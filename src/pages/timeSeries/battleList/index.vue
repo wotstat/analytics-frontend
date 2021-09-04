@@ -1,13 +1,13 @@
 <template>
 	<div class="list">
-		<Battle />
-		<Battle />
+		<Battle v-for="battle in battles" :key="battle.id" :battle="battle" />
 	</div>
 </template>
 
 <script>
 import Battle from './battle';
 export default {
+	props: ['battles'],
 	components: {
 		Battle,
 	},
