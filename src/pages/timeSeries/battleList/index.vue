@@ -1,13 +1,19 @@
 <template>
 	<div class="list">
-		<Battle v-for="battle in battles" :key="battle.id" :battle="battle" />
+		<Battle
+			v-for="battle in battles"
+			:key="battle.id"
+			:battle="battle"
+			@click="$emit('selectBattle', battle)"
+			:class="selectedBattle == battle ? 'selected' : ''"
+		/>
 	</div>
 </template>
 
 <script>
 import Battle from './battle';
 export default {
-	props: ['battles'],
+	props: ['battles', 'selectedBattle'],
 	components: {
 		Battle,
 	},
