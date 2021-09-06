@@ -1,11 +1,13 @@
 <template>
 	<div class="abs-full flex">
 		<BattleList
+			class="overflow-y-auto"
 			:battles="battles"
 			:selectedBattle="selectedBattle"
 			@selectBattle="selectBattle"
 		/>
 		<EventList
+			class="overflow-y-auto"
 			:events="battleEvents[selectedBattle.id]"
 			:loading="battleEventsLoading[selectedBattle.id]"
 			v-if="selectedBattle && battleEvents[selectedBattle.id]"

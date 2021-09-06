@@ -1,5 +1,5 @@
 <template>
-	<Card>
+	<Card class="battle-card">
 		<div>
 			<p>Результат: {{ battle.result || 'неизвестен' }}</p>
 			<p>Дата: {{ battle.dateTime }}</p>
@@ -19,3 +19,9 @@ export default {
 	},
 };
 </script>
+
+<style lang="scss" scoped>
+.battle-card {
+	overflow: hidden;
+}
+</style>
