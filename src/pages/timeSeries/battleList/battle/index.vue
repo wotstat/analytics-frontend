@@ -1,5 +1,5 @@
 <template>
-	<Card class="battle-card">
+	<Card class="battle-card pointer">
 		<div>
 			<p>Результат: {{ battle.result || 'неизвестен' }}</p>
 			<p>Дата: {{ battle.dateTime }}</p>

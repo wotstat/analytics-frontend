@@ -21,9 +21,11 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import '@/styles/variables.scss';
+
 .list {
 	width: 300px;
-	border-right: 2px solid silver;
+	border-right: $border-line;
 	div {
 		margin: 5px;
 	}

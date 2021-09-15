@@ -1,7 +1,17 @@
 <template>
 	<div class="list flex-1">
 		<p v-if="loading">Loading</p>
-		<Card v-for="event in allEvents" :key="event.id">
+		<Card
+			v-for="event in allEvents"
+			:key="event.id"
+			class="pointer"
+			:class="{
+				selected: selectedEvent?.id == event.id,
+			}"
+			@click="$emit('selectEvent', event)"
+			@keydown="move"
+			tabindex="0"
+		>
 			<p>{{ event.eventType }} | {{ event.dateTime }}</p>
 		</Card>
 	</div>
@@ -18,7 +28,7 @@ function compare(momentA, momentB) {
 }
 
 export default {
-	props: ['events', 'loading'],
+	props: ['events', 'loading', 'selectedEvent'],
 	computed: {
 		allEvents() {
 			const keys = Object.keys(this.events);
@@ -32,6 +42,16 @@ export default {
 			return res;
 		},
 	},
+	methods: {
+		move(e) {
+			if (this.selectedEvent && ['ArrowUp', 'ArrowDown'].includes(e.key)) {
+				const events = this.allEvents;
+				let i = events.indexOf(events.find((t) => t.id == this.selectedEvent.id));
+				i += e.key == 'ArrowUp' ? -1 : 1;
+				if (i >= 0 && i < events.length) this.$emit('selectEvent', events[i]);
+			}
+		},
+	},
 	components: {
 		Card,
 	},
@@ -40,8 +60,12 @@ export default {
 
 <style lang="scss" scoped>
 .list {
+	min-width: 200px;
 	div {
 		margin: 5px;
+		&:focus {
+			outline: none;
+		}
 	}
 }
 </style>
