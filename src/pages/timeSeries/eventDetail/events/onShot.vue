@@ -5,6 +5,7 @@
 		<p>autoAim: {{ event.autoAim }}</p>
 		<p>serverAim: {{ event.serverAim }}</p>
 		<p>ping: {{ event.ping * 1000 }} ms</p>
+		<p>fps: {{ event.fps }}</p>
 		<p>gunPoint: {{ bd2vector(event, 'gunPoint') }}</p>
 
 		<p>battleDispersion: {{ event.battleDispersion }}</p>
@@ -25,6 +26,22 @@
 		<hr />
 		<p>hitReason: {{ event.hitReason || 'не попал' }}</p>
 		<p>hitPoint: {{ bd2vector(event, 'hitPoint') }}</p>
+
+		<hr />
+		<div class="results" v-if="event.results.length > 0">
+			<p>Result</p>
+			<div v-for="result in event.results" :key="event.id + result.order" class="result">
+				<p>order: {{ result.order }}</p>
+				<p>tankTag: {{ result.tankTag }}</p>
+				<p>flags: {{ result.flags }}</p>
+				<p v-if="result.shotDamage > 0">shotDamage: {{ result.shotDamage }}</p>
+				<p v-if="result.fireDamage > 0">fireDamage: {{ result.fireDamage }}</p>
+				<p v-if="result.shotHealth != null">shotHealth: {{ result.shotHealth }}</p>
+				<p v-if="result.fireHealth != null">fireHealth: {{ result.fireHealth }}</p>
+				<p v-if="result.ammoBayDestroyed">ammoBayDestroyed: {{ result.ammoBayDestroyed }}</p>
+				<hr />
+			</div>
+		</div>
 	</div>
 </template>
 
@@ -37,3 +54,9 @@ export default {
 	},
 };
 </script>
+
+<style lang="scss" scoped>
+.result {
+	padding-left: 10px;
+}
+</style>
