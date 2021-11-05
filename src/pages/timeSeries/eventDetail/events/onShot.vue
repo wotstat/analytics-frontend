@@ -26,6 +26,7 @@
 		<hr />
 		<p>hitReason: {{ event.hitReason || 'не попал' }}</p>
 		<p>hitPoint: {{ bd2vector(event, 'hitPoint') }}</p>
+		<button v-if="event.hitSegment" @click="openInWotInspector">WOT Inspector</button>
 
 		<hr />
 		<div class="results" v-if="event.results.length > 0">
@@ -46,11 +47,35 @@
 </template>
 
 <script>
-import { bd2vector } from '@/utils';
+import { bd2vector, wotinspectorURL } from '@/utils';
 export default {
 	props: ['event'],
 	methods: {
 		bd2vector: (a, b) => bd2vector(a, b),
+		openInWotInspector() {
+			const e = this.event;
+			const url = wotinspectorURL(
+				{
+					vehicle: e.vehicleDescr,
+					chassis: e.chassisDescr,
+					turret: e.turretDescr,
+					gun: e.gunDescr,
+					shell: e.shellDescr,
+				},
+				{
+					vehicle: e.hitVehicleDescr,
+					chassis: e.hitChassisDescr,
+					turret: e.hitTurretDescr,
+					gun: e.hitGunDescr,
+					turretYaw: -e.hitTurretPitch,
+					turretPitch: e.hitTurretYaw,
+					segment: BigInt(e.hitSegment),
+				},
+				20
+			);
+			console.log(url);
+			window.open(url, '_blank');
+		},
 	},
 };
 </script>
