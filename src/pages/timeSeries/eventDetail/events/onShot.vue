@@ -7,7 +7,11 @@
 		<p>ping: {{ event.ping * 1000 }} ms</p>
 		<p>fps: {{ event.fps }}</p>
 		<p>gunPoint: {{ bd2vector(event, 'gunPoint') }}</p>
+		<p>clientMarkerPoint: {{ bd2vector(event, 'clientMarkerPoint') }}</p>
+		<p>vehicleSpeed: {{ event.vehicleSpeed }}</p>
+		<p>turretSpeed: {{ event.turretSpeed }}</p>
 
+		<br />
 		<p>battleDispersion: {{ event.battleDispersion }}</p>
 		<p>gunDispersion: {{ event.gunDispersion }}</p>
 

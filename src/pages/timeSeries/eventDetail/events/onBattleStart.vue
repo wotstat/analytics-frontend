@@ -20,10 +20,12 @@
 	<p>loadBattlePeriod: {{ event.loadBattlePeriod }}</p>
 	<p>battleLoadTimeMS: {{ event.battleLoadTimeMS }}</p>
 	<p>preBattleWaitTimeMS: {{ event.preBattleWaitTimeMS }}</p>
+	<p>inQueueWaitTimeMS: {{ event.inQueueWaitTimeMS }}</p>
 	<p>battleTimeMS: {{ event.battleTimeMS }}</p>
 
 	<hr />
 	<p>gameVersion: {{ event.gameVersion }}</p>
+	<p>gameplayMask: {{ event.gameplayMask.toString(2) }}</p>
 	<p>modVersion: {{ event.modVersion }}</p>
 	<p>region: {{ event.region }}</p>
 	<p>serverName: {{ event.serverName }}</p>
