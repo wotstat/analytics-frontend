@@ -12,8 +12,6 @@ function bd2vector(obj, name) {
 }
 
 function wotinspectorURL(vehicle, hitVehicle, hitDistance) {
-  console.log(vehicle);
-  console.log(hitVehicle);
   const dataLen = /*version*/ 1 + /*platform*/ +1 + /*shooter*/ 2 + 2 + 2 + 2 + 2 + /*target*/ 2 + 2 + 2 + 2 + /*gun yaw/pitch*/ 4 + 4 + /*segment*/ 8 + /*distance*/ 4
   const buffer = new Uint8Array(dataLen)
   const view = new DataView(buffer.buffer)
@@ -36,9 +34,7 @@ function wotinspectorURL(vehicle, hitVehicle, hitDistance) {
   view.setBigUint64(28, BigInt(hitVehicle.segment), true)
   view.setFloat32(36, hitDistance, true)
 
-  console.log(hitVehicle.turretPitch + "\t" + hitVehicle.turretYaw);
-
-  return "https://wotinspector.com/ru/webapp?data=" + btoa(String.fromCharCode.apply(null, buffer));
+  return "https://wotinspector.com/ru/webapp?data=" + encodeURIComponent(btoa(String.fromCharCode.apply(null, buffer)));
 }
 
 export { bd2vector, wotinspectorURL }
