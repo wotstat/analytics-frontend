@@ -1,24 +1,28 @@
 <template>
-	<div class="list flex-1">
-		<p v-if="loading">Loading</p>
-		<Card
-			v-for="event in allEvents"
-			:key="event.id"
-			class="pointer"
-			:class="{
-				selected: selectedEvent?.id == event.id,
-			}"
-			@click="$emit('selectEvent', event)"
-			@keydown="move"
-			tabindex="0"
-		>
-			<p>{{ event.eventType }} | {{ event.dateTime }}</p>
-		</Card>
+	<div>
+		<div class="list flex-1">
+			<p v-if="loading">Loading</p>
+			<Card
+				v-for="event in allEvents"
+				:key="event.id"
+				class="pointer"
+				:class="{
+					selected: selectedEvent?.id == event.id,
+				}"
+				@click="$emit('selectEvent', event)"
+				@keydown="move"
+				tabindex="0"
+			>
+				<p>{{ event.eventType }} | {{ event.dateTime }}</p>
+			</Card>
+		</div>
+		<Footer />
 	</div>
 </template>
 
 <script>
 import Card from '@/components/card';
+import Footer from '../footer/index.vue';
 import moment from 'moment';
 
 function compare(momentA, momentB) {
@@ -54,6 +58,7 @@ export default {
 	},
 	components: {
 		Card,
+		Footer,
 	},
 };
 </script>
