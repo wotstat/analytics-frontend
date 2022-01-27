@@ -27,7 +27,7 @@ export default {
 
 	&.selected {
 		.back {
-			background: rgba(167, 167, 167, 0.685);
+			background: rgba(209, 209, 209, 0.5);
 		}
 	}
 }

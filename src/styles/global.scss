@@ -19,6 +19,11 @@ p {
 	flex: 1;
 }
 
+.flex-col {
+	display: flex;
+	flex-direction: column;
+}
+
 .overflow-auto {
 	overflow: auto;
 }

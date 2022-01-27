@@ -11,14 +11,17 @@
   "dependencies": {
     "axios": "^0.21.1",
     "core-js": "^3.6.5",
+    "d3": "^7.3.0",
     "feather-icons": "^4.28.0",
     "moment": "^2.29.1",
     "vue": "^3.2.29",
     "vue-feather": "^2.0.0-rc.1",
+    "vue-resize": "^2.0.0-alpha.1",
     "vue-router": "^4.0.0-0",
     "vuex": "^4.0.0-0"
   },
   "devDependencies": {
+    "@types/d3": "7.1.0",
     "@vue/cli-plugin-babel": "~4.5.0",
     "@vue/cli-plugin-router": "~4.5.0",
     "@vue/cli-plugin-vuex": "~4.5.0",

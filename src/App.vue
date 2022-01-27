@@ -4,6 +4,7 @@
 
 <style lang="scss">
 @import '/styles/global.scss';
+
 body,
 html {
 	margin: 0;

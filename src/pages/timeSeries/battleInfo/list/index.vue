@@ -1,7 +1,6 @@
 <template>
 	<div>
 		<div class="list flex-1">
-			<p v-if="loading">Loading</p>
 			<Card
 				v-for="event in allEvents"
 				:key="event.id"
@@ -16,13 +15,11 @@
 				<p>{{ event.eventType }} | {{ event.dateTime }}</p>
 			</Card>
 		</div>
-		<Footer />
 	</div>
 </template>
 
 <script>
 import Card from '@/components/card';
-import Footer from '../footer/index.vue';
 import moment from 'moment';
 
 function compare(momentA, momentB) {
@@ -32,7 +29,7 @@ function compare(momentA, momentB) {
 }
 
 export default {
-	props: ['events', 'loading', 'selectedEvent'],
+	props: ['events', 'selectedEvent'],
 	computed: {
 		allEvents() {
 			const keys = Object.keys(this.events);
@@ -58,7 +55,6 @@ export default {
 	},
 	components: {
 		Card,
-		Footer,
 	},
 };
 </script>
