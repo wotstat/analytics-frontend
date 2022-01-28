@@ -5,6 +5,8 @@
 <style lang="scss">
 @import '/styles/global.scss';
 
+@import '@/styles/wot';
+
 body,
 html {
 	margin: 0;

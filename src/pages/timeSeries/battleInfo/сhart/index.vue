@@ -1,81 +1,111 @@
 <template>
-	<canvas class="canvas" ref="canvas"> </canvas>
+	<div class="parent" ref="parent">
+		<svg class="svg" ref="svg" :width="width">
+			<g class="hp-cell-parent" x="20">
+				<rect class="background" :width="width - 40" />
+				<g class="cells"></g>
+				<g class="lines" stroke="gray" stroke-width="1"></g>
+				<rect class="upground" :width="width - 40" />
+			</g>
+		</svg>
+	</div>
 	<resize-observer @notify="handleResize" />
 </template>
 
 <script>
 import { select } from 'd3-selection';
-import { zoom, zoomIdentity } from 'd3-zoom';
+import { zoom, zoomIdentity, zoomTransform } from 'd3-zoom';
 import { randomNormal } from 'd3-random';
-
-const randomX = randomNormal(1000 / 2, 80);
-const randomY = randomNormal(1000 / 2, 80);
-const points = Array.from({ length: 5000 }, () => [randomX(), randomY()]);
 
 export default {
 	data() {
 		return {
-			context: null,
-			width: 0,
-			height: 0,
+			baseWidth: 500,
+			width: 100,
 			transform: null,
 		};
 	},
 	methods: {
-		drawChart() {
-			let svg = d3.select('svg');
-			svg.attr('width', svg.clientWidth).attr('height', svg.clientHeight);
-		},
 		handleResize() {
-			let canvas = this.$refs.canvas;
-			this.width = canvas.parentNode.clientWidth;
-			this.height = canvas.parentNode.clientHeight;
-
-			let d3C = select(canvas);
-			d3C.style('width', this.width + 'px').style('height', this.height + 'px');
-
-			if (window.devicePixelRatio) {
-				d3C
-					.attr('width', this.width * window.devicePixelRatio)
-					.attr('height', this.height * window.devicePixelRatio);
-				this.context.scale(window.devicePixelRatio, window.devicePixelRatio);
-			} else {
-				d3C.attr('width', this.width).attr('height', this.height);
-			}
-			this.zoomed(this.transform || zoomIdentity);
+			let svg = this.$refs.svg;
+			this.baseWidth = svg.parentNode.clientWidth;
+			select('.parent')
+				.on('scrolled', this.scrolled)
+				.call(
+					zoom()
+						.translateExtent([
+							[0, 0],
+							[this.baseWidth, 100],
+						])
+						.scaleExtent([1, 4])
+						.on('zoom', this.zoomed)
+				);
+			this.zoomed({ transform: zoomIdentity });
 		},
-		zoomed(transform) {
-			const r = 1;
-			let context = this.context;
-			context.save();
-			context.clearRect(0, 0, this.width, this.height);
-			context.beginPath();
-			for (const d of points) {
-				const [x, y] = transform.apply(d);
-				context.moveTo(x + r, y);
-				context.arc(x, y, (r * transform.k) / 2, 0, 2 * Math.PI);
-			}
-			context.fill();
-			context.restore();
-			this.transform = transform;
+		draw() {
+			select('.hp-cell-parent .lines')
+				.selectAll('line')
+				.data(Array.from({ length: 900 }, (d, i) => i / 900))
+				.join('line')
+				.attr('x1', (d, i) => ((this.width - 40) / 900) * i)
+				.attr('x2', (d, i) => ((this.width - 40) / 900) * i)
+				.attr('y1', 0)
+				.attr('y2', 20);
+
+			select('.hp-cell-parent .cells')
+				.selectAll('rect')
+				.data(Array.from({ length: 900 }, (d, i) => i / 900))
+				.join('rect')
+				.attr('x', (d, i) => ((this.width - 40) / 900) * i)
+				.attr('y', (d, i) => 20 - d * 20)
+				.attr('width', (this.width - 40) / 900)
+				.attr('height', (d, i) => d * 20)
+				.attr('class', 'cell');
+
+			select('.svg')
+				.selectAll('circle')
+				.data([1, 2, 3, 4, 5, 6, 7, 8, 9, 0])
+				.join('circle')
+				.attr('r', 10)
+				.attr('cy', 50)
+				.attr('cx', (d, i) => (this.width * i) / 11 + 50);
+		},
+		zoomed({ transform }) {
+			this.width = this.baseWidth * transform.k;
+			select('.parent').node().scrollLeft = -transform.x;
+
+			this.draw();
+		},
+		scrolled() {
+			const wrapper = select('.parent');
+			const x = wrapper.node().scrollLeft + wrapper.node().clientWidth / 2;
+			const scale = zoomTransform(wrapper.node()).k;
+			wrapper.call(zoom().translateTo, x / scale, 1);
 		},
 	},
 	mounted() {
-		select('.canvas').call(
-			zoom()
-				.scaleExtent([1, 8])
-				.on('zoom', ({ transform }) => this.zoomed(transform))
-		);
-		this.context = select('.canvas').node().getContext('2d');
 		this.handleResize();
+
+		this.width = this.baseWidth;
+		this.draw();
 	},
 };
 </script>
 
-<style scoped>
-canvas {
-	width: 600px;
-	height: 600px;
-	position: absolute;
+<style lang="scss" scoped>
+.parent {
+	overflow-x: scroll;
+}
+svg {
+	// height: 200px;
+
+	.hp-cell-parent {
+		transform: translate(20px, 80px);
+
+		.background,
+		.upground {
+			height: 20px;
+		}
+	}
 }
 </style>

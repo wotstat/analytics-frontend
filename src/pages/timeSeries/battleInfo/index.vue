@@ -16,8 +16,9 @@
 				:selectedEvent="selectedEvent"
 			/>
 		</div>
-		<div class="flex flex-1" v-if="events && state == 'chart'">
+		<div class="flex-1" v-if="events && state == 'chart'">
 			<EventChart />
+			<div>test</div>
 		</div>
 	</div>
 </template>

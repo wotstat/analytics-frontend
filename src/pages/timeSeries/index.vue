@@ -8,6 +8,7 @@
 		/>
 
 		<BattleInfo
+			class="overflow-x-auto"
 			:events="battleEvents[selectedBattle?.id]"
 			:loading="battleEventsLoading[selectedBattle?.id]"
 		/>

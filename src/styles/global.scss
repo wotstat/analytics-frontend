@@ -6,9 +6,12 @@
 	bottom: 0;
 }
 
-p {
-	padding: 0;
-	margin: 0;
+.relative {
+	position: relative;
+}
+
+.absolute {
+	position: absolute;
 }
 
 .flex {
@@ -24,6 +27,11 @@ p {
 	flex-direction: column;
 }
 
+p {
+	padding: 0;
+	margin: 0;
+}
+
 .overflow-auto {
 	overflow: auto;
 }
@@ -32,6 +40,14 @@ p {
 	overflow-y: auto;
 }
 
+.overflow-x-auto {
+	overflow-x: auto;
+}
+
 .pointer {
 	cursor: pointer;
+}
+
+.w-100 {
+	width: 100%;
 }
