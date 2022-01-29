@@ -11,11 +11,33 @@ svg {
 		}
 
 		.cells {
-			fill: rgb(138, 188, 76);
+			fill: none;
+
+			.progress {
+				fill: rgb(138, 188, 76);
+			}
 
 			.cell:hover {
-				fill: rgb(238, 64, 116);
+				.progress {
+					fill: rgb(238, 64, 116);
+				}
 			}
 		}
+	}
+}
+.cell {
+	pointer-events: bounding-box;
+	// .main {
+	// 	fill: rgb(43, 46, 39);
+	// }
+}
+
+.render {
+	fill: rgb(138, 188, 76);
+}
+
+.cell:hover {
+	.render {
+		fill: rgb(238, 64, 116);
 	}
 }
