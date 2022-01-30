@@ -24,8 +24,8 @@ export default {
 @import '@/styles/variables.scss';
 
 .list {
-	width: 300px;
 	border-right: $border-line;
+	background: $main-background;
 	div {
 		margin: 5px;
 	}

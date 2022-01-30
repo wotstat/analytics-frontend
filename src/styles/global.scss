@@ -14,6 +14,10 @@
 	position: absolute;
 }
 
+.fixed {
+	position: fixed;
+}
+
 .flex {
 	display: flex;
 }
@@ -48,6 +52,20 @@ p {
 	cursor: pointer;
 }
 
+.skip-events {
+	pointer-events: none;
+}
+
 .w-100 {
 	width: 100%;
+}
+
+.h-100 {
+	height: 100%;
+}
+
+@each $size in (1, 5, 10) {
+	.z-#{$size} {
+		z-index: $size;
+	}
 }

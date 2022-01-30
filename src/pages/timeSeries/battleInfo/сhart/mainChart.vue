@@ -7,6 +7,7 @@
 				<g class="axis"></g>
 				<g class="lines" stroke="gray" stroke-width="1"></g>
 				<rect class="upground" :width="width - 40" />
+				<text fill="mouse-info" x="40" y="50">06:00</text>
 			</g>
 		</svg>
 	</div>
@@ -44,15 +45,13 @@ function drawTime(width, bellowZero, aboveZero) {
 }
 
 function drawLine(width, bellowZero, aboveZero) {
-	const totalTimeSec = bellowZero + aboveZero;
-
-	let timeInterval = () => {
-		// const length = [1, 2.5, 5, 30 / 4, 30 / 2, 30, 60];
-		const length = [15, 30, 60];
-
+	const cellParent = select('.hp-cell-parent');
+	cellParent.selectAll('#cell-info').remove();
+	let timeInterval = (totalTime) => {
+		const length = [1, 2.5, 5, 30 / 4, 30 / 2, 30, 60];
 		for (let i = 0; i < length.length; i++) {
 			const time = length[i];
-			if (width / (totalTimeSec / time) > 7) {
+			if (width / (totalTime / time) > 7) {
 				return time;
 			}
 		}
@@ -60,36 +59,53 @@ function drawLine(width, bellowZero, aboveZero) {
 		return length[length.length - 1];
 	};
 
-	const dt = timeInterval();
-	const step = totalTimeSec / dt;
+	const dt = timeInterval(bellowZero + aboveZero);
+	const stepBellow = bellowZero / dt;
+	const stepAbove = aboveZero / dt;
 
-	const count = Math.trunc(step);
+	const step = stepBellow + stepAbove;
+
+	const count = Math.trunc(stepBellow) + Math.trunc(stepAbove);
 	const cells = Array.from({ length: count + 2 }, (d, i) => 0.3);
 	const cellWidth = (width * (count / step)) / count;
 
-	const bellowCount = bellowZero / dt;
-	const offsetX = (bellowCount - Math.trunc(bellowCount)) * cellWidth;
+	const offsetX = (stepBellow - Math.trunc(stepBellow)) * cellWidth;
 
-	select('.hp-cell-parent .lines')
-		.selectAll('line')
-		.data(Array.from({ length: count + 1 }))
-		.join('line')
-		.attr('x1', (d, i) => cellWidth * i + offsetX)
-		.attr('x2', (d, i) => cellWidth * i + offsetX)
-		.attr('y1', 0)
-		.attr('y2', 20);
+	let handleMouseOver = (d, i) => {
+		console.log('handleMouseOver');
+		let t = cellParent
+			.append('text')
+			.attr('id', 'cell-info')
+			.attr('class', 'cell-info')
+			.attr(
+				'transform',
+				`translate(${d.target.transform.baseVal.consolidate().matrix.e + cellWidth / 2}, 40)`
+			)
+			.text('бой');
+		t.append('tspan').attr('x', '0').attr('dy', '1em').text(`хп: ${i}`);
+	};
+
+	let handleMouseOut = (d, i) => {
+		console.log('handleMouseOut');
+		cellParent.selectAll('#cell-info').remove();
+	};
 
 	var cell = select('.hp-cell-parent .cells').selectAll('.cell').data(cells),
 		cellExit = cell.exit(),
-		cellEnter = cell.enter().append('g').attr('class', 'cell'),
+		cellEnter = cell
+			.enter()
+			.append('g')
+			.attr('class', 'cell')
+			.on('mouseover', handleMouseOver)
+			.on('mouseout', handleMouseOut),
 		main = cell.select('.main'),
 		render = cell.select('.render');
 
 	main = main.merge(
-		cellEnter.append('rect').attr('class', 'main').attr('height', 20).attr('width', 1)
+		cellEnter.append('rect').attr('class', 'main skip-events').attr('height', 20).attr('width', 1)
 	);
 
-	render = render.merge(cellEnter.append('rect').attr('class', 'render'));
+	render = render.merge(cellEnter.append('rect').attr('class', 'render skip-events'));
 
 	render
 		.attr('height', (d, i) => d * 20)
@@ -106,6 +122,16 @@ function drawLine(width, bellowZero, aboveZero) {
 		.attr('transform', (d, i) => `translate(${i == 0 ? 0 : cellWidth * (i - 1) + offsetX}, 0)`);
 
 	cellExit.remove();
+
+	select('.hp-cell-parent .lines')
+		.selectAll('line')
+		.data(Array.from({ length: count + 1 }))
+		.join('line')
+		.attr('x1', (d, i) => cellWidth * i + offsetX)
+		.attr('x2', (d, i) => cellWidth * i + offsetX)
+		.attr('y1', 0)
+		.attr('y2', 20)
+		.attr('class', 'skip-events');
 }
 
 export default {
@@ -136,9 +162,9 @@ export default {
 		draw() {
 			let mainWidth = this.width - 2 * HORIZONTAL_PADDING;
 
-			drawLine(mainWidth, 40, 7.2 * 60);
+			drawLine(mainWidth, 55.5, 7.2 * 60);
 
-			drawTime(mainWidth, 40, 7.2 * 60);
+			drawTime(mainWidth, 55.5, 7.2 * 60);
 
 			select('.svg')
 				.selectAll('circle')
@@ -172,7 +198,7 @@ export default {
 
 <style lang="scss" scoped>
 .parent {
-	overflow-x: scroll;
+	overflow-x: auto;
 }
 svg {
 	// height: 200px;

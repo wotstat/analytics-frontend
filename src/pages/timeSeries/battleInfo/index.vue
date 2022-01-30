@@ -1,8 +1,8 @@
 <template>
 	<div class="flex-col flex-1">
-		<Footer v-model="state" />
+		<Footer v-model="state" @back="$emit('back')" />
 		<p v-if="loading">Loading</p>
-		<div class="flex flex-1" v-if="events && state == 'list'">
+		<div class="flex flex-1 overflow-y-auto" v-if="events && state == 'list'">
 			<EventList
 				class="overflow-y-auto flex-1"
 				:events="events"
@@ -12,7 +12,7 @@
 
 			<EventDetail
 				v-if="events && selectedEvent"
-				class="overflow-y-auto"
+				class="overflow-y-auto min-w-200"
 				:selectedEvent="selectedEvent"
 			/>
 		</div>
@@ -59,3 +59,9 @@ export default {
 	},
 };
 </script>
+
+<style lang="scss" scoped>
+.min-w-200 {
+	min-width: 200px;
+}
+</style>

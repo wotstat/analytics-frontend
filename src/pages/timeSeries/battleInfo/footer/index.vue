@@ -1,6 +1,7 @@
 <template>
-	<div class="container flex">
-		<div class="flex">
+	<div class="container">
+		<icon-btn type="chevron-left" class="selected back" @click="$emit('back')" />
+		<div class="flex swither">
 			<icon-btn type="list" :class="getClass('list')" @click="changeState('list')" />
 			<icon-btn type="bar-chart-2" :class="getClass('chart')" @click="changeState('chart')" />
 		</div>
@@ -23,10 +24,21 @@ export default {
 
 <style lang="scss" scoped>
 @import '@/styles/variables.scss';
+
 .container {
 	padding: 3px;
 	border-bottom: $border-line;
-	justify-content: right;
+
+	.swither {
+		float: right;
+	}
+
+	.back {
+		float: left;
+		@media screen and (min-width: $time-series-width) {
+			display: none;
+		}
+	}
 }
 
 div {

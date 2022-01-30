@@ -1,20 +1,18 @@
 <template>
-	<div>
-		<div class="list flex-1">
-			<Card
-				v-for="event in allEvents"
-				:key="event.id"
-				class="pointer"
-				:class="{
-					selected: selectedEvent?.id == event.id,
-				}"
-				@click="$emit('selectEvent', event)"
-				@keydown="move"
-				tabindex="0"
-			>
-				<p>{{ event.eventType }} | {{ event.dateTime }}</p>
-			</Card>
-		</div>
+	<div class="list flex-1">
+		<Card
+			v-for="event in allEvents"
+			:key="event.id"
+			class="pointer"
+			:class="{
+				selected: selectedEvent?.id == event.id,
+			}"
+			@click="$emit('selectEvent', event)"
+			@keydown="move"
+			tabindex="0"
+		>
+			<p>{{ event.eventType }} | {{ event.dateTime }}</p>
+		</Card>
 	</div>
 </template>
 
