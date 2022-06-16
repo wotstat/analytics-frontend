@@ -33,9 +33,10 @@ svg {
 }
 
 .cell-info {
-	font-size: 12px;
+	font-size: 10px;
 	font-family: sans-serif;
 	text-anchor: middle;
+	fill: black;
 }
 .render {
 	fill: rgb(138, 188, 76);
@@ -44,5 +45,15 @@ svg {
 .cell:hover {
 	.render {
 		fill: rgb(238, 64, 116);
+	}
+}
+
+.axis {
+	.tick {
+		transition: visibility 0s, opacity 0.2s;
+		&.hidden {
+			visibility: hidden;
+			opacity: 0;
+		}
 	}
 }

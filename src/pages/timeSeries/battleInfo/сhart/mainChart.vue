@@ -7,7 +7,6 @@
 				<g class="axis"></g>
 				<g class="lines" stroke="gray" stroke-width="1"></g>
 				<rect class="upground" :width="width - 40" />
-				<text fill="mouse-info" x="40" y="50">06:00</text>
 			</g>
 		</svg>
 	</div>
@@ -21,6 +20,7 @@ import { axisBottom } from 'd3-axis';
 import { scaleLinear, scaleTime } from 'd3-scale';
 import { timeFormat } from 'd3-time-format';
 import { timeSecond } from 'd3-time';
+import { text } from 'd3-fetch';
 
 const HORIZONTAL_PADDING = 20;
 
@@ -32,8 +32,8 @@ function drawTime(width, bellowZero, aboveZero) {
 					.domain([-bellowZero * 1000, aboveZero * 1000])
 					.range([0, width])
 			)
+				.ticks(timeSecond.every(14))
 				.ticks(width / 80)
-				// .tickValues([-bellowZero * 1000])
 				.tickFormat((t) =>
 					(t >= 0 ? timeFormat('%M:%S')(t * 1) : `-${timeFormat('%M:%S')(-t * 1)}`).replace(
 						'00:00',
@@ -49,6 +49,7 @@ function drawLine(width, bellowZero, aboveZero) {
 	cellParent.selectAll('#cell-info').remove();
 	let timeInterval = (totalTime) => {
 		const length = [1, 2.5, 5, 30 / 4, 30 / 2, 30, 60];
+		// const length = [30, 60];
 		for (let i = 0; i < length.length; i++) {
 			const time = length[i];
 			if (width / (totalTime / time) > 7) {
@@ -72,22 +73,37 @@ function drawLine(width, bellowZero, aboveZero) {
 	const offsetX = (stepBellow - Math.trunc(stepBellow)) * cellWidth;
 
 	let handleMouseOver = (d, i) => {
-		console.log('handleMouseOver');
+		const position =
+			d.target.transform.baseVal.consolidate().matrix.e + d.target.getBBox().width / 2;
+
 		let t = cellParent
 			.append('text')
 			.attr('id', 'cell-info')
 			.attr('class', 'cell-info')
-			.attr(
-				'transform',
-				`translate(${d.target.transform.baseVal.consolidate().matrix.e + cellWidth / 2}, 40)`
-			)
-			.text('бой');
+			.attr('transform', `translate(${position}, 38)`)
+			.text('03:00');
+		t.append('tspan').attr('x', '0').attr('dy', '1em').text('загрузка');
 		t.append('tspan').attr('x', '0').attr('dy', '1em').text(`хп: ${i}`);
+
+		const textWidth = t.node().getBBox().width;
+		const textPos = position - textWidth / 2;
+		select('.axis')
+			.selectAll('.tick')
+			.nodes()
+			.forEach((t) => {
+				const width = t.getBBox().width;
+				const pos = t.transform.baseVal.consolidate().matrix.e - width / 2;
+				const p1 = textPos - pos;
+				const p2 = pos - textPos;
+				if ((0 < p1 && p1 < width) || (0 < p2 && p2 < textWidth)) {
+					select(t).node().classList.add('hidden');
+				}
+			});
 	};
 
 	let handleMouseOut = (d, i) => {
-		console.log('handleMouseOut');
 		cellParent.selectAll('#cell-info').remove();
+		select('.axis').selectAll('.tick').attr('class', 'tick');
 	};
 
 	var cell = select('.hp-cell-parent .cells').selectAll('.cell').data(cells),
