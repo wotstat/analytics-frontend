@@ -16,6 +16,14 @@
 		<p>gunDispersion: {{ event.gunDispersion }}</p>
 
 		<hr />
+		<p>shellTag: {{ event.shellTag }}</p>
+		<p>shellName: {{ event.shellName }}</p>
+		<p>shellSpeed: {{ event.shellSpeed }}</p>
+		<p>shellCaliber: {{ event.shellCaliber }}</p>
+		<p>shellDamage: {{ event.shellDamage }}</p>
+		<p>shellPiercingPower: {{ event.shellPiercingPower }}</p>
+
+		<hr />
 		<p>clientShotDispersion: {{ event.clientShotDispersion }}</p>
 		<p>serverShotDispersion: {{ event.serverShotDispersion }}</p>
 		<p>serverMarkerPoint: {{ bd2vector(event, 'serverMarkerPoint') }}</p>
@@ -62,8 +70,8 @@ export default {
 			const gunPoint = bd2vector(e, 'gunPoint');
 			const distance = Math.sqrt(
 				Math.pow(gunPoint.x - hitPoint.x, 2) +
-					Math.pow(gunPoint.y - hitPoint.y, 2) +
-					Math.pow(gunPoint.z - hitPoint.z, 2)
+				Math.pow(gunPoint.y - hitPoint.y, 2) +
+				Math.pow(gunPoint.z - hitPoint.z, 2)
 			);
 			console.log(distance);
 

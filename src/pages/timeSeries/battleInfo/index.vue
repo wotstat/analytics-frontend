@@ -32,7 +32,7 @@ export default {
 	data() {
 		return {
 			selectedEvent: null,
-			state: 'chart',
+			state: 'list',
 		};
 	},
 	props: ['events', 'loading'],
