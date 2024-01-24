@@ -3,7 +3,7 @@ name: Deploy Dev
 on:
   push:
     branches:
-      - master
+      - dev
 
   workflow_dispatch:
 
@@ -12,34 +12,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+      - uses: oven-sh/setup-bun@v1
 
-      - name: Cache node modules
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-node-modules
+      - uses: actions/cache@v4
         with:
-          path: |
-            ~/.npm
-            **/node_modules
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-${{ matrix.bun }}-bun-${{ hashFiles('**/bun.lockb') }}
           restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
+            ${{ runner.os }}-${{ matrix.bun }}-bun-
 
       - name: Install Dependencies
-        run: npm install
+        run: bun install
 
       - name: Build
-        run: npm run build:dev
+        run: npm run build
 
-      - name: copy file via ssh
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
-          port: ${{ secrets.PORT }}
-          source: "dist/*"
-          target: "/home/web/web/wotstat/dev/AnalyticsFrontend"
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/production.key
+          chmod 600 ~/.ssh/production.key
+          cat >>~/.ssh/config <<END
+          Host node
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/production.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+
+      - name: Copy to server
+        run: rsync -avz ./dist node:/${{ vars.APP_PATH }}

@@ -1,23 +1,13 @@
+
 <template>
-	<router-view />
+  <RouterView />
 </template>
 
-<style lang="scss">
-@import '/styles/global.scss';
 
-@import '@/styles/wot';
+<script setup lang="ts">
+import { RouterView } from 'vue-router';
 
-body,
-html {
-	margin: 0;
-	padding: 0;
-}
+</script>
 
-#app {
-	// 	font-family: Avenir, Helvetica, Arial, sans-serif;
-	// 	-webkit-font-smoothing: antialiased;
-	// 	-moz-osx-font-smoothing: grayscale;
-	// 	text-align: center;
-	// 	color: #2c3e50;
-}
-</style>
+
+<style scoped></style>
