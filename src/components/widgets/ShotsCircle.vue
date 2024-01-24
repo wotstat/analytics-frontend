@@ -59,7 +59,7 @@ async function loadNextBatch() {
 
   loading = true;
 
-  console.log(`load ${LOAD_COUNT} shots offset ${shotsData.length} started at ${shotsData.length > 0 ? 'where id < ' + shotsData[0].id : ''}`);
+  console.log(`load ${LOAD_COUNT} shots offset ${shotsData.length} started at ${shotsData.length > 0 ? 'where id < ' + shotsData[0].id : 'all'}`);
   const result = await query<{ id: string, r: number, theta: number, hit: number }>(`
     SELECT id, 
     ballisticResultServer_r as r, 
@@ -77,7 +77,7 @@ async function loadNextBatch() {
     hit: row.hit == 1,
   })));
 
-  loadingFinished = result.data.length === 0
+  loadingFinished = result.data.length < LOAD_COUNT;
   loading = false;
 }
 

@@ -1,0 +1,50 @@
+.card-main-info:not(.description) {
+  font-weight: 800;
+  font-size: 3rem;
+  line-height: 1.1;
+  transition: all 0.25s;
+  transition-property: transform, filter;
+
+  &:hover {
+    $scale: 1.03;
+    transform: scale3d($scale, $scale, $scale);
+  }
+
+  $blur-radius: 1rem;
+
+  &.gold {
+    color: #ffdd9c;
+    filter: drop-shadow(0 0 $blur-radius #f73c08);
+  }
+
+  &.green {
+    color: #e7ffde;
+    filter: drop-shadow(0 0 $blur-radius #639e31);
+  }
+
+  &.red {
+    color: #ffe7e7;
+    filter: drop-shadow(0 0 $blur-radius #ce2021);
+  }
+
+  &.blue {
+    color: #eff3ff;
+    filter: drop-shadow(0 0 $blur-radius #5249c6);
+  }
+
+  &.yellow {
+    color: #ffffe7;
+    filter: drop-shadow(0 0 $blur-radius #deaa0a);
+  }
+
+  &.orange {
+    color: #fffbe7;
+    filter: drop-shadow(0 0 $blur-radius #d66d08);
+  }
+}
+
+.card-main-info.description {
+  font-weight: 600;
+  line-height: normal;
+  margin-top: 5px;
+}

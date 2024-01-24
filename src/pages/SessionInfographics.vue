@@ -4,27 +4,37 @@
     <h2>Стрельба</h2>
     <div class="flex ver shots">
       <div class="card long">
-        <TotalShots />
+        <GenericInfo query="select count(*) as data from Event_OnShot" description="Выстрелов всего" color="green" />
       </div>
       <div class="flex hor main">
         <div class="card circle">
           <ShotsCircle />
-          <p>- попали</p>
-          <p>- не попали</p>
+          <div class="legend">
+            <p><span class="mini-circle green">•</span> – промахи</p>
+            <p><span class="mini-circle red">•</span> – попадания</p>
+          </div>
         </div>
         <div class="flex ver flex-1 right">
           <div class="grid mincards">
             <div class="card">
-              <p>Попали</p>
+              <GenericInfo
+                query="SELECT count(if(length(results.order) > 0, 1, null)) / count() as data FROM Event_OnShot;"
+                description="Попало по танкам" color="yellow" :processor="usePercentProcessor()" />
             </div>
             <div class="card">
-              <p>С уроном</p>
+              <GenericInfo
+                query="SELECT count(if(arraySum(results.shotDamage) > 0 or arraySum(results.fireDamage) > 0, 1, null)) / count() as data FROM Event_OnShot;"
+                description="С уроном" color="orange" :processor="usePercentProcessor()" />
             </div>
             <div class="card">
-              <p>В первую половину</p>
+              <GenericInfo
+                query="SELECT count(if(ballisticResultServer_r < 0.5, 1, null)) / count() as data FROM Event_OnShot;"
+                description="Попали в первую половину" color="red" :processor="usePercentProcessor()" />
             </div>
             <div class="card">
-              <p>В первую треть</p>
+              <GenericInfo
+                query="SELECT count(if(ballisticResultServer_r < 0.333, 1, null)) / count() as data FROM Event_OnShot;"
+                description="Попали в первую треть" color="blue" :processor="usePercentProcessor()" />
             </div>
           </div>
           <div class="card chart">
@@ -38,7 +48,8 @@
 
 <script setup lang="ts">
 import ShotsCircle from "@/components/widgets/ShotsCircle.vue";
-import TotalShots from "@/components/widgets/TotalShots.vue";
+import GenericInfo from '@/components/widgets/GenericInfo.vue';
+import { usePercentProcessor } from '@/composition/usePercentProcessor';
 
 </script>
 
@@ -57,6 +68,24 @@ import TotalShots from "@/components/widgets/TotalShots.vue";
 
     @include medium {
       width: 400px;
+    }
+
+    .legend {
+      margin-top: 40px;
+
+      .mini-circle {
+        font-weight: 900;
+
+        &.green {
+          color: #e7ffde;
+          filter: drop-shadow(0 0 8px #639e31);
+        }
+
+        &.red {
+          color: #ffdd9c;
+          filter: drop-shadow(0 0 8px #f73c08);
+        }
+      }
     }
   }
 
