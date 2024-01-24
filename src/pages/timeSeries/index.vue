@@ -1,18 +1,9 @@
 <template>
-	<div class="abs-full container">
-		<BattleList
-			class="overflow-y-auto z-5 fixed h-100"
-			:class="selectedBattle ? 'hidden' : ''"
-			:battles="battles"
-			:selectedBattle="selectedBattle"
-			@selectBattle="selectBattle"
-		/>
-		<BattleInfo
-			class="abs-full overflow-x-auto z-1 info"
-			:events="battleEvents[selectedBattle?.id]"
-			:loading="battleEventsLoading[selectedBattle?.id]"
-			@back="back"
-		/>
+	<div class="container abs-full">
+		<BattleList class="overflow-y-auto z-5 fixed h-100" :class="selectedBattle ? 'hidden' : ''" :battles="battles"
+			:selectedBattle="selectedBattle" @selectBattle="selectBattle" />
+		<BattleInfo class="abs-full overflow-x-auto z-1 info" :events="battleEvents[selectedBattle?.id]"
+			:loading="battleEventsLoading[selectedBattle?.id]" @back="back" />
 	</div>
 </template>
 
@@ -76,10 +67,11 @@ export default {
 
 <style lang="scss" scoped>
 @import '@/styles/variables.scss';
+
 .container {
 	position: absolute;
 
-	.list {
+	.container {
 		width: 300px;
 		transform: none;
 
@@ -96,6 +88,7 @@ export default {
 
 	.info {
 		margin-left: 302px;
+
 		@media screen and (max-width: $time-series-width) {
 			margin-left: 0;
 		}
