@@ -17,13 +17,19 @@ import { query } from "@/db";
 
 const canvasRef = ref<InstanceType<typeof CanvasVue> | null>(null);
 
-const shotsData = shallowRef<{ r: number, theta: number }[]>([]);
+const shotsData = shallowRef<{ r: number, theta: number, hasHit: boolean }[]>([]);
 
 onMounted(async () => {
-  const data = await query('SELECT ballisticResultServer_r, ballisticResultServer_theta FROM Event_OnShot')
-  shotsData.value = data.data.map((row: any) => ({
+  const data = await query<{
+    ballisticResultServer_r: number,
+    ballisticResultServer_theta: number,
+    hasHit: 0 | 1,
+  }>('SELECT ballisticResultServer_r, ballisticResultServer_theta, length(results.order) > 0 as hasHit FROM Event_OnShot')
+
+  shotsData.value = data.data.map(row => ({
     r: row.ballisticResultServer_r,
     theta: row.ballisticResultServer_theta,
+    hasHit: row.hasHit == 1,
   }));
 })
 
@@ -45,11 +51,11 @@ function renderShots(ctx: CanvasRenderingContext2D, width: number, height: numbe
   for (const iterator of data) {
     const x = iterator.r * Math.cos(iterator.theta) * radius;
     const y = iterator.r * Math.sin(iterator.theta) * radius;
-    ctx.fillStyle = '#e7ffde';
-    ctx.shadowColor = "#639e31";
-    ctx.shadowBlur = 5;
+    ctx.fillStyle = iterator.hasHit ? '#ffdd9c' : '#e7ffde';
+    ctx.shadowColor = iterator.hasHit ? '#f73c08' : "#639e31";
+    ctx.shadowBlur = radius / 40;
     ctx.beginPath();
-    ctx.arc(width / 2 + x, height / 2 + y, 2, 0, 2 * Math.PI);
+    ctx.arc(width / 2 + x, height / 2 + y, radius / 150, 0, 2 * Math.PI);
     ctx.closePath();
     ctx.fill();
   }
@@ -61,18 +67,19 @@ const renderShotsDebounce = useDebounceFn((ctx: CanvasRenderingContext2D, width:
 }, 200);
 
 function redraw(ctx: CanvasRenderingContext2D, width: number, height: number) {
-  // dashed stroke style
-  ctx.setLineDash([20, 20]);
+  const radius = Math.min(width, height) / 2 - 1;
+
+  ctx.setLineDash([radius / 20]);
   ctx.strokeStyle = '#78d63a';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.arc(width / 2, height / 2, Math.min(width, height) / 2 - 1, 0, 2 * Math.PI);
+  ctx.arc(width / 2, height / 2, radius, 0, 2 * Math.PI);
   ctx.closePath();
   ctx.stroke();
 
   ctx.fillStyle = '#78d63a';
   ctx.beginPath();
-  ctx.arc(width / 2, height / 2, 5, 0, 2 * Math.PI);
+  ctx.arc(width / 2, height / 2, radius / 60, 0, 2 * Math.PI);
   ctx.closePath();
   ctx.fill();
 
