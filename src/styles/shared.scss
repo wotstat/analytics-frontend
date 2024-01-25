@@ -39,6 +39,15 @@
   flex-direction: column;
 }
 
+.chart-container {
+  position: relative;
+  flex: 1;
+
+  canvas {
+    position: absolute;
+  }
+}
+
 .center-container {
   margin: 0 auto;
   padding: 1rem;

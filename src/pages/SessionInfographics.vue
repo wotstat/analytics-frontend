@@ -38,7 +38,7 @@
             </div>
           </div>
           <div class="card chart">
-            <p>ГРАФИК</p>
+            <ShotDistribution />
           </div>
         </div>
       </div>
@@ -49,6 +49,7 @@
 <script setup lang="ts">
 import ShotsCircle from "@/components/widgets/ShotsCircle.vue";
 import GenericInfo from '@/components/widgets/GenericInfo.vue';
+import ShotDistribution from '@/components/widgets/ShotDistribution.vue';
 import { usePercentProcessor } from '@/composition/usePercentProcessor';
 
 </script>
@@ -63,11 +64,15 @@ import { usePercentProcessor } from '@/composition/usePercentProcessor';
 .shots {
   .card.circle {
     @include small {
-      width: 300px;
+      min-width: 300px;
     }
 
     @include medium {
-      width: 400px;
+      min-width: 400px;
+    }
+
+    @include large {
+      min-width: 500px;
     }
 
     .legend {
@@ -112,6 +117,9 @@ import { usePercentProcessor } from '@/composition/usePercentProcessor';
   }
 
   .chart {
+    display: flex;
+    padding: 0 15px 5px 15px;
+
     @include small {
       flex: 1;
     }

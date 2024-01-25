@@ -3,6 +3,18 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import { router } from './routes'
 
+import {
+  Chart as ChartJS,
+  Title, Tooltip, Legend, LineElement, PointElement, BarElement, CategoryScale, LinearScale
+} from 'chart.js'
+
+ChartJS.register(Title, Tooltip, Legend, LineElement, BarElement, PointElement, CategoryScale, LinearScale)
+ChartJS.defaults.color = 'rgba(255, 255, 255, 0.87)'
+ChartJS.defaults.font.family = 'Inter, system-ui, Avenir, Helvetica, Arial, sans-serif'
+ChartJS.defaults.font.weight = 500
+ChartJS.defaults.borderColor = 'rgba(255, 255, 255, 0.2)'
+ChartJS.defaults.animation = false
+
 
 createApp(App)
   .use(router)
