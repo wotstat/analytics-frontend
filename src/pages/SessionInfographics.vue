@@ -42,6 +42,26 @@
           </div>
         </div>
       </div>
+      <div class="flex hor-ver-x-small">
+        <div class="card flex-1">
+          <GenericInfo query="select count(if(sqrt(
+               pow(serverMarkerPoint_x - gunPoint_x, 2) +
+               pow(serverMarkerPoint_y - gunPoint_y, 2) +
+               pow(serverMarkerPoint_z - gunPoint_z, 2)
+       ) > 300, 1, null)) / count() as data from Event_OnShot;" description="С расстояния 300м+" color="yellow"
+            :processor="usePercentProcessor()" />
+        </div>
+        <div class="card flex-1">
+          <GenericInfo query="select count(if(abs(serverShotDispersion - gunDispersion) < 0.001 or
+                abs(clientShotDispersion - gunDispersion) < 0.001, 1, null)) / count() as data from Event_OnShot;"
+            description="С полным сведением" color="blue" :processor="usePercentProcessor()" />
+        </div>
+        <div class="card flex-1">
+          <GenericInfo
+            query="select count(if(abs(turretSpeed) + abs(vehicleRotationSpeed) < 0.02 and abs(vehicleSpeed) < 1, 1, null)) / count() as data from Event_OnShot;"
+            description="Неподвижно" color="green" :processor="usePercentProcessor()" />
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -122,6 +142,12 @@ import { usePercentProcessor } from '@/composition/usePercentProcessor';
 
     @include small {
       flex: 1;
+    }
+  }
+
+  .hor-ver-x-small {
+    @include less-x-small {
+      flex-direction: column;
     }
   }
 }
