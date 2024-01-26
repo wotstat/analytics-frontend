@@ -16,9 +16,9 @@ class ShadowBarController extends BarController {
       ctx.strokeStyle = barElement.options.borderColor.toString();
       ctx.lineWidth = 2;
 
-      const offset = 10
-
       const { x, y, width, base } = barElement.getProps(['x', 'y', 'base', 'height', 'width']);
+
+      const offset = Math.min(10, width / 2);
 
       ctx.beginPath();
       ctx.moveTo(x - width / 2 + offset, y + base);
