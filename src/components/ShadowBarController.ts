@@ -8,8 +8,6 @@ class ShadowBarController extends BarController {
     // super.draw()
 
     const meta = this.getMeta();
-
-    ctx.shadowBlur = 30;
     for (const barElement of meta.data as BarElement[]) {
 
       ctx.shadowColor = barElement.options.borderColor.toString();
@@ -19,6 +17,7 @@ class ShadowBarController extends BarController {
       const { x, y, width, base } = barElement.getProps(['x', 'y', 'base', 'height', 'width']);
 
       const offset = Math.min(10, width / 2);
+      ctx.shadowBlur = width
 
       ctx.beginPath();
       ctx.moveTo(x - width / 2 + offset, y + base);
