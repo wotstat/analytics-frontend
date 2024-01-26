@@ -13,7 +13,9 @@ ChartJS.defaults.color = 'rgba(255, 255, 255, 0.87)'
 ChartJS.defaults.font.family = 'Inter, system-ui, Avenir, Helvetica, Arial, sans-serif'
 ChartJS.defaults.font.weight = 500
 ChartJS.defaults.borderColor = 'rgba(255, 255, 255, 0.2)'
-ChartJS.defaults.animation = false
+
+// @ts-ignore
+ChartJS.defaults.animation.duration = 400
 
 
 createApp(App)

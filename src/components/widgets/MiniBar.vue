@@ -19,7 +19,6 @@ const props = defineProps<{
   callbacks?: Partial<TooltipCallbacks<'bar'>>,
 }>()
 
-
 const chartData = computed<ChartProps<'bar'>['data']>(() => ({
   labels: props.labels,
   datasets: [
@@ -38,7 +37,7 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
   responsive: true,
   maintainAspectRatio: false,
   scales: {
-    y: { display: false, max: max.value * 1.1, },
+    y: { display: false, max: max.value == 0 ? undefined : max.value * 1.1 },
     x: {
       grid: { display: false, },
     },
