@@ -1,5 +1,5 @@
 <template>
-  <div class="flex ver shots">
+  <div class="flex ver shots" ref="container">
     <div class="card long">
       <GenericInfo :value="dataResult.count" description="Выстрелов всего" color="green" />
     </div>
@@ -55,13 +55,17 @@
 
 <script setup lang="ts">
 import ShotsCircle from "@/components/widgets/ShotsCircle.vue";
-import GenericInfoQuery from '@/components/widgets/GenericInfoQuery.vue';
 import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import ShotDistribution from '@/components/widgets/ShotDistribution.vue';
 import { usePercentProcessor } from '@/composition/usePercentProcessor';
-import { queryAsync } from "@/db";
+import { queryAsyncFirst } from "@/db";
+import { ref } from "vue";
+import { useElementVisibility } from "@vueuse/core";
 
-const dataResult = queryAsync(`
+const container = ref<HTMLElement | null>(null);
+const visible = useElementVisibility(container);
+
+const dataResult = queryAsyncFirst(`
 select toUInt32(count())                                                                                as count,
        countIf(length(results.order) > 0) / count()                                                     as hit,
        countIf(arraySum(results.shotDamage) > 0 or arraySum(results.fireDamage) > 0) / count()          as damaged,
@@ -74,7 +78,7 @@ select toUInt32(count())                                                        
                     pow(serverMarkerPoint_y - gunPoint_y, 2) +
                     pow(serverMarkerPoint_z - gunPoint_z, 2)) > 300) / count()                          as dist300
 from Event_OnShot;
-`, { count: 0, hit: 0, damaged: 0, first50: 0, first30: 0, full: 0, stopped: 0, dist300: 0 })
+`, { count: 0, hit: 0, damaged: 0, first50: 0, first30: 0, full: 0, stopped: 0, dist300: 0 }, visible)
 
 </script>
 

@@ -1,6 +1,7 @@
 
 import { createClient } from "@clickhouse/client-web";
 import { computedAsync } from "@vueuse/core";
+import { Ref, computed, ref, shallowRef, watch, watchEffect } from "vue";
 
 export const clickhouse = createClient({
   host: import.meta.env.VITE_CLICKHOUSE_HOST as string,
@@ -26,9 +27,23 @@ export async function query<T>(query: string) {
   return await result.json<IClickhouseResponse<T>>();
 }
 
-export function queryAsync<T>(queryString: string, defaultValue: T) {
-  return computedAsync<T>(async () => {
+export function queryAsync<T>(queryString: string, enabled: Ref<boolean> = ref(true)) {
+  const result = shallowRef<T[]>([]);
+
+  const stop = watch(enabled, async (value) => {
+    if (!value) return;
+
     const { data } = await query<T>(queryString);
-    return data[0];
-  }, defaultValue)
+    result.value = data;
+    stop();
+
+  }, { immediate: true })
+
+  return result
+}
+
+export function queryAsyncFirst<T>(queryString: string, defaultValue: T, enabled: Ref<boolean> = ref(true)) {
+  const result = queryAsync<T>(queryString, enabled);
+
+  return computed(() => result.value[0] ?? defaultValue)
 }

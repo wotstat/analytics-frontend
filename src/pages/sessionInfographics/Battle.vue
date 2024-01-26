@@ -1,5 +1,5 @@
 <template>
-  <div class="flex ver battle">
+  <div class="flex ver battle" ref="container">
     <div class="card long">
       <GenericInfo :value="dataStart.battleCount" description="Боёв проведено" color="green" />
     </div>
@@ -69,9 +69,12 @@
 import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import MiniBar from '@/components/widgets/MiniBar.vue';
 import MniiPie from '@/components/widgets/MiniPie.vue';
-import { query, queryAsync } from "@/db";
-import { computedAsync } from '@vueuse/core';
-import { computed } from 'vue';
+import { queryAsync, queryAsyncFirst } from "@/db";
+import { useElementVisibility } from '@vueuse/core';
+import { computed, ref } from 'vue';
+
+const container = ref<HTMLElement | null>(null);
+const visible = useElementVisibility(container);
 
 const ms2sec = (ms: number) => (ms / 1000).toFixed();
 const sec2minsec = (sec: number) => `${(sec / 60).toFixed()}:${(sec % 60).toFixed()}`;
@@ -79,7 +82,7 @@ const sec2hour = (sec: number) => (sec / 60 / 60).toFixed(1);
 
 const tankLabels = ['MT', 'HT', 'AT', 'LT', 'SPG'];
 
-const dataStart = queryAsync(`
+const dataStart = queryAsyncFirst(`
 select toUInt32((abs(sumIf(battleTime, battleTime < 0)) +
                  sumIf(preBattleWaitTime, preBattleWaitTime < 30000) +
                  sumIf(loadTime, loadTime < 60000) +
@@ -87,15 +90,15 @@ select toUInt32((abs(sumIf(battleTime, battleTime < 0)) +
        toUInt32(count(*))                                                  as battleCount,        
        avg(preBattleWaitTime) + abs(avgIf(battleTime, battleTime < 0))     as avgWaitTime,
        avgIf(inQueueWaitTime, inQueueWaitTime < 300000)                    as avgInQueue
-from Event_OnBattleStart;`, { waitTime: 0, avgWaitTime: 0, avgInQueue: 0, battleCount: 0 })
+from Event_OnBattleStart;`, { waitTime: 0, avgWaitTime: 0, avgInQueue: 0, battleCount: 0 }, visible)
 
-const dataResult = queryAsync(`
+const dataResult = queryAsyncFirst(`
 select round(avg(personal.lifeTime))    as lifetime,
        round(avg(duration))             as duration,
        toUInt32(sum(personal.lifeTime)) as inBattle
-from Event_OnBattleResult;`, { lifetime: 0, duration: 0, inBattle: 0 })
+from Event_OnBattleResult;`, { lifetime: 0, duration: 0, inBattle: 0 }, visible)
 
-const chartResult = queryAsync(`
+const chartResult = queryAsyncFirst(`
 select avg(LT) as avgLT, avg(HT) as avgHT, avg(MT) as avgMT, avg(AT) as avgAT, avg(SPG) as avgSPG
 from (select length(playersResults.tankType)                                  as tankCount,
              arrayCount(t -> t == 'LT', playersResults.tankType) / tankCount  as LT,
@@ -104,29 +107,26 @@ from (select length(playersResults.tankType)                                  as
              arrayCount(t -> t == 'AT', playersResults.tankType) / tankCount  as AT,
              arrayCount(t -> t == 'SPG', playersResults.tankType) / tankCount as SPG
       from Event_OnBattleResult);
-`, { avgLT: 0, avgHT: 0, avgMT: 0, avgAT: 0, avgSPG: 0 })
+`, { avgLT: 0, avgHT: 0, avgMT: 0, avgAT: 0, avgSPG: 0 }, visible)
 
-const winrateData = computedAsync(async () => {
-  const { data } = await query<{ count: number, result: 'win' | 'lose' | 'tie' }>(`select toUInt32(count(*)) as count, result from Event_OnBattleResult group by result`)
+const winrateResult = queryAsync<{
+  count: number, result: 'win' | 'tie' | 'lose'
+}>(`select toUInt32(count(*)) as count, result from Event_OnBattleResult group by result`, visible);
 
+const winrateData = computed(() => {
   const res = {
     win: 0,
     tie: 0,
     lose: 0,
   }
 
-  for (const iterator of data) {
+  for (const iterator of winrateResult.value) {
     res[iterator.result] = iterator.count;
   }
 
   const total = res.win + res.tie + res.lose;
-
-  console.log(res);
-
-
   return [res.win / total, res.lose / total, res.tie / total].map(t => Math.round(t * 10000) / 100);
-}, [0, 0, 0])
-
+})
 
 const avgChart = computed(() => {
   const r = chartResult.value;

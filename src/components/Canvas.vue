@@ -7,7 +7,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
-import { useElementSize } from '@vueuse/core'
+import { useElementSize, useElementVisibility, watchOnce } from '@vueuse/core'
 
 const emit = defineEmits<{
   'redraw': [ctx: CanvasRenderingContext2D, width: number, height: number],
@@ -20,6 +20,9 @@ defineExpose({
 const canvas = ref<HTMLCanvasElement | null>(null);
 const container = ref<HTMLElement | null>(null);
 const containerSize = useElementSize(container);
+const visible = useElementVisibility(container);
+
+let context: CanvasRenderingContext2D | null = null;
 
 function redraw() {
   const dpr = window.devicePixelRatio || 1;
@@ -30,11 +33,17 @@ function redraw() {
   canvasElement.style.width = `${containerSize.width.value}px`;
   canvasElement.style.height = `${containerSize.height.value}px`;
 
-  const ctx = canvasElement.getContext('2d');
-  if (!ctx) return;
-  ctx.scale(dpr, dpr);
-  emit('redraw', ctx, containerSize.width.value, containerSize.height.value);
+  if (!context) context = canvasElement.getContext('2d');
+  if (!context) return;
+  context.scale(dpr, dpr);
+
+  if (!visible.value) return;
+  emit('redraw', context, containerSize.width.value, containerSize.height.value);
 }
+
+watchOnce(visible, v => {
+  if (v) redraw();
+})
 
 watch(() => containerSize.width.value, () => {
   redraw();

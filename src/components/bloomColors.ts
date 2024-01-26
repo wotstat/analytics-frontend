@@ -13,7 +13,7 @@ export const BloomColor = {
   },
   gold: {
     main: '#ffdd9c',
-    darken: '#ffce7c',
+    darken: '#ffdd9c',
     bloom: '#f73c08',
   },
   green: {

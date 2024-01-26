@@ -1,16 +1,19 @@
 <template>
-  <div class="chart-container">
+  <div class="chart-container" ref="container">
     <ShadowLine :data="chartData" :options="options" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { query } from '@/db';
-import { computedAsync } from '@vueuse/core';
-import { computed } from 'vue';
+import { queryAsync } from '@/db';
+import { useElementVisibility } from '@vueuse/core';
+import { computed, ref } from 'vue';
 import { type ChartProps } from 'vue-chartjs';
 import { ShadowLine } from "@/components/ShadowLineController";
+import { BloomColor } from '../bloomColors';
 
+const container = ref<HTMLElement | null>(null);
+const visible = useElementVisibility(container);
 
 function getQuery(isServer: boolean) {
   const r = isServer ? 'ballisticResultServer_r' : 'ballisticResultClient_r'
@@ -25,9 +28,8 @@ function getQuery(isServer: boolean) {
       order by r);`
 }
 
-async function calc(isServer: boolean) {
-  const { data } = await query<{ r: number, cum: number, percent: number }>(getQuery(isServer))
-
+type Row = { r: number, cum: number, percent: number }
+function calc(data: Row[]) {
   const res = new Array(100).fill(null)
 
   for (const row of data) {
@@ -36,8 +38,11 @@ async function calc(isServer: boolean) {
   return res
 }
 
-const clientMarker = computedAsync(async () => await calc(false), []);
-const serverMarker = computedAsync(async () => await calc(true), [])
+const clientMarkerResult = queryAsync<Row>(getQuery(false), visible)
+const serverMarkerResult = queryAsync<Row>(getQuery(true), visible)
+
+const clientMarker = computed(() => calc(clientMarkerResult.value))
+const serverMarker = computed(() => calc(serverMarkerResult.value))
 
 const labels = new Array(100).fill(0).map((_, i) => i);
 
@@ -47,18 +52,14 @@ const chartData = computed<ChartProps<'line'>['data']>(() => ({
     {
       data: serverMarker.value,
       label: 'Server',
-      // borderColor: '#ce2021',
-      // backgroundColor: '#ffe7e7',
-      borderColor: '#f73c08',
-      backgroundColor: '#ffdd9c',
+      borderColor: BloomColor.gold.bloom,
+      backgroundColor: BloomColor.gold.darken,
     },
     {
       data: clientMarker.value,
       label: 'Client',
-      // borderColor: '#5249c6',
-      // backgroundColor: '#eff3ff',
-      borderColor: '#639e31',
-      backgroundColor: '#e7ffde',
+      borderColor: BloomColor.green.bloom,
+      backgroundColor: BloomColor.green.main,
     }
   ]
 }))

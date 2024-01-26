@@ -41,16 +41,6 @@ const t: ChartProps<'pie'>['options'] = {
 const options = computed<ChartProps<'pie'>['options']>(() => ({
   responsive: true,
   maintainAspectRatio: false,
-  // scales: {
-  //   y: { display: false, max: max.value * 1.1, },
-  //   x: {
-  //     grid: { display: false, },
-  //   },
-  // },
-  // interaction: {
-  //   intersect: false,
-  //   mode: 'index',
-  // },
   layout: {
     padding: 20,
   },

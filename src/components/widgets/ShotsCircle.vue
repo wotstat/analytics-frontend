@@ -8,6 +8,7 @@ import { computed, ref, shallowRef } from "vue";
 
 import { useDebounceFn } from '@vueuse/core'
 import { query } from "@/db";
+import { BloomColor } from "../bloomColors";
 
 const LOAD_COUNT = 1000;
 const RENDER_COUNT = 20;
@@ -105,8 +106,8 @@ async function startDrawProcess() {
       const shot = shotsData[currentCount + i];
       const x = shot.x * r;
       const y = shot.y * r;
-      ctx.fillStyle = shot.hit ? '#ffdd9c' : '#e7ffde';
-      ctx.shadowColor = shot.hit ? '#f73c08' : "#639e31";
+      ctx.fillStyle = shot.hit ? BloomColor.gold.main : BloomColor.green.main;
+      ctx.shadowColor = shot.hit ? BloomColor.gold.bloom : BloomColor.green.bloom;
       ctx.shadowBlur = r / 40;
       ctx.beginPath();
       ctx.arc(widthRef.value / 2 + x, heightRef.value / 2 + y, r / 150, 0, 2 * Math.PI);

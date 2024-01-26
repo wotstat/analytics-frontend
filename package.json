@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@clickhouse/client-web": "^0.2.9",
+    "@vueuse/components": "^10.7.2",
     "@vueuse/core": "^10.7.2",
     "chart.js": "^4.4.1",
     "gsap": "^3.12.5",

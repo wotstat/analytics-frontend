@@ -1,5 +1,5 @@
 <template>
-  <div class="text-center">
+  <div class="text-center" ref="main">
     <p class="card-main-info" :class="color">{{ processor ? processor(data) : data }}<span v-if="miniProcessor"
         class="mini-description">{{ miniProcessor(data) }}</span>
       <span v-else-if="miniData" class="mini-description">{{
@@ -11,7 +11,11 @@
 
 <script setup lang="ts">
 import { useTweenCounter } from '@/composition/useTweenCounter';
-import { toRef, type Ref } from 'vue';
+import { toRef, type Ref, ref } from 'vue';
+import { useElementVisibility } from '@vueuse/core';
+
+const main = ref<HTMLElement | null>(null)
+const visible = useElementVisibility(main)
 
 const props = defineProps<{
   description: string,
@@ -23,7 +27,8 @@ const props = defineProps<{
 }>()
 
 const data = useTweenCounter(toRef(props, 'value'), {
-  fixedValue: props.processor ? 10 : 0
+  fixedValue: props.processor ? 10 : 0,
+  enabled: visible,
 });
 
 </script>
