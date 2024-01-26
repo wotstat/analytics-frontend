@@ -1,29 +1,28 @@
 <template>
   <div class="text-center">
-    <p class="card-main-info" :class="color">{{ processor ? processor(data) : data }}</p>
+    <p class="card-main-info" :class="color">{{ processor ? processor(data) : data }}<span v-if="miniProcessor"
+        class="mini-description">{{ miniProcessor(data) }}</span>
+      <span v-else-if="miniData" class="mini-description">{{
+        miniData }}</span>
+    </p>
     <p class="card-main-info description">{{ description }}</p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { query } from '@/db';
-import { computedAsync } from '@vueuse/core';
 import { useTweenCounter } from '@/composition/useTweenCounter';
+import { toRef, type Ref } from 'vue';
 
 const props = defineProps<{
-  query: string,
   description: string,
+  value: number
+  miniData?: string,
   color: 'orange' | 'green' | 'red' | 'blue' | 'yellow' | 'gold',
-  processor?: (data: any) => string,
+  processor?: (data: number) => string,
+  miniProcessor?: (data: number) => string,
 }>()
 
-const dataDB = computedAsync(async () => {
-  const response = await query<{ data: number }>(props.query);
-
-  return response.data[0].data;
-}, 0)
-
-const data = useTweenCounter(dataDB, {
+const data = useTweenCounter(toRef(props, 'value'), {
   fixedValue: props.processor ? 10 : 0
 });
 

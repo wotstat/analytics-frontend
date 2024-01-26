@@ -5,10 +5,10 @@ import { router } from './routes'
 
 import {
   Chart as ChartJS,
-  Title, Tooltip, Legend, LineElement, PointElement, BarElement, CategoryScale, LinearScale
+  Title, Tooltip, Legend, LineElement, PointElement, BarElement, CategoryScale, LinearScale, ArcElement
 } from 'chart.js'
 
-ChartJS.register(Title, Tooltip, Legend, LineElement, BarElement, PointElement, CategoryScale, LinearScale)
+ChartJS.register(Title, Tooltip, Legend, LineElement, BarElement, PointElement, CategoryScale, LinearScale, ArcElement)
 ChartJS.defaults.color = 'rgba(255, 255, 255, 0.87)'
 ChartJS.defaults.font.family = 'Inter, system-ui, Avenir, Helvetica, Arial, sans-serif'
 ChartJS.defaults.font.weight = 500

@@ -1,5 +1,6 @@
 
 import { createClient } from "@clickhouse/client-web";
+import { computedAsync } from "@vueuse/core";
 
 export const clickhouse = createClient({
   host: import.meta.env.VITE_CLICKHOUSE_HOST as string,
@@ -23,4 +24,11 @@ export interface IClickhouseResponse<T> {
 export async function query<T>(query: string) {
   const result = await clickhouse.query({ query });
   return await result.json<IClickhouseResponse<T>>();
+}
+
+export function queryAsync<T>(queryString: string, defaultValue: T) {
+  return computedAsync<T>(async () => {
+    const { data } = await query<T>(queryString);
+    return data[0];
+  }, defaultValue)
 }

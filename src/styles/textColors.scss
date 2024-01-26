@@ -5,6 +5,10 @@
   transition: all 0.25s;
   transition-property: transform, filter;
 
+  .mini-description {
+    font-size: 1rem;
+  }
+
   &:hover {
     $scale: 1.03;
     transform: scale3d($scale, $scale, $scale);

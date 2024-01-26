@@ -116,8 +116,4 @@ const options: ChartProps<'line'>['options'] = {
   }
 }
 
-
-
-
-
 </script>

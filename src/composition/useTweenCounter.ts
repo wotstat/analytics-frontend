@@ -14,5 +14,5 @@ export function useTweenCounter(value: Ref<number> | ComputedRef<number>, option
     gsap.to(tweened, { duration: options?.duration ?? 0.5, number: n })
   })
 
-  return computed(() => tweened.number.toFixed(options?.fixedValue ?? 0))
+  return computed(() => Number.parseFloat(tweened.number.toFixed(options?.fixedValue ?? 0)))
 }
