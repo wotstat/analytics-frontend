@@ -43,10 +43,10 @@
         </div>
 
 
-        <div class="card u1">
-          <p class="info">Тут пусто, я не придумал график:(</p>
-          <!-- <GenericInfo :value="dataResult.lifetime" description="Среднее время жизни" color="green"
-            :processor="sec2minsec" /> -->
+        <div class="card u1 chart bar">
+          <MiniBar :data="durationData.p" color="green" :labels="durationData.labels"
+            :callbacks="{ title: (t) => `Было ${Math.round((t[0].raw as number) * 100)}% боёв ${Number.parseInt(t[0].label) - 1}-${t[0].label} минут`, label: () => `` }" />
+          <p class="card-main-info description">Боёв по продолжительности</p>
         </div>
 
         <div class="card chart bar tank-type">
@@ -55,10 +55,10 @@
           <p class="card-main-info description">Распределение танков по классам</p>
         </div>
 
-        <div class="card u2">
-          <p class="info">Тут пусто, я не придумал график:(</p>
-          <!-- <GenericInfo :value="dataResult.lifetime" description="Среднее время жизни" color="green"
-            :processor="sec2minsec" /> -->
+        <div class="card u2 chart bar">
+          <MiniBar :data="durationData.l" color="yellow" :labels="durationData.labels"
+            :callbacks="{ title: (t) => `В боях ${Number.parseInt(t[0].label) - 1}-${t[0].label} минут вы жили ${Math.round(t[0].raw as number * 10) / 10} мин `, label: () => `` }" />
+          <p class="card-main-info description">Время жизни по длине боя</p>
         </div>
       </div>
     </div>
@@ -98,6 +98,15 @@ select round(avg(personal.lifeTime))    as lifetime,
        toUInt32(sum(personal.lifeTime)) as inBattle
 from Event_OnBattleResult;`, { lifetime: 0, duration: 0, inBattle: 0 }, visible)
 
+const durationResult = queryAsync<{ percent: number, duration: number, lifetime: number }>(`
+select duration, lifetime, count / sum(count) over (rows between unbounded preceding and unbounded following) as percent
+from (select ceil(duration / 60)         as duration,
+             count(*)                    as count,
+             avg(personal.lifeTime) / 60 as lifetime
+      from Event_OnBattleResult
+      group by duration
+      order by duration)`, visible)
+
 const chartResult = queryAsyncFirst(`
 select avg(LT) as avgLT, avg(HT) as avgHT, avg(MT) as avgMT, avg(AT) as avgAT, avg(SPG) as avgSPG
 from (select length(playersResults.tankType)                                  as tankCount,
@@ -132,6 +141,28 @@ const avgChart = computed(() => {
   const r = chartResult.value;
   return [r.avgMT, r.avgHT, r.avgAT, r.avgLT, r.avgSPG].map(t => t * 30 / 2).map(t => Math.round(t * 100) / 100);
 })
+
+const durationData = computed(() => {
+  const durations = durationResult.value;
+
+  const keyed = durations.reduce((prev, curr) => {
+    prev[curr.duration] = { p: curr.percent, l: curr.lifetime };
+    return prev;
+  }, {} as any);
+
+  for (let i = 1; i < 15; i++) {
+    if (!(i in keyed)) {
+      keyed[i] = { p: 0, l: 0 };
+    }
+  }
+
+  return {
+    labels: Object.keys(keyed),
+    p: Object.values(keyed).map((t: any) => t.p),
+    l: Object.values(keyed).map((t: any) => t.l),
+  }
+})
+
 </script>
 
 
@@ -246,7 +277,7 @@ const avgChart = computed(() => {
     padding: 15px;
 
     &.bar {
-      height: 180px;
+      height: 200px;
       padding: 10px 15px 15px 15px;
     }
 

@@ -3,10 +3,9 @@ import { createTypedChart } from 'vue-chartjs';
 
 class ShadowBarController extends BarController {
   draw() {
-    // super.draw()
-    // return
     const ctx = this.chart.ctx;
     ctx.save();
+    // super.draw()
 
     const meta = this.getMeta();
 
