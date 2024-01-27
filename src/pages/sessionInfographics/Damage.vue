@@ -69,9 +69,9 @@
           <div class="card chart bar medium-h flex-1">
             <MiniBar :data="stilledDistribution" color="green"
               :labels="stillKilledLabels.filter(t => t < 0).map(t => `${t}%`)" :callbacks="{
-                title: (t) => `Если рандом урона ${t[0].label}, то ${toPercent(t)} фрагов не добил бы`,
+                title: (t) => `Был шанс не добить ${toPercent(t)} фрагов, если бы зарандомило ${t[0].label}`,
                 label: () => ``,
-                afterBody: () => `Среди добитых, но с шансом не добить`
+                afterBody: () => `Среди тех, кого удалось добить`
               }" />
             <p class="card-main-info description">Был шанс <b>не</b> добить если бы <b>не</b> прошел урон</p>
           </div>
@@ -79,9 +79,9 @@
           <div class="card chart bar medium-h flex-1">
             <MiniBar :data="killedDistribution" color="red"
               :labels="stillKilledLabels.filter(t => t > 0).map(t => `+${t}%`)" :callbacks="{
-                title: (t) => `Если рандом урона ${t[0].label}, то ${toPercent(t)} фрагов добил бы`,
+                title: (t) => `Можно было добить ${toPercent(t)} фрагов, если бы зарандомило ${t[0].label}`,
                 label: () => ``,
-                afterBody: () => `Среди недобитых, но возможных`
+                afterBody: () => `Среди тех, кого был шанс добить`
               }" />
             <p class="card-main-info description">Был шанс добить если бы прошел урон</p>
           </div>
