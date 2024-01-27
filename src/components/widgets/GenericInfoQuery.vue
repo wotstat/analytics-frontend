@@ -1,12 +1,16 @@
 <template>
-  <GenericInfo :value="dataDB" :description="description" :miniData="miniData" :color="color" :processor="processor"
-    :miniProcessor="miniProcessor" />
+  <GenericInfo :value="value" :description="description" :miniData="miniData" :color="color" :processor="processor"
+    :miniProcessor="miniProcessor" ref="container" />
 </template>
 
 <script setup lang="ts">
-import { query } from '@/db';
+import { queryAsyncFirst } from '@/db';
 import GenericInfo from './GenericInfo.vue';
-import { computedAsync } from '@vueuse/core';
+import { computed, ref } from 'vue';
+import { useElementVisibility } from '@vueuse/core';
+
+const container = ref<HTMLElement | null>(null);
+const visible = useElementVisibility(container);
 
 const props = defineProps<{
   query: string,
@@ -17,9 +21,7 @@ const props = defineProps<{
   miniProcessor?: (data: any) => string,
 }>()
 
-const dataDB = computedAsync(async () => {
-  const { data } = await query<{ data: number }>(props.query);
-  return data[0].data;
-}, 0)
+const dataDB = queryAsyncFirst(props.query, { data: 0 }, visible);
+const value = computed(() => dataDB.value.data);
 
 </script>

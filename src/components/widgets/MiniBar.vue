@@ -7,7 +7,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { type ChartProps, Bar } from 'vue-chartjs';
+import { type ChartProps } from 'vue-chartjs';
 import { type TooltipCallbacks } from 'chart.js';
 import { ShadowBar } from "@/components/ShadowBarController";
 import { BloomColorVariant, getColor } from '../bloomColors';

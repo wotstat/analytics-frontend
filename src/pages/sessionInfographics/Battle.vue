@@ -46,13 +46,14 @@
         <div class="card u1 chart bar">
           <MiniBar :data="durationData.p" color="green" :labels="durationData.labels"
             :callbacks="{ title: (t) => `Было ${Math.round((t[0].raw as number) * 100)}% боёв ${Number.parseInt(t[0].label) - 1}-${t[0].label} минут`, label: () => `` }" />
-          <p class="card-main-info description">Боёв по продолжительности</p>
+          <p class="card-main-info description">Продолжительность боя</p>
         </div>
 
         <div class="card chart bar tank-type">
-          <MiniBar :data="avgChart" color="blue" :labels="tankLabels"
-            :callbacks="{ title: (t) => `В среднем в команде было ${t[0].formattedValue} ${t[0].label}`, label: () => `` }" />
-          <p class="card-main-info description">Распределение танков по классам</p>
+          <MiniBar :data="avgChart" color="blue" :labels="tankLabels" :callbacks="{
+            title: (t) => `В среднем в команде было ${t[0].formattedValue} ${t[0].label}`, label: () => ``
+          }" />
+          <p class="card-main-info description">Классов танков в командах</p>
         </div>
 
         <div class="card u2 chart bar">
