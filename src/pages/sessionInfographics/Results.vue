@@ -1,5 +1,5 @@
 <template>
-  <div class="flex ver battle" ref="container">
+  <div class="flex ver results" ref="container">
     <div class="card long">
       <GenericInfo :value="results.count" description="Результатов собрано" color="green" />
     </div>

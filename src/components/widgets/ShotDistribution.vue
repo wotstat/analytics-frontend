@@ -51,13 +51,13 @@ const chartData = computed<ChartProps<'line'>['data']>(() => ({
   datasets: [
     {
       data: serverMarker.value,
-      label: 'Server',
+      label: 'Серверный',
       borderColor: BloomColor.gold.bloom,
       backgroundColor: BloomColor.gold.darken,
     },
     {
       data: clientMarker.value,
-      label: 'Client',
+      label: 'Клиентский',
       borderColor: BloomColor.green.bloom,
       backgroundColor: BloomColor.green.main,
     }

@@ -9,6 +9,8 @@
     <Damage />
     <h2>Результаты</h2>
     <Results />
+    <h2>Охват</h2>
+    <Coverage />
 
   </div>
 </template>
@@ -18,6 +20,7 @@ import Battle from "./Battle.vue";
 import Shots from "./Shots.vue";
 import Damage from "./Damage.vue";
 import Results from "./Results.vue";
+import Coverage from "./Coverage.vue";
 
 </script>
 

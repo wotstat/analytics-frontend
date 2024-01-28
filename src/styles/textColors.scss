@@ -1,20 +1,4 @@
-.card-main-info:not(.description) {
-  font-weight: 800;
-  font-size: 3rem;
-  line-height: 1.1;
-  transition: all 0.25s;
-  transition-property: transform, filter;
-
-  .mini-description {
-    font-size: 1rem;
-  }
-
-  &:hover {
-    $scale: 1.03;
-    transform: scale3d($scale, $scale, $scale);
-  }
-
-  $blur-radius: 1rem;
+@mixin effect($blur-radius) {
 
   &.gold {
     color: #ffdd9c;
@@ -45,6 +29,29 @@
     color: #fffbe7;
     filter: drop-shadow(0 0 $blur-radius #d66d08);
   }
+}
+
+.text-effect {
+  @include effect(0.4rem);
+}
+
+.card-main-info:not(.description) {
+  font-weight: 800;
+  font-size: 3rem;
+  line-height: 1.1;
+  transition: all 0.25s;
+  transition-property: transform, filter;
+
+  .mini-description {
+    font-size: 1rem;
+  }
+
+  &:hover {
+    $scale: 1.03;
+    transform: scale3d($scale, $scale, $scale);
+  }
+
+  @include effect(1rem);
 }
 
 .card-main-info {

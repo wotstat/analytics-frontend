@@ -71,10 +71,10 @@
 
       <tbody>
         <tr v-for="(item, index) in roundedTable">
-          <td>{{ item.youTeam.kill }}</td>
-          <td>{{ item.youTeam.block }}</td>
-          <td>{{ item.youTeam.radio }}</td>
-          <td>{{ item.youTeam.dmg }}</td>
+          <td class="text-effect red">{{ item.youTeam.kill }}</td>
+          <td class="text-effect blue">{{ item.youTeam.block }}</td>
+          <td class="text-effect green">{{ item.youTeam.radio }}</td>
+          <td class="text-effect orange">{{ item.youTeam.dmg }}</td>
 
           <td class="center">
             {{ item.place + 1 }}
@@ -83,10 +83,10 @@
             </div>
           </td>
 
-          <td>{{ item.opponentTeam.dmg }}</td>
-          <td>{{ item.opponentTeam.radio }}</td>
-          <td>{{ item.opponentTeam.block }}</td>
-          <td>{{ item.opponentTeam.kill }}</td>
+          <td class="text-effect orange">{{ item.opponentTeam.dmg }}</td>
+          <td class="text-effect green">{{ item.opponentTeam.radio }}</td>
+          <td class="text-effect blue">{{ item.opponentTeam.block }}</td>
+          <td class="text-effect red">{{ item.opponentTeam.kill }}</td>
         </tr>
       </tbody>
     </table>
@@ -306,7 +306,7 @@ table {
   }
 
   .center {
-    width: 0%;
+    width: 0.5%;
     padding: 0 5px;
   }
 
@@ -324,7 +324,7 @@ table {
       width: 10%;
       position: relative;
       padding: 0 4px;
-      text-wrap: nowrap;
+      white-space: nowrap;
     }
   }
 }
