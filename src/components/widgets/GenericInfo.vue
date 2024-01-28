@@ -9,7 +9,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends number | number[]">
 import { useTweenCounter } from '@/composition/useTweenCounter';
 import { toRef, type Ref, ref } from 'vue';
 import { useElementVisibility } from '@vueuse/core';
@@ -19,14 +19,14 @@ const visible = useElementVisibility(main)
 
 const props = defineProps<{
   description: string,
-  value: number
+  value: T
   miniData?: string,
   color: 'orange' | 'green' | 'red' | 'blue' | 'yellow' | 'gold',
-  processor?: (data: number) => string,
-  miniProcessor?: (data: number) => string,
+  processor?: (data: T) => string,
+  miniProcessor?: (data: T) => string,
 }>()
 
-const data = useTweenCounter(toRef(props, 'value'), {
+const data = useTweenCounter(toRef(props, 'value') as Ref<T>, {
   fixedValue: props.processor ? 10 : 0,
   enabled: visible,
 });

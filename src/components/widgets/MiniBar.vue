@@ -14,7 +14,7 @@ import { BloomColorVariant, getColor } from '../bloomColors';
 
 const props = defineProps<{
   data: number[],
-  labels: string[],
+  labels: (string | number)[],
   color: BloomColorVariant,
   callbacks?: Partial<TooltipCallbacks<'bar'>>,
 }>()

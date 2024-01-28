@@ -1,18 +1,26 @@
 import { Ref, ComputedRef, watch, reactive, computed } from "vue";
 import gsap from 'gsap'
 
-export function useTweenCounter(value: Ref<number> | ComputedRef<number>, options?: {
+export function useTweenCounter<T extends number | number[]>(value: Ref<T> | ComputedRef<T>, options?: {
   duration?: number,
   fixedValue?: number,
   enabled?: Ref<boolean> | ComputedRef<boolean>
 }) {
 
-  const tweened = reactive({
-    number: 0
-  })
+  const isArray = Array.isArray(value.value)
 
-  function startTween(target: number) {
-    gsap.to(tweened, { duration: options?.duration ?? 0.5, number: target })
+  const tweened = isArray ?
+    reactive(new Array(value.value.length).fill(0).map(t => ({ value: 0 }))) :
+    reactive({ value: 0 })
+
+  function startTween(target: T) {
+    if (Array.isArray(tweened) && Array.isArray(target)) {
+      for (let i = 0; i < target.length; i++) {
+        gsap.to(tweened[i], { duration: options?.duration ?? 0.5, value: target[i] })
+      }
+    } else {
+      gsap.to(tweened, { duration: options?.duration ?? 0.5, value: target })
+    }
   }
 
   if (options?.enabled === undefined) watch(value, n => startTween(n))
@@ -30,5 +38,11 @@ export function useTweenCounter(value: Ref<number> | ComputedRef<number>, option
     })
   }
 
-  return computed(() => Number.parseFloat(tweened.number.toFixed(options?.fixedValue ?? 0)))
+  return computed(() => {
+
+    if (Array.isArray(tweened))
+      return tweened.map(t => Number.parseFloat(t.value.toFixed(options?.fixedValue ?? 0)))
+
+    return Number.parseFloat((tweened.value as number).toFixed(options?.fixedValue ?? 0))
+  }) as ComputedRef<T>
 }

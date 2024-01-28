@@ -31,6 +31,10 @@
   flex: 1;
 }
 
+.flex.gap-0 {
+  gap: 0;
+}
+
 .flex.hor {
   flex-direction: row;
 }

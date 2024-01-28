@@ -35,6 +35,12 @@ h1 {
   line-height: 1.1;
 }
 
+h2 {
+  font-size: 2.2em;
+  line-height: 1.1;
+  margin-top: 1.5em;
+}
+
 p {
   margin: 0;
 }
@@ -58,6 +64,11 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+
+select:focus,
+select:focus-visible {
+  outline: none;
 }
 
 // @media (prefers-color-scheme: light) {

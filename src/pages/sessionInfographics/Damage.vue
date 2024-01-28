@@ -6,8 +6,8 @@
     </div>
     <div class="flex ver">
       <div class="grid">
-        <div class="card chart bar mini-card">
-          <MiniBar :data="byShellData.damage" color="yellow" :labels="byShellData.labels" :callbacks="{
+        <div class="card chart bar height2 full-width-less-small">
+          <MiniBar :data="byShellData.damage" color="yellow" :labels="shellLabels" :callbacks="{
             title: (t) => `${toPercent(t)} выстрелов ${t[0].label} нанесли урон`,
             label: () => ``,
             beforeBody: () => `Среди попавших`
@@ -15,16 +15,14 @@
           <p class="card-main-info description">Нанесли урон</p>
         </div>
 
-        <div class="card chart bar mini-card">
-          <MiniBar :data="byShellData.noDamage" color="orange" :labels="byShellData.labels" :callbacks="{
-            title: (t) => `${toPercent(t)} выстрелов ${t[0].label} не нанесли урон`,
-            label: () => ``,
-            beforeBody: () => `Среди попавших`
-          }" />
-          <p class="card-main-info description">Не нанесли урон</p>
+        <div class="card mini-card frags full-width-less-small">
+          <GenericInfo :value="onShotResult.frags" description="Фрагов" color="red" />
+        </div>
+        <div class="card mini-card shot-per-frag full-width-less-small">
+          <GenericInfo :value="onShotResult.shotPerFrag" description="Снарядов на фраг" color="orange" />
         </div>
 
-        <div class="card chart bar mini-card">
+        <div class="card chart bar height2 full-width-less-small right-column">
           <MiniBar :data="smallDamageData" color="blue" :labels="['1ХП', '2ХП', '3ХП', '4ХП', '5ХП']" :callbacks="{
             title: (t) => `${toPercent(t)} танков осталось с ${t[0].label}`,
             label: () => ``,
@@ -34,15 +32,15 @@
           <p class="card-main-info description">Осталось ХП после урона</p>
         </div>
 
-        <div class="card mini-card">
+        <div class="card mini-card full-width-less-small">
           <GenericInfo :value="onShotResult.ammoBayDestroyed" description="Взорвано БК" color="orange" />
         </div>
 
-        <div class="card mini-card">
+        <div class="card mini-card full-width-less-small">
           <GenericInfo :value="onShotResult.fiered" description="Поджегов" color="red" />
         </div>
 
-        <div class="card mini-card">
+        <div class="card mini-card full-width-less-small">
           <GenericInfo :value="damageK" description="Коэффициент урона выше среднего" color="yellow"
             :processor="t => `${Math.round(t * 100) / 100}`" />
         </div>
@@ -93,24 +91,25 @@
 </template>
 
 <script setup lang="ts">
-import ShotsCircle from "@/components/widgets/ShotsCircle.vue";
 import GenericInfo from '@/components/widgets/GenericInfo.vue';
-import ShotDistribution from '@/components/widgets/ShotDistribution.vue';
-import { usePercentProcessor } from '@/composition/usePercentProcessor';
 import { queryAsync, queryAsyncFirst } from "@/db";
 import { computed, ref } from "vue";
 import { useElementVisibility } from "@vueuse/core";
 import MiniBar from "@/components/widgets/MiniBar.vue";
 import GenericInfoQuery from "@/components/widgets/GenericInfoQuery.vue";
+import { toRelative, toPercent } from "@/utils";
 
-function toRelative(arr: number[]) {
-  const sum = arr.reduce((prev, cur) => prev + cur, 0)
-  return arr.map(t => sum == 0 ? 0 : t / sum)
+const shellNames = {
+  'ARMOR_PIERCING': ['ББ', 'Бронебойный'],
+  'ARMOR_PIERCING_CR': ['БП', 'Подкалиберный'],
+  'ARMOR_PIERCING_HE': ['БК', 'Бронебойный каморный'],
+  'FLAME': ['ОC', 'Огнемётная смесь'],
+  'HIGH_EXPLOSIVE': ['ОФ', 'Осколочно-фугасный'],
+  'HOLLOW_CHARGE': ['КС', 'Кумулятивный']
 }
 
-function toPercent(value: { raw: unknown }[]) {
-  return `${Math.round((value[0].raw as number) * 100)}%`
-}
+const shellLabels = Object.values(shellNames).map(t => t[0])
+const shellFullNames = Object.values(shellNames).map(t => t[1])
 
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
@@ -225,9 +224,11 @@ const stilledDistribution = computed(() => toRelative(stillKilledData.value.slic
 const killedDistribution = computed(() => toRelative(stillKilledData.value.slice(5)))
 
 const byShellData = computed(() => {
+  const damageByName = Object.fromEntries(byShellResult.value.map(v => [v.shellTag, v.percentDamage]))
+  const shellKeys = Object.keys(shellNames)
+
   return {
-    labels: byShellResult.value.map(v => v.shellTag).map(v => v.split('_').map(v => v[0]).join('')),
-    damage: byShellResult.value.map(v => v.percentDamage),
+    damage: shellKeys.map(t => damageByName[t] ?? 0),
     noDamage: byShellResult.value.map(v => v.percentNoDamage),
   }
 })
@@ -247,10 +248,14 @@ const damageDistributionData = computed(() => {
 const damageK = computed(() => damageAggregatedResult.value.less == 0 ? 0 : damageAggregatedResult.value.more / damageAggregatedResult.value.less)
 
 const onShotResult = queryAsyncFirst(`
-select toUInt32(countIf(arraySum(results.fireDamage) > 0))    as fiered,
-       toUInt32(countIf(has(results.ammoBayDestroyed, True))) as ammoBayDestroyed
+select toUInt32(countIf(arraySum(results.fireDamage) > 0))                                           as fiered,
+       toUInt32(countIf(has(results.ammoBayDestroyed, True)))                                        as ammoBayDestroyed,
+       toUInt32(countIf(arrayMax(results.shotDamage) > 0 and
+                        length(arrayFilter(x -> x.1 != 0 and x.2 = 0,
+                                           arrayZip(results.shotDamage, results.shotHealth))) != 0)) as frags,
+       count() / frags                                                                               as shotPerFrag
 from Event_OnShot;
-`, { fiered: 0, ammoBayDestroyed: 0 }, visible)
+`, { fiered: 0, ammoBayDestroyed: 0, frags: 0, shotPerFrag: 0 }, visible)
 
 </script>
 
@@ -264,13 +269,29 @@ from Event_OnShot;
     grid-template-columns: repeat(3, 1fr);
   }
 
+  .right-column {
+    grid-column: 3 / 4;
+  }
+
+  // .frags {
+  //   grid-column: 2 / 2;
+
+  // }
+
+  // .shot-per-frag {
+  //   grid-column: 2 / 2;
+  // }
+
+  .full-width-less-small {
+    @include less-small {
+      grid-column: 1 / 4;
+      grid-row: auto;
+    }
+  }
+
   @include less-small {
     .chart {
       min-height: 200px;
-    }
-
-    .mini-card {
-      grid-column: 1 / 4;
     }
 
     .chart.mini-card {
@@ -284,12 +305,18 @@ from Event_OnShot;
     flex-direction: column;
     text-align: center;
     padding: 15px;
-    height: 180px;
 
+    &.height2 {
+      grid-row: 1 / 3;
+
+      @include less-small {
+        grid-row: auto;
+      }
+    }
 
     &.big {
       grid-column: 2 / 4;
-      grid-row: 2 / 5;
+      grid-row: 3 / 6;
       height: auto;
 
       @include less-small {

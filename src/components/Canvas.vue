@@ -23,6 +23,7 @@ const containerSize = useElementSize(container);
 const visible = useElementVisibility(container);
 
 let context: CanvasRenderingContext2D | null = null;
+let shouldRerenderAfterVisible = false;
 
 function redraw() {
   const dpr = window.devicePixelRatio || 1;
@@ -37,12 +38,17 @@ function redraw() {
   if (!context) return;
   context.scale(dpr, dpr);
 
-  if (!visible.value) return;
+  if (!visible.value) {
+    shouldRerenderAfterVisible = true;
+    return;
+  }
+
+  shouldRerenderAfterVisible = false;
   emit('redraw', context, containerSize.width.value, containerSize.height.value);
 }
 
-watchOnce(visible, v => {
-  if (v) redraw();
+watch(visible, v => {
+  if (v && shouldRerenderAfterVisible) redraw();
 })
 
 watch(() => containerSize.width.value, () => {

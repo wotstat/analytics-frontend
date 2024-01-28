@@ -283,7 +283,9 @@ const durationData = computed(() => {
     }
 
     &.pie {
-      height: 250px;
+      @include less-small {
+        height: 250px;
+      }
     }
 
     &.winrate {

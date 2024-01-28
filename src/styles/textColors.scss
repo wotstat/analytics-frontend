@@ -47,12 +47,20 @@
   }
 }
 
-.card-main-info.description {
-  font-weight: 600;
-  line-height: normal;
-  margin-top: 5px;
+.card-main-info {
+  &.description {
+    font-weight: 600;
+    line-height: normal;
+    margin-top: 5px;
+    text-align: center;
 
-  b {
-    font-weight: 800;
+    b {
+      font-weight: 800;
+    }
+
+    &.top {
+      margin-top: 0;
+      margin-bottom: 5px;
+    }
   }
 }

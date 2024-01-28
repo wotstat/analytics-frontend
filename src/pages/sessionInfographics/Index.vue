@@ -7,6 +7,9 @@
     <Shots />
     <h2>Урон</h2>
     <Damage />
+    <h2>Результаты</h2>
+    <Results />
+
   </div>
 </template>
 
@@ -14,6 +17,7 @@
 import Battle from "./Battle.vue";
 import Shots from "./Shots.vue";
 import Damage from "./Damage.vue";
+import Results from "./Results.vue";
 
 </script>
 
