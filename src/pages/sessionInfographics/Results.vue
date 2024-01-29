@@ -199,7 +199,7 @@ const playerKillDistribution = usePlayerDistribution('kills');
 
 
 const scoreData = computed(() => Object.fromEntries(scoreResult.value.map(r => [r.result, r])));
-const turboPercent = computed(() => turboResult.value.count / results.value.count);
+const turboPercent = computed(() => results.value.count ? turboResult.value.count / results.value.count : 0);
 </script>
 
 

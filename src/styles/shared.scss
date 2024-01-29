@@ -43,6 +43,15 @@
   flex-direction: column;
 }
 
+.flex.center {
+  align-items: center;
+  justify-content: center;
+}
+
+.relative {
+  position: relative;
+}
+
 .chart-container {
   position: relative;
   flex: 1;

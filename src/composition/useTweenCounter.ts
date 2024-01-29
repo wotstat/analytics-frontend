@@ -43,6 +43,9 @@ export function useTweenCounter<T extends number | number[]>(value: Ref<T> | Com
     if (Array.isArray(tweened))
       return tweened.map(t => Number.parseFloat(t.value.toFixed(options?.fixedValue ?? 0)))
 
-    return Number.parseFloat((tweened.value as number).toFixed(options?.fixedValue ?? 0))
+    if (typeof tweened.value === 'number')
+      return Number.parseFloat((tweened.value as number).toFixed(options?.fixedValue ?? 0))
+
+    return tweened.value
   }) as ComputedRef<T>
 }

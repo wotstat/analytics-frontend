@@ -29,6 +29,11 @@
     color: #fffbe7;
     filter: drop-shadow(0 0 $blur-radius #d66d08);
   }
+
+  &.light-blue {
+    color: #d6fbff;
+    filter: drop-shadow(0 0 $blur-radius #4a7697bc);
+  }
 }
 
 .text-effect {
