@@ -37,7 +37,7 @@
         </div>
 
         <div class="card mini-card full-width-less-small">
-          <GenericInfo :value="onShotResult.fiered" description="Поджегов" color="red" />
+          <GenericInfo :value="onShotResult.fiered" description="Поджогов" color="red" />
         </div>
 
         <div class="card mini-card full-width-less-small">
