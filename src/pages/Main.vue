@@ -1,7 +1,7 @@
 <template>
   <div class="hidden-x">
     <div class="main center-container">
-      <h1>Сессионная статистика для игр «Мир&nbsp;танков» и «World&nbsp;of&nbsp;Tanks»</h1>
+      <h1>Сессионная аналитика для игр «Мир&nbsp;танков» и «World&nbsp;of&nbsp;Tanks»</h1>
 
       <section class="intro">
         <div class="main-count">
@@ -25,10 +25,9 @@
             <a href="https://github.com/WOT-STAT/WOTMOD" target="_blank">открытой</a> пользовательской модификацией для
             игр
             <a href="https://tanki.su/ru/game/" target="_blank">«Мир&nbsp;танков»</a> и <a
-              href="https://worldoftanks.eu/en/game/" target="_blank">«World&nbsp;of&nbsp;Tanks»</a>. Эта модификация
+              href="https://worldoftanks.eu/en/game/" target="_blank">«World&nbsp;of&nbsp;Tanks»</a>. <br>Модификация
             работает в фоне, фиксируя различные игровые события, что позволяет вам анализировать свои действия и
-            сравнивать их с
-            результатами других игроков.
+            сравнивать их с результатами других игроков.
           </p>
         </div>
       </section>
@@ -390,6 +389,10 @@ const strimsniper = [
 section {
   margin: 80px 0;
 
+  @include less-small {
+    margin: 40px 0;
+  }
+
   &.intro {
     margin-top: 0;
   }
@@ -432,7 +435,12 @@ h2 {
 }
 
 .mod-description {
-  max-width: 60%;
+  max-width: 80%;
+  // max-width: 60%;
+
+  @include large {
+    max-width: 60%;
+  }
 
   @include less-small {
     max-width: 100%;

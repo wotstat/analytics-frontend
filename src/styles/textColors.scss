@@ -44,7 +44,7 @@ $background-secondary: #353535;
 }
 
 .card-main-info:not(.description) {
-  font-weight: 800;
+  font-weight: var(--bold-weight);
   font-size: 3rem;
   line-height: 1.1;
   transition: all 0.25s;
@@ -65,13 +65,13 @@ $background-secondary: #353535;
 
 .card-main-info {
   &.description {
-    font-weight: 600;
+    font-weight: var(--medium-bold-weight);
     line-height: normal;
     margin-top: 5px;
     text-align: center;
 
     b {
-      font-weight: 800;
+      font-weight: var(--bold-weight);
     }
 
     &.top {

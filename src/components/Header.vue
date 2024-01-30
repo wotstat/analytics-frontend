@@ -50,7 +50,6 @@ function openGithub() {
     font-size: 25px;
     font-weight: bold;
     color: inherit;
-    // margin-left: 10px;
 
     @include less-x-small {
       display: none;
