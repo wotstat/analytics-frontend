@@ -40,7 +40,7 @@ function openGithub() {
   top: 0;
   right: 0;
   background-color: $background-secondary;
-  padding: 10px 10px;
+  padding: 10px 14px 10px 18px;
   z-index: 10;
   align-items: center;
 
@@ -50,6 +50,7 @@ function openGithub() {
     font-size: 25px;
     font-weight: bold;
     color: inherit;
+    // margin-left: 10px;
 
     @include less-x-small {
       display: none;
