@@ -34,12 +34,12 @@
 
         <div class="card total-wait">
           <GenericInfo :value="dataStart.waitTime" description="Потрачено в ожидании боя" color="red"
-            :processor="sec2hour" mini-data="часов" />
+            :processor="sec2hour" mini-data="часа" />
         </div>
 
         <div class=" card total-play">
           <GenericInfo :value="dataResult.inBattle" description="Потрачено в бою" color="red" :processor="sec2hour"
-            mini-data="часов" />
+            mini-data="часа" />
         </div>
 
 

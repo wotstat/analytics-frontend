@@ -15,14 +15,29 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+code {
+  font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+}
+
 a {
   font-weight: 500;
-  color: #646cff;
+  color: #b9f8ff;
   text-decoration: inherit;
 }
 
 a:hover {
-  color: #535bf2;
+  color: #65f0ff;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid #353535;
+  margin: 2em 0;
+}
+
+br {
+  display: block;
+  margin: 1em 0;
 }
 
 body {
@@ -58,12 +73,13 @@ button {
 }
 
 button:hover {
-  border-color: #646cff;
+  // border-color: #646cff;
+  border-color: #65f0ff;
 }
 
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: none;
 }
 
 select:focus,

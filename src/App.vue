@@ -1,13 +1,20 @@
-
 <template>
-  <RouterView />
+  <Header />
+  <div class="content">
+    <RouterView />
+  </div>
 </template>
 
 
 <script setup lang="ts">
 import { RouterView } from 'vue-router';
+import Header from "./components/Header.vue";
 
 </script>
 
 
-<style scoped></style>
+<style scoped>
+.content {
+  padding-top: 50px;
+}
+</style>

@@ -18,6 +18,12 @@ const ctxRef = shallowRef<CanvasRenderingContext2D | null>(null);
 const widthRef = ref(0);
 const heightRef = ref(0);
 
+const props = defineProps<{
+  limitShot?: number,
+  drawDelay?: number,
+  drawCount?: number,
+}>()
+
 const radius = computed(() => Math.min(widthRef.value, heightRef.value) / 2 - 1);
 let timeoutHandler: number | null = null;
 
@@ -78,7 +84,7 @@ async function loadNextBatch() {
     hit: row.hit == 1,
   })));
 
-  loadingFinished = result.data.length < LOAD_COUNT;
+  loadingFinished = result.data.length < LOAD_COUNT || (props.limitShot != null && LOAD_COUNT * shotsData.length > props.limitShot);
   loading = false;
 }
 
@@ -89,10 +95,11 @@ async function startDrawProcess() {
   const r = radius.value
 
   function draw() {
-    timeoutHandler = setTimeout(draw, 1);
-    if (currentCount + RENDER_COUNT > shotsData.length) {
+    timeoutHandler = setTimeout(draw, props.drawDelay ?? 1);
+    const countToDraw = props.drawCount ?? RENDER_COUNT;
+
+    if (currentCount + countToDraw > shotsData.length) {
       if (loadingFinished) {
-        console.log('finished');
         clearTimeout(timeoutHandler);
       }
       loadNextBatch()
@@ -102,7 +109,7 @@ async function startDrawProcess() {
     const ctx = ctxRef.value
     if (!ctx) return
 
-    for (let i = 0; i < RENDER_COUNT; i++) {
+    for (let i = 0; i < countToDraw; i++) {
       const shot = shotsData[currentCount + i];
       const x = shot.x * r;
       const y = shot.y * r;
@@ -115,7 +122,7 @@ async function startDrawProcess() {
       ctx.fill();
 
     }
-    currentCount += RENDER_COUNT;
+    currentCount += countToDraw;
   }
   draw()
 }

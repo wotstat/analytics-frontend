@@ -17,6 +17,8 @@ const props = defineProps<{
   labels: (string | number)[],
   color: BloomColorVariant,
   callbacks?: Partial<TooltipCallbacks<'bar'>>,
+  tooltipDisabled?: boolean,
+  ticksXDisabled?: boolean,
 }>()
 
 const chartData = computed<ChartProps<'bar'>['data']>(() => ({
@@ -40,6 +42,7 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
     y: { display: false, max: max.value == 0 ? undefined : max.value * 1.1 },
     x: {
       grid: { display: false, },
+      ticks: { display: !props.ticksXDisabled, },
     },
   },
   interaction: {
@@ -49,6 +52,7 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
   plugins: {
     tooltip: {
       callbacks: props.callbacks,
+      enabled: !props.tooltipDisabled,
     },
     legend: {
       display: false,

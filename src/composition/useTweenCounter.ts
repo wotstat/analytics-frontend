@@ -11,7 +11,7 @@ export function useTweenCounter<T extends number | number[]>(value: Ref<T> | Com
 
   const tweened = isArray ?
     reactive(new Array(value.value.length).fill(0).map(t => ({ value: 0 }))) :
-    reactive({ value: 0 })
+    reactive({ value: value.value })
 
   function startTween(target: T) {
     if (Array.isArray(tweened) && Array.isArray(target)) {

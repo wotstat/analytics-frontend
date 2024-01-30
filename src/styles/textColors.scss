@@ -1,3 +1,6 @@
+$background-color: #242424;
+$background-secondary: #353535;
+
 @mixin effect($blur-radius) {
 
   &.gold {
