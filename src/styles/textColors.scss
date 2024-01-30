@@ -56,7 +56,8 @@ $background-secondary: #353535;
 
   &:hover {
     $scale: 1.03;
-    transform: scale3d($scale, $scale, $scale);
+    transform: scale($scale);
+    // transform: scale3d($scale, $scale, $scale);
   }
 
   @include effect(1rem);

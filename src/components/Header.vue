@@ -68,6 +68,10 @@ function openGithub() {
     width: 24px;
     height: 24px;
     cursor: pointer;
+
+    @include less-x-small {
+      display: none;
+    }
   }
 
   a:not(.logo) {

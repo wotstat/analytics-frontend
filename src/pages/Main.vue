@@ -7,9 +7,12 @@
         <div class="main-count">
           <div class="flex center">
             <div class="card">
-              <p class="card-main-info green relative">{{ eventCount.data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")
-              }}
-              <p class="animated">{{ totalEventCount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") }}</p>
+
+              <p class="card-main-info green hidden">
+                {{ ''.padStart(eventCount.data.toString().length, '0').replace(/\B(?=(\d{3})+(?!\d))/g, " ") }}
+                <span class="green animated">
+                  {{ totalEventCount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") }}
+                </span>
               </p>
               <p class="card-main-info description">Событий уже собрано</p>
             </div>
@@ -442,10 +445,19 @@ h2 {
 
     .card-main-info:not(.description) {
       font-size: 5em;
+
+      @include less-small {
+        font-size: 4rem;
+      }
+
+      @include less-x-small {
+        font-size: 3rem;
+      }
     }
 
-    .relative {
+    .hidden {
       visibility: hidden;
+      position: relative;
     }
 
     .animated {
@@ -455,6 +467,7 @@ h2 {
       left: 0;
       right: 0;
       bottom: 0;
+      white-space: nowrap;
     }
   }
 }
