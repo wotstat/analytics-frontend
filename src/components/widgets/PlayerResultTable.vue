@@ -106,7 +106,7 @@ const categoryContainer = ref<HTMLElement | null>(null);
 const { width } = useElementSize(categoryContainer)
 
 const youTeamResult = ref<'win' | 'lose'>('win')
-const opponentTeamResult = ref<'win' | 'lose'>('lose')
+const opponentTeamResult = ref<'win' | 'lose'>('win')
 const hightlight = ref<'none' | 'dmg' | 'radio' | 'block' | 'kill'>('dmg')
 
 function click(on: 'dmg' | 'radio' | 'block' | 'kill') {
@@ -115,6 +115,9 @@ function click(on: 'dmg' | 'radio' | 'block' | 'kill') {
 }
 
 function getQuery(result: 'win' | 'lose', team: 'you' | 'opponent') {
+
+  const youResult = team == 'you' ? result : result == 'win' ? 'lose' : 'win'
+
   return `
   select place,
        avg(arrayJoin(placed).2) as avgDamage,
@@ -134,13 +137,13 @@ from (select arrayFilter(t -> t.1 ${team == 'you' ? '=' : '!='} playerTeam,
              arrayReverseSort(team.5)                            as kills,
              arrayZip(range(15), damages, blocks, radios, kills) as placed
       from Event_OnBattleResult
-      where result = '${result}'
+      where result = '${youResult}'
         and length(playersResults.team) = 30)
 group by arrayJoin(placed).1 as place;`
 }
 
-const shouldLoadOpponentWin = computed(() => visible.value && opponentTeamResult.value == 'win')
-const shoudLoadYouLose = computed(() => visible.value && youTeamResult.value == 'lose')
+const shouldLoadOpponentLose = computed(() => visible.value && opponentTeamResult.value == 'lose')
+const shouldLoadYouLose = computed(() => visible.value && youTeamResult.value == 'lose')
 
 type TableItem = {
   place: number,
@@ -151,9 +154,9 @@ type TableItem = {
 }
 
 const youTramResultWin = queryAsync<TableItem>(getQuery('win', 'you'), visible)
-const youTramResultLose = queryAsync<TableItem>(getQuery('lose', 'you'), shoudLoadYouLose)
-const opponentTramResultWin = queryAsync<TableItem>(getQuery('win', 'opponent'), shouldLoadOpponentWin)
-const opponentTramResultLose = queryAsync<TableItem>(getQuery('lose', 'opponent'), visible)
+const youTramResultLose = queryAsync<TableItem>(getQuery('lose', 'you'), shouldLoadYouLose)
+const opponentTramResultWin = queryAsync<TableItem>(getQuery('win', 'opponent'), visible)
+const opponentTramResultLose = queryAsync<TableItem>(getQuery('lose', 'opponent'), shouldLoadOpponentLose)
 
 const table = computed(() => {
 

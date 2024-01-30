@@ -63,26 +63,9 @@
           </div>
         </div>
 
-        <div class="long flex col hor-ver-small">
-          <div class="card chart bar medium-h flex-1">
-            <MiniBar :data="stilledDistribution" color="green"
-              :labels="stillKilledLabels.filter(t => t < 0).map(t => `${t}%`)" :callbacks="{
-                title: (t) => `Был шанс не добить ${toPercent(t)} фрагов, если бы зарандомило ${t[0].label}`,
-                label: () => ``,
-                afterBody: () => `Среди тех, кого удалось добить`
-              }" />
-            <p class="card-main-info description">Был шанс <b>не</b> добить если бы <b>не</b> прошел урон</p>
-          </div>
-
-          <div class="card chart bar medium-h flex-1">
-            <MiniBar :data="killedDistribution" color="red"
-              :labels="stillKilledLabels.filter(t => t > 0).map(t => `+${t}%`)" :callbacks="{
-                title: (t) => `Можно было добить ${toPercent(t)} фрагов, если бы зарандомило ${t[0].label}`,
-                label: () => ``,
-                afterBody: () => `Среди тех, кого был шанс добить`
-              }" />
-            <p class="card-main-info description">Был шанс добить если бы прошел урон</p>
-          </div>
+        <div class="long card chart bar medium-h flex-1">
+          <StillSurviveDistribution />
+          <p class="card-main-info description">Распределение возможности добить от прошедшего урона</p>
         </div>
 
       </div>
@@ -97,6 +80,7 @@ import { computed, ref } from "vue";
 import { useElementVisibility } from "@vueuse/core";
 import MiniBar from "@/components/widgets/MiniBar.vue";
 import GenericInfoQuery from "@/components/widgets/GenericInfoQuery.vue";
+import StillSurviveDistribution from "@/components/widgets/StillSurviveDistribution.vue";
 import { toRelative, toPercent } from "@/utils";
 
 const shellNames = {
@@ -183,46 +167,6 @@ const smallDamageData = computed(() => {
   return toRelative(new Array(5).fill(0).map((v, i) => res[i + 1] ?? 0))
 })
 
-const stillKilledResult = queryAsync<{ rounded: number, count: number }>(`
-select hasKill, round(normP * 5) / 5 * 0.25 as rounded, toUInt32(count()) as count
-from (select arrayZip(results.shotDamage, results.shotHealth)               as shotHealth,
-             arrayFilter(x -> x.2 != 0, shotHealth)                         as notKill,
-             arrayFilter(x -> x.2 = 0, shotHealth)                          as killed,
-             length(killed) != 0                                            as hasKill,
-             arrayMax(results.shotDamage)                                   as damage,
-             arrayMax(x ->
-                          if(isNull(x.2), 0, assumeNotNull(x.2)),
-                      notKill) +
-             damage                                                         as beforeShotHealth,
-             shellDamage,
-             damageRandomization,
-             shellDamage + shellDamage * damageRandomization                as maxPossible,
-             shellDamage - shellDamage * damageRandomization                as minPossible,
-             (beforeShotHealth + if(hasKill, -0.5, +0.5)) / shellDamage - 1 as p,
-             p / damageRandomization as normP
-      from Event_OnShot
-      where shellTag != 'HIGH_EXPLOSIVE'
-        and arrayMax(results.shotDamage) > 0
-        and (hasKill or beforeShotHealth <= maxPossible) -- не добил противника, у которого ХП было меньше максималки (мог добить)
-        and (not hasKill or beforeShotHealth > minPossible) -- добил противника, у которого ХП было больше минималки (мог не добить)
-)
-group by hasKill, rounded;`)
-
-const stillKilledLabels = [-0.25, -0.2, -0.15, -0.1, -0.05, 0.05, 0.1, 0.15, 0.2, 0.25]
-const stillKilledData = computed(() => {
-  const res = stillKilledResult.value.reduce((prev, cur) => {
-    prev[cur.rounded] = cur.count
-    return prev
-  }, {} as any)
-
-  return stillKilledLabels.map(v => res[v] ?? 0)
-})
-
-
-
-const stilledDistribution = computed(() => toRelative(stillKilledData.value.slice(0, 5)))
-const killedDistribution = computed(() => toRelative(stillKilledData.value.slice(5)))
-
 const byShellData = computed(() => {
   const damageByName = Object.fromEntries(byShellResult.value.map(v => [v.shellTag, v.percentDamage]))
   const shellKeys = Object.keys(shellNames)
@@ -273,15 +217,6 @@ from Event_OnShot;
     grid-column: 3 / 4;
   }
 
-  // .frags {
-  //   grid-column: 2 / 2;
-
-  // }
-
-  // .shot-per-frag {
-  //   grid-column: 2 / 2;
-  // }
-
   .full-width-less-small {
     @include less-small {
       grid-column: 1 / 4;
@@ -325,17 +260,18 @@ from Event_OnShot;
         grid-row: auto;
       }
     }
-
-    &.medium-h {
-      height: 270px;
-    }
   }
 
   .long {
     grid-column: 1 / 4;
 
     &.chart {
-      height: 300px;
+      height: 380px;
+
+      @include less-small {
+        min-height: 280px;
+        height: auto;
+      }
     }
   }
 

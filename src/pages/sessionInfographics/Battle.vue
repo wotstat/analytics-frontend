@@ -81,7 +81,7 @@ const ms2sec = (ms: number) => (ms / 1000).toFixed();
 const sec2minsec = (sec: number) => `${(sec / 60).toFixed()}:${(sec % 60).toFixed()}`;
 const sec2hour = (sec: number) => (sec / 60 / 60).toFixed(1);
 
-const tankLabels = ['MT', 'HT', 'AT', 'LT', 'SPG'];
+const tankLabels = ['СТ', 'ТТ', 'ПТ', 'ЛТ', 'САУ'];
 
 const dataStart = queryAsyncFirst(`
 select toUInt32((abs(sumIf(battleTime, battleTime < 0)) +
