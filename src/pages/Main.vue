@@ -138,11 +138,11 @@
           <div class="image">
             <div class="card">
               <GenericInfo :value="turboResult.avgTurbo" :processor="t => t.toFixed(2)" mini-data="турбы"
-                description="В среднем из серсии в 10 боёв" color="blue" />
+                description="В среднем из серсии в 100 боёв" color="blue" />
             </div>
             <div class="card">
               <GenericInfo :value="turboResult.maxTurbo" :processor="t => t.toFixed()" mini-data="турбы"
-                description="Худшая серия из 10 боёв" color="blue" />
+                description="Худшая серия из 100 боёв" color="blue" />
             </div>
           </div>
         </div>
@@ -362,7 +362,7 @@ from (select arrayZip(playersResults.isAlive, playersResults.team)              
              playerTeamCount - arrayCount(t -> t.1, playerTeamAliveList)                  as opponentTeamFrags,
              opponentTeamCount - arrayCount(t -> t.1, opponentTeamAliveList)              as playerTeamFrags,
              duration < 5 * 60 and abs(opponentTeamFrags - playerTeamFrags) > 10          as isTurbo,
-             countIf(isTurbo) over (order by id rows between 9 preceding and current row) as countTurbo
+             countIf(isTurbo) over (order by id rows between 99 preceding and current row) as countTurbo
       from Event_OnBattleResult);`, { count: 0, maxTurbo: 0, avgTurbo: 0, medTurbo: 0, minTurbo: 0 });
 
 // STRIMSNIPER
