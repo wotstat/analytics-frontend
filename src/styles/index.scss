@@ -89,6 +89,11 @@ select:focus-visible {
   outline: none;
 }
 
+input:focus,
+input:focus-visible {
+  outline: none;
+}
+
 // @media (prefers-color-scheme: light) {
 //   :root {
 //     color: #213547;

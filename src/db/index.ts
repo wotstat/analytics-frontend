@@ -47,3 +47,7 @@ export function queryAsyncFirst<T>(queryString: string, defaultValue: T, enabled
 
   return computed(() => result.value[0] ?? defaultValue)
 }
+
+export function dateToDbIndex(date: Date) {
+  return (date.getTime() * 1e10).toLocaleString('fullwide', { useGrouping: false })
+}
