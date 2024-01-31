@@ -70,9 +70,9 @@
               <g>
                 <g v-for="tick in timelineLabels.ticks">
                   <line :x1="tick.x + '%'" y1="5" :x2="tick.x + '%'" y2="35" class="tick" />
-                  <text v-if="tick.lanels && tick.x > 10 && tick.x < 90" :x="tick.x + '%'" y="55" text-anchor="middle"
+                  <text v-if="tick.labels && tick.x > 10 && tick.x < 90" :x="tick.x + '%'" y="55" text-anchor="middle"
                     class="date">{{
-                      tick.lanels }}</text>
+                      tick.labels }}</text>
                 </g>
               </g>
 
@@ -217,7 +217,7 @@ const timelineLabels = computed(() => {
 
     for (var month = startMonth; month <= end; month.setMonth(month.getMonth() + 1)) {
       if (deltaInMonths < 12) {
-        ticks.push({ x: remapPercent(month), lanels: shortDate(month) });
+        ticks.push({ x: remapPercent(month), labels: shortDate(month) });
       } else {
         ticks.push({ x: remapPercent(month) });
       }
