@@ -71,7 +71,7 @@
             <div class="card">
               <GenericInfoQuery
                 query="select avgIf(inQueueWaitTime, inQueueWaitTime < 300000) as data from Event_OnBattleStart;"
-                description="Среднее время в очереди" :processor="ms2sec" mini-data="секунд" color="green" />
+                description="Среднее время в очереди" :processor="ms2sec" :mini-processor="secProcessor" color="green" />
             </div>
           </div>
         </div>
@@ -235,9 +235,11 @@ import { queryAsync, queryAsyncFirst } from '@/db';
 import { toPercent, toRelative } from '@/utils';
 import { computedAsync } from '@vueuse/core';
 import { Ref, computed, toRef, watchEffect } from 'vue';
+import { countLocalize } from '@/utils/i18n';
 
 const ms2sec = (ms: number) => (ms / 1000).toFixed();
 const sec2minsec = (sec: number) => `${(sec / 60).toFixed()}:${(sec % 60).toFixed().padStart(2, '0')}`;
+const secProcessor = (count: number) => countLocalize(count, 'секунда', 'секунды', 'секунд');
 
 const DBUrl = import.meta.env.VITE_CLICKHOUSE_HOST as string
 

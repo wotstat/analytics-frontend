@@ -7,7 +7,7 @@
       <div class="grid">
         <div class="card avg-queue">
           <GenericInfo :value="dataStart.avgInQueue" description="Среднее время в очереди" color="green"
-            :processor="ms2sec" mini-data="секунд" />
+            :processor="ms2sec" :mini-processor="secProcessor" />
         </div>
 
         <div class="card avg-battle">
@@ -24,7 +24,7 @@
 
         <div class="card avg-prebattle">
           <GenericInfo :value="dataStart.avgWaitTime" description="Среднее время в ожидании боя" color="blue"
-            :processor="ms2sec" mini-data="секунд" />
+            :processor="ms2sec" :mini-processor="secProcessor" />
         </div>
 
         <div class="card avg-lifetime">
@@ -71,6 +71,7 @@ import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import MiniBar from '@/components/widgets/MiniBar.vue';
 import MniiPie from '@/components/widgets/MiniPie.vue';
 import { queryAsync, queryAsyncFirst } from "@/db";
+import { countLocalize } from '@/utils/i18n';
 import { useElementVisibility } from '@vueuse/core';
 import { computed, ref } from 'vue';
 
@@ -80,6 +81,8 @@ const visible = useElementVisibility(container);
 const ms2sec = (ms: number) => (ms / 1000).toFixed();
 const sec2minsec = (sec: number) => `${(sec / 60).toFixed()}:${(sec % 60).toFixed().padEnd(2, '0')}`;
 const sec2hour = (sec: number) => (sec / 60 / 60).toFixed(1);
+
+const secProcessor = (count: number) => countLocalize(count, 'секунда', 'секунды', 'секунд');
 
 const tankLabels = ['СТ', 'ТТ', 'ПТ', 'ЛТ', 'САУ'];
 

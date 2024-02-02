@@ -1,7 +1,7 @@
 <template>
   <div class="text-center" ref="main">
     <p class="card-main-info" :class="color">{{ processor ? processor(data) : data }}<span v-if="miniProcessor"
-        class="mini-description">{{ miniProcessor(data) }}</span>
+        class="mini-description">{{ miniProcessor(targetData) }}</span>
       <span v-else-if="miniData" class="mini-description">{{
         miniData }}</span>
     </p>
@@ -11,7 +11,7 @@
 
 <script setup lang="ts" generic="T extends number | number[]">
 import { useTweenCounter } from '@/composition/useTweenCounter';
-import { toRef, type Ref, ref } from 'vue';
+import { toRef, type Ref, ref, computed } from 'vue';
 import { useElementVisibility } from '@vueuse/core';
 
 const main = ref<HTMLElement | null>(null)
@@ -30,5 +30,9 @@ const data = useTweenCounter(toRef(props, 'value') as Ref<T>, {
   fixedValue: props.processor ? 10 : 0,
   enabled: visible,
 });
+
+const targetData = computed(() => {
+  return props.processor ? Number.parseFloat(props.processor(props.value)) as T : props.value
+})
 
 </script>
