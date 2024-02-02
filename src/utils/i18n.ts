@@ -80,3 +80,8 @@ export function getArenaName(tag: string) {
   return arenaName
 }
 
+export function countLocalize(count: number, one: string, two: string, five: string = two) {
+  if (count % 10 == 1 && count % 100 != 11) return one
+  if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) return two
+  return five
+}

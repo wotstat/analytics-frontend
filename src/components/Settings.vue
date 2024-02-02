@@ -2,22 +2,42 @@
   <Teleport to="body">
     <div class="settings">
       <div class="card flex ver">
-        <h2>Параметры</h2>
+        <div class="flex title">
+          <h2 class="flex-1">Параметры</h2>
+          <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="15.4859"
+            height="15.4956" class="close" @click="emit('close')">
+            <g>
+              <rect height="15.4956" opacity="0" width="15.4859" x="0" y="0" />
+              <path
+                d="M0.252699 15.2429C0.594496 15.575 1.1609 15.575 1.49293 15.2429L7.74293 8.99293L13.9929 15.2429C14.325 15.575 14.9011 15.5847 15.2332 15.2429C15.5652 14.9011 15.5652 14.3445 15.2332 14.0125L8.98317 7.7527L15.2332 1.5027C15.5652 1.17067 15.575 0.604261 15.2332 0.27223C14.8914-0.0695668 14.325-0.0695668 13.9929 0.27223L7.74293 6.52223L1.49293 0.27223C1.1609-0.0695668 0.58473-0.0793324 0.252699 0.27223C-0.0793324 0.614027-0.0793324 1.17067 0.252699 1.5027L6.5027 7.7527L0.252699 14.0125C-0.0793324 14.3445-0.0890981 14.9109 0.252699 15.2429Z"
+                fill-opacity="0.85" />
+            </g>
+          </svg>
+        </div>
 
         <div class="scroll">
 
-          <h4>Игрок</h4>
-          <input type="text" placeholder="Никнейм" v-model="nickname">
+          <h4>
+            <input type="checkbox" v-model="enablePlayerFilter">
+            Игрок
+          </h4>
+          <input type="text" v-if="enablePlayerFilter" placeholder="Никнейм" v-model="nickname">
 
-          <h4>Уровень</h4>
-          <div class="flex hor variant-selector">
+          <h4>
+            <input type="checkbox" v-model="enableLevelFilter">
+            Уровень
+          </h4>
+          <div v-if="enableLevelFilter" class="flex hor variant-selector">
             <div v-for="item in ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const)" class="clickable-variant"
               @click="clickLevel(item)" :class="selectedLevels.includes(item) ? 'selected' : ''">{{ item }}
             </div>
           </div>
 
-          <h4>Класс</h4>
-          <div class="flex hor variant-selector">
+          <h4>
+            <input type="checkbox" v-model="enableTypeFilter">
+            Класс
+          </h4>
+          <div v-if="enableTypeFilter" class="flex hor variant-selector">
             <div v-for="item in ([['ЛТ', 'LT'], ['СТ', 'MT'], ['ТТ', 'HT'], ['ПТ', 'AT'], ['САУ', 'SPG']] as const)"
               class="clickable-variant" :class="selectedClasses.includes(item[1]) ? 'selected' : ''"
               @click="clickClass(item[1])">{{
@@ -25,8 +45,11 @@
           </div>
 
 
-          <h4>Танк</h4>
-          <div class="tank-selector flex ver gap-0">
+          <h4>
+            <input type="checkbox" v-model="enableTankFilter">
+            Танк
+          </h4>
+          <div v-if="enableTankFilter" class="tank-selector flex ver gap-0">
             <input type="text" placeholder="Поиск" v-model="serachText">
             <div class="tank-list">
               <div class="tank" v-for="tank in sortedTanks"
@@ -63,7 +86,7 @@
           </div>
 
           <div class="battles"
-            v-if="((periodVariant == 'fromTo' && fromDate && toDate) || (periodVariant == 'fromToNow' && fromDate)) && nickname != ''">
+            v-if="((periodVariant == 'fromTo' && fromDate && toDate) || (periodVariant == 'fromToNow' && fromDate)) && nickname != '' && enablePlayerFilter">
             <h5>Точные границы периода по боям</h5>
 
             <svg width="100%" height="80" ref="moveContainer" class="battle-timeline">
@@ -95,7 +118,7 @@
             </svg>
           </div>
         </div>
-        <button>Применить</button>
+        <button @click="apply">Применить</button>
       </div>
     </div>
   </Teleport>
@@ -104,10 +127,14 @@
 <script setup lang="ts">
 import { dateToDbIndex, query, queryAsync } from '@/db';
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch, watchEffect } from 'vue';
-import { useDebounce, useDraggable, useElementBounding } from '@vueuse/core';
+import { useDebounce, useDraggable, useElementBounding, watchOnce } from '@vueuse/core';
+import { TankLevel, TankType, useQueryStatParams } from '@/composition/useQueryStatParams';
 
-type TankType = 'LT' | 'MT' | 'HT' | 'AT' | 'SPG';
-type TankLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+
+const emit = defineEmits<{
+  close: [];
+}>();
+
 type Tank = {
   level: TankLevel,
   type: TankType,
@@ -119,11 +146,17 @@ type Battle = {
   end: number,
 }
 
+const enablePlayerFilter = ref(false);
+const enableLevelFilter = ref(false);
+const enableTypeFilter = ref(false);
+const enableTankFilter = ref(false);
+
+
 const leftXPotision = ref(0);
 const rightXPotision = ref(1);
 
 const moveContainer = ref<SVGElement | null>(null);
-const { left: boundingLeft, right: boundingRight, width: boundingWidth } = useElementBounding(moveContainer);
+const { left: boundingLeft, width: boundingWidth } = useElementBounding(moveContainer);
 const left = ref<SVGPathElement | null>(null);
 const right = ref<SVGPathElement | null>(null);
 
@@ -137,14 +170,67 @@ useDraggable(right, {
   onMove: (e) => rightXPotision.value = Math.min(boundingWidth.value, Math.max(20, 12 + e.x - boundingLeft.value)) / boundingWidth.value
 });
 
-const nickname = ref('St0rmHeart')
-const periodVariant = ref<'allTime' | 'lastX' | 'fromTo' | 'fromToNow'>('fromToNow')
+
+const nickname = ref('')
+const periodVariant = ref<'allTime' | 'lastX' | 'fromTo' | 'fromToNow'>('allTime')
 const selectedClasses = ref<(TankType)[]>([])
 const selectedLevels = ref<(TankLevel)[]>([])
 const selectedTanks = ref<(Tank)[]>([])
 const playerBattles = shallowRef<Battle[]>([])
 const fromDate = shallowRef<string | null>(null)
 const toDate = shallowRef<string | null>(null)
+const lastX = ref(10);
+
+const tanks = queryAsync<{ tankTag: string, tankType: TankType, tankLevel: TankLevel }>(`select distinct tankTag, tankType, tankLevel from Event_OnBattleStart;`)
+
+const tanksProcessed = computed(() => tanks.value.map(t => ({
+  level: t.tankLevel,
+  type: t.tankType,
+  tag: t.tankTag,
+  name: t.tankTag.split('_').slice(1).join('_'),
+})))
+
+const queryParams = useQueryStatParams()
+if (queryParams.player) { nickname.value = queryParams.player; enablePlayerFilter.value = true; }
+if (queryParams.level) { selectedLevels.value = queryParams.level; enableLevelFilter.value = true; }
+if (queryParams.types) { selectedClasses.value = queryParams.types; enableTypeFilter.value = true; }
+if (queryParams.tanks != null) {
+  const tanks = queryParams.tanks;
+  watchOnce(tanksProcessed, () => {
+    selectedTanks.value = tanksProcessed.value.filter(t => tanks.includes(t.tag));
+  })
+  enableTankFilter.value = true;
+}
+
+if (queryParams.period !== 'allTime') {
+  const period = queryParams.period;
+  if (period.type == 'lastX') {
+    periodVariant.value = 'lastX';
+    lastX.value = period.count;
+  } else if (period.type == 'fromToNow') {
+    periodVariant.value = 'fromToNow';
+    const date = period.from.toISOString().substring(0, 10);
+    fromDate.value = date
+    const dateFrom = new Date(date);
+
+    const delta = new Date().getTime() - dateFrom.getTime();
+    leftXPotision.value = (period.from.getTime() - dateFrom.getTime()) / delta;
+  } else if (period.type == 'fromTo') {
+    periodVariant.value = 'fromTo';
+    const fromDateStr = period.from.toISOString().substring(0, 10);
+    const targetStr = period.to.toISOString().substring(0, 10);
+    const targetDate = new Date(targetStr);
+    targetDate.setDate(targetDate.getDate() + 1);
+
+    fromDate.value = fromDateStr;
+    toDate.value = targetDate.toISOString().substring(0, 10);
+
+    const dateFrom = new Date(fromDateStr);
+    const delta = targetDate.getTime() - dateFrom.getTime();
+    leftXPotision.value = (period.from.getTime() - dateFrom.getTime()) / delta;
+    rightXPotision.value = (period.to.getTime() - dateFrom.getTime()) / delta;
+  }
+}
 
 const debouncedNickname = useDebounce(nickname, 500);
 
@@ -174,7 +260,20 @@ function clickTank(tank: Tank) {
   }
 }
 
-const lastX = ref(10);
+watch(periodVariant, (val) => {
+  if (val == 'allTime') {
+    fromDate.value = null;
+    toDate.value = null;
+  } else if (val == 'fromToNow') {
+    toDate.value = null;
+    leftXPotision.value = 0;
+    rightXPotision.value = 1;
+  } else if (val == 'fromTo') {
+    leftXPotision.value = 0;
+    rightXPotision.value = 1;
+  }
+})
+
 watch(lastX, (val) => {
   if (val < 0) {
     lastX.value = 1;
@@ -236,16 +335,16 @@ function shortDate(date: Date) {
   })
 }
 
-watch(() => [debouncedNickname.value, fromDate.value, toDate.value] as const, async (val) => {
-  if (val[0] == '') {
+watch(() => [enablePlayerFilter.value, debouncedNickname.value, fromDate.value, toDate.value] as const, async ([enablePlayerFilter, nickname, fromDate, toDate]) => {
+  if (!enablePlayerFilter || nickname == '') {
     playerBattles.value = [];
     return;
   }
 
   playerBattles.value = [];
 
-  const from = val[1] ? new Date(val[1]) : null
-  const to = val[2] ? new Date(val[2]) : new Date()
+  const from = fromDate ? new Date(fromDate) : null
+  const to = toDate ? new Date(toDate) : new Date()
 
   if (from) timeLineStart.value = new Date(from.getTime());
   if (to) timeLineEnd.value = new Date(to.getTime());
@@ -253,7 +352,7 @@ watch(() => [debouncedNickname.value, fromDate.value, toDate.value] as const, as
   const { data: battles } = await query<{ duration: number, dateTime: any }>(`
   select duration, dateTime 
   from Event_OnBattleResult 
-  where playerName = '${val[0]}'
+  where playerName = '${nickname}'
   ${from ? `and id >= '${dateToDbIndex(from)}'` : ''}
   ${to ? `and id <= '${dateToDbIndex(to)}'` : ''}
   order by dateTime
@@ -285,34 +384,81 @@ watch(() => [debouncedNickname.value, fromDate.value, toDate.value] as const, as
     start: (t.start - min) / (max - min),
     end: (t.end - min) / (max - min)
   }));
-})
-
-
-const tanks = queryAsync<{ tankTag: string, tankType: TankType, tankLevel: TankLevel }>(`select distinct tankTag, tankType, tankLevel from Event_OnBattleStart;`)
-const tanksProcessed = computed(() => tanks.value.map(t => {
-  return {
-    level: t.tankLevel,
-    type: t.tankType,
-    tag: t.tankTag,
-    name: t.tankTag.split('_').slice(1).join('_'),
-  }
-}))
+}, { immediate: true })
 
 const sortedTanks = computed<Tank[]>(() =>
   tanksProcessed.value
     .filter(t => selectedClasses.value.length == 0 || selectedClasses.value.includes(t.type))
     .filter(t => selectedLevels.value.length == 0 || selectedLevels.value.includes(t.level))
     .filter(t => serachText.value == '' || t.name.toLowerCase().includes(serachText.value.toLowerCase()))
-    .sort((a, b) => a.name.localeCompare(b.name))
+    .sort((a, b) => {
+      if (selectedTanks.value.map(t => t.tag).includes(a.tag) && !selectedTanks.value.map(t => t.tag).includes(b.tag)) {
+        return -1;
+      }
+      if (!selectedTanks.value.map(t => t.tag).includes(a.tag) && selectedTanks.value.map(t => t.tag).includes(b.tag)) {
+        return 1;
+      }
+
+      return a.name.localeCompare(b.name);
+    })
 )
+
+function apply() {
+  let target = '/session?';
+
+  if (enablePlayerFilter.value && nickname.value != '') target += `nickname=${nickname.value}&`;
+  if (enableLevelFilter.value && selectedLevels.value.length > 0) target += `level=${selectedLevels.value.join(',')}&`;
+  if (enableTypeFilter.value && selectedClasses.value.length > 0) target += `type=${selectedClasses.value.join(',')}&`;
+  if (enableTankFilter.value && selectedTanks.value.length > 0) target += `tank=${selectedTanks.value.map(t => t.tag).join(',')}&`;
+
+  function processPeriod() {
+    if (periodVariant.value == 'allTime') return;
+    if (periodVariant.value == 'lastX') return target += `lastX=${lastX.value}&`;
+
+    const processFromTo = () => {
+      const from = new Date(fromDate.value!);
+      const to = toDate.value ? new Date(toDate.value) : new Date();
+
+      if (!enablePlayerFilter.value || nickname.value == '') return { from, to }
+
+      const delta = to.getTime() - from.getTime();
+      const fromT = new Date(from.getTime() + delta * leftXPotision.value);
+      const toT = new Date(fromT.getTime() + delta * (rightXPotision.value - leftXPotision.value));
+
+      return { from: fromT, to: toT }
+    }
+
+    if (periodVariant.value == 'fromToNow') {
+      if (fromDate.value == null) return
+      const { from } = processFromTo();
+      target += `from=${from.toISOString()}&`;
+    } else if (periodVariant.value == 'fromTo') {
+      if (fromDate.value == null || toDate.value == null) return
+      const { from, to } = processFromTo();
+      target += `from=${from.toISOString()}&to=${to.toISOString()}&`;
+    }
+  }
+
+  processPeriod()
+
+  window.open(target.slice(0, -1), '_self');
+}
 
 onMounted(() => {
   document.body.classList.add('no-scroll');
+  document.addEventListener('keydown', onKey);
 });
 
 onUnmounted(() => {
   document.body.classList.remove('no-scroll');
+  document.removeEventListener('keydown', onKey);
 });
+
+function onKey(params: KeyboardEvent) {
+  if (params.key == 'Escape') {
+    emit('close');
+  }
+}
 
 </script>
 
@@ -324,6 +470,23 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 @import "@/styles/mixins.scss";
+
+.title {
+  align-items: center;
+
+  .close {
+    float: right;
+    background-color: #8181813e;
+    border-radius: 50%;
+    padding: 8px;
+    fill: var(--font-color);
+    cursor: pointer;
+
+    &:hover {
+      background-color: #8181815e;
+    }
+  }
+}
 
 .battle-timeline {
   .move {
@@ -439,9 +602,20 @@ onUnmounted(() => {
     margin: 40px;
     padding: 20px;
     overflow-y: auto;
+    overflow-x: hidden;
 
-    @include medium {
+    @include small {
       width: 700px;
+    }
+
+    @include less-small {
+      margin: 0;
+      width: 100%;
+      box-sizing: border-box;
+      margin-top: 50px;
+      height: 100%;
+      border-end-end-radius: 0;
+      border-end-start-radius: 0;
     }
 
     .scroll {

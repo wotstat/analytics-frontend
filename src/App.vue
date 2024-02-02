@@ -1,7 +1,6 @@
 <template>
   <div class="app">
     <Header />
-    <Settings />
     <div class="content">
       <RouterView />
     </div>
@@ -12,9 +11,6 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router';
 import Header from "./components/Header.vue";
-import Settings from './components/Settings.vue';
-
-
 
 const isWindows = navigator.platform.indexOf('Win') > -1
 const boldWeight = isWindows ? 700 : 800

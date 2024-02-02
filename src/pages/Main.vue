@@ -237,7 +237,7 @@ import { computedAsync } from '@vueuse/core';
 import { Ref, computed, toRef, watchEffect } from 'vue';
 
 const ms2sec = (ms: number) => (ms / 1000).toFixed();
-const sec2minsec = (sec: number) => `${(sec / 60).toFixed()}:${(sec % 60).toFixed()}`;
+const sec2minsec = (sec: number) => `${(sec / 60).toFixed()}:${(sec % 60).toFixed().padStart(2, '0')}`;
 
 const DBUrl = import.meta.env.VITE_CLICKHOUSE_HOST as string
 

@@ -78,7 +78,7 @@ const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
 
 const ms2sec = (ms: number) => (ms / 1000).toFixed();
-const sec2minsec = (sec: number) => `${(sec / 60).toFixed()}:${(sec % 60).toFixed()}`;
+const sec2minsec = (sec: number) => `${(sec / 60).toFixed()}:${(sec % 60).toFixed().padEnd(2, '0')}`;
 const sec2hour = (sec: number) => (sec / 60 / 60).toFixed(1);
 
 const tankLabels = ['СТ', 'ТТ', 'ПТ', 'ЛТ', 'САУ'];
