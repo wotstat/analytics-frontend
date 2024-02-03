@@ -10,6 +10,13 @@
           <td colspan="9" class="title">
             <div class="flex center">
               <div class="flex gap-0">
+                <p>Геймплей:</p>
+                <select v-model="battleGameplay">
+                  <option value="any">Любой</option>
+                  <option v-for="mode in battleGameplaysKeys" :value="mode">{{ battleGameplays[mode] }}</option>
+                </select>
+              </div>
+              <div class="flex gap-0">
                 <p>Режим:</p>
                 <select v-model="battleMode">
                   <option value="any">Любой</option>
@@ -99,8 +106,10 @@
 </template>
 
 <script setup lang="ts">
-import { queryAsync, queryAsyncFirst } from '@/db';
+import { queryAsync } from '@/db';
+import { whereSum } from '@/utils';
 import { getArenaName } from '@/utils/i18n';
+import { battleGameplays, battleGameplaysKeys, battleModes, battleModesKeys } from '@/utils/wot';
 import { useElementVisibility, useElementSize } from '@vueuse/core';
 import { ShallowRef, computed, ref, shallowRef, watch, watchEffect } from 'vue';
 
@@ -111,26 +120,9 @@ const visible = useElementVisibility(container);
 const { width } = useElementSize(container);
 const { width: firstWidth } = useElementSize(firstColumn);
 
-const battleModes = {
-  'ctf': 'Стандартный бой',
-  'domination': 'Встречный бой',
-  'assault': 'Штурм',
-  'nations': 'Противостояние',
-  'ctf2': 'Завоевание',
-  'assault2': 'Атака/Оборона',
-  'fallout': '«Стальная охота»',
-  'fallout2': '«Стальная охота» 2',
-  'fallout3': '«Стальная охота» 3',
-  'fallout4': '«Превосходство»',
-  'ctf30x30': 'Генеральное сражение',
-  'domination30x30': 'Ген. ражение встречка',
-  'epic': 'Линия фронта',
-  'comp7': 'Натиск'
-}
-
-const battleModesKeys = Object.keys(battleModes) as (keyof typeof battleModes)[];
 
 const battleResult = ref<'any' | 'win' | 'lose'>('any')
+const battleGameplay = ref<keyof typeof battleGameplays | 'any'>('any')
 const battleMode = ref<keyof typeof battleModes | 'any'>('any')
 
 type Selected = 'count' | 'damage' | 'radio' | 'block' | 'kills' | 'duration' | 'lifeTime'
@@ -144,6 +136,16 @@ function nameFromTag(tag: string) {
   const key = tag.split('spaces/')[1] + '/name'
   return getArenaName(key)
 }
+
+const expressions = computed(() => {
+  let result = []
+
+  if (battleGameplay.value != 'any') result.push(`battleGameplay = '${battleGameplay.value}'`)
+  if (battleMode.value != 'any') result.push(`battleMode = '${battleMode.value}'`)
+
+  return result
+})
+
 
 function generateQuery() {
   return `
@@ -176,7 +178,7 @@ function generateQuery() {
        avgIf(personal.kills, result = 'lose')                as loseKills,
        avgIf(personal.kills, result = 'win')                 as winKills
 from Event_OnBattleResult
-${battleMode.value == 'any' ? '' : `where battleGameplay = '${battleMode.value}'`}
+${whereSum(expressions.value)}
 group by arenaTag
 order by count desc;
   `
@@ -193,18 +195,19 @@ type ResultRow = {
   kills: number, loseKills: number, winKills: number,
 }
 
-const resultCache = shallowRef<{ [key in keyof typeof battleModes | 'any']?: ShallowRef<ResultRow[]> }>({})
+const resultCache = shallowRef<{ [key in string]?: ShallowRef<ResultRow[]> }>({})
+const cacheKey = computed(() => battleGameplay.value + '_' + battleMode.value)
 
-watch(battleMode, () => {
-  if (resultCache.value[battleMode.value]) return
+watch(cacheKey, (value) => {
+  if (resultCache.value[value]) return
 
   resultCache.value = {
     ...resultCache.value,
-    [battleMode.value]: queryAsync<ResultRow>(generateQuery(), visible)
+    [value]: queryAsync<ResultRow>(generateQuery(), visible)
   };
 }, { immediate: true })
 
-const result = computed(() => resultCache.value[battleMode.value]?.value ?? [])
+const result = computed(() => resultCache.value[cacheKey.value]?.value ?? [])
 
 const resultProcessed = computed(() => {
   const m = battleResult.value;

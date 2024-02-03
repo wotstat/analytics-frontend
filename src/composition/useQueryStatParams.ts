@@ -1,3 +1,4 @@
+import { battleGameplays, battleGameplaysKeys, battleModes, battleModesKeys } from "@/utils/wot";
 import { useRoute } from "vue-router";
 
 export type TankType = 'LT' | 'MT' | 'HT' | 'AT' | 'SPG';
@@ -8,6 +9,8 @@ type StatParams = {
   level: TankLevel[] | null;
   types: TankType[] | null;
   tanks: string[] | null;
+  battleMode: keyof typeof battleModes | 'any';
+  battleGameplay: keyof typeof battleGameplays | 'any';
   period: 'allTime' | {
     type: 'lastX'
     count: number
@@ -29,7 +32,9 @@ export function useQueryStatParams() {
     player: null,
     level: null,
     types: null,
-    tanks: null
+    tanks: null,
+    battleMode: 'any',
+    battleGameplay: 'any'
   }
 
   if ('nickname' in route.query) result.player = route.query.nickname as string;
@@ -40,6 +45,21 @@ export function useQueryStatParams() {
       .map(t => parseInt(t))
       .filter(t => !isNaN(t))
       .filter(t => t >= 1 && t <= 10) as TankLevel[];
+  }
+
+  if ('mode' in route.query) {
+    const battleMode = route.query.mode as string;
+
+    if (battleMode in battleModes) {
+      result.battleMode = battleMode as keyof typeof battleModes;
+    }
+  }
+
+  if ('gameplay' in route.query) {
+    const battleGameplay = route.query.gameplay as string;
+    if (battleGameplay in battleGameplays) {
+      result.battleGameplay = battleGameplay as keyof typeof battleGameplays;
+    }
   }
 
   if ('type' in route.query) {

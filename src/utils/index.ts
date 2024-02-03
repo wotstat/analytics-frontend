@@ -8,3 +8,7 @@ export function toRelative(arr: number[]) {
 export function toPercent(value: { raw: unknown }[]) {
   return `${Math.round((value[0].raw as number) * 100)}%`
 }
+
+export function whereSum(exp: string[], addWhere: boolean = true) {
+  return exp.length > 0 ? (addWhere ? 'WHERE ' : '') + exp.join(' AND ') : ''
+}

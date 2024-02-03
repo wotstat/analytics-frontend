@@ -25,6 +25,7 @@
     </template>
 
   </template>
+
   <span v-if="stat.period == 'allTime'"></span>
   <span v-else-if="stat.period.type == 'fromTo'">С <span class="text-effect light-blue">{{
     stat.period.from.toLocaleDateString() }}</span> по <span class="text-effect light-blue">{{
@@ -40,12 +41,25 @@
       class="text-effect light-blue">{{
         stat.period.count }}</span> {{ countLocalize(stat.period.count, 'бой', 'боя', 'боёв') }}.
   </span>
+
+  <span v-if="stat.battleMode != 'any'"><span class="text-effect light-blue">{{ battleModes[stat.battleMode] }}</span>
+    <template v-if="stat.battleGameplay != 'any'">
+      (<span class="text-effect light-blue">{{ battleGameplays[stat.battleGameplay] }}</span>).
+    </template>
+    <span v-else>. </span>
+  </span>
+  <template v-else-if="stat.battleGameplay != 'any'">
+    <span class="text-effect light-blue">{{ battleGameplays[stat.battleGameplay] }}</span>.
+  </template>
 </template>
 
 <script lang="ts" setup>
 import { useQueryStatParams } from '@/composition/useQueryStatParams';
 import { computed } from 'vue';
 import { countLocalize } from "@/utils/i18n";
+import { battleGameplays, battleModes } from '@/utils/wot';
+
+battleModes
 
 const stat = useQueryStatParams()
 
