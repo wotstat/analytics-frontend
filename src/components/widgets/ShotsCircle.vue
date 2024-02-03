@@ -27,7 +27,7 @@ const props = defineProps<{
 }>()
 
 const radius = computed(() => Math.min(widthRef.value, heightRef.value) / 2 - 1);
-let timeoutHandler: NodeJS.Timeout | null = null;
+let timeoutHandler: ReturnType<typeof setTimeout> | null = null;
 
 const renderShotsDebounce = useDebounceFn(() => {
   startDrawProcess();
