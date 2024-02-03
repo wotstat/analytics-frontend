@@ -1,0 +1,82 @@
+$background-color: #242424;
+$background-secondary: #353535;
+
+@mixin effect($blur-radius) {
+
+  &.gold {
+    color: #ffdd9c;
+    filter: drop-shadow(0 0 $blur-radius #f73c08);
+  }
+
+  &.green {
+    color: #e7ffde;
+    filter: drop-shadow(0 0 $blur-radius #639e31);
+  }
+
+  &.red {
+    color: #ffe7e7;
+    filter: drop-shadow(0 0 $blur-radius #ce2021);
+  }
+
+  &.blue {
+    color: #eff3ff;
+    filter: drop-shadow(0 0 $blur-radius #5249c6);
+  }
+
+  &.yellow {
+    color: #ffffe7;
+    filter: drop-shadow(0 0 $blur-radius #deaa0a);
+  }
+
+  &.orange {
+    color: #fffbe7;
+    filter: drop-shadow(0 0 $blur-radius #d66d08);
+  }
+
+  &.light-blue {
+    color: #d6fbff;
+    filter: drop-shadow(0 0 $blur-radius #4a7697bc);
+  }
+}
+
+.text-effect {
+  @include effect(0.4rem);
+}
+
+.card-main-info:not(.description) {
+  font-weight: var(--bold-weight);
+  font-size: 3rem;
+  line-height: 1.1;
+  transition: all 0.25s;
+  transition-property: transform, filter;
+
+  .mini-description {
+    font-size: 1rem;
+  }
+
+  &:hover {
+    $scale: 1.03;
+    transform: scale($scale);
+    // transform: scale3d($scale, $scale, $scale);
+  }
+
+  @include effect(1rem);
+}
+
+.card-main-info {
+  &.description {
+    font-weight: var(--medium-bold-weight);
+    line-height: normal;
+    margin-top: 5px;
+    text-align: center;
+
+    b {
+      font-weight: var(--bold-weight);
+    }
+
+    &.top {
+      margin-top: 0;
+      margin-bottom: 5px;
+    }
+  }
+}

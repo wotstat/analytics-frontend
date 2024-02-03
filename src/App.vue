@@ -1,20 +1,33 @@
 <template>
-	<router-view />
+  <div class="app">
+    <Header />
+    <div class="content">
+      <RouterView />
+    </div>
+  </div>
 </template>
 
-<style lang="scss">
-@import '/styles/global.scss';
-body,
-html {
-	margin: 0;
-	padding: 0;
-}
 
-#app {
-	// 	font-family: Avenir, Helvetica, Arial, sans-serif;
-	// 	-webkit-font-smoothing: antialiased;
-	// 	-moz-osx-font-smoothing: grayscale;
-	// 	text-align: center;
-	// 	color: #2c3e50;
+<script setup lang="ts">
+import { RouterView } from 'vue-router';
+import Header from "./components/Header.vue";
+
+const isWindows = navigator.platform.indexOf('Win') > -1
+const boldWeight = isWindows ? 700 : 800
+const mediumBoldWeight = isWindows ? 500 : 600
+
+</script>
+
+
+<style scoped>
+.content {
+  padding-top: 50px;
+}
+</style>
+
+<style>
+.app {
+  --bold-weight: v-bind(boldWeight);
+  --medium-bold-weight: v-bind(mediumBoldWeight);
 }
 </style>

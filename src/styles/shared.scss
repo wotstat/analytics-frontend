@@ -1,0 +1,83 @@
+@import './mixins.scss';
+@import './textColors.scss';
+
+.card {
+  background-color: $background-secondary;
+  border-radius: 15px;
+  box-shadow: 0 1px 2px 0px rgba(0, 0, 0, 0.1);
+
+  // @media (prefers-color-scheme: light) {
+  //   background-color: #fff;
+  //   color: #213547;
+  // }
+}
+
+.text-center {
+  text-align: center;
+}
+
+
+.grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.flex {
+  display: flex;
+  gap: 1rem;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.flex.gap-0 {
+  gap: 0;
+}
+
+.flex.hor {
+  flex-direction: row;
+}
+
+.flex.ver {
+  flex-direction: column;
+}
+
+.flex.center {
+  align-items: center;
+  justify-content: center;
+}
+
+.relative {
+  position: relative;
+}
+
+.chart-container {
+  position: relative;
+  flex: 1;
+
+  canvas {
+    position: absolute;
+  }
+}
+
+.center-container {
+  margin: 0 auto;
+  padding: 1rem;
+
+  @include x-small {
+    max-width: calc(480px - 1rem);
+  }
+
+  @include small {
+    max-width: calc(768px - 2rem);
+  }
+
+  @include medium {
+    max-width: calc(1024px - 3rem);
+  }
+
+  @include large {
+    max-width: calc(1200px - 3rem);
+  }
+}

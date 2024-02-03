@@ -1,33 +1,29 @@
 {
-  "name": "analytics-frontend",
-  "version": "0.1.0",
+  "name": "analytics-frontend-24",
   "private": true,
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "serve:dev": "vue-cli-service serve --mode dev",
-    "build:dev": "vue-cli-service build --mode dev",
-    "build": "vue-cli-service build"
+    "dev": "vite --host",
+    "build": "vue-tsc && vite build",
+    "build:dev": "vue-tsc && vite build --mode dev",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "axios": "^0.21.1",
-    "core-js": "^3.6.5",
-    "moment": "^2.29.1",
-    "vue": "^3.0.0",
-    "vue-router": "^4.0.0-0",
-    "vuex": "^4.0.0-0"
+    "@clickhouse/client-web": "^0.2.9",
+    "@vueuse/components": "^10.7.2",
+    "@vueuse/core": "^10.7.2",
+    "chart.js": "^4.4.1",
+    "gsap": "^3.12.5",
+    "vue": "^3.3.11",
+    "vue-chartjs": "^5.3.0",
+    "vue-router": "4"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "~4.5.0",
-    "@vue/cli-plugin-router": "~4.5.0",
-    "@vue/cli-plugin-vuex": "~4.5.0",
-    "@vue/cli-service": "~4.5.0",
-    "@vue/compiler-sfc": "^3.0.0",
-    "sass": "^1.26.5",
-    "sass-loader": "^8.0.2"
-  },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not dead"
-  ]
+    "@vitejs/plugin-vue": "^4.5.2",
+    "sass": "^1.70.0",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.8",
+    "vue-tsc": "^1.8.25"
+  }
 }
