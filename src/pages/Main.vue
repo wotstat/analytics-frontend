@@ -192,7 +192,7 @@
         <ul>
           <li>Пользлватель: <code>public</code></li>
           <li>Пароль: <code>без пароля</code></li>
-          <li>Хост: <code>dev.db.wotstat.soprachev.com</code></li>
+          <li>Хост: <code>{{ DBUrl.replace('https://', '') }}</code></li>
           <li>Порт: <code>8123</code></li>
         </ul>
 
