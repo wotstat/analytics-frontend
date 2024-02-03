@@ -125,6 +125,8 @@ order by k;
 const damageAggregatedResult = queryAsyncFirst(`
 select toUInt32(countIf(maxNotKillDamage < shellDamage)) as less,
        toUInt32(countIf(maxNotKillDamage > shellDamage)) as more,
+       toUInt32(sumIf(maxNotKillDamage, maxNotKillDamage < shellDamage)) as lessSum,
+       toUInt32(sumIf(maxNotKillDamage, maxNotKillDamage > shellDamage)) as moreSum,
        toUInt32(countIf(healthEnough < shellDamage - maxNotKillDamage)) as safed
 from (select arrayZip(results.shotDamage, results.shotHealth)   as shotHealth,
              arrayFilter(x -> x.2 != 0, shotHealth)             as notKill,
@@ -137,7 +139,7 @@ from (select arrayZip(results.shotDamage, results.shotHealth)   as shotHealth,
         and maxNotKillDamage > 0
         and shellTag != 'HIGH_EXPLOSIVE'
         ${whereClause(params, { withWhere: false })});
-`, { less: 0, more: 0, safed: 0 })
+`, { less: 0, more: 0, safed: 0, lessSum: 0, moreSum: 0 }, visible)
 
 const stilledResult = queryAsyncFirst(`
 select toUInt32(countIf(killedDamage > shellDamage)) as stilled
@@ -149,7 +151,7 @@ from (select arrayZip(results.shotDamage, results.shotHealth)                   
         and has(results.shotHealth, 0)
         and shellTag != 'HIGH_EXPLOSIVE'
         ${whereClause(params, { withWhere: false })});
-`, { stilled: 0 })
+`, { stilled: 0 }, visible)
 
 const byShellResult = queryAsync<{ shellTag: string, percentDamage: number, percentNoDamage: number }>(`
 select shellTag,
@@ -198,7 +200,7 @@ const damageDistributionData = computed(() => {
   return toRelative(absolute)
 })
 
-const damageK = computed(() => damageAggregatedResult.value.less == 0 ? 0 : damageAggregatedResult.value.more / damageAggregatedResult.value.less)
+const damageK = computed(() => damageAggregatedResult.value.lessSum == 0 ? 0 : damageAggregatedResult.value.moreSum / damageAggregatedResult.value.lessSum)
 
 const onShotResult = queryAsyncFirst(`
 select toUInt32(countIf(arraySum(results.fireDamage) > 0))                                           as fiered,
