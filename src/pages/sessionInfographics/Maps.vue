@@ -1,7 +1,7 @@
 <template>
   <div class="flex ver damage" ref="container">
     <div class="card">
-      <MapsTable />
+      <MapsTable :params="params" />
     </div>
     <!-- <div class="card">
       <p>Наиболее дисбалансные по респам</p>
@@ -18,9 +18,11 @@
 import { ref } from "vue";
 import { useElementVisibility } from "@vueuse/core";
 import MapsTable from "@/components/widgets/MapsTable.vue";
+import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
+const params = useQueryStatParams();
 
 
 </script>

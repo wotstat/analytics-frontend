@@ -11,9 +11,14 @@ import { computed, ref } from 'vue';
 import { type ChartProps } from 'vue-chartjs';
 import { ShadowLine } from "@/components/ShadowLineController";
 import { BloomColor } from '../bloomColors';
+import { StatParams, whereClause } from '@/composition/useQueryStatParams';
 
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
+
+const { params } = defineProps<{
+  params?: StatParams
+}>()
 
 function getQuery(isServer: boolean) {
   const r = isServer ? 'ballisticResultServer_r' : 'ballisticResultClient_r'
@@ -23,7 +28,7 @@ function getQuery(isServer: boolean) {
        round(cum / sum(count) over (), 2)                                 as percent
   from (select round(${r}, 2) as r, count() as count
       from Event_OnShot
-      where ${r} < 1
+      where ${r} < 1 ${params ? whereClause(params, { withWhere: false }) : ''}
       group by r
       order by r);`
 }

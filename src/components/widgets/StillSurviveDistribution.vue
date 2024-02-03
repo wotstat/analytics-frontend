@@ -14,9 +14,14 @@ import { ChartProps } from "vue-chartjs";
 import { BloomColor } from "../bloomColors";
 import { queryAsync } from "@/db";
 import { useElementVisibility } from "@vueuse/core";
+import { StatParams, whereClause } from "@/composition/useQueryStatParams";
 
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
+
+const { params } = defineProps<{
+  params?: StatParams
+}>()
 
 const query = queryAsync<{ canSurvive: number, roundedHealthDamage: number, cumSurvice: number }>(`
 select canSurvive,
@@ -38,7 +43,8 @@ from (select health = 0                                       as isKilled,
            results.shotDamage as damage
       where shellTag != 'HIGH_EXPLOSIVE'
         and damage > 0
-        and (canSurvive or canKill))
+        and (canSurvive or canKill)
+        ${params ? whereClause(params, { withWhere: false }) : ''})
 group by canSurvive, canKill, roundedHealthDamage
 order by canSurvive, roundedHealthDamage desc
 `, visible);

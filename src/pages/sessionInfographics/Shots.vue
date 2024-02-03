@@ -5,7 +5,7 @@
     </div>
     <div class="flex hor main">
       <div class="card circle">
-        <ShotsCircle />
+        <ShotsCircle :params="params" />
         <div class="legend">
           <p><span class="mini-circle green">•</span> – промахи</p>
           <p><span class="mini-circle red">•</span> – попадания</p>
@@ -31,7 +31,7 @@
           </div>
         </div>
         <div class="card chart">
-          <ShotDistribution />
+          <ShotDistribution :params="params" />
           <p class="card-main-info description">Распределение выстрелов в круге сведения</p>
         </div>
       </div>
@@ -61,9 +61,11 @@ import { usePercentProcessor } from '@/composition/usePercentProcessor';
 import { queryAsyncFirst } from "@/db";
 import { ref } from "vue";
 import { useElementVisibility } from "@vueuse/core";
+import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
+const params = useQueryStatParams();
 
 const dataResult = queryAsyncFirst(`
 select toUInt32(count())                                                                                as count,
@@ -77,7 +79,8 @@ select toUInt32(count())                                                        
        countIf(sqrt(pow(serverMarkerPoint_x - gunPoint_x, 2) +
                     pow(serverMarkerPoint_y - gunPoint_y, 2) +
                     pow(serverMarkerPoint_z - gunPoint_z, 2)) > 300) / count()                          as dist300
-from Event_OnShot;
+from Event_OnShot
+${whereClause(params)}
 `, { count: 0, hit: 0, damaged: 0, first50: 0, first30: 0, full: 0, stopped: 0, dist300: 0 }, visible)
 
 </script>

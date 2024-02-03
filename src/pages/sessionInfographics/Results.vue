@@ -25,7 +25,7 @@
     </div>
 
     <div class="card">
-      <PlayerResultTable />
+      <PlayerResultTable :params="params" />
     </div>
 
     <h4>Медианные показатели</h4>
@@ -111,9 +111,11 @@ import { computed, ref } from 'vue';
 import { toRelative, toPercent } from "@/utils";
 import PlayerResultTable from "@/components/widgets/PlayerResultTable.vue";
 import { usePercentProcessor } from '@/composition/usePercentProcessor';
+import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
+const params = useQueryStatParams();
 
 const places = new Array(15).fill(0).map((_, i) => i + 1);
 
@@ -130,7 +132,8 @@ select median(personal.damageDealt)                 as damage,
        median(personal.mileage)                     as mileage,
        median(personal.health / personal.maxHealth) as health,
        toUInt32(count())                            as count
-from Event_OnBattleResult;
+from Event_OnBattleResult
+${whereClause(params)};
 `, { count: 0, damage: 0, damageRadio: 0, damageTrack: 0, stunDuration: 0, spotted: 0, damageBlacked: 0, shots: 0, hits: 0, piercingHits: 0, mileage: 0, health: 0, },
   visible);
 
@@ -157,7 +160,8 @@ from (select arrayZip(playersResults.isAlive, playersResults.team)          as a
              opponentTeamCount - arrayCount(t -> t.1, opponentTeamAliveList)         as playerTeamFrags,
              result                                                                  as result,
              duration                                                                as duration     
-      from Event_OnBattleResult)
+      from Event_OnBattleResult
+      ${whereClause(params)})
 group by result;
 `, visible);
 
@@ -176,7 +180,8 @@ from (select arrayZip(playersResults.isAlive, playersResults.team)              
              opponentTeamCount - arrayCount(t -> t.1, opponentTeamAliveList)              as playerTeamFrags,
              duration < 5 * 60 and abs(opponentTeamFrags - playerTeamFrags) > 10          as isTurbo,
              countIf(isTurbo) over (order by id rows between 9 preceding and current row) as countTurbo
-      from Event_OnBattleResult);`, { count: 0, maxTurbo: 0, avgTurbo: 0, medTurbo: 0, minTurbo: 0 }, visible);
+      from Event_OnBattleResult
+      ${whereClause(params)});`, { count: 0, maxTurbo: 0, avgTurbo: 0, medTurbo: 0, minTurbo: 0 }, visible);
 
 function usePlayerDistribution(value: string) {
   const playerDamageDistribution = queryAsync<{ playerPosition: number, count: number }>(`
@@ -184,7 +189,8 @@ select playerPosition, toUInt32(count()) as count
 from (select arrayZip(playersResults.name, playersResults.${value}, playersResults.team) as p,
              arrayReverseSort(t -> t.2, arrayFilter(t -> t.3 = playerTeam, p)).1            as playerTeamList,
              indexOf(playerTeamList, playerName)                                            as playerPosition
-      from Event_OnBattleResult)
+      from Event_OnBattleResult
+      ${whereClause(params)})
 group by playerPosition;`, visible);
 
   return computed(() => {

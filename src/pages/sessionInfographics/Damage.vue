@@ -1,7 +1,8 @@
 <template>
   <div class="flex ver damage" ref="container">
     <div class="card long">
-      <GenericInfoQuery query="select toUInt32(count()) as data from Event_OnShot where arrayMax(results.shotDamage) > 0;"
+      <GenericInfoQuery
+        :query="`select toUInt32(count()) as data from Event_OnShot where arrayMax(results.shotDamage) > 0 ${whereClause(params, { withWhere: false })};`"
         description="Выстрелов с видимым уроном" color="green" />
     </div>
     <div class="flex ver">
@@ -64,7 +65,7 @@
         </div>
 
         <div class="long card chart bar medium-h flex-1">
-          <StillSurviveDistribution />
+          <StillSurviveDistribution :params="params" />
           <p class="card-main-info description">Распределение возможности добить от прошедшего урона</p>
         </div>
 
@@ -81,7 +82,10 @@ import { useElementVisibility } from "@vueuse/core";
 import MiniBar from "@/components/widgets/MiniBar.vue";
 import GenericInfoQuery from "@/components/widgets/GenericInfoQuery.vue";
 import StillSurviveDistribution from "@/components/widgets/StillSurviveDistribution.vue";
+import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 import { toRelative, toPercent } from "@/utils";
+
+const params = useQueryStatParams()
 
 const shellNames = {
   'ARMOR_PIERCING': ['ББ', 'Бронебойный'],
@@ -112,7 +116,8 @@ from (select arrayZip(results.shotDamage, results.shotHealth) as shotHealth,
       from Event_OnShot
       where length(results.order) > 0
         and maxNotKillDamage > 0
-        and shellTag != 'HIGH_EXPLOSIVE')
+        and shellTag != 'HIGH_EXPLOSIVE'
+        ${whereClause(params, { withWhere: false })})
 group by k
 order by k;
 `, visible)
@@ -130,7 +135,8 @@ from (select arrayZip(results.shotDamage, results.shotHealth)   as shotHealth,
       from Event_OnShot
       where length(results.order) > 0
         and maxNotKillDamage > 0
-        and shellTag != 'HIGH_EXPLOSIVE');
+        and shellTag != 'HIGH_EXPLOSIVE'
+        ${whereClause(params, { withWhere: false })});
 `, { less: 0, more: 0, safed: 0 })
 
 const stilledResult = queryAsyncFirst(`
@@ -141,7 +147,8 @@ from (select arrayZip(results.shotDamage, results.shotHealth)                   
       from Event_OnShot
       where length(results.order) > 0
         and has(results.shotHealth, 0)
-        and shellTag != 'HIGH_EXPLOSIVE');
+        and shellTag != 'HIGH_EXPLOSIVE'
+        ${whereClause(params, { withWhere: false })});
 `, { stilled: 0 })
 
 const byShellResult = queryAsync<{ shellTag: string, percentDamage: number, percentNoDamage: number }>(`
@@ -152,6 +159,7 @@ select shellTag,
        countIf(length(arrayFilter(t -> t > 0, results.shotDamage)) = 0) / conut as percentNoDamage
 from Event_OnShot
 where length(results.shotDamage) > 0
+${whereClause(params, { withWhere: false })}
 group by shellTag;`, visible)
 
 const smallDamageResult = queryAsync<{ damage: number, count: number }>(`
@@ -159,6 +167,7 @@ select a.1 as damage, toUInt32(count()) as count
 from Event_OnShot
 array join arrayZip(results.shotHealth, results.shotDamage) as a
 where a.2 > 0 and a.1 > 0 and a.1 <= 5
+${whereClause(params, { withWhere: false })}
 group by damage;
 `, visible)
 
@@ -198,7 +207,8 @@ select toUInt32(countIf(arraySum(results.fireDamage) > 0))                      
                         length(arrayFilter(x -> x.1 != 0 and x.2 = 0,
                                            arrayZip(results.shotDamage, results.shotHealth))) != 0)) as frags,
        count() / frags                                                                               as shotPerFrag
-from Event_OnShot;
+from Event_OnShot
+${whereClause(params)};
 `, { fiered: 0, ammoBayDestroyed: 0, frags: 0, shotPerFrag: 0 }, visible)
 
 </script>

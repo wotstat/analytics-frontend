@@ -9,6 +9,7 @@ import { computed, ref, shallowRef } from "vue";
 import { useDebounceFn } from '@vueuse/core'
 import { query } from "@/db";
 import { BloomColor } from "../bloomColors";
+import { StatParams, whereClause } from "@/composition/useQueryStatParams";
 
 const LOAD_COUNT = 1000;
 const RENDER_COUNT = 20;
@@ -22,10 +23,11 @@ const props = defineProps<{
   limitShot?: number,
   drawDelay?: number,
   drawCount?: number,
+  params?: StatParams
 }>()
 
 const radius = computed(() => Math.min(widthRef.value, heightRef.value) / 2 - 1);
-let timeoutHandler: number | null = null;
+let timeoutHandler: NodeJS.Timeout | null = null;
 
 const renderShotsDebounce = useDebounceFn(() => {
   startDrawProcess();
@@ -73,6 +75,7 @@ async function loadNextBatch() {
     ballisticResultServer_theta as theta, 
     length(results.order) > 0 as hit FROM Event_OnShot 
       ${shotsData.length > 0 ? 'where id < ' + shotsData[0].id : ''}
+      ${props.params ? whereClause(props.params, { withWhere: shotsData.length == 0 }) : ''}
       order by id desc 
       limit ${LOAD_COUNT} 
       offset ${shotsData.length};`)
@@ -96,14 +99,14 @@ async function startDrawProcess() {
 
   function draw() {
     timeoutHandler = setTimeout(draw, props.drawDelay ?? 1);
-    const countToDraw = props.drawCount ?? RENDER_COUNT;
+    let countToDraw = props.drawCount ?? RENDER_COUNT;
 
     if (currentCount + countToDraw > shotsData.length) {
       if (loadingFinished) {
         clearTimeout(timeoutHandler);
       }
       loadNextBatch()
-      return
+      countToDraw = Math.min(countToDraw, shotsData.length - currentCount);
     }
 
     const ctx = ctxRef.value

@@ -3,7 +3,7 @@
 
   <template v-if="stat.tanks">
     <span v-if="stat.tanks.length == 1">На танке <span class="text-effect light-blue">{{ tankName(stat.tanks[0])
-    }}</span></span>
+    }}</span>. </span>
     <span v-else>На танках <span class="text-effect light-blue">{{ stat.tanks.map(tankName).join(', ') }}</span>.
     </span>
   </template>
@@ -55,7 +55,6 @@
 
 <script lang="ts" setup>
 import { useQueryStatParams } from '@/composition/useQueryStatParams';
-import { computed } from 'vue';
 import { countLocalize } from "@/utils/i18n";
 import { battleGameplays, battleModes } from '@/utils/wot';
 

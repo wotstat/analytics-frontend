@@ -29,9 +29,14 @@
 </template>
 
 <script setup lang="ts">
+import { StatParams, whereClause } from '@/composition/useQueryStatParams';
 import { queryAsync, queryAsyncFirst } from '@/db';
 import { useElementVisibility } from '@vueuse/core';
 import { computed, ref } from 'vue';
+
+const { params } = defineProps<{
+  params?: StatParams
+}>()
 
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
@@ -59,6 +64,7 @@ from (select name,
            playersResults.damageDealt as damage,
            playersResults.bdid as bdid
       where name != playerName
+      ${params ? whereClause(params, { withWhere: false }) : ''}
       group by name, bdid, region)
 where count > 1
 order by count desc

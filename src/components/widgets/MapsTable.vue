@@ -106,12 +106,17 @@
 </template>
 
 <script setup lang="ts">
+import { StatParams, whereClause } from '@/composition/useQueryStatParams';
 import { queryAsync } from '@/db';
 import { whereSum } from '@/utils';
 import { getArenaName } from '@/utils/i18n';
 import { battleGameplays, battleGameplaysKeys, battleModes, battleModesKeys } from '@/utils/wot';
 import { useElementVisibility, useElementSize } from '@vueuse/core';
 import { ShallowRef, computed, ref, shallowRef, watch, watchEffect } from 'vue';
+
+const { params } = defineProps<{
+  params?: StatParams
+}>()
 
 const container = ref<HTMLElement | null>(null);
 const firstColumn = ref<HTMLElement | null>(null);
@@ -179,6 +184,7 @@ function generateQuery() {
        avgIf(personal.kills, result = 'win')                 as winKills
 from Event_OnBattleResult
 ${whereSum(expressions.value)}
+${params ? whereClause(params, { withWhere: expressions.value.length == 0 }) : ''}
 group by arenaTag
 order by count desc;
   `

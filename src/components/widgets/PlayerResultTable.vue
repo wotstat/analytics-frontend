@@ -95,9 +95,15 @@
 
 
 <script setup lang="ts">
+import { StatParams, whereClause } from '@/composition/useQueryStatParams';
 import { queryAsync } from '@/db';
 import { useElementVisibility, useElementSize } from '@vueuse/core';
 import { computed, ref } from 'vue';
+
+const { params } = defineProps<{
+  params?: StatParams
+}>()
+
 
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
@@ -138,7 +144,9 @@ from (select arrayFilter(t -> t.1 ${team == 'you' ? '=' : '!='} playerTeam,
              arrayZip(range(15), damages, blocks, radios, kills) as placed
       from Event_OnBattleResult
       where result = '${youResult}'
-        and length(playersResults.team) = 30)
+        and length(playersResults.team) = 30
+        ${params ? whereClause(params, { withWhere: false }) : ''}
+        )
 group by arrayJoin(placed).1 as place;`
 }
 
