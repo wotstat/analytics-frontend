@@ -46,6 +46,14 @@ function openGithub() {
 
   box-shadow: 0px 0px 10px 2px $background-color;
 
+  @include less-x-small {
+    gap: 0;
+
+    .header-right {
+      gap: 0;
+    }
+  }
+
   .logo {
     font-size: 25px;
     font-weight: bold;

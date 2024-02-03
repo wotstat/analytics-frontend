@@ -117,12 +117,12 @@
           <div class="image">
             <div class="card">
               <GenericInfo :value="[scoreData['win']?.medianTeam ?? 0, scoreData['win']?.medianOpponent ?? 0]"
-                description="Срденйи счёт при победе" color="green"
+                description="Средний счёт при победе" color="green"
                 :processor="t => `${Math.round(t[0])}:${Math.round(t[1])}`" />
             </div>
             <div class="card">
               <GenericInfo :value="[scoreData['lose']?.medianTeam ?? 0, scoreData['lose']?.medianOpponent ?? 0]"
-                description="Срденйи счёт при поражении" color="red"
+                description="Средний счёт при поражении" color="red"
                 :processor="t => `${Math.round(t[0])}:${Math.round(t[1])}`" />
             </div>
           </div>
@@ -138,7 +138,7 @@
           <div class="image">
             <div class="card">
               <GenericInfo :value="turboResult.avgTurbo" :processor="t => t.toFixed(2)" mini-data="турбы"
-                description="В среднем из серсии в 100 боёв" color="blue" />
+                description="В среднем из серии в 100 боёв" color="blue" />
             </div>
             <div class="card">
               <GenericInfo :value="turboResult.maxTurbo" :processor="t => t.toFixed()" mini-data="турбы"

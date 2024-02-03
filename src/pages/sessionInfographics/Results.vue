@@ -92,7 +92,7 @@
     <div class="flex hor-ver-small">
       <div class="card flex-1">
         <GenericInfo :value="turboResult.avgTurbo" :processor="t => t.toFixed(2)" mini-data="турбы"
-          description="В среднем из серсии в 10 боёв" color="blue" />
+          description="В среднем из серии в 10 боёв" color="blue" />
       </div>
       <div class="card flex-1">
         <GenericInfo :value="turboResult.minTurbo" description="Лучшая серия из 10 боёв" mini-data="турбо" color="blue" />
