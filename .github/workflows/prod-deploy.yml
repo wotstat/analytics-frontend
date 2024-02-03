@@ -1,9 +1,9 @@
-name: Deploy Dev
+name: Deploy Prod
 
 on:
   push:
     branches:
-      - dev
+      - prod
 
   workflow_dispatch:
 
@@ -26,7 +26,7 @@ jobs:
         run: bun install
 
       - name: Build
-        run: npm run build:dev
+        run: npm run build
 
       - name: Configure SSH
         run: |
@@ -46,4 +46,4 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
 
       - name: Copy to server
-        run: rsync -avz ./dist node:/${{ vars.APP_PATH_DEV }}
+        run: rsync -avz ./dist node:/${{ vars.APP_PATH_PROD }}
