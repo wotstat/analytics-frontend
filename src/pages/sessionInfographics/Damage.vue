@@ -33,19 +33,23 @@
           <p class="card-main-info description">Осталось ХП после урона</p>
         </div>
 
-        <div class="card mini-card full-width-less-small">
+        <!-- <div class="card mini-card full-width-less-small">
           <GenericInfo :value="onShotResult.ammoBayDestroyed" description="Взорвано БК" color="orange" />
-        </div>
+        </div> -->
 
         <div class="card mini-card full-width-less-small">
           <GenericInfo :value="onShotResult.fiered" description="Поджогов" color="red" />
         </div>
 
         <div class="card mini-card full-width-less-small">
-          <GenericInfo :value="damageK" description="Коэффициент урона выше среднего" color="yellow"
-            :processor="t => `${Math.round(t * 100) / 100}`" />
+          <GenericInfo :value="damageK" description="Выстрелов с уроном выше среднего"
+            :color="damageK < 0.5 ? 'red' : 'green'" :processor="usePercentProcessor(1)" />
         </div>
 
+        <div class="card mini-card full-width-less-small">
+          <GenericInfo :value="damageAggregatedResult.avgDamage * 0.25" description="Урона в среднем"
+            :color="damageAggregatedResult.avgDamage < 0 ? 'red' : 'green'" :processor="usePercentProcessor(2)" />
+        </div>
 
 
         <div class="card chart bar big">
@@ -84,6 +88,7 @@ import GenericInfoQuery from "@/components/widgets/GenericInfoQuery.vue";
 import StillSurviveDistribution from "@/components/widgets/StillSurviveDistribution.vue";
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 import { toRelative, toPercent } from "@/utils";
+import { usePercentProcessor } from '@/composition/usePercentProcessor';
 
 const params = useQueryStatParams()
 
@@ -123,23 +128,17 @@ order by k;
 `, visible)
 
 const damageAggregatedResult = queryAsyncFirst(`
-select toUInt32(countIf(maxNotKillDamage < shellDamage)) as less,
-       toUInt32(countIf(maxNotKillDamage > shellDamage)) as more,
-       toUInt32(sumIf(maxNotKillDamage, maxNotKillDamage < shellDamage)) as lessSum,
-       toUInt32(sumIf(maxNotKillDamage, maxNotKillDamage > shellDamage)) as moreSum,
-       toUInt32(countIf(healthEnough < shellDamage - maxNotKillDamage)) as safed
-from (select arrayZip(results.shotDamage, results.shotHealth)   as shotHealth,
-             arrayFilter(x -> x.2 != 0, shotHealth)             as notKill,
-             arrayMax(x -> x.1, notKill)                        as maxNotKillDamage,
-             arrayFirst(x -> x.1 = maxNotKillDamage, notKill).2 as healthEnough,
-             shellDamage
-
-      from Event_OnShot
-      where length(results.order) > 0
-        and maxNotKillDamage > 0
-        and shellTag != 'HIGH_EXPLOSIVE'
-        ${whereClause(params, { withWhere: false })});
-`, { less: 0, more: 0, safed: 0, lessSum: 0, moreSum: 0 }, visible)
+select avg((1.0 * dmg / shellDamage - 1) / damageRandomization) as avgDamage,
+       toUInt32(countIf(dmg < shellDamage)) as less,
+       toUInt32(countIf(dmg > shellDamage)) as more,
+       toUInt32(countIf(health < shellDamage - dmg)) as safed
+from Event_OnShot
+    array join
+     results.shotDamage as dmg,
+     results.shotHealth as health
+where dmg > 0 and health > 0 and shellTag != 'HIGH_EXPLOSIVE'
+${whereClause(params, { withWhere: false })};
+`, { less: 0, more: 0, safed: 0, avgDamage: 0 }, visible)
 
 const stilledResult = queryAsyncFirst(`
 select toUInt32(countIf(killedDamage > shellDamage)) as stilled
@@ -200,7 +199,7 @@ const damageDistributionData = computed(() => {
   return toRelative(absolute)
 })
 
-const damageK = computed(() => damageAggregatedResult.value.lessSum == 0 ? 0 : damageAggregatedResult.value.moreSum / damageAggregatedResult.value.lessSum)
+const damageK = computed(() => damageAggregatedResult.value.more == 0 ? 0 : damageAggregatedResult.value.more / (damageAggregatedResult.value.more + damageAggregatedResult.value.less))
 
 const onShotResult = queryAsyncFirst(`
 select toUInt32(countIf(arraySum(results.fireDamage) > 0))                                           as fiered,

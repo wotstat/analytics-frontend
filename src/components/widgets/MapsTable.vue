@@ -38,7 +38,7 @@
           <th ref="firstColumn">Карта</th>
           <td>
             <img src="/percent.png" @click="click('count')" :class="hightlight == 'count' ? 'selected' : ''">
-            <span class="tooltiptext">Процент карт</span>
+            <span class="tooltiptext">Количество</span>
           </td>
           <td>
             <img src="/dmg.png" @click="click('damage')" :class="hightlight == 'damage' ? 'selected' : ''">
@@ -234,11 +234,12 @@ const resultProcessed = computed(() => {
 
 const ordered = computed(() => {
   const percentSum = resultProcessed.value.reduce((acc, item) => acc + item.count, 0) ?? 1;
+  const maxBattleCount = Math.max(...resultProcessed.value.map(item => item.count) ?? [0]);
 
   return resultProcessed.value.sort((a, b) => b[hightlight.value] - a[hightlight.value])
     .map(item => ({
       ...item,
-      percent: (item.count / percentSum * 100).toFixed(1) + '%',
+      percent: maxBattleCount < 10 ? item.count : (item.count / percentSum * 100).toFixed(1) + '%',
     }))
 })
 

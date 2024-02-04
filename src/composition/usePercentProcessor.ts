@@ -1,6 +1,6 @@
 
 export function usePercentProcessor(digits = 0) {
   return (value: number) => {
-    return `${(value * 100).toFixed(digits)}%`;
+    return Number.isNaN(value) ? '0' : `${(value * 100).toFixed(digits)}%`;
   }
 }
