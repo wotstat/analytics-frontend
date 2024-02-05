@@ -4,9 +4,9 @@ import { computedAsync } from "@vueuse/core";
 import { Ref, computed, ref, shallowRef, watch, watchEffect } from "vue";
 
 export const clickhouse = createClient({
-  host: import.meta.env.VITE_CLICKHOUSE_HOST as string,
-  username: import.meta.env.VITE_CLICKHOUSE_USER as string,
-  database: import.meta.env.VITE_CLICKHOUSE_DATABASE as string,
+  host: import.meta.env.VITE_CLICKHOUSE_HOST,
+  username: import.meta.env.VITE_CLICKHOUSE_USER,
+  database: import.meta.env.VITE_CLICKHOUSE_DATABASE,
 });
 
 export interface IClickhouseResponse<T> {

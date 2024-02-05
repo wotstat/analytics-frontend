@@ -433,7 +433,7 @@ h1 {
 }
 
 h2 {
-  margin: 20px 0;
+  margin: 0 0 20px 0;
 }
 
 .mod-description {
