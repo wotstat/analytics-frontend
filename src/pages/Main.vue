@@ -633,7 +633,7 @@ h2 {
           td,
           th {
             text-align: center;
-            width: 50%;
+            width: 25%;
             position: relative;
             padding: 0 4px;
             text-wrap: nowrap;
