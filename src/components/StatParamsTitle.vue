@@ -42,8 +42,9 @@
         stat.period.count }}</span> {{ countLocalize(stat.period.count, 'бой', 'боя', 'боёв') }}.
   </span>
 
-  <span v-if="stat.battleMode != 'any'" class="text-effect light-blue"> {{ customBattleModes[stat.battleMode].title
-  }}</span>.
+  <span v-if="stat.battleMode != 'any'">
+    <span class="text-effect light-blue">{{ customBattleModes[stat.battleMode].title }}</span>.
+  </span>
 </template>
 
 <script lang="ts" setup>
