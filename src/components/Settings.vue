@@ -62,6 +62,12 @@
           <h4>Режим</h4>
           <select v-model="battleMode">
             <option value="any">Любой</option>
+            <option v-for="mode in customBattleModesKeys" :value="mode">{{ customBattleModes[mode].title }}</option>
+          </select>
+
+          <!-- <h4>Режим</h4>
+          <select v-model="battleMode">
+            <option value="any">Любой</option>
             <option v-for="mode in battleModesKeys" :value="mode">{{ battleModes[mode] }}</option>
           </select>
 
@@ -69,7 +75,7 @@
           <select v-model="battleGameplay">
             <option value="any">Любой</option>
             <option v-for="mode in battleGameplaysKeys" :value="mode">{{ battleGameplays[mode] }}</option>
-          </select>
+          </select> -->
 
           <h4>Период</h4>
           <select v-model="periodVariant">
@@ -140,7 +146,7 @@ import { dateToDbIndex, query, queryAsync } from '@/db';
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import { useDebounce, useDraggable, useElementBounding, watchOnce } from '@vueuse/core';
 import { TankLevel, TankType, useQueryStatParams } from '@/composition/useQueryStatParams';
-import { battleGameplays, battleModes, battleGameplaysKeys, battleModesKeys } from '@/utils/wot';
+import { customBattleModes, customBattleModesKeys } from '@/utils/wot';
 
 
 const emit = defineEmits<{
@@ -189,8 +195,7 @@ const selectedClasses = ref<(TankType)[]>([])
 const selectedLevels = ref<(TankLevel)[]>([])
 const selectedTanks = ref<(Tank)[]>([])
 const playerBattles = shallowRef<Battle[]>([])
-const battleGameplay = ref<keyof typeof battleGameplays | 'any'>('any')
-const battleMode = ref<keyof typeof battleModes | 'any'>('any')
+const battleMode = ref<keyof typeof customBattleModes | 'any'>('any')
 const fromDate = shallowRef<string | null>(null)
 const toDate = shallowRef<string | null>(null)
 const lastX = ref(10);
@@ -208,7 +213,6 @@ const queryParams = useQueryStatParams()
 if (queryParams.player) { nickname.value = queryParams.player; enablePlayerFilter.value = true; }
 if (queryParams.level) { selectedLevels.value = queryParams.level; enableLevelFilter.value = true; }
 if (queryParams.types) { selectedClasses.value = queryParams.types; enableTypeFilter.value = true; }
-if (queryParams.battleGameplay) battleGameplay.value = queryParams.battleGameplay;
 if (queryParams.battleMode) battleMode.value = queryParams.battleMode;
 if (queryParams.tanks != null) {
   const tanks = queryParams.tanks;
@@ -426,7 +430,6 @@ function apply() {
   if (enableLevelFilter.value && selectedLevels.value.length > 0) target += `level=${selectedLevels.value.join(',')}&`;
   if (enableTypeFilter.value && selectedClasses.value.length > 0) target += `type=${selectedClasses.value.join(',')}&`;
   if (enableTankFilter.value && selectedTanks.value.length > 0) target += `tank=${selectedTanks.value.map(t => t.tag).join(',')}&`;
-  if (battleGameplay.value != 'any') target += `gameplay=${battleGameplay.value}&`;
   if (battleMode.value != 'any') target += `mode=${battleMode.value}&`;
 
   function processPeriod() {

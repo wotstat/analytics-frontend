@@ -42,23 +42,15 @@
         stat.period.count }}</span> {{ countLocalize(stat.period.count, 'бой', 'боя', 'боёв') }}.
   </span>
 
-  <span v-if="stat.battleMode != 'any'"><span class="text-effect light-blue">{{ battleModes[stat.battleMode] }}</span>
-    <template v-if="stat.battleGameplay != 'any'">
-      (<span class="text-effect light-blue">{{ battleGameplays[stat.battleGameplay] }}</span>).
-    </template>
-    <span v-else>. </span>
-  </span>
-  <template v-else-if="stat.battleGameplay != 'any'">
-    <span class="text-effect light-blue">{{ battleGameplays[stat.battleGameplay] }}</span>.
-  </template>
+  <span v-if="stat.battleMode != 'any'" class="text-effect light-blue"> {{ customBattleModes[stat.battleMode].title
+  }}</span>.
 </template>
 
 <script lang="ts" setup>
 import { useQueryStatParams } from '@/composition/useQueryStatParams';
 import { countLocalize } from "@/utils/i18n";
-import { battleGameplays, battleModes } from '@/utils/wot';
+import { customBattleModes } from '@/utils/wot';
 
-battleModes
 
 const stat = useQueryStatParams()
 

@@ -9,21 +9,14 @@
         <tr>
           <td colspan="9" class="title">
             <div class="flex center">
-              <div class="flex gap-0">
-                <p>Геймплей:</p>
-                <select v-model="battleGameplay">
-                  <option value="any">Любой</option>
-                  <option v-for="mode in battleGameplaysKeys" :value="mode">{{ battleGameplays[mode] }}</option>
-                </select>
-              </div>
-              <div class="flex gap-0">
+              <div class="flex selector">
                 <p>Режим:</p>
                 <select v-model="battleMode">
                   <option value="any">Любой</option>
-                  <option v-for="mode in battleModesKeys" :value="mode">{{ battleModes[mode] }}</option>
+                  <option v-for="mode in customBattleModesKeys" :value="mode">{{ customBattleModes[mode].title }}</option>
                 </select>
               </div>
-              <div class="flex gap-0">
+              <div class="flex selector">
                 <p>Результат:</p>
                 <select v-model="battleResult">
                   <option value="any">Любой</option>
@@ -110,7 +103,7 @@ import { StatParams, whereClause } from '@/composition/useQueryStatParams';
 import { queryAsync } from '@/db';
 import { whereSum } from '@/utils';
 import { getArenaName } from '@/utils/i18n';
-import { battleGameplays, battleGameplaysKeys, battleModes, battleModesKeys } from '@/utils/wot';
+import { customBattleModesKeys, customBattleModes } from '@/utils/wot';
 import { useElementVisibility, useElementSize } from '@vueuse/core';
 import { ShallowRef, computed, ref, shallowRef, watch, watchEffect } from 'vue';
 
@@ -127,8 +120,7 @@ const { width: firstWidth } = useElementSize(firstColumn);
 
 
 const battleResult = ref<'any' | 'win' | 'lose'>('any')
-const battleGameplay = ref<keyof typeof battleGameplays | 'any'>('any')
-const battleMode = ref<keyof typeof battleModes | 'any'>('any')
+const battleMode = ref<keyof typeof customBattleModes | 'any'>('any')
 
 type Selected = 'count' | 'damage' | 'radio' | 'block' | 'kills' | 'duration' | 'lifeTime'
 function click(name: Selected) {
@@ -145,8 +137,11 @@ function nameFromTag(tag: string) {
 const expressions = computed(() => {
   let result = []
 
-  if (battleGameplay.value != 'any') result.push(`battleGameplay = '${battleGameplay.value}'`)
-  if (battleMode.value != 'any') result.push(`battleMode = '${battleMode.value}'`)
+  if (battleMode.value != 'any') {
+    const t = customBattleModes[battleMode.value]
+    if ('gameplay' in t) result.push(`battleGameplay = '${t.gameplay}'`)
+    if ('mode' in t) result.push(`battleMode = '${t.mode}'`)
+  }
 
   return result
 })
@@ -202,7 +197,7 @@ type ResultRow = {
 }
 
 const resultCache = shallowRef<{ [key in string]?: ShallowRef<ResultRow[]> }>({})
-const cacheKey = computed(() => battleGameplay.value + '_' + battleMode.value)
+const cacheKey = computed(() => battleMode.value + '_' + battleMode.value)
 
 watch(cacheKey, (value) => {
   if (resultCache.value[value]) return
@@ -416,5 +411,10 @@ table {
 
 .list-leave-active {
   position: absolute;
+}
+
+.flex.selector {
+  gap: 3px;
+  align-items: center;
 }
 </style>
