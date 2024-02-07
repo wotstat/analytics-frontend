@@ -365,8 +365,8 @@ watch(() => [enablePlayerFilter.value, debouncedNickname.value, fromDate.value, 
   if (from) timeLineStart.value = new Date(from.getTime());
   if (to) timeLineEnd.value = new Date(to.getTime());
 
-  const { data: battles } = await query<{ duration: number, dateTime: any }>(`
-  select duration, dateTime 
+  const { data: battles } = await query<{ duration: number, id: number }>(`
+  select duration, id 
   from Event_OnBattleResult 
   where playerName = '${nickname}'
   ${from ? `and id >= '${dateToDbIndex(from)}'` : ''}
@@ -376,7 +376,7 @@ watch(() => [enablePlayerFilter.value, debouncedNickname.value, fromDate.value, 
   `);
 
   const processed = battles.map(t => {
-    const end = new Date(t.dateTime);
+    const end = new Date(t.id / 1e10);
     const start = new Date(end.getTime() - t.duration * 1000);
     return {
       start: start.getTime(),

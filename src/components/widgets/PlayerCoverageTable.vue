@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 import { StatParams, whereClause } from '@/composition/useQueryStatParams';
-import { queryAsync, queryAsyncFirst } from '@/db';
+import { queryAsync, semverCompareStartFrom } from '@/db';
 import { useElementVisibility } from '@vueuse/core';
 import { computed, ref } from 'vue';
 
@@ -62,9 +62,12 @@ from (select name,
            playersResults.name as name,
            playersResults.team as team,
            playersResults.damageDealt as damage,
-           playersResults.bdid as bdid
+           playersResults.bdid as bdid,
+           playersResults.squadID as sqid
       where name != playerName
+      and (personal.squadID = 0 or sqid != personal.squadID)
       ${params ? whereClause(params, { withWhere: false }) : ''}
+      ${semverCompareStartFrom('1.1.0.0', false)}
       group by name, bdid, region)
 where count > 1
 order by count desc

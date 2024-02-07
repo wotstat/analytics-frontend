@@ -21,11 +21,11 @@
             <GenericInfo :value="dataResult.damaged" description="С уроном" color="orange"
               :processor="usePercentProcessor()" />
           </div>
-          <div class="card">
+          <div class="card hide-less-medium">
             <GenericInfo :value="dataResult.first50" description="Попали в первую половину" color="red"
               :processor="usePercentProcessor()" />
           </div>
-          <div class="card">
+          <div class="card hide-less-medium">
             <GenericInfo :value="dataResult.first30" description="Попали в первую треть" color="blue"
               :processor="usePercentProcessor()" />
           </div>
@@ -34,6 +34,17 @@
           <ShotDistribution :params="params" />
           <p class="card-main-info description">Распределение выстрелов в круге сведения</p>
         </div>
+      </div>
+    </div>
+
+    <div class="flex hor-ver-x-small show-less-medium">
+      <div class="card flex-1">
+        <GenericInfo :value="dataResult.first50" description="Попали в первую половину" color="red"
+          :processor="usePercentProcessor()" />
+      </div>
+      <div class="card flex-1">
+        <GenericInfo :value="dataResult.first30" description="Попали в первую треть" color="blue"
+          :processor="usePercentProcessor()" />
       </div>
     </div>
     <div class="flex hor-ver-x-small">
