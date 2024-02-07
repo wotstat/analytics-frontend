@@ -51,3 +51,17 @@ export function queryAsyncFirst<T>(queryString: string, defaultValue: T, enabled
 export function dateToDbIndex(date: Date) {
   return (date.getTime() * 1e10).toLocaleString('fullwide', { useGrouping: false })
 }
+
+export function semverCompareStartFrom(target: string, addWhere = true) {
+  const parts = target.split('.')
+  const major = parts[0] ?? 0
+  const minor = parts[1] ?? 0
+  const patch = parts[2] ?? 0
+  const revision = parts[3] ?? 0
+
+  return addWhere ? 'where ' : ' and ' + `
+  (modVersion_major > ${major} or
+  (modVersion_major = ${major} and modVersion_minor > ${minor}) or
+  (modVersion_major = ${major} and modVersion_minor = ${minor} and modVersion_patch > ${patch}) or
+  (modVersion_minor = ${major} and modVersion_minor = ${minor} and modVersion_patch = ${patch} and modVersion_revision >= ${revision}))`
+}
