@@ -95,8 +95,9 @@
 
 
 <script setup lang="ts">
-import { StatParams, whereClause } from '@/composition/useQueryStatParams';
+import { StatParams, useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 import { queryAsync } from '@/db';
+import { modeCount } from '@/utils/wot';
 import { useElementVisibility, useElementSize } from '@vueuse/core';
 import { computed, ref } from 'vue';
 
@@ -120,6 +121,13 @@ function click(on: 'dmg' | 'radio' | 'block' | 'kill') {
   else hightlight.value = on
 }
 
+const stat = useQueryStatParams()
+const playersCount = computed(() => {
+  const mode = stat.battleMode
+  if (mode == 'any') return 15
+  return mode in modeCount ? (modeCount as any)[mode] : 15
+})
+
 function getQuery(result: 'win' | 'lose', team: 'you' | 'opponent') {
 
   const youResult = team == 'you' ? result : result == 'win' ? 'lose' : 'win'
@@ -141,10 +149,10 @@ from (select arrayFilter(t -> t.1 ${team == 'you' ? '=' : '!='} playerTeam,
              arrayReverseSort(team.3)                            as blocks,
              arrayReverseSort(team.4)                            as radios,
              arrayReverseSort(team.5)                            as kills,
-             arrayZip(range(15), damages, blocks, radios, kills) as placed
+             arrayZip(range(${playersCount.value}), damages, blocks, radios, kills) as placed
       from Event_OnBattleResult
       where result = '${youResult}'
-        and length(playersResults.team) = 30
+        and length(playersResults.team) = ${playersCount.value * 2}
         ${params ? whereClause(params, { withWhere: false }) : ''}
         )
 group by arrayJoin(placed).1 as place;`
@@ -171,7 +179,9 @@ const table = computed(() => {
   const youTeam = youTeamResult.value == 'win' ? youTramResultWin.value : youTramResultLose.value
   const opponentTeam = opponentTeamResult.value == 'win' ? opponentTramResultWin.value : opponentTramResultLose.value
 
-  return new Array(15).fill(0)
+  const count = Math.max(youTeam.length, opponentTeam.length)
+
+  return new Array(count).fill(0)
     .map((_, i) => {
       const place = i
       const youTeamItem = youTeam.find(item => item.place == place)
@@ -214,17 +224,16 @@ const roundedTable = computed(() => {
 
 const hightlighted = computed(() => {
   const hightlightValue = hightlight.value
-
-  if (hightlightValue === 'none') return new Array(15).fill(false)
   const t = table.value
+
+  if (hightlightValue === 'none') return new Array(t.length).fill(false)
 
   const max = Math.max(...t.map(i => i.youTeam[hightlightValue]), ...t.map(i => i.opponentTeam[hightlightValue]))
 
-  const res = new Array(15).fill(0)
-    .map((_, i) => ({
-      you: t[i].youTeam[hightlightValue] / max * width.value * 0.95,
-      opponent: t[i].opponentTeam[hightlightValue] / max * width.value * 0.95
-    }))
+  const res = t.map(t => ({
+    you: t.youTeam[hightlightValue] / max * width.value * 0.95,
+    opponent: t.opponentTeam[hightlightValue] / max * width.value * 0.95
+  }))
 
   return res
 })

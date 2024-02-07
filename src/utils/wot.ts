@@ -36,4 +36,13 @@ export const customBattleModes = {
   'epicRandom': { title: 'Линия фронта', mode: 'EPIC_RANDOM' },
 } as const
 
+export const modeCount = {
+  'normalAny': 15,
+  'normalCft': 15,
+  'normalDomination': 15,
+  'normalAssault': 15,
+  'ranked': 10,
+  'epicRandom': 30,
+} as const
+
 export const customBattleModesKeys = Object.keys(customBattleModes) as (keyof typeof customBattleModes)[];
