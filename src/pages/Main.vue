@@ -39,6 +39,12 @@
 
         <p><a :href="latestRelease.browser_download_url" target="_blank">Скачайте</a> последнюю версию мода и поместите
           файл в каталог: <code>{{ targetModPath }}</code></p>
+
+        <i>Проверка на вирусы VirusTotal: <a
+            href="https://www.virustotal.com/gui/file/d2c21e8fbb360e4309f40d459014c40cb80307712fe452e967fc70ae7159b0fa?nocache=1"
+            target="_blank">посмотреть</a>
+        </i>
+
         <p class="warning">ВАЖНО: НЕ переименовывайте файл с модом. Он должен называться
           <code v-if="latestRelease.actual">"{{ latestRelease.name }}"</code>
           <span v-else>так же как и скачался. Например "{{ latestRelease.name }}"</span>
