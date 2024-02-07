@@ -193,7 +193,7 @@
           <li>Пользлватель: <code>public</code></li>
           <li>Пароль: <code>без пароля</code></li>
           <li>Хост: <code>{{ DBUrl.replace('https://', '') }}</code></li>
-          <li>Порт: <code>8123</code></li>
+          <li>Порт: <code>80</code></li>
         </ul>
 
         <p>Поиграться с базой можно тут: <a
