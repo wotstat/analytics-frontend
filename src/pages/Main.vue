@@ -147,7 +147,35 @@
           </div>
         </div>
 
-        <div class="feature">
+        <div class="feature right">
+          <div class="feature-description">
+            <h3>Анализ карт</h3>
+            <p>Анализируйте результаты боёв в разбивке по картам. Изучайте где вы играете хуже, а где лучше.</p>
+            <p>Сравнивайте показатели урона, насвета, фрагов, времени жизни на разных картах</p>
+          </div>
+          <div class="image">
+            <div class="card map">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Карта</th>
+                    <th>Боёв</th>
+                    <th>Урон</th>
+                    <th>Насвет</th>
+                  </tr>
+                </thead>
+                <tr v-for="item in mapsResults">
+                  <td>{{ nameFromTag(item.arenaTag).value }}</td>
+                  <td class="text-effect orange">{{ item.count }}</td>
+                  <td class="text-effect green">{{ item.damage }}</td>
+                  <td class="text-effect blue">{{ item.assist }}</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="feature left">
           <div class="feature-description">
             <h3>Анализ стримснайперов</h3>
             <p>Особенно полезно для стримеров</p>
@@ -193,7 +221,7 @@
           <li>Пользлватель: <code>public</code></li>
           <li>Пароль: <code>без пароля</code></li>
           <li>Хост: <code>{{ DBUrl.replace('https://', '') }}</code></li>
-          <li>Порт: <code>8123</code></li>
+          <li>Порт: <code>80</code></li>
         </ul>
 
         <p>Поиграться с базой можно тут: <a
@@ -235,7 +263,7 @@ import { queryAsync, queryAsyncFirst } from '@/db';
 import { toPercent, toRelative } from '@/utils';
 import { computedAsync } from '@vueuse/core';
 import { Ref, computed, toRef, watchEffect } from 'vue';
-import { countLocalize } from '@/utils/i18n';
+import { countLocalize, getArenaName } from '@/utils/i18n';
 
 const ms2sec = (ms: number) => (ms / 1000).toFixed();
 const sec2minsec = (sec: number) => `${(sec / 60).toFixed()}:${(sec % 60).toFixed().padStart(2, '0')}`;
@@ -377,6 +405,35 @@ const strimsniper = [
   ['Nidin', 2, 6752, 6718],
 ]
 
+// MAPS
+const mapsResults = queryAsync<{ arenaTag: string, count: number, damage: number, assist: number, kills: number }>(`
+select arenaTag,
+       count() as count,
+       round(avg(personal.damageDealt)) as damage,
+       round(avg(personal.damageAssistedRadio)) as assist,
+       round(avg(personal.kills), 1) as kills
+from Event_OnBattleResult
+where tankLevel = 10
+group by arenaTag
+order by count desc
+limit 5;
+`)
+
+function nameFromTag(tag: string) {
+  const key = tag.split('spaces/')[1] + '/name'
+  return getArenaName(key)
+}
+
+
+const maps = [
+  ['Перевал', 9, 4230, 2344],
+  ['Минск', 8, 1741, 4667],
+  ['Руинберг', 7, 2353, 4524],
+  ['Тихий берег', 5, 2762, 2436],
+  ['Студзянки', 4, 2589, 3344],
+  ['Линия Зигфрида', 2, 2411, 6718],
+]
+
 
 </script>
 
@@ -433,7 +490,7 @@ h1 {
 }
 
 h2 {
-  margin: 20px 0;
+  margin: 0 0 20px 0;
 }
 
 .mod-description {
@@ -546,7 +603,8 @@ h2 {
         min-height: 180px;
       }
 
-      &.strimsniper {
+      &.strimsniper,
+      &.map {
 
         $border: 1px solid rgba(240, 240, 240, 0.327);
 
