@@ -27,6 +27,14 @@
     <hr class="footer">
 
     <h2>Спасибо за использование</h2>
+    <p>Вы совершили <b>{{ totalRequests }} </b> {{ countLocalize(totalRequests, 'запрос', 'запроса', 'запросов') }} к базе
+      данных,
+      которые выполнялись <b>{{ Math.round(totalElapsed) }}</b>
+      {{ countLocalize(Math.round(totalElapsed), 'секунду', 'секунды', 'секунд') }}. Запросы взаимодействовали суммарно с
+      <b>{{ Math.round(totalRowsRead / 1000) }}</b>
+      {{ countLocalize(Math.round(totalElapsed), 'тычячью', 'тысячами', 'тысячами') }} строк базы данных.
+    </p>
+    <br>
     <p>Если вы хотите больше графиков, можете написать мне</p>
     <p>Так же вы можете получить прямой доступ к базе данных и выполнять любые анатилические запросы на языке SQL</p>
     <br>
@@ -47,6 +55,8 @@ import Settings from '@/components/Settings.vue';
 import { computed, ref } from "vue";
 import StatParamsTitle from "@/components/StatParamsTitle.vue";
 import { useQueryStatParams } from "@/composition/useQueryStatParams";
+import { totalRequests, totalElapsed, totalRowsRead } from "@/db";
+import { countLocalize } from "@/utils/i18n";
 
 const stat = useQueryStatParams()
 const emptyParams = computed(() => !stat.player && !stat.tanks && !stat.level && !stat.types && stat.period == 'allTime')

@@ -1,6 +1,6 @@
 
 import { createClient } from "@clickhouse/client-web";
-import { computedAsync } from "@vueuse/core";
+import { computedAsync, useLocalStorage } from "@vueuse/core";
 import { Ref, computed, ref, shallowRef, watch, watchEffect } from "vue";
 
 export const clickhouse = createClient({
@@ -11,20 +11,33 @@ export const clickhouse = createClient({
 
 export interface IClickhouseResponse<T> {
   data: T[];
+  rows: number;
   meta: {
-    rows: number;
-    rows_before_limit_at_least: number;
-    statistics: {
-      elapsed: number;
-      rows_read: number;
-      bytes_read: number;
-    };
+    name: string;
+    type: string;
+  }[];
+  statistics: {
+    elapsed: number;
+    rows_read: number;
+    bytes_read: number;
   };
 }
 
+export const totalRequests = useLocalStorage('totalRequests', 0)
+export const totalElapsed = useLocalStorage('totalElapsed', 0)
+export const totalRowsRead = useLocalStorage('totalRowsRead', 0)
+export const totalBytesRead = useLocalStorage('totalBytesRead', 0)
+
 export async function query<T>(query: string) {
   const result = await clickhouse.query({ query });
-  return await result.json<IClickhouseResponse<T>>();
+  const response = await result.json<IClickhouseResponse<T>>();
+
+  totalElapsed.value += response.statistics.elapsed
+  totalRowsRead.value += response.statistics.rows_read
+  totalBytesRead.value += response.statistics.bytes_read
+  totalRequests.value++
+
+  return response;
 }
 
 export function queryAsync<T>(queryString: string, enabled: Ref<boolean> = ref(true)) {
