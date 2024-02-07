@@ -81,3 +81,15 @@
     max-width: calc(1200px - 3rem);
   }
 }
+
+.hide-less-medium {
+  @include less-medium {
+    display: none;
+  }
+}
+
+.show-less-medium {
+  @include medium {
+    display: none;
+  }
+}
