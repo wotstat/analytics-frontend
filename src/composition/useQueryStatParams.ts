@@ -1,5 +1,5 @@
 import { dateToDbIndex } from "@/db";
-import { battleGameplays, battleGameplaysKeys, battleModes, battleModesKeys } from "@/utils/wot";
+import { customBattleModes } from "@/utils/wot";
 import { useRoute } from "vue-router";
 
 export type TankType = 'LT' | 'MT' | 'HT' | 'AT' | 'SPG';
@@ -10,8 +10,7 @@ export type StatParams = {
   level: TankLevel[] | null;
   types: TankType[] | null;
   tanks: string[] | null;
-  battleMode: keyof typeof battleModes | 'any';
-  battleGameplay: keyof typeof battleGameplays | 'any';
+  battleMode: keyof typeof customBattleModes | 'any';
   period: 'allTime' | {
     type: 'lastX'
     count: number
@@ -35,7 +34,6 @@ export function useQueryStatParams() {
     types: null,
     tanks: null,
     battleMode: 'any',
-    battleGameplay: 'any'
   }
 
   if ('nickname' in route.query) result.player = route.query.nickname as string;
@@ -51,15 +49,8 @@ export function useQueryStatParams() {
   if ('mode' in route.query) {
     const battleMode = route.query.mode as string;
 
-    if (battleMode in battleModes) {
-      result.battleMode = battleMode as keyof typeof battleModes;
-    }
-  }
-
-  if ('gameplay' in route.query) {
-    const battleGameplay = route.query.gameplay as string;
-    if (battleGameplay in battleGameplays) {
-      result.battleGameplay = battleGameplay as keyof typeof battleGameplays;
+    if (battleMode in customBattleModes) {
+      result.battleMode = battleMode as keyof typeof customBattleModes;
     }
   }
 
@@ -114,8 +105,14 @@ function whereClauseArray(params: StatParams) {
   if (params.level) result.push(`tankLevel in (${params.level.join(', ')})`);
   if (params.types) result.push(`tankType in ('${params.types.join("', '")}')`);
   if (params.tanks) result.push(`tankTag in ('${params.tanks.join("', '")}')`);
-  if (params.battleMode !== 'any') result.push(`battleMode = '${params.battleMode}'`);
-  if (params.battleGameplay !== 'any') result.push(`battleGameplay = '${params.battleGameplay}'`);
+  if (params.battleMode !== 'any') {
+    const t = customBattleModes[params.battleMode];
+    if ('mode' in t) result.push(`battleMode = '${t.mode}'`);
+  }
+  if (params.battleMode !== 'any') {
+    const t = customBattleModes[params.battleMode];
+    if ('gameplay' in t) result.push(`battleGameplay = '${t.gameplay}'`);
+  }
   return result;
 }
 
