@@ -33,7 +33,7 @@ export function useQueryStatParams() {
     level: null,
     types: null,
     tanks: null,
-    battleMode: 'any',
+    battleMode: 'normalAny',
   }
 
   if ('nickname' in route.query) result.player = route.query.nickname as string;
@@ -49,7 +49,9 @@ export function useQueryStatParams() {
   if ('mode' in route.query) {
     const battleMode = route.query.mode as string;
 
-    if (battleMode in customBattleModes) {
+    if (battleMode === 'any') {
+      result.battleMode = 'any';
+    } else if (battleMode in customBattleModes) {
       result.battleMode = battleMode as keyof typeof customBattleModes;
     }
   }
