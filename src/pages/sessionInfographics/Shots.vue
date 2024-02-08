@@ -5,7 +5,7 @@
     </div>
     <div class="flex hor main">
       <div class="card circle">
-        <ShotsCircle :params="params" />
+        <ShotsCircle :params="params" :mask-radius="maskRadius" />
         <div class="legend">
           <p><span class="mini-circle green">•</span> – промахи</p>
           <p><span class="mini-circle red">•</span> – попадания</p>
@@ -21,17 +21,17 @@
             <GenericInfo :value="dataResult.damaged" description="С уроном" color="orange"
               :processor="usePercentProcessor()" />
           </div>
-          <div class="card hide-less-medium">
+          <div class="card hide-less-medium" ref="percent50">
             <GenericInfo :value="dataResult.first50" description="Попали в первую половину" color="red"
               :processor="usePercentProcessor()" />
           </div>
-          <div class="card hide-less-medium">
+          <div class="card hide-less-medium" ref="percent30">
             <GenericInfo :value="dataResult.first30" description="Попали в первую треть" color="blue"
               :processor="usePercentProcessor()" />
           </div>
         </div>
-        <div class="card chart">
-          <ShotDistribution :params="params" />
+        <div class="card chart" ref="shotDistribution">
+          <ShotDistribution :params="params" @hover:progress="hoverProgress" />
           <p class="card-main-info description">Распределение выстрелов в круге сведения</p>
         </div>
       </div>
@@ -70,13 +70,31 @@ import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import ShotDistribution from '@/components/widgets/ShotDistribution.vue';
 import { usePercentProcessor } from '@/composition/usePercentProcessor';
 import { queryAsyncFirst } from "@/db";
-import { ref } from "vue";
-import { useElementVisibility } from "@vueuse/core";
+import { ref, watch, watchEffect } from "vue";
+import { useElementVisibility, useMouseInElement } from "@vueuse/core";
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
 const params = useQueryStatParams();
+
+const percent50 = ref<HTMLElement | null>(null);
+const { isOutside: isOutside50 } = useMouseInElement(percent50)
+
+const percent30 = ref<HTMLElement | null>(null);
+const { isOutside: isOutside30 } = useMouseInElement(percent30)
+
+const shotDistribution = ref<HTMLElement | null>(null);
+const { isOutside } = useMouseInElement(shotDistribution)
+
+watch(isOutside, (value) => { if (value) hoverProgress(1) })
+watch(isOutside50, (value) => hoverProgress(value ? 1 : 0.5))
+watch(isOutside30, (value) => hoverProgress(value ? 1 : 0.3333))
+
+const maskRadius = ref(1);
+const hoverProgress = (progress: number) => {
+  maskRadius.value = progress;
+}
 
 const dataResult = queryAsyncFirst(`
 select toUInt32(count())                                                                                as count,

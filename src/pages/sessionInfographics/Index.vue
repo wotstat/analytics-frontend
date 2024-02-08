@@ -15,7 +15,9 @@
     <Battle />
     <h2>Стрельба</h2>
     <Shots />
-    <h2>Урон</h2>
+    <h2 class="small-bottom-margin">Урон</h2>
+    <p class="section-description">Распределения урона строятся <b>исключая</b> урон фугасных снарядов и урон с добитием
+      (фрагом)</p>
     <Damage />
     <h2>Результаты</h2>
     <Results />
@@ -76,6 +78,15 @@ const showSettings = ref(false);
 h1 {
   margin: 0;
   margin-top: 0.3em;
+}
+
+.small-bottom-margin {
+  margin-bottom: 0em;
+}
+
+.section-description {
+  margin-top: 1em;
+  margin-bottom: 1em;
 }
 </style>
 

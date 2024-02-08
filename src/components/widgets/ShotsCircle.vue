@@ -1,5 +1,11 @@
 <template>
-  <CanvasVue @redraw="redraw" ref="canvasRef" />
+  <div class="shot-container">
+    <CanvasVue @redraw="redraw" ref="canvasRef" />
+    <svg v-if="maskRadius && maskRadius < 0.99">
+      <path :d="maskPath" />
+      <circle cx="50%" cy="50%" :r="`${(props.maskRadius ?? 1) / 2 * 100}%`" />
+    </svg>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -23,6 +29,7 @@ const props = defineProps<{
   limitShot?: number,
   drawDelay?: number,
   drawCount?: number,
+  maskRadius?: number,
   params?: StatParams
 }>()
 
@@ -129,4 +136,46 @@ async function startDrawProcess() {
   }
   draw()
 }
+
+const maskPath = computed(() => {
+  const width = widthRef.value;
+  const outerRadius = width / 2;
+  const innerRadius = outerRadius * (props.maskRadius ?? 1);
+
+  return `M 0, 0 l 0, ${width} l ${width}, 0 l 0, -${width} Z
+   M ${width / 2 - 0.5}, ${width / 2}
+   m 0 -${outerRadius}
+   m 1 ${outerRadius - innerRadius}
+   a ${innerRadius}, ${innerRadius}, 0, 1, 1, -1, 0
+   Z`
+})
+
 </script>
+
+<style scoped lang="scss">
+@import '@/styles/textColors.scss';
+
+.shot-container {
+  position: relative;
+
+  svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    path {
+      fill: $background-secondary;
+      fill-opacity: 0.8;
+    }
+
+    circle {
+      fill: none;
+      stroke: #e7ffde;
+      filter: drop-shadow(0 0 10px #639e31);
+      stroke-width: 1;
+    }
+  }
+}
+</style>
