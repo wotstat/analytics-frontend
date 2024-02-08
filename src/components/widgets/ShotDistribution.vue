@@ -20,6 +20,10 @@ const { params } = defineProps<{
   params?: StatParams
 }>()
 
+const emit = defineEmits<{
+  'hover:progress': [number]
+}>()
+
 function getQuery(isServer: boolean) {
   const r = isServer ? 'ballisticResultServer_r' : 'ballisticResultClient_r'
   return `
@@ -72,6 +76,11 @@ const chartData = computed<ChartProps<'line'>['data']>(() => ({
 const options: ChartProps<'line'>['options'] = {
   responsive: true,
   maintainAspectRatio: false,
+  onHover: (e, a) => {
+    const indexes = a.map(t => t.index)
+    if (indexes.length === 0) return
+    emit('hover:progress', indexes[0] / 100)
+  },
   scales: {
     y: {
       min: 0,
