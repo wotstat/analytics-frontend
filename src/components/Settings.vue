@@ -430,7 +430,7 @@ function apply() {
   if (enableLevelFilter.value && selectedLevels.value.length > 0) target += `level=${selectedLevels.value.join(',')}&`;
   if (enableTypeFilter.value && selectedClasses.value.length > 0) target += `type=${selectedClasses.value.join(',')}&`;
   if (enableTankFilter.value && selectedTanks.value.length > 0) target += `tank=${selectedTanks.value.map(t => t.tag).join(',')}&`;
-  if (battleMode.value != 'any') target += `mode=${battleMode.value}&`;
+  if (battleMode.value != 'normalAny') target += `mode=${battleMode.value}&`;
 
   function processPeriod() {
     if (periodVariant.value == 'allTime') return;

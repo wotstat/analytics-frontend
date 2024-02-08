@@ -95,8 +95,8 @@ const params = useQueryStatParams()
 const shellNames = {
   'ARMOR_PIERCING': ['ББ', 'Бронебойный'],
   'ARMOR_PIERCING_CR': ['БП', 'Подкалиберный'],
-  'ARMOR_PIERCING_HE': ['БК', 'Бронебойный каморный'],
-  'FLAME': ['ОC', 'Огнемётная смесь'],
+  // 'ARMOR_PIERCING_HE': ['БК', 'Бронебойный каморный'],
+  // 'FLAME': ['ОC', 'Огнемётная смесь'],
   'HIGH_EXPLOSIVE': ['ОФ', 'Осколочно-фугасный'],
   'HOLLOW_CHARGE': ['КС', 'Кумулятивный']
 }
