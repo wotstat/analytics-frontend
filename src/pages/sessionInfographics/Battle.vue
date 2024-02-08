@@ -76,15 +76,11 @@ import { countLocalize } from '@/utils/i18n';
 import { useElementVisibility } from '@vueuse/core';
 import { computed, ref } from 'vue';
 
+import { ms2sec, sec2minsec, secProcessor, sec2hour } from "@/utils";
+
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
 const params = useQueryStatParams();
-
-const ms2sec = (ms: number) => (ms / 1000).toFixed();
-const sec2minsec = (sec: number) => `${(sec / 60).toFixed()}:${(sec % 60).toFixed().padEnd(2, '0')}`;
-const sec2hour = (sec: number) => (sec / 60 / 60).toFixed(1);
-
-const secProcessor = (count: number) => countLocalize(count, 'секунда', 'секунды', 'секунд');
 
 const tankLabels = ['СТ', 'ТТ', 'ПТ', 'ЛТ', 'САУ'];
 

@@ -266,14 +266,11 @@ import MiniBar from '@/components/widgets/MiniBar.vue';
 import ShotsCircle from '@/components/widgets/ShotsCircle.vue';
 import { useTweenCounter } from '@/composition/useTweenCounter';
 import { queryAsync, queryAsyncFirst } from '@/db';
-import { toPercent, toRelative } from '@/utils';
+import { toRelative, ms2sec, sec2minsec, secProcessor } from '@/utils';
 import { computedAsync } from '@vueuse/core';
-import { Ref, computed, toRef, watchEffect } from 'vue';
-import { countLocalize, getArenaName } from '@/utils/i18n';
+import { computed } from 'vue';
+import { getArenaName } from '@/utils/i18n';
 
-const ms2sec = (ms: number) => (ms / 1000).toFixed();
-const sec2minsec = (sec: number) => `${(sec / 60).toFixed()}:${(sec % 60).toFixed().padStart(2, '0')}`;
-const secProcessor = (count: number) => countLocalize(count, 'секунда', 'секунды', 'секунд');
 
 const DBUrl = import.meta.env.VITE_CLICKHOUSE_HOST as string
 
