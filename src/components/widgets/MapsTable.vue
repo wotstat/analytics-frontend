@@ -1,6 +1,6 @@
 <template>
   <div class="container" ref="container">
-    <table>
+    <table class="hover-highlight">
 
       <thead>
         <tr>
@@ -337,14 +337,6 @@ table {
 
       &.selected {
         background-color: $bar-color;
-      }
-    }
-  }
-
-  tbody {
-    tr {
-      &:hover {
-        background-color: #8787870d;
       }
     }
   }

@@ -1,6 +1,6 @@
 <template>
   <div class="container" ref="container">
-    <table>
+    <table class="hover-highlight">
 
       <thead>
         <tr>
@@ -118,15 +118,6 @@ table {
 
   thead {
     border-bottom: $border;
-  }
-
-  tbody {
-    tr {
-
-      &:hover {
-        background-color: #8787870d;
-      }
-    }
   }
 
   td {

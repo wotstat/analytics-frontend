@@ -1,6 +1,6 @@
 <template>
   <div class="container" ref="container">
-    <table>
+    <table class="hover-highlight">
       <thead>
         <tr>
           <th colspan="9" class="title" ref="categoryContainer">Среднее распределение показателей по топу команд</th>
@@ -328,14 +328,6 @@ table {
   .center {
     width: 0.5%;
     padding: 0 5px;
-  }
-
-  tbody {
-    tr {
-      &:hover {
-        background-color: #8787870d;
-      }
-    }
   }
 
   tr {

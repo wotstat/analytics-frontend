@@ -59,6 +59,7 @@ import StatParamsTitle from "@/components/StatParamsTitle.vue";
 import { useQueryStatParams } from "@/composition/useQueryStatParams";
 import { totalRequests, totalElapsed, totalRowsRead } from "@/db";
 import { countLocalize } from "@/utils/i18n";
+import TeamLevelTable from "@/components/widgets/TeamLevelTable.vue";
 
 const stat = useQueryStatParams()
 const emptyParams = computed(() => !stat.player && !stat.tanks && !stat.level && !stat.types && stat.period == 'allTime')

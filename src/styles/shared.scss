@@ -52,6 +52,16 @@
   position: relative;
 }
 
+table.hover-highlight {
+  tbody {
+    tr {
+      &:hover {
+        background-color: #8787870d;
+      }
+    }
+  }
+}
+
 .chart-container {
   position: relative;
   flex: 1;

@@ -3,6 +3,10 @@
     <div class="card long">
       <GenericInfo :value="results.count" description="Результатов собрано" color="green" />
     </div>
+    <div class="card">
+      <p class="card-main-info description top">Распределение по уровню боя</p>
+      <TeamLevelTable :params="params" />
+    </div>
 
     <div class="flex hor-ver-small">
       <div class="card chart bar flex-1 flex ver gap-0">
@@ -73,6 +77,12 @@
       </div>
     </div>
 
+    <!-- <h4>Паттерны команд</h4>
+
+    <div class="card">
+      <p class="card-main-info description top">Распределение по уровню боя</p>
+      <TeamLevelTable :params="params" />
+    </div> -->
 
     <h4>Турбобои</h4>
     <p>Бои длинною менее 5 минут и разницей счёта больше 10 (проигравшая команда имеет не более 4 фрагов)</p>
@@ -112,6 +122,7 @@ import { toRelative, toPercent } from "@/utils";
 import PlayerResultTable from "@/components/widgets/PlayerResultTable.vue";
 import { usePercentProcessor } from '@/composition/usePercentProcessor';
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
+import TeamLevelTable from '@/components/widgets/TeamLevelTable.vue';
 
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
