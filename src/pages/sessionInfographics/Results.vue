@@ -3,6 +3,10 @@
     <div class="card long">
       <GenericInfo :value="results.count" description="Результатов собрано" color="green" />
     </div>
+    <div class="card">
+      <p class="card-main-info description top">Распределение по уровню боя</p>
+      <TeamLevelTable :params="params" />
+    </div>
 
     <div class="flex hor-ver-small">
       <div class="card chart bar flex-1 flex ver gap-0">
@@ -28,7 +32,7 @@
       <PlayerResultTable :params="params" />
     </div>
 
-    <h4>Медианные показатели</h4>
+    <h4>Средние показатели</h4>
     <div class="grid-mini">
       <div class="card flex-1">
         <GenericInfo :value="results.damage" description="Урон" color="yellow" />
@@ -64,15 +68,21 @@
 
     <div class="flex hor-ver-small">
       <div class="card flex-1">
-        <GenericInfo :value="[scoreData['win']?.medianTeam ?? 0, scoreData['win']?.medianOpponent ?? 0]"
+        <GenericInfo :value="[scoreData['win']?.avgTeam ?? 0, scoreData['win']?.avgOpponent ?? 0]"
           description="Счёт при победе" color="green" :processor="t => `${Math.round(t[0])}:${Math.round(t[1])}`" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="[scoreData['lose']?.medianTeam ?? 0, scoreData['lose']?.medianOpponent ?? 0]"
+        <GenericInfo :value="[scoreData['lose']?.avgTeam ?? 0, scoreData['lose']?.avgOpponent ?? 0]"
           description="Счёт при поражении" color="red" :processor="t => `${Math.round(t[0])}:${Math.round(t[1])}`" />
       </div>
     </div>
 
+    <!-- <h4>Паттерны команд</h4>
+
+    <div class="card">
+      <p class="card-main-info description top">Распределение по уровню боя</p>
+      <TeamLevelTable :params="params" />
+    </div> -->
 
     <h4>Турбобои</h4>
     <p>Бои длинною менее 5 минут и разницей счёта больше 10 (проигравшая команда имеет не более 4 фрагов)</p>
@@ -112,6 +122,7 @@ import { toRelative, toPercent } from "@/utils";
 import PlayerResultTable from "@/components/widgets/PlayerResultTable.vue";
 import { usePercentProcessor } from '@/composition/usePercentProcessor';
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
+import TeamLevelTable from '@/components/widgets/TeamLevelTable.vue';
 
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
@@ -120,17 +131,17 @@ const params = useQueryStatParams();
 const places = new Array(15).fill(0).map((_, i) => i + 1);
 
 const results = queryAsyncFirst(`
-select median(personal.damageDealt)                 as damage,
-       median(personal.damageAssistedRadio)         as damageRadio,
-       median(personal.damageAssistedTrack)         as damageTrack,
-       median(personal.stunDuration)                as stunDuration,
-       median(personal.spotted)                     as spotted,
-       median(personal.damageBlockedByArmor)        as damageBlacked,
-       median(personal.shots)                       as shots,
-       median(personal.directEnemyHits)             as hits,
-       median(personal.piercingEnemyHits)           as piercingHits,
-       median(personal.mileage)                     as mileage,
-       median(personal.health / personal.maxHealth) as health,
+select avg(personal.damageDealt)                 as damage,
+       avg(personal.damageAssistedRadio)         as damageRadio,
+       avg(personal.damageAssistedTrack)         as damageTrack,
+       avg(personal.stunDuration)                as stunDuration,
+       avg(personal.spotted)                     as spotted,
+       avg(personal.damageBlockedByArmor)        as damageBlacked,
+       avg(personal.shots)                       as shots,
+       avg(personal.directEnemyHits)             as hits,
+       avg(personal.piercingEnemyHits)           as piercingHits,
+       avg(personal.mileage)                     as mileage,
+       avg(personal.health / personal.maxHealth) as health,
        toUInt32(count())                            as count
 from Event_OnBattleResult
 ${whereClause(params)};

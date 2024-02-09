@@ -1,6 +1,6 @@
 <template>
   <div class="container" ref="container">
-    <table>
+    <table class="hover-highlight">
 
       <thead>
         <tr>
@@ -73,23 +73,17 @@
           <td class="text-effect red"> {{ item.kills.toFixed(1) }}</td>
           <td class="text-effect yellow">
             <div class="time-align">
-              <div class="left">
-                {{ (item.duration / 60).toFixed() }}
-              </div>
+              <div class="left">{{ timeProcessor(item.duration)[0] }}</div>
               <div>:</div>
-              <div class="right">
-                {{ (item.duration % 60) < 10 ? '0' : '' }}{{ (item.duration % 60).toFixed() }} </div>
-              </div>
+              <div class="right">{{ timeProcessor(item.duration)[1] }}</div>
+            </div>
           </td>
           <td class="text-effect light-blue">
             <div class="time-align">
-              <div class="left">
-                {{ (item.lifeTime / 60).toFixed() }}
-              </div>
+              <div class="left">{{ timeProcessor(item.lifeTime)[0] }}</div>
               <div>:</div>
-              <div class="right">
-                {{ (item.lifeTime % 60) < 10 ? '0' : '' }}{{ (item.lifeTime % 60).toFixed() }} </div>
-              </div>
+              <div class="right">{{ timeProcessor(item.lifeTime)[1] }}</div>
+            </div>
           </td>
         </tr>
       </tbody>
@@ -101,7 +95,7 @@
 <script setup lang="ts">
 import { StatParams, whereClause } from '@/composition/useQueryStatParams';
 import { queryAsync } from '@/db';
-import { whereSum } from '@/utils';
+import { timeProcessor, whereSum } from '@/utils';
 import { getArenaName } from '@/utils/i18n';
 import { customBattleModesKeys, customBattleModes } from '@/utils/wot';
 import { useElementVisibility, useElementSize } from '@vueuse/core';
@@ -343,14 +337,6 @@ table {
 
       &.selected {
         background-color: $bar-color;
-      }
-    }
-  }
-
-  tbody {
-    tr {
-      &:hover {
-        background-color: #8787870d;
       }
     }
   }

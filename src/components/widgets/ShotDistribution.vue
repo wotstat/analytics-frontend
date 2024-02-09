@@ -10,6 +10,7 @@ import { useElementVisibility } from '@vueuse/core';
 import { computed, ref } from 'vue';
 import { type ChartProps } from 'vue-chartjs';
 import { ShadowLine } from "@/components/ShadowLineController";
+import { ShadowBar } from "@/components/ShadowBarController";
 import { BloomColor } from '../bloomColors';
 import { StatParams, whereClause } from '@/composition/useQueryStatParams';
 
@@ -42,7 +43,7 @@ function calc(data: Row[]) {
   const res = new Array(100).fill(null)
 
   for (const row of data) {
-    res[row.r * 100] = row.percent * 100
+    res[Math.round(row.r * 100)] = row.percent * 100
   }
   return res
 }
