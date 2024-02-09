@@ -161,7 +161,7 @@
           </div>
           <div class="image">
             <div class="card map">
-              <table>
+              <table class="hover-highlight">
                 <thead>
                   <tr>
                     <th>Карта</th>
@@ -170,12 +170,14 @@
                     <th>Насвет</th>
                   </tr>
                 </thead>
-                <tr v-for="item in mapsResults">
-                  <td>{{ nameFromTag(item.arenaTag).value }}</td>
-                  <td class="text-effect orange">{{ item.count }}</td>
-                  <td class="text-effect green">{{ item.damage }}</td>
-                  <td class="text-effect blue">{{ item.assist }}</td>
-                </tr>
+                <tbody>
+                  <tr v-for="item in mapsResults">
+                    <td>{{ nameFromTag(item.arenaTag).value }}</td>
+                    <td class="text-effect orange">{{ item.count }}</td>
+                    <td class="text-effect green">{{ item.damage }}</td>
+                    <td class="text-effect blue">{{ item.assist }}</td>
+                  </tr>
+                </tbody>
               </table>
             </div>
           </div>
@@ -191,7 +193,7 @@
           </div>
           <div class="image">
             <div class="card strimsniper">
-              <table>
+              <table class="hover-highlight">
                 <thead>
                   <tr>
                     <th>Ник</th>
@@ -200,12 +202,14 @@
                     <th>Против</th>
                   </tr>
                 </thead>
-                <tr v-for="item in strimsniper">
-                  <td>{{ item[0] }}</td>
-                  <td class="text-effect orange">{{ item[1] }}</td>
-                  <td class="text-effect green">{{ item[2] }}</td>
-                  <td class="text-effect red">{{ item[3] }}</td>
-                </tr>
+                <tbody>
+                  <tr v-for="item in strimsniper">
+                    <td>{{ item[0] }}</td>
+                    <td class="text-effect orange">{{ item[1] }}</td>
+                    <td class="text-effect green">{{ item[2] }}</td>
+                    <td class="text-effect red">{{ item[3] }}</td>
+                  </tr>
+                </tbody>
               </table>
             </div>
           </div>
@@ -266,14 +270,11 @@ import MiniBar from '@/components/widgets/MiniBar.vue';
 import ShotsCircle from '@/components/widgets/ShotsCircle.vue';
 import { useTweenCounter } from '@/composition/useTweenCounter';
 import { queryAsync, queryAsyncFirst } from '@/db';
-import { toPercent, toRelative } from '@/utils';
+import { toRelative, ms2sec, sec2minsec, secProcessor } from '@/utils';
 import { computedAsync } from '@vueuse/core';
-import { Ref, computed, toRef, watchEffect } from 'vue';
-import { countLocalize, getArenaName } from '@/utils/i18n';
+import { computed } from 'vue';
+import { getArenaName } from '@/utils/i18n';
 
-const ms2sec = (ms: number) => (ms / 1000).toFixed();
-const sec2minsec = (sec: number) => `${(sec / 60).toFixed()}:${(sec % 60).toFixed().padStart(2, '0')}`;
-const secProcessor = (count: number) => countLocalize(count, 'секунда', 'секунды', 'секунд');
 
 const DBUrl = import.meta.env.VITE_CLICKHOUSE_HOST as string
 
@@ -626,14 +627,6 @@ h2 {
 
           thead {
             border-bottom: $border;
-          }
-
-          tbody {
-            tr {
-              &:hover {
-                background-color: #8787870d;
-              }
-            }
           }
 
           td,
