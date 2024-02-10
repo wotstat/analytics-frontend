@@ -91,7 +91,7 @@
           </div>
           <div class="image">
             <div class="card shots">
-              <ShotsCircle :limit-shot="10000" :draw-delay="1" :draw-count="2" />
+              <ShotsCircle :limit-shot="1000" :draw-delay="1" :draw-count="2" />
             </div>
           </div>
         </div>
