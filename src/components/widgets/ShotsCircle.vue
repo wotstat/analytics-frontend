@@ -112,22 +112,20 @@ async function startDrawProcess() {
 
     const [countResult, _] = await Promise.all([count, loadFirstBatch])
 
-    totalCount = countResult.data[0].count;
+    const dbCount = countResult.data[0].count;
+
+    totalCount = Math.min(dbCount, props.limitShot ?? dbCount);
   }
 
   let currentCount = 0;
   const r = radius.value
   const pointRadius = totalCount > 10000 ? r / 300 : r / 150;
-  const renderCount = props.drawCount ?? totalCount > 10000 ? RENDER_COUNT * 2 : RENDER_COUNT;
+  const renderCount = props.drawCount ?? RENDER_COUNT * (totalCount > 10000 ? 2 : 1);
 
   function draw() {
-    timeoutHandler = setTimeout(draw, props.drawDelay ?? 1);
     let countToDraw = props.drawCount ?? renderCount;
 
     if (currentCount + LOAD_COUNT > shotsData.length) {
-      if (loadingFinished) {
-        clearTimeout(timeoutHandler);
-      }
       loadNextBatch()
       countToDraw = Math.min(countToDraw, shotsData.length - currentCount);
     }
@@ -149,6 +147,10 @@ async function startDrawProcess() {
 
     }
     currentCount += countToDraw;
+
+    if (currentCount < totalCount) {
+      timeoutHandler = setTimeout(draw, props.drawDelay ?? 1);
+    }
   }
   draw()
 }
