@@ -20,7 +20,7 @@
         </div>
 
         <div class="flex center">
-          <p class="text-center mod-description">
+          <h2 class="text-center mod-description">
             Откройте новые горизонты анализа вашей игры с нашей <b>бесплатной</b> и полностью
             <a href="https://github.com/WOT-STAT/WOTMOD" target="_blank">открытой</a> пользовательской модификацией для
             игр
@@ -28,7 +28,7 @@
               href="https://worldoftanks.eu/en/game/" target="_blank">«World&nbsp;of&nbsp;Tanks»</a>. <br>Модификация
             работает в фоне, фиксируя различные игровые события, что позволяет вам анализировать свои действия и
             сравнивать их с результатами других игроков.
-          </p>
+          </h2>
         </div>
       </section>
     </div>
@@ -222,13 +222,13 @@
       <div class="center-container">
         <h2>SQL</h2>
         <p>К базе данных со ВСЕМИ исходными данными есть доступ черз SQL. Если вы разбираетесь, то можете самостоятельно
-          отправлть любые аналитичесие запросы</p>
+          отправлять любые аналитичесие запросы</p>
         <p>В качесте СУБД используется <a href="https://clickhouse.com/docs" target="_blank"
             rel="noopener noreferrer">clickhouse</a></p>
         <br>
         Для доступа используйте следующие данные:
         <ul>
-          <li>Пользлватель: <code>public</code></li>
+          <li>Пользователь: <code>public</code></li>
           <li>Пароль: <code>без пароля</code></li>
           <li>Хост: <code>{{ DBUrl.replace('https://', '') }}</code></li>
           <li>Порт: <code>80</code></li>
@@ -244,9 +244,9 @@
         <hr>
         <p>На доступ к базе есть следующие ограничения:</p>
         <ul>
-          <li>Каждую минуту: 240 запросов, время выполненни: 60c</li>
-          <li>Каждый час: 2000 запросов, время выполненни: 600c</li>
-          <li>Каждый день: 5000 запросов, время выполненни: 2000c</li>
+          <li>Каждую минуту: 240 запросов, время выполнения: 20c</li>
+          <li>Каждый час: 2000 запросов, время выполнения: 600c</li>
+          <li>Каждый день: 5000 запросов, время выполнения: 2000c</li>
         </ul>
       </div>
     </section>
@@ -501,6 +501,9 @@ h2 {
 }
 
 .mod-description {
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.4;
   max-width: 80%;
   // max-width: 60%;
 

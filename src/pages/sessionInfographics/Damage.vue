@@ -96,7 +96,7 @@ const shellNames = {
   'ARMOR_PIERCING': ['ББ', 'Бронебойный'],
   'ARMOR_PIERCING_CR': ['БП', 'Подкалиберный'],
   // 'ARMOR_PIERCING_HE': ['БК', 'Бронебойный каморный'],
-  // 'FLAME': ['ОC', 'Огнемётная смесь'],
+  'FLAME': ['ОС', 'Огнемётная смесь'],
   'HIGH_EXPLOSIVE': ['ОФ', 'Осколочно-фугасный'],
   'HOLLOW_CHARGE': ['КС', 'Кумулятивный']
 }
@@ -121,7 +121,7 @@ from (select arrayZip(results.shotDamage, results.shotHealth) as shotHealth,
       from Event_OnShot
       where length(results.order) > 0
         and maxNotKillDamage > 0
-        and shellTag != 'HIGH_EXPLOSIVE'
+        and shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME'
         ${whereClause(params, { withWhere: false })})
 group by k
 order by k;
@@ -136,7 +136,7 @@ from Event_OnShot
     array join
      results.shotDamage as dmg,
      results.shotHealth as health
-where dmg > 0 and health > 0 and shellTag != 'HIGH_EXPLOSIVE'
+where dmg > 0 and health > 0 and shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME'
 ${whereClause(params, { withWhere: false })};
 `, { less: 0, more: 0, safed: 0, avgDamage: 0 }, visible)
 
@@ -148,7 +148,7 @@ from (select arrayZip(results.shotDamage, results.shotHealth)                   
       from Event_OnShot
       where length(results.order) > 0
         and has(results.shotHealth, 0)
-        and shellTag != 'HIGH_EXPLOSIVE'
+        and shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME'
         ${whereClause(params, { withWhere: false })});
 `, { stilled: 0 }, visible)
 

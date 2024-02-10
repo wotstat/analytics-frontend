@@ -35,6 +35,7 @@ const props = defineProps<{
 
 const radius = computed(() => Math.min(widthRef.value, heightRef.value) / 2 - 1);
 let timeoutHandler: ReturnType<typeof setTimeout> | null = null;
+let totalCount = -1;
 
 const renderShotsDebounce = useDebounceFn(() => {
   startDrawProcess();
@@ -101,14 +102,29 @@ async function loadNextBatch() {
 async function startDrawProcess() {
   if (timeoutHandler) clearTimeout(timeoutHandler);
 
+  if (totalCount == -1) {
+
+    const count = query<{ count: number }>(`
+      SELECT count(*) as count FROM Event_OnShot 
+      ${props.params ? whereClause(props.params) : ''};`)
+
+    const loadFirstBatch = loadNextBatch()
+
+    const [countResult, _] = await Promise.all([count, loadFirstBatch])
+
+    totalCount = countResult.data[0].count;
+  }
+
   let currentCount = 0;
   const r = radius.value
+  const pointRadius = totalCount > 10000 ? r / 300 : r / 150;
+  const renderCount = props.drawCount ?? totalCount > 10000 ? RENDER_COUNT * 2 : RENDER_COUNT;
 
   function draw() {
     timeoutHandler = setTimeout(draw, props.drawDelay ?? 1);
-    let countToDraw = props.drawCount ?? RENDER_COUNT;
+    let countToDraw = props.drawCount ?? renderCount;
 
-    if (currentCount + countToDraw > shotsData.length) {
+    if (currentCount + LOAD_COUNT > shotsData.length) {
       if (loadingFinished) {
         clearTimeout(timeoutHandler);
       }
@@ -127,7 +143,7 @@ async function startDrawProcess() {
       ctx.shadowColor = shot.hit ? BloomColor.gold.bloom : BloomColor.green.bloom;
       ctx.shadowBlur = r / 40;
       ctx.beginPath();
-      ctx.arc(widthRef.value / 2 + x, heightRef.value / 2 + y, r / 150, 0, 2 * Math.PI);
+      ctx.arc(widthRef.value / 2 + x, heightRef.value / 2 + y, pointRadius, 0, 2 * Math.PI);
       ctx.closePath();
       ctx.fill();
 
