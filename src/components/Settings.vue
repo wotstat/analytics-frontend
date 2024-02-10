@@ -624,6 +624,8 @@ function onKey(params: KeyboardEvent) {
     padding: 20px;
     overflow-y: auto;
     overflow-x: hidden;
+    height: 100%;
+    max-height: 800px;
 
     @include small {
       width: 700px;
@@ -635,6 +637,7 @@ function onKey(params: KeyboardEvent) {
       box-sizing: border-box;
       margin-top: 50px;
       height: 100%;
+      max-height: 100%;
       border-end-end-radius: 0;
       border-end-start-radius: 0;
     }
@@ -644,6 +647,7 @@ function onKey(params: KeyboardEvent) {
       overflow-x: hidden;
       padding: 0 20px;
       margin: 0 -20px;
+      height: 100%;
     }
 
     h4,

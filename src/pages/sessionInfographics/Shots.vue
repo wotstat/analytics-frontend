@@ -70,7 +70,7 @@ import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import ShotDistribution from '@/components/widgets/ShotDistribution.vue';
 import { usePercentProcessor } from '@/composition/usePercentProcessor';
 import { queryAsyncFirst } from "@/db";
-import { ref, watch, watchEffect } from "vue";
+import { computed, ref, watch, watchEffect } from "vue";
 import { useElementVisibility, useMouseInElement } from "@vueuse/core";
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 
@@ -87,14 +87,21 @@ const { isOutside: isOutside30 } = useMouseInElement(percent30)
 const shotDistribution = ref<HTMLElement | null>(null);
 const { isOutside } = useMouseInElement(shotDistribution)
 
-watch(isOutside, (value) => { if (value) hoverProgress(1) })
-watch(isOutside50, (value) => hoverProgress(value ? 1 : 0.5))
-watch(isOutside30, (value) => hoverProgress(value ? 1 : 0.3333))
+// watch(isOutside, (value) => { if (value) hoverProgress(1) })
+// watch(isOutside50, (value) => hoverProgress(value ? 1 : 0.5))
+// watch(isOutside30, (value) => hoverProgress(value ? 1 : 0.3333))
 
-const maskRadius = ref(1);
+const chartHoverProgress = ref(1);
 const hoverProgress = (progress: number) => {
-  maskRadius.value = progress;
+  chartHoverProgress.value = progress;
 }
+
+const maskRadius = computed(() => {
+  if (!isOutside.value) return chartHoverProgress.value;
+  if (!isOutside50.value) return 0.5;
+  if (!isOutside30.value) return 0.3333;
+  return 1;
+})
 
 const dataResult = queryAsyncFirst(`
 select toUInt32(count())                                                                                as count,

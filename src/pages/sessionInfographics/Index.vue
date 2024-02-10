@@ -16,8 +16,8 @@
     <h2>Стрельба</h2>
     <Shots />
     <h2 class="small-bottom-margin">Урон</h2>
-    <p class="section-description">Распределения урона строятся <b>исключая</b> урон фугасных снарядов и урон с добитием
-      (фрагом)</p>
+    <p class="section-description">Распределения урона строятся <b>исключая</b> урон фугасных снарядов, огненной смеси и
+      урон с добитием (фрагом)</p>
     <Damage />
     <h2>Результаты</h2>
     <Results />
@@ -33,8 +33,7 @@
       данных,
       которые выполнялись <b>{{ Math.round(totalElapsed) }}</b>
       {{ countLocalize(Math.round(totalElapsed), 'секунду', 'секунды', 'секунд') }}. Запросы взаимодействовали суммарно с
-      <b>{{ Math.round(totalRowsRead / 1000) }}</b>
-      {{ countLocalize(Math.round(totalElapsed), 'тычячью', 'тысячами', 'тысячами') }} строк базы данных.
+      <b>{{ new Number(totalRowsRead).toLocaleString() }}</b> строк базы данных.
     </p>
     <br>
     <p>Если вы хотите больше графиков, можете написать мне</p>
@@ -65,7 +64,6 @@ const stat = useQueryStatParams()
 const emptyParams = computed(() => !stat.player && !stat.tanks && !stat.level && !stat.types && stat.period == 'allTime')
 
 const showSettings = ref(false);
-
 
 </script>
 
