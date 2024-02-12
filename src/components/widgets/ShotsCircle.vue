@@ -25,6 +25,7 @@ import { StatParams, whereClause } from "@/composition/useQueryStatParams";
 const LOAD_COUNT = 1000;
 const RENDER_COUNT = 20;
 const HOVER_RADIUS = 0.02;
+const MOBILE_HOVER_RADIUS = 0.15;
 
 const container = ref<HTMLElement | null>(null);
 const canvasRef = ref<InstanceType<typeof CanvasVue> | null>(null);
@@ -200,6 +201,10 @@ const maskPath = computed(() => {
 })
 
 
+function isMobile() {
+  return navigator.maxTouchPoints > 0;
+}
+
 const highlighted = computed(() => {
   if (!props.allowHover) return;
   if (isOutside.value) return;
@@ -207,8 +212,10 @@ const highlighted = computed(() => {
   const x = elementX.value / elementWidth.value * 2 - 1;
   const y = elementY.value / elementHeight.value * 2 - 1;
 
+  const radius = isMobile() ? MOBILE_HOVER_RADIUS : HOVER_RADIUS;
+
   const res = quadTree.retrieve(new Circle({
-    x, y, r: HOVER_RADIUS,
+    x, y, r: radius,
   })) as Circle<string>[];
 
   if (res.length == 0) return;
@@ -223,7 +230,7 @@ const highlighted = computed(() => {
     }
   }
 
-  if (Math.sqrt(distance) > HOVER_RADIUS) return
+  if (Math.sqrt(distance) > radius) return
 
   const SCALE_FIX_FACTOR = 0.996;
   return {
