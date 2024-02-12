@@ -1,7 +1,7 @@
 <template>
   <div class="container">
-    <div class="flex hor">
-      <div class="flex ver">
+    <div class="flex ver-less-medium">
+      <div class="flex ver shot-minimap-parent">
         <svg class="shot-circle">
           <circle v-if="possibleMin && possibleMin < 0.99" class="possible-min" cx="50%" cy="50%"
             :r="(possibleMin * 49.5) + '%'" />
@@ -61,47 +61,86 @@
             </svg>
           </div>
         </div>
-        <div v-if="selectedShoot">
+        <div v-if="selectedShoot" class="flex ver gap-0 ">
           <p>Время от начала боя: {{ sec2minsec(selectedShoot.battleTime / 1000) }}</p>
 
           <hr>
 
-          <div class="flex hor table-parent">
+          <div class="flex table-parent">
             <InfoTable :data="firstTable(selectedShoot)" class="flex-1" />
             <div class="flex ver flex-1 gap-0">
               <InfoTable :data="secondTable(selectedShoot)" />
               <InfoTable :data="[
                 ['ФПС', selectedShoot.fps],
                 ['Пинг', (selectedShoot.ping * 1000).toFixed() + 'мс'],
+                ['Попал в', { 'tank': 'танк', 'terrain': 'землю', 'none': 'небо', 'other': '-' }[selectedShoot.hitReason] ?? '-'],
               ]" />
             </div>
           </div>
 
           <hr>
 
-          <div class="flex hor table-parent">
+          <div class="flex table-parent">
             <InfoTable class="flex-1" :data="thirdTable(selectedShoot)" />
             <InfoTable class="flex-1" :data="[
               ['Скорость танка', selectedShoot.vehicleSpeed.toFixed()],
-              ['Скрость поворота танока', radToDeg(selectedShoot.vehicleRotationSpeed).toFixed() + ' °/c'],
+              ['Скрость поворота танка', radToDeg(selectedShoot.vehicleRotationSpeed).toFixed() + ' °/c'],
               ['Скорость повоорта башни', radToDeg(selectedShoot.turretSpeed).toFixed() + ' °/c'],
+              ['Ваше ХП', selectedShoot.health],
             ]" />
           </div>
 
-          <hr>
+          <template v-if="shotResult.length > 0">
+            <hr>
 
-          <!-- <button @click="openInWotInspector">WotIspector</button> -->
+            <div class="flex-table" v-if="shouldBeVerticalResult">
+              <tr class="table-title">
+                <td>Танк</td>
+                <td>Урон выстрелом</td>
+                <td>ХП осталось</td>
+                <template v-if="shotResult.some(t => t.fireDamage)">
+                  <td>Урон пожаром</td>
+                  <td>ХП после пожара</td>
+                </template>
+                <td v-if="shotResult.some(t => t.ammoBayDestroyed)">Взрыв БК</td>
+              </tr>
 
+              <tr v-for="result in shotResult">
+                <td>{{ result.tankTag }}</td>
+                <td>{{ result.shotDamage || '-' }}</td>
+                <td>{{ result.shotHealth ?? '-' }}</td>
+                <template v-if="shotResult.some(t => t.fireDamage)">
+                  <td>{{ result.fireDamage || '-' }}</td>
+                  <td>{{ result.fireHealth ?? '-' }}</td>
+                </template>
+                <td v-if="shotResult.some(t => t.ammoBayDestroyed)">{{ result.ammoBayDestroyed ? 'Да' : '-'
+                }}</td>
+              </tr>
+            </div>
+            <div class="flex ver gap-0" v-else>
+              <hr>
+              <template v-for="result in shotResult">
+                <InfoTable class="flex-1" :data="([
+                  ['Танк', result.tankTag],
+                  ['Урон выстрелом', result.shotDamage],
+                  result.shotHealth ? ['ХП осталось', result.shotHealth] : undefined,
+                  result.fireDamage ? ['Урон пожаром', result.fireDamage] : undefined,
+                  result.fireHealth ? ['ХП после пожара', result.fireHealth] : undefined,
+                  result.ammoBayDestroyed ? ['Взрыв БК', 'Да'] : undefined,
+                ].filter(t => t) as string[][])" />
+                <hr>
+              </template>
+            </div>
+          </template>
         </div>
       </div>
     </div>
     <hr>
-    <button @click="openInWotInspector">WotIspector</button>
-    <!-- {{ shotID }}
-    {{ res }}
-    <button @click="openInWotInspector">WotIspector</button>
-    <br>
-    {{ wotInspectorUrl }} -->
+    <div>
+      <p :class="wotInspectorUrl ? '' : 'inactive'"><a v-if="wotInspectorUrl" :href="wotInspectorUrl"
+          target="_blank">Посмотреть</a> <span v-else>Посмотреть</span>
+        прямое попадение на сервисе WotInspector </p>
+    </div>
   </div>
 </template>
 
@@ -110,7 +149,7 @@ import { query, queryAsync, queryAsyncFirst } from '@/db';
 import { computed, onMounted, ref, shallowRef, watch, watchEffect } from 'vue';
 import { wotinspectorURL } from '@/utils/wot';
 import { aranaMinimapUrl, getArenaID } from '@/utils/arenas';
-import { computedAsync, debouncedRef, useDraggable } from '@vueuse/core';
+import { computedAsync, debouncedRef, useDraggable, useMediaQuery } from '@vueuse/core';
 import { useRoute, useRouter } from 'vue-router';
 import { sec2minsec } from '@/utils';
 import InfoTable from "./InfoTable.vue";
@@ -225,7 +264,7 @@ const firstTable = (s: Shot) => [
   ['Карта', s.arenaTag],
   ['Пушка', s.gunTag],
   ['Калибр', s.shellCaliber],
-  ['Разброс орудия', (s.battleDispersion * 100).toFixed(2) + '%'],
+  ['Разброс орудия', (s.battleDispersion * 100).toFixed(2)],
   ['Версия мода', s.modVersion],
   ['Версия игры', s.gameVersion],
   ['Сервер', s.serverName],
@@ -258,6 +297,9 @@ const dragProgress = ref(0);
 
 function updateProgress(t: PointerEvent, shoudReplace = true) {
   if (!barProgress.value) return;
+
+  t.preventDefault();
+  t.stopPropagation();
 
   const bbox = barProgress.value.getBoundingClientRect();
   dragProgress.value = Math.max(0, Math.min(1, (t.clientX - bbox.left) / bbox.width));
@@ -300,13 +342,6 @@ onMounted(async () => {
 })
 
 const selectedShoot = computed(() => allShots.value?.[shotIndex.value] ?? null)
-
-
-function openInWotInspector() {
-  if (wotInspectorUrl.value != null) {
-    window.open(wotInspectorUrl.value, '_blank');
-  }
-}
 
 const wotInspectorUrl = computed(() => {
   if (selectedShoot.value == null) return null;
@@ -379,6 +414,23 @@ const playerTank = computed(() => {
   return { tag: selectedShoot.value.tankTag, type: selectedShoot.value.tankType, x: selectedShoot.value.gunPoint_x, y: selectedShoot.value.gunPoint_z };
 })
 
+const shotResult = computed(() => {
+  if (!selectedShoot.value) return []
+
+  const shot = selectedShoot.value
+  return shot['results.order'].map((t, i) => {
+    return {
+      tankTag: shot['results.tankTag'][i],
+      shotDamage: shot['results.shotDamage'][i],
+      fireDamage: shot['results.fireDamage'][i],
+      shotHealth: shot['results.shotHealth'][i],
+      fireHealth: shot['results.fireHealth'][i],
+      ammoBayDestroyed: shot['results.ammoBayDestroyed'][i],
+      flags: shot['results.flags'][i],
+    }
+  })
+})
+
 function getTankImg(tankType: string, ally: boolean, dead: boolean) {
   const tag = {
     'HT': 'heavyTank',
@@ -449,11 +501,66 @@ function onScroll(e: WheelEvent) {
   }
 }
 
+const shouldBeVerticalResult = useMediaQuery('(min-width: 768px)');
+
 </script>
 
 <style lang="scss" scoped>
+@import '@/styles/mixins.scss';
+
+.ver-less-medium {
+  flex-direction: row;
+
+  @include less-medium {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+.shot-minimap-parent {
+
+  flex-direction: column;
+  justify-content: space-evenly;
+
+  @include less-medium {
+    flex-direction: row;
+  }
+
+  @include less-x-small {
+    align-items: center;
+    flex-direction: column;
+  }
+}
+
+.table-parent {
+  gap: 40px;
+  flex-direction: row;
+
+  @include less-small {
+    flex-direction: column;
+    gap: 0px;
+  }
+
+}
+
+
 .container {
+  overflow-y: auto;
   margin-top: 20px;
+  margin-right: -20px;
+  padding-right: 20px;
+
+  @include medium {
+    width: 950px;
+  }
+
+  @include large {
+    width: 1120px;
+  }
+
+  @include x-large {
+    width: 1300px;
+  }
 
   >.flex {
     gap: 30px;
@@ -595,7 +702,6 @@ hr {
 
 .mini-header {
   margin-bottom: 10px;
-  width: 800px;
   gap: 0;
   user-select: none;
 
@@ -608,6 +714,7 @@ hr {
     border: 1px solid #535353;
     border-radius: 10px;
     cursor: ew-resize;
+    overflow: hidden;
 
     .bar {
       position: absolute;
@@ -615,7 +722,8 @@ hr {
       left: 0;
       height: 100%;
       background-color: #8080806c;
-      border-radius: 10px;
+      border-end-end-radius: 9px;
+      border-start-end-radius: 9px;
       transition: width 0.2s;
       pointer-events: none;
 
@@ -641,10 +749,34 @@ hr {
     justify-content: center;
     align-items: center;
     cursor: pointer;
+
+    svg {
+      width: 32px;
+    }
   }
 }
 
-.table-parent {
-  gap: 40px;
+.table-title {
+  color: #bababa;
+  font-weight: 300;
+}
+
+p.inactive {
+  color: #989898;
+}
+
+.flex-table {
+  tr {
+    display: flex;
+
+    &:hover:not(.table-title) {
+      background-color: #8787870d;
+    }
+
+    td,
+    th {
+      flex: 1;
+    }
+  }
 }
 </style>
