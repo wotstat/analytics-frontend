@@ -128,7 +128,8 @@ export function whereClause(params: StatParams, { withWhere, isBattleStart }: Pa
     } else if (params.period.type == 'fromToNow') {
       result.push(`id >= ${dateToDbIndex(params.period.from)}`);
     } else if (params.period.type == 'lastX') {
-      const lastIDs = `(select id from Event_OnBattleStart where ${whereClauseArray(params).join(' AND ')} order by id desc limit ${params.period.count})`;
+      const whereClause = whereClauseArray(params);
+      const lastIDs = `(select id from Event_OnBattleStart ${whereClause.length == 0 ? '' : `where ${whereClause.join(' AND ')}`} order by id desc limit ${params.period.count})`;
       result.push(`${isBattleStart ? 'id' : 'onBattleStartId'} in ${lastIDs}`);
     }
   }

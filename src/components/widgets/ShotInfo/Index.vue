@@ -18,6 +18,10 @@
           <img class="border" src="/minimap_b4.png" alt="">
 
           <div class="overlay-container">
+
+            <MinimapOverlays v-if="arenaTag && selectedShoot" :arenaTag="arenaTag"
+              :gameplay="selectedShoot.battleGameplay" :allyTeam="selectedShoot.team" />
+
             <svg v-if="playerTank && mapHitPoint" class="full">
               <line class="trajectory" :x1="absoluteStyleMapPosition(playerTank.x, playerTank.y).left"
                 :y1="absoluteStyleMapPosition(playerTank.x, playerTank.y).top"
@@ -148,12 +152,13 @@
 import { query, queryAsync, queryAsyncFirst } from '@/db';
 import { computed, onMounted, ref, shallowRef, watch, watchEffect } from 'vue';
 import { shellNames, wotinspectorURL } from '@/utils/wot';
-import { aranaMinimapUrl, getArenaID } from '@/utils/arenas';
+import { ArenaMeta, aranaMinimapUrl, convertCoordinate, getArenaID, loadArenaMeta } from '@/utils/arenas';
 import { computedAsync, debouncedRef, useDraggable, useMediaQuery } from '@vueuse/core';
 import { useRoute, useRouter } from 'vue-router';
 import { sec2minsec } from '@/utils';
 import InfoTable from "./InfoTable.vue";
 import { getArenaName } from '@/utils/i18n';
+import MinimapOverlays from '@/components/MinimapOverlays.vue';
 
 type UInt128 = string;
 type DateTime64 = string;
@@ -260,9 +265,18 @@ type Shot = {
   'results.flags': UInt16[]
 }
 
+const props = defineProps<{
+  shotID: string;
+}>();
+
+const shotIndex = ref(0);
+const allShots = shallowRef<Shot[] | null>(null);
+const selectedShoot = computed(() => allShots.value?.[shotIndex.value] ?? null)
+const arenaTag = computed(() => selectedShoot.value?.arenaTag.split('spaces/')[1] ?? null);
+
 const firstTable = (s: Shot) => [
   ['Танк', s.tankTag],
-  ['Карта', getArenaName(s.arenaTag.split('spaces/')[1] + '/name').value],
+  ['Карта', getArenaName(arenaTag.value + '/name').value],
   ['Пушка', s.gunTag],
   ['Калибр', s.shellCaliber],
   ['Разброс орудия', (s.battleDispersion * 100).toFixed(2)],
@@ -326,23 +340,18 @@ const { isDragging: isBarDragging } = useDraggable(barProgress, {
   onEnd: (e, t) => updateProgress(t, false),
 });
 
-const props = defineProps<{
-  shotID: string;
-}>();
-
-const shotIndex = ref(0);
-const allShots = shallowRef<Shot[] | null>(null);
-
 onMounted(async () => {
   console.log('OnMounted');
 
   const currentID = await query<{ onBattleStartId: string }>(`SELECT onBattleStartId FROM Event_OnShot WHERE id = '${props.shotID}'`);
   const shots = await query<Shot>(`SELECT * FROM Event_OnShot WHERE onBattleStartId = '${currentID.data[0].onBattleStartId}'`);
   allShots.value = shots.data;
+  console.log('AllShots', allShots.value);
+
   shotIndex.value = shots.data.findIndex(s => s.id === props.shotID);
 })
 
-const selectedShoot = computed(() => allShots.value?.[shotIndex.value] ?? null)
+const arenaMeta = computedAsync(async () => arenaTag.value ? await loadArenaMeta(arenaTag.value) : null);
 
 const wotInspectorUrl = computed(() => {
   if (selectedShoot.value == null) return null;
@@ -449,12 +458,10 @@ const serverMakerPoint = computed(() => {
   return { x: selectedShoot.value.serverMarkerPoint_x, y: selectedShoot.value.serverMarkerPoint_y, z: selectedShoot.value.serverMarkerPoint_z };
 })
 
-function mapNormalizedPosition(x: number, z: number) {
-  return { x: (x + 500) / 1000, y: (z + 500) / 1000 };
-}
+function absoluteStyleMapPosition(x: number, y: number) {
+  if (!arenaMeta.value) return { left: '0%', top: '0%' }
 
-function absoluteStyleMapPosition(x: number, z: number) {
-  const { x: nx, y: ny } = mapNormalizedPosition(x, z);
+  const { x: nx, y: ny } = convertCoordinate({ x, y }, arenaMeta.value.boundingBox)
   return {
     left: (nx * 100) + '%',
     top: (ny * 100) + '%',
