@@ -1,4 +1,13 @@
 
+export const shellNames = {
+  'ARMOR_PIERCING': ['ББ', 'Бронебойный'],
+  'ARMOR_PIERCING_CR': ['БП', 'Подкалиберный'],
+  // 'ARMOR_PIERCING_HE': ['БК', 'Бронебойный каморный'],
+  'FLAME': ['ОС', 'Огнемётная смесь'],
+  'HIGH_EXPLOSIVE': ['ОФ', 'Осколочно-фугасный'],
+  'HOLLOW_CHARGE': ['КС', 'Кумулятивный']
+} as const
+
 export const customBattleModes = {
   'normalAny': { title: 'Обычный режим', mode: 'REGULAR' },
   'normalCft': { title: 'Обычный (Стандартный)', mode: 'REGULAR', gameplay: 'ctf' },

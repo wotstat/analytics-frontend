@@ -147,12 +147,13 @@
 <script lang="ts" setup>
 import { query, queryAsync, queryAsyncFirst } from '@/db';
 import { computed, onMounted, ref, shallowRef, watch, watchEffect } from 'vue';
-import { wotinspectorURL } from '@/utils/wot';
+import { shellNames, wotinspectorURL } from '@/utils/wot';
 import { aranaMinimapUrl, getArenaID } from '@/utils/arenas';
 import { computedAsync, debouncedRef, useDraggable, useMediaQuery } from '@vueuse/core';
 import { useRoute, useRouter } from 'vue-router';
 import { sec2minsec } from '@/utils';
 import InfoTable from "./InfoTable.vue";
+import { getArenaName } from '@/utils/i18n';
 
 type UInt128 = string;
 type DateTime64 = string;
@@ -261,7 +262,7 @@ type Shot = {
 
 const firstTable = (s: Shot) => [
   ['Танк', s.tankTag],
-  ['Карта', s.arenaTag],
+  ['Карта', getArenaName(s.arenaTag.split('spaces/')[1] + '/name').value],
   ['Пушка', s.gunTag],
   ['Калибр', s.shellCaliber],
   ['Разброс орудия', (s.battleDispersion * 100).toFixed(2)],
@@ -271,7 +272,7 @@ const firstTable = (s: Shot) => [
 ]
 
 const secondTable = (s: Shot) => [
-  ['Тип снаряда', s.shellTag],
+  ['Тип снаряда', (shellNames as any)[s.shellTag][1]],
   ['Урон', s.shellDamage],
   ['Пробитие', s.shellPiercingPower],
   ['Скорость снаряда', s.shellSpeed],
