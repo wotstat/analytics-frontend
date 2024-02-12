@@ -78,7 +78,7 @@ import { computed, ref, watch, watchEffect } from "vue";
 import { useElementVisibility, useMouseInElement } from "@vueuse/core";
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 import PopupWindow from "@/components/PopupWindow.vue";
-import ShotInfo from "@/components/widgets/ShotInfo.vue";
+import ShotInfo from "@/components/widgets/ShotInfo/Index.vue";
 import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
