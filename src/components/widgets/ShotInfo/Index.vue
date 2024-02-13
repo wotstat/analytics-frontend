@@ -17,7 +17,7 @@
           </div>
           <img class="border" src="/minimap_b4.png" alt="">
 
-          <div class="overlay-container">
+          <div class="overlay-container" v-if="arenaMeta">
 
             <MinimapOverlays v-if="arenaTag && selectedShoot" :arenaTag="arenaTag"
               :gameplay="selectedShoot.battleGameplay" :allyTeam="selectedShoot.team" />
@@ -141,19 +141,19 @@
     </div>
     <hr>
     <div>
-      <p :class="wotInspectorUrl ? '' : 'inactive'"><a v-if="wotInspectorUrl" :href="wotInspectorUrl"
-          target="_blank">Посмотреть</a> <span v-else>Посмотреть</span>
+      <p :class="wotInspectorUrl ? '' : 'inactive'"><a v-if="wotInspectorUrl" :href="wotInspectorUrl" target="_blank"
+          @click="wotinspectorClick()">Посмотреть</a> <span v-else>Посмотреть</span>
         прямое попадение на сервисе WotInspector </p>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { query, queryAsync, queryAsyncFirst } from '@/db';
-import { computed, onMounted, ref, shallowRef, watch, watchEffect } from 'vue';
-import { shellNames, wotinspectorURL } from '@/utils/wot';
-import { ArenaMeta, aranaMinimapUrl, convertCoordinate, getArenaID, loadArenaMeta } from '@/utils/arenas';
-import { computedAsync, debouncedRef, useDraggable, useMediaQuery } from '@vueuse/core';
+import { query } from '@/db';
+import { computed, onMounted, ref, shallowRef, watch } from 'vue';
+import { shellNames, wotinspectorURL, wotinspectorLog } from '@/utils/wot';
+import { aranaMinimapUrl, convertCoordinate, loadArenaMeta } from '@/utils/arenas';
+import { computedAsync, useDraggable, useMediaQuery } from '@vueuse/core';
 import { useRoute, useRouter } from 'vue-router';
 import { sec2minsec } from '@/utils';
 import InfoTable from "./InfoTable.vue";
@@ -353,7 +353,7 @@ onMounted(async () => {
 
 const arenaMeta = computedAsync(async () => arenaTag.value ? await loadArenaMeta(arenaTag.value) : null);
 
-const wotInspectorUrl = computed(() => {
+function getWotinspectorParams() {
   if (selectedShoot.value == null) return null;
 
   const r = selectedShoot.value
@@ -370,22 +370,36 @@ const wotInspectorUrl = computed(() => {
     Math.pow(gunPoint.z - hitPoint.z, 2)
   );
 
-  return wotinspectorURL({
-    vehicle: r.vehicleDescr,
-    chassis: r.chassisDescr,
-    turret: r.turretDescr,
-    gun: r.gunDescr,
-    shell: r.shellDescr,
-  }, {
-    vehicle: r.hitVehicleDescr,
-    chassis: r.hitChassisDescr,
-    turret: r.hitTurretDescr,
-    gun: r.hitGunDescr,
-    turretYaw: -r.hitTurretPitch,
-    turretPitch: r.hitTurretYaw,
-    segment: r.hitSegment,
-  }, distance);
+  return {
+    tank: {
+      vehicle: r.vehicleDescr,
+      chassis: r.chassisDescr,
+      turret: r.turretDescr,
+      gun: r.gunDescr,
+      shell: r.shellDescr,
+    }, target: {
+      vehicle: r.hitVehicleDescr,
+      chassis: r.hitChassisDescr,
+      turret: r.hitTurretDescr,
+      gun: r.hitGunDescr,
+      turretYaw: -r.hitTurretPitch,
+      turretPitch: r.hitTurretYaw,
+      segment: r.hitSegment,
+    }, distance, isWOT: r.region != 'RU'
+  };
+}
+
+const wotInspectorUrl = computed(() => {
+  const params = getWotinspectorParams();
+  if (!params) return null;
+  return wotinspectorURL(params.tank, params.target, params.distance, params.isWOT);
 })
+
+function wotinspectorClick() {
+  const params = getWotinspectorParams();
+  if (!params) return;
+  wotinspectorLog(params.tank, params.target, params.distance, params.isWOT);
+}
 
 const hitPoint = computed(() => {
   if (selectedShoot.value == null) return null;

@@ -185,6 +185,61 @@
 
         <div class="feature left">
           <div class="feature-description">
+            <h3>Анализ сетапа</h3>
+            <p>Просматривайте как часто вы попадаете в топ команды, а как часто в низ</p>
+            <p>Показывает выше расположение в сетапе по одноуровневым, двухуровневым и трёхуровым боям</p>
+          </div>
+          <div class="image">
+            <div class="card map">
+              <table class="hover-highlight">
+                <thead>
+                  <tr>
+                    <th>Место</th>
+                    <th>Процент боёв</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Топ</td>
+                    <td class="text-effect green">63.3%</td>
+                  </tr>
+                  <tr>
+                    <td>Середина</td>
+                    <td class="text-effect orange">26.2%</td>
+                  </tr>
+                  <tr>
+                    <td>Дно</td>
+                    <td class="text-effect red">10.5%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="feature right">
+          <div class="feature-description">
+            <h3>Медианные показатели</h3>
+            <p>Медианные, средние, максимальные, 30% и 70% <a href="https://ru.wikipedia.org/wiki/Квантиль"
+                target="_blank" rel="noopener noreferrer">квантиль</a> по 10 метрикам. Урон, насвет, выстрелов, попаданий
+              и другие</p>
+            <p>На примере справа <b>медианные показаители</b> на 10 уровнях, это означает, что в <b>половине боёв</b>
+              результаты были
+              хуже указанных</p>
+          </div>
+
+          <div class="image">
+            <div class="card">
+              <GenericInfo :value="medianResults.medDamage" description="Медианный урон" color="green" />
+            </div>
+            <div class="card">
+              <GenericInfo :value="medianResults.medMileage" description="Медианная дистанция" color="orange" />
+            </div>
+          </div>
+        </div>
+
+        <div class="feature left">
+          <div class="feature-description">
             <h3>Анализ стримснайперов</h3>
             <p>Особенно полезно для стримеров</p>
             <p>Мод запоминает ники всех игроков после каждого боя, позволяя выявить тех, кто слишком часто попадается в
@@ -420,7 +475,7 @@ select arenaTag,
        round(avg(personal.damageAssistedRadio)) as assist,
        round(avg(personal.kills), 1) as kills
 from Event_OnBattleResult
-where tankLevel = 10
+where tankLevel > 8
 group by arenaTag
 order by count desc
 limit 5;
@@ -440,6 +495,10 @@ const maps = [
   ['Студзянки', 4, 2589, 3344],
   ['Линия Зигфрида', 2, 2411, 6718],
 ]
+
+// MEDIAN
+
+const medianResults = queryAsyncFirst(`select median(personal.damageDealt) as medDamage, median(personal.mileage) as medMileage from Event_OnBattleResult where tankLevel = 10`, { medDamage: 0, medMileage: 0 });
 
 
 </script>
