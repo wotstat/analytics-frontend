@@ -42,9 +42,33 @@ type VehicleHit = {
   segment: string
 }
 
+export function wotinspectorLog(vehicle: VehicleDescriptor & { shell: number },
+  hitVehicle: VehicleDescriptor & VehicleHit,
+  hitDistance: number, isWOT: boolean = false) {
+  console.debug(`
+ATTACKER:
+    vehicle: ${vehicle.vehicle}
+    chassis: ${vehicle.chassis}
+    gun: ${vehicle.gun}
+    shell: ${vehicle.shell}
+    turret: ${vehicle.turret}
+
+TARGET:
+    vehicle: ${hitVehicle.vehicle}
+    chassis: ${hitVehicle.chassis}
+    gun: ${hitVehicle.gun}
+    segment: ${hitVehicle.segment}
+    turret: ${hitVehicle.turret}
+    turretPitch: ${hitVehicle.turretPitch}
+    turretYaw: ${hitVehicle.turretYaw}
+    distance: ${hitDistance}
+
+URL: ${wotinspectorURL(vehicle, hitVehicle, hitDistance, isWOT)}
+  `);
+}
 export function wotinspectorURL(vehicle: VehicleDescriptor & { shell: number },
   hitVehicle: VehicleDescriptor & VehicleHit,
-  hitDistance: number) {
+  hitDistance: number, isWOT: boolean = false) {
   const dataLen = /*version*/ 1 + /*platform*/ +1 + /*shooter*/ 2 + 2 + 2 + 2 + 2 + /*target*/ 2 + 2 + 2 + 2 + /*gun yaw/pitch*/ 4 + 4 + /*segment*/ 8 + /*distance*/ 4
   const buffer = new Uint8Array(dataLen)
   const view = new DataView(buffer.buffer)
@@ -67,5 +91,5 @@ export function wotinspectorURL(vehicle: VehicleDescriptor & { shell: number },
   view.setBigUint64(28, BigInt(hitVehicle.segment), true)
   view.setFloat32(36, hitDistance, true)
 
-  return "https://armor.wotinspector.com/ru/pc?data=" + encodeURIComponent(btoa(String.fromCharCode.apply(null, Array.from(buffer))));
+  return `https://armor.wotinspector.com/ru/${isWOT ? 'pc' : 'mirtankov'}?data=${encodeURIComponent(btoa(String.fromCharCode.apply(null, Array.from(buffer))))}`;
 }

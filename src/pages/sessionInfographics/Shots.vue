@@ -5,7 +5,8 @@
     </div>
     <div class="flex hor main">
       <div class="card circle">
-        <ShotsCircle :params="params" :mask-radius="maskRadius" @on-click-shot="onClickShot" :allow-hover="true" />
+        <ShotsCircle :params="params" :limit-shot="50000" :mask-radius="maskRadius" @on-click-shot="onClickShot"
+          :allow-hover="true" />
         <div class="legend">
           <p><span class="mini-circle green">•</span> – промахи</p>
           <p><span class="mini-circle red">•</span> – попадания</p>

@@ -22,6 +22,7 @@ import { query } from "@/db";
 import { BloomColor } from "../bloomColors";
 import { StatParams, whereClause } from "@/composition/useQueryStatParams";
 
+const COUNT_TO_SMALL_SIZE = 3000;
 const LOAD_COUNT = 1000;
 const RENDER_COUNT = 20;
 const HOVER_RADIUS = 0.02;
@@ -40,7 +41,7 @@ const quadTree = new Quadtree({
   y: -1,
   width: 2,
   height: 2,
-  maxLevels: 20,
+  maxLevels: 5,
 });
 
 const props = defineProps<{
@@ -58,7 +59,7 @@ const emit = defineEmits<{
 
 const radius = computed(() => Math.min(widthRef.value, heightRef.value) / 2 - 1);
 let timeoutHandler: ReturnType<typeof setTimeout> | null = null;
-let totalCount = props.limitShot ?? -1;
+let totalCount = -1;
 
 const renderShotsDebounce = useDebounceFn(() => {
   startDrawProcess();
@@ -133,6 +134,10 @@ async function loadNextBatch() {
   loading = false;
 }
 
+function lerp(from: number, to: number, from2: number, to2: number, value: number) {
+  return (value - from2) / (to2 - from2) * (to - from) + from;
+}
+
 async function startDrawProcess() {
   if (timeoutHandler) clearTimeout(timeoutHandler);
 
@@ -146,13 +151,14 @@ async function startDrawProcess() {
 
     const [countResult, _] = await Promise.all([count, loadFirstBatch])
 
-    totalCount = countResult.data[0].count;
+    totalCount = Math.min(countResult.data[0].count, props.limitShot ?? 100000);
   }
 
   let currentCount = 0;
   const r = radius.value
-  const pointRadius = totalCount > 10000 ? r / 300 : r / 150;
-  const renderCount = props.drawCount ?? RENDER_COUNT * (totalCount > 10000 ? 2 : 1);
+  const d = Math.min(500, Math.max(150, lerp(150, 500, 500, 20000, totalCount)));
+  const pointRadius = r / d;
+  const renderCount = props.drawCount ?? RENDER_COUNT * (totalCount > COUNT_TO_SMALL_SIZE ? 2 : 1);
 
   function draw() {
     let countToDraw = props.drawCount ?? renderCount;

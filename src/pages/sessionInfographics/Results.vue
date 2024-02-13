@@ -53,13 +53,19 @@
     </div>
 
     <div class="flex hor">
-      <select class="h4" v-model="infoVariant">
-        <option value="avg">Средние показатели</option>
-        <option value="max">Максимальные показатели</option>
-        <option value="q3">Квантиль 30</option>
-        <option value="med">Медианные показатели</option>
-        <option value="q7">Квантиль 70</option>
-      </select>
+      <div class="select-container">
+        <svg viewBox="0 0 65 64" class="dropdown-arrow">
+          <path id="Vector 1 (Stroke)" fill-rule="evenodd"
+            d="M5.084 20.305a5 5 0 0 1 7.02-.851L31.02 34.276l18.915-14.822a5 5 0 1 1 6.168 7.871l-22 17.24a5 5 0 0 1-6.167 0l-22-17.24a5 5 0 0 1-.852-7.02Z" />
+        </svg>
+        <select class="h4" v-model="infoVariant" ref="variantSelector">
+          <option value="avg">Средние показатели</option>
+          <option value="max">Максимальные показатели</option>
+          <option value="q3">Квантиль 30</option>
+          <option value="med">Медианные показатели</option>
+          <option value="q7">Квантиль 70</option>
+        </select>
+      </div>
     </div>
     <p v-if="infoVariant == 'med'">В половине боёв показатели были меньше</p>
     <p v-else-if="infoVariant == 'q3'">В 30% боёв показатели были меньше</p>
@@ -157,6 +163,8 @@ import PlayerResultTable from "@/components/widgets/PlayerResultTable.vue";
 import { usePercentProcessor, useFixedProcessor } from '@/composition/usePercentProcessor';
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 import TeamLevelTable from '@/components/widgets/TeamLevelTable.vue';
+
+const variantSelector = ref<HTMLSelectElement | null>(null);
 
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
@@ -300,15 +308,26 @@ h4 {
   margin: 10px 0 0 0;
 }
 
-select.h4 {
-  margin: 10px 0 0 0;
-  border: none;
-  background: none;
-  font-weight: var(--medium-bold-weight);
-  color: inherit;
-  padding: 0;
-  font-size: 17px;
-  margin-left: -5px;
+.select-container {
+  select.h4 {
+    appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    background: none;
+    padding: 0;
+    margin: 0;
+    padding-left: 25px;
+    font-size: 17px;
+    font-weight: var(--medium-bold-weight);
+    color: inherit;
+  }
+
+  .dropdown-arrow {
+    pointer-events: none;
+    fill: var(--font-color);
+    height: 12px;
+    margin-right: -20px;
+  }
 }
 
 .grid-mini {
