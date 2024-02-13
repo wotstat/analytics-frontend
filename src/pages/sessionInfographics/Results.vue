@@ -32,48 +32,82 @@
       <PlayerResultTable :params="params" />
     </div>
 
-    <h4>Средние показатели</h4>
     <div class="grid-mini">
       <div class="card flex-1">
-        <GenericInfo :value="results.damage" description="Урон" color="yellow" />
+        <GenericInfo :value="results.hitPerShot" description="Попаданий/Выстрелов" color="green"
+          :processor="usePercentProcessor()" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="results.damageRadio" description="Насвет" color="yellow" />
+        <GenericInfo :value="results.piercingPerHit" description="Пробитий/Попаданий" color="green"
+          :processor="usePercentProcessor()" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="results.damageTrack" description="Ассист" color="yellow" />
+        <GenericInfo :value="results.DR" description="Коэф. урона" color="green" :processor="useFixedProcessor()" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="results.stunDuration" description="Время стана" color="yellow" />
+        <GenericInfo :value="results.KD" description="Коэф. уничтожения" color="green" :processor="useFixedProcessor()" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="results.spotted" description="Обнаруженных" color="yellow" />
+        <GenericInfo :value="results.TR" description="Коэф. исп. брони" color="green" :processor="useFixedProcessor()" />
+      </div>
+    </div>
+
+    <div class="flex hor">
+      <select class="h4" v-model="infoVariant">
+        <option value="avg">Средние показатели</option>
+        <option value="max">Максимальные показатели</option>
+        <option value="q3">Квантиль 30</option>
+        <option value="med">Медианные показатели</option>
+        <option value="q7">Квантиль 70</option>
+      </select>
+    </div>
+    <p v-if="infoVariant == 'med'">В половине боёв показатели были меньше</p>
+    <p v-else-if="infoVariant == 'q3'">В 30% боёв показатели были меньше</p>
+    <p v-else-if="infoVariant == 'q7'">В 30% боёв показатели были больше</p>
+    <!-- <h4>Средние показатели</h4> -->
+    <div class="grid-mini">
+      <div class="card flex-1">
+        <GenericInfo :value="getValue('damage')" description="Урон" color="yellow" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="results.damageBlacked" description="Натанкованно" color="yellow" />
+        <GenericInfo :value="getValue('damageRadio')" description="Насвет" color="yellow" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="results.shots" description="Выстрелов" color="yellow" />
+        <GenericInfo :value="getValue('damageTrack')" description="Ассист" color="yellow" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="results.hits" description="Попаданий" color="yellow" />
+        <GenericInfo :value="getValue('stunDuration')" description="Время стана" color="yellow" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="results.mileage" description="Дистанция" color="yellow" />
+        <GenericInfo :value="getValue('spotted')" :processor="useFixedProcessor(1)" description="Обнаруженных"
+          color="yellow" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="results.health" description="ХП остаётся" color="yellow" />
+        <GenericInfo :value="getValue('damageBlocked')" description="Натанкованно" color="yellow" />
+      </div>
+      <div class="card flex-1">
+        <GenericInfo :value="getValue('shots')" description="Выстрелов" color="yellow" />
+      </div>
+      <div class="card flex-1">
+        <GenericInfo :value="getValue('hits')" description="Попаданий" color="yellow" />
+      </div>
+      <div class="card flex-1">
+        <GenericInfo :value="getValue('mileage')" description="Дистанция" color="yellow" />
+      </div>
+      <div class="card flex-1">
+        <GenericInfo :value="getValue('health')" :processor="usePercentProcessor()" description="ХП остаётся"
+          color="yellow" />
       </div>
     </div>
 
     <div class="flex hor-ver-small">
       <div class="card flex-1">
-        <GenericInfo :value="[scoreData['win']?.avgTeam ?? 0, scoreData['win']?.avgOpponent ?? 0]"
-          description="Счёт при победе" color="green" :processor="t => `${Math.round(t[0])}:${Math.round(t[1])}`" />
+        <GenericInfo :value="teamScore(true)" description="Счёт при победе" color="green"
+          :processor="t => `${Math.round(t[0])}:${Math.round(t[1])}`" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="[scoreData['lose']?.avgTeam ?? 0, scoreData['lose']?.avgOpponent ?? 0]"
-          description="Счёт при поражении" color="red" :processor="t => `${Math.round(t[0])}:${Math.round(t[1])}`" />
+        <GenericInfo :value="teamScore(false)" description="Счёт при поражении" color="red"
+          :processor="t => `${Math.round(t[0])}:${Math.round(t[1])}`" />
       </div>
     </div>
 
@@ -116,11 +150,11 @@
 import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import MiniBar from '@/components/widgets/MiniBar.vue';
 import { queryAsync, queryAsyncFirst } from "@/db";
-import { useElementVisibility } from '@vueuse/core';
+import { useElementVisibility, useLocalStorage } from '@vueuse/core';
 import { computed, ref } from 'vue';
 import { toRelative, toPercent } from "@/utils";
 import PlayerResultTable from "@/components/widgets/PlayerResultTable.vue";
-import { usePercentProcessor } from '@/composition/usePercentProcessor';
+import { usePercentProcessor, useFixedProcessor } from '@/composition/usePercentProcessor';
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 import TeamLevelTable from '@/components/widgets/TeamLevelTable.vue';
 
@@ -130,23 +164,51 @@ const params = useQueryStatParams();
 
 const places = new Array(15).fill(0).map((_, i) => i + 1);
 
-const results = queryAsyncFirst(`
-select avg(personal.damageDealt)                 as damage,
-       avg(personal.damageAssistedRadio)         as damageRadio,
-       avg(personal.damageAssistedTrack)         as damageTrack,
-       avg(personal.stunDuration)                as stunDuration,
-       avg(personal.spotted)                     as spotted,
-       avg(personal.damageBlockedByArmor)        as damageBlacked,
-       avg(personal.shots)                       as shots,
-       avg(personal.directEnemyHits)             as hits,
+const infoVariant = useLocalStorage<'avg' | 'med' | 'max' | 'q3' | 'q7'>('infoResultsVariant', 'avg')
+
+
+const resultsList = [
+  ['personal.damageDealt', 'damage'],
+  ['personal.damageAssistedRadio', 'damageRadio'],
+  ['personal.damageAssistedTrack', 'damageTrack'],
+  ['personal.stunDuration', 'stunDuration'],
+  ['personal.spotted', 'spotted'],
+  ['personal.damageBlockedByArmor', 'damageBlocked'],
+  ['personal.shots', 'shots'],
+  ['personal.directEnemyHits', 'hits'],
+  ['personal.mileage', 'mileage'],
+  ['personal.health / personal.maxHealth', 'health']
+] as const
+
+const results = queryAsyncFirst(`select 
+      ${resultsList.map(t => `avg(${t[0]}) as avg_${t[1]}`).join(',\n')},
+      ${resultsList.map(t => `median(${t[0]}) as med_${t[1]}`).join(',\n')},
+      ${resultsList.map(t => `max(${t[0]}) as max_${t[1]}`).join(',\n')},
+      ${resultsList.map(t => `quantile(0.3)(${t[0]}) as q3_${t[1]}`).join(',\n')},
+      ${resultsList.map(t => `quantile(0.7)(${t[0]}) as q7_${t[1]}`).join(',\n')},
        avg(personal.piercingEnemyHits)           as piercingHits,
-       avg(personal.mileage)                     as mileage,
-       avg(personal.health / personal.maxHealth) as health,
-       toUInt32(count())                            as count
+       sum(personal.directEnemyHits)             as sumDirect,
+       sum(personal.shots)                       as sumShots,
+       sum(personal.piercingEnemyHits)           as sumPiercing,
+       sum(personal.damageDealt)                 as sumDealt,
+       sum(personal.maxHealth - personal.health) as sumReach,
+       sum(personal.kills)                       as sumKills,
+       sum(personal.damageBlockedByArmor)        as sumTank,
+       countIf(not personal.isAlive)             as sumDeath,
+       sumDirect / sumShots                      as hitPerShot,
+       sumPiercing / sumDirect                   as piercingPerHit,
+       sumDealt / sumReach                       as DR,
+       sumKills / sumDeath                       as KD,
+       sumTank / sumReach                        as TR,
+       toUInt32(count())                         as count
 from Event_OnBattleResult
 ${whereClause(params)};
-`, { count: 0, damage: 0, damageRadio: 0, damageTrack: 0, stunDuration: 0, spotted: 0, damageBlacked: 0, shots: 0, hits: 0, piercingHits: 0, mileage: 0, health: 0, },
-  visible);
+`, { count: 0, piercingHits: 0, piercingPerHit: 0, hitPerShot: 0, KD: 0, DR: 0, TR: 0 }, visible);
+
+function getValue(param: typeof resultsList[number][1]) {
+  if (!results.value) return 0;
+  return (results.value as any)[`${infoVariant.value}_${param}`] ?? 0;
+}
 
 const scoreResult = queryAsync<{
   result: 'win' | 'lose' | 'tie',
@@ -157,10 +219,16 @@ const scoreResult = queryAsync<{
   turbo: number,
 }>(`
 select result,
-       median(playerTeamFrags)   as medianTeam,
-       median(opponentTeamFrags) as medianOpponent,
+       median(playerTeamFrags)   as medTeam,
+       median(opponentTeamFrags) as medOpponent,
        avg(playerTeamFrags)      as avgTeam,
        avg(opponentTeamFrags)    as avgOpponent,
+       max(playerTeamFrags)      as maxTeam,
+       max(opponentTeamFrags)    as maxOpponent,
+       quantile(0.3)(playerTeamFrags)      as q3Team,
+       quantile(0.3)(opponentTeamFrags)    as q3Opponent,
+       quantile(0.7)(playerTeamFrags)      as q7Team,
+       quantile(0.7)(opponentTeamFrags)    as q7Opponent,
        toUInt32(countIf(duration < 5 * 60 and abs(opponentTeamFrags - playerTeamFrags) > 10)) as turbo
 from (select arrayZip(playersResults.isAlive, playersResults.team)          as aliveTeam,
              arrayFilter(t -> t.2 = playerTeam, aliveTeam)                  as playerTeamAliveList,
@@ -217,6 +285,11 @@ const playerKillDistribution = usePlayerDistribution('kills');
 
 const scoreData = computed(() => Object.fromEntries(scoreResult.value.map(r => [r.result, r])));
 const turboPercent = computed(() => results.value.count ? turboResult.value.count / results.value.count : 0);
+
+function teamScore(win: boolean) {
+  const t = scoreData.value[win ? 'win' : 'lose'] as any
+  return [t?.[`${infoVariant.value}Team`] ?? 0, t?.[`${infoVariant.value}Opponent`] ?? 0];
+}
 </script>
 
 
@@ -225,6 +298,17 @@ const turboPercent = computed(() => results.value.count ? turboResult.value.coun
 
 h4 {
   margin: 10px 0 0 0;
+}
+
+select.h4 {
+  margin: 10px 0 0 0;
+  border: none;
+  background: none;
+  font-weight: var(--medium-bold-weight);
+  color: inherit;
+  padding: 0;
+  font-size: 17px;
+  margin-left: -5px;
 }
 
 .grid-mini {

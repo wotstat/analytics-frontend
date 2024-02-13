@@ -21,7 +21,8 @@ export type StatParams = {
   } | {
     type: 'fromToNow',
     from: Date
-  }
+  },
+  battleId: string[] | null;
 };
 
 export function useQueryStatParams() {
@@ -34,6 +35,7 @@ export function useQueryStatParams() {
     types: null,
     tanks: null,
     battleMode: 'normalAny',
+    battleId: null
   }
 
   if ('nickname' in route.query) result.player = route.query.nickname as string;
@@ -69,7 +71,11 @@ export function useQueryStatParams() {
     result.tanks = splitted;
   }
 
-  if ('lastX' in route.query) {
+  if ('battleId' in route.query) {
+    const battleId = route.query.battleId as string;
+    const splitted = battleId.split(',');
+    result.battleId = splitted;
+  } else if ('lastX' in route.query) {
     const lastX = route.query.lastX as string;
     const count = parseInt(lastX);
     if (!isNaN(count)) {
@@ -107,12 +113,9 @@ function whereClauseArray(params: StatParams) {
   if (params.level) result.push(`tankLevel in (${params.level.join(', ')})`);
   if (params.types) result.push(`tankType in ('${params.types.join("', '")}')`);
   if (params.tanks) result.push(`tankTag in ('${params.tanks.join("', '")}')`);
-  if (params.battleMode !== 'any') {
+  if (params.battleId === null && params.battleMode !== 'any') {
     const t = customBattleModes[params.battleMode];
     if ('mode' in t) result.push(`battleMode = '${t.mode}'`);
-  }
-  if (params.battleMode !== 'any') {
-    const t = customBattleModes[params.battleMode];
     if ('gameplay' in t) result.push(`battleGameplay = '${t.gameplay}'`);
   }
   return result;
@@ -121,14 +124,17 @@ function whereClauseArray(params: StatParams) {
 export function whereClause(params: StatParams, { withWhere, isBattleStart }: Partial<{ withWhere: boolean, isBattleStart: boolean }> = { withWhere: true, isBattleStart: false }) {
   const result: string[] = whereClauseArray(params)
 
-  if (params.period !== 'allTime') {
+  if (params.battleId && params.battleId.length > 0) {
+    result.push(`${isBattleStart ? 'id' : 'onBattleStartId'} in (${params.battleId.map(t => `'${t}'`).join(', ')})`);
+  } else if (params.period !== 'allTime') {
     if (params.period.type == 'fromTo') {
       result.push(`id >= ${dateToDbIndex(params.period.from)}`);
       result.push(`id <= ${dateToDbIndex(params.period.to)}`);
     } else if (params.period.type == 'fromToNow') {
       result.push(`id >= ${dateToDbIndex(params.period.from)}`);
     } else if (params.period.type == 'lastX') {
-      const lastIDs = `(select id from Event_OnBattleStart where ${whereClauseArray(params).join(' AND ')} order by id desc limit ${params.period.count})`;
+      const whereClause = whereClauseArray(params);
+      const lastIDs = `(select id from Event_OnBattleStart ${whereClause.length == 0 ? '' : `where ${whereClause.join(' AND ')}`} order by id desc limit ${params.period.count})`;
       result.push(`${isBattleStart ? 'id' : 'onBattleStartId'} in ${lastIDs}`);
     }
   }

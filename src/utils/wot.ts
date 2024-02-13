@@ -1,30 +1,12 @@
-// export const battleGameplays = {
-//   'ctf': 'Стандартный бой',
-//   'domination': 'Встречный бой',
-//   'assault': 'Штурм',
-//   'nations': 'Противостояние',
-//   'ctf2': 'Завоевание',
-//   'assault2': 'Атака/Оборона',
-//   'fallout': '«Стальная охота»',
-//   'fallout2': '«Стальная охота» 2',
-//   'fallout3': '«Стальная охота» 3',
-//   'fallout4': '«Превосходство»',
-//   'ctf30x30': 'Генеральное сражение',
-//   'domination30x30': 'Ген. ражение встречка',
-//   'epic': 'Линия фронта',
-//   'comp7': 'Натиск'
-// } as const
 
-// export const battleGameplaysKeys = Object.keys(battleGameplays) as (keyof typeof battleGameplays)[];
-
-// export const battleModes = {
-//   'REGULAR': 'Обычный режим',
-//   'RANKED': 'Ранги',
-//   'MAPS_TRAINING': 'Топография',
-//   'EPIC_RANDOM': 'Линия фронта',
-// } as const
-
-// export const battleModesKeys = Object.keys(battleModes) as (keyof typeof battleModes)[];
+export const shellNames = {
+  'ARMOR_PIERCING': ['ББ', 'Бронебойный'],
+  'ARMOR_PIERCING_CR': ['БП', 'Подкалиберный'],
+  // 'ARMOR_PIERCING_HE': ['БК', 'Бронебойный каморный'],
+  'FLAME': ['ОС', 'Огнемётная смесь'],
+  'HIGH_EXPLOSIVE': ['ОФ', 'Осколочно-фугасный'],
+  'HOLLOW_CHARGE': ['КС', 'Кумулятивный']
+} as const
 
 export const customBattleModes = {
   'normalAny': { title: 'Обычный режим', mode: 'REGULAR' },
@@ -46,3 +28,44 @@ export const modeCount = {
 } as const
 
 export const customBattleModesKeys = Object.keys(customBattleModes) as (keyof typeof customBattleModes)[];
+
+type VehicleDescriptor = {
+  vehicle: number,
+  chassis: number,
+  turret: number,
+  gun: number,
+}
+
+type VehicleHit = {
+  turretPitch: number,
+  turretYaw: number,
+  segment: string
+}
+
+export function wotinspectorURL(vehicle: VehicleDescriptor & { shell: number },
+  hitVehicle: VehicleDescriptor & VehicleHit,
+  hitDistance: number) {
+  const dataLen = /*version*/ 1 + /*platform*/ +1 + /*shooter*/ 2 + 2 + 2 + 2 + 2 + /*target*/ 2 + 2 + 2 + 2 + /*gun yaw/pitch*/ 4 + 4 + /*segment*/ 8 + /*distance*/ 4
+  const buffer = new Uint8Array(dataLen)
+  const view = new DataView(buffer.buffer)
+  view.setUint8(0, 1)
+  view.setUint8(1, 0)
+  view.setUint16(2, vehicle.vehicle, true)
+  view.setUint16(4, vehicle.chassis, true)
+  view.setUint16(6, vehicle.turret, true)
+  view.setUint16(8, vehicle.gun, true)
+  view.setUint16(10, vehicle.shell, true)
+
+  view.setUint16(12, hitVehicle.vehicle, true)
+  view.setUint16(14, hitVehicle.chassis, true)
+  view.setUint16(16, hitVehicle.turret, true)
+  view.setUint16(18, hitVehicle.gun, true)
+
+  view.setFloat32(20, hitVehicle.turretPitch, true)
+  view.setFloat32(24, hitVehicle.turretYaw, true)
+
+  view.setBigUint64(28, BigInt(hitVehicle.segment), true)
+  view.setFloat32(36, hitDistance, true)
+
+  return "https://armor.wotinspector.com/ru/pc?data=" + encodeURIComponent(btoa(String.fromCharCode.apply(null, Array.from(buffer))));
+}
