@@ -17,7 +17,7 @@
           </div>
           <img class="border" src="/minimap_b4.png" alt="">
 
-          <div class="overlay-container">
+          <div class="overlay-container" v-if="arenaMeta">
 
             <MinimapOverlays v-if="arenaTag && selectedShoot" :arenaTag="arenaTag"
               :gameplay="selectedShoot.battleGameplay" :allyTeam="selectedShoot.team" />
