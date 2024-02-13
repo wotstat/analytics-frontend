@@ -41,7 +41,7 @@ const quadTree = new Quadtree({
   y: -1,
   width: 2,
   height: 2,
-  maxLevels: 2,
+  maxLevels: 5,
 });
 
 const props = defineProps<{
@@ -134,6 +134,10 @@ async function loadNextBatch() {
   loading = false;
 }
 
+function lerp(from: number, to: number, from2: number, to2: number, value: number) {
+  return (value - from2) / (to2 - from2) * (to - from) + from;
+}
+
 async function startDrawProcess() {
   if (timeoutHandler) clearTimeout(timeoutHandler);
 
@@ -152,7 +156,8 @@ async function startDrawProcess() {
 
   let currentCount = 0;
   const r = radius.value
-  const pointRadius = totalCount > COUNT_TO_SMALL_SIZE ? r / 300 : r / 150;
+  const d = Math.min(500, Math.max(150, lerp(150, 500, 500, 20000, totalCount)));
+  const pointRadius = r / d;
   const renderCount = props.drawCount ?? RENDER_COUNT * (totalCount > COUNT_TO_SMALL_SIZE ? 2 : 1);
 
   function draw() {
