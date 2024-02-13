@@ -102,12 +102,12 @@
 
     <div class="flex hor-ver-small">
       <div class="card flex-1">
-        <GenericInfo :value="[scoreData['win']?.avgTeam ?? 0, scoreData['win']?.avgOpponent ?? 0]"
-          description="Счёт при победе" color="green" :processor="t => `${Math.round(t[0])}:${Math.round(t[1])}`" />
+        <GenericInfo :value="teamScore(true)" description="Счёт при победе" color="green"
+          :processor="t => `${Math.round(t[0])}:${Math.round(t[1])}`" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="[scoreData['lose']?.avgTeam ?? 0, scoreData['lose']?.avgOpponent ?? 0]"
-          description="Счёт при поражении" color="red" :processor="t => `${Math.round(t[0])}:${Math.round(t[1])}`" />
+        <GenericInfo :value="teamScore(false)" description="Счёт при поражении" color="red"
+          :processor="t => `${Math.round(t[0])}:${Math.round(t[1])}`" />
       </div>
     </div>
 
@@ -203,10 +203,7 @@ const results = queryAsyncFirst(`select
        toUInt32(count())                         as count
 from Event_OnBattleResult
 ${whereClause(params)};
-`, {
-  count: 0, piercingHits: 0, piercingPerHit: 0, hitPerShot: 0, KD: 0, DR: 0, TR: 0
-},
-  visible);
+`, { count: 0, piercingHits: 0, piercingPerHit: 0, hitPerShot: 0, KD: 0, DR: 0, TR: 0 }, visible);
 
 function getValue(param: typeof resultsList[number][1]) {
   if (!results.value) return 0;
@@ -222,10 +219,16 @@ const scoreResult = queryAsync<{
   turbo: number,
 }>(`
 select result,
-       median(playerTeamFrags)   as medianTeam,
-       median(opponentTeamFrags) as medianOpponent,
+       median(playerTeamFrags)   as medTeam,
+       median(opponentTeamFrags) as medOpponent,
        avg(playerTeamFrags)      as avgTeam,
        avg(opponentTeamFrags)    as avgOpponent,
+       max(playerTeamFrags)      as maxTeam,
+       max(opponentTeamFrags)    as maxOpponent,
+       quantile(0.3)(playerTeamFrags)      as q3Team,
+       quantile(0.3)(opponentTeamFrags)    as q3Opponent,
+       quantile(0.7)(playerTeamFrags)      as q7Team,
+       quantile(0.7)(opponentTeamFrags)    as q7Opponent,
        toUInt32(countIf(duration < 5 * 60 and abs(opponentTeamFrags - playerTeamFrags) > 10)) as turbo
 from (select arrayZip(playersResults.isAlive, playersResults.team)          as aliveTeam,
              arrayFilter(t -> t.2 = playerTeam, aliveTeam)                  as playerTeamAliveList,
@@ -282,6 +285,11 @@ const playerKillDistribution = usePlayerDistribution('kills');
 
 const scoreData = computed(() => Object.fromEntries(scoreResult.value.map(r => [r.result, r])));
 const turboPercent = computed(() => results.value.count ? turboResult.value.count / results.value.count : 0);
+
+function teamScore(win: boolean) {
+  const t = scoreData.value[win ? 'win' : 'lose'] as any
+  return [t?.[`${infoVariant.value}Team`] ?? 0, t?.[`${infoVariant.value}Opponent`] ?? 0];
+}
 </script>
 
 
