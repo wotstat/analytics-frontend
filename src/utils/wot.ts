@@ -42,6 +42,30 @@ type VehicleHit = {
   segment: string
 }
 
+export function wotinspectorLog(vehicle: VehicleDescriptor & { shell: number },
+  hitVehicle: VehicleDescriptor & VehicleHit,
+  hitDistance: number) {
+  console.debug(`
+ATTACKER:
+    vehicle: ${vehicle.vehicle}
+    chassis: ${vehicle.chassis}
+    gun: ${vehicle.gun}
+    shell: ${vehicle.shell}
+    turret: ${vehicle.turret}
+
+TARGET:
+    vehicle: ${hitVehicle.vehicle}
+    chassis: ${hitVehicle.chassis}
+    gun: ${hitVehicle.gun}
+    segment: ${hitVehicle.segment}
+    turret: ${hitVehicle.turret}
+    turretPitch: ${hitVehicle.turretPitch}
+    turretYaw: ${hitVehicle.turretYaw}
+    distance: ${hitDistance}
+
+URL: ${wotinspectorURL(vehicle, hitVehicle, hitDistance)}
+  `);
+}
 export function wotinspectorURL(vehicle: VehicleDescriptor & { shell: number },
   hitVehicle: VehicleDescriptor & VehicleHit,
   hitDistance: number) {
