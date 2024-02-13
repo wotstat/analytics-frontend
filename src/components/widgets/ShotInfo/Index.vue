@@ -385,20 +385,20 @@ function getWotinspectorParams() {
       turretYaw: -r.hitTurretPitch,
       turretPitch: r.hitTurretYaw,
       segment: r.hitSegment,
-    }, distance
+    }, distance, isWOT: r.region != 'RU'
   };
 }
 
 const wotInspectorUrl = computed(() => {
   const params = getWotinspectorParams();
   if (!params) return null;
-  return wotinspectorURL(params.tank, params.target, params.distance);
+  return wotinspectorURL(params.tank, params.target, params.distance, params.isWOT);
 })
 
 function wotinspectorClick() {
   const params = getWotinspectorParams();
   if (!params) return;
-  wotinspectorLog(params.tank, params.target, params.distance);
+  wotinspectorLog(params.tank, params.target, params.distance, params.isWOT);
 }
 
 const hitPoint = computed(() => {
