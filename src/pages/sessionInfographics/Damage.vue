@@ -89,17 +89,9 @@ import StillSurviveDistribution from "@/components/widgets/StillSurviveDistribut
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 import { toRelative, toPercent } from "@/utils";
 import { usePercentProcessor } from '@/composition/usePercentProcessor';
+import { shellNames } from '@/utils/wot';
 
 const params = useQueryStatParams()
-
-const shellNames = {
-  'ARMOR_PIERCING': ['ББ', 'Бронебойный'],
-  'ARMOR_PIERCING_CR': ['БП', 'Подкалиберный'],
-  // 'ARMOR_PIERCING_HE': ['БК', 'Бронебойный каморный'],
-  'FLAME': ['ОС', 'Огнемётная смесь'],
-  'HIGH_EXPLOSIVE': ['ОФ', 'Осколочно-фугасный'],
-  'HOLLOW_CHARGE': ['КС', 'Кумулятивный']
-}
 
 const shellLabels = Object.values(shellNames).map(t => t[0])
 const shellFullNames = Object.values(shellNames).map(t => t[1])

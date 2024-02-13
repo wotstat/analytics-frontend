@@ -5,7 +5,7 @@
     </div>
     <div class="flex hor main">
       <div class="card circle">
-        <ShotsCircle :params="params" :mask-radius="maskRadius" />
+        <ShotsCircle :params="params" :mask-radius="maskRadius" @on-click-shot="onClickShot" :allow-hover="true" />
         <div class="legend">
           <p><span class="mini-circle green">•</span> – промахи</p>
           <p><span class="mini-circle red">•</span> – попадания</p>
@@ -61,6 +61,10 @@
           :processor="usePercentProcessor()" />
       </div>
     </div>
+
+    <PopupWindow v-if="selectedShot" @close="closeShotInfo" :title="'Информация о выстреле'">
+      <ShotInfo :shotID="selectedShot" />
+    </PopupWindow>
   </div>
 </template>
 
@@ -73,6 +77,12 @@ import { queryAsyncFirst } from "@/db";
 import { computed, ref, watch, watchEffect } from "vue";
 import { useElementVisibility, useMouseInElement } from "@vueuse/core";
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
+import PopupWindow from "@/components/PopupWindow.vue";
+import ShotInfo from "@/components/widgets/ShotInfo/Index.vue";
+import { useRoute, useRouter } from "vue-router";
+
+const route = useRoute();
+const router = useRouter();
 
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
@@ -87,16 +97,13 @@ const { isOutside: isOutside30 } = useMouseInElement(percent30)
 const shotDistribution = ref<HTMLElement | null>(null);
 const { isOutside } = useMouseInElement(shotDistribution)
 
-// watch(isOutside, (value) => { if (value) hoverProgress(1) })
-// watch(isOutside50, (value) => hoverProgress(value ? 1 : 0.5))
-// watch(isOutside30, (value) => hoverProgress(value ? 1 : 0.3333))
-
 const chartHoverProgress = ref(1);
 const hoverProgress = (progress: number) => {
   chartHoverProgress.value = progress;
 }
 
 const maskRadius = computed(() => {
+  if (selectedShot.value) return 1
   if (!isOutside.value) return chartHoverProgress.value;
   if (!isOutside50.value) return 0.5;
   if (!isOutside30.value) return 0.3333;
@@ -118,6 +125,16 @@ select toUInt32(count())                                                        
 from Event_OnShot
 ${whereClause(params)}
 `, { count: 0, hit: 0, damaged: 0, first50: 0, first30: 0, full: 0, stopped: 0, dist300: 0 }, visible)
+
+const selectedShot = computed(() => route.query.shot as string | undefined);
+
+function onClickShot(shot: string) {
+  router.push({ query: { ...route.query, shot } });
+}
+
+function closeShotInfo() {
+  router.push({ query: { ...route.query, shot: undefined } });
+}
 
 </script>
 

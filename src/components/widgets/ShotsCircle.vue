@@ -1,9 +1,13 @@
 <template>
-  <div class="shot-container">
+  <div class="shot-container" ref="container" :style="{ cursor: highlighted ? 'pointer' : '' }" @click="onClick">
     <CanvasVue @redraw="redraw" ref="canvasRef" />
     <svg v-if="maskRadius && maskRadius < 0.99">
       <path :d="maskPath" />
       <circle cx="50%" cy="50%" :r="`${(props.maskRadius ?? 1) / 2 * 100}%`" />
+    </svg>
+
+    <svg v-if="highlighted">
+      <circle class="highlight" :cx="highlighted.x * 100 + '%'" :cy="highlighted.y * 100 + '%'" r="3px" />
     </svg>
   </div>
 </template>
@@ -11,31 +15,50 @@
 <script setup lang="ts">
 import CanvasVue from "@/components/Canvas.vue";
 import { computed, ref, shallowRef } from "vue";
+import { Quadtree, Circle } from '@timohausmann/quadtree-ts';
 
-import { useDebounceFn } from '@vueuse/core'
+import { useDebounceFn, useMouseInElement } from '@vueuse/core'
 import { query } from "@/db";
 import { BloomColor } from "../bloomColors";
 import { StatParams, whereClause } from "@/composition/useQueryStatParams";
 
 const LOAD_COUNT = 1000;
 const RENDER_COUNT = 20;
+const HOVER_RADIUS = 0.02;
+const MOBILE_HOVER_RADIUS = 0.15;
 
+const container = ref<HTMLElement | null>(null);
 const canvasRef = ref<InstanceType<typeof CanvasVue> | null>(null);
 const ctxRef = shallowRef<CanvasRenderingContext2D | null>(null);
+const { elementX, elementY, elementHeight, elementWidth, isOutside } = useMouseInElement(container)
+
 const widthRef = ref(0);
 const heightRef = ref(0);
+
+const quadTree = new Quadtree({
+  x: -1,
+  y: -1,
+  width: 2,
+  height: 2,
+  maxLevels: 20,
+});
 
 const props = defineProps<{
   limitShot?: number,
   drawDelay?: number,
   drawCount?: number,
   maskRadius?: number,
-  params?: StatParams
+  params?: StatParams,
+  allowHover?: boolean,
+}>()
+
+const emit = defineEmits<{
+  onClickShot: [id: string]
 }>()
 
 const radius = computed(() => Math.min(widthRef.value, heightRef.value) / 2 - 1);
 let timeoutHandler: ReturnType<typeof setTimeout> | null = null;
-let totalCount = -1;
+let totalCount = props.limitShot ?? -1;
 
 const renderShotsDebounce = useDebounceFn(() => {
   startDrawProcess();
@@ -88,14 +111,25 @@ async function loadNextBatch() {
       limit ${LOAD_COUNT} 
       offset ${shotsData.length};`)
 
-  shotsData.push(...result.data.map(row => ({
+  const toAdd = result.data.map(row => ({
     id: row.id,
     x: row.r * Math.cos(row.theta),
     y: row.r * Math.sin(row.theta),
     hit: row.hit == 1,
-  })));
+  }));
 
-  loadingFinished = result.data.length < LOAD_COUNT || (props.limitShot != null && LOAD_COUNT * shotsData.length > props.limitShot);
+  shotsData.push(...toAdd);
+
+  const circles = toAdd.map(p => new Circle({
+    x: p.x,
+    y: p.y,
+    r: 0.001,
+    data: p.id
+  }))
+
+  for (const circle of circles) quadTree.insert(circle)
+
+  loadingFinished = result.data.length < LOAD_COUNT || (props.limitShot != null && LOAD_COUNT + shotsData.length > props.limitShot);
   loading = false;
 }
 
@@ -112,9 +146,7 @@ async function startDrawProcess() {
 
     const [countResult, _] = await Promise.all([count, loadFirstBatch])
 
-    const dbCount = countResult.data[0].count;
-
-    totalCount = Math.min(dbCount, props.limitShot ?? dbCount);
+    totalCount = countResult.data[0].count;
   }
 
   let currentCount = 0;
@@ -168,6 +200,52 @@ const maskPath = computed(() => {
    Z`
 })
 
+
+function isMobile() {
+  return navigator.maxTouchPoints > 0;
+}
+
+const highlighted = computed(() => {
+  if (!props.allowHover) return;
+  if (isOutside.value) return;
+
+  const x = elementX.value / elementWidth.value * 2 - 1;
+  const y = elementY.value / elementHeight.value * 2 - 1;
+
+  const radius = isMobile() ? MOBILE_HOVER_RADIUS : HOVER_RADIUS;
+
+  const res = quadTree.retrieve(new Circle({
+    x, y, r: radius,
+  })) as Circle<string>[];
+
+  if (res.length == 0) return;
+
+  let nearest = res[0]
+  let distance = (nearest.x - x) ** 2 + (nearest.y - y) ** 2
+  for (let i = 1; i < res.length; i++) {
+    const d = (res[i].x - x) ** 2 + (res[i].y - y) ** 2
+    if (d < distance) {
+      distance = d;
+      nearest = res[i];
+    }
+  }
+
+  if (Math.sqrt(distance) > radius) return
+
+  const SCALE_FIX_FACTOR = 0.996;
+  return {
+    x: (nearest.x * SCALE_FIX_FACTOR + 1) / 2,
+    y: (nearest.y * SCALE_FIX_FACTOR + 1) / 2,
+    id: nearest.data!
+  };
+})
+
+function onClick() {
+  if (highlighted.value) {
+    emit('onClickShot', highlighted.value.id)
+  }
+}
+
 </script>
 
 <style scoped lang="scss">
@@ -188,11 +266,20 @@ const maskPath = computed(() => {
       fill-opacity: 0.8;
     }
 
-    circle {
+    circle:not(.highlight) {
       fill: none;
       stroke: #e7ffde;
       filter: drop-shadow(0 0 10px #639e31);
       stroke-width: 1;
+    }
+
+    circle.highlight {
+      fill: #cdeafa;
+      // fill: none;
+      // stroke: #cdeafa;
+      filter: drop-shadow(0 0 5px #142de9);
+
+      // stroke-width: 1;
     }
   }
 }

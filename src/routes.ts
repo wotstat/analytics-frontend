@@ -16,6 +16,7 @@ export const router = createRouter({
   history: createWebHistory(),
   routes,
   scrollBehavior(to, from, savedPosition) {
+    if (to.path === from.path) return
     return { top: 0 }
   },
 })
