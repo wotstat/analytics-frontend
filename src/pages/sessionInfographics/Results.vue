@@ -303,6 +303,7 @@ function teamScore(win: boolean) {
 
 <style lang="scss" scoped>
 @import '@/styles/mixins.scss';
+@import '@/styles/textColors.scss';
 
 h4 {
   margin: 10px 0 0 0;
@@ -320,6 +321,11 @@ h4 {
     font-size: 17px;
     font-weight: var(--medium-bold-weight);
     color: inherit;
+
+    option {
+      color: var(--font-color);
+      background-color: $background-secondary;
+    }
   }
 
   .dropdown-arrow {
