@@ -115,7 +115,7 @@ async function loadNextBatch() {
   const toAdd = result.data.map(row => ({
     id: row.id,
     x: row.r * Math.cos(row.theta),
-    y: row.r * Math.sin(row.theta),
+    y: -row.r * Math.sin(row.theta),
     hit: row.hit == 1,
   }));
 
