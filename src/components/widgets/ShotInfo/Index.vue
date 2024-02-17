@@ -408,7 +408,7 @@ const hitPoint = computed(() => {
   const theta = selectedShoot.value.ballisticResultServer_theta
 
   const x = (r * Math.cos(theta) + 1) / 2
-  const y = (r * Math.sin(theta) + 1) / 2
+  const y = (1 - r * Math.sin(theta)) / 2
 
   return { x, y, hit: selectedShoot.value['results.order'].length > 0 }
 })
