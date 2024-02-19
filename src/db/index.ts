@@ -7,6 +7,9 @@ export const clickhouse = createClient({
   host: import.meta.env.VITE_CLICKHOUSE_HOST,
   username: import.meta.env.VITE_CLICKHOUSE_USER,
   database: import.meta.env.VITE_CLICKHOUSE_DATABASE,
+  clickhouse_settings: {
+    max_temporary_columns: '1000',
+  }
 });
 
 export interface IClickhouseResponse<T> {
