@@ -8,8 +8,10 @@
           <circle class="main" cx="50%" cy="50%" r="49.5%" />
           <line x1="45%" y1="50%" x2="55%" y2="50%" />
           <line x1="50%" y1="45%" x2="50%" y2="55%" />
-          <circle v-if="hitPoint" class="hit-point" :class="hitPoint.hit ? 'hit' : ''" :cx="hitPoint.x * 99 + '%'"
-            :cy="hitPoint.y * 99 + '%'" r="1%" />
+          <circle v-if="hitPointServer" class="hit-point" :class="hitPointServer.hit ? 'hit' : ''"
+            :cx="hitPointServer.x * 99 + '%'" :cy="hitPointServer.y * 99 + '%'" r="1%" />
+          <!-- <circle v-if="hitPointClient" class="hit-point client" :class="hitPointClient.hit ? 'hit' : ''"
+            :cx="hitPointClient.x * 99 + '%'" :cy="hitPointClient.y * 99 + '%'" r="1%" /> -->
         </svg>
         <div class="minimap">
           <div class="map-container">
@@ -37,6 +39,12 @@
               <line x1="0%" y1="50%" x2="100%" y2="50%" />
               <line x1="50%" y1="0%" x2="50%" y2="100%" />
             </svg>
+
+            <!-- <svg v-if="clientMakerPoint" class="marker client"
+              :style="absoluteStyleMapPosition(clientMakerPoint.x, clientMakerPoint.z)">
+              <line x1="0%" y1="50%" x2="100%" y2="50%" />
+              <line x1="50%" y1="0%" x2="50%" y2="100%" />
+            </svg> -->
 
             <svg v-if="mapHitPoint" class="hit-point" :style="absoluteStyleMapPosition(mapHitPoint.x, mapHitPoint.z)">
               <circle :class="mapHitPoint.hit ? 'hit' : ''" cx="50%" cy="50%" r="10%" />
@@ -88,8 +96,8 @@
             <InfoTable class="flex-1" :data="thirdTable(selectedShoot)" />
             <InfoTable class="flex-1" :data="[
               ['Скорость танка', selectedShoot.vehicleSpeed.toFixed()],
-              ['Скрость поворота танка', radToDeg(selectedShoot.vehicleRotationSpeed).toFixed() + ' °/c'],
-              ['Скорость повоорта башни', radToDeg(selectedShoot.turretSpeed).toFixed() + ' °/c'],
+              ['Скрость поворота танка', selectedShoot.vehicleRotationSpeed.toFixed() + ' °/c'],
+              ['Скорость повоорта башни', selectedShoot.turretSpeed.toFixed() + ' °/c'],
               ['Ваше ХП', selectedShoot.health],
             ]" />
           </div>
@@ -174,15 +182,15 @@ type Nullable<T> = T | null;
 
 type Shot = {
   id: UInt128
-  onBattleStartId: UInt128
-  localtime: DateTime64
-  dateTime: DateTime64
-  shotId: UInt32
+  // onBattleStartId: UInt128
+  // localtime: DateTime64
+  // dateTime: DateTime64
+  // shotId: UInt32
   health: UInt32
   arenaTag: string
-  playerName: string
-  playerClan: string
-  accountDBID: UInt64
+  // playerName: string
+  // playerClan: string
+  // accountDBID: UInt64
   battleMode: string
   battleGameplay: string
   serverName: string
@@ -196,13 +204,13 @@ type Shot = {
   gunTag: string
   battleTime: Int32
   shellTag: string
-  shellName: string
+  // shellName: string
   shellDamage: Decimal
-  damageRandomization: Decimal
+  // damageRandomization: Decimal
   shellPiercingPower: UInt32
   shellCaliber: Float32
   shellSpeed: Decimal
-  shellMaxDistance: UInt16
+  // shellMaxDistance: UInt16
   gunDispersion: Float32
   battleDispersion: Float32
   serverShotDispersion: Float32
@@ -212,7 +220,7 @@ type Shot = {
   ballisticResultClient_r: Float32
   ballisticResultClient_theta: Float32
   gravity: Float32
-  serverAim: Bool
+  // serverAim: Bool
   autoAim: Bool
   ping: Float32
   fps: UInt16
@@ -300,10 +308,6 @@ const thirdTable = (s: Shot) => [
   ['Автоприцел', s.autoAim ? 'Да' : 'Нет']
 ]
 
-function radToDeg(rad: number) {
-  return rad * 180 / Math.PI;
-}
-
 const router = useRouter();
 const route = useRoute();
 
@@ -344,7 +348,7 @@ onMounted(async () => {
   console.log('OnMounted');
 
   const currentID = await query<{ onBattleStartId: string }>(`SELECT onBattleStartId FROM Event_OnShot WHERE id = '${props.shotID}'`);
-  const shots = await query<Shot>(`SELECT * FROM Event_OnShot WHERE onBattleStartId = '${currentID.data[0].onBattleStartId}'`);
+  const shots = await query<Shot>(`SELECT * FROM Event_OnShot WHERE onBattleStartId = '${currentID.data[0].onBattleStartId}' order by battleTime`);
   allShots.value = shots.data;
   console.log('AllShots', allShots.value);
 
@@ -401,17 +405,20 @@ function wotinspectorClick() {
   wotinspectorLog(params.tank, params.target, params.distance, params.isWOT);
 }
 
-const hitPoint = computed(() => {
+function getHitPointServer(isServer: boolean) {
   if (selectedShoot.value == null) return null;
 
-  const r = selectedShoot.value.ballisticResultServer_r
-  const theta = selectedShoot.value.ballisticResultServer_theta
+  const r = isServer ? selectedShoot.value.ballisticResultServer_r : selectedShoot.value.ballisticResultClient_r
+  const theta = isServer ? selectedShoot.value.ballisticResultServer_theta : selectedShoot.value.ballisticResultClient_theta
 
   const x = (r * Math.cos(theta) + 1) / 2
   const y = (1 - r * Math.sin(theta)) / 2
 
   return { x, y, hit: selectedShoot.value['results.order'].length > 0 }
-})
+}
+
+const hitPointServer = computed(() => getHitPointServer(true))
+const hitPointClient = computed(() => getHitPointServer(false))
 
 const mapHitPoint = computed(() => {
   if (selectedShoot.value == null) return null;
@@ -470,6 +477,11 @@ function getTankImg(tankType: string, ally: boolean, dead: boolean) {
 const serverMakerPoint = computed(() => {
   if (selectedShoot.value == null) return null;
   return { x: selectedShoot.value.serverMarkerPoint_x, y: selectedShoot.value.serverMarkerPoint_y, z: selectedShoot.value.serverMarkerPoint_z };
+})
+
+const clientMakerPoint = computed(() => {
+  if (selectedShoot.value == null) return null;
+  return { x: selectedShoot.value.clientMarkerPoint_x, y: selectedShoot.value.clientMarkerPoint_y, z: selectedShoot.value.clientMarkerPoint_z };
 })
 
 function absoluteStyleMapPosition(x: number, y: number) {
@@ -604,6 +616,12 @@ const shouldBeVerticalResult = useMediaQuery('(min-width: 768px)');
     fill: #e7ffde;
     filter: drop-shadow(0 0 3px #639e31);
 
+    &.client {
+      stroke: #ffb300;
+      stroke-opacity: 1;
+      stroke-width: 5;
+    }
+
     &.hit {
       fill: #ffdd9c;
       filter: drop-shadow(0 0 3px #f73c08);
@@ -683,6 +701,12 @@ const shouldBeVerticalResult = useMediaQuery('(min-width: 768px)');
       stroke: #ffffff;
       stroke-width: 0.5;
       stroke-opacity: 0.8;
+
+      &.client {
+        stroke: #ffb300;
+        stroke-opacity: 1;
+        stroke-width: 0.7;
+      }
 
       line {
         filter: drop-shadow(0 0 2px #000000);
