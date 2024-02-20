@@ -81,8 +81,11 @@
       <div class="card flex-1">
         <GenericInfo :value="getValue('damageTrack')" description="Ассист" color="yellow" />
       </div>
-      <div class="card flex-1">
+      <!-- <div class="card flex-1">
         <GenericInfo :value="getValue('stunDuration')" description="Время стана" color="yellow" />
+      </div> -->
+      <div class="card flex-1">
+        <GenericInfo :value="getValue('mgSum')" description="Сумма отметки" color="yellow" />
       </div>
       <div class="card flex-1">
         <GenericInfo :value="getValue('spotted')" :processor="useFixedProcessor(1)" description="Обнаруженных"
@@ -180,6 +183,7 @@ const resultsList = [
   ['personal.damageAssistedRadio', 'damageRadio'],
   ['personal.damageAssistedTrack', 'damageTrack'],
   ['personal.stunDuration', 'stunDuration'],
+  ['(personal.damageDealt + max2(personal.damageAssistedRadio, personal.damageAssistedTrack))', 'mgSum'],
   ['personal.spotted', 'spotted'],
   ['personal.damageBlockedByArmor', 'damageBlocked'],
   ['personal.shots', 'shots'],
