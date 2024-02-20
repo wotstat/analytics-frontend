@@ -148,7 +148,6 @@ import { useDebounce, useDraggable, useElementBounding, watchOnce } from '@vueus
 import { TankLevel, TankType, useQueryStatParams } from '@/composition/useQueryStatParams';
 import { customBattleModes, customBattleModesKeys } from '@/utils/wot';
 
-
 const emit = defineEmits<{
   close: [];
 }>();
@@ -424,7 +423,7 @@ const sortedTanks = computed<Tank[]>(() =>
 )
 
 function apply() {
-  let target = '/session?';
+  let target = window.location.pathname + '?';
 
   if (enablePlayerFilter.value && nickname.value != '') target += `nickname=${nickname.value}&`;
   if (enableLevelFilter.value && selectedLevels.value.length > 0) target += `level=${selectedLevels.value.join(',')}&`;
