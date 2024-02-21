@@ -498,7 +498,8 @@ select arenaTag,
        round(avg(personal.damageAssistedRadio)) as assist,
        round(avg(personal.kills), 1) as kills
 from Event_OnBattleResult
-where tankLevel > 8
+where tankLevel = 10
+and battleMode = 'REGULAR'
 group by arenaTag
 order by count desc
 limit 5;
@@ -742,7 +743,7 @@ h2 {
             width: 25%;
             position: relative;
             padding: 0 4px;
-            text-wrap: nowrap;
+            // text-wrap: nowrap;
           }
 
           td:first-child {
