@@ -7,21 +7,6 @@
       <StatParamsTitle />
     </h3>
 
-    <!-- <p class="section-description">На графике отображаются выстрелы нанёсшие урон без добития, не явялющиеся фугасами или
-      огненной смесью</p>
-    <div class="card long">
-      <GenericInfo :value="total" description="Подходящих выстрелов" color="green" />
-    </div> -->
-
-    <!-- <p class="section-description">Для корректности графика, необходимо выбирать снаряды с одинаковым базовым уроном,
-      число столбцов должно быть кратно разбросу урона.
-      <br>
-      На каждый столбик будет одинаковое число потенциальных исходов рандома.
-      <br>
-      Использование нескольких значений урона,
-      приводит к всплескам на графике в местах округления до целых значений.
-    </p> -->
-
     <p class="section-description">Выберите один вид урона</p>
 
     <div class="card long">
@@ -105,7 +90,20 @@
       </div>
     </template>
     <hr>
-
+    <div class="info-cards flex">
+      <div class="card flex-1">
+        <GenericInfo :value="infoCardsResult.avg" description="Средний урон" :processor="useFixedProcessor(2)"
+          :color="infoCardsResult.avg < selectedDamage ? 'red' : 'green'" />
+      </div>
+      <div class="card flex-1">
+        <GenericInfo :value="infoCardsResult.median" description="Медианный урон"
+          :color="infoCardsResult.median < selectedDamage ? 'red' : 'green'" />
+      </div>
+      <div class="card flex-1">
+        <GenericInfo :value="infoCardsResult.belowDamage" description="Выстрелов с уроном ниже среднего"
+          :processor="usePercentProcessor(2)" :color="infoCardsResult.belowDamage > 0.5 ? 'red' : 'green'" />
+      </div>
+    </div>
     <h2>Описание</h2>
     <p>Когда нибудь оно будет</p>
     <hr class="spacer">
@@ -129,6 +127,7 @@ import { ShadowBar } from "@/components/ShadowBarController";
 import { ShadowLineController } from "@/components/ShadowLineController";
 import { getColor } from '@/components/bloomColors';
 import { useErrorCalculation } from './errorCalculation';
+import { useFixedProcessor, usePercentProcessor } from '@/composition/usePercentProcessor';
 
 ShadowLineController
 
@@ -147,6 +146,11 @@ const distribution = shallowRef({
   percents: [] as number[],
   from: [] as number[],
   to: [] as number[],
+})
+const infoCardsResult = shallowRef({
+  avg: 0,
+  median: 0,
+  belowDamage: 0
 })
 
 const damageCount = queryAsync<{ shellDamage: number, count: number }>(`
@@ -213,6 +217,32 @@ watch(allowedSteps, val => {
 
 watchEffect(() => selectedDamage.value = damageCount.value[0]?.shellDamage)
 
+async function caclIndo(damage: number) {
+  const res = await query<{ median: number, avg: number, belowDamage: number }>(`
+select avg(dmg) as avg, median(dmg) as median, 
+  countIf(dmg < ${damage}) as less, 
+  countIf(dmg > ${damage}) as more, 
+  less / (less + more) as belowDamage
+from Event_OnShot
+    array join
+     results.shotDamage as dmg,
+     results.shotHealth as health
+where dmg > 0
+  and health > 0
+  and shellTag != 'HIGH_EXPLOSIVE'
+  and shellTag != 'FLAME'
+  and shellDamage = ${damage}
+  ${whereClause(params, { withWhere: false })}
+`)
+
+  infoCardsResult.value = {
+    avg: res.data[0].avg,
+    median: res.data[0].median,
+    belowDamage: res.data[0].belowDamage
+  }
+
+}
+
 watch([selectedDamage, selectedStep], async ([damage, step]) => {
   if (!damage || !step) return
 
@@ -248,7 +278,7 @@ watch([selectedDamage, selectedStep], async ([damage, step]) => {
 
   const gropuping = `floor((nDmg ${leftEnough == 0 ? '' : `+ ${step} - ${leftEnough}`}) / ${step})`
 
-  const res = await query<{ r: number, from: number, to: number, value: number, percent: number }>(`
+  const resQuery = query<{ r: number, from: number, to: number, value: number, percent: number }>(`
 select ${gropuping} as r,
        toUInt32(to - barCount + 1) as from,
        toUInt32(sum(barCount) over (order by r) - 1 + ${min}) as to,
@@ -269,6 +299,10 @@ from (select filled as nDmg, c
 group by r
 order by r
   `)
+
+  const infoQuery = caclIndo(damage)
+
+  const [res] = await Promise.all([resQuery, infoQuery])
 
   distribution.value = {
     labels: res.data.map(({ from, to }) => `${(from + to) / 2}`),
@@ -319,11 +353,13 @@ const chartData = computed<ChartProps<'bar' | 'line'>['data']>(() => {
       type: 'ShadowLine' as any,
       borderColor: getColor('red').bloom,
       backgroundColor: getColor('red').main,
+      animation: false
     }, {
       data: high,
       type: 'ShadowLine' as any,
       borderColor: getColor('red').bloom,
       backgroundColor: getColor('red').main,
+      animation: false
     })
 
     datasets[0].borderColor = datasets[0].data.map((v, i) => v as number > high[i] || v as number < low[i] ? getColor('gold').bloom : getColor('green').bloom)
@@ -340,12 +376,12 @@ const max = computed(() => Math.max(...distribution.value.percents, ...lowHight.
 
 const options = computed<ChartProps<'bar'>['options']>(() => ({
   responsive: true,
-  animation: false,
+  // animation: false,
   scales: {
     y: { display: false, max: max.value == 0 ? undefined : max.value * 1.1 },
     x: {
-      grid: { display: false, },
-      // ticks: { display: !props.ticksXDisabled, },
+      grid: { display: false },
+      // ticks: { display: true },
     },
   },
   interaction: {
@@ -384,8 +420,9 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
     legend: {
       display: false,
     },
-
-  }
+    // @ts-ignore
+    centerLine: true,
+  },
 }))
 
 
@@ -395,6 +432,14 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
 <style lang="scss" scoped>
 @import '@/styles/table.scss';
 @import '@/styles/textColors.scss';
+
+.info-cards {
+  flex-wrap: wrap;
+
+  .card {
+    min-width: 200px;
+  }
+}
 
 .chart-container {
   aspect-ratio: 2;
