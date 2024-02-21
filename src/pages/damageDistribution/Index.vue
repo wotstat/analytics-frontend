@@ -527,7 +527,7 @@ h3 {
           padding: 0 10px;
           border-bottom: $border;
           background-color: $background-secondary;
-          z-index: 10;
+          z-index: 5;
         }
       }
     }
