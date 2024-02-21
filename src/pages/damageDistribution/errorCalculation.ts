@@ -1,4 +1,5 @@
-import { useWebWorker } from "@vueuse/core";
+
+import CalcWorker from './calcWorker.ts?worker'
 import { ComputedRef, Ref, ShallowRef, WatchSource, computed, ref, shallowRef, toValue, watch, watchEffect } from "vue";
 
 type ErrorResult = number[][]
@@ -15,21 +16,20 @@ export function useErrorCalculation(damage: WatchSource<number>, shotCount: Watc
   const progress = ref(0)
   const readyToCalculate = computed(() => !calculationInProgress.value && !currentResult.value)
 
-  const worker = useWebWorker<{ result?: ErrorResult, progress: number }>(new URL('./calcWorker.ts', import.meta.url).toString(), {
-    type: 'module',
-  })
+  const worker = new CalcWorker()
 
+  worker.onmessage = (e) => {
+    if (e.data.progress) {
+      progress.value = e.data.progress
+    }
 
-  watch(() => worker.data.value?.progress, (v) => progress.value = v)
-  watch(() => worker.data.value?.result, (res) => {
-    if (!res) return
-
-    calculationInProgress.value = false
-    const key = cacheKey(toValue(damage), toValue(intervals).length, toValue(shotCount), toValue(experimentsCount))
-    resultCache.set(key, res)
-    currentResult.value = res
-  })
-
+    if (e.data.result) {
+      calculationInProgress.value = false
+      const key = cacheKey(toValue(damage), toValue(intervals).length, toValue(shotCount), toValue(experimentsCount))
+      resultCache.set(key, e.data.result)
+      currentResult.value = e.data.result
+    }
+  }
 
   watch([damage, intervals, shotCount, experimentsCount], ([damage, intervals, shotCount, experimentsCount]) => {
     const key = cacheKey(damage, intervals.length, shotCount, experimentsCount)
@@ -42,7 +42,7 @@ export function useErrorCalculation(damage: WatchSource<number>, shotCount: Watc
   function startCalculation() {
     calculationInProgress.value = true
     currentResult.value = null
-    worker.post({
+    worker.postMessage({
       damage: toValue(damage),
       intervals: toValue(intervals),
       shotCount: toValue(shotCount),
@@ -52,7 +52,7 @@ export function useErrorCalculation(damage: WatchSource<number>, shotCount: Watc
 
   function stopCalculation() {
     if (!calculationInProgress.value) return
-    worker.post('cancel')
+    worker.postMessage('cancel')
     calculationInProgress.value = false
   }
 
