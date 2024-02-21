@@ -506,6 +506,7 @@ const medianResults = queryAsyncFirst(`select median(personal.damageDealt) as me
 <style scoped lang="scss">
 @import '@/styles/mixins.scss';
 @import '@/styles/textColors.scss';
+@import '@/styles/table.scss';
 
 .hidden-x {
   overflow-x: hidden;
@@ -675,10 +676,7 @@ h2 {
       &.strimsniper,
       &.map {
 
-        $border: 1px solid rgba(240, 240, 240, 0.327);
-
         table {
-          border-collapse: collapse;
           width: 100%;
           position: relative;
           z-index: 5;

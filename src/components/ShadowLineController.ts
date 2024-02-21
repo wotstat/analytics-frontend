@@ -1,9 +1,9 @@
 import { LineController } from 'chart.js'
 import { createTypedChart } from 'vue-chartjs';
 
-class ShadowLineController extends LineController {
+export class ShadowLineController extends LineController {
   draw() {
-    super.draw()
+    // super.draw()
     const ctx = this.chart.ctx;
     ctx.save();
 
