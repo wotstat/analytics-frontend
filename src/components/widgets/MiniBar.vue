@@ -19,6 +19,7 @@ const props = defineProps<{
   callbacks?: Partial<TooltipCallbacks<'bar'>>,
   tooltipDisabled?: boolean,
   ticksXDisabled?: boolean,
+  centerLine?: boolean,
 }>()
 
 const chartData = computed<ChartProps<'bar'>['data']>(() => ({
@@ -57,6 +58,7 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
     legend: {
       display: false,
     },
+    centerLine: props.centerLine
   }
 }))
 

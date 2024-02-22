@@ -107,7 +107,7 @@ const processed = computed(() => {
 
 
 <style scoped lang="scss">
-$border: 1px solid rgba(240, 240, 240, 0.327);
+@import '@/styles/table.scss';
 
 .container {
   overflow-x: auto;
