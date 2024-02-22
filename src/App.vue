@@ -48,7 +48,7 @@ const isDevMode = import.meta.env.VITE_SHOW_DEV_WATERMARK === 'true';
 }
 </style>
 
-<style>
+<style lang="scss">
 .app {
   --bold-weight: v-bind(boldWeight);
   --medium-bold-weight: v-bind(mediumBoldWeight);

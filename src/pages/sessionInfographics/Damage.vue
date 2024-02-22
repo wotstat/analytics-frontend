@@ -42,8 +42,8 @@
         </div>
 
         <div class="card mini-card full-width-less-small">
-          <GenericInfo :value="damageK" description="Выстрелов с уроном выше среднего"
-            :color="damageK < 0.5 ? 'red' : 'green'" :processor="usePercentProcessor(1)" />
+          <GenericInfo :value="damageK" description="Выстрелов с уроном ниже среднего"
+            :color="damageK > 0.5 ? 'red' : 'green'" :processor="usePercentProcessor(1)" />
         </div>
 
         <div class="card mini-card full-width-less-small">
@@ -52,10 +52,14 @@
         </div>
 
 
-        <div class="card chart bar big">
-          <MiniBar :data="damageDistributionData" color="green" :labels="damageLabels"
+        <div class="card chart bar big damage-distribution">
+          <MiniBar :data="damageDistributionData" :center-line="true" color="green" :labels="damageLabels"
             :callbacks="{ title: (t) => `${toPercent(t)} выстрелов отклонились на ${t[0].label} от базового урона`, label: () => `` }" />
-          <p class="card-main-info description">Распределение урона +- 25</p>
+          <div class="absolute">
+            <p class="card-main-info description">Распределение урона +- 25
+            </p>
+            <a href="" @click.prevent="openDamage">Расширенный</a>
+          </div>
         </div>
 
         <div class="long flex col hor-ver-x-small">
@@ -191,7 +195,7 @@ const damageDistributionData = computed(() => {
   return toRelative(absolute)
 })
 
-const damageK = computed(() => damageAggregatedResult.value.more == 0 ? 0 : damageAggregatedResult.value.more / (damageAggregatedResult.value.more + damageAggregatedResult.value.less))
+const damageK = computed(() => damageAggregatedResult.value.more == 0 ? 0 : damageAggregatedResult.value.less / (damageAggregatedResult.value.more + damageAggregatedResult.value.less))
 
 const onShotResult = queryAsyncFirst(`
 select toUInt32(countIf(arraySum(results.fireDamage) > 0))                                           as fiered,
@@ -204,6 +208,10 @@ from Event_OnShot
 ${whereClause(params)};
 `, { fiered: 0, ammoBayDestroyed: 0, frags: 0, shotPerFrag: 0 }, visible)
 
+
+function openDamage() {
+  window.open(`/damage${window.location.search}`)
+}
 </script>
 
 
@@ -211,6 +219,17 @@ ${whereClause(params)};
 @import '@/styles/mixins.scss';
 
 .damage {
+
+  .damage-distribution {
+    position: relative;
+
+    a {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+  }
+
   .grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);

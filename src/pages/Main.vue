@@ -40,15 +40,34 @@
         <p><a :href="latestRelease.browser_download_url" target="_blank">Скачайте</a> последнюю версию мода и поместите
           файл в каталог: <code>{{ targetModPath }}</code></p>
 
-        <i>Проверка на вирусы VirusTotal: <a
+        <!-- <i>Проверка на вирусы VirusTotal: <a
             href="https://www.virustotal.com/gui/file/d2c21e8fbb360e4309f40d459014c40cb80307712fe452e967fc70ae7159b0fa?nocache=1"
             target="_blank">посмотреть</a>
-        </i>
+        </i> -->
 
         <p class="warning">ВАЖНО: НЕ переименовывайте файл с модом. Он должен называться
           <code v-if="latestRelease.actual">"{{ latestRelease.name }}"</code>
           <span v-else>так же как и скачался. Например "{{ latestRelease.name }}"</span>
         </p>
+
+        <h3 class="streamer-header" @click="streamerOpen = !streamerOpen">
+          <svg viewBox="0 0 65 64" class="dropdown-arrow" :style="{
+            transform: streamerOpen ? 'rotateZ(0)' : 'rotateZ(-90deg)'
+          }">
+            <path
+              d="M5.084 20.305a5 5 0 0 1 7.02-.851L31.02 34.276l18.915-14.822a5 5 0 1 1 6.168 7.871l-22 17.24a5 5 0 0 1-6.167 0l-22-17.24a5 5 0 0 1-.852-7.02Z" />
+          </svg>
+          Для стримеров
+        </h3>
+        <div class="collapsable-body" ref="collapsableBody" :style="{
+          maxHeight: streamerOpen ? collapsableBody?.scrollHeight + 'px' : '0'
+        }">
+          <p>Если вы хотите скрыть игровой сервер из собираемой статистики, поместите файл <a href="/config.cfg"
+              target="_blank" download>config.cfg</a> в папку
+            <code>WOT/mods/configs/wot_stat</code>
+          </p>
+        </div>
+
         <div class="flex center">
           <button @click="download">СКАЧАТЬ</button>
         </div>
@@ -327,9 +346,11 @@ import { useTweenCounter } from '@/composition/useTweenCounter';
 import { queryAsync, queryAsyncFirst } from '@/db';
 import { toRelative, ms2sec, sec2minsec, secProcessor } from '@/utils';
 import { computedAsync } from '@vueuse/core';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { getArenaName } from '@/utils/i18n';
 
+
+const collapsableBody = ref<HTMLElement | null>(null);
 
 const DBUrl = import.meta.env.VITE_CLICKHOUSE_HOST as string
 
@@ -366,6 +387,8 @@ const latestRelease = computedAsync(async () => {
 function download() {
   window.open(latestRelease.value.browser_download_url, "_blank");
 }
+
+const streamerOpen = ref(false);
 
 
 // TOTAL
@@ -475,7 +498,8 @@ select arenaTag,
        round(avg(personal.damageAssistedRadio)) as assist,
        round(avg(personal.kills), 1) as kills
 from Event_OnBattleResult
-where tankLevel > 8
+where tankLevel = 10
+and battleMode = 'REGULAR'
 group by arenaTag
 order by count desc
 limit 5;
@@ -506,6 +530,31 @@ const medianResults = queryAsyncFirst(`select median(personal.damageDealt) as me
 <style scoped lang="scss">
 @import '@/styles/mixins.scss';
 @import '@/styles/textColors.scss';
+@import '@/styles/table.scss';
+
+.streamer-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 0;
+  user-select: none;
+  cursor: pointer;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    fill: var(--font-color);
+    transform: rotateZ(-90deg);
+    transition: transform 0.3s;
+  }
+
+}
+
+.collapsable-body {
+  transition: all 0.3s;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
 
 .hidden-x {
   overflow-x: hidden;
@@ -675,10 +724,7 @@ h2 {
       &.strimsniper,
       &.map {
 
-        $border: 1px solid rgba(240, 240, 240, 0.327);
-
         table {
-          border-collapse: collapse;
           width: 100%;
           position: relative;
           z-index: 5;
@@ -697,7 +743,7 @@ h2 {
             width: 25%;
             position: relative;
             padding: 0 4px;
-            text-wrap: nowrap;
+            // text-wrap: nowrap;
           }
 
           td:first-child {

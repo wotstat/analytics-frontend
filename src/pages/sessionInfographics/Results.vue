@@ -322,6 +322,7 @@ h4 {
     padding: 0;
     margin: 0;
     padding-left: 25px;
+    padding-right: 25px;
     font-size: 17px;
     font-weight: var(--medium-bold-weight);
     color: inherit;

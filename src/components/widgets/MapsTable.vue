@@ -242,8 +242,7 @@ const hightlighted = computed(() => {
 
 
 <style lang="scss" scoped>
-$border: 1px solid rgba(240, 240, 240, 0.327);
-$bar-color: #8181813e;
+@import '@/styles/table.scss';
 
 .container {
   overflow-x: auto;
