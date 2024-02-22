@@ -9,25 +9,23 @@ class ShadowBarController extends BarController {
 
     const meta = this.getMeta();
 
-    if (this.chart.config.options?.plugins && 'centerLine' in this.chart.config.options?.plugins && this.chart.config.options?.plugins.centerLine)
-      if (meta.xScale && meta.yScale) {
-        const height = meta.yScale.height;
-        const width = meta.xScale.width - meta.xScale.paddingRight;
-        const left = Math.round(meta.xScale.paddingLeft + width / 2)
+    if (this.chart.config.options?.plugins && 'centerLine' in this.chart.config.options?.plugins && this.chart.config.options?.plugins.centerLine) {
+      const height = this.chart.chartArea.height;
+      const left = this.chart.chartArea.left + this.chart.chartArea.width / 2
 
-        ctx.save();
+      ctx.save();
 
-        ctx.beginPath();
-        ctx.moveTo(left, 0);
-        ctx.lineTo(left, height);
+      ctx.beginPath();
+      ctx.moveTo(left, 0);
+      ctx.lineTo(left, height);
 
-        ctx.strokeStyle = '#5d5d5d';
-        ctx.setLineDash([5, 5]);
-        ctx.lineWidth = 1;
-        ctx.stroke();
+      ctx.strokeStyle = '#5d5d5d';
+      ctx.setLineDash([5, 5]);
+      ctx.lineWidth = 1;
+      ctx.stroke();
 
-        ctx.restore();
-      }
+      ctx.restore();
+    }
 
     for (const barElement of meta.data as BarElement[]) {
 
