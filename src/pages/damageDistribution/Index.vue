@@ -78,9 +78,9 @@
             @click="selectedConfidence = item">{{ item }}</button>
         </div>
         <div class="flex">
-          <input class="flex-1" type="range" min="0.5" max="0.9999999" :step="errorConfidenceStep"
+          <input class="flex-1" type="range" min="0" max="0.9999999" :step="errorConfidenceStep"
             v-model="selectedConfidence">
-          <input type="number" min="0.5" max="0.9999999" :step="errorConfidenceStep" v-model="selectedConfidence">
+          <input type="number" min="0" max="0.9999999" :step="errorConfidenceStep" v-model="selectedConfidence">
         </div>
         <p>Были просимулированы {{ errorResult[0].length }} сессий по {{ selectedTotal }} выстрелов, в <span
             class="text-effect gold">{{
@@ -341,8 +341,10 @@ const lowHight = computed(() => {
 
   const count = errorResult.value[0].length - 1
 
-  const low = Math.round((1 - selectedConfidence.value) * count)
-  const high = Math.round(selectedConfidence.value * count)
+  const t = 1 - selectedConfidence.value;
+
+  const low = Math.round(t / 2 * count)
+  const high = Math.round((1 - t / 2) * count)
 
   return [errorResult.value.map(t => t[low] * 100), errorResult.value.map(t => t[high] * 100)]
 })
