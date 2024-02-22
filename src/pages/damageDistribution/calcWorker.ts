@@ -10,21 +10,27 @@ let shouldCancel = false;
 
 self.onmessage = e => {
   if (e.data == 'cancel') {
-    console.log('[Worker] Calculation cancelled');
+    console.log('[Worker] Trying to cancel calculation');
     shouldCancel = true;
   }
   else {
     console.log('[Worker] Calculation started');
-    calculate(e.data.damage, e.data.shotCount, e.data.intervals, e.data.experimentsCount)
+    calculate(e.data.damage, e.data.shotCount, e.data.intervals, e.data.experimentsCount, e.data.key)
   }
 }
 
 self.postMessage({ progress: 0, result: null });
 
-function calculate(damage: number, shotCount: number, intervals: [number, number][], experimentsCount: number) {
+function finish() {
+  self.postMessage('end');
+  console.log('[Worker] Canceled calculation');
+}
+
+async function calculate(damage: number, shotCount: number, intervals: [number, number][], experimentsCount: number, key: string) {
   shouldCancel = false;
 
   const damageIndexMap = getDamageIndexMap(damage, shotCount, intervals);
+  console.log('[Worker] damageIndexMap', damageIndexMap);
 
   const results = Array.from({ length: intervals.length }, () => Array.from({ length: experimentsCount }, () => 0));
 
@@ -32,7 +38,7 @@ function calculate(damage: number, shotCount: number, intervals: [number, number
 
   for (let i = 0; i < experimentsCount; i++) {
     for (let j = 0; j < shotCount; j++) {
-      if (shouldCancel) return;
+      if (shouldCancel) return finish();
 
       const rand = Math.random();
       const dmg = Math.round(damage * (spline.at(rand) * 0.25 + 1));
@@ -40,12 +46,14 @@ function calculate(damage: number, shotCount: number, intervals: [number, number
       results[index][i] += 1;
     }
 
-    if (shouldCancel) return;
-    if (i % progressStep == 0)
+    if (shouldCancel) return finish();
+    if (i % progressStep == 0) {
       self.postMessage({ progress: i / experimentsCount * 0.95, result: null });
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
   }
 
-  if (shouldCancel) return;
+  if (shouldCancel) return finish();
   for (let i = 0; i < results.length; i++) {
     results[i].sort((a, b) => a - b)
     for (let j = 0; j < results[i].length; j++) {
@@ -53,10 +61,11 @@ function calculate(damage: number, shotCount: number, intervals: [number, number
     }
   }
 
-  if (shouldCancel) return;
+  if (shouldCancel) return finish();
   console.log('[Worker] Calculation finished');
 
-  self.postMessage({ result: results, progress: 1 });
+  self.postMessage({ result: results, progress: 1, key });
+  self.postMessage('end');
 }
 
 function getDamageIndexMap(damage: number, shotCount: number, intervals: [number, number][]) {

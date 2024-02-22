@@ -87,6 +87,11 @@
               (selectedConfidence * 100).toFixed(errorConfidenceStep.toString().length - 4) }}%</span> сессий распределение
           урона находилось МЕЖДУ границами.</p>
         <!-- <p>Если любой из столбиков вашего распределения выходит за пределы интервала</p> -->
+        <!-- <hr> -->
+        <br>
+        <div class="flex">
+          <button class="flex-1" @click="reset">Сбросить</button>
+        </div>
       </div>
     </template>
     <hr>
@@ -104,8 +109,7 @@
           :processor="usePercentProcessor(2)" :color="infoCardsResult.belowDamage > 0.5 ? 'red' : 'green'" />
       </div>
     </div>
-    <h2>Описание</h2>
-    <p>Когда нибудь оно будет</p>
+    <Description />
     <hr class="spacer">
   </div>
 </template>
@@ -119,7 +123,7 @@ import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import { useQueryStatParams, whereClause } from "@/composition/useQueryStatParams";
 import { query, queryAsync, queryAsyncFirst } from '@/db';
 import { computed, ref, shallowRef, watch, watchEffect } from 'vue';
-
+import { VueComponent as Description } from './description.md'
 
 import { type ChartProps } from 'vue-chartjs';
 import { type TooltipCallbacks } from 'chart.js';
@@ -129,6 +133,7 @@ import { getColor } from '@/components/bloomColors';
 import { useErrorCalculation } from './errorCalculation';
 import { useFixedProcessor, usePercentProcessor } from '@/composition/usePercentProcessor';
 
+// Нужно чтоб выполнились функции внутри модуля и зарегистрировались компоненты
 ShadowLineController
 
 const confidenceLevels = [0.9, 0.95, 0.99, 0.999]
@@ -170,7 +175,12 @@ order by count desc;
 
 const total = computed(() => damageCount.value.reduce((acc, { count }) => acc + count, 0))
 const selectedTotal = computed(() => damageCount.value.find(({ shellDamage }) => shellDamage == selectedDamage.value)?.count ?? 0)
-const errorConfidenceStep = computed(() => 1 / experimentsCount.value)
+const errorConfidenceStep = computed(() => {
+  const num = 1 / experimentsCount.value
+  const magnitude = Math.floor(Math.log10(num));
+  const nearestLowerPowerOf10 = Math.pow(10, magnitude);
+  return +nearestLowerPowerOf10.toFixed(Math.abs(magnitude));
+})
 
 const table = computed(() => {
   if (!damageCount.value.length) return []
@@ -196,9 +206,9 @@ const allowedSteps = computed(() => {
 
   const max = Math.ceil(currentDamage * 1.25)
   const min = Math.ceil(currentDamage * 0.75)
-  const delta = max - min
+  const delta = max - min + 1
 
-  return [1, ...damageSteps.filter(step => delta % step === 0)]
+  return [1, ...damageSteps.filter(step => delta / step > 15)]
 })
 
 watch(allowedSteps, val => {
@@ -217,7 +227,7 @@ watch(allowedSteps, val => {
 
 watchEffect(() => selectedDamage.value = damageCount.value[0]?.shellDamage)
 
-async function caclIndo(damage: number) {
+async function calcInfo(damage: number) {
   const res = await query<{ median: number, avg: number, belowDamage: number }>(`
 select avg(dmg) as avg, median(dmg) as median, 
   countIf(dmg < ${damage}) as less, 
@@ -254,8 +264,8 @@ watch([selectedDamage, selectedStep], async ([damage, step]) => {
     to: []
   }
 
-  const max = Math.ceil(damage * 1.25)
-  const min = Math.ceil(damage * 0.75)
+  const max = Math.round(damage * 1.25)
+  const min = Math.round(damage * 0.75)
   const delta = max - min
 
   let barCount = 0
@@ -300,7 +310,7 @@ group by r
 order by r
   `)
 
-  const infoQuery = caclIndo(damage)
+  const infoQuery = calcInfo(damage)
 
   const [res] = await Promise.all([resQuery, infoQuery])
 
@@ -324,7 +334,7 @@ const intervals = computed(() => {
   })
 })
 
-const { readyToCalculate, calculate, progress, result: errorResult } = useErrorCalculation(selectedDamage, selectedTotal, intervals, experimentsCount)
+const { readyToCalculate, calculate, reset, progress, result: errorResult } = useErrorCalculation(selectedDamage, selectedTotal, intervals, experimentsCount)
 
 const lowHight = computed(() => {
   if (!errorResult.value) return [[], []]
@@ -343,7 +353,8 @@ const chartData = computed<ChartProps<'bar' | 'line'>['data']>(() => {
     data: distribution.value.percents ?? [],
     borderColor: getColor('green').bloom,
     backgroundColor: getColor('green').main,
-    order: 10
+    order: 10,
+    animation: false
   }]
 
   if (errorResult.value) {
@@ -364,6 +375,9 @@ const chartData = computed<ChartProps<'bar' | 'line'>['data']>(() => {
 
     datasets[0].borderColor = datasets[0].data.map((v, i) => v as number > high[i] || v as number < low[i] ? getColor('gold').bloom : getColor('green').bloom)
     datasets[0].backgroundColor = datasets[0].data.map((v, i) => v as number > high[i] || v as number < low[i] ? getColor('gold').main : getColor('green').main)
+  } else {
+    datasets[0].borderColor = datasets[0].data.map(() => getColor('green').bloom)
+    datasets[0].backgroundColor = datasets[0].data.map(() => getColor('green').main)
   }
 
   return {
@@ -381,6 +395,7 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
     y: { display: false, max: max.value == 0 ? undefined : max.value * 1.1 },
     x: {
       grid: { display: false },
+      min: 0,
       // ticks: { display: true },
     },
   },
@@ -412,6 +427,12 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
           const value = distribution.value.values[item[0].dataIndex]
           const percent = distribution.value.percents[item[0].dataIndex]
           return `Количество: ${value} (${percent.toFixed(2)}%)`
+        },
+        afterBody: (item) => {
+          const from = distribution.value.from[item[0].dataIndex]
+          const to = distribution.value.to[item[0].dataIndex]
+
+          return from == to ? `` : `${to - from + 1} значений на столбик`
         },
         label: (i) => ''
       },
@@ -466,7 +487,7 @@ progress {
 }
 
 .spacer {
-  margin-bottom: 500px;
+  margin-bottom: 300px;
 }
 
 input[type='radio'] {
