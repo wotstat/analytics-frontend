@@ -7,7 +7,10 @@
       <StatParamsTitle />
     </h3>
 
-    <p class="section-description">Выберите один вид урона</p>
+    <p class="section-description">Выберите один вид урона
+      <br>
+      <i>Учитываются выстрелы с уроном, без добития, не фугасы</i>
+    </p>
 
     <div class="card long">
       <div class="container">
@@ -40,7 +43,7 @@
     </div>
 
     <h3>Параметры</h3>
-    <p>Выбирите число уронов на один столбик графика</p>
+    <p>Выберите число уронов на один столбик графика</p>
     <div class="steps-count">
       <button v-for="item in allowedSteps" :class="item == selectedStep ? 'selected' : ''" @click="selectedStep = item">{{
         item }}</button>
