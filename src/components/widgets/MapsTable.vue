@@ -42,6 +42,10 @@
             <span class="tooltiptext">Насвечено</span>
           </td>
           <td>
+            <img src="/mgsum.png" @click="click('mgSum')" :class="hightlight == 'mgSum' ? 'selected' : ''">
+            <span class="tooltiptext">Сумма отметки</span>
+          </td>
+          <td>
             <img src="/block.png" @click="click('block')" :class="hightlight == 'block' ? 'selected' : ''">
             <span class="tooltiptext">Натанковано</span>
           </td>
@@ -69,6 +73,7 @@
           <td class="text-effect gold">{{ item.percent }}</td>
           <td class="text-effect orange">{{ item.damage.toFixed() }}</td>
           <td class="text-effect green">{{ item.radio.toFixed() }}</td>
+          <td class="text-effect light-blue">{{ item.mgSum.toFixed() }}</td>
           <td class="text-effect blue">{{ item.block.toFixed() }}</td>
           <td class="text-effect red"> {{ item.kills.toFixed(1) }}</td>
           <td class="text-effect yellow">
@@ -116,7 +121,7 @@ const { width: firstWidth } = useElementSize(firstColumn);
 const battleResult = ref<'any' | 'win' | 'lose'>('any')
 const battleMode = ref<keyof typeof customBattleModes | 'any'>('any')
 
-type Selected = 'count' | 'damage' | 'radio' | 'block' | 'kills' | 'duration' | 'lifeTime'
+type Selected = 'count' | 'damage' | 'radio' | 'block' | 'kills' | 'duration' | 'lifeTime' | 'mgSum'
 function click(name: Selected) {
   hightlight.value = name;
 }
@@ -156,6 +161,10 @@ function generateQuery() {
        avgIf(personal.damageDealt, result = 'lose')          as loseDamage,
        avgIf(personal.damageDealt, result = 'win')           as winDamage,
 
+       avg(personal.damageDealt + max2(personal.damageAssistedRadio, personal.damageAssistedTrack))                     as mgSum,
+       avgIf(personal.damageDealt + max2(personal.damageAssistedRadio, personal.damageAssistedTrack), result = 'lose')  as loseMgSum,
+       avgIf(personal.damageDealt + max2(personal.damageAssistedRadio, personal.damageAssistedTrack), result = 'win')   as winMgSum,
+
        avg(personal.damageBlockedByArmor)                    as block,
        avgIf(personal.damageBlockedByArmor, result = 'lose') as loseBlock,
        avgIf(personal.damageBlockedByArmor, result = 'win')  as winBlock,
@@ -188,6 +197,7 @@ type ResultRow = {
   lifeTime: number, loseLifeTime: number, winLifeTime: number,
   radio: number, loseRadio: number, winRadio: number,
   kills: number, loseKills: number, winKills: number,
+  loseMgSum: number, winMgSum: number, mgSum: number,
 }
 
 const resultCache = shallowRef<{ [key in string]?: ShallowRef<ResultRow[]> }>({})
@@ -216,6 +226,7 @@ const resultProcessed = computed(() => {
     lifeTime: m == 'any' ? t.lifeTime : m == 'win' ? t.winLifeTime : t.loseLifeTime,
     radio: m == 'any' ? t.radio : m == 'win' ? t.winRadio : t.loseRadio,
     kills: m == 'any' ? t.kills : m == 'win' ? t.winKills : t.loseKills,
+    mgSum: m == 'any' ? t.mgSum : m == 'win' ? t.winMgSum : t.loseMgSum,
     arenaTag: t.arenaTag,
   }))
     .filter(t => t.count > 0)
@@ -228,7 +239,7 @@ const ordered = computed(() => {
   return resultProcessed.value.sort((a, b) => b[hightlight.value] - a[hightlight.value])
     .map(item => ({
       ...item,
-      percent: maxBattleCount < 10 ? item.count : (item.count / percentSum * 100).toFixed(1) + '%',
+      percent: maxBattleCount < 20 ? `${item.count} - ${(item.count / percentSum * 100).toFixed(1)}%` : (item.count / percentSum * 100).toFixed(1) + '%',
     }))
 })
 

@@ -21,9 +21,8 @@
 
         <div class="flex center">
           <h2 class="text-center mod-description">
-            Откройте новые горизонты анализа вашей игры с нашей <b>бесплатной</b> и полностью
-            <a href="https://github.com/WOT-STAT/WOTMOD" target="_blank">открытой</a> пользовательской модификацией для
-            игр
+            Откройте новые горизонты анализа вашей игры с <b>бесплатным</b> и полностью
+            <a href="https://github.com/WOT-STAT/WOTMOD" target="_blank">открытым</a> модом WotStat для игр
             <a href="https://tanki.su/ru/game/" target="_blank">«Мир&nbsp;танков»</a> и <a
               href="https://worldoftanks.eu/en/game/" target="_blank">«World&nbsp;of&nbsp;Tanks»</a>. <br>Модификация
             работает в фоне, фиксируя различные игровые события, что позволяет вам анализировать свои действия и
