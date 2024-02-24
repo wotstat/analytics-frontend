@@ -397,7 +397,7 @@ select (select count() from Event_OnBattleResult) +
        (select count() from Event_OnShot) +
        (select count() from Event_OnBattleResult) as count,
        toUInt32(count)                            as data;
-`, { data: 845 });
+`, { data: 200000 });
 
 const totalEventCount = useTweenCounter(computed(() => eventCount.value.data), { duration: 1 });
 
