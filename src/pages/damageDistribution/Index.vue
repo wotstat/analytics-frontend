@@ -9,7 +9,7 @@
 
     <p class="section-description">Выберите один вид урона
       <br>
-      <i>Учитываются выстрелы с уроном, без добития, не фугасы</i>
+      <i>Учитываются выстрелы с уроном, не фугасы, по танкам с ХП больше максималки</i>
     </p>
 
     <div class="card long">
@@ -230,7 +230,7 @@ watch(allowedSteps, val => {
 
 watchEffect(() => selectedDamage.value = damageCount.value[0]?.shellDamage)
 
-async function calcInfo(damage: number) {
+async function calcInfo(damage: number, max: number) {
   const res = await query<{ median: number, avg: number, belowDamage: number }>(`
 select avg(dmg) as avg, median(dmg) as median, 
   countIf(dmg < ${damage}) as less, 
@@ -245,6 +245,7 @@ where dmg > 0
   and shellTag != 'HIGH_EXPLOSIVE'
   and shellTag != 'FLAME'
   and shellDamage = ${damage}
+  and (dmg + health) > ${max}
   ${whereClause(params, { withWhere: false })}
 `)
 
@@ -313,7 +314,7 @@ group by r
 order by r
   `)
 
-  const infoQuery = calcInfo(damage)
+  const infoQuery = calcInfo(damage, max)
 
   const [res] = await Promise.all([resQuery, infoQuery])
 
