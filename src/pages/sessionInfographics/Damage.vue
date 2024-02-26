@@ -124,7 +124,7 @@ order by k;
 `, visible)
 
 const damageAggregatedResult = queryAsyncFirst(`
-select avg((1.0 * dmg / shellDamage - 1) / damageRandomization) as avgDamage,
+select avg((toFloat32(dmg) / shellDamage - 1) / damageRandomization) as avgDamage,
        toUInt32(countIf(dmg < shellDamage)) as less,
        toUInt32(countIf(dmg > shellDamage)) as more,
        toUInt32(countIf(health < shellDamage - dmg)) as safed
@@ -132,7 +132,11 @@ from Event_OnShot
     array join
      results.shotDamage as dmg,
      results.shotHealth as health
-where dmg > 0 and health > 0 and shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME'
+where dmg > 0
+and health > 0
+and (dmg + health) > round(shellDamage * 1.250001) // 1.250001 чтоб округляло в большую сторону
+and shellTag != 'HIGH_EXPLOSIVE'
+and shellTag != 'FLAME'
 ${whereClause(params, { withWhere: false })};
 `, { less: 0, more: 0, safed: 0, avgDamage: 0 }, visible)
 
