@@ -36,7 +36,7 @@
   </span>
   <span v-if="stat.period != 'allTime' && stat.period.type == 'lastX' && stat.period.count == 1">За <span
       class="text-effect light-blue">последний</span>
-    бой.</span>
+    бой. </span>
   <span v-else-if="stat.period != 'allTime' && stat.period.type == 'lastX'">За последние <span
       class="text-effect light-blue">{{
         stat.period.count }}</span> {{ countLocalize(stat.period.count, 'бой', 'боя', 'боёв') }}.
