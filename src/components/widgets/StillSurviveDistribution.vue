@@ -29,19 +29,19 @@ select canSurvive,
        round(normalizedHelthDamage * 25) / 25 * 0.25 as roundedHealthDamage,
        toUInt32(count(*)) as count,
        sum(count) over (partition by canSurvive order by roundedHealthDamage * if(canSurvive, -1, 1) rows between UNBOUNDED PRECEDING and current row) as cumSurvice
-from (select health = 0                                       as isKilled,
-             shellDamage + shellDamage * damageRandomization  as maxPossible,
-             shellDamage - shellDamage * damageRandomization  as minPossible,
-             health + damage                                  as healthBeforeShot,
+from (select rHealth = 0                                      as isKilled,
+             round(shellDamage + shellDamage * damageRandomization * 1.00001)  as maxPossible,
+             round(shellDamage - shellDamage * damageRandomization * 1.00001)  as minPossible,
+             rHealth + damage                                 as healthBeforeShot,
              isKilled and healthBeforeShot >= minPossible     as canSurvive,
              not isKilled and healthBeforeShot <= maxPossible as canKill,
              ((healthBeforeShot + if(isKilled, -0.5, +0.5)) / shellDamage - 1) as helthBeforeShotRelativeDmg,
              helthBeforeShotRelativeDmg / damageRandomization as normalizedHelthDamage
       from Event_OnShot
           array join
-           results.shotHealth as health,
+           results.shotHealth as rHealth,
            results.shotDamage as damage
-      where shellTag != 'HIGH_EXPLOSIVE'
+      where shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME'
         and damage > 0
         and (canSurvive or canKill)
         ${params ? whereClause(params, { withWhere: false }) : ''})
