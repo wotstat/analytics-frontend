@@ -171,6 +171,7 @@ where dmg > 0
   and health > 0
   and shellTag != 'HIGH_EXPLOSIVE'
   and shellTag != 'FLAME'
+  and (dmg + health) > round(shellDamage * 1.250001) // 1.250001 чтоб округляло в большую сторону
   ${whereClause(params, { withWhere: false })}
 group by shellDamage
 order by count desc;
@@ -305,6 +306,7 @@ from (select filled as nDmg, c
             where dmg > 0 and health > 0
               and shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME' and battleMode = 'REGULAR'
               and shellDamage = ${damage}
+              and (dmg + health) > ${max}
               ${whereClause(params, { withWhere: false })}
             group by zDmg) as T1
       right join (select toInt32(number) as filled from numbers(${limit})) as T2 on filled = zDmg
