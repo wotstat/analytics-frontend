@@ -64,12 +64,14 @@
 
         <div class="long flex col hor-ver-x-small">
           <div class="card flex-1">
-            <GenericInfo :value="stilledResult.stilled" description="Нечестно добитых" color="green" />
+            <GenericInfo :value="safeStillResult.stilled" description="Нечестно добитых" color="green" />
           </div>
 
+
           <div class="card flex-1">
-            <GenericInfo :value="damageAggregatedResult.safed" description="Нечестно спасенных" color="red" />
+            <GenericInfo :value="safeStillResult.safed" description="Нечестно спасенных" color="red" />
           </div>
+
         </div>
 
         <div class="long card chart bar medium-h flex-1">
@@ -126,8 +128,7 @@ order by k;
 const damageAggregatedResult = queryAsyncFirst(`
 select avg((toFloat32(dmg) / shellDamage - 1) / damageRandomization) as avgDamage,
        toUInt32(countIf(dmg < shellDamage)) as less,
-       toUInt32(countIf(dmg > shellDamage)) as more,
-       toUInt32(countIf(health < shellDamage - dmg)) as safed
+       toUInt32(countIf(dmg > shellDamage)) as more
 from Event_OnShot
     array join
      results.shotDamage as dmg,
@@ -140,17 +141,18 @@ and shellTag != 'FLAME'
 ${whereClause(params, { withWhere: false })};
 `, { less: 0, more: 0, safed: 0, avgDamage: 0 }, visible)
 
-const stilledResult = queryAsyncFirst(`
-select toUInt32(countIf(killedDamage > shellDamage)) as stilled
-from (select arrayZip(results.shotDamage, results.shotHealth)                          as shotHealth,
-             arrayFirst(x -> not isNull(x.2) and assumeNotNull(x.2) = 0, shotHealth).1 as killedDamage,
-             shellDamage
-      from Event_OnShot
-      where length(results.order) > 0
-        and has(results.shotHealth, 0)
-        and shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME'
-        ${whereClause(params, { withWhere: false })});
-`, { stilled: 0 }, visible)
+
+const safeStillResult = queryAsyncFirst(`
+select toUInt32(countIf(shotHealth = 0 and (shotHealth + dmg) > shellDamage))  as stilled,
+       toUInt32(countIf(shotHealth != 0 and (shotHealth + dmg) < shellDamage)) as safed
+from Event_OnShot
+    array join
+     results.shotDamage as dmg,
+     results.shotHealth as shotHealth
+where dmg > 0
+and shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME'
+${whereClause(params, { withWhere: false })}
+`, { stilled: 0, safed: 0 })
 
 const byShellResult = queryAsync<{ shellTag: string, percentDamage: number, percentNoDamage: number }>(`
 select shellTag,
