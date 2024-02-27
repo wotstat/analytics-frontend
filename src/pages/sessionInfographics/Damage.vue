@@ -108,7 +108,7 @@ const damageLabels = new Array(21).fill(0).map((v, i) => `${i == 10 ? '' : i < 1
 const damageDistributionResult = queryAsync<{ k: number, count: number }>(`
 select if(round(normK, 1) = -0, 0, round(normK, 1)) * 10 as k, toUInt32(count()) as count
 from (select arrayZip(results.shotDamage, results.shotHealth) as shotHealth,
-             arrayFilter(x -> x.2 != 0, shotHealth)           as notKill,
+             arrayFilter(x -> (x.2 + x.1) > round(shellDamage * 1.250001), shotHealth)           as notKill,
              arrayMax(x -> x.1, notKill)                      as maxNotKillDamage,
              shellDamage,
              damageRandomization,
