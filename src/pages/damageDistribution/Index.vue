@@ -218,7 +218,7 @@ const allowedSteps = computed(() => {
 watch(allowedSteps, val => {
   if (val.includes(selectedStep.value)) return
 
-  const priority = [5, 4, 6, 3]
+  const priority = [5, 7, 3, 9]
   if (priority.some(step => {
     if (val.includes(step)) {
       selectedStep.value = step
@@ -286,22 +286,23 @@ watch([selectedDamage, selectedStep], async ([damage, step]) => {
   const leftEnough = leftBorder - min
   const rightEnough = max - rightBorder
 
-  const limit = delta + 1 - Math.abs(rightEnough - leftEnough)
+  const borderDelta = Math.abs(leftEnough - rightEnough)
+  const limit = delta + 1
+  const offset = borderDelta;
 
+  console.log(`${leftEnough} + ${barCount * 2 + 1}*${step} + ${rightEnough}; Limit: ${limit + offset}`);
 
-  console.log(`${leftEnough} + ${barCount * 2 + 1}*${step} + ${rightEnough}; Limit: ${limit}`);
-
-  const gropuping = `floor((nDmg ${leftEnough == 0 ? '' : `+ ${step} - ${leftEnough}`}) / ${step})`
+  const group = `floor((nDmg + ${step - leftEnough - borderDelta}) / ${step})`
 
   const resQuery = query<{ r: number, from: number, to: number, value: number, percent: number }>(`
-select ${gropuping} as r,
+select ${group} as r,
        toUInt32(to - barCount + 1) as from,
-       toUInt32(sum(barCount) over (order by r) - 1 + ${min}) as to,
+       toUInt32(sum(barCount) over (order by r) - 1 + ${min - offset}) as to,
        sum(c) as value,
        value / sum(value) over () * 100 as percent,
        count(c) as barCount
 from (select filled as nDmg, c
-      from (select (dmg - ${min}) as zDmg, count() as c
+      from (select (dmg - ${min - offset}) as zDmg, count() as c
             from Event_OnShot array join results.shotDamage as dmg, results.shotHealth as health
             where dmg > 0 and health > 0
               and shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME' and battleMode = 'REGULAR'
@@ -309,9 +310,9 @@ from (select filled as nDmg, c
               and (dmg + health) > ${max}
               ${whereClause(params, { withWhere: false })}
             group by zDmg) as T1
-      right join (select toInt32(number) as filled from numbers(${limit})) as T2 on filled = zDmg
+      right join (select toInt32(number) as filled from numbers(${limit + offset})) as T2 on filled = zDmg
       order by nDmg
-      limit ${limit})
+      limit ${limit + offset})
 group by r
 order by r
   `)
@@ -429,7 +430,7 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
         title: (item) => {
           const from = distribution.value.from[item[0].dataIndex]
           const to = distribution.value.to[item[0].dataIndex]
-          return from == to ? `Урон ${from}` : `Урон от ${from} до ${to} включая границы`
+          return from == to ? `Урон ${from}` : `Урон от ${from} до ${to} включая границы` + `\n${(from + to) / 2} +- ${(to - from) / 2}`
         },
         beforeBody: (item) => {
           const value = distribution.value.values[item[0].dataIndex]
