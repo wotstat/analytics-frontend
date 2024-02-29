@@ -286,23 +286,21 @@ watch([selectedDamage, selectedStep], async ([damage, step]) => {
   const leftEnough = leftBorder - min
   const rightEnough = max - rightBorder
 
-  const borderDelta = Math.abs(leftEnough - rightEnough)
   const limit = delta + 1
-  const offset = borderDelta;
 
-  console.log(`${leftEnough} + ${barCount * 2 + 1}*${step} + ${rightEnough}; Limit: ${limit + offset}`);
+  console.log(`${leftEnough} + ${barCount * 2 + 1}*${step} + ${rightEnough}; Limit: ${limit}`);
 
-  const group = `floor((nDmg + ${step - leftEnough - borderDelta}) / ${step})`
+  const group = `floor((nDmg + ${step - leftEnough}) / ${step})`
 
   const resQuery = query<{ r: number, from: number, to: number, value: number, percent: number }>(`
 select ${group} as r,
        toUInt32(to - barCount + 1) as from,
-       toUInt32(sum(barCount) over (order by r) - 1 + ${min - offset}) as to,
+       toUInt32(sum(barCount) over (order by r) - 1 + ${min}) as to,
        sum(c) as value,
        value / sum(value) over () * 100 as percent,
        count(c) as barCount
 from (select filled as nDmg, c
-      from (select (dmg - ${min - offset}) as zDmg, count() as c
+      from (select (dmg - ${min}) as zDmg, count() as c
             from Event_OnShot array join results.shotDamage as dmg, results.shotHealth as health
             where dmg > 0 and health > 0
               and shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME' and battleMode = 'REGULAR'
@@ -310,9 +308,9 @@ from (select filled as nDmg, c
               and (dmg + health) > ${max}
               ${whereClause(params, { withWhere: false })}
             group by zDmg) as T1
-      right join (select toInt32(number) as filled from numbers(${limit + offset})) as T2 on filled = zDmg
+      right join (select toInt32(number) as filled from numbers(${limit})) as T2 on filled = zDmg
       order by nDmg
-      limit ${limit + offset})
+      limit ${limit})
 group by r
 order by r
   `)
@@ -451,7 +449,7 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
       display: false,
     },
     // @ts-ignore
-    centerLine: true,
+    centerLine: distribution.value.labels.indexOf(`${selectedDamage.value}`),
   },
 }))
 
@@ -564,6 +562,7 @@ h3 {
 
     td {
       text-align: center;
+      text-wrap: nowrap;
       padding: 0 5px;
     }
   }
