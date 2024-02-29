@@ -9,23 +9,37 @@ class ShadowBarController extends BarController {
 
     const meta = this.getMeta();
 
-    if (this.chart.config.options?.plugins && 'centerLine' in this.chart.config.options?.plugins && this.chart.config.options?.plugins.centerLine) {
-      const height = this.chart.chartArea.height;
-      const left = this.chart.chartArea.left + this.chart.chartArea.width / 2
+    const drawCenterLine = () => {
+      if (this.chart.config.options?.plugins && 'centerLine' in this.chart.config.options?.plugins && this.chart.config.options?.plugins.centerLine !== false) {
 
-      ctx.save();
+        const height = this.chart.chartArea.height;
+        let left = this.chart.chartArea.left + this.chart.chartArea.width / 2
 
-      ctx.beginPath();
-      ctx.moveTo(left, 0);
-      ctx.lineTo(left, height);
+        if (typeof this.chart.config.options?.plugins.centerLine === 'number') {
+          const bars = meta.data as BarElement[]
+          const targetBar = bars[this.chart.config.options?.plugins.centerLine]
+          if (!targetBar) return
 
-      ctx.strokeStyle = '#5d5d5d';
-      ctx.setLineDash([5, 5]);
-      ctx.lineWidth = 1;
-      ctx.stroke();
+          left = targetBar.x
+        }
 
-      ctx.restore();
+
+        ctx.save();
+
+        ctx.beginPath();
+        ctx.moveTo(left, 0);
+        ctx.lineTo(left, height);
+
+        ctx.strokeStyle = '#5d5d5d';
+        ctx.setLineDash([5, 5]);
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.restore();
+      }
     }
+
+    drawCenterLine()
 
     for (const barElement of meta.data as BarElement[]) {
 
