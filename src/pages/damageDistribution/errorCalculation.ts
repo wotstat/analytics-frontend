@@ -15,6 +15,7 @@ export function useErrorCalculation(damage: WatchSource<number>, shotCount: Watc
   const calculationInProgress = ref(false)
   const progress = ref(0)
   const readyToCalculate = computed(() => !calculationInProgress.value && !currentResult.value)
+  let skipAutoCalculation = false
 
   const worker = new CalcWorker()
   let workerBusy = false
@@ -55,11 +56,10 @@ export function useErrorCalculation(damage: WatchSource<number>, shotCount: Watc
     if (resultCache.has(key)) return
     const iterations = toValue(shotCount) * toValue(experimentsCount)
     if (iterations > 3000 * 10000) return
+    if (skipAutoCalculation) return
 
     for (let i = 0; i < 100 && workerBusy; i++) {
       await new Promise((resolve) => setTimeout(resolve, 10))
-      console.log(workerBusy);
-
     }
 
     if (workerBusy) return
@@ -68,6 +68,7 @@ export function useErrorCalculation(damage: WatchSource<number>, shotCount: Watc
   })
 
   function startCalculation() {
+    skipAutoCalculation = false
     calculationInProgress.value = true
     progress.value = 0
     workerBusy = true
@@ -89,11 +90,13 @@ export function useErrorCalculation(damage: WatchSource<number>, shotCount: Watc
 
   function reset() {
     currentResult.value = null
-    const key = getKey()
+    skipAutoCalculation = true
+    resultCache.clear()
+    // const key = getKey()
 
-    if (resultCache.has(key)) {
-      resultCache.delete(key)
-    }
+    // if (resultCache.has(key)) {
+    //   resultCache.delete(key)
+    // }
   }
 
   return {

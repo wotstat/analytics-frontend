@@ -218,7 +218,7 @@ const allowedSteps = computed(() => {
 watch(allowedSteps, val => {
   if (val.includes(selectedStep.value)) return
 
-  const priority = [5, 4, 6, 3]
+  const priority = [5, 7, 3, 9]
   if (priority.some(step => {
     if (val.includes(step)) {
       selectedStep.value = step
@@ -286,15 +286,14 @@ watch([selectedDamage, selectedStep], async ([damage, step]) => {
   const leftEnough = leftBorder - min
   const rightEnough = max - rightBorder
 
-  const limit = delta + 1 - Math.abs(rightEnough - leftEnough)
-
+  const limit = delta + 1
 
   console.log(`${leftEnough} + ${barCount * 2 + 1}*${step} + ${rightEnough}; Limit: ${limit}`);
 
-  const gropuping = `floor((nDmg ${leftEnough == 0 ? '' : `+ ${step} - ${leftEnough}`}) / ${step})`
+  const group = `floor((nDmg + ${step - leftEnough}) / ${step})`
 
   const resQuery = query<{ r: number, from: number, to: number, value: number, percent: number }>(`
-select ${gropuping} as r,
+select ${group} as r,
        toUInt32(to - barCount + 1) as from,
        toUInt32(sum(barCount) over (order by r) - 1 + ${min}) as to,
        sum(c) as value,
@@ -429,7 +428,7 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
         title: (item) => {
           const from = distribution.value.from[item[0].dataIndex]
           const to = distribution.value.to[item[0].dataIndex]
-          return from == to ? `Урон ${from}` : `Урон от ${from} до ${to} включая границы`
+          return from == to ? `Урон ${from}` : `Урон от ${from} до ${to} включая границы` + `\n${(from + to) / 2} +- ${(to - from) / 2}`
         },
         beforeBody: (item) => {
           const value = distribution.value.values[item[0].dataIndex]
@@ -450,7 +449,7 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
       display: false,
     },
     // @ts-ignore
-    centerLine: true,
+    centerLine: distribution.value.labels.indexOf(`${selectedDamage.value}`),
   },
 }))
 
@@ -563,6 +562,7 @@ h3 {
 
     td {
       text-align: center;
+      text-wrap: nowrap;
       padding: 0 5px;
     }
   }
