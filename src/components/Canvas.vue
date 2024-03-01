@@ -13,8 +13,13 @@ const emit = defineEmits<{
   'redraw': [ctx: CanvasRenderingContext2D, width: number, height: number],
 }>()
 
+const props = defineProps<{
+  redrawGenerator?: (ctx: CanvasRenderingContext2D, width: number, height: number) => Generator<number | undefined, void, void>
+}>()
+
 defineExpose({
   redraw,
+  context: () => context,
 })
 
 const canvas = ref<HTMLCanvasElement | null>(null);
@@ -24,6 +29,8 @@ const visible = useElementVisibility(container);
 
 let context: CanvasRenderingContext2D | null = null;
 let shouldRerenderAfterVisible = false;
+
+let currentGenerator: Generator<number | undefined, void, void> | null = null;
 
 function redraw() {
   const dpr = window.devicePixelRatio || 1;
@@ -45,6 +52,24 @@ function redraw() {
 
   shouldRerenderAfterVisible = false;
   emit('redraw', context, containerSize.width.value, containerSize.height.value);
+  if (props.redrawGenerator) {
+    currentGenerator = props.redrawGenerator!(context, containerSize.width.value, containerSize.height.value);
+    nextRedrawGeneratorStep()
+  } else {
+    currentGenerator = null;
+  }
+}
+
+let timer: ReturnType<typeof setTimeout> | null = null;
+function nextRedrawGeneratorStep() {
+  if (timer) clearTimeout(timer);
+  if (!currentGenerator) return;
+
+  const result = currentGenerator.next()
+  const value = result.value;
+
+  if (value === undefined) return;
+  timer = setTimeout(() => nextRedrawGeneratorStep(), value);
 }
 
 watch(visible, v => {

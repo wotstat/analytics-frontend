@@ -43,6 +43,13 @@ export async function query<T>(query: string) {
   return response;
 }
 
+export function queryComputed<T>(queryString: () => string) {
+  return computedAsync(async () => {
+    const { data } = await query<T>(queryString());
+    return data;
+  })
+}
+
 export function queryAsync<T>(queryString: string, enabled: Ref<boolean> = ref(true)) {
   const result = shallowRef<T[]>([]);
 
