@@ -64,6 +64,17 @@
     <template v-if="selectedDisplay == 'shots'">
 
       <div class="flex settings-line">
+        <p>Завершение выстрела</p>
+        <select v-model="selectedTracerEnd">
+          <option value="clientMarkerPoint">Клиентский прицел</option>
+          <option value="serverMarkerPoint">Серверный прицел</option>
+          <option value="tracerEnd">Исчезновение трассера</option>
+          <option value="hitPoint">Точка попадания</option>
+        </select>
+      </div>
+
+
+      <div class="flex settings-line">
         <p>Показывать трассеры</p>
         <input type="checkbox" v-model="showTracers">
       </div>
@@ -133,6 +144,7 @@ const selectedTeam = ref<1 | 2>(1);
 const selectedGameplay = ref<'ctf' | 'domination' | 'assault'>('ctf');
 const selectedDisplay = ref<'shots' | 'group'>('shots');
 const selectedPointVariant = ref<'gun' | 'target' | 'all'>('all');
+const selectedTracerEnd = ref<'clientMarkerPoint' | 'serverMarkerPoint' | 'tracerEnd' | 'hitPoint'>('tracerEnd');
 const selectedFrom = ref(0);
 const showTracers = useLocalStorage('mapShowTracers', true);
 const highlightTracers = useLocalStorage('mapHighlightTracers', false);
@@ -259,20 +271,22 @@ async function loadNextBatch() {
   loading = true;
 
   console.log(`load ${LOAD_COUNT} shots offset ${shotsData.length}`);
+
   const result = await query<{ id: string, x: number, z: number, hitX: number, hitZ: number, hit: number }>(`
       select
             id as id,
-            gunPoint_x          as x,
-            gunPoint_z          as z,
-            tracerEnd_x as hitX,
-            tracerEnd_z as hitZ,
-            length(results.order) > 0 as hit
+            gunPoint_x                      as x,
+            gunPoint_z                      as z,
+            ${selectedTracerEnd.value}_x    as hitX,
+            ${selectedTracerEnd.value}_z    as hitZ,
+            length(results.order) > 0       as hit
       from Event_OnShot
       where arenaTag = '${selectedMap.value}'
       and team = ${selectedTeam.value}
       and battleGameplay = '${selectedGameplay.value}'
       and battleTime >= ${selectedFrom.value * 1000}
       and battleTime <= ${selectedTo.value * 1000}
+      ${selectedTracerEnd.value == 'hitPoint' ? 'and hitPoint_x is not NULL' : ''}
       ${whereClause(params, { withWhere: false })}
       limit ${LOAD_COUNT}
       offset ${shotsData.length};`)
@@ -402,7 +416,7 @@ function* redrawGenerator(ctx: CanvasRenderingContext2D, width: number, height: 
 const debouncedFrom = useDebounce(selectedFrom, 500);
 const debouncedTo = useDebounce(selectedTo, 500);
 
-watch(() => [selectedMap.value, selectedTeam.value, selectedGameplay.value, debouncedFrom.value, debouncedTo.value, selectedPointVariant.value], () => {
+watch(() => [selectedMap.value, selectedTeam.value, selectedGameplay.value, debouncedFrom.value, debouncedTo.value, selectedPointVariant.value, selectedTracerEnd.value], () => {
   shotsData = []
   loading = false;
   loadingFinished = false;
