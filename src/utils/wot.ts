@@ -9,13 +9,17 @@ export const shellNames = {
 } as const
 
 export const customBattleModes = {
-  'normalAny': { title: 'Обычный режим', mode: 'REGULAR' },
-  'normalCft': { title: 'Обычный (Стандартный)', mode: 'REGULAR', gameplay: 'ctf' },
-  'normalDomination': { title: 'Обычный (Встречный)', mode: 'REGULAR', gameplay: 'domination' },
-  'normalAssault': { title: 'Обычный (Штурм)', mode: 'REGULAR', gameplay: 'assault' },
+  'normalAny': { title: 'Случайный бой', mode: 'REGULAR' },
+  'normalCft': { title: 'Случайный бой (Стандартный)', mode: 'REGULAR', gameplay: 'ctf' },
+  'normalDomination': { title: 'Случайный бой (Встречный)', mode: 'REGULAR', gameplay: 'domination' },
+  'normalAssault': { title: 'Случайный бой (Штурм)', mode: 'REGULAR', gameplay: 'assault' },
+  'epicRandom': { title: 'Генеральное сражение', mode: 'EPIC_RANDOM', gameplay: 'ctf' },
   'ranked': { title: 'Ранги', mode: 'RANKED' },
+  'comp7': { title: 'Натиск', mode: 'COMP7' },
+  'globalMap': { title: 'Глобальная карта', mode: 'GLOBAL_MAP' },
+  'sortie': { title: 'Укрепрайон (вылазка)', mode: 'SORTIE_2' },
+  'fortBattle': { title: 'Битва за укрепрайон', mode: 'FORT_BATTLE_2' },
   'mapsTraining': { title: 'Топография', mode: 'MAPS_TRAINING' },
-  'epicRandom': { title: 'Линия фронта', mode: 'EPIC_RANDOM' },
 } as const
 
 export const modeCount = {
