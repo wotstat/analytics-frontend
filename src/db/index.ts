@@ -43,6 +43,13 @@ export async function query<T>(query: string) {
   return response;
 }
 
+export function queryComputed<T>(queryString: () => string) {
+  return computedAsync(async () => {
+    const { data } = await query<T>(queryString());
+    return data;
+  })
+}
+
 export function queryAsync<T>(queryString: string, enabled: Ref<boolean> = ref(true)) {
   const result = shallowRef<T[]>([]);
 
@@ -69,15 +76,15 @@ export function dateToDbIndex(date: Date) {
 }
 
 export function semverCompareStartFrom(target: string, addWhere = true) {
-  const parts = target.split('.')
+  const parts = target.split('.').map(t => parseInt(t))
   const major = parts[0] ?? 0
   const minor = parts[1] ?? 0
   const patch = parts[2] ?? 0
   const revision = parts[3] ?? 0
 
-  return addWhere ? 'where ' : ' and ' + `
-  (modVersion_major > ${major} or
-  (modVersion_major = ${major} and modVersion_minor > ${minor}) or
-  (modVersion_major = ${major} and modVersion_minor = ${minor} and modVersion_patch > ${patch}) or
-  (modVersion_minor = ${major} and modVersion_minor = ${minor} and modVersion_patch = ${patch} and modVersion_revision >= ${revision}))`
+  return (addWhere ? 'where ' : ' and ') + `modVersionComparable > ${major * 1e9 + minor * 1e6 + patch * 1e3 + revision}`
+  // (modVersion_major > ${major} or
+  // (modVersion_major = ${major} and modVersion_minor > ${minor}) or
+  // (modVersion_major = ${major} and modVersion_minor = ${minor} and modVersion_patch > ${patch}) or
+  // (modVersion_minor = ${major} and modVersion_minor = ${minor} and modVersion_patch = ${patch} and modVersion_revision >= ${revision}))`
 }

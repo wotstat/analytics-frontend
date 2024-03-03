@@ -188,7 +188,7 @@ type Shot = {
   // shotId: UInt32
   health: UInt32
   arenaTag: string
-  // playerName: string
+  playerName: string
   // playerClan: string
   // accountDBID: UInt64
   battleMode: string
@@ -283,9 +283,10 @@ const selectedShoot = computed(() => allShots.value?.[shotIndex.value] ?? null)
 const arenaTag = computed(() => selectedShoot.value?.arenaTag.split('spaces/')[1] ?? null);
 
 const firstTable = (s: Shot) => [
+  ['Игрок', s.playerName],
   ['Танк', s.tankTag],
   ['Карта', getArenaName(arenaTag.value + '/name').value],
-  ['Пушка', s.gunTag],
+  // ['Пушка', s.gunTag],
   ['Калибр', s.shellCaliber],
   ['Разброс орудия', (s.battleDispersion * 100).toFixed(2)],
   ['Версия мода', s.modVersion],

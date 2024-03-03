@@ -13,6 +13,10 @@ const routes = [
   {
     path: '/damage',
     component: () => import('./pages/damageDistribution/Index.vue')
+  },
+  {
+    path: '/map',
+    component: () => import('./pages/map/Index.vue')
   }
 ] satisfies RouteRecordRaw[]
 

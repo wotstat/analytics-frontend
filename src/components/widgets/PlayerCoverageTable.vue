@@ -9,8 +9,8 @@
         <tr>
           <th>Никнейм</th>
           <th>Количество боёв</th>
-          <td>Урон союзник</td>
-          <td>Урон противник</td>
+          <td>Урон как союзник</td>
+          <td>Урон как противник</td>
         </tr>
       </thead>
 
@@ -57,21 +57,25 @@ from (select name,
              count()                           as count,
              avgIf(damage, team = playerTeam)  as playerDamage,
              avgIf(damage, team != playerTeam) as opponentDamage
-      from Event_OnBattleResult
-          array join
-           playersResults.name as name,
-           playersResults.team as team,
-           playersResults.damageDealt as damage,
-           playersResults.bdid as bdid,
-           playersResults.squadID as sqid
-      where name != playerName
-      and (personal.squadID = 0 or sqid != personal.squadID)
-      ${params ? whereClause(params, { withWhere: false }) : ''}
-      ${semverCompareStartFrom('1.1.0.0', false)}
+      from (select region,
+                   first_value(playerTeam)                 as playerTeam,
+                   first_value(playerName)                 as playerName,
+                   first_value(personal.squadID)           as squadID,
+                   first_value(playersResults.name)        as name,
+                   first_value(playersResults.team)        as team,
+                   first_value(playersResults.damageDealt) as damage,
+                   first_value(playersResults.bdid)        as bdid,
+                   first_value(playersResults.squadID)     as sqid
+            from Event_OnBattleResult
+              ${semverCompareStartFrom('1.1.0.0')}
+              ${params ? whereClause(params, { withWhere: false }) : ''}
+            group by arenaId, region)
+          array join name, team, damage, bdid, sqid
+      where name != playerName and (squadID = 0 or sqid != squadID)
       group by name, bdid, region)
 where count > 1
 order by count desc
-limit 30;`, visible)
+limit 30`, visible)
 
 const data = computed(() => {
   return result.value?.map((item, index) => {
