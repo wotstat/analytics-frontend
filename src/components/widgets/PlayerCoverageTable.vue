@@ -54,12 +54,12 @@ select *
 from (select name,
              bdid,
              region,
-             count()                           as count,
-             avgIf(damage, team = playerTeam)  as playerDamage,
-             avgIf(damage, team != playerTeam) as opponentDamage
+             count()                            as count,
+             avgIf(damage, team = fPlayerTeam)  as playerDamage,
+             avgIf(damage, team != fPlayerTeam) as opponentDamage
       from (select region,
-                   first_value(playerTeam)                 as playerTeam,
-                   first_value(playerName)                 as playerName,
+                   first_value(playerTeam)                 as fPlayerTeam,
+                   first_value(playerName)                 as fPlayerName,
                    first_value(personal.squadID)           as squadID,
                    first_value(playersResults.name)        as name,
                    first_value(playersResults.team)        as team,
@@ -71,7 +71,7 @@ from (select name,
               ${params ? whereClause(params, { withWhere: false }) : ''}
             group by arenaId, region)
           array join name, team, damage, bdid, sqid
-      where name != playerName and (squadID = 0 or sqid != squadID)
+      where name != fPlayerName and (squadID = 0 or sqid != squadID)
       group by name, bdid, region)
 where count > 1
 order by count desc
