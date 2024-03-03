@@ -303,7 +303,7 @@ from (select filled as nDmg, c
       from (select (dmg - ${min}) as zDmg, count() as c
             from Event_OnShot array join results.shotDamage as dmg, results.shotHealth as health
             where dmg > 0 and health > 0
-              and shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME' and battleMode = 'REGULAR'
+              and shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME'
               and shellDamage = ${damage}
               and (dmg + health) > ${max}
               ${whereClause(params, { withWhere: false })}
