@@ -93,7 +93,9 @@ select:focus-visible {
 }
 
 input:focus,
-input:focus-visible {
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible {
   outline: none;
 }
 
