@@ -109,7 +109,7 @@ export async function loadArenaMeta(tag: string): Promise<ArenaMeta> {
       name,
       boundingBox: {
         x: bottomLeft.x,
-        y: upperRight.y,
+        y: bottomLeft.y,
         width: upperRight.x - bottomLeft.x,
         height: upperRight.y - bottomLeft.y
       },
@@ -127,7 +127,7 @@ export async function loadArenaMeta(tag: string): Promise<ArenaMeta> {
 export function convertCoordinate(v: { x: number, y: number }, bbox: { x: number, y: number, width: number, height: number }) {
   return {
     x: (v.x - bbox.x) / bbox.width,
-    y: - (v.y - bbox.y) / bbox.height
+    y: (1 - v.y - bbox.y) / bbox.height
   }
 
 }

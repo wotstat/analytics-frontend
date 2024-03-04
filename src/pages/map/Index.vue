@@ -119,6 +119,7 @@
         }" />
         <CanvasVue :redrawGenerator="redrawGenerator" ref="canvasRef" />
         <CanvasVue class="hover-canvas" @redraw="hoverRender" ref="hoverCanvasRef" />
+        <Heatmap v-bind="heatmapParams" />
       </div>
     </div>
     <p>Выстрелов: {{ totalDraw }}</p>
@@ -141,6 +142,7 @@ import PopupWindow from '@/components/PopupWindow.vue';
 import ShotInfo from "@/components/widgets/ShotInfo/Index.vue";
 import CanvasVue from "@/components/Canvas.vue";
 import EfficiencyPopup from "./Efficiency.vue";
+import Heatmap from "./Heatmap.vue";
 
 import { useQueryStatParams, whereClause } from "@/composition/useQueryStatParams";
 import { query, queryComputed } from '@/db';
@@ -160,7 +162,7 @@ const CLICK_RADIUS = 0.005;
 
 const MAIN_COLOR_RANGE = new Color(BloomColor.green.main).range(new Color(BloomColor.gold.main), {
   space: 'lch',
-  outputSpace: 'srgb'
+  outputSpace: 'srgb',
 });
 
 const BLOOM_COLOR_RANGE = new Color(BloomColor.green.bloom).range(new Color(BloomColor.gold.bloom), {
@@ -195,6 +197,23 @@ const selectedEfficiency = ref({
   to: 1,
 });
 
+const heatmapParams = computed(() => {
+  return {
+    colorRange: BLOOM_COLOR_RANGE,
+    efficiency: selectedEfficiency.value,
+    map: {
+      meta: arenaMeta.value,
+      arena: selectedMap.value ?? '',
+      team: selectedTeam.value,
+      gameplay: selectedGameplay.value,
+    },
+    period: {
+      from: selectedFrom.value,
+      to: selectedTo.value,
+    },
+  }
+})
+
 const efficiencyPopup = ref(false)
 
 const arenaTag = computed(() => selectedMap.value?.split('/')[1]);
@@ -206,12 +225,20 @@ const nearestShotId = ref<string | null>(null)
 const { elementX, elementY, isOutside } = useMouseInElement(containerRef)
 watch(() => [elementX.value, elementY.value, isOutside.value], () => hoverCanvasRef.value?.redraw())
 
+const bloomCache = new Map<number, string>();
 function bloomColor(efficiency: number) {
-  return BLOOM_COLOR_RANGE((efficiency - selectedEfficiency.value.from) / (selectedEfficiency.value.to - selectedEfficiency.value.from)).toString();
+  if (bloomCache.has(efficiency)) return bloomCache.get(efficiency)!;
+  const color = BLOOM_COLOR_RANGE((efficiency - selectedEfficiency.value.from) / (selectedEfficiency.value.to - selectedEfficiency.value.from)).toString();
+  bloomCache.set(efficiency, color);
+  return color;
 }
 
+const mainCache = new Map<number, string>();
 function mainColor(efficiency: number) {
-  return MAIN_COLOR_RANGE((efficiency - selectedEfficiency.value.from) / (selectedEfficiency.value.to - selectedEfficiency.value.from)).toString();
+  if (mainCache.has(efficiency)) return mainCache.get(efficiency)!;
+  const color = MAIN_COLOR_RANGE((efficiency - selectedEfficiency.value.from) / (selectedEfficiency.value.to - selectedEfficiency.value.from)).toString();
+  mainCache.set(efficiency, color);
+  return color;
 }
 
 const quadTree = new Quadtree({
@@ -270,8 +297,10 @@ function hoverRender(ctx: CanvasRenderingContext2D, width: number, height: numbe
     }
 
     if (distance > HOVER_RADIUS ** 2) continue;
+    const alpha = Math.max(0, Math.min(1, 1 - d / HOVER_RADIUS ** 2))
+    if (alpha == 0) continue;
 
-    ctx.globalAlpha = Math.max(0, Math.min(1, 1 - d / HOVER_RADIUS ** 2));
+    ctx.globalAlpha = alpha;
     ctx.fillStyle = mainColor(shot.data.efficiency);
     ctx.beginPath();
     ctx.arc(shot.x * width, shot.y * width, r, 0, 2 * Math.PI);
