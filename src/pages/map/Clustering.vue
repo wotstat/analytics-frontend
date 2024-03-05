@@ -67,28 +67,30 @@ having count > 1
 `})
 
 const response = queryComputed<{ x: number, z: number, value: number }>(() => queryRequest.value)
+const heatmapData = shallowRef<{ x: number, z: number, value: number }[]>([])
 
-watch(response, () => {
+watch(response, (v) => {
+  heatmapData.value = v
   renderKey.value++
 }, { deep: true })
 
-const clusters = computed(() => {
-  if (!response.value) return null
-  // renderKey.value++
-  console.log(response.value);
-})
+watch(() => [props], () => {
+  heatmapData.value = []
+  renderKey.value++
+}, { deep: true })
+
 
 const threshold = 0.02
 
 function redraw(ctx: CanvasRenderingContext2D, width: number, height: number) {
-  if (!response.value) return
+  if (heatmapData.value.length == 0) return
   const cellCount = props.cellsCount
 
   const grid = new Array(cellCount).fill(0).map(() => new Array(cellCount).fill({ value: 0 })) as { value: number }[][]
   const cellWidth = width / cellCount
   const cellHeight = height / cellCount
 
-  for (const { x, z, value } of response.value) {
+  for (const { x, z, value } of heatmapData.value) {
     grid[x][z] = { value }
   }
 

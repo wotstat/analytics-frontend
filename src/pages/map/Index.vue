@@ -1,7 +1,7 @@
 <template>
   <div class="center-container">
     <h4><i>Сервис в очень ранней разработке. Прототип</i></h4>
-    <SettingsTitle>
+    <SettingsTitle :reload="true">
       Карты позиций
     </SettingsTitle>
     <h3>
@@ -28,9 +28,8 @@
     <div class="flex settings-line">
       <p>Тип боя</p>
       <select v-model="selectedGameplay">
-        <option value="ctf">Стандартный</option>
-        <option value="domination">Встречный</option>
-        <option value="assault">Штурм</option>
+        <option v-if="availableGameplayTypes" :value="item" v-for="item in availableGameplayTypes">
+          {{ item in gameplayTypes ? (gameplayTypes as any)[item] : item }}</option>
       </select>
     </div>
 
@@ -173,6 +172,8 @@ import { Quadtree, Circle } from '@timohausmann/quadtree-ts';
 import { useRoute, useRouter } from 'vue-router';
 
 import Color from 'colorjs.io';
+import { useQueryParamStorage } from '@/composition/useQueryParamStorage';
+import { gameplayTypes } from '@/utils/wot';
 
 const LOAD_COUNT = 2000;
 const HOVER_RADIUS = 0.05;
@@ -197,9 +198,9 @@ const hoverCanvasRef = ref<InstanceType<typeof CanvasVue> | null>(null);
 const tracerCanvasRef = ref<InstanceType<typeof CanvasVue> | null>(null);
 const tracerCtx = computed(() => tracerCanvasRef.value?.context());
 
-const selectedMap = ref<string | null>(null);
-const selectedTeam = ref<1 | 2>(1);
-const selectedGameplay = ref<'ctf' | 'domination' | 'assault'>('ctf');
+const selectedMap = useQueryParamStorage<string | null>('map', null);
+const selectedTeam = useQueryParamStorage<1 | 2>('team', 1);
+const selectedGameplay = useQueryParamStorage<string>('gameplay', 'ctf');
 const selectedDisplay = ref<'shots' | 'group'>('shots');
 const selectedPointVariant = ref<'gun' | 'target' | 'all'>('all');
 const selectedTracerEnd = ref<'clientMarkerPoint' | 'serverMarkerPoint' | 'tracerEnd' | 'hitPoint'>('tracerEnd');
@@ -287,11 +288,28 @@ group by arenaTag
 order by count desc
 `);
 
+const dbGameplayTypes = queryComputed<{ gameplay: string }>(() => `
+select distinct battleGameplay as gameplay from Event_OnShot
+where arenaTag = '${selectedMap.value}'
+${whereClause(params, { withWhere: false })}
+`);
+
+const availableGameplayTypes = computed(() => {
+  if (!dbGameplayTypes.value) return []
+  return dbGameplayTypes.value.map(t => t.gameplay);
+})
+
 watch(arenas, (value) => {
   if (value.length > 0 && !selectedMap.value) {
     selectedMap.value = value[0].tag;
   }
 });
+
+watch(availableGameplayTypes, types => {
+  if (!types) return
+  if (selectedGameplay.value in types) return
+  selectedGameplay.value = types[0]
+})
 
 const arenaMinimapUrl = computedAsync(() => {
   if (selectedMap.value == null) return null;
@@ -535,19 +553,20 @@ function* redrawGenerator(ctx: CanvasRenderingContext2D, width: number, height: 
 const debouncedFrom = useDebounce(selectedFrom, 500);
 const debouncedTo = useDebounce(selectedTo, 500);
 
-watch(() => [selectedMap.value,
-selectedTeam.value,
-selectedGameplay.value,
-debouncedFrom.value,
-debouncedTo.value,
-selectedPointVariant.value,
-selectedTracerEnd.value,
-selectedEfficiency.value], () => {
-  shotsData = []
-  loading = false;
-  loadingFinished = false;
-  canvasRef.value?.redraw()
-}, { immediate: true })
+watch(() => [
+  selectedTeam.value,
+  selectedGameplay.value,
+  debouncedFrom.value,
+  debouncedTo.value,
+  selectedPointVariant.value,
+  selectedTracerEnd.value,
+  selectedEfficiency.value,
+  availableGameplayTypes.value], () => {
+    shotsData = []
+    loading = false;
+    loadingFinished = false;
+    canvasRef.value?.redraw()
+  }, { immediate: true })
 
 
 

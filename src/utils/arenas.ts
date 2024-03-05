@@ -86,7 +86,7 @@ export async function loadArenaMeta(tag: string): Promise<ArenaMeta> {
 
     const parsedGameplay: Record<string, any> = {}
 
-    for (const gameplay of ['ctf', 'domination', 'assault', 'maps_training', 'assault2', 'ctf30x30']) {
+    for (const gameplay of ['ctf', 'domination', 'assault', 'maps_training', 'assault2', 'ctf30x30', 'epic']) {
       const gameplayType = gameplayTypes.querySelector(gameplay)
       if (!gameplayType) continue
 
