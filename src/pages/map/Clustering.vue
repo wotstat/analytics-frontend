@@ -1,5 +1,5 @@
 <template>
-  <CanvasVue class="hover-canvas" @redraw="redraw" :key="renderKey + props.blurRadius + '' + props.clusterPercentile" />
+  <CanvasVue class="hover-canvas" @redraw="redraw" :key="renderKey + props.blurRadius + '_' + props.clusterPercentile" />
 </template>
 
 <script setup lang="ts">
@@ -72,11 +72,14 @@ const heatmapData = shallowRef<{ x: number, z: number, value: number }[]>([])
 watch(response, (v) => {
   heatmapData.value = v
   renderKey.value++
+  console.log('got');
 }, { deep: true })
 
-watch(() => [props], () => {
+watch(queryRequest, () => {
   heatmapData.value = []
   renderKey.value++
+  console.log('reset');
+
 }, { deep: true })
 
 
