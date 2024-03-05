@@ -1,7 +1,7 @@
 <template>
   <div class="flex ver shots" ref="container">
     <div class="card long">
-      <GenericInfo :value="dataResult.count" description="Выстрелов всего" color="green" />
+      <GenericInfo :value="shotsCount.count" description="Выстрелов всего" color="green" />
     </div>
     <div class="flex hor main">
       <div class="card circle">
@@ -110,6 +110,12 @@ const maskRadius = computed(() => {
   if (!isOutside30.value) return 0.3333;
   return 1;
 })
+
+const shotsCount = queryAsyncFirst(`
+select toUInt32(count()) as count 
+from Event_OnShot
+${whereClause(params)}
+`, { count: 0 }, visible)
 
 const dataResult = queryAsyncFirst(`
 select toUInt32(count())                                                                                as count,
