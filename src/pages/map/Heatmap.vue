@@ -50,8 +50,6 @@ const size = computed(() => {
 const queryRequest = computed(() => {
   if (!size.value) return null
 
-  console.log(size.value);
-
   return `
   with toFloat64(${props.efficiency.expression}) as efficiency
   select max2(0, min2(${cellCount - 1}, floor((gunPoint_x - ${size.value.bottomLeft.x}) / ${size.value.xStep}))) as x,

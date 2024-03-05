@@ -127,7 +127,7 @@ export async function loadArenaMeta(tag: string): Promise<ArenaMeta> {
 export function convertCoordinate(v: { x: number, y: number }, bbox: { x: number, y: number, width: number, height: number }) {
   return {
     x: (v.x - bbox.x) / bbox.width,
-    y: (1 - v.y - bbox.y) / bbox.height
+    y: 1 - (v.y - bbox.y) / bbox.height
   }
 
 }

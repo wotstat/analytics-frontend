@@ -107,6 +107,22 @@
 
     </template>
 
+
+    <div class="flex settings-line">
+      <p>cellsCount</p>
+      <input type="number" v-model="cellsCount">
+    </div>
+
+    <div class="flex settings-line">
+      <p>blurRadius</p>
+      <input type="number" v-model="blurRadius">
+    </div>
+
+    <div class="flex settings-line">
+      <p>clusterCount</p>
+      <input type="number" v-model="clusterPercentile">
+    </div>
+
     <div class="minimap">
       <div class="map-container">
         <img class="map" v-if="arenaMinimapUrl" :src="arenaMinimapUrl">
@@ -117,9 +133,10 @@
         <CanvasVue ref="tracerCanvasRef" :style="{
           visibility: showTracers ? 'visible' : 'hidden',
         }" />
-        <CanvasVue :redrawGenerator="redrawGenerator" ref="canvasRef" />
+        <Clustering v-bind="clusteringParams" />
+        <CanvasVue :redrawGenerator="redrawGenerator" ref="canvasRef" :style="{ opacity: 0.8 }" />
         <CanvasVue class="hover-canvas" @redraw="hoverRender" ref="hoverCanvasRef" />
-        <Heatmap v-bind="heatmapParams" />
+        <!-- <Heatmap v-bind="heatmapParams" /> -->
       </div>
     </div>
     <p>Выстрелов: {{ totalDraw }}</p>
@@ -143,6 +160,7 @@ import ShotInfo from "@/components/widgets/ShotInfo/Index.vue";
 import CanvasVue from "@/components/Canvas.vue";
 import EfficiencyPopup from "./Efficiency.vue";
 import Heatmap from "./Heatmap.vue";
+import Clustering from "./Clustering.vue";
 
 import { useQueryStatParams, whereClause } from "@/composition/useQueryStatParams";
 import { query, queryComputed } from '@/db';
@@ -211,6 +229,18 @@ const heatmapParams = computed(() => {
       from: selectedFrom.value,
       to: selectedTo.value,
     },
+  }
+})
+
+const cellsCount = ref(200)
+const blurRadius = ref(2)
+const clusterPercentile = ref(0.8)
+const clusteringParams = computed(() => {
+  return {
+    ...heatmapParams.value,
+    cellsCount: cellsCount.value,
+    blurRadius: blurRadius.value,
+    clusterPercentile: clusterPercentile.value
   }
 })
 
@@ -393,8 +423,8 @@ async function loadNextBatch() {
 
 function relativeCoordinate(x: number, y: number) {
   if (!arenaMeta.value) return null
-  const { x: nx, y: ny } = convertCoordinate({ x, y }, arenaMeta.value.boundingBox)
-  return { x: nx, y: ny }
+  const p = convertCoordinate({ x, y }, arenaMeta.value.boundingBox)
+  return { x: p.x, y: p.y }
 }
 
 function* redrawGenerator(ctx: CanvasRenderingContext2D, width: number, height: number) {
