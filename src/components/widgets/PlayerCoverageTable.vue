@@ -58,14 +58,14 @@ from (select name,
              avgIf(damage, team = fPlayerTeam)  as playerDamage,
              avgIf(damage, team != fPlayerTeam) as opponentDamage
       from (select region,
-                   first_value(playerTeam)                 as fPlayerTeam,
-                   first_value(playerName)                 as fPlayerName,
-                   first_value(personal.squadID)           as squadID,
-                   first_value(playersResults.name)        as name,
-                   first_value(playersResults.team)        as team,
-                   first_value(playersResults.damageDealt) as damage,
-                   first_value(playersResults.bdid)        as bdid,
-                   first_value(playersResults.squadID)     as sqid
+                   any(playerTeam)                 as fPlayerTeam,
+                   any(playerName)                 as fPlayerName,
+                   any(personal.squadID)           as squadID,
+                   any(playersResults.name)        as name,
+                   any(playersResults.team)        as team,
+                   any(playersResults.damageDealt) as damage,
+                   any(playersResults.bdid)        as bdid,
+                   any(playersResults.squadID)     as sqid
             from Event_OnBattleResult
               ${semverCompareStartFrom('1.1.0.0')}
               ${params ? whereClause(params, { withWhere: false }) : ''}
