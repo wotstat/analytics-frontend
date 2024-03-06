@@ -180,7 +180,7 @@ function generateQuery() {
        avg(personal.kills)                                   as kills,
        avgIf(personal.kills, result = 'lose')                as loseKills,
        avgIf(personal.kills, result = 'win')                 as winKills
-from Event_OnBattleResult
+from Event_OnBattleResult sample 500000
 ${whereSum(expressions.value)}
 ${params ? whereClause(params, { withWhere: expressions.value.length == 0 }) : ''}
 group by arenaTag
