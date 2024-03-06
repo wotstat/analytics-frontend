@@ -286,12 +286,12 @@ const firstTable = (s: Shot) => [
   ['Игрок', s.playerName],
   ['Танк', s.tankTag],
   ['Карта', getArenaName(arenaTag.value + '/name').value],
-  // ['Пушка', s.gunTag],
+  ['Пушка', s.gunTag],
   ['Калибр', s.shellCaliber],
   ['Разброс орудия', (s.battleDispersion * 100).toFixed(2)],
   ['Версия мода', s.modVersion],
   ['Версия игры', s.gameVersion],
-  ['Сервер', s.serverName],
+  // ['Сервер', s.serverName],
 ]
 
 const secondTable = (s: Shot) => [
