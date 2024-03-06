@@ -43,9 +43,11 @@ export async function query<T>(query: string) {
   return response;
 }
 
-export function queryComputed<T>(queryString: () => string) {
+export function queryComputed<T>(queryString: () => string | null) {
   return computedAsync(async () => {
-    const { data } = await query<T>(queryString());
+    const q = queryString();
+    if (!q) return [];
+    const { data } = await query<T>(q);
     return data;
   })
 }

@@ -1,7 +1,7 @@
 <template>
   <div class="center-container">
     <h4><i>Сервис в очень ранней разработке. Прототип</i></h4>
-    <SettingsTitle>
+    <SettingsTitle :reload="true">
       Карты позиций
     </SettingsTitle>
     <h3>
@@ -28,9 +28,8 @@
     <div class="flex settings-line">
       <p>Тип боя</p>
       <select v-model="selectedGameplay">
-        <option value="ctf">Стандартный</option>
-        <option value="domination">Встречный</option>
-        <option value="assault">Штурм</option>
+        <option v-if="availableGameplayTypes" :value="item" v-for="item in availableGameplayTypes">
+          {{ item in gameplayTypes ? (gameplayTypes as any)[item] : item }}</option>
       </select>
     </div>
 
@@ -107,6 +106,22 @@
 
     </template>
 
+
+    <div class="flex settings-line">
+      <p>cellsCount</p>
+      <input type="number" v-model="cellsCount">
+    </div>
+
+    <div class="flex settings-line">
+      <p>blurRadius</p>
+      <input type="number" v-model="blurRadius">
+    </div>
+
+    <div class="flex settings-line">
+      <p>clusterCount</p>
+      <input type="number" v-model="clusterPercentile">
+    </div>
+
     <div class="minimap">
       <div class="map-container">
         <img class="map" v-if="arenaMinimapUrl" :src="arenaMinimapUrl">
@@ -117,8 +132,10 @@
         <CanvasVue ref="tracerCanvasRef" :style="{
           visibility: showTracers ? 'visible' : 'hidden',
         }" />
-        <CanvasVue :redrawGenerator="redrawGenerator" ref="canvasRef" />
+        <Clustering v-bind="clusteringParams" />
+        <CanvasVue :redrawGenerator="redrawGenerator" ref="canvasRef" :style="{ opacity: 0.8 }" />
         <CanvasVue class="hover-canvas" @redraw="hoverRender" ref="hoverCanvasRef" />
+        <!-- <Heatmap v-bind="heatmapParams" /> -->
       </div>
     </div>
     <p>Выстрелов: {{ totalDraw }}</p>
@@ -141,6 +158,8 @@ import PopupWindow from '@/components/PopupWindow.vue';
 import ShotInfo from "@/components/widgets/ShotInfo/Index.vue";
 import CanvasVue from "@/components/Canvas.vue";
 import EfficiencyPopup from "./Efficiency.vue";
+import Heatmap from "./Heatmap.vue";
+import Clustering from "./Clustering.vue";
 
 import { useQueryStatParams, whereClause } from "@/composition/useQueryStatParams";
 import { query, queryComputed } from '@/db';
@@ -153,6 +172,8 @@ import { Quadtree, Circle } from '@timohausmann/quadtree-ts';
 import { useRoute, useRouter } from 'vue-router';
 
 import Color from 'colorjs.io';
+import { useQueryParamStorage } from '@/composition/useQueryParamStorage';
+import { gameplayTypes } from '@/utils/wot';
 
 const LOAD_COUNT = 2000;
 const HOVER_RADIUS = 0.05;
@@ -160,7 +181,7 @@ const CLICK_RADIUS = 0.005;
 
 const MAIN_COLOR_RANGE = new Color(BloomColor.green.main).range(new Color(BloomColor.gold.main), {
   space: 'lch',
-  outputSpace: 'srgb'
+  outputSpace: 'srgb',
 });
 
 const BLOOM_COLOR_RANGE = new Color(BloomColor.green.bloom).range(new Color(BloomColor.gold.bloom), {
@@ -177,9 +198,9 @@ const hoverCanvasRef = ref<InstanceType<typeof CanvasVue> | null>(null);
 const tracerCanvasRef = ref<InstanceType<typeof CanvasVue> | null>(null);
 const tracerCtx = computed(() => tracerCanvasRef.value?.context());
 
-const selectedMap = ref<string | null>(null);
-const selectedTeam = ref<1 | 2>(1);
-const selectedGameplay = ref<'ctf' | 'domination' | 'assault'>('ctf');
+const selectedMap = useQueryParamStorage<string | null>('map', null);
+const selectedTeam = useQueryParamStorage<1 | 2>('team', 1);
+const selectedGameplay = useQueryParamStorage<string>('gameplay', 'ctf');
 const selectedDisplay = ref<'shots' | 'group'>('shots');
 const selectedPointVariant = ref<'gun' | 'target' | 'all'>('all');
 const selectedTracerEnd = ref<'clientMarkerPoint' | 'serverMarkerPoint' | 'tracerEnd' | 'hitPoint'>('tracerEnd');
@@ -195,6 +216,35 @@ const selectedEfficiency = ref({
   to: 1,
 });
 
+const heatmapParams = computed(() => {
+  return {
+    colorRange: BLOOM_COLOR_RANGE,
+    efficiency: selectedEfficiency.value,
+    map: {
+      meta: arenaMeta.value,
+      arena: selectedMap.value ?? '',
+      team: selectedTeam.value,
+      gameplay: selectedGameplay.value,
+    },
+    period: {
+      from: selectedFrom.value,
+      to: selectedTo.value,
+    },
+  }
+})
+
+const cellsCount = ref(200)
+const blurRadius = ref(2)
+const clusterPercentile = ref(0.8)
+const clusteringParams = computed(() => {
+  return {
+    ...heatmapParams.value,
+    cellsCount: cellsCount.value,
+    blurRadius: blurRadius.value,
+    clusterPercentile: clusterPercentile.value
+  }
+})
+
 const efficiencyPopup = ref(false)
 
 const arenaTag = computed(() => selectedMap.value?.split('/')[1]);
@@ -206,12 +256,20 @@ const nearestShotId = ref<string | null>(null)
 const { elementX, elementY, isOutside } = useMouseInElement(containerRef)
 watch(() => [elementX.value, elementY.value, isOutside.value], () => hoverCanvasRef.value?.redraw())
 
+const bloomCache = new Map<number, string>();
 function bloomColor(efficiency: number) {
-  return BLOOM_COLOR_RANGE((efficiency - selectedEfficiency.value.from) / (selectedEfficiency.value.to - selectedEfficiency.value.from)).toString();
+  if (bloomCache.has(efficiency)) return bloomCache.get(efficiency)!;
+  const color = BLOOM_COLOR_RANGE((efficiency - selectedEfficiency.value.from) / (selectedEfficiency.value.to - selectedEfficiency.value.from)).toString();
+  bloomCache.set(efficiency, color);
+  return color;
 }
 
+const mainCache = new Map<number, string>();
 function mainColor(efficiency: number) {
-  return MAIN_COLOR_RANGE((efficiency - selectedEfficiency.value.from) / (selectedEfficiency.value.to - selectedEfficiency.value.from)).toString();
+  if (mainCache.has(efficiency)) return mainCache.get(efficiency)!;
+  const color = MAIN_COLOR_RANGE((efficiency - selectedEfficiency.value.from) / (selectedEfficiency.value.to - selectedEfficiency.value.from)).toString();
+  mainCache.set(efficiency, color);
+  return color;
 }
 
 const quadTree = new Quadtree({
@@ -230,11 +288,28 @@ group by arenaTag
 order by count desc
 `);
 
+const dbGameplayTypes = queryComputed<{ gameplay: string }>(() => `
+select distinct battleGameplay as gameplay from Event_OnShot
+where arenaTag = '${selectedMap.value}'
+${whereClause(params, { withWhere: false })}
+`);
+
+const availableGameplayTypes = computed(() => {
+  if (!dbGameplayTypes.value) return []
+  return dbGameplayTypes.value.map(t => t.gameplay);
+})
+
 watch(arenas, (value) => {
   if (value.length > 0 && !selectedMap.value) {
     selectedMap.value = value[0].tag;
   }
 });
+
+watch(availableGameplayTypes, types => {
+  if (!types) return
+  if (selectedGameplay.value in types) return
+  selectedGameplay.value = types[0]
+})
 
 const arenaMinimapUrl = computedAsync(() => {
   if (selectedMap.value == null) return null;
@@ -270,8 +345,10 @@ function hoverRender(ctx: CanvasRenderingContext2D, width: number, height: numbe
     }
 
     if (distance > HOVER_RADIUS ** 2) continue;
+    const alpha = Math.max(0, Math.min(1, 1 - d / HOVER_RADIUS ** 2))
+    if (alpha == 0) continue;
 
-    ctx.globalAlpha = Math.max(0, Math.min(1, 1 - d / HOVER_RADIUS ** 2));
+    ctx.globalAlpha = alpha;
     ctx.fillStyle = mainColor(shot.data.efficiency);
     ctx.beginPath();
     ctx.arc(shot.x * width, shot.y * width, r, 0, 2 * Math.PI);
@@ -364,8 +441,8 @@ async function loadNextBatch() {
 
 function relativeCoordinate(x: number, y: number) {
   if (!arenaMeta.value) return null
-  const { x: nx, y: ny } = convertCoordinate({ x, y }, arenaMeta.value.boundingBox)
-  return { x: nx, y: ny }
+  const p = convertCoordinate({ x, y }, arenaMeta.value.boundingBox)
+  return { x: p.x, y: p.y }
 }
 
 function* redrawGenerator(ctx: CanvasRenderingContext2D, width: number, height: number) {
@@ -476,19 +553,20 @@ function* redrawGenerator(ctx: CanvasRenderingContext2D, width: number, height: 
 const debouncedFrom = useDebounce(selectedFrom, 500);
 const debouncedTo = useDebounce(selectedTo, 500);
 
-watch(() => [selectedMap.value,
-selectedTeam.value,
-selectedGameplay.value,
-debouncedFrom.value,
-debouncedTo.value,
-selectedPointVariant.value,
-selectedTracerEnd.value,
-selectedEfficiency.value], () => {
-  shotsData = []
-  loading = false;
-  loadingFinished = false;
-  canvasRef.value?.redraw()
-}, { immediate: true })
+watch(() => [
+  selectedTeam.value,
+  selectedGameplay.value,
+  debouncedFrom.value,
+  debouncedTo.value,
+  selectedPointVariant.value,
+  selectedTracerEnd.value,
+  selectedEfficiency.value,
+  availableGameplayTypes.value], () => {
+    shotsData = []
+    loading = false;
+    loadingFinished = false;
+    canvasRef.value?.redraw()
+  }, { immediate: true })
 
 
 

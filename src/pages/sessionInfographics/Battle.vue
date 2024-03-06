@@ -100,7 +100,7 @@ const dataResult = queryAsyncFirst(`
 select round(avg(personal.lifeTime))    as lifetime,
        round(avg(duration))             as duration,
        toUInt32(sum(personal.lifeTime)) as inBattle
-from Event_OnBattleResult
+from Event_OnBattleResult sample 10000
 ${whereClause(params)};`, { lifetime: 0, duration: 0, inBattle: 0 }, visible)
 
 const durationResult = queryAsync<{ percent: number, duration: number, lifetime: number }>(`
@@ -121,7 +121,7 @@ from (select length(playersResults.tankType)                                  as
              arrayCount(t -> t == 'MT', playersResults.tankType) / tankCount  as MT,
              arrayCount(t -> t == 'AT', playersResults.tankType) / tankCount  as AT,
              arrayCount(t -> t == 'SPG', playersResults.tankType) / tankCount as SPG
-      from Event_OnBattleResult
+      from Event_OnBattleResult sample 20000
       ${whereClause(params)});
 `, { avgLT: 0, avgHT: 0, avgMT: 0, avgAT: 0, avgSPG: 0 }, visible)
 

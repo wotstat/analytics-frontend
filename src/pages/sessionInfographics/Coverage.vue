@@ -5,7 +5,11 @@
     </div>
 
     <div class="card">
-      <PlayerCoverageTable :params="params" />
+      <PlayerCoverageTable :params="params" v-if="params.player" />
+      <template v-else>
+        <p class="card-main-info description">Игроки с которыми вы попадали чаще всего</p>
+        <p class="cent">Этот блок доступен только при выбранном фильтре игрока</p>
+      </template>
     </div>
   </div>
 </template>
@@ -34,3 +38,11 @@ ${whereClause(params, { withWhere: false })};
 
 
 </script>
+
+<style lang="scss" scoped>
+.cent {
+  text-align: center;
+  margin-top: 20px;
+  font-style: italic;
+}
+</style>

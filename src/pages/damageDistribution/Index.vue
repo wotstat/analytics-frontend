@@ -1,6 +1,6 @@
 <template>
   <div class="center-container">
-    <SettingsTitle>
+    <SettingsTitle :reload="true">
       Распределение урона
     </SettingsTitle>
     <h3>

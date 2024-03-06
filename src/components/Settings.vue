@@ -147,10 +147,18 @@ import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import { useDebounce, useDraggable, useElementBounding, watchOnce } from '@vueuse/core';
 import { TankLevel, TankType, useQueryStatParams } from '@/composition/useQueryStatParams';
 import { customBattleModes, customBattleModesKeys } from '@/utils/wot';
+import { useRoute, useRouter } from 'vue-router';
+
+const route = useRoute()
+const router = useRouter()
 
 const emit = defineEmits<{
   close: [];
 }>();
+
+const props = defineProps<{
+  reload?: boolean
+}>()
 
 type Tank = {
   level: TankLevel,
@@ -461,7 +469,42 @@ function apply() {
 
   processPeriod()
 
-  window.open(target.slice(0, -1), '_self');
+  const keys = [
+    'nickname',
+    'level',
+    'type',
+    'tank',
+    'mode',
+    'lastX',
+    'from',
+    'to',
+  ]
+
+  target = target.slice(0, -1)
+  if (props.reload !== false) {
+    const old = Object.entries(route.query).filter(t => !keys.includes(t[0])).map(t => t.join('=')).join('&')
+
+    if (old != '') target += (!target.includes('?') ? '?' : '&') + old;
+
+    window.open(target, '_self');
+  } else {
+    const targetParams = target.split('?')
+    if (targetParams.length > 1) {
+      const params = targetParams[1].split('&')
+      const p = Object.fromEntries(params.map(t => t.split('=')))
+      router.push({
+        query: {
+          ...route.query,
+          ...Object.fromEntries(keys.map(t => [t, undefined])),
+          ...p
+        }
+      });
+    } else {
+      router.push(target);
+    }
+  }
+
+  if (props.reload !== true) emit('close');
 }
 
 onMounted(() => {

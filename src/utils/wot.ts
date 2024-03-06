@@ -23,6 +23,16 @@ export const customBattleModes = {
   'mapsTraining': { title: 'Топография', mode: 'MAPS_TRAINING' },
 } as const
 
+export const gameplayTypes = {
+  'ctf': 'Стандартный',
+  'domination': 'Встречный',
+  'assault': 'Штурм',
+  'maps_training': 'Топография',
+  'assault2': 'Штурм 2',
+  'ctf30x30': 'Стандартный 30x30',
+  'epic': 'Генеральное сражение',
+} as const
+
 export const modeCount = {
   'normalAny': 15,
   'normalCft': 15,

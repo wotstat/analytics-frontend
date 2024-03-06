@@ -150,7 +150,7 @@ from (select arrayFilter(t -> t.1 ${team == 'you' ? '=' : '!='} playerTeam,
              arrayReverseSort(team.4)                            as radios,
              arrayReverseSort(team.5)                            as kills,
              arrayZip(range(${playersCount.value}), damages, blocks, radios, kills) as placed
-      from Event_OnBattleResult
+      from Event_OnBattleResult sample 1
       where result = '${youResult}'
         and length(playersResults.team) = ${playersCount.value * 2}
         ${params ? whereClause(params, { withWhere: false }) : ''}
