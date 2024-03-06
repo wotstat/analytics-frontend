@@ -280,7 +280,7 @@ select playerPosition, toUInt32(count()) as count
 from (select arrayZip(playersResults.name, playersResults.${value}, playersResults.team) as p,
              arrayReverseSort(t -> t.2, arrayFilter(t -> t.3 = playerTeam, p)).1            as playerTeamList,
              indexOf(playerTeamList, playerName)                                            as playerPosition
-      from Event_OnBattleResult
+      from Event_OnBattleResult sample 10000
       ${whereClause(params)})
 group by playerPosition;`, visible);
 

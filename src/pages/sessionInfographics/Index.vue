@@ -1,6 +1,6 @@
 <template>
   <div class="center-container">
-    <SettingsTitle>
+    <SettingsTitle :reload="true">
       Сессионная инфографика
     </SettingsTitle>
     <h3>
