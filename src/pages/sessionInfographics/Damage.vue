@@ -1,4 +1,7 @@
 <template>
+  <h2 class="small-bottom-margin">Урон</h2>
+  <p class="section-description">Распределения урона строятся для выстрелов с уроном, не фугасами и огненной смесью, по
+    танкам с ХП больше максималки</p>
   <div class="flex ver damage" ref="container">
     <div class="card long">
       <GenericInfoQuery
@@ -9,10 +12,10 @@
       <div class="grid">
         <div class="card chart bar height2 full-width-less-small">
           <MiniBar :data="byShellData.damage" color="yellow" :labels="shellLabels" :callbacks="{
-            title: (t) => `${toPercent(t)} выстрелов ${t[0].label} нанесли урон`,
-            label: () => ``,
-            beforeBody: () => `Среди попавших`
-          }" />
+          title: (t) => `${toPercent(t)} выстрелов ${t[0].label} нанесли урон`,
+          label: () => ``,
+          beforeBody: () => `Среди попавших`
+        }" />
           <p class="card-main-info description">Нанесли урон</p>
         </div>
 
@@ -25,11 +28,11 @@
 
         <div class="card chart bar height2 full-width-less-small right-column">
           <MiniBar :data="smallDamageData" color="blue" :labels="['1ХП', '2ХП', '3ХП', '4ХП', '5ХП']" :callbacks="{
-            title: (t) => `${toPercent(t)} танков осталось с ${t[0].label}`,
-            label: () => ``,
-            beforeBody: () => `Среди группы до 5 ХП`
+          title: (t) => `${toPercent(t)} танков осталось с ${t[0].label}`,
+          label: () => ``,
+          beforeBody: () => `Среди группы до 5 ХП`
 
-          }" />
+        }" />
           <p class="card-main-info description">Осталось ХП после урона</p>
         </div>
 

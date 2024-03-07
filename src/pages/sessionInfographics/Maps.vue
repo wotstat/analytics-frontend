@@ -1,4 +1,5 @@
 <template>
+  <h2>Карты</h2>
   <div class="flex ver damage" ref="container">
     <div class="card">
       <MapsTable :params="params" />

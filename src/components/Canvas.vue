@@ -6,7 +6,7 @@
 
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, onDeactivated } from 'vue';
 import { useElementSize, useElementVisibility, watchOnce } from '@vueuse/core'
 
 const emit = defineEmits<{
@@ -76,13 +76,19 @@ watch(visible, v => {
   if (v && shouldRerenderAfterVisible) redraw();
 })
 
-watch(() => containerSize.width.value, () => {
+watch(containerSize.width, width => {
+  if (width <= 0) return
   redraw();
 });
 
 onMounted(() => {
   redraw();
 });
+
+onDeactivated(() => {
+  if (timer) clearTimeout(timer);
+  context = null;
+})
 
 
 

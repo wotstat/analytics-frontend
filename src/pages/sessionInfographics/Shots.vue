@@ -1,4 +1,5 @@
 <template>
+  <h2>Стрельба</h2>
   <div class="flex ver shots" ref="container">
     <div class="card long">
       <GenericInfo :value="shotsCount.count" description="Выстрелов всего" color="green" />

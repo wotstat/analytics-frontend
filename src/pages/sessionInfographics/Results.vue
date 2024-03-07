@@ -1,4 +1,5 @@
 <template>
+  <h2>Результаты</h2>
   <div class="flex ver results" ref="container">
     <div class="card long">
       <GenericInfo :value="results.count" description="Результатов собрано" color="green" />
@@ -45,10 +46,12 @@
         <GenericInfo :value="results.DR" description="Коэф. урона" color="green" :processor="useFixedProcessor()" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="results.KD" description="Коэф. уничтожения" color="green" :processor="useFixedProcessor()" />
+        <GenericInfo :value="results.KD" description="Коэф. уничтожения" color="green"
+          :processor="useFixedProcessor()" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="results.TR" description="Коэф. исп. брони" color="green" :processor="useFixedProcessor()" />
+        <GenericInfo :value="results.TR" description="Коэф. исп. брони" color="green"
+          :processor="useFixedProcessor()" />
       </div>
     </div>
 
@@ -138,7 +141,8 @@
           :processor="usePercentProcessor(1)" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="turboResult.maxTurbo" description="Худшая серия из 10 боёв" mini-data="турбо" color="blue" />
+        <GenericInfo :value="turboResult.maxTurbo" description="Худшая серия из 10 боёв" mini-data="турбо"
+          color="blue" />
       </div>
     </div>
 
@@ -148,7 +152,8 @@
           description="В среднем из серии в 10 боёв" color="blue" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="turboResult.minTurbo" description="Лучшая серия из 10 боёв" mini-data="турбо" color="blue" />
+        <GenericInfo :value="turboResult.minTurbo" description="Лучшая серия из 10 боёв" mini-data="турбо"
+          color="blue" />
       </div>
     </div>
 

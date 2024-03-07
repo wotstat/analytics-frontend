@@ -1,4 +1,5 @@
 <template>
+  <h2>Бои</h2>
   <div class="flex ver battle" ref="container">
     <div class="card long">
       <GenericInfo :value="dataStart.battleCount" description="Боёв проведено" color="green" />
@@ -51,8 +52,8 @@
 
         <div class="card chart bar tank-type">
           <MiniBar :data="avgChart" color="blue" :labels="tankLabels" :callbacks="{
-            title: (t) => `В среднем в команде было ${t[0].formattedValue} ${t[0].label}`, label: () => ``
-          }" />
+        title: (t) => `В среднем в команде было ${t[0].formattedValue} ${t[0].label}`, label: () => ``
+      }" />
           <p class="card-main-info description">Классов танков в командах</p>
         </div>
 

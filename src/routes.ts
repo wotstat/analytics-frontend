@@ -8,7 +8,37 @@ const routes = [
   },
   {
     path: '/session',
-    component: () => import('./pages/sessionInfographics/Index.vue')
+    component: () => import('./pages/sessionInfographics/Index.vue'),
+    children: [
+      {
+        path: 'battle',
+        component: () => import('./pages/sessionInfographics/Battle.vue')
+      },
+      {
+        path: 'shots',
+        component: () => import('./pages/sessionInfographics/Shots.vue')
+      },
+      {
+        path: 'damage',
+        component: () => import('./pages/sessionInfographics/Damage.vue')
+      },
+      {
+        path: 'results',
+        component: () => import('./pages/sessionInfographics/Results.vue')
+      },
+      {
+        path: 'maps',
+        component: () => import('./pages/sessionInfographics/Maps.vue')
+      },
+      {
+        path: 'players',
+        component: () => import('./pages/sessionInfographics/Coverage.vue')
+      },
+      {
+        path: 'old-layout',
+        component: () => import('./pages/sessionInfographics/Old.vue')
+      }
+    ]
   },
   {
     path: '/damage',

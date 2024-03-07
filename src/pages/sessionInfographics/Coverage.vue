@@ -1,4 +1,7 @@
 <template>
+
+  <h2>Охват</h2>
+
   <div class="flex ver damage" ref="container">
     <div class="card long">
       <GenericInfo :value="coverageData.data" mini-data="игроков" description="Вы повстречали" color="green" />

@@ -28,7 +28,7 @@ const showSettings = ref(false)
 
 h1 {
   margin: 0;
-  margin-top: 0.3em;
+  // margin-top: 0.3em;
 }
 
 
