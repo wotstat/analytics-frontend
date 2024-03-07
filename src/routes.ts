@@ -12,6 +12,7 @@ const routes = [
     children: [
       {
         path: 'battle',
+        alias: '',
         component: () => import('./pages/sessionInfographics/Battle.vue')
       },
       {

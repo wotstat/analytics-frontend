@@ -93,7 +93,7 @@ const targets = [
 
 onBeforeRouteUpdate((to, from, next) => {
 
-  if (targets.some(([path, title]) => path === to.path) && Object.keys(to.query).length == 0) {
+  if (targets.some(([path, title]) => path === to.path) && Object.keys(to.query).length == 0 && Object.keys(from.query).length > 0) {
     next({ ...to, query: from.query })
   } else {
     next()
