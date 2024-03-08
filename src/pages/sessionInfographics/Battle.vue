@@ -100,7 +100,7 @@ ${whereClause(params, { isBattleStart: true })}
 const dataResult = queryAsyncFirst(`
 select round(avg(personal.lifeTime))    as lifetime,
        round(avg(duration))             as duration,
-       toUInt32(sum(personal.lifeTime)) as inBattle
+       toUInt32(sum(personal.lifeTime * _sample_factor)) as inBattle
 from Event_OnBattleResult sample 10000
 ${whereClause(params)};`, { lifetime: 0, duration: 0, inBattle: 0 }, visible)
 
