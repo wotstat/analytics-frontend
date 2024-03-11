@@ -24,10 +24,7 @@
         <StatParamsTitle />
       </h3>
 
-      <div class="menu-bar" ref="menuBar" :class="menuTop <= 70 && menuY != 0 ? 'top' : ''">
-        <div class="background" :style="{
-        clipPath: `inset(${40 - menuTop + 115}px 0px -10px 0px)`
-      }"></div>
+      <div class="menu-bar" ref="menuBar" :class="menuTop <= 60 && menuY != 0 ? 'top' : ''">
         <div class="router-links">
           <QueryPreserveRouterLink to="/session/battle">Бои</QueryPreserveRouterLink>
           <QueryPreserveRouterLink to="/session/shots">Стрельба</QueryPreserveRouterLink>
@@ -70,15 +67,16 @@
 import QueryPreserveRouterLink from '@/components/QueryPreserveRouterLink.vue';
 import SettingsTitle from '@/components/SettingsTitle.vue';
 import StatParamsTitle from "@/components/StatParamsTitle.vue";
+import { useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight';
 import { useQueryStatParams } from "@/composition/useQueryStatParams";
 import { totalRequests, totalElapsed, totalRowsRead } from "@/db";
 import { countLocalize } from "@/utils/i18n";
 import { useElementBounding } from '@vueuse/core';
-import { ref } from 'vue';
+import { ref, watchEffect } from 'vue';
 import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 
 const menuBar = ref<HTMLElement | null>(null);
-const { top: menuTop, y: menuY } = useElementBounding(menuBar)
+const { top: menuTop, y: menuY, height: menuH } = useElementBounding(menuBar)
 
 const stat = useQueryStatParams()
 const route = useRoute()
@@ -93,6 +91,14 @@ const targets = [
   ['/session/players', 'Охват'],
   ['/session/old-layout', 'Старый вид'],
 ]
+
+const { additionalHeaderHeight } = useAdditionalHeaderHeight();
+
+watchEffect(() => {
+  if (menuY.value == 0) return additionalHeaderHeight.value = 0;
+  if (menuTop.value > 60) return additionalHeaderHeight.value = 0;
+  additionalHeaderHeight.value = menuH.value - 18
+})
 
 </script>
 
@@ -145,23 +151,7 @@ $mobile-layout: 1100px;
       flex-wrap: wrap;
     }
 
-    .background {
-      position: absolute;
-      top: -100px;
-      left: 0;
-      bottom: 0;
-      right: 0;
-      background-color: unset;
-      transition: background-color 0.1s ease-in-out;
-      z-index: -1;
-    }
-
     &.top {
-      .background {
-        box-shadow: 0px 0px 10px 2px $background-color;
-        background-color: $background-secondary;
-      }
-
       .router-links {
         a {
           &.router-link-active {
