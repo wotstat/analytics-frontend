@@ -3,7 +3,7 @@
   <div class="center-container-new">
     <div class="sidebar">
       <div class="router-links">
-        <QueryPreserveRouterLink to="/session/battle">Бои</QueryPreserveRouterLink>
+        <QueryPreserveRouterLink to="/session">Бои</QueryPreserveRouterLink>
         <QueryPreserveRouterLink to="/session/shots">Стрельба</QueryPreserveRouterLink>
         <QueryPreserveRouterLink to="/session/damage">Урон</QueryPreserveRouterLink>
         <QueryPreserveRouterLink to="/session/results">Результаты</QueryPreserveRouterLink>
@@ -151,17 +151,16 @@ $mobile-layout: 1100px;
       flex-wrap: wrap;
     }
 
+    .router-links>a:hover:not(.router-link-exact-active) {
+      background-color: unset;
+    }
+
     &.top {
       .router-links {
         a {
-          &.router-link-active {
+          &.router-link-exact-active {
             color: #d6fbff;
             filter: drop-shadow(0 0 0.5em #4a7697bc);
-            background-color: unset;
-          }
-
-          &:hover {
-            background-color: $background-color;
             background-color: unset;
           }
         }
@@ -201,7 +200,7 @@ $mobile-layout: 1100px;
     border-radius: 10px;
     cursor: pointer;
 
-    &.router-link-active {
+    &.router-link-exact-active {
       background-color: #353535;
     }
 
