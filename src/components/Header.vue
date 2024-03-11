@@ -5,7 +5,7 @@
     <div class="flex-1"></div>
     <div class="header-right flex">
       <router-link to="/">Главная</router-link>
-      <router-link to="/session">Инфографика</router-link>
+      <router-link to="/session" :class="startsWith('/session') ? 'router-link-exact-active' : ''">Инфографика</router-link>
       <a :href="DBUrl + '/play?user=public#c2VsZWN0IHRhYmxlLCBuYW1lLCBjb21tZW50LCB0eXBlIGZyb20gZGVzY3JpcHRpb247'"
         target="_blank" rel="noopener noreferrer">БД</a>
       <svg @click="openGithub" height="32" aria-hidden="true" viewBox="0 0 16 16" version="1.1" width="32" fill="#fff"
@@ -19,11 +19,18 @@
 </template>
 
 <script setup lang="ts">
+import { useRoute } from 'vue-router';
+
 // import { RouterLink } from 'vue-router';
 const DBUrl = import.meta.env.VITE_CLICKHOUSE_HOST as string
+const route = useRoute()
 
 function openGithub() {
   window.open('https://github.com/WOT-STAT/WOTMOD', '_blank');
+}
+
+function startsWith(path: string) {
+  return route.path.startsWith(path);
 }
 
 </script>

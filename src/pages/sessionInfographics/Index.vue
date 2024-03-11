@@ -1,15 +1,18 @@
 <template>
+
   <div class="center-container-new">
     <div class="sidebar">
       <div class="router-links">
-        <RouterLink to="/session/battle">Бои</RouterLink>
-        <RouterLink to="/session/shots">Стрельба</RouterLink>
-        <RouterLink to="/session/damage">Урон</RouterLink>
-        <RouterLink to="/session/results">Результаты</RouterLink>
-        <RouterLink to="/session/maps">Карты</RouterLink>
-        <RouterLink to="/session/players">Охват</RouterLink>
+        <QueryPreserveRouterLink to="/session/battle">Бои</QueryPreserveRouterLink>
+        <QueryPreserveRouterLink to="/session/shots">Стрельба</QueryPreserveRouterLink>
+        <QueryPreserveRouterLink to="/session/damage">Урон</QueryPreserveRouterLink>
+        <QueryPreserveRouterLink to="/session/results">Результаты</QueryPreserveRouterLink>
+        <QueryPreserveRouterLink to="/session/maps">Карты</QueryPreserveRouterLink>
+        <QueryPreserveRouterLink to="/session/players">Охват</QueryPreserveRouterLink>
+
         <hr>
-        <RouterLink to="/session/old-layout">Старый вид</RouterLink>
+
+        <QueryPreserveRouterLink to="/session/distribution">Расширенное распределение</QueryPreserveRouterLink>
       </div>
     </div>
 
@@ -21,26 +24,27 @@
         <StatParamsTitle />
       </h3>
 
+      <div class="menu-bar" ref="menuBar" :class="menuTop <= 70 && menuY != 0 ? 'top' : ''">
+        <div class="background" :style="{
+        clipPath: `inset(${40 - menuTop + 115}px 0px -10px 0px)`
+      }"></div>
+        <div class="router-links">
+          <QueryPreserveRouterLink to="/session/battle">Бои</QueryPreserveRouterLink>
+          <QueryPreserveRouterLink to="/session/shots">Стрельба</QueryPreserveRouterLink>
+          <QueryPreserveRouterLink to="/session/damage">Урон</QueryPreserveRouterLink>
+          <QueryPreserveRouterLink to="/session/results">Результаты</QueryPreserveRouterLink>
+          <QueryPreserveRouterLink to="/session/maps">Карты</QueryPreserveRouterLink>
+          <QueryPreserveRouterLink to="/session/players">Охват</QueryPreserveRouterLink>
+
+          <QueryPreserveRouterLink to="/session/distribution">Распределение</QueryPreserveRouterLink>
+        </div>
+      </div>
+
       <RouterView v-slot="{ Component }">
         <KeepAlive>
           <component :is="Component" />
         </KeepAlive>
       </RouterView>
-      <!-- <h2>Бои</h2>
-    <Battle />
-    <h2>Стрельба</h2>
-    <Shots />
-    <h2 class="small-bottom-margin">Урон</h2>
-    <p class="section-description">Распределения урона строятся для выстрелов с уроном, не фугасами и огненной смесью,
-      по
-      танкам с ХП больше максималки</p>
-    <Damage />
-    <h2>Результаты</h2>
-    <Results />
-    <h2>Карты</h2>
-    <Maps />
-    <h2>Охват</h2>
-    <Coverage /> -->
 
       <hr class="footer">
 
@@ -58,28 +62,27 @@
       <br>
       <p>Связаться со мной вы можете по почте <a href="mailto:soprachev@mail.ru">soprachev@mail.ru</a></p>
     </div>
-
-
   </div>
 </template>
 
 <script setup lang="ts">
-import Battle from "./Battle.vue";
-import Shots from "./Shots.vue";
-import Damage from "./Damage.vue";
-import Results from "./Results.vue";
-import Coverage from "./Coverage.vue";
-import Maps from "./Maps.vue";
-import Old from "./Old.vue";
 
+import QueryPreserveRouterLink from '@/components/QueryPreserveRouterLink.vue';
 import SettingsTitle from '@/components/SettingsTitle.vue';
 import StatParamsTitle from "@/components/StatParamsTitle.vue";
 import { useQueryStatParams } from "@/composition/useQueryStatParams";
 import { totalRequests, totalElapsed, totalRowsRead } from "@/db";
 import { countLocalize } from "@/utils/i18n";
-import { onBeforeRouteLeave, onBeforeRouteUpdate } from "vue-router";
+import { useElementBounding } from '@vueuse/core';
+import { ref } from 'vue';
+import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
+
+const menuBar = ref<HTMLElement | null>(null);
+const { top: menuTop, y: menuY } = useElementBounding(menuBar)
 
 const stat = useQueryStatParams()
+const route = useRoute()
+const router = useRouter()
 
 const targets = [
   ['/session/battle', 'Бои'],
@@ -91,32 +94,90 @@ const targets = [
   ['/session/old-layout', 'Старый вид'],
 ]
 
-onBeforeRouteUpdate((to, from, next) => {
-
-  if (targets.some(([path, title]) => path === to.path) && Object.keys(to.query).length == 0 && Object.keys(from.query).length > 0) {
-    next({ ...to, query: from.query })
-  } else {
-    next()
-  }
-})
 </script>
 
 <style lang="scss" scoped>
+@import '@/styles/textColors.scss';
 @import "@/styles/mixins.scss";
 
+$sidebar-width: 170px;
+$mobile-layout: 1100px;
 
 .center-container-new {
 
   display: flex;
   justify-content: center;
 
-  @media screen and (max-width: 1100px) {
+  @media screen and (max-width: $mobile-layout) {
     flex-direction: column;
   }
 
   .sidebar {
-    min-width: 150px;
+    width: $sidebar-width;
     margin: 1rem;
+
+    @media screen and (max-width: $mobile-layout) {
+      display: none;
+    }
+
+    .router-links {
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 100px;
+    }
+  }
+
+  .menu-bar {
+    @media screen and (min-width: calc($mobile-layout + 1px)) {
+      display: none;
+    }
+
+    margin: 20px -1rem;
+    padding: 5px 1rem;
+    position: sticky;
+    top: 40px;
+    z-index: 100;
+
+    .router-links {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+
+    .background {
+      position: absolute;
+      top: -100px;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      background-color: unset;
+      transition: background-color 0.1s ease-in-out;
+      z-index: -1;
+    }
+
+    &.top {
+      .background {
+        box-shadow: 0px 0px 10px 2px $background-color;
+        background-color: $background-secondary;
+      }
+
+      .router-links {
+        a {
+          &.router-link-active {
+            color: #d6fbff;
+            filter: drop-shadow(0 0 0.5em #4a7697bc);
+            background-color: unset;
+          }
+
+          &:hover {
+            background-color: $background-color;
+            background-color: unset;
+          }
+        }
+      }
+    }
+
   }
 
   .container {
@@ -125,15 +186,15 @@ onBeforeRouteUpdate((to, from, next) => {
 
     @media screen and (min-width: 1500px) {
       max-width: calc(1200px - 3rem);
-      margin-right: 150px;
+      margin-right: $sidebar-width;
+    }
+
+    @media screen and (max-width: $mobile-layout) {
+      :deep(.page-title) {
+        display: none;
+      }
     }
   }
-
-  // @include medium {
-  //   max-width: calc(1024px - 3rem);
-  // }
-
-
 }
 
 .footer {
@@ -143,33 +204,14 @@ onBeforeRouteUpdate((to, from, next) => {
 }
 
 .router-links {
-  display: flex;
-  flex-direction: column;
-  position: sticky;
-  top: 100px;
-  // gap: 2px;
-
-
-  // @include less-medium {
-  //   flex-direction: column;
-  // }
-
-  // @include large {
-  //   flex-direction: column;
-  //   position: absolute;
-
-  //   top: 200px;
-  //   left: 0;
-  // }
-
-
   a {
     color: inherit;
-    line-height: 1;
-    padding: 8px;
+    line-height: 1.2;
+    padding: 6.5px 8px;
     border-radius: 10px;
+    cursor: pointer;
 
-    &.router-link-exact-active {
+    &.router-link-active {
       background-color: #353535;
     }
 

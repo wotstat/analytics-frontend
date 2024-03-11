@@ -38,6 +38,10 @@ const routes = [
       {
         path: 'old-layout',
         component: () => import('./pages/sessionInfographics/Old.vue')
+      },
+      {
+        path: 'distribution',
+        component: () => import('./pages/damageDistribution/Content.vue')
       }
     ]
   },

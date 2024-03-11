@@ -154,7 +154,7 @@ async function startDrawProcess() {
 
   let currentCount = 0;
   const r = radius.value
-  const d = Math.min(500, Math.max(150, lerp(150, 500, 500, 20000, totalCount)));
+  const d = Math.min(500, Math.max(150, lerp(150, 500, 500, 10000, totalCount)));
   const pointRadius = r / d;
   const renderCount = props.drawCount ?? RENDER_COUNT * (totalCount > COUNT_TO_SMALL_SIZE ? 2 : 1);
 
