@@ -1,5 +1,5 @@
 <template>
-  <h2>Бои</h2>
+  <h2 class="page-title">Бои</h2>
   <div class="flex ver battle" ref="container">
     <div class="card long">
       <GenericInfo :value="dataStart.battleCount" description="Боёв проведено" color="green" />

@@ -1,12 +1,13 @@
 <template>
-  <h2>Стрельба</h2>
+  <h2 class="page-title">Стрельба</h2>
+
   <div class="flex ver shots" ref="container">
     <div class="card long">
       <GenericInfo :value="shotsCount.count" description="Выстрелов всего" color="green" />
     </div>
     <div class="flex hor main">
       <div class="card circle">
-        <ShotsCircle :params="params" :limit-shot="50000" :mask-radius="maskRadius" @on-click-shot="onClickShot"
+        <ShotsCircle :params="params" :limit-shot="30000" :mask-radius="maskRadius" @on-click-shot="onClickShot"
           :allow-hover="true" />
         <div class="legend">
           <p><span class="mini-circle green">•</span> – промахи</p>

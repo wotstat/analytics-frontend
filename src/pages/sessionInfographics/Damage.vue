@@ -1,5 +1,6 @@
 <template>
-  <h2 class="small-bottom-margin">Урон</h2>
+  <h2 class="small-bottom-margin page-title">Урон</h2>
+
   <p class="section-description">Распределения урона строятся для выстрелов с уроном, не фугасами и огненной смесью, по
     танкам с ХП больше максималки</p>
   <div class="flex ver damage" ref="container">
