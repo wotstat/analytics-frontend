@@ -1,6 +1,7 @@
 
 import { createClient } from "@clickhouse/client-web";
 import { computedAsync, useLocalStorage } from "@vueuse/core";
+import { resolve } from "chart.js/helpers";
 import { Ref, computed, ref, shallowRef, watch, watchEffect } from "vue";
 
 export const clickhouse = createClient({
@@ -31,16 +32,26 @@ export const totalElapsed = useLocalStorage('totalElapsed', 0)
 export const totalRowsRead = useLocalStorage('totalRowsRead', 0)
 export const totalBytesRead = useLocalStorage('totalBytesRead', 0)
 
+
+const activeQueries = new Map<string, Promise<unknown>>();
 export async function query<T>(query: string) {
-  const result = await clickhouse.query({ query });
-  const response = await result.json<IClickhouseResponse<T>>();
 
-  totalElapsed.value += response.statistics.elapsed
-  totalRowsRead.value += response.statistics.rows_read
-  totalBytesRead.value += response.statistics.bytes_read
-  totalRequests.value++
+  if (activeQueries.has(query)) return activeQueries.get(query) as Promise<IClickhouseResponse<T>>;
 
-  return response;
+  const current = new Promise<IClickhouseResponse<T>>(async (resolve) => {
+    const result = await clickhouse.query({ query });
+    const response = await result.json<IClickhouseResponse<T>>();
+
+    totalElapsed.value += response.statistics.elapsed
+    totalRowsRead.value += response.statistics.rows_read
+    totalBytesRead.value += response.statistics.bytes_read
+    totalRequests.value++
+
+    resolve(response);
+  })
+  activeQueries.set(query, current);
+
+  return current;
 }
 
 export function queryComputed<T>(queryString: () => string | null) {
