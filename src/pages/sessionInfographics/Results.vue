@@ -3,7 +3,8 @@
 
   <div class="flex ver results" ref="container">
     <div class="card long">
-      <GenericInfo :value="results.count" description="Результатов собрано" color="green" />
+      <GenericInfo :status="results.status" :value="results.data.count" description="Результатов собрано"
+        color="green" />
     </div>
     <div class="card">
       <p class="card-main-info description top">Распределение по уровню боя</p>
@@ -12,19 +13,22 @@
 
     <div class="flex hor-ver-small">
       <div class="card chart bar flex-1 flex ver gap-0">
-        <MiniBar :data="playerDamageDistribution" color="orange" :labels="places"
+        <MiniBar :status="playerDamageDistribution.status" :data="playerDamageDistribution.data" color="orange"
+          :labels="places"
           :callbacks="{ title: (t) => `В ${toPercent(t)} боёв вы были топ-${t[0].label} по урону`, label: () => `` }" />
         <p class="card-main-info description">Место по урону</p>
       </div>
 
       <div class="card chart bar flex-1 flex ver gap-0">
-        <MiniBar :data="playerAssistedDistribution" color="orange" :labels="places"
+        <MiniBar :status="playerAssistedDistribution.status" :data="playerAssistedDistribution.data" color="orange"
+          :labels="places"
           :callbacks="{ title: (t) => `В ${toPercent(t)} боёв вы были топ-${t[0].label} по насвету`, label: () => `` }" />
         <p class="card-main-info description">Место по насвету</p>
       </div>
 
       <div class="card chart bar flex-1 flex ver gap-0">
-        <MiniBar :data="playerKillDistribution" color="orange" :labels="places"
+        <MiniBar :status="playerKillDistribution.status" :data="playerKillDistribution.data" color="orange"
+          :labels="places"
           :callbacks="{ title: (t) => `В ${toPercent(t)} боёв вы были топ-${t[0].label} по фрагам`, label: () => `` }" />
         <p class="card-main-info description">Место по фрагам</p>
       </div>
@@ -36,22 +40,23 @@
 
     <div class="grid-mini">
       <div class="card flex-1">
-        <GenericInfo :value="results.hitPerShot" description="Попаданий/Выстрелов" color="green"
-          :processor="usePercentProcessor()" />
+        <GenericInfo :status="results.status" :value="results.data.hitPerShot" description="Попаданий/Выстрелов"
+          color="green" :processor="usePercentProcessor()" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="results.piercingPerHit" description="Пробитий/Попаданий" color="green"
-          :processor="usePercentProcessor()" />
+        <GenericInfo :status="results.status" :value="results.data.piercingPerHit" description="Пробитий/Попаданий"
+          color="green" :processor="usePercentProcessor()" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="results.DR" description="Коэф. урона" color="green" :processor="useFixedProcessor()" />
-      </div>
-      <div class="card flex-1">
-        <GenericInfo :value="results.KD" description="Коэф. уничтожения" color="green"
+        <GenericInfo :status="results.status" :value="results.data.DR" description="Коэф. урона" color="green"
           :processor="useFixedProcessor()" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="results.TR" description="Коэф. исп. брони" color="green"
+        <GenericInfo :status="results.status" :value="results.data.KD" description="Коэф. уничтожения" color="green"
+          :processor="useFixedProcessor()" />
+      </div>
+      <div class="card flex-1">
+        <GenericInfo :status="results.status" :value="results.data.TR" description="Коэф. исп. брони" color="green"
           :processor="useFixedProcessor()" />
       </div>
     </div>
@@ -115,11 +120,11 @@
 
     <div class="flex hor-ver-small">
       <div class="card flex-1">
-        <GenericInfo :value="teamScore(true)" description="Счёт при победе" color="green"
+        <GenericInfo :status="scoreResult.status" :value="teamScore(true)" description="Счёт при победе" color="green"
           :processor="t => `${Math.round(t[0])}:${Math.round(t[1])}`" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="teamScore(false)" description="Счёт при поражении" color="red"
+        <GenericInfo :status="scoreResult.status" :value="teamScore(false)" description="Счёт при поражении" color="red"
           :processor="t => `${Math.round(t[0])}:${Math.round(t[1])}`" />
       </div>
     </div>
@@ -134,27 +139,28 @@
     <h4>Турбобои</h4>
     <p>Бои длинною менее 5 минут и разницей счёта больше 10 (проигравшая команда имеет не более 4 фрагов)</p>
     <div class="card long">
-      <GenericInfo :value="turboResult.count" description="Всего турбобоёв" color="blue" />
+      <GenericInfo :status="turboResult.status" :value="turboResult.data.count" description="Всего турбобоёв"
+        color="blue" />
     </div>
     <div class="flex hor-ver-small">
       <div class="card flex-1">
-        <GenericInfo :value="turboPercent" description="Турбо боёв в среднем" color="blue"
-          :processor="usePercentProcessor(1)" />
+        <GenericInfo :status="mergeStatuses(results.status, turboResult.status)" :value="turboPercent"
+          description="Турбо боёв в среднем" color="blue" :processor="usePercentProcessor(1)" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="turboResult.maxTurbo" description="Худшая серия из 10 боёв" mini-data="турбо"
-          color="blue" />
+        <GenericInfo :status="turboResult.status" :value="turboResult.data.maxTurbo"
+          description="Худшая серия из 10 боёв" mini-data="турбо" color="blue" />
       </div>
     </div>
 
     <div class="flex hor-ver-small">
       <div class="card flex-1">
-        <GenericInfo :value="turboResult.avgTurbo" :processor="t => t.toFixed(2)" mini-data="турбы"
-          description="В среднем из серии в 10 боёв" color="blue" />
+        <GenericInfo :status="turboResult.status" :value="turboResult.data.avgTurbo" :processor="t => t.toFixed(2)"
+          mini-data="турбы" description="В среднем из серии в 10 боёв" color="blue" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="turboResult.minTurbo" description="Лучшая серия из 10 боёв" mini-data="турбо"
-          color="blue" />
+        <GenericInfo :status="turboResult.status" :value="turboResult.data.minTurbo"
+          description="Лучшая серия из 10 боёв" mini-data="турбо" color="blue" />
       </div>
     </div>
 
@@ -164,7 +170,7 @@
 <script setup lang="ts">
 import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import MiniBar from '@/components/widgets/MiniBar.vue';
-import { queryAsync, queryAsyncFirst } from "@/db";
+import { Status, mergeStatuses, queryAsync, queryAsyncFirst } from "@/db";
 import { useElementVisibility, useLocalStorage } from '@vueuse/core';
 import { computed, ref } from 'vue';
 import { toRelative, toPercent } from "@/utils";
@@ -224,8 +230,9 @@ ${whereClause(params)};
 `, { count: 0, piercingHits: 0, piercingPerHit: 0, hitPerShot: 0, KD: 0, DR: 0, TR: 0 }, visible);
 
 function getValue(param: typeof resultsList[number][1]) {
-  if (!results.value) return 0;
-  return (results.value as any)[`${infoVariant.value}_${param}`] ?? 0;
+  if (!results.value.data) return 0;
+  const data = (results.value.data as any)[`${infoVariant.value}_${param}`] ?? 0;
+  return { data: data, status: results.value.status as Status };
 }
 
 const scoreResult = queryAsync<{
@@ -281,7 +288,7 @@ from (select arrayZip(playersResults.isAlive, playersResults.team)              
       ${whereClause(params)});`, { count: 0, maxTurbo: 0, avgTurbo: 0, medTurbo: 0, minTurbo: 0 }, visible);
 
 function usePlayerDistribution(value: string) {
-  const playerDamageDistribution = queryAsync<{ playerPosition: number, count: number }>(`
+  const result = queryAsync<{ playerPosition: number, count: number }>(`
 select playerPosition, toUInt32(count()) as count
 from (select arrayZip(playersResults.name, playersResults.${value}, playersResults.team) as p,
              arrayReverseSort(t -> t.2, arrayFilter(t -> t.3 = playerTeam, p)).1            as playerTeamList,
@@ -291,8 +298,8 @@ from (select arrayZip(playersResults.name, playersResults.${value}, playersResul
 group by playerPosition;`, visible);
 
   return computed(() => {
-    const countMap = Object.fromEntries(playerDamageDistribution.value.map(r => [r.playerPosition, r.count]))
-    return toRelative(places.map((_, i) => countMap[i + 1] ?? 0));
+    const countMap = Object.fromEntries(result.value.data.map(r => [r.playerPosition, r.count]))
+    return { status: result.value.status as Status, data: toRelative(places.map((_, i) => countMap[i + 1] ?? 0)) };
   });
 }
 
@@ -301,8 +308,8 @@ const playerAssistedDistribution = usePlayerDistribution('damageAssistedRadio');
 const playerKillDistribution = usePlayerDistribution('kills');
 
 
-const scoreData = computed(() => Object.fromEntries(scoreResult.value.map(r => [r.result, r])));
-const turboPercent = computed(() => results.value.count ? turboResult.value.count / results.value.count : 0);
+const scoreData = computed(() => Object.fromEntries(scoreResult.value.data.map(r => [r.result, r])));
+const turboPercent = computed(() => results.value.data.count ? turboResult.value.data.count / results.value.data.count : 0);
 
 function teamScore(win: boolean) {
   const t = scoreData.value[win ? 'win' : 'lose'] as any

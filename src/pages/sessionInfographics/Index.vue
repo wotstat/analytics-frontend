@@ -26,7 +26,7 @@
 
       <div class="menu-bar" ref="menuBar" :class="menuTop <= 60 && menuY != 0 ? 'top' : ''">
         <div class="router-links">
-          <QueryPreserveRouterLink to="/session/battle">Бои</QueryPreserveRouterLink>
+          <QueryPreserveRouterLink to="/session">Бои</QueryPreserveRouterLink>
           <QueryPreserveRouterLink to="/session/shots">Стрельба</QueryPreserveRouterLink>
           <QueryPreserveRouterLink to="/session/damage">Урон</QueryPreserveRouterLink>
           <QueryPreserveRouterLink to="/session/results">Результаты</QueryPreserveRouterLink>

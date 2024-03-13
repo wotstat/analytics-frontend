@@ -3,7 +3,8 @@
 
   <div class="flex ver shots" ref="container">
     <div class="card long">
-      <GenericInfo :value="shotsCount.count" description="Выстрелов всего" color="green" />
+      <GenericInfo :status="shotsCount.status" :value="shotsCount.data.count" description="Выстрелов всего"
+        color="green" />
     </div>
     <div class="flex hor main">
       <div class="card circle">
@@ -17,20 +18,20 @@
       <div class="flex ver flex-1 right">
         <div class="grid mincards">
           <div class="card">
-            <GenericInfo :value="dataResult.hit" description="Попало по танкам" color="yellow"
-              :processor="usePercentProcessor()" />
+            <GenericInfo :status="dataResult.status" :value="dataResult.data.hit" description="Попало по танкам"
+              color="yellow" :processor="usePercentProcessor()" />
           </div>
           <div class="card">
-            <GenericInfo :value="dataResult.damaged" description="С уроном" color="orange"
-              :processor="usePercentProcessor()" />
+            <GenericInfo :status="dataResult.status" :value="dataResult.data.damaged" description="С уроном"
+              color="orange" :processor="usePercentProcessor()" />
           </div>
           <div class="card hide-less-medium" ref="percent50">
-            <GenericInfo :value="dataResult.first50" description="Попали в первую половину" color="red"
-              :processor="usePercentProcessor()" />
+            <GenericInfo :status="dataResult.status" :value="dataResult.data.first50"
+              description="Попали в первую половину" color="red" :processor="usePercentProcessor()" />
           </div>
           <div class="card hide-less-medium" ref="percent30">
-            <GenericInfo :value="dataResult.first30" description="Попали в первую треть" color="blue"
-              :processor="usePercentProcessor()" />
+            <GenericInfo :status="dataResult.status" :value="dataResult.data.first30"
+              description="Попали в первую треть" color="blue" :processor="usePercentProcessor()" />
           </div>
         </div>
         <div class="card chart" ref="shotDistribution">
@@ -42,25 +43,25 @@
 
     <div class="flex hor-ver-x-small show-less-medium">
       <div class="card flex-1">
-        <GenericInfo :value="dataResult.first50" description="Попали в первую половину" color="red"
-          :processor="usePercentProcessor()" />
+        <GenericInfo :status="dataResult.status" :value="dataResult.data.first50" description="Попали в первую половину"
+          color="red" :processor="usePercentProcessor()" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="dataResult.first30" description="Попали в первую треть" color="blue"
-          :processor="usePercentProcessor()" />
+        <GenericInfo :status="dataResult.status" :value="dataResult.data.first30" description="Попали в первую треть"
+          color="blue" :processor="usePercentProcessor()" />
       </div>
     </div>
     <div class="flex hor-ver-x-small">
       <div class="card flex-1">
-        <GenericInfo :value="dataResult.dist300" description="С расстояния 300м+" color="yellow"
-          :processor="usePercentProcessor()" />
+        <GenericInfo :status="dataResult.status" :value="dataResult.data.dist300" description="С расстояния 300м+"
+          color="yellow" :processor="usePercentProcessor()" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="dataResult.full" description="С полным сведением" color="blue"
-          :processor="usePercentProcessor()" />
+        <GenericInfo :status="dataResult.status" :value="dataResult.data.full" description="С полным сведением"
+          color="blue" :processor="usePercentProcessor()" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="dataResult.stopped" description="Неподвижно" color="green"
+        <GenericInfo :status="dataResult.status" :value="dataResult.data.stopped" description="Неподвижно" color="green"
           :processor="usePercentProcessor()" />
       </div>
     </div>

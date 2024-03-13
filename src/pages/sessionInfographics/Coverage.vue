@@ -4,7 +4,8 @@
 
   <div class="flex ver damage" ref="container">
     <div class="card long">
-      <GenericInfo :value="coverageData.data" mini-data="игроков" description="Вы повстречали" color="green" />
+      <GenericInfo :status="coverageData.status" :value="coverageData.data.data" mini-data="игроков"
+        description="Вы повстречали" color="green" />
     </div>
 
     <div class="card">

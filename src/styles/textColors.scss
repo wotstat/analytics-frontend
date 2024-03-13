@@ -39,6 +39,18 @@ $background-secondary: #353535;
   }
 }
 
+@mixin text-skeleton($color, $highlight-color) {
+  background: linear-gradient(90deg, $color 8%, $highlight-color 18%, $color 33%);
+  background-size: 200% 100%;
+  animation: shine 1.8s infinite linear;
+
+  @keyframes shine {
+    to {
+      background-position: -200% 0;
+    }
+  }
+}
+
 .text-effect {
   @include effect(0.4rem);
 }
@@ -60,7 +72,22 @@ $background-secondary: #353535;
     // transform: scale3d($scale, $scale, $scale);
   }
 
-  @include effect(1rem);
+  &:not(.loading):not(.error) {
+    @include effect(1rem);
+  }
+
+  &.loading {
+    @include text-skeleton(var(--font-color), #b8b8b8);
+    color: transparent;
+    background-clip: text;
+    -moz-background-clip: text;
+    -webkit-background-clip: text;
+  }
+
+  &.error {
+    color: #e41710;
+  }
+
 }
 
 .card-main-info {
@@ -69,6 +96,10 @@ $background-secondary: #353535;
     line-height: normal;
     margin-top: 5px;
     text-align: center;
+
+    &.error {
+      color: #e41710;
+    }
 
     &.top {
       margin-top: 0;

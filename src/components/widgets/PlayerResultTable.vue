@@ -1,105 +1,119 @@
 <template>
-  <div class="container" ref="container">
-    <table class="hover-highlight">
-      <thead>
-        <tr>
-          <th colspan="9" class="title" ref="categoryContainer">Среднее распределение показателей по топу команд</th>
-        </tr>
+  <ServerStatusWrapper :status="loadingStatus" v-slot="{ showError, status }">
+    <div class="container" ref="container" v-if="status != 'error'">
+      <table class="hover-highlight">
+        <thead>
+          <tr>
+            <th colspan="9" class="title" ref="categoryContainer">Среднее распределение показателей по топу команд</th>
+          </tr>
 
-        <tr>
-          <th colspan="4" class="title" ref="categoryContainer">Ваша команда</th>
-          <th></th>
-          <th colspan="4" class="title">Команда противников</th>
-        </tr>
+          <tr>
+            <th colspan="4" class="title" ref="categoryContainer">Ваша команда</th>
+            <th></th>
+            <th colspan="4" class="title">Команда противников</th>
+          </tr>
 
-        <tr>
-          <th colspan="4">
-            <select v-model="youTeamResult">
-              <option value="win">Победила</option>
-              <option value="lose">Проиграла</option>
-            </select>
-          </th>
+          <tr>
+            <th colspan="4">
+              <select v-model="youTeamResult">
+                <option value="win">Победила</option>
+                <option value="lose">Проиграла</option>
+              </select>
+            </th>
 
-          <th></th>
+            <th></th>
 
-          <th colspan="4">
-            <select v-model="opponentTeamResult">
-              <option value="win">Победила</option>
-              <option value="lose">Проиграла</option>
-            </select>
-          </th>
-        </tr>
+            <th colspan="4">
+              <select v-model="opponentTeamResult">
+                <option value="win">Победила</option>
+                <option value="lose">Проиграла</option>
+              </select>
+            </th>
+          </tr>
 
-        <tr>
-          <td>
-            <img src="/kill.png" @click="click('kill')" :class="hightlight == 'kill' ? 'selected' : ''">
-            <span class="tooltiptext">Фрагов</span>
-          </td>
-          <td>
-            <img src="/block.png" @click="click('block')" :class="hightlight == 'block' ? 'selected' : ''" />
-            <span class="tooltiptext">Натанковано</span>
-          </td>
-          <td>
-            <img src="/spot.png" @click="click('radio')" :class="hightlight == 'radio' ? 'selected' : ''" />
-            <span class="tooltiptext">Насвет</span>
-          </td>
-          <td>
-            <img src="/dmg.png" @click="click('dmg')" :class="hightlight == 'dmg' ? 'selected' : ''" />
-            <span class="tooltiptext">Урон</span>
-          </td>
+          <tr>
+            <td>
+              <img src="/kill.png" @click="click('kill')" :class="hightlight == 'kill' ? 'selected' : ''">
+              <span class="tooltiptext">Фрагов</span>
+            </td>
+            <td>
+              <img src="/block.png" @click="click('block')" :class="hightlight == 'block' ? 'selected' : ''" />
+              <span class="tooltiptext">Натанковано</span>
+            </td>
+            <td>
+              <img src="/spot.png" @click="click('radio')" :class="hightlight == 'radio' ? 'selected' : ''" />
+              <span class="tooltiptext">Насвет</span>
+            </td>
+            <td>
+              <img src="/dmg.png" @click="click('dmg')" :class="hightlight == 'dmg' ? 'selected' : ''" />
+              <span class="tooltiptext">Урон</span>
+            </td>
 
-          <td class="center">ТОП</td>
+            <td class="center">ТОП</td>
 
-          <td>
-            <img src="/dmg.png" @click="click('dmg')" :class="hightlight == 'dmg' ? 'selected' : ''" />
-            <span class="tooltiptext">Урон</span>
-          </td>
-          <td>
-            <img src="/spot.png" @click="click('radio')" :class="hightlight == 'radio' ? 'selected' : ''" />
-            <span class="tooltiptext">Насвет</span>
-          </td>
-          <td>
-            <img src="/block.png" @click="click('block')" :class="hightlight == 'block' ? 'selected' : ''" />
-            <span class="tooltiptext">Натанковано</span>
-          </td>
-          <td>
-            <img src="/kill.png" @click="click('kill')" :class="hightlight == 'kill' ? 'selected' : ''">
-            <span class="tooltiptext">Фрагов</span>
-          </td>
-        </tr>
-      </thead>
+            <td>
+              <img src="/dmg.png" @click="click('dmg')" :class="hightlight == 'dmg' ? 'selected' : ''" />
+              <span class="tooltiptext">Урон</span>
+            </td>
+            <td>
+              <img src="/spot.png" @click="click('radio')" :class="hightlight == 'radio' ? 'selected' : ''" />
+              <span class="tooltiptext">Насвет</span>
+            </td>
+            <td>
+              <img src="/block.png" @click="click('block')" :class="hightlight == 'block' ? 'selected' : ''" />
+              <span class="tooltiptext">Натанковано</span>
+            </td>
+            <td>
+              <img src="/kill.png" @click="click('kill')" :class="hightlight == 'kill' ? 'selected' : ''">
+              <span class="tooltiptext">Фрагов</span>
+            </td>
+          </tr>
+        </thead>
 
-      <tbody>
-        <tr v-for="(item, index) in roundedTable">
-          <td class="text-effect red">{{ item.youTeam.kill }}</td>
-          <td class="text-effect blue">{{ item.youTeam.block }}</td>
-          <td class="text-effect green">{{ item.youTeam.radio }}</td>
-          <td class="text-effect orange">{{ item.youTeam.dmg }}</td>
+        <tbody>
+          <tr class="skeleton" v-for="i in new Array(5)" v-if="status == 'loading'">
+            <td colspan="4"></td>
+            <td></td>
+            <td colspan="4"></td>
+          </tr>
+          <tr v-for="(item, index) in roundedTable">
+            <td class="text-effect red">{{ item.youTeam.kill }}</td>
+            <td class="text-effect blue">{{ item.youTeam.block }}</td>
+            <td class="text-effect green">{{ item.youTeam.radio }}</td>
+            <td class="text-effect orange">{{ item.youTeam.dmg }}</td>
 
-          <td class="center">
-            {{ item.place + 1 }}
-            <div v-if="hightlighted[index]" class="bar-box left" :style="{ width: hightlighted[index].you + 'px' }"></div>
-            <div v-if="hightlighted[index]" class="bar-box right" :style="{ width: hightlighted[index].opponent + 'px' }">
-            </div>
-          </td>
+            <td class="center">
+              {{ item.place + 1 }}
+              <div v-if="hightlighted[index]" class="bar-box left" :style="{ width: hightlighted[index].you + 'px' }">
+              </div>
+              <div v-if="hightlighted[index]" class="bar-box right"
+                :style="{ width: hightlighted[index].opponent + 'px' }">
+              </div>
+            </td>
 
-          <td class="text-effect orange">{{ item.opponentTeam.dmg }}</td>
-          <td class="text-effect green">{{ item.opponentTeam.radio }}</td>
-          <td class="text-effect blue">{{ item.opponentTeam.block }}</td>
-          <td class="text-effect red">{{ item.opponentTeam.kill }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+            <td class="text-effect orange">{{ item.opponentTeam.dmg }}</td>
+            <td class="text-effect green">{{ item.opponentTeam.radio }}</td>
+            <td class="text-effect blue">{{ item.opponentTeam.block }}</td>
+            <td class="text-effect red">{{ item.opponentTeam.kill }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flex flex-1 center pointer" v-else @click="showError">
+      <p class="card-main-info error">!</p>
+    </div>
+  </ServerStatusWrapper>
 </template>
 
 
 <script setup lang="ts">
 import { StatParams, useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
-import { queryAsync } from '@/db';
+import { mergeStatuses, queryAsync } from '@/db';
 import { modeCount } from '@/utils/wot';
 import { useElementVisibility, useElementSize } from '@vueuse/core';
 import { computed, ref } from 'vue';
+import ServerStatusWrapper from '../ServerStatusWrapper.vue';
 
 const { params } = defineProps<{
   params?: StatParams
@@ -174,10 +188,17 @@ const youTramResultLose = queryAsync<TableItem>(getQuery('lose', 'you'), shouldL
 const opponentTramResultWin = queryAsync<TableItem>(getQuery('win', 'opponent'), visible)
 const opponentTramResultLose = queryAsync<TableItem>(getQuery('lose', 'opponent'), shouldLoadOpponentLose)
 
+const loadingStatus = computed(() => {
+  const youTeam = youTeamResult.value == 'win' ? youTramResultWin.value.status : youTramResultLose.value.status
+  const opponentTeam = opponentTeamResult.value == 'win' ? opponentTramResultWin.value.status : opponentTramResultLose.value.status
+
+  return mergeStatuses(youTeam, opponentTeam)
+})
+
 const table = computed(() => {
 
-  const youTeam = youTeamResult.value == 'win' ? youTramResultWin.value : youTramResultLose.value
-  const opponentTeam = opponentTeamResult.value == 'win' ? opponentTramResultWin.value : opponentTramResultLose.value
+  const youTeam = youTeamResult.value == 'win' ? youTramResultWin.value.data : youTramResultLose.value.data
+  const opponentTeam = opponentTeamResult.value == 'win' ? opponentTramResultWin.value.data : opponentTramResultLose.value.data
 
   const count = Math.max(youTeam.length, opponentTeam.length)
 

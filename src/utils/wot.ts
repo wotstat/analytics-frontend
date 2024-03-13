@@ -40,6 +40,7 @@ export const modeCount = {
   'normalAssault': 15,
   'ranked': 10,
   'epicRandom': 30,
+  'comp7': 7,
 } as const
 
 export const customBattleModesKeys = Object.keys(customBattleModes) as (keyof typeof customBattleModes)[];

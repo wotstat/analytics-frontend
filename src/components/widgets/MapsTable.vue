@@ -1,110 +1,125 @@
 <template>
-  <div class="container" ref="container">
-    <table class="hover-highlight">
+  <ServerStatusWrapper :status v-slot="{ showError, status }">
+    <div class="container" ref="container" v-if="status != 'error'">
+      <table class="hover-highlight">
 
-      <thead>
-        <tr>
-          <th colspan="9" class="title">Распределение карт</th>
-        </tr>
-        <tr>
-          <td colspan="9" class="title">
-            <div class="flex center">
-              <div class="flex selector">
-                <p>Режим:</p>
-                <select v-model="battleMode">
-                  <option value="any">Любой</option>
-                  <option v-for="mode in customBattleModesKeys" :value="mode">{{ customBattleModes[mode].title }}</option>
-                </select>
+        <thead>
+          <tr>
+            <th colspan="9" class="title">Распределение карт</th>
+          </tr>
+          <tr>
+            <td colspan="9" class="title">
+              <div class="flex center">
+                <div class="flex selector">
+                  <p>Режим:</p>
+                  <select v-model="battleMode">
+                    <option value="any">Любой</option>
+                    <option v-for="mode in customBattleModesKeys" :value="mode">{{ customBattleModes[mode].title }}
+                    </option>
+                  </select>
+                </div>
+                <div class="flex selector">
+                  <p>Результат:</p>
+                  <select v-model="battleResult">
+                    <option value="any">Любой</option>
+                    <option value="win">Победа</option>
+                    <option value="lose">Поражение</option>
+                  </select>
+                </div>
               </div>
-              <div class="flex selector">
-                <p>Результат:</p>
-                <select v-model="battleResult">
-                  <option value="any">Любой</option>
-                  <option value="win">Победа</option>
-                  <option value="lose">Поражение</option>
-                </select>
-              </div>
-            </div>
-          </td>
-        </tr>
-        <tr>
-          <th ref="firstColumn">Карта</th>
-          <td>
-            <img src="/percent.png" @click="click('count')" :class="hightlight == 'count' ? 'selected' : ''">
-            <span class="tooltiptext">Количество</span>
-          </td>
-          <td>
-            <img src="/dmg.png" @click="click('damage')" :class="hightlight == 'damage' ? 'selected' : ''">
-            <span class="tooltiptext">Урон</span>
-          </td>
-          <td>
-            <img src="/spot.png" @click="click('radio')" :class="hightlight == 'radio' ? 'selected' : ''">
-            <span class="tooltiptext">Насвечено</span>
-          </td>
-          <td>
-            <img src="/mgsum.png" @click="click('mgSum')" :class="hightlight == 'mgSum' ? 'selected' : ''">
-            <span class="tooltiptext">Сумма отметки</span>
-          </td>
-          <td>
-            <img src="/block.png" @click="click('block')" :class="hightlight == 'block' ? 'selected' : ''">
-            <span class="tooltiptext">Натанковано</span>
-          </td>
-          <td>
-            <img src="/kill.png" @click="click('kills')" :class="hightlight == 'kills' ? 'selected' : ''">
-            <span class="tooltiptext">Фрагов</span>
-          </td>
-          <td>
-            <img src="/duration.png" @click="click('duration')" :class="hightlight == 'duration' ? 'selected' : ''">
-            <span class="tooltiptext">Продолжительность</span>
-          </td>
-          <td>
-            <img src="/lifetime.png" @click="click('lifeTime')" :class="hightlight == 'lifeTime' ? 'selected' : ''">
-            <span class="tooltiptext">Время жизни</span>
-          </td>
-        </tr>
-      </thead>
+            </td>
+          </tr>
+          <tr>
+            <th ref="firstColumn">Карта</th>
+            <td>
+              <img src="/percent.png" @click="click('count')" :class="hightlight == 'count' ? 'selected' : ''">
+              <span class="tooltiptext">Количество</span>
+            </td>
+            <td>
+              <img src="/dmg.png" @click="click('damage')" :class="hightlight == 'damage' ? 'selected' : ''">
+              <span class="tooltiptext">Урон</span>
+            </td>
+            <td>
+              <img src="/spot.png" @click="click('radio')" :class="hightlight == 'radio' ? 'selected' : ''">
+              <span class="tooltiptext">Насвечено</span>
+            </td>
+            <td>
+              <img src="/mgsum.png" @click="click('mgSum')" :class="hightlight == 'mgSum' ? 'selected' : ''">
+              <span class="tooltiptext">Сумма отметки</span>
+            </td>
+            <td>
+              <img src="/block.png" @click="click('block')" :class="hightlight == 'block' ? 'selected' : ''">
+              <span class="tooltiptext">Натанковано</span>
+            </td>
+            <td>
+              <img src="/kill.png" @click="click('kills')" :class="hightlight == 'kills' ? 'selected' : ''">
+              <span class="tooltiptext">Фрагов</span>
+            </td>
+            <td>
+              <img src="/duration.png" @click="click('duration')" :class="hightlight == 'duration' ? 'selected' : ''">
+              <span class="tooltiptext">Продолжительность</span>
+            </td>
+            <td>
+              <img src="/lifetime.png" @click="click('lifeTime')" :class="hightlight == 'lifeTime' ? 'selected' : ''">
+              <span class="tooltiptext">Время жизни</span>
+            </td>
+          </tr>
+        </thead>
 
-      <!-- <TransitionGroup name="list" tag="tbody"> -->
-      <tbody>
-        <tr v-for="(item, index) in ordered" :key="item.arenaTag">
-          <td>{{ nameFromTag(item.arenaTag).value }}
-            <div v-if="hightlighted[index]" class="bar-box right" :style="{ width: hightlighted[index] + 'px' }"></div>
-          </td>
-          <td class="text-effect gold">{{ item.percent }}</td>
-          <td class="text-effect orange">{{ item.damage.toFixed() }}</td>
-          <td class="text-effect green">{{ item.radio.toFixed() }}</td>
-          <td class="text-effect light-blue">{{ item.mgSum.toFixed() }}</td>
-          <td class="text-effect blue">{{ item.block.toFixed() }}</td>
-          <td class="text-effect red"> {{ item.kills.toFixed(1) }}</td>
-          <td class="text-effect yellow">
-            <div class="time-align">
-              <div class="left">{{ timeProcessor(item.duration)[0] }}</div>
-              <div>:</div>
-              <div class="right">{{ timeProcessor(item.duration)[1] }}</div>
-            </div>
-          </td>
-          <td class="text-effect light-blue">
-            <div class="time-align">
-              <div class="left">{{ timeProcessor(item.lifeTime)[0] }}</div>
-              <div>:</div>
-              <div class="right">{{ timeProcessor(item.lifeTime)[1] }}</div>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-      <!-- </TransitionGroup> -->
-    </table>
-  </div>
+        <!-- <TransitionGroup name="list" tag="tbody"> -->
+        <tbody>
+          <tr class="skeleton" v-for="i in new Array(5)" v-if="status == 'loading'">
+            <td colspan="9"></td>
+          </tr>
+          <tr v-for="(item, index) in ordered" :key="item.arenaTag">
+            <td>{{ nameFromTag(item.arenaTag).value }}
+              <div v-if="hightlighted[index]" class="bar-box right" :style="{ width: hightlighted[index] + 'px' }">
+              </div>
+            </td>
+            <td class="text-effect gold">{{ item.percent }}</td>
+            <td class="text-effect orange">{{ item.damage.toFixed() }}</td>
+            <td class="text-effect green">{{ item.radio.toFixed() }}</td>
+            <td class="text-effect light-blue">{{ item.mgSum.toFixed() }}</td>
+            <td class="text-effect blue">{{ item.block.toFixed() }}</td>
+            <td class="text-effect red"> {{ item.kills.toFixed(1) }}</td>
+            <td class="text-effect yellow">
+              <div class="time-align">
+                <div class="left">{{ timeProcessor(item.duration)[0] }}</div>
+                <div>:</div>
+                <div class="right">{{ timeProcessor(item.duration)[1] }}</div>
+              </div>
+            </td>
+            <td class="text-effect light-blue">
+              <div class="time-align">
+                <div class="left">{{ timeProcessor(item.lifeTime)[0] }}</div>
+                <div>:</div>
+                <div class="right">{{ timeProcessor(item.lifeTime)[1] }}</div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+        <!-- </TransitionGroup> -->
+      </table>
+    </div>
+
+    <template v-else>
+      <div class="flex flex-1 center pointer" @click="showError">
+        <p class="card-main-info error">!</p>
+      </div>
+      <p class="card-main-info description">Распределение карт</p>
+    </template>
+  </ServerStatusWrapper>
 </template>
 
 <script setup lang="ts">
 import { StatParams, whereClause } from '@/composition/useQueryStatParams';
-import { queryAsync } from '@/db';
+import { Status, queryAsync } from '@/db';
 import { timeProcessor, whereSum } from '@/utils';
 import { getArenaName } from '@/utils/i18n';
 import { customBattleModesKeys, customBattleModes } from '@/utils/wot';
 import { useElementVisibility, useElementSize } from '@vueuse/core';
 import { ShallowRef, computed, ref, shallowRef, watch, watchEffect } from 'vue';
+import ServerStatusWrapper from '../ServerStatusWrapper.vue';
 
 const { params } = defineProps<{
   params?: StatParams
@@ -200,7 +215,7 @@ type ResultRow = {
   loseMgSum: number, winMgSum: number, mgSum: number,
 }
 
-const resultCache = shallowRef<{ [key in string]?: ShallowRef<ResultRow[]> }>({})
+const resultCache = shallowRef<{ [key in string]?: ShallowRef<{ status: Status, data: ResultRow[] }> }>({})
 const cacheKey = computed(() => battleMode.value + '_' + battleMode.value)
 
 watch(cacheKey, (value) => {
@@ -212,7 +227,9 @@ watch(cacheKey, (value) => {
   };
 }, { immediate: true })
 
-const result = computed(() => resultCache.value[cacheKey.value]?.value ?? [])
+const result = computed(() => resultCache.value[cacheKey.value]?.value?.data ?? [])
+const status = computed(() => resultCache.value[cacheKey.value]?.value?.status)
+
 
 const resultProcessed = computed(() => {
   const m = battleResult.value;

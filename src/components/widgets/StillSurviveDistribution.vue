@@ -1,8 +1,12 @@
-
 <template>
-  <div class="chart-container" ref="container">
-    <ShadowLine :data="chartData" :options="options" />
-  </div>
+  <ServerStatusWrapper :status="query.status" v-slot="{ status, showError }">
+    <div v-if="status != 'error'" class="chart-container" ref="container">
+      <ShadowLine :data="chartData" :options="options" />
+    </div>
+    <div class="flex flex-1 center pointer" v-else @click="showError">
+      <p class="card-main-info error">!</p>
+    </div>
+  </ServerStatusWrapper>
 </template>
 
 
@@ -12,9 +16,10 @@ import { ShadowLine } from "@/components/ShadowLineController";
 import { computed, ref } from "vue";
 import { ChartProps } from "vue-chartjs";
 import { BloomColor } from "../bloomColors";
-import { queryAsync } from "@/db";
+import { loading, queryAsync } from "@/db";
 import { useElementVisibility } from "@vueuse/core";
 import { StatParams, whereClause } from "@/composition/useQueryStatParams";
+import ServerStatusWrapper from "../ServerStatusWrapper.vue";
 
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
@@ -50,8 +55,8 @@ order by canSurvive, roundedHealthDamage desc
 `, visible);
 
 const processed = computed(() => {
-  const canSurviveObj = Object.fromEntries(query.value.filter(r => r.canSurvive).map(r => [r.roundedHealthDamage, r.cumSurvice]))
-  const canKillObj = Object.fromEntries(query.value.filter(r => !r.canSurvive).map(r => [r.roundedHealthDamage, r.cumSurvice]))
+  const canSurviveObj = Object.fromEntries(query.value.data.filter(r => r.canSurvive).map(r => [r.roundedHealthDamage, r.cumSurvice]))
+  const canKillObj = Object.fromEntries(query.value.data.filter(r => !r.canSurvive).map(r => [r.roundedHealthDamage, r.cumSurvice]))
 
   const canSurvive = new Array(51).fill(0)
   const canKill = new Array(51).fill(0)
@@ -74,20 +79,22 @@ const processed = computed(() => {
   return { canSurvive, canKill }
 })
 
+const isLoading = computed(() => query.value.status === loading)
+
 const chartData = computed<ChartProps<'line'>['data']>(() => ({
   labels: new Array(51).fill(0).map((_, i) => i),
   datasets: [
     {
       data: processed.value.canSurvive,
       label: 'Могли выжить',
-      borderColor: BloomColor.green.bloom,
-      backgroundColor: BloomColor.green.main,
+      borderColor: !isLoading.value ? BloomColor.green.bloom : '#e5e5e5',
+      backgroundColor: !isLoading.value ? BloomColor.green.main : '#e5e5e5',
     },
     {
       data: processed.value.canKill,
       label: 'Можно было добить',
-      borderColor: BloomColor.red.bloom,
-      backgroundColor: BloomColor.red.main,
+      borderColor: !isLoading.value ? BloomColor.red.bloom : '#e5e5e5',
+      backgroundColor: !isLoading.value ? BloomColor.red.main : '#e5e5e5',
     }
   ]
 }))
@@ -97,7 +104,6 @@ const options: ChartProps<'line'>['options'] = {
   maintainAspectRatio: false,
   scales: {
     y: {
-      // min: 0,
       display: false,
     },
     x: {
@@ -148,4 +154,3 @@ const options: ChartProps<'line'>['options'] = {
   }
 }
 </script>
-

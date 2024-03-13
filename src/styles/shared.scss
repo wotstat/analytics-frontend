@@ -49,6 +49,11 @@ p.section-description {
 .flex {
   display: flex;
   gap: 1rem;
+
+  &.center {
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 .flex-1 {
@@ -126,4 +131,8 @@ table.hover-highlight {
   @include medium {
     display: none;
   }
+}
+
+.pointer {
+  cursor: pointer;
 }
