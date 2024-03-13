@@ -333,8 +333,7 @@
 
     <div class="center-container">
       <hr>
-      <i>Тут наверное надо написать что то типа: WotStat не является официальным и никак не аффилирован с компанией
-        Wargaming.net или Lesta Games</i>
+      <i>WotStat не является официальным продуктом и никак не аффилирован с компанией Wargaming.net или Lesta Games</i>
       <br>
       <br>
       <p>Связаться со мной вы можете по почте <a href="mailto:soprachev@mail.ru">soprachev@mail.ru</a></p>
