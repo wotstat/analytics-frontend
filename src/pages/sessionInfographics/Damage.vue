@@ -12,7 +12,8 @@
     <div class="flex ver">
       <div class="grid">
         <div class="card chart bar height2 full-width-less-small">
-          <MiniBar :data="byShellData.damage" color="yellow" :labels="shellLabels" :callbacks="{
+          <MiniBar :status="byShellResult.status" :data="byShellData.damage" color="yellow" :labels="shellLabels"
+            :callbacks="{
           title: (t) => `${toPercent(t)} выстрелов ${t[0].label} нанесли урон`,
           label: () => ``,
           beforeBody: () => `Среди попавших`
@@ -21,14 +22,17 @@
         </div>
 
         <div class="card mini-card frags full-width-less-small">
-          <GenericInfo :value="onShotResult.frags" description="Фрагов" color="red" />
+          <GenericInfo :status="onShotResult.status" :value="onShotResult.data.frags" description="Фрагов"
+            color="red" />
         </div>
         <div class="card mini-card shot-per-frag full-width-less-small">
-          <GenericInfo :value="onShotResult.shotPerFrag" description="Снарядов на фраг" color="orange" />
+          <GenericInfo :status="onShotResult.status" :value="onShotResult.data.shotPerFrag"
+            description="Снарядов на фраг" color="orange" />
         </div>
 
         <div class="card chart bar height2 full-width-less-small right-column">
-          <MiniBar :data="smallDamageData" color="blue" :labels="['1ХП', '2ХП', '3ХП', '4ХП', '5ХП']" :callbacks="{
+          <MiniBar :status="smallDamageResult.status" :data="smallDamageData" color="blue"
+            :labels="['1ХП', '2ХП', '3ХП', '4ХП', '5ХП']" :callbacks="{
           title: (t) => `${toPercent(t)} танков осталось с ${t[0].label}`,
           label: () => ``,
           beforeBody: () => `Среди группы до 5 ХП`
@@ -42,22 +46,26 @@
         </div> -->
 
         <div class="card mini-card full-width-less-small">
-          <GenericInfo :value="onShotResult.fiered" description="Поджогов" color="red" />
+          <GenericInfo :status="onShotResult.status" :value="onShotResult.data.fiered" description="Поджогов"
+            color="red" />
         </div>
 
         <div class="card mini-card full-width-less-small">
-          <GenericInfo :value="damageK" description="Выстрелов с уроном ниже среднего"
-            :color="damageK > 0.5 ? 'red' : 'green'" :processor="usePercentProcessor(1)" />
+          <GenericInfo :status="damageAggregatedResult.status" :value="damageK"
+            description="Выстрелов с уроном ниже среднего" :color="damageK > 0.5 ? 'red' : 'green'"
+            :processor="usePercentProcessor(1)" />
         </div>
 
         <div class="card mini-card full-width-less-small">
-          <GenericInfo :value="damageAggregatedResult.avgDamage * 0.25" description="Урона в среднем"
-            :color="damageAggregatedResult.avgDamage < 0 ? 'red' : 'green'" :processor="usePercentProcessor(2)" />
+          <GenericInfo :status="damageAggregatedResult.status" :value="damageAggregatedResult.data.avgDamage * 0.25"
+            description="Урона в среднем" :color="damageAggregatedResult.data.avgDamage < 0 ? 'red' : 'green'"
+            :processor="usePercentProcessor(2)" />
         </div>
 
 
         <div class="card chart bar big damage-distribution">
-          <MiniBar :data="damageDistributionData" :center-line="true" color="green" :labels="damageLabels"
+          <MiniBar :status="damageDistributionResult.status" :data="damageDistributionData" :center-line="true"
+            color="green" :labels="damageLabels"
             :callbacks="{ title: (t) => `${toPercent(t)} выстрелов отклонились на ${t[0].label} от базового урона`, label: () => `` }" />
           <div class="absolute">
             <p class="card-main-info description">Распределение урона +- 25
@@ -68,12 +76,14 @@
 
         <div class="long flex col hor-ver-x-small">
           <div class="card flex-1">
-            <GenericInfo :value="safeStillResult.stilled" description="Нечестно добитых" color="green" />
+            <GenericInfo :status="safeStillResult.status" :value="safeStillResult.data.stilled"
+              description="Нечестно добитых" color="green" />
           </div>
 
 
           <div class="card flex-1">
-            <GenericInfo :value="safeStillResult.safed" description="Нечестно спасенных" color="red" />
+            <GenericInfo :status="safeStillResult.status" :value="safeStillResult.data.safed"
+              description="Нечестно спасенных" color="red" />
           </div>
 
         </div>
@@ -179,23 +189,23 @@ group by damage;
 `, visible)
 
 const smallDamageData = computed(() => {
-  const res = Object.fromEntries(smallDamageResult.value.map(v => [v.damage, v.count]))
+  const res = Object.fromEntries(smallDamageResult.value.data.map(v => [v.damage, v.count]))
   return toRelative(new Array(5).fill(0).map((v, i) => res[i + 1] ?? 0))
 })
 
 const byShellData = computed(() => {
-  const damageByName = Object.fromEntries(byShellResult.value.map(v => [v.shellTag, v.percentDamage]))
+  const damageByName = Object.fromEntries(byShellResult.value.data.map(v => [v.shellTag, v.percentDamage]))
   const shellKeys = Object.keys(shellNames)
 
   return {
     damage: shellKeys.map(t => damageByName[t] ?? 0),
-    noDamage: byShellResult.value.map(v => v.percentNoDamage),
+    noDamage: byShellResult.value.data.map(v => v.percentNoDamage),
   }
 })
 
 const damageDistributionData = computed(() => {
 
-  const res = damageDistributionResult.value.reduce((prev, cur) => {
+  const res = damageDistributionResult.value.data.reduce((prev, cur) => {
     prev[cur.k] = cur.count
     return prev
   }, {} as any)
@@ -205,7 +215,10 @@ const damageDistributionData = computed(() => {
   return toRelative(absolute)
 })
 
-const damageK = computed(() => damageAggregatedResult.value.more == 0 ? 0 : damageAggregatedResult.value.less / (damageAggregatedResult.value.more + damageAggregatedResult.value.less))
+const damageK = computed(() => {
+  const { more, less } = damageAggregatedResult.value.data
+  return more == 0 ? 0 : less / (more + less)
+})
 
 const onShotResult = queryAsyncFirst(`
 select toUInt32(countIf(arraySum(results.fireDamage) > 0))                                           as fiered,

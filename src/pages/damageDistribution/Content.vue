@@ -8,40 +8,49 @@
   </p>
 
   <div class="card long">
-    <div class="container">
-      <table class="hover-highlight">
-        <thead>
-          <tr>
-            <th></th>
-            <th>Урон</th>
-            <th>Мин</th>
-            <th>Макс</th>
-            <th>Разброс</th>
-            <th>Выстрелов</th>
-          </tr>
-        </thead>
+    <ServerStatusWrapper :status="damageCount.status" v-slot="{ showError, status }">
+      <div class="container" v-if="status != 'error'">
+        <table class="hover-highlight">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Урон</th>
+              <th>Мин</th>
+              <th>Макс</th>
+              <th>Разброс</th>
+              <th>Выстрелов</th>
+            </tr>
+          </thead>
 
-        <tbody>
-          <tr v-for="item in table">
-            <td class="checkbox">
-              <input type="radio" name="shell-damage" :value="item.shellDamage" v-model="selectedDamage">
-            </td>
-            <th class="text-effect gold">{{ item.shellDamage }}</th>
-            <td class="text-effect red">{{ item.min }} (-{{ item.shellDamage - item.min }})</td>
-            <td class="text-effect green">{{ item.max }} (+{{ item.max - item.shellDamage }})</td>
-            <td class="text-effect blue">{{ item.spread }}</td>
-            <td class="text-effect orange">{{ item.count }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+          <tbody>
+            <tr class="skeleton" v-for="i in new Array(5)" v-if="status == 'loading'">
+              <td colspan="6"></td>
+            </tr>
+
+            <tr v-for="item in table">
+              <td class="checkbox">
+                <input type="radio" name="shell-damage" :value="item.shellDamage" v-model="selectedDamage">
+              </td>
+              <th class="text-effect gold">{{ item.shellDamage }}</th>
+              <td class="text-effect red">{{ item.min }} (-{{ item.shellDamage - item.min }})</td>
+              <td class="text-effect green">{{ item.max }} (+{{ item.max - item.shellDamage }})</td>
+              <td class="text-effect blue">{{ item.spread }}</td>
+              <td class="text-effect orange">{{ item.count }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="flex flex-1 center pointer" v-else @click="showError">
+        <p class="card-main-info error">!</p>
+      </div>
+    </ServerStatusWrapper>
   </div>
 
   <h3>Параметры</h3>
   <p>Выберите число уронов на один столбик графика</p>
   <div class="steps-count">
     <button v-for="item in allowedSteps" :class="item == selectedStep ? 'selected' : ''" @click="selectedStep = item">{{
-            item }}</button>
+      item }}</button>
   </div>
 
   <div class="card">
@@ -53,8 +62,8 @@
 
   <h3>Погрешность</h3>
   <p>Границы допустимой погрешности рассчитываются индивидуально для <b>выбранного</b> значения урона ({{
-            selectedDamage
-          }}) и числа подходящих выстрелов ({{ selectedTotal }})</p>
+      selectedDamage
+    }}) и числа подходящих выстрелов ({{ selectedTotal }})</p>
 
   <template v-if="distribution.labels.length">
     <div v-if="readyToCalculate">
@@ -83,7 +92,7 @@
       </div>
       <p>Были просимулированы {{ errorResult[0].length }} сессий по {{ selectedTotal }} выстрелов, в <span
           class="text-effect gold">{{
-            (selectedConfidence * 100).toFixed(errorConfidenceStep.toString().length - 4) }}%</span> сессий
+      (selectedConfidence * 100).toFixed(errorConfidenceStep.toString().length - 4) }}%</span> сессий
         распределение
         урона находилось МЕЖДУ границами.</p>
       <!-- <p>Если любой из столбиков вашего распределения выходит за пределы интервала</p> -->
@@ -97,16 +106,17 @@
   <hr>
   <div class="info-cards flex">
     <div class="card flex-1">
-      <GenericInfo :value="infoCardsResult.avg" description="Средний урон" :processor="useFixedProcessor(2)"
-        :color="infoCardsResult.avg < selectedDamage ? 'red' : 'green'" />
+      <GenericInfo :status="infoCardsResult.status" :value="infoCards.avg" description="Средний урон"
+        :processor="useFixedProcessor(2)" :color="infoCards.avg < selectedDamage ? 'red' : 'green'" />
     </div>
     <div class="card flex-1">
-      <GenericInfo :value="infoCardsResult.median" description="Медианный урон"
-        :color="infoCardsResult.median < selectedDamage ? 'red' : 'green'" />
+      <GenericInfo :status="infoCardsResult.status" :value="infoCards.median" description="Медианный урон"
+        :color="infoCards.median < selectedDamage ? 'red' : 'green'" />
     </div>
     <div class="card flex-1">
-      <GenericInfo :value="infoCardsResult.belowDamage" description="Выстрелов с уроном ниже среднего"
-        :processor="usePercentProcessor(2)" :color="infoCardsResult.belowDamage > 0.5 ? 'red' : 'green'" />
+      <GenericInfo :status="infoCardsResult.status" :value="infoCards.belowDamage"
+        description="Выстрелов с уроном ниже среднего" :processor="usePercentProcessor(2)"
+        :color="infoCards.belowDamage > 0.5 ? 'red' : 'green'" />
     </div>
   </div>
   <Description />
@@ -119,7 +129,7 @@ import SettingsTitle from '@/components/SettingsTitle.vue';
 import StatParamsTitle from "@/components/StatParamsTitle.vue";
 import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import { useQueryStatParams, whereClause } from "@/composition/useQueryStatParams";
-import { query, queryAsync, queryAsyncFirst } from '@/db';
+import { Status, loading, query, queryAsync, queryAsyncFirst, queryComputed } from '@/db';
 import { computed, ref, shallowRef, watch, watchEffect } from 'vue';
 import { VueComponent as Description } from './description.md'
 
@@ -130,6 +140,8 @@ import { ShadowLineController } from "@/components/ShadowLineController";
 import { getColor } from '@/components/bloomColors';
 import { useErrorCalculation } from './errorCalculation';
 import { useFixedProcessor, usePercentProcessor } from '@/composition/usePercentProcessor';
+import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue';
+
 
 // Нужно чтоб выполнились функции внутри модуля и зарегистрировались компоненты
 ShadowLineController
@@ -150,11 +162,6 @@ const distribution = shallowRef({
   from: [] as number[],
   to: [] as number[],
 })
-const infoCardsResult = shallowRef({
-  avg: 0,
-  median: 0,
-  belowDamage: 0
-})
 
 const damageCount = queryAsync<{ shellDamage: number, count: number }>(`
 select shellDamage, toUInt32(count()) as count
@@ -172,8 +179,8 @@ group by shellDamage
 order by count desc;
 `)
 
-const total = computed(() => damageCount.value.reduce((acc, { count }) => acc + count, 0))
-const selectedTotal = computed(() => damageCount.value.find(({ shellDamage }) => shellDamage == selectedDamage.value)?.count ?? 0)
+const total = computed(() => damageCount.value.data.reduce((acc, { count }) => acc + count, 0))
+const selectedTotal = computed(() => damageCount.value.data.find(({ shellDamage }) => shellDamage == selectedDamage.value)?.count ?? 0)
 const errorConfidenceStep = computed(() => {
   const num = 1 / experimentsCount.value
   const magnitude = Math.floor(Math.log10(num));
@@ -182,9 +189,9 @@ const errorConfidenceStep = computed(() => {
 })
 
 const table = computed(() => {
-  if (!damageCount.value.length) return []
+  if (!damageCount.value.data.length) return []
 
-  return damageCount.value.map(({ shellDamage, count }) => {
+  return damageCount.value.data.map(({ shellDamage, count }) => {
     const min = Math.round(shellDamage * 0.75)
     const max = Math.round(shellDamage * 1.25)
 
@@ -224,13 +231,12 @@ watch(allowedSteps, val => {
   selectedStep.value = val[0]
 })
 
-watchEffect(() => selectedDamage.value = damageCount.value[0]?.shellDamage)
+watchEffect(() => selectedDamage.value = damageCount.value.data[0]?.shellDamage ?? 0)
 
-async function calcInfo(damage: number, max: number) {
-  const res = await query<{ median: number, avg: number, belowDamage: number }>(`
+const infoCardsResult = queryComputed<{ avg: number, median: number, belowDamage: number }>(() => `
 select avg(dmg) as avg, median(dmg) as median, 
-  countIf(dmg < ${damage}) as less, 
-  countIf(dmg > ${damage}) as more, 
+  countIf(dmg < ${selectedDamage.value}) as less, 
+  countIf(dmg > ${selectedDamage.value}) as more, 
   less / (less + more) as belowDamage
 from Event_OnShot
     array join
@@ -240,18 +246,18 @@ where dmg > 0
   and health > 0
   and shellTag != 'HIGH_EXPLOSIVE'
   and shellTag != 'FLAME'
-  and shellDamage = ${damage}
-  and (dmg + health) > ${max}
+  and shellDamage = ${selectedDamage.value}
+  and (dmg + health) > ${Math.round(selectedDamage.value * 1.25)}
   ${whereClause(params, { withWhere: false })}
 `)
 
-  infoCardsResult.value = {
-    avg: res.data[0].avg,
-    median: res.data[0].median,
-    belowDamage: res.data[0].belowDamage
-  }
+const infoCards = computed(() => {
+  const { data } = infoCardsResult.value
 
-}
+  if (data.length == 0) return { avg: 0, median: 0, belowDamage: 0 }
+
+  return data[0]
+})
 
 watch([selectedDamage, selectedStep], async ([damage, step]) => {
   if (!damage || !step) return
@@ -287,7 +293,7 @@ watch([selectedDamage, selectedStep], async ([damage, step]) => {
 
   const group = `floor((nDmg + ${step - leftEnough}) / ${step})`
 
-  const resQuery = query<{ r: number, from: number, to: number, value: number, percent: number }>(`
+  const res = await query<{ r: number, from: number, to: number, value: number, percent: number }>(`
 select ${group} as r,
        toUInt32(to - barCount + 1) as from,
        toUInt32(sum(barCount) over (order by r) - 1 + ${min}) as to,
@@ -309,10 +315,6 @@ from (select filled as nDmg, c
 group by r
 order by r
   `)
-
-  const infoQuery = calcInfo(damage, max)
-
-  const [res] = await Promise.all([resQuery, infoQuery])
 
   distribution.value = {
     labels: res.data.map(({ from, to }) => `${(from + to) / 2}`),

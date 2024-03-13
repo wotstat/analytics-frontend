@@ -51,16 +51,16 @@
 
         <h3 class="streamer-header" @click="streamerOpen = !streamerOpen">
           <svg viewBox="0 0 65 64" class="dropdown-arrow" :style="{
-            transform: streamerOpen ? 'rotateZ(0)' : 'rotateZ(-90deg)'
-          }">
+                  transform: streamerOpen ? 'rotateZ(0)' : 'rotateZ(-90deg)'
+                }">
             <path
               d="M5.084 20.305a5 5 0 0 1 7.02-.851L31.02 34.276l18.915-14.822a5 5 0 1 1 6.168 7.871l-22 17.24a5 5 0 0 1-6.167 0l-22-17.24a5 5 0 0 1-.852-7.02Z" />
           </svg>
           Для стримеров
         </h3>
         <div class="collapsable-body" ref="collapsableBody" :style="{
-          maxHeight: streamerOpen ? collapsableBody?.scrollHeight + 'px' : '0'
-        }">
+                  maxHeight: streamerOpen ? collapsableBody?.scrollHeight + 'px' : '0'
+                }">
           <p>Если вы хотите скрыть игровой сервер из собираемой статистики, поместите файл <a href="/config.cfg"
               target="_blank" download>config.cfg</a> в папку
             <code>WOT/mods/configs/wot_stat</code>
@@ -95,7 +95,8 @@
             <div class="card">
               <GenericInfoQuery
                 query="select avgIf(inQueueWaitTime, inQueueWaitTime < 300000) as data from Event_OnBattleStart;"
-                description="Среднее время в очереди" :processor="ms2sec" :mini-processor="secProcessor" color="green" />
+                description="Среднее время в очереди" :processor="ms2sec" :mini-processor="secProcessor"
+                color="green" />
             </div>
           </div>
         </div>
@@ -155,17 +156,18 @@
         <div class="feature left">
           <div class="feature-description">
             <h3>Анализ турбобоёв</h3>
-            <p>Выделите и анализируйте турбобои - быстрые сражения длительностью менее 5 минут с разницей во фрагах более
+            <p>Выделите и анализируйте турбобои - быстрые сражения длительностью менее 5 минут с разницей во фрагах
+              более
               10.</p>
             <p>Сравнивайте свои показатели с другими игроками на различных уровнях и в разное время</p>
           </div>
           <div class="image">
             <div class="card">
-              <GenericInfo :value="turboResult.avgTurbo" :processor="t => t.toFixed(2)" mini-data="турбы"
+              <GenericInfo :value="turboResult.data.avgTurbo" :processor="t => t.toFixed(2)" mini-data="турбы"
                 description="В среднем из серии в 100 боёв" color="blue" />
             </div>
             <div class="card">
-              <GenericInfo :value="turboResult.maxTurbo" :processor="t => t.toFixed()" mini-data="турбы"
+              <GenericInfo :value="turboResult.data.maxTurbo" :processor="t => t.toFixed()" mini-data="турбы"
                 description="Худшая серия из 100 боёв" color="blue" />
             </div>
           </div>
@@ -189,7 +191,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="item in mapsResults">
+                  <tr v-for="item in mapsResults.data">
                     <td>{{ nameFromTag(item.arenaTag).value }}</td>
                     <td class="text-effect orange">{{ item.count }}</td>
                     <td class="text-effect green">{{ item.damage }}</td>
@@ -239,7 +241,8 @@
           <div class="feature-description">
             <h3>Медианные показатели</h3>
             <p>Медианные, средние, максимальные, 30% и 70% <a href="https://ru.wikipedia.org/wiki/Квантиль"
-                target="_blank" rel="noopener noreferrer">квантиль</a> по 10 метрикам. Урон, насвет, выстрелов, попаданий
+                target="_blank" rel="noopener noreferrer">квантиль</a> по 10 метрикам. Урон, насвет, выстрелов,
+              попаданий
               и другие</p>
             <p>На примере справа <b>медианные показаители</b> на 10 уровнях, это означает, что в <b>половине боёв</b>
               результаты были
@@ -248,10 +251,12 @@
 
           <div class="image">
             <div class="card">
-              <GenericInfo :value="medianResults.medDamage" description="Медианный урон" color="green" />
+              <GenericInfo :status="medianResults.status" :value="medianResults.data.medDamage"
+                description="Медианный урон" color="green" />
             </div>
             <div class="card">
-              <GenericInfo :value="medianResults.medMileage" description="Медианная дистанция" color="orange" />
+              <GenericInfo :status="medianResults.status" :value="medianResults.data.medMileage"
+                description="Медианная дистанция" color="orange" />
             </div>
           </div>
         </div>
@@ -261,7 +266,8 @@
             <h3>Анализ стримснайперов</h3>
             <p>Особенно полезно для стримеров</p>
             <p>Мод запоминает ники всех игроков после каждого боя, позволяя выявить тех, кто слишком часто попадается в
-              боях с вами. Инфографика показывает наиболее частых "спутников" ваших боёв, их средний урон за вашу команду
+              боях с вами. Инфографика показывает наиболее частых "спутников" ваших боёв, их средний урон за вашу
+              команду
               и против вас</p>
           </div>
           <div class="image">
@@ -396,9 +402,9 @@ select (select count() from Event_OnBattleResult) +
        (select count() from Event_OnShot) +
        (select count() from Event_OnBattleResult) as count,
        toUInt32(count)                            as data;
-`, { data: 500000 });
+`, { data: 3000000 });
 
-const totalEventCount = useTweenCounter(computed(() => eventCount.value.data), { duration: 1 });
+const totalEventCount = useTweenCounter(computed(() => eventCount.value.data.data), { duration: 1 });
 
 
 // DAMAGE
@@ -421,7 +427,7 @@ order by k;
 `)
 const damageDistributionData = computed(() => {
 
-  const res = damageDistributionResult.value.reduce((prev, cur) => {
+  const res = damageDistributionResult.value.data.reduce((prev, cur) => {
     prev[cur.k] = cur.count
     return prev
   }, {} as any)
@@ -458,7 +464,7 @@ from (select arrayZip(playersResults.isAlive, playersResults.team)          as a
       from Event_OnBattleResult)
 group by result;
 `);
-const scoreData = computed(() => Object.fromEntries(scoreResult.value.map(r => [r.result, r])));
+const scoreData = computed(() => Object.fromEntries(scoreResult.value.data.map(r => [r.result, r])));
 
 
 // TURBO
@@ -484,7 +490,7 @@ const strimsniper = [
   ['JOVE', 9, 3542, 2344],
   ['Lebwa', 8, 4547, 4667],
   ['Korben', 7, 3545, 4524],
-  ['Kitya', 5, 1245, 2436],
+  ['G1deon', 5, 6541, 1401],
   ['Viktor', 4, 1247, 3344],
   ['Nidin', 2, 6752, 6718],
 ]

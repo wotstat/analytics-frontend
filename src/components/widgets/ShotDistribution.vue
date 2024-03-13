@@ -1,11 +1,17 @@
 <template>
-  <div class="chart-container" ref="container">
-    <ShadowLine :data="chartData" :options="options" />
-  </div>
+  <ServerStatusWrapper :status v-slot="{ showError, status }">
+    <div class="chart-container" ref="container" v-if="status != 'error'">
+      <ShadowLine :data="chartData" :options="options" />
+    </div>
+
+    <div class="flex flex-1 center pointer" v-else @click="showError">
+      <p class="card-main-info error">!</p>
+    </div>
+  </ServerStatusWrapper>
 </template>
 
 <script setup lang="ts">
-import { queryAsync } from '@/db';
+import { loading, mergeStatuses, queryAsync } from '@/db';
 import { useElementVisibility } from '@vueuse/core';
 import { computed, ref } from 'vue';
 import { type ChartProps } from 'vue-chartjs';
@@ -13,6 +19,7 @@ import { ShadowLine } from "@/components/ShadowLineController";
 import { ShadowBar } from "@/components/ShadowBarController";
 import { BloomColor } from '../bloomColors';
 import { StatParams, whereClause } from '@/composition/useQueryStatParams';
+import ServerStatusWrapper from '../ServerStatusWrapper.vue';
 
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
@@ -51,8 +58,13 @@ function calc(data: Row[]) {
 const clientMarkerResult = queryAsync<Row>(getQuery(false), visible)
 const serverMarkerResult = queryAsync<Row>(getQuery(true), visible)
 
-const clientMarker = computed(() => calc(clientMarkerResult.value))
-const serverMarker = computed(() => calc(serverMarkerResult.value))
+const isLoadingClient = computed(() => clientMarkerResult.value.status === loading)
+const isLoadingServer = computed(() => clientMarkerResult.value.status === loading)
+
+const clientMarker = computed(() => calc(clientMarkerResult.value.data))
+const serverMarker = computed(() => calc(serverMarkerResult.value.data))
+
+const status = computed(() => mergeStatuses(clientMarkerResult.value.status, serverMarkerResult.value.status))
 
 const labels = new Array(100).fill(0).map((_, i) => i);
 
@@ -62,14 +74,14 @@ const chartData = computed<ChartProps<'line'>['data']>(() => ({
     {
       data: serverMarker.value,
       label: 'Серверный',
-      borderColor: BloomColor.gold.bloom,
-      backgroundColor: BloomColor.gold.darken,
+      borderColor: !isLoadingServer.value ? BloomColor.gold.bloom : '#e5e5e5',
+      backgroundColor: !isLoadingServer.value ? BloomColor.gold.darken : '#e5e5e5',
     },
     {
       data: clientMarker.value,
       label: 'Клиентский',
-      borderColor: BloomColor.green.bloom,
-      backgroundColor: BloomColor.green.main,
+      borderColor: !isLoadingClient.value ? BloomColor.green.bloom : '#e5e5e5',
+      backgroundColor: !isLoadingClient.value ? BloomColor.green.main : '#e5e5e5',
     }
   ]
 }))

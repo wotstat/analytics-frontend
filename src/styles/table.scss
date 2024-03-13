@@ -1,6 +1,35 @@
+@import './textColors.scss';
+
 $border: 1px solid rgba(240, 240, 240, 0.327);
 $bar-color: #8181813e;
 
 table {
   border-collapse: collapse;
+
+  tr.skeleton {
+
+    td:not(.ignore-skeleton),
+    th:not(.ignore-skeleton) {
+      border: none !important;
+      width: auto !important;
+      filter: none !important;
+
+      &::after {
+        content: '';
+        display: block;
+        height: 1.2rem;
+        margin: 3px;
+        background: linear-gradient(90deg, $bar-color 8%, #aaaaaa3e 18%, $bar-color 33%);
+        background-size: 200% 100%;
+        animation: shine 1.8s infinite linear;
+        border-radius: 5px;
+
+        @keyframes shine {
+          to {
+            background-position: -200% 0;
+          }
+        }
+      }
+    }
+  }
 }
