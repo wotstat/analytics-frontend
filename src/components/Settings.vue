@@ -4,8 +4,8 @@
       <div class="card flex ver">
         <div class="flex title">
           <h2 class="flex-1">Параметры</h2>
-          <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="15.4859"
-            height="15.4956" class="close" @click="emit('close')">
+          <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+            width="15.4859" height="15.4956" class="close" @click="emit('close')">
             <g>
               <rect height="15.4956" opacity="0" width="15.4859" x="0" y="0" />
               <path
@@ -41,7 +41,7 @@
             <div v-for="item in ([['ЛТ', 'LT'], ['СТ', 'MT'], ['ТТ', 'HT'], ['ПТ', 'AT'], ['САУ', 'SPG']] as const)"
               class="clickable-variant" :class="selectedClasses.includes(item[1]) ? 'selected' : ''"
               @click="clickClass(item[1])">{{
-                item[0] }}</div>
+              item[0] }}</div>
           </div>
 
 
@@ -54,8 +54,8 @@
             <div class="tank-list">
               <div class="tank" v-for="tank in sortedTanks"
                 :class="selectedTanks.map(t => t.tag).includes(tank.tag) ? 'selected' : ''" @click="clickTank(tank)"> {{
-                  tank.name
-                }}</div>
+              tank.name
+            }}</div>
             </div>
           </div>
 
@@ -112,7 +112,7 @@
                   <line :x1="tick.x + '%'" y1="5" :x2="tick.x + '%'" y2="35" class="tick" />
                   <text v-if="tick.labels && tick.x > 10 && tick.x < 90" :x="tick.x + '%'" y="55" text-anchor="middle"
                     class="date">{{
-                      tick.labels }}</text>
+              tick.labels }}</text>
                 </g>
               </g>
 
@@ -126,8 +126,8 @@
                   :width="Math.max(0.1, 100 * (battle.end - battle.start)) + '%'" y="8" height="24" />
               </g>
 
-              <path :d="`M ${leftXPotision * boundingWidth} 5 m 11 0 l -10 0 l 0 30 l 10 0`" stroke-width="2" fill="none"
-                class="move" ref="left" />
+              <path :d="`M ${leftXPotision * boundingWidth} 5 m 11 0 l -10 0 l 0 30 l 10 0`" stroke-width="2"
+                fill="none" class="move" ref="left" />
 
               <path v-if="periodVariant == 'fromTo'"
                 :d="`M ${rightXPotision * boundingWidth} 5 m -11 0 l 10 0 l 0 30 l -10 0`" stroke-width="2" fill="none"
@@ -209,7 +209,7 @@ const lastX = ref(10);
 
 const tanks = queryAsync<{ tankTag: string, tankType: TankType, tankLevel: TankLevel }>(`select distinct tankTag, tankType, tankLevel from Event_OnBattleStart;`)
 
-const tanksProcessed = computed(() => tanks.value.map(t => ({
+const tanksProcessed = computed(() => tanks.value.data.map(t => ({
   level: t.tankLevel,
   type: t.tankType,
   tag: t.tankTag,

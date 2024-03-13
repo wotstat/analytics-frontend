@@ -23,6 +23,7 @@
       <h3>
         <StatParamsTitle />
       </h3>
+      <!-- <TankListSetup /> -->
 
       <div class="menu-bar" ref="menuBar" :class="menuTop <= 60 && menuY != 0 ? 'top' : ''">
         <div class="router-links">
@@ -74,6 +75,7 @@ import { countLocalize } from "@/utils/i18n";
 import { useElementBounding } from '@vueuse/core';
 import { ref, watchEffect } from 'vue';
 import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
+import TankListSetup from "@/components/TankListSetup/Index.vue";
 
 const menuBar = ref<HTMLElement | null>(null);
 const { top: menuTop, y: menuY, height: menuH } = useElementBounding(menuBar)
