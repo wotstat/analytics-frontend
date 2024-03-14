@@ -9,7 +9,7 @@
             <div class="card">
 
               <p class="card-main-info green hidden">
-                {{ ''.padStart(eventCount.data.toString().length, '0').replace(/\B(?=(\d{3})+(?!\d))/g, " ") }}
+                {{ ''.padStart(eventCount.data.data.toString().length, '0').replace(/\B(?=(\d{3})+(?!\d))/g, " ") }}
                 <span class="green animated">
                   {{ totalEventCount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") }}
                 </span>
