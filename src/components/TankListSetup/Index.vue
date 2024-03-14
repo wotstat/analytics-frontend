@@ -1,21 +1,44 @@
 <template>
   <div class="tank-scroll">
     <div class="tank-list">
-      <div class="card" v-for="item in tanks.data" @click="e => onClick(e, item.tag)"
-        :class="stats.tanks?.includes(item.tag) ? 'selected' : ''">
-        <p class="tank-name">{{ item.shortNameRU }}</p>
-        <img :src="item.iconUrl">
-        <table cellspacing="0" cellpadding="0">
-          <tr>
-            <th>Боёв</th>
-            <td>{{ item.battleCount }}</td>
-          </tr>
-          <tr>
-            <th>Выстрелов</th>
-            <td>{{ item.shotsCount }}</td>
-          </tr>
-        </table>
-      </div>
+      <ServerStatusWrapper :status="tanks.status" v-slot="{ status }">
+
+        <template v-if="status == 'loading'">
+          <div class="card loading" v-for="item in new Array(6)">
+            <p class="tank-name skeleton"></p>
+            <div class="img skeleton"></div>
+            <table cellspacing="0" cellpadding="0">
+              <tbody>
+                <tr class="skeleton">
+                  <th class="ignore-skeleton">Боёв</th>
+                  <td></td>
+                </tr>
+                <tr class="skeleton">
+                  <th class="ignore-skeleton">Выстрелов</th>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </template>
+
+
+        <div class="card" v-for="item in tanks.data" @click="e => onClick(e, item.tag)"
+          :class="stats.tanks?.includes(item.tag) ? 'selected' : ''">
+          <p class="tank-name">{{ item.shortNameRU }}</p>
+          <img :src="item.iconUrl">
+          <table cellspacing="0" cellpadding="0">
+            <tr>
+              <th>Боёв</th>
+              <td>{{ item.battleCount }}</td>
+            </tr>
+            <tr>
+              <th>Выстрелов</th>
+              <td>{{ item.shotsCount }}</td>
+            </tr>
+          </table>
+        </div>
+      </ServerStatusWrapper>
     </div>
   </div>
 </template>
@@ -24,6 +47,8 @@
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 import { queryComputed } from '@/db';
 import { useRoute, useRouter } from 'vue-router';
+import ServerStatusWrapper from '../ServerStatusWrapper.vue';
+
 
 const router = useRouter()
 const route = useRoute()
@@ -58,6 +83,13 @@ function onClick(e: MouseEvent, tag: string) {
 
 <style lang="scss" scoped>
 @import '@/styles/textColors.scss';
+@import '@/styles/table.scss';
+
+.skeleton {
+  td {
+    min-width: 40px;
+  }
+}
 
 .tank-scroll {
   overflow-x: auto;
@@ -120,14 +152,28 @@ function onClick(e: MouseEvent, tag: string) {
         text-align: center;
         margin-top: -10px;
         margin-bottom: 5px;
+
+        &.skeleton {
+          width: 100%;
+          height: 22px;
+          border-radius: 5px;
+          @include text-skeleton(#8181813e, #aaaaaa3e)
+        }
       }
 
-      img {
+      img, .img.skeleton {
         width: 150px;
         aspect-ratio: 16/10;
         margin: 7px 0;
         pointer-events: none;
         user-select: none;
+
+        &.skeleton {
+          border-radius: 5px;
+          border: none;
+          outline: none;
+          @include text-skeleton(#8181813e, #aaaaaa3e)
+        }
       }
     }
   }
