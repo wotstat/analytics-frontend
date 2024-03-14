@@ -11,7 +11,7 @@
 
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, nextTick, onActivated, onDeactivated, onMounted, ref } from 'vue';
 import { type ChartProps } from 'vue-chartjs';
 import { type TooltipCallbacks } from 'chart.js';
 import { ShadowBar } from "@/components/ShadowBarController";
@@ -32,6 +32,10 @@ const props = defineProps<{
 
 const isLoading = computed(() => props?.status === loading)
 
+const animated = ref(false)
+onActivated(() => nextTick(() => animated.value = true))
+onDeactivated(() => animated.value = false)
+
 const chartData = computed<ChartProps<'bar'>['data']>(() => ({
   labels: props.labels,
   datasets: [
@@ -49,6 +53,7 @@ const max = computed(() => Math.max(...props.data))
 const options = computed<ChartProps<'bar'>['options']>(() => ({
   responsive: true,
   maintainAspectRatio: false,
+  animation: animated.value ? undefined : false,
   scales: {
     y: { display: false, max: max.value == 0 ? undefined : max.value * 1.1 },
     x: {

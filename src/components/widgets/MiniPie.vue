@@ -12,7 +12,7 @@
 
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, nextTick, onActivated, onDeactivated, ref } from 'vue';
 import { type ChartProps } from 'vue-chartjs';
 import { type TooltipCallbacks } from 'chart.js';
 import { ShadowPie } from "@/components/ShadowPieController";
@@ -41,9 +41,15 @@ const chartData = computed<ChartProps<'pie'>['data']>(() => ({
   ]
 }))
 
+const animated = ref(false)
+onActivated(() => nextTick(() => animated.value = true))
+onDeactivated(() => animated.value = false)
+
+
 const options = computed<ChartProps<'pie'>['options']>(() => ({
   responsive: true,
   maintainAspectRatio: false,
+  animation: animated.value ? undefined : false,
   layout: {
     padding: 20,
   },
