@@ -134,7 +134,6 @@ select toUInt32(count())                                                        
                     pow(serverMarkerPoint_z - gunPoint_z, 2)) > 300) / count()                          as dist300
 from Event_OnShot
 ${whereClause(params)}
-  and modVersionComparable >= 1002000000
 `, { count: 0, hit: 0, damaged: 0, first50: 0, first30: 0, full: 0, stopped: 0, dist300: 0 }, visible)
 
 const selectedShot = computed(() => route.query.shot as string | undefined);
