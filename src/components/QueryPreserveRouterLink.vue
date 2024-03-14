@@ -37,7 +37,4 @@ function onClick(e: MouseEvent) {
     query: route.query
   })
 }
-
-
-
 </script>

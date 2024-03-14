@@ -70,7 +70,8 @@
           <div class="absolute">
             <p class="card-main-info description">Распределение урона +- 25
             </p>
-            <a href="" @click.prevent="openDamage">Расширенный</a>
+
+            <QueryPreserveRouterLink class="pointer" to="/session/distribution">Расширенный</QueryPreserveRouterLink>
           </div>
         </div>
 
@@ -110,6 +111,7 @@ import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParam
 import { toRelative, toPercent } from "@/utils";
 import { usePercentProcessor } from '@/composition/usePercentProcessor';
 import { shellNames } from '@/utils/wot';
+import QueryPreserveRouterLink from '@/components/QueryPreserveRouterLink.vue';
 
 const params = useQueryStatParams()
 
