@@ -149,7 +149,7 @@ ShadowLineController
 const confidenceLevels = [0.9, 0.95, 0.99, 0.999]
 const damageSteps = [3, 5, 7, 9, 11, 13, 15, 17]
 
-const params = useQueryStatParams()
+const stats = useQueryStatParams()
 
 const experimentsCount = ref<number>(5000)
 const selectedDamage = ref<number>(0)
@@ -174,7 +174,7 @@ where dmg > 0
   and shellTag != 'HIGH_EXPLOSIVE'
   and shellTag != 'FLAME'
   and (dmg + health) > round(shellDamage * 1.250001) // 1.250001 чтоб округляло в большую сторону
-  ${whereClause(params, { withWhere: false })}
+  ${whereClause(stats, { withWhere: false })}
 group by shellDamage
 order by count desc;
 `)
@@ -248,7 +248,7 @@ where dmg > 0
   and shellTag != 'FLAME'
   and shellDamage = ${selectedDamage.value}
   and (dmg + health) > ${Math.round(selectedDamage.value * 1.25)}
-  ${whereClause(params, { withWhere: false })}
+  ${whereClause(stats.value, { withWhere: false })}
 `)
 
 const infoCards = computed(() => {
@@ -307,7 +307,7 @@ from (select filled as nDmg, c
               and shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME'
               and shellDamage = ${damage}
               and (dmg + health) > ${max}
-              ${whereClause(params, { withWhere: false })}
+              ${whereClause(stats.value, { withWhere: false })}
             group by zDmg) as T1
       right join (select toInt32(number) as filled from numbers(${limit})) as T2 on filled = zDmg
       order by nDmg

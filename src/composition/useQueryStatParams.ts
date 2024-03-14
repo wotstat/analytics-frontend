@@ -1,5 +1,6 @@
 import { dateToDbIndex } from "@/db";
 import { customBattleModes } from "@/utils/wot";
+import { MaybeRefOrGetter, ShallowRef, ref, shallowRef, toValue, watchEffect } from "vue";
 import { useRoute } from "vue-router";
 
 export type TankType = 'LT' | 'MT' | 'HT' | 'AT' | 'SPG';
@@ -28,7 +29,7 @@ export type StatParams = {
 export function useQueryStatParams() {
   const route = useRoute();
 
-  const result: StatParams = {
+  const result = ref<StatParams>({
     period: 'allTime',
     player: null,
     level: null,
@@ -36,83 +37,98 @@ export function useQueryStatParams() {
     tanks: null,
     battleMode: 'normalAny',
     battleId: null
-  }
+  })
 
-  if ('nickname' in route.query) result.player = route.query.nickname as string;
-  if ('level' in route.query) {
-    const level = route.query.level as string;
-    const splitted = level.split(',');
-    result.level = splitted
-      .map(t => parseInt(t))
-      .filter(t => !isNaN(t))
-      .filter(t => t >= 1 && t <= 10) as TankLevel[];
-  }
+  watchEffect(() => {
 
-  if ('mode' in route.query) {
-    const battleMode = route.query.mode as string;
-
-    if (battleMode === 'any') {
-      result.battleMode = 'any';
-    } else if (battleMode in customBattleModes) {
-      result.battleMode = battleMode as keyof typeof customBattleModes;
+    const temp: StatParams = {
+      period: 'allTime',
+      player: null,
+      level: null,
+      types: null,
+      tanks: null,
+      battleMode: 'normalAny',
+      battleId: null
     }
-  }
 
-  if ('type' in route.query) {
-    const type = route.query.type as string;
-    const splitted = type.split(',');
-    result.types = splitted
-      .filter(t => ['LT', 'MT', 'HT', 'AT', 'SPG'].includes(t)) as TankType[];
-  }
+    if ('nickname' in route.query) temp.player = route.query.nickname as string;
+    if ('level' in route.query) {
+      const level = route.query.level as string;
+      const splitted = level.split(',');
+      temp.level = splitted
+        .map(t => parseInt(t))
+        .filter(t => !isNaN(t))
+        .filter(t => t >= 1 && t <= 10) as TankLevel[];
+    }
 
-  if ('tank' in route.query) {
-    const tank = route.query.tank as string;
-    const splitted = tank.split(',');
-    result.tanks = splitted;
-  }
+    if ('mode' in route.query) {
+      const battleMode = route.query.mode as string;
 
-  if ('battleId' in route.query) {
-    const battleId = route.query.battleId as string;
-    const splitted = battleId.split(',');
-    result.battleId = splitted;
-  } else if ('lastX' in route.query) {
-    const lastX = route.query.lastX as string;
-    const count = parseInt(lastX);
-    if (!isNaN(count)) {
-      result.period = {
-        type: 'lastX',
-        count
+      if (battleMode === 'any') {
+        temp.battleMode = 'any';
+      } else if (battleMode in customBattleModes) {
+        temp.battleMode = battleMode as keyof typeof customBattleModes;
       }
     }
-  } else if ('from' in route.query && 'to' in route.query) {
-    const from = new Date(route.query.from as string);
-    const to = new Date(route.query.to as string);
-    if (!isNaN(from.getTime()) && !isNaN(to.getTime())) {
-      result.period = {
-        type: 'fromTo',
-        from,
-        to
-      }
-    }
-  } else if ('from' in route.query) {
-    const from = new Date(route.query.from as string);
-    if (!isNaN(from.getTime())) {
-      result.period = {
-        type: 'fromToNow',
-        from
-      }
-    }
-  }
 
+    if ('type' in route.query) {
+      const type = route.query.type as string;
+      const splitted = type.split(',');
+      temp.types = splitted
+        .filter(t => ['LT', 'MT', 'HT', 'AT', 'SPG'].includes(t)) as TankType[];
+    }
+
+    if ('tank' in route.query) {
+      const tank = route.query.tank as string;
+      const splitted = tank.split(',');
+      temp.tanks = splitted;
+    }
+
+    if ('battleId' in route.query) {
+      const battleId = route.query.battleId as string;
+      const splitted = battleId.split(',');
+      temp.battleId = splitted;
+    } else if ('lastX' in route.query) {
+      const lastX = route.query.lastX as string;
+      const count = parseInt(lastX);
+      if (!isNaN(count)) {
+        temp.period = {
+          type: 'lastX',
+          count
+        }
+      }
+    } else if ('from' in route.query && 'to' in route.query) {
+      const from = new Date(route.query.from as string);
+      const to = new Date(route.query.to as string);
+      if (!isNaN(from.getTime()) && !isNaN(to.getTime())) {
+        temp.period = {
+          type: 'fromTo',
+          from,
+          to
+        }
+      }
+    } else if ('from' in route.query) {
+      const from = new Date(route.query.from as string);
+      if (!isNaN(from.getTime())) {
+        temp.period = {
+          type: 'fromToNow',
+          from
+        }
+      }
+    }
+
+    result.value = temp;
+
+  })
   return result;
 }
 
-function whereClauseArray(params: StatParams) {
+function whereClauseArray(params: StatParams, ignore: ('player' | 'level' | 'types' | 'tanks')[] = []) {
   const result: string[] = [];
-  if (params.player) result.push(`playerName = '${params.player}'`);
-  if (params.level) result.push(`tankLevel in (${params.level.join(', ')})`);
-  if (params.types) result.push(`tankType in ('${params.types.join("', '")}')`);
-  if (params.tanks) result.push(`tankTag in ('${params.tanks.join("', '")}')`);
+  if (!ignore.includes('player') && params.player) result.push(`playerName = '${params.player}'`);
+  if (!ignore.includes('level') && params.level) result.push(`tankLevel in (${params.level.join(', ')})`);
+  if (!ignore.includes('types') && params.types) result.push(`tankType in ('${params.types.join("', '")}')`);
+  if (!ignore.includes('tanks') && params.tanks) result.push(`tankTag in ('${params.tanks.join("', '")}')`);
   if (params.battleId === null && params.battleMode !== 'any') {
     const t = customBattleModes[params.battleMode];
     if ('mode' in t) result.push(`battleMode = '${t.mode}'`);
@@ -121,20 +137,25 @@ function whereClauseArray(params: StatParams) {
   return result;
 }
 
-export function whereClause(params: StatParams, { withWhere, isBattleStart }: Partial<{ withWhere: boolean, isBattleStart: boolean }> = { withWhere: true, isBattleStart: false }) {
-  const result: string[] = whereClauseArray(params)
+export function whereClause(params: MaybeRefOrGetter<StatParams>, options: Partial<{
+  withWhere: boolean, isBattleStart: boolean, ignore: ('player' | 'level' | 'types' | 'tanks')[]
+}> = { withWhere: true, isBattleStart: false, ignore: [] }) {
+  const { withWhere, isBattleStart, ignore } = options;
 
-  if (params.battleId && params.battleId.length > 0) {
-    result.push(`${isBattleStart ? 'id' : 'onBattleStartId'} in (${params.battleId.map(t => `'${t}'`).join(', ')})`);
-  } else if (params.period !== 'allTime') {
-    if (params.period.type == 'fromTo') {
-      result.push(`id >= ${dateToDbIndex(params.period.from)}`);
-      result.push(`id <= ${dateToDbIndex(params.period.to)}`);
-    } else if (params.period.type == 'fromToNow') {
-      result.push(`id >= ${dateToDbIndex(params.period.from)}`);
-    } else if (params.period.type == 'lastX') {
-      const whereClause = whereClauseArray(params);
-      const lastIDs = `(select id from Event_OnBattleStart ${whereClause.length == 0 ? '' : `where ${whereClause.join(' AND ')}`} order by id desc limit ${params.period.count})`;
+  const valueParams = toValue(params);
+  const result: string[] = whereClauseArray(valueParams, ignore)
+
+  if (valueParams.battleId && valueParams.battleId.length > 0) {
+    result.push(`${isBattleStart ? 'id' : 'onBattleStartId'} in (${valueParams.battleId.map(t => `'${t}'`).join(', ')})`);
+  } else if (valueParams.period !== 'allTime') {
+    if (valueParams.period.type == 'fromTo') {
+      result.push(`id >= ${dateToDbIndex(valueParams.period.from)}`);
+      result.push(`id <= ${dateToDbIndex(valueParams.period.to)}`);
+    } else if (valueParams.period.type == 'fromToNow') {
+      result.push(`id >= ${dateToDbIndex(valueParams.period.from)}`);
+    } else if (valueParams.period.type == 'lastX') {
+      const whereClause = whereClauseArray(valueParams, ignore);
+      const lastIDs = `(select id from Event_OnBattleStart ${whereClause.length == 0 ? '' : `where ${whereClause.join(' AND ')}`} order by id desc limit ${valueParams.period.count})`;
       result.push(`${isBattleStart ? 'id' : 'onBattleStartId'} in ${lastIDs}`);
     }
   }
