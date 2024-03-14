@@ -8,6 +8,7 @@
         <router-link to="/">Главная</router-link>
         <router-link to="/session"
           :class="startsWith('/session') ? 'router-link-exact-active' : ''">Инфографика</router-link>
+        <a class="boosty" href='https://boosty.to/wotstat' target="_blank" rel="noopener noreferrer">Спонсорство</a>
         <a :href="DBUrl + '/play?user=public#c2VsZWN0IHRhYmxlLCBuYW1lLCBjb21tZW50LCB0eXBlIGZyb20gZGVzY3JpcHRpb247'"
           target="_blank" rel="noopener noreferrer">БД</a>
         <svg @click="openGithub" height="32" aria-hidden="true" viewBox="0 0 16 16" version="1.1" width="32" fill="#fff"
@@ -112,6 +113,12 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
       &.router-link-exact-active {
         color: #d6fbff;
         filter: drop-shadow(0 0 0.5em #4a7697bc);
+      }
+    }
+
+    .boosty {
+      @include less-small {
+        display: none;
       }
     }
   }
