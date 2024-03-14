@@ -137,7 +137,7 @@ function click(on: 'dmg' | 'radio' | 'block' | 'kill') {
 
 const stat = useQueryStatParams()
 const playersCount = computed(() => {
-  const mode = stat.battleMode
+  const mode = stat.value.battleMode
   if (mode == 'any') return 15
   return mode in modeCount ? (modeCount as any)[mode] : 15
 })

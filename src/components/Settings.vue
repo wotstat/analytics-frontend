@@ -48,9 +48,10 @@
           <h4>
             <input type="checkbox" v-model="enableTankFilter">
             Танк
+            <span class="reset" v-if="selectedTanks.length" @click="selectedTanks = []"><a>Сбросить</a></span>
           </h4>
           <div v-if="enableTankFilter" class="tank-selector flex ver gap-0">
-            <input type="text" placeholder="Поиск" v-model="serachText">
+            <input type="text" placeholder="Поиск" v-model="searchText">
             <div class="tank-list">
               <div class="tank" v-for="tank in sortedTanks"
                 :class="selectedTanks.map(t => t.tag).includes(tank.tag) ? 'selected' : ''" @click="clickTank(tank)"> {{
@@ -126,11 +127,11 @@
                   :width="Math.max(0.1, 100 * (battle.end - battle.start)) + '%'" y="8" height="24" />
               </g>
 
-              <path :d="`M ${leftXPotision * boundingWidth} 5 m 11 0 l -10 0 l 0 30 l 10 0`" stroke-width="2"
+              <path :d="`M ${leftXPosition * boundingWidth} 5 m 11 0 l -10 0 l 0 30 l 10 0`" stroke-width="2"
                 fill="none" class="move" ref="left" />
 
               <path v-if="periodVariant == 'fromTo'"
-                :d="`M ${rightXPotision * boundingWidth} 5 m -11 0 l 10 0 l 0 30 l -10 0`" stroke-width="2" fill="none"
+                :d="`M ${rightXPosition * boundingWidth} 5 m -11 0 l 10 0 l 0 30 l -10 0`" stroke-width="2" fill="none"
                 class="move" ref="right" />
             </svg>
           </div>
@@ -143,7 +144,7 @@
 
 <script setup lang="ts">
 import { dateToDbIndex, query, queryAsync } from '@/db';
-import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, shallowRef, toRaw, toValue, watch } from 'vue';
 import { useDebounce, useDraggable, useElementBounding, watchOnce } from '@vueuse/core';
 import { TankLevel, TankType, useQueryStatParams } from '@/composition/useQueryStatParams';
 import { customBattleModes, customBattleModesKeys } from '@/utils/wot';
@@ -177,8 +178,8 @@ const enableTypeFilter = ref(false);
 const enableTankFilter = ref(false);
 
 
-const leftXPotision = ref(0);
-const rightXPotision = ref(1);
+const leftXPosition = ref(0);
+const rightXPosition = ref(1);
 
 const moveContainer = ref<SVGElement | null>(null);
 const { left: boundingLeft, width: boundingWidth } = useElementBounding(moveContainer);
@@ -187,12 +188,12 @@ const right = ref<SVGPathElement | null>(null);
 
 useDraggable(left, {
   axis: 'x',
-  onMove: (e) => leftXPotision.value = Math.min(boundingWidth.value - 20, Math.max(0, e.x - boundingLeft.value)) / boundingWidth.value
+  onMove: (e) => leftXPosition.value = Math.min(boundingWidth.value - 20, Math.max(0, e.x - boundingLeft.value)) / boundingWidth.value
 });
 
 useDraggable(right, {
   axis: 'x',
-  onMove: (e) => rightXPotision.value = Math.min(boundingWidth.value, Math.max(20, 12 + e.x - boundingLeft.value)) / boundingWidth.value
+  onMove: (e) => rightXPosition.value = Math.min(boundingWidth.value, Math.max(20, 12 + e.x - boundingLeft.value)) / boundingWidth.value
 });
 
 
@@ -207,16 +208,39 @@ const fromDate = shallowRef<string | null>(null)
 const toDate = shallowRef<string | null>(null)
 const lastX = ref(10);
 
-const tanks = queryAsync<{ tankTag: string, tankType: TankType, tankLevel: TankLevel }>(`select distinct tankTag, tankType, tankLevel from Event_OnBattleStart;`)
+const tankList = queryAsync<{
+  type: 'mediumTank' | 'lightTank' | 'heavyTank' | 'AT-SPG' | 'SPG',
+  tag: string, level: TankLevel, nameRU: string, shortNameRU: string
+}>(`select tag, type, level, nameRU, shortNameRU from TankList`)
 
-const tanksProcessed = computed(() => tanks.value.data.map(t => ({
+const tanks = computed(() => tankList.value.data.map(t => {
+
+  const types = {
+    'mediumTank': 'MT',
+    'lightTank': 'LT',
+    'heavyTank': 'HT',
+    'AT-SPG': 'AT',
+    'SPG': 'SPG',
+  } as const;
+
+  return {
+    tankLevel: t.level,
+    tankType: types[t.type] as TankType,
+    tankTag: t.tag,
+    tankName: t.nameRU,
+    shortName: t.shortNameRU
+  }
+}))
+
+const tanksProcessed = computed(() => tanks.value.map(t => ({
   level: t.tankLevel,
   type: t.tankType,
   tag: t.tankTag,
-  name: t.tankTag.split('_').slice(1).join('_'),
+  name: t.tankName,
+  short: t.shortName,
 })))
 
-const queryParams = useQueryStatParams()
+const queryParams = toValue(useQueryStatParams())
 if (queryParams.player) { nickname.value = queryParams.player; enablePlayerFilter.value = true; }
 if (queryParams.level) { selectedLevels.value = queryParams.level; enableLevelFilter.value = true; }
 if (queryParams.types) { selectedClasses.value = queryParams.types; enableTypeFilter.value = true; }
@@ -241,7 +265,7 @@ if (queryParams.period !== 'allTime') {
     const dateFrom = new Date(date);
 
     const delta = new Date().getTime() - dateFrom.getTime();
-    leftXPotision.value = (period.from.getTime() - dateFrom.getTime()) / delta;
+    leftXPosition.value = (period.from.getTime() - dateFrom.getTime()) / delta;
   } else if (period.type == 'fromTo') {
     periodVariant.value = 'fromTo';
     const fromDateStr = period.from.toISOString().substring(0, 10);
@@ -254,14 +278,14 @@ if (queryParams.period !== 'allTime') {
 
     const dateFrom = new Date(fromDateStr);
     const delta = targetDate.getTime() - dateFrom.getTime();
-    leftXPotision.value = (period.from.getTime() - dateFrom.getTime()) / delta;
-    rightXPotision.value = (period.to.getTime() - dateFrom.getTime()) / delta;
+    leftXPosition.value = (period.from.getTime() - dateFrom.getTime()) / delta;
+    rightXPosition.value = (period.to.getTime() - dateFrom.getTime()) / delta;
   }
 }
 
 const debouncedNickname = useDebounce(nickname, 500);
 
-const serachText = ref('');
+const searchText = ref('');
 
 function clickClass(params: TankType) {
   if (selectedClasses.value.includes(params)) {
@@ -293,11 +317,11 @@ watch(periodVariant, (val) => {
     toDate.value = null;
   } else if (val == 'fromToNow') {
     toDate.value = null;
-    leftXPotision.value = 0;
-    rightXPotision.value = 1;
+    leftXPosition.value = 0;
+    rightXPosition.value = 1;
   } else if (val == 'fromTo') {
-    leftXPotision.value = 0;
-    rightXPotision.value = 1;
+    leftXPosition.value = 0;
+    rightXPosition.value = 1;
   }
 })
 
@@ -417,17 +441,11 @@ const sortedTanks = computed<Tank[]>(() =>
   tanksProcessed.value
     .filter(t => selectedClasses.value.length == 0 || selectedClasses.value.includes(t.type))
     .filter(t => selectedLevels.value.length == 0 || selectedLevels.value.includes(t.level))
-    .filter(t => serachText.value == '' || t.name.toLowerCase().includes(serachText.value.toLowerCase()))
-    .sort((a, b) => {
-      if (selectedTanks.value.map(t => t.tag).includes(a.tag) && !selectedTanks.value.map(t => t.tag).includes(b.tag)) {
-        return -1;
-      }
-      if (!selectedTanks.value.map(t => t.tag).includes(a.tag) && selectedTanks.value.map(t => t.tag).includes(b.tag)) {
-        return 1;
-      }
-
-      return a.name.localeCompare(b.name);
-    })
+    .filter(t => searchText.value == '' ||
+      t.name.toLowerCase().includes(searchText.value.toLowerCase()) ||
+      t.short.toLowerCase().includes(searchText.value.toLowerCase())
+    )
+    .sort((a, b) => a.name.localeCompare(b.name))
 )
 
 function apply() {
@@ -450,8 +468,8 @@ function apply() {
       if (!enablePlayerFilter.value || nickname.value == '') return { from, to }
 
       const delta = to.getTime() - from.getTime();
-      const fromT = new Date(from.getTime() + delta * leftXPotision.value);
-      const toT = new Date(fromT.getTime() + delta * (rightXPotision.value - leftXPotision.value));
+      const fromT = new Date(from.getTime() + delta * leftXPosition.value);
+      const toT = new Date(fromT.getTime() + delta * (rightXPosition.value - leftXPosition.value));
 
       return { from: fromT, to: toT }
     }
@@ -695,6 +713,11 @@ function onKey(params: KeyboardEvent) {
     h4,
     h5 {
       margin-bottom: 0;
+
+      .reset {
+        float: right;
+        cursor: pointer;
+      }
     }
 
     h2 {

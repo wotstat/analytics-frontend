@@ -17,13 +17,13 @@
     </div>
 
     <div class="container">
-      <SettingsTitle :reload="true">
+      <SettingsTitle :reload="false">
         Сессионная инфографика
       </SettingsTitle>
       <h3>
         <StatParamsTitle />
       </h3>
-      <!-- <TankListSetup /> -->
+      <TankListSetup />
 
       <div class="menu-bar" ref="menuBar" :class="menuTop <= 60 && menuY != 0 ? 'top' : ''">
         <div class="router-links">
@@ -38,7 +38,7 @@
         </div>
       </div>
 
-      <RouterView v-slot="{ Component }">
+      <RouterView v-slot="{ Component }" :key="key">
         <KeepAlive>
           <component :is="Component" />
         </KeepAlive>
@@ -73,16 +73,26 @@ import { useQueryStatParams } from "@/composition/useQueryStatParams";
 import { totalRequests, totalElapsed, totalRowsRead } from "@/db";
 import { countLocalize } from "@/utils/i18n";
 import { useElementBounding } from '@vueuse/core';
-import { ref, watchEffect } from 'vue';
+import { ref, watch, watchEffect } from 'vue';
 import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 import TankListSetup from "@/components/TankListSetup/Index.vue";
 
 const menuBar = ref<HTMLElement | null>(null);
 const { top: menuTop, y: menuY, height: menuH } = useElementBounding(menuBar)
 
+const key = ref(0)
+
 const stat = useQueryStatParams()
 const route = useRoute()
 const router = useRouter()
+
+console.log('route', route.query);
+
+
+watch(stat, (current, old) => {
+  if (JSON.stringify(current) == JSON.stringify(old)) return;
+  key.value++;
+})
 
 const targets = [
   ['/session/battle', 'Бои'],
@@ -174,6 +184,7 @@ $mobile-layout: 1100px;
   .container {
     margin: 1rem;
     flex: 1;
+    min-width: 0;
 
     @media screen and (min-width: 1500px) {
       max-width: calc(1200px - 3rem);
