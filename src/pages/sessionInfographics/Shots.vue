@@ -124,14 +124,13 @@ const dataResult = queryAsyncFirst(`
 select toUInt32(count())                                                                                as count,
        countIf(length(results.order) > 0) / count()                                                     as hit,
        countIf(arraySum(results.shotDamage) > 0 or arraySum(results.fireDamage) > 0) / count()          as damaged,
-       countIf(ballisticResultServer_r <= 0.5) / count()                                                as first50,
-       countIf(ballisticResultServer_r <= 0.3333) / count()                                             as first30,
+       countIf(ballisticResultClient_r <= 0.5) / count()                                                as first50,
+       countIf(ballisticResultClient_r <= 0.3333) / count()                                             as first30,
        countIf(abs(serverShotDispersion / gunDispersion) between 0.999 and 1.001 or
                abs(clientShotDispersion / gunDispersion) between 0.999 and 1.001) / count()             as full,
        countIf(abs(turretSpeed) + abs(vehicleRotationSpeed) < 1 and abs(vehicleSpeed) < 0.5) / count()  as stopped,
-       countIf(sqrt(pow(serverMarkerPoint_x - gunPoint_x, 2) +
-                    pow(serverMarkerPoint_y - gunPoint_y, 2) +
-                    pow(serverMarkerPoint_z - gunPoint_z, 2)) > 300) / count()                          as dist300
+       countIf(L2Distance((serverMarkerPoint_x, serverMarkerPoint_y, serverMarkerPoint_z), 
+                    (gunPoint_x, gunPoint_y, gunPoint_z)) > 300) / count()                              as dist300
 from Event_OnShot
 ${whereClause(params)}
 `, { count: 0, hit: 0, damaged: 0, first50: 0, first30: 0, full: 0, stopped: 0, dist300: 0 }, visible)

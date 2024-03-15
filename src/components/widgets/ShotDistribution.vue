@@ -12,11 +12,10 @@
 
 <script setup lang="ts">
 import { loading, mergeStatuses, queryAsync } from '@/db';
-import { useElementVisibility } from '@vueuse/core';
+import { useElementVisibility, useLocalStorage } from '@vueuse/core';
 import { computed, ref } from 'vue';
 import { type ChartProps } from 'vue-chartjs';
 import { ShadowLine } from "@/components/ShadowLineController";
-import { ShadowBar } from "@/components/ShadowBarController";
 import { BloomColor } from '../bloomColors';
 import { StatParams, whereClause } from '@/composition/useQueryStatParams';
 import ServerStatusWrapper from '../ServerStatusWrapper.vue';
@@ -25,7 +24,7 @@ const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
 
 const { params } = defineProps<{
-  params?: StatParams
+  params: StatParams
 }>()
 
 const emit = defineEmits<{
@@ -36,18 +35,18 @@ function getQuery(isServer: boolean) {
   const r = isServer ? 'ballisticResultServer_r' : 'ballisticResultClient_r'
   return `
   select r,
-       sum(count) over (rows between unbounded preceding and current row) as cum,
-       round(cum / sum(count) over (), 2)                                 as percent
+       sum(count) over (rows between unbounded preceding and current row)        as cum,
+       round(cum / (select count() from Event_OnShot ${whereClause(params)}), 2) as percent
   from (select round(${r}, 2) as r, count() as count
       from Event_OnShot
-      where ${r} < 1 ${params ? whereClause(params, { withWhere: false }) : ''}
+      where ${r} <= 1 ${whereClause(params, { withWhere: false })}
       group by r
       order by r);`
 }
 
 type Row = { r: number, cum: number, percent: number }
 function calc(data: Row[]) {
-  const res = new Array(100).fill(null)
+  const res = new Array(101).fill(null)
 
   for (const row of data) {
     res[Math.round(row.r * 100)] = row.percent * 100
@@ -57,16 +56,33 @@ function calc(data: Row[]) {
 
 const clientMarkerResult = queryAsync<Row>(getQuery(false), visible)
 const serverMarkerResult = queryAsync<Row>(getQuery(true), visible)
+const sharedClientResult = queryAsync<Row>(`
+  select r,
+       sum(count) over (rows between unbounded preceding and current row)        as cum,
+       round(cum / (select count() from Event_OnShot 
+          ${whereClause(params, { ignore: ['player', 'level', 'tanks', 'types'] })}
+          ), 2) as percent
+  from (select round(ballisticResultClient_r, 2) as r, count() as count
+      from Event_OnShot
+      where ballisticResultClient_r <= 1 ${whereClause(params, { withWhere: false, ignore: ['player', 'level', 'tanks', 'types'] })}
+      group by r
+      order by r);`, visible)
 
 const isLoadingClient = computed(() => clientMarkerResult.value.status === loading)
 const isLoadingServer = computed(() => clientMarkerResult.value.status === loading)
+const isSharedLoading = computed(() => sharedClientResult.value.status === loading)
 
 const clientMarker = computed(() => calc(clientMarkerResult.value.data))
 const serverMarker = computed(() => calc(serverMarkerResult.value.data))
+const sharedClient = computed(() => calc(sharedClientResult.value.data))
 
-const status = computed(() => mergeStatuses(clientMarkerResult.value.status, serverMarkerResult.value.status))
+const status = computed(() => mergeStatuses(clientMarkerResult.value.status, serverMarkerResult.value.status, sharedClientResult.value.status))
 
-const labels = new Array(100).fill(0).map((_, i) => i);
+const labels = new Array(101).fill(0).map((_, i) => i);
+
+const isEnableClient = useLocalStorage('shotDistributionChartIsEnableClient', true)
+const isEnableServer = useLocalStorage('shotDistributionChartIsEnableServer', true)
+const isEnableShared = useLocalStorage('shotDistributionChartIsEnableShared', true)
 
 const chartData = computed<ChartProps<'line'>['data']>(() => ({
   labels,
@@ -74,14 +90,23 @@ const chartData = computed<ChartProps<'line'>['data']>(() => ({
     {
       data: serverMarker.value,
       label: 'Серверный',
+      hidden: isEnableServer.value,
       borderColor: !isLoadingServer.value ? BloomColor.gold.bloom : '#e5e5e5',
       backgroundColor: !isLoadingServer.value ? BloomColor.gold.darken : '#e5e5e5',
     },
     {
       data: clientMarker.value,
       label: 'Клиентский',
+      hidden: isEnableClient.value,
       borderColor: !isLoadingClient.value ? BloomColor.green.bloom : '#e5e5e5',
       backgroundColor: !isLoadingClient.value ? BloomColor.green.main : '#e5e5e5',
+    },
+    {
+      data: sharedClient.value,
+      label: 'Общий',
+      hidden: isEnableShared.value,
+      borderColor: !isSharedLoading.value ? BloomColor.blue.bloom : '#e5e5e5',
+      backgroundColor: !isSharedLoading.value ? BloomColor.blue.main : '#e5e5e5',
     }
   ]
 }))
@@ -140,6 +165,11 @@ const options: ChartProps<'line'>['options'] = {
           return `${v.toFixed(0)}% снарядов попало в ${t[0].label}% сведения`
         }
       }
+    },
+    legend: {
+      onClick: (evt, legendItem, legend) => {
+        [isEnableServer, isEnableClient, isEnableShared][legendItem.datasetIndex ?? 0].value = !legendItem.hidden
+      },
     }
   }
 }
