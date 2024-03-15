@@ -117,7 +117,7 @@ import { Status, queryAsync } from '@/db';
 import { timeProcessor, whereSum } from '@/utils';
 import { getArenaName } from '@/utils/i18n';
 import { customBattleModesKeys, customBattleModes } from '@/utils/wot';
-import { useElementVisibility, useElementSize } from '@vueuse/core';
+import { useElementVisibility, useElementSize, useLocalStorage } from '@vueuse/core';
 import { ShallowRef, computed, ref, shallowRef, watch, watchEffect } from 'vue';
 import ServerStatusWrapper from '../ServerStatusWrapper.vue';
 
@@ -141,7 +141,7 @@ function click(name: Selected) {
   hightlight.value = name;
 }
 
-const hightlight = ref<Selected>('count');
+const hightlight = useLocalStorage<Selected>('MapsTableColumnSelected', 'count');
 
 function nameFromTag(tag: string) {
   const key = tag.split('spaces/')[1] + '/name'
