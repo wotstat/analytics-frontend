@@ -30,7 +30,6 @@ const MOBILE_HOVER_RADIUS = 0.15;
 
 const container = ref<HTMLElement | null>(null);
 const canvasRef = ref<InstanceType<typeof CanvasVue> | null>(null);
-const ctxRef = shallowRef<CanvasRenderingContext2D | null>(null);
 const { elementX, elementY, elementHeight, elementWidth, isOutside } = useMouseInElement(container)
 
 const widthRef = ref(0);
@@ -66,7 +65,6 @@ const renderShotsDebounce = useDebounceFn(() => {
 }, 200);
 
 function redraw(ctx: CanvasRenderingContext2D, width: number, height: number) {
-  ctxRef.value = ctx;
   widthRef.value = width;
   heightRef.value = height;
 
@@ -156,7 +154,7 @@ async function startDrawProcess() {
 
   let currentCount = 0;
   const r = radius.value
-  const d = Math.min(500, Math.max(150, lerp(150, 500, 500, 20000, totalCount)));
+  const d = Math.min(500, Math.max(150, lerp(150, 500, 250, 5000, totalCount)));
   const pointRadius = r / d;
   const renderCount = props.drawCount ?? RENDER_COUNT * (totalCount > COUNT_TO_SMALL_SIZE ? 2 : 1);
 
@@ -168,7 +166,7 @@ async function startDrawProcess() {
       countToDraw = Math.min(countToDraw, shotsData.length - currentCount);
     }
 
-    const ctx = ctxRef.value
+    const ctx = canvasRef.value?.context()
     if (!ctx) return
 
     for (let i = 0; i < countToDraw; i++) {

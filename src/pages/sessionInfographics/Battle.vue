@@ -1,63 +1,66 @@
 <template>
+  <h2 class="page-title">Бои</h2>
   <div class="flex ver battle" ref="container">
     <div class="card long">
-      <GenericInfo :value="dataStart.battleCount" description="Боёв проведено" color="green" />
+      <GenericInfo :status="dataStart.status" :value="dataStart.data.battleCount" :processor="useFixedSpaceProcessor(0)"
+        description="Боёв проведено" color="green" />
     </div>
     <div class="flex ver main">
       <div class="grid">
         <div class="card avg-queue">
-          <GenericInfo :value="dataStart.avgInQueue" description="Среднее время в очереди" color="green"
-            :processor="ms2sec" :mini-processor="secProcessor" />
+          <GenericInfo :status="dataStart.status" :value="dataStart.data.avgInQueue"
+            description="Среднее время в очереди" color="green" :processor="ms2sec" :mini-processor="secProcessor" />
         </div>
 
         <div class="card avg-battle">
-          <GenericInfo :value="dataResult.duration" description="Среднее время боя" color="yellow"
-            :processor="sec2minsec" />
+          <GenericInfo :status="dataResult.status" :value="dataResult.data.duration" description="Среднее время боя"
+            color="yellow" :processor="sec2minsec" />
         </div>
 
         <div class="card winrate pie chart">
-          <MniiPie :data="winrateData" :color="['green', 'red', 'orange']" :labels="['Победы', 'Поражения', 'Ничьи']"
-            :callbacks="{ label: (t) => `${t.formattedValue}%` }" />
+          <MniiPie :status="winrateResult.status" :data="winrateData" :color="['green', 'red', 'orange']"
+            :labels="['Победы', 'Поражения', 'Ничьи']" :callbacks="{ label: (t) => `${t.formattedValue}%` }" />
           <p class="card-main-info description">Винрейт</p>
 
         </div>
 
         <div class="card avg-prebattle">
-          <GenericInfo :value="dataStart.avgWaitTime" description="Среднее время в ожидании боя" color="blue"
-            :processor="ms2sec" :mini-processor="secProcessor" />
+          <GenericInfo :status="dataStart.status" :value="dataStart.data.avgWaitTime"
+            description="Среднее время в ожидании боя" color="blue" :processor="ms2sec"
+            :mini-processor="secProcessor" />
         </div>
 
         <div class="card avg-lifetime">
-          <GenericInfo :value="dataResult.lifetime" description="Среднее время жизни" color="orange"
-            :processor="sec2minsec" />
+          <GenericInfo :status="dataResult.status" :value="dataResult.data.lifetime" description="Среднее время жизни"
+            color="orange" :processor="sec2minsec" />
         </div>
 
         <div class="card total-wait">
-          <GenericInfo :value="dataStart.waitTime" description="Потрачено в ожидании боя" color="red"
-            :processor="sec2hour" mini-data="часа" />
+          <GenericInfo :status="dataStart.status" :value="dataStart.data.waitTime"
+            description="Потрачено в ожидании боя" color="red" :processor="sec2hour" mini-data="часа" />
         </div>
 
         <div class=" card total-play">
-          <GenericInfo :value="dataResult.inBattle" description="Потрачено в бою" color="red" :processor="sec2hour"
-            mini-data="часа" />
+          <GenericInfo :status="dataResult.status" :value="dataResult.data.inBattle" description="Потрачено в бою"
+            color="red" :processor="sec2hour" mini-data="часа" />
         </div>
 
 
         <div class="card u1 chart bar">
-          <MiniBar :data="durationData.p" color="green" :labels="durationData.labels"
+          <MiniBar :status="durationResult.status" :data="durationData.p" color="green" :labels="durationData.labels"
             :callbacks="{ title: (t) => `Было ${Math.round((t[0].raw as number) * 100)}% боёв ${Number.parseInt(t[0].label) - 1}-${t[0].label} минут`, label: () => `` }" />
           <p class="card-main-info description">Продолжительность боя</p>
         </div>
 
         <div class="card chart bar tank-type">
-          <MiniBar :data="avgChart" color="blue" :labels="tankLabels" :callbacks="{
+          <MiniBar :status="chartResult.status" :data="avgChart" color="blue" :labels="tankLabels" :callbacks="{
         title: (t) => `В среднем в команде было ${t[0].formattedValue} ${t[0].label}`, label: () => ``
       }" />
           <p class="card-main-info description">Классов танков в командах</p>
         </div>
 
         <div class="card u2 chart bar">
-          <MiniBar :data="durationData.l" color="yellow" :labels="durationData.labels"
+          <MiniBar :status="durationResult.status" :data="durationData.l" color="yellow" :labels="durationData.labels"
             :callbacks="{ title: (t) => `В боях ${Number.parseInt(t[0].label) - 1}-${t[0].label} минут вы жили ${Math.round(t[0].raw as number * 10) / 10} мин `, label: () => `` }" />
           <p class="card-main-info description">Время жизни по длине боя</p>
         </div>
@@ -71,12 +74,12 @@ import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import MiniBar from '@/components/widgets/MiniBar.vue';
 import MniiPie from '@/components/widgets/MiniPie.vue';
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
-import { queryAsync, queryAsyncFirst } from "@/db";
-import { countLocalize } from '@/utils/i18n';
+import { loading, queryAsync, queryAsyncFirst } from "@/db";
 import { useElementVisibility } from '@vueuse/core';
 import { computed, ref } from 'vue';
 
 import { ms2sec, sec2minsec, secProcessor, sec2hour } from "@/utils";
+import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
@@ -136,7 +139,9 @@ const winrateData = computed(() => {
     lose: 0,
   }
 
-  for (const iterator of winrateResult.value) {
+  const { status, data } = winrateResult.value;
+
+  for (const iterator of data) {
     res[iterator.result] = iterator.count;
   }
 
@@ -145,12 +150,12 @@ const winrateData = computed(() => {
 })
 
 const avgChart = computed(() => {
-  const r = chartResult.value;
+  const { data: r } = chartResult.value;
   return [r.avgMT, r.avgHT, r.avgAT, r.avgLT, r.avgSPG].map(t => t * 30 / 2).map(t => Math.round(t * 100) / 100);
 })
 
 const durationData = computed(() => {
-  const durations = durationResult.value;
+  const { data: durations } = durationResult.value;
 
   const keyed = durations.reduce((prev, curr) => {
     prev[curr.duration] = { p: curr.percent, l: curr.lifetime };
