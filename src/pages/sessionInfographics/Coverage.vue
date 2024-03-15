@@ -4,8 +4,8 @@
 
   <div class="flex ver damage" ref="container">
     <div class="card long">
-      <GenericInfo :status="coverageData.status" :value="coverageData.data.data" mini-data="игроков"
-        description="Вы повстречали" color="green" />
+      <GenericInfo :status="coverageData.status" :value="coverageData.data.data" :processor="useFixedSpaceProcessor(0)"
+        mini-data="игроков" description="Вы повстречали" color="green" />
     </div>
 
     <div class="card">
@@ -27,6 +27,7 @@ import { ref } from "vue";
 import { useElementVisibility } from "@vueuse/core";
 import PlayerCoverageTable from "@/components/widgets/PlayerCoverageTable.vue";
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
+import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);

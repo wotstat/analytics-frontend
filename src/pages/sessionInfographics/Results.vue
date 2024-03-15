@@ -3,8 +3,8 @@
 
   <div class="flex ver results" ref="container">
     <div class="card long">
-      <GenericInfo :status="results.status" :value="results.data.count" description="Результатов собрано"
-        color="green" />
+      <GenericInfo :status="results.status" :value="results.data.count" :processor="useFixedSpaceProcessor(0)"
+        description="Результатов собрано" color="green" />
     </div>
     <div class="card">
       <p class="card-main-info description top">Распределение по уровню боя</p>
@@ -139,8 +139,8 @@
     <h4>Турбобои</h4>
     <p>Бои длинною менее 5 минут и разницей счёта больше 10 (проигравшая команда имеет не более 4 фрагов)</p>
     <div class="card long">
-      <GenericInfo :status="turboResult.status" :value="turboResult.data.count" description="Всего турбобоёв"
-        color="blue" />
+      <GenericInfo :status="turboResult.status" :value="turboResult.data.count" :processor="useFixedSpaceProcessor(0)"
+        description="Всего турбобоёв" color="blue" />
     </div>
     <div class="flex hor-ver-small">
       <div class="card flex-1">
@@ -175,7 +175,7 @@ import { useElementVisibility, useLocalStorage } from '@vueuse/core';
 import { computed, ref } from 'vue';
 import { toRelative, toPercent } from "@/utils";
 import PlayerResultTable from "@/components/widgets/PlayerResultTable.vue";
-import { usePercentProcessor, useFixedProcessor } from '@/composition/usePercentProcessor';
+import { usePercentProcessor, useFixedProcessor, useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 import TeamLevelTable from '@/components/widgets/TeamLevelTable.vue';
 

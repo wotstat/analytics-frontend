@@ -10,3 +10,10 @@ export function useFixedProcessor(digits = 2) {
     return Number.isNaN(value) ? '0' : value.toFixed(digits);
   }
 }
+
+export function useFixedSpaceProcessor(digits = 2) {
+  const toFixed = useFixedProcessor(digits);
+  return (value: number) => {
+    return toFixed(value).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  }
+}
