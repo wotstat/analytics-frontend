@@ -90,21 +90,21 @@ const chartData = computed<ChartProps<'line'>['data']>(() => ({
     {
       data: serverMarker.value,
       label: 'Серверный',
-      hidden: isEnableServer.value,
+      hidden: !isEnableServer.value,
       borderColor: !isLoadingServer.value ? BloomColor.gold.bloom : '#e5e5e5',
       backgroundColor: !isLoadingServer.value ? BloomColor.gold.darken : '#e5e5e5',
     },
     {
       data: clientMarker.value,
       label: 'Клиентский',
-      hidden: isEnableClient.value,
+      hidden: !isEnableClient.value,
       borderColor: !isLoadingClient.value ? BloomColor.green.bloom : '#e5e5e5',
       backgroundColor: !isLoadingClient.value ? BloomColor.green.main : '#e5e5e5',
     },
     {
       data: sharedClient.value,
       label: 'Общий',
-      hidden: isEnableShared.value,
+      hidden: !isEnableShared.value,
       borderColor: !isSharedLoading.value ? BloomColor.blue.bloom : '#e5e5e5',
       backgroundColor: !isSharedLoading.value ? BloomColor.blue.main : '#e5e5e5',
     }
@@ -168,6 +168,8 @@ const options: ChartProps<'line'>['options'] = {
     },
     legend: {
       onClick: (evt, legendItem, legend) => {
+        console.log('click', legendItem);
+
         [isEnableServer, isEnableClient, isEnableShared][legendItem.datasetIndex ?? 0].value = !legendItem.hidden
       },
     }
