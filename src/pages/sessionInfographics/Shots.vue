@@ -3,8 +3,8 @@
 
   <div class="flex ver shots" ref="container">
     <div class="card long">
-      <GenericInfo :status="shotsCount.status" :value="shotsCount.data.count" description="Выстрелов всего"
-        color="green" />
+      <GenericInfo :status="shotsCount.status" :value="shotsCount.data.count" :processor="useFixedSpaceProcessor(0)"
+        description="Выстрелов всего" color="green" />
     </div>
     <div class="flex hor main">
       <div class="card circle">
@@ -76,7 +76,7 @@
 import ShotsCircle from "@/components/widgets/ShotsCircle.vue";
 import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import ShotDistribution from '@/components/widgets/ShotDistribution.vue';
-import { usePercentProcessor } from '@/composition/usePercentProcessor';
+import { useFixedProcessor, useFixedSpaceProcessor, usePercentProcessor } from '@/composition/usePercentProcessor';
 import { queryAsyncFirst } from "@/db";
 import { computed, ref, watch, watchEffect } from "vue";
 import { useElementVisibility, useMouseInElement } from "@vueuse/core";

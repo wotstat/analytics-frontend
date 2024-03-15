@@ -2,8 +2,8 @@
   <h2 class="page-title">Бои</h2>
   <div class="flex ver battle" ref="container">
     <div class="card long">
-      <GenericInfo :status="dataStart.status" :value="dataStart.data.battleCount" description="Боёв проведено"
-        color="green" />
+      <GenericInfo :status="dataStart.status" :value="dataStart.data.battleCount" :processor="useFixedSpaceProcessor(0)"
+        description="Боёв проведено" color="green" />
     </div>
     <div class="flex ver main">
       <div class="grid">
@@ -79,6 +79,7 @@ import { useElementVisibility } from '@vueuse/core';
 import { computed, ref } from 'vue';
 
 import { ms2sec, sec2minsec, secProcessor, sec2hour } from "@/utils";
+import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);

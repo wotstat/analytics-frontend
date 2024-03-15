@@ -7,11 +7,14 @@
         <div class="main-count">
           <div class="flex center">
             <div class="card">
+              <p class="hidden">
+                <span class="card-main-info green hidden">
+                  {{ ''.padStart(Math.max(7, eventCount.data.data.toString().length),
+                    '0').replace(/\B(?=(\d{3})+(?!\d))/g, " ") }}
+                </span>
 
-              <p class="card-main-info green hidden">
-                {{ ''.padStart(eventCount.data.data.toString().length, '0').replace(/\B(?=(\d{3})+(?!\d))/g, " ") }}
-                <span class="green animated">
-                  {{ totalEventCount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") }}
+                <span class="card-main-info green animated" :class="eventCount.status == loading ? 'loading' : ''">
+                  {{ useFixedSpaceProcessor(0)(totalEventCount) }}
                 </span>
               </p>
               <p class="card-main-info description">Событий уже собрано</p>
@@ -51,16 +54,16 @@
 
         <h3 class="streamer-header" @click="streamerOpen = !streamerOpen">
           <svg viewBox="0 0 65 64" class="dropdown-arrow" :style="{
-                  transform: streamerOpen ? 'rotateZ(0)' : 'rotateZ(-90deg)'
-                }">
+                    transform: streamerOpen ? 'rotateZ(0)' : 'rotateZ(-90deg)'
+                  }">
             <path
               d="M5.084 20.305a5 5 0 0 1 7.02-.851L31.02 34.276l18.915-14.822a5 5 0 1 1 6.168 7.871l-22 17.24a5 5 0 0 1-6.167 0l-22-17.24a5 5 0 0 1-.852-7.02Z" />
           </svg>
           Для стримеров
         </h3>
         <div class="collapsable-body" ref="collapsableBody" :style="{
-                  maxHeight: streamerOpen ? collapsableBody?.scrollHeight + 'px' : '0'
-                }">
+                    maxHeight: streamerOpen ? collapsableBody?.scrollHeight + 'px' : '0'
+                  }">
           <p>Если вы хотите скрыть игровой сервер из собираемой статистики, поместите файл <a href="/config.cfg"
               target="_blank" download>config.cfg</a> в папку
             <code>WOT/mods/configs/wot_stat</code>
@@ -347,11 +350,12 @@ import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import MiniBar from '@/components/widgets/MiniBar.vue';
 import ShotsCircle from '@/components/widgets/ShotsCircle.vue';
 import { useTweenCounter } from '@/composition/useTweenCounter';
-import { queryAsync, queryAsyncFirst } from '@/db';
+import { loading, queryAsync, queryAsyncFirst } from '@/db';
 import { toRelative, ms2sec, sec2minsec, secProcessor } from '@/utils';
 import { computedAsync } from '@vueuse/core';
 import { computed, ref } from 'vue';
 import { getArenaName } from '@/utils/i18n';
+import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 
 
 const collapsableBody = ref<HTMLElement | null>(null);
@@ -401,7 +405,7 @@ select (select count() from Event_OnBattleResult) +
        (select count() from Event_OnShot) +
        (select count() from Event_OnBattleResult) as count,
        toUInt32(count)                            as data;
-`, { data: 3000000 });
+`, { data: 0 });
 
 const totalEventCount = useTweenCounter(computed(() => eventCount.value.data.data), { duration: 1 });
 
@@ -652,6 +656,7 @@ h2 {
     .hidden {
       visibility: hidden;
       position: relative;
+      text-wrap: nowrap;
     }
 
     .animated {

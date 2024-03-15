@@ -7,7 +7,7 @@
     <div class="card long">
       <GenericInfoQuery
         :query="`select toUInt32(count()) as data from Event_OnShot where arrayMax(results.shotDamage) > 0 ${whereClause(params, { withWhere: false })};`"
-        description="Выстрелов с видимым уроном" color="green" />
+        :processor="useFixedSpaceProcessor(0)" description="Выстрелов с видимым уроном" color="green" />
     </div>
     <div class="flex ver">
       <div class="grid">
@@ -22,8 +22,8 @@
         </div>
 
         <div class="card mini-card frags full-width-less-small">
-          <GenericInfo :status="onShotResult.status" :value="onShotResult.data.frags" description="Фрагов"
-            color="red" />
+          <GenericInfo :status="onShotResult.status" :value="onShotResult.data.frags"
+            :processor="useFixedSpaceProcessor(0)" description="Фрагов" color="red" />
         </div>
         <div class="card mini-card shot-per-frag full-width-less-small">
           <GenericInfo :status="onShotResult.status" :value="onShotResult.data.shotPerFrag"
@@ -109,7 +109,7 @@ import GenericInfoQuery from "@/components/widgets/GenericInfoQuery.vue";
 import StillSurviveDistribution from "@/components/widgets/StillSurviveDistribution.vue";
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 import { toRelative, toPercent } from "@/utils";
-import { usePercentProcessor } from '@/composition/usePercentProcessor';
+import { useFixedSpaceProcessor, usePercentProcessor } from '@/composition/usePercentProcessor';
 import { shellNames } from '@/utils/wot';
 import QueryPreserveRouterLink from '@/components/QueryPreserveRouterLink.vue';
 

@@ -89,9 +89,6 @@ const stat = useQueryStatParams()
 const route = useRoute()
 const router = useRouter()
 
-console.log('route', route.query);
-
-
 watch(stat, (current, old) => {
   if (JSON.stringify(current) == JSON.stringify(old)) return;
   key.value++;
