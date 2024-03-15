@@ -1,11 +1,14 @@
 <template>
+  <h2 class="page-title">Стрельба</h2>
+
   <div class="flex ver shots" ref="container">
     <div class="card long">
-      <GenericInfo :value="shotsCount.count" description="Выстрелов всего" color="green" />
+      <GenericInfo :status="shotsCount.status" :value="shotsCount.data.count" :processor="useFixedSpaceProcessor(0)"
+        description="Выстрелов всего" color="green" />
     </div>
     <div class="flex hor main">
       <div class="card circle">
-        <ShotsCircle :params="params" :limit-shot="50000" :mask-radius="maskRadius" @on-click-shot="onClickShot"
+        <ShotsCircle :params="params" :limit-shot="30000" :mask-radius="maskRadius" @on-click-shot="onClickShot"
           :allow-hover="true" />
         <div class="legend">
           <p><span class="mini-circle green">•</span> – промахи</p>
@@ -15,20 +18,20 @@
       <div class="flex ver flex-1 right">
         <div class="grid mincards">
           <div class="card">
-            <GenericInfo :value="dataResult.hit" description="Попало по танкам" color="yellow"
-              :processor="usePercentProcessor()" />
+            <GenericInfo :status="dataResult.status" :value="dataResult.data.hit" description="Попало по танкам"
+              color="yellow" :processor="usePercentProcessor()" />
           </div>
           <div class="card">
-            <GenericInfo :value="dataResult.damaged" description="С уроном" color="orange"
-              :processor="usePercentProcessor()" />
+            <GenericInfo :status="dataResult.status" :value="dataResult.data.damaged" description="С уроном"
+              color="orange" :processor="usePercentProcessor()" />
           </div>
           <div class="card hide-less-medium" ref="percent50">
-            <GenericInfo :value="dataResult.first50" description="Попали в первую половину" color="red"
-              :processor="usePercentProcessor()" />
+            <GenericInfo :status="dataResult.status" :value="dataResult.data.first50"
+              description="Попали в первую половину" color="red" :processor="usePercentProcessor()" />
           </div>
           <div class="card hide-less-medium" ref="percent30">
-            <GenericInfo :value="dataResult.first30" description="Попали в первую треть" color="blue"
-              :processor="usePercentProcessor()" />
+            <GenericInfo :status="dataResult.status" :value="dataResult.data.first30"
+              description="Попали в первую треть" color="blue" :processor="usePercentProcessor()" />
           </div>
         </div>
         <div class="card chart" ref="shotDistribution">
@@ -40,25 +43,25 @@
 
     <div class="flex hor-ver-x-small show-less-medium">
       <div class="card flex-1">
-        <GenericInfo :value="dataResult.first50" description="Попали в первую половину" color="red"
-          :processor="usePercentProcessor()" />
+        <GenericInfo :status="dataResult.status" :value="dataResult.data.first50" description="Попали в первую половину"
+          color="red" :processor="usePercentProcessor()" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="dataResult.first30" description="Попали в первую треть" color="blue"
-          :processor="usePercentProcessor()" />
+        <GenericInfo :status="dataResult.status" :value="dataResult.data.first30" description="Попали в первую треть"
+          color="blue" :processor="usePercentProcessor()" />
       </div>
     </div>
     <div class="flex hor-ver-x-small">
       <div class="card flex-1">
-        <GenericInfo :value="dataResult.dist300" description="С расстояния 300м+" color="yellow"
-          :processor="usePercentProcessor()" />
+        <GenericInfo :status="dataResult.status" :value="dataResult.data.dist300" description="С расстояния 300м+"
+          color="yellow" :processor="usePercentProcessor()" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="dataResult.full" description="С полным сведением" color="blue"
-          :processor="usePercentProcessor()" />
+        <GenericInfo :status="dataResult.status" :value="dataResult.data.full" description="С полным сведением"
+          color="blue" :processor="usePercentProcessor()" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="dataResult.stopped" description="Неподвижно" color="green"
+        <GenericInfo :status="dataResult.status" :value="dataResult.data.stopped" description="Неподвижно" color="green"
           :processor="usePercentProcessor()" />
       </div>
     </div>
@@ -73,7 +76,7 @@
 import ShotsCircle from "@/components/widgets/ShotsCircle.vue";
 import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import ShotDistribution from '@/components/widgets/ShotDistribution.vue';
-import { usePercentProcessor } from '@/composition/usePercentProcessor';
+import { useFixedProcessor, useFixedSpaceProcessor, usePercentProcessor } from '@/composition/usePercentProcessor';
 import { queryAsyncFirst } from "@/db";
 import { computed, ref, watch, watchEffect } from "vue";
 import { useElementVisibility, useMouseInElement } from "@vueuse/core";
@@ -121,17 +124,15 @@ const dataResult = queryAsyncFirst(`
 select toUInt32(count())                                                                                as count,
        countIf(length(results.order) > 0) / count()                                                     as hit,
        countIf(arraySum(results.shotDamage) > 0 or arraySum(results.fireDamage) > 0) / count()          as damaged,
-       countIf(ballisticResultServer_r <= 0.5) / count()                                                as first50,
-       countIf(ballisticResultServer_r <= 0.3333) / count()                                             as first30,
+       countIf(ballisticResultClient_r <= 0.5) / count()                                                as first50,
+       countIf(ballisticResultClient_r <= 0.3333) / count()                                             as first30,
        countIf(abs(serverShotDispersion / gunDispersion) between 0.999 and 1.001 or
                abs(clientShotDispersion / gunDispersion) between 0.999 and 1.001) / count()             as full,
        countIf(abs(turretSpeed) + abs(vehicleRotationSpeed) < 1 and abs(vehicleSpeed) < 0.5) / count()  as stopped,
-       countIf(sqrt(pow(serverMarkerPoint_x - gunPoint_x, 2) +
-                    pow(serverMarkerPoint_y - gunPoint_y, 2) +
-                    pow(serverMarkerPoint_z - gunPoint_z, 2)) > 300) / count()                          as dist300
+       countIf(L2Distance((serverMarkerPoint_x, serverMarkerPoint_y, serverMarkerPoint_z), 
+                    (gunPoint_x, gunPoint_y, gunPoint_z)) > 300) / count()                              as dist300
 from Event_OnShot
 ${whereClause(params)}
-  and modVersionComparable >= 1002000000
 `, { count: 0, hit: 0, damaged: 0, first50: 0, first30: 0, full: 0, stopped: 0, dist300: 0 }, visible)
 
 const selectedShot = computed(() => route.query.shot as string | undefined);

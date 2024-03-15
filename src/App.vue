@@ -27,7 +27,7 @@ const isDevMode = import.meta.env.VITE_SHOW_DEV_WATERMARK === 'true';
 
 <style scoped>
 .content {
-  padding-top: 50px;
+  padding-top: 57.5px;
 }
 
 .devmode {

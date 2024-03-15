@@ -1,40 +1,47 @@
 <template>
-  <div class="container" ref="container">
+  <ServerStatusWrapper :status="result.status" v-slot="{ showError, status }">
+    <div class="container" ref="container" v-if="status != 'error'">
 
-    <table class="hover-highlight">
-      <thead>
-        <tr>
-          <th>Сетап боя</th>
-          <th>-2</th>
-          <th>-1</th>
-          <th>ТОП</th>
-          <th>Всего</th>
-        </tr>
-      </thead>
-
-
-      <tbody>
-        <tr v-for="(p, i) in processed?.slice(0, 3)">
-          <td>{{ { 0: 'Одноуровневый', 1: 'Двухуровневый', 2: 'Трёхуровневый' }[i] }}</td>
-          <td class="text-effect red">{{ p[0] }}</td>
-          <td class="text-effect orange">{{ p[1] }}</td>
-          <td class="text-effect green">{{ p[2] }}</td>
-          <td class="text-effect blue">{{ p[3] }}</td>
-        </tr>
+      <table class="hover-highlight">
+        <thead>
+          <tr>
+            <th>Сетап боя</th>
+            <th>-2</th>
+            <th>-1</th>
+            <th>ТОП</th>
+            <th>Всего</th>
+          </tr>
+        </thead>
 
 
-        <tr>
-          <th>Всего</th>
-          <td class="text-effect red"><b>{{ processed?.[3][0] }}</b></td>
-          <td class="text-effect orange"><b>{{ processed?.[3][1] }}</b></td>
-          <td class="text-effect green"><b>{{ processed?.[3][2] }}</b></td>
-          <td></td>
-        </tr>
-      </tbody>
+        <tbody>
+          <tr v-for="(p, i) in processed?.slice(0, 3)" :class="status == 'loading' ? 'skeleton' : ''">
+            <td class="ignore-skeleton">{{ { 0: 'Одноуровневый', 1: 'Двухуровневый', 2: 'Трёхуровневый' }[i] }}</td>
+            <td class="text-effect red">{{ p[0] }}</td>
+            <td class="text-effect orange">{{ p[1] }}</td>
+            <td class="text-effect green">{{ p[2] }}</td>
+            <td class="text-effect blue">{{ p[3] }}</td>
+          </tr>
 
 
-    </table>
-  </div>
+          <tr>
+            <th>Всего</th>
+            <td class="text-effect red"><b>{{ processed?.[3][0] }}</b></td>
+            <td class="text-effect orange"><b>{{ processed?.[3][1] }}</b></td>
+            <td class="text-effect green"><b>{{ processed?.[3][2] }}</b></td>
+            <td></td>
+          </tr>
+        </tbody>
+
+
+      </table>
+
+    </div>
+
+    <div class="flex flex-1 center pointer" v-else @click="showError">
+      <p class="card-main-info error">!</p>
+    </div>
+  </ServerStatusWrapper>
 </template>
 
 <script setup lang="ts">
@@ -43,6 +50,8 @@ import { StatParams, whereClause } from '@/composition/useQueryStatParams';
 import { queryAsync } from '@/db';
 import { useElementVisibility } from '@vueuse/core';
 import { computed, ref, watchEffect } from 'vue';
+import ServerStatusWrapper from '../ServerStatusWrapper.vue';
+
 
 const { params } = defineProps<{
   params?: StatParams
@@ -80,13 +89,15 @@ order by battleType, position;
 const processed = computed(() => {
   if (!result.value) return null
 
-  const singleLevel = result.value.find(r => r.battleType == 1)
-  const doubleLevelTop = result.value.find(r => r.battleType == 2 && r.position == 0)
-  const doubleLevel = result.value.find(r => r.battleType == 2 && r.position == -1)
+  const data = result.value.data
 
-  const tripleLevelTop = result.value.find(r => r.battleType == 3 && r.position == 0)
-  const tripleLevelMiddle = result.value.find(r => r.battleType == 3 && r.position == -1)
-  const tripleLevel = result.value.find(r => r.battleType == 3 && r.position == -2)
+  const singleLevel = data.find(r => r.battleType == 1)
+  const doubleLevelTop = data.find(r => r.battleType == 2 && r.position == 0)
+  const doubleLevel = data.find(r => r.battleType == 2 && r.position == -1)
+
+  const tripleLevelTop = data.find(r => r.battleType == 3 && r.position == 0)
+  const tripleLevelMiddle = data.find(r => r.battleType == 3 && r.position == -1)
+  const tripleLevel = data.find(r => r.battleType == 3 && r.position == -2)
 
   const res = [
     [null, null, singleLevel?.percent],
