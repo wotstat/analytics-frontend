@@ -80,9 +80,9 @@ const status = computed(() => mergeStatuses(clientMarkerResult.value.status, ser
 
 const labels = new Array(101).fill(0).map((_, i) => i);
 
-const isEnableClient = useLocalStorage('shotDistributionChartIsEnableClient', true)
-const isEnableServer = useLocalStorage('shotDistributionChartIsEnableServer', true)
-const isEnableShared = useLocalStorage('shotDistributionChartIsEnableShared', true)
+const isHideServer = useLocalStorage('shotDistributionChartServerHide', false)
+const isHideClient = useLocalStorage('shotDistributionChartClientHide', false)
+const isHideShared = useLocalStorage('shotDistributionChartSharedHide', false)
 
 const chartData = computed<ChartProps<'line'>['data']>(() => ({
   labels,
@@ -90,21 +90,21 @@ const chartData = computed<ChartProps<'line'>['data']>(() => ({
     {
       data: serverMarker.value,
       label: 'Серверный',
-      hidden: !isEnableServer.value,
+      hidden: isHideServer.value,
       borderColor: !isLoadingServer.value ? BloomColor.gold.bloom : '#e5e5e5',
       backgroundColor: !isLoadingServer.value ? BloomColor.gold.darken : '#e5e5e5',
     },
     {
       data: clientMarker.value,
       label: 'Клиентский',
-      hidden: !isEnableClient.value,
+      hidden: isHideClient.value,
       borderColor: !isLoadingClient.value ? BloomColor.green.bloom : '#e5e5e5',
       backgroundColor: !isLoadingClient.value ? BloomColor.green.main : '#e5e5e5',
     },
     {
       data: sharedClient.value,
       label: 'Общий',
-      hidden: !isEnableShared.value,
+      hidden: isHideShared.value,
       borderColor: !isSharedLoading.value ? BloomColor.blue.bloom : '#e5e5e5',
       backgroundColor: !isSharedLoading.value ? BloomColor.blue.main : '#e5e5e5',
     }
@@ -168,9 +168,7 @@ const options: ChartProps<'line'>['options'] = {
     },
     legend: {
       onClick: (evt, legendItem, legend) => {
-        console.log('click', legendItem);
-
-        [isEnableServer, isEnableClient, isEnableShared][legendItem.datasetIndex ?? 0].value = !legendItem.hidden
+        [isHideServer, isHideClient, isHideShared][legendItem.datasetIndex ?? 0].value = !legendItem.hidden
       },
     }
   }
