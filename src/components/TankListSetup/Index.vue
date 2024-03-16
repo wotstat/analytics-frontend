@@ -56,10 +56,10 @@ const route = useRoute()
 const stats = useQueryStatParams();
 
 const tanks = queryComputed<{ tag: string, battleCount: string, shotsCount: string, shortNameRU: string, iconUrl: string }>(() => `
-select shots.tankTag as tag, battleCount, shotsCount, shortNameRU, iconUrl
-from (select tankTag, count() as shotsCount from Event_OnShot ${whereClause(stats.value, { ignore: ['tanks'] })} group by tankTag) as shots
-         join (select tankTag, count() as battleCount from Event_OnBattleStart ${whereClause(stats.value, { ignore: ['tanks'] })} group by tankTag) as battles on shots.tankTag = battles.tankTag
-         join TankList on shots.tankTag = TankList.tag
+select battles.tankTag as tag, battleCount, shotsCount, shortNameRU, iconUrl
+from (select tankTag, count() as battleCount from Event_OnBattleStart ${whereClause(stats.value, { ignore: ['tanks'], isBattleStart: true })} group by tankTag) as battles 
+         left join (select tankTag, count() as shotsCount from Event_OnShot ${whereClause(stats.value, { ignore: ['tanks'] })} group by tankTag) as shots on shots.tankTag = battles.tankTag
+         left join TankList on battles.tankTag = TankList.tag
 order by battleCount desc
 limit 50;
 `);
