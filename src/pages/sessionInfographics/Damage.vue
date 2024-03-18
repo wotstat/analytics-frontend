@@ -1,8 +1,8 @@
 <template>
   <h2 class="small-bottom-margin page-title">Урон</h2>
 
-  <p class="section-description">Распределения урона строятся для выстрелов с уроном, не фугасами и огненной смесью, по
-    танкам с ХП больше максималки</p>
+  <p class="section-description">Распределения урона строятся для выстрелов ББ, БП и КС снарядами по танкам с ХП,
+    превышающим максимальный урон снаряда</p>
   <div class="flex ver damage" ref="container">
     <div class="card long">
       <GenericInfoQuery
