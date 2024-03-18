@@ -68,7 +68,8 @@
   <template v-if="distribution.labels.length">
     <div v-if="readyToCalculate">
       <p>После нажатия кнопки "Рассчитать" будет проведено <input type="number" min="100" max="1000000"
-          v-model="experimentsCount"> экспериментов с серией по {{ selectedTotal }} выстрелов
+          v-model="experimentsCount"> экспериментов с серией по <input type="number" min="0" max="100000000"
+          v-model="selectedTotalTarget"> выстрелов
       </p>
 
       <br>
@@ -77,7 +78,8 @@
       </div>
     </div>
     <div v-else-if="!errorResult">
-      <progress :value="progress">70%</progress>
+      <progress :value="progress"></progress>
+      <button @click="cancel()">Отменить</button>
     </div>
     <div v-else>
       <h4>Настройте доверительный интервал</h4>
@@ -90,7 +92,7 @@
           v-model="selectedConfidence">
         <input type="number" min="0" max="0.9999999" :step="errorConfidenceStep" v-model="selectedConfidence">
       </div>
-      <p>Были просимулированы {{ errorResult[0].length }} сессий по {{ selectedTotal }} выстрелов, в <span
+      <p>Были просимулированы {{ errorResult[0].length }} сессий по {{ selectedTotalTarget }} выстрелов, в <span
           class="text-effect gold">{{
       (selectedConfidence * 100).toFixed(errorConfidenceStep.toString().length - 4) }}%</span> сессий
         распределение
@@ -181,6 +183,10 @@ order by count desc;
 
 const total = computed(() => damageCount.value.data.reduce((acc, { count }) => acc + count, 0))
 const selectedTotal = computed(() => damageCount.value.data.find(({ shellDamage }) => shellDamage == selectedDamage.value)?.count ?? 0)
+
+const selectedTotalTarget = ref(0)
+watch(selectedTotal, val => selectedTotalTarget.value = val)
+
 const errorConfidenceStep = computed(() => {
   const num = 1 / experimentsCount.value
   const magnitude = Math.floor(Math.log10(num));
@@ -336,7 +342,8 @@ const intervals = computed(() => {
   })
 })
 
-const { readyToCalculate, calculate, reset, progress, result: errorResult } = useErrorCalculation(selectedDamage, selectedTotal, intervals, experimentsCount)
+const { readyToCalculate, calculate, reset, progress, result: errorResult, cancel } =
+  useErrorCalculation(selectedDamage, selectedTotalTarget, intervals, experimentsCount)
 
 const lowHight = computed(() => {
   if (!errorResult.value) return [[], []]
