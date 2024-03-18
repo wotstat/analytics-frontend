@@ -64,7 +64,8 @@
             <p v-if="allShots">Выстрел {{ shotIndex + 1 }} из {{ allShots?.length }} в бою</p>
             <p v-else>Загрузка</p>
             <div v-if="allShots" class="bar" :class="isBarDragging || scrolling ? 'transition-disable' : ''"
-              :style="{ width: (isBarDragging ? dragProgress : (shotIndex / (allShots.length - 1))) * 100 + '%' }"></div>
+              :style="{ width: (isBarDragging ? dragProgress : (shotIndex / (allShots.length - 1))) * 100 + '%' }">
+            </div>
           </div>
           <div class="next" @click="next">
             <svg viewBox="0 0 64 64">
@@ -83,10 +84,10 @@
             <div class="flex ver flex-1 gap-0">
               <InfoTable :data="secondTable(selectedShoot)" />
               <InfoTable :data="[
-                ['ФПС', selectedShoot.fps],
-                ['Пинг', (selectedShoot.ping * 1000).toFixed() + 'мс'],
-                ['Попал в', { 'tank': 'танк', 'terrain': 'землю', 'none': 'небо', 'other': '-' }[selectedShoot.hitReason] ?? '-'],
-              ]" />
+            ['ФПС', selectedShoot.fps],
+            ['Пинг', (selectedShoot.ping).toFixed() + 'мс'],
+            ['Попал в', { 'tank': 'танк', 'terrain': 'землю', 'none': 'небо', 'other': '-' }[selectedShoot.hitReason] ?? '-'],
+          ]" />
             </div>
           </div>
 
@@ -95,11 +96,11 @@
           <div class="flex table-parent">
             <InfoTable class="flex-1" :data="thirdTable(selectedShoot)" />
             <InfoTable class="flex-1" :data="[
-              ['Скорость танка', selectedShoot.vehicleSpeed.toFixed()],
-              ['Скрость поворота танка', selectedShoot.vehicleRotationSpeed.toFixed() + ' °/c'],
-              ['Скорость повоорта башни', selectedShoot.turretSpeed.toFixed() + ' °/c'],
-              ['Ваше ХП', selectedShoot.health],
-            ]" />
+            ['Скорость танка', selectedShoot.vehicleSpeed.toFixed()],
+            ['Скрость поворота танка', selectedShoot.vehicleRotationSpeed.toFixed() + ' °/c'],
+            ['Скорость повоорта башни', selectedShoot.turretSpeed.toFixed() + ' °/c'],
+            ['Ваше ХП', selectedShoot.health],
+          ]" />
           </div>
 
           <template v-if="shotResult.length > 0">
@@ -126,20 +127,20 @@
                   <td>{{ result.fireHealth ?? '-' }}</td>
                 </template>
                 <td v-if="shotResult.some(t => t.ammoBayDestroyed)">{{ result.ammoBayDestroyed ? 'Да' : '-'
-                }}</td>
+                  }}</td>
               </tr>
             </div>
             <div class="flex ver gap-0" v-else>
               <hr>
               <template v-for="result in shotResult">
                 <InfoTable class="flex-1" :data="([
-                  ['Танк', result.tankTag],
-                  ['Урон выстрелом', result.shotDamage],
-                  result.shotHealth ? ['ХП осталось', result.shotHealth] : undefined,
-                  result.fireDamage ? ['Урон пожаром', result.fireDamage] : undefined,
-                  result.fireHealth ? ['ХП после пожара', result.fireHealth] : undefined,
-                  result.ammoBayDestroyed ? ['Взрыв БК', 'Да'] : undefined,
-                ].filter(t => t) as string[][])" />
+            ['Танк', result.tankTag],
+            ['Урон выстрелом', result.shotDamage],
+            result.shotHealth ? ['ХП осталось', result.shotHealth] : undefined,
+            result.fireDamage ? ['Урон пожаром', result.fireDamage] : undefined,
+            result.fireHealth ? ['ХП после пожара', result.fireHealth] : undefined,
+            result.ammoBayDestroyed ? ['Взрыв БК', 'Да'] : undefined,
+          ].filter(t => t) as string[][])" />
                 <hr>
               </template>
             </div>
