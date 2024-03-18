@@ -104,7 +104,8 @@ export function useErrorCalculation(damage: WatchSource<number>, shotCount: Watc
     reset,
     result: currentResult,
     readyToCalculate,
-    progress
+    progress,
+    cancel: stopCalculation
   }
 
 }
