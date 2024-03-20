@@ -88,13 +88,11 @@ const params = useQueryStatParams();
 const tankLabels = ['СТ', 'ТТ', 'ПТ', 'ЛТ', 'САУ'];
 
 const dataStart = queryAsyncFirst(`
-select toUInt32((abs(sumIf(battleTime, battleTime < 0)) +
-                 sumIf(preBattleWaitTime, preBattleWaitTime < 30000) +
-                 sumIf(loadTime, loadTime < 60000) +
-                 sumIf(inQueueWaitTime, inQueueWaitTime < 300000)) / 1000) as waitTime,
-       toUInt32(count(*))                                                  as battleCount,        
-       avg(preBattleWaitTime) + abs(avgIf(battleTime, battleTime < 0))     as avgWaitTime,
-       avgIf(inQueueWaitTime, inQueueWaitTime < 300000)                    as avgInQueue
+select toUInt32(sum(inQueueWaitTime + loadTime + preBattleWaitTime) / 1000)          as waitTime,
+       toUInt32(count(*))                                                            as battleCount,        
+       avg(preBattleWaitTime + 
+          if(battleTime < 0 and preBattleWaitTime + battleTime < 0, -battleTime, 0)) as avgWaitTime,
+       avgIf(inQueueWaitTime, inQueueWaitTime < 300000)                              as avgInQueue
 from Event_OnBattleStart
 ${whereClause(params, { isBattleStart: true })}
 `, { waitTime: 0, avgWaitTime: 0, avgInQueue: 0, battleCount: 0 }, visible)
