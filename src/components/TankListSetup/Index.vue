@@ -115,7 +115,6 @@ function onClick(e: MouseEvent, tag: string) {
   }
 
   .tank-list {
-    width: 1000px;
     display: flex;
     gap: 10px;
     padding: 10px;

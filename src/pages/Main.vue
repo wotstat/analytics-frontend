@@ -144,12 +144,12 @@
           </div>
           <div class="image">
             <div class="card">
-              <GenericInfo :value="[scoreData['win']?.medianTeam ?? 0, scoreData['win']?.medianOpponent ?? 0]"
+              <GenericInfo :value="[scoreResult.data[0]?.allyFragsWin ?? 0, scoreResult.data[0]?.enemyFragsWin ?? 0]"
                 description="Средний счёт при победе" color="green"
                 :processor="t => `${Math.round(t[0])}:${Math.round(t[1])}`" />
             </div>
             <div class="card">
-              <GenericInfo :value="[scoreData['lose']?.medianTeam ?? 0, scoreData['lose']?.medianOpponent ?? 0]"
+              <GenericInfo :value="[scoreResult.data[0]?.allyFragsLose ?? 0, scoreResult.data[0]?.enemyFragsLose ?? 0]"
                 description="Средний счёт при поражении" color="red"
                 :processor="t => `${Math.round(t[0])}:${Math.round(t[1])}`" />
             </div>
@@ -413,21 +413,21 @@ const totalEventCount = useTweenCounter(computed(() => eventCount.value.data.dat
 // DAMAGE
 const damageLabels = new Array(21).fill(0)
 const damageDistributionResult = queryAsync<{ k: number, count: number }>(`
-select if(round(normK, 1) = -0, 0, round(normK, 1)) * 10 as k, toUInt32(count()) as count
-from (select arrayZip(results.shotDamage, results.shotHealth) as shotHealth,
-             arrayFilter(x -> x.2 != 0, shotHealth)           as notKill,
-             arrayMax(x -> x.1, notKill)                      as maxNotKillDamage,
-             shellDamage,
-             damageRandomization,
-             1.0 * maxNotKillDamage / shellDamage             as k,
-             (k - 1.0) / damageRandomization                  as normK
-      from Event_OnShot
-      where length(results.order) > 0
-        and maxNotKillDamage > 0
-        and shellTag != 'HIGH_EXPLOSIVE')
+with arrayMax(results.shotDamage) as dmg,
+     indexOf(results.shotDamage, dmg) as idx,
+     results.shotHealth[idx] as health,
+     dmg > 0 and health > 0 and idx > 0 and (dmg + health) > round(shellDamage * 1.250001) as representative,
+     ((toFloat32(dmg) / shellDamage) - 1) / damageRandomization AS dmgRelativeShell,
+     length(results.shotDamage) as hits,
+     max2(-1, min2(1, round(dmgRelativeShell, 1))) as rounded,
+     if(rounded = -0, 0, rounded) as trueRounded
+select trueRounded * 10 as k,
+       toUInt32(countIf(representative and hits > 0)) as count
+from Event_OnShot
+where shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME' and battleMode = 'REGULAR'
 group by k
-order by k;
-`)
+having k between -10 and 10
+order by k`)
 const damageDistributionData = computed(() => {
 
   const res = damageDistributionResult.value.data.reduce((prev, cur) => {
@@ -442,33 +442,18 @@ const damageDistributionData = computed(() => {
 
 // RESULTS
 const scoreResult = queryAsync<{
-  result: 'win' | 'lose' | 'tie',
-  medianTeam: number,
-  medianOpponent: number,
-  avgTeam: number,
-  avgOpponent: number,
-  turbo: number,
+  enemyFragsWin: number,
+  allyFragsWin: number,
+  enemyFragsLose: number,
+  allyFragsLose: number
 }>(`
-select result,
-       median(playerTeamFrags)   as medianTeam,
-       median(opponentTeamFrags) as medianOpponent,
-       avg(playerTeamFrags)      as avgTeam,
-       avg(opponentTeamFrags)    as avgOpponent,
-       toUInt32(countIf(duration < 5 * 60 and abs(opponentTeamFrags - playerTeamFrags) > 10)) as turbo
-from (select arrayZip(playersResults.isAlive, playersResults.team)          as aliveTeam,
-             arrayFilter(t -> t.2 = playerTeam, aliveTeam)                  as playerTeamAliveList,
-             arrayFilter(t -> t.2 != playerTeam, aliveTeam)                 as opponentTeamAliveList,
-             length(arrayFilter(t -> t = playerTeam, playersResults.team))  as playerTeamCount,
-             length(arrayFilter(t -> t != playerTeam, playersResults.team)) as opponentTeamCount,
-             playerTeamCount - arrayCount(t -> t.1, playerTeamAliveList)             as opponentTeamFrags,
-             opponentTeamCount - arrayCount(t -> t.1, opponentTeamAliveList)         as playerTeamFrags,
-             result                                                                  as result,
-             duration                                                                as duration     
-      from Event_OnBattleResult)
-group by result;
+select 
+  avgIf(allyTeamCount - allyTeamSurvivedCount, result = 'win') as enemyFragsWin,
+  avgIf(enemyTeamCount - enemyTeamSurvivedCount, result = 'win') as allyFragsWin,
+  avgIf(allyTeamCount - allyTeamSurvivedCount, result = 'lose') as enemyFragsLose,
+  avgIf(enemyTeamCount - enemyTeamSurvivedCount, result = 'lose') as allyFragsLose
+  from Event_OnBattleResult where battleMode = 'REGULAR'
 `);
-const scoreData = computed(() => Object.fromEntries(scoreResult.value.data.map(r => [r.result, r])));
-
 
 // TURBO
 const turboResult = queryAsyncFirst(`
@@ -477,16 +462,13 @@ select max(countTurbo)    as maxTurbo,
        avg(countTurbo)    as avgTurbo,
        median(countTurbo) as medTurbo,
        sum(isTurbo)       as count
-from (select arrayZip(playersResults.isAlive, playersResults.team)                        as aliveTeam,
-             arrayFilter(t -> t.2 = playerTeam, aliveTeam)                                as playerTeamAliveList,
-             arrayFilter(t -> t.2 != playerTeam, aliveTeam)                               as opponentTeamAliveList,
-             length(arrayFilter(t -> t = playerTeam, playersResults.team))                as playerTeamCount,
-             length(arrayFilter(t -> t != playerTeam, playersResults.team))               as opponentTeamCount,
-             playerTeamCount - arrayCount(t -> t.1, playerTeamAliveList)                  as opponentTeamFrags,
-             opponentTeamCount - arrayCount(t -> t.1, opponentTeamAliveList)              as playerTeamFrags,
-             duration < 5 * 60 and abs(opponentTeamFrags - playerTeamFrags) > 10          as isTurbo,
+from (select allyTeamCount - allyTeamSurvivedCount                               as opponentTeamFrags,
+             enemyTeamCount - enemyTeamSurvivedCount                             as playerTeamFrags,
+             duration < 5 * 60 and abs(opponentTeamFrags - playerTeamFrags) > 10 as isTurbo,
              countIf(isTurbo) over (order by id rows between 99 preceding and current row) as countTurbo
-      from Event_OnBattleResult);`, { count: 0, maxTurbo: 0, avgTurbo: 0, medTurbo: 0, minTurbo: 0 });
+      from Event_OnBattleResult
+      where battleMode = 'REGULAR')
+`, { count: 0, maxTurbo: 0, avgTurbo: 0, medTurbo: 0, minTurbo: 0 });
 
 // STRIMSNIPER
 const strimsniper = [
