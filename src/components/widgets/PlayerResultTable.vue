@@ -76,7 +76,7 @@
             <td></td>
             <td colspan="4"></td>
           </tr>
-          <tr v-for="(item, index) in roundedTable">
+          <tr v-for="(item, index) in roundedTable" v-else>
             <td class="text-effect red">{{ item.youTeam.kill }}</td>
             <td class="text-effect blue">{{ item.youTeam.block }}</td>
             <td class="text-effect green">{{ item.youTeam.radio }}</td>
@@ -84,10 +84,10 @@
 
             <td class="center">
               {{ item.place + 1 }}
-              <div v-if="hightlighted[index]" class="bar-box left" :style="{ width: hightlighted[index].you + 'px' }">
+              <div v-if="highlighted[index]" class="bar-box left" :style="{ width: highlighted[index].you + 'px' }">
               </div>
-              <div v-if="hightlighted[index]" class="bar-box right"
-                :style="{ width: hightlighted[index].opponent + 'px' }">
+              <div v-if="highlighted[index]" class="bar-box right"
+                :style="{ width: highlighted[index].opponent + 'px' }">
               </div>
             </td>
 
@@ -114,9 +114,11 @@ import { modeCount } from '@/utils/wot';
 import { useElementVisibility, useElementSize } from '@vueuse/core';
 import { computed, ref } from 'vue';
 import ServerStatusWrapper from '../ServerStatusWrapper.vue';
+import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
+import { bestMV } from '@/db/schema';
 
 const { params } = defineProps<{
-  params?: StatParams
+  params: StatParams
 }>()
 
 
@@ -142,63 +144,93 @@ const playersCount = computed(() => {
   return mode in modeCount ? (modeCount as any)[mode] : 15
 })
 
-function getQuery(result: 'win' | 'lose', team: 'you' | 'opponent') {
+function getQuery(result: 'win' | 'lose') {
 
-  const youResult = team == 'you' ? result : result == 'win' ? 'lose' : 'win'
+  const best = bestMV('team_results', params)
 
-  return `
-  select place,
-       avg(arrayJoin(placed).2) as avgDamage,
-       avg(arrayJoin(placed).3) as avgBlacks,
-       avg(arrayJoin(placed).4) as avgRadios,
-       avg(arrayJoin(placed).5) as avgKills
-from (select arrayFilter(t -> t.1 ${team == 'you' ? '=' : '!='} playerTeam,
-                         arrayZip(
-                                 playersResults.team,
-                                 playersResults.damageDealt,
-                                 playersResults.damageBlockedByArmor,
-                                 playersResults.damageAssistedRadio,
-                                 playersResults.kills))          as team,
-             arrayReverseSort(team.2)                            as damages,
-             arrayReverseSort(team.3)                            as blocks,
-             arrayReverseSort(team.4)                            as radios,
-             arrayReverseSort(team.5)                            as kills,
-             arrayZip(range(${playersCount.value}), damages, blocks, radios, kills) as placed
-      from Event_OnBattleResult sample 1
-      where result = '${youResult}'
-        and length(playersResults.team) = ${playersCount.value * 2}
-        ${params ? whereClause(params, { withWhere: false }) : ''}
-        )
-group by arrayJoin(placed).1 as place;`
+  const query = best ? `
+  with
+    avgForEachMerge(allyDamages) as allyDamagesA,
+    avgForEachMerge(allyBlocks) as allyBlocksA,
+    avgForEachMerge(allyRadios) as allyRadiosA,
+    avgForEachMerge(allyKills) as allyKillsA,
+    avgForEachMerge(enemyDamages) as enemyDamagesA,
+    avgForEachMerge(enemyBlocks) as enemyBlocksA,
+    avgForEachMerge(enemyRadios) as enemyRadiosA,
+    avgForEachMerge(enemyKills) as enemyKillsA,
+    arrayJoin(arrayZip(range(${playersCount.value}), allyDamagesA, allyBlocksA, allyRadiosA, allyKillsA, enemyDamagesA, enemyBlocksA, enemyRadiosA, enemyKillsA)) as arr
+  select arr.1 as place, 
+        arr.2 as allyDamage,
+        arr.3 as allyBlock,
+        arr.4 as allyRadio,
+        arr.5 as allyKill,
+        arr.6 as enemyDamage,
+        arr.7 as enemyBlock,
+        arr.8 as enemyRadio,
+        arr.9 as enemyKill
+  from ${best}
+  where result = '${result}'
+  and playersCount = ${playersCount.value * 2}
+  ${whereClause(params, { withWhere: false })};
+  ` : `
+  with
+      arrayZip(playersResults.team, playersResults.damageDealt, playersResults.damageBlockedByArmor, playersResults.damageAssistedRadio, playersResults.kills) as teamValues,
+      arrayFilter(t -> t.1 = playerTeam, teamValues) as allyTeam,
+      arrayFilter(t -> t.1 != playerTeam, teamValues) as enemyTeam,
+      length(playersResults.team) as playersCount,
+      avgForEach(arrayReverseSort(allyTeam.2))  as allyDamages,
+      avgForEach(arrayReverseSort(allyTeam.3))  as allyBlocks,
+      avgForEach(arrayReverseSort(allyTeam.4))  as allyRadios,
+      avgForEach(arrayReverseSort(allyTeam.5))  as allyKills,
+      avgForEach(arrayReverseSort(enemyTeam.2)) as enemyDamages,
+      avgForEach(arrayReverseSort(enemyTeam.3)) as enemyBlocks,
+      avgForEach(arrayReverseSort(enemyTeam.4)) as enemyRadios,
+      avgForEach(arrayReverseSort(enemyTeam.5)) as enemyKills,
+      arrayJoin(arrayZip(range(${playersCount.value}), allyDamages, allyBlocks, allyRadios, allyKills, enemyDamages, enemyBlocks, enemyRadios, enemyKills)) as arr
+    select arr.1 as place, 
+        arr.2 as allyDamage,
+        arr.3 as allyBlock,
+        arr.4 as allyRadio,
+        arr.5 as allyKill,
+        arr.6 as enemyDamage,
+        arr.7 as enemyBlock,
+        arr.8 as enemyRadio,
+        arr.9 as enemyKill
+  from Event_OnBattleResult
+  where result = '${result}'
+  and playersCount = ${playersCount.value * 2}
+  ${whereClause(params, { withWhere: false })};
+  `
+
+  return query
 }
 
-const shouldLoadOpponentLose = computed(() => visible.value && opponentTeamResult.value == 'lose')
-const shouldLoadYouLose = computed(() => visible.value && youTeamResult.value == 'lose')
+const shouldLoadLose = computed(() => visible.value && youTeamResult.value == 'lose' || opponentTeamResult.value == 'win')
 
 type TableItem = {
   place: number,
-  avgDamage: number,
-  avgBlacks: number,
-  avgRadios: number,
-  avgKills: number,
+  allyDamage: number,
+  allyBlock: number,
+  allyRadio: number,
+  allyKill: number,
+  enemyDamage: number,
+  enemyBlock: number,
+  enemyRadio: number,
+  enemyKill: number,
 }
 
-const youTramResultWin = queryAsync<TableItem>(getQuery('win', 'you'), visible)
-const youTramResultLose = queryAsync<TableItem>(getQuery('lose', 'you'), shouldLoadYouLose)
-const opponentTramResultWin = queryAsync<TableItem>(getQuery('win', 'opponent'), visible)
-const opponentTramResultLose = queryAsync<TableItem>(getQuery('lose', 'opponent'), shouldLoadOpponentLose)
+const teamResultWin = queryAsync<TableItem>(getQuery('win'), visible)
+const teamResultLose = queryAsync<TableItem>(getQuery('lose'), shouldLoadLose)
 
 const loadingStatus = computed(() => {
-  const youTeam = youTeamResult.value == 'win' ? youTramResultWin.value.status : youTramResultLose.value.status
-  const opponentTeam = opponentTeamResult.value == 'win' ? opponentTramResultWin.value.status : opponentTramResultLose.value.status
-
-  return mergeStatuses(youTeam, opponentTeam)
+  if (youTeamResult.value == 'lose' || opponentTeamResult.value == 'lose') return teamResultLose.value.status
+  return teamResultWin.value.status
 })
 
 const table = computed(() => {
 
-  const youTeam = youTeamResult.value == 'win' ? youTramResultWin.value.data : youTramResultLose.value.data
-  const opponentTeam = opponentTeamResult.value == 'win' ? opponentTramResultWin.value.data : opponentTramResultLose.value.data
+  const youTeam = youTeamResult.value == 'win' ? teamResultWin.value.data : teamResultLose.value.data
+  const opponentTeam = opponentTeamResult.value == 'win' ? teamResultLose.value.data : teamResultWin.value.data
 
   const count = Math.max(youTeam.length, opponentTeam.length)
 
@@ -208,31 +240,31 @@ const table = computed(() => {
       const youTeamItem = youTeam.find(item => item.place == place)
       const opponentTeamItem = opponentTeam.find(item => item.place == place)
 
-      const team = (t: TableItem | undefined) => ({
-        dmg: t?.avgDamage ?? 0,
-        radio: t?.avgRadios ?? 0,
-        block: t?.avgBlacks ?? 0,
-        kill: t?.avgKills ?? 0,
-      })
-
       return {
         place,
-        youTeam: team(youTeamItem),
-        opponentTeam: team(opponentTeamItem),
+        youTeam: {
+          dmg: youTeamItem?.allyDamage ?? 0,
+          radio: youTeamItem?.allyRadio ?? 0,
+          block: youTeamItem?.allyBlock ?? 0,
+          kill: youTeamItem?.allyKill ?? 0,
+        },
+        opponentTeam: {
+          dmg: opponentTeamItem?.enemyDamage ?? 0,
+          radio: opponentTeamItem?.enemyRadio ?? 0,
+          block: opponentTeamItem?.enemyBlock ?? 0,
+          kill: opponentTeamItem?.enemyKill ?? 0,
+        },
       }
     })
 })
 
 const roundedTable = computed(() => {
-  const splitByThousent = (t: number) => {
-    if (t < 1000) return t
-    return `${Math.floor(t / 1000)} ${t.toString().slice(1)}`
-  }
+  const processor = useFixedSpaceProcessor(0)
 
   const round = (t: { dmg: number, radio: number, block: number, kill: number }) => ({
-    dmg: splitByThousent(Math.round(t.dmg)),
-    radio: splitByThousent(Math.round(t.radio)),
-    block: splitByThousent(Math.round(t.block)),
+    dmg: processor(Math.round(t.dmg)),
+    radio: processor(Math.round(t.radio)),
+    block: processor(Math.round(t.block)),
     kill: Math.round(t.kill * 10) / 10,
   })
 
@@ -243,7 +275,7 @@ const roundedTable = computed(() => {
   }))
 })
 
-const hightlighted = computed(() => {
+const highlighted = computed(() => {
   const hightlightValue = hightlight.value
   const t = table.value
 

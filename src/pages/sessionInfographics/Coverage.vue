@@ -26,20 +26,30 @@ import { queryAsyncFirst } from "@/db";
 import { ref } from "vue";
 import { useElementVisibility } from "@vueuse/core";
 import PlayerCoverageTable from "@/components/widgets/PlayerCoverageTable.vue";
-import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
+import { useQueryStatParams, whereClause, whereClauseColumns } from '@/composition/useQueryStatParams';
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
+import { bestMV } from '@/db/schema';
 
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
 const params = useQueryStatParams();
 
-const coverageData = queryAsyncFirst(`
-select count(distinct name) as data
-from Event_OnBattleResult
-    array join playersResults.name as name
-where name != playerName
-${whereClause(params, { withWhere: false })};
-`, { data: 0 }, visible)
+
+const mv = bestMV('player_coverage', params)
+
+const query = mv ? `
+  select uniqMerge(uniq) as data
+  from ${mv}
+  ${whereClause(params)}`
+  : `
+  select uniq(arrayJoin(playersResults.name)) as data
+  from Event_OnBattleResult
+  ${whereClause(params)}`
+
+const coverageData = queryAsyncFirst(query, { data: 0 }, visible)
+
+console.log(bestMV('player_coverage', params));
+
 
 
 </script>

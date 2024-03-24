@@ -37,10 +37,11 @@ function getQuery(isServer: boolean) {
   select r,
        sum(count) over (rows between unbounded preceding and current row)        as cum,
        round(cum / (select count() from Event_OnShot ${whereClause(params)}), 2) as percent
-  from (select round(${r}, 2) as r, count() as count
+  from (select round(if(${r} < 2, ${r}, 3), 2) as r, count() as count
       from Event_OnShot
-      where ${r} <= 1 ${whereClause(params, { withWhere: false })}
+      ${whereClause(params)}
       group by r
+      having r <= 1
       order by r);`
 }
 
@@ -62,10 +63,11 @@ const sharedClientResult = queryAsync<Row>(`
        round(cum / (select count() from Event_OnShot 
           ${whereClause(params, { ignore: ['player', 'level', 'tanks', 'types'] })}
           ), 2) as percent
-  from (select round(ballisticResultClient_r, 2) as r, count() as count
+  from (select round(if(ballisticResultClient_r < 2, ballisticResultClient_r, 3), 2) as r, count() as count
       from Event_OnShot
-      where ballisticResultClient_r <= 1 ${whereClause(params, { withWhere: false, ignore: ['player', 'level', 'tanks', 'types'] })}
+      ${whereClause(params, { ignore: ['player', 'level', 'tanks', 'types'] })}
       group by r
+      having r <= 1
       order by r);`, visible)
 
 const isLoadingClient = computed(() => clientMarkerResult.value.status === loading)

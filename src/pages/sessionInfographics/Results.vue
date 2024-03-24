@@ -3,7 +3,7 @@
 
   <div class="flex ver results" ref="container">
     <div class="card long">
-      <GenericInfo :status="results.status" :value="results.data.count" :processor="useFixedSpaceProcessor(0)"
+      <GenericInfo :status="resultsInfo.status" :value="resultsInfo.data.count" :processor="useFixedSpaceProcessor(0)"
         description="Результатов собрано" color="green" />
     </div>
     <div class="card">
@@ -15,21 +15,21 @@
       <div class="card chart bar flex-1 flex ver gap-0">
         <MiniBar :status="playerDamageDistribution.status" :data="playerDamageDistribution.data" color="orange"
           :labels="places"
-          :callbacks="{ title: (t) => `В ${toPercent(t)} боёв вы были топ-${t[0].label} по урону`, label: () => `` }" />
+          :callbacks="{ title: t => `В ${toPercent(t, 1)} боёв вы были топ-${t[0].label} по урону`, label: () => ``, afterBody: positionChartAfterBody(playerDamageDistribution) }" />
         <p class="card-main-info description">Место по урону</p>
       </div>
 
       <div class="card chart bar flex-1 flex ver gap-0">
         <MiniBar :status="playerAssistedDistribution.status" :data="playerAssistedDistribution.data" color="orange"
           :labels="places"
-          :callbacks="{ title: (t) => `В ${toPercent(t)} боёв вы были топ-${t[0].label} по насвету`, label: () => `` }" />
+          :callbacks="{ title: (t) => `В ${toPercent(t, 1)} боёв вы были топ-${t[0].label} по насвету`, label: () => ``, afterBody: positionChartAfterBody(playerAssistedDistribution) }" />
         <p class="card-main-info description">Место по насвету</p>
       </div>
 
       <div class="card chart bar flex-1 flex ver gap-0">
         <MiniBar :status="playerKillDistribution.status" :data="playerKillDistribution.data" color="orange"
           :labels="places"
-          :callbacks="{ title: (t) => `В ${toPercent(t)} боёв вы были топ-${t[0].label} по фрагам`, label: () => `` }" />
+          :callbacks="{ title: (t) => `В ${toPercent(t, 1)} боёв вы были топ-${t[0].label} по фрагам`, label: () => ``, afterBody: positionChartAfterBody(playerKillDistribution) }" />
         <p class="card-main-info description">Место по фрагам</p>
       </div>
     </div>
@@ -40,24 +40,24 @@
 
     <div class="grid-mini">
       <div class="card flex-1">
-        <GenericInfo :status="results.status" :value="results.data.hitPerShot" description="Попаданий/Выстрелов"
+        <GenericInfo :status="resultsInfo.status" :value="resultsInfo.data.hitPerShot" description="Попаданий/Выстрелов"
           color="green" :processor="usePercentProcessor()" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :status="results.status" :value="results.data.piercingPerHit" description="Пробитий/Попаданий"
-          color="green" :processor="usePercentProcessor()" />
+        <GenericInfo :status="resultsInfo.status" :value="resultsInfo.data.piercingPerHit"
+          description="Пробитий/Попаданий" color="green" :processor="usePercentProcessor()" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :status="results.status" :value="results.data.DR" description="Коэф. урона" color="green"
+        <GenericInfo :status="resultsInfo.status" :value="resultsInfo.data.DR" description="Коэф. урона" color="green"
           :processor="useFixedProcessor()" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :status="results.status" :value="results.data.KD" description="Коэф. уничтожения" color="green"
-          :processor="useFixedProcessor()" />
+        <GenericInfo :status="resultsInfo.status" :value="resultsInfo.data.KD" description="Коэф. уничтожения"
+          color="green" :processor="useFixedProcessor()" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :status="results.status" :value="results.data.TR" description="Коэф. исп. брони" color="green"
-          :processor="useFixedProcessor()" />
+        <GenericInfo :status="resultsInfo.status" :value="resultsInfo.data.TR" description="Коэф. исп. брони"
+          color="green" :processor="useFixedProcessor()" />
       </div>
     </div>
 
@@ -120,12 +120,12 @@
 
     <div class="flex hor-ver-small">
       <div class="card flex-1">
-        <GenericInfo :status="scoreResult.status" :value="teamScore(true)" description="Счёт при победе" color="green"
-          :processor="t => `${Math.round(t[0])}:${Math.round(t[1])}`" />
+        <GenericInfo :status="functionalResults.status" :value="teamScore(true)" description="Счёт при победе"
+          color="green" :processor="t => `${Math.round(t[0])}:${Math.round(t[1])}`" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :status="scoreResult.status" :value="teamScore(false)" description="Счёт при поражении" color="red"
-          :processor="t => `${Math.round(t[0])}:${Math.round(t[1])}`" />
+        <GenericInfo :status="functionalResults.status" :value="teamScore(false)" description="Счёт при поражении"
+          color="red" :processor="t => `${Math.round(t[0])}:${Math.round(t[1])}`" />
       </div>
     </div>
 
@@ -136,7 +136,7 @@
       <TeamLevelTable :params="params" />
     </div> -->
 
-    <h4>Турбобои</h4>
+    <h4 ref="turboContainer">Турбобои</h4>
     <p>Бои длинною менее 5 минут и разницей счёта больше 10 (проигравшая команда имеет не более 4 фрагов)</p>
     <div class="card long">
       <GenericInfo :status="turboResult.status" :value="turboResult.data.count" :processor="useFixedSpaceProcessor(0)"
@@ -144,7 +144,7 @@
     </div>
     <div class="flex hor-ver-small">
       <div class="card flex-1">
-        <GenericInfo :status="mergeStatuses(results.status, turboResult.status)" :value="turboPercent"
+        <GenericInfo :status="mergeStatuses(resultsInfo.status, turboResult.status)" :value="turboPercent"
           description="Турбо боёв в среднем" color="blue" :processor="usePercentProcessor(1)" />
       </div>
       <div class="card flex-1">
@@ -170,7 +170,7 @@
 <script setup lang="ts">
 import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import MiniBar from '@/components/widgets/MiniBar.vue';
-import { Status, mergeStatuses, queryAsync, queryAsyncFirst } from "@/db";
+import { Status, mergeStatuses, queryAsync, queryAsyncFirst, queryComputed } from "@/db";
 import { useElementVisibility, useLocalStorage } from '@vueuse/core';
 import { computed, ref } from 'vue';
 import { toRelative, toPercent } from "@/utils";
@@ -178,24 +178,30 @@ import PlayerResultTable from "@/components/widgets/PlayerResultTable.vue";
 import { usePercentProcessor, useFixedProcessor, useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 import TeamLevelTable from '@/components/widgets/TeamLevelTable.vue';
+import { countLocalize } from '@/utils/i18n';
+import { TooltipItem } from 'chart.js';
 
 const variantSelector = ref<HTMLSelectElement | null>(null);
 
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
+
+const turboContainer = ref<HTMLElement | null>(null);
+const turboVisible = useElementVisibility(turboContainer);
+
 const params = useQueryStatParams();
 
 const places = new Array(15).fill(0).map((_, i) => i + 1);
 
 const infoVariant = useLocalStorage<'avg' | 'med' | 'max' | 'q3' | 'q7'>('infoResultsVariant', 'avg')
-
+const positionChartAfterBody = (distribution: any) => (t: TooltipItem<'bar'>[]) => `${distribution.absolute[t[0].dataIndex]} ${countLocalize(distribution.absolute[t[0].dataIndex], 'бой', 'боя', 'боёв')}`
 
 const resultsList = [
   ['personal.damageDealt', 'damage'],
   ['personal.damageAssistedRadio', 'damageRadio'],
   ['personal.damageAssistedTrack', 'damageTrack'],
   ['personal.stunDuration', 'stunDuration'],
-  ['(personal.damageDealt + max2(personal.damageAssistedRadio, personal.damageAssistedTrack))', 'mgSum'],
+  ['gunMarkSum', 'mgSum'],
   ['personal.spotted', 'spotted'],
   ['personal.damageBlockedByArmor', 'damageBlocked'],
   ['personal.shots', 'shots'],
@@ -204,12 +210,37 @@ const resultsList = [
   ['personal.health / personal.maxHealth', 'health']
 ] as const
 
-const results = queryAsyncFirst(`select 
-      ${resultsList.map(t => `avg(${t[0]}) as avg_${t[1]}`).join(',\n')},
-      ${resultsList.map(t => `median(${t[0]}) as med_${t[1]}`).join(',\n')},
-      ${resultsList.map(t => `max(${t[0]}) as max_${t[1]}`).join(',\n')},
-      ${resultsList.map(t => `quantile(0.3)(${t[0]}) as q3_${t[1]}`).join(',\n')},
-      ${resultsList.map(t => `quantile(0.7)(${t[0]}) as q7_${t[1]}`).join(',\n')},
+
+const functionByInfo = {
+  'avg': (shouldIf = false) => `avg${shouldIf ? 'If' : ''}`,
+  'med': (shouldIf = false) => `median${shouldIf ? 'If' : ''}`,
+  'max': (shouldIf = false) => `max${shouldIf ? 'If' : ''}`,
+  'q3': (shouldIf = false) => `quantile${shouldIf ? 'If' : ''}(0.3)`,
+  'q7': (shouldIf = false) => `quantile${shouldIf ? 'If' : ''}(0.7)`,
+} as const
+
+const functionalResults = queryComputed<{
+  [K in typeof resultsList[number][1]]: number
+} & {
+  enemyFragsWin: number,
+  allyFragsWin: number,
+  enemyFragsLose: number,
+  allyFragsLose: number
+}>(() => {
+
+  const fn = functionByInfo[infoVariant.value]
+  return `
+  select 
+  ${resultsList.map(t => `${fn()}(${t[0]}) as ${t[1]}`).join(',\n')},
+  ${fn(true)}(allyTeamCount - allyTeamSurvivedCount, result = 'win') as enemyFragsWin,
+  ${fn(true)}(enemyTeamCount - enemyTeamSurvivedCount, result = 'win') as allyFragsWin,
+  ${fn(true)}(allyTeamCount - allyTeamSurvivedCount, result = 'lose') as enemyFragsLose,
+  ${fn(true)}(enemyTeamCount - enemyTeamSurvivedCount, result = 'lose') as allyFragsLose
+  from Event_OnBattleResult
+  ${whereClause(params)}
+`})
+
+const resultsInfo = queryAsyncFirst(`select 
        avg(personal.piercingEnemyHits)           as piercingHits,
        sum(personal.directEnemyHits)             as sumDirect,
        sum(personal.shots)                       as sumShots,
@@ -229,45 +260,9 @@ from Event_OnBattleResult
 ${whereClause(params)};
 `, { count: 0, piercingHits: 0, piercingPerHit: 0, hitPerShot: 0, KD: 0, DR: 0, TR: 0 }, visible);
 
-function getValue(param: typeof resultsList[number][1]) {
-  if (!results.value.data) return 0;
-  const data = (results.value.data as any)[`${infoVariant.value}_${param}`] ?? 0;
-  return { data: data, status: results.value.status as Status };
+function getValue(param: typeof resultsList[number][1] | 'enemyFragsWin' | 'allyFragsWin' | 'enemyFragsLose' | 'allyFragsLose') {
+  return { data: functionalResults.value.data[0]?.[param] ?? 0, status: functionalResults.value.status as Status };
 }
-
-const scoreResult = queryAsync<{
-  result: 'win' | 'lose' | 'tie',
-  medianTeam: number,
-  medianOpponent: number,
-  avgTeam: number,
-  avgOpponent: number,
-  turbo: number,
-}>(`
-select result,
-       median(playerTeamFrags)   as medTeam,
-       median(opponentTeamFrags) as medOpponent,
-       avg(playerTeamFrags)      as avgTeam,
-       avg(opponentTeamFrags)    as avgOpponent,
-       max(playerTeamFrags)      as maxTeam,
-       max(opponentTeamFrags)    as maxOpponent,
-       quantile(0.3)(playerTeamFrags)      as q3Team,
-       quantile(0.3)(opponentTeamFrags)    as q3Opponent,
-       quantile(0.7)(playerTeamFrags)      as q7Team,
-       quantile(0.7)(opponentTeamFrags)    as q7Opponent,
-       toUInt32(countIf(duration < 5 * 60 and abs(opponentTeamFrags - playerTeamFrags) > 10)) as turbo
-from (select arrayZip(playersResults.isAlive, playersResults.team)          as aliveTeam,
-             arrayFilter(t -> t.2 = playerTeam, aliveTeam)                  as playerTeamAliveList,
-             arrayFilter(t -> t.2 != playerTeam, aliveTeam)                 as opponentTeamAliveList,
-             length(arrayFilter(t -> t = playerTeam, playersResults.team))  as playerTeamCount,
-             length(arrayFilter(t -> t != playerTeam, playersResults.team)) as opponentTeamCount,
-             playerTeamCount - arrayCount(t -> t.1, playerTeamAliveList)             as opponentTeamFrags,
-             opponentTeamCount - arrayCount(t -> t.1, opponentTeamAliveList)         as playerTeamFrags,
-             result                                                                  as result,
-             duration                                                                as duration     
-      from Event_OnBattleResult
-      ${whereClause(params)})
-group by result;
-`, visible);
 
 const turboResult = queryAsyncFirst(`
 select max(countTurbo)    as maxTurbo,
@@ -275,45 +270,41 @@ select max(countTurbo)    as maxTurbo,
        avg(countTurbo)    as avgTurbo,
        median(countTurbo) as medTurbo,
        sum(isTurbo)       as count
-from (select arrayZip(playersResults.isAlive, playersResults.team)                        as aliveTeam,
-             arrayFilter(t -> t.2 = playerTeam, aliveTeam)                                as playerTeamAliveList,
-             arrayFilter(t -> t.2 != playerTeam, aliveTeam)                               as opponentTeamAliveList,
-             length(arrayFilter(t -> t = playerTeam, playersResults.team))                as playerTeamCount,
-             length(arrayFilter(t -> t != playerTeam, playersResults.team))               as opponentTeamCount,
-             playerTeamCount - arrayCount(t -> t.1, playerTeamAliveList)                  as opponentTeamFrags,
-             opponentTeamCount - arrayCount(t -> t.1, opponentTeamAliveList)              as playerTeamFrags,
-             duration < 5 * 60 and abs(opponentTeamFrags - playerTeamFrags) > 10          as isTurbo,
-             countIf(isTurbo) over (order by id rows between 9 preceding and current row) as countTurbo
+from (select allyTeamCount - allyTeamSurvivedCount                               as opponentTeamFrags,
+             enemyTeamCount - enemyTeamSurvivedCount                             as playerTeamFrags,
+             duration < 5 * 60 and abs(opponentTeamFrags - playerTeamFrags) > 10 as isTurbo,
+             countIf(isTurbo) over (partition by playerName order by playerName, id rows between 9 preceding and current row) as countTurbo
       from Event_OnBattleResult
-      ${whereClause(params)});`, { count: 0, maxTurbo: 0, avgTurbo: 0, medTurbo: 0, minTurbo: 0 }, visible);
+      ${whereClause(params)});`, { count: 0, maxTurbo: 0, avgTurbo: 0, medTurbo: 0, minTurbo: 0 }, turboVisible);
 
-function usePlayerDistribution(value: string) {
+function usePlayerDistribution(value: 'Damage' | 'Radio' | 'Kills') {
   const result = queryAsync<{ playerPosition: number, count: number }>(`
-select playerPosition, toUInt32(count()) as count
-from (select arrayZip(playersResults.name, playersResults.${value}, playersResults.team) as p,
-             arrayReverseSort(t -> t.2, arrayFilter(t -> t.3 = playerTeam, p)).1            as playerTeamList,
-             indexOf(playerTeamList, playerName)                                            as playerPosition
-      from Event_OnBattleResult sample 10000
-      ${whereClause(params)})
-group by playerPosition;`, visible);
+  select playerTeamPositionBy${value} as playerPosition, toUInt32(count()) as count
+  from Event_OnBattleResult
+  ${whereClause(params)}
+  group by playerPosition;`, visible);
 
   return computed(() => {
     const countMap = Object.fromEntries(result.value.data.map(r => [r.playerPosition, r.count]))
-    return { status: result.value.status as Status, data: toRelative(places.map((_, i) => countMap[i + 1] ?? 0)) };
+    const absolute = places.map((_, i) => countMap[i] ?? 0);
+    return { status: result.value.status as Status, data: toRelative(absolute), absolute };
   });
 }
 
-const playerDamageDistribution = usePlayerDistribution('damageDealt');
-const playerAssistedDistribution = usePlayerDistribution('damageAssistedRadio');
-const playerKillDistribution = usePlayerDistribution('kills');
+const playerDamageDistribution = usePlayerDistribution('Damage');
+const playerAssistedDistribution = usePlayerDistribution('Radio');
+const playerKillDistribution = usePlayerDistribution('Kills');
 
 
-const scoreData = computed(() => Object.fromEntries(scoreResult.value.data.map(r => [r.result, r])));
-const turboPercent = computed(() => results.value.data.count ? turboResult.value.data.count / results.value.data.count : 0);
+const turboPercent = computed(() => resultsInfo.value.data.count ? turboResult.value.data.count / resultsInfo.value.data.count : 0);
 
 function teamScore(win: boolean) {
-  const t = scoreData.value[win ? 'win' : 'lose'] as any
-  return [t?.[`${infoVariant.value}Team`] ?? 0, t?.[`${infoVariant.value}Opponent`] ?? 0];
+  const res = functionalResults.value.data[0]
+  if (!res) return [0, 0]
+
+  const left = win ? res.allyFragsWin : res.allyFragsLose
+  const right = win ? res.enemyFragsWin : res.enemyFragsLose
+  return [left, right]
 }
 </script>
 

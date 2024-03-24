@@ -137,9 +137,27 @@ function whereClauseArray(params: StatParams, ignore: ('player' | 'level' | 'typ
   return result;
 }
 
-export function whereClause(params: MaybeRefOrGetter<StatParams>, options: Partial<{
-  withWhere: boolean, isBattleStart: boolean, ignore: ('player' | 'level' | 'types' | 'tanks')[]
-}> = { withWhere: true, isBattleStart: false, ignore: [] }) {
+function whereClauseArrayColumns(params: StatParams, ignore: ('player' | 'level' | 'types' | 'tanks')[] = []) {
+  const result: string[] = [];
+  if (!ignore.includes('player') && params.player) result.push(`playerName`);
+  if (!ignore.includes('level') && params.level) result.push(`tankLevel`);
+  if (!ignore.includes('types') && params.types) result.push(`tankType`);
+  if (!ignore.includes('tanks') && params.tanks) result.push(`tankTag`);
+  if (params.battleId === null && params.battleMode !== 'any') {
+    const t = customBattleModes[params.battleMode];
+    if ('mode' in t) result.push(`battleMode`);
+    if ('gameplay' in t) result.push(`battleGameplay`);
+  }
+  return result;
+}
+
+type Options = Partial<{
+  withWhere: boolean,
+  isBattleStart: boolean,
+  ignore: ('player' | 'level' | 'types' | 'tanks')[]
+}>
+
+export function whereClause(params: MaybeRefOrGetter<StatParams>, options: Options = { withWhere: true, isBattleStart: false, ignore: [] }) {
   const { withWhere, isBattleStart, ignore } = options;
 
   const valueParams = toValue(params);
@@ -161,4 +179,23 @@ export function whereClause(params: MaybeRefOrGetter<StatParams>, options: Parti
   }
 
   return result.length == 0 ? '' : (withWhere === false ? ' and ' : 'where ') + result.join(' AND ');
+}
+
+export function whereClauseColumns(params: MaybeRefOrGetter<StatParams>, options: Options = { withWhere: true, isBattleStart: false, ignore: [] }) {
+  const { isBattleStart, ignore } = options;
+  const valueParams = toValue(params);
+
+  const result: string[] = whereClauseArrayColumns(valueParams, ignore)
+
+  if (valueParams.battleId && valueParams.battleId.length > 0) {
+    result.push(isBattleStart ? 'id' : 'onBattleStartId');
+  } else if (valueParams.period !== 'allTime') {
+    if (['fromTo', 'fromToNow'].includes(valueParams.period.type)) {
+      result.push(`id`);
+    } else if (valueParams.period.type == 'lastX') {
+      result.push(isBattleStart ? 'id' : 'onBattleStartId');
+    }
+  }
+
+  return result
 }
