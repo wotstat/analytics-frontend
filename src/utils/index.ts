@@ -6,8 +6,9 @@ export function toRelative(arr: number[]) {
   return arr.map(t => sum == 0 ? 0 : t / sum)
 }
 
-export function toPercent(value: { raw: unknown }[]) {
-  return `${Math.round((value[0].raw as number) * 100)}%`
+export function toPercent(value: { raw: unknown }[], digits: number = 0) {
+  const scale = Math.pow(10, digits)
+  return `${(Math.round((value[0].raw as number) * 100 * scale) / scale).toFixed(digits)}%`
 }
 
 export function whereSum(exp: string[], addWhere: boolean = true) {

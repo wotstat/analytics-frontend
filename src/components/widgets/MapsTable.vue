@@ -176,9 +176,9 @@ function generateQuery() {
        avgIf(personal.damageDealt, result = 'lose')          as loseDamage,
        avgIf(personal.damageDealt, result = 'win')           as winDamage,
 
-       avg(personal.damageDealt + max2(personal.damageAssistedRadio, personal.damageAssistedTrack))                     as mgSum,
-       avgIf(personal.damageDealt + max2(personal.damageAssistedRadio, personal.damageAssistedTrack), result = 'lose')  as loseMgSum,
-       avgIf(personal.damageDealt + max2(personal.damageAssistedRadio, personal.damageAssistedTrack), result = 'win')   as winMgSum,
+       avg(gunMarkSum)                     as mgSum,
+       avgIf(gunMarkSum, result = 'lose')  as loseMgSum,
+       avgIf(gunMarkSum, result = 'win')   as winMgSum,
 
        avg(personal.damageBlockedByArmor)                    as block,
        avgIf(personal.damageBlockedByArmor, result = 'lose') as loseBlock,
@@ -195,7 +195,7 @@ function generateQuery() {
        avg(personal.kills)                                   as kills,
        avgIf(personal.kills, result = 'lose')                as loseKills,
        avgIf(personal.kills, result = 'win')                 as winKills
-from Event_OnBattleResult sample 500000
+from Event_OnBattleResult
 ${whereSum(expressions.value)}
 ${params ? whereClause(params, { withWhere: expressions.value.length == 0 }) : ''}
 group by arenaTag
