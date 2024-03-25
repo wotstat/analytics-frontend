@@ -19,7 +19,7 @@ const team_results = {
 } as const;
 
 const accuracy_hit_points = {
-  'accuracy_hit_points_mv': ['battleMode, battleGameplay, tankLevel, tankType, tankTag']
+  'accuracy_hit_points_mv': ['battleMode', 'battleGameplay', 'tankLevel', 'tankType', 'tankTag']
 }
 
 
