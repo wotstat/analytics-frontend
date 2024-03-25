@@ -356,6 +356,7 @@ import { computedAsync } from '@vueuse/core';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { getArenaName } from '@/utils/i18n';
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
+import { useDocumentVisibility } from '@vueuse/core'
 
 
 const collapsableBody = ref<HTMLElement | null>(null);
@@ -405,18 +406,19 @@ const totalCount = ref(0);
 const totalCountFirstLoading = ref(true);
 const totalEventCount = useTweenCounter(computed(() => totalCount.value), { duration: 1 });
 
+const documentVisibility = useDocumentVisibility()
 let timer: ReturnType<typeof setTimeout> | null = null;
 async function loadLoop() {
-  const result = await query<{ data: number }>(`select (select count() from Event_OnBattleResult) + 
-  (select count() from Event_OnShot) + 
-  (select count() from Event_OnBattleResult) as count,
-   toUInt32(count) as data;`, { allowCache: false })
 
-  console.log(result.data[0].data);
+  if (documentVisibility.value == 'visible') {
+    const result = await query<{ data: number }>(`select (select count() from Event_OnBattleResult) + 
+      (select count() from Event_OnShot) + 
+      (select count() from Event_OnBattleResult) as count,
+      toUInt32(count) as data;`, { allowCache: false })
 
-
-  totalCount.value = result.data[0].data;
-  totalCountFirstLoading.value = false;
+    totalCount.value = result.data[0].data;
+    totalCountFirstLoading.value = false;
+  }
   timer = setTimeout(() => loadLoop(), 1000);
 }
 
