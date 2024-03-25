@@ -66,22 +66,17 @@ const result = queryAsync<{
   position: 0 | -1 | -2,
   percent: number
 }>(`
-select length(levelVisible)       as battleType,
+select length(visibleLevels)       as battleType,
        position,
        sum(count)                 as count,
        count / sum(count) over () as percent
-from (select levelVisible,
+from (select visibleLevels,
              tankLevel,
-             tankLevel - arrayMax(levelVisible) as position,
-             count(*)                           as count
-      from (select arrayZip(playersResults.tankLevel, playersResults.team)                      as levelTeam,
-                   arraySort(arrayMap(t -> t.1, arrayFilter(t -> t.2 = playerTeam, levelTeam))) as myTeam,
-                   arrayDistinct(myTeam)                                                        as levelVisible,
-                   tankLevel
-            from Event_OnBattleResult
-            ${params ? whereClause(params) : ''})
-      group by levelVisible, tankLevel
-      order by tankLevel, length(levelVisible))
+             tankLevel - arrayMax(visibleLevels) as position,
+             count()                             as count
+      from Event_OnBattleResult
+      ${params ? whereClause(params) : ''}
+      group by visibleLevels, tankLevel)
 group by battleType, position
 order by battleType, position;
 `, visible)

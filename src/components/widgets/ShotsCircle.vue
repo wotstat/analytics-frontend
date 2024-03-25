@@ -21,6 +21,7 @@ import { useDebounceFn, useMouseInElement } from '@vueuse/core'
 import { query } from "@/db";
 import { BloomColor } from "../bloomColors";
 import { StatParams, whereClause } from "@/composition/useQueryStatParams";
+import { bestMV } from "@/db/schema";
 
 const COUNT_TO_SMALL_SIZE = 3000;
 const LOAD_COUNT = 1000;
@@ -99,11 +100,15 @@ async function loadNextBatch() {
   loading = true;
 
   console.log(`load ${LOAD_COUNT} shots offset ${shotsData.length} started at ${shotsData.length > 0 ? 'where id < ' + shotsData[0].id : 'all'}`);
+
+  const best = bestMV('accuracy_hit_points', props.params ? props.params : [])
+  const prefix = best ? `
+  id, r, theta, hit FROM ${best}
+  ` : `
+  id, ballisticResultClient_r as r, ballisticResultClient_theta as theta, length(results.order) > 0 as hit FROM Event_OnShot
+  `
   const result = await query<{ id: string, r: number, theta: number, hit: number }>(`
-    SELECT id, 
-    ballisticResultServer_r as r, 
-    ballisticResultServer_theta as theta, 
-    length(results.order) > 0 as hit FROM Event_OnShot 
+    SELECT ${prefix}
       ${shotsData.length > 0 ? 'where id < ' + shotsData[0].id : ''}
       ${props.params ? whereClause(props.params, { withWhere: shotsData.length == 0 }) : ''}
       order by id desc 

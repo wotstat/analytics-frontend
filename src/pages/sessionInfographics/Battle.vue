@@ -53,7 +53,7 @@
         </div>
 
         <div class="card chart bar tank-type">
-          <MiniBar :status="chartResult.status" :data="avgChart" color="blue" :labels="tankLabels" :callbacks="{
+          <MiniBar :status="avgTypeResult.status" :data="avgChart" color="blue" :labels="tankLabels" :callbacks="{
         title: (t) => `В среднем в команде было ${t[0].formattedValue} ${t[0].label}`, label: () => ``
       }" />
           <p class="card-main-info description">Классов танков в командах</p>
@@ -74,7 +74,7 @@ import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import MiniBar from '@/components/widgets/MiniBar.vue';
 import MniiPie from '@/components/widgets/MiniPie.vue';
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
-import { loading, queryAsync, queryAsyncFirst } from "@/db";
+import { queryAsync, queryAsyncFirst } from "@/db";
 import { useElementVisibility } from '@vueuse/core';
 import { computed, ref } from 'vue';
 
@@ -100,12 +100,12 @@ ${whereClause(params, { isBattleStart: true })}
 const dataResult = queryAsyncFirst(`
 select round(avg(personal.lifeTime))    as lifetime,
        round(avg(duration))             as duration,
-       toUInt32(sum(personal.lifeTime * _sample_factor)) as inBattle
-from Event_OnBattleResult sample 10000
+       toUInt32(sum(personal.lifeTime)) as inBattle
+from Event_OnBattleResult
 ${whereClause(params)};`, { lifetime: 0, duration: 0, inBattle: 0 }, visible)
 
 const durationResult = queryAsync<{ percent: number, duration: number, lifetime: number }>(`
-select duration, lifetime, count / sum(count) over (rows between unbounded preceding and unbounded following) as percent
+select duration, lifetime, count / sum(count) over () as percent
 from (select ceil(duration / 60)         as duration,
              count(*)                    as count,
              avg(personal.lifeTime) / 60 as lifetime
@@ -114,17 +114,16 @@ from (select ceil(duration / 60)         as duration,
       group by duration
       order by duration)`, visible)
 
-const chartResult = queryAsyncFirst(`
-select avg(LT) as avgLT, avg(HT) as avgHT, avg(MT) as avgMT, avg(AT) as avgAT, avg(SPG) as avgSPG
-from (select length(playersResults.tankType)                                  as tankCount,
-             arrayCount(t -> t == 'LT', playersResults.tankType) / tankCount  as LT,
-             arrayCount(t -> t == 'HT', playersResults.tankType) / tankCount  as HT,
-             arrayCount(t -> t == 'MT', playersResults.tankType) / tankCount  as MT,
-             arrayCount(t -> t == 'AT', playersResults.tankType) / tankCount  as AT,
-             arrayCount(t -> t == 'SPG', playersResults.tankType) / tankCount as SPG
-      from Event_OnBattleResult sample 20000
-      ${whereClause(params)});
-`, { avgLT: 0, avgHT: 0, avgMT: 0, avgAT: 0, avgSPG: 0 }, visible)
+const avgTypeResult = queryAsyncFirst(`
+with length(playersResults.tankType) as tankCount
+select avg(ltCount / tankCount) as LT,
+      avg(htCount / tankCount) as HT,
+      avg(mtCount / tankCount) as MT,
+      avg(atCount / tankCount) as AT,
+      avg(spgCount / tankCount) as SPG
+from Event_OnBattleResult
+${whereClause(params)};
+`, { LT: 0, HT: 0, MT: 0, AT: 0, SPG: 0 }, visible)
 
 const winrateResult = queryAsync<{
   count: number, result: 'win' | 'tie' | 'lose'
@@ -137,7 +136,7 @@ const winrateData = computed(() => {
     lose: 0,
   }
 
-  const { status, data } = winrateResult.value;
+  const { data } = winrateResult.value;
 
   for (const iterator of data) {
     res[iterator.result] = iterator.count;
@@ -148,8 +147,8 @@ const winrateData = computed(() => {
 })
 
 const avgChart = computed(() => {
-  const { data: r } = chartResult.value;
-  return [r.avgMT, r.avgHT, r.avgAT, r.avgLT, r.avgSPG].map(t => t * 30 / 2).map(t => Math.round(t * 100) / 100);
+  const { data: r } = avgTypeResult.value;
+  return [r.MT, r.HT, r.AT, r.LT, r.SPG].map(t => t * 30 / 2).map(t => Math.round(t * 100) / 100);
 })
 
 const durationData = computed(() => {
