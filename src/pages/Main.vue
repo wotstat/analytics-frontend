@@ -8,12 +8,12 @@
           <div class="flex center">
             <div class="card">
               <p class="hidden">
-                <span class="card-main-info green hidden">
-                  {{ ''.padStart(Math.max(7, eventCount.data.data.toString().length),
+                <span class="card-main-info green hidden counter">
+                  {{ ''.padStart(Math.max(7, totalEventCount.toString().length),
                     '0').replace(/\B(?=(\d{3})+(?!\d))/g, " ") }}
                 </span>
 
-                <span class="card-main-info green animated" :class="eventCount.status == loading ? 'loading' : ''">
+                <span class="card-main-info green animated counter" :class="totalCountFirstLoading ? 'loading' : ''">
                   {{ useFixedSpaceProcessor(0)(totalEventCount) }}
                 </span>
               </p>
@@ -350,10 +350,10 @@ import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import MiniBar from '@/components/widgets/MiniBar.vue';
 import ShotsCircle from '@/components/widgets/ShotsCircle.vue';
 import { useTweenCounter } from '@/composition/useTweenCounter';
-import { loading, queryAsync, queryAsyncFirst } from '@/db';
+import { loading, query, queryAsync, queryAsyncFirst } from '@/db';
 import { toRelative, ms2sec, sec2minsec, secProcessor } from '@/utils';
 import { computedAsync } from '@vueuse/core';
-import { computed, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { getArenaName } from '@/utils/i18n';
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 
@@ -400,14 +400,28 @@ const streamerOpen = ref(false);
 
 
 // TOTAL
-const eventCount = queryAsyncFirst(`
-select (select count() from Event_OnBattleResult) +
-       (select count() from Event_OnShot) +
-       (select count() from Event_OnBattleResult) as count,
-       toUInt32(count)                            as data;
-`, { data: 0 });
 
-const totalEventCount = useTweenCounter(computed(() => eventCount.value.data.data), { duration: 1 });
+const totalCount = ref(0);
+const totalCountFirstLoading = ref(true);
+const totalEventCount = useTweenCounter(computed(() => totalCount.value), { duration: 1 });
+
+let timer: ReturnType<typeof setTimeout> | null = null;
+async function loadLoop() {
+  const result = await query<{ data: number }>(`select (select count() from Event_OnBattleResult) + 
+  (select count() from Event_OnShot) + 
+  (select count() from Event_OnBattleResult) as count,
+   toUInt32(count) as data;`, { allowCache: false })
+
+  console.log(result.data[0].data);
+
+
+  totalCount.value = result.data[0].data;
+  totalCountFirstLoading.value = false;
+  timer = setTimeout(() => loadLoop(), 1000);
+}
+
+onMounted(() => loadLoop())
+onUnmounted(() => timer && clearTimeout(timer))
 
 
 // DAMAGE
@@ -521,6 +535,11 @@ const medianResults = queryAsyncFirst(`select median(personal.damageDealt) as me
 @import '@/styles/mixins.scss';
 @import '@/styles/textColors.scss';
 @import '@/styles/table.scss';
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100..700&display=swap');
+
+.counter {
+  font-variant-numeric: tabular-nums;
+}
 
 .streamer-header {
   display: flex;
