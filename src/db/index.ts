@@ -50,7 +50,7 @@ export function isErrorStatus(status: Status): status is { status: typeof error,
 }
 
 const activeQueries = new Map<string, Promise<unknown>>();
-export async function query<T>(query: string) {
+export async function query<T>(query: string, { allowCache = true } = {}) {
 
   if (activeQueries.has(query)) return activeQueries.get(query) as Promise<IClickhouseResponse<T>>;
 
@@ -71,7 +71,9 @@ export async function query<T>(query: string) {
       return reject(error);
     }
   })
-  activeQueries.set(query, current);
+
+  if (allowCache)
+    activeQueries.set(query, current);
 
   return current;
 }
