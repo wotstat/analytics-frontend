@@ -52,11 +52,14 @@
           </h4>
           <div v-if="enableTankFilter" class="tank-selector flex ver gap-0">
             <input type="text" placeholder="Поиск" v-model="searchText">
-            <div class="tank-list">
-              <div class="tank" v-for="tank in sortedTanks"
-                :class="selectedTanks.map(t => t.tag).includes(tank.tag) ? 'selected' : ''" @click="clickTank(tank)"> {{
-              tank.name
-            }}</div>
+
+            <div v-bind="sortedTankContainerProps" class="tank-list">
+              <div v-bind="sortedTankWrapperProps">
+                <div v-for="item in sortedTankList" :key="item.index" class="tank" @click="clickTank(item.data)"
+                  :class="selectedTanks.map(t => t.tag).includes(item.data.tag) ? 'selected' : ''">
+                  {{ item.data.name }}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -145,7 +148,7 @@
 <script setup lang="ts">
 import { dateToDbIndex, query, queryAsync } from '@/db';
 import { computed, onMounted, onUnmounted, ref, shallowRef, toRaw, toValue, watch } from 'vue';
-import { useDebounce, useDraggable, useElementBounding, watchOnce } from '@vueuse/core';
+import { useDebounce, useDraggable, useElementBounding, watchOnce, useVirtualList } from '@vueuse/core';
 import { TankLevel, TankType, useQueryStatParams } from '@/composition/useQueryStatParams';
 import { customBattleModes, customBattleModesKeys } from '@/utils/wot';
 import { useRoute, useRouter } from 'vue-router';
@@ -209,23 +212,27 @@ const toDate = shallowRef<string | null>(null)
 const lastX = ref(10);
 
 const tankList = queryAsync<{
-  type: 'mediumTank' | 'lightTank' | 'heavyTank' | 'AT-SPG' | 'SPG',
+  type: 'MT' | 'LT' | 'HT' | 'AT' | 'SPG',
   tag: string, level: TankLevel, nameRU: string, shortNameRU: string
-}>(`select tag, type, level, nameRU, shortNameRU from TankList`)
+}>(`
+with
+    splitByChar(':', rawTanks.tankTag)[2] as withoutNation,
+    splitByChar('_', withoutNation) as splitted,
+    arrayStringConcat(splitted, ' ') as tagWithoutNation,
+    arrayStringConcat(arraySlice(splitted, 2), ' ') as name
+select multiIf(shortNameRU != '', shortNameRU, name != '', name, tagWithoutNation != '', tagWithoutNation, rawTanks.tankTag) as shortNameRU,
+       if(TankList.nameRU != '', TankList.nameRU, shortNameRU) as nameRU,
+       rawTanks.tankTag as tag,
+       rawTanks.tankType as type,
+       rawTanks.tankLevel as level
+from (select tankTag, tankType, tankLevel from Event_OnBattleStart group by tankTag, tankType, tankLevel) as rawTanks
+         left join TankList on rawTanks.tankTag = TankList.tag
+`)
 
 const tanks = computed(() => tankList.value.data.map(t => {
-
-  const types = {
-    'mediumTank': 'MT',
-    'lightTank': 'LT',
-    'heavyTank': 'HT',
-    'AT-SPG': 'AT',
-    'SPG': 'SPG',
-  } as const;
-
   return {
     tankLevel: t.level,
-    tankType: types[t.type] as TankType,
+    tankType: t.type,
     tankTag: t.tag,
     tankName: t.nameRU,
     shortName: t.shortNameRU
@@ -447,6 +454,14 @@ const sortedTanks = computed<Tank[]>(() =>
     )
     .sort((a, b) => a.name.localeCompare(b.name))
 )
+
+const { list: sortedTankList,
+  containerProps: sortedTankContainerProps,
+  wrapperProps: sortedTankWrapperProps } = useVirtualList(sortedTanks, { itemHeight: 34 })
+
+watch(sortedTanks, () => {
+  sortedTankContainerProps.ref.value?.scrollTo(0, 0);
+})
 
 function apply() {
   let target = window.location.pathname + '?';
