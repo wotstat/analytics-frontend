@@ -9,7 +9,7 @@
             <div class="card">
               <p class="hidden">
                 <span class="card-main-info green hidden counter">
-                  {{ ''.padStart(Math.max(7, totalEventCount.toString().length),
+                  {{ ''.padStart(Math.max(7, totalCount.toString().length),
                     '0').replace(/\B(?=(\d{3})+(?!\d))/g, " ") }}
                 </span>
 
@@ -541,6 +541,7 @@ const medianResults = queryAsyncFirst(`select median(personal.damageDealt) as me
 
 .counter {
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .streamer-header {
