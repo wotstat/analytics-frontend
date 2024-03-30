@@ -26,7 +26,10 @@
         <div class="card" v-for="item in tanks.data" @click="e => onClick(e, item.tag)"
           :class="stats.tanks?.includes(item.tag) ? 'selected' : ''">
           <p class="tank-name">{{ item.shortNameRU }}</p>
-          <img :src="item.iconUrl">
+          <img :src="item.iconUrl" v-if="item.iconUrl">
+          <div class="img flex" v-else>
+            <span>?</span>
+          </div>
           <table cellspacing="0" cellpadding="0">
             <tr>
               <th>Боёв</th>
@@ -56,7 +59,16 @@ const route = useRoute()
 const stats = useQueryStatParams();
 
 const tanks = queryComputed<{ tag: string, battleCount: string, shotsCount: string, shortNameRU: string, iconUrl: string }>(() => `
-select battles.tankTag as tag, battleCount, shotsCount, shortNameRU, iconUrl
+with
+    splitByChar(':', battles.tankTag)[2] as withoutNation,
+    splitByChar('_', withoutNation) as splitted,
+    arrayStringConcat(splitted, ' ') as tagWithoutNation,
+    arrayStringConcat(arraySlice(splitted, 2), ' ') as name
+select battles.tankTag as tag, 
+       battleCount,
+       shotsCount,
+       multiIf(shortNameRU != '', shortNameRU, name != '', name, tagWithoutNation != '', tagWithoutNation, battles.tankTag) as shortNameRU, 
+       iconUrl
 from (select tankTag, count() as battleCount from Event_OnBattleStart ${whereClause(stats.value, { ignore: ['tanks'], isBattleStart: true })} group by tankTag) as battles 
          left join (select tankTag, count() as shotsCount from Event_OnShot ${whereClause(stats.value, { ignore: ['tanks'] })} group by tankTag) as shots on shots.tankTag = battles.tankTag
          left join TankList on battles.tankTag = TankList.tag
@@ -140,9 +152,9 @@ function onClick(e: MouseEvent, tag: string) {
 
       &.selected {
         // font-weight: 500;
-        border: 2px solid #fffbe7;
         // color: #353535;
         // background-color: #fffbe7;
+        border: 2px solid #fffbe7;
         filter: drop-shadow(0 0 3px #d66d08);
       }
 
@@ -160,12 +172,26 @@ function onClick(e: MouseEvent, tag: string) {
         }
       }
 
-      img, .img.skeleton {
+      img, .img, .img.skeleton {
         width: 150px;
         aspect-ratio: 16/10;
         margin: 7px 0;
         pointer-events: none;
         user-select: none;
+
+        text-align: center;
+        line-height: 100%;
+        font-size: 3em;
+        color: #bababa97;
+
+        &.flex {
+          justify-content: center;
+          align-items: center;
+        }
+
+        span {
+          filter: drop-shadow(0px 4px 6px black);
+        }
 
         &.skeleton {
           border-radius: 5px;
