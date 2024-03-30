@@ -67,7 +67,18 @@ const tankNamesMap = computed(() => {
 });
 
 function tankName(tag: string) {
-  return tankNamesMap.value.get(tag)?.full ?? tag.split('_').slice(1).join('_')
+  const name = tankNamesMap.value.get(tag)?.full
+  if (name) return name
+
+  const idName = tag.split(':')[1];
+
+  if (!idName) return tag
+
+  const splitted = idName.split('_').slice(1).join(' ')
+
+  if (splitted) return splitted
+
+  return idName
 }
 
 function levelToString(): string {
