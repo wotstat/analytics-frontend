@@ -350,7 +350,7 @@ import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import MiniBar from '@/components/widgets/MiniBar.vue';
 import ShotsCircle from '@/components/widgets/ShotsCircle.vue';
 import { useTweenCounter } from '@/composition/useTweenCounter';
-import { loading, query, queryAsync, queryAsyncFirst } from '@/db';
+import { query, queryAsync, queryAsyncFirst } from '@/db';
 import { toRelative, ms2sec, sec2minsec, secProcessor } from '@/utils';
 import { computedAsync } from '@vueuse/core';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
@@ -655,6 +655,10 @@ h2 {
       @include less-x-small {
         font-size: 3rem;
       }
+    }
+
+    @include less-x-small {
+      padding: 15px;
     }
 
     .hidden {
