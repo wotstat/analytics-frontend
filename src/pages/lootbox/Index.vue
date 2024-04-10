@@ -145,31 +145,35 @@ function getQuery(from: string, orderBy: string = '2 desc') {
     where = null
   }
 
+  const whereTag = selectedContainer.value == 'any' ? '' : `containerTag = '${selectedContainer.value}'`
+  const whereWhereTag = whereTag ? `where ${whereTag}` : ''
+  const andWhereTag = whereTag ? `and ${whereTag}` : ''
+
 
   if (where) {
     return `
     with
-      (select count() from Event_OnLootboxOpen) as lootboxesCount,
-      (select count() from Event_OnLootboxOpen where ${where}) as personalLootboxesCount
+      (select count() from Event_OnLootboxOpen ${whereWhereTag}) as lootboxesCount,
+      (select count() from Event_OnLootboxOpen where ${where} ${andWhereTag}) as personalLootboxesCount
     select title,
            toUInt32(countIf(${where})) as count,
            count / personalLootboxesCount as percent,
            toUInt32(count()) as total,
            total / lootboxesCount as other
     from ${from}
-    ${selectedContainer.value == 'any' ? '' : `where containerTag = '${selectedContainer.value}'`}
+    ${whereWhereTag}
     group by title
     order by ${orderBy}
     `
   } else {
     return `
     with
-      (select count() from Event_OnLootboxOpen) as lootboxesCount
+      (select count() from Event_OnLootboxOpen ${whereWhereTag}) as lootboxesCount
     select title,
            toUInt32(count()) as count,
            count / lootboxesCount as percent
     from ${from}
-    ${selectedContainer.value == 'any' ? '' : `where containerTag = '${selectedContainer.value}'`}
+    ${whereWhereTag}
     group by title
     order by ${orderBy}
     `
