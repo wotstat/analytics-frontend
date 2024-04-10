@@ -1,4 +1,5 @@
-import { shallowRef } from "vue";
+import { queryAsync } from "@/db";
+import { computed, shallowRef } from "vue";
 
 class Parser {
 
@@ -84,4 +85,29 @@ export function countLocalize(count: number, one: string, two: string, five: str
   if (count % 10 == 1 && count % 100 != 11) return one
   if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) return two
   return five
+}
+
+
+const tankNames = queryAsync<{ tag: string, shortNameRU: string, nameRU: string }>(`select tag, shortNameRU, nameRU from TankList;`);
+const tankNamesMap = computed(() => {
+  const map = new Map<string, { short: string, full: string }>();
+  for (const tank of tankNames.value.data) {
+    map.set(tank.tag, { short: tank.shortNameRU, full: tank.nameRU });
+  }
+  return map;
+});
+
+export function getTankName(tag: string, short: boolean = false) {
+  const name = short ? tankNamesMap.value.get(tag)?.short : tankNamesMap.value.get(tag)?.full
+  if (name) return name
+
+  const idName = tag.split(':')[1];
+
+  if (!idName) return tag
+
+  const splitted = idName.split('_').slice(1).join(' ')
+
+  if (splitted) return splitted
+
+  return idName
 }
