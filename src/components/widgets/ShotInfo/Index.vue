@@ -158,7 +158,7 @@
 </template>
 
 <script lang="ts" setup>
-import { query } from '@/db';
+import { dbIndexToDate, query } from '@/db';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import { shellNames, wotinspectorURL, wotinspectorLog } from '@/utils/wot';
 import { aranaMinimapUrl, convertCoordinate, loadArenaMeta } from '@/utils/arenas';
@@ -349,8 +349,20 @@ const { isDragging: isBarDragging } = useDraggable(barProgress, {
 onMounted(async () => {
   console.log('OnMounted');
 
-  const currentID = await query<{ onBattleStartId: string }>(`SELECT onBattleStartId FROM Event_OnShot WHERE id = '${props.shotID}'`);
-  const shots = await query<Shot>(`SELECT * FROM Event_OnShot WHERE onBattleStartId = '${currentID.data[0].onBattleStartId}' order by battleTime`);
+  const shotTime = dbIndexToDate(props.shotID)
+  const currentID = await query<{ onBattleStartId: string }>(`
+  SELECT onBattleStartId FROM Event_OnShot
+  WHERE id = '${props.shotID}'
+  and dateTime > toDateTime(${shotTime}) and dateTime < toDateTime(${shotTime + 1})`);
+
+  const onBattleStartId = currentID.data[0].onBattleStartId;
+
+  const shots = await query<Shot>(`
+  SELECT * FROM Event_OnShot
+  WHERE onBattleStartId = '${onBattleStartId}'
+  and dateTime > toDateTime(${dbIndexToDate(onBattleStartId)})
+  and dateTime < toDateTime(${dbIndexToDate(onBattleStartId)}) + interval 1 hour
+  order by battleTime`);
   allShots.value = shots.data;
   console.log('AllShots', allShots.value);
 

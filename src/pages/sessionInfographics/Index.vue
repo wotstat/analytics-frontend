@@ -13,6 +13,7 @@
         <hr>
 
         <QueryPreserveRouterLink to="/session/distribution">Расширенное распределение</QueryPreserveRouterLink>
+        <QueryPreserveRouterLink to="/session/lootbox">Коробки</QueryPreserveRouterLink>
       </div>
     </div>
 
@@ -23,7 +24,8 @@
       <h3>
         <StatParamsTitle />
       </h3>
-      <TankListSetup />
+
+      <TankListSetup v-if="!route.meta.hideTankList" />
 
       <div class="menu-bar" ref="menuBar" :class="menuTop <= 60 && menuY != 0 ? 'top' : ''">
         <div class="router-links">
@@ -35,6 +37,7 @@
           <QueryPreserveRouterLink to="/session/players">Охват</QueryPreserveRouterLink>
 
           <QueryPreserveRouterLink to="/session/distribution">Распределение</QueryPreserveRouterLink>
+          <QueryPreserveRouterLink to="/session/lootbox">Коробки</QueryPreserveRouterLink>
         </div>
       </div>
 

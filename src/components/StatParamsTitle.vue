@@ -2,9 +2,10 @@
   <span v-if="stat.player">Для игрока <span class="text-effect light-blue">{{ stat.player }}</span>. </span>
 
   <template v-if="stat.tanks">
-    <span v-if="stat.tanks.length == 1">На танке <span class="text-effect light-blue">{{ tankName(stat.tanks[0])
+    <span v-if="stat.tanks.length == 1">На танке <span class="text-effect light-blue">{{ getTankName(stat.tanks[0])
         }}</span>. </span>
-    <span v-else>На танках <span class="text-effect light-blue">{{ stat.tanks.map(tankName).join(', ') }}</span>.
+    <span v-else>На танках <span class="text-effect light-blue">{{ stat.tanks.map(t => getTankName(t)).join(', ')
+        }}</span>.
     </span>
   </template>
   <template v-else>
@@ -49,37 +50,11 @@
 
 <script lang="ts" setup>
 import { useQueryStatParams } from '@/composition/useQueryStatParams';
-import { queryAsync } from '@/db';
-import { countLocalize } from "@/utils/i18n";
+import { countLocalize, getTankName } from "@/utils/i18n";
 import { customBattleModes } from '@/utils/wot';
-import { computed } from 'vue';
 
 
 const stat = useQueryStatParams()
-
-const tankNames = queryAsync<{ tag: string, shortNameRU: string, nameRU: string }>(`select tag, shortNameRU, nameRU from TankList;`);
-const tankNamesMap = computed(() => {
-  const map = new Map<string, { short: string, full: string }>();
-  for (const tank of tankNames.value.data) {
-    map.set(tank.tag, { short: tank.shortNameRU, full: tank.nameRU });
-  }
-  return map;
-});
-
-function tankName(tag: string) {
-  const name = tankNamesMap.value.get(tag)?.full
-  if (name) return name
-
-  const idName = tag.split(':')[1];
-
-  if (!idName) return tag
-
-  const splitted = idName.split('_').slice(1).join(' ')
-
-  if (splitted) return splitted
-
-  return idName
-}
 
 function levelToString(): string {
   // Sort the array to ensure it's in ascending order
