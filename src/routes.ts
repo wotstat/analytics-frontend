@@ -1,5 +1,16 @@
 import { type RouteRecordRaw, createRouter, createWebHistory } from 'vue-router'
 
+import SessionInfographics from './pages/sessionInfographics/Index.vue'
+import Battle from './pages/sessionInfographics/Battle.vue'
+import Shots from './pages/sessionInfographics/Shots.vue'
+import Damage from './pages/sessionInfographics/Damage.vue'
+import Results from './pages/sessionInfographics/Results.vue'
+import Maps from './pages/sessionInfographics/Maps.vue'
+import Coverage from './pages/sessionInfographics/Coverage.vue'
+import Distribution from './pages/damageDistribution/Content.vue'
+import Lootbox from './pages/lootbox/Index.vue'
+
+
 
 const routes = [
   {
@@ -8,40 +19,20 @@ const routes = [
   },
   {
     path: '/session',
-    component: () => import('./pages/sessionInfographics/Index.vue'),
+    component: SessionInfographics,
     children: [
-      {
-        path: '',
-        component: () => import('./pages/sessionInfographics/Battle.vue')
-      },
-      {
-        path: 'shots',
-        component: () => import('./pages/sessionInfographics/Shots.vue')
-      },
-      {
-        path: 'damage',
-        component: () => import('./pages/sessionInfographics/Damage.vue')
-      },
-      {
-        path: 'results',
-        component: () => import('./pages/sessionInfographics/Results.vue')
-      },
-      {
-        path: 'maps',
-        component: () => import('./pages/sessionInfographics/Maps.vue')
-      },
-      {
-        path: 'players',
-        component: () => import('./pages/sessionInfographics/Coverage.vue')
-      },
+      { path: '', component: Battle },
+      { path: 'shots', component: Shots },
+      { path: 'damage', component: Damage },
+      { path: 'results', component: Results },
+      { path: 'maps', component: Maps },
+      { path: 'players', component: Coverage },
       {
         path: 'old-layout',
         component: () => import('./pages/sessionInfographics/Old.vue')
       },
-      {
-        path: 'distribution',
-        component: () => import('./pages/damageDistribution/Content.vue')
-      }
+      { path: 'distribution', component: Distribution },
+      { path: 'lootbox', component: Lootbox, meta: { hideTankList: true } }
     ]
   },
   {

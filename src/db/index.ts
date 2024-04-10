@@ -97,6 +97,16 @@ export function queryComputed<T>(queryString: () => string | null) {
   return result
 }
 
+export function queryComputedFirst<T>(queryString: () => string | null, defaultValue: T) {
+  const result = queryComputed<T>(queryString);
+
+  return computed(() => ({
+    status: result.value.status as Status,
+    data: result.value.data[0] ?? defaultValue
+  }))
+
+}
+
 export function queryAsync<T>(queryString: string, enabled: Ref<boolean> = ref(true)) {
   const result = shallowRef<{ status: Status, data: T[] }>({ status: loading, data: [] });
 
@@ -128,6 +138,11 @@ export function queryAsyncFirst<T>(queryString: string, defaultValue: T, enabled
 
 export function dateToDbIndex(date: Date) {
   return (date.getTime() * 1e10).toLocaleString('fullwide', { useGrouping: false })
+}
+
+export function dbIndexToDate(index: string) {
+  const time = parseInt(index.slice(0, index.length - 10))
+  return Math.floor(time / 1000)
 }
 
 export function semverCompareStartFrom(target: string, addWhere = true) {
