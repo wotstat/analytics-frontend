@@ -413,7 +413,8 @@ async function loadLoop() {
   if (documentVisibility.value == 'visible') {
     const result = await query<{ data: number }>(`select (select count() from Event_OnBattleResult) + 
       (select count() from Event_OnShot) + 
-      (select count() from Event_OnBattleResult) as count,
+      (select count() from Event_OnBattleResult) +
+      (select count() from Event_OnLootboxOpen) as count,
       toUInt32(count) as data;`, { allowCache: false })
 
     totalCount.value = result.data[0].data;
