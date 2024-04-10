@@ -177,7 +177,7 @@ function getQuery(from: string, orderBy: string = '2 desc') {
 }
 
 const lootboxesStats = queryComputed<Stats>(() => getQuery(`
-(select concat(tag, ':', count) as title, playerName, containerTag
+(select concat(tag, ':', count) as title, playerName, containerTag, id
 from Event_OnLootboxOpen
 array join lootboxes.tag as tag, lootboxes.count as count)
 `, '1'))
@@ -188,23 +188,23 @@ array join Event_OnLootboxOpen.addedVehicles as title
 `))
 
 const goldStats = queryComputed<Stats>(() => getQuery(`
-(select gold as title, playerName, containerTag from Event_OnLootboxOpen where gold > 0)
+(select gold as title, playerName, containerTag, id from Event_OnLootboxOpen where gold > 0)
 `, '1'))
 
 const creditsStats = queryComputed<Stats>(() => getQuery(`
-(select credits as title, playerName, containerTag from Event_OnLootboxOpen where credits > 0)
+(select credits as title, playerName, containerTag, id from Event_OnLootboxOpen where credits > 0)
 `, '1'))
 
 const freeXpStats = queryComputed<Stats>(() => getQuery(`
-(select freeXP as title, playerName, containerTag from Event_OnLootboxOpen where freeXP > 0)
+(select freeXP as title, playerName, containerTag, id from Event_OnLootboxOpen where freeXP > 0)
 `, '1'))
 
 const premStats = queryComputed<Stats>(() => getQuery(`
-(select premiumPlus as title, playerName, containerTag from Event_OnLootboxOpen where premiumPlus > 0)
+(select premiumPlus as title, playerName, containerTag, id from Event_OnLootboxOpen where premiumPlus > 0)
 `, '1'))
 
 const customizationsStats = queryComputed<Stats>(() => getQuery(`
-(select concat(type, '|', tag, '|', count) as title, playerName, containerTag
+(select concat(type, '|', tag, '|', count) as title, playerName, containerTag, id
 from Event_OnLootboxOpen
 array join customizations.type as type, customizations.tag as tag, customizations.count as count)
 `, '1'))
@@ -214,7 +214,8 @@ const managementStats = queryComputed<Stats>(() => getQuery(`
     select arrayConcat(array(slots, berths), equip.count) as count,
            arrayConcat(array('slots', 'berths'), equip.tag) as name,
            playerName,
-           containerTag
+           containerTag,
+           id
     from Event_OnLootboxOpen
 )
 array join count, name
@@ -223,20 +224,20 @@ where count > 0)
 
 const boostersStats = queryComputed<Stats>(() => getQuery(`
 (select concat(boosters.tag, ':', boosters.value, ':', boosters.time, ':', boosters.count) as title,
-playerName, containerTag
+playerName, containerTag, id
 from Event_OnLootboxOpen
 array join boosters.tag, boosters.value, boosters.time, boosters.count)
 `, '1'))
 
 const crewbooksStats = queryComputed<Stats>(() => getQuery(`
-(select concat(tag, ':', count) as title, playerName, containerTag
+(select concat(tag, ':', count) as title, playerName, containerTag, id
 from Event_OnLootboxOpen
 array join crewBooks.tag as tag, crewBooks.count as count)
 `, '1'))
 
 const itemsStats = queryComputed<Stats>(() => getQuery(`
 (select concat(items.tag, ':', items.count) as title,
-playerName, containerTag
+playerName, containerTag, id
 from Event_OnLootboxOpen
 array join items.tag, items.count)
 `, '1'))
