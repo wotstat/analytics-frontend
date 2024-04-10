@@ -30,9 +30,11 @@
             <td class="n-mono text-effect" :class="getColor(line.other, line.percent)"
               v-if="displayOther && line.other">
               {{ percentFormatter(line.other) }}
-              {{ line.other > line.percent ? '↓' : line.other < line.percent ? '↑' : '' }} </td>
-            <td v-if="byNumber" class="text-effect blue">{{ percentFormatter(Number(line.title) / byNumber *
-    line.percent) }}</td>
+              {{ Math.abs(line.other - line.percent) < 0.00001 ? '' : line.other > line.percent ? '↓' : '↑' }}
+            </td>
+            <td v-if="byNumber" class="text-effect blue">
+              {{ percentFormatter(Number(line.title) / byNumber * line.percent) }}
+            </td>
           </tr>
 
 
@@ -88,7 +90,7 @@ function percentFormatter(value: number) {
 }
 
 function getColor(left: number, right: number) {
-  return left > right ? 'red' : left < right ? 'green' : 'yellow';
+  return Math.abs(left - right) < 0.00001 ? 'yellow' : left > right ? 'red' : 'green';
 }
 
 
