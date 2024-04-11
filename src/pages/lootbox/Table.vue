@@ -103,6 +103,10 @@ function getColor(left: number, right: number) {
   font-variant-numeric: tabular-nums;
 }
 
+.container {
+  overflow-x: auto;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
