@@ -16,12 +16,12 @@
         description="Открытых коробок" color="green" />
     </div>
 
-    <div class="flex">
-      <div class="card flex-1">
+    <div class="flex hor-ver-small">
+      <div class="card flex-1 order-small-3">
         <GenericInfo :status="mainStats.status" :value="mainStats.data.gold" description="Золото" color="orange"
           :processor="useFixedSpaceProcessor(0)" />
       </div>
-      <div class="card flex-1">
+      <div class="card flex-1 order-small-2">
         <GenericInfo :status="mainStats.status" :value="mainStats.data.prem" mini-data="дней" description="Премиум"
           color="yellow" />
       </div>
@@ -30,7 +30,7 @@
       </div>
     </div>
 
-    <div class="flex">
+    <div class="flex hor-ver-small">
       <div class="card flex-1">
         <GenericInfo :status="mainStats.status" :value="mainStats.data.credits" description="Серебро" color="blue"
           :processor="useFixedSpaceProcessor(0)" />
@@ -344,11 +344,25 @@ function lootboxLocalizer(tag: string) {
 </script>
 
 <style lang="scss" scoped>
+@import '/src/styles/mixins.scss';
+
 .page-title {}
 
 .select-line {
   margin: 10px 0;
   flex-wrap: wrap;
   gap: 0 1rem;
+}
+
+.order-small-2 {
+  @include less-small {
+    order: 2;
+  }
+}
+
+.order-small-3 {
+  @include less-small {
+    order: 3;
+  }
 }
 </style>
