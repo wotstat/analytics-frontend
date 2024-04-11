@@ -40,6 +40,7 @@
           color="green" :processor="useFixedSpaceProcessor(0)" />
       </div>
     </div>
+    <i>* С учётом компенсаций. Танки только реально начисленные</i>
   </div>
 
   <h3>Вероятности</h3>
@@ -75,10 +76,11 @@ import { Status, dateToDbIndex, queryAsyncFirst, queryComputed, queryComputedFir
 import { computed, ref } from 'vue';
 import TableSection from "./TableSection.vue";
 import { countLocalize, getTankName } from '@/utils/i18n';
+import { useLocalStorage } from '@vueuse/core';
 
 const params = useQueryStatParams()
 
-const selectedContainer = ref('any')
+const selectedContainer = useLocalStorage('selectedLootbox', 'any')
 
 function whereClause(ignore: ('player' | 'tag' | 'date')[] = []) {
   const result = []
@@ -163,6 +165,7 @@ function getQuery(from: string, orderBy: string = '2 desc') {
     from ${from}
     ${whereWhereTag}
     group by title
+    having count > 0
     order by ${orderBy}
     `
   } else {
@@ -175,6 +178,7 @@ function getQuery(from: string, orderBy: string = '2 desc') {
     from ${from}
     ${whereWhereTag}
     group by title
+    having count > 0
     order by ${orderBy}
     `
   }
@@ -188,11 +192,11 @@ array join lootboxes.tag as tag, lootboxes.count as count)
 
 const vehiclesStats = queryComputed<Stats>(() => getQuery(`
 Event_OnLootboxOpen
-array join Event_OnLootboxOpen.addedVehicles as title
+array join arrayConcat(addedVehicles, compensatedVehicles.tag) as title
 `))
 
 const goldStats = queryComputed<Stats>(() => getQuery(`
-(select gold as title, playerName, containerTag, id from Event_OnLootboxOpen where gold > 0)
+(select (gold - arraySum(compensatedVehicles.gold)) as title, playerName, containerTag, id from Event_OnLootboxOpen where title > 0)
 `, '1'))
 
 const creditsStats = queryComputed<Stats>(() => getQuery(`
