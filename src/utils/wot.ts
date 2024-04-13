@@ -15,12 +15,17 @@ export const customBattleModes = {
   'normalAssault': { title: 'Случайный бой (Штурм)', mode: 'REGULAR', gameplay: 'assault' },
   'epicRandom': { title: 'Генеральное сражение', mode: 'EPIC_RANDOM' },
   'epicBattle': { title: 'Линия фронта', mode: 'EPIC_BATTLE' },
+  'battleRoyaleSolo': { title: 'Стальной охотник (соло)', mode: 'BATTLE_ROYALE_SOLO' },
+  'battleRoyaleSquad': { title: 'Стальной охотник (взвод)', mode: 'BATTLE_ROYALE_SQUAD' },
   'ranked': { title: 'Ранги', mode: 'RANKED' },
   'comp7': { title: 'Натиск', mode: 'COMP7' },
   'globalMap': { title: 'Глобальная карта', mode: 'GLOBAL_MAP' },
   'sortie': { title: 'Укрепрайон (вылазка)', mode: 'SORTIE_2' },
   'fortBattle': { title: 'Битва за укрепрайон', mode: 'FORT_BATTLE_2' },
   'mapsTraining': { title: 'Топография', mode: 'MAPS_TRAINING' },
+  'cosmic': { title: 'Космический режим', mode: 'COSMIC_EVENT' },
+  'funRandom': { title: 'Фан рандом', mode: 'FUN_RANDOM' },
+  'training': { title: 'Тренировочные комнаты', mode: 'TRAINING' },
 } as const
 
 export const gameplayTypes = {
