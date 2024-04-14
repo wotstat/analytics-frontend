@@ -15,16 +15,9 @@
 
 
         <tbody>
-          <!-- <tr v-for="(p, i) in processed?.slice(0, 3)" :class="status == 'loading' ? 'skeleton' : ''">
-            <td class="ignore-skeleton">{{ { 0: 'Одноуровневый', 1: 'Двухуровневый', 2: 'Трёхуровневый' }[i] }}</td>
-            <td class="text-effect red">{{ p[0] }}</td>
-            <td class="text-effect orange">{{ p[1] }}</td>
-            <td class="text-effect green">{{ p[2] }}</td>
-            <td class="text-effect blue">{{ p[3] }}</td>
-          </tr> -->
-
           <tr v-for="line in data">
-            <td>{{ localizer ? localizer(line.title) : line.title }}</td>
+            <td v-if="!localizer">{{ line.titleName || line.title }}</td>
+            <TableTitle v-else :title="localizer(line.title, line.titleName)" :leftAlign />
             <td class="n-mono text-effect gold">{{ line.count }}</td>
             <td class="n-mono text-effect green">{{ percentFormatter(line.percent) }}</td>
             <td class="n-mono text-effect" :class="getColor(line.other, line.percent)"
@@ -65,6 +58,7 @@
 <script lang="ts" setup>
 
 import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue';
+import TableTitle from "./TableTitle.vue";
 import { Status } from '@/db';
 import { computed } from 'vue';
 
@@ -72,12 +66,14 @@ const props = defineProps<{
   status: Status,
   data: {
     title: string,
+    titleName?: string,
     count: number,
     percent: number,
     other?: number
   }[],
-  localizer?: (key: string) => string,
-  byNumber?: number
+  localizer?: (key: string, titleName?: string) => string | { prefix?: string, postfix?: string, value: string },
+  byNumber?: number,
+  leftAlign?: boolean
 }>()
 
 const displayOther = computed(() => props.data.some(line => line.other !== undefined));
@@ -98,6 +94,7 @@ function getColor(left: number, right: number) {
 
 <style lang="scss" scoped>
 @import '/src/styles/table.scss';
+@import '/src/styles/mixins.scss';
 
 .n-mono {
   font-variant-numeric: tabular-nums;
@@ -107,34 +104,70 @@ function getColor(left: number, right: number) {
   overflow-x: auto;
 }
 
+.left-align {
+  >* {
+    text-align: left !important;
+    ;
+  }
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
+
+
+  &.by-number,
+  &.with-other {
+
+    th,
+    td {
+      @include less-large {
+        width: 100px;
+
+        &:first-child {
+          width: 100px;
+        }
+      }
+    }
+  }
 
   th,
   td {
 
     text-align: center;
     padding: 0px 4px;
+    width: 100px;
+    text-wrap: nowrap;
 
     &:first-child {
       border-right: $border;
+      width: 200px;
+      text-wrap: balance;
     }
-  }
 
-  &.with-other:not(.by-number),
-  &.by-number:not(.with-other) {
-    tr {
-      th {
-        width: 25%;
+    @include less-large {
+      width: 50px;
+
+      &:first-child {
+        width: 300px;
       }
     }
   }
 
-  &.with-other.by-number {
-    tr {
-      th {
-        width: 20%;
+  &:not(.with-other):not(.by-number) {
+
+    th,
+    td {
+      &:not(:first-child) {
+        width: 154px;
+      }
+
+      @include less-large {
+        width: 50px;
+
+        &:first-child {
+          width: 300px;
+        }
       }
     }
   }
@@ -144,7 +177,6 @@ table {
 
     tr {
       th {
-        width: 33%;
         padding-bottom: 5px;
       }
     }
