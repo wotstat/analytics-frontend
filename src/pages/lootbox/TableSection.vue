@@ -16,12 +16,14 @@ const props = defineProps<{
   status: Status,
   data: {
     title: string,
+    titleName?: string,
     count: number,
     percent: number,
     other?: number
   }[],
-  localizer?: (key: string) => string,
-  byNumber?: number
+  localizer?: (key: string, titleName?: string) => string | { prefix?: string, postfix?: string, value: string },
+  byNumber?: number,
+  leftAlign?: boolean
 }>()
 </script>
 
