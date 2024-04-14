@@ -6,7 +6,7 @@
     <p>Вид коробок</p>
     <select v-model="selectedContainer">
       <option value="any">Любой</option>
-      <option v-for="tag in containerVariants">{{ tag }}</option>
+      <option v-for="tag in containerVariants" :value="tag.tag">{{ tag.name }}</option>
     </select>
   </div>
 
@@ -61,10 +61,9 @@
   <TableSection title="Менеджмент" v-bind="managementStats" :localizer="managementLocalizer" />
   <TableSection title="Бустеры" v-bind="boostersStats" :localizer="boostersLocalizer" />
   <TableSection title="Учебные брошюры" v-bind="crewbooksStats" :localizer="crewbooksLocalizer" />
-  <TableSection title="Расходники" v-bind="itemsStatsSorted" :localizer="itemsLocalizer" />
-  <i>Локализация названий появится позже</i>
-  <TableSection title="Кастомизация" v-bind="customizationsStats" :localizer="customizationLocalizer" />
-  <i>Локализация названий появится позже</i>
+  <TableSection title="Расходники" v-bind="itemsStatsSorted" :localizer="itemsLocalizer" :left-align="true" />
+  <TableSection title="Кастомизация" v-bind="customizationsStats" :localizer="customizationLocalizer"
+    :left-align="true" />
 
 </template>
 
@@ -75,8 +74,10 @@ import { useQueryStatParams } from '@/composition/useQueryStatParams';
 import { Status, dateToDbIndex, queryAsyncFirst, queryComputed, queryComputedFirst } from '@/db';
 import { computed, ref } from 'vue';
 import TableSection from "./TableSection.vue";
-import { countLocalize, getTankName } from '@/utils/i18n';
+import { countLocalize, crewBookName, getTankName } from '@/utils/i18n';
 import { useLocalStorage } from '@vueuse/core';
+
+const TARGET_LOCALE_REGION = 'RU'
 
 const params = useQueryStatParams()
 
@@ -107,14 +108,15 @@ function whereClause(ignore: ('player' | 'tag' | 'date')[] = []) {
   return result.join(' and ') || 'true'
 }
 
-const containerTag = queryComputed<{ containerTag: string }>(() => `
-select containerTag, toUInt32(count()) as count from Event_OnLootboxOpen
+const containerTag = queryComputed<{ name?: string, containerTag: string }>(() => `
+select L.name as name, containerTag, toUInt32(count()) as count from Event_OnLootboxOpen
+left join (select name, tag from Lootboxes where region = '${TARGET_LOCALE_REGION}' group by name, tag) as L on L.tag = containerTag
 where ${whereClause(['tag'])}
-group by containerTag
+group by containerTag, L.name
 order by containerTag desc
 `)
 
-const containerVariants = computed(() => containerTag.value.data.map((x: any) => x.containerTag))
+const containerVariants = computed(() => containerTag.value.data.map((x: any) => ({ tag: x.containerTag, name: x.name ?? x.containerTag })))
 
 const total = queryComputedFirst(() => `
 select toUInt32(count()) as count
@@ -141,7 +143,7 @@ type Stats = {
 }
 
 
-function getQuery(from: string, orderBy: string = '2 desc') {
+function getQuery(from: string, orderBy: string = '2 desc', localizeTable?: string) {
   let where: string | null = whereClause(['tag'])
   if (where === 'true') {
     where = null
@@ -152,43 +154,55 @@ function getQuery(from: string, orderBy: string = '2 desc') {
   const andWhereTag = whereTag ? `and ${whereTag}` : ''
 
 
+  const join = localizeTable ? `as T left join (select name, tag from ${localizeTable} where region = '${TARGET_LOCALE_REGION}' group by name, tag) as L on L.tag = T.tag` : ''
+  const joinName = localizeTable ? ', L.name as titleName' : ''
+  const joinTag = localizeTable ? ', tag' : ''
+
   if (where) {
     return `
     with
       (select count() from Event_OnLootboxOpen ${whereWhereTag}) as lootboxesCount,
       (select count() from Event_OnLootboxOpen where ${where} ${andWhereTag}) as personalLootboxesCount
-    select title,
-           toUInt32(countIf(${where})) as count,
-           count / personalLootboxesCount as percent,
-           toUInt32(count()) as total,
-           total / lootboxesCount as other
-    from ${from}
-    ${whereWhereTag}
-    group by title
-    having count > 0
-    order by ${orderBy}
+    select title, count, percent, total, other ${joinName}
+    from (
+      select title ${joinTag},
+            toUInt32(countIf(${where})) as count,
+            count / personalLootboxesCount as percent,
+            toUInt32(count()) as total,
+            total / lootboxesCount as other
+      from ${from}
+      ${whereWhereTag}
+      group by title ${joinTag}
+      having count > 0
+      order by ${orderBy}
+    ) 
+    ${join}
     `
   } else {
     return `
     with
       (select count() from Event_OnLootboxOpen ${whereWhereTag}) as lootboxesCount
-    select title,
+    select title, count, percent ${joinName}
+    from (
+      select title ${joinTag},
            toUInt32(count()) as count,
            count / lootboxesCount as percent
-    from ${from}
-    ${whereWhereTag}
-    group by title
-    having count > 0
-    order by ${orderBy}
+      from ${from}
+      ${whereWhereTag}
+      group by title ${joinTag}
+      having count > 0
+      order by ${orderBy}
+    ) 
+    ${join}
     `
   }
 }
 
 const lootboxesStats = queryComputed<Stats>(() => getQuery(`
-(select concat(tag, ':', count) as title, playerName, containerTag, id
+(select concat(tag, ':', count) as title, tag, playerName, containerTag, id
 from Event_OnLootboxOpen
 array join lootboxes.tag as tag, lootboxes.count as count)
-`, '1'))
+`, '1', 'Lootboxes'))
 
 const vehiclesStats = queryComputed<Stats>(() => getQuery(`
 Event_OnLootboxOpen
@@ -212,10 +226,10 @@ const premStats = queryComputed<Stats>(() => getQuery(`
 `, '1'))
 
 const customizationsStats = queryComputed<Stats>(() => getQuery(`
-(select concat(type, '|', tag, '|', count) as title, playerName, containerTag, id
+(select concat(type, '|', ctag, '|', count) as title, splitByChar(':', ctag)[2] as tag, playerName, containerTag, id
 from Event_OnLootboxOpen
-array join customizations.type as type, customizations.tag as tag, customizations.count as count)
-`, '1'))
+array join customizations.type as type, customizations.tag as ctag, customizations.count as count)
+`, '1', 'Customizations'))
 
 const managementStats = queryComputed<Stats>(() => getQuery(`
 (select concat(name, ':', count) as title, * from (
@@ -245,10 +259,10 @@ array join crewBooks.tag as tag, crewBooks.count as count)
 
 const itemsStats = queryComputed<Stats>(() => getQuery(`
 (select concat(items.tag, ':', items.count) as title,
-playerName, containerTag, id
+playerName, containerTag, id, items.tag as tag
 from Event_OnLootboxOpen
 array join items.tag, items.count)
-`, '1'))
+`, '1', 'Artefacts'))
 
 const itemsStatsSorted = computed(() => {
 
@@ -284,7 +298,7 @@ const itemsStatsSorted = computed(() => {
 
 })
 
-function customizationLocalizer(title: string) {
+function customizationLocalizer(title: string, titleName?: string) {
   const [type, tag, count] = title.split('|')
 
   const typeLocal = {
@@ -297,7 +311,11 @@ function customizationLocalizer(title: string) {
   const tagParts = tag.split('/')
   const tagLocal = tagParts[tagParts.length - 1].split('_').map(x => x[0].toUpperCase() + x.slice(1)).join(' ')
 
-  return `${typeLocal}: ${tagLocal} (x${count})`
+  return {
+    prefix: `${typeLocal}:`,
+    value: `${titleName || tagLocal}`,
+    postfix: `(x${count})`
+  }
 }
 
 function tankTagLocalizer(tag: string) {
@@ -306,11 +324,17 @@ function tankTagLocalizer(tag: string) {
 
 function managementLocalizer(tag: string) {
   const [name, count] = tag.split(':')
-  return ({
+
+  const localName = {
     'slots': 'Слоты',
     'berths': 'Койки',
     'demountKit': 'Демонтажный набор',
-  }[name] || name) + ` (x${count})`
+  }[name] || name
+
+  return {
+    value: localName,
+    postfix: count != '1' ? `(x${count})` : undefined
+  }
 }
 
 function boostersLocalizer(tag: string) {
@@ -323,22 +347,43 @@ function boostersLocalizer(tag: string) {
 
   const hours = Math.round(Number(time) / 3600 * 10) / 10
 
-  return `${localName} +${value}% ${hours}ч (x${count})`
+  return {
+    value: `${localName} +${value}% ${hours}ч`,
+    postfix: count != '1' ? `(x${count})` : undefined
+  }
 }
 
 function crewbooksLocalizer(tag: string) {
   const [name, count] = tag.split(':')
-  return `${name} (x${count})`
+  return {
+    value: `${crewBookName(name)}`,
+    postfix: count != '1' ? `(x${count})` : undefined
+  }
 }
 
-function itemsLocalizer(tag: string) {
+function itemsLocalizer(tag: string, titleName?: string) {
   const [name, count] = tag.split(':')
-  return `${name} (x${count})`
+
+
+  let prefix = ''
+  if (name.includes('BattleBooster')) {
+    prefix = 'Инструкция:'
+  }
+
+
+  return {
+    prefix: prefix,
+    value: `${titleName ?? name}`,
+    postfix: count != '1' ? `(x${count})` : undefined
+  }
 }
 
-function lootboxLocalizer(tag: string) {
+function lootboxLocalizer(tag: string, titleName?: string) {
   const [name, count] = tag.split(':')
-  return `${name} (x${count})`
+  return {
+    value: `${titleName ?? name}`,
+    postfix: count != '1' ? `(x${count})` : undefined
+  }
 }
 
 </script>

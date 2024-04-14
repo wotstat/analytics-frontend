@@ -41,6 +41,12 @@ $breakpoint-xl: 1900px;
   }
 }
 
+@mixin less-large {
+  @media screen and (max-width: calc($breakpoint-l - 1px)) {
+    @content;
+  }
+}
+
 @mixin large {
   @media screen and (min-width: $breakpoint-l) {
     @content;
