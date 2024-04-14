@@ -111,3 +111,10 @@ export function getTankName(tag: string, short: boolean = false) {
 
   return idName
 }
+
+export function crewBookName(tag: string) {
+  return {
+    'universalBrochure': 'Универсальная брошюра',
+    'universalBook': 'Универсальное пособие',
+  }[tag] ?? tag
+}
