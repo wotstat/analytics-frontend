@@ -8,10 +8,10 @@
           <circle class="main" cx="50%" cy="50%" r="49.5%" />
           <line x1="45%" y1="50%" x2="55%" y2="50%" />
           <line x1="50%" y1="45%" x2="50%" y2="55%" />
-          <circle v-if="hitPointServer" class="hit-point" :class="hitPointServer.hit ? 'hit' : ''"
-            :cx="hitPointServer.x * 99 + '%'" :cy="hitPointServer.y * 99 + '%'" r="1%" />
-          <!-- <circle v-if="hitPointClient" class="hit-point client" :class="hitPointClient.hit ? 'hit' : ''"
-            :cx="hitPointClient.x * 99 + '%'" :cy="hitPointClient.y * 99 + '%'" r="1%" /> -->
+          <circle v-if="hitPointClient" class="hit-point" :class="hitPointClient.hit ? 'hit' : ''"
+            :cx="hitPointClient.x * 99 + '%'" :cy="hitPointClient.y * 99 + '%'" r="1%" />
+          <!-- <circle v-if="hitPointServer" class="hit-point client" :class="hitPointServer.hit ? 'hit' : ''"
+            :cx="hitPointServer.x * 99 + '%'" :cy="hitPointServer.y * 99 + '%'" r="1%" /> -->
         </svg>
         <div class="minimap">
           <div class="map-container">
