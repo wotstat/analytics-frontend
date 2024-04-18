@@ -11,26 +11,46 @@
     </ul>
     </p>
 
-    <FullScreenCard v-for="part in totalResult">
-      <ChuckTable :status="response.status" :part="part" />
-      <template v-slot:full>
-        <ChuckTable :status="response.status" :part="part" />
-      </template>
-    </FullScreenCard>
+    <ServerStatusWrapper :status="response.status" v-if="allow">
+      <div v-if="response.status == loading" class="card">
+        <table class="hover-highlight" width="100%">
+          <tbody>
+            <tr class="skeleton" v-for="i in new Array(5)">
+              <td colspan="4"></td>
+              <td></td>
+              <td colspan="4"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <FullScreenCard v-for="part in totalResult">
+        <ChuckTable :part="part" />
+        <template v-slot:full>
+          <ChuckTable :part="part" />
+        </template>
+      </FullScreenCard>
+    </ServerStatusWrapper>
+
+    <div v-else class="card flex center">
+      <b>Необходимо в фильтрах указать игрока</b>
+    </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 import FullScreenCard from '@/components/FullScreenCard.vue';
+import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue';
 import ChuckTable from '@/components/widgets/ChuckTable.vue';
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
-import { queryAsync } from '@/db';
+import { loading, queryAsync, success } from '@/db';
 import { ChuckResult } from '@/db/schema';
 import { computed } from 'vue';
 
-
-
 const params = useQueryStatParams()
+
+const allow = computed(() => params.value.player != null)
+
 const response = queryAsync<ChuckResult>(`
 with
    groupArray(pname) as name,
@@ -74,7 +94,7 @@ array join squads as psquad,
 where psquad = playerSquad and playerSquad != 0 or pname = playerName
 group by onBattleStartId, arena, result, duration, id, dateTime, spgCount, enemyTeamMaxHealth
 order by id desc
-`)
+`, allow)
 
 const splittedResult = computed(() => {
   let parts = new Map<string, ChuckResult[]>()
