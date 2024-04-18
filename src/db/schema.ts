@@ -47,3 +47,16 @@ export function bestMV(target: keyof typeof schemas, options: string[] | MaybeRe
   return bestMvWithColumns(target, columns);
 }
 
+
+
+export type ChuckResult = {
+  id: string;
+  dateTime: string;
+  arena: string;
+  result: string;
+  duration: number;
+  spgCount: number;
+  enemyTeamMaxHealth: number;
+  players: [string, string, number, number, number][];
+  totalScore: number;
+}
