@@ -5,6 +5,10 @@ export function usePercentProcessor(digits = 0) {
   }
 }
 
+export function roundProcessor(value: number, scale = 1) {
+  return Number.isNaN(value) ? 0 : Math.round(value * scale) / scale;
+}
+
 export function useFixedProcessor(digits = 2) {
   return (value: number) => {
     return Number.isNaN(value) ? '0' : value.toFixed(digits);
