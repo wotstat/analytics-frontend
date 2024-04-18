@@ -27,6 +27,7 @@ const routes = [
       { path: 'results', component: Results },
       { path: 'maps', component: Maps },
       { path: 'players', component: Coverage },
+      { path: 'chuck-norris-tournament', component: () => import('./pages/sessionInfographics/Chuck.vue') },
       {
         path: 'old-layout',
         component: () => import('./pages/sessionInfographics/Old.vue')
