@@ -73,7 +73,13 @@
           <th>{{ part.winScoreSum }}</th>
           <th class="l-b">{{ part.healthSum }}</th>
           <th>{{ part.spgSum }}</th>
-          <th>{{ part.timeSum }}</th>
+          <th>
+            <div class="time-align">
+              <div class="left">{{ timeProcessor(part.timeSum)[0] }}</div>
+              <div>:</div>
+              <div class="right">{{ timeProcessor(part.timeSum)[1] }}</div>
+            </div>
+          </th>
           <th>{{ part.dmgSum }}</th>
           <th>{{ part.killSum }}</th>
           <th>{{ part.scoreSum }}</th>
