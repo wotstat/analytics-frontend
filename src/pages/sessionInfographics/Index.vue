@@ -14,6 +14,7 @@
 
         <QueryPreserveRouterLink to="/session/distribution">Расширенное распределение</QueryPreserveRouterLink>
         <QueryPreserveRouterLink to="/session/lootbox">Коробки</QueryPreserveRouterLink>
+        <QueryPreserveRouterLink to="/session/chuck-norris-tournament">Очки Чака</QueryPreserveRouterLink>
       </div>
     </div>
 
@@ -38,6 +39,7 @@
 
           <QueryPreserveRouterLink to="/session/distribution">Распределение</QueryPreserveRouterLink>
           <QueryPreserveRouterLink to="/session/lootbox">Коробки</QueryPreserveRouterLink>
+          <QueryPreserveRouterLink to="/session/chuck-norris-tournament">Очки Чака</QueryPreserveRouterLink>
         </div>
       </div>
 
