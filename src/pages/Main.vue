@@ -361,7 +361,7 @@ import { useDocumentVisibility } from '@vueuse/core'
 
 const collapsableBody = ref<HTMLElement | null>(null);
 
-const DBUrl = import.meta.env.VITE_CLICKHOUSE_HOST as string
+const DBUrl = import.meta.env.VITE_CLICKHOUSE_URL
 
 const gameVersion = computedAsync(async () => {
   const response = await fetch("https://raw.githubusercontent.com/IzeBerg/wot-src/RU/sources/paths.xml")
