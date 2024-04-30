@@ -35,15 +35,15 @@
           <td>{{ i + 1 }}</td>
           <td class="l-b">{{ nameFromTag(item.arena).value }}</td>
 
-          <template v-for="player in item.players">
+          <template v-for="(player, i) in item.players">
             <td class="l-b">{{ getTankName(player[1]) }}</td>
-            <td>{{ player[2] }}</td>
-            <td>{{ player[3] }}</td>
-            <td>{{ player[4] }}</td>
+            <td class="text-effect" :class="getRelativeColor(part.avg[i][0], player[2])">{{ player[2] }}</td>
+            <td class="text-effect" :class="getRelativeColor(part.avg[i][1], player[3])">{{ player[3] }}</td>
+            <td class="text-effect" :class="getRelativeColor(part.avg[i][2], player[4])">{{ player[4] }}</td>
           </template>
 
-          <td class="l-b">{{ item.result }}</td>
-          <td>{{ item.result == 'win' ? '3000' : '0' }}</td>
+          <td class="l-b text-effect" :class="getResultColor(item.result)">{{ item.result }}</td>
+          <td class="text-effect" :class="getResultColor(item.result)">{{ item.result == 'win' ? '3000' : '0' }}</td>
           <td class="l-b">{{ item.enemyTeamMaxHealth }}</td>
           <td>{{ item.spgCount }}</td>
 
@@ -54,9 +54,13 @@
               <div class="right">{{ timeProcessor(item.duration)[1] }}</div>
             </div>
           </td>
-          <td>{{ item.players.reduce((acc, t) => acc + t[2], 0) }}</td>
-          <td>{{ item.players.reduce((acc, t) => acc + t[3], 0) }}</td>
-          <td>{{ item.totalScore }}</td>
+          <td class="text-effect"
+            :class="getRelativeColor(part.dmgAvg, item.players.reduce((acc, t) => acc + t[2], 0))">
+            {{ item.players.reduce((acc, t) => acc + t[2], 0) }}</td>
+          <td class="text-effect"
+            :class="getRelativeColor(part.killAvg, item.players.reduce((acc, t) => acc + t[3], 0))">
+            {{ item.players.reduce((acc, t) => acc + t[3], 0) }}</td>
+          <td class="text-effect" :class="getRelativeColor(part.scoreAvg, item.totalScore)">{{ item.totalScore }}</td>
         </tr>
       </tbody>
 
@@ -167,6 +171,18 @@ function nameFromTag(tag: string) {
   return getArenaName(key)
 }
 
+function getResultColor(result: string) {
+  return {
+    win: 'green',
+    tie: 'yellow',
+    lose: 'red'
+  }[result]
+}
+
+
+function getRelativeColor(base: number, value: number) {
+  return value > 1.25 * base ? 'green' : value < 0.75 * base ? 'red' : 'yellow'
+}
 
 </script>
 
