@@ -123,7 +123,7 @@ export function useQueryStatParams() {
   return result;
 }
 
-function whereClauseArray(params: StatParams, ignore: ('player' | 'level' | 'types' | 'tanks')[] = []) {
+function whereClauseArray(params: StatParams, ignore: ('player' | 'level' | 'types' | 'tanks' | 'id')[] = []) {
   const result: string[] = [];
   if (!ignore.includes('player') && params.player) result.push(`playerName = '${params.player}'`);
   if (!ignore.includes('level') && params.level) result.push(`tankLevel in (${params.level.join(', ')})`);
@@ -137,7 +137,7 @@ function whereClauseArray(params: StatParams, ignore: ('player' | 'level' | 'typ
   return result;
 }
 
-function whereClauseArrayColumns(params: StatParams, ignore: ('player' | 'level' | 'types' | 'tanks')[] = []) {
+function whereClauseArrayColumns(params: StatParams, ignore: ('player' | 'level' | 'types' | 'tanks' | 'id')[] = []) {
   const result: string[] = [];
   if (!ignore.includes('player') && params.player) result.push(`playerName`);
   if (!ignore.includes('level') && params.level) result.push(`tankLevel`);
@@ -154,7 +154,7 @@ function whereClauseArrayColumns(params: StatParams, ignore: ('player' | 'level'
 type Options = Partial<{
   withWhere: boolean,
   isBattleStart: boolean,
-  ignore: ('player' | 'level' | 'types' | 'tanks')[]
+  ignore: ('player' | 'level' | 'types' | 'tanks' | 'id')[]
 }>
 
 export function whereClause(params: MaybeRefOrGetter<StatParams>, options: Options = { withWhere: true, isBattleStart: false, ignore: [] }) {
@@ -163,18 +163,20 @@ export function whereClause(params: MaybeRefOrGetter<StatParams>, options: Optio
   const valueParams = toValue(params);
   const result: string[] = whereClauseArray(valueParams, ignore)
 
-  if (valueParams.battleId && valueParams.battleId.length > 0) {
-    result.push(`${isBattleStart ? 'id' : 'onBattleStartId'} in (${valueParams.battleId.map(t => `'${t}'`).join(', ')})`);
-  } else if (valueParams.period !== 'allTime') {
-    if (valueParams.period.type == 'fromTo') {
-      result.push(`id >= ${dateToDbIndex(valueParams.period.from)}`);
-      result.push(`id <= ${dateToDbIndex(valueParams.period.to)}`);
-    } else if (valueParams.period.type == 'fromToNow') {
-      result.push(`id >= ${dateToDbIndex(valueParams.period.from)}`);
-    } else if (valueParams.period.type == 'lastX') {
-      const whereClause = whereClauseArray(valueParams, ignore);
-      const lastIDs = `(select id from Event_OnBattleStart ${whereClause.length == 0 ? '' : `where ${whereClause.join(' AND ')}`} order by id desc limit ${valueParams.period.count})`;
-      result.push(`${isBattleStart ? 'id' : 'onBattleStartId'} in ${lastIDs}`);
+  if (!ignore?.includes('id')) {
+    if (valueParams.battleId && valueParams.battleId.length > 0) {
+      result.push(`${isBattleStart ? 'id' : 'onBattleStartId'} in (${valueParams.battleId.map(t => `'${t}'`).join(', ')})`);
+    } else if (valueParams.period !== 'allTime') {
+      if (valueParams.period.type == 'fromTo') {
+        result.push(`id >= ${dateToDbIndex(valueParams.period.from)}`);
+        result.push(`id <= ${dateToDbIndex(valueParams.period.to)}`);
+      } else if (valueParams.period.type == 'fromToNow') {
+        result.push(`id >= ${dateToDbIndex(valueParams.period.from)}`);
+      } else if (valueParams.period.type == 'lastX') {
+        const whereClause = whereClauseArray(valueParams, ignore);
+        const lastIDs = `(select id from Event_OnBattleStart ${whereClause.length == 0 ? '' : `where ${whereClause.join(' AND ')}`} order by id desc limit ${valueParams.period.count})`;
+        result.push(`${isBattleStart ? 'id' : 'onBattleStartId'} in ${lastIDs}`);
+      }
     }
   }
 
