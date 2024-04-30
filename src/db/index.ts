@@ -1,30 +1,17 @@
 
-import { createClient } from "@clickhouse/client-web";
+import { ResponseJSON, createClient } from "@clickhouse/client-web";
 import { computedAsync, useLocalStorage } from "@vueuse/core";
 import { Ref, computed, ref, shallowRef, watch, watchEffect } from "vue";
 
 export const clickhouse = createClient({
-  host: import.meta.env.VITE_CLICKHOUSE_HOST,
+  url: import.meta.env.VITE_CLICKHOUSE_URL,
   username: import.meta.env.VITE_CLICKHOUSE_USER,
   database: import.meta.env.VITE_CLICKHOUSE_DATABASE,
+  password: import.meta.env.VITE_CLICKHOUSE_PASSWORD,
   clickhouse_settings: {
     max_temporary_columns: '1000',
   }
 });
-
-export interface IClickhouseResponse<T> {
-  data: T[];
-  rows: number;
-  meta: {
-    name: string;
-    type: string;
-  }[];
-  statistics: {
-    elapsed: number;
-    rows_read: number;
-    bytes_read: number;
-  };
-}
 
 export const totalRequests = useLocalStorage('totalRequests', 0)
 export const totalElapsed = useLocalStorage('totalElapsed', 0)
@@ -52,18 +39,18 @@ export function isErrorStatus(status: Status): status is { status: typeof error,
 const activeQueries = new Map<string, Promise<unknown>>();
 export async function query<T>(query: string, { allowCache = true } = {}) {
 
-  if (activeQueries.has(query)) return activeQueries.get(query) as Promise<IClickhouseResponse<T>>;
+  if (activeQueries.has(query)) return activeQueries.get(query) as Promise<ResponseJSON<T>>;
 
-  const current = new Promise<IClickhouseResponse<T>>(async (resolve, reject) => {
+  const current = new Promise<ResponseJSON<T>>(async (resolve, reject) => {
     try {
       // await new Promise(resolve => setTimeout(resolve, 10000));
 
-      const result = await clickhouse.query({ query });
-      const response = await result.json<IClickhouseResponse<T>>();
+      const result = await clickhouse.query({ query, format: 'JSON' });
+      const response = await result.json<T>()
 
-      totalElapsed.value += response.statistics.elapsed
-      totalRowsRead.value += response.statistics.rows_read
-      totalBytesRead.value += response.statistics.bytes_read
+      totalElapsed.value += response.statistics?.elapsed ?? 0
+      totalRowsRead.value += response.statistics?.rows_read ?? 0
+      totalBytesRead.value += response.statistics?.bytes_read ?? 0
       totalRequests.value++
 
       resolve(response);

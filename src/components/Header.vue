@@ -30,7 +30,7 @@ import { useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeig
 import { useRoute } from 'vue-router';
 
 // import { RouterLink } from 'vue-router';
-const DBUrl = import.meta.env.VITE_CLICKHOUSE_HOST as string
+const DBUrl = import.meta.env.VITE_CLICKHOUSE_URL
 const route = useRoute()
 
 function openGithub() {

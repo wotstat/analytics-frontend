@@ -283,6 +283,21 @@ const allShots = shallowRef<Shot[] | null>(null);
 const selectedShoot = computed(() => allShots.value?.[shotIndex.value] ?? null)
 const arenaTag = computed(() => selectedShoot.value?.arenaTag.split('spaces/')[1] ?? null);
 
+watch(selectedShoot, shot => {
+  console.log(JSON.stringify({
+    clientShotDispersion: shot?.clientShotDispersion,
+    serverShotDispersion: shot?.serverShotDispersion,
+    gravity: shot?.gravity,
+    gunDispersion: shot?.gunDispersion,
+    shellSpeed: shot?.shellSpeed,
+    gunPoint: { x: shot?.gunPoint_x, y: shot?.gunPoint_y, z: shot?.gunPoint_z },
+    serverMarkerPoint: { x: shot?.serverMarkerPoint_x, y: shot?.serverMarkerPoint_y, z: shot?.serverMarkerPoint_z },
+    clientMarkerPoint: { x: shot?.clientMarkerPoint_x, y: shot?.clientMarkerPoint_y, z: shot?.clientMarkerPoint_z },
+    tracerStart: { x: shot?.tracerStart_x, y: shot?.tracerStart_y, z: shot?.tracerStart_z },
+    tracerVel: { x: shot?.tracerVel_x, y: shot?.tracerVel_y, z: shot?.tracerVel_z },
+  }))
+})
+
 const firstTable = (s: Shot) => [
   ['Игрок', s.playerName],
   ['Танк', s.tankTag],
