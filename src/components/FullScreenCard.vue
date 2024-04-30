@@ -84,6 +84,12 @@ function onKey(params: KeyboardEvent) {
     flex-direction: column;
   }
 
+  .card {
+    width: max-content;
+    max-width: calc(100% - 30px);
+    margin: auto;
+  }
+
 }
 
 

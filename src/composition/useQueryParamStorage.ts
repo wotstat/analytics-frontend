@@ -1,4 +1,5 @@
 import { MaybeRefOrGetter, StorageLike, useLocalStorage, useStorage } from "@vueuse/core";
+import { onDeactivated, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 
@@ -26,7 +27,12 @@ function useRouterStorage(): StorageLike {
   }
 }
 
-export function useQueryParamStorage<T>(key: string, value: MaybeRefOrGetter<T>) {
+export function useQueryParamStorage<T>(key: string, value: MaybeRefOrGetter<T>, deactivatable?: boolean) {
+  const ref = useStorage(key, value, useRouterStorage());
 
-  return useStorage(key, value, useRouterStorage())
+  if (deactivatable) {
+    onDeactivated(() => ref.value = null)
+    onUnmounted(() => ref.value = null)
+  }
+  return ref
 }

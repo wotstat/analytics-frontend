@@ -7,38 +7,56 @@
         target="_blank">Турнира Чака</a>. Работает для любых боёв, ничего дополнительно настраивать не нужно.
       Работает и <b>взводом</b> и <b>соло</b>. Таблицы результатов эквивалентны турнирным таблицам.
     </p>
-    <p>
-      Используются правила 2023 года:
+    <p>Используются правила 2023 года:</p>
     <ul>
       <li>Победа – 3000 очков</li>
       <li>Фраг – 300 очков</li>
       <li>1 урон – 1 очко</li>
     </ul>
-    </p>
 
-    <ServerStatusWrapper :status="response.status" v-if="allow">
-      <div v-if="response.status == loading" class="card">
-        <table class="hover-highlight" width="100%">
-          <tbody>
-            <tr class="skeleton" v-for="i in new Array(5)">
-              <td colspan="4"></td>
-              <td></td>
-              <td colspan="4"></td>
-            </tr>
-          </tbody>
-        </table>
+    <div :class="classSettings">
+      <div>
+        <input type="checkbox" name="color" id="color" v-model="colorDecoration">
+        <label for="color ">Цветовая разметка.
+          <span class="text-effect red">Плохой</span>;
+          <span class="text-effect yellow">Средний +- 25%</span>;
+          <span class="text-effect green">Хороший</span>
+        </label>
       </div>
 
-      <FullScreenCard v-for="part in totalResult">
-        <ChuckTable :part="part" />
-        <template v-slot:full>
-          <ChuckTable :part="part" />
-        </template>
-      </FullScreenCard>
-    </ServerStatusWrapper>
+      <div v-if="colorDecoration">
+        <input type="checkbox" name="contrast" id="contrast" v-model="contrastDecoration">
+        <label for="contrast">Повышенная контрастность</label>
+      </div>
+    </div>
 
-    <div v-else class="card flex center">
-      <b>Необходимо в фильтрах указать ник игрока (шестерёнка рядом с заголовком)</b>
+    <div :class="classSettings" class="flex ver">
+      <ServerStatusWrapper :status="response.status" v-if="allow">
+        <div v-if="response.status == loading" class="card">
+          <table class="hover-highlight" width="100%">
+            <tbody>
+              <tr class="skeleton" v-for="i in new Array(5)">
+                <td colspan="4"></td>
+                <td></td>
+                <td colspan="4"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <FullScreenCard v-for="part in totalResult">
+          <ChuckTable :part="part" />
+          <template v-slot:full>
+            <div :class="classSettings" class="fullscreen">
+              <ChuckTable :part="part" />
+            </div>
+          </template>
+        </FullScreenCard>
+      </ServerStatusWrapper>
+
+      <div v-else class="card flex center">
+        <b>Необходимо в фильтрах указать ник игрока (шестерёнка рядом с заголовком)</b>
+      </div>
     </div>
   </div>
 </template>
@@ -50,7 +68,18 @@ import ChuckTable from '@/components/widgets/ChuckTable.vue';
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 import { loading, queryAsync, success } from '@/db';
 import { ChuckResult } from '@/db/schema';
+import { useLocalStorage } from '@vueuse/core';
 import { computed } from 'vue';
+
+const colorDecoration = useLocalStorage('chuckColorDecoration', true)
+const contrastDecoration = useLocalStorage('chuckContrastDecoration', false)
+
+const classSettings = computed(() => {
+  return [
+    !colorDecoration.value ? 'disable-effect' : '',
+    colorDecoration.value && contrastDecoration.value ? 'without-shadow' : ''
+  ].join(' ')
+})
 
 const params = useQueryStatParams()
 
@@ -200,5 +229,11 @@ ul {
 
 td {
   white-space: nowrap;
+}
+
+.fullscreen {
+  :deep(th) {
+    width: 60px;
+  }
 }
 </style>
