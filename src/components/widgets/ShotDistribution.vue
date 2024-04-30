@@ -61,11 +61,11 @@ const sharedClientResult = queryAsync<Row>(`
   select r,
        sum(count) over (rows between unbounded preceding and current row)        as cum,
        round(cum / (select count() from Event_OnShot 
-          ${whereClause(params, { ignore: ['player', 'level', 'tanks', 'types'] })}
+          ${whereClause(params, { ignore: ['player', 'level', 'tanks', 'types', 'id'] })}
           ), 2) as percent
   from (select round(if(ballisticResultClient_r < 2, ballisticResultClient_r, 3), 2) as r, count() as count
       from Event_OnShot
-      ${whereClause(params, { ignore: ['player', 'level', 'tanks', 'types'] })}
+      ${whereClause(params, { ignore: ['player', 'level', 'tanks', 'types', 'id'] })}
       group by r
       having r <= 1
       order by r);`, visible)
