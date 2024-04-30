@@ -39,8 +39,15 @@
       <div class="center-container">
         <h2>Установка</h2>
 
-        <p><a :href="latestRelease.browser_download_url" target="_blank">Скачайте</a> последнюю версию мода и поместите
-          файл в каталог: <code>{{ targetModPath }}</code></p>
+        <p>
+          <a :href="latestRelease.browser_download_url" target="_blank">Скачайте</a> последнюю версию мода и поместите
+          файл в каталог:
+        <ul>
+          <li>Леста: <code>{{ targetModPath[0] }}</code></li>
+          <li>Wargaming: <code>{{ targetModPath[1] }}</code></li>
+        </ul>
+
+        </p>
 
         <!-- <i>Проверка на вирусы VirusTotal: <a
             href="https://www.virustotal.com/gui/file/d2c21e8fbb360e4309f40d459014c40cb80307712fe452e967fc70ae7159b0fa?nocache=1"
@@ -363,16 +370,22 @@ const collapsableBody = ref<HTMLElement | null>(null);
 
 const DBUrl = import.meta.env.VITE_CLICKHOUSE_URL
 
-const gameVersion = computedAsync(async () => {
-  const response = await fetch("https://raw.githubusercontent.com/IzeBerg/wot-src/RU/sources/paths.xml")
+async function parseGameVersion(url: string) {
+  const response = await fetch(url)
   const text = await response.text();
   const parser = new DOMParser();
   const doc = parser.parseFromString(text, "text/xml");
   return doc.documentElement.querySelector("Path[mask='*.wotmod']")?.textContent ?? './mods/GAME_VERSION';
-}, './mods/1.20.0.0');
+}
+
+const gameVersionRU = computedAsync(async () => await parseGameVersion("https://raw.githubusercontent.com/IzeBerg/wot-src/RU/sources/paths.xml"), './mods/1.20.0.0');
+const gameVersionEU = computedAsync(async () => await parseGameVersion("https://raw.githubusercontent.com/IzeBerg/wot-src/EU/sources/paths.xml"), './mods/1.20.0.0');
 
 const targetModPath = computed(() => {
-  return "World_Of_Tanks" + gameVersion.value.slice(1);
+  return [
+    "Tanki" + gameVersionRU.value.slice(1),
+    "World_Of_Tanks" + gameVersionEU.value.slice(1),
+  ]
 })
 
 const latestRelease = computedAsync(async () => {

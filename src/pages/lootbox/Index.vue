@@ -71,17 +71,17 @@
 import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 import { useQueryStatParams } from '@/composition/useQueryStatParams';
-import { Status, dateToDbIndex, queryAsyncFirst, queryComputed, queryComputedFirst } from '@/db';
-import { computed, ref } from 'vue';
+import { Status, dateToDbIndex, queryComputed, queryComputedFirst } from '@/db';
+import { computed } from 'vue';
 import TableSection from "./TableSection.vue";
 import { countLocalize, crewBookName, getTankName } from '@/utils/i18n';
-import { useLocalStorage } from '@vueuse/core';
+import { useQueryParamStorage } from '@/composition/useQueryParamStorage';
 
 const TARGET_LOCALE_REGION = 'RU'
 
 const params = useQueryStatParams()
 
-const selectedContainer = useLocalStorage('selectedLootbox', 'any')
+const selectedContainer = useQueryParamStorage('selectedLootbox', 'any', true)
 
 function whereClause(ignore: ('player' | 'tag' | 'date')[] = []) {
   const result = []

@@ -39,6 +39,68 @@ $background-secondary: #353535;
   }
 }
 
+@mixin effectColor() {
+
+  &.gold {
+    color: #ffdd9c;
+  }
+
+  &.green {
+    color: #cdffbb;
+  }
+
+  &.red {
+    color: #ffb6b6;
+  }
+
+  &.blue {
+    color: #eff3ff;
+  }
+
+  &.yellow {
+    color: #fdfdce;
+  }
+
+  &.orange {
+    color: #fffbe7;
+  }
+
+  &.light-blue {
+    color: #d6fbff;
+  }
+}
+
+@mixin effectContrast() {
+
+  &.gold {
+    color: #ffdd9c;
+  }
+
+  &.green {
+    color: #30D158;
+  }
+
+  &.red {
+    color: #FF453A;
+  }
+
+  &.blue {
+    color: #eff3ff;
+  }
+
+  &.yellow {
+    color: #FFD60A;
+  }
+
+  &.orange {
+    color: #fffbe7;
+  }
+
+  &.light-blue {
+    color: #d6fbff;
+  }
+}
+
 @mixin text-skeleton($color, $highlight-color) {
   background: linear-gradient(90deg, $color 8%, $highlight-color 18%, $color 33%);
   background-size: 200% 100%;
@@ -53,6 +115,16 @@ $background-secondary: #353535;
 
 .text-effect {
   @include effect(0.4rem);
+}
+
+.without-shadow .text-effect {
+  @include effectContrast();
+  filter: none;
+}
+
+.disable-effect .text-effect {
+  color: inherit;
+  filter: none;
 }
 
 .card-main-info:not(.description) {

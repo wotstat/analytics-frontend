@@ -15,6 +15,7 @@ export const customBattleModes = {
   'normalAssault': { title: 'Случайный бой (Штурм)', mode: 'REGULAR', gameplay: 'assault' },
   'epicRandom': { title: 'Генеральное сражение', mode: 'EPIC_RANDOM' },
   'epicBattle': { title: 'Линия фронта', mode: 'EPIC_BATTLE' },
+  'historical': { title: 'Исторический ивент', mode: 'HISTORICAL_BATTLES' },
   'battleRoyaleSolo': { title: 'Стальной охотник (соло)', mode: 'BATTLE_ROYALE_SOLO' },
   'battleRoyaleSquad': { title: 'Стальной охотник (взвод)', mode: 'BATTLE_ROYALE_SQUAD' },
   'ranked': { title: 'Ранги', mode: 'RANKED' },
