@@ -89,10 +89,10 @@
 
         </div>
 
-        <div class="long card chart bar medium-h flex-1">
+        <!-- <div class="long card chart bar medium-h flex-1">
           <StillSurviveDistribution :params="params" />
           <p class="card-main-info description">Распределение возможности добить от прошедшего урона</p>
-        </div>
+        </div> -->
 
       </div>
     </div>
@@ -112,6 +112,7 @@ import { toRelative, toPercent } from "@/utils";
 import { useFixedSpaceProcessor, usePercentProcessor } from '@/composition/usePercentProcessor';
 import { shellNames } from '@/utils/wot';
 import QueryPreserveRouterLink from '@/components/QueryPreserveRouterLink.vue';
+import { bestMV } from '@/db/schema';
 
 const params = useQueryStatParams()
 
@@ -181,17 +182,27 @@ from Event_OnShot
 ${whereClause(params)}
 group by shellTag;`, visible)
 
-const smallDamageResult = queryAsync<{ damage: number, count: number }>(`
-select a.1 as damage, toUInt32(count()) as count
+const healthEnoughBestMV = bestMV('event_OnShot_health_damage', params)
+const healthEnoughQuery = healthEnoughBestMV ? `
+select healthEnough, toUInt32(countMerge(count)) as count
+from ${healthEnoughBestMV}
+where healthEnough between 1 and 5
+${whereClause(params, { withWhere: false })}
+group by healthEnough;
+` : `
+select a.1 as healthEnough, toUInt32(count()) as count
 from Event_OnShot
 array join arrayZip(results.shotHealth, results.shotDamage) as a
 where a.2 > 0 and a.1 > 0 and a.1 <= 5
 ${whereClause(params, { withWhere: false })}
-group by damage;
-`, visible)
+group by healthEnough;
+`
+
+const smallDamageResult = queryAsync<{ healthEnough: number, count: number }>(healthEnoughQuery, visible)
+
 
 const smallDamageData = computed(() => {
-  const res = Object.fromEntries(smallDamageResult.value.data.map(v => [v.damage, v.count]))
+  const res = Object.fromEntries(smallDamageResult.value.data.map(v => [v.healthEnough, v.count]))
   return toRelative(new Array(5).fill(0).map((v, i) => res[i + 1] ?? 0))
 })
 
