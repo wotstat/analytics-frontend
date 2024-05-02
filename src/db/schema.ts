@@ -22,11 +22,21 @@ const accuracy_hit_points = {
   'accuracy_hit_points_mv': ['battleMode', 'battleGameplay', 'tankLevel', 'tankType', 'tankTag']
 }
 
+const event_OnShot_health_damage = {
+  'Event_OnShot_health_damage_mv': ['battleMode', 'battleGameplay', 'tankLevel', 'tankType', 'tankTag']
+}
+
+const event_OnShot_safe_damage_count_by_base_mv = {
+  'Event_OnShot_safe_damage_count_by_base_mv': ['battleMode', 'battleGameplay', 'tankLevel', 'tankType', 'tankTag']
+}
+
 
 const schemas = {
   player_coverage,
   team_results,
-  accuracy_hit_points
+  accuracy_hit_points,
+  event_OnShot_health_damage,
+  event_OnShot_safe_damage_count_by_base_mv
 } as const;
 
 function bestMvWithColumns(target: keyof typeof schemas, columns: string[]) {

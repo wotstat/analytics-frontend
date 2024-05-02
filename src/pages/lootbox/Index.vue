@@ -109,11 +109,14 @@ function whereClause(ignore: ('player' | 'tag' | 'date')[] = []) {
 }
 
 const containerTag = queryComputed<{ name?: string, containerTag: string }>(() => `
-select L.name as name, containerTag, toUInt32(count()) as count from Event_OnLootboxOpen
-left join (select name, tag from Lootboxes where region = '${TARGET_LOCALE_REGION}' group by name, tag) as L on L.tag = containerTag
-where ${whereClause(['tag'])}
-group by containerTag, L.name
-order by containerTag desc
+select containerTag, name, count from (select name, tag from Lootboxes where region = '${TARGET_LOCALE_REGION}' group by name, tag) as T1
+right join (
+    select containerTag, count() as count
+    from Event_OnLootboxOpen
+    where ${whereClause(['tag'])}
+    group by containerTag
+) as T2 on T1.tag = T2.containerTag
+order by containerTag desc;
 `)
 
 const containerVariants = computed(() => containerTag.value.data.map((x: any) => ({ tag: x.containerTag, name: x.name ?? x.containerTag })))
@@ -199,7 +202,7 @@ function getQuery(from: string, orderBy: string = '2 desc', localizeTable?: stri
 }
 
 const lootboxesStats = queryComputed<Stats>(() => getQuery(`
-(select concat(tag, ':', count) as title, tag, playerName, containerTag, id
+(select concat(tag, ':', count) as title, tag, playerName, containerTag
 from Event_OnLootboxOpen
 array join lootboxes.tag as tag, lootboxes.count as count)
 `, '1', 'Lootboxes'))
@@ -210,11 +213,13 @@ array join arrayConcat(addedVehicles, compensatedVehicles.tag) as title
 `))
 
 const goldStats = queryComputed<Stats>(() => getQuery(`
-(select (gold - arraySum(compensatedVehicles.gold)) as title, playerName, containerTag, id from Event_OnLootboxOpen where title > 0)
+(select (gold - arraySum(compensatedVehicles.gold)) as title, playerName, containerTag
+from Event_OnLootboxOpen where title > 0)
 `, '1'))
 
 const creditsStats = queryComputed<Stats>(() => getQuery(`
-(select credits as title, playerName, containerTag, id from Event_OnLootboxOpen where credits > 0)
+(select credits as title, playerName, containerTag
+from Event_OnLootboxOpen where credits > 0)
 `, '1'))
 
 const freeXpStats = queryComputed<Stats>(() => getQuery(`
@@ -222,11 +227,12 @@ const freeXpStats = queryComputed<Stats>(() => getQuery(`
 `, '1'))
 
 const premStats = queryComputed<Stats>(() => getQuery(`
-(select premiumPlus as title, playerName, containerTag, id from Event_OnLootboxOpen where premiumPlus > 0)
+(select premiumPlus as title, playerName, containerTag
+from Event_OnLootboxOpen where premiumPlus > 0)
 `, '1'))
 
 const customizationsStats = queryComputed<Stats>(() => getQuery(`
-(select concat(type, '|', ctag, '|', count) as title, splitByChar(':', ctag)[2] as tag, playerName, containerTag, id
+(select concat(type, '|', ctag, '|', count) as title, splitByChar(':', ctag)[2] as tag, playerName, containerTag
 from Event_OnLootboxOpen
 array join customizations.type as type, customizations.tag as ctag, customizations.count as count)
 `, '1', 'Customizations'))
@@ -236,8 +242,7 @@ const managementStats = queryComputed<Stats>(() => getQuery(`
     select arrayConcat(array(slots, berths), equip.count) as count,
            arrayConcat(array('slots', 'berths'), equip.tag) as name,
            playerName,
-           containerTag,
-           id
+           containerTag
     from Event_OnLootboxOpen
 )
 array join count, name
@@ -246,20 +251,20 @@ where count > 0)
 
 const boostersStats = queryComputed<Stats>(() => getQuery(`
 (select concat(boosters.tag, ':', boosters.value, ':', boosters.time, ':', boosters.count) as title,
-playerName, containerTag, id
+playerName, containerTag
 from Event_OnLootboxOpen
 array join boosters.tag, boosters.value, boosters.time, boosters.count)
 `, '1'))
 
 const crewbooksStats = queryComputed<Stats>(() => getQuery(`
-(select concat(tag, ':', count) as title, playerName, containerTag, id
+(select concat(tag, ':', count) as title, playerName, containerTag
 from Event_OnLootboxOpen
 array join crewBooks.tag as tag, crewBooks.count as count)
 `, '1'))
 
 const itemsStats = queryComputed<Stats>(() => getQuery(`
 (select concat(items.tag, ':', items.count) as title,
-playerName, containerTag, id, items.tag as tag
+playerName, containerTag, items.tag as tag
 from Event_OnLootboxOpen
 array join items.tag, items.count)
 `, '1', 'Artefacts'))

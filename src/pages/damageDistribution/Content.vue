@@ -127,22 +127,20 @@
 
 <script lang="ts" setup>
 
-import SettingsTitle from '@/components/SettingsTitle.vue';
-import StatParamsTitle from "@/components/StatParamsTitle.vue";
 import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import { useQueryStatParams, whereClause } from "@/composition/useQueryStatParams";
-import { Status, loading, query, queryAsync, queryAsyncFirst, queryComputed } from '@/db';
+import { query, queryAsync, queryComputed } from '@/db';
 import { computed, ref, shallowRef, watch, watchEffect } from 'vue';
 import { VueComponent as Description } from './description.md'
 
 import { type ChartProps } from 'vue-chartjs';
-import { type TooltipCallbacks } from 'chart.js';
 import { ShadowBar } from "@/components/ShadowBarController";
 import { ShadowLineController } from "@/components/ShadowLineController";
 import { getColor } from '@/components/bloomColors';
 import { useErrorCalculation } from './errorCalculation';
 import { useFixedProcessor, usePercentProcessor } from '@/composition/usePercentProcessor';
 import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue';
+import { bestMV } from '@/db/schema';
 
 
 // Нужно чтоб выполнились функции внутри модуля и зарегистрировались компоненты
@@ -165,7 +163,17 @@ const distribution = shallowRef({
   to: [] as number[],
 })
 
-const damageCount = queryAsync<{ shellDamage: number, count: number }>(`
+const best = bestMV('event_OnShot_safe_damage_count_by_base_mv', stats)
+
+const bestQuery = best ? `
+select shellDamage, toUInt32(countMerge(count)) as count
+from ${best}
+where shellTag != 'HIGH_EXPLOSIVE'
+  and shellTag != 'FLAME'
+  ${whereClause(stats, { withWhere: false })}
+group by shellDamage
+order by count desc;
+` : `
 select shellDamage, toUInt32(count()) as count
 from Event_OnShot
     array join
@@ -179,7 +187,9 @@ where dmg > 0
   ${whereClause(stats, { withWhere: false })}
 group by shellDamage
 order by count desc;
-`)
+`
+
+const damageCount = queryAsync<{ shellDamage: number, count: number }>(bestQuery)
 
 const total = computed(() => damageCount.value.data.reduce((acc, { count }) => acc + count, 0))
 const selectedTotal = computed(() => damageCount.value.data.find(({ shellDamage }) => shellDamage == selectedDamage.value)?.count ?? 0)

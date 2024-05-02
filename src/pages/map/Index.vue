@@ -133,7 +133,7 @@
         <CanvasVue ref="tracerCanvasRef" :style="{
       visibility: showTracers ? 'visible' : 'hidden',
     }" />
-        <Clustering v-bind="clusteringParams" />
+        <!-- <Clustering v-bind="clusteringParams" /> -->
         <CanvasVue :redrawGenerator="redrawGenerator" ref="canvasRef" :style="{ opacity: 0.8 }" />
         <CanvasVue class="hover-canvas" @redraw="hoverRender" ref="hoverCanvasRef" />
         <!-- <Heatmap v-bind="heatmapParams" /> -->
@@ -199,7 +199,7 @@ const hoverCanvasRef = ref<InstanceType<typeof CanvasVue> | null>(null);
 const tracerCanvasRef = ref<InstanceType<typeof CanvasVue> | null>(null);
 const tracerCtx = computed(() => tracerCanvasRef.value?.context());
 
-const selectedMap = useQueryParamStorage<string | null>('map', null);
+const selectedMap = useQueryParamStorage<string>('map', '');
 const selectedTeam = useQueryParamStorage<1 | 2>('team', 1);
 const selectedGameplay = useQueryParamStorage<string>('gameplay', 'ctf');
 const selectedDisplay = ref<'shots' | 'group'>('shots');
@@ -300,17 +300,17 @@ const availableGameplayTypes = computed(() => {
   return dbGameplayTypes.value.data.map(t => t.gameplay);
 })
 
-watch(arenas, (value) => {
-  if (value.data.length > 0 && !selectedMap.value) {
-    selectedMap.value = value.data[0].tag;
-  }
-});
+// watch(arenas, (value) => {
+//   if (value.data.length > 0 && !selectedMap.value) {
+//     selectedMap.value = value.data[0].tag;
+//   }
+// });
 
-watch(availableGameplayTypes, types => {
-  if (!types) return
-  if (selectedGameplay.value in types) return
-  selectedGameplay.value = types[0]
-})
+// watch(availableGameplayTypes, types => {
+//   if (!types) return
+//   if (selectedGameplay.value in types) return
+//   selectedGameplay.value = types[0]
+// })
 
 const arenaMinimapUrl = computedAsync(() => {
   if (selectedMap.value == null) return null;
@@ -424,6 +424,33 @@ async function loadNextBatch() {
       and efficiency <= ${selectedEfficiency.value.to}
       ${selectedTracerEnd.value == 'hitPoint' ? 'and hitPoint_x is not NULL' : ''}
       ${whereClause(params, { withWhere: false })}
+      and playerName in (
+        select playerName
+        from
+        (
+            select playerName, avg(personal.damageDealt) as dmg, quantile(0.95)(dmg) over () as qDmg
+            from Event_OnBattleResult
+            ${whereClause(params, { ignore: ['player', 'types', 'level'] })}
+            group by playerName
+            having count() > 10
+        )
+        where dmg > qDmg
+
+
+        union all
+
+
+        select playerName
+        from
+        (
+            select playerName, avg(personal.damageDealt) as dmg, quantile(0.95)(dmg) over () as qDmg
+            from Event_OnBattleResult
+            ${whereClause(params, { ignore: ['player', 'types', 'level', 'tanks'] })}
+            group by playerName
+            having count() > 50
+        )
+        where dmg > qDmg
+      )
       limit ${LOAD_COUNT}
       offset ${shotsData.length};`)
 
