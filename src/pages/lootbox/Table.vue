@@ -19,11 +19,16 @@
             <td v-if="!localizer">{{ line.titleName || line.title }}</td>
             <TableTitle v-else :title="localizer(line.title, line.titleName)" :leftAlign />
             <td class="n-mono text-effect gold">{{ line.count }}</td>
-            <td class="n-mono text-effect green">{{ percentFormatter(line.percent) }}</td>
-            <td class="n-mono text-effect" :class="getColor(line.other, line.percent)"
-              v-if="displayOther && line.other">
-              {{ percentFormatter(line.other) }}
+
+            <td v-if="line.other" class="n-mono text-effect green" :class="getColor(line.other, line.percent)">
+              {{ percentFormatter(line.percent) }}
               {{ Math.abs(line.other - line.percent) < 0.00001 ? '' : line.other > line.percent ? '↓' : '↑' }}
+            </td>
+            <td v-else class="n-mono text-effect green">{{ percentFormatter(line.percent) }}</td>
+
+
+            <td v-if="displayOther && line.other" class="n-mono text-effect green">
+              {{ percentFormatter(line.other) }}
             </td>
             <td v-if="byNumber" class="text-effect blue">
               {{ percentFormatter(Number(line.title) / byNumber * line.percent) }}
@@ -34,10 +39,14 @@
           <tr>
             <th>Всего</th>
             <th class="n-mono text-effect gold">{{ data.reduce((a, v) => a + v.count, 0) }}</th>
-            <th class="n-mono text-effect green">{{ percentFormatter(percentSum) }}</th>
+
+
             <th v-if="displayOther" class="n-mono text-effect" :class="getColor(otherSum, percentSum)">
-              {{ percentFormatter(otherSum) }}
-              {{ otherSum > percentSum ? '↓' : otherSum < percentSum ? '↑' : '' }} </th>
+              {{ percentFormatter(percentSum) }}
+              {{ Math.abs(otherSum - percentSum) < 0.00001 ? '' : otherSum < percentSum ? '↑' : '↓' }} </th>
+            <th v-else class="n-mono text-effect green">{{ percentFormatter(percentSum) }}</th>
+
+            <th v-if="displayOther" class="n-mono text-effect green"> {{ percentFormatter(otherSum) }} </th>
             <th v-if="byNumber" class="n-mono text-effect blue">
               {{ percentFormatter(data.reduce((a, v) => a + (Number(v.title) * v.percent / (byNumber ?? 1)), 0)) }}
             </th>
@@ -62,16 +71,18 @@ import TableTitle from "./TableTitle.vue";
 import { Status } from '@/db';
 import { computed } from 'vue';
 
+type LocalizedName = string | [name: string, region: string][]
+
 const props = defineProps<{
   status: Status,
   data: {
     title: string,
-    titleName?: string,
+    titleName?: LocalizedName,
     count: number,
     percent: number,
     other?: number
   }[],
-  localizer?: (key: string, titleName?: string) => string | { prefix?: string, postfix?: string, value: string },
+  localizer?: (key: string, titleName?: LocalizedName) => string | { prefix?: string, postfix?: string, value: string },
   byNumber?: number,
   leftAlign?: boolean
 }>()
