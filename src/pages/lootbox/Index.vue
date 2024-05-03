@@ -1,5 +1,5 @@
 <template>
-  <i>В этом разделе не учитываются фильтры по танкам, режимам и боям</i>
+  <i>В этом разделе учитывается только фильтр по нику игрока</i>
   <h2 class="page-title">Награды из коробок</h2>
 
   <div class="select-line flex">
@@ -145,129 +145,155 @@ type Stats = {
   other?: number
 }
 
+type LocalizedName = string | [name: string, region: string][]
 
-function getQuery(from: string, orderBy: string = '2 desc', localizeTable?: string) {
+
+function getQuery(select: string, arrayJoin: string, materialized: string, tagProcessor?: string, localizeTable?: string) {
   let where: string | null = whereClause(['tag'])
   if (where === 'true') {
     where = null
   }
 
   const whereTag = selectedContainer.value == 'any' ? '' : `containerTag = '${selectedContainer.value}'`
+
   const whereWhereTag = whereTag ? `where ${whereTag}` : ''
   const andWhereTag = whereTag ? `and ${whereTag}` : ''
 
+  const groupBy = 'title' + (select.includes('tag') ? ', tag' : '')
 
-  const join = localizeTable ? `as T left join (select name, tag from ${localizeTable} where region = '${TARGET_LOCALE_REGION}' group by name, tag) as L on L.tag = T.tag` : ''
-  const joinName = localizeTable ? ', L.name as titleName' : ''
-  const joinTag = localizeTable ? ', tag' : ''
 
-  if (where) {
-    return `
+  const prefix = localizeTable ? 'select title, count, percent, total, other, locale as titleName from (' : ''
+  const simplePrefix = localizeTable ? 'select title, count, percent, locale as titleName from (' : ''
+  const postfix = localizeTable ? `) as M left join
+  (select tag, arrayZip(groupArray(name), groupArray(region)) as locale from ${localizeTable} group by tag)
+  as L using tag` : ''
+
+  return where ? `
     with
-      (select count() from Event_OnLootboxOpen ${whereWhereTag}) as lootboxesCount,
-      (select count() from Event_OnLootboxOpen where ${where} ${andWhereTag}) as personalLootboxesCount
-    select title, count, percent, total, other ${joinName}
-    from (
-      select title ${joinTag},
-            toUInt32(countIf(${where})) as count,
-            count / personalLootboxesCount as percent,
-            toUInt32(count()) as total,
-            total / lootboxesCount as other
-      from ${from}
-      ${whereWhereTag}
-      group by title ${joinTag}
-      having count > 0
-      order by ${orderBy}
-    ) 
-    ${join}
-    `
-  } else {
-    return `
+      (select count() from Event_OnLootboxOpen where ${where} ${andWhereTag}) as personalLootboxesCount,
+      (select count() from Event_OnLootboxOpen ${whereWhereTag}) as lootboxesCount
+    ${prefix}
+    select title,
+           ${tagProcessor ? tagProcessor + ' as tag' : 'tag'},
+           toUInt32(playerCount) as count,
+           playerCount / personalLootboxesCount as percent,
+           toUInt32(total) as total,
+           total / lootboxesCount as other
+    from
+    (
+        select ${select}, count() as playerCount
+        from Event_OnLootboxOpen
+        ${arrayJoin} and ${where} ${andWhereTag}
+        group by ${groupBy}
+        having playerCount > 0
+    ) as T
+
+    join
+
+    (
+        select title, countMerge(count) as total
+        from ${materialized}
+        ${whereWhereTag}
+        group by title
+    ) as T2
+    using title
+    order by 1
+    ${postfix}
+  ` : `
     with
       (select count() from Event_OnLootboxOpen ${whereWhereTag}) as lootboxesCount
-    select title, count, percent ${joinName}
-    from (
-      select title ${joinTag},
-           toUInt32(count()) as count,
-           count / lootboxesCount as percent
-      from ${from}
-      ${whereWhereTag}
-      group by title ${joinTag}
-      having count > 0
-      order by ${orderBy}
-    ) 
-    ${join}
-    `
-  }
+    ${simplePrefix}
+    select title,
+    ${tagProcessor ? tagProcessor + ' as tag' : 'tag'},
+    toUInt32(countMerge(count)) as count,
+    count / lootboxesCount as percent
+    from ${materialized}
+    ${whereWhereTag}
+    group by ${groupBy}
+    order by 1
+    ${postfix}
+  `
+
 }
 
-const lootboxesStats = queryComputed<Stats>(() => getQuery(`
-(select concat(tag, ':', count) as title, tag, playerName, containerTag
-from Event_OnLootboxOpen
-array join lootboxes.tag as tag, lootboxes.count as count)
-`, '1', 'Lootboxes'))
+const lootboxesStats = queryComputed<Stats>(() => getQuery(
+  `concat(tag, ':', count) as title, tag`,
+  `array join lootboxes.tag as tag, lootboxes.count as count where true`,
+  `lootbox_lootbox_mv`,
+  undefined,
+  'Lootboxes'
+))
 
-const vehiclesStats = queryComputed<Stats>(() => getQuery(`
-Event_OnLootboxOpen
-array join arrayConcat(addedVehicles, compensatedVehicles.tag) as title
-`))
+const vehiclesStats = queryComputed<Stats>(() => getQuery(
+  `title`,
+  `array join arrayConcat(addedVehicles, compensatedVehicles.tag) as title where true`,
+  `lootbox_vehicle_mv`,
+  'title'
+))
 
-const goldStats = queryComputed<Stats>(() => getQuery(`
-(select (gold - arraySum(compensatedVehicles.gold)) as title, playerName, containerTag
-from Event_OnLootboxOpen where title > 0)
-`, '1'))
+const goldStats = queryComputed<Stats>(() => getQuery(
+  `(gold - arraySum(compensatedVehicles.gold)) as title`,
+  `where title > 0`,
+  `lootbox_gold_mv`,
+  'title'
+))
 
-const creditsStats = queryComputed<Stats>(() => getQuery(`
-(select credits as title, playerName, containerTag
-from Event_OnLootboxOpen where credits > 0)
-`, '1'))
+const creditsStats = queryComputed<Stats>(() => getQuery(
+  `credits as title`,
+  `where credits > 0`,
+  `lootbox_credits_mv`,
+  'title'
+))
 
-const freeXpStats = queryComputed<Stats>(() => getQuery(`
-(select freeXP as title, playerName, containerTag, id from Event_OnLootboxOpen where freeXP > 0)
-`, '1'))
+const freeXpStats = queryComputed<Stats>(() => getQuery(
+  `freeXP as title`,
+  `where freeXP > 0`,
+  `lootbox_free_xp_mv`,
+  'title'
+))
 
-const premStats = queryComputed<Stats>(() => getQuery(`
-(select premiumPlus as title, playerName, containerTag
-from Event_OnLootboxOpen where premiumPlus > 0)
-`, '1'))
+const premStats = queryComputed<Stats>(() => getQuery(
+  `premiumPlus as title`,
+  `where premiumPlus > 0`,
+  `lootbox_premium_mv`,
+  'title'
+))
 
-const customizationsStats = queryComputed<Stats>(() => getQuery(`
-(select concat(type, '|', ctag, '|', count) as title, splitByChar(':', ctag)[2] as tag, playerName, containerTag
-from Event_OnLootboxOpen
-array join customizations.type as type, customizations.tag as ctag, customizations.count as count)
-`, '1', 'Customizations'))
+const customizationsStats = queryComputed<Stats>(() => getQuery(
+  `concat(customizations.type, '|', tag, '|', customizations.count) as title, tag`,
+  `array join customizations.type, customizations.tag as tag, customizations.count where true`,
+  `lootbox_customizations_mv`,
+  `splitByChar(':', tag)[2]`,
+  `Customizations`
+))
 
-const managementStats = queryComputed<Stats>(() => getQuery(`
-(select concat(name, ':', count) as title, * from (
-    select arrayConcat(array(slots, berths), equip.count) as count,
-           arrayConcat(array('slots', 'berths'), equip.tag) as name,
-           playerName,
-           containerTag
-    from Event_OnLootboxOpen
-)
-array join count, name
-where count > 0)
-`, '1'))
+const managementStats = queryComputed<Stats>(() => getQuery(
+  `concat(tag, ':', count) as title, tag`,
+  `array join arrayConcat(array(slots, berths), equip.count) as count,
+     arrayConcat(array('slots', 'berths'), equip.tag) as tag
+     where count > 0`,
+  `lootbox_equipment_mv`
+))
 
-const boostersStats = queryComputed<Stats>(() => getQuery(`
-(select concat(boosters.tag, ':', boosters.value, ':', boosters.time, ':', boosters.count) as title,
-playerName, containerTag
-from Event_OnLootboxOpen
-array join boosters.tag, boosters.value, boosters.time, boosters.count)
-`, '1'))
+const boostersStats = queryComputed<Stats>(() => getQuery(
+  `concat(tag, ':', boosters.value, ':', boosters.time, ':', boosters.count) as title, tag`,
+  `array join boosters.tag as tag, boosters.value, boosters.time, boosters.count where true`,
+  `lootbox_boosters_mv`
+))
 
-const crewbooksStats = queryComputed<Stats>(() => getQuery(`
-(select concat(tag, ':', count) as title, playerName, containerTag
-from Event_OnLootboxOpen
-array join crewBooks.tag as tag, crewBooks.count as count)
-`, '1'))
+const crewbooksStats = queryComputed<Stats>(() => getQuery(
+  `concat(tag, ':', count) as title, tag`,
+  `array join crewBooks.tag as tag, crewBooks.count as count where true`,
+  `lootbox_crewbook_mv`
+))
 
-const itemsStats = queryComputed<Stats>(() => getQuery(`
-(select concat(items.tag, ':', items.count) as title,
-playerName, containerTag, items.tag as tag
-from Event_OnLootboxOpen
-array join items.tag, items.count)
-`, '1', 'Artefacts'))
+const itemsStats = queryComputed<Stats>(() => getQuery(
+  `concat(tag, ':', itemCount) as title, tag`,
+  `array join items.tag as tag, items.count as itemCount where true`,
+  `lootbox_item_mv`,
+  undefined,
+  `Artefacts`
+))
 
 const itemsStatsSorted = computed(() => {
 
@@ -303,10 +329,36 @@ const itemsStatsSorted = computed(() => {
 
 })
 
-function customizationLocalizer(title: string, titleName?: string) {
+
+function getBestLocalization(data: LocalizedName) {
+
+  if (typeof data === 'string') {
+    return data
+  }
+
+  const dict = data.reduce((acc, [name, region]) => {
+    acc[region] = name
+    return acc
+  }, {} as Record<string, string>)
+
+
+  if (dict[TARGET_LOCALE_REGION]) {
+    return dict[TARGET_LOCALE_REGION]
+  }
+
+
+  const fallback = ['EU', 'NA', 'RU', 'CN', 'ASIA']
+
+  for (const region of fallback) {
+    if (dict[region]) return dict[region]
+  }
+}
+
+function customizationLocalizer(title: string, titleName?: LocalizedName) {
   const [type, tag, count] = title.split('|')
 
   const typeLocal = {
+    'camouflage': 'Камуфляж',
     'projectionDecal': 'Декаль',
     'style': 'Стиль',
     'inscription': 'Надпись',
@@ -318,7 +370,7 @@ function customizationLocalizer(title: string, titleName?: string) {
 
   return {
     prefix: `${typeLocal}:`,
-    value: `${titleName || tagLocal}`,
+    value: `${titleName ? getBestLocalization(titleName) : tagLocal}`,
     postfix: `(x${count})`
   }
 }
@@ -360,13 +412,16 @@ function boostersLocalizer(tag: string) {
 
 function crewbooksLocalizer(tag: string) {
   const [name, count] = tag.split(':')
+
+  const postfix = parseInt(count) ? count != '1' ? `(x${count})` : undefined : `(${count})`
+
   return {
     value: `${crewBookName(name)}`,
-    postfix: count != '1' ? `(x${count})` : undefined
+    postfix
   }
 }
 
-function itemsLocalizer(tag: string, titleName?: string) {
+function itemsLocalizer(tag: string, titleName?: LocalizedName) {
   const [name, count] = tag.split(':')
 
 
@@ -378,15 +433,15 @@ function itemsLocalizer(tag: string, titleName?: string) {
 
   return {
     prefix: prefix,
-    value: `${titleName ?? name}`,
+    value: titleName ? getBestLocalization(titleName) ?? name : name,
     postfix: count != '1' ? `(x${count})` : undefined
   }
 }
 
-function lootboxLocalizer(tag: string, titleName?: string) {
+function lootboxLocalizer(tag: string, titleName?: LocalizedName) {
   const [name, count] = tag.split(':')
   return {
-    value: `${titleName ?? name}`,
+    value: titleName ? getBestLocalization(titleName) ?? name : name,
     postfix: count != '1' ? `(x${count})` : undefined
   }
 }

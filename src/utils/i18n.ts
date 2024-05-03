@@ -116,5 +116,7 @@ export function crewBookName(tag: string) {
   return {
     'universalBrochure': 'Универсальная брошюра',
     'universalBook': 'Универсальное пособие',
+    'personalBook': 'Персональное учебное пособие',
+    'brochure': 'Учебная брошюра',
   }[tag] ?? tag
 }

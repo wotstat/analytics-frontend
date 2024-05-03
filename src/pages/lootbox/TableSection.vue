@@ -11,17 +11,19 @@
 import { Status } from "@/db";
 import Table from "./Table.vue";
 
+type LocalizedName = string | [name: string, region: string][]
+
 const props = defineProps<{
   title: string,
   status: Status,
   data: {
     title: string,
-    titleName?: string,
+    titleName?: LocalizedName,
     count: number,
     percent: number,
     other?: number
   }[],
-  localizer?: (key: string, titleName?: string) => string | { prefix?: string, postfix?: string, value: string },
+  localizer?: (key: string, titleName?: LocalizedName) => string | { prefix?: string, postfix?: string, value: string },
   byNumber?: number,
   leftAlign?: boolean
 }>()
