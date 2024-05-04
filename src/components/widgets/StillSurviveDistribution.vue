@@ -22,7 +22,7 @@ import { StatParams, whereClause } from "@/composition/useQueryStatParams";
 import ServerStatusWrapper from "../ServerStatusWrapper.vue";
 
 const container = ref<HTMLElement | null>(null);
-const visible = useElementVisibility(container);
+const enabled = useElementVisibility(container);
 
 const { params } = defineProps<{
   params?: StatParams
@@ -52,7 +52,7 @@ from (select rHealth = 0                                      as isKilled,
         ${params ? whereClause(params, { withWhere: false }) : ''})
 group by canSurvive, canKill, roundedHealthDamage
 order by canSurvive, roundedHealthDamage desc
-`, visible);
+`, { enabled });
 
 const processed = computed(() => {
   const canSurviveObj = Object.fromEntries(query.value.data.filter(r => r.canSurvive).map(r => [r.roundedHealthDamage, r.cumSurvice]))

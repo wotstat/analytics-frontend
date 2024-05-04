@@ -77,10 +77,10 @@ import ShotsCircle from "@/components/widgets/ShotsCircle.vue";
 import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import ShotDistribution from '@/components/widgets/ShotDistribution.vue';
 import { useFixedProcessor, useFixedSpaceProcessor, usePercentProcessor } from '@/composition/usePercentProcessor';
-import { queryAsyncFirst } from "@/db";
+import { SHORT_CACHE_SETTINGS, queryAsyncFirst } from "@/db";
 import { computed, ref, watch, watchEffect } from "vue";
 import { useElementVisibility, useMouseInElement } from "@vueuse/core";
-import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
+import { getQueryStatParamsCache, useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 import PopupWindow from "@/components/PopupWindow.vue";
 import ShotInfo from "@/components/widgets/ShotInfo/Index.vue";
 import { useRoute, useRouter } from "vue-router";
@@ -118,7 +118,7 @@ const shotsCount = queryAsyncFirst(`
 select toUInt32(count()) as count 
 from Event_OnShot
 ${whereClause(params)}
-`, { count: 0 }, visible)
+`, { count: 0 }, { enabled: visible, settings: params.value.player ? {} : SHORT_CACHE_SETTINGS })
 
 const dataResult = queryAsyncFirst(`
 select toUInt32(count())                                                                             as count,
@@ -132,7 +132,7 @@ select toUInt32(count())                                                        
        countIf(clientMarkerDistance > 300) / count                                                   as dist300
 from Event_OnShot
 ${whereClause(params)}
-`, { count: 0, hit: 0, damaged: 0, first50: 0, first30: 0, full: 0, stopped: 0, dist300: 0 }, visible)
+`, { count: 0, hit: 0, damaged: 0, first50: 0, first30: 0, full: 0, stopped: 0, dist300: 0 }, { enabled: visible, settings: getQueryStatParamsCache(params.value) })
 
 const selectedShot = computed(() => route.query.shot as string | undefined);
 

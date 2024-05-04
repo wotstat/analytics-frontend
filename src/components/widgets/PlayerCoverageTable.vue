@@ -53,7 +53,7 @@ const { params } = defineProps<{
 }>()
 
 const container = ref<HTMLElement | null>(null);
-const visible = useElementVisibility(container);
+const enabled = useElementVisibility(container);
 
 
 const result = queryAsync<{
@@ -89,7 +89,7 @@ from (select name,
       group by name, bdid, region)
 where count > 1
 order by count desc
-limit 30`, visible)
+limit 30`, { enabled })
 
 const data = computed(() => {
   return result.value.data?.map((item, index) => {

@@ -128,7 +128,7 @@ array join squads as psquad,
 where psquad = playerSquad and playerSquad != 0 or pname = playerName
 group by onBattleStartId, arena, result, duration, id, dateTime, spgCount, enemyTeamMaxHealth
 order by id desc
-`, allow)
+`, { enabled: allow })
 
 const splittedResult = computed(() => {
   let parts = new Map<string, ChuckResult[]>()

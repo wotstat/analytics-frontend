@@ -1,17 +1,18 @@
-import { dateToDbIndex } from "@/db";
+import { CACHE_SETTINGS, SHORT_CACHE_SETTINGS, dateToDbIndex } from "@/db";
 import { customBattleModes } from "@/utils/wot";
-import { MaybeRefOrGetter, ShallowRef, ref, shallowRef, toValue, watchEffect } from "vue";
+import { ClickHouseSettings } from "@clickhouse/client-web";
+import { MaybeRefOrGetter, Ref, ShallowRef, computed, ref, shallowRef, toValue, watchEffect } from "vue";
 import { useRoute } from "vue-router";
 
 export type TankType = 'LT' | 'MT' | 'HT' | 'AT' | 'SPG';
 export type TankLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
 export type StatParams = {
-  player: string | null;
-  level: TankLevel[] | null;
-  types: TankType[] | null;
-  tanks: string[] | null;
-  battleMode: keyof typeof customBattleModes | 'any';
+  player: string | null
+  level: TankLevel[] | null
+  types: TankType[] | null
+  tanks: string[] | null
+  battleMode: keyof typeof customBattleModes | 'any'
   period: 'allTime' | {
     type: 'lastX'
     count: number
@@ -22,8 +23,8 @@ export type StatParams = {
   } | {
     type: 'fromToNow',
     from: Date
-  },
-  battleId: string[] | null;
+  }
+  battleId: string[] | null
 };
 
 export function useQueryStatParams() {
@@ -121,6 +122,19 @@ export function useQueryStatParams() {
 
   })
   return result;
+}
+
+export function getQueryStatParamsCache(params: StatParams) {
+  if (params.player) return {}
+  if (params.period === 'allTime') return CACHE_SETTINGS
+  if (params.period.type == 'lastX') return SHORT_CACHE_SETTINGS
+  return CACHE_SETTINGS
+}
+
+export function useQueryStatParamsCache(params: Ref<StatParams>) {
+  return computed<ClickHouseSettings>(() => {
+    return getQueryStatParamsCache(params.value)
+  })
 }
 
 function whereClauseArray(params: StatParams, ignore: ('player' | 'level' | 'types' | 'tanks' | 'id')[] = []) {
