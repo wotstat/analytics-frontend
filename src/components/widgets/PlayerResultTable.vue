@@ -108,7 +108,7 @@
 
 
 <script setup lang="ts">
-import { StatParams, useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
+import { StatParams, getQueryStatParamsCache, useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 import { mergeStatuses, queryAsync } from '@/db';
 import { modeCount } from '@/utils/wot';
 import { useElementVisibility, useElementSize } from '@vueuse/core';
@@ -123,7 +123,7 @@ const { params } = defineProps<{
 
 
 const container = ref<HTMLElement | null>(null);
-const visible = useElementVisibility(container);
+const enabled = useElementVisibility(container);
 
 const categoryContainer = ref<HTMLElement | null>(null);
 const { width } = useElementSize(categoryContainer)
@@ -205,7 +205,7 @@ function getQuery(result: 'win' | 'lose') {
   return query
 }
 
-const shouldLoadLose = computed(() => visible.value && youTeamResult.value == 'lose' || opponentTeamResult.value == 'win')
+const shouldLoadLose = computed(() => enabled.value && youTeamResult.value == 'lose' || opponentTeamResult.value == 'win')
 
 type TableItem = {
   place: number,
@@ -219,8 +219,8 @@ type TableItem = {
   enemyKill: number,
 }
 
-const teamResultWin = queryAsync<TableItem>(getQuery('win'), visible)
-const teamResultLose = queryAsync<TableItem>(getQuery('lose'), shouldLoadLose)
+const teamResultWin = queryAsync<TableItem>(getQuery('win'), { enabled, settings: { ...getQueryStatParamsCache(params), query_cache_nondeterministic_function_handling: 'save' } })
+const teamResultLose = queryAsync<TableItem>(getQuery('lose'), { enabled: shouldLoadLose, settings: { ...getQueryStatParamsCache(params), query_cache_nondeterministic_function_handling: 'save' } })
 
 const loadingStatus = computed(() => {
   if (youTeamResult.value == 'lose' || opponentTeamResult.value == 'lose') return teamResultLose.value.status

@@ -47,16 +47,22 @@
 </template>
 
 <script lang="ts" setup>
-import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
-import { queryComputed } from '@/db';
+import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams';
+import { LONG_CACHE_SETTINGS, queryComputed } from '@/db';
 import { useRoute, useRouter } from 'vue-router';
 import ServerStatusWrapper from '../ServerStatusWrapper.vue';
+import { computed } from 'vue';
 
 
 const router = useRouter()
 const route = useRoute()
 
-const stats = useQueryStatParams();
+const stats = useQueryStatParams()
+
+const cacheSettings = computed(() => {
+  if (stats.value.player) return {}
+  return LONG_CACHE_SETTINGS
+})
 
 const tanks = queryComputed<{ tag: string, battleCount: string, shotsCount: string, shortNameRU: string, iconUrl: string }>(() => `
 with
@@ -74,7 +80,7 @@ from (select tankTag, count() as battleCount from Event_OnBattleStart ${whereCla
          left join TankList on battles.tankTag = TankList.tag
 order by battleCount desc
 limit 50;
-`);
+`, { settings: cacheSettings.value });
 
 
 function onClick(e: MouseEvent, tag: string) {

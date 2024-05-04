@@ -128,8 +128,8 @@
 <script lang="ts" setup>
 
 import GenericInfo from '@/components/widgets/GenericInfo.vue';
-import { useQueryStatParams, whereClause } from "@/composition/useQueryStatParams";
-import { query, queryAsync, queryComputed } from '@/db';
+import { useQueryStatParams, useQueryStatParamsCache, whereClause } from "@/composition/useQueryStatParams";
+import { LONG_CACHE_SETTINGS, query, queryAsync, queryComputed } from '@/db';
 import { computed, ref, shallowRef, watch, watchEffect } from 'vue';
 import { VueComponent as Description } from './description.md'
 
@@ -150,6 +150,7 @@ const confidenceLevels = [0.9, 0.95, 0.99, 0.999]
 const damageSteps = [3, 5, 7, 9, 11, 13, 15, 17]
 
 const stats = useQueryStatParams()
+const settings = useQueryStatParamsCache(stats)
 
 const experimentsCount = ref<number>(5000)
 const selectedDamage = ref<number>(0)
@@ -189,7 +190,7 @@ group by shellDamage
 order by count desc;
 `
 
-const damageCount = queryAsync<{ shellDamage: number, count: number }>(bestQuery)
+const damageCount = queryAsync<{ shellDamage: number, count: number }>(bestQuery, { settings: settings.value })
 
 const total = computed(() => damageCount.value.data.reduce((acc, { count }) => acc + count, 0))
 const selectedTotal = computed(() => damageCount.value.data.find(({ shellDamage }) => shellDamage == selectedDamage.value)?.count ?? 0)
@@ -265,7 +266,7 @@ where dmg > 0
   and shellDamage = ${selectedDamage.value}
   and (dmg + health) > ${Math.round(selectedDamage.value * 1.25)}
   ${whereClause(stats.value, { withWhere: false })}
-`)
+`, { settings: settings.value })
 
 const infoCards = computed(() => {
   const { data } = infoCardsResult.value
@@ -330,7 +331,7 @@ from (select filled as nDmg, c
       limit ${limit})
 group by r
 order by r
-  `)
+  `, { settings: stats.value.player ? {} : LONG_CACHE_SETTINGS })
 
   distribution.value = {
     labels: res.data.map(({ from, to }) => `${(from + to) / 2}`),
