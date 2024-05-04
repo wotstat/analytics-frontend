@@ -73,7 +73,7 @@
 import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import MiniBar from '@/components/widgets/MiniBar.vue';
 import MniiPie from '@/components/widgets/MiniPie.vue';
-import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
+import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams';
 import { queryAsync, queryAsyncFirst } from "@/db";
 import { useElementVisibility } from '@vueuse/core';
 import { computed, ref } from 'vue';
@@ -84,6 +84,7 @@ import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
 const params = useQueryStatParams();
+const settings = useQueryStatParamsCache(params)
 
 const tankLabels = ['СТ', 'ТТ', 'ПТ', 'ЛТ', 'САУ'];
 
@@ -95,14 +96,14 @@ select toUInt32(sum(inQueueWaitTime + loadTime + preBattleWaitTime) / 1000)     
        avgIf(inQueueWaitTime, inQueueWaitTime < 300000)                              as avgInQueue
 from Event_OnBattleStart
 ${whereClause(params, { isBattleStart: true })}
-`, { waitTime: 0, avgWaitTime: 0, avgInQueue: 0, battleCount: 0 }, visible)
+`, { waitTime: 0, avgWaitTime: 0, avgInQueue: 0, battleCount: 0 }, { enabled: visible, settings: settings.value })
 
 const dataResult = queryAsyncFirst(`
 select round(avg(personal.lifeTime))    as lifetime,
        round(avg(duration))             as duration,
        toUInt32(sum(personal.lifeTime)) as inBattle
 from Event_OnBattleResult
-${whereClause(params)};`, { lifetime: 0, duration: 0, inBattle: 0 }, visible)
+${whereClause(params)};`, { lifetime: 0, duration: 0, inBattle: 0 }, { enabled: visible, settings: settings.value })
 
 const durationResult = queryAsync<{ percent: number, duration: number, lifetime: number }>(`
 select duration, lifetime, count / sum(count) over () as percent
@@ -112,7 +113,7 @@ from (select ceil(duration / 60)         as duration,
       from Event_OnBattleResult
       ${whereClause(params)}
       group by duration
-      order by duration)`, visible)
+      order by duration)`, { enabled: visible, settings: settings.value })
 
 const avgTypeResult = queryAsyncFirst(`
 with length(playersResults.tankType) as tankCount
@@ -123,11 +124,11 @@ select avg(ltCount / tankCount) as LT,
       avg(spgCount / tankCount) as SPG
 from Event_OnBattleResult
 ${whereClause(params)};
-`, { LT: 0, HT: 0, MT: 0, AT: 0, SPG: 0 }, visible)
+`, { LT: 0, HT: 0, MT: 0, AT: 0, SPG: 0 }, { enabled: visible, settings: settings.value })
 
 const winrateResult = queryAsync<{
   count: number, result: 'win' | 'tie' | 'lose'
-}>(`select toUInt32(count(*)) as count, result from Event_OnBattleResult ${whereClause(params)} group by result`, visible);
+}>(`select toUInt32(count(*)) as count, result from Event_OnBattleResult ${whereClause(params)} group by result`, { enabled: visible, settings: settings.value });
 
 const winrateData = computed(() => {
   const res = {

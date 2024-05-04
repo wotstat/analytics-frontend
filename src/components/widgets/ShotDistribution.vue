@@ -17,7 +17,7 @@ import { computed, ref } from 'vue';
 import { type ChartProps } from 'vue-chartjs';
 import { ShadowLine } from "@/components/ShadowLineController";
 import { BloomColor } from '../bloomColors';
-import { StatParams, whereClause } from '@/composition/useQueryStatParams';
+import { StatParams, getQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams';
 import ServerStatusWrapper from '../ServerStatusWrapper.vue';
 
 const container = ref<HTMLElement | null>(null);
@@ -55,8 +55,8 @@ function calc(data: Row[]) {
   return res
 }
 
-const clientMarkerResult = queryAsync<Row>(getQuery(false), visible)
-const serverMarkerResult = queryAsync<Row>(getQuery(true), visible)
+const clientMarkerResult = queryAsync<Row>(getQuery(false), { enabled: visible, settings: getQueryStatParamsCache(params) })
+const serverMarkerResult = queryAsync<Row>(getQuery(true), { enabled: visible, settings: getQueryStatParamsCache(params) })
 const sharedClientResult = queryAsync<Row>(`
   select r,
        sum(count) over (rows between unbounded preceding and current row)        as cum,
@@ -68,7 +68,7 @@ const sharedClientResult = queryAsync<Row>(`
       ${whereClause(params, { ignore: ['player', 'level', 'tanks', 'types', 'id'] })}
       group by r
       having r <= 1
-      order by r);`, visible)
+      order by r);`, { enabled: visible, settings: getQueryStatParamsCache(params) })
 
 const isLoadingClient = computed(() => clientMarkerResult.value.status === loading)
 const isLoadingServer = computed(() => clientMarkerResult.value.status === loading)

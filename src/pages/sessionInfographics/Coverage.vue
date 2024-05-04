@@ -26,13 +26,14 @@ import { queryAsyncFirst } from "@/db";
 import { ref } from "vue";
 import { useElementVisibility } from "@vueuse/core";
 import PlayerCoverageTable from "@/components/widgets/PlayerCoverageTable.vue";
-import { useQueryStatParams, whereClause, whereClauseColumns } from '@/composition/useQueryStatParams';
+import { useQueryStatParams, useQueryStatParamsCache, whereClause, whereClauseColumns } from '@/composition/useQueryStatParams';
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 import { bestMV } from '@/db/schema';
 
 const container = ref<HTMLElement | null>(null);
-const visible = useElementVisibility(container);
+const enabled = useElementVisibility(container);
 const params = useQueryStatParams();
+const settings = useQueryStatParamsCache(params)
 
 
 const mv = bestMV('player_coverage', params)
@@ -46,7 +47,7 @@ const query = mv ? `
   from Event_OnBattleResult
   ${whereClause(params)}`
 
-const coverageData = queryAsyncFirst(query, { data: 0 }, visible)
+const coverageData = queryAsyncFirst(query, { data: 0 }, { enabled, settings: settings.value })
 
 console.log(bestMV('player_coverage', params));
 

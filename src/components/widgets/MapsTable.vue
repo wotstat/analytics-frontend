@@ -112,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import { StatParams, whereClause } from '@/composition/useQueryStatParams';
+import { StatParams, getQueryStatParamsCache, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams';
 import { Status, queryAsync } from '@/db';
 import { timeProcessor, whereSum } from '@/utils';
 import { getArenaName } from '@/utils/i18n';
@@ -122,7 +122,7 @@ import { ShallowRef, computed, ref, shallowRef, watch, watchEffect } from 'vue';
 import ServerStatusWrapper from '../ServerStatusWrapper.vue';
 
 const { params } = defineProps<{
-  params?: StatParams
+  params: StatParams
 }>()
 
 const container = ref<HTMLElement | null>(null);
@@ -223,7 +223,7 @@ watch(cacheKey, (value) => {
 
   resultCache.value = {
     ...resultCache.value,
-    [value]: queryAsync<ResultRow>(generateQuery(), visible)
+    [value]: queryAsync<ResultRow>(generateQuery(), { enabled: visible, settings: getQueryStatParamsCache(params) })
   };
 }, { immediate: true })
 

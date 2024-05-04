@@ -5,19 +5,18 @@
     превышающим максимальный урон снаряда</p>
   <div class="flex ver damage" ref="container">
     <div class="card long">
-      <GenericInfoQuery
-        :query="`select toUInt32(countIf(arrayMax(results.shotDamage) > 0)) as data from Event_OnShot ${whereClause(params)};`"
-        :processor="useFixedSpaceProcessor(0)" description="Выстрелов с видимым уроном" color="green" />
+      <GenericInfo :status="totalShots.status" :value="totalShots.data.data" :processor="useFixedSpaceProcessor(0)"
+        description="Выстрелов с видимым уроном" color="green" />
     </div>
     <div class="flex ver">
       <div class="grid">
         <div class="card chart bar height2 full-width-less-small">
           <MiniBar :status="byShellResult.status" :data="byShellData.damage" color="yellow" :labels="shellLabels"
             :callbacks="{
-          title: (t) => `${toPercent(t)} выстрелов ${t[0].label} нанесли урон`,
-          label: () => ``,
-          beforeBody: () => `Среди попавших`
-        }" />
+        title: (t) => `${toPercent(t)} выстрелов ${t[0].label} нанесли урон`,
+        label: () => ``,
+        beforeBody: () => `Среди попавших`
+      }" />
           <p class="card-main-info description">Нанесли урон</p>
         </div>
 
@@ -33,11 +32,11 @@
         <div class="card chart bar height2 full-width-less-small right-column">
           <MiniBar :status="smallDamageResult.status" :data="smallDamageData" color="blue"
             :labels="['1ХП', '2ХП', '3ХП', '4ХП', '5ХП']" :callbacks="{
-          title: (t) => `${toPercent(t)} танков осталось с ${t[0].label}`,
-          label: () => ``,
-          beforeBody: () => `Среди группы до 5 ХП`
+        title: (t) => `${toPercent(t)} танков осталось с ${t[0].label}`,
+        label: () => ``,
+        beforeBody: () => `Среди группы до 5 ХП`
 
-        }" />
+      }" />
           <p class="card-main-info description">Осталось ХП после урона</p>
         </div>
 
@@ -107,7 +106,7 @@ import { useElementVisibility } from "@vueuse/core";
 import MiniBar from "@/components/widgets/MiniBar.vue";
 import GenericInfoQuery from "@/components/widgets/GenericInfoQuery.vue";
 import StillSurviveDistribution from "@/components/widgets/StillSurviveDistribution.vue";
-import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
+import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams';
 import { toRelative, toPercent } from "@/utils";
 import { useFixedSpaceProcessor, usePercentProcessor } from '@/composition/usePercentProcessor';
 import { shellNames } from '@/utils/wot';
@@ -115,14 +114,17 @@ import QueryPreserveRouterLink from '@/components/QueryPreserveRouterLink.vue';
 import { bestMV } from '@/db/schema';
 
 const params = useQueryStatParams()
+const settings = useQueryStatParamsCache(params)
 
 const shellLabels = Object.values(shellNames).map(t => t[0])
 const shellFullNames = Object.values(shellNames).map(t => t[1])
 
 const container = ref<HTMLElement | null>(null);
-const visible = useElementVisibility(container);
+const enabled = useElementVisibility(container);
 
 const damageLabels = new Array(21).fill(0).map((v, i) => `${i == 10 ? '' : i < 10 ? '-' : '+'}${Math.abs((i - 10) * 2.5)}%`)
+
+const totalShots = queryAsyncFirst(`select toUInt32(countIf(arrayMax(results.shotDamage) > 0)) as data from Event_OnShot ${whereClause(params)}`, { data: 0 }, { enabled, settings: settings.value })
 
 const damageDistributionResult = queryAsync<{ k: number, count: number }>(`
 with arrayMax(results.shotDamage) as dmg,
@@ -140,7 +142,7 @@ where shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME'
 ${whereClause(params, { withWhere: false })}
 group by k
 having k between -10 and 10
-order by k;`, visible)
+order by k;`, { enabled, settings: settings.value })
 
 const damageAggregatedResult = queryAsyncFirst(`
 with arrayMax(results.shotDamage) as dmg,
@@ -156,7 +158,7 @@ select
 from Event_OnShot
 where shellTag not in ('HIGH_EXPLOSIVE', 'FLAME')
 ${whereClause(params, { withWhere: false })};
-`, { less: 0, more: 0, avgDamage: 0 }, visible)
+`, { less: 0, more: 0, avgDamage: 0 }, { enabled, settings: settings.value })
 
 const safeStillResult = queryAsyncFirst(`
 with arrayMax(results.shotDamage) as dmg,
@@ -169,7 +171,7 @@ select countIf(dmg > 0 and health = 0 and healthBeforeShot > shellDamage and not
 from Event_OnShot
 where shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME'
 ${whereClause(params, { withWhere: false })}
-`, { stilled: 0, saved: 0 })
+`, { stilled: 0, saved: 0 }, { enabled, settings: settings.value })
 
 const byShellResult = queryAsync<{ shellTag: string, percentDamage: number, percentNoDamage: number }>(`
 with arrayMax(results.shotDamage) as dmg,
@@ -180,7 +182,7 @@ select shellTag,
        countIf(hits > 0 and dmg = 0) / hitCount as percentNoDamage
 from Event_OnShot
 ${whereClause(params)}
-group by shellTag;`, visible)
+group by shellTag;`, { enabled, settings: settings.value })
 
 const healthEnoughBestMV = bestMV('event_OnShot_health_damage', params)
 const healthEnoughQuery = healthEnoughBestMV ? `
@@ -198,7 +200,7 @@ ${whereClause(params, { withWhere: false })}
 group by healthEnough;
 `
 
-const smallDamageResult = queryAsync<{ healthEnough: number, count: number }>(healthEnoughQuery, visible)
+const smallDamageResult = queryAsync<{ healthEnough: number, count: number }>(healthEnoughQuery, { enabled, settings: settings.value })
 
 
 const smallDamageData = computed(() => {
@@ -241,7 +243,7 @@ select
   count() / frags  as shotPerFrag
 from Event_OnShot
 ${whereClause(params)};
-`, { fired: 0, ammoBayDestroyed: 0, frags: 0, shotPerFrag: 0 }, visible)
+`, { fired: 0, ammoBayDestroyed: 0, frags: 0, shotPerFrag: 0 }, { enabled, settings: settings.value })
 
 
 function openDamage() {

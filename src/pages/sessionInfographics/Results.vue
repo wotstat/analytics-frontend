@@ -170,13 +170,13 @@
 <script setup lang="ts">
 import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import MiniBar from '@/components/widgets/MiniBar.vue';
-import { Status, mergeStatuses, queryAsync, queryAsyncFirst, queryComputed } from "@/db";
+import { LONG_CACHE_SETTINGS, Status, mergeStatuses, queryAsync, queryAsyncFirst, queryComputed } from "@/db";
 import { useElementVisibility, useLocalStorage } from '@vueuse/core';
 import { computed, ref } from 'vue';
 import { toRelative, toPercent } from "@/utils";
 import PlayerResultTable from "@/components/widgets/PlayerResultTable.vue";
 import { usePercentProcessor, useFixedProcessor, useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
-import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
+import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams';
 import TeamLevelTable from '@/components/widgets/TeamLevelTable.vue';
 import { countLocalize } from '@/utils/i18n';
 import { TooltipItem } from 'chart.js';
@@ -184,12 +184,13 @@ import { TooltipItem } from 'chart.js';
 const variantSelector = ref<HTMLSelectElement | null>(null);
 
 const container = ref<HTMLElement | null>(null);
-const visible = useElementVisibility(container);
+const enabled = useElementVisibility(container);
 
 const turboContainer = ref<HTMLElement | null>(null);
 const turboVisible = useElementVisibility(turboContainer);
 
-const params = useQueryStatParams();
+const params = useQueryStatParams()
+const settings = useQueryStatParamsCache(params)
 
 const places = new Array(15).fill(0).map((_, i) => i + 1);
 
@@ -238,7 +239,7 @@ const functionalResults = queryComputed<{
   ${fn(true)}(enemyTeamCount - enemyTeamSurvivedCount, result = 'lose') as allyFragsLose
   from Event_OnBattleResult
   ${whereClause(params)}
-`})
+`}, { settings: settings.value })
 
 const resultsInfo = queryAsyncFirst(`select 
        avg(personal.piercingEnemyHits)           as piercingHits,
@@ -258,7 +259,7 @@ const resultsInfo = queryAsyncFirst(`select
        toUInt32(count())                         as count
 from Event_OnBattleResult
 ${whereClause(params)};
-`, { count: 0, piercingHits: 0, piercingPerHit: 0, hitPerShot: 0, KD: 0, DR: 0, TR: 0 }, visible);
+`, { count: 0, piercingHits: 0, piercingPerHit: 0, hitPerShot: 0, KD: 0, DR: 0, TR: 0 }, { enabled, settings: settings.value });
 
 function getValue(param: typeof resultsList[number][1] | 'enemyFragsWin' | 'allyFragsWin' | 'enemyFragsLose' | 'allyFragsLose') {
   return { data: functionalResults.value.data[0]?.[param] ?? 0, status: functionalResults.value.status as Status };
@@ -275,14 +276,14 @@ from (select allyTeamCount - allyTeamSurvivedCount                              
              duration < 5 * 60 and abs(opponentTeamFrags - playerTeamFrags) > 10 as isTurbo,
              countIf(isTurbo) over (partition by playerName order by playerName, id rows between 9 preceding and current row) as countTurbo
       from Event_OnBattleResult
-      ${whereClause(params)});`, { count: 0, maxTurbo: 0, avgTurbo: 0, medTurbo: 0, minTurbo: 0 }, turboVisible);
+      ${whereClause(params)});`, { count: 0, maxTurbo: 0, avgTurbo: 0, medTurbo: 0, minTurbo: 0 }, { enabled: turboVisible, settings: params.value.player ? {} : LONG_CACHE_SETTINGS });
 
 function usePlayerDistribution(value: 'Damage' | 'Radio' | 'Kills') {
   const result = queryAsync<{ playerPosition: number, count: number }>(`
   select playerTeamPositionBy${value} as playerPosition, toUInt32(count()) as count
   from Event_OnBattleResult
   ${whereClause(params)}
-  group by playerPosition;`, visible);
+  group by playerPosition;`, { enabled, settings: settings.value });
 
   return computed(() => {
     const countMap = Object.fromEntries(result.value.data.map(r => [r.playerPosition, r.count]))

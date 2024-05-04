@@ -357,7 +357,7 @@ import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import MiniBar from '@/components/widgets/MiniBar.vue';
 import ShotsCircle from '@/components/widgets/ShotsCircle.vue';
 import { useTweenCounter } from '@/composition/useTweenCounter';
-import { query, queryAsync, queryAsyncFirst } from '@/db';
+import { LONG_CACHE_SETTINGS, query, queryAsync, queryAsyncFirst } from '@/db';
 import { toRelative, ms2sec, sec2minsec, secProcessor } from '@/utils';
 import { computedAsync } from '@vueuse/core';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
@@ -422,6 +422,7 @@ const totalEventCount = useTweenCounter(computed(() => totalCount.value), { dura
 const documentVisibility = useDocumentVisibility()
 let timer: ReturnType<typeof setTimeout> | null = null;
 async function loadLoop() {
+  timer = setTimeout(() => loadLoop(), 1000);
 
   if (documentVisibility.value == 'visible') {
     const result = await query<{ data: number }>(`select (select count() from Event_OnBattleResult) + 
@@ -433,7 +434,6 @@ async function loadLoop() {
     totalCount.value = result.data[0].data;
     totalCountFirstLoading.value = false;
   }
-  timer = setTimeout(() => loadLoop(), 1000);
 }
 
 onMounted(() => loadLoop())
@@ -457,7 +457,7 @@ from Event_OnShot
 where shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME' and battleMode = 'REGULAR'
 group by k
 having k between -10 and 10
-order by k`)
+order by k`, { settings: LONG_CACHE_SETTINGS })
 const damageDistributionData = computed(() => {
 
   const res = damageDistributionResult.value.data.reduce((prev, cur) => {
@@ -483,7 +483,7 @@ select
   avgIf(allyTeamCount - allyTeamSurvivedCount, result = 'lose') as enemyFragsLose,
   avgIf(enemyTeamCount - enemyTeamSurvivedCount, result = 'lose') as allyFragsLose
   from Event_OnBattleResult where battleMode = 'REGULAR'
-`);
+`, { settings: LONG_CACHE_SETTINGS });
 
 // TURBO
 const turboResult = queryAsyncFirst(`
@@ -498,7 +498,7 @@ from (select allyTeamCount - allyTeamSurvivedCount                              
              countIf(isTurbo) over (order by id rows between 99 preceding and current row) as countTurbo
       from Event_OnBattleResult
       where battleMode = 'REGULAR')
-`, { count: 0, maxTurbo: 0, avgTurbo: 0, medTurbo: 0, minTurbo: 0 });
+`, { count: 0, maxTurbo: 0, avgTurbo: 0, medTurbo: 0, minTurbo: 0 }, { settings: LONG_CACHE_SETTINGS });
 
 // STRIMSNIPER
 const strimsniper = [
@@ -523,7 +523,7 @@ and battleMode = 'REGULAR'
 group by arenaTag
 order by count desc
 limit 5;
-`)
+`, { settings: LONG_CACHE_SETTINGS })
 
 function nameFromTag(tag: string) {
   const key = tag.split('spaces/')[1] + '/name'
@@ -542,7 +542,10 @@ const maps = [
 
 // MEDIAN
 
-const medianResults = queryAsyncFirst(`select median(personal.damageDealt) as medDamage, median(personal.mileage) as medMileage from Event_OnBattleResult where tankLevel = 10`, { medDamage: 0, medMileage: 0 });
+const medianResults = queryAsyncFirst(`select median(personal.damageDealt) as medDamage, median(personal.mileage) as medMileage from Event_OnBattleResult where tankLevel = 10`,
+  { medDamage: 0, medMileage: 0 },
+  { settings: LONG_CACHE_SETTINGS }
+);
 
 
 </script>

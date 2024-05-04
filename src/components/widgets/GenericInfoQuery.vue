@@ -12,7 +12,7 @@ import { computed, ref, toRaw, watchEffect } from 'vue';
 import { useElementVisibility } from '@vueuse/core';
 
 const container = ref<HTMLElement | null>(null);
-const visible = useElementVisibility(container);
+const enabled = useElementVisibility(container);
 
 const props = defineProps<{
   query: string,
@@ -23,7 +23,7 @@ const props = defineProps<{
   miniProcessor?: (data: any) => string,
 }>()
 
-const dataDB = queryAsyncFirst(props.query, { data: 0 }, visible);
+const dataDB = queryAsyncFirst(props.query, { data: 0 }, { enabled });
 const value = computed(() => dataDB.value.data.data);
 
 </script>
