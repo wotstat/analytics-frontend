@@ -70,7 +70,7 @@
 <script lang="ts" setup>
 import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
-import { useQueryStatParams } from '@/composition/useQueryStatParams';
+import { useQueryStatParams, useQueryStatParamsCache } from '@/composition/useQueryStatParams';
 import { Status, dateToDbIndex, queryComputed, queryComputedFirst } from '@/db';
 import { computed } from 'vue';
 import TableSection from "./TableSection.vue";
@@ -80,6 +80,7 @@ import { useQueryParamStorage } from '@/composition/useQueryParamStorage';
 const TARGET_LOCALE_REGION = 'RU'
 
 const params = useQueryStatParams()
+const settings = useQueryStatParamsCache(params)
 
 const selectedContainer = useQueryParamStorage('selectedLootbox', 'any', true)
 
@@ -216,7 +217,11 @@ function getQuery(select: string, arrayJoin: string, materialized: string, tagPr
 
 }
 
-const lootboxesStats = queryComputed<Stats>(() => getQuery(
+function load(queryString: () => string) {
+  return queryComputed<Stats>(queryString, { settings: settings.value })
+}
+
+const lootboxesStats = load(() => getQuery(
   `concat(tag, ':', count) as title, tag`,
   `array join lootboxes.tag as tag, lootboxes.count as count where true`,
   `lootbox_lootbox_mv`,
@@ -224,42 +229,42 @@ const lootboxesStats = queryComputed<Stats>(() => getQuery(
   'Lootboxes'
 ))
 
-const vehiclesStats = queryComputed<Stats>(() => getQuery(
+const vehiclesStats = load(() => getQuery(
   `title`,
   `array join arrayConcat(addedVehicles, compensatedVehicles.tag) as title where true`,
   `lootbox_vehicle_mv`,
   'title'
 ))
 
-const goldStats = queryComputed<Stats>(() => getQuery(
+const goldStats = load(() => getQuery(
   `(gold - arraySum(compensatedVehicles.gold)) as title`,
   `where title > 0`,
   `lootbox_gold_mv`,
   'title'
 ))
 
-const creditsStats = queryComputed<Stats>(() => getQuery(
+const creditsStats = load(() => getQuery(
   `credits as title`,
   `where credits > 0`,
   `lootbox_credits_mv`,
   'title'
 ))
 
-const freeXpStats = queryComputed<Stats>(() => getQuery(
+const freeXpStats = load(() => getQuery(
   `freeXP as title`,
   `where freeXP > 0`,
   `lootbox_free_xp_mv`,
   'title'
 ))
 
-const premStats = queryComputed<Stats>(() => getQuery(
+const premStats = load(() => getQuery(
   `premiumPlus as title`,
   `where premiumPlus > 0`,
   `lootbox_premium_mv`,
   'title'
 ))
 
-const customizationsStats = queryComputed<Stats>(() => getQuery(
+const customizationsStats = load(() => getQuery(
   `concat(customizations.type, '|', tag, '|', customizations.count) as title, tag`,
   `array join customizations.type, customizations.tag as tag, customizations.count where true`,
   `lootbox_customizations_mv`,
@@ -267,7 +272,7 @@ const customizationsStats = queryComputed<Stats>(() => getQuery(
   `Customizations`
 ))
 
-const managementStats = queryComputed<Stats>(() => getQuery(
+const managementStats = load(() => getQuery(
   `concat(tag, ':', count) as title, tag`,
   `array join arrayConcat(array(slots, berths), equip.count) as count,
      arrayConcat(array('slots', 'berths'), equip.tag) as tag
@@ -275,19 +280,19 @@ const managementStats = queryComputed<Stats>(() => getQuery(
   `lootbox_equipment_mv`
 ))
 
-const boostersStats = queryComputed<Stats>(() => getQuery(
+const boostersStats = load(() => getQuery(
   `concat(tag, ':', boosters.value, ':', boosters.time, ':', boosters.count) as title, tag`,
   `array join boosters.tag as tag, boosters.value, boosters.time, boosters.count where true`,
   `lootbox_boosters_mv`
 ))
 
-const crewbooksStats = queryComputed<Stats>(() => getQuery(
+const crewbooksStats = load(() => getQuery(
   `concat(tag, ':', count) as title, tag`,
   `array join crewBooks.tag as tag, crewBooks.count as count where true`,
   `lootbox_crewbook_mv`
 ))
 
-const itemsStats = queryComputed<Stats>(() => getQuery(
+const itemsStats = load(() => getQuery(
   `concat(tag, ':', itemCount) as title, tag`,
   `array join items.tag as tag, items.count as itemCount where true`,
   `lootbox_item_mv`,

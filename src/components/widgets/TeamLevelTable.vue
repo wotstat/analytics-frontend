@@ -46,7 +46,7 @@
 
 <script setup lang="ts">
 import { usePercentProcessor } from '@/composition/usePercentProcessor';
-import { StatParams, whereClause } from '@/composition/useQueryStatParams';
+import { StatParams, getQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams';
 import { queryAsync } from '@/db';
 import { useElementVisibility } from '@vueuse/core';
 import { computed, ref, watchEffect } from 'vue';
@@ -54,11 +54,11 @@ import ServerStatusWrapper from '../ServerStatusWrapper.vue';
 
 
 const { params } = defineProps<{
-  params?: StatParams
+  params: StatParams
 }>()
 
 const container = ref<HTMLElement | null>(null);
-const visible = useElementVisibility(container);
+const enabled = useElementVisibility(container);
 
 
 const result = queryAsync<{
@@ -79,7 +79,7 @@ from (select visibleLevels,
       group by visibleLevels, tankLevel)
 group by battleType, position
 order by battleType, position;
-`, visible)
+`, { enabled, settings: getQueryStatParamsCache(params) })
 
 const processed = computed(() => {
   if (!result.value) return null

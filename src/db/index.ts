@@ -1,5 +1,5 @@
 
-import { ResponseJSON, createClient } from "@clickhouse/client-web";
+import { ResponseJSON, createClient, type ClickHouseSettings } from "@clickhouse/client-web";
 import { computedAsync, useLocalStorage } from "@vueuse/core";
 import { Ref, computed, ref, shallowRef, watch, watchEffect } from "vue";
 
@@ -9,9 +9,13 @@ export const clickhouse = createClient({
   database: import.meta.env.VITE_CLICKHOUSE_DATABASE,
   password: import.meta.env.VITE_CLICKHOUSE_PASSWORD,
   clickhouse_settings: {
-    max_temporary_columns: '1000',
+    max_temporary_columns: '1000'
   }
 });
+
+export const CACHE_SETTINGS = { use_query_cache: 1 } as ClickHouseSettings
+export const SHORT_CACHE_SETTINGS = { use_query_cache: 1, query_cache_ttl: 10 } as ClickHouseSettings
+export const LONG_CACHE_SETTINGS = { use_query_cache: 1, query_cache_ttl: 600 } as ClickHouseSettings
 
 export const totalRequests = useLocalStorage('totalRequests', 0)
 export const totalElapsed = useLocalStorage('totalElapsed', 0)
@@ -37,7 +41,7 @@ export function isErrorStatus(status: Status): status is { status: typeof error,
 }
 
 const activeQueries = new Map<string, Promise<unknown>>();
-export async function query<T>(query: string, { allowCache = true } = {}) {
+export async function query<T>(query: string, { allowCache = true, settings = {} as ClickHouseSettings } = {}) {
 
   if (activeQueries.has(query)) return activeQueries.get(query) as Promise<ResponseJSON<T>>;
 
@@ -45,7 +49,7 @@ export async function query<T>(query: string, { allowCache = true } = {}) {
     try {
       // await new Promise(resolve => setTimeout(resolve, 10000));
 
-      const result = await clickhouse.query({ query, format: 'JSON' });
+      const result = await clickhouse.query({ query, format: 'JSON', clickhouse_settings: settings });
       const response = await result.json<T>()
 
       totalElapsed.value += response.statistics?.elapsed ?? 0
@@ -65,7 +69,7 @@ export async function query<T>(query: string, { allowCache = true } = {}) {
   return current;
 }
 
-export function queryComputed<T>(queryString: () => string | null) {
+export function queryComputed<T>(queryString: () => string | null, { settings = {} as ClickHouseSettings } = {}) {
   const result = shallowRef<{ status: Status, data: T[] }>({ status: loading, data: [] });
 
   watch(queryString, async (q) => {
@@ -73,7 +77,7 @@ export function queryComputed<T>(queryString: () => string | null) {
 
     try {
       result.value = { data: [], status: loading };
-      const { data } = await query<T>(q);
+      const { data } = await query<T>(q, { settings });
       result.value = { data, status: success };
     } catch (reason) {
       console.error(reason);
@@ -94,7 +98,7 @@ export function queryComputedFirst<T>(queryString: () => string | null, defaultV
 
 }
 
-export function queryAsync<T>(queryString: string, enabled: Ref<boolean> = ref(true)) {
+export function queryAsync<T>(queryString: string, { enabled = ref(true), settings = {} as ClickHouseSettings } = {}) {
   const result = shallowRef<{ status: Status, data: T[] }>({ status: loading, data: [] });
 
   const stop = watch(enabled, async (value) => {
@@ -103,7 +107,7 @@ export function queryAsync<T>(queryString: string, enabled: Ref<boolean> = ref(t
     setTimeout(() => stop(), 0);
 
     try {
-      const { data } = await query<T>(queryString);
+      const { data } = await query<T>(queryString, { settings });
       result.value = { data, status: success };
     } catch (reason) {
       console.error(reason);
@@ -114,8 +118,8 @@ export function queryAsync<T>(queryString: string, enabled: Ref<boolean> = ref(t
   return result
 }
 
-export function queryAsyncFirst<T>(queryString: string, defaultValue: T, enabled: Ref<boolean> = ref(true)) {
-  const result = queryAsync<T>(queryString, enabled);
+export function queryAsyncFirst<T>(queryString: string, defaultValue: T, { enabled = ref(true), settings = {} as ClickHouseSettings } = {}) {
+  const result = queryAsync<T>(queryString, { enabled, settings });
 
   return computed(() => ({
     status: result.value.status as Status,
