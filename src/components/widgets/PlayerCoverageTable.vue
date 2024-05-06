@@ -93,7 +93,7 @@ limit 30`, { enabled })
 
 const data = computed(() => {
   return result.value.data?.map((item, index) => {
-    const prefix = item.region.toLowerCase() === 'ru' ? 'https://tanki.su/ru/community/accounts/' : 'https://worldoftanks.eu/en/community/accounts/';
+    const prefix = ['ru', 'ct'].includes(item.region.toLowerCase()) ? 'https://tanki.su/ru/community/accounts/' : 'https://worldoftanks.eu/en/community/accounts/';
     return {
       ...item,
       url: `${prefix}${item.bdid}-${item.name}/`,
