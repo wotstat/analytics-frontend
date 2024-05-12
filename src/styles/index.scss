@@ -8,7 +8,6 @@
 
   color-scheme: dark;
   color: var(--font-color);
-  background-color: #242424;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -16,6 +15,10 @@
   -moz-osx-font-smoothing: grayscale;
 
   --font-color: rgba(255, 255, 255, 0.87);
+
+  body {
+    background-color: #242424;
+  }
 }
 
 code {

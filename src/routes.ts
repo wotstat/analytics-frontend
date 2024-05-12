@@ -9,6 +9,7 @@ import Maps from './pages/sessionInfographics/Maps.vue'
 import Coverage from './pages/sessionInfographics/Coverage.vue'
 import Distribution from './pages/damageDistribution/Content.vue'
 import Lootbox from './pages/lootbox/Index.vue'
+import Chuck from './pages/obs/ChuckNorris.vue'
 
 
 
@@ -43,6 +44,11 @@ const routes = [
   {
     path: '/map',
     component: () => import('./pages/map/Index.vue')
+  },
+  {
+    path: '/widget/chuck-norris',
+    component: Chuck,//() => import('./pages/obs/ChuckNorris.vue'),
+    meta: { clearPage: true }
   }
 ] satisfies RouteRecordRaw[]
 
