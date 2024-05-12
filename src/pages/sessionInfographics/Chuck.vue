@@ -14,6 +14,10 @@
       <li>1 урон – 1 очко</li>
     </ul>
 
+    <div>
+      <button @click="showWidget = true">Виджет для OBS</button>
+    </div>
+
     <div :class="classSettings">
       <div>
         <input type="checkbox" name="color" id="color" v-model="colorDecoration">
@@ -58,22 +62,61 @@
         <b>Необходимо в фильтрах указать ник игрока (шестерёнка рядом с заголовком)</b>
       </div>
     </div>
+
+
+    <PopupWindow title="Виджет для OBS" v-if="showWidget" @close="showWidget = false">
+      <div class="popup-container">
+        <p>Виджет отображает среднее количество очков за серию для всех совзводных, а так же персональные результаты за
+          прошлый бой</p>
+        <p>Игровые ники загрузятся после завершения первого боя</p>
+        <div class="preview">
+          <img src="/screenPart.png" alt="">
+          <div class="widget-container">
+            <ChuckNorris class="widget" />
+          </div>
+        </div>
+        <p>Добавьте источник <b>"браузер"</b> в OBS и вставьте туда следующую ссылку:</p>
+        <br>
+        <div class="url">
+          {{ getWidgetUrl() }}
+        </div>
+        <br>
+        <button @click="copyWidgetLink">Скопировать</button>
+        <br>
+        <br>
+        <i>Ссылку можно показывать кому угодно, ничего секретного в ней нет</i>
+      </div>
+
+    </PopupWindow>
   </div>
 </template>
 
 <script lang="ts" setup>
 import FullScreenCard from '@/components/FullScreenCard.vue';
+import PopupWindow from '@/components/PopupWindow.vue';
 import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue';
 import ChuckTable from '@/components/widgets/ChuckTable.vue';
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 import { loading, queryAsync, success } from '@/db';
 import { ChuckResult } from '@/db/schema';
 import { useLocalStorage } from '@vueuse/core';
-import { computed } from 'vue';
-
+import { computed, ref } from 'vue';
+import ChuckNorris from '../obs/ChuckNorris.vue';
+import { useRoute } from 'vue-router';
 const colorDecoration = useLocalStorage('chuckColorDecoration', true)
 const contrastDecoration = useLocalStorage('chuckContrastDecoration', false)
 
+const showWidget = ref(false)
+
+function getWidgetUrl() {
+  return window.location.origin + '/widget/chuck-norris' + window.location.search
+}
+
+function copyWidgetLink() {
+  navigator.clipboard.writeText(getWidgetUrl())
+}
+
+const route = useRoute()
 const classSettings = computed(() => {
   return [
     !colorDecoration.value ? 'disable-effect' : '',
@@ -221,6 +264,53 @@ const totalResult = computed(() => {
 
 .container {
   overflow-x: auto;
+}
+
+.popup-container {
+  max-width: 700px;
+
+  .preview {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    margin: 20px 0;
+
+    img {
+      width: 100%;
+      border-radius: 10px;
+    }
+
+    .widget-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      .widget {
+        font-size: 5.2px;
+
+        &.solo {
+          font-size: 8px;
+        }
+
+        max-width: 400px;
+        box-sizing: border-box;
+      }
+    }
+  }
+
+  .url {
+    background-color: #1a1a1a;
+    border-radius: 10px;
+    padding: 10px;
+    overflow: auto;
+    // white-space: nowrap;
+  }
 }
 
 ul {

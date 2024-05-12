@@ -1,9 +1,15 @@
 <template>
   <div class="app">
-    <Header />
-    <div class="content">
+    <template v-if="!route.meta.clearPage">
+      <Header v-if="!route.meta.hideHeader" />
+      <div class="content">
+        <RouterView />
+      </div>
+    </template>
+
+    <template v-else>
       <RouterView />
-    </div>
+    </template>
 
     <div class="devmode" v-if="isDevMode">
       <p>В РАЗРАБОТКЕ</p>
@@ -13,7 +19,7 @@
 
 
 <script setup lang="ts">
-import { RouterView } from 'vue-router';
+import { RouterView, useRoute } from 'vue-router';
 import Header from "./components/Header.vue";
 
 const isWindows = navigator.platform.indexOf('Win') > -1
@@ -21,6 +27,8 @@ const boldWeight = isWindows ? 700 : 800
 const mediumBoldWeight = isWindows ? 500 : 600
 
 const isDevMode = import.meta.env.VITE_SHOW_DEV_WATERMARK === 'true';
+
+const route = useRoute();
 
 </script>
 
