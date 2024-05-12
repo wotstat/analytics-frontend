@@ -43,6 +43,11 @@ const routes = [
   {
     path: '/map',
     component: () => import('./pages/map/Index.vue')
+  },
+  {
+    path: '/widget/chuck-norris',
+    component: () => import('./pages/obs/ChuckNorris.vue'),
+    meta: { clearPage: true }
   }
 ] satisfies RouteRecordRaw[]
 
