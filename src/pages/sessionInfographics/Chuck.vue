@@ -15,7 +15,7 @@
     </ul>
 
     <div>
-      <button @click="showWidget = true">Виджет для OBS</button>
+      <button class="light" @click="showWidget = true">Виджет для OBS</button>
     </div>
 
     <div :class="classSettings">
@@ -75,16 +75,20 @@
             <ChuckNorris class="widget" />
           </div>
         </div>
-        <p>Добавьте источник <b>"браузер"</b> в OBS и вставьте туда следующую ссылку:</p>
-        <br>
-        <div class="url">
-          {{ getWidgetUrl() }}
-        </div>
-        <br>
-        <button @click="copyWidgetLink">Скопировать</button>
-        <br>
-        <br>
-        <i>Ссылку можно показывать кому угодно, ничего секретного в ней нет</i>
+
+        <template v-if="params.player">
+          <p>Добавьте источник <b>"браузер"</b> в OBS и вставьте туда следующую ссылку:</p>
+          <br>
+          <div class="url">
+            {{ getWidgetUrl() }}
+          </div>
+          <br>
+          <button @click="copyWidgetLink">Скопировать</button>
+          <br>
+          <br>
+          <i>Ссылку можно показывать кому угодно, ничего секретного в ней нет</i>
+        </template>
+        <p v-else><b>Необходимо в фильтрах указать ник игрока (шестерёнка рядом с заголовком)</b></p>
       </div>
 
     </PopupWindow>
@@ -104,7 +108,7 @@ import { computed, ref } from 'vue';
 import ChuckNorris from '../obs/ChuckNorris.vue';
 import { useRoute } from 'vue-router';
 const colorDecoration = useLocalStorage('chuckColorDecoration', true)
-const contrastDecoration = useLocalStorage('chuckContrastDecoration', false)
+const contrastDecoration = useLocalStorage('chuckHightContrast', true)
 
 const showWidget = ref(false)
 
