@@ -32,7 +32,7 @@
       <tbody>
         <tr v-for="(item, i) in part.lines[1]">
           <!-- <td>{{ item }}</td> -->
-          <td>{{ i + 1 }}</td>
+          <td class="battleNumber"> {{ i + 1 }} </td>
           <td class="l-b">{{ nameFromTag(item.arena).value }}</td>
 
           <template v-for="(player, i) in item.players">
