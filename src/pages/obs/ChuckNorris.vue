@@ -8,17 +8,20 @@ import ChuckNorris from '@/components/obs/ChuckNorris.vue';
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 import { query, queryAsync } from '@/db';
 import { ChuckResult } from '@/db/schema';
-import { computed, onMounted, ref, shallowRef, watchEffect } from 'vue';
+import { computed, onMounted, onUnmounted, ref, shallowRef, watchEffect } from 'vue';
 
 const params = useQueryStatParams()
 const allow = computed(() => params.value.player != null)
+let enabled = true
 
 const data = shallowRef<ChuckResult[]>([])
 
 async function load() {
   if (!allow.value) return
+  if (!enabled) return
 
-  const res = await query<ChuckResult>(`
+  try {
+    const res = await query<ChuckResult>(`
 with
    groupArray(pname) as name,
    groupArray(ptag) as tag,
@@ -63,12 +66,20 @@ group by onBattleStartId, arena, result, duration, id, dateTime, spgCount, enemy
 order by id desc
   `, { allowCache: false })
 
-  data.value = res.data
+    data.value = res.data
+  } catch (error) {
+    console.error(error);
+  }
+
   setTimeout(() => load(), 3000);
 }
 
 onMounted(() => {
   load()
+})
+
+onUnmounted(() => {
+  enabled = false
 })
 
 const splittedResult = computed(() => {

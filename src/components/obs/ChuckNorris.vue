@@ -13,7 +13,7 @@
 
       <tbody>
         <tr v-for="(player, i) in players" v-if="players.length > 1">
-          <th class="wide">{{ nickProcessor(player.nickname) }}</th>
+          <th class="wide nickname">{{ nickProcessor(player.nickname) }}</th>
           <td class="green">{{ processor(avgTween[i]) }}</td>
           <td>{{ processor(lastTween[i]) }}</td>
         </tr>
@@ -52,7 +52,7 @@ const props = defineProps<{
 const processor = useFixedSpaceProcessor(0)
 
 function nickProcessor(name: string) {
-  if (name.length > 13) return name.slice(0, 13) + '...';
+  if (name.endsWith('_Chuck')) return name.slice(0, -6);
   return name;
 }
 
@@ -76,7 +76,7 @@ onMounted(() => {
 <style lang="scss" scoped>
 .card {
   font-size: 1.3vw;
-  padding: 3em;
+  padding: 2.1em 3em;
   border-radius: 3em;
   background-color: #3a3a3ad2;
   // background-color: #2022315a;
@@ -136,6 +136,10 @@ onMounted(() => {
           text-align: center;
         }
       }
+
+      th:last-child {
+        padding-left: 0.58em;
+      }
     }
 
     tbody {
@@ -173,6 +177,11 @@ onMounted(() => {
 
       }
     }
+  }
+
+  .nickname {
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .green {
