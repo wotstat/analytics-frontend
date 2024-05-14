@@ -6,7 +6,7 @@
 <script setup lang="ts">
 import ChuckNorris from '@/components/obs/ChuckNorris.vue';
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
-import { query, queryAsync } from '@/db';
+import { query } from '@/db';
 import { ChuckResult } from '@/db/schema';
 import { computed, onMounted, onUnmounted, ref, shallowRef, watchEffect } from 'vue';
 
@@ -14,38 +14,25 @@ const params = useQueryStatParams()
 const allow = computed(() => params.value.player != null)
 let enabled = true
 
-const data = shallowRef<ChuckResult[]>([])
+type TargetChuckResult = { players: ChuckResult['players'], totalScore: number }
+const data = shallowRef<TargetChuckResult[]>([])
 
 async function load() {
   if (!allow.value) return
   if (!enabled) return
 
   try {
-    const res = await query<ChuckResult>(`
+    const res = await query<TargetChuckResult>(`
 with
    groupArray(pname) as name,
    groupArray(ptag) as tag,
    groupArray(pdmg) as dmg,
    groupArray(pkill) as kill,
    groupArray(toUInt32(pdmg + pkill * 300)) as score
-select
-       id,
-       dateTime,
-       arena,
-       result,
-       duration,
-       spgCount,
-       enemyTeamMaxHealth,
-       arraySort(t -> t.1, arrayZip(name, tag, dmg, kill, score)) as players,
+select arraySort(t -> t.1, arrayZip(name, tag, dmg, kill, score)) as players,
        toUInt32(arraySum(players.5) + if(result = 'win', 3000, 0)) as totalScore
-from (select arenaTag as arena,
-             id,
-             dateTime,
+from (select id,
              result,
-             duration,
-             onBattleStartId,
-             spgCount,
-             enemyTeamMaxHealth,
              personal.squadID as playerSquad,
              playersResults.squadID as squads,
              playerName as playerName,
@@ -62,7 +49,7 @@ array join squads as psquad,
            kills as pkill,
            tankTags as ptag
 where psquad = playerSquad and playerSquad != 0 or pname = playerName
-group by onBattleStartId, arena, result, duration, id, dateTime, spgCount, enemyTeamMaxHealth
+group by result, id
 order by id desc
   `, { allowCache: false })
 
@@ -83,7 +70,7 @@ onUnmounted(() => {
 })
 
 const splittedResult = computed(() => {
-  let parts = new Map<string, ChuckResult[]>()
+  let parts = new Map<string, TargetChuckResult[]>()
 
   for (const item of data.value) {
     const key = item.players.map(t => t[0]).join(',')
