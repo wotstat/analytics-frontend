@@ -48,7 +48,7 @@
           <h4>
             <input type="checkbox" v-model="enableTankFilter">
             Танк
-            <span class="reset" v-if="selectedTanks.length" @click="selectedTanks = []"><a>Сбросить</a></span>
+            <span class="reset" v-if="selectedTanks.length" @click="clearTankFilter"><a>Сбросить</a></span>
           </h4>
           <div v-if="enableTankFilter" class="tank-selector flex ver gap-0">
             <input type="text" placeholder="Поиск" v-model="searchText">
@@ -316,6 +316,11 @@ function clickTank(tank: Tank) {
   } else {
     selectedTanks.value.push(tank);
   }
+}
+
+function clearTankFilter() {
+  selectedTanks.value = [];
+  enableTankFilter.value = false;
 }
 
 watch(periodVariant, (val) => {
