@@ -19,8 +19,6 @@ export function useTweenCounter<T extends number | number[]>(value: Ref<T> | Com
         gsap.to(tweened[i], { duration: options?.duration ?? 0.5, value: target[i] })
       }
     } else {
-      console.log('startTween', target, tweened);
-
       gsap.to(tweened, { duration: options?.duration ?? 0.5, value: target })
     }
   }
