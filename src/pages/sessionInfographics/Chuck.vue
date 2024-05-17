@@ -14,56 +14,58 @@
       <li>1 урон – 1 очко</li>
     </ul>
 
-    <div class="flex">
-      <button class="light" @click="showWidget = true">Виджет для OBS</button>
-      <button class="light" @click="showTimecodes = true">Таймкоды для стрима</button>
-    </div>
-
-    <div :class="classSettings">
-      <div>
-        <input type="checkbox" name="color" id="color" v-model="colorDecoration">
-        <label for="color ">Цветовая разметка.
-          <span class="text-effect red">Плохой</span>;
-          <span class="text-effect yellow">Средний +- 25%</span>;
-          <span class="text-effect green">Хороший</span>
-        </label>
+    <template v-if="allow">
+      <div class="flex">
+        <button class="light" @click="showWidget = true">Виджет для OBS</button>
+        <button class="light" @click="showTimecodes = true">Таймкоды для стрима</button>
       </div>
 
-      <div v-if="colorDecoration">
-        <input type="checkbox" name="contrast" id="contrast" v-model="contrastDecoration">
-        <label for="contrast">Повышенная контрастность</label>
-      </div>
-    </div>
-
-    <div :class="classSettings" class="flex ver">
-      <ServerStatusWrapper :status="response.status" v-if="allow">
-        <div v-if="response.status == loading" class="card">
-          <table class="hover-highlight" width="100%">
-            <tbody>
-              <tr class="skeleton" v-for="i in new Array(5)">
-                <td colspan="4"></td>
-                <td></td>
-                <td colspan="4"></td>
-              </tr>
-            </tbody>
-          </table>
+      <div :class="classSettings">
+        <div>
+          <input type="checkbox" name="color" id="color" v-model="colorDecoration">
+          <label for="color ">Цветовая разметка.
+            <span class="text-effect red">Плохой</span>;
+            <span class="text-effect yellow">Средний +- 25%</span>;
+            <span class="text-effect green">Хороший</span>
+          </label>
         </div>
 
-        <FullScreenCard v-for="part in totalResult">
-          <ChuckTable :part="part" />
-          <template v-slot:full>
-            <div :class="classSettings" class="fullscreen">
-              <ChuckTable :part="part" />
-            </div>
-          </template>
-        </FullScreenCard>
-      </ServerStatusWrapper>
-
-      <div v-else class="card flex center">
-        <b>Необходимо в фильтрах указать ник игрока (шестерёнка рядом с заголовком)</b>
+        <div v-if="colorDecoration">
+          <input type="checkbox" name="contrast" id="contrast" v-model="contrastDecoration">
+          <label for="contrast">Повышенная контрастность</label>
+        </div>
       </div>
-    </div>
 
+      <div :class="classSettings" class="flex ver">
+        <ServerStatusWrapper :status="response.status">
+          <div v-if="response.status == loading" class="card">
+            <table class="hover-highlight" width="100%">
+              <tbody>
+                <tr class="skeleton" v-for="i in new Array(5)">
+                  <td colspan="4"></td>
+                  <td></td>
+                  <td colspan="4"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <FullScreenCard v-for="part in totalResult">
+            <ChuckTable :part="part" />
+            <template v-slot:full>
+              <div :class="classSettings" class="fullscreen">
+                <ChuckTable :part="part" />
+              </div>
+            </template>
+          </FullScreenCard>
+        </ServerStatusWrapper>
+
+
+      </div>
+    </template>
+    <div v-else class="card flex center">
+      <b>Необходимо в фильтрах указать ник игрока (шестерёнка рядом с заголовком)</b>
+    </div>
 
     <PopupWindow title="Виджет для OBS" v-if="showWidget" @close="showWidget = false">
       <ChuckInfo />

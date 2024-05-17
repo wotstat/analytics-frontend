@@ -1,8 +1,8 @@
 <template>
-  <div class="popup-container">
+  <div class="popup-container without-shadow" v-if="params.player">
     <p>Вычисляет таймкоды для записи стрима.</p>
 
-    <h3>Шаг 1</h3>
+    <h3 class="text-effect green">Шаг 1</h3>
     <p>
       Укажите таймкод любого боя. Если стрим прерывался по техническим причинам,
       вы можете указать таймкод до и после прерывания.
@@ -35,7 +35,7 @@
       </table>
     </div>
 
-    <h3>Шаг 2</h3>
+    <h3 class="text-effect green">Шаг 2</h3>
     <div class="flex">
       <p class="flex-1">Укажите формат сообщения</p>
       <a v-if="formatTemplate != defaultTemplate" @click.prevent="formatTemplate = defaultTemplate">Сбросить</a>
@@ -49,11 +49,12 @@
       <li>{map} – название карты</li>
       <li>{dmg} – урон</li>
       <li>{frags} – фраги</li>
+      <li>{gm} – сумма для отметки</li>
       <li>{chuck} – сумма очков Чака</li>
       <li>{comment} – подпись хорошего и наилучшего боя (по очкам Чака)</li>
     </ul>
 
-    <h3>Шаг 3</h3>
+    <h3 class="text-effect green">Шаг 3</h3>
     <p>
       Скопируйте таймкоды и вставьте в описание записи стрима
     </p>
@@ -65,6 +66,9 @@
     <div class="flex">
       <button @click="copy">Скопировать</button>
     </div>
+  </div>
+  <div class="popup-container" v-else>
+    <b>Необходимо в фильтрах указать ник игрока (шестерёнка рядом с заголовком)</b>
   </div>
 </template>
 
@@ -96,14 +100,12 @@ function getDate(dateString: string) {
 
 function getTimecode(time: number) {
   if (time < 0) return 'До начала'
-  const date = new Date(time * 1000).toLocaleString('ru-RU', {
-    hour: time > 60 * 60 ? '2-digit' : undefined,
-    minute: '2-digit',
-    second: '2-digit',
-    timeZone: 'UTC'
-  })
+  const seconds = time % 60
+  const minutes = Math.floor(time / 60) % 60
+  const hours = Math.floor(time / 60 / 60)
 
-  return date
+  if (hours > 0) return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
 
 const processedTimings = computed(() => {
@@ -137,7 +139,7 @@ const processedTimings = computed(() => {
     }
 
     const dateDelta = date.getTime() - lastDate.getTime()
-    res[i] = (lastTime + Math.floor(dateDelta / 1000))
+    res[i] = (lastTime + Math.round(dateDelta / 1000))
   }
 
   return res
@@ -166,6 +168,7 @@ const resultTimecodes = computed(() => {
       .replaceAll('{map}', nameFromTag(t.res.arenaTag).value)
       .replaceAll('{dmg}', t.res.pDmg.toString())
       .replaceAll('{frags}', t.res.pKills.toString())
+      .replaceAll('{gm}', t.res.gunMarkSum.toString())
       .replaceAll('{chuck}', t.res.chuck.toString())
       .replaceAll('{comment}', getComment(t))
     )
@@ -195,11 +198,12 @@ const result = queryComputed<{
   arenaTag: string,
   tankTag: string,
   result: string,
+  gunMarkSum: number,
   pDmg: number,
   pKills: number,
   chuck: number
-}>(() => `
-select dateTime, arenaTag, tankTag, result, pDmg, pKills,
+}>(() => params.value.player === null ? null : `
+select dateTime, arenaTag, tankTag, result, pDmg, pKills, gunMarkSum,
        toUInt32(pDmg + arraySum(squadmateDamage) + (pKills + arraySum(squadmateKills)) * 300 + if(result = 'win', 3000, 0)) as chuck
 from
 (
@@ -213,7 +217,7 @@ join
         arrayZip(playersResults.squadID, playersResults.name, playersResults.damageDealt, playersResults.kills) as squadResults,
         arrayFilter(x -> x.1 = personal.squadID and x.1 != 0 and x.2 != playerName, squadResults) as squadmateResults,
         squadmateResults.3 as squadmateDamage, squadmateResults.4 as squadmateKills
-    select onBattleStartId, arenaTag, result, personal.damageDealt as pDmg, personal.kills as pKills, squadmateDamage, squadmateKills
+    select onBattleStartId, arenaTag, result, personal.damageDealt as pDmg, personal.kills as pKills, squadmateDamage, squadmateKills, gunMarkSum
     from Event_OnBattleResult
     ${whereClause(params.value)}
 ) as T2
@@ -288,7 +292,7 @@ watch(result, () => {
           background-color: transparent;
           text-align: center;
           margin: 0;
-          padding: 0ch;
+          padding: 0;
           font-size: 16px;
         }
 
