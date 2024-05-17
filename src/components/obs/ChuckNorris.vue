@@ -39,6 +39,7 @@
       <div class="progress"></div>
     </div>
   </div>
+  <!-- <button @click="showRecordScreen(22542)">Show Best</button> -->
 </template>
 
 
@@ -377,12 +378,12 @@ defineExpose({
 
   @keyframes showRecord {
     0% {
-      scale: 0.7;
+      transform: scale(0.7);
       opacity: 0;
     }
 
     80% {
-      scale: 1.2;
+      transform: scale(1.2);
       opacity: 1;
     }
 
