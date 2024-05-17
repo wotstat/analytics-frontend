@@ -259,7 +259,6 @@ watch(result, () => {
     background-color: #1a1a1a;
     padding: 10px;
     white-space: pre;
-    margin-top: 10px;
   }
 
   table {
