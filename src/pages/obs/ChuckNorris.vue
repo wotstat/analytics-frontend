@@ -136,7 +136,8 @@ const targetP = computed(() => {
 
 watch(targetP, (val, old) => {
   if (old.battles < 5) return
-  if (val.sum.max == old.sum.max) return
+  if (val.battles < 5) return
+  if (val.sum.max <= old.sum.max) return
 
   widget.value?.showRecordScreen(val.sum.max)
 })
