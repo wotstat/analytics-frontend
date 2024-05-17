@@ -69,11 +69,12 @@ export async function query<T>(query: string, { allowCache = true, settings = {}
   return current;
 }
 
-export function queryComputed<T>(queryString: () => string | null, { settings = {} as ClickHouseSettings } = {}) {
+export function queryComputed<T>(queryString: () => string | null, { settings = {} as ClickHouseSettings, enabled = ref(true) } = {}) {
   const result = shallowRef<{ status: Status, data: T[] }>({ status: loading, data: [] });
 
-  watch(queryString, async (q) => {
+  watch(() => [queryString(), enabled.value] as const, async ([q, enabled]) => {
     if (!q) return;
+    if (!enabled) return;
 
     try {
       result.value = { data: [], status: loading };
