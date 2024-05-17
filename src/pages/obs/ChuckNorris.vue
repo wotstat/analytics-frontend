@@ -1,5 +1,5 @@
 <template>
-  <ChuckNorris v-bind="targetP" />
+  <ChuckNorris v-bind="targetP" ref="widget" />
 </template>
 
 
@@ -8,7 +8,7 @@ import ChuckNorris from '@/components/obs/ChuckNorris.vue';
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 import { query } from '@/db';
 import { ChuckResult } from '@/db/schema';
-import { computed, onMounted, onUnmounted, ref, shallowRef, watchEffect } from 'vue';
+import { computed, onMounted, onUnmounted, ref, shallowRef, watch, watchEffect } from 'vue';
 
 const params = useQueryStatParams()
 const allow = computed(() => params.value.player != null)
@@ -16,6 +16,7 @@ let enabled = true
 
 type TargetChuckResult = { players: ChuckResult['players'], totalScore: number }
 const data = shallowRef<TargetChuckResult[]>([])
+const widget = ref<InstanceType<typeof ChuckNorris> | null>(null)
 
 async function load() {
   if (!allow.value) return
@@ -93,7 +94,8 @@ const prepare = computed(() => {
     players: b[0].players.map(t => t[0]),
     total: b.length,
     sum: b.map(t => t.totalScore).reduce((a, b) => a + b, 0),
-    sumLast: b[0].totalScore
+    sumLast: b[0].totalScore,
+    max: Math.max(...b.map(t => t.totalScore))
   }
 })
 
@@ -107,7 +109,8 @@ const targetP = computed(() => {
     ],
     sum: {
       avg: 0,
-      last: 0
+      last: 0,
+      max: 0
     },
     battles: 0
   }
@@ -125,9 +128,17 @@ const targetP = computed(() => {
     battles: r.total,
     sum: {
       avg: r.sum / r.total,
-      last: r.sumLast
+      last: r.sumLast,
+      max: r.max
     }
   }
+})
+
+watch(targetP, (val, old) => {
+  if (old.battles < 5) return
+  if (val.sum.max == old.sum.max) return
+
+  widget.value?.showRecordScreen(val.sum.max)
 })
 
 </script>
