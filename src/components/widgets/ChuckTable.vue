@@ -36,7 +36,7 @@
           <td class="l-b">{{ nameFromTag(item.arena).value }}</td>
 
           <template v-for="(player, i) in item.players">
-            <td class="l-b">{{ getTankName(player[1]) }}</td>
+            <td class="l-b">{{ getTankName(player[1], true) }}</td>
             <td class="text-effect" :class="getRelativeColor(part.avg[i][0], player[2])">{{ player[2] }}</td>
             <td class="text-effect" :class="getRelativeColor(part.avg[i][1], player[3])">{{ player[3] }}</td>
             <td class="text-effect" :class="getRelativeColor(part.avg[i][2], player[4])">{{ player[4] }}</td>
