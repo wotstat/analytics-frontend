@@ -36,9 +36,10 @@
     </div>
 
     <h3>Шаг 2</h3>
-    <p>
-      Укажите формат сообщения
-    </p>
+    <div class="flex">
+      <p class="flex-1">Укажите формат сообщения</p>
+      <a v-if="formatTemplate != defaultTemplate" @click.prevent="formatTemplate = defaultTemplate">Сбросить</a>
+    </div>
     <div class="flex">
       <input type="text" class="format flex-1" v-model="formatTemplate">
     </div>
@@ -232,6 +233,10 @@ watch(result, () => {
 
 .popup-container {
   max-width: 700px;
+
+  a {
+    cursor: pointer;
+  }
 
   h3 {
     margin-top: 2em;

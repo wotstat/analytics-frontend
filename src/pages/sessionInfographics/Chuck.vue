@@ -92,7 +92,7 @@ const colorDecoration = useLocalStorage('chuckColorDecoration', true)
 const contrastDecoration = useLocalStorage('chuckHightContrast', true)
 
 const showWidget = ref(false)
-const showTimecodes = ref(true)
+const showTimecodes = ref(false)
 
 const classSettings = computed(() => {
   return [
