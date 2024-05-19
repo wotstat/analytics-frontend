@@ -1,6 +1,9 @@
 <template>
   <div class="popup-container without-shadow" v-if="params.player">
-    <p>Вычисляет таймкоды для записи стрима.</p>
+    <p>
+      Вычисляет таймкоды для записи стрима. <a href="https://www.youtube.com/watch?v=zoDMW87S_kc" target="_blank"
+        rel="noopener noreferrer">Видео туториал</a> как пользоваться.
+    </p>
 
     <h3 class="text-effect green">Шаг 1</h3>
     <p>
