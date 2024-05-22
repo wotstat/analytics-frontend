@@ -16,7 +16,7 @@
         <thead>
           <tr>
             <th>Таймкод</th>
-            <th>Время, мск</th>
+            <!-- <th>Время, мск</th>  -->
             <th>Карта</th>
             <th>Танк</th>
             <th>Урон</th>
@@ -28,7 +28,7 @@
             <td class="timecode">
               <input type="text" :placeholder="getTimecode(processedTimings[i])" v-model="timings[i]">
             </td>
-            <td>{{ getDate(battle.dateTime) }}</td>
+            <!-- <td>{{ getDate(battle.dateTime) }}</td> -->
             <td>{{ nameFromTag(battle.arenaTag).value }}</td>
             <td>{{ getTankName(battle.tankTag, true) }}</td>
             <td>{{ battle.pDmg }}</td>
