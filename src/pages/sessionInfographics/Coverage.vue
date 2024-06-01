@@ -47,7 +47,7 @@ const query = mv ? `
   from Event_OnBattleResult
   ${whereClause(params)}`
 
-const coverageData = queryAsyncFirst(query, { data: 0 }, { enabled, settings: settings.value })
+const coverageData = queryAsyncFirst(query, { data: 0 }, { enabled, settings: { ...settings.value, query_cache_nondeterministic_function_handling: 'save' } })
 
 console.log(bestMV('player_coverage', params));
 

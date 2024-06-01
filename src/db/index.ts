@@ -137,6 +137,10 @@ export function dbIndexToDate(index: string) {
   return Math.floor(time / 1000)
 }
 
+export function dateToDbDate(date: Date) {
+  return date.toISOString().slice(0, 10)
+}
+
 export function semverCompareStartFrom(target: string, addWhere = true) {
   const parts = target.split('.').map(t => parseInt(t))
   const major = parts[0] ?? 0
