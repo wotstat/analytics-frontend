@@ -1,4 +1,4 @@
-import { CACHE_SETTINGS, SHORT_CACHE_SETTINGS, dateToDbIndex } from "@/db";
+import { CACHE_SETTINGS, SHORT_CACHE_SETTINGS, dateToDbDate, dateToDbIndex } from "@/db";
 import { customBattleModes } from "@/utils/wot";
 import { ClickHouseSettings } from "@clickhouse/client-web";
 import { MaybeRefOrGetter, Ref, ShallowRef, computed, ref, shallowRef, toValue, watchEffect } from "vue";
@@ -184,8 +184,14 @@ export function whereClause(params: MaybeRefOrGetter<StatParams>, options: Optio
       if (valueParams.period.type == 'fromTo') {
         result.push(`id >= ${dateToDbIndex(valueParams.period.from)}`);
         result.push(`id <= ${dateToDbIndex(valueParams.period.to)}`);
+
+        result.push(`dateTime >= '${dateToDbDate(valueParams.period.from)}'`);
+        const toDate = new Date(valueParams.period.to.getTime() + 24 * 60 * 60 * 1000);
+        result.push(`dateTime <= '${dateToDbDate(toDate)}'`);
+
       } else if (valueParams.period.type == 'fromToNow') {
         result.push(`id >= ${dateToDbIndex(valueParams.period.from)}`);
+        result.push(`dateTime >= '${dateToDbDate(valueParams.period.from)}'`);
       } else if (valueParams.period.type == 'lastX') {
         const whereClause = whereClauseArray(valueParams, ignore);
         const lastIDs = `(select id from Event_OnBattleStart ${whereClause.length == 0 ? '' : `where ${whereClause.join(' AND ')}`} order by id desc limit ${valueParams.period.count})`;
