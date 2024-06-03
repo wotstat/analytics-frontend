@@ -163,7 +163,7 @@ $mobile-layout: 1100px;
     padding: 5px 1rem;
     position: sticky;
     top: 40px;
-    z-index: 100;
+    z-index: 10;
 
     .router-links {
       display: flex;
