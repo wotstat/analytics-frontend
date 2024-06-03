@@ -63,10 +63,13 @@
       <p>Если вы хотите больше графиков, можете написать мне</p>
       <p>Так же вы можете получить прямой доступ к базе данных и выполнять любые аналитические запросы на языке SQL</p>
       <br>
-      <p>Финансово поддержать разработку вы можете на <a href='https://boosty.to/wotstat'
-          target="_blank">boosty.to/wotstat</a></p>
+      <p>Финансово поддержать разработку вы можете на
+        <a href='https://boosty.to/wotstat' target="_blank">boosty.to/wotstat</a>
+        или
+        <a href='https://patreon.com/WotStat' target="_blank">patreon.com/wotstat</a>
+      </p>
       <br>
-      <p>Связаться со мной вы можете по почте <a href="mailto:soprachev@mail.ru">soprachev@mail.ru</a></p>
+      <p>Связаться со мной вы можете по почте <a href="mailto:support@wotstat.info">support@wotstat.info</a></p>
     </div>
   </div>
 </template>

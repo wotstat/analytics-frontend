@@ -102,6 +102,10 @@ textarea:focus-visible {
   outline: none;
 }
 
+svg.icon {
+  fill: currentColor;
+}
+
 // @media (prefers-color-scheme: light) {
 //   :root {
 //     color: #213547;
