@@ -12,19 +12,16 @@
           target="_blank" rel="noopener noreferrer">SQL</a>
 
 
-        <!-- <div class="sep"></div> -->
+        <!-- <div class="sep"></div>
 
-        <!-- <div class="i18n drop-down">
+        <div class="i18n drop-down">
           <I18nIcon class="icon" />
           <ArrowDownIcon class="icon arrow" />
 
           <div class="menu">
             <a href="/">Русский</a>
             <a href="/en">English</a>
-            <a href="/en">English</a>
-            <a href="/en">English</a>
-            <a href="/en">English</a>
-            <a href="/en">English</a>
+            <a href="/en">Spenish</a>
           </div>
         </div> -->
 
@@ -50,6 +47,9 @@
 
       </div>
     </div>
+  </div>
+  <div class="header-background">
+    <div class="spacer-1"></div>
     <div class="spacer" :style="{
       height: additionalHeaderHeight + 'px'
     }"></div>
@@ -82,34 +82,22 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
 @import '@/styles/textColors.scss';
 @import '@/styles/mixins.scss';
 
-.background {
-  position: absolute;
+.header-background {
+  position: fixed;
   left: 0;
   top: 0;
   right: 0;
-  bottom: 0;
-  background-color: rgb(78, 144, 201);
-}
+  z-index: 10;
 
-.drop-down {
-  .menu {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    background-color: $background-secondary;
-    border-radius: 5px;
-    box-shadow: 0px 0px 10px 2px $background-color;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    padding: 5px 0;
-    z-index: 10000;
+  background-color: $background-secondary;
+  box-shadow: 0px 0px 10px 2px $background-color;
+
+  .spacer-1 {
+    height: 55px;
   }
 
-  &:hover {
-    .menu {
-      display: flex;
-    }
+  .spacer {
+    transition: all 0.1s;
   }
 }
 
@@ -137,14 +125,12 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
   left: 0;
   top: 0;
   right: 0;
-  background-color: $background-secondary;
   padding: 0 14px 0 18px;
-  z-index: 10;
+  z-index: 11;
   display: flex;
   align-items: center;
   flex-direction: column;
 
-  box-shadow: 0px 0px 10px 2px $background-color;
 
   @include less-small {
     padding: 0 10px;
@@ -156,10 +142,6 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
     height: 25px;
     margin: 0 8px;
     border-right: 1px solid #5d5d5dbc;
-  }
-
-  .spacer {
-    transition: all 0.1s;
   }
 
   .main {
@@ -176,6 +158,11 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
     .wotstat-logo {
       font-size: 25px;
       font-weight: bold;
+
+      &.router-link-exact-active {
+        color: inherit;
+        filter: none
+      }
 
       &.small {
         display: none;
@@ -217,6 +204,49 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
       &:hover {
         color: #f5fdffde;
         filter: drop-shadow(0 0 0.3em #3fa5f362);
+      }
+    }
+
+    .drop-down {
+      .menu {
+        position: absolute;
+        top: calc(100% - 5px);
+        right: 0;
+        padding: 10px;
+        z-index: 1000;
+
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+
+        border-radius: 15px;
+        background-color: $background-secondary;
+        box-shadow: 0px 0px 10px 0px $background-color;
+        border: 1px solid #5d5d5dbc;
+
+        visibility: hidden;
+        opacity: 0;
+        transition: opacity 0.2s;
+
+        a {
+          padding: 5px 10px;
+          border-radius: 10px;
+          transition: all 0.2s;
+          padding: 5px 10px;
+          filter: none;
+
+          &:hover {
+            background-color: #5d5d5dbc;
+            filter: none;
+          }
+        }
+      }
+
+      &:hover {
+        .menu {
+          visibility: visible;
+          opacity: 1;
+        }
       }
     }
   }
