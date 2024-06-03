@@ -343,7 +343,7 @@
       <i>WotStat не является официальным продуктом и никак не аффилирован с компанией Wargaming.net или Lesta Games</i>
       <br>
       <br>
-      <p>Связаться со мной вы можете по почте <a href="mailto:soprachev@mail.ru">soprachev@mail.ru</a></p>
+      <p>Связаться со мной вы можете по почте <a href="mailto:support@wotstat.info">support@wotstat.info</a></p>
     </div>
   </div>
 </template>
