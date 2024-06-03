@@ -60,17 +60,14 @@
         </p>
 
         <h3 class="streamer-header" @click="streamerOpen = !streamerOpen">
-          <svg viewBox="0 0 65 64" class="dropdown-arrow" :style="{
-                    transform: streamerOpen ? 'rotateZ(0)' : 'rotateZ(-90deg)'
-                  }">
-            <path
-              d="M5.084 20.305a5 5 0 0 1 7.02-.851L31.02 34.276l18.915-14.822a5 5 0 1 1 6.168 7.871l-22 17.24a5 5 0 0 1-6.167 0l-22-17.24a5 5 0 0 1-.852-7.02Z" />
-          </svg>
+          <ArrowDownIcon :style="{
+            transform: streamerOpen ? 'rotateZ(0)' : 'rotateZ(-90deg)'
+          }" />
           Для стримеров
         </h3>
         <div class="collapsable-body" ref="collapsableBody" :style="{
-                    maxHeight: streamerOpen ? collapsableBody?.scrollHeight + 'px' : '0'
-                  }">
+          maxHeight: streamerOpen ? collapsableBody?.scrollHeight + 'px' : '0'
+        }">
           <p>Если вы хотите скрыть игровой сервер из собираемой статистики, поместите файл <a href="/config.cfg"
               target="_blank" download>config.cfg</a> в папку
             <code>WOT/mods/configs/wot_stat</code>
@@ -346,7 +343,7 @@
       <i>WotStat не является официальным продуктом и никак не аффилирован с компанией Wargaming.net или Lesta Games</i>
       <br>
       <br>
-      <p>Связаться со мной вы можете по почте <a href="mailto:soprachev@mail.ru">soprachev@mail.ru</a></p>
+      <p>Связаться со мной вы можете по почте <a href="mailto:support@wotstat.info">support@wotstat.info</a></p>
     </div>
   </div>
 </template>
@@ -364,6 +361,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { getArenaName } from '@/utils/i18n';
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 import { useDocumentVisibility } from '@vueuse/core'
+import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
 
 
 const collapsableBody = ref<HTMLElement | null>(null);

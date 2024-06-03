@@ -63,10 +63,7 @@
 
     <div class="flex hor">
       <div class="select-container">
-        <svg viewBox="0 0 65 64" class="dropdown-arrow">
-          <path id="Vector 1 (Stroke)" fill-rule="evenodd"
-            d="M5.084 20.305a5 5 0 0 1 7.02-.851L31.02 34.276l18.915-14.822a5 5 0 1 1 6.168 7.871l-22 17.24a5 5 0 0 1-6.167 0l-22-17.24a5 5 0 0 1-.852-7.02Z" />
-        </svg>
+        <ArrowDownIcon class="dropdown-arrow" />
         <select class="h4" v-model="infoVariant" ref="variantSelector">
           <option value="avg">Средние показатели</option>
           <option value="max">Максимальные показатели</option>
@@ -180,6 +177,7 @@ import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/comp
 import TeamLevelTable from '@/components/widgets/TeamLevelTable.vue';
 import { countLocalize } from '@/utils/i18n';
 import { TooltipItem } from 'chart.js';
+import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
 
 const variantSelector = ref<HTMLSelectElement | null>(null);
 
