@@ -35,7 +35,7 @@
           <BoostyIcon class="icon" />
         </a>
 
-        <a href="https://www.patreon.com/WotStat" target="_blank" class="icon">
+        <a href="https://patreon.com/wotstat" target="_blank" class="icon">
           <PatreonIcon class="icon" />
         </a>
 
