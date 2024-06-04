@@ -1,5 +1,5 @@
 <template>
-  <RTK ref="widget" :place="place" v-if="!hasError" />
+  <RTK ref="widget" :place="place" :color="color" v-if="!hasError" />
   <p class="error-text" v-else>Никнейм не найден. Если вы уверены в нём, возможно баг, напишите на почту
     soprachev@mail.ru</p>
 </template>
@@ -9,6 +9,7 @@
 import RTK from '@/components/obs/RTK.vue';
 import { useQueryStatParams } from '@/composition/useQueryStatParams';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 
 const params = useQueryStatParams()
 const allow = computed(() => params.value.player != null)
@@ -20,9 +21,16 @@ const id = ref(0)
 const hasError = ref(false)
 const widget = ref<InstanceType<typeof RTK> | null>(null)
 
+const route = useRoute()
+
+const color = computed(() => route.query.color?.toString())
+
 async function load() {
   if (!allow.value) return
   if (!enabled) return
+
+  console.log(color.value);
+
 
   try {
 
