@@ -2,7 +2,7 @@
   <div class="flex">
     <div class="card">
       <div class="main">
-        <p>Место: <span class="green bold num">{{ processor(placeTween) }}</span></p>
+        <p>Место: <span class="green bold num" :style="style">{{ processor(placeTween) }}</span></p>
       </div>
 
       <div class="record abs-full">
@@ -10,7 +10,6 @@
       </div>
     </div>
   </div>
-  <!-- <button @click="showRecordScreen(22542)">Show Best</button> -->
 </template>
 
 
@@ -27,7 +26,13 @@ let confettiCanvas: confetti.CreateTypes | null = null
 
 const props = defineProps<{
   place: number;
+  color?: string;
 }>();
+
+const style = computed(() => ({
+  color: `#${props.color}`
+}))
+
 
 const processor = useFixedSpaceProcessor(0)
 
