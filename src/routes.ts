@@ -48,6 +48,11 @@ const routes = [
     path: '/widget/chuck-norris',
     component: () => import('./pages/obs/ChuckNorris.vue'),
     meta: { clearPage: true }
+  },
+  {
+    path: '/widget/rtk',
+    component: () => import('./pages/obs/RTK.vue'),
+    meta: { clearPage: true }
   }
 ] satisfies RouteRecordRaw[]
 
