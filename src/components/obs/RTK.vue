@@ -4,12 +4,13 @@
       <div class="main">
         <p>Место: <span class="green bold num" :style="style">{{ processor(placeTween) }}</span></p>
       </div>
-
       <div class="record abs-full">
         <canvas ref="confettiCanvasRef"></canvas>
       </div>
     </div>
   </div>
+
+  <!-- <button @click="showRecordScreen()">Show Best</button> -->
 </template>
 
 
