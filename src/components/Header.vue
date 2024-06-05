@@ -12,38 +12,64 @@
           target="_blank" rel="noopener noreferrer">SQL</a>
 
 
-        <!-- <div class="sep"></div>
+        <div class="wide">
+          <!-- <div class="sep"></div>
 
-        <div class="i18n drop-down">
-          <I18nIcon class="icon" />
-          <ArrowDownIcon class="icon arrow" />
+          <div class="i18n drop-down">
+            <I18nIcon class="icon" />
+            <ArrowDownIcon class="icon arrow" />
 
+            <div class="menu">
+              <a href="/">Русский</a>
+              <a href="/en">English</a>
+              <a href="/en">Spenish</a>
+            </div>
+          </div> -->
+
+
+          <div class="sep"></div>
+
+          <a href="https://boosty.to/wotstat" target="_blank" class="icon">
+            <BoostyIcon />
+          </a>
+
+          <a href="https://patreon.com/wotstat" target="_blank" class="icon">
+            <PatreonIcon />
+          </a>
+
+          <div class="sep"></div>
+          <a :href="discordUrl" target="_blank" class="icon">
+            <DiscordIcon />
+          </a>
+
+          <a href="https://github.com/WOT-STAT/WOTMOD" target="_blank" class="icon">
+            <GitHubIcon />
+          </a>
+        </div>
+
+        <div class="drop-down points-menu">
+          <PointsIcon class="icon" />
           <div class="menu">
-            <a href="/">Русский</a>
-            <a href="/en">English</a>
-            <a href="/en">Spenish</a>
+            <!-- <a href="/points">Русский</a>
+            <a href="/points/players">English</a>
+            <hr> -->
+            <div class="flex">
+              <a href="https://boosty.to/wotstat" target="_blank" class="icon">
+                <BoostyIcon />
+                Boosty
+              </a>
+              <a href="https://patreon.com/wotstat" target="_blank" class="icon">
+                <PatreonIcon />
+              </a>
+              <a :href="discordUrl" target="_blank" class="icon">
+                <DiscordIcon />
+              </a>
+              <a href="https://github.com/WOT-STAT/WOTMOD" target="_blank" class="icon">
+                <GitHubIcon />
+              </a>
+            </div>
           </div>
-        </div> -->
-
-
-        <div class="sep"></div>
-
-        <a href="https://boosty.to/wotstat" target="_blank" class="icon">
-          <BoostyIcon class="icon" />
-        </a>
-
-        <a href="https://patreon.com/wotstat" target="_blank" class="icon">
-          <PatreonIcon class="icon" />
-        </a>
-
-        <div class="sep"></div>
-        <a :href="discordUrl" target="_blank" class="icon">
-          <DiscordIcon class="icon" />
-        </a>
-
-        <a href="https://github.com/WOT-STAT/WOTMOD" target="_blank" class="icon">
-          <GitHubIcon class="icon" />
-        </a>
+        </div>
 
       </div>
     </div>
@@ -65,6 +91,7 @@ import PatreonIcon from '@/assets/icons/patreon.svg'
 import BoostyIcon from '@/assets/icons/boosty.svg'
 import I18nIcon from '@/assets/icons/i18n.svg'
 import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
+import PointsIcon from '@/assets/icons/points.svg'
 
 const DBUrl = import.meta.env.VITE_CLICKHOUSE_URL
 const discordUrl = import.meta.env.VITE_DISCORD_URL
@@ -101,25 +128,6 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
   }
 }
 
-.i18n {
-  position: relative;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  padding: 15px 5px;
-
-  .icon {
-    width: 16px;
-    height: 16px;
-  }
-
-  .arrow {
-    width: 10px;
-    height: 10px;
-    margin-left: 3px;
-  }
-}
-
 .header {
   position: fixed;
   left: 0;
@@ -150,6 +158,34 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
     height: 55px;
     gap: 0;
 
+    a.icon {
+      font-size: 0;
+      color: inherit;
+      padding: 5px 8px;
+
+      :deep(svg) {
+        fill: currentColor;
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    a {
+      color: inherit;
+      padding: 0 10px;
+      transition: all 0.2s;
+
+      &.router-link-exact-active {
+        color: #d6fbff;
+        filter: drop-shadow(0 0 0.5em #4a7697bc);
+      }
+
+      &:hover {
+        color: #f5fdffde;
+        filter: drop-shadow(0 0 0.3em #3fa5f362);
+      }
+    }
+
     .header-right {
       align-items: center;
       gap: 0;
@@ -178,32 +214,59 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
       }
     }
 
+    .wide {
+      display: flex;
+      align-items: center;
+      gap: 0;
 
-    a.icon {
-      font-size: 0;
+      @include less-small {
+        display: none;
+      }
+    }
+
+    .i18n {
+      position: relative;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      padding: 15px 5px;
+
+      .icon {
+        width: 16px;
+        height: 16px;
+      }
+
+      .arrow {
+        width: 10px;
+        height: 10px;
+        margin-left: 3px;
+      }
+    }
+
+    .points-menu {
       color: inherit;
-      padding: 5px 8px;
+      display: flex;
+      align-items: center;
+      padding: 15px 5px;
+      padding-right: 0;
+
+      @include small {
+        display: none;
+      }
+
+      hr {
+        margin: 5px 0;
+        border: none;
+        border-top: 1px solid #5d5d5dbc;
+      }
+
+      .flex {
+        gap: 3px;
+      }
 
       .icon {
         width: 20px;
         height: 20px;
-        cursor: pointer;
-      }
-    }
-
-    a {
-      color: inherit;
-      padding: 0 10px;
-      transition: all 0.2s;
-
-      &.router-link-exact-active {
-        color: #d6fbff;
-        filter: drop-shadow(0 0 0.5em #4a7697bc);
-      }
-
-      &:hover {
-        color: #f5fdffde;
-        filter: drop-shadow(0 0 0.3em #3fa5f362);
       }
     }
 
@@ -249,6 +312,12 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
         }
       }
     }
+
+    // .icon {
+    //   width: 20px;
+    //   height: 20px;
+    //   fill: currentColor;
+    // }
   }
 }
 </style>
