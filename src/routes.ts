@@ -49,11 +49,8 @@ const routes = [
     component: () => import('./pages/obs/ChuckNorris.vue'),
     meta: { clearPage: true }
   },
-  {
-    path: '/widget/rtk',
-    component: () => import('./pages/obs/RTK.vue'),
-    meta: { clearPage: true }
-  }
+  { path: '/widget/rtk', component: () => import('./pages/obs/RTK.vue'), meta: { clearPage: true } },
+  { path: '/widget/rtk-big', component: () => import('./pages/obs/RTKBig.vue'), meta: { clearPage: true } }
 ] satisfies RouteRecordRaw[]
 
 export const router = createRouter({
