@@ -11,7 +11,7 @@
           </p>
         </div>
 
-        <div class="l2" v-if="battles.length">
+        <div class="l2" v-if="battles.length && !medium">
           <div class="flex gap-0">
             <div class="flex-1">
               <table>
@@ -90,6 +90,7 @@ let confettiCanvas: confetti.CreateTypes | null = null
 
 const props = defineProps<{
   color?: string;
+  medium?: boolean;
   place: number;
   totalBattles: number;
   battles: Array<{ dateTime: string; tankTag: string; xp: string }>

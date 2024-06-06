@@ -1,6 +1,6 @@
 <template>
   <RTKBig ref="widget" :battles="battles" :lastSession="lastSession" :totalBattles="totalBattles" :place="place"
-    :color="color" v-if="!hasError" />
+    :color="color" :medium v-if="!hasError" />
   <p class="error-text" v-else>Никнейм не найден. Если вы уверены в нём, возможно баг, напишите на почту
     soprachev@mail.ru</p>
 </template>
@@ -26,6 +26,7 @@ const widget = ref<InstanceType<typeof RTKBig> | null>(null)
 const route = useRoute()
 
 const color = computed(() => route.query.color?.toString())
+const medium = computed(() => route.query.medium?.toString() == 'true')
 
 type Battle = {
   dateTime: string;
