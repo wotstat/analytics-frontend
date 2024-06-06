@@ -118,6 +118,10 @@ const chartData = computed<ChartProps<'bar'>['data']>(() => ({
   ]
 }))
 
+// watchEffect(() => {
+//   console.log('lastSession', props.lastSession);
+// })
+
 const max = computed(() => Math.max(...props.lastSession.slice(0, 8).map(b => +b.xp)))
 
 const options = computed<ChartProps<'bar'>['options']>(() => ({
