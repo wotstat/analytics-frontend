@@ -74,9 +74,8 @@
 
 
 <script setup lang="ts">
-import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 import { useTweenCounter } from '@/composition/useTweenCounter';
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref, watchEffect } from 'vue';
 import { useRoute } from 'vue-router';
 import confetti from 'canvas-confetti'
 import { getTankName } from '@/utils/i18n';
@@ -113,11 +112,15 @@ const chartData = computed<ChartProps<'bar'>['data']>(() => ({
   labels: ['1', '2', '3', '4', '5', '6', '7', '8'],
   datasets: [
     {
-      data: props.lastSession.map(b => +b.xp),
+      data: props.lastSession.slice(0, 8).map(b => +b.xp).reverse(),
       backgroundColor: accentColor.value,
     }
   ]
 }))
+
+// watchEffect(() => {
+//   console.log('lastSession', props.lastSession);
+// })
 
 const max = computed(() => Math.max(...props.lastSession.slice(0, 8).map(b => +b.xp)))
 
