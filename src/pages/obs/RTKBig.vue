@@ -47,7 +47,7 @@ const lastSession = computed(() => {
     const current = battles[sessionIndex]
     const prev = battles[sessionIndex - 1]
 
-    if (new Date(current.dateTime).getTime() - new Date(prev.dateTime).getTime() > 1000 * 60 * 60 * 2) {
+    if (new Date(prev.dateTime).getTime() - new Date(current.dateTime).getTime() > 1000 * 60 * 60 * 2) {
       break
     }
   }
