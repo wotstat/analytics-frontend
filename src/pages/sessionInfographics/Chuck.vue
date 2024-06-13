@@ -57,6 +57,10 @@
                 <ChuckTable :part="part" />
               </div>
             </template>
+            <template v-slot:control>
+              <DownloadIcon class="icon" @click="downloadCsv(part)" />
+              <CopyIcon class="icon" @click="copy(part)" />
+            </template>
           </FullScreenCard>
         </ServerStatusWrapper>
 
@@ -89,6 +93,10 @@ import { useLocalStorage } from '@vueuse/core';
 import { computed, ref } from 'vue';
 import ChuckInfo from '../obs/ChuckInfo.vue';
 import Timecodes from '@/components/Timecodes.vue'
+
+import CopyIcon from '@/assets/icons/copy.svg'
+
+import DownloadIcon from '@/assets/icons/download.svg'
 
 const colorDecoration = useLocalStorage('chuckColorDecoration', true)
 const contrastDecoration = useLocalStorage('chuckHightContrast', true)
@@ -235,6 +243,55 @@ const totalResult = computed(() => {
   })
 })
 
+function getTable(part: typeof totalResult.value[number]) {
+  const players = [
+    '',
+    ...part.lines[0].split(',').flatMap(t => [t, '', '', '']),
+  ]
+
+  const header =
+    ['map', ...new Array(part.avg.length).fill(0).flatMap(t => ['tank', 'dmg', 'kill', 'score']), 'result', 'total', 'duration']
+
+  return [
+    players,
+    header,
+    ...part.lines[1].map(t => ([
+      t.arena,
+      ...t.players.flatMap(t => [
+        t[1],
+        t[2],
+        t[3],
+        t[4]
+      ]),
+      t.result,
+      t.totalScore,
+      t.duration
+    ]))
+  ]
+}
+
+
+function copy(part: typeof totalResult.value[number]) {
+  const res = getTable(part).map(t => t.join('\t')).join('\n')
+  navigator.clipboard.writeText(res)
+  alert('Скопировано в буфер обмена')
+}
+
+function downloadCsv(part: typeof totalResult.value[number]) {
+
+  const res = getTable(part).map(t => t.join(',')).join('\n')
+
+  var element = document.createElement('a');
+  element.setAttribute('href', 'data:text/csv;charset=UTF-8,' + encodeURIComponent(res));
+  element.setAttribute('download', 'chuck.csv');
+
+  element.style.display = 'none';
+  document.body.appendChild(element);
+
+  element.click();
+
+  document.body.removeChild(element);
+}
 
 </script>
 
