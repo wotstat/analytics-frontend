@@ -2,7 +2,9 @@
   <div class="card">
     <div class="control">
       <slot name="control"></slot>
-      <FullscreenOpenIcon class="icon" @click="isFull = !isFull" />
+      <div class="icon" @click="isFull = !isFull">
+        <FullscreenOpenIcon />
+      </div>
     </div>
     <slot name="full"></slot>
   </div>
@@ -11,7 +13,10 @@
       <div class="card" ref="fullscreenElement">
         <div class="control">
           <slot name="control"></slot>
-          <FullscreenCloseIcon class="icon" @click="isFull = false" />
+
+          <div class="icon" @click="isFull = false">
+            <FullscreenCloseIcon />
+          </div>
         </div>
         <slot name="full"></slot>
       </div>
@@ -94,15 +99,17 @@ function onKey(params: KeyboardEvent) {
 
     :deep(.icon) {
       cursor: pointer;
-      overflow: visible;
       background-color: #8181813e;
       border-radius: 50%;
       padding: 8px;
       fill: var(--font-color);
       cursor: pointer;
-
       width: 15px;
       height: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
 
       &:hover {
         background-color: #8181815e;
