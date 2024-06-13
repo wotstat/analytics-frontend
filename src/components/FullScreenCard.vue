@@ -107,8 +107,6 @@ function onKey(params: KeyboardEvent) {
       width: 15px;
       height: 15px;
       display: flex;
-      align-items: center;
-      justify-content: center;
 
 
       &:hover {
