@@ -58,8 +58,12 @@
               </div>
             </template>
             <template v-slot:control>
-              <DownloadIcon class="icon" @click="downloadCsv(part)" />
-              <CopyIcon class="icon" @click="copy(part)" />
+              <div class="icon" @click="downloadCsv(part)">
+                <DownloadIcon />
+              </div>
+              <div class="icon" @click="copy(part)">
+                <CopyIcon />
+              </div>
             </template>
           </FullScreenCard>
         </ServerStatusWrapper>
