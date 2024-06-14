@@ -51,10 +51,10 @@
           </div>
 
           <FullScreenCard v-for="part in totalResult">
-            <ChuckTable :part="part" />
+            <ChuckTable :part="part" :show-date="false" />
             <template v-slot:full>
               <div :class="classSettings" class="fullscreen">
-                <ChuckTable :part="part" />
+                <ChuckTable :part="part" :show-date="true" />
               </div>
             </template>
             <template v-slot:control>
@@ -91,7 +91,7 @@ import PopupWindow from '@/components/PopupWindow.vue';
 import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue';
 import ChuckTable from '@/components/widgets/ChuckTable.vue';
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
-import { loading, queryAsync, success } from '@/db';
+import { dbIndexToDate, loading, queryAsync, success } from '@/db';
 import { ChuckResult } from '@/db/schema';
 import { useLocalStorage } from '@vueuse/core';
 import { computed, ref } from 'vue';
@@ -128,6 +128,7 @@ with
    groupArray(toUInt32(pdmg + pkill * 300)) as score
 select
        id,
+       onBattleStartId,
        dateTime,
        arena,
        result,
@@ -179,10 +180,12 @@ const splittedResult = computed(() => {
 const totalResult = computed(() => {
   return splittedResult.value.map(t => {
 
-    const playerCount = t[1][0].players.length
+    const results = t[1]
+
+    const playerCount = results[0].players.length
 
 
-    const sum = t[1]
+    const sum = results
       .map(t => t.players)
       .reduce((a, v) => {
         for (let i = 0; i < playerCount; i++) {
@@ -194,34 +197,34 @@ const totalResult = computed(() => {
       }, new Array(playerCount).fill(0).map(() => [0, 0, 0]))
 
 
-    const battleCount = t[1].length
+    const battleCount = results.length
 
 
     const avg = sum.map(s => s.map(v => v / battleCount))
 
-    const winrate = t[1].filter(t => t.result == 'win').length / battleCount
-    const winScoreSum = t[1].reduce((acc, t) => acc + (t.result == 'win' ? 3000 : 0), 0)
+    const winrate = results.filter(t => t.result == 'win').length / battleCount
+    const winScoreSum = results.reduce((acc, t) => acc + (t.result == 'win' ? 3000 : 0), 0)
     const winScoreAvg = winScoreSum / battleCount
 
-    const healthSum = t[1].reduce((acc, t) => acc + t.enemyTeamMaxHealth, 0)
+    const healthSum = results.reduce((acc, t) => acc + t.enemyTeamMaxHealth, 0)
     const healthAvg = healthSum / battleCount
 
-    const spgSum = t[1].reduce((acc, t) => acc + t.spgCount, 0)
+    const spgSum = results.reduce((acc, t) => acc + t.spgCount, 0)
     const spgAvg = spgSum / battleCount
 
-    const timeSum = t[1].reduce((acc, t) => acc + t.duration, 0)
+    const timeSum = results.reduce((acc, t) => acc + t.duration, 0)
     const timeAvg = timeSum / battleCount
 
-    const dmgSum = t[1].reduce((acc, t) => acc + t.players.reduce((acc, t) => acc + t[2], 0), 0)
+    const dmgSum = results.reduce((acc, t) => acc + t.players.reduce((acc, t) => acc + t[2], 0), 0)
     const dmgAvg = dmgSum / battleCount
 
-    const killSum = t[1].reduce((acc, t) => acc + t.players.reduce((acc, t) => acc + t[3], 0), 0)
+    const killSum = results.reduce((acc, t) => acc + t.players.reduce((acc, t) => acc + t[3], 0), 0)
     const killAvg = killSum / battleCount
 
-    const scoreSum = t[1].reduce((acc, t) => acc + t.totalScore, 0)
+    const scoreSum = results.reduce((acc, t) => acc + t.totalScore, 0)
     const scoreAvg = scoreSum / battleCount
 
-    t[1].reverse()
+    results.reverse()
 
     return {
       lines: t,
@@ -254,12 +257,13 @@ function getTable(part: typeof totalResult.value[number]) {
   ]
 
   const header =
-    ['map', ...new Array(part.avg.length).fill(0).flatMap(t => ['tank', 'dmg', 'kill', 'score']), 'result', 'total', 'duration']
+    ['date', 'map', ...new Array(part.avg.length).fill(0).flatMap(t => ['tank', 'dmg', 'kill', 'score']), 'result', 'total', 'duration']
 
   return [
     players,
     header,
     ...part.lines[1].map(t => ([
+      new Date(dbIndexToDate(t.onBattleStartId) * 1000).toLocaleString(),
       t.arena,
       ...t.players.flatMap(t => [
         t[1],

@@ -6,7 +6,7 @@
         <FullscreenOpenIcon />
       </div>
     </div>
-    <slot name="full"></slot>
+    <slot></slot>
   </div>
   <Teleport to="body" v-if="isFull">
     <div class="fullscreen" :class="height < windowHeight - 40 ? 'small' : 'large'">
