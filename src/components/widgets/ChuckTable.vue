@@ -5,12 +5,14 @@
         <tr>
           <th></th>
           <th></th>
+          <th v-if="showDate"></th>
           <th colspan="4" class="l-b" v-for="name in part.lines[0].split(',')">{{ name }}</th>
           <th colspan="2" class="l-b">Результат боя</th>
           <th colspan="6" class="l-b">Командный результат</th>
         </tr>
         <tr>
           <th>№</th>
+          <th class="l-b" v-if="showDate">Дата</th>
           <th class="l-b">Карта</th>
           <template v-for="name in part.lines[0].split(',')">
             <th class="l-b">Танк</th>
@@ -33,6 +35,7 @@
         <tr v-for="(item, i) in part.lines[1]">
           <!-- <td>{{ item }}</td> -->
           <td class="battleNumber"> {{ i + 1 }} </td>
+          <td class="l-b num" v-if="showDate">{{ getDate(item.onBattleStartId) }}</td>
           <td class="l-b">{{ nameFromTag(item.arena).value }}</td>
 
           <template v-for="(player, i) in item.players">
@@ -139,6 +142,7 @@
 
 <script lang="ts" setup>
 import { roundProcessor, usePercentProcessor } from '@/composition/usePercentProcessor';
+import { dbIndexToDate } from '@/db';
 import { ChuckResult } from '@/db/schema';
 import { timeProcessor } from '@/utils';
 import { getArenaName, getTankName } from '@/utils/i18n';
@@ -164,6 +168,7 @@ const props = defineProps<{
     scoreSum: number,
     scoreAvg: number
   },
+  showDate: boolean
 }>();
 
 function nameFromTag(tag: string) {
@@ -184,6 +189,16 @@ function getRelativeColor(base: number, value: number) {
   return value > 1.25 * base ? 'green' : value < 0.75 * base ? 'red' : 'yellow'
 }
 
+function getDate(id: string) {
+  const date = new Date(dbIndexToDate(id) * 1000)
+  return date.toLocaleDateString(undefined, {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
 </script>
 
 <style lang="scss" scoped>
@@ -192,6 +207,10 @@ function getRelativeColor(base: number, value: number) {
 .container {
   overflow-x: auto;
   // max-width: 1500px;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
 }
 
 ul {

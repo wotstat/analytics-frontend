@@ -61,6 +61,7 @@ export function bestMV(target: keyof typeof schemas, options: string[] | MaybeRe
 
 export type ChuckResult = {
   id: string;
+  onBattleStartId: string;
   dateTime: string;
   arena: string;
   result: string;
