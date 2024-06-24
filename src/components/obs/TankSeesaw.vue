@@ -5,8 +5,9 @@
         <thead>
           <tr>
             <th class="wide">Никнейм</th>
-            <th class="center">{{ getTankName(tank[0], true) }}</th>
-            <th class="center">{{ getTankName(tank[1], true) }}</th>
+            <th class="center ellipsis">{{ getTankName(tank[0], true) }}</th>
+            <th class="center ellipsis">{{ getTankName(tank[1], true) }}</th>
+            <th class="center small">Счёт</th>
           </tr>
         </thead>
 
@@ -18,6 +19,7 @@
             <td class="num" :class="Math.max(...dmg1Tween) == dmg1Tween[i] ? 'green' : ''">{{ processor(dmg1Tween[i]) }}
             </td>
             <td class="num" :class="Math.max(...dmg2Tween) == dmg2Tween[i] ? 'green' : ''">{{ dmg2Tween[i] }}</td>
+            <td class="num small" :class="Math.max(...score) == score[i] ? 'green' : ''">{{ score[i] }}</td>
           </tr>
         </tbody>
       </table>
@@ -35,6 +37,7 @@ import { useRoute } from 'vue-router';
 
 const props = defineProps<{
   nickname: string[];
+  score: number[];
   tank: string[];
   dmg: number[][];
   backgroundColor?: string;
@@ -68,35 +71,8 @@ onMounted(() => {
 <style lang="scss" scoped>
 $grey: #c4c4c4;
 
-.l2 {
-  font-size: 2.8em;
-
-  .sep {
-    width: 0;
-    border-right: 0.08em solid #525252d2;
-    margin: 0 1em;
-  }
-
-  table {
-    width: 100%;
-    text-wrap: nowrap;
-    padding: 0;
-
-    th,
-    td {
-      padding: 0 !important;
-    }
-  }
-
-  .ellipsis {
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-}
-
-
 .card {
-  font-size: 1.3vw;
+  font-size: 1.5vw;
   padding: 3em 3em 2.3em 3em;
   border-radius: 3em;
   position: relative;
@@ -122,7 +98,16 @@ $grey: #c4c4c4;
       white-space: nowrap;
 
       &.wide {
-        width: 45%;
+        width: 35%;
+      }
+
+      &.small {
+        width: 10%;
+      }
+
+      &.ellipsis {
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
     }
 
