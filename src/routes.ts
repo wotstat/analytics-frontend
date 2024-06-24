@@ -28,27 +28,15 @@ const routes = [
       { path: 'maps', component: Maps },
       { path: 'players', component: Coverage },
       { path: 'chuck-norris-tournament', component: () => import('./pages/sessionInfographics/Chuck.vue') },
-      {
-        path: 'old-layout',
-        component: () => import('./pages/sessionInfographics/Old.vue')
-      },
+      { path: 'old-layout', component: () => import('./pages/sessionInfographics/Old.vue') },
       { path: 'distribution', component: Distribution },
       { path: 'lootbox', component: Lootbox, meta: { hideTankList: true } }
     ]
   },
-  {
-    path: '/damage',
-    component: () => import('./pages/damageDistribution/Index.vue')
-  },
-  {
-    path: '/map',
-    component: () => import('./pages/map/Index.vue')
-  },
-  {
-    path: '/widget/chuck-norris',
-    component: () => import('./pages/obs/ChuckNorris.vue'),
-    meta: { clearPage: true }
-  },
+  { path: '/damage', component: () => import('./pages/damageDistribution/Index.vue') },
+  { path: '/map', component: () => import('./pages/map/Index.vue') },
+  { path: '/widget/chuck-norris', component: () => import('./pages/obs/ChuckNorris.vue'), meta: { clearPage: true } },
+  { path: '/widget/gleborg-chuck-gold', component: () => import('./pages/obs/ChuckGold.vue'), meta: { clearPage: true } },
   { path: '/widget/rtk', component: () => import('./pages/obs/RTK.vue'), meta: { clearPage: true } },
   { path: '/widget/rtk-big', component: () => import('./pages/obs/RTKBig.vue'), meta: { clearPage: true } }
 ] satisfies RouteRecordRaw[]
