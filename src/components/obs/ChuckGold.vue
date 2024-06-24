@@ -36,7 +36,7 @@
                 <td class="grey num" :style="{ width: '13%' }">{{ i + 1 }}.</td>
                 <td class="grey ellipsis">{{ top[i]?.nickname ?? '' }}</td>
                 <td class="bold right num gold" :style="{ width: '26%' }">
-                  {{ Math.round((top[i]?.score ?? 0) / 10) }}
+                  {{ top[i] ? Math.round(top[i].score / 10) : '' }}
                 </td>
               </tr>
             </table>
