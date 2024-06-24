@@ -58,13 +58,13 @@ LAST_BATTLE_SQUAD as (select arrayFilter(t -> t.2 = personal.squadID and t.2 != 
     order by dateTime desc
     limit 1 union all (select [] as t)),
     (select * from LAST_BATTLE_SQUAD order by length(t) desc limit 1) as LAST_BATTLE_SQUAD_FIXED
-select toUInt32(sum(not firstWin)) as w1, toUInt32(countIf(firstWin)) as w2
+select toUInt32(sum(firstWin)) as w1, toUInt32(countIf(not firstWin)) as w2
 from (
     with
-        arrayFilter(t -> t.2 = personal.squadID and t.2 != 0, arrayZip(playersResults.name, playersResults.squadID, playersResults.tankTag, playersResults.damageDealt)) as filter
-    select tanks as tank,
-    avgIf(dmg, arraySort(LAST_BATTLE_SQUAD_FIXED.1)[1] = name) as d1,
-    avgIf(dmg, arraySort(LAST_BATTLE_SQUAD_FIXED.1)[2] = name) as d2, d1 < d2 as firstWin
+        arrayFilter(t -> t.2 = personal.squadID and t.2 != 0, arrayZip(playersResults.name, playersResults.squadID, playersResults.tankTag, playersResults.damageDealt)) as filter,
+        avgIf(dmg, arraySort(LAST_BATTLE_SQUAD_FIXED.1)[1] = name) as d1,
+        avgIf(dmg, arraySort(LAST_BATTLE_SQUAD_FIXED.1)[2] = name) as d2
+    select tanks as tank, if(isNaN(d1), 0, d1) as d1v, if(isNaN(d2), 0, d2) as d2v, d1v > d2v as firstWin
     from Event_OnBattleResult
     array join filter.1 as name, filter.3 as tanks, filter.4 as dmg
     ${whereClause(params)} and has(LAST_BATTLE_SQUAD_FIXED.1, name)
