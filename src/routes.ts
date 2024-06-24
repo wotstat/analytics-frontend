@@ -36,6 +36,7 @@ const routes = [
   { path: '/damage', component: () => import('./pages/damageDistribution/Index.vue') },
   { path: '/map', component: () => import('./pages/map/Index.vue') },
   { path: '/widget/chuck-norris', component: () => import('./pages/obs/ChuckNorris.vue'), meta: { clearPage: true } },
+  { path: '/widget/tank-seesaw', component: () => import('./pages/obs/TankSeesaw.vue'), meta: { clearPage: true } },
   { path: '/widget/gleborg-chuck-gold', component: () => import('./pages/obs/ChuckGold.vue'), meta: { clearPage: true } },
   { path: '/widget/rtk', component: () => import('./pages/obs/RTK.vue'), meta: { clearPage: true } },
   { path: '/widget/rtk-big', component: () => import('./pages/obs/RTKBig.vue'), meta: { clearPage: true } }
