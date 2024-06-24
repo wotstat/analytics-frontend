@@ -1,5 +1,5 @@
 <template>
-  <ChuckGold v-bind="targetP" :background-color />
+  <ChuckGold v-bind="targetP" :background-color :spacer />
 </template>
 
 
@@ -17,6 +17,7 @@ let enabled = true
 
 const route = useRoute()
 const backgroundColor = computed(() => route.query.backgroundColor?.toString())
+const spacer = computed(() => route.query.spacer ? Number.parseFloat(route.query.spacer.toString()) : undefined)
 
 type Result = {
   nickname: string,
