@@ -5,9 +5,9 @@
         <thead>
           <tr>
             <th class="wide"></th>
-            <th class="center"><img src="/public/dmg.png"></th>
-            <th class="center" :style="{ width: '14%' }"><img src="/public/kill.png"></th>
-            <th class="right" :style="{ width: '15%' }"><img src="/public/gold.png" class="gold-img"></th>
+            <th class="center"><img src="/dmg.png"></th>
+            <th class="center" :style="{ width: '14%' }"><img src="/kill.png"></th>
+            <th class="right" :style="{ width: '15%' }"><img src="/gold.png" class="gold-img"></th>
           </tr>
         </thead>
 
@@ -23,10 +23,7 @@
         </tbody>
       </table>
 
-      <br>
-      <br>
-      <br>
-      <br>
+      <div :style="{ height: `${spacer ?? 6}em` }"></div>
 
       <div class="l2">
         <div class="flex gap-0">
@@ -81,6 +78,7 @@ const props = defineProps<{
     score: number;
   }[];
   backgroundColor?: string;
+  spacer?: number;
 }>();
 
 
