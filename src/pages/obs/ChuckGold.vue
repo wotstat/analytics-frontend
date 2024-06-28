@@ -18,6 +18,7 @@ let enabled = true
 const route = useRoute()
 const backgroundColor = computed(() => route.query.backgroundColor?.toString())
 const spacer = computed(() => route.query.spacer ? Number.parseFloat(route.query.spacer.toString()) : undefined)
+const ignore = computed(() => route.query.ignore ? route.query.ignore.toString().split(',') : undefined)
 
 type Result = {
   nickname: string,
@@ -44,11 +45,11 @@ with '${params.value.player}' as PLAYER_NAME,
     limit 1 union all (select [] as t)),
     (select * from LAST_BATTLE_SQUAD order by length(t) desc limit 1)  as LAST_BATTLE_SQUAD_FIXED
 select pName as nickname,
-       toUInt32(sum(pKills)) as frags,
-       toUInt32(sum(pDamageDealt)) as dmg,
+       avg(pKills) as frags,
+       avg(pDamageDealt) as dmg,
        toUInt32(count()) as battles,
        toUInt32(countIf(result = 'win')) as wins,
-       toUInt32(dmg + frags * 300 + wins * 1000) as score,
+       avg(pDamageDealt + pKills * 300 + if(result = 'win', 1000, 0)) as score,
        has(LAST_BATTLE_SQUAD_FIXED, pName) as lastBattleSquad
 from Event_OnBattleResult
 array join
@@ -60,7 +61,7 @@ ${whereClause(params)}
   and personal.squadID != 0
   and personal.squadID = pSquadID
 group by pName
-having pName != PLAYER_NAME
+having pName != PLAYER_NAME ${ignore.value && ignore.value.length ? `and pName not in (${ignore.value.map(t => `'${t}'`).join(', ')})` : ''}
 order by lastBattleSquad desc, score desc
 limit 12;
   `, { allowCache: false })
