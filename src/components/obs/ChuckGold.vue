@@ -5,9 +5,12 @@
         <thead>
           <tr>
             <th class="wide"></th>
-            <th class="center"><img src="/dmg.png"></th>
-            <th class="center" :style="{ width: '14%' }"><img src="/kill.png"></th>
-            <th class="right" :style="{ width: '15%' }"><img src="/gold.png" class="gold-img"></th>
+            <!-- <th class="center"><img src="/dmg.png"></th> -->
+            <th class="center">Урон</th>
+            <!-- <th class="center" :style="{ width: '14%' }"><img src="/kill.png"></th> -->
+            <th class="center">Фраги</th>
+            <!-- <th class="right" :style="{ width: '15%' }"><img src="/gold.png" class="gold-img"></th> -->
+            <th class="right">Очки</th>
           </tr>
         </thead>
 
@@ -16,9 +19,9 @@
             <th class="wide nickname"><span class="win">({{ player.wins }}/{{ player.battles }})</span>
               {{ nickProcessor(player.nickname) }}
             </th>
-            <td class="num">{{ processor(dmgTween[i]) }}</td>
-            <td class="num" :style="{ width: '10%' }">{{ fragsTween[i] }}</td>
-            <td class="gold bold right num" :style="{ width: '15%' }">{{ Math.round(scoreTween[i] / 10) }}</td>
+            <td class="num">{{ processor(dmgTween[i] / 3) }}</td>
+            <td class="num" :style="{ width: '10%' }">{{ fixed(fragsTween[i] / 10) }}</td>
+            <td class="gold bold right num" :style="{ width: '15%' }">{{ fixed0(scoreTween[i]) }}</td>
           </tr>
         </tbody>
       </table>
@@ -33,7 +36,7 @@
                 <td class="grey num" :style="{ width: '13%' }">{{ i + 1 }}.</td>
                 <td class="grey ellipsis">{{ top[i]?.nickname ?? '' }}</td>
                 <td class="bold right num gold" :style="{ width: '26%' }">
-                  {{ top[i] ? Math.round(top[i].score / 10) : '' }}
+                  {{ top[i] ? fixed0(top[i].score) : '' }}
                 </td>
               </tr>
             </table>
@@ -46,7 +49,7 @@
                 <td class="grey num" :style="{ width: '15%' }">{{ i + 6 }}.</td>
                 <td class="grey ellipsis">{{ top[i + 5]?.nickname ?? '' }}</td>
                 <td class="bold right num gold" :style="{ width: '26%' }">
-                  {{ top[i + 5] ? Math.round(top[i + 5].score / 10) : '' }}
+                  {{ top[i + 5] ? fixed0(top[i + 5].score) : '' }}
                 </td>
               </tr>
             </table>
@@ -59,7 +62,7 @@
 
 
 <script setup lang="ts">
-import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
+import { useFixedProcessor, useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 import { useTweenCounter } from '@/composition/useTweenCounter';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
@@ -86,6 +89,8 @@ const backgroundColor = computed(() => `#${props.backgroundColor ?? '353535'}`)
 
 
 const processor = useFixedSpaceProcessor(0)
+const fixed = useFixedProcessor(1)
+const fixed0 = useFixedProcessor(0)
 
 function nickProcessor(name: string) {
   if (name.endsWith('_Chuck')) return name.slice(0, -6);
@@ -95,7 +100,7 @@ function nickProcessor(name: string) {
 const dmg = computed(() => props.current.map(t => t.dmg));
 const dmgTween = useTweenCounter(dmg, { duration: 1 });
 
-const frags = computed(() => props.current.map(t => t.frags));
+const frags = computed(() => props.current.map(t => t.frags * 10));
 const fragsTween = useTweenCounter(frags, { duration: 1 });
 
 const score = computed(() => props.current.map(t => t.score));
