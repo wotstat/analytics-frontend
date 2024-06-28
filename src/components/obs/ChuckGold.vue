@@ -20,7 +20,7 @@
               {{ nickProcessor(player.nickname) }}
             </th>
             <td class="num">{{ processor(dmgTween[i]) }}</td>
-            <td class="num" :style="{ width: '10%' }">{{ fixed(fragsTween[i]) }}</td>
+            <td class="num" :style="{ width: '10%' }">{{ fixed(fragsTween[i] / 10) }}</td>
             <td class="gold bold right num" :style="{ width: '15%' }">{{ fixed0(scoreTween[i]) }}</td>
           </tr>
         </tbody>
