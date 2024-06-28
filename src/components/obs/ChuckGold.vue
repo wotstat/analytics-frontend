@@ -19,8 +19,8 @@
             <th class="wide nickname"><span class="win">({{ player.wins }}/{{ player.battles }})</span>
               {{ nickProcessor(player.nickname) }}
             </th>
-            <td class="num">{{ processor(dmgTween[i] / 3) }}</td>
-            <td class="num" :style="{ width: '10%' }">{{ fixed(fragsTween[i] / 10) }}</td>
+            <td class="num">{{ processor(dmgTween[i]) }}</td>
+            <td class="num" :style="{ width: '10%' }">{{ fixed(fragsTween[i]) }}</td>
             <td class="gold bold right num" :style="{ width: '15%' }">{{ fixed0(scoreTween[i]) }}</td>
           </tr>
         </tbody>
