@@ -161,7 +161,7 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
     a.icon {
       font-size: 0;
       color: inherit;
-      padding: 5px 8px;
+      padding: 15px 8px;
 
       :deep(svg) {
         fill: currentColor;
@@ -172,7 +172,7 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
 
     a {
       color: inherit;
-      padding: 0 10px;
+      padding: 15px 10px;
       transition: all 0.2s;
 
       &.router-link-exact-active {
@@ -247,8 +247,8 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
       color: inherit;
       display: flex;
       align-items: center;
-      padding: 15px 5px;
-      padding-right: 0;
+      padding: 15px 10px;
+      margin-right: -10px;
 
       @include small {
         display: none;
