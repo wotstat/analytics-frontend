@@ -3,6 +3,13 @@
     <div class="main flex">
       <router-link to="/" class="wotstat-logo">WotStat</router-link>
       <router-link to="/" class="wotstat-logo small">WS</router-link>
+      <div class="sep greater-600"></div>
+      <a href="https://positions.wotstat.info/" target="_blank" rel="noopener noreferrer" class="greater-600 positions"
+        :class="{ 'new-badge': isPositionBadgeVisible }" @mouseover="isPositionBadgeVisible = false">
+        <div class="back">
+          Мод на позиции
+        </div>
+      </a>
       <div class="flex-1"></div>
       <div class="header-right flex">
         <router-link to="/">Главная</router-link>
@@ -10,7 +17,6 @@
           :class="startsWith('/session') ? 'router-link-exact-active' : ''">Инфографика</router-link>
         <a :href="DBUrl + '/play?user=public#c2VsZWN0IHRhYmxlLCBuYW1lLCBjb21tZW50LCB0eXBlIGZyb20gZGVzY3JpcHRpb247'"
           target="_blank" rel="noopener noreferrer">SQL</a>
-
 
         <div class="wide">
           <!-- <div class="sep"></div>
@@ -53,7 +59,19 @@
             <!-- <a href="/points">Русский</a>
             <a href="/points/players">English</a>
             <hr> -->
-            <div class="flex">
+
+            <div class="flex btn less-600">
+              <a href="https://positions.wotstat.info/" target="_blank" rel="noopener noreferrer"
+                class="positions flex-1" :class="{ 'new-badge': isPositionBadgeVisible }"
+                @mouseover="isPositionBadgeVisible = false">
+                <div class="back">
+                  Мод на позиции
+                </div>
+              </a>
+            </div>
+            <hr class="less-600">
+
+            <div class="line flex">
               <a href="https://boosty.to/wotstat" target="_blank" class="icon">
                 <BoostyIcon />
                 Boosty
@@ -92,6 +110,8 @@ import BoostyIcon from '@/assets/icons/boosty.svg'
 import I18nIcon from '@/assets/icons/i18n.svg'
 import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
 import PointsIcon from '@/assets/icons/points.svg'
+import { useLocalStorage } from '@vueuse/core';
+import { ref } from 'vue';
 
 const DBUrl = import.meta.env.VITE_CLICKHOUSE_URL
 const discordUrl = import.meta.env.VITE_DISCORD_URL
@@ -102,6 +122,9 @@ function startsWith(path: string) {
 }
 
 const { additionalHeaderHeight } = useAdditionalHeaderHeight();
+
+// const isPositionBadgeVisible = ref(true);
+const isPositionBadgeVisible = useLocalStorage('isPositionBadgeVisible', true);
 
 </script>
 
@@ -139,11 +162,9 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
   align-items: center;
   flex-direction: column;
 
-
   @include less-small {
     padding: 0 10px;
   }
-
 
   .sep {
     width: 0px;
@@ -161,7 +182,7 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
     a.icon {
       font-size: 0;
       color: inherit;
-      padding: 5px 8px;
+      padding: 15px 8px;
 
       :deep(svg) {
         fill: currentColor;
@@ -172,7 +193,7 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
 
     a {
       color: inherit;
-      padding: 0 10px;
+      padding: 15px 10px;
       transition: all 0.2s;
 
       &.router-link-exact-active {
@@ -214,6 +235,51 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
       }
     }
 
+    .positions {
+      font-size: 14px;
+      font-weight: var(--bold-weight);
+      color: rgba(255, 255, 255, 0.9);
+      padding: 1.5px;
+      transition: all 0.2s;
+      background: linear-gradient(13deg, #2ef45f 0%, #2f80ed 100%);
+      border-radius: 10px;
+      margin: 0 10px;
+      position: relative;
+      text-wrap: nowrap;
+
+      &.new-badge {
+        &::before {
+          position: absolute;
+          content: 'NEW';
+          top: -5px;
+          right: -5px;
+          background-color: #2f80ed;
+          border-radius: 5px;
+          padding: 0px 3px;
+          font-size: 10px;
+        }
+      }
+
+      .back {
+        padding: 4px 10px;
+        border-radius: 8.5px;
+        transition: all 0.2s;
+        background-color: $background-secondary;
+      }
+
+      &:hover {
+        padding: 3px;
+
+        .back {
+          padding: 2.5px 8.5px;
+          border-radius: 7px;
+          color: white;
+        }
+
+        filter: drop-shadow(0 0 0.3em #2f81ed99);
+      }
+    }
+
     .wide {
       display: flex;
       align-items: center;
@@ -247,8 +313,8 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
       color: inherit;
       display: flex;
       align-items: center;
-      padding: 15px 5px;
-      padding-right: 0;
+      padding: 15px 17px 15px 10px;
+      margin-right: -10px;
 
       @include small {
         display: none;
@@ -291,7 +357,8 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
         opacity: 0;
         transition: opacity 0.2s;
 
-        a {
+        >a,
+        >.line>a {
           padding: 5px 10px;
           border-radius: 10px;
           transition: all 0.2s;
@@ -303,6 +370,15 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
             filter: none;
           }
         }
+
+        .btn {
+          padding: 5px 0;
+        }
+
+        .positions {
+          margin: 0;
+          text-align: center;
+        }
       }
 
       &:hover {
@@ -312,12 +388,26 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
         }
       }
     }
+  }
 
-    // .icon {
-    //   width: 20px;
-    //   height: 20px;
-    //   fill: currentColor;
-    // }
+  .less-600 {
+    display: none;
+
+    @media screen and (max-width: 600px) {
+      display: block;
+
+      &.flex {
+        display: flex;
+      }
+    }
+  }
+
+  .greater-600 {
+    display: block;
+
+    @media screen and (max-width: 600px) {
+      display: none;
+    }
   }
 }
 </style>
