@@ -39,7 +39,8 @@ const routes = [
   { path: '/widget/tank-seesaw', component: () => import('./pages/obs/TankSeesaw.vue'), meta: { clearPage: true } },
   { path: '/widget/gleborg-chuck-gold', component: () => import('./pages/obs/ChuckGold.vue'), meta: { clearPage: true } },
   { path: '/widget/rtk', component: () => import('./pages/obs/RTK.vue'), meta: { clearPage: true } },
-  { path: '/widget/rtk-big', component: () => import('./pages/obs/RTKBig.vue'), meta: { clearPage: true } }
+  { path: '/widget/rtk-big', component: () => import('./pages/obs/RTKBig.vue'), meta: { clearPage: true } },
+  { path: '/widget/sum-dmg', component: () => import('./pages/obs/SumDmg.vue'), meta: { clearPage: true } }
 ] satisfies RouteRecordRaw[]
 
 export const router = createRouter({
