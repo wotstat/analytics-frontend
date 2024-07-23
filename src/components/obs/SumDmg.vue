@@ -79,6 +79,7 @@ onMounted(() => {
     .num {
       font-variant-numeric: tabular-nums;
       text-wrap: nowrap;
+      white-space: nowrap;
     }
 
     .num {
