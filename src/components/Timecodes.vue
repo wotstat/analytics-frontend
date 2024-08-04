@@ -51,6 +51,7 @@
       <li>{tank} – название танка</li>
       <li>{map} – название карты</li>
       <li>{dmg} – урон</li>
+      <li>{radio} – насвет</li>
       <li>{xp} – чистый опыт</li>
       <li>{frags} – фраги</li>
       <li>{gm} – сумма для отметки</li>
@@ -171,6 +172,7 @@ const resultTimecodes = computed(() => {
       .replaceAll('{tank}', getTankName(t.res.tankTag))
       .replaceAll('{map}', nameFromTag(t.res.arenaTag).value)
       .replaceAll('{dmg}', t.res.pDmg.toString())
+      .replaceAll('{radio}', t.res.pAssistRadio.toString())
       .replaceAll('{xp}', t.res.pXp.toString())
       .replaceAll('{frags}', t.res.pKills.toString())
       .replaceAll('{gm}', t.res.gunMarkSum.toString())
@@ -205,11 +207,12 @@ const result = queryComputed<{
   result: string,
   gunMarkSum: number,
   pDmg: number,
+  pAssistRadio: number,
   pXp: number,
   pKills: number,
   chuck: number
 }>(() => params.value.player === null ? null : `
-select dateTime, arenaTag, tankTag, result, pDmg, pXp, pKills, gunMarkSum,
+select dateTime, arenaTag, tankTag, result, pAssistRadio, pDmg, pXp, pKills, gunMarkSum,
        toUInt32(pDmg + arraySum(squadmateDamage) + (pKills + arraySum(squadmateKills)) * 300 + if(result = 'win', 3000, 0)) as chuck
 from
 (
@@ -223,7 +226,8 @@ join
         arrayZip(playersResults.squadID, playersResults.name, playersResults.damageDealt, playersResults.kills) as squadResults,
         arrayFilter(x -> x.1 = personal.squadID and x.1 != 0 and x.2 != playerName, squadResults) as squadmateResults,
         squadmateResults.3 as squadmateDamage, squadmateResults.4 as squadmateKills
-    select onBattleStartId, arenaTag, result, personal.damageDealt as pDmg, personal.xp as pXp, personal.kills as pKills, squadmateDamage, squadmateKills, gunMarkSum
+    select onBattleStartId, arenaTag, result, personal.damageDealt as pDmg, personal.damageAssistedRadio as pAssistRadio,
+           personal.xp as pXp, personal.kills as pKills, squadmateDamage, squadmateKills, gunMarkSum
     from Event_OnBattleResult
     ${whereClause(params.value)}
 ) as T2
