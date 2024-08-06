@@ -42,7 +42,7 @@
 
         <div class=" card total-play">
           <GenericInfo :status="dataResult.status" :value="dataResult.data.inBattle" description="Потрачено в бою"
-            color="red" :processor="sec2hour" mini-data="часа" />
+            color="red" :processor="hour2hour" mini-data="часа" />
         </div>
 
 
@@ -54,8 +54,8 @@
 
         <div class="card chart bar tank-type">
           <MiniBar :status="avgTypeResult.status" :data="avgChart" color="blue" :labels="tankLabels" :callbacks="{
-        title: (t) => `В среднем в команде было ${t[0].formattedValue} ${t[0].label}`, label: () => ``
-      }" />
+            title: (t) => `В среднем в команде было ${t[0].formattedValue} ${t[0].label}`, label: () => ``
+          }" />
           <p class="card-main-info description">Классов танков в командах</p>
         </div>
 
@@ -78,7 +78,7 @@ import { queryAsync, queryAsyncFirst } from "@/db";
 import { useElementVisibility } from '@vueuse/core';
 import { computed, ref } from 'vue';
 
-import { ms2sec, sec2minsec, secProcessor, sec2hour } from "@/utils";
+import { ms2sec, sec2minsec, secProcessor, sec2hour, hour2hour } from "@/utils";
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 
 const container = ref<HTMLElement | null>(null);
@@ -101,7 +101,7 @@ ${whereClause(params, { isBattleStart: true })}
 const dataResult = queryAsyncFirst(`
 select round(avg(personal.lifeTime))    as lifetime,
        round(avg(duration))             as duration,
-       toUInt32(sum(personal.lifeTime)) as inBattle
+       toUInt32(sum(personal.lifeTime) / 60 / 60) as inBattle
 from Event_OnBattleResult
 ${whereClause(params)};`, { lifetime: 0, duration: 0, inBattle: 0 }, { enabled: visible, settings: settings.value })
 
