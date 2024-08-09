@@ -10,7 +10,7 @@
 import LootboxInfo from '@/components/obs/LootboxInfo.vue';
 import { useQueryStatParams } from '@/composition/useQueryStatParams';
 import { dateToDbIndex, query } from '@/db';
-import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, shallowRef, watch, watchEffect } from 'vue';
 import { useRoute } from 'vue-router';
 
 let enabled = true
@@ -21,8 +21,8 @@ const hasError = ref(false)
 const route = useRoute()
 
 const color = computed(() => route.query.color?.toString())
-const backgroundColor = computed(() => route.query.backgroundColor?.toString())
-const containerTag = computed(() => route.query.containerTag?.toString())
+const backgroundColor = computed(() => route.query.backgroundcolor?.toString())
+const containerTag = computed(() => route.query.containertag?.toString())
 
 function whereClause(ignore: ('player' | 'tag' | 'date')[] = []) {
   const result = []
