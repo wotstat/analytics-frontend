@@ -391,6 +391,7 @@ function managementLocalizer(tag: string) {
     'slots': 'Слоты',
     'berths': 'Койки',
     'demountKit': 'Демонтажный набор',
+    'recertificationForm': 'Бланк переподготовки',
   }[name] || name
 
   return {
