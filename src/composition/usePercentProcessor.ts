@@ -21,3 +21,11 @@ export function useFixedSpaceProcessor(digits = 2) {
     return toFixed(value).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   }
 }
+
+export function useLogProcessor() {
+  return (value: number) => {
+    if (value < 100000) return value.toString();
+    if (value < 1000000) return (value / 1000).toFixed(1) + 'k';
+    return (value / 1000000).toFixed(1) + 'M';
+  }
+}
