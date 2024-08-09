@@ -120,7 +120,7 @@ right join (
 order by containerTag desc;
 `)
 
-const containerVariants = computed(() => containerTag.value.data.map((x: any) => ({ tag: x.containerTag, name: x.name ?? x.containerTag })))
+const containerVariants = computed(() => containerTag.value.data.map((x) => ({ tag: x.containerTag, name: x.name || x.containerTag })))
 
 const total = queryComputedFirst(() => `
 select toUInt32(count()) as count
