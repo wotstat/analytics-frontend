@@ -43,6 +43,9 @@
     <i>* С учётом компенсаций. Танки только реально начисленные</i>
   </div>
 
+  <OpenByTable v-if="openWithStats.status == success && openWithStats.data.length" :localizer="lootboxLocalizer"
+    :data="openWithStats.data" />
+
   <h3>Вероятности</h3>
   <template
     v-if="goldStats.data.length + creditsStats.data.length + freeXpStats.data.length + premStats.data.length > 0">
@@ -71,9 +74,10 @@
 import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 import { useQueryStatParams, useQueryStatParamsCache } from '@/composition/useQueryStatParams';
-import { Status, dateToDbIndex, queryComputed, queryComputedFirst } from '@/db';
+import { Status, dateToDbIndex, queryComputed, queryComputedFirst, success } from '@/db';
 import { computed } from 'vue';
 import TableSection from "./TableSection.vue";
+import OpenByTable from "./OpenByTable.vue";
 import { countLocalize, crewBookName, getTankName } from '@/utils/i18n';
 import { useQueryParamStorage } from '@/composition/useQueryParamStorage';
 
@@ -125,8 +129,48 @@ const containerVariants = computed(() => containerTag.value.data.map((x) => ({ t
 const total = queryComputedFirst(() => `
 select toUInt32(count()) as count
 from Event_OnLootboxOpen
-where ${whereClause()}
+where ${whereClause()} and isOpenSuccess
 `, { count: 0 })
+
+const openWithStats = queryComputed<{ tag: string, locale: LocalizedName, count: number, successCount: number, totalCount?: number, totalSuccess?: number }>(() => {
+  let where: string | null = whereClause(['tag'])
+  if (where === 'true') {
+    where = null
+  }
+
+  return where ? `
+    select tag, locale, count, successCount, totalCount, totalSuccess
+    from (
+        select tag, count, successCount, P2.count as totalCount, P2.successCount as totalSuccess
+        from (
+            select openByTag as tag, toUInt32(count()) as count, toUInt32(countIf(isOpenSuccess)) as successCount
+            from Event_OnLootboxOpen
+            where ${whereClause()} and openByTag != Event_OnLootboxOpen.containerTag
+            group by tag
+        ) as P
+        join (
+            select openByTag as tag, toUInt32(count()) as count, toUInt32(countIf(isOpenSuccess)) as successCount
+            from Event_OnLootboxOpen
+            where openByTag != Event_OnLootboxOpen.containerTag and ${whereClause(['date', 'player'])}
+            group by tag
+        ) as P2
+        using tag
+    ) as M
+    left join (
+        select tag, arrayZip(groupArray(name), groupArray(region)) as locale from Lootboxes group by tag
+    ) as L
+    using tag
+  ` : `
+    select tag, locale, count, successCount
+    from (
+        select openByTag as tag, toUInt32(count()) as count, toUInt32(countIf(isOpenSuccess)) as successCount
+        from Event_OnLootboxOpen
+        where ${whereClause()} and openByTag != Event_OnLootboxOpen.containerTag
+        group by openByTag
+    ) as M
+    left join (select tag, arrayZip(groupArray(name), groupArray(region)) as locale from Lootboxes group by tag) as L
+    using tag
+`})
 
 const mainStats = queryComputedFirst(() => `
 select
