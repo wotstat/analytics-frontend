@@ -201,7 +201,7 @@ function getQuery(select: string, arrayJoin: string, materialized: string, tagPr
 
   const whereTag = selectedContainer.value == 'any' ? '' : `containerTag = '${selectedContainer.value}'`
 
-  const whereWhereTag = whereTag ? `where ${whereTag}` : ''
+  const whereWhereTag = whereTag ? `where ${whereTag} and isOpenSuccess` : 'where isOpenSuccess'
   const andWhereTag = whereTag ? `and ${whereTag}` : ''
 
   const groupBy = 'title' + (select.includes('tag') ? ', tag' : '')
