@@ -42,7 +42,7 @@ const routes = [
   { path: '/widget/rtk-big', component: () => import('./pages/obs/RTKBig.vue'), meta: { clearPage: true } },
   { path: '/widget/sum-dmg', component: () => import('./pages/obs/SumDmg.vue'), meta: { clearPage: true } },
   { path: '/widget/sum-radio', component: () => import('./pages/obs/SumRadio.vue'), meta: { clearPage: true } },
-  { path: '/widget/sum-tank', component: () => import('./pages/obs/SumTank.vue'), meta: { clearPage: true } },
+  { path: '/widget/sum-block', component: () => import('./pages/obs/SumBlock.vue'), meta: { clearPage: true } },
   { path: '/widget/lootbox-info', component: () => import('./pages/obs/LootboxInfo.vue'), meta: { clearPage: true } }
 ] satisfies RouteRecordRaw[]
 
