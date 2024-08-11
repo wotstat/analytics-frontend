@@ -1,12 +1,12 @@
 <template>
-  <SumTank ref="widget" v-bind="targetProps" :color="color" :backgroundColor="backgroundColor" v-if="!hasError" />
+  <SumBlock ref="widget" v-bind="targetProps" :color="color" :backgroundColor="backgroundColor" v-if="!hasError" />
   <p class="error-text" v-else>Никнейм не найден. Если вы уверены в нём, возможно баг, напишите на почту
     soprachev@mail.ru</p>
 </template>
 
 
 <script setup lang="ts">
-import SumTank from '@/components/obs/SumTank.vue';
+import SumBlock from '@/components/obs/SumBlock.vue';
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 import { query } from '@/db';
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
