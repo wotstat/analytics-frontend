@@ -30,6 +30,21 @@
             </p>
           </div>
         </div>
+
+        <div class="tanks">
+          <div class="left flex-1">
+            <div v-for="tank in evenTanks" :key="tank.name" class="flex">
+              <p class="flex-1">{{ tank.name }}</p>
+              <p class="flex-1 right">{{ tank.count }}</p>
+            </div>
+          </div>
+          <div class="right flex-1">
+            <div v-for="tank in oddTanks" :key="tank.name" class="flex">
+              <p class="flex-1">{{ tank.name }}</p>
+              <p class="flex-1 right">{{ tank.count }}</p>
+            </div>
+          </div>
+        </div>
         <!-- <div class="sum flex-1">
           <p class="header center grey">Сумма ({{ battleCount }})</p>
           <p class="num green bold center" :style="{ color: `#${props.color}` }">{{ processor(sumDamageTween) }}</p>
@@ -73,14 +88,10 @@ const logProcessor = useLogProcessor()
 const infos = computed(() => ([props.count, props.gold, props.credits, props.freeXp, props.premium]))
 const infosTween = useTweenCounter(infos, { duration: 1 })
 
-// const sumDamage = computed(() => props.sumDamage);
-// const lastDamage = computed(() => props.lastDamage);
-
-// const sumDamageTween = useTweenCounter(sumDamage, { duration: 1 });
-// const lastDamageTween = useTweenCounter(lastDamage, { duration: 1 });
-
-
 const route = useRoute();
+
+const evenTanks = computed(() => props.tanks.filter((_, i) => i % 2 === 0))
+const oddTanks = computed(() => props.tanks.filter((_, i) => i % 2 === 1))
 
 onMounted(() => {
   if (route.meta.clearPage)
