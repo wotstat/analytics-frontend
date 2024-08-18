@@ -15,16 +15,21 @@
         <QueryPreserveRouterLink to="/session/distribution">Расширенное распределение</QueryPreserveRouterLink>
         <QueryPreserveRouterLink to="/session/lootbox">Коробки</QueryPreserveRouterLink>
         <QueryPreserveRouterLink to="/session/chuck-norris-tournament">Очки Чака</QueryPreserveRouterLink>
+        <hr>
+        <QueryPreserveRouterLink to="/session/widgets">Виджеты</QueryPreserveRouterLink>
       </div>
     </div>
 
     <div class="container">
-      <SettingsTitle :reload="false">
-        Сессионная инфографика
-      </SettingsTitle>
-      <h3>
-        <StatParamsTitle />
-      </h3>
+      <template v-if="!route.meta.customTitle">
+        <SettingsTitle :reload="false">
+          Сессионная инфографика
+        </SettingsTitle>
+        <h3>
+          <StatParamsTitle />
+        </h3>
+      </template>
+      <h1 class="main-title" v-if="route.meta.customTitle">{{ route.meta.customTitle }}</h1>
 
       <TankListSetup v-if="!route.meta.hideTankList" />
 
@@ -40,6 +45,7 @@
           <QueryPreserveRouterLink to="/session/distribution">Распределение</QueryPreserveRouterLink>
           <QueryPreserveRouterLink to="/session/lootbox">Коробки</QueryPreserveRouterLink>
           <QueryPreserveRouterLink to="/session/chuck-norris-tournament">Очки Чака</QueryPreserveRouterLink>
+          <QueryPreserveRouterLink to="/session/widgets">Виджеты</QueryPreserveRouterLink>
         </div>
       </div>
 
@@ -128,6 +134,15 @@ watchEffect(() => {
 
 $sidebar-width: 170px;
 $mobile-layout: 1100px;
+
+
+.main-title {
+  margin: 0;
+
+  @include less-x-small {
+    font-size: 1.8rem;
+  }
+}
 
 .center-container-new {
 
