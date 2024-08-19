@@ -1,4 +1,26 @@
 <template>
+
+  <h4>Как добавить виджет в игру</h4>
+  <p>
+    Чтоб добавить <b>любой</b> виджет прямо в игру вам необходим мод
+    <a href="https://github.com/WOT-STAT/wotstat-widgets" target="_blank">wotstat-widgets</a>,
+    скачайте его и с помощью уведомления в игре добавьте виджет в игру по ссылке.
+    <a href="https://github.com/WOT-STAT/wotstat-widgets/releases/latest" target="_blank">СКАЧАТЬ</a>
+  </p>
+  <div class="flex center">
+    <img src="https://raw.githubusercontent.com/WOT-STAT/wotstat-widgets/main/.github/hero.png" class="hero">
+  </div>
+
+  <h4>Как добавить в OBS (для стримеров)</h4>
+  <p>
+    Если вы добавляете виджет в OBS, ему всё ещё необходимо получать от игры информацию, для этого можете установить мод
+    <a href="https://github.com/WOT-STAT/wotstat-widgets" target="_blank">wotstat-widgets</a> и никак его не
+    настраивать ИЛИ установить легковесную альтернативу
+    <a href="https://github.com/WOT-STAT/data-provider" target="_blank">data-provider</a>, она будет передавать данные,
+    но не даст возможности добавить виджет в игру.
+    <a href="https://github.com/WOT-STAT/data-provider/releases/latest" target="_blank">СКАЧАТЬ</a>
+  </p>
+
   <iframe :src="`${WIDGETS_URL}/iframe/collection`" frameborder="0" class="collection" ref="collection" :style="{
     height: `${height}px`
   }" @load="onCollectionLoad"></iframe>
@@ -55,6 +77,18 @@ function onPreviewLoad() {
 
 <style lang="scss" scoped>
 @import "@/styles/mixins.scss";
+
+h4 {
+  margin-bottom: 0.5em;
+}
+
+
+.hero {
+  max-width: 100%;
+  max-height: 200px;
+  height: auto;
+  margin-top: 1em;
+}
 
 .collection {
   width: 100%;
