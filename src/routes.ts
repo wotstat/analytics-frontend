@@ -32,7 +32,7 @@ const routes = [
       { path: 'old-layout', component: () => import('./pages/sessionInfographics/Old.vue') },
       { path: 'distribution', component: Distribution },
       { path: 'lootbox', component: Lootbox, meta: { hideTankList: true } },
-      { path: 'widgets', component: Widgets, meta: { hideTankList: true, customTitle: 'Виджеты' } }
+      { path: 'widgets/:widget*', component: Widgets, meta: { hideTankList: true, customTitle: 'Виджеты' } }
     ]
   },
   { path: '/damage', component: () => import('./pages/damageDistribution/Index.vue') },

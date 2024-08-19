@@ -25,7 +25,7 @@
     height: `${height}px`
   }" @load="onCollectionLoad"></iframe>
 
-  <PopupWindow :title="selectedTitle" v-if="selectedRoute" @close="selectedRoute = null">
+  <PopupWindow :title="selectedTitle" v-if="selectedRoute" @close="onClosePreview">
     <iframe :src="`${WIDGETS_URL}/iframe/preview${selectedRoute}`" frameborder="0" class="preview"
       allow="clipboard-write" ref="preview" @load="onPreviewLoad"></iframe>
   </PopupWindow>
@@ -37,11 +37,28 @@ import PopupWindow from '@/components/PopupWindow.vue';
 import { useIframeContentBounding } from '@/composition/useIframeContentBounding';
 import { useIframeMessages } from '@/composition/useIframeMessages';
 import { computed, onDeactivated, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
-const selectedRoute = ref<string | null>(null);
 const selectedTitle = ref<string>('');
 const collection = ref<HTMLIFrameElement | null>(null);
 const preview = ref<HTMLIFrameElement | null>(null);
+
+const route = useRoute()
+const router = useRouter()
+
+const selectedRoute = computed(() => {
+  const targetWidget = route.params.widget;
+
+  if (Array.isArray(targetWidget) && targetWidget.length > 0) {
+    return '/' + targetWidget.join('/');
+  }
+
+  if (targetWidget)
+    return '/' + route.params.widget;
+
+  return null
+});
+
 
 const { height } = useIframeContentBounding(collection);
 
@@ -50,7 +67,11 @@ const WIDGETS_URL = import.meta.env.VITE_WIDGETS_URL as string;
 useIframeMessages(collection, data => {
   if (data.type === 'widget-click') {
     selectedTitle.value = data.title;
-    selectedRoute.value = data.route;
+
+    router.push({
+      query: { ...route.query },
+      params: { widget: data.route.split('/').filter(Boolean) }
+    });
   }
 });
 
@@ -58,8 +79,16 @@ onDeactivated(() => {
   if (collection.value) {
     collection.value.style.opacity = '0';
   }
-  selectedRoute.value = null;
+
+  if (selectedRoute.value) onClosePreview();
 });
+
+function onClosePreview() {
+  router.push({
+    query: { ...route.query },
+    params: { widget: '' }
+  });
+}
 
 function onCollectionLoad() {
   if (!collection.value) return;
