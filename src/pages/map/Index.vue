@@ -131,8 +131,8 @@
       <div class="overlay-container" ref="containerRef" @click="onClickShot">
         <MinimapOverlays v-if="arenaTag" :arenaTag="arenaTag" :gameplay="selectedGameplay" :allyTeam="selectedTeam" />
         <CanvasVue ref="tracerCanvasRef" :style="{
-      visibility: showTracers ? 'visible' : 'hidden',
-    }" />
+          visibility: showTracers ? 'visible' : 'hidden',
+        }" />
         <!-- <Clustering v-bind="clusteringParams" /> -->
         <CanvasVue :redrawGenerator="redrawGenerator" ref="canvasRef" :style="{ opacity: 0.8 }" />
         <CanvasVue class="hover-canvas" @redraw="hoverRender" ref="hoverCanvasRef" />
