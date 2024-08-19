@@ -9,6 +9,7 @@ import Maps from './pages/sessionInfographics/Maps.vue'
 import Coverage from './pages/sessionInfographics/Coverage.vue'
 import Distribution from './pages/damageDistribution/Content.vue'
 import Lootbox from './pages/lootbox/Index.vue'
+import Widgets from './pages/sessionInfographics/Widgets.vue'
 
 
 
@@ -30,7 +31,8 @@ const routes = [
       { path: 'chuck-norris-tournament', component: () => import('./pages/sessionInfographics/Chuck.vue') },
       { path: 'old-layout', component: () => import('./pages/sessionInfographics/Old.vue') },
       { path: 'distribution', component: Distribution },
-      { path: 'lootbox', component: Lootbox, meta: { hideTankList: true } }
+      { path: 'lootbox', component: Lootbox, meta: { hideTankList: true } },
+      { path: 'widgets', component: Widgets, meta: { hideTankList: true, customTitle: 'Виджеты' } }
     ]
   },
   { path: '/damage', component: () => import('./pages/damageDistribution/Index.vue') },

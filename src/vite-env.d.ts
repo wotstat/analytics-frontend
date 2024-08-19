@@ -8,6 +8,7 @@ interface ImportMetaEnv {
   readonly VITE_CLICKHOUSE_USER: string
   readonly VITE_CLICKHOUSE_DATABASE: string
   readonly VITE_DISCORD_URL: string
+  readonly VITE_WIDGETS_URL: string
 }
 
 interface ImportMeta {
