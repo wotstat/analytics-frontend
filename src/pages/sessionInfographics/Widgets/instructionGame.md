@@ -6,5 +6,5 @@
 4. Укажите ссылку на виджет и нажмите "Добавить"
 
 ::: center
-![Инструкция как создать виджет](/widgets/add-widget.webp){class=add-widget}
+![Инструкция как создать виджет](/widgets-images/add-widget.webp){class=add-widget}
 :::
