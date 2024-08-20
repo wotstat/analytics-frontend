@@ -55,6 +55,8 @@ export const router = createRouter({
   routes,
   scrollBehavior(to, from, savedPosition) {
     if (to.path === from.path) return
+    if (to.path.startsWith('/session/widgets') && from.path.startsWith('/session/widgets')) return
+
     return { top: 0 }
   },
 })
