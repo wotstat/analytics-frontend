@@ -1,25 +1,31 @@
 <template>
-
-  <h4>Как добавить виджет в игру</h4>
-  <p>
-    Чтоб добавить <b>любой</b> виджет прямо в игру вам необходим мод
-    <a href="https://github.com/WOT-STAT/wotstat-widgets" target="_blank">wotstat-widgets</a>,
-    скачайте его и с помощью уведомления в игре добавьте виджет в игру по ссылке.
-    <a href="https://github.com/WOT-STAT/wotstat-widgets/releases/latest" target="_blank">СКАЧАТЬ</a>
-  </p>
+  <br>
+  <p>Виджеты универсальные их можно добавлять как в OBS так и прямо в игру</p>
   <div class="flex center">
     <img src="https://raw.githubusercontent.com/WOT-STAT/wotstat-widgets/main/.github/hero.png" class="hero">
   </div>
+  <br>
+  <According>
+    <template #header>
+      <h4>Как добавить виджет в игру</h4>
+    </template>
+    <template #panel>
+      <div class="markdown">
+        <InstructionGame />
+      </div>
+    </template>
+  </According>
 
-  <h4>Как добавить в OBS (для стримеров)</h4>
-  <p>
-    Если вы добавляете виджет в OBS, ему всё ещё необходимо получать от игры информацию, для этого можете установить мод
-    <a href="https://github.com/WOT-STAT/wotstat-widgets" target="_blank">wotstat-widgets</a> и никак его не
-    настраивать ИЛИ установить легковесную альтернативу
-    <a href="https://github.com/WOT-STAT/data-provider" target="_blank">data-provider</a>, она будет передавать данные,
-    но не даст возможности добавить виджет в игру.
-    <a href="https://github.com/WOT-STAT/data-provider/releases/latest" target="_blank">СКАЧАТЬ</a>
-  </p>
+  <According>
+    <template #header>
+      <h4>Как добавить в OBS (для стримеров)</h4>
+    </template>
+    <template #panel>
+      <div class="markdown">
+        <InstructionOBS />
+      </div>
+    </template>
+  </According>
 
   <iframe :src="`${WIDGETS_URL}/iframe/collection`" frameborder="0" class="collection" ref="collection" :style="{
     height: `${height}px`
@@ -33,11 +39,16 @@
 
 
 <script setup lang="ts">
+import According from '@/components/According.vue';
 import PopupWindow from '@/components/PopupWindow.vue';
 import { useIframeContentBounding } from '@/composition/useIframeContentBounding';
 import { useIframeMessages } from '@/composition/useIframeMessages';
 import { computed, onDeactivated, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+
+import { VueComponent as InstructionGame } from "./instructionGame.md";
+import { VueComponent as InstructionOBS } from "./instructionOBS.md";
+
 
 const selectedTitle = ref<string>('');
 const collection = ref<HTMLIFrameElement | null>(null);
@@ -108,15 +119,48 @@ function onPreviewLoad() {
 @import "@/styles/mixins.scss";
 
 h4 {
-  margin-bottom: 0.5em;
+  margin: 0;
 }
 
 
 .hero {
-  max-width: 100%;
-  max-height: 200px;
+  max-width: 550px;
+  width: 100%;
   height: auto;
   margin-top: 1em;
+  border-radius: 0.5em;
+}
+
+.markdown {
+  :deep(.markdown-alert-important) {
+    background-color: #302a32
+  }
+
+  :deep(img) {
+    &.add-widget {
+      max-width: 550px;
+      width: 100%;
+      min-width: 0;
+    }
+
+    &.widget-compare {
+      image-rendering: pixelated;
+      width: 100%;
+      min-width: 0;
+
+      @media (-webkit-device-pixel-ratio: 1) {
+        max-width: 866px;
+      }
+
+      @media (-webkit-device-pixel-ratio: 2) {
+        max-width: 433px;
+      }
+
+      @media (-webkit-device-pixel-ratio: 3) {
+        max-width: 288px;
+      }
+    }
+  }
 }
 
 .collection {
