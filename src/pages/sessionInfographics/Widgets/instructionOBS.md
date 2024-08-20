@@ -19,5 +19,5 @@
 - Первая каритинка `400x400` **без масштабирования**
 - Вторая картинка `2048x2048` **уменьшенная в OBS** в 5 раз
 ::: center
-![Инструкция как создать виджет](/widgets/compare.png){class=widget-compare}
+![Инструкция как создать виджет](/widgets-images/compare.png){class=widget-compare}
 :::
