@@ -86,6 +86,13 @@ useIframeMessages(collection, data => {
   }
 });
 
+useIframeMessages(preview, data => {
+  if (data.type === 'readme-loaded') {
+    const attributes = data.attributes as Record<string, string>;
+    if ('title' in attributes) selectedTitle.value = attributes.title;
+  }
+});
+
 onDeactivated(() => {
   if (collection.value) {
     collection.value.style.opacity = '0';
