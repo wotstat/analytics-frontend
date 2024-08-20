@@ -1,0 +1,116 @@
+.markdown {
+  h1 {
+    font-size: 1.4em;
+  }
+
+  h2 {
+    font-size: 1.5em;
+    margin-top: 1em;
+  }
+
+  h3 {
+    font-size: 1.25em;
+    margin-top: 0.5em;
+  }
+
+  h4 {
+    font-size: 1em;
+    margin-top: 0.5em;
+    margin-bottom: 0;
+  }
+
+  a {
+    font-weight: 500;
+    color: #b9f8ff;
+    text-decoration: inherit;
+
+    &:hover {
+      color: #65f0ff;
+    }
+  }
+
+  p {
+    margin: 0.5em 0;
+  }
+
+  img {
+    border-radius: 0.5em;
+  }
+
+  code {
+    font-size: 0.85em;
+    background-color: #262525;
+    border-radius: 0.4em;
+    padding: 0.08em 0.375em;
+    display: inline-block;
+    border: 1px solid #4b4b4b;
+    color: var(--font-color);
+    font-weight: 600;
+  }
+
+  table {
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    overflow: auto;
+    border-spacing: 0;
+    border-collapse: collapse;
+
+    th {
+      text-align: center;
+    }
+
+    th,
+    td {
+      padding: 6px 13px;
+      border: 1px solid #4b4b4b;
+    }
+  }
+
+  blockquote {
+    margin: 0;
+    padding: 0.5em 1em;
+    background-color: #262525;
+    border-left: 0.25em solid #4b4b4b;
+    border-radius: 0.25em;
+    color: var(--font-color);
+  }
+
+  .markdown-alert {
+    margin: 0.5em 1em 0.5em 0;
+    padding: 0.5em 1em;
+    background-color: #262525;
+    border-left: 0.25em solid #4b4b4b;
+    border-radius: 0.25em;
+
+    p:last-child {
+      margin-bottom: 0;
+    }
+
+    p:nth-child(2) {
+      margin-top: 0;
+    }
+
+    .markdown-alert-title {
+      font-weight: 600;
+      color: white;
+      margin: 0;
+    }
+
+    @mixin markdown-alert($name, $border, $color) {
+      &.markdown-alert-#{$name} {
+        border-left-color: $border;
+
+        .markdown-alert-title {
+          color: $color;
+        }
+      }
+    }
+
+    @include markdown-alert(note, #2b99f3, #5ab7ff);
+    @include markdown-alert(important, #d54bff, #da61ff);
+    @include markdown-alert(tip, #4bff4b, #4bff4b);
+    @include markdown-alert(warning, #ffaa00, #ffaa00);
+    @include markdown-alert(caution, #ff4b4b, #ff4b4b);
+  }
+}
