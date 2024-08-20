@@ -18,7 +18,7 @@
 
   <According>
     <template #header>
-      <h4>Как добавить в OBS (для стримеров)</h4>
+      <h4>Как добавить виджет в OBS (для стримеров)</h4>
     </template>
     <template #panel>
       <div class="markdown">
