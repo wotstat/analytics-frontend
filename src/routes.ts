@@ -9,7 +9,7 @@ import Maps from './pages/sessionInfographics/Maps.vue'
 import Coverage from './pages/sessionInfographics/Coverage.vue'
 import Distribution from './pages/damageDistribution/Content.vue'
 import Lootbox from './pages/lootbox/Index.vue'
-import Widgets from './pages/sessionInfographics/Widgets.vue'
+import Widgets from './pages/sessionInfographics/Widgets/Index.vue'
 
 
 

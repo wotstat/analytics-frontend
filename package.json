@@ -11,6 +11,10 @@
   },
   "dependencies": {
     "@clickhouse/client-web": "^1.0.1",
+    "@mdit/plugin-alert": "^0.13.0",
+    "@mdit/plugin-align": "^0.13.0",
+    "@mdit/plugin-attrs": "^0.13.0",
+    "@mdit/plugin-container": "^0.13.0",
     "@timohausmann/quadtree-ts": "^2.2.2",
     "@vitejs/plugin-vue": "^5.0.4",
     "@vueuse/components": "^10.7.2",
