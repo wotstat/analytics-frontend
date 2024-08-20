@@ -126,41 +126,35 @@
       </div>
     </div>
 
-    <!-- <h4>Паттерны команд</h4>
-
-    <div class="card">
-      <p class="card-main-info description top">Распределение по уровню боя</p>
-      <TeamLevelTable :params="params" />
-    </div> -->
-
-    <h4 ref="turboContainer">Турбобои</h4>
-    <p>Бои длинною менее 5 минут и разницей счёта больше 10 (проигравшая команда имеет не более 4 фрагов)</p>
-    <div class="card long">
-      <GenericInfo :status="turboResult.status" :value="turboResult.data.count" :processor="useFixedSpaceProcessor(0)"
-        description="Всего турбобоёв" color="blue" />
-    </div>
-    <div class="flex hor-ver-small">
-      <div class="card flex-1">
-        <GenericInfo :status="mergeStatuses(resultsInfo.status, turboResult.status)" :value="turboPercent"
-          description="Турбо боёв в среднем" color="blue" :processor="usePercentProcessor(1)" />
+    <template v-if="params.player">
+      <h4 ref="turboContainer">Турбобои</h4>
+      <p>Бои длинною менее 5 минут и разницей счёта больше 10 (проигравшая команда имеет не более 4 фрагов)</p>
+      <div class="card long">
+        <GenericInfo :status="turboResult.status" :value="turboResult.data.count" :processor="useFixedSpaceProcessor(0)"
+          description="Всего турбобоёв" color="blue" />
       </div>
-      <div class="card flex-1">
-        <GenericInfo :status="turboResult.status" :value="turboResult.data.maxTurbo"
-          description="Худшая серия из 10 боёв" mini-data="турбо" color="blue" />
+      <div class="flex hor-ver-small">
+        <div class="card flex-1">
+          <GenericInfo :status="mergeStatuses(resultsInfo.status, turboResult.status)" :value="turboPercent"
+            description="Турбо боёв в среднем" color="blue" :processor="usePercentProcessor(1)" />
+        </div>
+        <div class="card flex-1">
+          <GenericInfo :status="turboResult.status" :value="turboResult.data.maxTurbo"
+            description="Худшая серия из 10 боёв" mini-data="турбо" color="blue" />
+        </div>
       </div>
-    </div>
 
-    <div class="flex hor-ver-small">
-      <div class="card flex-1">
-        <GenericInfo :status="turboResult.status" :value="turboResult.data.avgTurbo" :processor="t => t.toFixed(2)"
-          mini-data="турбы" description="В среднем из серии в 10 боёв" color="blue" />
+      <div class="flex hor-ver-small">
+        <div class="card flex-1">
+          <GenericInfo :status="turboResult.status" :value="turboResult.data.avgTurbo" :processor="t => t.toFixed(2)"
+            mini-data="турбы" description="В среднем из серии в 10 боёв" color="blue" />
+        </div>
+        <div class="card flex-1">
+          <GenericInfo :status="turboResult.status" :value="turboResult.data.minTurbo"
+            description="Лучшая серия из 10 боёв" mini-data="турбо" color="blue" />
+        </div>
       </div>
-      <div class="card flex-1">
-        <GenericInfo :status="turboResult.status" :value="turboResult.data.minTurbo"
-          description="Лучшая серия из 10 боёв" mini-data="турбо" color="blue" />
-      </div>
-    </div>
-
+    </template>
   </div>
 </template>
 
@@ -274,7 +268,7 @@ from (select allyTeamCount - allyTeamSurvivedCount                              
              duration < 5 * 60 and abs(opponentTeamFrags - playerTeamFrags) > 10 as isTurbo,
              countIf(isTurbo) over (partition by playerName order by playerName, id rows between 9 preceding and current row) as countTurbo
       from Event_OnBattleResult
-      ${whereClause(params)});`, { count: 0, maxTurbo: 0, avgTurbo: 0, medTurbo: 0, minTurbo: 0 }, { enabled: turboVisible, settings: params.value.player ? {} : LONG_CACHE_SETTINGS });
+      ${whereClause(params)});`, { count: 0, maxTurbo: 0, avgTurbo: 0, medTurbo: 0, minTurbo: 0 }, { enabled: turboVisible, settings: params.value.player ? {} : { ...LONG_CACHE_SETTINGS, query_cache_ttl: 3600 } });
 
 function usePlayerDistribution(value: 'Damage' | 'Radio' | 'Kills') {
   const result = queryAsync<{ playerPosition: number, count: number }>(`
