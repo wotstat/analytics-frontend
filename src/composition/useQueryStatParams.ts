@@ -59,7 +59,7 @@ export function useQueryStatParams() {
       temp.level = splitted
         .map(t => parseInt(t))
         .filter(t => !isNaN(t))
-        .filter(t => t >= 1 && t <= 10) as TankLevel[];
+        .filter(t => t >= 1 && t <= 11) as TankLevel[];
     }
 
     if ('mode' in route.query) {
