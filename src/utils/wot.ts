@@ -1,5 +1,6 @@
 
 export const shellNames = {
+  'ARMOR_PIERCING_FSDS': ['БОПС', 'Бронебойный оперённый'],
   'ARMOR_PIERCING': ['ББ', 'Бронебойный'],
   'ARMOR_PIERCING_CR': ['БП', 'Подкалиберный'],
   // 'ARMOR_PIERCING_HE': ['БК', 'Бронебойный каморный'],
