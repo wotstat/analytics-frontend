@@ -56,6 +56,7 @@
       <li>{frags} – фраги</li>
       <li>{gm} – сумма для отметки</li>
       <li>{chuck} – сумма очков Чака</li>
+      <li>{rank} – место в Стальном Охотнике</li>
       <li>{comment} – подпись хорошего и наилучшего боя (по очкам Чака)</li>
     </ul>
 
@@ -177,6 +178,7 @@ const resultTimecodes = computed(() => {
       .replaceAll('{frags}', t.res.pKills.toString())
       .replaceAll('{gm}', t.res.gunMarkSum.toString())
       .replaceAll('{chuck}', t.res.chuck.toString())
+      .replaceAll('{rank}', t.res.playerRank.toString())
       .replaceAll('{comment}', getComment(t))
     )
     .map(t => t
@@ -210,9 +212,10 @@ const result = queryComputed<{
   pAssistRadio: number,
   pXp: number,
   pKills: number,
-  chuck: number
+  chuck: number,
+  playerRank: number
 }>(() => params.value.player === null ? null : `
-select dateTime, arenaTag, tankTag, result, pAssistRadio, pDmg, pXp, pKills, gunMarkSum,
+select dateTime, arenaTag, tankTag, result, pAssistRadio, pDmg, pXp, pKills, gunMarkSum, playerRank,
        toUInt32(pDmg + arraySum(squadmateDamage) + (pKills + arraySum(squadmateKills)) * 300 + if(result = 'win', 3000, 0)) as chuck
 from
 (
@@ -227,7 +230,7 @@ join
         arrayFilter(x -> x.1 = personal.squadID and x.1 != 0 and x.2 != playerName, squadResults) as squadmateResults,
         squadmateResults.3 as squadmateDamage, squadmateResults.4 as squadmateKills
     select onBattleStartId, arenaTag, result, personal.damageDealt as pDmg, personal.damageAssistedRadio as pAssistRadio,
-           personal.xp as pXp, personal.kills as pKills, squadmateDamage, squadmateKills, gunMarkSum
+           personal.xp as pXp, personal.kills as pKills, squadmateDamage, squadmateKills, gunMarkSum, personal.playerRank as playerRank
     from Event_OnBattleResult
     ${whereClause(params.value)}
 ) as T2
