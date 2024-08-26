@@ -46,9 +46,12 @@ import { useIframeMessages } from '@/composition/useIframeMessages';
 import { computed, onDeactivated, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import { VueComponent as InstructionGame } from "./instructionGame.md";
-import { VueComponent as InstructionOBS } from "./instructionOBS.md";
+import { VueComponentWith as InstructionGameWith } from "./instructionGame.md";
+import { VueComponentWith as InstructionOBSWith } from "./instructionOBS.md";
+import { allMdComponents } from '@/components/mdUtils/getAllMdComponents';
 
+const InstructionGame = InstructionGameWith(allMdComponents);
+const InstructionOBS = InstructionOBSWith(allMdComponents);
 
 const selectedTitle = ref<string>('');
 const collection = ref<HTMLIFrameElement | null>(null);
