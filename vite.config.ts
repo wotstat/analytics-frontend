@@ -15,7 +15,7 @@ export default defineConfig({
     svgLoader(),
     mdPlugin({
       mode: [Mode.VUE],
-      markdownIt: new MarkdownIt()
+      markdownIt: new MarkdownIt({ html: true })
         .use(alert)
         .use(attrs)
         .use(container)
