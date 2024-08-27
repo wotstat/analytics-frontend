@@ -1,3 +1,7 @@
 <template>
-  <code><slot></slot>1.25.1.1</code>
+  <code><slot></slot>{{ gameVersionEU }}</code>
 </template>
+
+<script lang="ts" setup>
+import { gameVersionEU } from "./gameVersion";
+</script>
