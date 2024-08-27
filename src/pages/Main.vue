@@ -40,14 +40,19 @@
         <h2>Установка</h2>
 
         <p>
-          <a :href="latestRelease.browser_download_url" target="_blank">Скачайте</a> последнюю версию мода и поместите
+          <a :href="latestWotstat.browser_download_url" target="_blank">Скачайте</a> последнюю версию мода и поместите
           файл в каталог:
+        </p>
         <ul>
-          <li>Леста: <code>{{ targetModPath[0] }}</code></li>
-          <li>Wargaming: <code>{{ targetModPath[1] }}</code></li>
+          <li>Леста:
+            <CurrentLestaVersion>Tanki/mods/</CurrentLestaVersion>
+          </li>
+          <li>Wargaming:
+            <CurrentWgVersion>World_Of_Tanks/mods/</CurrentWgVersion>
+          </li>
         </ul>
 
-        </p>
+        <i>Версии игры актуальны на {{ new Date().toLocaleDateString() }}</i>
 
         <!-- <i>Проверка на вирусы VirusTotal: <a
             href="https://www.virustotal.com/gui/file/d2c21e8fbb360e4309f40d459014c40cb80307712fe452e967fc70ae7159b0fa?nocache=1"
@@ -55,8 +60,8 @@
         </i> -->
 
         <p class="warning">ВАЖНО: НЕ переименовывайте файл с модом. Он должен называться
-          <code v-if="latestRelease.actual">"{{ latestRelease.name }}"</code>
-          <span v-else>так же как и скачался. Например "{{ latestRelease.name }}"</span>
+          <code v-if="latestWotstat.actual">"{{ latestWotstat.name }}"</code>
+          <span v-else>так же как и скачался. Например "{{ latestWotstat.name }}"</span>
         </p>
 
         <h3 class="streamer-header" @click="streamerOpen = !streamerOpen">
@@ -362,50 +367,27 @@ import { getArenaName } from '@/utils/i18n';
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 import { useDocumentVisibility } from '@vueuse/core'
 import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
+import CurrentLestaVersion from '@/components/mdUtils/CurrentLestaVersion.vue';
+import CurrentWgVersion from '@/components/mdUtils/CurrentWgVersion.vue';
+import { githubRelease } from '@/components/mdUtils/ghRelease';
 
 
 const collapsableBody = ref<HTMLElement | null>(null);
 
 const DBUrl = import.meta.env.VITE_CLICKHOUSE_URL
 
-async function parseGameVersion(url: string) {
-  const response = await fetch(url)
-  const text = await response.text();
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(text, "text/xml");
-  return doc.documentElement.querySelector("Path[mask='*.wotmod']")?.textContent ?? './mods/GAME_VERSION';
-}
-
-const gameVersionRU = computedAsync(async () => await parseGameVersion("https://raw.githubusercontent.com/IzeBerg/wot-src/RU/sources/paths.xml"), './mods/1.20.0.0');
-const gameVersionEU = computedAsync(async () => await parseGameVersion("https://raw.githubusercontent.com/IzeBerg/wot-src/EU/sources/paths.xml"), './mods/1.20.0.0');
-
-const targetModPath = computed(() => {
-  return [
-    "Tanki" + gameVersionRU.value.slice(1),
-    "World_Of_Tanks" + gameVersionEU.value.slice(1),
-  ]
-})
-
-const latestRelease = computedAsync(async () => {
-  const response = await fetch("https://api.github.com/repos/WOT-STAT/WOTMOD/releases/latest")
-  const text = await response.text();
-  const json = JSON.parse(text);
-
-  const asset = (json.assets as Record<string, string>[]).find(t => t.name.startsWith('mod.wotStat')) as {
-    browser_download_url: string,
-    name: string,
-  };
-
+const latestWotstat = computedAsync(async () => {
+  const asset = await githubRelease("https://api.github.com/repos/WOT-STAT/WOTMOD/releases/latest", t => t.endsWith('.wotmod'))
   return {
     browser_download_url: asset.browser_download_url,
     name: asset.name,
     actual: true,
   }
-
 }, { browser_download_url: 'https://github.com/WOT-STAT/WOTMOD/releases/latest', name: 'mod.wotStat_1.0.0.1-a.3.wotmod', actual: false });
 
+
 function download() {
-  window.open(latestRelease.value.browser_download_url, "_blank");
+  window.open(latestWotstat.value.browser_download_url, "_blank");
 }
 
 const streamerOpen = ref(false);
