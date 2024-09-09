@@ -10,7 +10,8 @@
       <p v-else>Loading: {{ current }}/{{ total }} el: {{ lastTime }}s</p>
     </div>
 
-    <div class="drop-zone" :class="{ 'isOverDropZone': isOverDropZone }" ref="dropZoneRef">
+    <div class="drop-zone" @click="openSelectFileDialog" :class="{ 'isOverDropZone': isOverDropZone }"
+      ref="dropZoneRef">
       <p>Drop computed file here</p>
     </div>
 
@@ -57,6 +58,8 @@ function onDrop(files: File[] | null) {
     const text = e.target?.result as string
     const json = JSON.parse(text)
     suspicious.value = json
+    console.log(json);
+
   }
   reader.readAsText(files[0])
 }
@@ -104,6 +107,16 @@ function reset() {
   suspicious.value = []
 }
 
+function openSelectFileDialog() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'text/json';
+  input.onchange = (e) => {
+    const files = (e.target as HTMLInputElement).files;
+    onDrop([...files?.length ? files : []]);
+  }
+  input.click();
+}
 
 
 async function load() {
