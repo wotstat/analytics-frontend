@@ -48,7 +48,7 @@ import { useDropZone, useLocalStorage } from '@vueuse/core';
 const dropZoneRef = ref<HTMLDivElement>()
 const { isOverDropZone } = useDropZone(dropZoneRef, {
   onDrop,
-  dataTypes: ['text/json', 'application/json'],
+  dataTypes: ['application/json'],
 })
 
 function onDrop(files: File[] | null) {
@@ -110,7 +110,7 @@ function reset() {
 function openSelectFileDialog() {
   const input = document.createElement('input');
   input.type = 'file';
-  input.accept = 'text/json';
+  input.accept = 'application/json';
   input.onchange = (e) => {
     const files = (e.target as HTMLInputElement).files;
     onDrop([...files?.length ? files : []]);
