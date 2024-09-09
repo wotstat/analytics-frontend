@@ -10,6 +10,7 @@ import Coverage from './pages/sessionInfographics/Coverage.vue'
 import Distribution from './pages/damageDistribution/Content.vue'
 import Lootbox from './pages/lootbox/Index.vue'
 import Widgets from './pages/sessionInfographics/widgets/Index.vue'
+import FixedMatchDetect from "./pages/services/fixedMatchDetect/Index.vue";
 
 
 
@@ -32,11 +33,14 @@ const routes = [
       { path: 'old-layout', component: () => import('./pages/sessionInfographics/Old.vue') },
       { path: 'distribution', component: Distribution },
       { path: 'lootbox', component: Lootbox, meta: { hideTankList: true } },
-      { path: 'widgets/:widget*', component: Widgets, meta: { hideTankList: true, customTitle: 'Виджеты' } }
+      { path: 'widgets/:widget*', component: Widgets, meta: { hideTankList: true, customTitle: 'Виджеты' } },
     ]
   },
+  { path: '/services/fixed-match-detector', component: FixedMatchDetect },
+
   { path: '/widgets', redirect: '/session/widgets' },
   { path: '/widgets/demo', redirect: t => window.location.href = 'https://widgets.wotstat.info/demo-widget' },
+
   { path: '/damage', component: () => import('./pages/damageDistribution/Index.vue') },
   { path: '/map', component: () => import('./pages/map/Index.vue') },
   { path: '/widget/chuck-norris', component: () => import('./pages/obs/ChuckNorris.vue'), meta: { clearPage: true } },
