@@ -32,8 +32,17 @@
   }" @load="onCollectionLoad"></iframe>
 
   <PopupWindow :title="selectedTitle" v-if="selectedRoute" @close="onClosePreview">
+    <div class="loader" v-if="isPreviewLoading">
+      <div class="top-text loading"></div>
+      <div class="bottom-content">
+        <div class="preview-content loading"></div>
+        <div class="settings-content loading"></div>
+      </div>
+      <div class="url-line loading"></div>
+    </div>
     <iframe :src="`${WIDGETS_URL}/iframe/preview${selectedRoute}`" frameborder="0" class="preview"
-      allow="clipboard-write" ref="preview" @load="onPreviewLoad"></iframe>
+      :style="{ opacity: isPreviewLoading ? 0 : 1 }" allow="clipboard-write" ref="preview"
+      @load="onPreviewLoad"></iframe>
   </PopupWindow>
 </template>
 
@@ -43,7 +52,7 @@ import According from '@/components/According.vue';
 import PopupWindow from '@/components/PopupWindow.vue';
 import { useIframeContentBounding } from '@/composition/useIframeContentBounding';
 import { useIframeMessages } from '@/composition/useIframeMessages';
-import { computed, onDeactivated, ref } from 'vue';
+import { computed, onDeactivated, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { VueComponentWith as InstructionGameWith } from "./instructionGame.md";
@@ -56,6 +65,7 @@ const InstructionOBS = InstructionOBSWith(allMdComponents);
 const selectedTitle = ref<string>('');
 const collection = ref<HTMLIFrameElement | null>(null);
 const preview = ref<HTMLIFrameElement | null>(null);
+const isPreviewLoading = ref(true);
 
 const route = useRoute()
 const router = useRouter()
@@ -71,6 +81,10 @@ const selectedRoute = computed(() => {
     return '/' + route.params.widget;
 
   return null
+});
+
+watch(selectedRoute, (value, old) => {
+  if (value && !old) isPreviewLoading.value = true;
 });
 
 
@@ -118,7 +132,7 @@ function onCollectionLoad() {
 
 function onPreviewLoad() {
   if (!preview.value) return;
-  preview.value.style.opacity = '1';
+  isPreviewLoading.value = false;
 }
 
 
@@ -185,10 +199,65 @@ h4 {
   max-width: 100%;
   width: 900px;
   height: 700px;
-  opacity: 0;
+
+  transition: opacity 0.2s;
 
   @include less-small {
     height: 100%;
+  }
+}
+
+.loader {
+  position: absolute;
+  inset: 0;
+  top: 60px;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+
+  gap: 10px;
+
+  .loading {
+    border-radius: 10px;
+
+    $base-color: #a8a8a81e;
+    $shine-color: #a8a8a83f;
+
+    // skeleton
+
+    background: linear-gradient(90deg, $base-color, $shine-color, $base-color);
+    background-size: 200% 100%;
+    animation: shine 1.5s infinite linear;
+
+    @keyframes shine {
+      to {
+        background-position: -200% 100%;
+      }
+    }
+
+  }
+
+  .top-text {
+    flex: 1;
+  }
+
+  .bottom-content {
+    flex: 1;
+    display: flex;
+    gap: 10px;
+
+    .preview-content {
+      flex: 1;
+    }
+
+    .settings-content {
+      width: 300px;
+    }
+
+  }
+
+  .url-line {
+    height: 56px;
   }
 }
 </style>
