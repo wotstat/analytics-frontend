@@ -84,10 +84,11 @@ const props = defineProps<{
   }[],
   localizer?: (key: string, titleName?: LocalizedName) => string | { prefix?: string, postfix?: string, value: string },
   byNumber?: number,
-  leftAlign?: boolean
+  leftAlign?: boolean,
+  showOther: boolean | undefined
 }>()
 
-const displayOther = computed(() => props.data.some(line => line.other !== undefined));
+const displayOther = computed(() => props.showOther !== false && props.data.some(line => line.other !== undefined));
 const percentSum = computed(() => props.data.reduce((a, v) => a + v.percent, 0));
 const otherSum = computed(() => props.data.reduce((a, v) => a + (v.other ?? 0), 0));
 
