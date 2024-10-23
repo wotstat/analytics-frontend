@@ -44,6 +44,9 @@
 import { ref } from 'vue';
 import { createClient } from '@clickhouse/client-web';
 import { useDropZone, useLocalStorage } from '@vueuse/core';
+// import data from './bb.json';
+
+const data = {}
 
 const dropZoneRef = ref<HTMLDivElement>()
 const { isOverDropZone } = useDropZone(dropZoneRef, {
@@ -121,7 +124,7 @@ function openSelectFileDialog() {
 
 async function load() {
 
-  const data = {}
+  // const data = {}
   const acc = (data as any).data.accounts as any[]
   const longSession = acc.filter(t => t.battles.length > 25)
   const sorted = longSession.sort((a, b) => b.results.totalScores - a.results.totalScores)
@@ -149,6 +152,39 @@ async function load() {
 
     try {
 
+      //     const result = clickhouse.query({
+      //       query: `
+      //   with ${item.wotId} as WOT_ID
+      //   select
+      //       player, toUInt32(count()) as count, arrayZip(groupArray(arenaId), groupArray(time)) as arenas
+      //   from
+      //   (
+      //       with
+      //           toHour(dateTime) + 3 as hour,
+      //           hour between 9 and 24 or hour between 0 and 1 as prime,
+      //           arrayFirstIndex(t -> t = WOT_ID, playersResults.bdid) as targetIndex,
+      //           playersResults.tankType[targetIndex] as targetTankType,
+      //           playersResults.tankLevel[targetIndex] as targetTankLevel,
+      //           playersResults.squadID[targetIndex] as targetSquad
+      //       select arenaId, any(dateTime + interval 3 hour) as time, arrayZip(any(playersResults.bdid), any(playersResults.name)) as players
+      //       from Event_OnBattleResult
+      //       where dateTime between '2024-08-23' and '2024-09-06'
+      //           and has(playersResults.bdid, WOT_ID)
+      //           and prime
+      //           and targetTankType = 'HT'
+      //           and targetTankLevel = 10
+      //           and targetSquad = 0
+      //           and battleMode = 'REGULAR'
+      //       group by arenaId
+      //   )
+      //   array join players as player
+      //   group by player
+      //   having count() > 3
+      //   order by count() desc;
+      // `});
+
+
+      // squad
       const result = clickhouse.query({
         query: `
     with ${item.wotId} as WOT_ID
@@ -156,29 +192,33 @@ async function load() {
         player, toUInt32(count()) as count, arrayZip(groupArray(arenaId), groupArray(time)) as arenas
     from
     (
-        with
-            toHour(dateTime) + 3 as hour,
-            hour between 9 and 24 or hour between 0 and 1 as prime,
-            arrayFirstIndex(t -> t = WOT_ID, playersResults.bdid) as targetIndex,
-            playersResults.tankType[targetIndex] as targetTankType,
-            playersResults.tankLevel[targetIndex] as targetTankLevel,
-            playersResults.squadID[targetIndex] as targetSquad
-        select arenaId, any(dateTime + interval 3 hour) as time, arrayZip(any(playersResults.bdid), any(playersResults.name)) as players
-        from Event_OnBattleResult
-        where dateTime between '2024-08-23' and '2024-09-06'
-            and has(playersResults.bdid, WOT_ID)
-            and prime
-            and targetTankType = 'HT'
-            and targetTankLevel = 10
-            and targetSquad = 0
-            and battleMode = 'REGULAR'
-        group by arenaId
+      with
+          toHour(dateTime) + 3 as hour,
+          hour between 9 and 24 or hour between 0 and 1 as prime,
+          arrayFirstIndex(t -> t = WOT_ID, playersResults.bdid) as targetIndex,
+          playersResults.tankType[targetIndex] as targetTankType,
+          playersResults.tankLevel[targetIndex] as targetTankLevel,
+          playersResults.squadID[targetIndex] as targetSquad
+      select arenaId, any(dateTime + interval 3 hour) as time,
+        arrayFilter(t -> t.3 = targetSquad,
+        arrayZip(any(playersResults.bdid), any(playersResults.name), any(playersResults.squadID))) as squadman,
+        arrayZip(squadman.1, squadman.2) as players
+      from Event_OnBattleResult
+      where dateTime between '2024-08-23' and '2024-09-06'
+          and has(playersResults.bdid, WOT_ID)
+          and prime
+          and targetTankType = 'HT'
+          and targetTankLevel = 10
+          and targetSquad != 0
+          and battleMode = 'REGULAR'
+      group by arenaId, targetSquad
     )
     array join players as player
     group by player
-    having count() > 3
-    order by count() desc;
+order by count() desc;
   `});
+
+
 
 
       const res = await result
