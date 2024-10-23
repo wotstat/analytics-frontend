@@ -25,7 +25,8 @@ const props = defineProps<{
   }[],
   localizer?: (key: string, titleName?: LocalizedName) => string | { prefix?: string, postfix?: string, value: string },
   byNumber?: number,
-  leftAlign?: boolean
+  leftAlign?: boolean,
+  showOther: boolean | undefined
 }>()
 </script>
 
