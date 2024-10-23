@@ -34,14 +34,15 @@
         <div class="tanks">
           <div class="left flex-1">
             <div v-for="tank in evenTanks" :key="tank.name" class="flex">
-              <p class="flex-1">{{ tank.name }}</p>
-              <p class="flex-1 right">{{ tank.count }}</p>
+              <p class="flex-1">{{ getTankName(tank.name, true) }}</p>
+              <p class="right bold num">{{ tank.count }}</p>
             </div>
           </div>
+          <div class="vr"></div>
           <div class="right flex-1">
             <div v-for="tank in oddTanks" :key="tank.name" class="flex">
-              <p class="flex-1">{{ tank.name }}</p>
-              <p class="flex-1 right">{{ tank.count }}</p>
+              <p class="flex-1">{{ getTankName(tank.name, true) }}</p>
+              <p class="right bold num">{{ tank.count }}</p>
             </div>
           </div>
         </div>
@@ -63,6 +64,7 @@
 <script setup lang="ts">
 import { useFixedSpaceProcessor, useLogProcessor } from '@/composition/usePercentProcessor';
 import { useTweenCounter } from '@/composition/useTweenCounter';
+import { getTankName } from '@/utils/i18n';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
@@ -92,6 +94,8 @@ const route = useRoute();
 
 const evenTanks = computed(() => props.tanks.filter((_, i) => i % 2 === 0))
 const oddTanks = computed(() => props.tanks.filter((_, i) => i % 2 === 1))
+
+
 
 onMounted(() => {
   if (route.meta.clearPage)
@@ -127,7 +131,38 @@ onMounted(() => {
     }
 
     p {
-      font-size: 1em;
+      font-size: 0.9em;
+    }
+
+    .tanks {
+      display: flex;
+      gap: 1em;
+      margin-top: 1em;
+      font-size: 4em;
+      line-height: 1;
+      white-space: nowrap;
+
+      .left,
+      .right {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5em;
+      }
+
+      .right {
+        // font-weight: bold;
+      }
+
+      .flex {
+        display: flex;
+        gap: 0.5em;
+      }
+
+      .vr {
+        width: 1px;
+        background-color: #5a5a5a;
+        margin: 0 1em;
+      }
     }
 
     .small {
