@@ -86,10 +86,41 @@ TARGET:
     turretYaw: ${hitVehicle.turretYaw}
     distance: ${hitDistance}
 
-URL: ${wotinspectorURL(vehicle, hitVehicle, hitDistance, isWOT)}
+URL: ${wotinspectorURLNew(vehicle, hitVehicle, hitDistance, isWOT)}
   `);
 }
-export function wotinspectorURL(vehicle: VehicleDescriptor & { shell: number },
+
+
+function rad2deg(rad: number) {
+  return rad * 180 / Math.PI;
+}
+
+export function wotinspectorURLNew(vehicle: VehicleDescriptor & { shell: number },
+  hitVehicle: VehicleDescriptor & VehicleHit,
+  hitDistance: number, isWOT: boolean = false) {
+
+  const query = {
+    'distance': hitDistance,
+    'pkg': isWOT ? 'pc' : 'mirtankov',
+    'segment': hitVehicle.segment,
+    'shooter.chassis': vehicle.chassis,
+    'shooter.gun': vehicle.gun,
+    'shooter.shell': vehicle.shell,
+    'shooter.turret': vehicle.turret,
+    'shooter.vehicle': vehicle.vehicle,
+    'target.chassis': hitVehicle.chassis,
+    'target.gun': hitVehicle.gun,
+    'target.gun.pitch': rad2deg(hitVehicle.turretPitch),
+    'target.turret': hitVehicle.turret,
+    'target.turret.yaw': rad2deg(hitVehicle.turretYaw),
+    'target.vehicle': hitVehicle.vehicle,
+  }
+
+  return `https://api.wotinspector.com/v2/ai/shotsimulate?${Object.entries(query).map(([key, value]) => `${key}=${value}`).join('&')}`;
+}
+
+
+export function wotinspectorURLOld(vehicle: VehicleDescriptor & { shell: number },
   hitVehicle: VehicleDescriptor & VehicleHit,
   hitDistance: number, isWOT: boolean = false) {
   const dataLen = /*version*/ 1 + /*platform*/ +1 + /*shooter*/ 2 + 2 + 2 + 2 + 2 + /*target*/ 2 + 2 + 2 + 2 + /*gun yaw/pitch*/ 4 + 4 + /*segment*/ 8 + /*distance*/ 4
