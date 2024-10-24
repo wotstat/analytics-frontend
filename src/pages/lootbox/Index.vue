@@ -270,7 +270,7 @@ function getQuery(select: string, arrayJoin: string, materialized: string, tagPr
 
   return where ? `
 with
-(select count() from Event_OnLootboxOpen where ${where} ${andWhereTag}) as personalLootboxesCount,
+  (select count() from Event_OnLootboxOpen where ${where} ${andWhereTag}) as personalLootboxesCount,
   (select count() from Event_OnLootboxOpen ${whereWhereTag}) as lootboxesCount
     ${prefix}
     select title,
@@ -297,7 +297,7 @@ join
         group by title
   ) as T2
 using title
-    order by 1
+    order by count
     ${postfix}
 ` : `
 with
@@ -310,7 +310,7 @@ toUInt32(countMerge(count)) as count,
     from ${materialized}
     ${whereWhereTag}
     group by ${groupBy}
-    order by 1
+    order by count
     ${postfix}
 `
 
