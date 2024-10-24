@@ -33,11 +33,11 @@
           <table cellspacing="0" cellpadding="0">
             <tr>
               <th>Боёв</th>
-              <td>{{ item.battleCount }}</td>
+              <td>{{ logProcessor(item.battleCount) }}</td>
             </tr>
             <tr>
               <th>Выстрелов</th>
-              <td>{{ item.shotsCount }}</td>
+              <td>{{ logProcessor(item.shotsCount) }}</td>
             </tr>
           </table>
         </div>
@@ -52,6 +52,7 @@ import { LONG_CACHE_SETTINGS, queryComputed } from '@/db';
 import { useRoute, useRouter } from 'vue-router';
 import ServerStatusWrapper from '../ServerStatusWrapper.vue';
 import { computed } from 'vue';
+import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 
 
 const router = useRouter()
@@ -59,12 +60,18 @@ const route = useRoute()
 
 const stats = useQueryStatParams()
 
+const fixedSpaceProcessor = useFixedSpaceProcessor(0)
+function logProcessor(value: number) {
+  if (value < 1e6) return fixedSpaceProcessor(value);
+  if (value < 1e9) return (value / 1e6).toFixed(1) + 'M';
+}
+
 const cacheSettings = computed(() => {
   if (stats.value.player) return {}
   return LONG_CACHE_SETTINGS
 })
 
-const tanks = queryComputed<{ tag: string, battleCount: string, shotsCount: string, shortNameRU: string, iconUrl: string }>(() => `
+const tanks = queryComputed<{ tag: string, battleCount: number, shotsCount: number, shortNameRU: string, iconUrl: string }>(() => `
 with
     splitByChar(':', battles.tankTag)[2] as withoutNation,
     splitByChar('_', withoutNation) as splitted,
@@ -75,8 +82,8 @@ select battles.tankTag as tag,
        shotsCount,
        multiIf(shortNameRU != '', shortNameRU, name != '', name, tagWithoutNation != '', tagWithoutNation, battles.tankTag) as shortNameRU, 
        iconUrl
-from (select tankTag, count() as battleCount from Event_OnBattleStart ${whereClause(stats.value, { ignore: ['tanks'], isBattleStart: true })} group by tankTag) as battles 
-         left join (select tankTag, count() as shotsCount from Event_OnShot ${whereClause(stats.value, { ignore: ['tanks'] })} group by tankTag) as shots on shots.tankTag = battles.tankTag
+from (select tankTag, toUInt32(count()) as battleCount from Event_OnBattleStart ${whereClause(stats.value, { ignore: ['tanks'], isBattleStart: true })} group by tankTag) as battles 
+         left join (select tankTag, toUInt32(count()) as shotsCount from Event_OnShot ${whereClause(stats.value, { ignore: ['tanks'] })} group by tankTag) as shots on shots.tankTag = battles.tankTag
          left join TankList on battles.tankTag = TankList.tag
 order by battleCount desc
 limit 50;
