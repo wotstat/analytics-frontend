@@ -84,10 +84,10 @@
             <div class="flex ver flex-1 gap-0">
               <InfoTable :data="secondTable(selectedShoot)" />
               <InfoTable :data="[
-            ['ФПС', selectedShoot.fps],
-            ['Пинг', (selectedShoot.ping).toFixed() + 'мс'],
-            ['Попал в', { 'tank': 'танк', 'terrain': 'землю', 'none': 'небо', 'other': '-' }[selectedShoot.hitReason] ?? '-'],
-          ]" />
+                ['ФПС', selectedShoot.fps],
+                ['Пинг', (selectedShoot.ping).toFixed() + 'мс'],
+                ['Попал в', { 'tank': 'танк', 'terrain': 'землю', 'none': 'небо', 'other': '-' }[selectedShoot.hitReason] ?? '-'],
+              ]" />
             </div>
           </div>
 
@@ -96,11 +96,11 @@
           <div class="flex table-parent">
             <InfoTable class="flex-1" :data="thirdTable(selectedShoot)" />
             <InfoTable class="flex-1" :data="[
-            ['Скорость танка', selectedShoot.vehicleSpeed.toFixed()],
-            ['Скрость поворота танка', selectedShoot.vehicleRotationSpeed.toFixed() + ' °/c'],
-            ['Скорость повоорта башни', selectedShoot.turretSpeed.toFixed() + ' °/c'],
-            ['Ваше ХП', selectedShoot.health],
-          ]" />
+              ['Скорость танка', selectedShoot.vehicleSpeed.toFixed()],
+              ['Скрость поворота танка', selectedShoot.vehicleRotationSpeed.toFixed() + ' °/c'],
+              ['Скорость повоорта башни', selectedShoot.turretSpeed.toFixed() + ' °/c'],
+              ['Ваше ХП', selectedShoot.health],
+            ]" />
           </div>
 
           <template v-if="shotResult.length > 0">
@@ -134,13 +134,13 @@
               <hr>
               <template v-for="result in shotResult">
                 <InfoTable class="flex-1" :data="([
-            ['Танк', result.tankTag],
-            ['Урон выстрелом', result.shotDamage],
-            result.shotHealth ? ['ХП осталось', result.shotHealth] : undefined,
-            result.fireDamage ? ['Урон пожаром', result.fireDamage] : undefined,
-            result.fireHealth ? ['ХП после пожара', result.fireHealth] : undefined,
-            result.ammoBayDestroyed ? ['Взрыв БК', 'Да'] : undefined,
-          ].filter(t => t) as string[][])" />
+                  ['Танк', result.tankTag],
+                  ['Урон выстрелом', result.shotDamage],
+                  result.shotHealth ? ['ХП осталось', result.shotHealth] : undefined,
+                  result.fireDamage ? ['Урон пожаром', result.fireDamage] : undefined,
+                  result.fireHealth ? ['ХП после пожара', result.fireHealth] : undefined,
+                  result.ammoBayDestroyed ? ['Взрыв БК', 'Да'] : undefined,
+                ].filter(t => t) as string[][])" />
                 <hr>
               </template>
             </div>
@@ -150,9 +150,11 @@
     </div>
     <hr>
     <div>
-      <p :class="wotInspectorUrl ? '' : 'inactive'"><a v-if="wotInspectorUrl" :href="wotInspectorUrl" target="_blank"
-          @click="wotinspectorClick()">Посмотреть</a> <span v-else>Посмотреть</span>
-        прямое попадение на сервисе WotInspector </p>
+      <p :class="getWotinspectorParams() ? '' : 'inactive'">
+        <a v-if="getWotinspectorParams()" @click="wotinspectorClick()" class="pointer">Посмотреть</a>
+        <span v-else>Посмотреть</span>
+        прямое попадание на сервисе WotInspector. (Откроется страница где надо будет нажать на "url": ...)
+      </p>
     </div>
   </div>
 </template>
@@ -160,7 +162,7 @@
 <script lang="ts" setup>
 import { dbIndexToDate, query } from '@/db';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
-import { shellNames, wotinspectorURL, wotinspectorLog } from '@/utils/wot';
+import { shellNames, wotinspectorLog, wotinspectorURLNew } from '@/utils/wot';
 import { aranaMinimapUrl, convertCoordinate, loadArenaMeta } from '@/utils/arenas';
 import { computedAsync, useDraggable, useMediaQuery } from '@vueuse/core';
 import { useRoute, useRouter } from 'vue-router';
@@ -422,16 +424,28 @@ function getWotinspectorParams() {
   };
 }
 
-const wotInspectorUrl = computed(() => {
-  const params = getWotinspectorParams();
-  if (!params) return null;
-  return wotinspectorURL(params.tank, params.target, params.distance, params.isWOT);
-})
-
-function wotinspectorClick() {
+async function wotinspectorClick() {
   const params = getWotinspectorParams();
   if (!params) return;
   wotinspectorLog(params.tank, params.target, params.distance, params.isWOT);
+
+  const url = wotinspectorURLNew(params.tank, params.target, params.distance, params.isWOT);
+
+  window.open(url, '_blank');
+  return;
+  const data = await fetch(url, {
+    headers: new Headers({
+      'X-CSRFToken': 'aXVEuzVgeUgkHuhdgVA2Glw9lYt5wezxv1AjsBDcFDa6yogAjM55QMVlz74FczDd'
+    })
+  });
+  const json = await data.json();
+
+  if ('url' in json) {
+    window.open(json.url, '_blank');
+  } else {
+    console.error('Error', json);
+    alert('Ошибка при получении данных от WotInspector');
+  }
 }
 
 function getHitPointServer(isServer: boolean) {
