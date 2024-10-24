@@ -20,7 +20,8 @@
             <TableTitle v-else :title="localizer(line.title, line.titleName)" :leftAlign />
             <td class="n-mono text-effect gold">{{ line.count }}</td>
 
-            <td v-if="line.other" class="n-mono text-effect green" :class="getColor(line.other, line.percent)">
+            <td v-if="displayOther && line.other" class="n-mono text-effect green"
+              :class="getColor(line.other, line.percent)">
               {{ percentFormatter(line.percent) }}
               {{ Math.abs(line.other - line.percent) < 0.00001 ? '' : line.other > line.percent ? '↓' : '↑' }}
             </td>

@@ -153,7 +153,7 @@
       <p :class="getWotinspectorParams() ? '' : 'inactive'">
         <a v-if="getWotinspectorParams()" @click="wotinspectorClick()" class="pointer">Посмотреть</a>
         <span v-else>Посмотреть</span>
-        прямое попадание на сервисе WotInspector. (Откроется страница где надо будет нажать на "url": ...)
+        прямое попадание на сервисе WotInspector.
       </p>
     </div>
   </div>
@@ -430,14 +430,7 @@ async function wotinspectorClick() {
   wotinspectorLog(params.tank, params.target, params.distance, params.isWOT);
 
   const url = wotinspectorURLNew(params.tank, params.target, params.distance, params.isWOT);
-
-  window.open(url, '_blank');
-  return;
-  const data = await fetch(url, {
-    headers: new Headers({
-      'X-CSRFToken': 'aXVEuzVgeUgkHuhdgVA2Glw9lYt5wezxv1AjsBDcFDa6yogAjM55QMVlz74FczDd'
-    })
-  });
+  const data = await fetch(url);
   const json = await data.json();
 
   if ('url' in json) {
