@@ -41,13 +41,14 @@ export function isErrorStatus(status: Status): status is { status: typeof error,
 }
 
 const activeQueries = new Map<string, Promise<unknown>>();
+const cachedResults = new Map<string, unknown>();
 export async function query<T>(query: string, { allowCache = true, settings = {} as ClickHouseSettings } = {}) {
 
   if (activeQueries.has(query)) return activeQueries.get(query) as Promise<ResponseJSON<T>>;
 
   const current = new Promise<ResponseJSON<T>>(async (resolve, reject) => {
     try {
-      // await new Promise(resolve => setTimeout(resolve, 10000));
+      // await new Promise(resolve => setTimeout(resolve, 100000));
 
       const result = await clickhouse.query({ query, format: 'JSON', clickhouse_settings: settings });
       const response = await result.json<T>()
@@ -57,6 +58,7 @@ export async function query<T>(query: string, { allowCache = true, settings = {}
       totalBytesRead.value += response.statistics?.bytes_read ?? 0
       totalRequests.value++
 
+      if (allowCache) cachedResults.set(query, response);
       resolve(response);
     } catch (error) {
       return reject(error);
@@ -77,6 +79,10 @@ export function queryComputed<T>(queryString: () => string | null, { settings = 
     if (!enabled) return;
 
     try {
+      if (cachedResults.has(q)) {
+        result.value = { data: (cachedResults.get(q) as ResponseJSON<T>).data, status: success };
+        return;
+      }
       result.value = { data: [], status: loading };
       const { data } = await query<T>(q, { settings });
       result.value = { data, status: success };
