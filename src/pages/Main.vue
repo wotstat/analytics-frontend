@@ -107,8 +107,7 @@
             <div class="card">
               <GenericInfoQuery
                 query="select avgIf(inQueueWaitTime, inQueueWaitTime < 300000) as data from Event_OnBattleStart;"
-                description="Среднее время в очереди" :processor="ms2sec" :mini-processor="secProcessor"
-                color="green" />
+                description="Среднее время в очереди" :processor="ms2sec" :mini-processor="ms2secLabel" color="green" />
             </div>
           </div>
         </div>
@@ -360,7 +359,7 @@ import MiniBar from '@/components/widgets/MiniBar.vue';
 import ShotsCircle from '@/components/widgets/ShotsCircle.vue';
 import { useTweenCounter } from '@/composition/useTweenCounter';
 import { LONG_CACHE_SETTINGS, query, queryAsync, queryAsyncFirst } from '@/db';
-import { toRelative, ms2sec, sec2minsec, secProcessor } from '@/utils';
+import { toRelative, ms2sec, sec2minsec, ms2secLabel } from '@/utils';
 import { computedAsync } from '@vueuse/core';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { getArenaName } from '@/utils/i18n';

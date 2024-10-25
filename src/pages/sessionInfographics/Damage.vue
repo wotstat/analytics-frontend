@@ -13,10 +13,10 @@
         <div class="card chart bar height2 full-width-less-small">
           <MiniBar :status="byShellResult.status" :data="byShellData.damage" color="yellow" :labels="shellLabels"
             :callbacks="{
-        title: (t) => `${toPercent(t)} выстрелов ${t[0].label} нанесли урон`,
-        label: () => ``,
-        beforeBody: () => `Среди попавших`
-      }" />
+              title: (t) => `${toPercent(t)} выстрелов ${t[0].label} нанесли урон`,
+              label: () => ``,
+              beforeBody: () => `Среди попавших`
+            }" />
           <p class="card-main-info description">Нанесли урон</p>
         </div>
 
@@ -32,11 +32,11 @@
         <div class="card chart bar height2 full-width-less-small right-column">
           <MiniBar :status="smallDamageResult.status" :data="smallDamageData" color="blue"
             :labels="['1ХП', '2ХП', '3ХП', '4ХП', '5ХП']" :callbacks="{
-        title: (t) => `${toPercent(t)} танков осталось с ${t[0].label}`,
-        label: () => ``,
-        beforeBody: () => `Среди группы до 5 ХП`
+              title: (t) => `${toPercent(t)} танков осталось с ${t[0].label}`,
+              label: () => ``,
+              beforeBody: () => `Среди группы до 5 ХП`
 
-      }" />
+            }" />
           <p class="card-main-info description">Осталось ХП после урона</p>
         </div>
 
@@ -57,7 +57,7 @@
 
         <div class="card mini-card full-width-less-small">
           <GenericInfo :status="damageAggregatedResult.status" :value="damageAggregatedResult.data.avgDamage * 0.25"
-            description="Урона в среднем" :color="damageAggregatedResult.data.avgDamage < 0 ? 'red' : 'green'"
+            description="Отклонение от среднего" :color="damageAggregatedResult.data.avgDamage < 0 ? 'red' : 'green'"
             :processor="usePercentProcessor(2)" />
         </div>
 

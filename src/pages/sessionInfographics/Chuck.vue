@@ -252,7 +252,7 @@ const totalResult = computed(() => {
 
 function getTable(part: typeof totalResult.value[number]) {
   const players = [
-    '',
+    '', '',
     ...part.lines[0].split(',').flatMap(t => [t, '', '', '']),
   ]
 
@@ -263,7 +263,7 @@ function getTable(part: typeof totalResult.value[number]) {
     players,
     header,
     ...part.lines[1].map(t => ([
-      new Date(dbIndexToDate(t.onBattleStartId) * 1000).toLocaleString(),
+      new Date(dbIndexToDate(t.onBattleStartId) * 1000).toISOString(),
       t.arena,
       ...t.players.flatMap(t => [
         t[1],

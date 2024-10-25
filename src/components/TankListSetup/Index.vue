@@ -25,11 +25,9 @@
 
         <div class="card" v-for="item in tanks.data" @click="e => onClick(e, item.tag)"
           :class="stats.tanks?.includes(item.tag) ? 'selected' : ''">
-          <p class="tank-name">{{ item.shortNameRU }}</p>
-          <img :src="item.iconUrl" v-if="item.iconUrl">
-          <div class="img flex" v-else>
-            <span>?</span>
-          </div>
+          <p class="tank-name">{{ getTankName(item.tag, true) }}</p>
+          <FallbackImg :src="`${staticUrl}/vehicles/preview/${item.tag.replace(':', '-')}.png`" class="img"
+            :fallback="`${staticUrl}/vehicles/preview/noImage.png`" />
           <table cellspacing="0" cellpadding="0">
             <tr>
               <th>Боёв</th>
@@ -47,12 +45,16 @@
 </template>
 
 <script lang="ts" setup>
-import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams';
+import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 import { LONG_CACHE_SETTINGS, queryComputed } from '@/db';
 import { useRoute, useRouter } from 'vue-router';
 import ServerStatusWrapper from '../ServerStatusWrapper.vue';
-import { computed } from 'vue';
+import { computed, onMounted, watchEffect } from 'vue';
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
+import FallbackImg from '../FallbackImg.vue';
+import { getTankName } from '@/utils/i18n';
+
+const staticUrl = import.meta.env.VITE_STATIC_URL;
 
 
 const router = useRouter()
@@ -71,22 +73,14 @@ const cacheSettings = computed(() => {
   return LONG_CACHE_SETTINGS
 })
 
-const tanks = queryComputed<{ tag: string, battleCount: number, shotsCount: number, shortNameRU: string, iconUrl: string }>(() => `
-with
-    splitByChar(':', battles.tankTag)[2] as withoutNation,
-    splitByChar('_', withoutNation) as splitted,
-    arrayStringConcat(splitted, ' ') as tagWithoutNation,
-    arrayStringConcat(arraySlice(splitted, 2), ' ') as name
-select battles.tankTag as tag, 
+const tanks = queryComputed<{ tag: string, battleCount: number, shotsCount: number }>(() => `
+select battles.tankTag as tag,
        battleCount,
        shotsCount,
-       multiIf(shortNameRU != '', shortNameRU, name != '', name, tagWithoutNation != '', tagWithoutNation, battles.tankTag) as shortNameRU, 
-       iconUrl
-from (select tankTag, toUInt32(count()) as battleCount from Event_OnBattleStart ${whereClause(stats.value, { ignore: ['tanks'], isBattleStart: true })} group by tankTag) as battles 
-         left join (select tankTag, toUInt32(count()) as shotsCount from Event_OnShot ${whereClause(stats.value, { ignore: ['tanks'] })} group by tankTag) as shots on shots.tankTag = battles.tankTag
-         left join TankList on battles.tankTag = TankList.tag
+from (select tankTag, toUInt32(count()) as battleCount from Event_OnBattleStart ${whereClause(stats.value, { ignore: ['tanks'], isBattleStart: true })} group by tankTag) as battles
+left join (select tankTag, toUInt32(count()) as shotsCount from Event_OnShot ${whereClause(stats.value, { ignore: ['tanks'] })} group by tankTag) as shots on shots.tankTag = battles.tankTag
 order by battleCount desc
-limit 50;
+limit 150;
 `, { settings: cacheSettings.value });
 
 
@@ -163,9 +157,6 @@ function onClick(e: MouseEvent, tag: string) {
       }
 
       &.selected {
-        // font-weight: 500;
-        // color: #353535;
-        // background-color: #fffbe7;
         border: 2px solid #fffbe7;
         filter: drop-shadow(0 0 3px #d66d08);
       }
@@ -173,12 +164,17 @@ function onClick(e: MouseEvent, tag: string) {
       .tank-name {
         font-weight: bold;
         text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
         margin-top: -10px;
         margin-bottom: 5px;
+        width: 150px;
 
         &.skeleton {
           width: 100%;
-          height: 22px;
+          height: 25px;
+          margin-top: 0;
           border-radius: 5px;
           @include text-skeleton(#8181813e, #aaaaaa3e)
         }
@@ -195,6 +191,7 @@ function onClick(e: MouseEvent, tag: string) {
         line-height: 100%;
         font-size: 3em;
         color: #bababa97;
+        font-size: 10px;
 
         &.flex {
           justify-content: center;

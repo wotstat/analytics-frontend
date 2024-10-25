@@ -23,6 +23,7 @@ export function timeProcessor(time: number) {
 
 export const ms2sec = (ms: number) => (ms / 1000).toFixed();
 export const sec2minsec = (sec: number) => timeProcessor(sec).join(':');
-export const secProcessor = (count: number) => countLocalize(count, 'секунда', 'секунды', 'секунд');
+export const secLabel = (count: number) => countLocalize(count, 'секунда', 'секунды', 'секунд');
+export const ms2secLabel = (count: number) => countLocalize(count / 1000, 'секунда', 'секунды', 'секунд');
 export const sec2hour = (sec: number) => (sec / 60 / 60).toFixed(1);
 export const hour2hour = (hour: number) => hour.toFixed(1);
