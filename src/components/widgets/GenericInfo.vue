@@ -2,9 +2,12 @@
   <ServerStatusWrapper :status v-slot="{ showError, status }">
     <div class="text-center" ref="main">
       <p class="card-main-info" v-if="status != 'error'" :class="[color, status]">{{ processor ? processor(data) : data
-        }}<span v-if="miniProcessor" class="mini-description">{{ miniProcessor(targetData) }}</span>
-        <span v-else-if="miniData" class="mini-description">{{
-    miniData }}</span>
+        }}<span v-if="miniProcessor" class="mini-description">
+          {{ miniProcessor(data) }}
+        </span>
+        <span v-else-if="miniData" class="mini-description">
+          {{ miniData }}
+        </span>
       </p>
 
       <p v-else class="card-main-info error" @click="showError">!</p>

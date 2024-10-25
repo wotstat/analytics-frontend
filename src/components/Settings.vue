@@ -40,8 +40,7 @@
           <div v-if="enableTypeFilter" class="flex hor variant-selector">
             <div v-for="item in ([['ЛТ', 'LT'], ['СТ', 'MT'], ['ТТ', 'HT'], ['ПТ', 'AT'], ['САУ', 'SPG']] as const)"
               class="clickable-variant" :class="selectedClasses.includes(item[1]) ? 'selected' : ''"
-              @click="clickClass(item[1])">{{
-              item[0] }}</div>
+              @click="clickClass(item[1])">{{ item[0] }}</div>
           </div>
 
 
@@ -115,8 +114,7 @@
                 <g v-for="tick in timelineLabels.ticks">
                   <line :x1="tick.x + '%'" y1="5" :x2="tick.x + '%'" y2="35" class="tick" />
                   <text v-if="tick.labels && tick.x > 10 && tick.x < 90" :x="tick.x + '%'" y="55" text-anchor="middle"
-                    class="date">{{
-              tick.labels }}</text>
+                    class="date">{{ tick.labels }}</text>
                 </g>
               </g>
 
@@ -152,6 +150,7 @@ import { useDebounce, useDraggable, useElementBounding, watchOnce, useVirtualLis
 import { TankLevel, TankType, useQueryStatParams } from '@/composition/useQueryStatParams';
 import { customBattleModes, customBattleModesKeys } from '@/utils/wot';
 import { useRoute, useRouter } from 'vue-router';
+import { getTankName } from '@/utils/i18n';
 
 const route = useRoute()
 const router = useRouter()
@@ -213,20 +212,13 @@ const lastX = ref(10);
 
 const tankList = queryAsync<{
   type: 'MT' | 'LT' | 'HT' | 'AT' | 'SPG',
-  tag: string, level: TankLevel, nameRU: string, shortNameRU: string
+  tag: string, level: TankLevel
 }>(`
-with
-    splitByChar(':', rawTanks.tankTag)[2] as withoutNation,
-    splitByChar('_', withoutNation) as splitted,
-    arrayStringConcat(splitted, ' ') as tagWithoutNation,
-    arrayStringConcat(arraySlice(splitted, 2), ' ') as name
-select multiIf(shortNameRU != '', shortNameRU, name != '', name, tagWithoutNation != '', tagWithoutNation, rawTanks.tankTag) as shortNameRU,
-       if(TankList.nameRU != '', TankList.nameRU, shortNameRU) as nameRU,
-       rawTanks.tankTag as tag,
-       rawTanks.tankType as type,
-       rawTanks.tankLevel as level
-from (select tankTag, tankType, tankLevel from Event_OnBattleStart group by tankTag, tankType, tankLevel) as rawTanks
-         left join TankList on rawTanks.tankTag = TankList.tag
+select tankTag as tag, 
+       tankType as type, 
+       tankLevel as level 
+from Event_OnBattleStart
+group by tankTag, tankType, tankLevel;
 `)
 
 const tanks = computed(() => tankList.value.data.map(t => {
@@ -234,8 +226,8 @@ const tanks = computed(() => tankList.value.data.map(t => {
     tankLevel: t.level,
     tankType: t.type,
     tankTag: t.tag,
-    tankName: t.nameRU,
-    shortName: t.shortNameRU
+    tankName: getTankName(t.tag, false),
+    shortName: getTankName(t.tag, true)
   }
 }))
 

@@ -18,7 +18,6 @@ table {
         content: '';
         display: block;
         height: 1.2rem;
-        margin: 3px;
         background: linear-gradient(90deg, $bar-color 8%, #aaaaaa3e 18%, $bar-color 33%);
         background-size: 200% 100%;
         animation: shine 1.8s infinite linear;

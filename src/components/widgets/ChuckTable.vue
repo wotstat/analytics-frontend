@@ -69,7 +69,7 @@
 
       <tfoot>
         <tr>
-          <th colspan="2">Результат</th>
+          <th :colspan="showDate ? 3 : 2">Результат</th>
           <template v-for="player in part.sum">
             <th class="l-b"></th>
             <th>{{ player[0] }}</th>
@@ -93,7 +93,7 @@
         </tr>
 
         <tr>
-          <th colspan="2">Среднее</th>
+          <th :colspan="showDate ? 3 : 2">Среднее</th>
           <template v-for="player in part.avg">
             <th class="l-b"></th>
             <th>{{ roundProcessor(player[0]) }}</th>
@@ -118,7 +118,7 @@
         </tr>
 
         <tr>
-          <th colspan="2"></th>
+          <th :colspan="showDate ? 3 : 2"></th>
           <template v-for="player in part.lines[1][0].players">
             <th class="l-b"></th>
             <th>Урон</th>

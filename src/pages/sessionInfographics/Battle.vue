@@ -9,7 +9,7 @@
       <div class="grid">
         <div class="card avg-queue">
           <GenericInfo :status="dataStart.status" :value="dataStart.data.avgInQueue"
-            description="Среднее время в очереди" color="green" :processor="ms2sec" :mini-processor="secProcessor" />
+            description="Среднее время в очереди" color="green" :processor="ms2sec" :mini-processor="ms2secLabel" />
         </div>
 
         <div class="card avg-battle">
@@ -26,8 +26,7 @@
 
         <div class="card avg-prebattle">
           <GenericInfo :status="dataStart.status" :value="dataStart.data.avgWaitTime"
-            description="Среднее время в ожидании боя" color="blue" :processor="ms2sec"
-            :mini-processor="secProcessor" />
+            description="Среднее время в ожидании боя" color="blue" :processor="ms2sec" :mini-processor="ms2secLabel" />
         </div>
 
         <div class="card avg-lifetime">
@@ -37,12 +36,13 @@
 
         <div class="card total-wait">
           <GenericInfo :status="dataStart.status" :value="dataStart.data.waitTime"
-            description="Потрачено в ожидании боя" color="red" :processor="sec2hour" mini-data="часа" />
+            description="Потрачено в ожидании боя" color="red" :processor="t => hourDayExp(t).value"
+            :mini-processor="t => hourDayExp(t).suffix" />
         </div>
 
-        <div class=" card total-play">
+        <div class="card total-play">
           <GenericInfo :status="dataResult.status" :value="dataResult.data.inBattle" description="Потрачено в бою"
-            color="red" :processor="hour2hour" mini-data="часа" />
+            color="red" :processor="t => hourDayExp(t).value" :mini-processor="t => hourDayExp(t).suffix" />
         </div>
 
 
@@ -78,7 +78,7 @@ import { queryAsync, queryAsyncFirst } from "@/db";
 import { useElementVisibility } from '@vueuse/core';
 import { computed, ref } from 'vue';
 
-import { ms2sec, sec2minsec, secProcessor, sec2hour, hour2hour } from "@/utils";
+import { ms2sec, sec2minsec, sec2hour, ms2secLabel } from "@/utils";
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 
 const container = ref<HTMLElement | null>(null);
@@ -89,7 +89,7 @@ const settings = useQueryStatParamsCache(params)
 const tankLabels = ['СТ', 'ТТ', 'ПТ', 'ЛТ', 'САУ'];
 
 const dataStart = queryAsyncFirst(`
-select toUInt32(sum(inQueueWaitTime + loadTime + preBattleWaitTime) / 1000)          as waitTime,
+select toUInt32(sum(inQueueWaitTime + loadTime + preBattleWaitTime) / 1000 / 60 / 60)as waitTime,
        toUInt32(count(*))                                                            as battleCount,        
        avg(preBattleWaitTime + 
           if(battleTime < 0 and preBattleWaitTime + battleTime < 0, -battleTime, 0)) as avgWaitTime,
@@ -172,6 +172,13 @@ const durationData = computed(() => {
     l: Object.values(keyed).map((t: any) => t.l),
   }
 })
+
+function hourDayExp(hour: number) {
+  if (hour < 1000) return { value: hour.toFixed(1), suffix: 'часа' }
+  const day = hour / 24
+  if (day < 1000) return { value: day.toFixed(1), suffix: 'дня' }
+  return { value: (day / 365).toFixed(1), suffix: 'лет' }
+}
 
 </script>
 
