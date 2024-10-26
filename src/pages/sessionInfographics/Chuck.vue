@@ -145,13 +145,15 @@ from (select arenaTag as arena,
              onBattleStartId,
              spgCount / 2 as spgCount,
              enemyTeamMaxHealth,
+             team as playerTeam,
              personal.squadID as playerSquad,
              playersResults.squadID as squads,
              playerName as playerName,
              playersResults.name as names,
              playersResults.damageDealt as damages,
              playersResults.kills as kills,
-             playersResults.tankTag as tankTags
+             playersResults.tankTag as tankTags,
+             playersResults.team as teams
       from Event_OnBattleResult
       ${whereClause(params)}
       order by id desc)
@@ -159,8 +161,9 @@ array join squads as psquad,
            names as pname,
            damages as pdmg,
            kills as pkill,
-           tankTags as ptag
-where psquad = playerSquad and playerSquad != 0 or pname = playerName
+           tankTags as ptag,
+           teams as pteam
+where psquad = playerSquad and pteam = playerTeam and playerSquad != 0 or pname = playerName
 group by onBattleStartId, arena, result, duration, id, dateTime, spgCount, enemyTeamMaxHealth
 order by id desc
 `, { enabled: allow })
