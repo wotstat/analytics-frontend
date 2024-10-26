@@ -27,18 +27,50 @@
     </template>
   </According>
 
+  <div class="collection-loading" v-if="isCollectionLoading">
+    <div class="section" v-for="i in new Array(2).fill(0)">
+      <div class="title skeleton"></div>
+      <div class="items">
+        <div class="item" v-for="i in new Array(3).fill(0)">
+          <div class="info">
+            <div class="title"></div>
+            <div class="content"></div>
+          </div>
+          <div class="widget"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <iframe :src="`${WIDGETS_URL}/iframe/collection`" frameborder="0" class="collection" ref="collection" :style="{
-    height: `${height}px`
+    height: `${height}px`,
+    minHeight: `${height}px`,
+    opacity: isCollectionLoading ? 0 : 1
   }" @load="onCollectionLoad"></iframe>
 
   <PopupWindow :title="selectedTitle" v-if="selectedRoute" @close="onClosePreview">
     <div class="loader" v-if="isPreviewLoading">
-      <div class="top-text loading"></div>
-      <div class="bottom-content">
-        <div class="preview-content loading"></div>
-        <div class="settings-content loading"></div>
+      <div class="top-text">
+        <p class="skeleton"></p>
+        <p class="skeleton"></p>
+        <p class="skeleton"></p>
+        <p class="skeleton"></p>
+        <p class="skeleton"></p>
+        <p class="skeleton"></p>
+        <p class="skeleton"></p>
+        <p class="skeleton"></p>
       </div>
-      <div class="url-line loading"></div>
+      <div class="bottom-content">
+        <div class="preview-content skeleton"></div>
+        <div class="settings-content">
+          <p class="skeleton"></p>
+          <p class="skeleton"></p>
+          <p class="skeleton"></p>
+          <p class="skeleton"></p>
+          <p class="skeleton"></p>
+        </div>
+      </div>
+      <div class="url-line skeleton"></div>
     </div>
     <iframe :src="`${WIDGETS_URL}/iframe/preview${selectedRoute}`" frameborder="0" class="preview"
       :style="{ opacity: isPreviewLoading ? 0 : 1 }" allow="clipboard-write" ref="preview"
@@ -66,6 +98,7 @@ const selectedTitle = ref<string>('');
 const collection = ref<HTMLIFrameElement | null>(null);
 const preview = ref<HTMLIFrameElement | null>(null);
 const isPreviewLoading = ref(true);
+const isCollectionLoading = ref(true);
 
 const route = useRoute()
 const router = useRouter()
@@ -111,9 +144,8 @@ useIframeMessages(preview, data => {
 });
 
 onDeactivated(() => {
-  if (collection.value) {
-    collection.value.style.opacity = '0';
-  }
+  if (collection.value)
+    isCollectionLoading.value = false;
 
   if (selectedRoute.value) onClosePreview();
 });
@@ -127,7 +159,7 @@ function onClosePreview() {
 
 function onCollectionLoad() {
   if (!collection.value) return;
-  collection.value.style.opacity = '1';
+  setTimeout(() => isCollectionLoading.value = false, 30);
 }
 
 function onPreviewLoad() {
@@ -141,6 +173,7 @@ function onPreviewLoad() {
 
 <style lang="scss" scoped>
 @import "@/styles/mixins.scss";
+@import '@/styles/textColors.scss';
 
 h4 {
   margin: 0;
@@ -195,6 +228,65 @@ h4 {
   opacity: 0;
 }
 
+.collection-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  margin-top: 40px;
+
+  .section {
+    .title {
+      height: 30px;
+      margin: 6px 0;
+      width: 200px;
+      border-radius: 10px;
+      @include text-skeleton(#8181813e, #aaaaaa3e)
+    }
+
+    .items {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+      grid-auto-rows: 150px;
+      gap: 10px;
+
+      .item {
+        background-color: #353535;
+        padding: 20px;
+        border-radius: 20px;
+        display: flex;
+        gap: 10px;
+
+        .info {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+
+          .title {
+            height: 20px;
+            width: 100%;
+            border-radius: 10px;
+            @include text-skeleton(#8181813e, #aaaaaa3e)
+          }
+
+          .content {
+            height: 20px;
+            width: 100%;
+            border-radius: 10px;
+            @include text-skeleton(#8181813e, #aaaaaa3e)
+          }
+        }
+      }
+
+      .widget {
+        width: 150px;
+        border-radius: 10px;
+        @include text-skeleton(#8181813e, #aaaaaa3e)
+      }
+    }
+  }
+}
+
 .preview {
   max-width: 100%;
   width: 900px;
@@ -210,41 +302,44 @@ h4 {
 .loader {
   position: absolute;
   inset: 0;
-  top: 60px;
+  margin-top: 64.2px;
+  height: 700px;
   display: flex;
   flex-direction: column;
   padding: 20px;
+  padding-top: 0;
 
-  gap: 10px;
+  gap: 20px;
 
-  .loading {
+  .skeleton {
     border-radius: 10px;
-
-    $base-color: #a8a8a81e;
-    $shine-color: #a8a8a83f;
-
-    // skeleton
-
-    background: linear-gradient(90deg, $base-color, $shine-color, $base-color);
-    background-size: 200% 100%;
-    animation: shine 1.5s infinite linear;
-
-    @keyframes shine {
-      to {
-        background-position: -200% 100%;
-      }
-    }
-
+    @include text-skeleton(#8181813e, #aaaaaa3e);
   }
 
   .top-text {
     flex: 1;
+
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 50%;
+
+    p {
+      height: 25px;
+      width: 100%;
+      border-radius: 20px;
+
+      &:first-child {
+        margin-top: 8px;
+      }
+    }
   }
 
   .bottom-content {
     flex: 1;
     display: flex;
-    gap: 10px;
+    gap: 20px;
 
     .preview-content {
       flex: 1;
@@ -252,6 +347,18 @@ h4 {
 
     .settings-content {
       width: 300px;
+
+      p {
+        height: 20px;
+        width: 100%;
+        border-radius: 50px;
+        margin: 7px 0;
+
+        &:first-child {
+          margin-top: 0;
+          height: 30px;
+        }
+      }
     }
 
   }
