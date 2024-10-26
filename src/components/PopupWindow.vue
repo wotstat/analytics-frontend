@@ -11,7 +11,7 @@
               fill-opacity="0.85" />
           </g>
         </svg>
-        <h2 class="title">{{ title }}</h2>
+        <h2 class="title" v-if="title !== undefined">{{ title }}&nbsp;</h2>
         <slot></slot>
       </div>
     </div>
@@ -22,7 +22,7 @@
 import { onMounted, onUnmounted } from 'vue';
 
 const props = defineProps<{
-  title: string;
+  title?: string;
 }>();
 
 const emit = defineEmits<{
