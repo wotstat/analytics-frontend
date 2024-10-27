@@ -1,9 +1,14 @@
 Большинству виджетов для корректной работы необходимо получать данные из игры. 
 Для этого подойдёт как [wotstat-widgets](https://github.com/WOT-STAT/wotstat-widgets){target='_blank'} так и легковесный [data-provider](https://github.com/WOT-STAT/data-provider){target='_blank'}.
 
-**Как установить data-provider**
-1. Скачайте актуальную версию мода из [репозитория](https://github.com/WOT-STAT/data-provider/releases/latest){target='_blank'}
-2. Переместите файл `data-provider_VVV.wotmod` в папку `WOT/mods/XXX` где `XXX` - это версия игры
+**Установите мод wotstat-widgets**
+1. [Скачайте](https://github.com/WOT-STAT/wotstat-widgets/releases/latest){target='_blank'} актуальную версию мода из [репозитория](https://github.com/WOT-STAT/wotstat-widgets){target='_blank'}
+2. Переместите файл `wotstat-widgets_VVV.wotmod` в папку `WOT/mods/XXX` где `XXX` - это версия игры
+
+**Как сбросить накопленные данные**
+1. В OBS выберите источник виджета
+2. Нажмите кнопку `Взаимодействовать` (снизу)
+3. В открывшемся окне, нажмите `ПКМ` в любое место виджета, и выберите `Очистить данные`
 
 **Как правильно добавить виджет**
 1. Добавьте источник `Браузер`
