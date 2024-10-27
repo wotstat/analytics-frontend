@@ -2,7 +2,7 @@
   <br>
   <p>Виджеты универсальные их можно добавлять как в OBS так и прямо в игру</p>
   <div class="flex center">
-    <img src="https://raw.githubusercontent.com/WOT-STAT/wotstat-widgets/main/.github/hero.png" class="hero">
+    <img src="/widgets-images/hero.webp" class="hero">
   </div>
   <br>
   <According>
@@ -184,6 +184,7 @@ h4 {
   max-width: 550px;
   width: 100%;
   height: auto;
+  aspect-ratio: 1652/736;
   margin-top: 1em;
   border-radius: 0.5em;
 }
@@ -289,8 +290,8 @@ h4 {
 
 .preview {
   max-width: 100%;
-  width: 900px;
-  height: 700px;
+  width: 1000px;
+  height: 900px;
 
   transition: opacity 0.2s;
 
@@ -303,7 +304,7 @@ h4 {
   position: absolute;
   inset: 0;
   margin-top: 64.2px;
-  height: 700px;
+  height: 900px;
   display: flex;
   flex-direction: column;
   padding: 20px;
