@@ -86,7 +86,7 @@ async function load() {
       from Event_OnLootboxOpen
               array join arrayConcat(addedVehicles, compensatedVehicles.tag) as tag
       where ${whereClause()}
-      group by tag;`
+      group by tag;`, { allowCache: false }
     )
 
     targetProps.value = {
