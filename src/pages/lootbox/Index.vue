@@ -228,11 +228,11 @@ const rerollStats = queryComputed<{ tag: string, locale: LocalizedName, count: n
 })
 
 const mainStats = queryComputedFirst(() => `
-  select
-  sum(premiumPlus) as prem,
+select
+    sum(premiumPlus) as prem,
     sum(credits) as credits,
     sum(freeXP) as freeXP,
-    sum(gold) as gold,
+    sum(gold) + sum(arraySum(compensatedVehicles.gold)) as gold,
     sum(length(addedVehicles)) as vehicles
 from Event_OnLootboxOpen
 where ${whereClause()}
