@@ -92,8 +92,9 @@ const infosTween = useTweenCounter(infos, { duration: 1 })
 
 const route = useRoute();
 
-const evenTanks = computed(() => props.tanks.filter((_, i) => i % 2 === 0))
-const oddTanks = computed(() => props.tanks.filter((_, i) => i % 2 === 1))
+const sortedTanks = computed(() => props.tanks.sort((a, b) => b.count - a.count))
+const evenTanks = computed(() => sortedTanks.value.filter((_, i) => i < sortedTanks.value.length / 2))
+const oddTanks = computed(() => sortedTanks.value.filter((_, i) => i >= sortedTanks.value.length / 2))
 
 
 
