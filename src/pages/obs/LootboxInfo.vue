@@ -74,7 +74,7 @@ async function load() {
           toUInt32(sum(premiumPlus)) as prem,
           toUInt32(sum(credits)) as credits,
           toUInt32(sum(freeXP)) as freeXP,
-          toUInt32(sum(gold)) as gold,
+          toUInt32(sum(gold) + sum(arraySum(compensatedVehicles.gold))) as gold,
           sum(length(addedVehicles)) as vehicles,
           toUInt32(count()) as count
       from Event_OnLootboxOpen
