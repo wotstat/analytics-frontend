@@ -2,7 +2,7 @@
   <br>
   <p>Виджеты универсальные их можно добавлять как в OBS так и прямо в игру</p>
   <div class="flex center">
-    <img src="/widgets-images/hero.webp" class="hero">
+    <img src="@/assets/widgets-images/hero.webp" class="hero">
   </div>
   <br>
   <According>
