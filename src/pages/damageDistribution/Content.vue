@@ -62,8 +62,8 @@
 
   <h3>Погрешность</h3>
   <p>Границы допустимой погрешности рассчитываются индивидуально для <b>выбранного</b> значения урона ({{
-      selectedDamage
-    }}) и числа подходящих выстрелов ({{ selectedTotal }})</p>
+    selectedDamage
+  }}) и числа подходящих выстрелов ({{ selectedTotal }})</p>
 
   <template v-if="distribution.labels.length">
     <div v-if="readyToCalculate">
@@ -94,7 +94,7 @@
       </div>
       <p>Были просимулированы {{ errorResult[0].length }} сессий по {{ selectedTotalTarget }} выстрелов, в <span
           class="text-effect gold">{{
-      (selectedConfidence * 100).toFixed(errorConfidenceStep.toString().length - 4) }}%</span> сессий
+            (selectedConfidence * 100).toFixed(errorConfidenceStep.toString().length - 4) }}%</span> сессий
         распределение
         урона находилось МЕЖДУ границами.</p>
       <!-- <p>Если любой из столбиков вашего распределения выходит за пределы интервала</p> -->
@@ -473,8 +473,9 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/table.scss';
-@import '@/styles/textColors.scss';
+@use '/src/styles/table.scss' as *;
+@use '/src/styles/variables.scss' as *;
+@use '/src/styles/textColors.scss';
 
 .info-cards {
   flex-wrap: wrap;

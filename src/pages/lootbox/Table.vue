@@ -106,8 +106,8 @@ function getColor(left: number, right: number) {
 </script>
 
 <style lang="scss" scoped>
-@import '/src/styles/table.scss';
-@import '/src/styles/mixins.scss';
+@use '/src/styles/table.scss' as *;
+@use '/src/styles/mixins.scss' as *;
 
 .n-mono {
   font-variant-numeric: tabular-nums;
@@ -197,7 +197,6 @@ table {
 
   tbody {
     tr {
-
       &:last-child {
         border-top: $border;
 

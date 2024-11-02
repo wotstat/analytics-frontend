@@ -10,5 +10,5 @@
 
 
 ::: center
-![Инструкция как создать виджет](/widgets-images/add-widget.webp){class=add-widget}
+![Инструкция как создать виджет](@/assets/widgets-images/add-widget.webp){class=add-widget}
 :::

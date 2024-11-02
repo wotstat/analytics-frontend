@@ -615,7 +615,7 @@ function closeShotInfo() {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/mixins.scss';
+@use '/src/styles/mixins.scss' as *;
 
 .settings-line {
   margin-bottom: 5px;

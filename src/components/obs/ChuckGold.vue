@@ -5,11 +5,8 @@
         <thead>
           <tr>
             <th class="wide"></th>
-            <!-- <th class="center"><img src="/dmg.png"></th> -->
             <th class="center">Урон</th>
-            <!-- <th class="center" :style="{ width: '14%' }"><img src="/kill.png"></th> -->
             <th class="center">Фраги</th>
-            <!-- <th class="right" :style="{ width: '15%' }"><img src="/gold.png" class="gold-img"></th> -->
             <th class="right">Очки</th>
           </tr>
         </thead>

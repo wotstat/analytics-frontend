@@ -29,14 +29,16 @@
           <FallbackImg :src="`${staticUrl}/vehicles/preview/${item.tag.replace(':', '-')}.png`" class="img"
             :fallback="`${staticUrl}/vehicles/preview/noImage.png`" />
           <table cellspacing="0" cellpadding="0">
-            <tr>
-              <th>Боёв</th>
-              <td>{{ logProcessor(item.battleCount) }}</td>
-            </tr>
-            <tr>
-              <th>Выстрелов</th>
-              <td>{{ logProcessor(item.shotsCount) }}</td>
-            </tr>
+            <tbody>
+              <tr>
+                <th>Боёв</th>
+                <td>{{ logProcessor(item.battleCount) }}</td>
+              </tr>
+              <tr>
+                <th>Выстрелов</th>
+                <td>{{ logProcessor(item.shotsCount) }}</td>
+              </tr>
+            </tbody>
           </table>
         </div>
       </ServerStatusWrapper>
@@ -101,8 +103,9 @@ function onClick(e: MouseEvent, tag: string) {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/textColors.scss';
-@import '@/styles/table.scss';
+@use '/src/styles/textColors.scss' as *;
+@use '/src/styles/table.scss' as *;
+@use '/src/styles/variables.scss' as *;
 
 .skeleton {
   td {

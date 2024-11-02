@@ -73,8 +73,8 @@
         <div class="collapsable-body" ref="collapsableBody" :style="{
           maxHeight: streamerOpen ? collapsableBody?.scrollHeight + 'px' : '0'
         }">
-          <p>Если вы хотите скрыть игровой сервер из собираемой статистики, поместите файл <a href="/config.cfg"
-              target="_blank" download>config.cfg</a> в папку
+          <p>Если вы хотите скрыть игровой сервер из собираемой статистики, поместите файл <a :href="ConfigUrl"
+              target="_blank" download="config.cfg">config.cfg</a> в папку
             <code>WOT/mods/configs/wot_stat</code>
           </p>
         </div>
@@ -369,6 +369,7 @@ import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
 import CurrentLestaVersion from '@/components/mdUtils/CurrentLestaVersion.vue';
 import CurrentWgVersion from '@/components/mdUtils/CurrentWgVersion.vue';
 import { githubRelease } from '@/components/mdUtils/ghRelease';
+import ConfigUrl from '@/assets/config.cfg?url';
 
 
 const collapsableBody = ref<HTMLElement | null>(null);
@@ -530,10 +531,11 @@ const medianResults = queryAsyncFirst(`select median(personal.damageDealt) as me
 </script>
 
 <style scoped lang="scss">
-@import '@/styles/mixins.scss';
-@import '@/styles/textColors.scss';
-@import '@/styles/table.scss';
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100..700&display=swap');
+@use '/src/styles/textColors.scss' as *;
+@use '/src/styles/table.scss' as *;
+@use '/src/styles/variables.scss' as *;
+@use '/src/styles/mixins.scss' as *;
+@import 'https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100..700&display=swap';
 
 .counter {
   font-variant-numeric: tabular-nums;

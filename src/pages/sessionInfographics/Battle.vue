@@ -184,7 +184,7 @@ function hourDayExp(hour: number) {
 
 
 <style lang="scss" scoped>
-@import '@/styles/mixins.scss';
+@use '/src/styles/mixins.scss' as *;
 
 .battle {
   .grid {

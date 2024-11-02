@@ -33,7 +33,7 @@
 
       <TankListSetup v-if="!route.meta.hideTankList" />
 
-      <div class="menu-bar" ref="menuBar" :class="menuTop <= 60 && menuY != 0 ? 'top' : ''">
+      <div class="menu-bar" ref="menuBar" :class="menuTop <= headerOffset && menuY != 0 ? 'top' : ''">
         <div class="router-links">
           <QueryPreserveRouterLink to="/session">Бои</QueryPreserveRouterLink>
           <QueryPreserveRouterLink to="/session/shots">Стрельба</QueryPreserveRouterLink>
@@ -85,12 +85,12 @@
 import QueryPreserveRouterLink from '@/components/QueryPreserveRouterLink.vue';
 import SettingsTitle from '@/components/SettingsTitle.vue';
 import StatParamsTitle from "@/components/StatParamsTitle.vue";
-import { useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight';
+import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight';
 import { useQueryStatParams } from "@/composition/useQueryStatParams";
 import { totalRequests, totalElapsed, totalRowsRead } from "@/db";
 import { countLocalize } from "@/utils/i18n";
 import { useElementBounding } from '@vueuse/core';
-import { ref, watch, watchEffect } from 'vue';
+import { computed, ref, watch, watchEffect } from 'vue';
 import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 import TankListSetup from "@/components/TankListSetup/Index.vue";
 
@@ -101,36 +101,27 @@ const key = ref(0)
 
 const stat = useQueryStatParams()
 const route = useRoute()
-const router = useRouter()
+const headerOffset = computed(() => headerHeight.value)
 
 watch(stat, (current, old) => {
   if (JSON.stringify(current) == JSON.stringify(old)) return;
   key.value++;
 })
 
-const targets = [
-  ['/session/battle', 'Бои'],
-  ['/session/shots', 'Стрельба'],
-  ['/session/damage', 'Урон'],
-  ['/session/results', 'Результаты'],
-  ['/session/maps', 'Карты'],
-  ['/session/players', 'Охват'],
-  ['/session/old-layout', 'Старый вид'],
-]
-
 const { additionalHeaderHeight } = useAdditionalHeaderHeight();
 
 watchEffect(() => {
   if (menuY.value == 0) return additionalHeaderHeight.value = 0;
-  if (menuTop.value > 60) return additionalHeaderHeight.value = 0;
+  if (menuTop.value > headerOffset.value) return additionalHeaderHeight.value = 0;
   additionalHeaderHeight.value = menuH.value - 18
 })
 
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/textColors.scss';
-@import "@/styles/mixins.scss";
+@use '/src/styles/textColors.scss';
+@use "/src/styles/mixins.scss" as *;
+@use '/src/styles/variables.scss' as *;
 
 $sidebar-width: 170px;
 $mobile-layout: 1100px;
@@ -165,20 +156,20 @@ $mobile-layout: 1100px;
       display: flex;
       flex-direction: column;
       position: sticky;
-      top: 100px;
+      top: calc(var(--header-height) + 40px);
     }
   }
 
   .menu-bar {
-    @media screen and (min-width: calc($mobile-layout + 1px)) {
-      display: none;
-    }
-
     margin: 20px -1rem;
     padding: 5px 1rem;
     position: sticky;
-    top: 40px;
+    top: calc(var(--header-height) - 15px);
     z-index: 10;
+
+    @media screen and (min-width: calc($mobile-layout + 1px)) {
+      display: none;
+    }
 
     .router-links {
       display: flex;

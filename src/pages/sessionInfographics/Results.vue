@@ -303,8 +303,9 @@ function teamScore(win: boolean) {
 
 
 <style lang="scss" scoped>
-@import '@/styles/mixins.scss';
-@import '@/styles/textColors.scss';
+@use '/src/styles/mixins.scss' as *;
+@use '/src/styles/variables.scss' as *;
+@use '/src/styles/textColors.scss';
 
 h4 {
   margin: 10px 0 0 0;
