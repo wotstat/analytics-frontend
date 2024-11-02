@@ -554,7 +554,7 @@ function lootboxLocalizer(tag: string, titleName?: LocalizedName) {
 </script>
 
 <style lang="scss" scoped>
-@import '/src/styles/mixins.scss';
+@use '/src/styles/mixins.scss' as *;
 
 .page-title {}
 

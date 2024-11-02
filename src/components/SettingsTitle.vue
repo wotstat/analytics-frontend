@@ -23,7 +23,7 @@ const showSettings = ref(false)
 </script>
 
 <style scoped lang="scss">
-@import '@/styles/mixins.scss';
+@use '/src/styles/mixins.scss' as *;
 
 h1 {
   margin: 0;

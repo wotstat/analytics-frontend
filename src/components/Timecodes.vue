@@ -245,8 +245,9 @@ watch(result, () => {
 </script>
 
 <style lang="scss" scoped>
-@import '/src/styles/table.scss';
-@import '/src/styles/textColors.scss';
+@use '/src/styles/table.scss' as *;
+@use '/src/styles/textColors.scss';
+@use '/src/styles/variables.scss' as *;
 
 .popup-container {
   max-width: 700px;

@@ -65,8 +65,8 @@ function getColor(left: number, right: number) {
 
 
 <style lang="scss" scoped>
-@import '/src/styles/table.scss';
-@import '/src/styles/mixins.scss';
+@use '/src/styles/table.scss' as *;
+@use '/src/styles/mixins.scss' as *;
 
 .full-screen-table {
   width: 100%;

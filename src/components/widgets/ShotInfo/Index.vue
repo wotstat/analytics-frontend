@@ -576,7 +576,7 @@ const shouldBeVerticalResult = useMediaQuery('(min-width: 768px)');
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/mixins.scss';
+@use '/src/styles/mixins.scss' as *;
 
 .ver-less-medium {
   flex-direction: row;

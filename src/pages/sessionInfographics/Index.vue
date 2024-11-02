@@ -119,8 +119,9 @@ watchEffect(() => {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/textColors.scss';
-@import "@/styles/mixins.scss";
+@use '/src/styles/textColors.scss';
+@use "/src/styles/mixins.scss" as *;
+@use '/src/styles/variables.scss' as *;
 
 $sidebar-width: 170px;
 $mobile-layout: 1100px;
@@ -160,15 +161,15 @@ $mobile-layout: 1100px;
   }
 
   .menu-bar {
-    @media screen and (min-width: calc($mobile-layout + 1px)) {
-      display: none;
-    }
-
     margin: 20px -1rem;
     padding: 5px 1rem;
     position: sticky;
     top: calc(var(--header-height) - 15px);
     z-index: 10;
+
+    @media screen and (min-width: calc($mobile-layout + 1px)) {
+      display: none;
+    }
 
     .router-links {
       display: flex;
