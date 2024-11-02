@@ -29,14 +29,16 @@
           <FallbackImg :src="`${staticUrl}/vehicles/preview/${item.tag.replace(':', '-')}.png`" class="img"
             :fallback="`${staticUrl}/vehicles/preview/noImage.png`" />
           <table cellspacing="0" cellpadding="0">
-            <tr>
-              <th>Боёв</th>
-              <td>{{ logProcessor(item.battleCount) }}</td>
-            </tr>
-            <tr>
-              <th>Выстрелов</th>
-              <td>{{ logProcessor(item.shotsCount) }}</td>
-            </tr>
+            <tbody>
+              <tr>
+                <th>Боёв</th>
+                <td>{{ logProcessor(item.battleCount) }}</td>
+              </tr>
+              <tr>
+                <th>Выстрелов</th>
+                <td>{{ logProcessor(item.shotsCount) }}</td>
+              </tr>
+            </tbody>
           </table>
         </div>
       </ServerStatusWrapper>

@@ -33,38 +33,46 @@
 
           <tr>
             <td>
-              <img src="/kill.png" @click="click('kill')" :class="hightlight == 'kill' ? 'selected' : ''">
+              <img src="@/assets/efficiency-icon/kill.png" @click="click('kill')"
+                :class="hightlight == 'kill' ? 'selected' : ''">
               <span class="tooltiptext">Фрагов</span>
             </td>
             <td>
-              <img src="/block.png" @click="click('block')" :class="hightlight == 'block' ? 'selected' : ''" />
+              <img src="@/assets/efficiency-icon/block.png" @click="click('block')"
+                :class="hightlight == 'block' ? 'selected' : ''" />
               <span class="tooltiptext">Натанковано</span>
             </td>
             <td>
-              <img src="/spot.png" @click="click('radio')" :class="hightlight == 'radio' ? 'selected' : ''" />
+              <img src="@/assets/efficiency-icon/spot.png" @click="click('radio')"
+                :class="hightlight == 'radio' ? 'selected' : ''" />
               <span class="tooltiptext">Насвет</span>
             </td>
             <td>
-              <img src="/dmg.png" @click="click('dmg')" :class="hightlight == 'dmg' ? 'selected' : ''" />
+              <img src="@/assets/efficiency-icon/dmg.png" @click="click('dmg')"
+                :class="hightlight == 'dmg' ? 'selected' : ''" />
               <span class="tooltiptext">Урон</span>
             </td>
 
             <td class="center">ТОП</td>
 
             <td>
-              <img src="/dmg.png" @click="click('dmg')" :class="hightlight == 'dmg' ? 'selected' : ''" />
+              <img src="@/assets/efficiency-icon/dmg.png" @click="click('dmg')"
+                :class="hightlight == 'dmg' ? 'selected' : ''" />
               <span class="tooltiptext">Урон</span>
             </td>
             <td>
-              <img src="/spot.png" @click="click('radio')" :class="hightlight == 'radio' ? 'selected' : ''" />
+              <img src="@/assets/efficiency-icon/spot.png" @click="click('radio')"
+                :class="hightlight == 'radio' ? 'selected' : ''" />
               <span class="tooltiptext">Насвет</span>
             </td>
             <td>
-              <img src="/block.png" @click="click('block')" :class="hightlight == 'block' ? 'selected' : ''" />
+              <img src="@/assets/efficiency-icon/block.png" @click="click('block')"
+                :class="hightlight == 'block' ? 'selected' : ''" />
               <span class="tooltiptext">Натанковано</span>
             </td>
             <td>
-              <img src="/kill.png" @click="click('kill')" :class="hightlight == 'kill' ? 'selected' : ''">
+              <img src="@/assets/efficiency-icon/kill.png" @click="click('kill')"
+                :class="hightlight == 'kill' ? 'selected' : ''">
               <span class="tooltiptext">Фрагов</span>
             </td>
           </tr>
