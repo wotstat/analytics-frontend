@@ -21,22 +21,18 @@ jobs:
       - name: Build
         run: bun run build
 
-      - name: Configure SSH
+      - name: Upload to s3
         run: |
-          mkdir -p ~/.ssh/
-          echo "$SSH_KEY" > ~/.ssh/production.key
-          chmod 600 ~/.ssh/production.key
-          cat >>~/.ssh/config <<END
-          Host node
-            HostName $SSH_HOST
-            User $SSH_USER
-            IdentityFile ~/.ssh/production.key
-            StrictHostKeyChecking no
-          END
-        env:
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_KEY: ${{ secrets.SSH_KEY }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
+          aws s3 sync ./dist s3://wotstat.info \
+            --cache-control "max-age=31104000, public" \
+            --endpoint-url=https://storage.yandexcloud.net/ \
+            --delete
 
-      - name: Copy to server
-        run: rsync -avz ./dist node:/${{ vars.APP_PATH_PROD }}
+          aws s3 cp \
+            s3://wotstat.info/index.html s3://wotstat.info/index.html \
+            --cache-control "public, max-age=300" \
+            --endpoint-url=https://storage.yandexcloud.net/
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ru-central1
