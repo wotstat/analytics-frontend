@@ -32,35 +32,43 @@
           <tr>
             <th ref="firstColumn">Карта</th>
             <td>
-              <img src="/percent.png" @click="click('count')" :class="hightlight == 'count' ? 'selected' : ''">
+              <img src="@/assets/efficiency-icon/percent.png" @click="click('count')"
+                :class="hightlight == 'count' ? 'selected' : ''">
               <span class="tooltiptext">Количество</span>
             </td>
             <td>
-              <img src="/dmg.png" @click="click('damage')" :class="hightlight == 'damage' ? 'selected' : ''">
+              <img src="@/assets/efficiency-icon/dmg.png" @click="click('damage')"
+                :class="hightlight == 'damage' ? 'selected' : ''">
               <span class="tooltiptext">Урон</span>
             </td>
             <td>
-              <img src="/spot.png" @click="click('radio')" :class="hightlight == 'radio' ? 'selected' : ''">
+              <img src="@/assets/efficiency-icon/spot.png" @click="click('radio')"
+                :class="hightlight == 'radio' ? 'selected' : ''">
               <span class="tooltiptext">Насвечено</span>
             </td>
             <td>
-              <img src="/mgsum.png" @click="click('mgSum')" :class="hightlight == 'mgSum' ? 'selected' : ''">
+              <img src="@/assets/efficiency-icon/mgsum.png" @click="click('mgSum')"
+                :class="hightlight == 'mgSum' ? 'selected' : ''">
               <span class="tooltiptext">Сумма отметки</span>
             </td>
             <td>
-              <img src="/block.png" @click="click('block')" :class="hightlight == 'block' ? 'selected' : ''">
+              <img src="@/assets/efficiency-icon/block.png" @click="click('block')"
+                :class="hightlight == 'block' ? 'selected' : ''">
               <span class="tooltiptext">Натанковано</span>
             </td>
             <td>
-              <img src="/kill.png" @click="click('kills')" :class="hightlight == 'kills' ? 'selected' : ''">
+              <img src="@/assets/efficiency-icon/kill.png" @click="click('kills')"
+                :class="hightlight == 'kills' ? 'selected' : ''">
               <span class="tooltiptext">Фрагов</span>
             </td>
             <td>
-              <img src="/duration.png" @click="click('duration')" :class="hightlight == 'duration' ? 'selected' : ''">
+              <img src="@/assets/efficiency-icon/duration.png" @click="click('duration')"
+                :class="hightlight == 'duration' ? 'selected' : ''">
               <span class="tooltiptext">Продолжительность</span>
             </td>
             <td>
-              <img src="/lifetime.png" @click="click('lifeTime')" :class="hightlight == 'lifeTime' ? 'selected' : ''">
+              <img src="@/assets/efficiency-icon/lifetime.png" @click="click('lifeTime')"
+                :class="hightlight == 'lifeTime' ? 'selected' : ''">
               <span class="tooltiptext">Время жизни</span>
             </td>
           </tr>
@@ -270,7 +278,7 @@ const hightlighted = computed(() => {
 
 
 <style lang="scss" scoped>
-@import '@/styles/table.scss';
+@use '/src/styles/table.scss' as *;
 
 .container {
   overflow-x: auto;
@@ -303,6 +311,9 @@ a {
 }
 
 td {
+
+  white-space: nowrap;
+
   &:hover {
     .tooltiptext {
       animation-duration: 1.5s;
@@ -325,8 +336,6 @@ td {
       }
     }
   }
-
-  white-space: nowrap;
 
   .tooltiptext {
     position: absolute;

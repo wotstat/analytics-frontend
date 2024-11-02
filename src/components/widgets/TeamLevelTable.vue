@@ -113,7 +113,7 @@ const processed = computed(() => {
 
 
 <style scoped lang="scss">
-@import '@/styles/table.scss';
+@use '/src/styles/table.scss' as *;
 
 .container {
   overflow-x: auto;

@@ -10,22 +10,22 @@
         <div class="flex currencies">
           <div class="flex-1 num">
             <p class="line">
-              <img src="/big-icons/gold.png">
+              <img src="@/assets/widgets/gold.png">
               {{ logProcessor(infosTween[1]) }}
             </p>
             <p class="line">
-              <img src="/big-icons/credits.png">
+              <img src="@/assets/widgets/big-icons/credits.png">
               {{ logProcessor(infosTween[2]) }}
             </p>
           </div>
 
           <div class="flex-1 num">
             <p class="line">
-              <img src="/big-icons/freeXP.png">
+              <img src="@/assets/widgets/big-icons/freeXP.png">
               {{ logProcessor(infosTween[3]) }}
             </p>
             <p class="line">
-              <img src="/big-icons/premium-icon-wot.png">
+              <img src="@/assets/widgets/big-icons/premium-icon-wot.png">
               {{ logProcessor(infosTween[4]) }}
             </p>
           </div>
@@ -65,7 +65,7 @@
 import { useFixedSpaceProcessor, useLogProcessor } from '@/composition/usePercentProcessor';
 import { useTweenCounter } from '@/composition/useTweenCounter';
 import { getTankName } from '@/utils/i18n';
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
 const props = defineProps<{

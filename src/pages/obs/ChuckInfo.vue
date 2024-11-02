@@ -4,7 +4,7 @@
       прошлый бой</p>
     <p>Игровые ники загрузятся после завершения первого боя</p>
     <div class="preview">
-      <img src="/screenPart.png" alt="">
+      <img src="@/assets/widgets/screenPart.png" alt="">
       <div class="widget-container">
         <ChuckNorris class="widget" />
       </div>

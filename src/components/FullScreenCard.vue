@@ -56,7 +56,8 @@ function onKey(params: KeyboardEvent) {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/textColors.scss';
+@use '/src/styles/textColors.scss';
+@use '/src/styles/variables.scss' as *;
 
 .fullscreen {
   position: fixed;

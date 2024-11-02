@@ -562,7 +562,7 @@ function onKey(params: KeyboardEvent) {
 </style>
 
 <style lang="scss" scoped>
-@import "@/styles/mixins.scss";
+@use "/src/styles/mixins.scss" as *;
 
 .title {
   align-items: center;

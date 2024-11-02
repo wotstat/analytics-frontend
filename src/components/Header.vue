@@ -1,5 +1,10 @@
 <template>
-  <div class="header">
+  <div class="header" ref="headerElement">
+    <div class="upper-header">
+      В данный момент WotStat переезжает на новый хостинг. Возможны перебои в работе.
+      <br>
+      Часть накопленных данных после 02.11.2024 может быть утеряна. Приносим извинения за временные неудобства.
+    </div>
     <div class="main flex">
       <router-link to="/" class="wotstat-logo">WotStat</router-link>
       <router-link to="/" class="wotstat-logo small">WS</router-link>
@@ -93,7 +98,7 @@
     </div>
   </div>
   <div class="header-background">
-    <div class="spacer-1"></div>
+    <HeaderSpacer />
     <div class="spacer" :style="{
       height: additionalHeaderHeight + 'px'
     }"></div>
@@ -101,7 +106,7 @@
 </template>
 
 <script setup lang="ts">
-import { useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight';
+import { useAdditionalHeaderHeight, useDefaultHeaderHeight } from '@/composition/useAdditionalHeaderHeight';
 import { useRoute } from 'vue-router';
 import GitHubIcon from '@/assets/icons/github.svg'
 import DiscordIcon from '@/assets/icons/discord.svg'
@@ -112,10 +117,14 @@ import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
 import PointsIcon from '@/assets/icons/points.svg'
 import { useLocalStorage } from '@vueuse/core';
 import { ref } from 'vue';
+import HeaderSpacer from './HeaderSpacer.vue';
 
 const DBUrl = import.meta.env.VITE_CLICKHOUSE_URL
 const discordUrl = import.meta.env.VITE_DISCORD_URL
 const route = useRoute()
+
+const headerElement = ref<HTMLElement | null>(null);
+useDefaultHeaderHeight(headerElement);
 
 function startsWith(path: string) {
   return route.path.startsWith(path);
@@ -123,14 +132,14 @@ function startsWith(path: string) {
 
 const { additionalHeaderHeight } = useAdditionalHeaderHeight();
 
-// const isPositionBadgeVisible = ref(true);
 const isPositionBadgeVisible = useLocalStorage('isPositionBadgeVisible', true);
 
 </script>
 
 <style scoped lang="scss">
-@import '@/styles/textColors.scss';
-@import '@/styles/mixins.scss';
+@use '/src/styles/textColors.scss';
+@use '/src/styles/mixins.scss' as *;
+@use '/src/styles/variables.scss' as *;
 
 .header-background {
   position: fixed;
@@ -141,10 +150,6 @@ const isPositionBadgeVisible = useLocalStorage('isPositionBadgeVisible', true);
 
   background-color: $background-secondary;
   box-shadow: 0px 0px 10px 2px $background-color;
-
-  .spacer-1 {
-    height: 55px;
-  }
 
   .spacer {
     transition: all 0.1s;
@@ -164,6 +169,23 @@ const isPositionBadgeVisible = useLocalStorage('isPositionBadgeVisible', true);
 
   @include less-small {
     padding: 0 10px;
+  }
+
+  .upper-header {
+    background-color: #c4800b86;
+    width: 100%;
+    color: white;
+    padding: 1em;
+    text-align: center;
+    margin: 0 -14px 0 -18px;
+    font-size: 14px;
+    font-weight: var(--bold-weight);
+  }
+
+  .flex {
+    display: flex;
+    align-items: center;
+    gap: 0;
   }
 
   .sep {

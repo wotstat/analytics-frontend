@@ -2,7 +2,7 @@
   <br>
   <p>Виджеты универсальные их можно добавлять как в OBS так и прямо в игру</p>
   <div class="flex center">
-    <img src="/widgets-images/hero.webp" class="hero">
+    <img src="@/assets/widgets-images/hero.webp" class="hero">
   </div>
   <br>
   <According>
@@ -172,8 +172,8 @@ function onPreviewLoad() {
 
 
 <style lang="scss" scoped>
-@import "@/styles/mixins.scss";
-@import '@/styles/textColors.scss';
+@use "/src/styles/mixins.scss" as *;
+@use '/src/styles/textColors.scss' as *;
 
 h4 {
   margin: 0;

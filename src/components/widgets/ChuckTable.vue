@@ -202,7 +202,7 @@ function getDate(id: string) {
 </script>
 
 <style lang="scss" scoped>
-@import '/src/styles/table.scss';
+@use '/src/styles/table.scss' as *;
 
 .container {
   overflow-x: auto;

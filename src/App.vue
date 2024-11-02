@@ -1,8 +1,9 @@
 <template>
-  <div class="app">
+  <div class="app" :style="{ '--header-height': headerHeight + 'px' }">
     <template v-if="!route.meta.clearPage">
       <Header v-if="!route.meta.hideHeader" />
       <div class="content">
+        <HeaderSpacer />
         <RouterView />
       </div>
     </template>
@@ -21,6 +22,8 @@
 <script setup lang="ts">
 import { RouterView, useRoute } from 'vue-router';
 import Header from "./components/Header.vue";
+import HeaderSpacer from "./components/HeaderSpacer.vue";
+import { headerHeight } from './composition/useAdditionalHeaderHeight';
 
 const isWindows = navigator.platform.indexOf('Win') > -1
 const boldWeight = isWindows ? 700 : 800
@@ -34,10 +37,6 @@ const route = useRoute();
 
 
 <style scoped>
-.content {
-  padding-top: 57.5px;
-}
-
 .devmode {
   position: fixed;
   top: 1rem;

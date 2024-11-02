@@ -1,5 +1,6 @@
-@import './shared.scss';
-@import "./markdown.scss";
+@use './shared.scss';
+@use './markdown.scss';
+@use './variables.scss' as *;
 
 :root {
   // font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;

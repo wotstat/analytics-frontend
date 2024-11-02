@@ -253,7 +253,7 @@ function openDamage() {
 
 
 <style lang="scss" scoped>
-@import '@/styles/mixins.scss';
+@use '/src/styles/mixins.scss' as *;
 
 .damage {
 

@@ -307,7 +307,7 @@ function downloadCsv(part: typeof totalResult.value[number]) {
 </script>
 
 <style lang="scss" scoped>
-@import '/src/styles/table.scss';
+@use '/src/styles/table.scss' as *;
 
 .container {
   overflow-x: auto;

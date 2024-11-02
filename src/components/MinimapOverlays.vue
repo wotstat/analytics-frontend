@@ -1,17 +1,17 @@
 <template>
   <div class="base-overlays-container" v-if="gameplayType">
     <img v-for="(base, i) in gameplayType.teamBasePositions[allyTeamIndex]" class="base" :style="getStyle(base)"
-      :src="`/minimap/AllyTeamBaseEntry_green_${i}.png`">
+      :src="images[`AllyTeamBaseEntry_green_${i}`]">
     <img v-for="(base, i) in gameplayType.teamBasePositions[enemyTeamIndex]" class="base" :style="getStyle(base)"
-      :src="`/minimap/EnemyTeamBaseEntry_red_${i}.png`">
+      :src="images[`EnemyTeamBaseEntry_red_${i}`]">
 
     <img v-for="(base, i) in gameplayType.teamSpawnPoints[allyTeamIndex]" class="spawn" :style="getStyle(base)"
-      :src="`/minimap/AllyTeamSpawnEntry_green_${i + 1}.png`">
+      :src="images[`AllyTeamSpawnEntry_green_${i + 1}`]">
     <img v-for="(base, i) in gameplayType.teamSpawnPoints[enemyTeamIndex]" class="spawn" :style="getStyle(base)"
-      :src="`/minimap/EnemyTeamSpawnEntry_red_${i + 1}.png`">
+      :src="images[`EnemyTeamSpawnEntry_red_${i + 1}`]">
 
     <img v-if="gameplayType.controlPoint" class="controll" :style="getStyle(gameplayType.controlPoint)"
-      :src="`/minimap/ControlPointEntry_0.png`">
+      src="@/assets/minimap/ControlPointEntry_0.png">
   </div>
 </template>
 
@@ -31,6 +31,9 @@ const gameplayType = computed(() => meta.value?.gameplayTypes[props.gameplay]);
 
 const allyTeamIndex = computed(() => props.allyTeam - 1)
 const enemyTeamIndex = computed(() => props.allyTeam === 1 ? 1 : 0)
+
+const images = Object.fromEntries(Object.entries(import.meta.glob<{ default: string }>('/src/assets/minimap/*', { eager: true }))
+  .map(([key, value]) => [key.replace('/src/assets/minimap/', '').replace('.png', ''), value.default]));
 
 
 function getStyle(v: { x: number, y: number }) {

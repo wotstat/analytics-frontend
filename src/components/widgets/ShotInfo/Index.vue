@@ -17,7 +17,7 @@
           <div class="map-container">
             <img class="map" v-if="arenaMinimapUrl" :src="arenaMinimapUrl">
           </div>
-          <img class="border" src="/minimap_b4.png" alt="">
+          <img class="border" src="@/assets/minimap/minimap_b4.png" alt="">
 
           <div class="overlay-container" v-if="arenaMeta">
 
@@ -106,30 +106,32 @@
           <template v-if="shotResult.length > 0">
             <hr>
 
-            <div class="flex-table" v-if="shouldBeVerticalResult">
-              <tr class="table-title">
-                <td>Танк</td>
-                <td>Урон выстрелом</td>
-                <td>ХП осталось</td>
-                <template v-if="shotResult.some(t => t.fireDamage)">
-                  <td>Урон пожаром</td>
-                  <td>ХП после пожара</td>
-                </template>
-                <td v-if="shotResult.some(t => t.ammoBayDestroyed)">Взрыв БК</td>
-              </tr>
+            <table class="flex-table" v-if="shouldBeVerticalResult">
+              <tbody>
+                <tr class="table-title">
+                  <td>Танк</td>
+                  <td>Урон выстрелом</td>
+                  <td>ХП осталось</td>
+                  <template v-if="shotResult.some(t => t.fireDamage)">
+                    <td>Урон пожаром</td>
+                    <td>ХП после пожара</td>
+                  </template>
+                  <td v-if="shotResult.some(t => t.ammoBayDestroyed)">Взрыв БК</td>
+                </tr>
 
-              <tr v-for="result in shotResult">
-                <td>{{ result.tankTag }}</td>
-                <td>{{ result.shotDamage || '-' }}</td>
-                <td>{{ result.shotHealth ?? '-' }}</td>
-                <template v-if="shotResult.some(t => t.fireDamage)">
-                  <td>{{ result.fireDamage || '-' }}</td>
-                  <td>{{ result.fireHealth ?? '-' }}</td>
-                </template>
-                <td v-if="shotResult.some(t => t.ammoBayDestroyed)">{{ result.ammoBayDestroyed ? 'Да' : '-'
-                  }}</td>
-              </tr>
-            </div>
+                <tr v-for="result in shotResult">
+                  <td>{{ result.tankTag }}</td>
+                  <td>{{ result.shotDamage || '-' }}</td>
+                  <td>{{ result.shotHealth ?? '-' }}</td>
+                  <template v-if="shotResult.some(t => t.fireDamage)">
+                    <td>{{ result.fireDamage || '-' }}</td>
+                    <td>{{ result.fireHealth ?? '-' }}</td>
+                  </template>
+                  <td v-if="shotResult.some(t => t.ammoBayDestroyed)">{{ result.ammoBayDestroyed ? 'Да' : '-'
+                    }}</td>
+                </tr>
+              </tbody>
+            </table>
             <div class="flex ver gap-0" v-else>
               <hr>
               <template v-for="result in shotResult">
@@ -498,6 +500,7 @@ const shotResult = computed(() => {
   })
 })
 
+const images = import.meta.glob<{ default: string }>('/src/assets/tank-markers/*.png', { eager: true });
 function getTankImg(tankType: string, ally: boolean, dead: boolean) {
   const tag = {
     'HT': 'heavyTank',
@@ -507,7 +510,7 @@ function getTankImg(tankType: string, ally: boolean, dead: boolean) {
     'AT': 'AT-SPG',
   }[tankType] ?? 'heavyTank';
 
-  return `/tankMarkers/${tag}_${ally ? 'ally' : 'enemy'}_${dead ? 'dead_' : ''}${ally ? 'green' : 'red'}.png`
+  return images[`/src/assets/tank-markers/${tag}_${ally ? 'ally' : 'enemy'}_${dead ? 'dead_' : ''}${ally ? 'green' : 'red'}.png`].default
 }
 
 const serverMakerPoint = computed(() => {
@@ -576,7 +579,7 @@ const shouldBeVerticalResult = useMediaQuery('(min-width: 768px)');
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/mixins.scss';
+@use '/src/styles/mixins.scss' as *;
 
 .ver-less-medium {
   flex-direction: row;
