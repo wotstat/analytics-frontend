@@ -258,7 +258,8 @@ function onClick() {
 </script>
 
 <style scoped lang="scss">
-@import '@/styles/textColors.scss';
+@use '/src/styles/textColors.scss';
+@use '/src/styles/variables.scss' as *;
 
 .shot-container {
   position: relative;

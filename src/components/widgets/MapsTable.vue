@@ -270,7 +270,7 @@ const hightlighted = computed(() => {
 
 
 <style lang="scss" scoped>
-@import '@/styles/table.scss';
+@use '/src/styles/table.scss' as *;
 
 .container {
   overflow-x: auto;
@@ -303,6 +303,9 @@ a {
 }
 
 td {
+
+  white-space: nowrap;
+
   &:hover {
     .tooltiptext {
       animation-duration: 1.5s;
@@ -325,8 +328,6 @@ td {
       }
     }
   }
-
-  white-space: nowrap;
 
   .tooltiptext {
     position: absolute;

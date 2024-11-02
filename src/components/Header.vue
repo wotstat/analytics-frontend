@@ -137,8 +137,9 @@ const isPositionBadgeVisible = useLocalStorage('isPositionBadgeVisible', true);
 </script>
 
 <style scoped lang="scss">
-@import '@/styles/textColors.scss';
-@import '@/styles/mixins.scss';
+@use '/src/styles/textColors.scss';
+@use '/src/styles/mixins.scss' as *;
+@use '/src/styles/variables.scss' as *;
 
 .header-background {
   position: fixed;

@@ -530,10 +530,11 @@ const medianResults = queryAsyncFirst(`select median(personal.damageDealt) as me
 </script>
 
 <style scoped lang="scss">
-@import '@/styles/mixins.scss';
-@import '@/styles/textColors.scss';
-@import '@/styles/table.scss';
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100..700&display=swap');
+@use '/src/styles/textColors.scss' as *;
+@use '/src/styles/table.scss' as *;
+@use '/src/styles/variables.scss' as *;
+@use '/src/styles/mixins.scss' as *;
+@import 'https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100..700&display=swap';
 
 .counter {
   font-variant-numeric: tabular-nums;

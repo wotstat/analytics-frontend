@@ -1,15 +1,12 @@
-@import './mixins.scss';
-@import './textColors.scss';
+@use './textColors.scss';
+@use './variables.scss' as *;
+@use './mixins.scss' as *;
 
 .card {
   background-color: $background-secondary;
   border-radius: 15px;
   box-shadow: 0 1px 2px 0px rgba(0, 0, 0, 0.1);
 
-  // @media (prefers-color-scheme: light) {
-  //   background-color: #fff;
-  //   color: #213547;
-  // }
 }
 
 button.light {

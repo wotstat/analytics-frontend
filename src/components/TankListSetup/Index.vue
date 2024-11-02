@@ -101,8 +101,9 @@ function onClick(e: MouseEvent, tag: string) {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/textColors.scss';
-@import '@/styles/table.scss';
+@use '/src/styles/textColors.scss' as *;
+@use '/src/styles/table.scss' as *;
+@use '/src/styles/variables.scss' as *;
 
 .skeleton {
   td {

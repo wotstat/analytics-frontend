@@ -148,7 +148,7 @@ function closeShotInfo() {
 
 
 <style lang="scss" scoped>
-@import '@/styles/mixins.scss';
+@use '/src/styles/mixins.scss' as *;
 
 .shots {
   .card.circle {

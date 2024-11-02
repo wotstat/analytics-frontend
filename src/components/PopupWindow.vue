@@ -49,7 +49,7 @@ function onKey(params: KeyboardEvent) {
 </script>
 
 <style lang="scss" scoped>
-@import "@/styles/mixins.scss";
+@use "/src/styles/mixins.scss" as *;
 
 .popup-container {
   position: fixed;
@@ -72,6 +72,7 @@ function onKey(params: KeyboardEvent) {
     padding: 20px;
     overflow-y: auto;
     overflow-x: hidden;
+    position: relative;
 
     @include less-small {
       margin: 0;
@@ -83,8 +84,6 @@ function onKey(params: KeyboardEvent) {
       border-end-end-radius: 0;
       border-end-start-radius: 0;
     }
-
-    position: relative;
 
     h2.title {
       margin: 0;
