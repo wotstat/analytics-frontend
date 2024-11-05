@@ -1,10 +1,10 @@
 <template>
   <div class="header" ref="headerElement">
-    <div class="upper-header">
+    <!-- <div class="upper-header">
       В данный момент WotStat переезжает на новый хостинг. Возможны перебои в работе.
       <br>
       Часть накопленных данных после 02.11.2024 может быть утеряна. Приносим извинения за временные неудобства.
-    </div>
+    </div> -->
     <div class="main flex">
       <router-link to="/" class="wotstat-logo">WotStat</router-link>
       <router-link to="/" class="wotstat-logo small">WS</router-link>
