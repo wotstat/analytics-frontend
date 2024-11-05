@@ -34,6 +34,11 @@
           <input type="checkbox" name="contrast" id="contrast" v-model="contrastDecoration">
           <label for="contrast">Повышенная контрастность</label>
         </div>
+
+        <div>
+          <input type="checkbox" name="without-observers" id="without-observers" v-model="withoutObservers">
+          <label for="without-observers">Исключить наблюдателей</label>
+        </div>
       </div>
 
       <div :class="classSettings" class="flex ver">
@@ -91,7 +96,7 @@ import PopupWindow from '@/components/PopupWindow.vue';
 import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue';
 import ChuckTable from '@/components/widgets/ChuckTable.vue';
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
-import { dbIndexToDate, loading, queryAsync, success } from '@/db';
+import { dbIndexToDate, loading, queryAsync, queryComputed, success } from '@/db';
 import { ChuckResult } from '@/db/schema';
 import { useLocalStorage } from '@vueuse/core';
 import { computed, ref } from 'vue';
@@ -104,6 +109,7 @@ import DownloadIcon from '@/assets/icons/download.svg'
 
 const colorDecoration = useLocalStorage('chuckColorDecoration', true)
 const contrastDecoration = useLocalStorage('chuckHightContrast', true)
+const withoutObservers = useLocalStorage('withoutObservers', true)
 
 const showWidget = ref(false)
 const showTimecodes = ref(false)
@@ -119,7 +125,7 @@ const params = useQueryStatParams()
 
 const allow = computed(() => params.value.player != null)
 
-const response = queryAsync<ChuckResult>(`
+const response = queryComputed<ChuckResult>(() => `
 with
    groupArray(pname) as name,
    groupArray(ptag) as tag,
@@ -163,7 +169,7 @@ array join squads as psquad,
            kills as pkill,
            tankTags as ptag,
            teams as pteam
-where psquad = playerSquad and pteam = playerTeam and playerSquad != 0 or pname = playerName
+where psquad = playerSquad and pteam = playerTeam ${withoutObservers.value ? `and ptag != 'ussr:Observer'` : ''} and playerSquad != 0 or pname = playerName 
 group by onBattleStartId, arena, result, duration, id, dateTime, spgCount, enemyTeamMaxHealth
 order by id desc
 `, { enabled: allow })
