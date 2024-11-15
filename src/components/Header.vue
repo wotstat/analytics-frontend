@@ -1,9 +1,9 @@
 <template>
   <div class="header" ref="headerElement">
-    <div class="upper-header">
-      В данный момент WotStat переезжает на новый хостинг. Возможны перебои в работе.
+    <div class="upper-header success">
+      WotStat переехал на новый хостинг. Ближайшие несколько часов возможны перебои в работе.
       <br>
-      Часть накопленных данных после 13.11.2024 может отображаться с задержкой. Приносим извинения за временные
+      Данные накопленные после 13.11.2024 будут загружены в течение дня. Приносим извинения за временные
       неудобства.
     </div>
     <div class="main flex">
@@ -173,7 +173,6 @@ const isPositionBadgeVisible = useLocalStorage('isPositionBadgeVisible', true);
   }
 
   .upper-header {
-    background-color: #c4800b86;
     width: 100%;
     color: white;
     padding: 1em;
@@ -181,6 +180,14 @@ const isPositionBadgeVisible = useLocalStorage('isPositionBadgeVisible', true);
     margin: 0 -14px 0 -18px;
     font-size: 14px;
     font-weight: var(--bold-weight);
+
+    &.warning {
+      background-color: #c4800b86;
+    }
+
+    &.success {
+      background-color: #0bc45786;
+    }
   }
 
   .flex {
