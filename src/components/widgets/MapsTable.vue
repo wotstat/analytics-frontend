@@ -1,34 +1,29 @@
 <template>
-  <ServerStatusWrapper :status v-slot="{ showError, status }">
+  <ServerStatusWrapper :status="dataQ.status" v-slot="{ showError, status }">
     <div class="container" ref="container" v-if="status != 'error'">
-      <table class="hover-highlight">
 
+      <p class="title center">Распределение карт</p>
+      <div class="flex center setup">
+        <div class="flex selector">
+          <p>Режим:</p>
+          <select v-model="battleMode">
+            <option value="any">Любой</option>
+            <option v-for="mode in customBattleModesKeys" :value="mode">{{ customBattleModes[mode].title }}
+            </option>
+          </select>
+        </div>
+        <div class="flex selector">
+          <p>Результат:</p>
+          <select v-model="battleResult">
+            <option value="any">Любой</option>
+            <option value="win">Победа</option>
+            <option value="lose">Поражение</option>
+          </select>
+        </div>
+      </div>
+
+      <table class="hover-highlight">
         <thead>
-          <tr>
-            <th colspan="9" class="title">Распределение карт</th>
-          </tr>
-          <tr>
-            <td colspan="9" class="title">
-              <div class="flex center">
-                <div class="flex selector">
-                  <p>Режим:</p>
-                  <select v-model="battleMode">
-                    <option value="any">Любой</option>
-                    <option v-for="mode in customBattleModesKeys" :value="mode">{{ customBattleModes[mode].title }}
-                    </option>
-                  </select>
-                </div>
-                <div class="flex selector">
-                  <p>Результат:</p>
-                  <select v-model="battleResult">
-                    <option value="any">Любой</option>
-                    <option value="win">Победа</option>
-                    <option value="lose">Поражение</option>
-                  </select>
-                </div>
-              </div>
-            </td>
-          </tr>
           <tr>
             <th ref="firstColumn">Карта</th>
             <td>
@@ -121,7 +116,7 @@
 
 <script setup lang="ts">
 import { StatParams, getQueryStatParamsCache, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams';
-import { Status, queryAsync } from '@/db';
+import { Status, queryAsync, queryComputed } from '@/db';
 import { timeProcessor, whereSum } from '@/utils';
 import { getArenaName } from '@/utils/i18n';
 import { customBattleModesKeys, customBattleModes } from '@/utils/wot';
@@ -168,9 +163,19 @@ const expressions = computed(() => {
   return result
 })
 
+type ResultRow = {
+  arenaTag: string,
+  count: number, loseCount: number, winCount: number,
+  avgDuration: number, loseDuration: number, winDuration: number,
+  damage: number, loseDamage: number, winDamage: number,
+  block: number, loseBlock: number, winBlock: number,
+  lifeTime: number, loseLifeTime: number, winLifeTime: number,
+  radio: number, loseRadio: number, winRadio: number,
+  kills: number, loseKills: number, winKills: number,
+  loseMgSum: number, winMgSum: number, mgSum: number,
+}
 
-function generateQuery() {
-  return `
+const dataQ = queryComputed<ResultRow>(() => `
   select arenaTag,
        toUInt32(count(*))                                    as count,
        toUInt32(countIf(result = 'lose'))                    as loseCount,
@@ -208,40 +213,11 @@ ${whereSum(expressions.value)}
 ${params ? whereClause(params, { withWhere: expressions.value.length == 0 }) : ''}
 group by arenaTag
 order by count desc;
-  `
-}
-
-type ResultRow = {
-  arenaTag: string,
-  count: number, loseCount: number, winCount: number,
-  avgDuration: number, loseDuration: number, winDuration: number,
-  damage: number, loseDamage: number, winDamage: number,
-  block: number, loseBlock: number, winBlock: number,
-  lifeTime: number, loseLifeTime: number, winLifeTime: number,
-  radio: number, loseRadio: number, winRadio: number,
-  kills: number, loseKills: number, winKills: number,
-  loseMgSum: number, winMgSum: number, mgSum: number,
-}
-
-const resultCache = shallowRef<{ [key in string]?: ShallowRef<{ status: Status, data: ResultRow[] }> }>({})
-const cacheKey = computed(() => battleMode.value + '_' + battleMode.value)
-
-watch(cacheKey, (value) => {
-  if (resultCache.value[value]) return
-
-  resultCache.value = {
-    ...resultCache.value,
-    [value]: queryAsync<ResultRow>(generateQuery(), { enabled: visible, settings: getQueryStatParamsCache(params) })
-  };
-}, { immediate: true })
-
-const result = computed(() => resultCache.value[cacheKey.value]?.value?.data ?? [])
-const status = computed(() => resultCache.value[cacheKey.value]?.value?.status)
-
+  `, { settings: getQueryStatParamsCache(params) })
 
 const resultProcessed = computed(() => {
   const m = battleResult.value;
-  const r = result.value
+  const r = dataQ.value.data ?? [];
 
   return r.map(t => ({
     count: m == 'any' ? t.count : m == 'win' ? t.winCount : t.loseCount,
@@ -353,18 +329,33 @@ td {
   }
 }
 
+tr.skeleton {
+  td {
+    height: 1.5rem;
+  }
+}
+
+.title {
+  padding: 0 0 15px 0;
+  font-weight: bold;
+  text-align: center;
+}
+
+.setup {
+  padding: 0 0 15px 0;
+  font-weight: bold;
+}
+
+
 table {
   border-collapse: collapse;
   width: 100%;
   position: relative;
   z-index: 5;
 
-  .title {
-    padding: 0 0 15px 0;
-  }
-
   thead {
     border-bottom: $border;
+    height: 2.7em;
 
     img {
       width: 35px;
@@ -385,11 +376,8 @@ table {
     text-wrap: nowrap;
   }
 
-  td:first-child:not(.title) {
-    border-right: $border;
-  }
-
-  th:first-child:not(.title) {
+  td:first-child,
+  th:first-child {
     border-right: $border;
   }
 }

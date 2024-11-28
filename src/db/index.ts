@@ -65,13 +65,12 @@ export async function query<T>(query: string, { allowCache = true, settings = {}
     }
   })
 
-  if (allowCache)
-    activeQueries.set(query, current);
+  if (allowCache) activeQueries.set(query, current);
 
   return current;
 }
 
-export function queryComputed<T>(queryString: () => string | null, { settings = {} as ClickHouseSettings, enabled = ref(true) } = {}) {
+export function queryComputed<T>(queryString: () => string | null, { settings = {} as ClickHouseSettings, enabled = ref(true), allowCache = true } = {}) {
   const result = shallowRef<{ status: Status, data: T[] }>({ status: loading, data: [] });
 
   watch(() => [queryString(), enabled.value] as const, async ([q, enabled]) => {
@@ -79,12 +78,12 @@ export function queryComputed<T>(queryString: () => string | null, { settings = 
     if (!enabled) return;
 
     try {
-      if (cachedResults.has(q)) {
+      if (cachedResults.has(q) && allowCache) {
         result.value = { data: (cachedResults.get(q) as ResponseJSON<T>).data, status: success };
         return;
       }
       result.value = { data: [], status: loading };
-      const { data } = await query<T>(q, { settings });
+      const { data } = await query<T>(q, { settings, allowCache });
       result.value = { data, status: success };
     } catch (reason) {
       console.error(reason);
