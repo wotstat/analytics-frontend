@@ -68,8 +68,7 @@
 
             <div class="flex btn less-600">
               <a href="https://positions.wotstat.info/" target="_blank" rel="noopener noreferrer"
-                class="positions flex-1" :class="{ 'new-badge': isPositionBadgeVisible }"
-                @mouseover="isPositionBadgeVisible = false">
+                class="positions flex-1">
                 <div class="back">
                   Мод на позиции
                 </div>
@@ -116,7 +115,6 @@ import BoostyIcon from '@/assets/icons/boosty.svg'
 import I18nIcon from '@/assets/icons/i18n.svg'
 import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
 import PointsIcon from '@/assets/icons/points.svg'
-import { useLocalStorage } from '@vueuse/core';
 import { ref } from 'vue';
 import HeaderSpacer from './HeaderSpacer.vue';
 
@@ -132,8 +130,6 @@ function startsWith(path: string) {
 }
 
 const { additionalHeaderHeight } = useAdditionalHeaderHeight();
-
-const isPositionBadgeVisible = useLocalStorage('isPositionBadgeVisible', true);
 
 </script>
 
