@@ -149,13 +149,13 @@
   }
 
   &.loading {
-    @include text-skeleton(var(--font-color), #787878);
     animation-delay: 0.5s;
     animation-duration: 3s;
     color: transparent;
     background-clip: text;
     -moz-background-clip: text;
     -webkit-background-clip: text;
+    @include text-skeleton(var(--font-color), #787878);
   }
 
   &.error {
