@@ -148,14 +148,17 @@
     @include effect(1rem);
   }
 
+
   &.loading {
-    animation-delay: 0.5s;
-    animation-duration: 3s;
+    @include text-skeleton(var(--font-color), #787878);
+  }
+
+  &.loading {
     color: transparent;
     background-clip: text;
     -moz-background-clip: text;
     -webkit-background-clip: text;
-    @include text-skeleton(var(--font-color), #787878);
+    animation-duration: 3s;
   }
 
   &.error {
