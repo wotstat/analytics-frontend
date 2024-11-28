@@ -1,4 +1,4 @@
-@use './textColors.scss';
+@use './textColors.scss' as *;
 
 $border: 1px solid rgba(240, 240, 240, 0.327);
 $bar-color: #8181813e;
@@ -18,16 +18,8 @@ table {
         content: '';
         display: block;
         height: 1.2rem;
-        background: linear-gradient(90deg, $bar-color 8%, #aaaaaa3e 18%, $bar-color 33%);
-        background-size: 200% 100%;
-        animation: shine 1.8s infinite linear;
         border-radius: 5px;
-
-        // @keyframes shine {
-        //   to {
-        //     background-position: -200% 0;
-        //   }
-        // }
+        @include text-skeleton($bar-color, #aaaaaa3e);
       }
     }
   }

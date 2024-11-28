@@ -4,7 +4,7 @@
       <ServerStatusWrapper :status="tanks.status" v-slot="{ status }">
 
         <template v-if="status == 'loading'">
-          <div class="card loading" v-for="item in new Array(6)">
+          <div class="card loading" v-for="item in new Array(8)">
             <p class="tank-name skeleton"></p>
             <div class="img skeleton"></div>
             <table cellspacing="0" cellpadding="0">
