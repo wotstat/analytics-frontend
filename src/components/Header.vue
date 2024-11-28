@@ -10,8 +10,7 @@
       <router-link to="/" class="wotstat-logo">WotStat</router-link>
       <router-link to="/" class="wotstat-logo small">WS</router-link>
       <div class="sep greater-600"></div>
-      <a href="https://positions.wotstat.info/" target="_blank" rel="noopener noreferrer" class="greater-600 positions"
-        :class="{ 'new-badge': isPositionBadgeVisible }" @mouseover="isPositionBadgeVisible = false">
+      <a href="https://positions.wotstat.info/" target="_blank" rel="noopener noreferrer" class="greater-600 positions">
         <div class="back">
           Мод на позиции
         </div>
