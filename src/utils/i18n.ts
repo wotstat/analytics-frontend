@@ -41,7 +41,7 @@ export const arenas: Parser | null = null
 
 const LANGUAGE = 'RU'
 const languageRegionPriority = {
-  'RU': ['RU', 'EU', 'NA'],
+  'RU': ['RU', 'PT_RU', 'EU', 'NA'],
   'EN': ['EU', 'NA', 'RU'],
 } as const
 
@@ -137,4 +137,26 @@ export function crewBookName(tag: string) {
     'brochure': 'Учебная брошюра',
     'universalGuide': 'Универсальное руководство',
   }[tag] ?? tag
+}
+
+
+
+export type LocalizedName = string | [name: string, region: string][]
+
+export function getBestLocalization(data: LocalizedName) {
+
+  if (typeof data === 'string') {
+    return data
+  }
+
+  const dict = data.reduce((acc, [name, region]) => {
+    acc[region] = name
+    return acc
+  }, {} as Record<string, string>)
+
+  for (const region of languageRegionPriority[LANGUAGE])
+    if (dict[region]) return dict[region]
+
+  for (const region of ['EU', 'NA', 'RU', 'CN', 'ASIA'])
+    if (dict[region]) return dict[region]
 }

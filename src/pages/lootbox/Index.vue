@@ -1,14 +1,8 @@
 <template>
-  <i>В этом разделе учитывается только фильтр по нику игрока</i>
-  <h2 class="page-title">Награды из коробок</h2>
+  <!-- <i>В этом разделе учитывается только фильтр по нику игрока</i> -->
+  <LootboxList v-model="selectedContainer" />
 
-  <div class="select-line flex">
-    <p>Вид коробок</p>
-    <select v-model="selectedContainer">
-      <option value="any">Любой</option>
-      <option v-for="tag in containerVariants" :value="tag.tag">{{ tag.name.replaceAll('\\n', '') }}</option>
-    </select>
-  </div>
+  <h2 class="page-title">Награды из коробок</h2>
 
   <div class="flex ver">
     <div class="card long">
@@ -91,8 +85,8 @@
     :showOther />
   <TableSection title="Кастомизация" v-bind="customizationsStats" :localizer="customizationLocalizer" :left-align="true"
     :showOther />
-  <TableSection title="Новогодние игрушни (в разработке)" v-bind="toysStats" :localizer="toysLocalizer"
-    :left-align="true" :showOther />
+  <TableSection title="Новогодние игрушни" v-bind="toysStats" :localizer="toysLocalizer" :left-align="true"
+    :showOther />
 
 </template>
 
@@ -101,32 +95,29 @@ import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import { useFixedSpaceProcessor, useLogProcessor } from '@/composition/usePercentProcessor';
 import { useQueryStatParams, useQueryStatParamsCache } from '@/composition/useQueryStatParams';
 import { Status, dateToDbIndex, queryComputed, queryComputedFirst, success } from '@/db';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import TableSection from "./TableSection.vue";
 import OpenByTable from "./OpenByTable.vue";
 import RerollTable from './RerollTable.vue';
-import { countLocalize, crewBookName, getTankName } from '@/utils/i18n';
-import { useQueryParamStorage } from '@/composition/useQueryParamStorage';
+import { countLocalize, crewBookName, getBestLocalization, getTankName, LocalizedName } from '@/utils/i18n';
 import SnowCardWrapper from '@/components/shared/SnowCardWrapper.vue';
+import LootboxList from './LootboxList/Index.vue';
 
-
-
-const TARGET_LOCALE_REGION = 'RU'
 
 const params = useQueryStatParams()
 const settings = useQueryStatParamsCache(params)
-
-const selectedContainer = useQueryParamStorage('selectedLootbox', 'any', true)
 
 function localeFor(table: 'Lootboxes' | 'Customizations' | 'Artefacts') {
   return `select tag, arrayZip(groupArray(name), groupArray(region)) as locale from (select tag, region, argMax(name, gameVersion) as name from ${table} group by tag, region order by region) group by tag`
 }
 
+const selectedContainer = ref<string[]>([])
+
 function whereClause(ignore: ('player' | 'tag' | 'date')[] = []) {
   const result = []
 
-  if (selectedContainer.value != 'any' && !ignore.includes('tag')) {
-    result.push(`containerTag = '${selectedContainer.value}'`)
+  if (selectedContainer.value.length != 0 && !ignore.includes('tag')) {
+    result.push(`containerTag in (${selectedContainer.value.map(x => `'${x}'`).join(', ')})`)
   }
 
   if (params.value.player && !ignore.includes('player')) {
@@ -146,16 +137,6 @@ function whereClause(ignore: ('player' | 'tag' | 'date')[] = []) {
 
   return result.join(' and ') || 'true'
 }
-
-const containerTag = queryComputed<{ locale: LocalizedName, containerTag: string }>(() => `
-  with containers as (select containerTag as tag, count() as count from Event_OnLootboxOpen where true group by containerTag), 
-    locales as (${localeFor('Lootboxes')})
-  select tag as containerTag, locale, count from containers
-  left outer join locales using tag
-  order by containerTag desc;
-`)
-
-const containerVariants = computed(() => containerTag.value.data.map((x) => ({ tag: x.containerTag, name: getBestLocalization(x.locale) ?? x.containerTag })))
 
 const total = queryComputedFirst(() => `
 select toUInt32(count()) as count
@@ -244,7 +225,7 @@ select
     sum(credits) as credits,
     sum(freeXP) as freeXP,
     sum(gold) + sum(arraySum(compensatedVehicles.gold)) as gold,
-    sum(length(addedVehicles)) as vehicles,
+    toUInt32(sum(length(addedVehicles))) as vehicles,
     toUInt32(sum(arraySum(arrayFilter(t -> t.1 == 'ny25_mandarin', arrayZip(extra.tag, extra.count)).2))) as mandarin25,
     toUInt32(sum(arraySum(arrayFilter(t -> t.1 == 'ny25_mandarin', arrayZip(compensatedToys.currency, compensatedToys.count)).2))) as compensatedMandarin25
 from Event_OnLootboxOpen
@@ -258,16 +239,13 @@ type Stats = {
   other?: number
 }
 
-type LocalizedName = string | [name: string, region: string][]
-
-
 const showOther = computed(() => whereClause(['tag', 'date']) !== 'true')
 
 function getQuery(select: string, arrayJoin: string, materialized: string, tagProcessor?: string, localizeTable?: string) {
   let where: string | null = whereClause(['tag'])
   if (where === 'true') where = null
 
-  const whereTag = selectedContainer.value == 'any' ? '' : `containerTag = '${selectedContainer.value}'`
+  const whereTag = selectedContainer.value.length == 0 ? '' : `containerTag in (${selectedContainer.value.map(x => `'${x}'`).join(', ')})`
 
   const whereWhereTag = whereTag ? `where ${whereTag} and isOpenSuccess` : 'where isOpenSuccess'
   const andWhereTag = whereTag ? `and ${whereTag} ` : ''
@@ -364,10 +342,11 @@ const mandarin25Stats = load(() => getQuery(
 ))
 
 const toysStats = load(() => getQuery(
-  `concat(tag, '|', toys.count) as title`,
-  `toys.tag as tag, toys.count where tag`,
+  `concat(tag, '|', toys.count) as title, tag`,
+  `array join toys.tag as tag, toys.count where tag != ''`,
   `lootbox_toys_mv`,
-  'title'
+  `splitByChar('|', tag)[1]`,
+  `Toys`
 ))
 
 const goldStats = load(() => getQuery(
@@ -469,29 +448,6 @@ const itemsStatsSorted = computed(() => {
 })
 
 
-function getBestLocalization(data: LocalizedName) {
-
-  if (typeof data === 'string') {
-    return data
-  }
-
-  const dict = data.reduce((acc, [name, region]) => {
-    acc[region] = name
-    return acc
-  }, {} as Record<string, string>)
-
-
-  if (dict[TARGET_LOCALE_REGION]) return dict[TARGET_LOCALE_REGION]
-
-  if (TARGET_LOCALE_REGION == 'RU' && dict['PT_RU']) return dict['PT_RU']
-
-  const fallback = ['EU', 'NA', 'RU', 'CN', 'ASIA']
-
-  for (const region of fallback) {
-    if (dict[region]) return dict[region]
-  }
-}
-
 function customizationLocalizer(title: string, titleName?: LocalizedName) {
   const [type, tag, count] = title.split('|')
 
@@ -513,10 +469,10 @@ function customizationLocalizer(title: string, titleName?: LocalizedName) {
   }
 }
 
-function toysLocalizer(title: string) {
+function toysLocalizer(title: string, titleName?: LocalizedName) {
   const [tag, count] = title.split('|')
   return {
-    value: tag,
+    value: titleName ? getBestLocalization(titleName) ?? title : title,
     postfix: `(x${count})`
   }
 }
@@ -597,8 +553,6 @@ function lootboxLocalizer(tag: string, titleName?: LocalizedName) {
 
 <style lang="scss" scoped>
 @use '/src/styles/mixins.scss' as *;
-
-.page-title {}
 
 .select-line {
   margin: 10px 0;

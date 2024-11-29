@@ -61,7 +61,7 @@
 <script setup lang="ts">
 import { useFixedProcessor, useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 import { useTweenCounter } from '@/composition/useTweenCounter';
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
 const props = defineProps<{

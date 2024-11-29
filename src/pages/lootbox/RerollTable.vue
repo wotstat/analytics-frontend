@@ -1,7 +1,7 @@
 <template>
   <h3>Количество отказов (замен)</h3>
   <div class="card">
-    <table class="hover-highlight full-screen-table" :class="data[0].count != undefined ? 'with-other' : ''">
+    <table class="hover-highlight full-screen-table" :class="data[0].totalCount != undefined ? 'with-other' : ''">
       <thead class="border-bottom">
         <tr>
           <th class="border-right">Название</th>
