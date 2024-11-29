@@ -1,8 +1,5 @@
 <template>
   <i>В этом разделе учитывается только фильтр по нику игрока</i>
-  <br>
-  <br>
-  <b>Минимальная необходимая версия мода 1.4.3.0. Убедитесь, что вы обновились</b>
   <h2 class="page-title">Награды из коробок</h2>
 
   <div class="select-line flex">
@@ -44,6 +41,15 @@
           color="green" :processor="useLogProcessor()" />
       </div>
     </div>
+
+
+    <SnowCardWrapper>
+      <div class="card long">
+        <GenericInfo :status="mainStats.status"
+          :value="mainStats.data.mandarin25 + mainStats.data.compensatedMandarin25"
+          :processor="useFixedSpaceProcessor(0)" description="Новогодние мандарины на Лесте" color="gold" />
+      </div>
+    </SnowCardWrapper>
     <i>* С учётом компенсаций. Танки только реально начисленные</i>
     <i>
       <ul class="margin-0">
@@ -70,6 +76,8 @@
     </p>
   </template>
   <TableSection title="Другие контейнеры" v-bind="lootboxesStats" :localizer="lootboxLocalizer" :showOther />
+
+  <TableSection title="Мандарины" v-bind="mandarin25Stats" :by-number="1000" :showOther />
   <TableSection title="Техника" v-bind="vehiclesStats" :localizer="tankTagLocalizer" :showOther />
   <TableSection title="Золото" v-bind="goldStats" :by-number="1000" :showOther />
   <TableSection title="Серебро" v-bind="creditsStats" :by-number="100000" :showOther />
@@ -83,6 +91,8 @@
     :showOther />
   <TableSection title="Кастомизация" v-bind="customizationsStats" :localizer="customizationLocalizer" :left-align="true"
     :showOther />
+  <TableSection title="Новогодние игрушни (в разработке)" v-bind="toysStats" :localizer="toysLocalizer"
+    :left-align="true" :showOther />
 
 </template>
 
@@ -97,6 +107,7 @@ import OpenByTable from "./OpenByTable.vue";
 import RerollTable from './RerollTable.vue';
 import { countLocalize, crewBookName, getTankName } from '@/utils/i18n';
 import { useQueryParamStorage } from '@/composition/useQueryParamStorage';
+import SnowCardWrapper from '@/components/shared/SnowCardWrapper.vue';
 
 
 
@@ -233,10 +244,12 @@ select
     sum(credits) as credits,
     sum(freeXP) as freeXP,
     sum(gold) + sum(arraySum(compensatedVehicles.gold)) as gold,
-    sum(length(addedVehicles)) as vehicles
+    sum(length(addedVehicles)) as vehicles,
+    toUInt32(sum(arraySum(arrayFilter(t -> t.1 == 'ny25_mandarin', arrayZip(extra.tag, extra.count)).2))) as mandarin25,
+    toUInt32(sum(arraySum(arrayFilter(t -> t.1 == 'ny25_mandarin', arrayZip(compensatedToys.currency, compensatedToys.count)).2))) as compensatedMandarin25
 from Event_OnLootboxOpen
 where ${whereClause()}
-  `, { prem: 0, credits: 0, freeXP: 0, gold: 0, vehicles: 0 })
+  `, { prem: 0, credits: 0, freeXP: 0, gold: 0, vehicles: 0, mandarin25: 0, compensatedMandarin25: 0 })
 
 type Stats = {
   title: string,
@@ -297,7 +310,7 @@ join
         group by title
   ) as T2
 using title
-    order by count
+    order by title
     ${postfix}
 ` : `
 with
@@ -310,7 +323,7 @@ toUInt32(countMerge(count)) as count,
     from ${materialized}
     ${whereWhereTag}
     group by ${groupBy}
-    order by count
+    order by title
     ${postfix}
 `
 
@@ -328,10 +341,32 @@ const lootboxesStats = load(() => getQuery(
   'Lootboxes'
 ))
 
-const vehiclesStats = load(() => getQuery(
+const vehiclesStats = computed(() => {
+  const data =
+    load(() => getQuery(
+      `title`,
+      `array join arrayConcat(addedVehicles, compensatedVehicles.tag) as title where true`,
+      `lootbox_vehicle_mv`,
+      'title'
+    ))
+
+  return {
+    data: data.value.data.sort((a, b) => a.count - b.count),
+    status: data.value.status as Status
+  }
+})
+
+const mandarin25Stats = load(() => getQuery(
   `title`,
-  `array join arrayConcat(addedVehicles, compensatedVehicles.tag) as title where true`,
-  `lootbox_vehicle_mv`,
+  `array join arrayFilter(t -> t.1 == 'ny25_mandarin', arrayZip(extra.tag, extra.count)).2 as title where title > 0`,
+  `lootbox_ny25mandarin_mv`,
+  'title'
+))
+
+const toysStats = load(() => getQuery(
+  `concat(tag, '|', toys.count) as title`,
+  `toys.tag as tag, toys.count where tag`,
+  `lootbox_toys_mv`,
   'title'
 ))
 
@@ -446,10 +481,9 @@ function getBestLocalization(data: LocalizedName) {
   }, {} as Record<string, string>)
 
 
-  if (dict[TARGET_LOCALE_REGION]) {
-    return dict[TARGET_LOCALE_REGION]
-  }
+  if (dict[TARGET_LOCALE_REGION]) return dict[TARGET_LOCALE_REGION]
 
+  if (TARGET_LOCALE_REGION == 'RU' && dict['PT_RU']) return dict['PT_RU']
 
   const fallback = ['EU', 'NA', 'RU', 'CN', 'ASIA']
 
@@ -475,6 +509,14 @@ function customizationLocalizer(title: string, titleName?: LocalizedName) {
   return {
     prefix: `${typeLocal}: `,
     value: `${titleName ? getBestLocalization(titleName) : tagLocal} `,
+    postfix: `(x${count})`
+  }
+}
+
+function toysLocalizer(title: string) {
+  const [tag, count] = title.split('|')
+  return {
+    value: tag,
     postfix: `(x${count})`
   }
 }
