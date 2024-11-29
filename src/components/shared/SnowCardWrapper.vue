@@ -56,7 +56,7 @@
     position: absolute;
     top: -20px;
     bottom: -20px;
-    // z-index: 9999;
+    width: 10px;
     -webkit-user-select: none;
     user-select: none;
     cursor: default;
