@@ -95,13 +95,14 @@ import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import { useFixedSpaceProcessor, useLogProcessor } from '@/composition/usePercentProcessor';
 import { useQueryStatParams, useQueryStatParamsCache } from '@/composition/useQueryStatParams';
 import { Status, dateToDbIndex, queryComputed, queryComputedFirst, success } from '@/db';
-import { computed, ref } from 'vue';
+import { computed, ref, watchEffect } from 'vue';
 import TableSection from "./TableSection.vue";
 import OpenByTable from "./OpenByTable.vue";
 import RerollTable from './RerollTable.vue';
 import { countLocalize, crewBookName, getBestLocalization, getTankName, LocalizedName } from '@/utils/i18n';
 import SnowCardWrapper from '@/components/shared/SnowCardWrapper.vue';
 import LootboxList from './LootboxList/Index.vue';
+import { useRoute } from 'vue-router';
 
 
 const params = useQueryStatParams()
@@ -111,7 +112,8 @@ function localeFor(table: 'Lootboxes' | 'Customizations' | 'Artefacts') {
   return `select tag, arrayZip(groupArray(name), groupArray(region)) as locale from (select tag, region, argMax(name, gameVersion) as name from ${table} group by tag, region order by region) group by tag`
 }
 
-const selectedContainer = ref<string[]>([])
+const route = useRoute()
+const selectedContainer = ref<string[]>((route.query.selectedLootbox as string)?.split(',') || [])
 
 function whereClause(ignore: ('player' | 'tag' | 'date')[] = []) {
   const result = []
