@@ -33,7 +33,7 @@
         <table cellspacing="0" cellpadding="0">
           <tbody>
             <tr class="skeleton">
-              <th class="ignore-skeleton">Боёв</th>
+              <th class="ignore-skeleton">Открыто</th>
               <td></td>
             </tr>
           </tbody>
