@@ -1,68 +1,70 @@
 <template>
-  <ServerStatusWrapper :status="status" v-slot="{ showError, status }">
-    <div class="container" ref="container" v-if="status != 'error'">
+  <div>
+    <ServerStatusWrapper :status="status" v-slot="{ showError, status }">
+      <div class="container" ref="container" v-if="status != 'error'">
 
-      <table class="hover-highlight" :class="[displayOther ? 'with-other' : '', byNumber ? 'by-number' : '']">
-        <thead>
-          <tr>
-            <th>Название</th>
-            <th>Количество</th>
-            <th>Процент</th>
-            <th v-if="displayOther">У других</th>
-            <th v-if="byNumber">На {{ byNumber }}</th>
-          </tr>
-        </thead>
-
-
-        <tbody>
-          <tr v-for="line in data">
-            <td v-if="!localizer">{{ line.titleName || line.title }}</td>
-            <TableTitle v-else :title="localizer(line.title, line.titleName)" :leftAlign />
-            <td class="n-mono text-effect gold">{{ line.count }}</td>
-
-            <td v-if="displayOther && line.other" class="n-mono text-effect green"
-              :class="getColor(line.other, line.percent)">
-              {{ percentFormatter(line.percent) }}
-              {{ Math.abs(line.other - line.percent) < 0.00001 ? '' : line.other > line.percent ? '↓' : '↑' }}
-            </td>
-            <td v-else class="n-mono text-effect green">{{ percentFormatter(line.percent) }}</td>
+        <table class="hover-highlight" :class="[displayOther ? 'with-other' : '', byNumber ? 'by-number' : '']">
+          <thead>
+            <tr>
+              <th>Название</th>
+              <th>Количество</th>
+              <th>Процент</th>
+              <th v-if="displayOther">У других</th>
+              <th v-if="byNumber">На {{ byNumber }}</th>
+            </tr>
+          </thead>
 
 
-            <td v-if="displayOther && line.other" class="n-mono text-effect green">
-              {{ percentFormatter(line.other) }}
-            </td>
-            <td v-if="byNumber" class="text-effect blue">
-              {{ percentFormatter(Number(line.title) / byNumber * line.percent) }}
-            </td>
-          </tr>
+          <tbody>
+            <tr v-for="line in data">
+              <td v-if="!localizer">{{ line.titleName || line.title }}</td>
+              <TableTitle v-else :title="localizer(line.title, line.titleName)" :leftAlign />
+              <td class="n-mono text-effect gold">{{ line.count }}</td>
+
+              <td v-if="displayOther && line.other" class="n-mono text-effect green"
+                :class="getColor(line.other, line.percent)">
+                {{ percentFormatter(line.percent) }}
+                {{ Math.abs(line.other - line.percent) < 0.00001 ? '' : line.other > line.percent ? '↓' : '↑' }}
+              </td>
+              <td v-else class="n-mono text-effect green">{{ percentFormatter(line.percent) }}</td>
 
 
-          <tr>
-            <th>Всего</th>
-            <th class="n-mono text-effect gold">{{ data.reduce((a, v) => a + v.count, 0) }}</th>
+              <td v-if="displayOther && line.other" class="n-mono text-effect green">
+                {{ percentFormatter(line.other) }}
+              </td>
+              <td v-if="byNumber" class="text-effect blue">
+                {{ percentFormatter(Number(line.title) / byNumber * line.percent) }}
+              </td>
+            </tr>
 
 
-            <th v-if="displayOther" class="n-mono text-effect" :class="getColor(otherSum, percentSum)">
-              {{ percentFormatter(percentSum) }}
-              {{ Math.abs(otherSum - percentSum) < 0.00001 ? '' : otherSum < percentSum ? '↑' : '↓' }} </th>
-            <th v-else class="n-mono text-effect green">{{ percentFormatter(percentSum) }}</th>
-
-            <th v-if="displayOther" class="n-mono text-effect green"> {{ percentFormatter(otherSum) }} </th>
-            <th v-if="byNumber" class="n-mono text-effect blue">
-              {{ percentFormatter(data.reduce((a, v) => a + (Number(v.title) * v.percent / (byNumber ?? 1)), 0)) }}
-            </th>
-          </tr>
-        </tbody>
+            <tr>
+              <th>Всего</th>
+              <th class="n-mono text-effect gold">{{ data.reduce((a, v) => a + v.count, 0) }}</th>
 
 
-      </table>
+              <th v-if="displayOther" class="n-mono text-effect" :class="getColor(otherSum, percentSum)">
+                {{ percentFormatter(percentSum) }}
+                {{ Math.abs(otherSum - percentSum) < 0.00001 ? '' : otherSum < percentSum ? '↑' : '↓' }} </th>
+              <th v-else class="n-mono text-effect green">{{ percentFormatter(percentSum) }}</th>
 
-    </div>
+              <th v-if="displayOther" class="n-mono text-effect green"> {{ percentFormatter(otherSum) }} </th>
+              <th v-if="byNumber" class="n-mono text-effect blue">
+                {{ percentFormatter(data.reduce((a, v) => a + (Number(v.title) * v.percent / (byNumber ?? 1)), 0)) }}
+              </th>
+            </tr>
+          </tbody>
 
-    <div class="flex flex-1 center pointer" v-else @click="showError">
-      <p class="card-main-info error">!</p>
-    </div>
-  </ServerStatusWrapper>
+
+        </table>
+
+      </div>
+
+      <div class="flex flex-1 center pointer" v-else @click="showError">
+        <p class="card-main-info error">!</p>
+      </div>
+    </ServerStatusWrapper>
+  </div>
 </template>
 
 <script lang="ts" setup>

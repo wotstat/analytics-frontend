@@ -140,9 +140,9 @@ export function useQueryStatParamsCache(params: Ref<StatParams>) {
 function whereClauseArray(params: StatParams, ignore: ('player' | 'level' | 'types' | 'tanks' | 'id')[] = []) {
   const result: string[] = [];
   if (!ignore.includes('player') && params.player) result.push(`playerName = '${params.player}'`);
-  if (!ignore.includes('level') && params.level) result.push(`tankLevel in (${params.level.join(', ')})`);
-  if (!ignore.includes('types') && params.types) result.push(`tankType in ('${params.types.join("', '")}')`);
-  if (!ignore.includes('tanks') && params.tanks) result.push(`tankTag in ('${params.tanks.join("', '")}')`);
+  if (!ignore.includes('level') && params.level) result.push(`tankLevel in (${params.level.sort().join(', ')})`);
+  if (!ignore.includes('types') && params.types) result.push(`tankType in ('${params.types.sort().join("', '")}')`);
+  if (!ignore.includes('tanks') && params.tanks) result.push(`tankTag in ('${params.tanks.sort().join("', '")}')`);
   if (params.battleId === null && params.battleMode !== 'any') {
     const t = customBattleModes[params.battleMode];
     if ('mode' in t) result.push(`battleMode = '${t.mode}'`);
