@@ -1,6 +1,6 @@
 <template>
   <!-- <i>В этом разделе учитывается только фильтр по нику игрока</i> -->
-  <LootboxList v-model="selectedContainer" />
+  <LootboxList v-model="selectedContainer" class="lootbox-list" />
 
   <h2 class="page-title">Награды из коробок</h2>
 
@@ -556,10 +556,8 @@ function lootboxLocalizer(tag: string, titleName?: LocalizedName) {
 <style lang="scss" scoped>
 @use '/src/styles/mixins.scss' as *;
 
-.select-line {
-  margin: 10px 0;
-  flex-wrap: wrap;
-  gap: 0 1rem;
+.lootbox-list {
+  margin-bottom: 2em;
 }
 
 .order-small-2 {

@@ -1,53 +1,53 @@
 <template>
+  <div>
+    <ServerStatusWrapper :status="containersTag.status" v-slot="{ status }">
+      <HorizontalScrollItems v-if="status != 'loading'" :items="containersVariants"
+        v-model:selected="selectedContainers" selectable>
+        <template #default="{ item }">
+          <div class="container-info">
+            <p class="title">{{ item.name.replaceAll('\\n', '') }}</p>
+            <FallbackImg :src="containersImages[`./containers/${item.tag}.png`]?.default ?? NoImageLB" class="img"
+              :fallback="Math.random() < .5 ? NoImageLB : `${staticUrl}/vehicles/preview/noImage.png`" />
+            <table cellspacing="0" cellpadding="0">
+              <tbody>
+                <tr>
+                  <th>Открыто</th>
+                  <td>{{ logProcessor(item.count) }}</td>
+                </tr>
+              </tbody>
+            </table>
 
-  <ServerStatusWrapper :status="containersTag.status" v-slot="{ status }">
-    <HorizontalScrollItems v-if="status != 'loading'" :items="containersVariants" v-model:selected="selectedContainers"
-      selectable>
-      <template #default="{ item }">
-        <div class="container-info">
-          <p class="title">{{ item.name.replaceAll('\\n', '') }}</p>
-          <FallbackImg :src="containersImages[`./containers/${item.tag}.png`]?.default ?? NoImageLB" class="img"
-            :fallback="Math.random() < .5 ? NoImageLB : `${staticUrl}/vehicles/preview/noImage.png`" />
+            <div class="flex date-line gap-0">
+              <p>{{ toDate(item.start) }}</p>
+              <span class="secondary flex-1">–</span>
+              <p>{{ toDate(item.end) }}</p>
+            </div>
+          </div>
+        </template>
+      </HorizontalScrollItems>
+
+      <HorizontalScrollItems v-else :items="new Array(8).fill(0).map(i => ({ key: `${i}` }))">
+        <div class="container-info loading">
+          <p class="title skeleton"></p>
+          <div class="img skeleton"></div>
           <table cellspacing="0" cellpadding="0">
             <tbody>
-              <tr>
-                <th>Открыто</th>
-                <td>{{ logProcessor(item.count) }}</td>
+              <tr class="skeleton">
+                <th class="ignore-skeleton">Открыто</th>
+                <td></td>
               </tr>
             </tbody>
           </table>
 
           <div class="flex date-line gap-0">
-            <p>{{ toDate(item.start) }}</p>
+            <p class="skeleton"></p>
             <span class="secondary flex-1">–</span>
-            <p>{{ toDate(item.end) }}</p>
+            <p class="skeleton"></p>
           </div>
         </div>
-      </template>
-    </HorizontalScrollItems>
-
-    <HorizontalScrollItems v-else :items="new Array(8).fill(0).map(i => ({ key: `${i}` }))">
-      <div class="container-info loading">
-        <p class="title skeleton"></p>
-        <div class="img skeleton"></div>
-        <table cellspacing="0" cellpadding="0">
-          <tbody>
-            <tr class="skeleton">
-              <th class="ignore-skeleton">Открыто</th>
-              <td></td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div class="flex date-line gap-0">
-          <p class="skeleton"></p>
-          <span class="secondary flex-1">–</span>
-          <p class="skeleton"></p>
-        </div>
-      </div>
-    </HorizontalScrollItems>
-  </ServerStatusWrapper>
-
+      </HorizontalScrollItems>
+    </ServerStatusWrapper>
+  </div>
 </template>
 
 <script lang="ts" setup>
