@@ -53,7 +53,7 @@
 <script lang="ts" setup>
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 import { queryComputed } from '@/db';
-import { computed, ref, watchEffect } from 'vue';
+import { computed, ref, watch, watchEffect } from 'vue';
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 import { getBestLocalization } from '@/utils/i18n';
 import { pausableWatch } from '@vueuse/core';
@@ -84,7 +84,7 @@ const statsToSelected = pausableWatch(() => selectedContainersQuery.value, (cont
 }, { immediate: true });
 
 const model = defineModel<string[]>()
-watchEffect(() => model.value = selectedContainers.value)
+watch(selectedContainers, (value) => model.value = value, { immediate: true })
 
 const fixedSpaceProcessor = useFixedSpaceProcessor(0)
 function logProcessor(value: number) {
