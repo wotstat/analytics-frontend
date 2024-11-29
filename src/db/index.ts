@@ -1,7 +1,7 @@
 
 import { ResponseJSON, createClient, type ClickHouseSettings } from "@clickhouse/client-web";
-import { computedAsync, useLocalStorage } from "@vueuse/core";
-import { Ref, computed, ref, shallowRef, watch, watchEffect } from "vue";
+import { useLocalStorage } from "@vueuse/core";
+import { computed, ref, shallowRef, watch } from "vue";
 
 export const clickhouse = createClient({
   url: import.meta.env.VITE_CLICKHOUSE_URL,
