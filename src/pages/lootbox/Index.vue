@@ -95,7 +95,7 @@ import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import { useFixedSpaceProcessor, useLogProcessor } from '@/composition/usePercentProcessor';
 import { useQueryStatParams, useQueryStatParamsCache } from '@/composition/useQueryStatParams';
 import { Status, dateToDbIndex, queryComputed, queryComputedFirst, success } from '@/db';
-import { computed, ref, watchEffect } from 'vue';
+import { computed, ref } from 'vue';
 import TableSection from "./TableSection.vue";
 import OpenByTable from "./OpenByTable.vue";
 import RerollTable from './RerollTable.vue';
