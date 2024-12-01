@@ -39,8 +39,7 @@
 
     <SnowCardWrapper>
       <div class="card long">
-        <GenericInfo :status="mainStats.status"
-          :value="mainStats.data.mandarin25 + mainStats.data.compensatedMandarin25"
+        <GenericInfo :status="mainStats.status" :value="mainStats.data.mandarin25"
           :processor="useFixedSpaceProcessor(0)" description="Новогодние мандарины на Лесте" color="gold" />
       </div>
     </SnowCardWrapper>
@@ -338,7 +337,10 @@ const vehiclesStats = computed(() => {
 
 const mandarin25Stats = load(() => getQuery(
   `title`,
-  `array join arrayFilter(t -> t.1 == 'ny25_mandarin', arrayZip(extra.tag, extra.count)).2 as title where title > 0`,
+  `array join arrayFilter(
+    t -> t.1 = 'ny25_mandarin' and not has(arrayZip(compensatedToys.currency, compensatedToys.count), t),
+    arrayZip(extra.tag, extra.count)
+  ).2 as title where title > 0`,
   `lootbox_ny25mandarin_mv`,
   'title'
 ))
