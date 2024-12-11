@@ -5,6 +5,7 @@
         v-model:selected="selectedContainers" selectable>
         <template #default="{ item }">
           <div class="container-info">
+            <div class="isOpenedToday" v-if="isOpenedToday(item.end)"></div>
             <p class="title">{{ item.name.replaceAll('\\n', '') }}</p>
             <FallbackImg :src="containersImages[`./containers/${item.tag}.png`]?.default ?? NoImageLB" class="img"
               :fallback="Math.random() < .5 ? NoImageLB : `${staticUrl}/vehicles/preview/noImage.png`" />
@@ -53,7 +54,7 @@
 <script lang="ts" setup>
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 import { queryComputed } from '@/db';
-import { computed, ref, watch, watchEffect } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 import { getBestLocalization } from '@/utils/i18n';
 import { pausableWatch } from '@vueuse/core';
@@ -92,24 +93,26 @@ function logProcessor(value: number) {
   if (value < 1e9) return (value / 1e6).toFixed(1) + 'M';
 }
 
-function toDate(yyyyMM: number) {
-  const yyyy = Math.floor(yyyyMM / 100);
-  const mm = yyyyMM % 100;
-  return `${mm.toString().padStart(2, '0')}.${yyyy}`;
+function toDate(date: string) {
+  return new Date(date).toLocaleDateString('ru-RU', { month: '2-digit', year: '2-digit', day: '2-digit' });
+}
+
+function isOpenedToday(date: string) {
+  return (new Date().getTime() - new Date(date).getTime()) < 2 * 24 * 60 * 60 * 1000;
 }
 
 const containersTag = queryComputed<{
   locale: [name: string, region: string][],
   tag: string,
   count: number,
-  start: number,
-  end: number
+  start: string,
+  end: string
 }>(() => `
 with containers as (
     select containerTag as tag,
       toUInt32(count()) as count,
-      toYYYYMM(min(dateTime)) as start,
-      toYYYYMM(max(dateTime)) as end
+      toStartOfDay(min(dateTime)) as start,
+      toStartOfDay(max(dateTime)) as end
       from Event_OnLootboxOpen
     ${whereClause(stats.value, { ignore: ['tanks', 'level', 'types', 'battleMode'] })}
     group by containerTag
@@ -154,6 +157,18 @@ const containersVariants = computed(() => containersTag.value.data
 }
 
 .container-info {
+  position: relative;
+
+  .isOpenedToday {
+    position: absolute;
+    top: 2px;
+    right: -8px;
+    width: 10px;
+    height: 10px;
+    background-color: #34C759;
+    border-radius: 50%;
+  }
+
   table {
     width: 100%;
 
