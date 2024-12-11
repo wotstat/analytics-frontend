@@ -280,7 +280,7 @@ from
         having playerCount > 0
   ) as T
 
-join
+left join
 
   (
     select title, countMerge(count) as total
