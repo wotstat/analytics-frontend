@@ -74,6 +74,7 @@
   <TableSection title="Техника" v-bind="vehiclesStats" :localizer="tankTagLocalizer" :showOther />
   <TableSection title="Золото" v-bind="goldStats" :by-number="1000" :showOther />
   <TableSection title="Серебро" v-bind="creditsStats" :by-number="100000" :showOther />
+  <TableSection title="Боны" v-bind="crystalStats" :by-number="100" :showOther />
   <TableSection title="Свободный опыт" v-bind="freeXpStats" :by-number="10000" :showOther />
   <TableSection title="Премиум" v-bind="premStats"
     :localizer="(t) => t + ' ' + countLocalize(Number(t), 'день', 'дня', 'дней')" :by-number="1" :showOther />
@@ -357,6 +358,13 @@ const goldStats = load(() => getQuery(
   `(gold - arraySum(compensatedVehicles.gold)) as title`,
   `where title > 0`,
   `lootbox_gold_mv`,
+  'title'
+))
+
+const crystalStats = load(() => getQuery(
+  `crystal as title`,
+  `where title > 0`,
+  `lootbox_crystal_mv`,
   'title'
 ))
 
