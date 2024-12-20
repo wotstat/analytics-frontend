@@ -164,7 +164,7 @@
           </div>
         </div>
 
-        <div class="feature left">
+        <!-- <div class="feature left">
           <div class="feature-description">
             <h3>Анализ турбобоёв</h3>
             <p>Выделите и анализируйте турбобои - быстрые сражения длительностью менее 5 минут с разницей во фрагах
@@ -182,9 +182,9 @@
                 description="Худшая серия из 100 боёв" color="blue" />
             </div>
           </div>
-        </div>
+        </div> -->
 
-        <div class="feature right">
+        <div class="feature left">
           <div class="feature-description">
             <h3>Анализ карт</h3>
             <p>Анализируйте результаты боёв в разбивке по картам. Изучайте где вы играете хуже, а где лучше.</p>
@@ -214,7 +214,7 @@
           </div>
         </div>
 
-        <div class="feature left">
+        <div class="feature right">
           <div class="feature-description">
             <h3>Анализ сетапа</h3>
             <p>Просматривайте как часто вы попадаете в топ команды, а как часто в низ</p>
@@ -248,7 +248,7 @@
           </div>
         </div>
 
-        <div class="feature right">
+        <div class="feature left">
           <div class="feature-description">
             <h3>Медианные показатели</h3>
             <p>Медианные, средние, максимальные, 30% и 70% <a href="https://ru.wikipedia.org/wiki/Квантиль"
@@ -272,7 +272,7 @@
           </div>
         </div>
 
-        <div class="feature left">
+        <div class="feature right">
           <div class="feature-description">
             <h3>Анализ стримснайперов</h3>
             <p>Особенно полезно для стримеров</p>
