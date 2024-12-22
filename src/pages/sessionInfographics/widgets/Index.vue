@@ -2,7 +2,7 @@
   <br>
   <p>Виджеты универсальные их можно добавлять как в OBS так и прямо в игру</p>
   <div class="flex center">
-    <img src="@/assets/widgets-images/hero.webp" class="hero">
+    <img src="./hero.webp" class="hero">
   </div>
   <br>
   <According>
@@ -87,8 +87,8 @@ import { useIframeMessages } from '@/composition/useIframeMessages';
 import { computed, onDeactivated, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import { VueComponentWith as InstructionGameWith } from "./instructionGame.md";
-import { VueComponentWith as InstructionOBSWith } from "./instructionOBS.md";
+import { VueComponentWith as InstructionGameWith } from "./instructionGame/index.md";
+import { VueComponentWith as InstructionOBSWith } from "./instructionOBS/index.md";
 import { allMdComponents } from '@/components/mdUtils/getAllMdComponents';
 
 const InstructionGame = InstructionGameWith(allMdComponents);
@@ -217,6 +217,13 @@ h4 {
       @media (-webkit-device-pixel-ratio: 3) {
         max-width: 288px;
       }
+    }
+
+    &.srgb-compare {
+      width: 100%;
+      min-width: 0;
+
+      max-width: 433px;
     }
   }
 }
