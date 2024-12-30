@@ -103,7 +103,7 @@ import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import { queryAsync, queryAsyncFirst } from "@/db";
 import { computed, ref } from "vue";
 import { useElementVisibility } from "@vueuse/core";
-import MiniBar from "@/components/widgets/MiniBar.vue";
+import MiniBar from "@/components/widgets/charts/MiniBar.vue";
 import GenericInfoQuery from "@/components/widgets/GenericInfoQuery.vue";
 import StillSurviveDistribution from "@/components/widgets/StillSurviveDistribution.vue";
 import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams';

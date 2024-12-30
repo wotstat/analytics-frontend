@@ -355,7 +355,7 @@
 <script setup lang="ts">
 import GenericInfoQuery from '@/components/widgets/GenericInfoQuery.vue';
 import GenericInfo from '@/components/widgets/GenericInfo.vue';
-import MiniBar from '@/components/widgets/MiniBar.vue';
+import MiniBar from '@/components/widgets/charts/MiniBar.vue';
 import ShotsCircle from '@/components/widgets/ShotsCircle.vue';
 import { useTweenCounter } from '@/composition/useTweenCounter';
 import { LONG_CACHE_SETTINGS, query, queryAsync, queryAsyncFirst } from '@/db';

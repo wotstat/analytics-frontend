@@ -16,7 +16,6 @@
 
     <template v-if="allow">
       <div class="flex">
-        <button class="light" @click="showWidget = true">Виджет для OBS</button>
         <button class="light" @click="showTimecodes = true">Таймкоды для стрима</button>
       </div>
 
@@ -80,10 +79,6 @@
       <b>Необходимо в фильтрах указать ник игрока (шестерёнка рядом с заголовком)</b>
     </div>
 
-    <PopupWindow title="Виджет для OBS" v-if="showWidget" @close="showWidget = false">
-      <ChuckInfo />
-    </PopupWindow>
-
     <PopupWindow title="Таймкоды для стрима" v-if="showTimecodes" @close="showTimecodes = false">
       <Timecodes />
     </PopupWindow>
@@ -100,7 +95,6 @@ import { dbIndexToDate, loading, queryAsync, queryComputed, success } from '@/db
 import { ChuckResult } from '@/db/schema';
 import { useLocalStorage } from '@vueuse/core';
 import { computed, ref } from 'vue';
-import ChuckInfo from '../obs/ChuckInfo.vue';
 import Timecodes from '@/components/Timecodes.vue'
 
 import CopyIcon from '@/assets/icons/copy.svg'
@@ -111,7 +105,6 @@ const colorDecoration = useLocalStorage('chuckColorDecoration', true)
 const contrastDecoration = useLocalStorage('chuckHightContrast', true)
 const withoutObservers = useLocalStorage('withoutObservers', true)
 
-const showWidget = ref(false)
 const showTimecodes = ref(false)
 
 const classSettings = computed(() => {

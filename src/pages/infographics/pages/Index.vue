@@ -83,7 +83,7 @@
 <script setup lang="ts">
 
 import QueryPreserveRouterLink from '@/components/QueryPreserveRouterLink.vue';
-import SettingsTitle from '@/components/SettingsTitle.vue';
+import SettingsTitle from '@/pages/infographics/settings/SettingsTitle.vue';
 import StatParamsTitle from "@/components/StatParamsTitle.vue";
 import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight';
 import { useQueryStatParams } from "@/composition/useQueryStatParams";
