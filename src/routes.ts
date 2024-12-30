@@ -1,6 +1,6 @@
 import { type RouteRecordRaw, createRouter, createWebHistory } from 'vue-router'
 
-import infographics from './pages/infographics/pages/Index.vue'
+import infographics from './pages/infographics/Index.vue'
 import Battle from './pages/infographics/pages/Battle.vue'
 import Shots from './pages/infographics/pages/shots/Shots.vue'
 import Damage from './pages/infographics/pages/Damage.vue'
