@@ -134,8 +134,8 @@ import { computed, ref, shallowRef, watch, watchEffect } from 'vue';
 import { VueComponent as Description } from './description.md'
 
 import { type ChartProps } from 'vue-chartjs';
-import { ShadowBar } from "@/components/ShadowBarController";
-import { ShadowLineController } from "@/components/ShadowLineController";
+import { ShadowBar } from "@/components/widgets/charts/ShadowBarController";
+import { ShadowLineController } from "@/components/widgets/charts/ShadowLineController";
 import { getColor } from '@/components/bloomColors';
 import { useErrorCalculation } from './errorCalculation';
 import { useFixedProcessor, usePercentProcessor } from '@/composition/usePercentProcessor';

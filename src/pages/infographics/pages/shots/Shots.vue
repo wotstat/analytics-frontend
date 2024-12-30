@@ -76,13 +76,13 @@
 import ShotsCircle from "@/components/widgets/ShotsCircle.vue";
 import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import ShotDistribution from '@/components/widgets/ShotDistribution.vue';
-import { useFixedProcessor, useFixedSpaceProcessor, usePercentProcessor } from '@/composition/usePercentProcessor';
+import { useFixedSpaceProcessor, usePercentProcessor } from '@/composition/usePercentProcessor';
 import { SHORT_CACHE_SETTINGS, queryAsyncFirst } from "@/db";
-import { computed, ref, watch, watchEffect } from "vue";
+import { computed, ref } from "vue";
 import { useElementVisibility, useMouseInElement } from "@vueuse/core";
 import { getQueryStatParamsCache, useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
 import PopupWindow from "@/components/PopupWindow.vue";
-import ShotInfo from "@/components/widgets/ShotInfo/Index.vue";
+import ShotInfo from "./shotInfo/Index.vue";
 import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();

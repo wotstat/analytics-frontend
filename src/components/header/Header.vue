@@ -107,15 +107,15 @@
 <script setup lang="ts">
 import { useAdditionalHeaderHeight, useDefaultHeaderHeight } from '@/composition/useAdditionalHeaderHeight';
 import { useRoute } from 'vue-router';
-import GitHubIcon from '@/assets/icons/github.svg'
-import DiscordIcon from '@/assets/icons/discord.svg'
-import PatreonIcon from '@/assets/icons/patreon.svg'
-import BoostyIcon from '@/assets/icons/boosty.svg'
-import I18nIcon from '@/assets/icons/i18n.svg'
-import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
-import PointsIcon from '@/assets/icons/points.svg'
 import { ref } from 'vue';
+import GitHubIcon from './assets/github.svg'
+import DiscordIcon from './assets/discord.svg'
+import PatreonIcon from './assets/patreon.svg'
+import BoostyIcon from './assets/boosty.svg'
+import PointsIcon from './assets/points.svg'
 import HeaderSpacer from './HeaderSpacer.vue';
+import I18nIcon from './assets/i18n.svg'
+import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
 
 const DBUrl = import.meta.env.VITE_CLICKHOUSE_URL
 const discordUrl = import.meta.env.VITE_DISCORD_URL

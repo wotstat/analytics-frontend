@@ -11,7 +11,7 @@
       :src="images[`EnemyTeamSpawnEntry_red_${i + 1}`]">
 
     <img v-if="gameplayType.controlPoint" class="controll" :style="getStyle(gameplayType.controlPoint)"
-      src="@/assets/minimap/ControlPointEntry_0.png">
+      src="./assets/bases/ControlPointEntry_0.png">
   </div>
 </template>
 
@@ -32,8 +32,10 @@ const gameplayType = computed(() => meta.value?.gameplayTypes[props.gameplay]);
 const allyTeamIndex = computed(() => props.allyTeam - 1)
 const enemyTeamIndex = computed(() => props.allyTeam === 1 ? 1 : 0)
 
-const images = Object.fromEntries(Object.entries(import.meta.glob<{ default: string }>('/src/assets/minimap/*', { eager: true }))
-  .map(([key, value]) => [key.replace('/src/assets/minimap/', '').replace('.png', ''), value.default]));
+const images = Object.fromEntries(
+  Object.entries(import.meta.glob<{ default: string }>('./assets/bases/*', { eager: true }))
+  .map(([key, value]) => [key.replace('./assets/bases/', '').replace('.png', ''), value.default])
+);
 
 
 function getStyle(v: { x: number, y: number }) {

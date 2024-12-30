@@ -13,7 +13,7 @@
 
 
 <script lang="ts" setup>
-import SettingsTitle from '@/components/SettingsTitle.vue';
+import SettingsTitle from '@/pages/infographics/settings/SettingsTitle.vue';
 import StatParamsTitle from '@/components/StatParamsTitle.vue';
 
 import Content from './Content.vue';

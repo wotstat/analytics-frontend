@@ -17,7 +17,7 @@
           <div class="map-container">
             <img class="map" v-if="arenaMinimapUrl" :src="arenaMinimapUrl">
           </div>
-          <img class="border" src="@/assets/minimap/minimap_b4.png" alt="">
+          <img class="border" src="./minimap_b4.png" alt="">
 
           <div class="overlay-container" v-if="arenaMeta">
 
@@ -171,7 +171,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { sec2minsec } from '@/utils';
 import InfoTable from "./InfoTable.vue";
 import { getArenaName } from '@/utils/i18n';
-import MinimapOverlays from '@/components/MinimapOverlays.vue';
+import MinimapOverlays from '@/components/minimapOverlay/Index.vue';
 
 type UInt128 = string;
 type DateTime64 = string;
@@ -500,7 +500,7 @@ const shotResult = computed(() => {
   })
 })
 
-const images = import.meta.glob<{ default: string }>('/src/assets/tank-markers/*.png', { eager: true });
+const images = import.meta.glob<{ default: string }>('./tank-markers/*.png', { eager: true });
 function getTankImg(tankType: string, ally: boolean, dead: boolean) {
   const tag = {
     'HT': 'heavyTank',
@@ -510,7 +510,7 @@ function getTankImg(tankType: string, ally: boolean, dead: boolean) {
     'AT': 'AT-SPG',
   }[tankType] ?? 'heavyTank';
 
-  return images[`/src/assets/tank-markers/${tag}_${ally ? 'ally' : 'enemy'}_${dead ? 'dead_' : ''}${ally ? 'green' : 'red'}.png`].default
+  return images[`./tank-markers/${tag}_${ally ? 'ally' : 'enemy'}_${dead ? 'dead_' : ''}${ally ? 'green' : 'red'}.png`].default
 }
 
 const serverMakerPoint = computed(() => {

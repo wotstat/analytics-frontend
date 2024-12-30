@@ -160,7 +160,7 @@
 
 <script setup lang="ts">
 import GenericInfo from '@/components/widgets/GenericInfo.vue';
-import MiniBar from '@/components/widgets/MiniBar.vue';
+import MiniBar from '@/components/widgets/charts/MiniBar.vue';
 import { LONG_CACHE_SETTINGS, Status, mergeStatuses, queryAsync, queryAsyncFirst, queryComputed } from "@/db";
 import { useElementVisibility, useLocalStorage } from '@vueuse/core';
 import { computed, ref } from 'vue';
