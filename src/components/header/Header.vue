@@ -9,22 +9,25 @@
     <div class="main flex">
       <router-link to="/" class="wotstat-logo">WotStat</router-link>
       <router-link to="/" class="wotstat-logo small">WS</router-link>
-      <div class="sep greater-600"></div>
-      <a href="https://positions.wotstat.info/" target="_blank" rel="noopener noreferrer" class="greater-600 positions">
-        <div class="back">
-          Мод на позиции
-        </div>
-      </a>
+      <div class="positions-section flex">
+        <div class="sep"></div>
+        <a href="https://positions.wotstat.info/" target="_blank" rel="noopener noreferrer" class="positions">
+          <div class="back">
+            Мод на позиции
+          </div>
+        </a>
+      </div>
       <div class="flex-1"></div>
       <div class="header-right flex">
-        <router-link to="/">Главная</router-link>
-        <router-link to="/session"
-          :class="startsWith('/session') ? 'router-link-exact-active' : ''">Инфографика</router-link>
-        <a :href="DBUrl + '/play?user=public#c2VsZWN0IHRhYmxlLCBuYW1lLCBjb21tZW50LCB0eXBlIGZyb20gZGVzY3JpcHRpb247'"
-          target="_blank" rel="noopener noreferrer">SQL</a>
+        <router-link to="/" class="hero">Главная</router-link>
+        <router-link to="/session" class="infographics">Инфографика</router-link>
+        <router-link to="/widgets" class="widgets">Виджеты</router-link>
+        <router-link to="/replays" class="replays">Реплеи</router-link>
+        <a :href="SQLUrl" target="_blank" rel="noopener noreferrer" class="sql">SQL</a>
 
-        <div class="wide">
-          <!-- <div class="sep"></div>
+
+        <div class="language-section flex">
+          <div class="sep"></div>
 
           <div class="i18n drop-down">
             <I18nIcon class="icon" />
@@ -35,10 +38,12 @@
               <a href="/en">English</a>
               <a href="/en">Spenish</a>
             </div>
-          </div> -->
-
+          </div>
 
           <div class="sep"></div>
+        </div>
+
+        <div class="links-sections flex">
 
           <a href="https://boosty.to/wotstat" target="_blank" class="icon">
             <BoostyIcon />
@@ -61,21 +66,33 @@
         <div class="drop-down points-menu">
           <PointsIcon class="icon" />
           <div class="menu">
-            <!-- <a href="/points">Русский</a>
-            <a href="/points/players">English</a>
-            <hr> -->
 
-            <div class="flex btn less-600">
-              <a href="https://positions.wotstat.info/" target="_blank" rel="noopener noreferrer"
-                class="positions flex-1">
-                <div class="back">
-                  Мод на позиции
-                </div>
-              </a>
+            <router-link to="/" class="hero">Главная</router-link>
+            <router-link to="/session" class="infographics">Инфографика</router-link>
+            <router-link to="/widgets" class="widgets">Виджеты</router-link>
+            <router-link to="/replays" class="replays">Реплеи</router-link>
+            <a :href="SQLUrl" target="_blank" rel="noopener noreferrer" class="sql">SQL</a>
+            <hr class="any-page-divider">
+
+            <div class="language-section container">
+              <a href="/">Русский</a>
+              <a href="/en">English</a>
+              <hr>
             </div>
-            <hr class="less-600">
 
-            <div class="line flex">
+            <div class="positions-section">
+              <div class="flex btn">
+                <a href="https://positions.wotstat.info/" target="_blank" rel="noopener noreferrer"
+                  class="positions flex-1">
+                  <div class="back">
+                    Мод на позиции
+                  </div>
+                </a>
+              </div>
+              <hr>
+            </div>
+
+            <div class="line flex links-sections">
               <a href="https://boosty.to/wotstat" target="_blank" class="icon">
                 <BoostyIcon />
                 Boosty
@@ -119,14 +136,11 @@ import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
 
 const DBUrl = import.meta.env.VITE_CLICKHOUSE_URL
 const discordUrl = import.meta.env.VITE_DISCORD_URL
-const route = useRoute()
+
+const SQLUrl = DBUrl + '/play?user=public#c2VsZWN0IHRhYmxlLCBuYW1lLCBjb21tZW50LCB0eXBlIGZyb20gZGVzY3JpcHRpb247'
 
 const headerElement = ref<HTMLElement | null>(null);
 useDefaultHeaderHeight(headerElement);
-
-function startsWith(path: string) {
-  return route.path.startsWith(path);
-}
 
 const { additionalHeaderHeight } = useAdditionalHeaderHeight();
 
@@ -221,7 +235,7 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
       padding: 15px 10px;
       transition: all 0.2s;
 
-      &.router-link-exact-active {
+      &.router-link-active {
         color: #d6fbff;
         filter: drop-shadow(0 0 0.5em #4a7697bc);
       }
@@ -241,7 +255,7 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
       font-size: 25px;
       font-weight: bold;
 
-      &.router-link-exact-active {
+      &.router-link-active {
         color: inherit;
         filter: none
       }
@@ -305,16 +319,6 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
       }
     }
 
-    .wide {
-      display: flex;
-      align-items: center;
-      gap: 0;
-
-      @include less-small {
-        display: none;
-      }
-    }
-
     .i18n {
       position: relative;
       display: flex;
@@ -340,10 +344,6 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
       align-items: center;
       padding: 15px 17px 15px 10px;
       margin-right: -10px;
-
-      @include small {
-        display: none;
-      }
 
       hr {
         margin: 5px 0;
@@ -383,7 +383,8 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
         transition: opacity 0.2s;
 
         >a,
-        >.line>a {
+        >.line>a,
+        >.container>a {
           padding: 5px 10px;
           border-radius: 10px;
           transition: all 0.2s;
@@ -414,25 +415,66 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
       }
     }
   }
+}
 
-  .less-600 {
-    display: none;
+$drop-down-menu: 1050px;
+$links-sections: 1050px;
+$sql: 900px;
+$replays: 830px;
+$widgets: 500px;
+$infographics: 400px;
+$positions: 680px;
+$hero: 100px;
+$language-section: 300px;
 
-    @media screen and (max-width: 600px) {
-      display: block;
-
-      &.flex {
-        display: flex;
-      }
-    }
-  }
-
-  .greater-600 {
-    display: block;
-
-    @media screen and (max-width: 600px) {
+@mixin hide-if-small($width, $class) {
+  @media (max-width: $width) {
+    &.#{$class} {
       display: none;
     }
+  }
+}
+
+@mixin hide-if-greater($width, $class) {
+  @media (min-width: calc($width + 1px)) {
+    &.#{$class} {
+      display: none;
+    }
+  }
+}
+
+.header .main {
+  *:not(:is(.menu *)) {
+    @include hide-if-greater($drop-down-menu, points-menu);
+    @include hide-if-small($links-sections, links-sections);
+    @include hide-if-small($sql, sql);
+    @include hide-if-small($replays, replays);
+    @include hide-if-small($widgets, widgets);
+    @include hide-if-small($infographics, infographics);
+    @include hide-if-small($hero, hero);
+    @include hide-if-small($positions, positions-section);
+    @include hide-if-small($language-section, language-section);
+  }
+}
+
+
+.header .main .menu {
+
+  .language-section {
+    display: flex;
+    flex-direction: column;
+  }
+
+  * {
+    @include hide-if-greater($links-sections, links-sections);
+    @include hide-if-greater($sql, any-page-divider);
+    @include hide-if-greater($sql, sql);
+    @include hide-if-greater($replays, replays);
+    @include hide-if-greater($widgets, widgets);
+    @include hide-if-greater($infographics, infographics);
+    @include hide-if-greater($hero, hero);
+    @include hide-if-greater($positions, positions-section);
+    @include hide-if-greater($language-section, language-section);
   }
 }
 </style>
