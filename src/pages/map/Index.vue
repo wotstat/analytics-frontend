@@ -156,7 +156,7 @@ import SettingsTitle from '@/pages/infographics/settings/SettingsTitle.vue';
 import StatParamsTitle from "@/components/StatParamsTitle.vue";
 import MinimapOverlays from '@/components/minimapOverlay/Index.vue';
 import PopupWindow from '@/components/PopupWindow.vue';
-import ShotInfo from "@/components/widgets/ShotInfo/Index.vue";
+import ShotInfo from "@/pages/infographics/pages/shots/shotInfo/Index.vue";
 import CanvasVue from "@/components/Canvas.vue";
 import EfficiencyPopup from "./Efficiency.vue";
 import Heatmap from "./Heatmap.vue";
