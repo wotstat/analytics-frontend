@@ -35,6 +35,10 @@ const routes = [
       { path: 'widgets/:widget*', component: Widgets, meta: { hideTankList: true, customTitle: 'Виджеты' } },
     ]
   },
+  {
+    path: '/replays',
+    component: () => import('./pages/replays/Index.vue')
+  },
   { path: '/services/fixed-match-detector', component: FixedMatchDetect },
 
   { path: '/widgets', redirect: '/session/widgets' },
