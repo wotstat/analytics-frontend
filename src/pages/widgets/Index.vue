@@ -1,81 +1,85 @@
 <template>
-  <br>
-  <p>Виджеты универсальные их можно добавлять как в OBS так и прямо в игру</p>
-  <div class="flex center">
-    <img src="./hero.webp" class="hero">
-  </div>
-  <br>
-  <According>
-    <template #header>
-      <h4>Как добавить виджет в игру</h4>
-    </template>
-    <template #panel>
-      <div class="markdown">
-        <InstructionGame />
-      </div>
-    </template>
-  </According>
 
-  <According>
-    <template #header>
-      <h4>Как добавить виджет в OBS (для стримеров)</h4>
-    </template>
-    <template #panel>
-      <div class="markdown">
-        <InstructionOBS />
-      </div>
-    </template>
-  </According>
+  <div class="center-container">
+    <h1>Виджеты</h1>
+    <br>
+    <p>Виджеты универсальные их можно добавлять как в OBS так и прямо в игру</p>
+    <div class="flex center">
+      <img src="./hero.webp" class="hero">
+    </div>
+    <br>
+    <According>
+      <template #header>
+        <h4>Как добавить виджет в игру</h4>
+      </template>
+      <template #panel>
+        <div class="markdown">
+          <InstructionGame />
+        </div>
+      </template>
+    </According>
 
-  <div class="collection-loading" v-if="isCollectionLoading">
-    <div class="section" v-for="i in new Array(2).fill(0)">
-      <div class="title skeleton"></div>
-      <div class="items">
-        <div class="item" v-for="i in new Array(3).fill(0)">
-          <div class="info">
-            <div class="title"></div>
-            <div class="content"></div>
+    <According>
+      <template #header>
+        <h4>Как добавить виджет в OBS (для стримеров)</h4>
+      </template>
+      <template #panel>
+        <div class="markdown">
+          <InstructionOBS />
+        </div>
+      </template>
+    </According>
+
+    <div class="collection-loading" v-if="isCollectionLoading">
+      <div class="section" v-for="i in new Array(2).fill(0)">
+        <div class="title skeleton"></div>
+        <div class="items">
+          <div class="item" v-for="i in new Array(3).fill(0)">
+            <div class="info">
+              <div class="title"></div>
+              <div class="content"></div>
+            </div>
+            <div class="widget"></div>
           </div>
-          <div class="widget"></div>
         </div>
       </div>
     </div>
+
+    <iframe :src="`${WIDGETS_URL}/iframe/collection`" frameborder="0" class="collection" ref="collection" :style="{
+      height: `${height}px`,
+      minHeight: `${height}px`,
+      opacity: isCollectionLoading ? 0 : 1
+    }" @load="onCollectionLoad"></iframe>
+
+    <PopupWindow :title="selectedTitle" v-if="selectedRoute" @close="onClosePreview">
+      <div class="loader" v-if="isPreviewLoading">
+        <div class="top-text">
+          <p class="skeleton"></p>
+          <p class="skeleton"></p>
+          <p class="skeleton"></p>
+          <p class="skeleton"></p>
+          <p class="skeleton"></p>
+          <p class="skeleton"></p>
+          <p class="skeleton"></p>
+          <p class="skeleton"></p>
+        </div>
+        <div class="bottom-content">
+          <div class="preview-content skeleton"></div>
+          <div class="settings-content">
+            <p class="skeleton"></p>
+            <p class="skeleton"></p>
+            <p class="skeleton"></p>
+            <p class="skeleton"></p>
+            <p class="skeleton"></p>
+          </div>
+        </div>
+        <div class="url-line skeleton"></div>
+      </div>
+      <iframe :src="`${WIDGETS_URL}/iframe/preview${selectedRoute}`" frameborder="0" class="preview"
+        :style="{ opacity: isPreviewLoading ? 0 : 1 }" allow="clipboard-write" ref="preview"
+        @load="onPreviewLoad"></iframe>
+    </PopupWindow>
   </div>
-
-  <iframe :src="`${WIDGETS_URL}/iframe/collection`" frameborder="0" class="collection" ref="collection" :style="{
-    height: `${height}px`,
-    minHeight: `${height}px`,
-    opacity: isCollectionLoading ? 0 : 1
-  }" @load="onCollectionLoad"></iframe>
-
-  <PopupWindow :title="selectedTitle" v-if="selectedRoute" @close="onClosePreview">
-    <div class="loader" v-if="isPreviewLoading">
-      <div class="top-text">
-        <p class="skeleton"></p>
-        <p class="skeleton"></p>
-        <p class="skeleton"></p>
-        <p class="skeleton"></p>
-        <p class="skeleton"></p>
-        <p class="skeleton"></p>
-        <p class="skeleton"></p>
-        <p class="skeleton"></p>
-      </div>
-      <div class="bottom-content">
-        <div class="preview-content skeleton"></div>
-        <div class="settings-content">
-          <p class="skeleton"></p>
-          <p class="skeleton"></p>
-          <p class="skeleton"></p>
-          <p class="skeleton"></p>
-          <p class="skeleton"></p>
-        </div>
-      </div>
-      <div class="url-line skeleton"></div>
-    </div>
-    <iframe :src="`${WIDGETS_URL}/iframe/preview${selectedRoute}`" frameborder="0" class="preview"
-      :style="{ opacity: isPreviewLoading ? 0 : 1 }" allow="clipboard-write" ref="preview"
-      @load="onPreviewLoad"></iframe>
-  </PopupWindow>
 </template>
 
 
@@ -174,6 +178,19 @@ function onPreviewLoad() {
 <style lang="scss" scoped>
 @use "/src/styles/mixins.scss" as *;
 @use '/src/styles/textColors.scss' as *;
+
+
+.center-container {
+  max-width: 1100px;
+
+  @media screen and (max-width: 1250px) {
+    max-width: 100%;
+  }
+}
+
+h1 {
+  margin: 0;
+}
 
 h4 {
   margin: 0;
