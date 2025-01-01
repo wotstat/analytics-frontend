@@ -366,7 +366,7 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
         position: absolute;
         top: calc(100% - 5px);
         right: 0;
-        padding: 10px;
+        padding: 6px;
         z-index: 1000;
 
         display: flex;

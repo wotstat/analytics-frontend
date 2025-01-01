@@ -37,11 +37,16 @@ const routes = [
   },
   {
     path: '/replays',
-    component: () => import('./pages/replays/Index.vue')
+    component: () => import('./pages/replays/Index.vue'),
+    children: [
+      { path: '', component: () => import('./pages/replays/search/Index.vue') },
+      { path: 'analyze', component: () => import('./pages/replays/localAnalyzer/Index.vue') },
+      { path: 'my', component: () => import('./pages/replays/my/Index.vue') },
+    ]
   },
   { path: '/services/fixed-match-detector', component: FixedMatchDetect },
 
-  { path: '/widgets', redirect: '/session/widgets' },
+  { path: '/widgets', component: () => import('./pages/widgets/Index.vue') },
   { path: '/widgets/demo', redirect: t => window.location.href = 'https://widgets.wotstat.info/demo-widget' },
 
   { path: '/damage', component: () => import('./pages/services/damageDistribution/Index.vue') },

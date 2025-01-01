@@ -5,6 +5,7 @@
       <div class="sticky-sidebar router-links">
         <QueryPreserveRouterLink to="/replays">Поиск реплеев</QueryPreserveRouterLink>
         <QueryPreserveRouterLink to="/replays/analyze">Локальный анализ</QueryPreserveRouterLink>
+        <QueryPreserveRouterLink to="/replays/my">Мои реплеи</QueryPreserveRouterLink>
         <hr>
         <button class="upload-replay">
           <p>Загрузить реплей</p>
@@ -13,11 +14,11 @@
     </template>
 
     <template #content-top>
-      <h1>content-top</h1>
+      <h1>Реплеи</h1>
     </template>
 
     <template #default>
-      <h1>Main content</h1>
+      <RouterView></RouterView>
     </template>
   </SidebarLayout>
 </template>
@@ -27,6 +28,8 @@
 import QueryPreserveRouterLink from '@/components/QueryPreserveRouterLink.vue';
 import SidebarLayout from '@/components/SidebarLayout/Index.vue'
 import { SidebarLink } from '@/components/SidebarLayout/types';
+import { RouterView } from 'vue-router';
+
 
 const links: SidebarLink[] = [
   { to: '/replays', labels: 'Поиск реплеев' },
@@ -51,5 +54,9 @@ const links: SidebarLink[] = [
     color: white;
     filter: drop-shadow(1px 0.03px 0px rgba(0, 0, 0, 0.8));
   }
+}
+
+h1 {
+  margin: 0;
 }
 </style>
