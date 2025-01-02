@@ -52,7 +52,8 @@ function isGetText(obj: Parser | Promise<Parser>): obj is Parser {
 }
 
 export function getArenaName(tag: string) {
-  const arenaName = shallowRef<string>(tag)
+  const name = tag.replace('spaces/', '')
+  const arenaName = shallowRef<string>(name)
 
   if (!parsers.arena) {
     parsers.arena = new Promise((resolve, reject) => {
@@ -75,10 +76,10 @@ export function getArenaName(tag: string) {
   }
 
   if (isGetText(parsers.arena)) {
-    arenaName.value = parsers.arena.getTranslation(tag)
+    arenaName.value = parsers.arena.getTranslation(name + '/name')
   } else {
     parsers.arena.then(arena => {
-      arenaName.value = arena.getTranslation(tag)
+      arenaName.value = arena.getTranslation(name + '/name')
     })
   }
 

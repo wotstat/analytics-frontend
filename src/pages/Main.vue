@@ -203,7 +203,7 @@
                 </thead>
                 <tbody>
                   <tr v-for="item in mapsResults.data">
-                    <td>{{ nameFromTag(item.arenaTag).value }}</td>
+                    <td>{{ getArenaName(item.arenaTag) }}</td>
                     <td class="text-effect orange">{{ item.count }}</td>
                     <td class="text-effect green">{{ item.damage }}</td>
                     <td class="text-effect blue">{{ item.assist }}</td>
@@ -504,12 +504,6 @@ group by arenaTag
 order by count desc
 limit 5;
 `, { settings: LONG_CACHE_SETTINGS })
-
-function nameFromTag(tag: string) {
-  const key = tag.split('spaces/')[1] + '/name'
-  return getArenaName(key)
-}
-
 
 const maps = [
   ['Перевал', 9, 4230, 2344],

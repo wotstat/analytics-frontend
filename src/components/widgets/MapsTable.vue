@@ -75,7 +75,7 @@
             <td colspan="9"></td>
           </tr>
           <tr v-for="(item, index) in ordered" :key="item.arenaTag">
-            <td>{{ nameFromTag(item.arenaTag).value }}
+            <td>{{ getArenaName(item.arenaTag) }}
               <div v-if="hightlighted[index]" class="bar-box right" :style="{ width: hightlighted[index] + 'px' }">
               </div>
             </td>
@@ -145,11 +145,6 @@ function click(name: Selected) {
 }
 
 const hightlight = useLocalStorage<Selected>('MapsTableColumnSelected', 'count');
-
-function nameFromTag(tag: string) {
-  const key = tag.split('spaces/')[1] + '/name'
-  return getArenaName(key)
-}
 
 const expressions = computed(() => {
   let result = []
