@@ -25,44 +25,6 @@
         <router-link to="/replays" class="replays">Реплеи</router-link>
         <a :href="SQLUrl" target="_blank" rel="noopener noreferrer" class="sql">SQL</a>
 
-
-        <div class="language-section flex">
-          <div class="sep"></div>
-
-          <div class="i18n drop-down">
-            <I18nIcon class="icon" />
-            <ArrowDownIcon class="icon arrow" />
-
-            <div class="menu">
-              <a href="/">Русский</a>
-              <a href="/en">English</a>
-              <a href="/en">Spenish</a>
-            </div>
-          </div>
-
-          <div class="sep"></div>
-        </div>
-
-        <div class="links-sections flex">
-
-          <a href="https://boosty.to/wotstat" target="_blank" class="icon">
-            <BoostyIcon />
-          </a>
-
-          <a href="https://patreon.com/wotstat" target="_blank" class="icon">
-            <PatreonIcon />
-          </a>
-
-          <div class="sep"></div>
-          <a :href="discordUrl" target="_blank" class="icon">
-            <DiscordIcon />
-          </a>
-
-          <a href="https://github.com/WOT-STAT/WOTMOD" target="_blank" class="icon">
-            <GitHubIcon />
-          </a>
-        </div>
-
         <div class="drop-down points-menu">
           <PointsIcon class="icon" />
           <div class="menu">
@@ -108,6 +70,43 @@
               </a>
             </div>
           </div>
+        </div>
+
+        <div class="language-section flex">
+          <div class="sep"></div>
+
+          <div class="i18n drop-down">
+            <I18nIcon class="icon" />
+            <ArrowDownIcon class="icon arrow" />
+
+            <div class="menu">
+              <a href="/">Русский</a>
+              <a href="/en">English</a>
+              <a href="/en">Spenish</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="links-sections flex">
+
+          <div class="sep"></div>
+
+          <a href="https://boosty.to/wotstat" target="_blank" class="icon">
+            <BoostyIcon />
+          </a>
+
+          <a href="https://patreon.com/wotstat" target="_blank" class="icon">
+            <PatreonIcon />
+          </a>
+
+          <div class="sep"></div>
+          <a :href="discordUrl" target="_blank" class="icon">
+            <DiscordIcon />
+          </a>
+
+          <a href="https://github.com/WOT-STAT/WOTMOD" target="_blank" class="icon">
+            <GitHubIcon />
+          </a>
         </div>
 
       </div>
