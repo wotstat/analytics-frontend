@@ -59,8 +59,8 @@ import { ref, watch } from 'vue';
 import { useRoute } from "vue-router";
 import TankListSetup from "@/components/TankListSetup/Index.vue";
 
-import SidebarLayout from '@/components/SidebarLayout/Index.vue'
-import { SidebarLink } from '@/components/SidebarLayout/types';
+import SidebarLayout from '@/components/sidebarLayout/Index.vue'
+import { SidebarLink } from '@/components/sidebarLayout/types';
 
 
 const links: SidebarLink[] = [
