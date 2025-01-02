@@ -305,7 +305,7 @@ watch(selectedShoot, shot => {
 const firstTable = (s: Shot) => [
   ['Игрок', s.playerName],
   ['Танк', s.tankTag],
-  ['Карта', getArenaName(arenaTag.value + '/name').value],
+  ['Карта', getArenaName(arenaTag.value ?? '').value],
   ['Пушка', s.gunTag],
   ['Калибр', s.shellCaliber],
   ['Разброс орудия', (s.battleDispersion * 100).toFixed(2)],

@@ -12,7 +12,7 @@
       <p>Карта</p>
       <select v-model="selectedMap">
         <option v-for="item in arenas.data" :value="item.tag">
-          {{ getArenaName(item.tag.split('/')[1] + '/name').value }} – {{ item.count }}
+          {{ getArenaName(item.tag) }} – {{ item.count }}
         </option>
       </select>
     </div>

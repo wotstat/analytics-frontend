@@ -6,8 +6,7 @@
       <template #default="{ item }">
         <div class="tank-info">
           <p class="tank-name">{{ getTankName(item.tag, true) }}</p>
-          <FallbackImg :src="`${staticUrl}/vehicles/preview/${item.tag.replace(':', '-')}.png`" class="img"
-            :fallback="`${staticUrl}/vehicles/preview/noImage.png`" />
+          <VehicleImage :tag="item.tag" :size="'preview'" class="img" />
           <table cellspacing="0" cellpadding="0">
             <tbody>
               <tr>
@@ -48,15 +47,17 @@
 
 <script lang="ts" setup>
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
-import { loading, LONG_CACHE_SETTINGS, queryComputed } from '@/db';
+import { LONG_CACHE_SETTINGS, queryComputed } from '@/db';
 import { useRoute, useRouter } from 'vue-router';
 import ServerStatusWrapper from '../ServerStatusWrapper.vue';
-import { computed, onMounted, ref, watchEffect } from 'vue';
+import { computed, ref } from 'vue';
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
-import FallbackImg from '../FallbackImg.vue';
 import { getTankName } from '@/utils/i18n';
 import HorizontalScrollItems from '../shared/HorizontalScrollItems.vue';
 import { pausableWatch } from '@vueuse/core';
+import VehicleImage from '../shared/VehicleImage.vue';
+
+
 
 const staticUrl = import.meta.env.VITE_STATIC_URL;
 
