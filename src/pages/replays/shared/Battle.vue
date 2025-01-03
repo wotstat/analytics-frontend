@@ -21,39 +21,39 @@
           <h3>{{ meta.title }}</h3>
           <div class="info">
             <div class="item">
-              <img :src="DmgIcon" alt="damage">
-              <p>2</p>
+              <img :src="DmgIcon" alt="download count">
+              <p>{{ utils.downloadCount }}</p>
             </div>
           </div>
         </div>
         <div class="stats">
           <div class="item">
             <img :src="DmgIcon" alt="damage">
-            <p>1234</p>
+            <p>{{ stats.damage }}</p>
           </div>
           <div class="item">
             <img :src="DmgIcon" alt="damage">
-            <p>1234</p>
+            <p>{{ stats.assist }}</p>
           </div>
           <div class="item">
             <img :src="DmgIcon" alt="damage">
-            <p>1234</p>
+            <p>{{ stats.blocked }}</p>
           </div>
           <div class="item">
             <img :src="DmgIcon" alt="damage">
-            <p>1234</p>
+            <p>{{ stats.kills }}</p>
           </div>
           <div class="item">
             <img :src="DmgIcon" alt="damage">
-            <p>1234</p>
+            <p>{{ stats.xp }}</p>
           </div>
           <div class="item">
             <img :src="DmgIcon" alt="damage">
-            <p>1234</p>
+            <p>{{ stats.spot }}</p>
           </div>
           <div class="item">
             <img :src="DmgIcon" alt="damage">
-            <p>1234</p>
+            <p>{{ timeProcessor(stats.lifetime).join(':') }}</p>
           </div>
           <div class="item">
             <img :src="DmgIcon" alt="damage">
@@ -75,6 +75,7 @@
 <script setup lang="ts">
 import DmgIcon from '@/assets/efficiency-icon/dmg.png'
 import VehicleImage from '@/components/shared/VehicleImage.vue';
+import { timeProcessor } from '@/utils';
 import { getArenaName, getTankName } from '@/utils/i18n';
 
 
@@ -91,7 +92,20 @@ const props = defineProps<{
     arena: string
     tankTag: string,
     battleMode: string
+  },
+  stats: {
+    damage: number,
+    assist: number,
+    blocked: number,
+    kills: number,
+    xp: number,
+    lifetime: number,
+    spot: number,
+  },
+  utils: {
+    downloadCount: number
   }
+
 }>()
 
 
