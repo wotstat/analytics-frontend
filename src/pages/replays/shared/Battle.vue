@@ -27,38 +27,13 @@
           </div>
         </div>
         <div class="stats">
-          <div class="item">
-            <img :src="DmgIcon" alt="damage">
-            <p>{{ stats.damage }}</p>
-          </div>
-          <div class="item">
-            <img :src="DmgIcon" alt="damage">
-            <p>{{ stats.assist }}</p>
-          </div>
-          <div class="item">
-            <img :src="DmgIcon" alt="damage">
-            <p>{{ stats.blocked }}</p>
-          </div>
-          <div class="item">
-            <img :src="DmgIcon" alt="damage">
-            <p>{{ stats.kills }}</p>
-          </div>
-          <div class="item">
-            <img :src="DmgIcon" alt="damage">
-            <p>{{ stats.xp }}</p>
-          </div>
-          <div class="item">
-            <img :src="DmgIcon" alt="damage">
-            <p>{{ stats.spot }}</p>
-          </div>
-          <div class="item">
-            <img :src="DmgIcon" alt="damage">
-            <p>{{ timeProcessor(stats.lifetime).join(':') }}</p>
-          </div>
-          <div class="item">
-            <img :src="DmgIcon" alt="damage">
-            <p>1234</p>
-          </div>
+          <BattleStatValue :value="stats.damage" tooltip="Урон" />
+          <BattleStatValue :value="stats.assist" tooltip="Ассист" />
+          <BattleStatValue :value="stats.blocked" tooltip="Заблокированно бронёй" />
+          <BattleStatValue :value="stats.kills" tooltip="Уничтожено" />
+          <BattleStatValue :value="stats.xp" tooltip="Опыт" />
+          <BattleStatValue :value="stats.spot" tooltip="Обнаружено" />
+          <BattleStatValue :value="stats.damage" tooltip="Урон" />
         </div>
         <div class="meta">
           <p class="item">Регион: <span>{{ meta.region }}</span></p>
@@ -75,9 +50,10 @@
 <script setup lang="ts">
 import DmgIcon from '@/assets/efficiency-icon/dmg.png'
 import VehicleImage from '@/components/shared/VehicleImage.vue';
+import Tooltip from '@/components/Tooltip.vue';
 import { timeProcessor } from '@/utils';
 import { getArenaName, getTankName } from '@/utils/i18n';
-
+import BattleStatValue from './BattleStatValue.vue';
 
 
 const props = defineProps<{
@@ -267,19 +243,6 @@ h5 {
         gap: 10px;
         font-size: 16px;
         margin-left: 20px;
-
-        .item {
-          display: flex;
-          align-items: center;
-          gap: 0.2em;
-          line-height: 1.2;
-
-          img {
-            width: 40px;
-            height: 40px;
-            margin: -10px;
-          }
-        }
       }
 
       .meta {
