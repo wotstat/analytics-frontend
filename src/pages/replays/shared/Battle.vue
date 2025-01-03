@@ -34,6 +34,7 @@
           <BattleStatValue :value="stats.xp" tooltip="Опыт" />
           <BattleStatValue :value="stats.spot" tooltip="Обнаружено" />
           <BattleStatValue :value="stats.damage" tooltip="Урон" />
+          <BattleStatValue :value="timeProcessor(stats.lifetime).join(':')" tooltip="Время жизни" />
         </div>
         <div class="meta">
           <p class="item">Регион: <span>{{ meta.region }}</span></p>
@@ -50,7 +51,6 @@
 <script setup lang="ts">
 import DmgIcon from '@/assets/efficiency-icon/dmg.png'
 import VehicleImage from '@/components/shared/VehicleImage.vue';
-import Tooltip from '@/components/Tooltip.vue';
 import { timeProcessor } from '@/utils';
 import { getArenaName, getTankName } from '@/utils/i18n';
 import BattleStatValue from './BattleStatValue.vue';
