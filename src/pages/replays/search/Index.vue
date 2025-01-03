@@ -27,6 +27,18 @@ const info = {
     arena: 'spaces/05_prohorovka',
     tankTag: 'ussr:R159_SU_130PM',
     battleMode: 'REGULAR'
+  },
+  stats: {
+    damage: 1234,
+    assist: 1234,
+    blocked: 1234,
+    kills: 1234,
+    xp: 1234,
+    lifetime: 1234,
+    spot: 4
+  },
+  utils: {
+    downloadCount: 24,
   }
 } as const
 
