@@ -18,7 +18,7 @@ import Tooltip from '@/components/Tooltip.vue';
 
 const props = defineProps<{
   // icon: string
-  value: string
+  value: string | number
   tooltip: string
 }>()
 </script>
