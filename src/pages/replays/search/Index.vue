@@ -1,5 +1,9 @@
 <template>
-  <h2>Search</h2>
+  <h2>Поиск реплеев</h2>
+  <div class="tank-select">
+    <p>Танк:</p>
+    <VehicleSelector />
+  </div>
   <div class="battles">
     <Battle v-bind="info" />
     <Battle v-bind="{ ...info, meta: { ...info.meta, result: 'lose', tankTag: 'germany:G121_Grille_15_L63' } }" />
@@ -14,6 +18,7 @@
 <script setup lang="ts">
 
 import Battle from '../shared/Battle.vue'
+import VehicleSelector from '@/components/vehicleSelector/Index.vue'
 
 const info = {
   meta: {
@@ -50,5 +55,17 @@ const info = {
   display: grid;
   grid-template-columns: repeat(1, minmax(500px, 1fr));
   gap: 1.3em;
+}
+
+.tank-select {
+  display: flex;
+  align-items: baseline;
+  font-size: 18px;
+  margin-bottom: 1em;
+
+  p {
+    padding-right: 0.3em;
+  }
+
 }
 </style>

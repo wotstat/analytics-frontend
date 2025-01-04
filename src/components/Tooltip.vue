@@ -33,7 +33,7 @@ const props = defineProps<{
   position: relative;
   padding: var(--offset);
   margin: calc(var(--offset) * -1 - 1px);
-  border-radius: 5px;
+  border-radius: 8px;
   border: 1px solid transparent;
   transition: border .4s ease;
 
@@ -75,10 +75,10 @@ const props = defineProps<{
     pointer-events: none;
 
     .tooltip {
-      box-shadow: 0px 0px 10px 0px #242424;
-      border: 1px solid rgba(93, 93, 93, 0.737254902);
-      background-color: #353535;
-      border-radius: 10px;
+      box-shadow: 0 0 20px #0000004d;
+      border: 1px solid #424242;
+      background-color: #2a2a2a;
+      border-radius: 8px;
       padding: 8px;
     }
   }
