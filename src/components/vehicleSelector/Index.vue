@@ -4,13 +4,29 @@
     <div class="badges" v-if="vehicles.length">
       <Badge :text="vehicle" closable v-for="vehicle in vehicles" @close="onRemove(vehicle)" />
     </div>
-    <button class="select" @click="openSelect">выбрать</button>
+    <PopupModal>
+      <button class="select" @click="openSelect">выбрать</button>
+
+      <template #popup>
+        <div>
+          <h3>Выберите технику</h3>
+          <ul>
+            <li v-for="vehicle in ['T-34', 'Panther', 'Sherman']" :key="vehicle">
+              <button @click="vehicles.push(vehicle)">{{ vehicle }}</button>
+            </li>
+          </ul>
+        </div>
+      </template>
+    </PopupModal>
   </div>
 </template>
 
 <script setup lang="ts">
 
 import Badge from '@/components/Badge.vue'
+import PopupModal from '../PopupModal.vue'
+
+
 
 const vehicles = defineModel<string[]>({ default: [] })
 
