@@ -574,7 +574,7 @@ function* redrawGenerator(ctx: CanvasRenderingContext2D, width: number, height: 
     console.log(`Draw ${drawCount} / ${shotsData.length} shots`);
 
     totalDraw.value = drawCount;
-    yield 100
+    yield 10
   }
 }
 
