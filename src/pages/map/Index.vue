@@ -134,7 +134,7 @@
           visibility: showTracers ? 'visible' : 'hidden',
         }" />
         <!-- <Clustering v-bind="clusteringParams" /> -->
-        <CanvasVue :redrawGenerator="redrawGenerator" ref="canvasRef" :style="{ opacity: 0.8 }" />
+        <CanvasVue :redrawGenerator="redrawGeneratorPrepared" ref="canvasRef" class="tracers-canvas" />
         <CanvasVue class="hover-canvas" @redraw="hoverRender" ref="hoverCanvasRef" />
         <!-- <Heatmap v-bind="heatmapParams" /> -->
       </div>
@@ -558,11 +558,11 @@ function* redrawGenerator(ctx: CanvasRenderingContext2D, width: number, height: 
 
 
   let drawCount = 0
-  while (drawCount < 50000) {
+  while (drawCount < 500) {
     if (drawCount == shotsData.length) {
       if (loadingFinished) return console.log('FINISHED')
       loadNextBatch()
-      yield 500
+      yield 10
       continue
     }
 
@@ -575,6 +575,167 @@ function* redrawGenerator(ctx: CanvasRenderingContext2D, width: number, height: 
 
     totalDraw.value = drawCount;
     yield 10
+  }
+}
+
+
+let shotsDataPrepared: { tankType: string, x: number, z: number, hitX: number, hitZ: number, efficiency: number, count: number }[] = []
+async function loadPreparedHeatmap() {
+  /*
+    const response = await fetch('https://db.wotstat.info/?database=WOT', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain',
+      },
+      body: `
+      with 2 as STEP
+    select toFixedString(tankType, 4) as type,
+          toInt16(round(gunPoint_x / STEP) * STEP) as x,
+          toInt16(round(gunPoint_z / STEP) * STEP) as z,
+          toInt16(round(tracerEnd_x / STEP) * STEP) as hitX,
+          toInt16(round(tracerEnd_z / STEP) * STEP) as hitZ,
+          toFloat32(count() / sum(count()) over ()) as efficiency,
+          toUInt32(count()) as count
+      from Event_OnShot
+      where region = 'RU'
+          and battleMode = 'REGULAR'
+          and battleGameplay = '${selectedGameplay.value}'
+          and arenaTag = '${selectedMap.value}'
+          and tankLevel > 5
+          and length(results.order) > 0
+          and tankType != 'SPG'
+      group by x, z, hitX, hitZ, tankType
+      having count() > 3
+      order by efficiency desc
+      format RowBinary;
+      `
+    })
+  
+    const blob = await response.blob()
+    const buffer = await blob.arrayBuffer()
+    const dataView = new DataView(buffer);
+  
+    const size = buffer.byteLength / 20
+  
+    for (let i = 0; i < size; i++) {
+      const offset = i * 20
+  
+      const fixedString = String.fromCharCode(
+        dataView.getUint8(offset),
+        dataView.getUint8(offset + 1),
+        dataView.getUint8(offset + 2),
+        dataView.getUint8(offset + 3)
+      ).replaceAll('\x00', '');
+  
+      const x = dataView.getInt16(offset + 4, true)
+      const z = dataView.getInt16(offset + 6, true)
+      const hitX = dataView.getInt16(offset + 8, true)
+      const hitZ = dataView.getInt16(offset + 10, true)
+      const efficiency = dataView.getFloat32(offset + 12, true)
+      const count = dataView.getUint32(offset + 16, true)
+  
+      shotsDataPrepared.push({ tankType: fixedString, x, z, hitX, hitZ, efficiency, count });
+    }
+  */
+
+
+
+  const result = await query<{ tankType: string, x: number, z: number, hitX: number, hitZ: number, efficiency: number, count: number }>(`
+  with 2 as STEP
+  select tankType,
+        toInt16(round(gunPoint_x / STEP) * STEP) as x,
+        toInt16(round(gunPoint_z / STEP) * STEP) as z,
+        toInt16(round(tracerEnd_x / STEP) * STEP) as hitX,
+        toInt16(round(tracerEnd_z / STEP) * STEP) as hitZ,
+        toFloat32(count() / sum(count()) over ()) as efficiency,
+        toUInt32(count()) as count
+  from Event_OnShot
+  where region = 'RU'
+      and battleMode = 'REGULAR'
+      and battleGameplay = '${selectedGameplay.value}'
+      and arenaTag = '${selectedMap.value}'
+      and tankLevel > 5
+      and length(results.order) > 0
+      and tankType != 'SPG'
+  group by x, z, hitX, hitZ, tankType
+  having count() > 3
+  order by efficiency desc
+  `)
+
+  // console.log('Loaded2', result.data);
+
+  shotsDataPrepared = result.data;
+
+}
+
+const colorByType = {
+  'AT': [70, 82, 255],
+  'MT': [252, 200, 100],
+  'HT': [255, 70, 70],
+  'LT': [84, 255, 83],
+  'SPG': [255, 83, 200]
+}
+
+function* redrawGeneratorPrepared(ctx: CanvasRenderingContext2D, width: number, height: number) {
+  yield 100
+  console.log('redraw');
+  if (shotsDataPrepared.length == 0)
+    loadPreparedHeatmap()
+
+  let drawCount = 0
+  while (drawCount < 500) {
+    if (shotsDataPrepared.length == 0) {
+      yield 10
+      continue
+    }
+
+    const targetToDraw = shotsDataPrepared.length - drawCount;
+
+    if (targetToDraw == 0) {
+      console.log("DONE")
+      break
+    }
+
+    console.log(shotsDataPrepared);
+
+    while (shotsDataPrepared.length - drawCount != 0) {
+
+      for (drawCount; drawCount < shotsDataPrepared.length; drawCount++) {
+        const shot = shotsDataPrepared[drawCount];
+
+        for (let i = 0; i < 1; i++) {
+          const tankPos = relativeCoordinate(shot.x + Math.random() * 2 - 1, shot.z + Math.random() * 2 - 1)
+          const hitPos = relativeCoordinate(shot.hitX + Math.random() * 2 - 1, shot.hitZ + Math.random() * 2 - 1)
+
+          if (!tankPos || !hitPos) continue;
+
+          ctx.lineWidth = 1;
+          const colorType = colorByType[shot.tankType as keyof typeof colorByType]
+          ctx.strokeStyle = `rgba(${colorType[0]}, ${colorType[1]}, ${colorType[2]}, ${shot.efficiency * 1000})`
+
+          ctx.beginPath();
+          ctx.moveTo(tankPos.x * width, tankPos.y * width);
+          ctx.lineTo(hitPos.x * width, hitPos.y * width);
+          ctx.stroke();
+        }
+
+        if (drawCount % 100000 == 0) {
+          console.log(`Drawed ${drawCount}`);
+
+          yield 1
+        }
+      }
+
+
+      yield 10
+    }
+
+    console.log('draw');
+    break
+
+
+
+    yield 100
   }
 }
 
@@ -591,6 +752,7 @@ watch(() => [
   selectedEfficiency.value,
   availableGameplayTypes.value], () => {
     shotsData = []
+    shotsDataPrepared = []
     loading = false;
     loadingFinished = false;
     canvasRef.value?.redraw()
@@ -674,8 +836,14 @@ textarea {
     img.map {
       width: 100%;
       pointer-events: none;
-      filter: brightness(0.6);
+      filter: brightness(0.3);
     }
+  }
+
+  .tracers-canvas {
+    filter: drop-shadow(0 0 0px rgb(0, 0, 0)) brightness(2.1) saturate(1.3);
+
+    :deep(canvas) {}
   }
 
   .overlay-container {
@@ -690,15 +858,14 @@ textarea {
     &:hover {
       *:not(.hover-canvas) {
         :deep(canvas) {
-          filter: brightness(0.8) opacity(0.6);
+          // filter: brightness(0.8) opacity(0.6);
         }
       }
     }
 
     :deep(canvas) {
-      transition: filter 0.1s;
+      // transition: filter 0.1s;
     }
   }
-
 }
 </style>
