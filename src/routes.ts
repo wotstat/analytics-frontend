@@ -50,6 +50,7 @@ const routes = [
   { path: '/widgets/demo', redirect: t => window.location.href = 'https://widgets.wotstat.info/demo-widget' },
 
   { path: '/damage', component: () => import('./pages/services/damageDistribution/Index.vue') },
+  { path: '/map', component: () => import('./pages/map/Index.vue') }
 ] satisfies RouteRecordRaw[]
 
 export const router = createRouter({
