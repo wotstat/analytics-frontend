@@ -28,7 +28,7 @@
             Уровень
           </h4>
           <div v-if="enableLevelFilter" class="flex hor variant-selector">
-            <div v-for="item in ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const)" class="clickable-variant"
+            <div v-for="item in ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] as const)" class="clickable-variant"
               @click="clickLevel(item)" :class="selectedLevels.includes(item) ? 'selected' : ''">{{ item }}
             </div>
           </div>
