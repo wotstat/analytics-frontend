@@ -50,7 +50,7 @@
 
 <script setup lang="ts">
 import DmgIcon from '@/assets/efficiency-icon/dmg.png'
-import VehicleImage from '@/components/shared/VehicleImage.vue';
+import VehicleImage from '@/components/vehicles/VehicleImage.vue';
 import { timeProcessor } from '@/utils';
 import { getArenaName, getTankName } from '@/utils/i18n';
 import BattleStatValue from './BattleStatValue.vue';

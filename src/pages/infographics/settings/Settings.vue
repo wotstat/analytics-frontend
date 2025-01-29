@@ -218,7 +218,8 @@ select tankTag as tag,
        tankType as type, 
        tankLevel as level 
 from Event_OnBattleStart
-group by tankTag, tankType, tankLevel;
+group by tankTag, tankType, tankLevel
+having count() > 10;
 `)
 
 const tanks = computed(() => tankList.value.data.map(t => {

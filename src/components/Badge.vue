@@ -39,8 +39,8 @@ function handleClose() {
 
   .x-icon {
     stroke: white;
-    height: 1em;
-    margin-left: 5px;
+    height: 0.9em;
+    margin-left: 3px;
     cursor: pointer;
     transition: stroke 0.3s;
     margin-right: -2px;

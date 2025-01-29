@@ -1,8 +1,8 @@
 <template>
   <h2>Поиск реплеев</h2>
   <div class="tank-select">
-    <p>Танк:</p>
-    <VehicleSelector />
+    <p @click="displayPopup = true">Танк:</p>
+    <VehicleSelectorBadges v-model="selectedVehicle" v-model:display-popup="displayPopup" />
   </div>
   <div class="battles">
     <Battle v-bind="info" />
@@ -17,8 +17,9 @@
 
 <script setup lang="ts">
 
+import { ref } from 'vue';
 import Battle from '../shared/Battle.vue'
-import VehicleSelector from '@/components/vehicleSelector/Index.vue'
+import VehicleSelectorBadges from '@/components/vehicleSelector/VehicleSelectorBadges.vue'
 
 const info = {
   meta: {
@@ -46,6 +47,10 @@ const info = {
     downloadCount: 24,
   }
 } as const
+
+const selectedVehicle = ref(new Set<string>())
+
+const displayPopup = ref(false)
 
 </script>
 
