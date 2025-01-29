@@ -10,13 +10,16 @@
     <slot></slot>
     <div class="tooltip-container">
       <div class="tooltip">
-        <slot name="tooltip"></slot>
+        <slot name="tooltip" v-if="slot.tooltip"></slot>
+        <p v-else>{{ text }}</p>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
+import { useSlots } from 'vue';
+
 
 const props = defineProps<{
   pos?: 'top' | 'bottom' | 'left' | 'right'
@@ -24,8 +27,11 @@ const props = defineProps<{
   highlight?: boolean
   interactive?: boolean
   delay?: number
+  text?: string
 }>()
 
+
+const slot = useSlots()
 </script>
 
 <style lang="scss" scoped>
@@ -80,6 +86,10 @@ const props = defineProps<{
       background-color: #2a2a2a;
       border-radius: 8px;
       padding: 8px;
+
+      p {
+        line-height: 1;
+      }
     }
   }
 

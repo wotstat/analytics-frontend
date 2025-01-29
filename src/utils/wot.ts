@@ -51,6 +51,13 @@ export const modeCount = {
   'comp7': 7,
 } as const
 
+export const vehicleTypes = ['HT', 'MT', 'LT', 'AT', 'SPG'] as const
+export type VehicleType = typeof vehicleTypes[number]
+
+export const nations = ['ussr', 'germany', 'usa', 'china', 'france', 'uk', 'japan', 'czech', 'sweden', 'poland', 'italy'] as const
+export const nationsIndexes = new Map<Nation, number>(nations.map((nation, index) => [nation, index]))
+export type Nation = typeof nations[number]
+
 export const customBattleModesKeys = Object.keys(customBattleModes) as (keyof typeof customBattleModes)[];
 
 type VehicleDescriptor = {

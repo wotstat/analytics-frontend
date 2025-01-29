@@ -92,32 +92,35 @@ export function countLocalize(count: number, one: string, two: string, five: str
   return five
 }
 
-type Locale = ['RU' | 'EU', string, string]
-const tankNames = queryAsync<{ tag: string, locales: Locale[] }>(`
-  select tag, arrayZip(groupArray(region), groupArray(name), groupArray(shortName)) as locales
-  from VehiclesLatest where region in ('RU', 'EU') group by tag
-`);
 
-const tankNamesMap = computed(() => new Map<string, Locale[]>(tankNames.value.data.map(t => [t.tag, t.locales])));
+const languageToPostfix = {
+  'RU': 'RU',
+  'EN': 'EU',
+  'CN': 'CN',
+}
+
+export const selectVehiclesLocalization = `select tag, type, level, role, nation, short${languageToPostfix[LANGUAGE]} as short, name${languageToPostfix[LANGUAGE]} as name from VehiclesLocalization`
+export const selectTagVehiclesLocalization = `select tag, short${languageToPostfix[LANGUAGE]} as short, name${languageToPostfix[LANGUAGE]} as name from VehiclesLocalization`
+
+const tankNames = queryAsync<{ tag: string, short: string, name: string }>(selectVehiclesLocalization);
+
+const tankNamesMap = computed(() => new Map<string, [string, string]>(tankNames.value.data.map(t => [t.tag, [t.name, t.short]])));
 
 function getBestLocale(tag: string, short: boolean = false) {
   const locales = tankNamesMap.value.get(tag)
-
   if (!locales) return null
-
-  const priority = languageRegionPriority[LANGUAGE]
-
-  for (const region of priority) {
-    const locale = locales.find(l => l[0] === region)
-    if (!locale) continue
-    const result = short ? locale[2] : locale[1]
-    if (result && result != '?empty?') return result
-  }
+  const result = short ? locales[1] : locales[0]
+  if (result && result != '?empty?') return result
+  return null
 }
 
 export function getTankName(tag: string, short: boolean = false) {
   const name = getBestLocale(tag, short)
   if (name) return name
+  return tankTagToReadable(tag)
+}
+
+export function tankTagToReadable(tag: string) {
 
   const idName = tag.split(':')[1];
 

@@ -58,7 +58,7 @@ import { computed, ref, watch } from 'vue';
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 import { getBestLocalization } from '@/utils/i18n';
 import { pausableWatch } from '@vueuse/core';
-import FallbackImg from '@/components/FallbackImg.vue';
+import FallbackImg from '@/components/fallbackImg/FallbackImg.vue';
 import HorizontalScrollItems from '@/components/shared/HorizontalScrollItems.vue';
 import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue';
 import { useQueryParamStorage } from '@/composition/useQueryParamStorage';

@@ -12,7 +12,13 @@ import MarkdownIt from "markdown-it";
 export default defineConfig({
   plugins: [
     vue(),
-    svgLoader(),
+    svgLoader({
+      svgoConfig: {
+        plugins: [
+          'removeDimensions'
+        ]
+      }
+    }),
     mdPlugin({
       mode: [Mode.VUE],
       markdownIt: new MarkdownIt({ html: true })
