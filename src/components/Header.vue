@@ -1,9 +1,11 @@
 <template>
   <div class="header" ref="headerElement">
     <div class="upper-header warning">
-      Основной сервер WotStat упал. Ведутся работы по восстановлению.
+      Основной сервер WotStat упал (30.01 1:30). Ведутся работы по восстановлению.
       <br>
-      Приносим извинения за временные неудобства. (Актуально на 30 января 2:50 МСК)
+      03:55 МСК - Сервер перезагрузили, не помогло. Ожидаю подключения KVM.
+      <br>
+      Резервная копия базы данных есть от 29.01 20:31 МСК.
     </div>
     <div class="main flex">
       <router-link to="/" class="wotstat-logo">WotStat</router-link>
