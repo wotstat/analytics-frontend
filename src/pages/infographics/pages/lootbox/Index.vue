@@ -321,20 +321,17 @@ const lootboxesStats = load(() => getQuery(
   'Lootboxes'
 ))
 
-const vehiclesStats = computed(() => {
-  const data =
-    load(() => getQuery(
-      `title`,
-      `array join arrayConcat(addedVehicles, compensatedVehicles.tag) as title where true`,
-      `lootbox_vehicle_mv`,
-      'title'
-    ))
+const vehiclesStatsData = load(() => getQuery(
+  `title`,
+  `array join arrayConcat(addedVehicles, compensatedVehicles.tag) as title where true`,
+  `lootbox_vehicle_mv`,
+  'title'
+))
 
-  return {
-    data: data.value.data.sort((a, b) => a.count - b.count),
-    status: data.value.status as Status
-  }
-})
+const vehiclesStats = computed(() => ({
+  data: vehiclesStatsData.value.data.sort((a, b) => a.count - b.count),
+  status: vehiclesStatsData.value.status as Status
+}))
 
 const mandarin25Stats = load(() => getQuery(
   `title`,
