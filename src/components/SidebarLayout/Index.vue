@@ -38,9 +38,9 @@
 <script setup lang="ts">
 import { useElementBounding } from '@vueuse/core';
 import QueryPreserveRouterLink from '../QueryPreserveRouterLink.vue';
-import { SidebarLink } from './types';
 import { computed, ref, watchEffect } from 'vue';
 import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight';
+import { SidebarLink } from './types';
 
 const menuBar = ref<HTMLElement | null>(null);
 const { top: menuTop, y: menuY, height: menuH } = useElementBounding(menuBar)

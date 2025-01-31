@@ -22,8 +22,8 @@
         <router-link to="/" class="hero">Главная</router-link>
         <router-link to="/session" class="infographics">Инфографика</router-link>
         <router-link to="/widgets" class="widgets">Виджеты</router-link>
-        <router-link to="/replays" class="replays">Реплеи</router-link>
-        <a :href="SQLUrl" target="_blank" rel="noopener noreferrer" class="sql">SQL</a>
+        <router-link to="/bb25" class="replays bob25">ББ2025</router-link>
+        <!-- <router-link to="/replays" class="replays">Реплеи</router-link> -->
 
         <div class="drop-down points-menu">
           <PointsIcon class="icon" />
@@ -32,8 +32,9 @@
             <router-link to="/" class="hero">Главная</router-link>
             <router-link to="/session" class="infographics">Инфографика</router-link>
             <router-link to="/widgets" class="widgets">Виджеты</router-link>
-            <router-link to="/replays" class="replays">Реплеи</router-link>
-            <a :href="SQLUrl" target="_blank" rel="noopener noreferrer" class="sql">SQL</a>
+            <router-link to="/bb25" class="replays">ББ2025</router-link>
+            <!-- <router-link to="/replays" class="replays">Реплеи</router-link> -->
+            <a :href="SQLUrl" target="_blank" rel="noopener noreferrer" class="sql">Доступ к БД </a>
             <hr class="any-page-divider">
 
             <div class="language-section container">
@@ -99,14 +100,20 @@
             <PatreonIcon />
           </a>
 
-          <div class="sep"></div>
           <a :href="discordUrl" target="_blank" class="icon">
             <DiscordIcon />
+          </a>
+
+          <div class="sep"></div>
+
+          <a :href="SQLUrl" target="_blank" class="icon">
+            <DatabaseIcon />
           </a>
 
           <a href="https://github.com/WOT-STAT/WOTMOD" target="_blank" class="icon">
             <GitHubIcon />
           </a>
+
         </div>
 
       </div>
@@ -128,6 +135,7 @@ import GitHubIcon from './assets/github.svg'
 import DiscordIcon from './assets/discord.svg'
 import PatreonIcon from './assets/patreon.svg'
 import BoostyIcon from './assets/boosty.svg'
+import DatabaseIcon from './assets/database.svg'
 import PointsIcon from './assets/points.svg'
 import HeaderSpacer from './HeaderSpacer.vue';
 import I18nIcon from './assets/i18n.svg'
@@ -418,7 +426,7 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
 
 $drop-down-menu: 1050px;
 $links-sections: 1050px;
-$sql: 900px;
+$sql: 1050px;
 $replays: 830px;
 $widgets: 500px;
 $infographics: 400px;
@@ -475,5 +483,22 @@ $language-section: 300px;
     @include hide-if-greater($positions, positions-section);
     @include hide-if-greater($language-section, language-section);
   }
+}
+
+.language-section {
+  display: none !important;
+}
+
+.main a.bob25 {
+  font-weight: bold;
+  color: white !important;
+
+  text-shadow:
+    0.5px 0.3px 4px rgba(0, 195, 255, 0.3),
+    -0.5px -0.5px 4px rgba(225, 0, 255, 0.3),
+    0.5px 0.5px 1.2px rgb(0, 195, 255, 0.6),
+    -0.5px -0.3px 1.2px rgb(225, 0, 255, 0.6);
+
+  filter: drop-shadow(0 0 0.5em #0000003e);
 }
 </style>
