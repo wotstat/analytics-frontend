@@ -57,7 +57,7 @@ import { totalRequests, totalElapsed, totalRowsRead } from "@/db";
 import { countLocalize } from "@/utils/i18n";
 import { ref, watch } from 'vue';
 import { useRoute } from "vue-router";
-import TankListSetup from "@/components/TankListSetup/Index.vue";
+import TankListSetup from "@/components/tankListSetup/Index.vue";
 
 import SidebarLayout from '@/components/sidebarLayout/Index.vue'
 import { SidebarLink } from '@/components/sidebarLayout/types';
@@ -75,7 +75,7 @@ const links: SidebarLink[] = [
   { to: '/session/lootbox', labels: 'Коробки' },
   { to: '/session/chuck-norris-tournament', labels: 'Очки Чака' },
   'separator',
-  { to: '/session/widgets', labels: 'Виджеты' },
+  { to: '/widgets', labels: 'Виджеты' },
 ]
 
 const route = useRoute()
