@@ -52,10 +52,6 @@ function isStatusValue(value: T | { status: Status, data: T }): value is { statu
   return value != null && typeof value == 'object' && 'status' in value && 'data' in value
 }
 
-const targetData = computed(() => {
-  return props.processor ? Number.parseFloat(props.processor(value.value)) as T : value.value
-})
-
 </script>
 
 
