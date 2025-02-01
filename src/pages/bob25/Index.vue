@@ -11,11 +11,25 @@
     </div>
 
     <h3>Всего игроков</h3>
-    <div class="card multi-value">
-      <p>232523</p>
-      <p>123584</p>
-      <p>98510</p>
-      <p>87405</p>
+    <div class="card multi-value mono-num">
+      <div class="flex">
+        <WideValues :values="playersCount" space colorize />
+      </div>
+      <div class="flex subline">
+        <WideValues :values="playersCountPercent" colorize :processor="t => `${t.toFixed(2)}%`" />
+      </div>
+    </div>
+
+    <br>
+
+    <h3>Всего очков</h3>
+    <div class="card multi-value mono-num">
+      <div class="flex">
+        <WideValues :values="playersCount" space colorize />
+      </div>
+      <div class="flex subline">
+        <WideValues :values="playersCountPercent" :precision="2" colorize :processor="t => `${t.toFixed(2)}%`" />
+      </div>
     </div>
 
   </div>
@@ -23,11 +37,25 @@
 
 
 <script setup lang="ts">
-import { useFixedSpaceProcessor } from "@/composition/usePercentProcessor";
 import Background from "./assets/background.webp";
-import Blogger from "./components/Blogger.vue";
+import Blogger from "./components/blogger/Blogger.vue";
+import WideValues from "./components/WideValues.vue";
+import { computed } from "vue";
+import { useTimestamp } from "@vueuse/core";
 
-// useFixedSpaceProcessor(0);
+
+const time = useTimestamp();
+const offset = computed(() => Math.round((time.value - 1738373302152) / 3000));
+const playersCount = computed(() => [
+  100 + offset.value * 400 * Math.random(),
+  200 + offset.value * 400 * Math.random(),
+  300 + offset.value * 400 * Math.random(),
+  400 + offset.value * 400 * Math.random(),]
+);
+
+const playersCountPercent = computed(() => playersCount.value.map(v => 100 * v / playersCount.value.reduce((a, v) => a + v, 0)));
+
+
 
 </script>
 
@@ -67,14 +95,31 @@ h1 {
   padding: 0 15px;
 }
 
+h3 {
+  margin: 0;
+  margin-bottom: 5px;
+}
+
 .card {
   background: rgba(255, 255, 255, 0.08);
 }
 
 .multi-value {
-  display: flex;
-  justify-content: space-around;
   font-size: 1.5rem;
   color: white;
+  font-size: 28px;
+  text-align: center;
+  font-weight: bold;
+  line-height: 1;
+
+  :deep(p) {
+    flex: 1;
+  }
+
+  .subline {
+    margin-top: 8px;
+    font-size: 15px;
+    opacity: 0.8;
+  }
 }
 </style>
