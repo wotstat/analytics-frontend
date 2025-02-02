@@ -56,7 +56,7 @@ export function getArenaName(tag: string) {
 
   if (!parsers.arena) {
     parsers.arena = new Promise((resolve, reject) => {
-      fetch(`https://raw.githubusercontent.com/IzeBerg/wot-src/${LANGUAGE}/sources/res/text/lc_messages/arenas.po`)
+      fetch(`https://raw.githubusercontent.com/IzeBerg/wot-src/${LANGUAGE}/sources/res/text/ru/lc_messages/arenas.po`)
         .then(res => res.text())
         .then(text => {
           resolve(new Parser(text))
