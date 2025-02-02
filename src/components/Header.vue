@@ -1,8 +1,8 @@
 <template>
   <div class="header" ref="headerElement">
-    <div class="upper-header success">
+    <!-- <div class="upper-header success">
       Работа WotStat восстановлена. Некоторые аналитические данные будут доступны позже в течение дня.
-    </div>
+    </div> -->
     <div class="main flex">
       <router-link to="/" class="wotstat-logo">WotStat</router-link>
       <router-link to="/" class="wotstat-logo small">WS</router-link>

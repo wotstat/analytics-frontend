@@ -12,6 +12,7 @@ const player_coverage = {
   'player_coverage_mv_tankLevel': ['battleMode', 'battleGameplay', 'tankLevel'],
   'player_coverage_mv_tankType': ['battleMode', 'battleGameplay', 'tankType'],
   'player_coverage_mv_tankLevel_tankType': ['battleMode', 'battleGameplay', 'tankLevel', 'tankType'],
+  'player_coverage_mv_tankTag': ['battleMode', 'battleGameplay', 'tankTag'],
 } as const;
 
 const team_results = {
@@ -54,6 +55,8 @@ function bestMvWithColumns(target: keyof typeof schemas, columns: string[]) {
 
 export function bestMV(target: keyof typeof schemas, options: string[] | MaybeRefOrGetter<StatParams>) {
   const columns = Array.isArray(options) ? options : whereClauseColumns(options);
+  console.log('columns', target, columns);
+
   return bestMvWithColumns(target, columns);
 }
 
