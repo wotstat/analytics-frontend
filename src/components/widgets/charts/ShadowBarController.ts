@@ -73,3 +73,7 @@ ShadowBarController.defaults = BarController.defaults;
 
 // @ts-ignore
 export const ShadowBar = createTypedChart('ShadowBar', ShadowBarController)
+
+export function setup() {
+  return ShadowBar
+}
