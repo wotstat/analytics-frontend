@@ -1,5 +1,5 @@
 <template>
-  <div class="center-container">
+  <div class="bob-center-container">
     <img :src="Background" class="background" alt="background" />
     <h1>Битва Блогеров 2025</h1>
 
@@ -10,27 +10,21 @@
       <Blogger blogger="lebwa" />
     </div>
 
-    <h3>Всего игроков</h3>
-    <div class="card multi-value mono-num">
-      <div class="flex">
-        <WideValues :values="playersCount" space colorize />
-      </div>
-      <div class="flex subline">
-        <WideValues :values="playersCountPercent" colorize :processor="t => `${t.toFixed(2)}%`" />
-      </div>
-    </div>
-
+    <BloggersLine title="Всего игроков" :values="playersCount" withPercent />
     <br>
-
-    <h3>Всего очков</h3>
-    <div class="card multi-value mono-num">
-      <div class="flex">
-        <WideValues :values="playersCount" space colorize />
-      </div>
-      <div class="flex subline">
-        <WideValues :values="playersCountPercent" :precision="2" colorize :processor="t => `${t.toFixed(2)}%`" />
-      </div>
-    </div>
+    <BloggersLine title="Всего очков" :values="playersCount" withPercent />
+    <br>
+    <TotalScoreChart />
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
 
   </div>
 </template>
@@ -39,9 +33,13 @@
 <script setup lang="ts">
 import Background from "./assets/background.webp";
 import Blogger from "./components/blogger/Blogger.vue";
-import WideValues from "./components/WideValues.vue";
+import BloggersValues from "./components/BloggersValues.vue";
+import BloggersLine from "./components/BloggersLine.vue";
 import { computed } from "vue";
 import { useTimestamp } from "@vueuse/core";
+import TotalScoreChart from "./components/TotalScoreChart.vue";
+
+
 
 
 const time = useTimestamp();
@@ -53,14 +51,18 @@ const playersCount = computed(() => [
   400 + offset.value * 400 * Math.random(),]
 );
 
-const playersCountPercent = computed(() => playersCount.value.map(v => 100 * v / playersCount.value.reduce((a, v) => a + v, 0)));
-
-
 
 </script>
 
 
 <style lang="scss" scoped>
+.bob-center-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
+
 h1 {
   color: white;
   text-align: center;
@@ -69,10 +71,19 @@ h1 {
     -0.5px -0.5px 8px rgba(225, 0, 255, 0.3),
     0.5px 0.5px 3px rgb(0, 195, 255, 0.6),
     -0.5px -0.3px 3px rgb(225, 0, 255, 0.6);
+
+  @media screen and (max-width: 900px) {
+    font-size: 40px;
+  }
+
+  @media screen and (max-width: 600px) {
+    font-size: 30px;
+  }
 }
 
 .background {
-  position: absolute;
+  position: fixed;
+  transform: translate3d(0, 0, 0);
   left: 0;
   top: 0;
   width: 100%;
@@ -100,26 +111,8 @@ h3 {
   margin-bottom: 5px;
 }
 
-.card {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.multi-value {
-  font-size: 1.5rem;
-  color: white;
-  font-size: 28px;
-  text-align: center;
-  font-weight: bold;
-  line-height: 1;
-
-  :deep(p) {
-    flex: 1;
-  }
-
-  .subline {
-    margin-top: 8px;
-    font-size: 15px;
-    opacity: 0.8;
-  }
+:deep(.card) {
+  background: rgb(102 102 102 / 15%);
+  box-shadow: none;
 }
 </style>

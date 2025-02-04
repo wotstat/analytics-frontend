@@ -38,3 +38,7 @@ ShadowLineController.defaults = LineController.defaults;
 
 // @ts-ignore
 export const ShadowLine = createTypedChart('ShadowLine', ShadowLineController)
+
+export function setup() {
+  return ShadowLine
+}

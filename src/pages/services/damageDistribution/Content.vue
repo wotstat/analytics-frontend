@@ -135,7 +135,7 @@ import { VueComponent as Description } from './description.md'
 
 import { type ChartProps } from 'vue-chartjs';
 import { ShadowBar } from "@/components/widgets/charts/ShadowBarController";
-import { ShadowLineController } from "@/components/widgets/charts/ShadowLineController";
+import { setup as setupShadowLine } from "@/components/widgets/charts/ShadowLineController";
 import { getColor } from '@/components/bloomColors';
 import { useErrorCalculation } from './errorCalculation';
 import { useFixedProcessor, usePercentProcessor } from '@/composition/usePercentProcessor';
@@ -143,8 +143,7 @@ import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue';
 import { bestMV } from '@/db/schema';
 
 
-// Нужно чтоб выполнились функции внутри модуля и зарегистрировались компоненты
-ShadowLineController
+setupShadowLine()
 
 const confidenceLevels = [0.9, 0.95, 0.99, 0.999]
 const damageSteps = [3, 5, 7, 9, 11, 13, 15, 17]
