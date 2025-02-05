@@ -15,8 +15,8 @@ export function useProcessed<T>(props: {
   const tweenValue = useTweenComputed(() => props.value, props.options)
 
   return computed(() => {
-    if ('processor' in props && props.processor)
-      return props.processor(tweenValue.value)
+
+    if (props.processor) return props.processor(tweenValue.value)
 
     const space = 'space' in props && props.space
 
