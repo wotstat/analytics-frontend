@@ -1,9 +1,15 @@
 <template>
   <div class="line">
-    <h3 v-if="title">{{ title }}</h3>
+    <div class="header">
+      <div class="chart-icon" :class="{ 'active': showChart }" @click="showChart = !showChart"
+        v-if="showChart !== undefined">
+        <Chart />
+      </div>
+      <h3 v-if="title">{{ title }}</h3>
+    </div>
     <div class="card multi-value mono-num">
       <div class="flex">
-        <BloggersValues :values="values" space colorize />
+        <BloggersValues :values="values" space colorize :processor />
       </div>
       <div class="flex subline" v-if="withPercent">
         <BloggersValues :values="percents" colorize :processor="t => `${t.toFixed(2)}%`" />
@@ -16,21 +22,56 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import BloggersValues from "./BloggersValues.vue";
+import Chart from "../assets/chart.svg";
 
 const props = defineProps<{
   values: number[]
   withPercent?: boolean
   title?: string
+  processor?: (value: number) => string
 }>()
 
 const percents = computed(() => props.values.map(v => 100 * v / props.values.reduce((a, v) => a + v, 0)));
+
+
+const showChart = defineModel('showChart');
+
 </script>
 
 
 <style lang="scss" scoped>
-h3 {
-  margin: 0;
+.header {
+  display: flex;
   margin-bottom: 5px;
+  gap: 10px;
+  align-items: center;
+
+  h3 {
+    flex: 1;
+    margin: 0;
+  }
+
+  .chart-icon {
+    border-radius: 15px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: rgba(102, 102, 102, 0.2);
+    user-select: none;
+
+    svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    &.active {
+      background: var(--blue-color);
+      fill: white;
+    }
+  }
 }
 
 .multi-value {

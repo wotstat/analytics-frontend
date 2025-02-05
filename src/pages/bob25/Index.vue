@@ -12,13 +12,20 @@
 
     <BloggersLine title="Всего игроков" :values="playersCount" withPercent />
     <br>
-    <BloggersLine title="Всего очков" :values="playersCount" withPercent />
+    <BloggersLine title="Всего очков" :values="playersCount" withPercent v-model:show-chart="showTotalScoreChart" />
     <br>
-    <TotalScoreChart />
+    <TotalScoreChart v-if="showTotalScoreChart" />
     <br>
+    <BloggersLine title="Прирост очков за 24 часа" :values="playersCount" with-percent />
     <br>
+    <BloggersLine title="Прирост очков за 60 минут" :values="playersCount" with-percent />
+    <!-- <br> -->
+    <!-- <TotalScoreChart /> -->
     <br>
+    <BloggersLine title="Винрейт" :values="playersCount.map(t => 100 * Math.random())"
+      :processor="t => `${t.toFixed(2)}%`" />
     <br>
+    <TopTanks title="Популярная техника" />
     <br>
     <br>
     <br>
@@ -35,12 +42,13 @@ import Background from "./assets/background.webp";
 import Blogger from "./components/blogger/Blogger.vue";
 import BloggersValues from "./components/BloggersValues.vue";
 import BloggersLine from "./components/BloggersLine.vue";
-import { computed } from "vue";
-import { useTimestamp } from "@vueuse/core";
+import { computed, ref } from "vue";
+import { useLocalStorage, useTimestamp } from "@vueuse/core";
 import TotalScoreChart from "./components/TotalScoreChart.vue";
+import TopTanks from "./components/TopTanks.vue";
 
 
-
+const showTotalScoreChart = useLocalStorage('bob25-show-total-score-chart', false);
 
 const time = useTimestamp();
 const offset = computed(() => Math.round((time.value - 1738373302152) / 3000));
