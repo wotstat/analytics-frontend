@@ -28,9 +28,10 @@
       <TimeSeriesChart v-if="showTotalScoreChart" :labels="totalScoreChart.labels" :data="totalScoreChart.data"
         showDisplayVariant />
 
-      <BloggersLine title="Отрыв до следующего места" :values="delta.map(t => t[0])">
+      <BloggersLine title="Отрыв" :values="delta.map(t => t[0])">
         <template #subline="{ item, i }">
-          <p class="subline-blogger">До
+          <p class="subline-blogger">
+            <span v-if="item > 0">От </span><span v-else>До </span>
             <BloggerName :blogger="delta[i][1]" small-bloom />
           </p>
         </template>
