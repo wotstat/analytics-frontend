@@ -67,12 +67,11 @@ function select(value: string) {
 
   &.open {
     height: auto;
+    box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.1);
 
     @supports (height: calc-size(auto, size)) {
       height: calc-size(auto, size);
     }
-
-    box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.1);
   }
 
 
