@@ -141,3 +141,15 @@ table.hover-highlight {
 .pointer {
   cursor: pointer;
 }
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.mono-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.bold {
+  font-weight: bold;
+}

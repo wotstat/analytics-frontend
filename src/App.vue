@@ -21,8 +21,8 @@
 
 <script setup lang="ts">
 import { RouterView, useRoute } from 'vue-router';
-import Header from "./components/Header.vue";
-import HeaderSpacer from "./components/HeaderSpacer.vue";
+import Header from "./components/header/Header.vue";
+import HeaderSpacer from "./components/header/HeaderSpacer.vue";
 import { headerHeight } from './composition/useAdditionalHeaderHeight';
 
 const isWindows = navigator.platform.indexOf('Win') > -1

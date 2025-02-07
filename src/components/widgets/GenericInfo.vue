@@ -1,8 +1,8 @@
 <template>
   <ServerStatusWrapper :status v-slot="{ showError, status }">
     <div class="text-center" ref="main">
-      <p class="card-main-info" v-if="status != 'error'" :class="[color, status]">{{ processor ? processor(data) : data
-        }}<span v-if="miniProcessor" class="mini-description">
+      <p class="card-main-info nowrap" v-if="status != 'error'" :class="[color, status]">
+        {{ processor ? processor(data) : data }}<span v-if="miniProcessor" class="mini-description">
           {{ miniProcessor(data) }}
         </span>
         <span v-else-if="miniData" class="mini-description">
@@ -51,10 +51,6 @@ const data = useTweenCounter(value, {
 function isStatusValue(value: T | { status: Status, data: T }): value is { status: Status, data: T } {
   return value != null && typeof value == 'object' && 'status' in value && 'data' in value
 }
-
-const targetData = computed(() => {
-  return props.processor ? Number.parseFloat(props.processor(value.value)) as T : value.value
-})
 
 </script>
 

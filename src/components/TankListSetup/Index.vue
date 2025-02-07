@@ -1,33 +1,12 @@
 <template>
-  <div class="tank-scroll">
-    <div class="tank-list">
-      <ServerStatusWrapper :status="tanks.status" v-slot="{ status }">
 
-        <template v-if="status == 'loading'">
-          <div class="card loading" v-for="item in new Array(6)">
-            <p class="tank-name skeleton"></p>
-            <div class="img skeleton"></div>
-            <table cellspacing="0" cellpadding="0">
-              <tbody>
-                <tr class="skeleton">
-                  <th class="ignore-skeleton">Боёв</th>
-                  <td></td>
-                </tr>
-                <tr class="skeleton">
-                  <th class="ignore-skeleton">Выстрелов</th>
-                  <td></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </template>
-
-
-        <div class="card" v-for="item in tanks.data" @click="e => onClick(e, item.tag)"
-          :class="stats.tanks?.includes(item.tag) ? 'selected' : ''">
+  <ServerStatusWrapper :status="tanks.status" v-slot="{ status }">
+    <HorizontalScrollItems v-if="status != 'loading'" :items="tanks.data.map(t => ({ ...t, key: t.tag }))"
+      v-model:selected="selectedTanks" selectable>
+      <template #default="{ item }">
+        <div class="tank-info">
           <p class="tank-name">{{ getTankName(item.tag, true) }}</p>
-          <FallbackImg :src="`${staticUrl}/vehicles/preview/${item.tag.replace(':', '-')}.png`" class="img"
-            :fallback="`${staticUrl}/vehicles/preview/noImage.png`" />
+          <VehicleImage :tag="item.tag" :size="'preview'" class="img" />
           <table cellspacing="0" cellpadding="0">
             <tbody>
               <tr>
@@ -41,9 +20,29 @@
             </tbody>
           </table>
         </div>
-      </ServerStatusWrapper>
-    </div>
-  </div>
+      </template>
+    </HorizontalScrollItems>
+
+    <HorizontalScrollItems v-else :items="new Array(8).fill(0).map(i => ({ key: `${i}` }))">
+      <div class="tank-info loading">
+        <p class="tank-name skeleton"></p>
+        <div class="img skeleton"></div>
+        <table cellspacing="0" cellpadding="0">
+          <tbody>
+            <tr class="skeleton">
+              <th class="ignore-skeleton">Боёв</th>
+              <td></td>
+            </tr>
+            <tr class="skeleton">
+              <th class="ignore-skeleton">Выстрелов</th>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </HorizontalScrollItems>
+  </ServerStatusWrapper>
+
 </template>
 
 <script lang="ts" setup>
@@ -51,10 +50,14 @@ import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParam
 import { LONG_CACHE_SETTINGS, queryComputed } from '@/db';
 import { useRoute, useRouter } from 'vue-router';
 import ServerStatusWrapper from '../ServerStatusWrapper.vue';
-import { computed, onMounted, watchEffect } from 'vue';
+import { computed, ref } from 'vue';
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
-import FallbackImg from '../FallbackImg.vue';
 import { getTankName } from '@/utils/i18n';
+import HorizontalScrollItems from '../shared/HorizontalScrollItems.vue';
+import { pausableWatch } from '@vueuse/core';
+import VehicleImage from '../vehicles/VehicleImage.vue';
+
+
 
 const staticUrl = import.meta.env.VITE_STATIC_URL;
 
@@ -63,6 +66,21 @@ const router = useRouter()
 const route = useRoute()
 
 const stats = useQueryStatParams()
+
+const selectedTanks = ref<string[]>([]);
+
+const selectedToStats = pausableWatch(() => selectedTanks.value, (tanks) => {
+  statsToSelected.pause();
+  const target = { ...route.query, tank: tanks.length != 0 ? tanks.join(',') : undefined };
+  router.push({ query: target });
+  statsToSelected.resume();
+});
+
+const statsToSelected = pausableWatch(() => stats.value.tanks, (tanks) => {
+  selectedToStats.pause();
+  selectedTanks.value = tanks || [];
+  selectedToStats.resume();
+}, { immediate: true });
 
 const fixedSpaceProcessor = useFixedSpaceProcessor(0)
 function logProcessor(value: number) {
@@ -85,21 +103,6 @@ order by battleCount desc
 limit 150;
 `, { settings: cacheSettings.value });
 
-
-function onClick(e: MouseEvent, tag: string) {
-  const currentTanks = stats.value.tanks || [];
-  if (currentTanks.includes(tag)) {
-    const targetTanks = currentTanks.filter(t => t !== tag);
-    const target = { ...route.query, tank: targetTanks.length != 0 ? currentTanks.filter(t => t !== tag).join(',') : undefined };
-    router.push({ query: target });
-  } else if (e.ctrlKey || e.metaKey) {
-    const target = { ...route.query, tank: [...currentTanks, tag].join(',') };
-    router.push({ query: target });
-  } else {
-    router.push({ query: { ...route.query, tank: tag } });
-  }
-}
-
 </script>
 
 <style lang="scss" scoped>
@@ -113,105 +116,71 @@ function onClick(e: MouseEvent, tag: string) {
   }
 }
 
-.tank-scroll {
-  overflow-x: auto;
+.tank-info {
+  table {
+    width: 100%;
 
-  &::-webkit-scrollbar {
-    height: 10px;
+    th {
+      text-align: left;
+      font-weight: 300;
+      margin-left: 5px;
+      color: #bababa;
+    }
+
+    td {
+      text-align: right;
+    }
   }
 
-  &::-webkit-scrollbar-track {
-    border-radius: 10px;
+  .tank-name {
+    font-weight: bold;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: -10px;
+    margin-bottom: 5px;
+    width: 150px;
+
+    &.skeleton {
+      width: 100%;
+      height: 25px;
+      margin-top: 0;
+      border-radius: 5px;
+      @include text-skeleton(#8181813e, #aaaaaa3e)
+    }
   }
 
-  &::-webkit-scrollbar-thumb {
-    background: $background-secondary;
-    box-shadow: 0 1px 2px 0px rgb(0, 0, 0, 0.1);
-    border-radius: 10px;
-    cursor: pointer;
-  }
 
-  &::-webkit-scrollbar-thumb:hover {
-    background: #464646;
-  }
+  img,
+  .img,
+  .img.skeleton {
+    width: 150px;
+    aspect-ratio: 16/10;
+    margin: 7px 0;
+    pointer-events: none;
+    user-select: none;
 
-  .tank-list {
-    display: flex;
-    gap: 10px;
-    padding: 10px;
+    text-align: center;
+    line-height: 100%;
+    font-size: 3em;
+    color: #bababa97;
+    font-size: 10px;
 
-    .card {
-      cursor: pointer;
-      border: 2px solid transparent;
+    &.flex {
+      justify-content: center;
+      align-items: center;
+    }
 
-      table {
-        width: 100%;
+    span {
+      filter: drop-shadow(0px 4px 6px black);
+    }
 
-        th {
-          text-align: left;
-          font-weight: 300;
-          margin-left: 5px;
-          color: #bababa;
-        }
-
-        td {
-          text-align: right;
-        }
-      }
-
-      &.selected {
-        border: 2px solid #fffbe7;
-        filter: drop-shadow(0 0 3px #d66d08);
-      }
-
-      .tank-name {
-        font-weight: bold;
-        text-align: center;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        margin-top: -10px;
-        margin-bottom: 5px;
-        width: 150px;
-
-        &.skeleton {
-          width: 100%;
-          height: 25px;
-          margin-top: 0;
-          border-radius: 5px;
-          @include text-skeleton(#8181813e, #aaaaaa3e)
-        }
-      }
-
-      img, .img, .img.skeleton {
-        width: 150px;
-        aspect-ratio: 16/10;
-        margin: 7px 0;
-        pointer-events: none;
-        user-select: none;
-
-        text-align: center;
-        line-height: 100%;
-        font-size: 3em;
-        color: #bababa97;
-        font-size: 10px;
-
-        &.flex {
-          justify-content: center;
-          align-items: center;
-        }
-
-        span {
-          filter: drop-shadow(0px 4px 6px black);
-        }
-
-        &.skeleton {
-          border-radius: 5px;
-          border: none;
-          outline: none;
-          @include text-skeleton(#8181813e, #aaaaaa3e)
-        }
-      }
+    &.skeleton {
+      border-radius: 5px;
+      border: none;
+      outline: none;
+      @include text-skeleton(#8181813e, #aaaaaa3e)
     }
   }
 }

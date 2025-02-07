@@ -36,7 +36,7 @@
           <!-- <td>{{ item }}</td> -->
           <td class="battleNumber"> {{ i + 1 }} </td>
           <td class="l-b num" v-if="showDate">{{ getDate(item.onBattleStartId) }}</td>
-          <td class="l-b">{{ nameFromTag(item.arena).value }}</td>
+          <td class="l-b">{{ getArenaName(item.arena).value }}</td>
 
           <template v-for="(player, i) in item.players">
             <td class="l-b">{{ getTankName(player[1], true) }}</td>
@@ -170,11 +170,6 @@ const props = defineProps<{
   },
   showDate: boolean
 }>();
-
-function nameFromTag(tag: string) {
-  const key = tag.split('spaces/')[1] + '/name'
-  return getArenaName(key)
-}
 
 function getResultColor(result: string) {
   return {

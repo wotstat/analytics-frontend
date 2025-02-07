@@ -41,7 +41,7 @@ export const arenas: Parser | null = null
 
 const LANGUAGE = 'RU'
 const languageRegionPriority = {
-  'RU': ['RU', 'EU', 'NA'],
+  'RU': ['RU', 'PT_RU', 'EU', 'NA'],
   'EN': ['EU', 'NA', 'RU'],
 } as const
 
@@ -52,7 +52,8 @@ function isGetText(obj: Parser | Promise<Parser>): obj is Parser {
 }
 
 export function getArenaName(tag: string) {
-  const arenaName = shallowRef<string>(tag)
+  const name = tag.replace('spaces/', '')
+  const arenaName = shallowRef<string>(name)
 
   if (!parsers.arena) {
     parsers.arena = new Promise((resolve, reject) => {
@@ -75,10 +76,10 @@ export function getArenaName(tag: string) {
   }
 
   if (isGetText(parsers.arena)) {
-    arenaName.value = parsers.arena.getTranslation(tag)
+    arenaName.value = parsers.arena.getTranslation(name + '/name')
   } else {
     parsers.arena.then(arena => {
-      arenaName.value = arena.getTranslation(tag)
+      arenaName.value = arena.getTranslation(name + '/name')
     })
   }
 
@@ -91,32 +92,35 @@ export function countLocalize(count: number, one: string, two: string, five: str
   return five
 }
 
-type Locale = ['RU' | 'EU', string, string]
-const tankNames = queryAsync<{ tag: string, locales: Locale[] }>(`
-  select tag, arrayZip(groupArray(region), groupArray(name), groupArray(shortName)) as locales
-  from VehiclesLatest where region in ('RU', 'EU') group by tag
-`);
 
-const tankNamesMap = computed(() => new Map<string, Locale[]>(tankNames.value.data.map(t => [t.tag, t.locales])));
+const languageToPostfix = {
+  'RU': 'RU',
+  'EN': 'EU',
+  'CN': 'CN',
+}
+
+export const selectVehiclesLocalization = `select tag, type, level, role, nation, short${languageToPostfix[LANGUAGE]} as short, name${languageToPostfix[LANGUAGE]} as name from VehiclesLocalization`
+export const selectTagVehiclesLocalization = `select tag, short${languageToPostfix[LANGUAGE]} as short, name${languageToPostfix[LANGUAGE]} as name from VehiclesLocalization`
+
+const tankNames = queryAsync<{ tag: string, short: string, name: string }>(selectVehiclesLocalization);
+
+const tankNamesMap = computed(() => new Map<string, [string, string]>(tankNames.value.data.map(t => [t.tag, [t.name, t.short]])));
 
 function getBestLocale(tag: string, short: boolean = false) {
   const locales = tankNamesMap.value.get(tag)
-
   if (!locales) return null
-
-  const priority = languageRegionPriority[LANGUAGE]
-
-  for (const region of priority) {
-    const locale = locales.find(l => l[0] === region)
-    if (!locale) continue
-    const result = short ? locale[2] : locale[1]
-    if (result && result != '?empty?') return result
-  }
+  const result = short ? locales[1] : locales[0]
+  if (result && result != '?empty?') return result
+  return null
 }
 
 export function getTankName(tag: string, short: boolean = false) {
   const name = getBestLocale(tag, short)
   if (name) return name
+  return tankTagToReadable(tag)
+}
+
+export function tankTagToReadable(tag: string) {
 
   const idName = tag.split(':')[1];
 
@@ -137,4 +141,26 @@ export function crewBookName(tag: string) {
     'brochure': 'Учебная брошюра',
     'universalGuide': 'Универсальное руководство',
   }[tag] ?? tag
+}
+
+
+
+export type LocalizedName = string | [name: string, region: string][]
+
+export function getBestLocalization(data: LocalizedName) {
+
+  if (typeof data === 'string') {
+    return data
+  }
+
+  const dict = data.reduce((acc, [name, region]) => {
+    acc[region] = name
+    return acc
+  }, {} as Record<string, string>)
+
+  for (const region of languageRegionPriority[LANGUAGE])
+    if (dict[region]) return dict[region]
+
+  for (const region of ['EU', 'NA', 'RU', 'CN', 'ASIA'])
+    if (dict[region]) return dict[region]
 }
