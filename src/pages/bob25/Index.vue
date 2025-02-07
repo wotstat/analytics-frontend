@@ -12,7 +12,6 @@
 
     <div class="lines">
       <InstallMod />
-      <AwaitUpdates />
       <BloggersLine title="Всего игроков" :values="totalPlayers" withPercent
         v-model:show-chart="showTotalPlayersChart" />
       <TimeSeriesChart v-if="showTotalPlayersChart" :labels="totalPlayersChart.labels" :data="totalPlayersChart.data"
@@ -43,6 +42,8 @@
       <ServerStatusWrapper :status="scoredTanks.status" v-slot="{ showError, status }">
         <TopTanks title="В среднем очков" :data="scoredTanks.data" v-if="scoredTanks.data" :value-type="'score'" />
       </ServerStatusWrapper>
+
+      <AwaitUpdates />
     </div>
 
     <footer>
