@@ -1,4 +1,4 @@
-import { CACHE_SETTINGS, loading, query, queryAsync, Status, success } from "@/db";
+import { CACHE_SETTINGS, loading, query, queryAsync, Status, success, SUPER_SHORT_CACHE_SETTINGS } from "@/db";
 import { computed, onMounted, onUnmounted, shallowRef, watch, watchEffect } from "vue";
 import { bloggerGameIdArrayToArray, bloggerGameIdToName, bloggerNameByGameId, bloggerNamesArray, bloggerRecordToArray, bloggerTimeSeriesProcess } from "./bloggerNames";
 import { objectEntries, useDebounceFn, useIntervalFn, useLocalStorage } from "@vueuse/core";
@@ -89,7 +89,7 @@ export function useBloggerChart(q: (from: number, to: number, step: number) => s
     const to = periodToInterval[period.value]()[1]
 
     const currentRaceId = ++raceId
-    const { data } = await query<{ bloggerId: number, value: number, t: number }>(q(from, to, stepToInterval[step.value]), { allowCache: false })
+    const { data } = await query<{ bloggerId: number, value: number, t: number }>(q(from, to, stepToInterval[step.value]), { allowCache: false, settings: SUPER_SHORT_CACHE_SETTINGS })
 
     if (currentRaceId != raceId) return
 
@@ -178,14 +178,27 @@ export function useHourTotalScoreDelta() {
 
   async function update() {
     const { data } = await query<{ b1: number, b2: number, b3: number, b4: number }>(`
+      with
+          (select max(dateTime) from BOB25.Scores) as currentDate,
+          (select max(dateTime) from BOB25.Scores where dateTime < now() - interval 1 hour) as lastDate,
+          current as (
+              select quantileMerge(0.99)(b1Score) as b1, quantileMerge(0.99)(b2Score) as b2, quantileMerge(0.99)(b3Score) as b3, quantileMerge(0.99)(b4Score) as b4
+              from BOB25.Scores
+              where dateTime = currentDate
+          ),
+          last as (
+              select quantileMerge(0.99)(b1Score) as b1, quantileMerge(0.99)(b2Score) as b2, quantileMerge(0.99)(b3Score) as b3, quantileMerge(0.99)(b4Score) as b4
+              from BOB25.Scores
+              where dateTime = lastDate
+          )
       select
-          quantileMerge(0.99)(b1Score) as b1,
-          quantileMerge(0.99)(b2Score) as b2,
-          quantileMerge(0.99)(b3Score) as b3,
-          quantileMerge(0.99)(b4Score) as b4
-      from BOB25.Scores
-      where dateTime > now() - interval 1 hour;
-    `, { allowCache: false })
+          current.b1 - last.b1 AS b1,
+          current.b2 - last.b2 AS b2,
+          current.b3 - last.b3 AS b3,
+          current.b4 - last.b4 AS b4
+      from current
+      cross join last;
+    `, { allowCache: false, settings: { ...SUPER_SHORT_CACHE_SETTINGS, query_cache_nondeterministic_function_handling: 'save' } })
 
     total.value = (data.length ? bloggerGameIdArrayToArray([data[0].b1, data[0].b2, data[0].b3, data[0].b4]) : [0, 0, 0, 0])
       .map(v => v ?? 0)
@@ -201,14 +214,27 @@ export function use24HourTotalScoreDelta() {
 
   async function update() {
     const { data } = await query<{ b1: number, b2: number, b3: number, b4: number }>(`
+      with
+          (select max(dateTime) from BOB25.Scores) as currentDate,
+          (select max(dateTime) from BOB25.Scores where dateTime < now() - interval 24 hour) as lastDate,
+          current as (
+              select quantileMerge(0.99)(b1Score) as b1, quantileMerge(0.99)(b2Score) as b2, quantileMerge(0.99)(b3Score) as b3, quantileMerge(0.99)(b4Score) as b4
+              from BOB25.Scores
+              where dateTime = currentDate
+          ),
+          last as (
+              select quantileMerge(0.99)(b1Score) as b1, quantileMerge(0.99)(b2Score) as b2, quantileMerge(0.99)(b3Score) as b3, quantileMerge(0.99)(b4Score) as b4
+              from BOB25.Scores
+              where dateTime = lastDate
+          )
       select
-          quantileMerge(0.99)(b1Score) as b1,
-          quantileMerge(0.99)(b2Score) as b2,
-          quantileMerge(0.99)(b3Score) as b3,
-          quantileMerge(0.99)(b4Score) as b4
-      from BOB25.Scores
-      where dateTime > now() - interval 24 hour;
-    `, { allowCache: false })
+          current.b1 - last.b1 AS b1,
+          current.b2 - last.b2 AS b2,
+          current.b3 - last.b3 AS b3,
+          current.b4 - last.b4 AS b4
+      from current
+      cross join last;
+    `, { allowCache: false, settings: { ...SUPER_SHORT_CACHE_SETTINGS, query_cache_nondeterministic_function_handling: 'save' } })
 
     total.value = (data.length ? bloggerGameIdArrayToArray([data[0].b1, data[0].b2, data[0].b3, data[0].b4]) : [0, 0, 0, 0])
       .map(v => v ?? 0)
