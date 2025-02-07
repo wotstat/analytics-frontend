@@ -83,7 +83,7 @@ export function useTotalWinrate() {
     total.value = result
   }
 
-  useIntervalFn(() => update(), 30000, { immediateCallback: true })
+  useIntervalFn(() => update(), 60000, { immediateCallback: true })
 
   return total
 }
@@ -165,7 +165,7 @@ export function useTotalScore() {
     total.value = (data.length ? bloggerGameIdArrayToArray([data[0].b1, data[0].b2, data[0].b3, data[0].b4]) : [0, 0, 0, 0]).map(v => v ?? 0)
   }
 
-  useIntervalFn(() => update(), 5000, { immediateCallback: true })
+  useIntervalFn(() => update(), 10000, { immediateCallback: true })
 
   return total
 }
@@ -225,7 +225,7 @@ export function useHourTotalScoreDelta() {
       .map(v => v ?? 0)
   }
 
-  useIntervalFn(() => update(), 5000, { immediateCallback: true })
+  useIntervalFn(() => update(), 10000, { immediateCallback: true })
 
   return total
 }
@@ -261,7 +261,7 @@ export function use24HourTotalScoreDelta() {
       .map(v => v ?? 0)
   }
 
-  useIntervalFn(() => update(), 5000, { immediateCallback: true })
+  useIntervalFn(() => update(), 10000, { immediateCallback: true })
 
   return total
 }
@@ -284,7 +284,7 @@ export function useAvgBattleDuration() {
     total.value = result
   }
 
-  useIntervalFn(() => update(), 5000, { immediateCallback: true })
+  useIntervalFn(() => update(), 10000, { immediateCallback: true })
 
   return total
 }
