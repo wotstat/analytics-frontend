@@ -1,7 +1,7 @@
 
 import { ResponseJSON, createClient, type ClickHouseSettings } from "@clickhouse/client-web";
-import { computedAsync, useLocalStorage } from "@vueuse/core";
-import { Ref, computed, ref, shallowRef, watch, watchEffect } from "vue";
+import { useLocalStorage } from "@vueuse/core";
+import { computed, ref, shallowRef, watch } from "vue";
 
 export const clickhouse = createClient({
   url: import.meta.env.VITE_CLICKHOUSE_URL,
@@ -65,13 +65,12 @@ export async function query<T>(query: string, { allowCache = true, settings = {}
     }
   })
 
-  if (allowCache)
-    activeQueries.set(query, current);
+  if (allowCache) activeQueries.set(query, current);
 
   return current;
 }
 
-export function queryComputed<T>(queryString: () => string | null, { settings = {} as ClickHouseSettings, enabled = ref(true) } = {}) {
+export function queryComputed<T>(queryString: () => string | null, { settings = {} as ClickHouseSettings, enabled = ref(true), allowCache = true } = {}) {
   const result = shallowRef<{ status: Status, data: T[] }>({ status: loading, data: [] });
 
   watch(() => [queryString(), enabled.value] as const, async ([q, enabled]) => {
@@ -79,12 +78,12 @@ export function queryComputed<T>(queryString: () => string | null, { settings = 
     if (!enabled) return;
 
     try {
-      if (cachedResults.has(q)) {
+      if (cachedResults.has(q) && allowCache) {
         result.value = { data: (cachedResults.get(q) as ResponseJSON<T>).data, status: success };
         return;
       }
       result.value = { data: [], status: loading };
-      const { data } = await query<T>(q, { settings });
+      const { data } = await query<T>(q, { settings, allowCache });
       result.value = { data, status: success };
     } catch (reason) {
       console.error(reason);

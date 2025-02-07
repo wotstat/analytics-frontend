@@ -137,13 +137,13 @@ export function useQueryStatParamsCache(params: Ref<StatParams>) {
   })
 }
 
-function whereClauseArray(params: StatParams, ignore: ('player' | 'level' | 'types' | 'tanks' | 'id')[] = []) {
+function whereClauseArray(params: StatParams, ignore: ('player' | 'level' | 'types' | 'tanks' | 'id' | 'battleMode')[] = []) {
   const result: string[] = [];
   if (!ignore.includes('player') && params.player) result.push(`playerName = '${params.player}'`);
-  if (!ignore.includes('level') && params.level) result.push(`tankLevel in (${params.level.join(', ')})`);
-  if (!ignore.includes('types') && params.types) result.push(`tankType in ('${params.types.join("', '")}')`);
-  if (!ignore.includes('tanks') && params.tanks) result.push(`tankTag in ('${params.tanks.join("', '")}')`);
-  if (params.battleId === null && params.battleMode !== 'any') {
+  if (!ignore.includes('level') && params.level) result.push(`tankLevel in (${params.level.sort().join(', ')})`);
+  if (!ignore.includes('types') && params.types) result.push(`tankType in ('${params.types.sort().join("', '")}')`);
+  if (!ignore.includes('tanks') && params.tanks) result.push(`tankTag in ('${params.tanks.sort().join("', '")}')`);
+  if (!ignore.includes('battleMode') && params.battleId === null && params.battleMode !== 'any') {
     const t = customBattleModes[params.battleMode];
     if ('mode' in t) result.push(`battleMode = '${t.mode}'`);
     if ('gameplay' in t) result.push(`battleGameplay = '${t.gameplay}'`);
@@ -151,13 +151,13 @@ function whereClauseArray(params: StatParams, ignore: ('player' | 'level' | 'typ
   return result;
 }
 
-function whereClauseArrayColumns(params: StatParams, ignore: ('player' | 'level' | 'types' | 'tanks' | 'id')[] = []) {
+function whereClauseArrayColumns(params: StatParams, ignore: ('player' | 'level' | 'types' | 'tanks' | 'id' | 'battleMode')[] = []) {
   const result: string[] = [];
   if (!ignore.includes('player') && params.player) result.push(`playerName`);
   if (!ignore.includes('level') && params.level) result.push(`tankLevel`);
   if (!ignore.includes('types') && params.types) result.push(`tankType`);
   if (!ignore.includes('tanks') && params.tanks) result.push(`tankTag`);
-  if (params.battleId === null && params.battleMode !== 'any') {
+  if (!ignore.includes('battleMode') && params.battleId === null && params.battleMode !== 'any') {
     const t = customBattleModes[params.battleMode];
     if ('mode' in t) result.push(`battleMode`);
     if ('gameplay' in t) result.push(`battleGameplay`);
@@ -168,7 +168,7 @@ function whereClauseArrayColumns(params: StatParams, ignore: ('player' | 'level'
 type Options = Partial<{
   withWhere: boolean,
   isBattleStart: boolean,
-  ignore: ('player' | 'level' | 'types' | 'tanks' | 'id')[]
+  ignore: ('player' | 'level' | 'types' | 'tanks' | 'id' | 'battleMode')[]
 }>
 
 export function whereClause(params: MaybeRefOrGetter<StatParams>, options: Options = { withWhere: true, isBattleStart: false, ignore: [] }) {

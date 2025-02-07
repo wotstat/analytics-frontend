@@ -104,12 +104,13 @@
   background: linear-gradient(90deg, $color 8%, $highlight-color 18%, $color 33%);
   background-size: 200% 100%;
   animation: shine 1.8s infinite linear;
+  background-position: 100% 0;
 
-  // @keyframes shine {
-  //   to {
-  //     background-position: -200% 0;
-  //   }
-  // }
+  @keyframes shine {
+    to {
+      background-position: -100% 0;
+    }
+  }
 }
 
 .text-effect {
@@ -147,12 +148,17 @@
     @include effect(1rem);
   }
 
+
   &.loading {
-    @include text-skeleton(var(--font-color), #b8b8b8);
+    @include text-skeleton(var(--font-color), #787878);
+  }
+
+  &.loading {
     color: transparent;
     background-clip: text;
     -moz-background-clip: text;
     -webkit-background-clip: text;
+    animation-duration: 3s;
   }
 
   &.error {

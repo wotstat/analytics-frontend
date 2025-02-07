@@ -15,7 +15,7 @@
           <slot name="control"></slot>
 
           <div class="icon" @click="isFull = false">
-            <FullscreenCloseIcon />
+            <XIcon />
           </div>
         </div>
         <slot name="full"></slot>
@@ -28,7 +28,7 @@
 import { useElementBounding, useWindowSize } from '@vueuse/core';
 import { ref, watch } from 'vue';
 import FullscreenOpenIcon from '@/assets/icons/fullscreenOpen.svg'
-import FullscreenCloseIcon from '@/assets/icons/fullscreenClose.svg'
+import XIcon from '@/assets/icons/x.svg'
 
 
 const isFull = ref(false)

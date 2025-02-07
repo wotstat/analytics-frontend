@@ -34,5 +34,6 @@ export function useQueryParamStorage<T>(key: string, value: MaybeRefOrGetter<T>,
     onDeactivated(() => ref.value = null)
     onUnmounted(() => ref.value = null)
   }
+
   return ref
 }
