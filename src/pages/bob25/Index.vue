@@ -3,14 +3,18 @@
     <img :src="Background" class="background" alt="background" />
     <h1>Битва Блогеров 2025</h1>
 
-    <!-- <div>
-      <h2>Near_You</h2>
-    </div> -->
     <div class="bloggers">
       <Blogger blogger="nearyou" />
       <Blogger blogger="jove" />
       <Blogger blogger="yusha" />
       <Blogger blogger="lebwa" />
+    </div>
+
+    <div class="sub-header" ref="subHeader" :class="{ 'hidden': !shouldDisplaySubHeader }">
+      <BloggerName :blogger="'nearyou'" />
+      <BloggerName :blogger="'jove'" />
+      <BloggerName :blogger="'yusha'" />
+      <BloggerName :blogger="'lebwa'" />
     </div>
 
     <div class="lines">
@@ -61,7 +65,7 @@
 import Background from "./assets/background.webp";
 import Blogger from "./components/blogger/Blogger.vue";
 import BloggersLine from "./components/BloggersLine.vue";
-import { useLocalStorage } from "@vueuse/core";
+import { useElementBounding, useLocalStorage } from "@vueuse/core";
 import TopTanks from "./components/TopTanks.vue";
 import TimeSeriesChart from "./components/TimeSeriesChart.vue";
 import { use24HourTotalScoreDelta, useAvgBattleDuration, useAvgBattleDurationChart, useHourTotalScoreDelta, usePopularTanks, useScoredTanks, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart } from "./components/queryLoader";
@@ -69,11 +73,26 @@ import ServerStatusWrapper from "@/components/ServerStatusWrapper.vue";
 import { timeProcessor } from "@/utils";
 import InstallMod from "./components/InstallMod.vue";
 import AwaitUpdates from "./components/AwaitUpdates.vue";
-
+import BloggerName from "./components/blogger/BloggerName.vue";
+import { computed, ref, watchEffect } from "vue";
+import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight';
 
 const showTotalPlayersChart = useLocalStorage('bob25-show-total-players-chart', false);
 const showTotalScoreChart = useLocalStorage('bob25-show-total-score-chart', true);
 const showDurationChart = useLocalStorage('bob25-show-duration-chart', false);
+
+
+const subHeader = ref<HTMLElement | null>(null);
+const { top: subHeaderTop, y: menuY, height: menuH } = useElementBounding(subHeader)
+const headerOffset = computed(() => headerHeight.value)
+const shouldDisplaySubHeader = computed(() => subHeaderTop.value < headerOffset.value)
+
+const { additionalHeaderHeight } = useAdditionalHeaderHeight();
+watchEffect(() => {
+  if (menuY.value == 0) return additionalHeaderHeight.value = 0;
+  if (subHeaderTop.value > headerOffset.value) return additionalHeaderHeight.value = 0;
+  additionalHeaderHeight.value = menuH.value - 5
+})
 
 
 const totalPlayers = useTotalPlayers()
@@ -95,6 +114,37 @@ const scoredTanks = useScoredTanks()
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 15px;
+
+  .sub-header {
+    position: sticky;
+    top: calc(var(--header-height) - 10px);
+    display: flex;
+    padding: 0 10px;
+    z-index: 1000;
+    margin-top: -35px;
+
+    transition: opacity 0.1s;
+
+    &.hidden {
+      opacity: 0;
+    }
+
+    h2 {
+      margin: 0;
+      flex: 1;
+      text-align: center;
+      font-size: 25px;
+    }
+
+
+    @media screen and (max-width: 900px) {
+      h2 {
+        font-size: 20px;
+      }
+
+      padding: 0;
+    }
+  }
 }
 
 
@@ -116,10 +166,6 @@ h1 {
   }
 }
 
-h2 {
-  position: sticky;
-  top: 100px;
-}
 
 .background {
   position: fixed;

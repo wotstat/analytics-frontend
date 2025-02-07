@@ -1,7 +1,8 @@
 <template>
   <div class="blogger" :class="blogger">
     <img :src="targetUrl" :alt="blogger">
-    <h2 class="mt-font">{{ targetNickname }}</h2>
+    <BloggerName :blogger="blogger" />
+    <!-- <h2 class="mt-font">{{ targetNickname }}</h2> -->
   </div>
 </template>
 
@@ -13,6 +14,8 @@ import Jove from './jove.png'
 import Lebwa from './lebwa.png'
 import Nearyou from './nearyou.png'
 import Yusha from './yusha.png'
+import BloggerName from './BloggerName.vue';
+
 
 const props = defineProps<{
   blogger: 'jove' | 'lebwa' | 'nearyou' | 'yusha'
@@ -24,15 +27,6 @@ const targetUrl = computed(() => {
     case 'lebwa': return Lebwa
     case 'nearyou': return Nearyou
     case 'yusha': return Yusha
-  }
-})
-
-const targetNickname = computed(() => {
-  switch (props.blogger) {
-    case 'jove': return 'Jove'
-    case 'lebwa': return 'LeBwa'
-    case 'nearyou': return 'Near_You'
-    case 'yusha': return 'Yusha'
   }
 })
 </script>
@@ -70,29 +64,8 @@ const targetNickname = computed(() => {
     }
   }
 
-  &.jove {
-    h2 {
-      text-shadow: 0 0 10px #ff0000;
-    }
-  }
-
-  &.lebwa {
-    h2 {
-      text-shadow: 0 0 12px #ffe100;
-    }
-  }
-
-  &.yusha {
-    h2 {
-      text-shadow: 0 0 10px #009dff;
-      transform: translateX(5%);
-    }
-  }
-
-  &.nearyou {
-    h2 {
-      text-shadow: 0 0 10px #ff00fb;
-    }
+  &.yusha h2 {
+    transform: translateX(5%);
   }
 }
 </style>
