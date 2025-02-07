@@ -37,8 +37,7 @@
         :data="avgBattleDurationChart.data" showDisplayVariant :min="0" :max="600"
         :processor="t => timeProcessor(t).join(':')" />
 
-      <!-- <BloggersLine title="Винрейт" :values="playersCount.map(t => 100 * Math.random())"
-        :processor="t => `${t.toFixed(2)}%`" /> -->
+      <BloggersLine title="Винрейт" :values="totalWinrate.map(t => t * 100)" :processor="t => `${t.toFixed(2)}%`" />
 
       <ServerStatusWrapper :status="popularTanks.status" v-slot="{ showError, status }">
         <TopTanks title="Популярная техника" :data="popularTanks.data" v-if="popularTanks.data"
@@ -68,7 +67,7 @@ import BloggersLine from "./components/BloggersLine.vue";
 import { useElementBounding, useLocalStorage } from "@vueuse/core";
 import TopTanks from "./components/TopTanks.vue";
 import TimeSeriesChart from "./components/TimeSeriesChart.vue";
-import { use24HourTotalScoreDelta, useAvgBattleDuration, useAvgBattleDurationChart, useHourTotalScoreDelta, usePopularTanks, useScoredTanks, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart } from "./components/queryLoader";
+import { use24HourTotalScoreDelta, useAvgBattleDuration, useAvgBattleDurationChart, useHourTotalScoreDelta, usePopularTanks, useScoredTanks, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart, useTotalWinrate } from "./components/queryLoader";
 import ServerStatusWrapper from "@/components/ServerStatusWrapper.vue";
 import { timeProcessor } from "@/utils";
 import InstallMod from "./components/InstallMod.vue";
@@ -105,6 +104,7 @@ const avgDuration = useAvgBattleDuration()
 const avgBattleDurationChart = useAvgBattleDurationChart()
 const popularTanks = usePopularTanks()
 const scoredTanks = useScoredTanks()
+const totalWinrate = useTotalWinrate()
 
 </script>
 
