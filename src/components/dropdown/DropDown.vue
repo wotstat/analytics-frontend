@@ -63,6 +63,7 @@ function select(value: string) {
   height: 1.6em;
 
   transition: height 0.15s;
+  will-change: height;
 
   &.open {
     height: calc-size(auto, size);

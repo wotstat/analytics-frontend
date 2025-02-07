@@ -9,10 +9,10 @@
     </div>
     <div class="card multi-value mono-num">
       <div class="flex">
-        <BloggersValues :values="values" space colorize :processor />
+        <BloggersValues :values="values" space colorize :processor :lessIsBetter />
       </div>
       <div class="flex subline" v-if="withPercent">
-        <BloggersValues :values="percents" colorize :processor="t => `${t.toFixed(2)}%`" />
+        <BloggersValues :values="percents" colorize :processor="t => `${t.toFixed(2)}%`" :lessIsBetter />
       </div>
     </div>
   </div>
@@ -29,9 +29,10 @@ const props = defineProps<{
   withPercent?: boolean
   title?: string
   processor?: (value: number) => string
+  lessIsBetter?: boolean
 }>()
 
-const percents = computed(() => props.values.map(v => 100 * v / props.values.reduce((a, v) => a + v, 0)));
+const percents = computed(() => props.values.map(v => 100 * v / props.values.reduce((a, v) => a + v, 0.0000001)));
 
 
 const showChart = defineModel('showChart');

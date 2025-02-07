@@ -10,28 +10,44 @@
       <Blogger blogger="lebwa" />
     </div>
 
-    <BloggersLine title="Всего игроков" :values="playersCount" withPercent />
-    <br>
-    <BloggersLine title="Всего очков" :values="playersCount" withPercent v-model:show-chart="showTotalScoreChart" />
-    <br>
-    <TotalScoreChart v-if="showTotalScoreChart" />
-    <br>
-    <BloggersLine title="Прирост очков за 24 часа" :values="playersCount" with-percent />
-    <br>
-    <BloggersLine title="Прирост очков за 60 минут" :values="playersCount" with-percent />
-    <!-- <br> -->
-    <!-- <TotalScoreChart /> -->
-    <br>
-    <BloggersLine title="Винрейт" :values="playersCount.map(t => 100 * Math.random())"
-      :processor="t => `${t.toFixed(2)}%`" />
-    <br>
-    <TopTanks title="Популярная техника" />
-    <br>
-    <br>
-    <br>
-    <br>
-    <br>
-    <br>
+    <div class="lines">
+      <InstallMod />
+      <AwaitUpdates />
+      <BloggersLine title="Всего игроков" :values="totalPlayers" withPercent
+        v-model:show-chart="showTotalPlayersChart" />
+      <TimeSeriesChart v-if="showTotalPlayersChart" :labels="totalPlayersChart.labels" :data="totalPlayersChart.data"
+        showDisplayVariant />
+
+      <BloggersLine title="Всего очков" :values="totalScore" withPercent v-model:show-chart="showTotalScoreChart" />
+      <TimeSeriesChart v-if="showTotalScoreChart" :labels="totalScoreChart.labels" :data="totalScoreChart.data"
+        showDisplayVariant />
+
+      <BloggersLine title="Прирост очков за 24 часа" :values="dayTotalScoreDelta" with-percent />
+
+      <BloggersLine title="Прирост очков за 60 минут" :values="hourTotalScoreDelta" with-percent />
+      <BloggersLine title="Средне время боя" :values="avgDuration" :processor="t => timeProcessor(t).join(':')"
+        v-model:show-chart="showDurationChart" less-is-better />
+      <TimeSeriesChart v-if="showDurationChart" :labels="avgBattleDurationChart.labels"
+        :data="avgBattleDurationChart.data" showDisplayVariant :min="0" :max="600"
+        :processor="t => timeProcessor(t).join(':')" />
+
+      <!-- <BloggersLine title="Винрейт" :values="playersCount.map(t => 100 * Math.random())"
+        :processor="t => `${t.toFixed(2)}%`" /> -->
+
+      <ServerStatusWrapper :status="popularTanks.status" v-slot="{ showError, status }">
+        <TopTanks title="Популярная техника" :data="popularTanks.data" v-if="popularTanks.data"
+          :value-type="'percent'" />
+      </ServerStatusWrapper>
+
+
+      <ServerStatusWrapper :status="scoredTanks.status" v-slot="{ showError, status }">
+        <TopTanks title="В среднем очков" :data="scoredTanks.data" v-if="scoredTanks.data" :value-type="'score'" />
+      </ServerStatusWrapper>
+    </div>
+
+    <footer>
+
+    </footer>
 
   </div>
 </template>
@@ -40,25 +56,39 @@
 <script setup lang="ts">
 import Background from "./assets/background.webp";
 import Blogger from "./components/blogger/Blogger.vue";
-import BloggersValues from "./components/BloggersValues.vue";
 import BloggersLine from "./components/BloggersLine.vue";
-import { computed, ref } from "vue";
+import { computed, ref, watchEffect } from "vue";
 import { useLocalStorage, useTimestamp } from "@vueuse/core";
-import TotalScoreChart from "./components/TotalScoreChart.vue";
 import TopTanks from "./components/TopTanks.vue";
+import TimeSeriesChart from "./components/TimeSeriesChart.vue";
+import { use24HourTotalScoreDelta, useAvgBattleDuration, useAvgBattleDurationChart, useHourTotalScoreDelta, usePopularTanks, useScoredTanks, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart } from "./components/queryLoader";
+import { bloggerNamesArray, bloggerRecordToArray } from "./components/bloggerNames";
+import { success } from "@/db";
+import ServerStatusWrapper from "@/components/ServerStatusWrapper.vue";
+import { timeProcessor } from "@/utils";
+import InstallMod from "./components/InstallMod.vue";
+import AwaitUpdates from "./components/AwaitUpdates.vue";
 
 
-const showTotalScoreChart = useLocalStorage('bob25-show-total-score-chart', false);
 
-const time = useTimestamp();
-const offset = computed(() => Math.round((time.value - 1738373302152) / 3000));
-const playersCount = computed(() => [
-  100 + offset.value * 400 * Math.random(),
-  200 + offset.value * 400 * Math.random(),
-  300 + offset.value * 400 * Math.random(),
-  400 + offset.value * 400 * Math.random(),]
-);
 
+
+
+const showTotalPlayersChart = useLocalStorage('bob25-show-total-players-chart', false);
+const showTotalScoreChart = useLocalStorage('bob25-show-total-score-chart', true);
+const showDurationChart = useLocalStorage('bob25-show-duration-chart', true);
+
+
+const totalPlayers = useTotalPlayers()
+const totalPlayersChart = useTotalPlayersChart()
+const totalScore = useTotalScore()
+const totalScoreChart = useTotalScoreChart()
+const hourTotalScoreDelta = useHourTotalScoreDelta()
+const dayTotalScoreDelta = use24HourTotalScoreDelta()
+const avgDuration = useAvgBattleDuration()
+const avgBattleDurationChart = useAvgBattleDurationChart()
+const popularTanks = usePopularTanks()
+const scoredTanks = useScoredTanks()
 
 </script>
 
@@ -114,6 +144,12 @@ h1 {
   padding: 0 15px;
 }
 
+.lines {
+  div {
+    margin-bottom: 20px;
+  }
+}
+
 h3 {
   margin: 0;
   margin-bottom: 5px;
@@ -122,5 +158,9 @@ h3 {
 :deep(.card) {
   background: rgb(102 102 102 / 15%);
   box-shadow: none;
+}
+
+footer {
+  margin-top: 200px;
 }
 </style>

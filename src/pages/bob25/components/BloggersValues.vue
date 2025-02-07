@@ -1,7 +1,7 @@
 <template>
   <p v-for="value in values" class="nowrap" :class="{
-    'min': colorize && value === min,
-    'max': colorize && value === max,
+    'min': colorize && value === (lessIsBetter ? max : min),
+    'max': colorize && value === (lessIsBetter ? min : max),
   }">
     <TweenValue :value :options :processor :raw :space :precision />
   </p>
@@ -21,6 +21,7 @@ const props = defineProps<{
   space?: boolean
   precision?: number
   colorize?: boolean
+  lessIsBetter?: boolean
 }>()
 
 

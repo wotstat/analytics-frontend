@@ -41,6 +41,7 @@ const targetNickname = computed(() => {
 <style lang="scss" scoped>
 .blogger {
   position: relative;
+  z-index: -1;
   margin-bottom: -2%;
 
   img {
