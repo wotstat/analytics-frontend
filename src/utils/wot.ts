@@ -14,6 +14,7 @@ export const customBattleModes = {
   'normalCft': { title: 'Случайный бой (Стандартный)', mode: 'REGULAR', gameplay: 'ctf' },
   'normalDomination': { title: 'Случайный бой (Встречный)', mode: 'REGULAR', gameplay: 'domination' },
   'normalAssault': { title: 'Случайный бой (Штурм)', mode: 'REGULAR', gameplay: 'assault' },
+  'bob': { title: 'Битва Блогеров 2025', mode: 'BOB' },
   'epicRandom': { title: 'Генеральное сражение', mode: 'EPIC_RANDOM' },
   'epicBattle': { title: 'Линия фронта', mode: 'EPIC_BATTLE' },
   'tournament-regular': { title: 'Турниры', mode: 'TOURNAMENT_REGULAR' },

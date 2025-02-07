@@ -32,11 +32,11 @@ const displayVariants = [
 ]
 
 const periodToStep = {
-  'all': ['min1', 'min10', 'min30', 'hour1', 'day'],
-  'today': ['min1', 'min10', 'min30', 'hour1'],
-  'yesterday': ['min1', 'min10', 'min30', 'hour1'],
-  'lastHour': ['sec5', 'sec10', 'min1', 'min10', 'min30'],
-  'last24': ['min1', 'min10', 'min30', 'hour1'],
+  'all': ['min1', 'min3', 'min10', 'min30', 'hour1', 'day'],
+  'today': ['min1', 'min3', 'min10', 'min30', 'hour1'],
+  'yesterday': ['min1', 'min3', 'min10', 'min30', 'hour1'],
+  'lastHour': ['sec5', 'sec10', 'min1', 'min3', 'min10', 'min30'],
+  'last24': ['min1', 'min3', 'min10', 'min30', 'hour1'],
 }
 
 const defaultValues = {
