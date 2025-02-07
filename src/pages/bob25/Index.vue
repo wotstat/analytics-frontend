@@ -13,7 +13,7 @@
     <div class="lines">
       <InstallMod />
       <AwaitUpdates />
-      <!-- <BloggersLine title="Всего игроков" :values="totalPlayers" withPercent
+      <BloggersLine title="Всего игроков" :values="totalPlayers" withPercent
         v-model:show-chart="showTotalPlayersChart" />
       <TimeSeriesChart v-if="showTotalPlayersChart" :labels="totalPlayersChart.labels" :data="totalPlayersChart.data"
         showDisplayVariant />
@@ -29,20 +29,20 @@
         v-model:show-chart="showDurationChart" less-is-better />
       <TimeSeriesChart v-if="showDurationChart" :labels="avgBattleDurationChart.labels"
         :data="avgBattleDurationChart.data" showDisplayVariant :min="0" :max="600"
-        :processor="t => timeProcessor(t).join(':')" /> -->
+        :processor="t => timeProcessor(t).join(':')" />
 
       <!-- <BloggersLine title="Винрейт" :values="playersCount.map(t => 100 * Math.random())"
         :processor="t => `${t.toFixed(2)}%`" /> -->
 
-      <!-- <ServerStatusWrapper :status="popularTanks.status" v-slot="{ showError, status }">
+      <ServerStatusWrapper :status="popularTanks.status" v-slot="{ showError, status }">
         <TopTanks title="Популярная техника" :data="popularTanks.data" v-if="popularTanks.data"
           :value-type="'percent'" />
-      </ServerStatusWrapper> -->
+      </ServerStatusWrapper>
 
 
-      <!-- <ServerStatusWrapper :status="scoredTanks.status" v-slot="{ showError, status }">
+      <ServerStatusWrapper :status="scoredTanks.status" v-slot="{ showError, status }">
         <TopTanks title="В среднем очков" :data="scoredTanks.data" v-if="scoredTanks.data" :value-type="'score'" />
-      </ServerStatusWrapper> -->
+      </ServerStatusWrapper>
     </div>
 
     <footer>

@@ -139,7 +139,7 @@ export function useTotalScore() {
       group by dateTime;
     `, { allowCache: false })
 
-    total.value = bloggerGameIdArrayToArray([data[0].b1, data[0].b2, data[0].b3, data[0].b4])
+    total.value = (data.length ? bloggerGameIdArrayToArray([data[0].b1, data[0].b2, data[0].b3, data[0].b4]) : [0, 0, 0, 0]).map(v => v ?? 0)
   }
 
   useIntervalFn(() => update(), 5000, { immediateCallback: true })
@@ -185,7 +185,7 @@ export function useHourTotalScoreDelta() {
       where dateTime > now() - interval 1 hour;
     `, { allowCache: false })
 
-    total.value = bloggerGameIdArrayToArray([data[0].b1, data[0].b2, data[0].b3, data[0].b4])
+    total.value = (data.length ? bloggerGameIdArrayToArray([data[0].b1, data[0].b2, data[0].b3, data[0].b4]) : [0, 0, 0, 0])
       .map(v => v ?? 0)
   }
 
@@ -208,7 +208,7 @@ export function use24HourTotalScoreDelta() {
       where dateTime > now() - interval 24 hour;
     `, { allowCache: false })
 
-    total.value = bloggerGameIdArrayToArray([data[0].b1, data[0].b2, data[0].b3, data[0].b4])
+    total.value = (data.length ? bloggerGameIdArrayToArray([data[0].b1, data[0].b2, data[0].b3, data[0].b4]) : [0, 0, 0, 0])
       .map(v => v ?? 0)
   }
 
