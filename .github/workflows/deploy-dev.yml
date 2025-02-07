@@ -21,6 +21,12 @@ jobs:
       - name: Build
         run: bun run build:dev
 
+      # FIX FOR YANDEX CLOUD
+      - id: install-aws-cli
+        uses: unfor19/install-aws-cli-action@v1
+        with:
+          version: 2.22.35
+
       - name: Upload to s3
         run: |
           aws s3 sync ./dist s3://dev.wotstat.info \
