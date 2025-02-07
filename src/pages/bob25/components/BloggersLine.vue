@@ -14,13 +14,16 @@
       <div class="flex subline" v-if="withPercent">
         <BloggersValues :values="percents" colorize :processor="t => `${t.toFixed(2)}%`" :lessIsBetter />
       </div>
+      <div class="flex subline custom-subline" v-if="slot.subline">
+        <slot name="subline" v-for="(item, i) in values" :item :i></slot>
+      </div>
     </div>
   </div>
 </template>
 
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, useSlots } from "vue";
 import BloggersValues from "./BloggersValues.vue";
 import Chart from "../assets/chart.svg";
 
@@ -31,9 +34,9 @@ const props = defineProps<{
   processor?: (value: number) => string
   lessIsBetter?: boolean
 }>()
+const slot = useSlots();
 
 const percents = computed(() => props.values.map(v => 100 * v / props.values.reduce((a, v) => a + v, 0.0000001)));
-
 
 const showChart = defineModel('showChart');
 
@@ -87,6 +90,10 @@ const showChart = defineModel('showChart');
     margin-top: 8px;
     font-size: 15px;
     opacity: 0.8;
+  }
+
+  .custom-subline {
+    opacity: 1;
   }
 
   @media screen and (max-width: 900px) {
