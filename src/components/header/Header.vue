@@ -1,10 +1,7 @@
 <template>
   <div class="header" ref="headerElement">
     <!-- <div class="upper-header success">
-      WotStat переехал на новый хостинг. Ближайшие несколько часов возможны перебои в работе.
-      <br>
-      Данные накопленные после 13.11.2024 будут загружены в течение дня. Приносим извинения за временные
-      неудобства.
+      Работа WotStat восстановлена. Некоторые аналитические данные будут доступны позже в течение дня.
     </div> -->
     <div class="main flex">
       <router-link to="/" class="wotstat-logo">WotStat</router-link>
