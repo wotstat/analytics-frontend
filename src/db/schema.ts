@@ -55,8 +55,6 @@ function bestMvWithColumns(target: keyof typeof schemas, columns: string[]) {
 
 export function bestMV(target: keyof typeof schemas, options: string[] | MaybeRefOrGetter<StatParams>) {
   const columns = Array.isArray(options) ? options : whereClauseColumns(options);
-  console.log('columns', target, columns);
-
   return bestMvWithColumns(target, columns);
 }
 
