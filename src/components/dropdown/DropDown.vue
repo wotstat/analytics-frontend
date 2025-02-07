@@ -66,7 +66,12 @@ function select(value: string) {
   will-change: height;
 
   &.open {
-    height: calc-size(auto, size);
+    height: auto;
+
+    @supports (height: calc-size(auto, size)) {
+      height: calc-size(auto, size);
+    }
+
     box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.1);
   }
 
