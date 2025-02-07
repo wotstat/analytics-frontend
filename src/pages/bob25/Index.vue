@@ -31,7 +31,7 @@
       <!-- <BloggersLine title="Прирост очков за 24 часа" :values="dayTotalScoreDelta" with-percent /> -->
 
       <BloggersLine title="Прирост очков за 60 минут" :values="hourTotalScoreDelta" with-percent />
-      <BloggersLine title="Средне время боя" :values="avgDuration" :processor="t => timeProcessor(t).join(':')"
+      <BloggersLine title="Среднее время боя" :values="avgDuration" :processor="t => timeProcessor(t).join(':')"
         v-model:show-chart="showDurationChart" less-is-better />
       <TimeSeriesChart v-if="showDurationChart" :labels="avgBattleDurationChart.labels"
         :data="avgBattleDurationChart.data" showDisplayVariant :min="0" :max="600"
