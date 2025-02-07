@@ -13,6 +13,3 @@ export function onErrorRemoveUrl(url: string) {
 export function isUrlMayValidImage(url: string) {
   return !errorUrlSet.has(url);
 }
-
-
-console.log(errorUrlSet);
