@@ -1,5 +1,5 @@
 <template>
-  <div class="items-scroll">
+  <div class="items-scroll nice-scrollbar">
     <div class="items-list">
       <div class="card" v-for="item in items" @click="e => onClick(e, item.key)"
         :class="selectable && selected?.includes(item.key) ? 'selected' : ''">
@@ -42,25 +42,6 @@ function onClick(e: MouseEvent, tag: string) {
 
 .items-scroll {
   overflow-x: auto;
-
-  &::-webkit-scrollbar {
-    height: 10px;
-  }
-
-  &::-webkit-scrollbar-track {
-    border-radius: 10px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: $background-secondary;
-    box-shadow: 0 1px 2px 0px rgb(0, 0, 0, 0.1);
-    border-radius: 10px;
-    cursor: pointer;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: #464646;
-  }
 
   .items-list {
     display: flex;

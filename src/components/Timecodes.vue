@@ -29,7 +29,7 @@
               <input type="text" :placeholder="getTimecode(processedTimings[i])" v-model="timings[i]">
             </td>
             <!-- <td>{{ getDate(battle.dateTime) }}</td> -->
-            <td>{{ nameFromTag(battle.arenaTag).value }}</td>
+            <td>{{ getArenaName(battle.arenaTag).value }}</td>
             <td>{{ getTankName(battle.tankTag, true) }}</td>
             <td>{{ battle.pDmg }}</td>
             <td>{{ battle.chuck }}</td>
@@ -92,10 +92,6 @@ const timings = ref<string[]>([])
 
 const params = useQueryStatParams()
 
-function nameFromTag(tag: string) {
-  const key = tag.split('spaces/')[1] + '/name'
-  return getArenaName(key)
-}
 
 function getDate(dateString: string) {
   return new Date(dateString).toLocaleString('ru-RU', {
@@ -171,7 +167,7 @@ const resultTimecodes = computed(() => {
       .replaceAll('{n}', (i + 1).toString())
       .replaceAll('{time}', getTimecode(t.time))
       .replaceAll('{tank}', getTankName(t.res.tankTag))
-      .replaceAll('{map}', nameFromTag(t.res.arenaTag).value)
+      .replaceAll('{map}', getArenaName(t.res.arenaTag).value)
       .replaceAll('{dmg}', t.res.pDmg.toString())
       .replaceAll('{radio}', t.res.pAssistRadio.toString())
       .replaceAll('{xp}', t.res.pXp.toString())

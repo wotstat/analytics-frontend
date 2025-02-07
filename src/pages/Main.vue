@@ -203,7 +203,7 @@
                 </thead>
                 <tbody>
                   <tr v-for="item in mapsResults.data">
-                    <td>{{ nameFromTag(item.arenaTag).value }}</td>
+                    <td>{{ getArenaName(item.arenaTag) }}</td>
                     <td class="text-effect orange">{{ item.count }}</td>
                     <td class="text-effect green">{{ item.damage }}</td>
                     <td class="text-effect blue">{{ item.assist }}</td>
@@ -355,7 +355,7 @@
 <script setup lang="ts">
 import GenericInfoQuery from '@/components/widgets/GenericInfoQuery.vue';
 import GenericInfo from '@/components/widgets/GenericInfo.vue';
-import MiniBar from '@/components/widgets/MiniBar.vue';
+import MiniBar from '@/components/widgets/charts/MiniBar.vue';
 import ShotsCircle from '@/components/widgets/ShotsCircle.vue';
 import { useTweenCounter } from '@/composition/useTweenCounter';
 import { LONG_CACHE_SETTINGS, query, queryAsync, queryAsyncFirst } from '@/db';
@@ -504,12 +504,6 @@ group by arenaTag
 order by count desc
 limit 5;
 `, { settings: LONG_CACHE_SETTINGS })
-
-function nameFromTag(tag: string) {
-  const key = tag.split('spaces/')[1] + '/name'
-  return getArenaName(key)
-}
-
 
 const maps = [
   ['Перевал', 9, 4230, 2344],

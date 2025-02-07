@@ -1,6 +1,8 @@
 @use './shared.scss';
 @use './markdown.scss';
-@use './variables.scss' as *;
+@use './variables.scss';
+@use './mtfont.scss';
+@use './nice-scrollbar.scss';
 
 :root {
   // font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -17,9 +19,14 @@
   -moz-osx-font-smoothing: grayscale;
 
   --font-color: rgba(255, 255, 255, 0.87);
+  --background-secondary: #{variables.$background-secondary};
+  --background-color: #{variables.$background-color};
+  --blue-color: #0A84FFFF;
+  --blue-thin-color: rgb(0, 153, 255);
+
 
   body {
-    background-color: #242424;
+    background-color: var(--background-color);
   }
 }
 
