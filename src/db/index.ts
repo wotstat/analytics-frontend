@@ -15,6 +15,7 @@ export const clickhouse = createClient({
 
 export const CACHE_SETTINGS = { use_query_cache: 1, query_cache_ttl: 600 } as ClickHouseSettings
 export const SHORT_CACHE_SETTINGS = { use_query_cache: 1, query_cache_ttl: 10 } as ClickHouseSettings
+export const SUPER_SHORT_CACHE_SETTINGS = { use_query_cache: 1, query_cache_ttl: 5 } as ClickHouseSettings
 export const LONG_CACHE_SETTINGS = { use_query_cache: 1, query_cache_ttl: 600 } as ClickHouseSettings
 
 export const totalRequests = useLocalStorage('totalRequests', 0)
