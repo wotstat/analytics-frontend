@@ -19,10 +19,10 @@ export const bloggerNamesArray = [
 ];
 
 export const bloggerGameIdToIndex = {
-  1: 0,
-  2: 1,
-  3: 2,
-  4: 3
+  1: 1,
+  2: 3,
+  3: 0,
+  4: 2
 }
 
 export const bloggerGameIdToName = {
@@ -44,7 +44,7 @@ export function bloggerGameIdArrayToArray<T>(t: T[]): T[] {
   let res = new Array(4);
 
   for (let i = 0; i < t.length; i++) {
-    res[bloggerGameIdToIndex[(i + 1) as 1 | 2 | 3 | 4]] = t[i]
+    res[bloggerGameIdToIndex[(i + 1) as 1 | 2 | 3 | 4]] = t[i] ?? null;
   }
 
   return res as T[];
