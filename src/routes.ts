@@ -9,7 +9,6 @@ import Maps from './pages/infographics/pages/Maps.vue'
 import Coverage from './pages/infographics/pages/Coverage.vue'
 import Distribution from './pages/services/damageDistribution/Content.vue'
 import Lootbox from './pages/infographics/pages/lootbox/Index.vue'
-import Widgets from './pages/widgets/Index.vue'
 import FixedMatchDetect from "./pages/services/fixedMatchDetect/Index.vue";
 
 
@@ -29,7 +28,7 @@ const routes = [
       { path: 'chuck-norris-tournament', component: () => import('./pages/infographics/pages/Chuck.vue') },
       { path: 'distribution', component: Distribution },
       { path: 'lootbox', component: Lootbox, meta: { hideTankList: true } },
-      { path: 'widgets/:widget*', component: Widgets, meta: { hideTankList: true, customTitle: 'Виджеты' } },
+      { path: 'widgets/:widget*', component: () => import('./pages/widgets/Index.vue'), meta: { hideTankList: true, customTitle: 'Виджеты' } },
     ]
   },
   {
