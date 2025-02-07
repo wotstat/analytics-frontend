@@ -3,6 +3,9 @@
     <img :src="Background" class="background" alt="background" />
     <h1>Битва Блогеров 2025</h1>
 
+    <!-- <div>
+      <h2>Near_You</h2>
+    </div> -->
     <div class="bloggers">
       <Blogger blogger="nearyou" />
       <Blogger blogger="jove" />
@@ -21,7 +24,7 @@
       <TimeSeriesChart v-if="showTotalScoreChart" :labels="totalScoreChart.labels" :data="totalScoreChart.data"
         showDisplayVariant />
 
-      <BloggersLine title="Прирост очков за 24 часа" :values="dayTotalScoreDelta" with-percent />
+      <!-- <BloggersLine title="Прирост очков за 24 часа" :values="dayTotalScoreDelta" with-percent /> -->
 
       <BloggersLine title="Прирост очков за 60 минут" :values="hourTotalScoreDelta" with-percent />
       <BloggersLine title="Средне время боя" :values="avgDuration" :processor="t => timeProcessor(t).join(':')"
@@ -111,6 +114,11 @@ h1 {
   @media screen and (max-width: 600px) {
     font-size: 30px;
   }
+}
+
+h2 {
+  position: sticky;
+  top: 100px;
 }
 
 .background {
