@@ -2,17 +2,21 @@
   <div class="line">
     <h3 v-if="title">{{ title }}</h3>
     <div class="card">
-      <div class="blogger" v-for="(_, i) in new Array(4)">
+      <div class="blogger" v-for="(t, i) in data">
         <div class="top" v-if="!less800">
-          <VehicleImage :size="'shop'" :tag="'uk:GB83_FV4005'" />
-          <p>{{ getTankName('uk:GB83_FV4005', true) }} (5.4%)</p>
+          <VehicleImage :size="'shop'" :tag="t[0].tag" />
+          <p class="mt-font">{{ getTankName(t[0].tag, true) }} ({{ format(t[0].value) }}<img class="crown" :src="Crown"
+              v-if="valueType == 'score'">)
+          </p>
         </div>
         <h4 v-else>{{ bloggerNamesArray[i] }}</h4>
         <div class="more-lines">
-          <div class="mini-line" v-for="i in new Array(4)">
-            <VehicleImage :size="'small'" :tag="'uk:GB83_FV4005'" />
-            <p class="name">{{ getTankName('uk:GB83_FV4005', true) }}</p>
-            <p class="right">8.3%</p>
+          <div class="mini-line" v-for="(line, i) in less800 ? t : t.slice(1)">
+            <VehicleImage :size="'small'" :tag="line.tag" />
+            <p class="name mt-font">{{ getTankName(line.tag, true) }}</p>
+            <p class="right mt-font bold">{{ format(line.value) }}<img class="crown" :src="Crown"
+                v-if="valueType == 'score'">
+            </p>
           </div>
         </div>
       </div>
@@ -26,12 +30,28 @@ import VehicleImage from '@/components/vehicles/VehicleImage.vue';
 import { getTankName } from '@/utils/i18n';
 import { useMediaQuery } from '@vueuse/core';
 import { bloggerNamesArray } from './bloggerNames';
+import { usePercentProcessor } from '@/composition/usePercentProcessor';
+import Crown from '../assets/crown.png';
 
 const less800 = useMediaQuery('(max-width: 800px)')
 
+const percent = usePercentProcessor(2)
+
 const props = defineProps<{
   title?: string
+  data: {
+    tag: string
+    value: number
+  }[][]
+  valueType?: 'percent' | 'score'
 }>()
+
+
+function format(value: number) {
+  if (props.valueType == 'percent') return percent(value)
+  return value.toFixed(2)
+}
+
 </script>
 
 
@@ -83,6 +103,16 @@ h3 {
       pointer-events: none;
     }
 
+    .crown {
+      position: unset;
+      display: inline-block;
+      height: 15px;
+      width: auto;
+      margin-bottom: -1.5px;
+      margin-right: 2px;
+      margin-left: 3px;
+    }
+
     p {
       margin: 0;
       font-weight: bold;
@@ -107,6 +137,10 @@ h3 {
       width: 100%;
       max-width: 230px;
 
+      @media screen and (max-width: 800px) {
+        max-width: unset;
+      }
+
       img {
         position: absolute;
         left: 0;
@@ -119,6 +153,14 @@ h3 {
         font-size: 14px;
         flex: 1;
         font-weight: bold;
+      }
+
+      .crown {
+        position: unset;
+        display: inline-block;
+        height: 15px;
+        margin-bottom: -1px;
+        margin-left: 3px;
       }
     }
   }

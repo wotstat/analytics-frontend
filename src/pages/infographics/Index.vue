@@ -60,7 +60,7 @@ import { useRoute } from "vue-router";
 import TankListSetup from "@/components/tankListSetup/Index.vue";
 
 import SidebarLayout from '@/components/sidebarLayout/Index.vue'
-import { SidebarLink } from '@/components/sidebarLayout/types';
+import { SidebarLink } from '@/components/sidebarLayout/utils';
 
 
 const links: SidebarLink[] = [
@@ -71,7 +71,7 @@ const links: SidebarLink[] = [
   { to: '/session/maps', labels: 'Карты' },
   { to: '/session/players', labels: 'Охват' },
   'separator',
-  { to: '/session/distribution', labels: 'Расширенное распределение', shortLabel: 'Распределение' },
+  // { to: '/session/distribution', labels: 'Расширенное распределение', shortLabel: 'Распределение' },
   { to: '/session/lootbox', labels: 'Коробки' },
   { to: '/session/chuck-norris-tournament', labels: 'Очки Чака' },
   'separator',

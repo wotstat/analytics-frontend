@@ -26,7 +26,7 @@ const fallbackUrl = computed(() => {
   switch (props.size ?? 'preview') {
     case 'small': return `${staticUrl}/vehicles/small/noImage.png`;
     case 'preview': return `${staticUrl}/vehicles/preview/noImage.png`;
-    case 'shop': return `${staticUrl}/vehicles/shop/noImage.png`;
+    case 'shop': return `${staticUrl}/vehicles/preview/noImage.png`;
   }
 })
 

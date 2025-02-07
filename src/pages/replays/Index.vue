@@ -27,7 +27,7 @@
 
 import QueryPreserveRouterLink from '@/components/QueryPreserveRouterLink.vue';
 import SidebarLayout from '@/components/sidebarLayout/Index.vue'
-import { SidebarLink } from '@/components/sidebarLayout/types';
+import { SidebarLink } from '@/components/sidebarLayout/utils';
 import { RouterView } from 'vue-router';
 
 
