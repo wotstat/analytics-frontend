@@ -67,6 +67,27 @@ export function useTotalPlayers() {
   return total
 }
 
+export function useTotalWinrate() {
+  const total = shallowRef([0, 0, 0, 0])
+
+  async function update() {
+    const { data } = await query<{ bloggerId: number, winrate: number }>(`
+      select bloggerId, countMerge(wins) / countMerge(battles) as winrate
+      from BOB25.Battles
+      group by bloggerId
+    `, { allowCache: false, settings: CACHE_SETTINGS })
+
+    const byBlogger = Object.groupBy(data, t => bloggerNameByGameId(t.bloggerId)) as Record<string, { winrate: number }[]>
+    const result = bloggerRecordToArray(byBlogger).flat().map(t => t?.winrate ?? 0)
+
+    total.value = result
+  }
+
+  useIntervalFn(() => update(), 30000, { immediateCallback: true })
+
+  return total
+}
+
 export function useBloggerChart(q: (from: number, to: number, step: number) => string) {
   const target = shallowRef<{
     data: number[][],
