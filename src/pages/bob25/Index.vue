@@ -28,6 +28,14 @@
       <TimeSeriesChart v-if="showTotalScoreChart" :labels="totalScoreChart.labels" :data="totalScoreChart.data"
         showDisplayVariant />
 
+      <BloggersLine title="Отрыв до следующего места" :values="delta.map(t => t[0])">
+        <template #subline="{ item, i }">
+          <p class="subline-blogger">До
+            <BloggerName :blogger="delta[i][1]" small-bloom />
+          </p>
+        </template>
+      </BloggersLine>
+
       <!-- <BloggersLine title="Прирост очков за 24 часа" :values="dayTotalScoreDelta" with-percent /> -->
 
       <BloggersLine title="Прирост очков за 60 минут" :values="hourTotalScoreDelta" with-percent />
@@ -53,7 +61,13 @@
     </div>
 
     <footer>
-
+      <h5>Почему данным можно доверять</h5>
+      <p>Статистика собирается модом, однако, учитывает не только игрока у которого мод установлен, а полный результат
+        боя для обеих команд.</p>
+      <p>На данный момент, известно о каждом втором сыгранном бое, при этом бои распределены между командами
+        пропорционально их
+        очкам.</p>
+      <p>Если в бою присутствует более одного игрока с модом, бой всё равно засчитывается только один раз.</p>
     </footer>
 
   </div>
@@ -75,6 +89,7 @@ import AwaitUpdates from "./components/AwaitUpdates.vue";
 import BloggerName from "./components/blogger/BloggerName.vue";
 import { computed, ref, watchEffect } from "vue";
 import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight';
+import { bloggerNamesArray } from "./components/bloggerNames";
 
 const showTotalPlayersChart = useLocalStorage('bob25-show-total-players-chart', false);
 const showTotalScoreChart = useLocalStorage('bob25-show-total-score-chart', true);
@@ -94,6 +109,7 @@ watchEffect(() => {
 })
 
 
+
 const totalPlayers = useTotalPlayers()
 const totalPlayersChart = useTotalPlayersChart()
 const totalScore = useTotalScore()
@@ -105,6 +121,25 @@ const avgBattleDurationChart = useAvgBattleDurationChart()
 const popularTanks = usePopularTanks()
 const scoredTanks = useScoredTanks()
 const totalWinrate = useTotalWinrate()
+
+
+const delta = computed(() => {
+  const s = totalScore.value
+
+  const sorted = s.map((t, i) => [i, t])
+    .toSorted((a, b) => b[1] - a[1])
+
+
+  const delta = sorted.map((t, i) => {
+    if (i === 0) return [t[0], t[1] - sorted[i + 1][1], sorted[i + 1][0]]
+    return [t[0], t[1] - sorted[i - 1][1], sorted[i - 1][0]]
+  })
+    .sort((a, b) => a[0] - b[0])
+    .map(t => [t[1], t[2]])
+
+
+  return delta
+})
 
 </script>
 
@@ -119,9 +154,10 @@ const totalWinrate = useTotalWinrate()
     position: sticky;
     top: calc(var(--header-height) - 10px);
     display: flex;
-    padding: 0 10px;
+    padding: 0 15px;
     z-index: 1000;
     margin-top: -35px;
+    gap: 1rem;
 
     transition: opacity 0.1s;
 
@@ -133,16 +169,21 @@ const totalWinrate = useTotalWinrate()
       margin: 0;
       flex: 1;
       text-align: center;
-      font-size: 25px;
+      font-size: 23px;
     }
 
 
     @media screen and (max-width: 900px) {
+
       h2 {
         font-size: 20px;
       }
+    }
 
-      padding: 0;
+    @media screen and (max-width: 500px) {
+      h2 {
+        font-size: 16px;
+      }
     }
   }
 }
@@ -163,6 +204,14 @@ h1 {
 
   @media screen and (max-width: 600px) {
     font-size: 30px;
+  }
+}
+
+.subline-blogger {
+  h2 {
+    margin: 0;
+    font-size: 1.2em;
+    display: inline;
   }
 }
 
@@ -210,5 +259,11 @@ h3 {
 
 footer {
   margin-top: 200px;
+  margin-bottom: 100px;
+
+  h5 {
+    margin: 10px 0;
+    font-size: 16px;
+  }
 }
 </style>
