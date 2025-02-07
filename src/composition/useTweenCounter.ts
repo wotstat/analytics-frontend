@@ -1,3 +1,7 @@
+// OLD VARIANT. 
+// TODO: Replace to ./tween
+
+
 import { Ref, ComputedRef, watch, reactive, computed } from "vue";
 import gsap from 'gsap'
 
