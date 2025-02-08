@@ -120,7 +120,7 @@ const chartData = computed<ChartProps<'bar' | 'line'>['data']>(() => {
             .map((v, i) => i == 0 || !v ? null : v - data[i - 1])
             .map(t => {
               if (t) lastNonZero = t
-              return lastNonZero
+              return t == null ? t : lastNonZero
             }),
         label: bloggerNamesArray[i],
         backgroundColor: bloggerColors[i][0],
