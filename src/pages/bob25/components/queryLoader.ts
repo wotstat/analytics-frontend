@@ -127,8 +127,6 @@ export function useBloggerChart(q: (from: number, to: number, step: number) => s
   const updateDebounce = useDebounceFn(update, 100)
 
   watch(visible, v => {
-    console.log(v ? 'start' : 'stop');
-
     if (v) t.resume()
     else t.pause()
   }, { immediate: true })
