@@ -8,7 +8,7 @@
       </div>
 
       <div class="chart-options right">
-        <DropDown v-if="showDisplayVariant" :variants="displayVariants" v-model="display" />
+        <DropDown v-if="showDisplayVariant" :variants="displayVariants" v-model="displayVariant" />
       </div>
     </div>
   </div>
@@ -24,13 +24,9 @@ import { bloggerNamesArray } from "./bloggerNames";
 import DropDown from "@/components/dropdown/DropDown.vue";
 import { useLocalStorage, useMediaQuery } from "@vueuse/core";
 import { stepVariants, periodVariants, period, step } from "./queryLoader";
-import { preferredLogProcessor } from "../store";
+import { displayVariant, displayVariants, preferredLogProcessor } from "../store";
 import { useLogProcessor } from "@/composition/usePercentProcessor";
 
-const displayVariants = [
-  { value: 'total', label: 'Всего' },
-  { value: 'delta', label: 'Прирост' },
-]
 
 const periodToStep = {
   'all': ['min1', 'min3', 'min10', 'min30', 'hour1', 'day'],
@@ -83,7 +79,7 @@ const filtererStepVariants = computed(() => {
   return stepVariants.filter(v => periodToStep[period.value].includes(v.value))
 })
 
-const display = useLocalStorage<typeof displayVariants[number]['value']>('bob25-selected-chart-display', 'total')
+
 
 watch(period, () => {
   step.value = defaultValues[period.value]
@@ -105,6 +101,7 @@ const props = defineProps<{
   max?: number,
   yValues?: number[],
   yIsPercent?: boolean,
+  hightFilter?: boolean
 }>()
 
 const chartData = computed<ChartProps<'bar' | 'line'>['data']>(() => {
@@ -113,15 +110,31 @@ const chartData = computed<ChartProps<'bar' | 'line'>['data']>(() => {
 
       let lastNonZero = 0
 
+      let processed: (number | null)[] = []
+
+      if (!props.showDisplayVariant || displayVariant.value == 'total') {
+        processed = data
+      } else {
+        processed = data
+          .map((v, i) => i == 0 || !v ? null : v - data[i - 1])
+          .map(t => {
+            if (t) lastNonZero = t
+            return t == null ? t : lastNonZero
+          })
+      }
+
+      if (props.hightFilter) {
+        for (let i = 0; i < processed.length; i++) {
+          const element = processed[i];
+          if (!element) continue
+          if (element > 900000) {
+            processed[i] = null
+          }
+        }
+      }
+
       return {
-        data: !props.showDisplayVariant || display.value == 'total' ?
-          data :
-          data
-            .map((v, i) => i == 0 || !v ? null : v - data[i - 1])
-            .map(t => {
-              if (t) lastNonZero = t
-              return t == null ? t : lastNonZero
-            }),
+        data: processed,
         label: bloggerNamesArray[i],
         backgroundColor: bloggerColors[i][0],
         borderColor: bloggerColors[i][1]

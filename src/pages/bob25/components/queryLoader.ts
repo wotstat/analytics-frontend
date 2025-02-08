@@ -1,5 +1,5 @@
 import { CACHE_SETTINGS, loading, query, queryAsync, Status, success, SUPER_SHORT_CACHE_SETTINGS } from "@/db";
-import { computed, onMounted, onUnmounted, shallowRef, watch, watchEffect } from "vue";
+import { computed, onMounted, onUnmounted, Ref, shallowRef, watch, watchEffect } from "vue";
 import { bloggerGameIdArrayToArray, bloggerGameIdToName, bloggerNameByGameId, bloggerNamesArray, bloggerRecordToArray, bloggerTimeSeriesProcess } from "./bloggerNames";
 import { objectEntries, useDebounceFn, useIntervalFn, useLocalStorage } from "@vueuse/core";
 import { getLast24HourBorders, getLastHourBorders, getTodayBorders, getYesterdayBorders } from "./timeUtils";
@@ -88,7 +88,7 @@ export function useTotalWinrate() {
   return total
 }
 
-export function useBloggerChart(q: (from: number, to: number, step: number) => string) {
+export function useBloggerChart(q: (from: number, to: number, step: number) => string, visible: Ref<boolean>) {
   const target = shallowRef<{
     data: number[][],
     labels: number[],
@@ -121,9 +121,17 @@ export function useBloggerChart(q: (from: number, to: number, step: number) => s
     })
   }
 
-  useIntervalFn(() => update(), () => Math.min(30000, stepToInterval[step.value] * 1000), { immediateCallback: true })
+  const t = useIntervalFn(() => update(), () => Math.min(30000, stepToInterval[step.value] * 1000), { immediateCallback: true, immediate: false })
+  t.pause()
 
   const updateDebounce = useDebounceFn(update, 100)
+
+  watch(visible, v => {
+    console.log(v ? 'start' : 'stop');
+
+    if (v) t.resume()
+    else t.pause()
+  }, { immediate: true })
 
   watch([period, step], () => {
     reset()
@@ -133,7 +141,7 @@ export function useBloggerChart(q: (from: number, to: number, step: number) => s
   return target
 }
 
-export function useTotalPlayersChart() {
+export function useTotalPlayersChart(visible: Ref<boolean>) {
   return useBloggerChart((from, to, step) => `
       select
         bloggerId,
@@ -143,7 +151,7 @@ export function useTotalPlayersChart() {
       where dateTime between ${from} and ${to + step}
       group by t, bloggerId
       order by bloggerId, t
-    `)
+    `, visible)
 }
 
 export function useTotalScore() {
@@ -170,7 +178,7 @@ export function useTotalScore() {
   return total
 }
 
-export function useTotalScoreChart() {
+export function useTotalScoreChart(visible: Ref<boolean>) {
   return useBloggerChart((from, to, step) => `
       with
           prepare as (
@@ -191,7 +199,7 @@ export function useTotalScoreChart() {
       from prepare
       array join [b1, b2, b3, b4] as score, [1, 2, 3, 4] as bloggerId
       group by bloggerId, t;
-  `)
+  `, visible)
 }
 
 export function useHourTotalScoreDelta() {
@@ -325,7 +333,7 @@ export function useAvgBattleDuration() {
   return total
 }
 
-export function useAvgBattleDurationChart() {
+export function useAvgBattleDurationChart(visible: Ref<boolean>) {
   return useBloggerChart((from, to, step) => `
       select
         bloggerId,
@@ -336,11 +344,11 @@ export function useAvgBattleDurationChart() {
       group by t, bloggerId
       having countMerge(battles) > 300
       order by bloggerId, t
-    `)
+    `, visible)
 }
 
 
-export function useWinrateChart() {
+export function useWinrateChart(visible: Ref<boolean>) {
   return useBloggerChart((from, to, step) => `
       select
         bloggerId,
@@ -351,7 +359,7 @@ export function useWinrateChart() {
       group by t, bloggerId
       having countMerge(battles) > 300
       order by bloggerId, t
-    `)
+    `, visible)
 }
 
 export function usePopularTanks() {
