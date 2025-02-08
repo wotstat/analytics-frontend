@@ -21,10 +21,11 @@ import { ShadowLine } from "@/components/widgets/charts/ShadowLineController";
 import { computed, ref, watch } from "vue";
 import { ChartProps } from "vue-chartjs";
 import { bloggerNamesArray } from "./bloggerNames";
-import { timeProcessor } from "@/utils";
 import DropDown from "@/components/dropdown/DropDown.vue";
-import { useLocalStorage } from "@vueuse/core";
+import { useLocalStorage, useMediaQuery } from "@vueuse/core";
 import { stepVariants, periodVariants, period, step } from "./queryLoader";
+import { preferredLogProcessor } from "../store";
+import { useLogProcessor } from "@/composition/usePercentProcessor";
 
 const displayVariants = [
   { value: 'total', label: 'Всего' },
@@ -41,10 +42,10 @@ const periodToStep = {
 
 const defaultValues = {
   'all': 'min30',
-  'today': 'min1',
-  'yesterday': 'min1',
+  'today': 'min3',
+  'yesterday': 'min3',
   'lastHour': 'sec10',
-  'last24': 'min1',
+  'last24': 'min3',
 } as const
 
 
@@ -102,6 +103,8 @@ const props = defineProps<{
   processor?: (v: number) => string,
   min?: number,
   max?: number,
+  yValues?: number[],
+  yIsPercent?: boolean,
 }>()
 
 const chartData = computed<ChartProps<'bar' | 'line'>['data']>(() => {
@@ -141,12 +144,28 @@ const targetSkip = computed(() => {
   return HOUR * 24
 })
 
+const smallScreen = useMediaQuery('(max-width: 700px)')
+
+
+const logProc = useLogProcessor()
 
 const options = computed<ChartProps<'bar'>['options']>(() => ({
   responsive: true,
+  maintainAspectRatio: false,
   animation: false,
   scales: {
-    y: { display: false, min: props.min, max: props.max },
+    y: {
+      display: !!props.yValues,
+      min: props.min,
+      max: props.max,
+      ticks: {
+        stepSize: 0.05,
+        callback: function (value, index, values) {
+          if (props.yValues?.includes(value as any)) return props.yIsPercent ? `${(value as number) * 100}%` : value;
+          return null;
+        }
+      }
+    },
     x: {
       grid: {
         display: true,
@@ -158,10 +177,11 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
         autoSkip: false,
         maxRotation: 0,
         callback: function (value, index, ctx) {
-          if (index <= ctx.length * 0.01 || index >= ctx.length * 0.99) return ''
+          const offset = smallScreen.value ? 0.03 : 0.01
+          if (index <= ctx.length * offset || index >= ctx.length * (1 - offset)) return ''
 
           const t = this.getLabelForValue(value as any) as any as number
-          if (t % targetSkip.value != 0) return ''
+          if (t % (smallScreen.value ? targetSkip.value * 2 : targetSkip.value) != 0) return ''
 
           return targetSkip.value < 60 * 60 * 24 ? formatDateHHMM(t) : formatDateDay(t)
         }
@@ -170,7 +190,7 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
   },
   interaction: {
     intersect: false,
-    mode: 'index',
+    mode: 'index'
   },
   labels: {
     enabled: true,
@@ -185,11 +205,14 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
       display: true,
     },
     tooltip: {
+      position: 'nearest',
       callbacks: {
         title: t => {
           return `${formatDateFull(t[0].label as any)}`
         },
-        label: props.processor ? t => `${bloggerNamesArray[t.datasetIndex]}: ${props.processor!(t.parsed.y)}` : undefined,
+        label: props.processor ?
+          t => `${bloggerNamesArray[t.datasetIndex]}: ${props.processor!(t.parsed.y)}` :
+          preferredLogProcessor.value ? t => `${bloggerNamesArray[t.datasetIndex]}: ${logProc(t.parsed.y)}` : undefined,
       },
 
     },
@@ -203,6 +226,10 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
 <style lang="scss" scoped>
 .chart-container {
   aspect-ratio: 2;
+
+  @media screen and (max-width: 900px) {
+    aspect-ratio: 1.5;
+  }
 
   .chart-options {
     position: absolute;
@@ -224,12 +251,6 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
     @media screen and (max-width: 900px) {
       margin-top: 25px;
     }
-  }
-}
-
-.card {
-  @media screen and (max-width: 900px) {
-    padding-bottom: 35px;
   }
 }
 </style>
