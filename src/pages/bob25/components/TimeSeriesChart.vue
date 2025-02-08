@@ -109,14 +109,24 @@ const props = defineProps<{
 
 const chartData = computed<ChartProps<'bar' | 'line'>['data']>(() => {
   const datasets: ChartProps<'bar' | 'line'>['data']['datasets'] =
-    props.data.map((data, i) => ({
-      data: !props.showDisplayVariant || display.value == 'total' ?
-        data :
-        data.map((v, i) => i == 0 || !v ? null : v - data[i - 1]),
-      label: bloggerNamesArray[i],
-      backgroundColor: bloggerColors[i][0],
-      borderColor: bloggerColors[i][1]
-    }))
+    props.data.map((data, i) => {
+
+      let lastNonZero = 0
+
+      return {
+        data: !props.showDisplayVariant || display.value == 'total' ?
+          data :
+          data
+            .map((v, i) => i == 0 || !v ? null : v - data[i - 1])
+            .map(t => {
+              if (t) lastNonZero = t
+              return lastNonZero
+            }),
+        label: bloggerNamesArray[i],
+        backgroundColor: bloggerColors[i][0],
+        borderColor: bloggerColors[i][1]
+      }
+    })
 
   return {
     labels: props.labels,
@@ -147,7 +157,7 @@ const targetSkip = computed(() => {
 const smallScreen = useMediaQuery('(max-width: 700px)')
 
 
-const logProc = useLogProcessor()
+const logProc = useLogProcessor(2)
 
 const options = computed<ChartProps<'bar'>['options']>(() => ({
   responsive: true,
@@ -158,13 +168,13 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
       display: !!props.yValues,
       min: props.min,
       max: props.max,
-      ticks: {
+      ticks: props.yValues ? {
         stepSize: 0.05,
         callback: function (value, index, values) {
           if (props.yValues?.includes(value as any)) return props.yIsPercent ? `${(value as number) * 100}%` : value;
           return null;
         }
-      }
+      } : undefined
     },
     x: {
       grid: {
