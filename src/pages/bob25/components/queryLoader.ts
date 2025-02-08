@@ -266,6 +266,42 @@ export function use24HourTotalScoreDelta() {
   return total
 }
 
+export function useYesterdayTotalScoreDelta() {
+  const total = shallowRef([0, 0, 0, 0])
+
+  async function update() {
+    const { data } = await query<{ b1: number, b2: number, b3: number, b4: number }>(`
+      with
+          (select max(dateTime) from BOB25.Scores where dateTime < toStartOfInterval(now(), interval 1 day) + interval 3 hour) as currentDate,
+          (select max(dateTime) from BOB25.Scores where dateTime < toStartOfInterval(now(), interval 1 day) - interval 1 day + interval 3 hour) as lastDate,
+          current as (
+              select quantileMerge(0.99)(b1Score) as b1, quantileMerge(0.99)(b2Score) as b2, quantileMerge(0.99)(b3Score) as b3, quantileMerge(0.99)(b4Score) as b4
+              from BOB25.Scores
+              where dateTime = currentDate
+          ),
+          last as (
+              select quantileMerge(0.99)(b1Score) as b1, quantileMerge(0.99)(b2Score) as b2, quantileMerge(0.99)(b3Score) as b3, quantileMerge(0.99)(b4Score) as b4
+              from BOB25.Scores
+              where dateTime = lastDate
+          )
+      select
+          current.b1 - if(isNaN(last.b1), 0, last.b1) AS b1,
+          current.b2 - if(isNaN(last.b2), 0, last.b2) AS b2,
+          current.b3 - if(isNaN(last.b3), 0, last.b3) AS b3,
+          current.b4 - if(isNaN(last.b4), 0, last.b4) AS b4
+      from current
+      cross join last;
+    `, { allowCache: false, settings: { ...SUPER_SHORT_CACHE_SETTINGS, query_cache_nondeterministic_function_handling: 'save' } })
+
+    total.value = (data.length ? bloggerGameIdArrayToArray([data[0].b1, data[0].b2, data[0].b3, data[0].b4]) : [0, 0, 0, 0])
+      .map(v => v ?? 0)
+  }
+
+  useIntervalFn(() => update(), 10000, { immediateCallback: true })
+
+  return total
+}
+
 export function useAvgBattleDuration() {
   const total = shallowRef([0, 0, 0, 0])
 
@@ -298,6 +334,22 @@ export function useAvgBattleDurationChart() {
       from BOB25.Battles
       where dateTime between ${from} and ${to + step}
       group by t, bloggerId
+      having countMerge(battles) > 300
+      order by bloggerId, t
+    `)
+}
+
+
+export function useWinrateChart() {
+  return useBloggerChart((from, to, step) => `
+      select
+        bloggerId,
+        toUnixTimestamp(toStartOfInterval(dateTime, interval ${step} second)) as t,
+        toFloat32(countMerge(wins)/countMerge(battles)) as value
+      from BOB25.Battles
+      where dateTime between ${from} and ${to + step}
+      group by t, bloggerId
+      having countMerge(battles) > 300
       order by bloggerId, t
     `)
 }

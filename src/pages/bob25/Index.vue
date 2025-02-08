@@ -24,29 +24,39 @@
       <TimeSeriesChart v-if="showTotalPlayersChart" :labels="totalPlayersChart.labels" :data="totalPlayersChart.data"
         showDisplayVariant />
 
-      <BloggersLine title="Всего очков" :values="totalScore" withPercent v-model:show-chart="showTotalScoreChart" />
+      <BloggersLine title="Всего очков" :values="totalScore" withPercent collapse-to-log
+        v-model:show-chart="showTotalScoreChart" />
       <TimeSeriesChart v-if="showTotalScoreChart" :labels="totalScoreChart.labels" :data="totalScoreChart.data"
         showDisplayVariant />
 
-      <BloggersLine title="Отрыв" :values="delta.map(t => t[0])">
+      <BloggersLine title="Отрыв" :values="delta.map(t => t[0])" collapse-to-log>
         <template #subline="{ item, i }">
-          <p class="subline-blogger">
+          <p class="subline-blogger nowrap">
             <span v-if="item > 0">От </span><span v-else>До </span>
             <BloggerName :blogger="delta[i][1]" small-bloom />
           </p>
         </template>
       </BloggersLine>
 
-      <!-- <BloggersLine title="Прирост очков за 24 часа" :values="dayTotalScoreDelta" with-percent /> -->
 
       <BloggersLine title="Прирост очков за 60 минут" :values="hourTotalScoreDelta" with-percent />
+      <BloggersLine title="Заработано очков вчера" :values="yesterdayTotalScoreDelta" with-percent />
+
       <BloggersLine title="Среднее время боя" :values="avgDuration" :processor="t => timeProcessor(t).join(':')"
         v-model:show-chart="showDurationChart" less-is-better />
       <TimeSeriesChart v-if="showDurationChart" :labels="avgBattleDurationChart.labels"
         :data="avgBattleDurationChart.data" showDisplayVariant :min="0" :max="600"
         :processor="t => timeProcessor(t).join(':')" />
 
-      <BloggersLine title="Винрейт" :values="totalWinrate.map(t => t * 100)" :processor="t => `${t.toFixed(2)}%`" />
+      <BloggersLine title="Винрейт" :values="totalWinrate.map(t => t * 100)" :processor="t => `${t.toFixed(2)}%`"
+        v-model:show-chart="showWinrateChart" />
+
+      <template v-if="showWinrateChart">
+        <TimeSeriesChart :labels="winrateChart.labels" :data="winrateChart.data"
+          :processor="t => `${(t * 100).toFixed(2)}%`" :y-values="[0.35, 0.5, 0.65]" y-is-percent />
+        <div>*Каждая точка графика требует более 300 боёв, если значений нет, увеличьте шаг графика, например до 10
+          минут</div>
+      </template>
 
       <ServerStatusWrapper :status="popularTanks.status" v-slot="{ showError, status }">
         <TopTanks title="Популярная техника" :data="popularTanks.data" v-if="popularTanks.data"
@@ -58,7 +68,7 @@
         <TopTanks title="В среднем очков" :data="scoredTanks.data" v-if="scoredTanks.data" :value-type="'score'" />
       </ServerStatusWrapper>
 
-      <AwaitUpdates />
+      <!-- <AwaitUpdates /> -->
     </div>
 
     <footer>
@@ -69,7 +79,21 @@
         пропорционально их
         очкам.</p>
       <p>Если в бою присутствует более одного игрока с модом, бой всё равно засчитывается только один раз.</p>
+
+      <br>
+      <h5>Почему нет количества боёв</h5>
+      <p>При используемом подходе сбора данных, только относительные метрики могут быть репрезентативными. Например,
+        количество <b>известных</b> побед относительно количества <b>известных</b> боёв (получается винрейт)</p>
+      <p>Количество боёв это абсолютная величина, и она может зависеть как за счёт бОльшего количества проведённых боёв,
+        так и за счёт числа игроков с установленным модом.</p>
+
+      <hr>
+      <div class="flex settings">
+        <input type="checkbox" v-model="preferredLogProcessor">
+        <p>Предпочитать сокращение чисел до <b>М</b>иллионов. 123 456 789 => 123.4M</p>
+      </div>
     </footer>
+
 
   </div>
 </template>
@@ -82,7 +106,7 @@ import BloggersLine from "./components/BloggersLine.vue";
 import { useElementBounding, useLocalStorage } from "@vueuse/core";
 import TopTanks from "./components/TopTanks.vue";
 import TimeSeriesChart from "./components/TimeSeriesChart.vue";
-import { use24HourTotalScoreDelta, useAvgBattleDuration, useAvgBattleDurationChart, useHourTotalScoreDelta, usePopularTanks, useScoredTanks, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart, useTotalWinrate } from "./components/queryLoader";
+import { use24HourTotalScoreDelta, useAvgBattleDuration, useAvgBattleDurationChart, useHourTotalScoreDelta, usePopularTanks, useScoredTanks, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart, useTotalWinrate, useWinrateChart, useYesterdayTotalScoreDelta } from "./components/queryLoader";
 import ServerStatusWrapper from "@/components/ServerStatusWrapper.vue";
 import { timeProcessor } from "@/utils";
 import InstallMod from "./components/InstallMod.vue";
@@ -91,10 +115,12 @@ import BloggerName from "./components/blogger/BloggerName.vue";
 import { computed, ref, watchEffect } from "vue";
 import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight';
 import { bloggerNamesArray } from "./components/bloggerNames";
+import { preferredLogProcessor } from "./store";
 
 const showTotalPlayersChart = useLocalStorage('bob25-show-total-players-chart', false);
 const showTotalScoreChart = useLocalStorage('bob25-show-total-score-chart', true);
 const showDurationChart = useLocalStorage('bob25-show-duration-chart', false);
+const showWinrateChart = useLocalStorage('bob25-show-winrate-chart', false);
 
 
 const subHeader = ref<HTMLElement | null>(null);
@@ -116,12 +142,13 @@ const totalPlayersChart = useTotalPlayersChart()
 const totalScore = useTotalScore()
 const totalScoreChart = useTotalScoreChart()
 const hourTotalScoreDelta = useHourTotalScoreDelta()
-const dayTotalScoreDelta = use24HourTotalScoreDelta()
+const yesterdayTotalScoreDelta = useYesterdayTotalScoreDelta()
 const avgDuration = useAvgBattleDuration()
 const avgBattleDurationChart = useAvgBattleDurationChart()
 const popularTanks = usePopularTanks()
 const scoredTanks = useScoredTanks()
 const totalWinrate = useTotalWinrate()
+const winrateChart = useWinrateChart()
 
 
 const delta = computed(() => {
@@ -265,6 +292,14 @@ footer {
   h5 {
     margin: 10px 0;
     font-size: 16px;
+  }
+
+  .settings {
+    gap: 0.5em;
+  }
+
+  input[type="checkbox"] {
+    cursor: pointer;
   }
 }
 </style>
