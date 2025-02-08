@@ -27,7 +27,11 @@
       <BloggersLine title="Всего очков" :values="totalScore" withPercent collapse-to-log
         v-model:show-chart="showTotalScoreChart" />
       <TimeSeriesChart v-if="showTotalScoreChart" :labels="totalScoreChart.labels" :data="totalScoreChart.data"
-        showDisplayVariant />
+        showDisplayVariant :hightFilter="totalScoreDeltaHightFilter" />
+      <p class="footnote" v-if="showTotalScoreChart && displayVariant == 'delta'">
+        <input type="checkbox" v-model="totalScoreDeltaHightFilter">
+        Скрыть пики от рискованных атак
+      </p>
 
       <BloggersLine title="Отрыв" :values="delta.map(t => t[0])" collapse-to-log>
         <template #subline="{ item, i }">
@@ -117,12 +121,16 @@ import BloggerName from "./components/blogger/BloggerName.vue";
 import { computed, ref, watchEffect } from "vue";
 import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight';
 import { bloggerNamesArray } from "./components/bloggerNames";
-import { preferredLogProcessor } from "./store";
+import { displayVariant, preferredLogProcessor } from "./store";
+
+
 
 const showTotalPlayersChart = useLocalStorage('bob25-show-total-players-chart', false);
 const showTotalScoreChart = useLocalStorage('bob25-show-total-score-chart', true);
 const showDurationChart = useLocalStorage('bob25-show-duration-chart', false);
 const showWinrateChart = useLocalStorage('bob25-show-winrate-chart', false);
+
+const totalScoreDeltaHightFilter = useLocalStorage('bob25-total-score-delta-hight-filter', false);
 
 
 const subHeader = ref<HTMLElement | null>(null);
@@ -140,17 +148,17 @@ watchEffect(() => {
 
 
 const totalPlayers = useTotalPlayers()
-const totalPlayersChart = useTotalPlayersChart()
+const totalPlayersChart = useTotalPlayersChart(showTotalPlayersChart)
 const totalScore = useTotalScore()
-const totalScoreChart = useTotalScoreChart()
+const totalScoreChart = useTotalScoreChart(showTotalScoreChart)
 const hourTotalScoreDelta = useHourTotalScoreDelta()
 const yesterdayTotalScoreDelta = useYesterdayTotalScoreDelta()
 const avgDuration = useAvgBattleDuration()
-const avgBattleDurationChart = useAvgBattleDurationChart()
+const avgBattleDurationChart = useAvgBattleDurationChart(showDurationChart)
 const popularTanks = usePopularTanks()
 const scoredTanks = useScoredTanks()
 const totalWinrate = useTotalWinrate()
-const winrateChart = useWinrateChart()
+const winrateChart = useWinrateChart(showWinrateChart)
 
 
 const delta = computed(() => {
