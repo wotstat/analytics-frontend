@@ -27,7 +27,7 @@
       <BloggersLine title="Всего очков" :values="totalScore" withPercent collapse-to-log
         v-model:show-chart="showTotalScoreChart" />
       <TimeSeriesChart v-if="showTotalScoreChart" :labels="totalScoreChart.labels" :data="totalScoreChart.data"
-        showDisplayVariant :hightFilter="totalScoreDeltaHightFilter" />
+        showDisplayVariant :hightFilter="totalScoreHightPass" />
       <p class="footnote" v-if="showTotalScoreChart && displayVariant == 'delta'">
         <input type="checkbox" v-model="totalScoreDeltaHightFilter">
         Скрыть пики от рискованных атак
@@ -131,6 +131,7 @@ const showDurationChart = useLocalStorage('bob25-show-duration-chart', false);
 const showWinrateChart = useLocalStorage('bob25-show-winrate-chart', false);
 
 const totalScoreDeltaHightFilter = useLocalStorage('bob25-total-score-delta-hight-filter', false);
+const totalScoreHightPass = computed(() => totalScoreDeltaHightFilter.value && displayVariant.value === 'delta')
 
 
 const subHeader = ref<HTMLElement | null>(null);
