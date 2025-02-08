@@ -26,6 +26,9 @@
 import { computed, useSlots } from "vue";
 import BloggersValues from "./BloggersValues.vue";
 import Chart from "../assets/chart.svg";
+import { useLogProcessor } from "@/composition/usePercentProcessor";
+import { preferredLogProcessor } from "../store";
+import { useMediaQuery } from "@vueuse/core";
 
 const props = defineProps<{
   values: number[]
@@ -33,8 +36,19 @@ const props = defineProps<{
   title?: string
   processor?: (value: number) => string
   lessIsBetter?: boolean
+  collapseToLog?: boolean
 }>()
 const slot = useSlots();
+
+const logProc = useLogProcessor();
+const mobile = useMediaQuery('(max-width: 800px)');
+
+
+const processor = computed(() => {
+  if (props.processor) return props.processor;
+  if (mobile.value) return logProc;
+  return preferredLogProcessor.value ? logProc : undefined;
+});
 
 const percents = computed(() => props.values.map(v => 100 * v / props.values.reduce((a, v) => a + v, 0.0000001)));
 
