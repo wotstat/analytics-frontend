@@ -40,6 +40,8 @@
 
 
       <BloggersLine title="Прирост очков за 60 минут" :values="hourTotalScoreDelta" with-percent />
+      <p class="footnote">*Учитывайте, что рискованная атака считает очки по факту <b>начала</b> боя, а счётчик
+        показывает изменение счётчика очков, который обновляется по факту <b>завершения</b> боя.</p>
       <BloggersLine title="Заработано очков вчера" :values="yesterdayTotalScoreDelta" with-percent />
 
       <BloggersLine title="Среднее время боя" :values="avgDuration" :processor="t => timeProcessor(t).join(':')"
@@ -54,8 +56,8 @@
       <template v-if="showWinrateChart">
         <TimeSeriesChart :labels="winrateChart.labels" :data="winrateChart.data"
           :processor="t => `${(t * 100).toFixed(2)}%`" :y-values="[0.35, 0.5, 0.65]" y-is-percent />
-        <div>*Каждая точка графика требует более 300 боёв, если значений нет, увеличьте шаг графика, например до 10
-          минут</div>
+        <p class="footnote">*Каждая точка графика требует более 300 боёв, если значений нет, увеличьте шаг графика,
+          например до 10 минут</p>
       </template>
 
       <ServerStatusWrapper :status="popularTanks.status" v-slot="{ showError, status }">
@@ -271,6 +273,11 @@ h1 {
 
 .lines {
   div {
+    margin-bottom: 20px;
+  }
+
+  .footnote {
+    margin-top: -15px;
     margin-bottom: 20px;
   }
 }
