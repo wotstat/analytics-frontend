@@ -80,6 +80,14 @@ import { computed, ref } from 'vue';
 
 import { ms2sec, sec2minsec, sec2hour, ms2secLabel } from "@/utils";
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
+import { useMeta } from '@/composition/useMeta';
+
+useMeta({
+  title: 'Сессионная инфографика',
+  description: 'Серверная статистика по сессии игрока в Мир Танков и World of Tanks',
+  keywords: 'инфографика, сессия, игрок, статистика, World of Tanks'
+})
+
 
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);

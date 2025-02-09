@@ -62,7 +62,6 @@ import TankListSetup from "@/components/tankListSetup/Index.vue";
 import SidebarLayout from '@/components/sidebarLayout/Index.vue'
 import { SidebarLink } from '@/components/sidebarLayout/utils';
 
-
 const links: SidebarLink[] = [
   { to: '/session', labels: 'Бои' },
   { to: '/session/shots', labels: 'Стрельба' },

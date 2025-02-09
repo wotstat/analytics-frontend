@@ -20,6 +20,14 @@ import { ref } from "vue";
 import { useElementVisibility } from "@vueuse/core";
 import MapsTable from "@/components/widgets/MapsTable.vue";
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
+import { useMeta } from "@/composition/useMeta";
+
+useMeta({
+  title: 'Статистика карт',
+  description: 'Статистика по карт в боях',
+  keywords: 'статистика карт, статистика карт в боях, статистика карт в игре, статистика карт в world of tanks'
+})
+
 
 const container = ref<HTMLElement | null>(null);
 const visible = useElementVisibility(container);
