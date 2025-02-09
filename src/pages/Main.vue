@@ -370,6 +370,13 @@ import CurrentLestaVersion from '@/components/mdUtils/CurrentLestaVersion.vue';
 import CurrentWgVersion from '@/components/mdUtils/CurrentWgVersion.vue';
 import { githubRelease } from '@/components/mdUtils/ghRelease';
 import ConfigUrl from '@/assets/config.cfg?url';
+import { useMeta } from '@/composition/useMeta';
+
+useMeta({
+  title: 'WOTSTAT - Сессионная аналитика для игр «Мир танков» и «World of Tanks»',
+  description: 'Сессионная аналитика для игр «Мир танков» и «World of Tanks». Откройте новые горизонты анализа вашей игры с бесплатным и полностью открытым модом WotStat для игр «Мир танков» и «World of Tanks»',
+  keywords: 'wotstat, wot, world of tanks, мир танков, аналитика, статистика, мод, модификация, сессионная аналитика, анализ боёв, анализ выстрелов, анализ урона, анализ результатов, анализ карт, анализ стримснайперов, анализ сетапа, медианные показатели, clickhouse, sql',
+})
 
 
 const collapsableBody = ref<HTMLElement | null>(null);

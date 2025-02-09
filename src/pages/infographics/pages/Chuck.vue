@@ -100,6 +100,13 @@ import Timecodes from '@/components/Timecodes.vue'
 import CopyIcon from '@/assets/icons/copy.svg'
 
 import DownloadIcon from '@/assets/icons/download.svg'
+import { useMeta } from '@/composition/useMeta';
+
+useMeta({
+  title: 'Очки Чака',
+  description: 'Подсчитывает очки по правилам Турнира Чака. Работает для любых боёв, ничего дополнительно настраивать не нужно. Работает и взводом и соло. Таблицы результатов эквивалентны турнирным таблицам.',
+  keywords: 'очки чака, турнир чака, турнир чака, турнир чака правила, турнир чака таблица, турнир чака результаты'
+})
 
 const colorDecoration = useLocalStorage('chuckColorDecoration', true)
 const contrastDecoration = useLocalStorage('chuckHightContrast', true)

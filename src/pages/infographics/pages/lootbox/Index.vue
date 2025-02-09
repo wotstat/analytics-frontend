@@ -103,6 +103,13 @@ import { countLocalize, crewBookName, getBestLocalization, getTankName, Localize
 import SnowCardWrapper from '@/components/shared/SnowCardWrapper.vue';
 import LootboxList from './LootboxList/Index.vue';
 import { useRoute } from 'vue-router';
+import { useMeta } from '@/composition/useMeta';
+
+useMeta({
+  title: 'Статистика коробок',
+  description: 'Статистика открытия коробок в игре World of Tanks и Мир Танков',
+  keywords: 'статистика коробок, статистика коробок в игре, статистика коробок в world of tanks, статистика коробок в мир танков'
+})
 
 
 const params = useQueryStatParams()
