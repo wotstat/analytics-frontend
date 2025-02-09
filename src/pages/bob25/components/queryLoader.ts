@@ -193,10 +193,11 @@ export function useTotalScoreChart(visible: Ref<boolean>) {
       select
           bloggerId,
           toUnixTimestamp(toStartOfInterval(dateTime, interval ${step} second)) as t,
-          toUInt32(max(score)) as value
+          toUInt32(argMax(score, t)) as value
       from prepare
       array join [b1, b2, b3, b4] as score, [1, 2, 3, 4] as bloggerId
-      group by bloggerId, t;
+      group by bloggerId, t
+      order by bloggerId, t
   `, visible)
 }
 
@@ -340,7 +341,7 @@ export function useAvgBattleDurationChart(visible: Ref<boolean>) {
       from BOB25.Battles
       where dateTime between ${from} and ${to + step}
       group by t, bloggerId
-      having countMerge(battles) > 300
+      having countMerge(battles) > 200
       order by bloggerId, t
     `, visible)
 }

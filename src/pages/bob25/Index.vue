@@ -27,7 +27,7 @@
       <BloggersLine title="Всего очков" :values="totalScore" withPercent collapse-to-log
         v-model:show-chart="showTotalScoreChart" />
       <TimeSeriesChart v-if="showTotalScoreChart" :labels="totalScoreChart.labels" :data="totalScoreChart.data"
-        showDisplayVariant :hightFilter="totalScoreHightPass" />
+        showDisplayVariant :hightFilter="totalScoreHightPass" :should-stepped-interpolation="shouldInterpolateScore" />
       <p class="footnote" v-if="showTotalScoreChart && displayVariant == 'delta'">
         <input type="checkbox" v-model="totalScoreDeltaHightFilter">
         Скрыть пики от рискованных атак
@@ -50,9 +50,13 @@
 
       <BloggersLine title="Среднее время боя" :values="avgDuration" :processor="t => timeProcessor(t).join(':')"
         v-model:show-chart="showDurationChart" less-is-better />
-      <TimeSeriesChart v-if="showDurationChart" :labels="avgBattleDurationChart.labels"
-        :data="avgBattleDurationChart.data" showDisplayVariant :min="0" :max="600"
-        :processor="t => timeProcessor(t).join(':')" />
+
+      <template v-if="showDurationChart">
+        <TimeSeriesChart :labels="avgBattleDurationChart.labels" :data="avgBattleDurationChart.data" showDisplayVariant
+          :min="200" :max="300" :processor="t => timeProcessor(t).join(':')" />
+        <p class="footnote">*Каждая точка графика требует более 300 боёв, если значений нет, увеличьте шаг графика,
+          например до 10 минут</p>
+      </template>
 
       <BloggersLine title="Винрейт" :values="totalWinrate.map(t => t * 100)" :processor="t => `${t.toFixed(2)}%`"
         v-model:show-chart="showWinrateChart" />
@@ -112,17 +116,14 @@ import BloggersLine from "./components/BloggersLine.vue";
 import { useElementBounding, useLocalStorage } from "@vueuse/core";
 import TopTanks from "./components/TopTanks.vue";
 import TimeSeriesChart from "./components/TimeSeriesChart.vue";
-import { use24HourTotalScoreDelta, useAvgBattleDuration, useAvgBattleDurationChart, useHourTotalScoreDelta, usePopularTanks, useScoredTanks, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart, useTotalWinrate, useWinrateChart, useYesterdayTotalScoreDelta } from "./components/queryLoader";
+import { period, step, useAvgBattleDuration, useAvgBattleDurationChart, useHourTotalScoreDelta, usePopularTanks, useScoredTanks, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart, useTotalWinrate, useWinrateChart, useYesterdayTotalScoreDelta } from "./components/queryLoader";
 import ServerStatusWrapper from "@/components/ServerStatusWrapper.vue";
 import { timeProcessor } from "@/utils";
 import InstallMod from "./components/InstallMod.vue";
-import AwaitUpdates from "./components/AwaitUpdates.vue";
 import BloggerName from "./components/blogger/BloggerName.vue";
 import { computed, ref, watchEffect } from "vue";
 import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight';
-import { bloggerNamesArray } from "./components/bloggerNames";
 import { displayVariant, preferredLogProcessor } from "./store";
-
 
 
 const showTotalPlayersChart = useLocalStorage('bob25-show-total-players-chart', false);
@@ -132,6 +133,7 @@ const showWinrateChart = useLocalStorage('bob25-show-winrate-chart', false);
 
 const totalScoreDeltaHightFilter = useLocalStorage('bob25-total-score-delta-hight-filter', false);
 const totalScoreHightPass = computed(() => totalScoreDeltaHightFilter.value && displayVariant.value === 'delta')
+const shouldInterpolateScore = computed(() => displayVariant.value === 'total' && step.value == 'min1' && period.value != 'lastHour')
 
 
 const subHeader = ref<HTMLElement | null>(null);
@@ -195,7 +197,8 @@ const delta = computed(() => {
     display: flex;
     padding: 0 15px;
     z-index: 1000;
-    margin-top: -35px;
+    margin-top: -130px;
+    margin-bottom: 110px;
     gap: 1rem;
 
     transition: opacity 0.1s;

@@ -38,10 +38,10 @@ const periodToStep = {
 
 const defaultValues = {
   'all': 'min30',
-  'today': 'min3',
-  'yesterday': 'min3',
+  'today': 'min1',
+  'yesterday': 'min1',
   'lastHour': 'sec10',
-  'last24': 'min3',
+  'last24': 'min1',
 } as const
 
 
@@ -101,8 +101,63 @@ const props = defineProps<{
   max?: number,
   yValues?: number[],
   yIsPercent?: boolean,
-  hightFilter?: boolean
+  hightFilter?: boolean,
+  shouldSteppedInterpolation?: boolean,
 }>()
+
+function interpolateSteppedData(data: (number | null)[]): (number | null)[] {
+  // First, extract the key points (ignoring consecutive duplicates and nulls)
+  interface KeyPoint { index: number; value: number; }
+  const keyPoints: KeyPoint[] = [];
+  data.forEach((d, i) => {
+    if (d === null) return;
+    // Only push if this is the first number or it differs from the previous key point.
+    if (keyPoints.length === 0 || keyPoints[keyPoints.length - 1].value !== d) {
+      keyPoints.push({ index: i, value: d });
+    }
+  });
+
+  // If there are no key points (or all values were null) return a copy.
+  if (keyPoints.length === 0) {
+    return data.slice();
+  }
+
+  // Create a result array (we will fill it in)
+  const result: (number | null)[] = data.slice();
+
+  // Fill in from the beginning to the first key point with the first key value.
+  const firstKey = keyPoints[0];
+  for (let i = 0; i < firstKey.index; i++) {
+    result[i] = firstKey.value;
+  }
+
+  // Now go through each interval between consecutive key points and interpolate.
+  for (let k = 0; k < keyPoints.length - 1; k++) {
+    const start = keyPoints[k];
+    const end = keyPoints[k + 1];
+    const deltaIndex = end.index - start.index;
+    const deltaValue = end.value - start.value;
+    for (let i = start.index; i <= end.index; i++) {
+      const t = (i - start.index) / deltaIndex; // t goes from 0 to 1
+      result[i] = start.value + deltaValue * t;
+    }
+  }
+
+  // Fill in from the last key point to the end of the array.
+  const lastKey = keyPoints[keyPoints.length - 1];
+  for (let i = lastKey.index + 1; i < data.length; i++) {
+    result[i] = lastKey.value;
+  }
+
+  // Finally, ensure that any positions that were originally null remain null.
+  for (let i = 0; i < data.length; i++) {
+    if (data[i] === null) {
+      result[i] = null;
+    }
+  }
+
+  return result;
+}
 
 const chartData = computed<ChartProps<'bar' | 'line'>['data']>(() => {
   const datasets: ChartProps<'bar' | 'line'>['data']['datasets'] =
@@ -118,26 +173,34 @@ const chartData = computed<ChartProps<'bar' | 'line'>['data']>(() => {
         processed = data
           .map((v, i) => i == 0 || !v ? null : v - data[i - 1])
           .map(t => {
+            if (lastNonZero == t) return null
             if (t) lastNonZero = t
             return t == null ? t : lastNonZero
           })
       }
 
       if (props.hightFilter) {
+        let lastNonHigh = 0
         for (let i = 0; i < processed.length; i++) {
           const element = processed[i];
+          const movingAverage = processed.slice(Math.max(0, i - 5), Math.min(processed.length, i + 5))
+            .reduce<number>((a, b) => a + (b ?? 0), 0) / 10
           if (!element) continue
-          if (element > 900000) {
-            processed[i] = null
+          if (Math.abs(element) > movingAverage * 2) {
+            processed[i] = lastNonHigh
+          } else {
+            lastNonHigh = element
           }
         }
       }
 
       return {
-        data: processed,
+        data: props.shouldSteppedInterpolation ?
+          interpolateSteppedData(processed).map(t => t ? Math.round(t) : null) :
+          processed,
         label: bloggerNamesArray[i],
         backgroundColor: bloggerColors[i][0],
-        borderColor: bloggerColors[i][1]
+        borderColor: bloggerColors[i][1],
       }
     })
 
