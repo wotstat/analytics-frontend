@@ -1,5 +1,5 @@
 // useMeta.ts
-import { reactive, watch, onMounted } from 'vue';
+import { reactive, watch, onMounted, onActivated } from 'vue';
 
 export interface Meta {
   title?: string;
@@ -52,6 +52,7 @@ export function useMeta(initialMeta: Meta = {}): Meta {
 
   // Ensure meta is updated when the component mounts.
   onMounted(updateMeta);
+  onActivated(updateMeta);
 
   return meta;
 }

@@ -172,6 +172,14 @@ import TeamLevelTable from '@/components/widgets/TeamLevelTable.vue';
 import { countLocalize } from '@/utils/i18n';
 import { TooltipItem } from 'chart.js';
 import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
+import { useMeta } from '@/composition/useMeta';
+
+useMeta({
+  title: 'Статистика результатов',
+  description: 'Статистика результатов боёв',
+  keywords: 'статистика результатов, статистика результатов боёв, статистика результатов в игре, статистика результатов в world of tanks'
+})
+
 
 const variantSelector = ref<HTMLSelectElement | null>(null);
 

@@ -112,6 +112,14 @@ import { useFixedSpaceProcessor, usePercentProcessor } from '@/composition/usePe
 import { shellNames } from '@/utils/wot';
 import QueryPreserveRouterLink from '@/components/QueryPreserveRouterLink.vue';
 import { bestMV } from '@/db/schema';
+import { useMeta } from '@/composition/useMeta';
+
+useMeta({
+  title: 'Инфографика урона',
+  description: 'Инфографика урона в боях',
+  keywords: 'инфографика урона, статистика урона, статистика урона в боях'
+})
+
 
 const params = useQueryStatParams()
 const settings = useQueryStatParamsCache(params)
