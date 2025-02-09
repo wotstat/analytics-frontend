@@ -124,6 +124,13 @@ import BloggerName from "./components/blogger/BloggerName.vue";
 import { computed, ref, watchEffect } from "vue";
 import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight';
 import { displayVariant, preferredLogProcessor } from "./store";
+import { useMeta } from "@/composition/useMeta";
+
+useMeta({
+  title: 'Статистика Битва Блогеров 2025 ',
+  description: 'Статистика по битве блогеров 2025 в игре Мир Танков',
+  keywords: 'битва блогеров, блогеры, статистика, wot, Джов, Юша, Левша, Нирю, Jove, Yusha, Lebwa, Nearyou',
+})
 
 
 const showTotalPlayersChart = useLocalStorage('bob25-show-total-players-chart', false);
