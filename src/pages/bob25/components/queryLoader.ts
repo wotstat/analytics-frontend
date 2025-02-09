@@ -159,10 +159,10 @@ export function useTotalScore() {
     const { data } = await query<{ b1: number, b2: number, b3: number, b4: number }>(`
       select
         dateTime,
-        quantileMerge(0.99)(b1Score) as b1,
-        quantileMerge(0.99)(b2Score) as b2,
-        quantileMerge(0.99)(b3Score) as b3,
-        quantileMerge(0.99)(b4Score) as b4
+        quantileMerge(0.5)(b1Score) as b1,
+        quantileMerge(0.5)(b2Score) as b2,
+        quantileMerge(0.5)(b3Score) as b3,
+        quantileMerge(0.5)(b4Score) as b4
       from BOB25.Scores
       where dateTime = (select max(dateTime) from BOB25.Scores)
       group by dateTime;
@@ -181,10 +181,10 @@ export function useTotalScoreChart(visible: Ref<boolean>) {
       with
           prepare as (
               with
-                  quantileMerge(0.99)(b1Score) as b1,
-                  quantileMerge(0.99)(b2Score) as b2,
-                  quantileMerge(0.99)(b3Score) as b3,
-                  quantileMerge(0.99)(b4Score) as b4
+                  quantileMerge(0.5)(b1Score) as b1,
+                  quantileMerge(0.5)(b2Score) as b2,
+                  quantileMerge(0.5)(b3Score) as b3,
+                  quantileMerge(0.5)(b4Score) as b4
               select dateTime, b1, b2, b3, b4
               from BOB25.Scores
               where dateTime between ${from} and ${to + step}
@@ -210,12 +210,12 @@ export function useHourTotalScoreDelta() {
           (select max(dateTime) from BOB25.Scores) as currentDate,
           (select max(dateTime) from BOB25.Scores where dateTime < now() - interval 1 hour) as lastDate,
           current as (
-              select quantileMerge(0.99)(b1Score) as b1, quantileMerge(0.99)(b2Score) as b2, quantileMerge(0.99)(b3Score) as b3, quantileMerge(0.99)(b4Score) as b4
+              select quantileMerge(0.5)(b1Score) as b1, quantileMerge(0.5)(b2Score) as b2, quantileMerge(0.5)(b3Score) as b3, quantileMerge(0.5)(b4Score) as b4
               from BOB25.Scores
               where dateTime = currentDate
           ),
           last as (
-              select quantileMerge(0.99)(b1Score) as b1, quantileMerge(0.99)(b2Score) as b2, quantileMerge(0.99)(b3Score) as b3, quantileMerge(0.99)(b4Score) as b4
+              select quantileMerge(0.5)(b1Score) as b1, quantileMerge(0.5)(b2Score) as b2, quantileMerge(0.5)(b3Score) as b3, quantileMerge(0.5)(b4Score) as b4
               from BOB25.Scores
               where dateTime = lastDate
           )
@@ -246,12 +246,12 @@ export function use24HourTotalScoreDelta() {
           (select max(dateTime) from BOB25.Scores) as currentDate,
           (select max(dateTime) from BOB25.Scores where dateTime < now() - interval 24 hour) as lastDate,
           current as (
-              select quantileMerge(0.99)(b1Score) as b1, quantileMerge(0.99)(b2Score) as b2, quantileMerge(0.99)(b3Score) as b3, quantileMerge(0.99)(b4Score) as b4
+              select quantileMerge(0.5)(b1Score) as b1, quantileMerge(0.5)(b2Score) as b2, quantileMerge(0.5)(b3Score) as b3, quantileMerge(0.5)(b4Score) as b4
               from BOB25.Scores
               where dateTime = currentDate
           ),
           last as (
-              select quantileMerge(0.99)(b1Score) as b1, quantileMerge(0.99)(b2Score) as b2, quantileMerge(0.99)(b3Score) as b3, quantileMerge(0.99)(b4Score) as b4
+              select quantileMerge(0.5)(b1Score) as b1, quantileMerge(0.5)(b2Score) as b2, quantileMerge(0.5)(b3Score) as b3, quantileMerge(0.5)(b4Score) as b4
               from BOB25.Scores
               where dateTime = lastDate
           )
@@ -282,12 +282,12 @@ export function useYesterdayTotalScoreDelta() {
           (select max(dateTime) from BOB25.Scores where dateTime < toStartOfInterval(now(), interval 1 day) + interval 3 hour) as currentDate,
           (select max(dateTime) from BOB25.Scores where dateTime < toStartOfInterval(now(), interval 1 day) - interval 1 day + interval 3 hour) as lastDate,
           current as (
-              select quantileMerge(0.99)(b1Score) as b1, quantileMerge(0.99)(b2Score) as b2, quantileMerge(0.99)(b3Score) as b3, quantileMerge(0.99)(b4Score) as b4
+              select quantileMerge(0.5)(b1Score) as b1, quantileMerge(0.5)(b2Score) as b2, quantileMerge(0.5)(b3Score) as b3, quantileMerge(0.5)(b4Score) as b4
               from BOB25.Scores
               where dateTime = currentDate
           ),
           last as (
-              select quantileMerge(0.99)(b1Score) as b1, quantileMerge(0.99)(b2Score) as b2, quantileMerge(0.99)(b3Score) as b3, quantileMerge(0.99)(b4Score) as b4
+              select quantileMerge(0.5)(b1Score) as b1, quantileMerge(0.5)(b2Score) as b2, quantileMerge(0.5)(b3Score) as b3, quantileMerge(0.5)(b4Score) as b4
               from BOB25.Scores
               where dateTime = lastDate
           )
