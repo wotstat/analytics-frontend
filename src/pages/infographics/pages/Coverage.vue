@@ -29,6 +29,13 @@ import PlayerCoverageTable from "@/components/widgets/PlayerCoverageTable.vue";
 import { useQueryStatParams, useQueryStatParamsCache, whereClause, whereClauseColumns } from '@/composition/useQueryStatParams';
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 import { bestMV } from '@/db/schema';
+import { useMeta } from '@/composition/useMeta';
+
+useMeta({
+  title: 'Охват игроков',
+  description: 'Статистика охвата игроков в боях',
+  keywords: 'охват игроков, статистика охвата игроков, статистика игроков, статистика игроков в боях'
+})
 
 const container = ref<HTMLElement | null>(null);
 const enabled = useElementVisibility(container);

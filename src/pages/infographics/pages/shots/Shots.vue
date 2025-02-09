@@ -84,6 +84,14 @@ import { getQueryStatParamsCache, useQueryStatParams, whereClause } from '@/comp
 import PopupWindow from "@/components/PopupWindow.vue";
 import ShotInfo from "./shotInfo/Index.vue";
 import { useRoute, useRouter } from "vue-router";
+import { useMeta } from "@/composition/useMeta";
+
+useMeta({
+  title: 'Статистика стрельбы',
+  description: 'Статистика стрельбы в боях',
+  keywords: 'статистика стрельбы, статистика стрельбы в боях, статистика стрельбы в игре, статистика стрельбы в world of tanks'
+})
+
 
 const route = useRoute();
 const router = useRouter();
