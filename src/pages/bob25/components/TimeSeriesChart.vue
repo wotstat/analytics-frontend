@@ -166,14 +166,14 @@ const chartData = computed<ChartProps<'bar' | 'line'>['data']>(() => {
       let lastNonZero = 0
 
       let processed: (number | null)[] = []
-
-      if (!props.showDisplayVariant || displayVariant.value == 'total') {
+      processed = data
+      if (displayVariant.value != 'delta') {
         processed = data
       } else {
         processed = data
           .map((v, i) => i == 0 || !v ? null : v - data[i - 1])
           .map(t => {
-            if (lastNonZero == t) return null
+            if (lastNonZero == t) return lastNonZero
             if (t) lastNonZero = t
             return t == null ? t : lastNonZero
           })
