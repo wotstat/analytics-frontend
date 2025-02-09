@@ -10,8 +10,17 @@ export class ShadowLineController extends LineController {
     const meta = this.getMeta();
     ctx.beginPath();
 
+    ctx.shadowBlur = 10;
+    ctx.lineWidth = 3;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+
     for (const point of meta.data) {
-      if ('skip' in point && point.skip) continue
+      if ('skip' in point && point.skip) {
+        ctx.stroke();
+        ctx.beginPath();
+        continue;
+      }
 
       const { x, y } = point.getProps(['x', 'y']);
       if (Number.isNaN(x)) continue
@@ -23,13 +32,9 @@ export class ShadowLineController extends LineController {
       ctx.strokeStyle = point.options.backgroundColor;
     }
 
-    ctx.shadowBlur = 10;
-    ctx.lineWidth = 3;
-
     ctx.stroke();
 
     ctx.restore();
-
   }
 }
 
