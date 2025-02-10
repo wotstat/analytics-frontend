@@ -82,7 +82,8 @@ const filtererStepVariants = computed(() => {
 
 
 watch(period, () => {
-  step.value = defaultValues[period.value]
+  if (!periodToStep[period.value].includes(step.value))
+    step.value = defaultValues[period.value]
 })
 
 const bloggerColors = [
