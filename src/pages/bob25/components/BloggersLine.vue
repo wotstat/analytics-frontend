@@ -15,7 +15,7 @@
         <BloggersValues :values="percents" colorize :processor="t => `${t.toFixed(2)}%`" :lessIsBetter />
       </div>
       <div class="flex subline custom-subline" v-if="slot.subline">
-        <slot name="subline" v-for="(item, i) in values" :item :i></slot>
+        <slot name="subline" v-for="(item, i) in values" :item :i :processor></slot>
       </div>
     </div>
   </div>
