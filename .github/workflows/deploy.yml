@@ -38,6 +38,11 @@ jobs:
             s3://wotstat.info/index.html s3://wotstat.info/index.html \
             --cache-control "public, max-age=300" \
             --endpoint-url=https://storage.yandexcloud.net/
+
+          aws s3 cp \
+            s3://wotstat.info/sitemap.xml s3://wotstat.info/sitemap.xml \
+            --content-type "text/xml; charset=utf-8" \
+            --endpoint-url=https://storage.yandexcloud.net/
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.SECRET_ACCESS_KEY }}
