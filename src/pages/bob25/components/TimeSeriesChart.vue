@@ -46,7 +46,7 @@ const defaultValues = {
 
 
 const pad = (num: number) => num.toString().padStart(2, '0')
-const enabledBloggers = useLocalStorage('enabledBloggers', bloggerNamesArray.map(() => true))
+const enabledBloggers = useLocalStorage('bob25-enabled-blogers', bloggerNamesArray.map(() => true))
 
 function formatDateFull(dt: number) {
   const date = new Date(dt * 1000);
@@ -215,7 +215,7 @@ const chartData = computed<ChartProps<'bar' | 'line'>['data']>(() => {
         label: bloggerNamesArray[i],
         backgroundColor: bloggerColors[i][0],
         borderColor: bloggerColors[i][1],
-        hidden: enabledBloggers.value[i],
+        hidden: !enabledBloggers.value[i],
       }
     })
 

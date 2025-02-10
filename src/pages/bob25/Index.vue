@@ -54,7 +54,7 @@
         </template>
       </BloggersLine>
       <p class="footnote">*Сегодня в 09:01 минус вчера в 09:01 (то есть с учётом ночных компенсаций и багов).
-        Рискованная атака в игре, почему то, считается по другому ~7.4%</p>
+        Рискованная атака в игре, почему то, немного отличается.</p>
 
       <BloggersLine title="Среднее время боя" :values="avgDuration" :processor="t => timeProcessor(t).join(':')"
         v-model:show-chart="showDurationChart" less-is-better />
