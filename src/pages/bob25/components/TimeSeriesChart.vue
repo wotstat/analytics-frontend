@@ -46,6 +46,7 @@ const defaultValues = {
 
 
 const pad = (num: number) => num.toString().padStart(2, '0')
+const enabledBloggers = useLocalStorage('enabledBloggers', bloggerNamesArray.map(() => true))
 
 function formatDateFull(dt: number) {
   const date = new Date(dt * 1000);
@@ -214,6 +215,7 @@ const chartData = computed<ChartProps<'bar' | 'line'>['data']>(() => {
         label: bloggerNamesArray[i],
         backgroundColor: bloggerColors[i][0],
         borderColor: bloggerColors[i][1],
+        hidden: enabledBloggers.value[i],
       }
     })
 
@@ -302,6 +304,11 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
   plugins: {
     legend: {
       display: true,
+      onClick: (e, legendItem, legend) => {
+        const datasetIndex = legendItem.datasetIndex;
+        if (datasetIndex == undefined) return;
+        enabledBloggers.value[datasetIndex] = !enabledBloggers.value[datasetIndex];
+      }
     },
     tooltip: {
       position: 'nearest',

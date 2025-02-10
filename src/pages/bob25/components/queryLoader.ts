@@ -278,26 +278,26 @@ export function useYesterdayTotalScoreDelta() {
 
   async function update() {
     const { data } = await query<{ b1: number, b2: number, b3: number, b4: number }>(`
-      with
-          (select max(dateTime) from BOB25.Scores where dateTime < toStartOfInterval(now(), interval 1 day) + interval 3 hour) as currentDate,
-          (select max(dateTime) from BOB25.Scores where dateTime < toStartOfInterval(now(), interval 1 day) - interval 1 day + interval 3 hour) as lastDate,
-          current as (
-              select quantileMerge(0.5)(b1Score) as b1, quantileMerge(0.5)(b2Score) as b2, quantileMerge(0.5)(b3Score) as b3, quantileMerge(0.5)(b4Score) as b4
-              from BOB25.Scores
-              where dateTime = currentDate
-          ),
-          last as (
-              select quantileMerge(0.5)(b1Score) as b1, quantileMerge(0.5)(b2Score) as b2, quantileMerge(0.5)(b3Score) as b3, quantileMerge(0.5)(b4Score) as b4
-              from BOB25.Scores
-              where dateTime = lastDate
-          )
-      select
-          current.b1 - if(isNaN(last.b1), 0, last.b1) AS b1,
-          current.b2 - if(isNaN(last.b2), 0, last.b2) AS b2,
-          current.b3 - if(isNaN(last.b3), 0, last.b3) AS b3,
-          current.b4 - if(isNaN(last.b4), 0, last.b4) AS b4
-      from current
-      cross join last;
+    with
+      (select max(dateTime) from BOB25.Scores where dateTime < toStartOfInterval(now(), interval 1 day) + interval 6 hour + interval 1 minute) as currentDate,
+      (select max(dateTime) from BOB25.Scores where dateTime < toStartOfInterval(now(), interval 1 day) + interval 6 hour + interval 1 minute - interval 1 day) as lastDate,
+      current as (
+          select quantileMerge(0.5)(b1Score) as b1, quantileMerge(0.5)(b2Score) as b2, quantileMerge(0.5)(b3Score) as b3, quantileMerge(0.5)(b4Score) as b4
+          from BOB25.Scores
+          where dateTime = currentDate
+      ),
+      last as (
+          select quantileMerge(0.5)(b1Score) as b1, quantileMerge(0.5)(b2Score) as b2, quantileMerge(0.5)(b3Score) as b3, quantileMerge(0.5)(b4Score) as b4
+          from BOB25.Scores
+          where dateTime = lastDate
+      )
+    select
+      current.b1 - if(isNaN(last.b1), 0, last.b1) AS b1,
+      current.b2 - if(isNaN(last.b2), 0, last.b2) AS b2,
+      current.b3 - if(isNaN(last.b3), 0, last.b3) AS b3,
+      current.b4 - if(isNaN(last.b4), 0, last.b4) AS b4
+    from current
+    cross join last;
     `, { allowCache: false, settings: { ...SUPER_SHORT_CACHE_SETTINGS, query_cache_nondeterministic_function_handling: 'save' } })
 
     total.value = (data.length ? bloggerGameIdArrayToArray([data[0].b1, data[0].b2, data[0].b3, data[0].b4]) : [0, 0, 0, 0])
@@ -341,7 +341,7 @@ export function useAvgBattleDurationChart(visible: Ref<boolean>) {
       from BOB25.Battles
       where dateTime between ${from} and ${to + step}
       group by t, bloggerId
-      having countMerge(battles) > 200
+      having countMerge(battles) > 50
       order by bloggerId, t
     `, visible)
 }
@@ -356,7 +356,7 @@ export function useWinrateChart(visible: Ref<boolean>) {
       from BOB25.Battles
       where dateTime between ${from} and ${to + step}
       group by t, bloggerId
-      having countMerge(battles) > 300
+      having countMerge(battles) > 50
       order by bloggerId, t
     `, visible)
 }

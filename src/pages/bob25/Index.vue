@@ -46,16 +46,23 @@
       <BloggersLine title="Прирост очков за 60 минут" :values="hourTotalScoreDelta" with-percent />
       <p class="footnote">*Учитывайте, что рискованная атака считает очки по факту <b>начала</b> боя, а счётчик
         показывает изменение счётчика очков, который обновляется по факту <b>завершения</b> боя.</p>
-      <BloggersLine title="Заработано очков вчера" :values="yesterdayTotalScoreDelta" with-percent />
+      <BloggersLine title="Заработано очков вчера" :values="yesterdayTotalScoreDelta" with-percent>
+        <template #subline="{ item, processor }">
+          <p class="subline">7% =
+            <TweenValue :value="Math.round(item * 0.07)" :processor="processor" space />
+          </p>
+        </template>
+      </BloggersLine>
+      <p class="footnote">*Сегодня в 09:01 минус вчера в 09:01 (то есть с учётом ночных компенсаций и багов).
+        Рискованная атака в игре, почему то, считается по другому ~7.4%</p>
 
       <BloggersLine title="Среднее время боя" :values="avgDuration" :processor="t => timeProcessor(t).join(':')"
         v-model:show-chart="showDurationChart" less-is-better />
 
       <template v-if="showDurationChart">
-        <TimeSeriesChart :labels="avgBattleDurationChart.labels" :data="avgBattleDurationChart.data" showDisplayVariant
-          :min="200" :max="300" :processor="t => timeProcessor(t).join(':')" />
-        <p class="footnote">*Каждая точка графика требует более 300 боёв, если значений нет, увеличьте шаг графика,
-          например до 10 минут</p>
+        <TimeSeriesChart :labels="avgBattleDurationChart.labels" :data="avgBattleDurationChart.data" :min="200"
+          :max="300" :processor="t => timeProcessor(t).join(':')" />
+        <p class="footnote">*Рекомендуется шаг не менее 10 минут, иначе график шумный</p>
       </template>
 
       <BloggersLine title="Винрейт" :values="totalWinrate.map(t => t * 100)" :processor="t => `${t.toFixed(2)}%`"
@@ -64,8 +71,7 @@
       <template v-if="showWinrateChart">
         <TimeSeriesChart :labels="winrateChart.labels" :data="winrateChart.data"
           :processor="t => `${(t * 100).toFixed(2)}%`" :y-values="[0.35, 0.5, 0.65]" y-is-percent />
-        <p class="footnote">*Каждая точка графика требует более 300 боёв, если значений нет, увеличьте шаг графика,
-          например до 10 минут</p>
+        <p class="footnote">*Рекомендуется шаг не менее 10 минут, иначе график шумный</p>
       </template>
 
       <ServerStatusWrapper :status="popularTanks.status" v-slot="{ showError, status }">
@@ -125,6 +131,8 @@ import { computed, ref, watchEffect } from "vue";
 import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight';
 import { displayVariant, preferredLogProcessor } from "./store";
 import { useMeta } from "@/composition/useMeta";
+import { spaceProcessor } from "@/composition/processors/useSpaceProcessor";
+import TweenValue from "@/components/tween/TweenValue.vue";
 
 useMeta({
   title: 'Статистика Битва Блогеров 2025 ',
@@ -262,6 +270,10 @@ h1 {
     font-size: 1.2em;
     display: inline;
   }
+}
+
+.subline {
+  opacity: 0.8;
 }
 
 
