@@ -168,11 +168,11 @@ const chartData = computed<ChartProps<'bar' | 'line'>['data']>(() => {
 
       let processed: (number | null)[] = []
       processed = data
-      if (displayVariant.value != 'delta') {
+      if (!props.showDisplayVariant || displayVariant.value != 'delta') {
         processed = data
       } else {
         processed = data
-          .map((v, i) => i == 0 || !v ? null : v - data[i - 1])
+          .map((v, i) => i == 0 || !v ? null : data[i] - data[i - 1])
           .map(t => {
             if (lastNonZero == t) return lastNonZero
             if (t) lastNonZero = t
@@ -182,16 +182,28 @@ const chartData = computed<ChartProps<'bar' | 'line'>['data']>(() => {
 
       if (props.hightFilter) {
         let lastNonHigh = 0
+        let last10: number[] = []
+        let last10Sum = 0
+        for (let i = 0, added = 0; i < processed.length && added < 10; i++) {
+          if (!processed[i]) continue
+          last10.push(processed[i]!)
+          last10Sum += processed[i]!
+          added++
+        }
+
         for (let i = 0; i < processed.length; i++) {
           const element = processed[i];
-          const movingAverage = processed.slice(Math.max(0, i - 5), Math.min(processed.length, i + 5))
-            .reduce<number>((a, b) => a + (b ?? 0), 0) / 10
           if (!element) continue
-          if (Math.abs(element) > movingAverage * 2) {
+
+          if (element > last10Sum / 10 * 2 || element < last10Sum / 10 / 2) {
             processed[i] = lastNonHigh
           } else {
             lastNonHigh = element
           }
+
+          last10Sum -= last10.shift()!
+          last10.push(element)
+          last10Sum += element
         }
       }
 
