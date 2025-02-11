@@ -44,8 +44,6 @@
 
 
       <BloggersLine title="Прирост очков за 60 минут" :values="hourTotalScoreDelta" with-percent />
-      <p class="footnote">*Учитывайте, что рискованная атака считает очки по факту <b>начала</b> боя, а счётчик
-        показывает изменение счётчика очков, который обновляется по факту <b>завершения</b> боя.</p>
       <BloggersLine title="Заработано очков вчера" :values="yesterdayTotalScoreDelta" with-percent>
         <template #subline="{ item, processor }">
           <p class="subline">7% =
@@ -53,8 +51,6 @@
           </p>
         </template>
       </BloggersLine>
-      <p class="footnote">*Сегодня в 09:01 минус вчера в 09:01 (то есть с учётом ночных компенсаций и багов).
-        Рискованная атака в игре, почему то, немного отличается.</p>
 
       <BloggersLine title="Среднее время боя" :values="avgDuration" :processor="t => timeProcessor(t).join(':')"
         v-model:show-chart="showDurationChart" less-is-better />

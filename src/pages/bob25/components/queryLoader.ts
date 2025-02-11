@@ -1,4 +1,4 @@
-import { CACHE_SETTINGS, loading, query, queryAsync, Status, success, SUPER_SHORT_CACHE_SETTINGS } from "@/db";
+import { CACHE_SETTINGS, loading, query, queryAsync, SHORT_CACHE_SETTINGS, Status, success, SUPER_SHORT_CACHE_SETTINGS } from "@/db";
 import { computed, onMounted, onUnmounted, Ref, shallowRef, watch, watchEffect } from "vue";
 import { bloggerGameIdArrayToArray, bloggerGameIdToName, bloggerNameByGameId, bloggerNamesArray, bloggerRecordToArray, bloggerTimeSeriesProcess } from "./bloggerNames";
 import { objectEntries, useDebounceFn, useIntervalFn, useLocalStorage } from "@vueuse/core";
@@ -54,7 +54,7 @@ export function useTotalPlayers() {
       select bloggerId, argMax(count, dateTime) as count
       from BOB25.TotalPlayers
       group by bloggerId
-    `, { allowCache: false })
+    `, { allowCache: false, settings: SHORT_CACHE_SETTINGS })
 
     const byBlogger = Object.groupBy(data, t => bloggerNameByGameId(t.bloggerId)) as Record<string, { count: number }[]>
     const result = bloggerRecordToArray(byBlogger).flat().map(t => t?.count ?? 0)
@@ -166,7 +166,7 @@ export function useTotalScore() {
       from BOB25.Scores
       where dateTime = (select max(dateTime) from BOB25.Scores)
       group by dateTime;
-    `, { allowCache: false })
+    `, { allowCache: false, settings: SHORT_CACHE_SETTINGS })
 
     total.value = (data.length ? bloggerGameIdArrayToArray([data[0].b1, data[0].b2, data[0].b3, data[0].b4]) : [0, 0, 0, 0]).map(v => v ?? 0)
   }
@@ -319,7 +319,7 @@ export function useAvgBattleDuration() {
         toUInt32(avgMerge(duration)) as duration
       from BOB25.Battles
       group by bloggerId
-    `, { allowCache: false })
+    `, { allowCache: false, settings: CACHE_SETTINGS })
 
     const byBlogger = Object.groupBy(data, t => bloggerNameByGameId(t.bloggerId)) as Record<string, { duration: number }[]>
     const result = bloggerRecordToArray(byBlogger).flat().map(t => t?.duration ?? 0)
@@ -345,7 +345,6 @@ export function useAvgBattleDurationChart(visible: Ref<boolean>) {
       order by bloggerId, t
     `, visible)
 }
-
 
 export function useWinrateChart(visible: Ref<boolean>) {
   return useBloggerChart((from, to, step) => `
@@ -405,3 +404,42 @@ export function useScoredTanks() {
     return { status: data.value.status as Status, data: result }
   })
 }
+
+// export function useCurrentSkills() {
+
+//   const skills = shallowRef<({ skill: string, begin: Date } | null)[]>([null, null, null, null])
+
+//   async function update() {
+//     const { data } = await query<{ bloggerId: number, skill: string, dateTime: number }>(`
+//       with
+//           data as (
+//               with
+//                   extra.bob.allyBloggerId as blog1,
+//                   extra.bob.allySkill as skill1,
+//                   extra.bob.enemyBloggerId as blog2,
+//                   extra.bob.enemySkill as skill2
+//               select blog1, skill1, blog2, skill2, toStartOfInterval(dateTime, interval 5 second) as dateTime
+//               from Event_OnBattleStart
+//               where battleMode = 'BOB'
+//                 and dateTime > now() - interval 6 hour
+//                 and blog1 != 0 and blog2 != 0
+//               group by dateTime, blog1, blog2, skill1, skill2
+//               order by blog1, blog2, dateTime
+//           )
+//       select blog as bloggerId, skill, toUnixTimeStamp(min(dateTime)) as dateTime
+//       from data
+//           array join [blog1, blog2] as blog, [skill1, skill2] as skill
+//       group by blog, skill
+//       having count() > 20
+//       order by blog, skill;
+//     `, { allowCache: false, settings: SUPER_SHORT_CACHE_SETTINGS })
+
+//     const byBlogger = Object.groupBy(data, t => bloggerNameByGameId(t.bloggerId)) as Record<string, { skill: string, begin: number }[]>
+//     const result = bloggerRecordToArray(byBlogger).flat().map(t => ({ skill: t?.skill ?? '', begin: new Date(t?.begin ?? 0) }))
+//     skills.value = result
+//   }
+
+//   useIntervalFn(() => update(), 5000, { immediateCallback: true })
+
+//   return skills
+// }
