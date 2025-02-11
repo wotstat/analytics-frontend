@@ -226,7 +226,7 @@ export function useHourTotalScoreDelta() {
           current.b4 - last.b4 AS b4
       from current
       cross join last;
-    `, { allowCache: false, settings: { ...SUPER_SHORT_CACHE_SETTINGS, query_cache_nondeterministic_function_handling: 'save' } })
+    `, { allowCache: false, settings: { ...SHORT_CACHE_SETTINGS, query_cache_nondeterministic_function_handling: 'save' } })
 
     total.value = (data.length ? bloggerGameIdArrayToArray([data[0].b1, data[0].b2, data[0].b3, data[0].b4]) : [0, 0, 0, 0])
       .map(v => v ?? 0)
