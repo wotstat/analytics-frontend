@@ -211,7 +211,7 @@ const delta = computed(() => {
     top: calc(var(--header-height) - 10px);
     display: flex;
     padding: 0 15px;
-    z-index: 1000;
+    z-index: 10;
     margin-top: -130px;
     margin-bottom: 110px;
     gap: 1rem;
