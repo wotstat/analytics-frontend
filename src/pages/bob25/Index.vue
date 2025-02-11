@@ -10,7 +10,7 @@
       <Blogger blogger="lebwa" />
     </div>
 
-    <div class="sub-header" ref="subHeader" :class="{ 'hidden': !shouldDisplaySubHeader }">
+    <div class="sub-header" ref="subHeader" :class="{ 'visible': shouldDisplaySubHeader }">
       <BloggerName :blogger="'nearyou'" />
       <BloggerName :blogger="'jove'" />
       <BloggerName :blogger="'yusha'" />
@@ -216,10 +216,11 @@ const delta = computed(() => {
     margin-bottom: 110px;
     gap: 1rem;
 
+    opacity: 0;
     transition: opacity 0.1s;
 
-    &.hidden {
-      opacity: 0;
+    &.visible {
+      opacity: 1;
     }
 
     h2 {
@@ -229,9 +230,12 @@ const delta = computed(() => {
       font-size: 23px;
     }
 
+    @media screen and (max-width: 990px) {
+      margin-top: -13.5vw;
+      margin-bottom: calc(13.5vw - 20px);
+    }
 
     @media screen and (max-width: 900px) {
-
       h2 {
         font-size: 20px;
       }

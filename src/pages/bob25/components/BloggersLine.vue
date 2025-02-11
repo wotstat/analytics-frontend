@@ -123,7 +123,7 @@ const showChart = defineModel('showChart');
   }
 
   @media screen and (max-width: 500px) {
-    font-size: 14px;
+    font-size: 16px;
 
     .subline {
       font-size: 11px;
