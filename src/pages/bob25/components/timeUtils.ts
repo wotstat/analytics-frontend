@@ -7,7 +7,7 @@ export function getTodayBorders(): [number, number] {
   date.setUTCHours(0, 0, 0, 0);
   const start = Math.floor(date.getTime() / 1000) - 3 * HOUR;
   const end = start + 24 * HOUR;
-  return [start + 9 * HOUR, end + HOUR];
+  return [start + 9 * HOUR, end + HOUR * 2];
 }
 
 export function getYesterdayBorders(): [number, number] {
@@ -16,7 +16,7 @@ export function getYesterdayBorders(): [number, number] {
   date.setUTCHours(0, 0, 0, 0);
   const start = Math.floor(date.getTime() / 1000) - 3 * HOUR;
   const end = start + 24 * HOUR;
-  return [start + 9 * HOUR - 24 * HOUR, end + HOUR - 24 * HOUR + 1];
+  return [start + 9 * HOUR - 24 * HOUR, end + HOUR - 24 * HOUR + HOUR];
 }
 
 export function getLastHourBorders(interval: number): [number, number] {
