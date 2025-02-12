@@ -134,7 +134,7 @@ function interpolateSteppedData(data: (number | null)[]): (number | null)[] {
   data.forEach((d, i) => {
     if (d === null) return;
     // Only push if this is the first number or it differs from the previous key point.
-    if (keyPoints.length === 0 || keyPoints[keyPoints.length - 1].value !== d) {
+    if (keyPoints.length === 0 || keyPoints[keyPoints.length - 1].value !== d || i - keyPoints[keyPoints.length - 1].index > 3) {
       keyPoints.push({ index: i, value: d });
     }
   });
