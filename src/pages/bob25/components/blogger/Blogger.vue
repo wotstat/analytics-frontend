@@ -36,7 +36,6 @@ const targetUrl = computed(() => {
 .blogger {
   position: relative;
   z-index: -1;
-  margin-bottom: -2%;
 
   img {
     width: 100%;
@@ -45,13 +44,15 @@ const targetUrl = computed(() => {
     object-fit: contain;
     pointer-events: none;
     user-select: none;
+    display: block;
 
-    mask-image: linear-gradient(rgba(0, 0, 0, 1) 40%, rgba(0, 0, 0, 0) 90%);
+    mask-image: linear-gradient(rgba(0, 0, 0, 1) 60%, rgba(0, 0, 0, 0) 98%);
+    transform: translateY(2%);
   }
 
   h2 {
     position: absolute;
-    bottom: 33%;
+    bottom: 30%;
     font-weight: bold;
     text-align: center;
     width: 100%;
@@ -64,8 +65,8 @@ const targetUrl = computed(() => {
     }
   }
 
-  &.yusha h2 {
-    transform: translateX(5%);
+  &.yusha img {
+    transform: translate(-5%, 2%);
   }
 }
 </style>

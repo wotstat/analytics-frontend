@@ -17,9 +17,9 @@
       <BloggerName :blogger="'lebwa'" />
     </div>
 
-    <!-- <div class="skills-header">
+    <div class="skills-header">
       <Skills v-for="skill in skills" :skills="skill" />
-    </div> -->
+    </div>
 
     <div class="lines">
       <InstallMod />
@@ -195,8 +195,6 @@ const totalWinrate = useTotalWinrate()
 const winrateChart = useWinrateChart(showWinrateChart)
 const skills = useSkillsHistory()
 
-watchEffect(() => console.log(skills.value))
-
 
 const delta = computed(() => {
   const s = totalScore.value
@@ -231,8 +229,8 @@ const delta = computed(() => {
     display: flex;
     padding: 0 15px;
     z-index: 10;
-    margin-top: -145px;
-    margin-bottom: 120px;
+    margin-top: -162px;
+    margin-bottom: 20px;
     gap: 1rem;
 
     opacity: 0;
@@ -247,14 +245,12 @@ const delta = computed(() => {
       flex: 1;
       text-align: center;
       font-size: 23px;
-    }
-
-    @media screen and (max-width: 990px) {
-      margin-top: -15.8vw;
-      margin-bottom: calc(15.8vw - 20px);
+      line-height: 1;
     }
 
     @media screen and (max-width: 900px) {
+      margin-top: calc((100vw + 30px) * -0.15 - 20px);
+
       h2 {
         font-size: 20px;
       }
@@ -270,7 +266,15 @@ const delta = computed(() => {
   .skills-header {
     display: flex;
     gap: 10px;
-    margin-top: -100px;
+    margin-bottom: 30px;
+
+    @media screen and (max-width: 900px) {
+      margin-bottom: calc((100vw + 30px) * 0.15 - 110px);
+    }
+
+    @media screen and (max-width: 550px) {
+      visibility: hidden;
+    }
 
     div {
       flex: 1;
@@ -332,7 +336,7 @@ h1 {
   justify-content: space-around;
   max-width: 100%;
   max-height: 400px;
-  padding: 0 15px;
+  margin-bottom: 15px;
 }
 
 .lines {
