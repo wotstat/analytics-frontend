@@ -5,11 +5,17 @@ import { objectEntries, useDebounceFn, useIntervalFn, useLocalStorage } from "@v
 import { getLast24HourBorders, getLastHourBorders, getTodayBorders, getYesterdayBorders } from "./timeUtils";
 
 export const periodVariants = [
-  { value: 'all', label: 'Всё время' },
   { value: 'today', label: 'Сегодня' },
   { value: 'yesterday', label: 'Вчера' },
   { value: 'lastHour', label: 'Прошлый час' },
   { value: 'last24', label: 'Прошлые 24ч' },
+  { value: 'all', label: 'Всё время' },
+  { value: 'day1', label: 'День 1' },
+  { value: 'day2', label: 'День 2' },
+  { value: 'day3', label: 'День 3' },
+  { value: 'day4', label: 'День 4' },
+  { value: 'day5', label: 'День 5' },
+  { value: 'day6', label: 'День 6' },
 ] as const
 
 export const stepVariants = [
@@ -34,12 +40,22 @@ const stepToInterval = {
   'day': 60 * 60 * 24,
 }
 
+const DAY = 60 * 60 * 24
+const PLAY = 60 * 60 * 18
+const START = 1738908000 - 60 * 60
 const periodToInterval = {
-  'all': () => [1738875600, 1739736000],
+  'all': () => [START, 1739736000],
   'today': () => getTodayBorders(),
   'yesterday': () => getYesterdayBorders(),
   'lastHour': () => getLastHourBorders(stepToInterval[step.value]),
   'last24': () => getLast24HourBorders(stepToInterval[step.value]),
+  'day1': () => [START, START + PLAY],
+  'day2': () => [START + DAY, START + DAY + PLAY],
+  'day3': () => [START + DAY * 2, START + DAY * 2 + PLAY],
+  'day4': () => [START + DAY * 3, START + DAY * 3 + PLAY],
+  'day5': () => [START + DAY * 4, START + DAY * 4 + PLAY],
+  'day6': () => [START + DAY * 5, START + DAY * 5 + PLAY],
+
 }
 
 

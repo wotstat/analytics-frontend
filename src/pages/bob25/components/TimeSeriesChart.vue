@@ -34,6 +34,16 @@ const periodToStep = {
   'yesterday': ['min1', 'min3', 'min10', 'min30', 'hour1'],
   'lastHour': ['sec5', 'sec10', 'min1', 'min3', 'min10', 'min30'],
   'last24': ['min1', 'min3', 'min10', 'min30', 'hour1'],
+  'day1': ['min1', 'min3', 'min10', 'min30', 'hour1'],
+  'day2': ['min1', 'min3', 'min10', 'min30', 'hour1'],
+  'day3': ['min1', 'min3', 'min10', 'min30', 'hour1'],
+  'day4': ['min1', 'min3', 'min10', 'min30', 'hour1'],
+  'day5': ['min1', 'min3', 'min10', 'min30', 'hour1'],
+  'day6': ['min1', 'min3', 'min10', 'min30', 'hour1'],
+  'day7': ['min1', 'min3', 'min10', 'min30', 'hour1'],
+  'day8': ['min1', 'min3', 'min10', 'min30', 'hour1'],
+  'day9': ['min1', 'min3', 'min10', 'min30', 'hour1'],
+  'day10': ['min1', 'min3', 'min10', 'min30', 'hour1'],
 }
 
 const defaultValues = {
@@ -42,6 +52,16 @@ const defaultValues = {
   'yesterday': 'min1',
   'lastHour': 'sec10',
   'last24': 'min1',
+  'day1': 'min1',
+  'day2': 'min1',
+  'day3': 'min1',
+  'day4': 'min1',
+  'day5': 'min1',
+  'day6': 'min1',
+  'day7': 'min1',
+  'day8': 'min1',
+  'day9': 'min1',
+  'day10': 'min1',
 } as const
 
 
