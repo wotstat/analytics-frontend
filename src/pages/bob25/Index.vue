@@ -17,6 +17,10 @@
       <BloggerName :blogger="'lebwa'" />
     </div>
 
+    <!-- <div class="skills-header">
+      <Skills v-for="skill in skills" :skills="skill" />
+    </div> -->
+
     <div class="lines">
       <InstallMod />
       <BloggersLine title="Всего игроков" :values="totalPlayers" withPercent
@@ -118,7 +122,7 @@ import BloggersLine from "./components/BloggersLine.vue";
 import { useElementBounding, useLocalStorage } from "@vueuse/core";
 import TopTanks from "./components/TopTanks.vue";
 import TimeSeriesChart from "./components/TimeSeriesChart.vue";
-import { period, step, useAvgBattleDuration, useAvgBattleDurationChart, useHourTotalScoreDelta, usePopularTanks, useScoredTanks, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart, useTotalWinrate, useWinrateChart, useYesterdayTotalScoreDelta } from "./components/queryLoader";
+import { period, step, useAvgBattleDuration, useAvgBattleDurationChart, useHourTotalScoreDelta, usePopularTanks, useScoredTanks, useSkillsHistory, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart, useTotalWinrate, useWinrateChart, useYesterdayTotalScoreDelta } from "./components/queryLoader";
 import ServerStatusWrapper from "@/components/ServerStatusWrapper.vue";
 import { timeProcessor } from "@/utils";
 import InstallMod from "./components/InstallMod.vue";
@@ -128,6 +132,8 @@ import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditi
 import { displayVariant, preferredLogProcessor } from "./store";
 import { useMeta } from "@/composition/useMeta";
 import TweenValue from "@/components/tween/TweenValue.vue";
+import Skills from "./components/skills/Skills.vue";
+
 
 useMeta({
   title: 'Статистика Битва Блогеров 2025 ',
@@ -187,6 +193,9 @@ const popularTanks = usePopularTanks()
 const scoredTanks = useScoredTanks()
 const totalWinrate = useTotalWinrate()
 const winrateChart = useWinrateChart(showWinrateChart)
+const skills = useSkillsHistory()
+
+watchEffect(() => console.log(skills.value))
 
 
 const delta = computed(() => {
@@ -222,8 +231,8 @@ const delta = computed(() => {
     display: flex;
     padding: 0 15px;
     z-index: 10;
-    margin-top: -130px;
-    margin-bottom: 110px;
+    margin-top: -145px;
+    margin-bottom: 120px;
     gap: 1rem;
 
     opacity: 0;
@@ -241,8 +250,8 @@ const delta = computed(() => {
     }
 
     @media screen and (max-width: 990px) {
-      margin-top: -13.5vw;
-      margin-bottom: calc(13.5vw - 20px);
+      margin-top: -15.8vw;
+      margin-bottom: calc(15.8vw - 20px);
     }
 
     @media screen and (max-width: 900px) {
@@ -255,6 +264,16 @@ const delta = computed(() => {
       h2 {
         font-size: 16px;
       }
+    }
+  }
+
+  .skills-header {
+    display: flex;
+    gap: 10px;
+    margin-top: -100px;
+
+    div {
+      flex: 1;
     }
   }
 }

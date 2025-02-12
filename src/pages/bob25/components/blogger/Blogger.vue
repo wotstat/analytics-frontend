@@ -10,10 +10,10 @@
 <script setup lang="ts">
 
 import { computed } from 'vue';
-import Jove from './jove.png'
-import Lebwa from './lebwa.png'
-import Nearyou from './nearyou.png'
-import Yusha from './yusha.png'
+import Jove from './jove.webp'
+import Lebwa from './lebwa.webp'
+import Nearyou from './nearyou.webp'
+import Yusha from './yusha.webp'
 import BloggerName from './BloggerName.vue';
 
 
@@ -51,7 +51,7 @@ const targetUrl = computed(() => {
 
   h2 {
     position: absolute;
-    bottom: 30%;
+    bottom: 33%;
     font-weight: bold;
     text-align: center;
     width: 100%;
