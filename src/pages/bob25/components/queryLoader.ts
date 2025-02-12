@@ -412,12 +412,12 @@ export function useSkillsHistory() {
   }[][]>([[], [], [], []])
 
   async function update() {
-    const { data } = await query<{ bloggerId: number, skill: string, start: string, end: string }>(`
-      select * from BOB25.Skills order by bloggerId, start;
+    const { data } = await query<{ bloggerId: number, skill: string, start: string, end: string, startD: number }>(`
+      select *, toUnixTimestamp(start) as startD from BOB25.Skills order by bloggerId, start;
       `, { allowCache: false, settings: SHORT_CACHE_SETTINGS })
 
-    const byBlogger = Object.groupBy(data.map(t => ({ ...t, startD: new Date(t.start).getTime() / 1000, endD: new Date(t.end).getTime() / 1000 })),
-      t => bloggerNameByGameId(t.bloggerId)) as Record<string, { skill: string, startD: number, endD: number }[]>
+    const byBlogger = Object.groupBy(data,
+      t => bloggerNameByGameId(t.bloggerId)) as Record<string, { skill: string, startD: number }[]>
 
     const processed = Object.fromEntries(Object.entries(byBlogger).map(([name, data]) => {
       let skills = []
@@ -444,6 +444,8 @@ export function useSkillsHistory() {
 
   return total
 }
+
+useSkillsHistory()
 
 // export function useCurrentSkills() {
 
