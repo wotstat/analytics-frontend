@@ -48,6 +48,13 @@
 
 
       <BloggersLine title="Прирост очков за 60 минут" :values="hourTotalScoreDelta" with-percent />
+      <BloggersLine title="Заработано очков сегодня" :values="todayScoreDelta" with-percent>
+        <template #subline="{ item, processor }">
+          <p class="subline">7% =
+            <TweenValue :value="Math.round(item * 0.07)" :processor="processor" space />
+          </p>
+        </template>
+      </BloggersLine>
       <BloggersLine title="Заработано очков вчера" :values="yesterdayTotalScoreDelta" with-percent>
         <template #subline="{ item, processor }">
           <p class="subline">7% =
@@ -122,7 +129,7 @@ import BloggersLine from "./components/BloggersLine.vue";
 import { useElementBounding, useLocalStorage } from "@vueuse/core";
 import TopTanks from "./components/TopTanks.vue";
 import TimeSeriesChart from "./components/TimeSeriesChart.vue";
-import { period, step, useAvgBattleDuration, useAvgBattleDurationChart, useHourTotalScoreDelta, usePopularTanks, useScoredTanks, useSkillsHistory, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart, useTotalWinrate, useWinrateChart, useYesterdayTotalScoreDelta } from "./components/queryLoader";
+import { period, step, useAvgBattleDuration, useAvgBattleDurationChart, useHourTotalScoreDelta, usePopularTanks, useScoredTanks, useSkillsHistory, useTodayTotalScoreDelta, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart, useTotalWinrate, useWinrateChart, useYesterdayTotalScoreDelta } from "./components/queryLoader";
 import ServerStatusWrapper from "@/components/ServerStatusWrapper.vue";
 import { timeProcessor } from "@/utils";
 import InstallMod from "./components/InstallMod.vue";
@@ -187,6 +194,7 @@ const totalScore = useTotalScore()
 const totalScoreChart = useTotalScoreChart(showTotalScoreChart)
 const hourTotalScoreDelta = useHourTotalScoreDelta()
 const yesterdayTotalScoreDelta = useYesterdayTotalScoreDelta()
+const todayScoreDelta = useTodayTotalScoreDelta()
 const avgDuration = useAvgBattleDuration()
 const avgBattleDurationChart = useAvgBattleDurationChart(showDurationChart)
 const popularTanks = usePopularTanks()
