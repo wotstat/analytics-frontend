@@ -123,11 +123,10 @@ import ServerStatusWrapper from "@/components/ServerStatusWrapper.vue";
 import { timeProcessor } from "@/utils";
 import InstallMod from "./components/InstallMod.vue";
 import BloggerName from "./components/blogger/BloggerName.vue";
-import { computed, ref, watchEffect } from "vue";
+import { computed, onMounted, ref, watchEffect } from "vue";
 import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight';
 import { displayVariant, preferredLogProcessor } from "./store";
 import { useMeta } from "@/composition/useMeta";
-import { spaceProcessor } from "@/composition/processors/useSpaceProcessor";
 import TweenValue from "@/components/tween/TweenValue.vue";
 
 useMeta({
@@ -148,9 +147,24 @@ const shouldInterpolateScore = computed(() => displayVariant.value === 'total' &
 
 
 const subHeader = ref<HTMLElement | null>(null);
-const { top: subHeaderTop, y: menuY, height: menuH } = useElementBounding(subHeader)
+const loaded = ref(false)
+const { top: subHeaderTop, y: menuY, height: menuH, update } = useElementBounding(subHeader)
 const headerOffset = computed(() => headerHeight.value)
-const shouldDisplaySubHeader = computed(() => subHeaderTop.value < headerOffset.value)
+const shouldDisplaySubHeader = computed(() => loaded.value && subHeaderTop.value < headerOffset.value)
+
+onMounted(async () => {
+
+  async function awaitLoad() {
+    for (let i = 0; i < 10; i++) {
+      await new Promise(r => setTimeout(r, 1))
+      if (subHeaderTop.value > 80) return
+    }
+  }
+
+  await awaitLoad()
+  loaded.value = true
+})
+
 
 const { additionalHeaderHeight } = useAdditionalHeaderHeight();
 watchEffect(() => {
