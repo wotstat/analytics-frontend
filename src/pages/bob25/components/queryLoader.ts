@@ -405,6 +405,46 @@ export function useScoredTanks() {
   })
 }
 
+export function useSkillsHistory() {
+  const total = shallowRef<{
+    skill: string;
+    start: number;
+  }[][]>([[], [], [], []])
+
+  async function update() {
+    const { data } = await query<{ bloggerId: number, skill: string, start: string, end: string }>(`
+      select * from BOB25.Skills order by bloggerId, start;
+      `, { allowCache: false, settings: SHORT_CACHE_SETTINGS })
+
+    const byBlogger = Object.groupBy(data.map(t => ({ ...t, startD: new Date(t.start).getTime() / 1000, endD: new Date(t.end).getTime() / 1000 })),
+      t => bloggerNameByGameId(t.bloggerId)) as Record<string, { skill: string, startD: number, endD: number }[]>
+
+    const processed = Object.fromEntries(Object.entries(byBlogger).map(([name, data]) => {
+      let skills = []
+      let currentSkill = { skill: 'default', start: 0 }
+      for (let i = 0; i < data.length; i++) {
+        const t = data[i];
+        if (t.startD - currentSkill.start < 60 * 60 || t.skill == 'default') continue;
+        skills.push(currentSkill)
+        currentSkill = { skill: t.skill, start: t.startD }
+      }
+      skills.push(currentSkill)
+
+      return [name, skills]
+    }))
+
+    const result = bloggerRecordToArray(processed)
+      .map(blog => blog?.map(t => ({ skill: t.skill, start: t.start })))
+
+    total.value = result
+  }
+
+
+  useIntervalFn(() => update(), 10000, { immediateCallback: true })
+
+  return total
+}
+
 // export function useCurrentSkills() {
 
 //   const skills = shallowRef<({ skill: string, begin: Date } | null)[]>([null, null, null, null])

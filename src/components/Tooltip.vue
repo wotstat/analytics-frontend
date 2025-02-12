@@ -86,9 +86,11 @@ const slot = useSlots()
       background-color: #2a2a2a;
       border-radius: 8px;
       padding: 8px;
+      width: max-content;
 
       p {
-        line-height: 1;
+        line-height: 1.1;
+        text-align: center;
       }
     }
   }
