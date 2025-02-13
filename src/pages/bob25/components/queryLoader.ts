@@ -563,7 +563,6 @@ export function useSkillsHistory() {
     const result = bloggerRecordToArray(processed)
       .map(blog => blog?.map(t => ({ skill: t.skill, start: t.start })))
 
-    console.log(result);
     total.value = result
   }
 

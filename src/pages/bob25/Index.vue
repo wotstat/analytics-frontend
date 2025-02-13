@@ -31,7 +31,7 @@
 
       <BloggersLine title="Всего боёв" :values="totalBattles" withPercent v-model:show-chart="showTotalBattlesChart" />
       <TimeSeriesChart v-if="showTotalBattlesChart" :labels="totalBattlesChart.labels" :data="totalBattlesChart.data"
-        showDisplayVariant />
+        showDisplayVariant smooth-if-need />
       <p class="footnote small">В том числе бои сыгранные <b>без мода</b>*</p>
 
       <BloggersLine title="Всего очков" :values="totalScore" withPercent collapse-to-log
@@ -83,7 +83,7 @@
 
       <template v-if="showWinrateChart">
         <TimeSeriesChart :labels="winrateChart.labels" :data="winrateChart.data"
-          :processor="t => `${(t * 100).toFixed(2)}%`" :y-values="[0.35, 0.5, 0.65]" y-is-percent />
+          :processor="t => `${(t * 100).toFixed(2)}%`" :y-values="[0.35, 0.5, 0.65]" y-is-percent smooth-if-need />
         <p class="footnote">*Рекомендуется шаг не менее 10 минут, иначе график шумный</p>
       </template>
 
