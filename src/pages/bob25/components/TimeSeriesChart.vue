@@ -181,6 +181,29 @@ function interpolateSteppedData(data: (number | null)[]): (number | null)[] {
   return result;
 }
 
+function movingAvg(values: (number | null)[], window: number) {
+  const result = []
+  for (let i = 0; i < values.length; i++) {
+    if (values[i] === null) {
+      result.push(null)
+      continue
+    }
+
+    let sum = 0
+    let count = 0
+    for (let j = i - window; j <= i + window; j++) {
+      if (j < 0 || j >= values.length) continue
+      if (values[j] === null) continue
+      sum += values[j]!
+      count++
+    }
+
+    result.push(sum / count)
+  }
+
+  return result
+}
+
 const chartData = computed<ChartProps<'bar' | 'line'>['data']>(() => {
   const datasets: ChartProps<'bar' | 'line'>['data']['datasets'] =
     props.data.map((data, i) => {
