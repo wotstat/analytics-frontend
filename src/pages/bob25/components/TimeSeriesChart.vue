@@ -11,6 +11,12 @@
         <DropDown v-if="showDisplayVariant" :variants="displayVariants" v-model="displayVariant" />
       </div>
     </div>
+    <div class="flex slider" v-if="smoothIsNeeded">
+      <Tooltip text="Скользящее среднее">
+        <p>Сглаживание</p>
+      </Tooltip>
+      <input class="flex-1" type="range" :min="0" :max="20" :step="1" v-model="smooth">
+    </div>
   </div>
 </template>
 
@@ -26,6 +32,7 @@ import { useLocalStorage, useMediaQuery } from "@vueuse/core";
 import { stepVariants, periodVariants, period, step } from "./queryLoader";
 import { displayVariant, displayVariants, preferredLogProcessor } from "../store";
 import { useLogProcessor } from "@/composition/usePercentProcessor";
+import Tooltip from "@/components/Tooltip.vue";
 
 
 const periodToStep = {
@@ -67,6 +74,8 @@ const defaultValues = {
 
 const pad = (num: number) => num.toString().padStart(2, '0')
 const enabledBloggers = useLocalStorage('bob25-enabled-blogers', bloggerNamesArray.map(() => true))
+const smooth = useLocalStorage('bob25-chart-smooth', 0)
+const smoothIsNeeded = computed(() => props.smoothIfNeed && props.labels.length > 300)
 
 function formatDateFull(dt: number) {
   const date = new Date(dt * 1000);
@@ -125,6 +134,7 @@ const props = defineProps<{
   yIsPercent?: boolean,
   hightFilter?: boolean,
   shouldSteppedInterpolation?: boolean,
+  smoothIfNeed?: boolean,
 }>()
 
 function interpolateSteppedData(data: (number | null)[]): (number | null)[] {
@@ -181,6 +191,36 @@ function interpolateSteppedData(data: (number | null)[]): (number | null)[] {
   return result;
 }
 
+function interpolateNullValues(values: (number | null)[], maxStep: number = 0): (number | null)[] {
+  const result = []
+  for (let i = 0; i < values.length; i++) {
+    if (values[i] == null) {
+      let j = i
+      while (values[j] == null && j < values.length && (j - i) < maxStep) j++
+      const start = values[i - 1]
+      const end = values[j]
+
+      if (start == null || end == null) {
+        for (let k = i; k <= j; k++) {
+          result[k] = null
+        }
+      } else {
+        const delta = end - start
+        const isInt = Number.isInteger(start) && Number.isInteger(end)
+        for (let k = i; k <= j; k++) {
+          result[k] = start + delta * (k - i) / (j - i)
+          if (isInt) result[k] = Math.round(result[k]!)
+        }
+      }
+
+      i = j
+    } else {
+      result[i] = values[i]!
+    }
+  }
+  return result
+}
+
 function movingAvg(values: (number | null)[], window: number) {
   const result = []
   for (let i = 0; i < values.length; i++) {
@@ -198,7 +238,8 @@ function movingAvg(values: (number | null)[], window: number) {
       count++
     }
 
-    result.push(sum / count)
+    const isInt = Number.isInteger(sum)
+    result.push(isInt ? Math.round(sum / count) : sum / count)
   }
 
   return result
@@ -254,7 +295,7 @@ const chartData = computed<ChartProps<'bar' | 'line'>['data']>(() => {
       return {
         data: props.shouldSteppedInterpolation ?
           interpolateSteppedData(processed).map(t => t ? Math.round(t) : null) :
-          processed,
+          !smoothIsNeeded.value || smooth.value == 0 ? processed : movingAvg(interpolateNullValues(processed, Math.round(processed.length * 0.01)), Math.round(smooth.value)),
         label: bloggerNamesArray[i],
         backgroundColor: bloggerColors[i][0],
         borderColor: bloggerColors[i][1],
@@ -400,6 +441,17 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
     @media screen and (max-width: 900px) {
       margin-top: 25px;
     }
+  }
+}
+
+.slider {
+  margin-top: 10px;
+  align-items: center;
+  gap: 10px;
+
+  input {
+    margin: 0;
+    margin-bottom: -2px;
   }
 }
 </style>
