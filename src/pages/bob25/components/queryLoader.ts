@@ -194,7 +194,8 @@ export function useTotalBattlesChart(visible: Ref<boolean>) {
         sum(n1) as n1, sum(n2) as n2, sum(n3) as n3, sum(n4) as n4,
         n1 + n2 + n3 + n4 as nRep,
         if(n1 = 0, 0, 1 - power(1 - (((n2 / n1) / 6.5) / (1 + ((n2 / n1) / 6.5))) , 14)) as probObserved,
-        if(probObserved = 0, 0, nRep / probObserved) as total
+        if(probObserved = 0, 0, nRep / probObserved) as total,
+        n2 as total2
       select
         bloggerId,
         toUnixTimestamp(toStartOfInterval(dateTime, interval ${step} second)) as t,
@@ -202,6 +203,7 @@ export function useTotalBattlesChart(visible: Ref<boolean>) {
       from BOB25.ModdedPlayerBattles
       where dateTime between ${from} and ${to + step}
       group by bloggerId, t
+      having probObserved > 0.1
       order by bloggerId, t
     `, visible)
 
@@ -545,7 +547,8 @@ export function useSkillsHistory() {
 
       for (let i = 0; i < data.length; i++) {
         const t = data[i];
-        if (t.startD - currentSkill.start < 60 * 60 || t.skill == 'default') continue;
+        // TODO: await 1 hour, ddos break deltas
+        if (t.startD - currentSkill.start < 60 * 40 || t.skill == 'default') continue;
         skills.push(currentSkill)
         if (currentSkill.end - currentSkill.start > 60 * 60 * 1.2)
           skills.push({ skill: currentSkill.skill, start: currentSkill.end - 60 * 60, end: currentSkill.end })
@@ -560,6 +563,7 @@ export function useSkillsHistory() {
     const result = bloggerRecordToArray(processed)
       .map(blog => blog?.map(t => ({ skill: t.skill, start: t.start })))
 
+    console.log(result);
     total.value = result
   }
 
