@@ -209,9 +209,15 @@ export function useTotalBattlesChart(visible: Ref<boolean>) {
     const last3Min = Date.now() / 1000 - 5 * 60
     const lastIndex = data.value.labels.findLastIndex(t => t < last3Min)
 
+    const labels = data.value.labels
+
     return {
-      data: data.value.data.map(d => d.map((t, i) => i > lastIndex ? null : t)),
-      labels: data.value.labels
+      data: data.value.data.map(d => d.map((t, i) => {
+        if (i > lastIndex) return null
+        if (labels[i] > 1739469480 && labels[i] < 1739470860) return null
+        return t
+      })),
+      labels: labels
     }
   })
 

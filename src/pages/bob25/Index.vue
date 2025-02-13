@@ -190,9 +190,10 @@ const shouldDisplaySubHeader = computed(() => loaded.value && subHeaderTop.value
 onMounted(async () => {
 
   async function awaitLoad() {
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 200; i++) {
       await new Promise(r => setTimeout(r, 1))
       if (subHeaderTop.value > 80) return
+      update()
     }
   }
 
@@ -207,7 +208,6 @@ watchEffect(() => {
   if (subHeaderTop.value > headerOffset.value) return additionalHeaderHeight.value = 0;
   additionalHeaderHeight.value = menuH.value - 5
 })
-
 
 
 const totalPlayers = useTotalPlayers()
