@@ -93,7 +93,7 @@ export function useBloggerChart(q: (from: number, to: number, step: number) => s
     if (currentRaceId != raceId) return
 
     target.value = bloggerTimeSeriesProcess(data, {
-      from: from,
+      from: period.value == 'all' ? data[0].t : from,
       to: to,
       step: stepToInterval[step.value],
     })

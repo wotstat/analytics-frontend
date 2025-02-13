@@ -24,7 +24,7 @@
 <script setup lang="ts">
 
 import { ShadowLine } from "@/components/widgets/charts/ShadowLineController";
-import { computed, ref, watch } from "vue";
+import { computed, watch } from "vue";
 import { ChartProps } from "vue-chartjs";
 import { bloggerNamesArray } from "./bloggerNames";
 import DropDown from "@/components/dropdown/DropDown.vue";
