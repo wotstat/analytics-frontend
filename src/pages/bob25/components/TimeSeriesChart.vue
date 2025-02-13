@@ -115,7 +115,7 @@ const bloggerColors = [
 ]
 
 const props = defineProps<{
-  data: number[][],
+  data: (number | null)[][],
   labels: number[],
   showDisplayVariant?: boolean,
   processor?: (v: number) => string,
@@ -193,7 +193,7 @@ const chartData = computed<ChartProps<'bar' | 'line'>['data']>(() => {
         processed = data
       } else {
         processed = data
-          .map((v, i) => i == 0 || !v ? null : data[i] - data[i - 1])
+          .map((v, i) => i == 0 || !v || !data[i] || !data[i - 1] ? null : data[i] - data[i - 1]!)
           .map(t => {
             if (lastNonZero == t) return lastNonZero
             if (t) lastNonZero = t

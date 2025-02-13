@@ -97,7 +97,7 @@ const activeSkill = computed(() => {
 const todayHistory = computed(() => {
   if (!withTime.value.length) return []
   return withTime.value.slice(activeSkill.value ? 1 : 0).slice(0, 8)
-    .filter(skill => skill.start + 60 * 60 * 24 > new Date().setHours(1, 0, 0, 0) / 1000)
+    .filter(skill => skill.start > new Date().setHours(1, 0, 0, 0) / 1000)
 })
 </script>
 
