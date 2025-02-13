@@ -62,48 +62,6 @@ const periodToInterval = {
 export const period = useLocalStorage<typeof periodVariants[number]['value']>('bob25-selected-chart-period', 'today')
 export const step = useLocalStorage<typeof stepVariants[number]['value']>('bob25-selected-chart-step', 'min10')
 
-export function useTotalPlayers() {
-  const total = shallowRef([0, 0, 0, 0])
-
-  async function update() {
-    const { data } = await query<{ bloggerId: number, count: number }>(`
-      select bloggerId, argMax(count, dateTime) as count
-      from BOB25.TotalPlayers
-      group by bloggerId
-    `, { allowCache: false, settings: SHORT_CACHE_SETTINGS })
-
-    const byBlogger = Object.groupBy(data, t => bloggerNameByGameId(t.bloggerId)) as Record<string, { count: number }[]>
-    const result = bloggerRecordToArray(byBlogger).flat().map(t => t?.count ?? 0)
-
-    total.value = result
-  }
-
-  useIntervalFn(() => update(), 5000, { immediateCallback: true })
-
-  return total
-}
-
-export function useTotalWinrate() {
-  const total = shallowRef([0, 0, 0, 0])
-
-  async function update() {
-    const { data } = await query<{ bloggerId: number, winrate: number }>(`
-      select bloggerId, countMerge(wins) / countMerge(battles) as winrate
-      from BOB25.Battles
-      group by bloggerId
-    `, { allowCache: false, settings: CACHE_SETTINGS })
-
-    const byBlogger = Object.groupBy(data, t => bloggerNameByGameId(t.bloggerId)) as Record<string, { winrate: number }[]>
-    const result = bloggerRecordToArray(byBlogger).flat().map(t => t?.winrate ?? 0)
-
-    total.value = result
-  }
-
-  useIntervalFn(() => update(), 60000, { immediateCallback: true })
-
-  return total
-}
-
 export function useBloggerChart(q: (from: number, to: number, step: number) => string, visible: Ref<boolean>) {
   const target = shallowRef<{
     data: number[][],
@@ -153,6 +111,95 @@ export function useBloggerChart(q: (from: number, to: number, step: number) => s
   })
 
   return target
+}
+
+export function useTotalPlayers() {
+  const total = shallowRef([0, 0, 0, 0])
+
+  async function update() {
+    const { data } = await query<{ bloggerId: number, count: number }>(`
+      select bloggerId, argMax(count, dateTime) as count
+      from BOB25.TotalPlayers
+      group by bloggerId
+    `, { allowCache: false, settings: SHORT_CACHE_SETTINGS })
+
+    const byBlogger = Object.groupBy(data, t => bloggerNameByGameId(t.bloggerId)) as Record<string, { count: number }[]>
+    const result = bloggerRecordToArray(byBlogger).flat().map(t => t?.count ?? 0)
+
+    total.value = result
+  }
+
+  useIntervalFn(() => update(), 5000, { immediateCallback: true })
+
+  return total
+}
+
+export function useTotalWinrate() {
+  const total = shallowRef([0, 0, 0, 0])
+
+  async function update() {
+    const { data } = await query<{ bloggerId: number, winrate: number }>(`
+      select bloggerId, countMerge(wins) / countMerge(battles) as winrate
+      from BOB25.Battles
+      group by bloggerId
+    `, { allowCache: false, settings: CACHE_SETTINGS })
+
+    const byBlogger = Object.groupBy(data, t => bloggerNameByGameId(t.bloggerId)) as Record<string, { winrate: number }[]>
+    const result = bloggerRecordToArray(byBlogger).flat().map(t => t?.winrate ?? 0)
+
+    total.value = result
+  }
+
+  useIntervalFn(() => update(), 60000, { immediateCallback: true })
+
+  return total
+}
+
+export function useTotalBattles() {
+  const total = shallowRef([0, 0, 0, 0])
+
+  async function update() {
+    const { data } = await query<{ bloggerId: number, value: number }>(`
+      with
+          countMerge(n1) as n1, countMerge(n2) as n2, countMerge(n3) as n3, countMerge(n4) as n4,
+          n1 + n2 + n3 + n4 as nRep,
+          if(n1 = 0, 0, 1 - power(1 - (((n2 / n1) / 6.5) / (1 + ((n2 / n1) / 6.5))) , 14)) as probObserved,
+          if(probObserved = 0, 0, nRep / probObserved) as total
+      select
+          bloggerId,
+          round(total) as value
+      from BOB25.ModdedPlayerBattles
+      group by bloggerId
+      order by bloggerId;
+    `, { allowCache: false, settings: CACHE_SETTINGS })
+
+    const byBlogger = Object.groupBy(data, t => bloggerNameByGameId(t.bloggerId)) as Record<string, { value: number }[]>
+    const result = bloggerRecordToArray(byBlogger).flat().map(t => t?.value ?? 0)
+
+    total.value = result
+  }
+
+  useIntervalFn(() => update(), 60000, { immediateCallback: true })
+
+  return total
+}
+
+export function useTotalBattlesChart(visible: Ref<boolean>) {
+  return useBloggerChart((from, to, step) => `
+      with
+        countMerge(n1) as n1, countMerge(n2) as n2, countMerge(n3) as n3, countMerge(n4) as n4,
+        n1 + n2 + n3 + n4 as nRep,
+        if(n1 = 0, 0, 1 - power(1 - (((n2 / n1) / 6.5) / (1 + ((n2 / n1) / 6.5))) , 14)) as probObserved,
+        if(probObserved = 0, 0, nRep / probObserved) as total
+      select
+        bloggerId,
+        toUnixTimestamp(toStartOfInterval(dateTime, interval ${step} second)) as t,
+        round(total) as value
+      from BOB25.ModdedPlayerBattles
+      where dateTime between ${from} and ${to + step}
+      group by bloggerId, t
+      order by bloggerId, t
+    `, visible)
 }
 
 export function useTotalPlayersChart(visible: Ref<boolean>) {
