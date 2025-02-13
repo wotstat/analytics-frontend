@@ -28,6 +28,12 @@
       <TimeSeriesChart v-if="showTotalPlayersChart" :labels="totalPlayersChart.labels" :data="totalPlayersChart.data"
         showDisplayVariant />
 
+
+      <BloggersLine title="Всего боёв" :values="totalBattles" withPercent v-model:show-chart="showTotalBattlesChart" />
+      <TimeSeriesChart v-if="showTotalBattlesChart" :labels="totalBattlesChart.labels" :data="totalBattlesChart.data"
+        showDisplayVariant />
+      <p class="footnote small">В том числе бои сыгранные <b>без мода</b>*</p>
+
       <BloggersLine title="Всего очков" :values="totalScore" withPercent collapse-to-log
         v-model:show-chart="showTotalScoreChart" />
       <TimeSeriesChart v-if="showTotalScoreChart" :labels="totalScoreChart.labels" :data="totalScoreChart.data"
@@ -104,11 +110,26 @@
       <p>Если в бою присутствует более одного игрока с модом, бой всё равно засчитывается только один раз.</p>
 
       <br>
-      <h5>Почему нет количества боёв</h5>
-      <p>При используемом подходе сбора данных, только относительные метрики могут быть репрезентативными. Например,
-        количество <b>известных</b> побед относительно количества <b>известных</b> боёв (получается винрейт)</p>
-      <p>Количество боёв это абсолютная величина, и она может зависеть как за счёт бОльшего количества проведённых боёв,
-        так и за счёт числа игроков с установленным модом.</p>
+      <h5>*Оценка количества боёв</h5>
+      <p>
+        На основании количества боёв, в которых присутствует <b>ровно один игрок</b> с модом, и количества боёв, в
+        которых присутствует <b>ровно два игрока</b> с модом, можно оценить количество боёв, где с модом ноль игроков.
+        Бои, в которых присутствовал взвод с модом исключаются.
+        <br>
+        От абсолютных значений отклонение может быть, однако вы
+        можете сравнивать команды друг между другом и отток пользователей со временем.
+        <br>
+        <br>
+        Для тех кому интересно. Формула: <br>
+        <code>t = (n2 / n1) / 6.5</code>
+        <br>
+        <code>k = 1 - pow(1 - (t / (1 + t)), 14)</code>
+        <br>
+        <code>total = (n1 + n2 + n3 + n4) / k</code>
+        <br>
+        Где <code>n1</code> - количество боёв с одним игроком с модом, <code>n2</code> - количество боёв с двумя,
+        <code>6.5</code> – отношение числа сочетаний из <code>14 по 2</code> к числу сочетаний из <code>14 по 1</code>
+      </p>
 
       <hr>
       <div class="flex settings">
@@ -129,7 +150,7 @@ import BloggersLine from "./components/BloggersLine.vue";
 import { useElementBounding, useLocalStorage } from "@vueuse/core";
 import TopTanks from "./components/TopTanks.vue";
 import TimeSeriesChart from "./components/TimeSeriesChart.vue";
-import { period, step, useAvgBattleDuration, useAvgBattleDurationChart, useHourTotalScoreDelta, usePopularTanks, useScoredTanks, useSkillsHistory, useTodayTotalScoreDelta, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart, useTotalWinrate, useWinrateChart, useYesterdayTotalScoreDelta } from "./components/queryLoader";
+import { period, step, useAvgBattleDuration, useAvgBattleDurationChart, useHourTotalScoreDelta, usePopularTanks, useScoredTanks, useSkillsHistory, useTodayTotalScoreDelta, useTotalBattles, useTotalBattlesChart, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart, useTotalWinrate, useWinrateChart, useYesterdayTotalScoreDelta } from "./components/queryLoader";
 import ServerStatusWrapper from "@/components/ServerStatusWrapper.vue";
 import { timeProcessor } from "@/utils";
 import InstallMod from "./components/InstallMod.vue";
@@ -150,6 +171,7 @@ useMeta({
 
 
 const showTotalPlayersChart = useLocalStorage('bob25-show-total-players-chart', false);
+const showTotalBattlesChart = useLocalStorage('bob25-show-total-battles-chart', false);
 const showTotalScoreChart = useLocalStorage('bob25-show-total-score-chart', true);
 const showDurationChart = useLocalStorage('bob25-show-duration-chart', false);
 const showWinrateChart = useLocalStorage('bob25-show-winrate-chart', false);
@@ -190,6 +212,8 @@ watchEffect(() => {
 
 const totalPlayers = useTotalPlayers()
 const totalPlayersChart = useTotalPlayersChart(showTotalPlayersChart)
+const totalBattles = useTotalBattles()
+const totalBattlesChart = useTotalBattlesChart(showTotalBattlesChart)
 const totalScore = useTotalScore()
 const totalScoreChart = useTotalScoreChart(showTotalScoreChart)
 const hourTotalScoreDelta = useHourTotalScoreDelta()
@@ -383,6 +407,14 @@ footer {
 
   input[type="checkbox"] {
     cursor: pointer;
+  }
+
+  code {
+    background: #00000040;
+    border: 1px solid #8c8c8c40;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 0.9em;
   }
 }
 </style>
