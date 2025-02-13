@@ -532,21 +532,25 @@ export function useSkillsHistory() {
   }[][]>([[], [], [], []])
 
   async function update() {
-    const { data } = await query<{ bloggerId: number, skill: string, start: string, end: string, startD: number }>(`
-      select *, toUnixTimestamp(start) as startD from BOB25.Skills order by bloggerId, start;
+    const { data } = await query<{ bloggerId: number, skill: string, start: string, end: string, startD: number, endD: number }>(`
+      select *, toUnixTimestamp(start) as startD, toUnixTimestamp(end) as endD from BOB25.Skills order by bloggerId, start;
       `, { allowCache: false, settings: SHORT_CACHE_SETTINGS })
 
     const byBlogger = Object.groupBy(data,
-      t => bloggerNameByGameId(t.bloggerId)) as Record<string, { skill: string, startD: number }[]>
+      t => bloggerNameByGameId(t.bloggerId)) as Record<string, { skill: string, startD: number, endD: number }[]>
 
     const processed = Object.fromEntries(Object.entries(byBlogger).map(([name, data]) => {
       let skills = []
-      let currentSkill = { skill: 'default', start: 0 }
+      let currentSkill = { skill: 'default', start: 0, end: 0 }
+
       for (let i = 0; i < data.length; i++) {
         const t = data[i];
         if (t.startD - currentSkill.start < 60 * 60 || t.skill == 'default') continue;
         skills.push(currentSkill)
-        currentSkill = { skill: t.skill, start: t.startD }
+        if (currentSkill.end - currentSkill.start > 60 * 60 * 1.2)
+          skills.push({ skill: currentSkill.skill, start: currentSkill.end - 60 * 60, end: currentSkill.end })
+
+        currentSkill = { skill: t.skill, start: t.startD, end: t.endD }
       }
       skills.push(currentSkill)
 
