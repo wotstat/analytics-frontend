@@ -16,6 +16,7 @@ export const periodVariants = [
   { value: 'day4', label: 'День 4' },
   { value: 'day5', label: 'День 5' },
   { value: 'day6', label: 'День 6' },
+  { value: 'day7', label: 'День 7' },
 ] as const
 
 export const stepVariants = [
@@ -55,7 +56,10 @@ const periodToInterval = {
   'day4': () => [START + DAY * 3, START + DAY * 3 + PLAY],
   'day5': () => [START + DAY * 4, START + DAY * 4 + PLAY],
   'day6': () => [START + DAY * 5, START + DAY * 5 + PLAY],
-
+  'day7': () => [START + DAY * 6, START + DAY * 6 + PLAY],
+  'day8': () => [START + DAY * 7, START + DAY * 7 + PLAY],
+  'day9': () => [START + DAY * 8, START + DAY * 8 + PLAY],
+  'day10': () => [START + DAY * 9, START + DAY * 9 + PLAY],
 }
 
 
@@ -161,7 +165,7 @@ export function useTotalBattles() {
   async function update() {
     const { data } = await query<{ bloggerId: number, value: number }>(`
       with
-          countMerge(n1) as n1, countMerge(n2) as n2, countMerge(n3) as n3, countMerge(n4) as n4,
+          sum(n1) as n1, sum(n2) as n2, sum(n3) as n3, sum(n4) as n4,
           n1 + n2 + n3 + n4 as nRep,
           if(n1 = 0, 0, 1 - power(1 - (((n2 / n1) / 6.5) / (1 + ((n2 / n1) / 6.5))) , 14)) as probObserved,
           if(probObserved = 0, 0, nRep / probObserved) as total
@@ -185,9 +189,9 @@ export function useTotalBattles() {
 }
 
 export function useTotalBattlesChart(visible: Ref<boolean>) {
-  return useBloggerChart((from, to, step) => `
+  const data = useBloggerChart((from, to, step) => `
       with
-        countMerge(n1) as n1, countMerge(n2) as n2, countMerge(n3) as n3, countMerge(n4) as n4,
+        sum(n1) as n1, sum(n2) as n2, sum(n3) as n3, sum(n4) as n4,
         n1 + n2 + n3 + n4 as nRep,
         if(n1 = 0, 0, 1 - power(1 - (((n2 / n1) / 6.5) / (1 + ((n2 / n1) / 6.5))) , 14)) as probObserved,
         if(probObserved = 0, 0, nRep / probObserved) as total
@@ -200,6 +204,17 @@ export function useTotalBattlesChart(visible: Ref<boolean>) {
       group by bloggerId, t
       order by bloggerId, t
     `, visible)
+
+  return computed(() => {
+    const last3Min = Date.now() / 1000 - 5 * 60
+    const lastIndex = data.value.labels.findLastIndex(t => t < last3Min)
+
+    return {
+      data: data.value.data.map(d => d.map((t, i) => i > lastIndex ? null : t)),
+      labels: data.value.labels
+    }
+  })
+
 }
 
 export function useTotalPlayersChart(visible: Ref<boolean>) {
@@ -543,44 +558,3 @@ export function useSkillsHistory() {
 
   return total
 }
-
-useSkillsHistory()
-
-// export function useCurrentSkills() {
-
-//   const skills = shallowRef<({ skill: string, begin: Date } | null)[]>([null, null, null, null])
-
-//   async function update() {
-//     const { data } = await query<{ bloggerId: number, skill: string, dateTime: number }>(`
-//       with
-//           data as (
-//               with
-//                   extra.bob.allyBloggerId as blog1,
-//                   extra.bob.allySkill as skill1,
-//                   extra.bob.enemyBloggerId as blog2,
-//                   extra.bob.enemySkill as skill2
-//               select blog1, skill1, blog2, skill2, toStartOfInterval(dateTime, interval 5 second) as dateTime
-//               from Event_OnBattleStart
-//               where battleMode = 'BOB'
-//                 and dateTime > now() - interval 6 hour
-//                 and blog1 != 0 and blog2 != 0
-//               group by dateTime, blog1, blog2, skill1, skill2
-//               order by blog1, blog2, dateTime
-//           )
-//       select blog as bloggerId, skill, toUnixTimeStamp(min(dateTime)) as dateTime
-//       from data
-//           array join [blog1, blog2] as blog, [skill1, skill2] as skill
-//       group by blog, skill
-//       having count() > 20
-//       order by blog, skill;
-//     `, { allowCache: false, settings: SUPER_SHORT_CACHE_SETTINGS })
-
-//     const byBlogger = Object.groupBy(data, t => bloggerNameByGameId(t.bloggerId)) as Record<string, { skill: string, begin: number }[]>
-//     const result = bloggerRecordToArray(byBlogger).flat().map(t => ({ skill: t?.skill ?? '', begin: new Date(t?.begin ?? 0) }))
-//     skills.value = result
-//   }
-
-//   useIntervalFn(() => update(), 5000, { immediateCallback: true })
-
-//   return skills
-// }
