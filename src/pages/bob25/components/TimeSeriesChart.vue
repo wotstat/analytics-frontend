@@ -428,6 +428,7 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
     display: flex;
     gap: 5px;
     align-items: flex-start;
+    z-index: 3;
 
     &.right {
       left: unset;
