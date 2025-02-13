@@ -32,7 +32,8 @@
       <BloggersLine title="Всего боёв" :values="totalBattles" withPercent v-model:show-chart="showTotalBattlesChart" />
       <TimeSeriesChart v-if="showTotalBattlesChart" :labels="totalBattlesChart.labels" :data="totalBattlesChart.data"
         showDisplayVariant smooth-if-need />
-      <p class="footnote small">В том числе бои сыгранные <b>без мода</b>*</p>
+      <p class="footnote small">В том числе бои сыгранные <b>без мода</b>*. Обновляется по факту завершения боя, но
+        засчитывает по времени начала.</p>
 
       <BloggersLine title="Всего очков" :values="totalScore" withPercent collapse-to-log
         v-model:show-chart="showTotalScoreChart" />
