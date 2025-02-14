@@ -6,7 +6,16 @@
         <h5>{{ getNameDescription(activeSkill.skill)[0] }}</h5>
         <p>{{ getNameDescription(activeSkill.skill)[1] }}</p>
       </div>
-      <p class="time mt-font">{{ activeSkill.timeLabel }}м</p>
+      <Tooltip :offset="0" :delay="0" class="main-time-tooltip">
+        <template #default>
+          <p class="time mt-font">{{ activeSkill.timeLabel }}м</p>
+        </template>
+        <template #tooltip>
+          <p class="tooltip-time">
+            {{ getHHMM(activeSkill.start) }} – {{ getHHMM(activeSkill.start + 3600) }}
+          </p>
+        </template>
+      </Tooltip>
     </div>
 
     <div class="latest latest-empty" v-else>
@@ -19,9 +28,15 @@
 
     <div class="all">
       <div class="item" v-for="skill in todayHistory">
-        <Tooltip :text="getNameDescription(skill.skill)[0]" :offset="0" :delay="0">
-          <img :src="getImage(skill.skill)" :alt="skill.skill">
-          <p class="time mt-font">{{ (skill.timeLabel / 60 - 1).toFixed(1) }}ч</p>
+        <Tooltip :offset="0" :delay="0">
+          <template #default>
+            <img :src="getImage(skill.skill)" :alt="skill.skill">
+            <p class="time mt-font">{{ ((60 + skill.timeLabel) / 60 - 1).toFixed(1) }}ч</p>
+          </template>
+          <template #tooltip>
+            <p class="tooltip-content">{{ getNameDescription(skill.skill)[0] }} <span class="tooltip-time">{{
+              getHHMM(skill.start) }} – {{ getHHMM(skill.start + 3600) }}</span></p>
+          </template>
         </Tooltip>
       </div>
       <!-- <h5 :key="skill.skill">{{ getNameDescription(skill.skill)[0] }}</h5> -->
@@ -99,6 +114,11 @@ const todayHistory = computed(() => {
   return withTime.value.slice(activeSkill.value ? 1 : 0).slice(0, 8)
     .filter(skill => skill.start > new Date(Date.now() - 60 * 60 * 8 * 1000).setHours(1, 0, 0, 0) / 1000)
 })
+
+function getHHMM(time: number) {
+  const date = new Date(time * 1000)
+  return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+}
 </script>
 
 
@@ -138,11 +158,14 @@ const todayHistory = computed(() => {
       width: 100%;
     }
 
-    .time {
+    .main-time-tooltip {
       position: absolute;
-      line-height: 1;
       bottom: 6px;
       right: 6px;
+    }
+
+    .time {
+      line-height: 1;
       font-size: 11px;
       font-weight: bold;
       color: rgb(255, 247, 237);
@@ -201,6 +224,24 @@ const todayHistory = computed(() => {
         color: rgb(255, 234, 206);
         filter: drop-shadow(0 0 1px rgb(255, 132, 0)) drop-shadow(0 0 1px black) drop-shadow(0 0 2px black);
       }
+    }
+  }
+
+  .tooltip-content {
+    line-height: 1;
+    position: relative;
+    padding-bottom: 9px;
+
+    .tooltip-time {
+      font-size: 10px;
+      font-weight: bold;
+      color: rgb(255, 234, 206);
+      position: absolute;
+      white-space: nowrap;
+      right: 0;
+      bottom: -5.5px;
+      line-height: 1;
+      filter: drop-shadow(0 0 1px rgb(255, 132, 0)) drop-shadow(0 0 1px black);
     }
   }
 }
