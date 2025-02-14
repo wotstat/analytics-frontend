@@ -231,6 +231,8 @@ function getHHMM(time: number) {
     line-height: 1;
     position: relative;
     padding-bottom: 9px;
+    min-width: 70px;
+    text-align: center;
 
     .tooltip-time {
       font-size: 10px;
@@ -241,7 +243,7 @@ function getHHMM(time: number) {
       right: 0;
       bottom: -5.5px;
       line-height: 1;
-      filter: drop-shadow(0 0 1px rgb(255, 132, 0)) drop-shadow(0 0 1px black);
+      filter: drop-shadow(0 0 1px rgba(255, 132, 0, 0.281));
     }
   }
 }
