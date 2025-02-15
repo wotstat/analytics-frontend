@@ -18,6 +18,8 @@ export const periodVariants = [
   { value: 'day6', label: 'День 6' },
   { value: 'day7', label: 'День 7' },
   { value: 'day8', label: 'День 8' },
+  { value: 'day9', label: 'День 9' },
+  { value: 'day10', label: 'День 10' },
 ] as const
 
 export const stepVariants = [
