@@ -492,7 +492,7 @@ export function usePopularTanks() {
     from BOB25.Vehicles
     group by bloggerId, tankTag
     order by bloggerId, percent desc
-    limit 7 by bloggerId;
+    limit 30 by bloggerId;
   `, { settings: CACHE_SETTINGS })
 
   return computed(() => {
@@ -514,7 +514,38 @@ export function useScoredTanks() {
     group by bloggerId, tankTag
     having countMerge(battles) > 100
     order by bloggerId, score desc
-    limit 7 by bloggerId;
+    limit 30 by bloggerId;
+  `, { settings: CACHE_SETTINGS })
+
+  return computed(() => {
+    if (data.value.status != success) return { status: data.value.status as Status, data: undefined }
+    const byBlogger = Object.groupBy(data.value.data, t => bloggerNameByGameId(t.bloggerId)) as Record<string, { tankTag: string, score: number }[]>
+
+    const result = bloggerRecordToArray(byBlogger)
+      .map(tanks => tanks?.map(t => ({ tag: t.tankTag, value: t.score })))
+
+    return { status: data.value.status as Status, data: result }
+  })
+}
+
+export function useScoredPopularTanks() {
+  const data = queryAsync<{ bloggerId: number, tankTag: string, score: number }>(`
+    with
+        topTanks as (
+            select tankTag
+            from BOB25.Vehicles
+            group by bloggerId, tankTag
+            order by countMerge(battles) desc
+            limit 30 by bloggerId
+        )
+    select bloggerId, tankTag,
+      avgMerge(score) as score
+    from BOB25.Vehicles
+    where tankTag in topTanks
+    group by bloggerId, tankTag
+    having countMerge(battles) > 100
+    order by bloggerId, score desc
+    limit 30 by bloggerId
   `, { settings: CACHE_SETTINGS })
 
   return computed(() => {
