@@ -268,10 +268,10 @@ export function useTotalScoreChart(visible: Ref<boolean>) {
       with
           prepare as (
               with
-                  quantileMerge(0.5)(b1Score) as b1,
-                  quantileMerge(0.5)(b2Score) as b2,
-                  quantileMerge(0.5)(b3Score) as b3,
-                  quantileMerge(0.5)(b4Score) as b4
+                  quantileMerge(0.7)(b1Score) as b1,
+                  quantileMerge(0.7)(b2Score) as b2,
+                  quantileMerge(0.7)(b3Score) as b3,
+                  quantileMerge(0.7)(b4Score) as b4
               select dateTime, b1, b2, b3, b4
               from BOB25.Scores
               where dateTime between ${from} and ${to + step}
