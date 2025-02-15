@@ -390,6 +390,7 @@ h1 {
     margin-bottom: 0px;
     gap: 0.5em;
     align-items: center;
+    line-height: 1.2;
 
     input {
       cursor: pointer;
