@@ -1,25 +1,33 @@
 <template>
   <div class="line">
-    <h3 v-if="title">{{ title }}</h3>
+    <div class="flex">
+      <h3 v-if="title" class="flex-1">{{ title }}</h3>
+      <button class="more-button" @click="isMore = !isMore">{{ isMore ? 'Меньше' : 'Больше' }}</button>
+    </div>
     <div class="card">
-      <div class="blogger" v-for="(t, i) in data">
-        <div class="top" v-if="!less800">
-          <VehicleImage :size="'shop'" :tag="t[0].tag" />
-          <p class="mt-font">{{ getTankName(t[0].tag, true) }} ({{ format(t[0].value) }}<img class="crown" :src="Crown"
-              v-if="valueType == 'score'">)
-          </p>
-        </div>
-        <h4 v-else>{{ bloggerNamesArray[i] }}</h4>
-        <div class="more-lines">
-          <div class="mini-line" v-for="(line, i) in less800 ? t : t.slice(1)">
-            <VehicleImage :size="'small'" :tag="line.tag" />
-            <p class="name mt-font">{{ getTankName(line.tag, true) }}</p>
-            <p class="right mt-font bold">{{ format(line.value) }}<img class="crown" :src="Crown"
-                v-if="valueType == 'score'">
+      <div class="columns">
+        <div class="blogger" v-for="(t, i) in data">
+          <div class="top" v-if="!less800">
+            <VehicleImage :size="'shop'" :tag="t[0].tag" />
+            <p class="mt-font" :class="t[0].tag == selected ? 'selected' : ''">{{ getTankName(t[0].tag, true) }} ({{
+              format(t[0].value) }}<img class="crown" :src="Crown" v-if="valueType == 'score'">)
             </p>
+          </div>
+          <h4 v-else>{{ bloggerNamesArray[i] }}</h4>
+          <div class="more-lines">
+            <div class="mini-line" :class="line.tag == selected ? 'selected' : ''" @pointerover="hover(line.tag)"
+              @pointerout="unhover(line.tag)"
+              v-for="(line, i) in less800 ? t.slice(0, isMore ? data.length : 20) : t.slice(1).slice(0, isMore ? t.length : 5)">
+              <VehicleImage :size="'small'" :tag="line.tag" />
+              <p class="name mt-font">{{ getTankName(line.tag, true) }}</p>
+              <p class="right mt-font bold">{{ format(line.value) }}<img class="crown" :src="Crown"
+                  v-if="valueType == 'score'">
+              </p>
+            </div>
           </div>
         </div>
       </div>
+      <slot></slot>
     </div>
   </div>
 </template>
@@ -32,8 +40,11 @@ import { useMediaQuery } from '@vueuse/core';
 import { bloggerNamesArray } from './bloggerNames';
 import { usePercentProcessor } from '@/composition/usePercentProcessor';
 import Crown from '../assets/crown.png';
+import { ref } from 'vue';
 
 const less800 = useMediaQuery('(max-width: 800px)')
+const isMore = ref(false)
+const selected = ref('')
 
 const percent = usePercentProcessor(2)
 
@@ -52,6 +63,15 @@ function format(value: number) {
   return value.toFixed(2)
 }
 
+
+function hover(tag: string) {
+  selected.value = tag
+}
+
+function unhover(tag: string) {
+  if (selected.value == tag) selected.value = ''
+}
+
 </script>
 
 
@@ -62,14 +82,26 @@ h3 {
 }
 
 .card {
-  display: flex;
-  position: relative;
+  .columns {
+    display: flex;
+    position: relative;
 
-  @media screen and (max-width: 800px) {
-    flex-direction: column;
-    gap: 20px;
+    @media screen and (max-width: 800px) {
+      flex-direction: column;
+      gap: 20px;
+    }
   }
+}
 
+.more-button {
+  background: none;
+  border: none;
+  color: #1ea1ff;
+  cursor: pointer;
+  font-size: 14px;
+  margin: 0;
+  padding: 0;
+  margin-left: 10px;
 }
 
 .blogger {
@@ -116,6 +148,23 @@ h3 {
     p {
       margin: 0;
       font-weight: bold;
+      position: relative;
+
+      &::before {
+        content: '';
+        background: #ffffff00;
+        position: absolute;
+        inset: -2px -10px;
+        border-radius: 5px;
+        z-index: -2;
+        transition: background 0.1s;
+      }
+
+      &.selected {
+        &::before {
+          background: #ffffff2b;
+        }
+      }
     }
   }
 
@@ -137,6 +186,21 @@ h3 {
       width: 100%;
       max-width: 230px;
 
+      &::before {
+        content: '';
+        background: #ffffff00;
+        position: absolute;
+        inset: 0 -8px 0 0;
+        border-radius: 5px;
+        z-index: -2;
+        transition: background 0.1s;
+      }
+
+      &.selected::before {
+        background: #ffffff2b;
+      }
+
+
       @media screen and (max-width: 800px) {
         max-width: unset;
       }
@@ -145,7 +209,8 @@ h3 {
         position: absolute;
         left: 0;
         height: 30px;
-        z-index: -1;
+        pointer-events: none;
+        user-select: none;
       }
 
       .name {
@@ -153,6 +218,7 @@ h3 {
         font-size: 14px;
         flex: 1;
         font-weight: bold;
+        z-index: 1;
       }
 
       .crown {

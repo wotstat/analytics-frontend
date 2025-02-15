@@ -95,7 +95,13 @@
 
 
       <ServerStatusWrapper :status="scoredTanks.status" v-slot="{ showError, status }">
-        <TopTanks title="В среднем очков" :data="scoredTanks.data" v-if="scoredTanks.data" :value-type="'score'" />
+        <TopTanks title="В среднем очков" :data="onlyPopularTanks ? scoredPopularTanks.data : scoredTanks.data"
+          v-if="scoredTanks.data && scoredPopularTanks.data" :value-type="'score'">
+          <div class="flex top-tanks-filter">
+            <input type="checkbox" v-model="onlyPopularTanks">
+            <label>Среди популярных танков. <i>(топ 30 танков по количеству боёв)</i></label>
+          </div>
+        </TopTanks>
       </ServerStatusWrapper>
 
       <!-- <AwaitUpdates /> -->
@@ -151,7 +157,7 @@ import BloggersLine from "./components/BloggersLine.vue";
 import { useElementBounding, useLocalStorage } from "@vueuse/core";
 import TopTanks from "./components/TopTanks.vue";
 import TimeSeriesChart from "./components/TimeSeriesChart.vue";
-import { period, step, useAvgBattleDuration, useAvgBattleDurationChart, useHourTotalScoreDelta, usePopularTanks, useScoredTanks, useSkillsHistory, useTodayTotalScoreDelta, useTotalBattles, useTotalBattlesChart, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart, useTotalWinrate, useWinrateChart, useYesterdayTotalScoreDelta } from "./components/queryLoader";
+import { period, step, useAvgBattleDuration, useAvgBattleDurationChart, useHourTotalScoreDelta, usePopularTanks, useScoredPopularTanks, useScoredTanks, useSkillsHistory, useTodayTotalScoreDelta, useTotalBattles, useTotalBattlesChart, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart, useTotalWinrate, useWinrateChart, useYesterdayTotalScoreDelta } from "./components/queryLoader";
 import ServerStatusWrapper from "@/components/ServerStatusWrapper.vue";
 import { timeProcessor } from "@/utils";
 import InstallMod from "./components/InstallMod.vue";
@@ -176,6 +182,7 @@ const showTotalBattlesChart = useLocalStorage('bob25-show-total-battles-chart', 
 const showTotalScoreChart = useLocalStorage('bob25-show-total-score-chart', true);
 const showDurationChart = useLocalStorage('bob25-show-duration-chart', false);
 const showWinrateChart = useLocalStorage('bob25-show-winrate-chart', false);
+const onlyPopularTanks = useLocalStorage('bob25-only-popular-tanks', false);
 
 const totalScoreDeltaHightFilter = useLocalStorage('bob25-total-score-delta-hight-filter', false);
 const totalScoreHightPass = computed(() => totalScoreDeltaHightFilter.value && displayVariant.value === 'delta')
@@ -224,6 +231,7 @@ const avgDuration = useAvgBattleDuration()
 const avgBattleDurationChart = useAvgBattleDurationChart(showDurationChart)
 const popularTanks = usePopularTanks()
 const scoredTanks = useScoredTanks()
+const scoredPopularTanks = useScoredPopularTanks()
 const totalWinrate = useTotalWinrate()
 const winrateChart = useWinrateChart(showWinrateChart)
 const skills = useSkillsHistory()
@@ -375,6 +383,17 @@ h1 {
 .lines {
   div {
     margin-bottom: 20px;
+  }
+
+  .top-tanks-filter {
+    margin-top: 20px;
+    margin-bottom: 0px;
+    gap: 0.5em;
+    align-items: center;
+
+    input {
+      cursor: pointer;
+    }
   }
 
   .footnote {
