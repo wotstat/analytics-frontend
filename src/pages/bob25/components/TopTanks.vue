@@ -1,6 +1,6 @@
 <template>
   <div class="line">
-    <div class="flex">
+    <div class="flex header">
       <h3 v-if="title" class="flex-1">{{ title }}</h3>
       <button class="more-button" @click="isMore = !isMore">{{ isMore ? 'Меньше' : 'Больше' }}</button>
     </div>
@@ -17,7 +17,7 @@
           <div class="more-lines">
             <div class="mini-line" :class="line.tag == selected ? 'selected' : ''" @pointerover="hover(line.tag)"
               @pointerout="unhover(line.tag)"
-              v-for="(line, i) in less800 ? t.slice(0, isMore ? data.length : 20) : t.slice(1).slice(0, isMore ? t.length : 5)">
+              v-for="(line, i) in less800 ? t.slice(0, isMore ? t.length : 5) : t.slice(1).slice(0, isMore ? t.length : 5)">
               <VehicleImage :size="'small'" :tag="line.tag" />
               <p class="name mt-font">{{ getTankName(line.tag, true) }}</p>
               <p class="right mt-font bold">{{ format(line.value) }}<img class="crown" :src="Crown"
@@ -79,6 +79,10 @@ function unhover(tag: string) {
 h3 {
   margin: 0;
   margin-bottom: 5px;
+}
+
+.header {
+  align-items: baseline;
 }
 
 .card {
