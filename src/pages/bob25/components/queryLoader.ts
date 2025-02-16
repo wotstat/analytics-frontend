@@ -714,3 +714,35 @@ export function useCrossBattleCount() {
 
   return resultMatrix
 }
+
+export function usePlayerDistribution() {
+  const data = queryAsync<{ bloggerId: number, p: number }>(`
+    with
+        players as (
+            select bloggerId,
+                  countMerge(battles) as battles,
+                  countMerge(wins) / battles as winrate
+            from BOB25.Players
+            group by playerBdid, bloggerId
+            having battles > 100
+        )
+    select bloggerId,
+          round(winrate * 100) as w,
+          count() as c,
+          count() / sum(count()) over (partition by bloggerId) as p
+    from players
+    group by bloggerId, w
+    order by bloggerId, w
+    with fill from 0 to 101 step 1;
+  `, { settings: LONG_CACHE_SETTINGS })
+
+  return computed(() => {
+    if (data.value.status != success) return { status: data.value.status as Status, data: undefined }
+    const byBlogger = Object.groupBy(data.value.data, t => bloggerNameByGameId(t.bloggerId)) as Record<string, { p: number }[]>
+
+    const result = bloggerRecordToArray(byBlogger)
+      .map(tanks => tanks?.map(t => t.p))
+
+    return { status: data.value.status as Status, data: result }
+  })
+}
