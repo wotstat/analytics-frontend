@@ -56,7 +56,7 @@
       </BloggersLine>
 
 
-      <BloggersLine title="Прирост очков за 60 минут" :values="hourTotalScoreDelta" with-percent />
+      <!-- <BloggersLine title="Прирост очков за 60 минут" :values="hourTotalScoreDelta" with-percent />
       <BloggersLine title="Заработано очков сегодня" :values="todayScoreDelta" with-percent>
         <template #subline="{ item, processor }">
           <p class="subline">7% =
@@ -70,7 +70,7 @@
             <TweenValue :value="Math.round(item * 0.07)" :processor="processor" space />
           </p>
         </template>
-      </BloggersLine>
+      </BloggersLine> -->
 
       <BloggersLine title="Среднее время боя" :values="avgDuration" :processor="t => timeProcessor(t).join(':')"
         v-model:show-chart="showDurationChart" less-is-better />
@@ -102,6 +102,10 @@
         Среди игроков, которые попались в бои с модом более 100 раз
       </p>
 
+      <TopByDamage />
+      <p class="footnote">
+        Среди боёв, в которых хотя бы один игрок был с модом
+      </p>
 
       <ServerStatusWrapper :status="popularTanks.status" v-slot="{ showError, status }">
         <TopTanks title="Популярная техника" :data="popularTanks.data" v-if="popularTanks.data"
@@ -181,11 +185,11 @@ import { computed, onMounted, ref, watchEffect } from "vue";
 import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight';
 import { displayVariant, preferredLogProcessor } from "./store";
 import { useMeta } from "@/composition/useMeta";
-import TweenValue from "@/components/tween/TweenValue.vue";
 import Skills from "./components/skills/Skills.vue";
 import CrossTable from "./components/CrossTable.vue";
 import BattlesPerWinrate from "./components/BattlesPerWinrate.vue";
 import Ads from "./components/Ads.vue";
+import TopByDamage from "./components/TopByDamage.vue";
 
 
 useMeta({
