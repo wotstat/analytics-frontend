@@ -106,6 +106,7 @@ h3 {
       margin-bottom: -3px;
       margin-left: 2px;
       margin-right: -5px;
+      width: 10px;
     }
 
     .score {
