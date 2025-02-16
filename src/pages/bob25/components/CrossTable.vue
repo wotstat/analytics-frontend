@@ -23,7 +23,10 @@
           <td>
             <BloggerName :blogger="blogRowIndex" small-bloom />
           </td>
-          <td v-for="(item, blogColIndex) in bloggerNamesArray">
+          <td v-for="(item, blogColIndex) in bloggerNamesArray" :class="{
+            'red': percents[blogRowIndex][blogColIndex] == Math.min(...percents[blogRowIndex].filter(t => t != 0)),
+            'green': percents[blogRowIndex][blogColIndex] == Math.max(...percents[blogRowIndex].filter(t => t != 0))
+          }">
             <template v-if="blogRowIndex != blogColIndex">
               {{ format(percents[blogRowIndex][blogColIndex]) }}%
             </template>
@@ -144,6 +147,14 @@ table {
         padding-right: 3px;
         padding-top: 1px;
       }
+    }
+
+    &.red {
+      color: rgb(255, 226, 223);
+    }
+
+    &.green {
+      color: rgb(228, 255, 229);
     }
   }
 
