@@ -42,6 +42,7 @@ const chartData = computed<ChartProps<'bar'>['data'][]>(() => {
 const options = computed<ChartProps<'bar'>['options']>(() => ({
   responsive: true,
   maintainAspectRatio: false,
+  animation: false,
   scales: {
     y: {
       display: false,
