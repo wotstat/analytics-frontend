@@ -53,6 +53,7 @@ function select(value: string) {
   background: #2c2c2cb2;
   font-size: 14px;
   color: white;
+  white-space: nowrap;
 
   border-radius: 5px;
   border: 1px solid #91919152;
@@ -64,9 +65,12 @@ function select(value: string) {
 
   transition: height 0.15s;
   will-change: height;
+  position: relative;
+  z-index: 1;
 
   &.open {
     height: auto;
+    z-index: 2;
     box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.1);
 
     @supports (height: calc-size(auto, size)) {
@@ -100,6 +104,7 @@ function select(value: string) {
       padding-right: calc(0.4em + 0.7em + 0.4em - 0.1em);
       position: relative;
       cursor: pointer;
+      white-space: nowrap;
 
       &::before {
         content: '';
