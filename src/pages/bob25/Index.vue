@@ -88,6 +88,13 @@
         <p class="footnote">*Рекомендуется шаг не менее 10 минут, иначе график шумный</p>
       </template>
 
+      <CrossTable title="Перекрёстный винрейт" :percents="crossWinrate" :digits="1" v-if="crossWinrate" />
+      <CrossTable title="Перекрёстное количество боёв" :percents="crossBattles" :digits="0" v-if="crossBattles" />
+      <p class="footnote">
+        Читать построчно. То есть, если в строке <b>Near_You</b> и столбце <b>Yusha</b> стоит 13%, это значит, что
+        команда <b>Near_You</b> провела 13% боёв против команды <b>Yusha</b>.
+      </p>
+
       <ServerStatusWrapper :status="popularTanks.status" v-slot="{ showError, status }">
         <TopTanks title="Популярная техника" :data="popularTanks.data" v-if="popularTanks.data"
           :value-type="'percent'" />
@@ -157,7 +164,7 @@ import BloggersLine from "./components/BloggersLine.vue";
 import { useElementBounding, useLocalStorage } from "@vueuse/core";
 import TopTanks from "./components/TopTanks.vue";
 import TimeSeriesChart from "./components/TimeSeriesChart.vue";
-import { period, step, useAvgBattleDuration, useAvgBattleDurationChart, useHourTotalScoreDelta, usePopularTanks, useScoredPopularTanks, useScoredTanks, useSkillsHistory, useTodayTotalScoreDelta, useTotalBattles, useTotalBattlesChart, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart, useTotalWinrate, useWinrateChart, useYesterdayTotalScoreDelta } from "./components/queryLoader";
+import { period, step, useAvgBattleDuration, useAvgBattleDurationChart, useCrossBattleCount, useCrossWinrate, useHourTotalScoreDelta, usePopularTanks, useScoredPopularTanks, useScoredTanks, useSkillsHistory, useTodayTotalScoreDelta, useTotalBattles, useTotalBattlesChart, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart, useTotalWinrate, useWinrateChart, useYesterdayTotalScoreDelta } from "./components/queryLoader";
 import ServerStatusWrapper from "@/components/ServerStatusWrapper.vue";
 import { timeProcessor } from "@/utils";
 import InstallMod from "./components/InstallMod.vue";
@@ -168,6 +175,7 @@ import { displayVariant, preferredLogProcessor } from "./store";
 import { useMeta } from "@/composition/useMeta";
 import TweenValue from "@/components/tween/TweenValue.vue";
 import Skills from "./components/skills/Skills.vue";
+import CrossTable from "./components/CrossTable.vue";
 
 
 useMeta({
@@ -235,7 +243,8 @@ const scoredPopularTanks = useScoredPopularTanks()
 const totalWinrate = useTotalWinrate()
 const winrateChart = useWinrateChart(showWinrateChart)
 const skills = useSkillsHistory()
-
+const crossWinrate = useCrossWinrate()
+const crossBattles = useCrossBattleCount()
 
 const delta = computed(() => {
   const s = totalScore.value

@@ -1,8 +1,9 @@
-import { CACHE_SETTINGS, loading, query, queryAsync, SHORT_CACHE_SETTINGS, Status, success, SUPER_SHORT_CACHE_SETTINGS } from "@/db";
-import { computed, onMounted, onUnmounted, Ref, shallowRef, watch, watchEffect } from "vue";
-import { bloggerGameIdArrayToArray, bloggerGameIdToName, bloggerNameByGameId, bloggerNamesArray, bloggerRecordToArray, bloggerTimeSeriesProcess } from "./bloggerNames";
-import { objectEntries, useDebounceFn, useIntervalFn, useLocalStorage } from "@vueuse/core";
+import { CACHE_SETTINGS, LONG_CACHE_SETTINGS, query, queryAsync, SHORT_CACHE_SETTINGS, Status, success, SUPER_SHORT_CACHE_SETTINGS } from "@/db";
+import { computed, Ref, shallowRef, watch } from "vue";
+import { bloggerGameIdArrayToArray, bloggerGameIdToIndex, bloggerNameByGameId, bloggerRecordToArray, bloggerTimeSeriesProcess } from "./bloggerNames";
+import { useDebounceFn, useIntervalFn, useLocalStorage } from "@vueuse/core";
 import { getLast24HourBorders, getLastHourBorders, getTodayBorders, getYesterdayBorders } from "./timeUtils";
+import { crossTablePeriod } from "../store";
 
 export const periodVariants = [
   { value: 'today', label: 'Сегодня' },
@@ -604,4 +605,112 @@ export function useSkillsHistory() {
   useIntervalFn(() => update(), 10000, { immediateCallback: true })
 
   return total
+}
+
+export function useCrossWinrate() {
+  const resultMatrix = shallowRef<number[][]>(Array(4).fill(0).map(() => Array(4).fill(0)))
+  let counter = 0
+
+  async function update(interval: typeof crossTablePeriod.value) {
+    const currentCounter = ++counter
+    const matrix = Array(4).fill(0).map(() => Array(4).fill(0))
+    resultMatrix.value = [...matrix]
+
+    const { data } = await query<{ t1: number, t2: number, winrate: number }>(`
+      with
+        distinctBattleResults as (
+            with
+                CAST(extra.bob.allyBloggerId, 'UInt8') AS allyBloggerId,
+                CAST(extra.bob.enemyBloggerId, 'UInt8') AS enemyBloggerId
+            select enemyBloggerId,
+                  allyBloggerId,
+                  arenaId,
+                  result == 'win' as win
+            from WOT.Event_OnBattleResult
+            where battleMode = 'BOB' and enemyBloggerId != 0 and allyBloggerId != 0
+            and dateTime between ${periodToInterval[interval]()[0]} and ${periodToInterval[interval]()[1]}
+            limit 1 by arenaId
+        ),
+        joined as (
+            select allyBlog, enemyBlog, win
+            from distinctBattleResults
+            array join [allyBloggerId, enemyBloggerId] as allyBlog,
+                      [enemyBloggerId, allyBloggerId] as enemyBlog,
+                      [win, not win] as win
+        )
+      select allyBlog as t1, enemyBlog as t2,
+            countIf(win) / count() as winrate
+      from joined
+      group by t1, t2
+      order by t1, t2;
+    `, { settings: LONG_CACHE_SETTINGS })
+
+    if (currentCounter != counter) return
+
+    for (const line of data) {
+      const t1 = bloggerGameIdToIndex[line.t1 as any as keyof typeof bloggerGameIdToIndex]
+      const t2 = bloggerGameIdToIndex[line.t2 as any as keyof typeof bloggerGameIdToIndex]
+      matrix[t1][t2] = line.winrate
+    }
+
+    resultMatrix.value = matrix
+  }
+
+  watch(crossTablePeriod, () => update(crossTablePeriod.value), { immediate: true })
+
+  return resultMatrix
+}
+
+export function useCrossBattleCount() {
+  const resultMatrix = shallowRef<number[][]>(Array(4).fill(0).map(() => Array(4).fill(0)))
+  let counter = 0
+
+  async function update(interval: typeof crossTablePeriod.value) {
+    const currentCounter = ++counter
+    const matrix = Array(4).fill(0).map(() => Array(4).fill(0))
+    resultMatrix.value = [...matrix]
+
+    const { data } = await query<{ t1: number, t2: number, battlesPercent: number }>(`
+      with
+        distinctBattleResults as (
+            with
+                CAST(extra.bob.allyBloggerId, 'UInt8') AS allyBloggerId,
+                CAST(extra.bob.enemyBloggerId, 'UInt8') AS enemyBloggerId
+            select enemyBloggerId,
+                  allyBloggerId,
+                  arenaId,
+                  result == 'win' as win
+            from WOT.Event_OnBattleResult
+            where battleMode = 'BOB' and enemyBloggerId != 0 and allyBloggerId != 0
+            and dateTime between ${periodToInterval[interval]()[0]} and ${periodToInterval[interval]()[1]}
+            limit 1 by arenaId
+        ),
+        joined as (
+            select allyBlog, enemyBlog, win
+            from distinctBattleResults
+            array join [allyBloggerId, enemyBloggerId] as allyBlog,
+                      [enemyBloggerId, allyBloggerId] as enemyBlog,
+                      [win, not win] as win
+        )
+      select allyBlog as t1, enemyBlog as t2,
+            count() / sum(count()) over (partition by t1) as battlesPercent
+      from joined
+      group by t1, t2
+      order by t1, t2;
+    `, { settings: LONG_CACHE_SETTINGS })
+
+    if (currentCounter != counter) return
+
+    for (const line of data) {
+      const t1 = bloggerGameIdToIndex[line.t1 as any as keyof typeof bloggerGameIdToIndex]
+      const t2 = bloggerGameIdToIndex[line.t2 as any as keyof typeof bloggerGameIdToIndex]
+      matrix[t1][t2] = line.battlesPercent
+    }
+
+    resultMatrix.value = matrix
+  }
+
+  watch(crossTablePeriod, () => update(crossTablePeriod.value), { immediate: true })
+
+  return resultMatrix
 }
