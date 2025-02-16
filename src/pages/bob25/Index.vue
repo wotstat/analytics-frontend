@@ -3,6 +3,8 @@
     <img :src="Background" class="background" alt="background" />
     <h1>Битва Блогеров 2025</h1>
 
+    <Ads />
+
     <div class="bloggers">
       <Blogger blogger="nearyou" />
       <Blogger blogger="jove" />
@@ -183,6 +185,7 @@ import TweenValue from "@/components/tween/TweenValue.vue";
 import Skills from "./components/skills/Skills.vue";
 import CrossTable from "./components/CrossTable.vue";
 import BattlesPerWinrate from "./components/BattlesPerWinrate.vue";
+import Ads from "./components/Ads.vue";
 
 
 useMeta({
