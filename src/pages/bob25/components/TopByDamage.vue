@@ -61,18 +61,23 @@ h3 {
   display: flex;
   gap: 20px;
 
-  @media screen and (max-width: 1000px) {
-    flex-direction: column;
-    gap: 20px;
-  }
-
   .blogger {
     flex: 1;
   }
 
   h4 {
+    display: none;
     margin: 0 0 10px 0;
     text-align: center;
+  }
+
+  @media screen and (max-width: 1000px) {
+    flex-direction: column;
+    gap: 20px;
+
+    h4 {
+      display: block;
+    }
   }
 
   .line {
