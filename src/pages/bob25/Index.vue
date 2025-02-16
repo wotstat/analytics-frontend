@@ -95,6 +95,12 @@
         команда <b>Near_You</b> провела 13% боёв против команды <b>Yusha</b>.
       </p>
 
+      <BattlesPerWinrate v-if="playerDistribution.data" :data="playerDistribution.data" />
+      <p class="footnote">
+        Среди игроков, которые попались в бои с модом более 100 раз
+      </p>
+
+
       <ServerStatusWrapper :status="popularTanks.status" v-slot="{ showError, status }">
         <TopTanks title="Популярная техника" :data="popularTanks.data" v-if="popularTanks.data"
           :value-type="'percent'" />
@@ -164,7 +170,7 @@ import BloggersLine from "./components/BloggersLine.vue";
 import { useElementBounding, useLocalStorage } from "@vueuse/core";
 import TopTanks from "./components/TopTanks.vue";
 import TimeSeriesChart from "./components/TimeSeriesChart.vue";
-import { period, step, useAvgBattleDuration, useAvgBattleDurationChart, useCrossBattleCount, useCrossWinrate, useHourTotalScoreDelta, usePopularTanks, useScoredPopularTanks, useScoredTanks, useSkillsHistory, useTodayTotalScoreDelta, useTotalBattles, useTotalBattlesChart, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart, useTotalWinrate, useWinrateChart, useYesterdayTotalScoreDelta } from "./components/queryLoader";
+import { period, step, useAvgBattleDuration, useAvgBattleDurationChart, useCrossBattleCount, useCrossWinrate, useHourTotalScoreDelta, usePlayerDistribution, usePopularTanks, useScoredPopularTanks, useScoredTanks, useSkillsHistory, useTodayTotalScoreDelta, useTotalBattles, useTotalBattlesChart, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart, useTotalWinrate, useWinrateChart, useYesterdayTotalScoreDelta } from "./components/queryLoader";
 import ServerStatusWrapper from "@/components/ServerStatusWrapper.vue";
 import { timeProcessor } from "@/utils";
 import InstallMod from "./components/InstallMod.vue";
@@ -176,6 +182,7 @@ import { useMeta } from "@/composition/useMeta";
 import TweenValue from "@/components/tween/TweenValue.vue";
 import Skills from "./components/skills/Skills.vue";
 import CrossTable from "./components/CrossTable.vue";
+import BattlesPerWinrate from "./components/BattlesPerWinrate.vue";
 
 
 useMeta({
@@ -245,6 +252,7 @@ const winrateChart = useWinrateChart(showWinrateChart)
 const skills = useSkillsHistory()
 const crossWinrate = useCrossWinrate()
 const crossBattles = useCrossBattleCount()
+const playerDistribution = usePlayerDistribution()
 
 const delta = computed(() => {
   const s = totalScore.value
