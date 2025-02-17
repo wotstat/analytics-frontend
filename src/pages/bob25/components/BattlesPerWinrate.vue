@@ -23,7 +23,7 @@ const props = defineProps<{
   data: number[][],
 }>()
 
-const bloomColors = ['#ff00fb', '#ff0000', '#009dff', '#ffe100']
+const bloomColors = ['#ff00fb', '#ffe100', '#ff0000', '#009dff']
 
 const chartData = computed<ChartProps<'bar'>['data'][]>(() => {
 

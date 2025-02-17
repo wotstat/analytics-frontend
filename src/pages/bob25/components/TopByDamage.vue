@@ -6,7 +6,7 @@
     </div>
     <div class="card">
       <div class="bloggers">
-        <div class="blogger" v-for="(blog, i) in [nearyou, jove, yusha, lebwa]">
+        <div class="blogger" v-for="(blog, i) in [nearyou, lebwa, jove, yusha]">
           <h4>{{ bloggerNamesArray[i] }}</h4>
           <div class="line mt-font" v-for="(player, order) in blog.slice(0, !isMore ? 10 : blog.length)">
             <p class="order">{{ order + 1 }}</p>

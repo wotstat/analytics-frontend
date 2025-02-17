@@ -6,11 +6,6 @@ import { getLast24HourBorders, getLastHourBorders, getTodayBorders, getYesterday
 import { crossTablePeriod } from "../store";
 
 export const periodVariants = [
-  { value: 'today', label: 'Сегодня' },
-  { value: 'yesterday', label: 'Вчера' },
-  { value: 'lastHour', label: 'Прошлый час' },
-  { value: 'last24', label: 'Прошлые 24ч' },
-  { value: 'all', label: 'Всё время' },
   { value: 'day1', label: 'День 1' },
   { value: 'day2', label: 'День 2' },
   { value: 'day3', label: 'День 3' },
@@ -21,6 +16,7 @@ export const periodVariants = [
   { value: 'day8', label: 'День 8' },
   { value: 'day9', label: 'День 9' },
   { value: 'day10', label: 'День 10' },
+  { value: 'all', label: 'Всё время' },
 ] as const
 
 export const stepVariants = [
@@ -49,7 +45,7 @@ const DAY = 60 * 60 * 24
 const PLAY = 60 * 60 * 18
 const START = 1738908000 - 60 * 60
 const periodToInterval = {
-  'all': () => [START, 1739736000],
+  'all': () => [START, START + 9 * DAY + PLAY],
   'today': () => getTodayBorders(),
   'yesterday': () => getYesterdayBorders(),
   'lastHour': () => getLastHourBorders(stepToInterval[step.value]),
@@ -67,8 +63,13 @@ const periodToInterval = {
 }
 
 
-export const period = useLocalStorage<typeof periodVariants[number]['value']>('bob25-selected-chart-period', 'today')
+export const period = useLocalStorage<typeof periodVariants[number]['value']>('bob25-selected-chart-period', 'all')
 export const step = useLocalStorage<typeof stepVariants[number]['value']>('bob25-selected-chart-step', 'min10')
+
+watch(period, p => {
+  if (periodVariants.map(t => t.value).includes(p)) return
+  period.value = 'all'
+}, { immediate: true })
 
 export function useBloggerChart(q: (from: number, to: number, step: number) => string, visible: Ref<boolean>) {
   const target = shallowRef<{

@@ -1,27 +1,27 @@
 <template>
   <div class="bob-center-container">
     <img :src="Background" class="background" alt="background" />
-    <h1>Битва Блогеров 2025</h1>
+    <h1>Результаты<br />Битвы Блогеров 2025</h1>
 
     <Ads />
 
     <div class="bloggers">
       <Blogger blogger="nearyou" />
+      <Blogger blogger="lebwa" />
       <Blogger blogger="jove" />
       <Blogger blogger="yusha" />
-      <Blogger blogger="lebwa" />
     </div>
 
     <div class="sub-header" ref="subHeader" :class="{ 'visible': shouldDisplaySubHeader }">
       <BloggerName :blogger="'nearyou'" />
+      <BloggerName :blogger="'lebwa'" />
       <BloggerName :blogger="'jove'" />
       <BloggerName :blogger="'yusha'" />
-      <BloggerName :blogger="'lebwa'" />
     </div>
 
-    <div class="skills-header">
+    <!-- <div class="skills-header mt-font">
       <Skills v-for="skill in skills" :skills="skill" />
-    </div>
+    </div> -->
 
     <div class="lines">
       <InstallMod />
@@ -208,7 +208,7 @@ const onlyPopularTanks = useLocalStorage('bob25-only-popular-tanks', false);
 
 const totalScoreDeltaHightFilter = useLocalStorage('bob25-total-score-delta-hight-filter', false);
 const totalScoreHightPass = computed(() => totalScoreDeltaHightFilter.value && displayVariant.value === 'delta')
-const shouldInterpolateScore = computed(() => displayVariant.value === 'total' && step.value == 'min1' && period.value != 'lastHour')
+const shouldInterpolateScore = computed(() => displayVariant.value === 'total' && step.value == 'min1')
 
 
 const subHeader = ref<HTMLElement | null>(null);
@@ -294,12 +294,17 @@ const delta = computed(() => {
     display: flex;
     padding: 0 15px;
     z-index: 10;
-    margin-top: -162px;
-    margin-bottom: 20px;
+    margin-top: -132px;
     gap: 1rem;
 
     opacity: 0;
     transition: opacity 0.1s;
+
+    margin-bottom: 100px;
+
+    @media screen and (max-width: 900px) {
+      margin-bottom: calc((100vw + 30px) * 0.15 - 25px);
+    }
 
     &.visible {
       opacity: 1;
@@ -314,7 +319,7 @@ const delta = computed(() => {
     }
 
     @media screen and (max-width: 900px) {
-      margin-top: calc((100vw + 30px) * -0.15 - 20px);
+      margin-top: calc((100vw + 30px) * -0.15 + 2px);
 
       h2 {
         font-size: 20px;
