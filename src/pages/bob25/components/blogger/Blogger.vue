@@ -88,6 +88,8 @@ const place = computed(() => {
     font-weight: bold;
     font-size: 20vw;
 
+    user-select: none;
+
     @media screen and (min-width: 900px) {
       font-size: 170px;
     }
