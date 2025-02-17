@@ -118,9 +118,9 @@ watch(period, () => {
 
 const bloggerColors = [
   ['#f931a3', '#EB1E9100'],
+  ['#fffb35', '#fffb1c00'],
   ['#ff2a2a', '#f7101000'],
   ['#1679ff', '#0040ff00'],
-  ['#fffb35', '#fffb1c00'],
 ]
 
 const props = defineProps<{

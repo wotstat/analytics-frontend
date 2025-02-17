@@ -10,7 +10,6 @@ export const displayVariant = useLocalStorage<typeof displayVariants[number]['va
 
 
 export const crossPeriodVariants = [
-  { value: 'all', label: 'Всё время' },
   { value: 'day1', label: 'День 1' },
   { value: 'day2', label: 'День 2' },
   { value: 'day3', label: 'День 3' },
@@ -21,6 +20,7 @@ export const crossPeriodVariants = [
   { value: 'day8', label: 'День 8' },
   { value: 'day9', label: 'День 9' },
   { value: 'day10', label: 'День 10' },
+  { value: 'all', label: 'Всё время' },
 ] as const
 
 export const crossTablePeriod = useLocalStorage<typeof crossPeriodVariants[number]['value']>('bob25-crosstable-period', 'all')

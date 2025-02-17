@@ -13,16 +13,16 @@ export const bloggerNames = {
 
 export const bloggerNamesArray = [
   nearyou,
+  lebwa,
   jove,
   yusha,
-  lebwa
 ];
 
 export const bloggerGameIdToIndex = {
-  1: 1,
-  2: 3,
+  1: 2,
+  2: 1,
   3: 0,
-  4: 2
+  4: 3
 }
 
 export const bloggerGameIdToName = {

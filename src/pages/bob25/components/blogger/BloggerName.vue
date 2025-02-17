@@ -17,10 +17,10 @@ const props = defineProps<{
 const targetBlogger = computed(() => {
   if (typeof props.blogger == 'string') return props.blogger
   switch (props.blogger) {
-    case 1: return 'jove'
-    case 3: return 'lebwa'
+    case 2: return 'jove'
+    case 1: return 'lebwa'
     case 0: return 'nearyou'
-    case 2: return 'yusha'
+    case 3: return 'yusha'
   }
 })
 
@@ -50,7 +50,7 @@ h2 {
   }
 
   &.lebwa {
-    text-shadow: 0 0 calc(var(--bloom-radius) * 1.1) #ffe100;
+    text-shadow: 0 0 calc(var(--bloom-radius) * 1.1) #f58f23;
   }
 
   &.yusha {
