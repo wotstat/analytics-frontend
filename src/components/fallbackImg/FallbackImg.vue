@@ -1,5 +1,5 @@
 <template>
-  <img :src="src" :alt="alt" @error="onError">
+  <img :src="src" :alt="alt" @error="onError" :key="src">
 </template>
 
 
