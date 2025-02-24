@@ -348,7 +348,7 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
       align-items: center;
       padding: 15px 17px 15px 17px;
       margin-right: -10px;
-      margin-left: -5px;
+      margin-left: -7px;
       z-index: 2;
 
       hr {
