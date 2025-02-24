@@ -55,6 +55,7 @@ export const router = createRouter({
   routes,
   scrollBehavior(to, from, savedPosition) {
     if (to.path === from.path) return
+    if (to.matched && from.matched && to.matched[0] == from.matched[0]) return
 
     return { top: 0 }
   },

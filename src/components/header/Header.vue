@@ -346,8 +346,10 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
       color: inherit;
       display: flex;
       align-items: center;
-      padding: 15px 17px 15px 10px;
+      padding: 15px 17px 15px 17px;
       margin-right: -10px;
+      margin-left: -5px;
+      z-index: 2;
 
       hr {
         margin: 5px 0;
@@ -368,8 +370,8 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
     .drop-down {
       .menu {
         position: absolute;
-        top: calc(100% - 5px);
-        right: 0;
+        top: calc(100% - 12px);
+        right: 5px;
         padding: 6px;
         z-index: 1000;
 
