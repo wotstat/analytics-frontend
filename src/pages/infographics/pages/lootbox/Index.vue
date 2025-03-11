@@ -1,6 +1,11 @@
 <template>
   <!-- <i>В этом разделе учитывается только фильтр по нику игрока</i> -->
-  <LootboxList v-model="selectedContainer" class="lootbox-list" />
+  <LootboxList v-model="selectedContainer" class="lootbox-list" :without-test="!showTestData" />
+
+  <div class="settings-line">
+    <input type="checkbox" id="showTestData" v-model="showTestData" />
+    <label for="showTestData">Учитывать данные с тестовых серверов</label>
+  </div>
 
   <h2 class="page-title">Награды из коробок</h2>
 
@@ -15,17 +20,6 @@
         <GenericInfo :status="mainStats.status" :value="mainStats.data.gold" description="Золото" color="orange"
           :processor="useLogProcessor()" />
       </div>
-      <div class="card flex-1 order-small-2">
-        <GenericInfo :status="mainStats.status" :value="mainStats.data.prem" mini-data="дней" description="Премиум"
-          color="yellow" :processor="useLogProcessor()" />
-      </div>
-      <div class="card flex-1">
-        <GenericInfo :status="mainStats.status" :value="mainStats.data.vehicles" description="Танки" color="gold"
-          :processor="useFixedSpaceProcessor(0)" />
-      </div>
-    </div>
-
-    <div class="flex hor-ver-small">
       <div class="card flex-1">
         <GenericInfo :status="mainStats.status" :value="mainStats.data.credits" description="Серебро" color="blue"
           :processor="useLogProcessor()" />
@@ -36,13 +30,33 @@
       </div>
     </div>
 
+    <div class="flex hor-ver-small">
+      <div class="card flex-1 order-small-2">
+        <GenericInfo :status="mainStats.status" :value="mainStats.data.prem" mini-data="дней" description="Премиум"
+          color="yellow" :processor="useLogProcessor()" />
+      </div>
+      <div class="card flex-1">
+        <GenericInfo :status="mainStats.status" :value="mainStats.data.vehicles" description="Танки" color="gold"
+          :processor="useFixedSpaceProcessor(0)" />
+      </div>
+      <div class="card flex-1">
+        <GenericInfo :status="mainStats.status" :value="mainStats.data.equipCoin" description="Компоненты"
+          color="yellow" :processor="useLogProcessor()" />
+      </div>
+    </div>
 
-    <SnowCardWrapper>
+
+    <!-- <SnowCardWrapper>
       <div class="card long">
         <GenericInfo :status="mainStats.status" :value="mainStats.data.mandarin25"
           :processor="useFixedSpaceProcessor(0)" description="Новогодние мандарины на Лесте" color="gold" />
       </div>
-    </SnowCardWrapper>
+    </SnowCardWrapper> -->
+    <!-- <div class="card long">
+      <GenericInfo :status="mainStats.status" :value="mainStats.data.equipCoin" description="Компоненты " color="yellow"
+        :processor="useLogProcessor()" />
+    </div> -->
+
     <i>* С учётом компенсаций. Танки только реально начисленные</i>
     <i>
       <ul class="margin-0">
@@ -104,6 +118,7 @@ import SnowCardWrapper from '@/components/shared/SnowCardWrapper.vue';
 import LootboxList from './LootboxList/Index.vue';
 import { useRoute } from 'vue-router';
 import { useMeta } from '@/composition/useMeta';
+import { useLocalStorage } from '@vueuse/core';
 
 useMeta({
   title: 'Статистика коробок',
@@ -114,6 +129,7 @@ useMeta({
 
 const params = useQueryStatParams()
 const settings = useQueryStatParamsCache(params)
+const showTestData = useLocalStorage('lootbox-show-test-data', false)
 
 function localeFor(table: 'Lootboxes' | 'Customizations' | 'Artefacts') {
   return `select tag, arrayZip(groupArray(name), groupArray(region)) as locale from (select tag, region, argMax(name, gameVersion) as name from ${table} group by tag, region order by region) group by tag`
@@ -142,6 +158,10 @@ function whereClause(ignore: ('player' | 'tag' | 'date')[] = []) {
     } else if (valueParams.period.type == 'fromToNow') {
       result.push(`id >= ${dateToDbIndex(valueParams.period.from)}`);
     }
+  }
+
+  if (!showTestData.value) {
+    result.push(`region not in ('CT')`)
   }
 
   return result.join(' and ') || 'true'
@@ -233,13 +253,14 @@ select
     sum(premiumPlus) as prem,
     sum(credits) as credits,
     sum(freeXP) as freeXP,
+    sum(equipCoin) as equipCoin,
     sum(gold) + sum(arraySum(compensatedVehicles.gold)) as gold,
     toUInt32(sum(length(addedVehicles))) as vehicles,
     toUInt32(sum(arraySum(arrayFilter(t -> t.1 == 'ny25_mandarin', arrayZip(extra.tag, extra.count)).2))) as mandarin25,
     toUInt32(sum(arraySum(arrayFilter(t -> t.1 == 'ny25_mandarin', arrayZip(compensatedToys.currency, compensatedToys.count)).2))) as compensatedMandarin25
 from Event_OnLootboxOpen
 where ${whereClause()}
-  `, { prem: 0, credits: 0, freeXP: 0, gold: 0, vehicles: 0, mandarin25: 0, compensatedMandarin25: 0 })
+  `, { prem: 0, credits: 0, freeXP: 0, gold: 0, equipCoin: 0, vehicles: 0, mandarin25: 0, compensatedMandarin25: 0 })
 
 type Stats = {
   title: string,
@@ -571,7 +592,15 @@ function lootboxLocalizer(tag: string, titleName?: LocalizedName) {
 @use '/src/styles/mixins.scss' as *;
 
 .lootbox-list {
+  margin-bottom: 1em;
+}
+
+.settings-line {
   margin-bottom: 2em;
+
+  label {
+    margin-left: 0.2em;
+  }
 }
 
 .order-small-2 {

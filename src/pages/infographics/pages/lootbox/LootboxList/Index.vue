@@ -57,7 +57,7 @@ import { queryComputed } from '@/db';
 import { computed, ref, watch } from 'vue';
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 import { getBestLocalization } from '@/utils/i18n';
-import { pausableWatch } from '@vueuse/core';
+import { objectEntries, pausableWatch } from '@vueuse/core';
 import FallbackImg from '@/components/fallbackImg/FallbackImg.vue';
 import HorizontalScrollItems from '@/components/shared/HorizontalScrollItems.vue';
 import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue';
@@ -65,7 +65,25 @@ import { useQueryParamStorage } from '@/composition/useQueryParamStorage';
 
 import NoImageLB from "./noImageLB.png";
 
+const customOrderKeys = new Map<string, number>(objectEntries({
+  'mtl_1_24': 1000,
+  'rp_2024_tanks_6': -902,
+  'rp_2024_tanks_7': -903,
+  'rp_2024_tanks_8': -904,
+  'rp_2024_large': -905,
+  'rp_2024_medium': -910,
+  'rp_2024_small': -915,
+
+  'tanks_birthday_2023_VI': -1000,
+  'tanks_birthday_2023_premium': -1000,
+  'tanks_birthday_2023_X': -1000,
+}));
+
 const containersImages = import.meta.glob<{ default: string }>('./containers/*.png', { eager: true });
+
+const props = defineProps<{
+  withoutTest: boolean
+}>()
 
 const staticUrl = import.meta.env.VITE_STATIC_URL;
 const stats = useQueryStatParams()
@@ -114,7 +132,10 @@ with containers as (
       toStartOfDay(min(dateTime)) as start,
       toStartOfDay(max(dateTime)) as end
       from Event_OnLootboxOpen
-    ${whereClause(stats.value, { ignore: ['tanks', 'level', 'types', 'battleMode'] })}
+    ${whereClause(stats.value, {
+  ignore: ['tanks', 'level', 'types', 'battleMode'],
+  additional: props.withoutTest ? `region not in ('CT')` : ''
+})}
     group by containerTag
     order by start desc, end desc
     ),
@@ -141,7 +162,23 @@ const containersVariants = computed(() => containersTag.value.data
     count: x.count,
     start: x.start,
     end: x.end
-  })))
+  }))
+  .sort((a, b) => {
+    const aKey = customOrderKeys.get(a.tag) ?? null;
+    const bKey = customOrderKeys.get(b.tag) ?? null;
+    if (aKey != null && bKey != null) return bKey - aKey;
+    if (aKey != null) return aKey > 0 ? -1 : 1;
+    if (bKey != null) return bKey > 0 ? 1 : -1;
+
+    if (a.start > b.start) return -1;
+    if (a.start < b.start) return 1;
+
+    if (a.end > b.end) return -1;
+    if (a.end < b.end) return 1;
+
+    return a.name.localeCompare(b.name);
+  })
+)
 
 </script>
 
