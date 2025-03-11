@@ -168,10 +168,11 @@ function whereClauseArrayColumns(params: StatParams, ignore: ('player' | 'level'
 type Options = Partial<{
   withWhere: boolean,
   isBattleStart: boolean,
-  ignore: ('player' | 'level' | 'types' | 'tanks' | 'id' | 'battleMode')[]
+  ignore: ('player' | 'level' | 'types' | 'tanks' | 'id' | 'battleMode')[],
+  additional: string[] | string
 }>
 
-export function whereClause(params: MaybeRefOrGetter<StatParams>, options: Options = { withWhere: true, isBattleStart: false, ignore: [] }) {
+export function whereClause(params: MaybeRefOrGetter<StatParams>, options: Options = { withWhere: true, isBattleStart: false, ignore: [], additional: [] }) {
   const { withWhere, isBattleStart, ignore } = options;
 
   const valueParams = toValue(params);
@@ -199,6 +200,11 @@ export function whereClause(params: MaybeRefOrGetter<StatParams>, options: Optio
       }
     }
   }
+
+  if (Array.isArray(options.additional))
+    result.push(...options.additional)
+  else if (typeof options.additional === 'string' && options.additional.trim().length > 0)
+    result.push(options.additional)
 
   return result.length == 0 ? '' : (withWhere === false ? ' and ' : 'where ') + result.join(' AND ');
 }
