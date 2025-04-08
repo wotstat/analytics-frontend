@@ -1,5 +1,4 @@
 <template>
-  <!-- <i>В этом разделе учитывается только фильтр по нику игрока</i> -->
   <LootboxList v-model="selectedContainer" class="lootbox-list" :without-test="!showTestData" />
 
   <div class="settings-line">
@@ -7,6 +6,10 @@
     <label for="showTestData">Учитывать данные с тестовых серверов</label>
   </div>
 
+  <i>
+    Из-за бага в базе данных, вызванного новыми марсианскими коробками, примерно 1.5% открытий, сделанных 8 апреля до
+    19:00 МСК, к сожалению, были утеряны.
+  </i>
   <h2 class="page-title">Награды из коробок</h2>
 
   <div class="flex ver">
