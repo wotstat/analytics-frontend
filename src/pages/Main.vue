@@ -473,19 +473,19 @@ select
 `, { settings: LONG_CACHE_SETTINGS });
 
 // TURBO
-const turboResult = queryAsyncFirst(`
-select max(countTurbo)    as maxTurbo,
-       min(countTurbo)    as minTurbo,
-       avg(countTurbo)    as avgTurbo,
-       median(countTurbo) as medTurbo,
-       sum(isTurbo)       as count
-from (select allyTeamCount - allyTeamSurvivedCount                               as opponentTeamFrags,
-             enemyTeamCount - enemyTeamSurvivedCount                             as playerTeamFrags,
-             duration < 5 * 60 and abs(opponentTeamFrags - playerTeamFrags) > 10 as isTurbo,
-             countIf(isTurbo) over (order by id rows between 99 preceding and current row) as countTurbo
-      from Event_OnBattleResult
-      where battleMode = 'REGULAR')
-`, { count: 0, maxTurbo: 0, avgTurbo: 0, medTurbo: 0, minTurbo: 0 }, { settings: { ...LONG_CACHE_SETTINGS, query_cache_ttl: 86400 } });
+// const turboResult = queryAsyncFirst(`
+// select max(countTurbo)    as maxTurbo,
+//        min(countTurbo)    as minTurbo,
+//        avg(countTurbo)    as avgTurbo,
+//        median(countTurbo) as medTurbo,
+//        sum(isTurbo)       as count
+// from (select allyTeamCount - allyTeamSurvivedCount                               as opponentTeamFrags,
+//              enemyTeamCount - enemyTeamSurvivedCount                             as playerTeamFrags,
+//              duration < 5 * 60 and abs(opponentTeamFrags - playerTeamFrags) > 10 as isTurbo,
+//              countIf(isTurbo) over (order by id rows between 99 preceding and current row) as countTurbo
+//       from Event_OnBattleResult
+//       where battleMode = 'REGULAR')
+// `, { count: 0, maxTurbo: 0, avgTurbo: 0, medTurbo: 0, minTurbo: 0 }, { settings: { ...LONG_CACHE_SETTINGS, query_cache_ttl: 86400 } });
 
 // STRIMSNIPER
 const strimsniper = [
