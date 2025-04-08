@@ -254,7 +254,7 @@ select
     sum(credits) as credits,
     sum(freeXP) as freeXP,
     sum(equipCoin) as equipCoin,
-    sum(gold) + sum(arraySum(compensatedVehicles.gold)) as gold,
+    sum(gold) as gold,
     toUInt32(sum(length(addedVehicles))) as vehicles,
     toUInt32(sum(arraySum(arrayFilter(t -> t.1 == 'ny25_mandarin', arrayZip(extra.tag, extra.count)).2))) as mandarin25,
     toUInt32(sum(arraySum(arrayFilter(t -> t.1 == 'ny25_mandarin', arrayZip(compensatedToys.currency, compensatedToys.count)).2))) as compensatedMandarin25
