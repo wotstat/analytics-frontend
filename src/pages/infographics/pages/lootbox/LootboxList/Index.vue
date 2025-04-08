@@ -7,8 +7,7 @@
           <div class="container-info">
             <div class="isOpenedToday" v-if="isOpenedToday(item.end)"></div>
             <p class="title">{{ item.name.replaceAll('\\n', '') }}</p>
-            <FallbackImg :src="containersImages[`./containers/${item.tag}.png`]?.default ?? NoImageLB" class="img"
-              :fallback="Math.random() < .5 ? NoImageLB : `${staticUrl}/vehicles/preview/noImage.png`" />
+            <FallbackImg :src="containersImages[`./containers/${item.tag}.png`]?.default ?? NoImageLB" class="img" />
             <table cellspacing="0" cellpadding="0">
               <tbody>
                 <tr>
