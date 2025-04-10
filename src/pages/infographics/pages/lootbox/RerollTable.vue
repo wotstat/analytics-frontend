@@ -1,13 +1,14 @@
 <template>
   <h3>Количество отказов (замен)</h3>
   <div class="card">
-    <table class="hover-highlight full-screen-table" :class="data[0].totalCount != undefined ? 'with-other' : ''">
+    <table class="hover-highlight full-screen-table"
+      :class="showOther && data[0].totalCount != undefined ? 'with-other' : ''">
       <thead class="border-bottom">
         <tr>
           <th class="border-right">Название</th>
           <th>Количество</th>
           <th>Процент</th>
-          <th v-if="data[0].totalCount != undefined">У других</th>
+          <th v-if="showOther && data[0].totalCount != undefined">Должно быть</th>
         </tr>
       </thead>
 
@@ -16,13 +17,14 @@
           <td class="border-right">{{ localizer(item.tag, item.locale).value }}</td>
           <td class="n-mono text-effect gold">{{ item.rerollCount }} / {{ item.count }}</td>
 
-          <td v-if="item.other" class="n-mono text-effect green" :class="getColor(item.other, item.percent)">
+          <td v-if="showOther && item.other" class="n-mono text-effect green"
+            :class="getColor(item.other, item.percent)">
             {{ (item.percent * 100).toFixed(2) }}%
             {{ Math.abs(item.other - item.percent) < 0.00001 ? '' : item.other > item.percent ? '↓' : '↑' }}
           </td>
           <td v-else class="n-mono text-effect green">{{ (item.percent * 100).toFixed(2) }}%</td>
 
-          <td class="n-mono text-effect green" v-if="data[0].totalCount != undefined">
+          <td class="n-mono text-effect green" v-if="showOther && data[0].totalCount != undefined">
             {{ ((item.totalReroll ?? 0) / (item.totalCount ?? 1) * 100).toFixed(2) }}%
           </td>
         </tr>
@@ -47,6 +49,7 @@ const props = defineProps<{
     totalCount?: number,
     totalReroll?: number
   }[],
+  showOther?: boolean,
   localizer: (key: string, titleName?: LocalizedName) => { prefix?: string, postfix?: string, value: string },
 }>()
 
