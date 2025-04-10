@@ -9,7 +9,7 @@
               <th>Название</th>
               <th>Количество</th>
               <th>Процент</th>
-              <th v-if="displayOther">У других</th>
+              <th v-if="displayOther">Должно быть</th>
               <th v-if="byNumber">На {{ byNumber }}</th>
             </tr>
           </thead>

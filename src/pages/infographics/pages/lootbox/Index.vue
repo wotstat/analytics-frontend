@@ -72,10 +72,10 @@
   </div>
 
   <OpenByTable v-if="openWithStats.status == success && openWithStats.data.length" :localizer="lootboxLocalizer"
-    :data="openWithStats.data" />
+    :data="openWithStats.data" :showOther />
 
   <RerollTable v-if="rerollStats.status == success && rerollStats.data.length" :data="rerollStats.data"
-    :localizer="lootboxLocalizer" />
+    :localizer="lootboxLocalizer" :showOther />
 
   <h3>Вероятности</h3>
   <template
@@ -141,7 +141,7 @@ function localeFor(table: 'Lootboxes' | 'Customizations' | 'Artefacts') {
 const route = useRoute()
 const selectedContainer = ref<string[]>((route.query.selectedLootbox as string)?.split(',') || [])
 
-function whereClause(ignore: ('player' | 'tag' | 'date')[] = []) {
+function whereClause(ignore: ('player' | 'tag' | 'date' | 'region')[] = []) {
   const result = []
 
   if (selectedContainer.value.length != 0 && !ignore.includes('tag')) {
@@ -163,7 +163,7 @@ function whereClause(ignore: ('player' | 'tag' | 'date')[] = []) {
     }
   }
 
-  if (!showTestData.value) {
+  if (!showTestData.value && !ignore.includes('region')) {
     result.push(`region not in ('CT')`)
   }
 
@@ -272,7 +272,7 @@ type Stats = {
   other?: number
 }
 
-const showOther = computed(() => whereClause(['tag', 'date']) !== 'true')
+const showOther = computed(() => whereClause(['tag', 'date', 'region']) !== 'true')
 
 function getQuery(select: string, arrayJoin: string, materialized: string, tagProcessor?: string, localizeTable?: string) {
   let where: string | null = whereClause(['tag'])
