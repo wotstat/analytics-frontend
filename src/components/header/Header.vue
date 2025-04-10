@@ -11,6 +11,7 @@
         <a href="https://positions.wotstat.info/" target="_blank" rel="noopener noreferrer" class="positions">
           <div class="back">
             Мод на позиции
+            <LogoIcon class="logo-icon" />
           </div>
         </a>
       </div>
@@ -46,6 +47,7 @@
                   class="positions flex-1">
                   <div class="back">
                     Мод на позиции
+                    <LogoIcon class="logo-icon" />
                   </div>
                 </a>
               </div>
@@ -134,6 +136,7 @@ import PatreonIcon from './assets/patreon.svg'
 import BoostyIcon from './assets/boosty.svg'
 import DatabaseIcon from './assets/database.svg'
 import PointsIcon from './assets/points.svg'
+import LogoIcon from './assets/logo2.0.svg'
 import HeaderSpacer from './HeaderSpacer.vue';
 import I18nIcon from './assets/i18n.svg'
 import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
@@ -308,6 +311,12 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
         border-radius: 8.5px;
         transition: all 0.2s;
         background-color: $background-secondary;
+
+        .logo-icon {
+          height: 1.1em;
+          display: inline-block;
+          margin-bottom: -0.25em;
+        }
       }
 
       &:hover {
