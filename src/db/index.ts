@@ -9,7 +9,8 @@ export const clickhouse = createClient({
   database: import.meta.env.VITE_CLICKHOUSE_DATABASE,
   password: import.meta.env.VITE_CLICKHOUSE_PASSWORD,
   clickhouse_settings: {
-    max_temporary_columns: '1000'
+    max_temporary_columns: '1000',
+    add_http_cors_header: 1
   }
 });
 
