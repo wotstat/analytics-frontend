@@ -1,6 +1,6 @@
-Чтоб добавить виджет прямо в игру вам необходим мод [wotstat-widgets](https://github.com/WOT-STAT/wotstat-widgets){target='_blank'}
+Чтоб добавить виджет прямо в игру вам необходим мод [wotstat-widgets](https://github.com/wotstat/wotstat-widgets){target='_blank'}
 
-1. [Скачайте](https://github.com/WOT-STAT/wotstat-widgets/releases/latest){target='_blank'} актуальную версию мода из [репозитория](https://github.com/WOT-STAT/wotstat-widgets){target='_blank'}
+1. [Скачайте](https://github.com/wotstat/wotstat-widgets/releases/latest){target='_blank'} актуальную версию мода из [репозитория](https://github.com/wotstat/wotstat-widgets){target='_blank'}
 2. Переместите файл `wotstat-widgets_VVV.wotmod` в папку с игрой по пути (<i>актуальному на {{ new Date().toLocaleDateString() }}</i>):
 - Lesta: <current-lesta-version>Tanki/mods/</current-lesta-version>
 - Wargaming: <current-wg-version>World_Of_Tanks/mods/</current-wg-version>

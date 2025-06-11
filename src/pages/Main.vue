@@ -40,8 +40,8 @@
         <h2>Установка</h2>
 
         <p>
-          <a :href="latestWotstat.browser_download_url" target="_blank">Скачайте</a> последнюю версию мода и поместите
-          файл в каталог:
+          <a :href="'https://github.com/wotstat/wotstat-analytics/releases/latest'" target="_blank">Скачайте</a>
+          последнюю версию мода и поместите файл в каталог:
         </p>
         <ul>
           <li>Леста:
@@ -59,11 +59,12 @@
             target="_blank">посмотреть</a>
         </i> -->
 
-        <p class="warning">ВАЖНО: НЕ переименовывайте файл с модом. Он должен называться
+        <!-- <p class="warning">ВАЖНО: НЕ переименовывайте файл с модом. Он должен называться
           <code v-if="latestWotstat.actual">"{{ latestWotstat.name }}"</code>
           <span v-else>так же как и скачался. Например "{{ latestWotstat.name }}"</span>
-        </p>
+        </p> -->
 
+        <!-- 
         <h3 class="streamer-header" @click="streamerOpen = !streamerOpen">
           <ArrowDownIcon :style="{
             transform: streamerOpen ? 'rotateZ(0)' : 'rotateZ(-90deg)'
@@ -78,9 +79,10 @@
             <code>WOT/mods/configs/wot_stat</code>
           </p>
         </div>
-
-        <div class="flex center">
-          <button @click="download">СКАЧАТЬ</button>
+        -->
+        <div class="flex center download-buttons">
+          <button @click="download('lesta')">СКАЧАТЬ LESTA</button>
+          <button @click="download('wg')">СКАЧАТЬ WG</button>
         </div>
       </div>
 
@@ -379,22 +381,27 @@ useMeta({
 })
 
 
-const collapsableBody = ref<HTMLElement | null>(null);
-
 const DBUrl = import.meta.env.VITE_CLICKHOUSE_URL
 
 const latestWotstat = computedAsync(async () => {
-  const asset = await githubRelease("https://api.github.com/repos/WOT-STAT/WOTMOD/releases/latest", t => t.endsWith('.wotmod'))
-  return {
-    browser_download_url: asset.browser_download_url,
-    name: asset.name,
-    actual: true,
-  }
-}, { browser_download_url: 'https://github.com/WOT-STAT/WOTMOD/releases/latest', name: 'mod.wotStat_1.0.0.1-a.3.wotmod', actual: false });
+  const [wg, lesta] = await githubRelease("https://api.github.com/repos/wotstat/wotstat-analytics/releases/latest",
+    [t => t.endsWith('.wotmod'), t => t.endsWith('.mtmod')])
+  return { lesta, wg, actual: true }
+}, {
+  lesta: {
+    browser_download_url: 'https://github.com/wotstat/wotstat-analytics/releases/latest',
+    name: 'mod.wotStat_1.0.0.1-a.3.mtmod',
+  },
+  wg: {
+    browser_download_url: 'https://github.com/WOT-STAT/WOTMOD/releases/latest',
+    name: 'mod.wotStat_1.0.0.1-a.3.wotmod',
+  },
+  actual: false
+});
 
 
-function download() {
-  window.open(latestWotstat.value.browser_download_url, "_blank");
+function download(vendor: 'lesta' | 'wg' = 'lesta') {
+  window.open(latestWotstat.value[vendor].browser_download_url, "_blank");
 }
 
 const streamerOpen = ref(false);
@@ -780,6 +787,24 @@ h2 {
         }
       }
     }
+  }
+}
+
+.download-buttons {
+  margin-top: 10px;
+
+  button {
+    width: 200px;
+  }
+
+  @media screen and (max-width: 600px) {
+    flex-direction: column;
+    gap: 5px;
+
+    button {
+      width: 100%;
+    }
+
   }
 }
 </style>
