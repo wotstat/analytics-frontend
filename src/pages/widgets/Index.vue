@@ -49,7 +49,7 @@
       height: `${height}px`,
       minHeight: `${height}px`,
       opacity: isCollectionLoading ? 0 : 1
-    }" @load="onCollectionLoad"></iframe>
+    }" @load="onCollectionLoad" v-if="showCollection"></iframe>
 
     <PopupWindow :title="selectedTitle" v-if="selectedRoute" @close="onClosePreview">
       <div class="loader" v-if="isPreviewLoading">
@@ -88,7 +88,7 @@ import According from '@/components/According.vue';
 import PopupWindow from '@/components/PopupWindow.vue';
 import { useIframeContentBounding } from '@/composition/useIframeContentBounding';
 import { useIframeMessages } from '@/composition/useIframeMessages';
-import { computed, onDeactivated, ref, watch } from 'vue';
+import { computed, onDeactivated, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { VueComponentWith as InstructionGameWith } from "./instructionGame/index.md";
@@ -114,7 +114,7 @@ const isCollectionLoading = ref(true);
 const route = useRoute()
 const router = useRouter()
 
-const selectedRoute = computed(() => {
+function currentPreviewRoute() {
   const targetWidget = route.params.widget;
 
   if (Array.isArray(targetWidget) && targetWidget.length > 0) {
@@ -125,6 +125,12 @@ const selectedRoute = computed(() => {
     return '/' + route.params.widget;
 
   return null
+}
+
+const showCollection = ref(currentPreviewRoute() === null);
+
+const selectedRoute = computed(() => {
+  return currentPreviewRoute()
 });
 
 watch(selectedRoute, (value, old) => {
@@ -144,6 +150,9 @@ useIframeMessages(collection, data => {
       query: { ...route.query },
       params: { widget: data.route.split('/').filter(Boolean) }
     });
+  } else if (data.type === 'collection-mounted') {
+    if (collection.value)
+      isCollectionLoading.value = false;
   }
 });
 
@@ -151,6 +160,10 @@ useIframeMessages(preview, data => {
   if (data.type === 'readme-loaded') {
     const attributes = data.attributes as Record<string, string>;
     if ('title' in attributes) selectedTitle.value = attributes.title;
+  } else if (data.type === 'preview-mounted') {
+    if (preview.value) isPreviewLoading.value = false;
+  } else if (data.type === 'preview-component-loaded') {
+    showCollection.value = true;
   }
 });
 
@@ -162,6 +175,7 @@ onDeactivated(() => {
 });
 
 function onClosePreview() {
+  showCollection.value = true;
   router.push({
     query: { ...route.query },
     params: { widget: '' }
@@ -170,7 +184,7 @@ function onClosePreview() {
 
 function onCollectionLoad() {
   if (!collection.value) return;
-  setTimeout(() => isCollectionLoading.value = false, 30);
+  isCollectionLoading.value = false
 }
 
 function onPreviewLoad() {
