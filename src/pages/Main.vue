@@ -13,7 +13,7 @@
                     '0').replace(/\B(?=(\d{3})+(?!\d))/g, " ") }}
                 </span>
 
-                <span class="card-main-info green animated counter" :class="totalCountFirstLoading ? 'loading' : ''">
+                <span class="card-main-info green animated counter" :class="totalCountHasData ? '' : 'loading'">
                   {{ useFixedSpaceProcessor(0)(totalEventCount) }}
                 </span>
               </p>
@@ -360,26 +360,23 @@ import GenericInfo from '@/components/widgets/GenericInfo.vue';
 import MiniBar from '@/components/widgets/charts/MiniBar.vue';
 import ShotsCircle from '@/components/widgets/ShotsCircle.vue';
 import { useTweenCounter } from '@/composition/useTweenCounter';
-import { LONG_CACHE_SETTINGS, query, queryAsync, queryAsyncFirst } from '@/db';
+import { LONG_CACHE_SETTINGS, queryAsync, queryAsyncFirst } from '@/db';
 import { toRelative, ms2sec, sec2minsec, ms2secLabel } from '@/utils';
 import { computedAsync } from '@vueuse/core';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { getArenaName } from '@/utils/i18n';
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
-import { useDocumentVisibility } from '@vueuse/core'
-import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
 import CurrentLestaVersion from '@/components/mdUtils/CurrentLestaVersion.vue';
 import CurrentWgVersion from '@/components/mdUtils/CurrentWgVersion.vue';
 import { githubRelease } from '@/components/mdUtils/ghRelease';
-import ConfigUrl from '@/assets/config.cfg?url';
 import { useMeta } from '@/composition/useMeta';
+import { useAnalyticsRealtime } from '@/composition/useAnalyticsRealtime';
 
 useMeta({
   title: 'WOTSTAT - Сессионная аналитика для игр «Мир танков» и «World of Tanks»',
   description: 'Сессионная аналитика для игр «Мир танков» и «World of Tanks». Откройте новые горизонты анализа вашей игры с бесплатным и полностью открытым модом WotStat для игр «Мир танков» и «World of Tanks»',
   keywords: 'wotstat, wot, world of tanks, мир танков, аналитика, статистика, мод, модификация, сессионная аналитика, анализ боёв, анализ выстрелов, анализ урона, анализ результатов, анализ карт, анализ стримснайперов, анализ сетапа, медианные показатели, clickhouse, sql',
 })
-
 
 const DBUrl = import.meta.env.VITE_CLICKHOUSE_URL
 
@@ -408,31 +405,8 @@ const streamerOpen = ref(false);
 
 
 // TOTAL
-
-const totalCount = ref(0);
-const totalCountFirstLoading = ref(true);
-const totalEventCount = useTweenCounter(computed(() => totalCount.value), { duration: 1 });
-
-const documentVisibility = useDocumentVisibility()
-let timer: ReturnType<typeof setTimeout> | null = null;
-async function loadLoop() {
-  timer = setTimeout(() => loadLoop(), 1000);
-
-  if (documentVisibility.value == 'visible') {
-    const result = await query<{ data: number }>(`select (select count() from Event_OnBattleResult) + 
-      (select count() from Event_OnShot) + 
-      (select count() from Event_OnBattleResult) +
-      (select count() from Event_OnLootboxOpen) as count,
-      toUInt32(count) as data;`, { allowCache: false })
-
-    totalCount.value = result.data[0].data;
-    totalCountFirstLoading.value = false;
-  }
-}
-
-onMounted(() => loadLoop())
-onUnmounted(() => timer && clearTimeout(timer))
-
+const { data: totalCount, hasData: totalCountHasData } = useAnalyticsRealtime('totalEvents')
+const totalEventCount = useTweenCounter(computed(() => totalCount.value ?? 0), { duration: 1 });
 
 // DAMAGE
 const damageLabels = new Array(21).fill(0)
