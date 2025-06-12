@@ -10,6 +10,7 @@ interface ImportMetaEnv {
   readonly VITE_DISCORD_URL: string
   readonly VITE_WIDGETS_URL: string
   readonly VITE_STATIC_URL: string
+  readonly VITE_ANALYTICS_REALTIME_URL: string
 }
 
 interface ImportMeta {
