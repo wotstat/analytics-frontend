@@ -95,6 +95,7 @@ import { VueComponentWith as InstructionGameWith } from "./instructionGame/index
 import { VueComponentWith as InstructionOBSWith } from "./instructionOBS/index.md";
 import { allMdComponents } from '@/components/mdUtils/getAllMdComponents';
 import { useMeta } from '@/composition/useMeta';
+import { WIDGETS_URL } from '@/utils/externalUrl';
 
 useMeta({
   title: 'Виджеты',
@@ -139,8 +140,6 @@ watch(selectedRoute, (value, old) => {
 
 
 const { height } = useIframeContentBounding(collection);
-
-const WIDGETS_URL = import.meta.env.VITE_WIDGETS_URL as string;
 
 useIframeMessages(collection, data => {
   if (data.type === 'widget-click') {

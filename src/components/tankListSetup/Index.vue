@@ -59,8 +59,6 @@ import VehicleImage from '../vehicles/VehicleImage.vue';
 
 
 
-const staticUrl = import.meta.env.VITE_STATIC_URL;
-
 
 const router = useRouter()
 const route = useRoute()
