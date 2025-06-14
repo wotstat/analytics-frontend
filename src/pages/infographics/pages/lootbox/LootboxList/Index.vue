@@ -84,7 +84,6 @@ const props = defineProps<{
   withoutTest: boolean
 }>()
 
-const staticUrl = import.meta.env.VITE_STATIC_URL;
 const stats = useQueryStatParams()
 const selectedContainers = ref<string[]>([]);
 const selectedContainersQuery = useQueryParamStorage<string | null>('selectedLootbox', null, true)

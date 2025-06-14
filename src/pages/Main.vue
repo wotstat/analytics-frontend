@@ -322,13 +322,13 @@
         <ul>
           <li>Пользователь: <code>public</code></li>
           <li>Пароль: <code>без пароля</code></li>
-          <li>Хост: <code>{{ DBUrl.replace('https://', '') }}</code></li>
+          <li>Хост: <code>{{ CLICKHOUSE_URL.replace('https://', '') }}</code></li>
           <li>Порт: <code>80</code></li>
         </ul>
 
         <p>Поиграться с базой можно тут: <a
-            :href="DBUrl + '/play?user=public#c2VsZWN0IHRhYmxlLCBuYW1lLCBjb21tZW50LCB0eXBlIGZyb20gZGVzY3JpcHRpb247'"
-            target="_blank" rel="noopener noreferrer">{{ DBUrl.replace('https://', '') }}/play</a></p>
+            :href="CLICKHOUSE_URL + '/play?user=public#c2VsZWN0IHRhYmxlLCBuYW1lLCBjb21tZW50LCB0eXBlIGZyb20gZGVzY3JpcHRpb247'"
+            target="_blank" rel="noopener noreferrer">{{ CLICKHOUSE_URL.replace('https://', '') }}/play</a></p>
 
         <br>
         Список доступных таблиц с описанием столбцов можно получить командой:
@@ -371,14 +371,13 @@ import CurrentWgVersion from '@/components/mdUtils/CurrentWgVersion.vue';
 import { githubRelease } from '@/components/mdUtils/ghRelease';
 import { useMeta } from '@/composition/useMeta';
 import { useAnalyticsRealtime } from '@/composition/useAnalyticsRealtime';
+import { CLICKHOUSE_URL } from '@/utils/externalUrl';
 
 useMeta({
   title: 'WOTSTAT - Сессионная аналитика для игр «Мир танков» и «World of Tanks»',
   description: 'Сессионная аналитика для игр «Мир танков» и «World of Tanks». Откройте новые горизонты анализа вашей игры с бесплатным и полностью открытым модом WotStat для игр «Мир танков» и «World of Tanks»',
   keywords: 'wotstat, wot, world of tanks, мир танков, аналитика, статистика, мод, модификация, сессионная аналитика, анализ боёв, анализ выстрелов, анализ урона, анализ результатов, анализ карт, анализ стримснайперов, анализ сетапа, медианные показатели, clickhouse, sql',
 })
-
-const DBUrl = import.meta.env.VITE_CLICKHOUSE_URL
 
 const latestWotstat = computedAsync(async () => {
   const [wg, lesta] = await githubRelease("https://api.github.com/repos/wotstat/wotstat-analytics/releases/latest",

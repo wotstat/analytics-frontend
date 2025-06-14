@@ -44,7 +44,6 @@ const routes = [
   { path: '/services/fixed-match-detector', component: FixedMatchDetect },
 
   { path: '/widgets/:widget*', component: () => import('./pages/widgets/Index.vue') },
-  { path: '/widgets/demo', redirect: t => window.location.href = 'https://widgets.wotstat.info/demo-widget' },
 
   { path: '/damage', component: () => import('./pages/services/damageDistribution/Index.vue') },
   { path: '/map', component: () => import('./pages/map/Index.vue') }

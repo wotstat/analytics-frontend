@@ -1,3 +1,4 @@
+import { ANALYTICS_REALTIME_URL } from "@/utils/externalUrl";
 import { syncRefs, useWebSocket } from "@vueuse/core";
 import { ref, ShallowRef, shallowRef, watch } from "vue";
 
@@ -28,7 +29,7 @@ export function useAnalyticsRealtime<K extends ChannelKey, T = unknown>(channel:
   const result = shallowRef<T | null>(def);
   const hasData = ref(false);
 
-  const { data } = useWebSocket<T>(import.meta.env.VITE_ANALYTICS_REALTIME_URL + '/' + channel, { autoReconnect: true });
+  const { data } = useWebSocket<T>(ANALYTICS_REALTIME_URL + '/' + channel, { autoReconnect: true });
 
   watch(data, (newData) => {
     if (newData === null || newData === undefined) result.value = def;

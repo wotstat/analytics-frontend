@@ -140,11 +140,11 @@ import LogoIcon from './assets/logo2.0.svg'
 import HeaderSpacer from './HeaderSpacer.vue';
 import I18nIcon from './assets/i18n.svg'
 import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
+import { CLICKHOUSE_URL } from '@/utils/externalUrl';
 
-const DBUrl = import.meta.env.VITE_CLICKHOUSE_URL
 const discordUrl = import.meta.env.VITE_DISCORD_URL
 
-const SQLUrl = DBUrl + '/play?user=public#c2VsZWN0IHRhYmxlLCBuYW1lLCBjb21tZW50LCB0eXBlIGZyb20gZGVzY3JpcHRpb247'
+const SQLUrl = CLICKHOUSE_URL + '/play?user=public#c2VsZWN0IHRhYmxlLCBuYW1lLCBjb21tZW50LCB0eXBlIGZyb20gZGVzY3JpcHRpb247'
 
 const headerElement = ref<HTMLElement | null>(null);
 useDefaultHeaderHeight(headerElement);
