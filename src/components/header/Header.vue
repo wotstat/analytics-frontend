@@ -8,7 +8,7 @@
       <router-link to="/" class="wotstat-logo small">WS</router-link>
       <div class="positions-section flex">
         <div class="sep"></div>
-        <a href="https://positions.wotstat.info/" target="_blank" rel="noopener noreferrer" class="positions">
+        <a :href="POSITIONS_URL" target="_blank" rel="noopener noreferrer" class="positions">
           <div class="back">
             Мод на позиции
             <LogoIcon class="logo-icon" />
@@ -43,8 +43,7 @@
 
             <div class="positions-section">
               <div class="flex btn">
-                <a href="https://positions.wotstat.info/" target="_blank" rel="noopener noreferrer"
-                  class="positions flex-1">
+                <a :href="POSITIONS_URL" target="_blank" rel="noopener noreferrer" class="positions flex-1">
                   <div class="back">
                     Мод на позиции
                     <LogoIcon class="logo-icon" />
@@ -128,7 +127,6 @@
 
 <script setup lang="ts">
 import { useAdditionalHeaderHeight, useDefaultHeaderHeight } from '@/composition/useAdditionalHeaderHeight';
-import { useRoute } from 'vue-router';
 import { ref } from 'vue';
 import GitHubIcon from './assets/github.svg'
 import DiscordIcon from './assets/discord.svg'
@@ -140,7 +138,7 @@ import LogoIcon from './assets/logo2.0.svg'
 import HeaderSpacer from './HeaderSpacer.vue';
 import I18nIcon from './assets/i18n.svg'
 import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
-import { CLICKHOUSE_URL } from '@/utils/externalUrl';
+import { CLICKHOUSE_URL, POSITIONS_URL } from '@/utils/externalUrl';
 
 const discordUrl = import.meta.env.VITE_DISCORD_URL
 
