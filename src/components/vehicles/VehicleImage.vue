@@ -1,5 +1,10 @@
 <template>
-  <FallbackImg :src="targetUrl" :fallback="fallbackUrl" :style :loading />
+  <FallbackImg
+    :src="targetUrl"
+    :fallback="fallbackUrl"
+    :style
+    :loading
+  />
 </template>
 
 <script setup lang="ts">

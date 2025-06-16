@@ -1,15 +1,13 @@
-
-
-const errorUrlSet = new Set<string>();
+const errorUrlSet = new Set<string>()
 
 export function onErrorWithUrl(url: string) {
-  errorUrlSet.add(url);
+  errorUrlSet.add(url)
 }
 
 export function onErrorRemoveUrl(url: string) {
-  errorUrlSet.delete(url);
+  errorUrlSet.delete(url)
 }
 
 export function isUrlMayValidImage(url: string) {
-  return !errorUrlSet.has(url);
+  return !errorUrlSet.has(url)
 }

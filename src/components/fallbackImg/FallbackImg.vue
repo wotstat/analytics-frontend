@@ -1,11 +1,17 @@
 <template>
-  <img :src="src" :alt="alt" @error="onError" :key="src" :loading="loading" :style="{ objectFit: 'cover' }" />
+  <img
+    ref="imgRef"
+    :alt="alt"
+    @error="onError"
+    :loading="loading"
+    :style="{ objectFit: 'cover' }"
+  />
 </template>
 
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { isUrlMayValidImage, onErrorWithUrl } from './store';
+import { ref, watch, onMounted } from 'vue'
+import { isUrlMayValidImage, onErrorWithUrl } from './store'
 
 const props = defineProps<{
   src: string
@@ -14,16 +20,29 @@ const props = defineProps<{
   loading?: 'lazy' | 'eager'
 }>()
 
-const target = computed(() => {
+const imgRef = ref<HTMLImageElement | null>(null)
 
-  return isUrlMayValidImage(props.src) ? props.src : props.fallback
-})
+function setSrc(url: string) {
+  const img = imgRef.value
+  if (img) img.src = url
+}
 
-function onError(event: Event) {
+function updateSrc() {
+  setSrc(
+    isUrlMayValidImage(props.src)
+      ? props.src
+      : props.fallback ?? props.src
+  )
+}
+
+onMounted(updateSrc)
+watch(() => props.src, updateSrc)
+
+function onError() {
   if (!props.fallback) return
-  const target = event.target as HTMLImageElement
-  if (target.src === props.fallback) return
-  target.src = props.fallback
+  if (imgRef.value?.src === props.fallback) return
+  setSrc(props.fallback)
   onErrorWithUrl(props.src)
 }
 </script>
+
