@@ -1,5 +1,5 @@
 <template>
-  <FallbackImg :src="targetUrl" :fallback="fallbackUrl" :style />
+  <FallbackImg :src="targetUrl" :fallback="fallbackUrl" :style :loading />
 </template>
 
 <script setup lang="ts">
@@ -10,6 +10,7 @@ import { STATIC_URL } from '@/utils/externalUrl';
 const props = defineProps<{
   tag: string,
   size?: 'small' | 'preview' | 'shop'
+  loading?: 'lazy' | 'eager'
 }>();
 
 const targetUrl = computed(() => {

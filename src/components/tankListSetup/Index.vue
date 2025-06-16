@@ -6,7 +6,7 @@
       <template #default="{ item }">
         <div class="tank-info">
           <p class="tank-name">{{ getTankName(item.tag, true) }}</p>
-          <VehicleImage :tag="item.tag" :size="'preview'" class="img" />
+          <VehicleImage :tag="item.tag" :size="'preview'" class="img" :loading="'lazy'" />
           <table cellspacing="0" cellpadding="0">
             <tbody>
               <tr>
