@@ -1,5 +1,5 @@
 <template>
-  <img :src="src" :alt="alt" @error="onError" :key="src">
+  <img :src="src" :alt="alt" @error="onError" :key="src" :loading="loading" :style="{ objectFit: 'cover' }" />
 </template>
 
 
@@ -11,6 +11,7 @@ const props = defineProps<{
   src: string
   alt?: string
   fallback?: string
+  loading?: 'lazy' | 'eager'
 }>()
 
 const target = computed(() => {
