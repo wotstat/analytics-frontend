@@ -38,11 +38,10 @@ function updateSrc() {
 onMounted(updateSrc)
 watch(() => props.src, updateSrc)
 
-function onError(event: Event) {
+function onError() {
   if (!props.fallback) return
-  const img = event.target as HTMLImageElement
-  if (img.src === props.fallback) return
-  img.src = props.fallback
+  if (imgRef.value?.src === props.fallback) return
+  setSrc(props.fallback)
   onErrorWithUrl(props.src)
 }
 </script>
