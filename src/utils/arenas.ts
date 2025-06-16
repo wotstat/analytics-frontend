@@ -56,7 +56,7 @@ export async function getArenaID(arenaTag: string) {
 
 export async function aranaMinimapUrl(arenaTag: string) {
   const id = await getArenaID(arenaTag)
-  return `https://static.armorinspector.com/mi/pc1.21.1/img-${id}-1024.jpg`
+  return `https://archive.wotinspector.com/mi/mirtankov1.32.0/img-${id}-1024.jpg`
 }
 
 const arenasMeta: Map<string, ArenaMeta | Promise<ArenaMeta>> = new Map()
