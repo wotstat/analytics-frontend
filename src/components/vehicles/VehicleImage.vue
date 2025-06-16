@@ -2,8 +2,8 @@
   <FallbackImg
     :src="targetUrl"
     :fallback="fallbackUrl"
-    :style="style"
-    :loading="loading"
+    :style
+    :loading
   />
 </template>
 
