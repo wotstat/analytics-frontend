@@ -3,6 +3,16 @@
     <!-- <div class="upper-header success">
       Работа WotStat восстановлена. Некоторые аналитические данные будут доступны позже в течение дня.
     </div> -->
+
+    <div class="upper-header success" v-if="CURRENT_URL_PREFIX !== 'ru' && ruHeaderVisible">
+      Доступен резервный домен на случай замедлений в России <a href="http://ru.wotstat.info"
+        target="_blank">ru.wotstat.info</a>
+
+      <div class="right-section">
+        <button @click="hideHeader('RuAlternativeHeader')">Понятно</button>
+      </div>
+    </div>
+
     <div class="main flex">
       <router-link to="/" class="wotstat-logo">WotStat</router-link>
       <router-link to="/" class="wotstat-logo small">WS</router-link>
@@ -138,7 +148,8 @@ import LogoIcon from './assets/logo2.0.svg'
 import HeaderSpacer from './HeaderSpacer.vue';
 import I18nIcon from './assets/i18n.svg'
 import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
-import { CLICKHOUSE_URL, POSITIONS_URL } from '@/utils/externalUrl';
+import { CLICKHOUSE_URL, CURRENT_URL_PREFIX, POSITIONS_URL } from '@/utils/externalUrl';
+import { useLocalStorage } from '@vueuse/core';
 
 const discordUrl = import.meta.env.VITE_DISCORD_URL
 
@@ -148,6 +159,12 @@ const headerElement = ref<HTMLElement | null>(null);
 useDefaultHeaderHeight(headerElement);
 
 const { additionalHeaderHeight } = useAdditionalHeaderHeight();
+
+const ruHeaderVisible = useLocalStorage('RuAlternativeHeader', true);
+
+function hideHeader(name: string) {
+  if (name == 'RuAlternativeHeader') ruHeaderVisible.value = false;
+}
 
 </script>
 
@@ -176,24 +193,20 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
   left: 0;
   top: 0;
   right: 0;
-  padding: 0 14px 0 18px;
   z-index: 11;
   display: flex;
   align-items: center;
   flex-direction: column;
-
-  @include less-small {
-    padding: 0 10px;
-  }
 
   .upper-header {
     width: 100%;
     color: white;
     padding: 1em;
     text-align: center;
-    margin: 0 -14px 0 -18px;
+    box-sizing: border-box;
     font-size: 14px;
     font-weight: var(--bold-weight);
+    position: relative;
 
     &.warning {
       background-color: #c4800b86;
@@ -201,6 +214,43 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
 
     &.success {
       background-color: #0bc45786;
+    }
+
+    a {
+      font-weight: var(--bold-weight);
+    }
+
+    .right-section {
+      position: absolute;
+      right: 10px;
+      top: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    &:has(.right-section) {
+      padding: 1em 110px;
+
+      @media screen and (max-width: 650px) {
+        padding: 1em;
+        padding-right: 110px;
+      }
+
+      @media screen and (max-width: 400px) {
+        padding: 1em;
+
+        .right-section {
+          position: static;
+          width: 100%;
+          text-align: center;
+          margin-top: 10px;
+
+          * {
+            flex: 1;
+          }
+        }
+      }
     }
   }
 
@@ -218,10 +268,16 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight();
   }
 
   .main {
+    box-sizing: border-box;
     align-items: center;
     width: 100%;
     height: 55px;
+    padding: 0 14px 0 18px;
     gap: 0;
+
+    @include less-small {
+      padding: 0 10px;
+    }
 
     a.icon {
       font-size: 0;
