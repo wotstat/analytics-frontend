@@ -4,7 +4,7 @@
       Работа WotStat восстановлена. Некоторые аналитические данные будут доступны позже в течение дня.
     </div> -->
 
-    <div class="upper-header success" v-if="CURRENT_URL_PREFIX != 'ru.' && ruHeaderVisible">
+    <div class="upper-header blue" v-if="CURRENT_URL_PREFIX != 'ru.' && ruHeaderVisible">
       Доступен резервный домен на случай замедлений в России <a href="http://ru.wotstat.info"
         target="_blank">ru.wotstat.info</a>
 
@@ -214,6 +214,14 @@ function hideHeader(name: string) {
 
     &.success {
       background-color: #0bc45786;
+    }
+
+    &.blue {
+      background-color: #1280d6;
+
+      a {
+        color: rgb(193, 255, 186);
+      }
     }
 
     a {
