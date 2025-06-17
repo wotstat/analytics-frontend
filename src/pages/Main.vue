@@ -2,7 +2,7 @@
   <div class="hidden-x">
     <div class="main center-container">
       <div class="go-to-ru info card" v-if="CURRENT_URL_PREFIX !== 'ru.'">
-        Если РКН блокирует или замедляет сайт, вы можете использовать резервную версию <a
+        Если провайдер (РКН) блокирует или замедляет сайт, вы можете использовать резервную версию <a
           href="https://ru.wotstat.info"><b>ru.</b>wotstat.info</a>
       </div>
 
@@ -558,15 +558,10 @@ const medianResults = queryAsyncFirst(`select median(personal.damageDealt) as me
   width: fit-content;
   position: relative;
   overflow: hidden;
+  background-color: #1280d6;
 
-  &::before {
-    content: '';
-    position: absolute;
-    left: 8px;
-    top: 15px;
-    bottom: 15px;
-    width: 2px;
-    background-color: #e7ffde;
+  a {
+    color: rgb(193, 255, 186);
   }
 }
 
