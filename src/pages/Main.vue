@@ -1,6 +1,11 @@
 <template>
   <div class="hidden-x">
     <div class="main center-container">
+      <div class="go-to-ru info card" v-if="CURRENT_URL_PREFIX !== 'ru.'">
+        Если РКН блокирует или замедляет сайт, вы можете использовать резервную версию <a
+          href="https://ru.wotstat.info"><b>ru.</b>wotstat.info</a>
+      </div>
+
       <h1>Сессионная аналитика для игр «Мир&nbsp;танков» и «World&nbsp;of&nbsp;Tanks»</h1>
 
       <section class="intro">
@@ -32,6 +37,36 @@
             сравнивать их с результатами других игроков.
           </h2>
         </div>
+
+        <div class="is-alternative card" v-if="CURRENT_URL_PREFIX == 'ru.'">
+          <p>
+            Вы находитесь на резервной версии, которая нужна на случай замедления основного сайта.
+            Если он у вас работает, рекомендуется пользоваться основным <a href="https://wotstat.info">wotstat.info</a>.
+          </p>
+
+          <br>
+
+          <p>
+            Кроме того, резервная версия с префиксом <b>ru</b> доступна для всех прочих ресурсов:
+          </p>
+
+          <ul>
+            <li>
+              <a href="https://ru.positions.wotstat.info" target="_blank"><b>ru.</b>positions.wotstat.info</a> – сайт
+              модификации на позиции
+            </li>
+            <li>
+              <a href="https://ru.widgets.wotstat.info" target="_blank"><b>ru.</b>widgets.wotstat.info</a> – сайт с
+              виджетами
+            </li>
+            <li>
+              <a href="https://db.wotstat.info/play?user=public" target="_blank"><b>ru.</b>db.wotstat.info</a> – доступ
+              к базе данных
+            </li>
+          </ul>
+
+        </div>
+
       </section>
     </div>
 
@@ -371,7 +406,7 @@ import CurrentWgVersion from '@/components/mdUtils/CurrentWgVersion.vue';
 import { githubRelease } from '@/components/mdUtils/ghRelease';
 import { useMeta } from '@/composition/useMeta';
 import { useAnalyticsRealtime } from '@/composition/useAnalyticsRealtime';
-import { CLICKHOUSE_URL } from '@/utils/externalUrl';
+import { CLICKHOUSE_URL, CURRENT_URL_PREFIX } from '@/utils/externalUrl';
 
 useMeta({
   title: 'WOTSTAT - Сессионная аналитика для игр «Мир танков» и «World of Tanks»',
@@ -399,8 +434,6 @@ const latestWotstat = computedAsync(async () => {
 function download(vendor: 'lesta' | 'wg' = 'lesta') {
   window.open(latestWotstat.value[vendor].browser_download_url, "_blank");
 }
-
-const streamerOpen = ref(false);
 
 
 // TOTAL
@@ -518,6 +551,34 @@ const medianResults = queryAsyncFirst(`select median(personal.damageDealt) as me
 @use '/src/styles/mixins.scss' as *;
 @import 'https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100..700&display=swap';
 
+.info {
+  text-align: center;
+  color: white;
+  margin: 0 auto;
+  width: fit-content;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 15px;
+    bottom: 15px;
+    width: 2px;
+    background-color: #e7ffde;
+  }
+}
+
+.is-alternative {
+  margin-top: 40px;
+
+  ul {
+    margin: 0;
+    padding-left: 1em;
+  }
+}
+
 .counter {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -578,7 +639,6 @@ p.warning {
   border-radius: 10px;
 }
 
-
 h1 {
   text-align: center;
   margin-top: 100px;
@@ -604,6 +664,7 @@ h2 {
   font-weight: 400;
   line-height: 1.4;
   max-width: 80%;
+  margin: 0;
   // max-width: 60%;
 
   @include large {
