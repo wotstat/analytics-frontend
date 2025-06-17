@@ -4,7 +4,7 @@
       Работа WotStat восстановлена. Некоторые аналитические данные будут доступны позже в течение дня.
     </div> -->
 
-    <div class="upper-header success" v-if="CURRENT_URL_PREFIX !== 'ru' && ruHeaderVisible">
+    <div class="upper-header success" v-if="CURRENT_URL_PREFIX != 'ru.' && ruHeaderVisible">
       Доступен резервный домен на случай замедлений в России <a href="http://ru.wotstat.info"
         target="_blank">ru.wotstat.info</a>
 
