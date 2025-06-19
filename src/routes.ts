@@ -10,6 +10,7 @@ import Coverage from './pages/infographics/pages/Coverage.vue'
 import Distribution from './pages/services/damageDistribution/Content.vue'
 import Lootbox from './pages/infographics/pages/lootbox/Index.vue'
 import FixedMatchDetect from "./pages/services/fixedMatchDetect/Index.vue";
+import Install from './pages/install/Index.vue'
 
 
 
@@ -42,6 +43,7 @@ const routes = [
   },
   { path: '/bb25', component: () => import('./pages/bob25/Index.vue') },
   { path: '/services/fixed-match-detector', component: FixedMatchDetect },
+  { path: '/install', component: Install },
 
   { path: '/widgets/:widget*', component: () => import('./pages/widgets/Index.vue') },
 
