@@ -162,6 +162,15 @@ const targetStyle = computed(() => {
       align-items: center;
       justify-content: center;
 
+
+      transition: filter 0.2s ease-out, border-color 0.2s ease-out;
+
+      &:hover {
+        background-color: rgb(29, 29, 29);
+        filter: drop-shadow(0 0 10px rgba(24, 254, 97, 0.05));
+        border-color: rgb(24, 254, 97);
+      }
+
       .checkmark {
         width: 20px;
         height: 20px;
