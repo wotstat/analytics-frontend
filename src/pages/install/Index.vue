@@ -1,7 +1,7 @@
 <template>
   <div class="page">
     <h1>Установка модов WotStat</h1>
-    <p>Вы можете установить моды прямо через браузерный веб-установщик или скачать моды и установить их вручную.</p>
+    <p>Вы можете установить моды прямо через браузерный веб-установщик или скачать файлами и установить вручную.</p>
 
     <div class="space"></div>
 
@@ -61,6 +61,48 @@
 
     <div class="other-mods">
       <h4>Другие моды</h4>
+
+      <table>
+        <thead>
+          <td></td>
+          <td>Название</td>
+          <td>Автор</td>
+          <td>Описание</td>
+          <td>Версия</td>
+          <td>Источник</td>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>
+              <input type="checkbox">
+            </td>
+            <td>Меню модов</td>
+            <td>@poliroid</td>
+            <td>Добавляет в ангар кнопку через которую открываются другие моды</td>
+            <td>1.6.01</td>
+            <td>
+              <a href="https://gitlab.com/wot-public-mods/mods-list/-/releases" target="_blank"
+                rel="noopener noreferrer">GitLab
+              </a>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <input type="checkbox">
+            </td>
+            <td>Настройки модов</td>
+            <td>@IzeBerg</td>
+            <td>Добавляет интерфейс для настроек модов</td>
+            <td>1.6.3</td>
+            <td>
+              <a href="https://github.com/IzeBerg/modssettingsapi/" target="_blank" rel="noopener noreferrer">GitHub
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <div class="space"></div>
@@ -85,6 +127,7 @@ import MTLogo from './assets/mt-logo.svg';
 import WOTLogo from './assets/wot-logo.svg';
 import MTName from './assets/mt-name.svg';
 import WOTName from './assets/wot-name.svg';
+import Github from "./assets/github.svg";
 
 import EyeMarker from './assets/mods/eye-marker-install.webp'
 import ModCard from './ModCard.vue';
@@ -218,6 +261,79 @@ async function install() {
           }
         }
       }
+    }
+  }
+
+  .other-mods {
+    table {
+      width: 100%;
+      border-collapse: collapse;
+
+      thead {
+        td {
+          padding: 0.5em;
+          font-weight: bold;
+          text-align: left;
+          font-size: 0.9em;
+        }
+      }
+
+      tbody {
+        tr {
+          &:hover {
+            background: rgba(255, 255, 255, 0.05);
+
+            td {
+              border-bottom: 1px solid transparent !important;
+            }
+          }
+
+          &:has(+tr:not(:hover)) {
+            td {
+              border-bottom: 1px solid #353535;
+            }
+          }
+        }
+      }
+
+      tr {
+        border-radius: 10px;
+
+        td {
+          padding: 0.7em 0.5em;
+          border-bottom: 1px solid transparent;
+
+          a {
+            color: #4a90e2;
+            text-decoration: none;
+
+            &:hover {
+              text-decoration: underline;
+            }
+          }
+        }
+      }
+
+      td {
+        &:first-child {
+          padding-left: 0;
+          padding-right: 0;
+          border-top-left-radius: 10px;
+          border-bottom-left-radius: 10px;
+        }
+
+        &:last-child {
+          padding-right: 0;
+          border-top-right-radius: 10px;
+          border-bottom-right-radius: 10px;
+        }
+      }
+    }
+
+    input[type="checkbox"] {
+      accent-color: #34ff59;
+      margin-left: 0.9em;
+      cursor: pointer;
     }
   }
 
