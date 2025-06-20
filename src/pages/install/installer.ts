@@ -31,18 +31,45 @@ async function getGameInfo(directoryHandle: FileSystemDirectoryHandle) {
   const detectedGameRealm = version.querySelector('realm')?.textContent;
 
   if (!detectedGameVersion || !detectedGameRealm) return null;
+  const realm = detectedGameRealm.trim().toUpperCase();
 
   const pathsFileContents = await (await pathsFile.getFile()).text();
   const paths = new DOMParser().parseFromString(pathsFileContents, 'application/xml');
 
-  const detectedModPath = [...paths.querySelectorAll('Paths > Path')].find(t => t.textContent?.includes('./mods/'))?.textContent;
+  const detectedModPath = [...paths.querySelectorAll('Paths > Path')].find(t => t.textContent?.includes('./mods/'));
 
-  if (!detectedModPath) return null;
+  if (!detectedModPath || !detectedModPath.textContent) return null;
+
+  const modExtension = detectedModPath.getAttribute('mask')?.replace('*', '') || '.wotmod';
+
+
+  const modsPath = detectedModPath.textContent.trim().replace('./mods', 'mods')
+  const modsSet = new Set<string>();
+
+  try {
+
+    let handle = directoryHandle;
+    for (const element of modsPath.split('/')) handle = await handle.getDirectoryHandle(element);
+
+    const entries = await fromAsync(handle.values());
+    const mods = entries
+      .filter(e => e.kind === 'file' && e.name.endsWith(modExtension))
+      .map(e => e.name);
+
+    for (const mod of mods) {
+      const match = mod.match(`^(.*?)(?:_[\\d.]+)?(?: \\([^)]+\\))?${modExtension}`);
+      if (!match || !match[1]) continue;
+      modsSet.add(match[1]);
+    }
+
+  } catch (error) { }
 
   return {
-    version: detectedGameVersion,
-    realm: detectedGameRealm,
-    modsPath: detectedModPath,
+    version: detectedGameVersion.trim(),
+    realm,
+    modsPath,
+    modsSet,
+    modExtension
   }
 
 }
@@ -74,6 +101,8 @@ export function useInstaller() {
     version: string;
     realm: string;
     modsPath: string;
+    modsSet: Set<string>;
+    modExtension: string;
   } | null>(null);
 
   async function init() {
@@ -153,7 +182,7 @@ export function useInstaller() {
     const modsPath = gameInfo.value.modsPath;
 
     let handle = rootHandle.value;
-    for (const element of modsPath.replace('./mods', 'mods').split('/')) {
+    for (const element of modsPath.split('/')) {
       handle = await handle.getDirectoryHandle(element, { create: true });
     }
 
