@@ -1,18 +1,21 @@
 <template>
-  <div class="mod card wotstat-positions inside" ref="card" :style="targetStyle" @click="isChecked = !isChecked">
-    <div class="image">
-      <img :src="image">
-    </div>
+  <div class="mod card" ref="card" :style="targetStyleThrottled" @click="isChecked = !isChecked">
 
-    <div class="info">
-      <slot name="info" v-if="slots.info"></slot>
-      <template v-else>
-        <div class="header">
-          <h5>{{ title }}</h5>
-          <Github class="github" />
-        </div>
-        <p>{{ description }}</p>
-      </template>
+    <div class="content-container">
+      <div class="image">
+        <img :src="image">
+      </div>
+
+      <div class="info">
+        <slot name="info" v-if="slots.info"></slot>
+        <template v-else>
+          <div class="header">
+            <h5>{{ title }}</h5>
+            <Github class="github" />
+          </div>
+          <p>{{ description }}</p>
+        </template>
+      </div>
     </div>
 
     <div class="checkbox-container" :class="{ checked: isChecked }">
@@ -32,9 +35,10 @@
 <script setup lang="ts">
 import { computed, ref, useSlots } from 'vue';
 import Github from './assets/github.svg'
-import { useMouseInElement } from '@vueuse/core';
+import { useMouseInElement, useThrottle, useThrottleFn } from '@vueuse/core';
 import { useCardRotation } from '@/composition/useCardRotation';
 import CheckMark from './assets/checkmark-bold.svg'
+import { useNextAnimationFrameThrottle } from '@/composition/utils/useNextAnimationFrameThrottle';
 
 const card = ref<HTMLElement | null>(null)
 
@@ -63,16 +67,23 @@ const targetStyle = computed(() => {
   return {
     '--x-rotation': `${-y * MULTIPLIER}deg`,
     '--y-rotation': `${x * MULTIPLIER}deg`,
-    '--x-offset': `${x * 0.5}px`,
-    '--y-offset': `${y * 0.5}px`,
+    '--x-offset': `${x * 1.5}px`,
+    '--y-offset': `${y * 1.5}px`,
     '--element-x': `${elementX.value}px`,
-    '--element-y': `${elementY.value}px`
+    '--element-y': `${elementY.value}px`,
+    '--shadow-opacity': `${Math.min(0.2, Math.max(0.1, Math.max(Math.abs(x), Math.abs(y))))}`
   }
 })
+
+// to prevent multiple layout recalculation
+const targetStyleThrottled = useNextAnimationFrameThrottle(targetStyle)
 </script>
 
 
 <style lang="scss" scoped>
+$content-border: 2px;
+$image-border-radius: calc(15px - $content-border);
+
 .mod {
   flex: 1;
   padding: 0;
@@ -80,58 +91,67 @@ const targetStyle = computed(() => {
   z-index: 5;
   cursor: pointer;
   user-select: none;
+  container: mod-container / inline-size;
 
   transform: perspective(400px) rotateX(var(--x-rotation)) rotateY(var(--y-rotation));
-  box-shadow: calc(var(--x-offset) * -2) calc(var(--y-offset) * -2) 5px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: calc(var(--x-offset) * -2) calc(var(--y-offset) * -2) 10px 0 rgba(0, 0, 0, var(--shadow-opacity));
 
-  .image {
-    img {
-      transform: translate(var(--x-offset), var(--y-offset));
-    }
-  }
+  .content-container {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 10px;
 
-  .image {
-    height: 200px;
-    border-top-left-radius: 13px;
-    border-top-right-radius: 13px;
-    overflow: hidden;
-    margin: 2px;
-
-    img {
-      display: block;
-      width: 100%;
-      height: 100%;
-      scale: 1.04;
-      object-fit: cover;
-      user-select: none;
-      pointer-events: none;
-    }
-  }
-
-  .info {
-    padding: 1em;
-
-    .header {
-      display: flex;
-      align-items: center;
-
-      h5 {
-        margin: 0;
-        font-size: 1em;
-        flex: 1;
+    .image {
+      img {
+        transform: translate(var(--x-offset), var(--y-offset));
       }
+    }
 
-      .github {
+    .image {
+      height: 200px;
+      border-top-left-radius: $image-border-radius;
+      border-top-right-radius: $image-border-radius;
+      overflow: hidden;
+      margin: $content-border;
+
+      img {
         display: block;
-        width: 20px;
-        height: 20px;
+        width: 100%;
+        height: 100%;
+        scale: 1.04;
+        object-fit: cover;
+        user-select: none;
+        pointer-events: none;
+      }
+    }
+
+    .info {
+      padding: 1em;
+
+      .header {
+        display: flex;
+        align-items: center;
+
+        h5 {
+          margin: 0;
+          font-size: 1em;
+          flex: 1;
+        }
+
+        .github {
+          display: block;
+          width: 20px;
+          height: 20px;
+        }
       }
     }
   }
 
   .checkbox-container {
-    margin-top: 10px;
-    position: relative;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
 
     .line {
       position: absolute;
@@ -192,7 +212,6 @@ const targetStyle = computed(() => {
     }
   }
 
-
   .blink-container {
     position: absolute;
     inset: 0;
@@ -204,7 +223,7 @@ const targetStyle = computed(() => {
       position: absolute;
       inset: 2px;
       background: #353535;
-      border-radius: 13px;
+      border-radius: $image-border-radius;
 
       &::before {
         content: '';
@@ -216,6 +235,27 @@ const targetStyle = computed(() => {
         left: calc(var(--element-x) - 50px);
         background: rgba(255, 255, 255, 0.204);
         filter: blur(20px);
+      }
+    }
+  }
+
+
+  @container mod-container (min-width: 450px) {
+    .content-container {
+      flex-direction: row;
+      padding-bottom: 0px;
+
+      .image {
+        border-top-right-radius: 0px;
+        border-bottom-left-radius: $image-border-radius;
+
+        min-width: 40%;
+        max-width: 40%;
+
+
+        img {
+          transform: translate(calc(var(--x-offset) / 0.4), var(--y-offset));
+        }
       }
     }
   }

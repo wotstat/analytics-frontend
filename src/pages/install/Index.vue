@@ -117,7 +117,6 @@
       <button @click="install">Установить</button>
     </div>
   </div>
-
 </template>
 
 
@@ -262,6 +261,11 @@ async function install() {
         }
       }
     }
+
+    @media screen and (max-width: 800px) {
+      flex-direction: column;
+      gap: 2em
+    }
   }
 
   .other-mods {
@@ -344,8 +348,7 @@ async function install() {
     padding: 1em;
     z-index: 100;
     border-radius: 15px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-    margin: 0 -20px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
   }
 }
 </style>
