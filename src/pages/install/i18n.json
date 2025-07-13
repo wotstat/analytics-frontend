@@ -1,0 +1,16 @@
+{
+  "ru": {
+    "name:wotstat.lootbox-open-multiplier": "Множитель лутбоксов",
+    "name:wotstat.data-provider": "Data Provider",
+    "name:me.poliroid.modslistapi": "Меню модов",
+    "name:izeberg.modssettingsapi": "Настройки модов",
+    "author:wotstat.lootbox-open-multiplier": "@WotStat",
+    "author:wotstat.data-provider": "@WotStat",
+    "author:me.poliroid.modslistapi": "@Poliroid",
+    "author:izeberg.modssettingsapi": "@Izeberg",
+    "description:wotstat.lootbox-open-multiplier": "Позволяет открывать до 100 лутбоксов за раз",
+    "description:wotstat.data-provider": "Передаёт информацию об игре в OBS виджеты",
+    "description:me.poliroid.modslistapi": "Добавляет в ангар меню с установленными модами",
+    "description:izeberg.modssettingsapi": "Позволяет настраивать моды прямо в игре"
+  }
+}

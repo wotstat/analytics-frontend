@@ -50,66 +50,72 @@
     <h4>Основные моды</h4>
     <div class="main-mods">
       <ModCard title="Виджеты" description="Модификация позволяет добавлять веб-виджеты прямо в игру."
-        :image="EyeMarker" v-model="installWidgets" />
+        :image="EyeMarker" :model-value="enabledMods.get('wotstat.widgets') ?? false"
+        @update:model-value="v => enabledMods.set('wotstat.widgets', v)" />
       <ModCard title="Аналитика" description="Собирается аналитические данные и отправляет их в базу данных WotStat."
-        :image="EyeMarker" v-model="installAnalytics" />
+        :image="EyeMarker" :model-value="enabledMods.get('wotstat.analytics') ?? false"
+        @update:model-value="v => enabledMods.set('wotstat.analytics', v)" />
       <ModCard title="Позиции" description="Отображает эффективные позиции для каждого танка на каждой карте."
-        :image="EyeMarker" v-model="installPositions" />
+        :image="EyeMarker" :model-value="enabledMods.get('wotstat.positions') ?? false"
+        @update:model-value="v => enabledMods.set('wotstat.positions', v)" />
     </div>
 
     <div class="large-space"></div>
 
     <div class="other-mods">
-      <h4>Другие моды</h4>
 
-      <table>
+      <div class="line flex">
+        <h4 class="flex-1">Другие моды</h4>
+        <div class="switcher">
+          <button class="detail" @click="displayType = 'detail'" :class="{ active: displayType === 'detail' }">
+            <SidebarIcon />
+          </button>
+          <button class="table" @click="displayType = 'table'" :class="{ active: displayType === 'table' }">
+            <ListIcon />
+          </button>
+        </div>
+      </div>
+
+      <table v-if="displayType === 'table'">
         <thead>
-          <td></td>
-          <td>Название</td>
-          <td>Автор</td>
-          <td>Описание</td>
-          <td>Версия</td>
-          <td>Источник</td>
+          <tr>
+            <td></td>
+            <td>Название</td>
+            <td>Автор</td>
+            <td>Описание</td>
+            <td>Версия</td>
+            <td>Источник</td>
+          </tr>
         </thead>
 
         <tbody>
-          <tr>
+          <tr v-for="mod in otherMods.filter(m => latestMods.has(m.tag))"
+            @click="enabledMods.set(mod.tag, !enabledMods.get(mod.tag))">
             <td>
-              <input type="checkbox">
+              <input type="checkbox" :checked="enabledMods.get(mod.tag)"
+                @change="enabledMods.set(mod.tag, !enabledMods.get(mod.tag))" @click.stop />
             </td>
-            <td>Меню модов</td>
-            <td>@poliroid</td>
-            <td>Добавляет в ангар кнопку через которую открываются другие моды</td>
-            <td>1.6.01</td>
+            <td>{{ t(`name:${mod.tag}`) }}</td>
+            <td>{{ t(`author:${mod.tag}`) }}</td>
+            <td>{{ t(`description:${mod.tag}`) }}</td>
+            <td>{{ latestMods.get(mod.tag)?.version ?? '?' }}</td>
             <td>
-              <a href="https://gitlab.com/wot-public-mods/mods-list/-/releases" target="_blank"
-                rel="noopener noreferrer">GitLab
-              </a>
-            </td>
-          </tr>
-
-          <tr>
-            <td>
-              <input type="checkbox">
-            </td>
-            <td>Настройки модов</td>
-            <td>@IzeBerg</td>
-            <td>Добавляет интерфейс для настроек модов</td>
-            <td>1.6.3</td>
-            <td>
-              <a href="https://github.com/IzeBerg/modssettingsapi/" target="_blank" rel="noopener noreferrer">GitHub
-              </a>
+              <a :href="mod.source.url" target="_blank" rel="noopener noreferrer" @click.stop>{{ mod.source.name }}</a>
             </td>
           </tr>
         </tbody>
       </table>
+
+      <div v-else class="detailed">
+        <div class="list">
+          <div class="element" v-for="mod in otherMods.filter(m => latestMods.has(m.tag))">
+            {{ t(`name:${mod.tag}`) }}
+          </div>
+        </div>
+        <div class="detail"></div>
+      </div>
     </div>
 
-    <div class="space"></div>
-
-    <div class="utils">
-      <h4>Служебные моды</h4>
-    </div>
 
     <div class="large-space"></div>
 
@@ -126,17 +132,33 @@ import MTLogo from './assets/mt-logo.svg';
 import WOTLogo from './assets/wot-logo.svg';
 import MTName from './assets/mt-name.svg';
 import WOTName from './assets/wot-name.svg';
-import Github from "./assets/github.svg";
+import ListIcon from "./assets/list.svg";
+import SidebarIcon from "./assets/sidebar.svg";
 
 import EyeMarker from './assets/mods/eye-marker-install.webp'
 import ModCard from './ModCard.vue';
-import { ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { lestaLatestMods, otherMods, wotLatestMods } from './mods'
+import { useI18n } from '@/composition/useI18n';
+import i18n from './i18n.json';
+import { useLocalStorage } from '@vueuse/core';
 
-const installWidgets = ref(false)
-const installAnalytics = ref(true)
-const installPositions = ref(false)
+const displayType = ref<'detail' | 'table'>('table')
+const preferredGameVendor = ref<'lesta' | 'wargaming'>('lesta')
+const enabledMods = useLocalStorage('install:enabledMods', new Map<string, boolean>())
+
+const { t } = useI18n(i18n)
 
 const { isBrowserSupported, requestGameFolderAccess, gameInfo, installMods } = useInstaller()
+
+watch(gameInfo, info => {
+  if (!info) return;
+  if (info.realm === 'RU' || info.realm === 'RPT') preferredGameVendor.value = 'lesta';
+  else preferredGameVendor.value = 'wargaming';
+});
+
+const latestMods = computed(() => preferredGameVendor.value === 'lesta' ? lestaLatestMods.value : wotLatestMods.value);
+
 
 async function selectFolder() {
   await requestGameFolderAccess()
@@ -284,6 +306,8 @@ async function install() {
 
       tbody {
         tr {
+          cursor: pointer;
+
           &:hover {
             background: rgba(255, 255, 255, 0.05);
 
@@ -332,12 +356,51 @@ async function install() {
           border-bottom-right-radius: 10px;
         }
       }
+
+      @media screen and (max-width: 800px) {
+        td:nth-child(3) {
+          display: none;
+        }
+      }
+
+      @media screen and (max-width: 500px) {
+        font-size: 0.9em;
+
+        td:nth-child(5) {
+          display: none;
+        }
+      }
     }
 
     input[type="checkbox"] {
       accent-color: #34ff59;
       margin-left: 0.9em;
       cursor: pointer;
+    }
+
+    .switcher {
+      display: flex;
+      align-items: center;
+
+      button {
+        background: transparent;
+        border: none;
+        padding: 6px;
+
+        svg {
+          width: 25px;
+          fill: currentColor;
+          display: block;
+        }
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.05);
+        }
+
+        &.active {
+          background: rgba(255, 255, 255, 0.1);
+        }
+      }
     }
   }
 
