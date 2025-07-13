@@ -13,9 +13,7 @@
       </div>
     </template>
 
-    <template #content-top>
-      <h1>Реплеи</h1>
-    </template>
+    <template #content-top></template>
 
     <template #default>
       <RouterView></RouterView>

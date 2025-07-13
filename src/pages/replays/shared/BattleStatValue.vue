@@ -5,7 +5,7 @@
         <p class="tooltip">{{ tooltip }}</p>
       </template>
       <div class="item">
-        <img :src="DmgIcon" alt="damage">
+        <Icon :icon="icon" />
         <p>{{ value }}</p>
       </div>
     </Tooltip>
@@ -14,10 +14,13 @@
 
 <script lang="ts" setup>
 import DmgIcon from '@/assets/efficiency-icon/dmg.png'
+import Icon from '@/components/efficiencyIcon/Icon.vue';
+import { IconType } from '@/components/efficiencyIcon/utils';
 import Tooltip from '@/components/Tooltip.vue';
 
+
 const props = defineProps<{
-  // icon: string
+  icon: IconType
   value: string | number
   tooltip: string
 }>()
@@ -41,6 +44,12 @@ const props = defineProps<{
     width: 40px;
     height: 40px;
     margin: -10px;
+  }
+
+  svg {
+    width: 35px;
+    height: 35px;
+    margin: -5px;
   }
 }
 

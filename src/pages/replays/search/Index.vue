@@ -56,6 +56,10 @@ const displayPopup = ref(false)
 
 
 <style scoped lang="scss">
+h2 {
+  margin-top: 1em;
+}
+
 .battles {
   display: grid;
   grid-template-columns: repeat(1, minmax(500px, 1fr));

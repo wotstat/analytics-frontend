@@ -21,20 +21,20 @@
           <h3>{{ meta.title }}</h3>
           <div class="info">
             <div class="item">
-              <img :src="DmgIcon" alt="download count">
+              <DownloadFill />
               <p>{{ utils.downloadCount }}</p>
             </div>
           </div>
         </div>
         <div class="stats">
-          <BattleStatValue :value="stats.damage" tooltip="Урон" />
-          <BattleStatValue :value="stats.assist" tooltip="Ассист" />
-          <BattleStatValue :value="stats.blocked" tooltip="Заблокированно бронёй" />
-          <BattleStatValue :value="stats.kills" tooltip="Уничтожено" />
-          <BattleStatValue :value="stats.xp" tooltip="Опыт" />
-          <BattleStatValue :value="stats.spot" tooltip="Обнаружено" />
-          <BattleStatValue :value="stats.damage" tooltip="Урон" />
-          <BattleStatValue :value="timeProcessor(stats.lifetime).join(':')" tooltip="Время жизни" />
+          <BattleStatValue :value="stats.damage" :icon="'dmg'" tooltip="Урон" />
+          <BattleStatValue :value="stats.assist" :icon="'assist'" tooltip="Ассист" />
+          <BattleStatValue :value="stats.blocked" :icon="'block'" tooltip="Заблокированно бронёй" />
+          <BattleStatValue :value="stats.kills" :icon="'kill'" tooltip="Уничтожено" />
+          <BattleStatValue :value="stats.xp" :icon="'xp'" tooltip="Опыт" />
+          <BattleStatValue :value="stats.spot" :icon="'discover'" tooltip="Обнаружено" />
+          <BattleStatValue :value="stats.damage" :icon="'dmg'" tooltip="Урон" />
+          <BattleStatValue :value="timeProcessor(stats.lifetime).join(':')" :icon="'lifetime'" tooltip="Время жизни" />
         </div>
         <div class="meta">
           <p class="item">Регион: <span>{{ meta.region }}</span></p>
@@ -49,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import DmgIcon from '@/assets/efficiency-icon/dmg.png'
+import DownloadFill from '@/assets/icons/download-fill.svg'
 import VehicleImage from '@/components/vehicles/VehicleImage.vue';
 import { timeProcessor } from '@/utils';
 import { getArenaName, getTankName } from '@/utils/i18n';
@@ -226,10 +226,13 @@ h5 {
         .info {
           .item {
             display: flex;
-            align-items: flex-end;
+            align-items: center;
 
-            img {
-              height: 20px;
+            svg {
+              height: 16px;
+              fill: currentColor;
+              display: block;
+              margin-right: 0.1em;
             }
           }
         }
