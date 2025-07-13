@@ -1,5 +1,4 @@
 import { playerNameProcessor } from "@/composition/processors/usePlayerNameProcessor"
-import { MultiSlotParamSlot } from "@/utils/defineWidget"
 
 export const shared = [
   'battles',
@@ -79,17 +78,6 @@ export function modificationLabel(modification: string) {
   if (modification.endsWith('-in-row')) return 'in-row'
   return 'total'
 }
-
-export const multiSlotParamSlot = efficiencyWithMods.map(t => ({
-  value: t.value,
-  icon: t.value,
-  label: t.value,
-  modifications: t.modifications.map(t => ({
-    value: t,
-    icon: t,
-    label: modificationLabel(t),
-  }))
-})) satisfies MultiSlotParamSlot[]
 
 export type IconType = typeof efficiency[number] | typeof shared[number]
 const iconTypeSet = new Set<IconType>([...efficiency, ...shared])
