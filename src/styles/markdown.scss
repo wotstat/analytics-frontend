@@ -4,8 +4,9 @@
   }
 
   h2 {
-    font-size: 1.5em;
-    margin-top: 1em;
+    font-size: 1.2em;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
   }
 
   h3 {
@@ -34,6 +35,13 @@
   }
 
   img {
+    border-radius: 0.5em;
+    width: 100%;
+  }
+
+  video {
+    width: 100%;
+    height: auto;
     border-radius: 0.5em;
   }
 
