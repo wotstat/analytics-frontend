@@ -1,6 +1,6 @@
 <template>
   <div class="page">
-    <h1>Установка модов WotStat</h1>
+    <h1>Установка модов</h1>
     <p>Вы можете установить моды прямо через браузерный веб-установщик или скачать файлами и установить вручную.</p>
 
     <div class="space"></div>
@@ -107,12 +107,40 @@
       </table>
 
       <div v-else class="detailed">
-        <div class="list">
-          <div class="element" v-for="mod in otherMods.filter(m => latestMods.has(m.tag))">
-            {{ t(`name:${mod.tag}`) }}
+        <div class="info">
+          <div class="list">
+            <template v-for="mod in otherMods.filter(m => latestMods.has(m.tag))">
+              <div class="element" @click="enabledMods.set(mod.tag, !enabledMods.get(mod.tag))"
+                @pointerover="selectedModInDetail = mod" :class="{ selected: selectedModInDetail?.tag === mod.tag }">
+                <input type="checkbox" :checked="enabledMods.get(mod.tag)"
+                  @change="enabledMods.set(mod.tag, !enabledMods.get(mod.tag))" @click.stop />
+                {{ t(`name:${mod.tag}`) }}
+              </div>
+              <div class="separator"></div>
+            </template>
           </div>
         </div>
-        <div class="detail"></div>
+        <div class="detail nice-scrollbar" ref="detailContentContainer" :class="{ 'has-scroll': hasScrollY }">
+          <div class="markdown">
+            <component :is="detailComponent" v-if="detailComponent" />
+            <div v-else>
+              {{ selectedModInDetail }}
+            </div>
+          </div>
+          <div class="footer-info" v-if="selectedModInDetail">
+            <p>
+              <span>{{ t(`author:${selectedModInDetail.tag}`) }}</span>
+              <span> • </span>
+              <a :href="selectedModInDetail.source.url" target="_blank" rel="noopener noreferrer" @click.stop>{{
+                selectedModInDetail.source.name }}</a>
+              <template v-if="latestMods.get(selectedModInDetail.tag)">
+                <span> • </span>
+                <span>v{{ latestMods.get(selectedModInDetail.tag)!.version }} ({{
+                  latestMods.get(selectedModInDetail.tag)!.date }})</span>
+              </template>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -137,15 +165,20 @@ import SidebarIcon from "./assets/sidebar.svg";
 
 import EyeMarker from './assets/mods/eye-marker-install.webp'
 import ModCard from './ModCard.vue';
-import { computed, ref, watch } from 'vue';
-import { lestaLatestMods, otherMods, wotLatestMods } from './mods'
+import { type Component, computed, ref, watch } from 'vue';
+import { lestaLatestMods, ModInfo, otherMods, wotLatestMods } from './mods'
 import { useI18n } from '@/composition/useI18n';
 import i18n from './i18n.json';
 import { useLocalStorage } from '@vueuse/core';
+import { useHasScroll } from '@/composition/useHasScroll';
 
-const displayType = ref<'detail' | 'table'>('table')
+const detailContentContainer = ref<HTMLElement | null>(null);
+const displayType = useLocalStorage<'detail' | 'table'>('install:otherModsDisplayType', 'table')
 const preferredGameVendor = ref<'lesta' | 'wargaming'>('lesta')
 const enabledMods = useLocalStorage('install:enabledMods', new Map<string, boolean>())
+const selectedModInDetail = ref<ModInfo | null>(null);
+
+const { hasScrollY } = useHasScroll(detailContentContainer);
 
 const { t } = useI18n(i18n)
 
@@ -158,6 +191,20 @@ watch(gameInfo, info => {
 });
 
 const latestMods = computed(() => preferredGameVendor.value === 'lesta' ? lestaLatestMods.value : wotLatestMods.value);
+
+const unwatch = watch(latestMods, mods => {
+  if (mods.size === 0) return;
+  if (!selectedModInDetail.value) selectedModInDetail.value = otherMods.at(0) || null;
+  if (selectedModInDetail.value) unwatch();
+});
+
+const mdDescriptions = import.meta.glob<{ VueComponent: Component }>('./details/*/*.md', { eager: true });
+const detailComponent = computed(() => {
+  if (!selectedModInDetail.value) return null;
+  const modTag = selectedModInDetail.value.tag;
+  const path = `./details/ru/${modTag}.md`;
+  return mdDescriptions[path]?.VueComponent || null;
+});
 
 
 async function selectFolder() {
@@ -357,6 +404,12 @@ async function install() {
         }
       }
 
+      input[type="checkbox"] {
+        accent-color: #34ff59;
+        margin-left: 0.9em;
+        cursor: pointer;
+      }
+
       @media screen and (max-width: 800px) {
         td:nth-child(3) {
           display: none;
@@ -370,12 +423,6 @@ async function install() {
           display: none;
         }
       }
-    }
-
-    input[type="checkbox"] {
-      accent-color: #34ff59;
-      margin-left: 0.9em;
-      cursor: pointer;
     }
 
     .switcher {
@@ -399,6 +446,99 @@ async function install() {
 
         &.active {
           background: rgba(255, 255, 255, 0.1);
+        }
+      }
+    }
+
+    .detailed {
+      display: flex;
+      gap: 1em;
+      margin-top: 1em;
+
+      .info {
+        width: 30%;
+        min-width: 200px;
+
+        .list {
+          display: flex;
+          flex-direction: column;
+          position: sticky;
+          top: calc(var(--header-height) + 20px);
+
+          .element {
+            border-radius: 10px;
+            padding: 0.7em 1em;
+            cursor: pointer;
+            user-select: none;
+
+            input[type="checkbox"] {
+              accent-color: #34ff59;
+              margin-left: -0.2em;
+              margin-right: 0.8em;
+              cursor: pointer;
+            }
+
+            &.selected {
+              background-color: rgba(255, 255, 255, 0.05);
+            }
+
+            &:hover {
+              background-color: rgba(255, 255, 255, 0.05);
+            }
+
+            &.selected,
+            &:hover {
+              &+.separator {
+                background-color: transparent;
+              }
+            }
+          }
+
+          .separator {
+            background-color: #ffffff18;
+            height: 1px;
+            margin: 0;
+            margin-bottom: -1px;
+
+            &:last-child {
+              display: none;
+            }
+
+            &:has(+.element:hover),
+            &:has(+.element.selected) {
+              background-color: transparent;
+            }
+
+          }
+        }
+      }
+
+      .detail {
+        flex: 1;
+        height: 800px;
+        overflow-y: auto;
+
+        &.has-scroll {
+          padding-right: 5px;
+        }
+
+        :deep(.markdown) {
+          h1 {
+            margin-top: 0;
+          }
+
+          blockquote {
+            background-color: rgba(255, 255, 255, 0.04);
+          }
+        }
+
+        .footer-info {
+          border-top: 1px solid #353535;
+          background-color: var(--background-color);
+          position: sticky;
+          bottom: 0;
+          margin-top: 1em;
+          padding-top: 1em;
         }
       }
     }
