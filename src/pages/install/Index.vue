@@ -89,8 +89,7 @@
         </thead>
 
         <tbody>
-          <tr v-for="mod in otherMods.filter(m => latestMods.has(m.tag))"
-            @click="enabledMods.set(mod.tag, !enabledMods.get(mod.tag))">
+          <tr v-for="mod in displayedModsList" @click="enabledMods.set(mod.tag, !enabledMods.get(mod.tag))">
             <td>
               <input type="checkbox" :checked="enabledMods.get(mod.tag)"
                 @change="enabledMods.set(mod.tag, !enabledMods.get(mod.tag))" @click.stop />
@@ -98,7 +97,7 @@
             <td>{{ t(`name:${mod.tag}`) }}</td>
             <td>{{ t(`author:${mod.tag}`) }}</td>
             <td>{{ t(`description:${mod.tag}`) }}</td>
-            <td>{{ latestMods.get(mod.tag)?.version ?? '?' }}</td>
+            <td>{{ mod.version }}</td>
             <td>
               <a :href="mod.source.url" target="_blank" rel="noopener noreferrer" @click.stop>{{ mod.source.name }}</a>
             </td>
@@ -109,7 +108,7 @@
       <div v-else class="detailed">
         <div class="info">
           <div class="list">
-            <template v-for="mod in otherMods.filter(m => latestMods.has(m.tag))">
+            <template v-for="mod in displayedModsList">
               <div class="element" @click="enabledMods.set(mod.tag, !enabledMods.get(mod.tag))"
                 @pointerover="selectedModInDetail = mod" :class="{ selected: selectedModInDetail?.tag === mod.tag }">
                 <input type="checkbox" :checked="enabledMods.get(mod.tag)"
@@ -133,17 +132,23 @@
               <span> • </span>
               <a :href="selectedModInDetail.source.url" target="_blank" rel="noopener noreferrer" @click.stop>{{
                 selectedModInDetail.source.name }}</a>
-              <template v-if="latestMods.get(selectedModInDetail.tag)">
+              <span> • </span>
+              <span>v{{ selectedModInDetail.version }} ({{ selectedModInDetail.date }})</span>
+
+              <template v-if="selectedModInDetail.support == 'mt-only'">
                 <span> • </span>
-                <span>v{{ latestMods.get(selectedModInDetail.tag)!.version }} ({{
-                  latestMods.get(selectedModInDetail.tag)!.date }})</span>
+                <span class="bold">Только Lesta</span>
+              </template>
+
+              <template v-if="selectedModInDetail.support == 'wot-only'">
+                <span> • </span>
+                <span class="bold">Только WG</span>
               </template>
             </p>
           </div>
         </div>
       </div>
     </div>
-
 
     <div class="large-space"></div>
 
@@ -166,7 +171,7 @@ import SidebarIcon from "./assets/sidebar.svg";
 import EyeMarker from './assets/mods/eye-marker-install.webp'
 import ModCard from './ModCard.vue';
 import { type Component, computed, ref, watch } from 'vue';
-import { lestaLatestMods, ModInfo, otherMods, wotLatestMods } from './mods'
+import { latestModsMap, lestaLatestMods, ModInfo, otherMods, wotLatestMods } from './mods'
 import { useI18n } from '@/composition/useI18n';
 import i18n from './i18n.json';
 import { useLocalStorage } from '@vueuse/core';
@@ -174,9 +179,9 @@ import { useHasScroll } from '@/composition/useHasScroll';
 
 const detailContentContainer = ref<HTMLElement | null>(null);
 const displayType = useLocalStorage<'detail' | 'table'>('install:otherModsDisplayType', 'table')
-const preferredGameVendor = ref<'lesta' | 'wargaming'>('lesta')
+const preferredGameVendor = ref<'lesta' | 'wargaming' | 'unknown'>('unknown')
 const enabledMods = useLocalStorage('install:enabledMods', new Map<string, boolean>())
-const selectedModInDetail = ref<ModInfo | null>(null);
+const selectedModInDetail = ref<(ModInfo & { version: string, date: string }) | null>(null);
 
 const { hasScrollY } = useHasScroll(detailContentContainer);
 
@@ -185,16 +190,36 @@ const { t } = useI18n(i18n)
 const { isBrowserSupported, requestGameFolderAccess, gameInfo, installMods } = useInstaller()
 
 watch(gameInfo, info => {
-  if (!info) return;
+  if (!info) return preferredGameVendor.value = 'unknown';
   if (info.realm === 'RU' || info.realm === 'RPT') preferredGameVendor.value = 'lesta';
   else preferredGameVendor.value = 'wargaming';
-});
+}, { immediate: true });
 
-const latestMods = computed(() => preferredGameVendor.value === 'lesta' ? lestaLatestMods.value : wotLatestMods.value);
+const displayedModsList = computed(() => {
+  return otherMods
+    .filter(m =>
+      (m.support == 'mt-only' && preferredGameVendor.value === 'lesta') ||
+      (m.support == 'wot-only' && preferredGameVendor.value === 'wargaming') ||
+      (m.support == undefined) ||
+      (preferredGameVendor.value == 'unknown'))
+    .map(m => {
+      const latestMod = latestModsMap.value.get(m.tag);
+      if (!latestMod) return null;
 
-const unwatch = watch(latestMods, mods => {
-  if (mods.size === 0) return;
-  if (!selectedModInDetail.value) selectedModInDetail.value = otherMods.at(0) || null;
+      const target = latestMod[preferredGameVendor.value == 'wargaming' ? 'wotmod' : 'mtmod'];
+
+      return {
+        ...m,
+        version: target.version,
+        date: target.date,
+      };
+    })
+    .filter(m => m !== null);
+})
+
+const unwatch = watch(displayedModsList, mods => {
+  if (mods.length === 0) return;
+  if (!selectedModInDetail.value) selectedModInDetail.value = mods.at(0) || null;
   if (selectedModInDetail.value) unwatch();
 });
 
