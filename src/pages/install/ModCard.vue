@@ -1,5 +1,6 @@
 <template>
-  <div class="mod card" ref="card" :style="targetStyleThrottled" @click="isChecked = !isChecked">
+  <div class="mod card" ref="card" :style="{ ...targetStyleThrottled, ...elementMousePositionStyleThrottled }"
+    @click="isChecked = !isChecked">
 
     <div class="content-container">
       <div class="image">
@@ -33,7 +34,7 @@
 
 
 <script setup lang="ts">
-import { computed, ref, useSlots } from 'vue';
+import { computed, ref, useSlots, watchEffect } from 'vue';
 import Github from './assets/github.svg'
 import { useMouseInElement, useThrottle, useThrottleFn } from '@vueuse/core';
 import { useCardRotation } from '@/composition/useCardRotation';
@@ -56,8 +57,7 @@ const props = defineProps<{
 const slots = useSlots()
 
 const rot = useCardRotation(card, {})
-
-const { elementX, elementY } = useMouseInElement(card)
+const { elementX, elementY, elementWidth, elementHeight } = useMouseInElement(card)
 
 const targetStyle = computed(() => {
   const x = rot.x.value
@@ -69,14 +69,33 @@ const targetStyle = computed(() => {
     '--y-rotation': `${x * MULTIPLIER}deg`,
     '--x-offset': `${x * 1.5}px`,
     '--y-offset': `${y * 1.5}px`,
+    '--shadow-opacity': `${Math.min(0.2, Math.max(0.1, Math.max(Math.abs(x), Math.abs(y))))}`,
+  }
+})
+
+const UPDATED_OFFSET = 100
+const elementMousePositionStyle = computed<{ '--element-x': string, '--element-y': string, }>((prev) => {
+  const distanceX = -Math.min(elementX.value, elementWidth.value - elementX.value);
+  const distanceY = -Math.min(elementY.value, elementHeight.value - elementY.value);
+
+  if (prev?.['--element-x'] == '0px' || prev?.['--element-y'] == '0px') prev = undefined;
+
+  if (distanceX > UPDATED_OFFSET || distanceY > UPDATED_OFFSET) {
+    return prev || {
+      '--element-x': `${UPDATED_OFFSET}px`,
+      '--element-y': `${UPDATED_OFFSET}px`,
+    }
+  }
+
+  return {
     '--element-x': `${elementX.value}px`,
     '--element-y': `${elementY.value}px`,
-    '--shadow-opacity': `${Math.min(0.2, Math.max(0.1, Math.max(Math.abs(x), Math.abs(y))))}`
   }
 })
 
 // to prevent multiple layout recalculation
 const targetStyleThrottled = useNextAnimationFrameThrottle(targetStyle)
+const elementMousePositionStyleThrottled = useNextAnimationFrameThrottle(elementMousePositionStyle)
 </script>
 
 

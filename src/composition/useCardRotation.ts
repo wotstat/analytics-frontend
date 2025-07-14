@@ -3,8 +3,6 @@ import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 
 
 export function useCardRotation(target: MaybeElementRef, options: {
-  maxX?: number;
-  maxY?: number;
   transitionDuration?: number;
 }) {
 
