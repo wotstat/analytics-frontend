@@ -4,7 +4,7 @@
 
     <div class="content-container">
       <div class="image">
-        <img :src="image">
+        <img :src="image" v-for="(image, i) in images" :class="`layer-${i}`" />
       </div>
 
       <div class="info">
@@ -49,12 +49,14 @@ const isChecked = defineModel({
 })
 
 const props = defineProps<{
-  image: string
+  image: string | string[]
   title?: string
   description?: string
 }>()
 
 const slots = useSlots()
+
+const images = computed(() => Array.isArray(props.image) ? props.image : [props.image])
 
 const rot = useCardRotation(card, {})
 const { elementX, elementY, elementWidth, elementHeight } = useMouseInElement(card)
@@ -121,8 +123,15 @@ $image-border-radius: calc(15px - $content-border);
     padding-bottom: 10px;
 
     .image {
+      background-color: rgba(0, 0, 0, 0.08);
+
       img {
-        transform: translate(var(--x-offset), var(--y-offset));
+        @for $i from 0 through 4 {
+          &.layer-#{$i} {
+            transform: translate(calc(var(--x-offset) / ($i + 1)), calc(var(--y-offset) / ($i + 1)));
+            z-index: calc(5 - $i);
+          }
+        }
       }
     }
 
@@ -132,6 +141,7 @@ $image-border-radius: calc(15px - $content-border);
       border-top-right-radius: $image-border-radius;
       overflow: hidden;
       margin: $content-border;
+      position: relative;
 
       img {
         display: block;
@@ -141,6 +151,7 @@ $image-border-radius: calc(15px - $content-border);
         object-fit: cover;
         user-select: none;
         pointer-events: none;
+        position: absolute;
       }
     }
 

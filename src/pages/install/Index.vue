@@ -50,13 +50,14 @@
     <h4>Основные моды</h4>
     <div class="main-mods">
       <ModCard title="Виджеты" description="Модификация позволяет добавлять веб-виджеты прямо в игру."
-        :image="EyeMarker" :model-value="enabledMods.get('wotstat.widgets') ?? false"
+        :image="[WidgetsMainScreen, WidgetsBackScreen]" :model-value="enabledMods.get('wotstat.widgets') ?? false"
         @update:model-value="v => enabledMods.set('wotstat.widgets', v)" />
       <ModCard title="Аналитика" description="Собирается аналитические данные и отправляет их в базу данных WotStat."
-        :image="EyeMarker" :model-value="enabledMods.get('wotstat.analytics') ?? false"
+        :image="[AnalyticsMain, AnalyticsBack1, AnalyticsBack2]"
+        :model-value="enabledMods.get('wotstat.analytics') ?? false"
         @update:model-value="v => enabledMods.set('wotstat.analytics', v)" />
       <ModCard title="Позиции" description="Отображает эффективные позиции для каждого танка на каждой карте."
-        :image="EyeMarker" :model-value="enabledMods.get('wotstat.positions') ?? false"
+        :image="[EyeMarkerMain, EyeMarkerBack]" :model-value="enabledMods.get('wotstat.positions') ?? false"
         @update:model-value="v => enabledMods.set('wotstat.positions', v)" />
     </div>
 
@@ -169,6 +170,19 @@ import ListIcon from "./assets/list.svg";
 import SidebarIcon from "./assets/sidebar.svg";
 
 import EyeMarker from './assets/mods/eye-marker-install.webp'
+import WidgetsScreen from './assets/mods/widgets.png'
+import WidgetsMainScreen from './assets/mods/widgets-layer-main.png'
+import WidgetsBackScreen from './assets/mods/widgets-layer-back.png'
+
+
+import EyeMarkerMain from './assets/mods/eye-marker-install-main.png'
+import EyeMarkerBack from './assets/mods/eye-marker-install-back.png'
+
+
+import AnalyticsMain from './assets/mods/analytics-main.png'
+import AnalyticsBack1 from './assets/mods/analytics-back-1.png'
+import AnalyticsBack2 from './assets/mods/analytics-back-2.png'
+
 import ModCard from './ModCard.vue';
 import { type Component, computed, ref, watch } from 'vue';
 import { latestModsMap, lestaLatestMods, ModInfo, otherMods, wotLatestMods } from './mods'
