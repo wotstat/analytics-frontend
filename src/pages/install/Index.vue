@@ -48,7 +48,7 @@
 
     <div class="space"></div>
 
-    <div class="line flex">
+    <div class="line flex main-mods-header">
       <h4 class="flex-1">Основные моды</h4>
       <button class="detail header-button" @click="">
         <Points />
@@ -551,6 +551,14 @@ async function install() {
     .change {
       display: flex;
       align-items: flex-end;
+    }
+  }
+
+  .main-mods-header {
+    align-items: center;
+
+    .header-button {
+      padding: 0 6px;
     }
   }
 
