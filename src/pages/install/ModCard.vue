@@ -15,6 +15,9 @@
             <Github class="github" />
           </div>
           <p>{{ description }}</p>
+          <div class="badges">
+            <div class="badge version">{{ version }}</div>
+          </div>
         </template>
       </div>
     </div>
@@ -52,6 +55,7 @@ const props = defineProps<{
   image: string | string[]
   title?: string
   description?: string
+  version?: string
 }>()
 
 const slots = useSlots()
@@ -225,7 +229,7 @@ $image-border-radius: calc(15px - $content-border);
         width: 20px;
         height: 20px;
         display: block;
-        fill: rgb(31, 229, 93);
+        fill: rgb(255, 255, 255);
         transform: translateX(-2%);
         opacity: 0;
       }
