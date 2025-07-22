@@ -18,9 +18,10 @@
       </div>
     </div>
 
-    <div class="select-folder-unsupported" v-if="!isBrowserSupported">
-      <h3>Ваш браузер не поддерживается</h3>
+    <div class="select-folder-unsupported card" v-if="!isBrowserSupported">
+      <h3>Ваш браузер не поддерживает веб-установку</h3>
       <p>Попробуйте Chrome 86+, Edge 86+, Opera 72+. Firefox и Safari пока не поддерживаются</p>
+      <p>Вы всё ещё можете скачать моды архивом и установить их вручную</p>
     </div>
 
     <div class="game-info card" v-if="gameInfo">
@@ -47,31 +48,88 @@
 
     <div class="space"></div>
 
-    <h4>Основные моды</h4>
+    <div class="line flex">
+      <h4 class="flex-1">Основные моды</h4>
+      <button class="detail header-button" @click="">
+        <Points />
+      </button>
+    </div>
+
     <div class="main-mods">
-      <ModCard title="Виджеты" description="Модификация позволяет добавлять веб-виджеты прямо в игру."
-        :image="[WidgetsMainScreen, WidgetsBackScreen]" :model-value="enabledMods.get('wotstat.widgets') ?? false"
-        @update:model-value="v => enabledMods.set('wotstat.widgets', v)" />
-      <ModCard title="Аналитика" description="Собирается аналитические данные и отправляет их в базу данных WotStat."
-        :image="[AnalyticsMain, AnalyticsBack1, AnalyticsBack2]"
+      <ModCard :image="[WidgetsMainScreen, WidgetsBackScreen]"
+        :model-value="enabledMods.get('wotstat.widgets') ?? false"
+        @update:model-value="v => enabledMods.set('wotstat.widgets', v)">
+        <template #info>
+          <div class="header">
+            <h5>Виджеты</h5>
+            <a href="https://github.com/wotstat/wotstat-widgets" target="_blank" class="circle" @click.stop>
+              <Github class="github" />
+            </a>
+          </div>
+          <p>Модификация позволяет добавлять веб-виджеты прямо в игру.</p>
+          <div class="badges">
+            <div class="badge blue" v-if="latestModsMap.get('wotstat.widgets')">v{{
+              latestModsMap.get('wotstat.widgets')?.mtmod.version }}</div>
+            <Download class="download" @click.stop />
+          </div>
+        </template>
+      </ModCard>
+
+      <ModCard :image="[AnalyticsMain, AnalyticsBack1, AnalyticsBack2]"
         :model-value="enabledMods.get('wotstat.analytics') ?? false"
-        @update:model-value="v => enabledMods.set('wotstat.analytics', v)" />
-      <ModCard title="Позиции" description="Отображает эффективные позиции для каждого танка на каждой карте."
-        :image="[EyeMarkerMain, EyeMarkerBack]" :model-value="enabledMods.get('wotstat.positions') ?? false"
-        @update:model-value="v => enabledMods.set('wotstat.positions', v)" />
+        @update:model-value="v => enabledMods.set('wotstat.analytics', v)"> <template #info>
+          <div class="header">
+            <h5>Аналитика</h5>
+            <a href="https://github.com/wotstat/wotstat-analytics" target="_blank" class="circle" @click.stop>
+              <Github class="github" />
+            </a>
+          </div>
+          <p>Собирается аналитические данные и отправляет их в базу данных WotStat.</p>
+          <div class="badges">
+            <div class="badge blue" v-if="latestModsMap.get('wotstat.analytics')">v{{
+              latestModsMap.get('wotstat.analytics')?.mtmod.version }}</div>
+            <Download class="download" @click.stop />
+          </div>
+        </template>
+      </ModCard>
+
+      <ModCard :image="[EyeMarkerMain, EyeMarkerBack]" :model-value="enabledMods.get('wotstat.positions') ?? false"
+        @update:model-value="v => enabledMods.set('wotstat.positions', v)"> <template #info>
+          <div class="header">
+            <h5>
+              <a :href="POSITIONS_URL" target="_blank" rel="noopener noreferrer" @click.stop>
+                Позиции
+                <OpenExternal class="open-external" />
+              </a>
+            </h5>
+            <a href="https://github.com/wotstat/wotstat-positions" target="_blank" class="circle" @click.stop>
+              <Github class="github" />
+            </a>
+          </div>
+          <p>Отображает эффективные позиции для каждого танка на каждой карте.</p>
+          <div class="badges">
+            <div class="badge blue" v-if="latestModsMap.get('wotstat.positions')">v{{
+              latestModsMap.get('wotstat.positions')?.mtmod.version }}</div>
+            <div class="badge yellow">Необходима лицензия</div>
+            <Download class="download" @click.stop />
+          </div>
+        </template>
+      </ModCard>
     </div>
 
     <div class="large-space"></div>
 
-    <div class="other-mods">
+    <div class="other-mods" v-if="displayedModsList.length > 0">
 
       <div class="line flex">
         <h4 class="flex-1">Другие моды</h4>
         <div class="switcher">
-          <button class="detail" @click="displayType = 'detail'" :class="{ active: displayType === 'detail' }">
+          <button class="detail header-button" @click="displayType = 'detail'"
+            :class="{ active: displayType === 'detail' }">
             <SidebarIcon />
           </button>
-          <button class="table" @click="displayType = 'table'" :class="{ active: displayType === 'table' }">
+          <button class="table header-button" @click="displayType = 'table'"
+            :class="{ active: displayType === 'table' }">
             <ListIcon />
           </button>
         </div>
@@ -90,14 +148,20 @@
         </thead>
 
         <tbody>
-          <tr v-for="mod in displayedModsList" @click="enabledMods.set(mod.tag, !enabledMods.get(mod.tag))">
+          <tr v-for="mod in displayedModsList" @click="toggleMod(mod.tag)">
             <td>
-              <input type="checkbox" :checked="enabledMods.get(mod.tag)"
-                @change="enabledMods.set(mod.tag, !enabledMods.get(mod.tag))" @click.stop />
+              <SmallCheckbox class="checkbox" :model-value="enabledMods.get(mod.tag) || dependencies.has(mod.tag)"
+                :class="{ 'is-dependency': dependencies.has(mod.tag) }" @update:model-value="toggleMod(mod.tag)"
+                @click.stop />
             </td>
-            <td>{{ t(`name:${mod.tag}`) }}</td>
+            <td>
+              {{ t(`name:${mod.tag}`) }}
+            </td>
             <td>{{ t(`author:${mod.tag}`) }}</td>
-            <td>{{ t(`description:${mod.tag}`) }}</td>
+            <td>
+              {{ t(`description:${mod.tag}`) }}
+              <div class="badge" v-if="mod.support">{{ mod.support == 'mt-only' ? 'Только Lesta' : 'Только WG' }}</div>
+            </td>
             <td>{{ mod.version }}</td>
             <td>
               <a :href="mod.source.url" target="_blank" rel="noopener noreferrer" @click.stop>{{ mod.source.name }}</a>
@@ -110,10 +174,11 @@
         <div class="info">
           <div class="list">
             <template v-for="mod in displayedModsList">
-              <div class="element" @click="enabledMods.set(mod.tag, !enabledMods.get(mod.tag))"
-                @pointerover="selectedModInDetail = mod" :class="{ selected: selectedModInDetail?.tag === mod.tag }">
-                <input type="checkbox" :checked="enabledMods.get(mod.tag)"
-                  @change="enabledMods.set(mod.tag, !enabledMods.get(mod.tag))" @click.stop />
+              <div class="element" @click="toggleMod(mod.tag)" @pointerover="selectedModInDetail = mod"
+                :class="{ selected: selectedModInDetail?.tag === mod.tag }">
+                <SmallCheckbox class="checkbox" :class="{ 'is-dependency': dependencies.has(mod.tag) }"
+                  :model-value="enabledMods.get(mod.tag) || dependencies.has(mod.tag)"
+                  @update:model-value="toggleMod(mod.tag)" />
                 {{ t(`name:${mod.tag}`) }}
               </div>
               <div class="separator"></div>
@@ -154,6 +219,7 @@
     <div class="large-space"></div>
 
     <div class="install-footer">
+      {{ preferredGameVendor }}
       <button @click="install">Установить</button>
     </div>
   </div>
@@ -168,9 +234,13 @@ import MTName from './assets/mt-name.svg';
 import WOTName from './assets/wot-name.svg';
 import ListIcon from "./assets/list.svg";
 import SidebarIcon from "./assets/sidebar.svg";
+import Github from './assets/github.svg'
+import OpenExternal from './assets/open-external.svg';
+import Download from './assets/download.svg';
+import Points from './assets/points.svg';
 
-import EyeMarker from './assets/mods/eye-marker-install.webp'
-import WidgetsScreen from './assets/mods/widgets.png'
+
+
 import WidgetsMainScreen from './assets/mods/widgets-layer-main.png'
 import WidgetsBackScreen from './assets/mods/widgets-layer-back.png'
 
@@ -185,11 +255,13 @@ import AnalyticsBack2 from './assets/mods/analytics-back-2.png'
 
 import ModCard from './ModCard.vue';
 import { type Component, computed, ref, watch } from 'vue';
-import { latestModsMap, lestaLatestMods, ModInfo, otherMods, wotLatestMods } from './mods'
+import { latestMods, latestModsMap, lestaLatestMods, ModInfo, otherMods, otherModsMap, wotLatestMods, } from './mods'
 import { useI18n } from '@/composition/useI18n';
 import i18n from './i18n.json';
 import { useLocalStorage } from '@vueuse/core';
 import { useHasScroll } from '@/composition/useHasScroll';
+import SmallCheckbox from './SmallCheckbox.vue';
+import { POSITIONS_URL } from '@/utils/externalUrl';
 
 const detailContentContainer = ref<HTMLElement | null>(null);
 const displayType = useLocalStorage<'detail' | 'table'>('install:otherModsDisplayType', 'table')
@@ -245,6 +317,38 @@ const detailComponent = computed(() => {
   return mdDescriptions[path]?.VueComponent || null;
 });
 
+const dependencies = computed(() => {
+  return dependenciesForMods([...enabledMods.value.entries()]
+    .filter(([k, v]) => v)
+    .map(([k, v]) => k)
+  );
+});
+
+function dependenciesForMods(mods: string[]) {
+  const dependencies = new Set<string>();
+  const stack = [mods];
+
+  while (stack.length > 0) {
+    const current = stack.pop() || [];
+    for (const dep of current) {
+      if (!dependencies.has(dep)) {
+        dependencies.add(dep);
+        const depInfo = otherModsMap.get(dep);
+        if (depInfo && depInfo.required) {
+          stack.push(depInfo.required);
+        }
+      }
+    }
+  }
+
+  for (const mod of mods) dependencies.delete(mod)
+
+  return dependencies
+}
+
+function toggleMod(tag: string) {
+  enabledMods.value.set(tag, !enabledMods.value.get(tag))
+}
 
 async function selectFolder() {
   await requestGameFolderAccess()
@@ -258,6 +362,117 @@ async function install() {
 
 
 <style lang="scss" scoped>
+.main-mods {
+  .header {
+    display: flex;
+    align-items: center;
+
+    h5 {
+      margin: 0;
+      font-size: 1em;
+      flex: 1;
+    }
+
+    a {
+      color: white;
+
+      .open-external {
+        width: 13px;
+        height: 13px;
+        display: inline-block;
+        fill: currentColor;
+        margin-left: 0.2em;
+        margin-bottom: -0.05em;
+        color: #ffffffd9;
+      }
+
+      &:hover {
+        text-decoration: underline;
+
+        .open-external {
+          color: #ffffff;
+        }
+      }
+    }
+
+    a.circle {
+      color: white;
+      transition: filter 0.2s ease-out;
+
+      svg {
+        position: relative;
+        z-index: 1;
+      }
+
+      &:hover {
+        position: relative;
+
+        &::before {
+          content: '';
+          background-color: rgba(255, 255, 255, 0.1);
+          position: absolute;
+          inset: -6px;
+          border-radius: 50%;
+        }
+      }
+    }
+
+    .github {
+      display: block;
+      width: 20px;
+      height: 20px;
+    }
+
+  }
+
+  .badges {
+    margin-top: 0.5em;
+    margin-bottom: -0.5em;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    flex-wrap: wrap;
+
+    .badge {
+      padding: 0.2em 0.5em;
+      border-radius: 5px;
+      font-size: 0.8em;
+      font-weight: bold;
+      line-height: 1.2;
+
+      white-space: nowrap;
+
+      &.blue {
+        background-color: #2081f1;
+        color: white;
+      }
+
+      &.yellow {
+        background-color: #9a00c9;
+        color: white;
+      }
+    }
+
+    .download {
+      width: 20px;
+      height: 20px;
+      display: block;
+      fill: rgb(255, 255, 255);
+      cursor: pointer;
+      transition: filter 0.2s ease-out;
+      padding: 5px;
+      margin: -5px;
+      margin-left: auto;
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 5px;
+      }
+    }
+  }
+}
+
+
 .page {
   max-width: 1000px;
   margin: auto;
@@ -277,6 +492,22 @@ async function install() {
 
   .large-space {
     margin: 3rem 0;
+  }
+
+  button.header-button {
+    background: transparent;
+    border: none;
+    padding: 6px;
+
+    svg {
+      width: 25px;
+      fill: currentColor;
+      display: block;
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
   }
 
   .select-folder {
@@ -441,10 +672,23 @@ async function install() {
           border-top-right-radius: 10px;
           border-bottom-right-radius: 10px;
         }
+
+        .badge {
+          float: right;
+          padding: 0.2em 0.5em;
+          background-color: #4a90e2;
+          color: white;
+          border-radius: 5px;
+          margin-top: 0.2em;
+          font-size: 0.8em;
+          margin-left: 0.5em;
+          font-weight: bold;
+          line-height: 1.2;
+        }
       }
 
-      input[type="checkbox"] {
-        accent-color: #34ff59;
+      .checkbox {
+        --accent-color: #34ff59;
         margin-left: 0.9em;
         cursor: pointer;
       }
@@ -469,20 +713,6 @@ async function install() {
       align-items: center;
 
       button {
-        background: transparent;
-        border: none;
-        padding: 6px;
-
-        svg {
-          width: 25px;
-          fill: currentColor;
-          display: block;
-        }
-
-        &:hover {
-          background: rgba(255, 255, 255, 0.05);
-        }
-
         &.active {
           background: rgba(255, 255, 255, 0.1);
         }
@@ -510,10 +740,10 @@ async function install() {
             cursor: pointer;
             user-select: none;
 
-            input[type="checkbox"] {
-              accent-color: #34ff59;
+            .checkbox {
+              --accent-color: #34ff59;
               margin-left: -0.2em;
-              margin-right: 0.8em;
+              margin-right: 0.4em;
               cursor: pointer;
             }
 
@@ -580,6 +810,10 @@ async function install() {
           padding-top: 1em;
         }
       }
+    }
+
+    .checkbox.is-dependency {
+      opacity: 0.4;
     }
   }
 
