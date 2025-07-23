@@ -43,6 +43,7 @@ import { useMouseInElement, useThrottle, useThrottleFn } from '@vueuse/core';
 import { useCardRotation } from '@/composition/useCardRotation';
 import CheckMark from './assets/checkmark-bold.svg'
 import { useNextAnimationFrameThrottle } from '@/composition/utils/useNextAnimationFrameThrottle';
+import { show3dEffect, showGlowEffect } from './cardIntaractionControl';
 
 const card = ref<HTMLElement | null>(null)
 
@@ -62,7 +63,7 @@ const slots = useSlots()
 
 const images = computed(() => Array.isArray(props.image) ? props.image : [props.image])
 
-const rot = useCardRotation(card, {})
+const rot = useCardRotation(card, { enabled: show3dEffect })
 const { elementX, elementY, elementWidth, elementHeight } = useMouseInElement(card)
 
 const targetStyle = computed(() => {
@@ -81,6 +82,8 @@ const targetStyle = computed(() => {
 
 const UPDATED_OFFSET = 100
 const elementMousePositionStyle = computed<{ '--element-x': string, '--element-y': string, }>((prev) => {
+  if (!showGlowEffect.value) return { '--element-x': '-10000px', '--element-y': '-10000px', }
+
   const distanceX = -Math.min(elementX.value, elementWidth.value - elementX.value);
   const distanceY = -Math.min(elementY.value, elementHeight.value - elementY.value);
 

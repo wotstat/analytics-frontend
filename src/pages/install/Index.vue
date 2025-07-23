@@ -47,10 +47,29 @@
     </div>
 
     <div class="space"></div>
+    <h4 class="flex-1">Предпочитаемая игра</h4>
+    <div class="preferred-game">
+      <div class="switcher">
+        <button class="mt" :class="{ active: preferredGameVendor === 'lesta' }" @click="preferredGameVendor = 'lesta'">
+          <MTName class="logo-name" />
+          <MTLogo class="logo" />
+        </button>
+        <button class="divider" :class="{ active: preferredGameVendor === 'unknown' }"
+          @click="preferredGameVendor = 'unknown'">/</button>
+        <button class="wot" :class="{ active: preferredGameVendor === 'wargaming' }"
+          @click="preferredGameVendor = 'wargaming'">
+          <WOTLogo class="logo" />
+          <WOTName class="logo-name" />
+        </button>
+      </div>
+    </div>
+
+
+    <div class="space"></div>
 
     <div class="line flex main-mods-header">
       <h4 class="flex-1">Основные моды</h4>
-      <button class="detail header-button" @click="">
+      <button class="detail header-button" @click="t => showContextMenu(t.currentTarget as HTMLElement)">
         <Points />
       </button>
     </div>
@@ -70,7 +89,7 @@
           <div class="badges">
             <div class="badge blue" v-if="latestModsMap.get('wotstat.widgets')">v{{
               latestModsMap.get('wotstat.widgets')?.mtmod.version }}</div>
-            <Download class="download" @click.stop />
+            <Download class="download" @click.stop="e => onClickDownload(e, 'wotstat.widgets')" />
           </div>
         </template>
       </ModCard>
@@ -88,7 +107,7 @@
           <div class="badges">
             <div class="badge blue" v-if="latestModsMap.get('wotstat.analytics')">v{{
               latestModsMap.get('wotstat.analytics')?.mtmod.version }}</div>
-            <Download class="download" @click.stop />
+            <Download class="download" @click.stop="e => onClickDownload(e, 'wotstat.analytics')" />
           </div>
         </template>
       </ModCard>
@@ -111,7 +130,7 @@
             <div class="badge blue" v-if="latestModsMap.get('wotstat.positions')">v{{
               latestModsMap.get('wotstat.positions')?.mtmod.version }}</div>
             <div class="badge yellow">Необходима лицензия</div>
-            <Download class="download" @click.stop />
+            <Download class="download" @click.stop="e => onClickDownload(e, 'wotstat.positions')" />
           </div>
         </template>
       </ModCard>
@@ -144,6 +163,7 @@
             <td>Описание</td>
             <td>Версия</td>
             <td>Источник</td>
+            <td></td>
           </tr>
         </thead>
 
@@ -160,11 +180,18 @@
             <td>{{ t(`author:${mod.tag}`) }}</td>
             <td>
               {{ t(`description:${mod.tag}`) }}
-              <div class="badge" v-if="mod.support">{{ mod.support == 'mt-only' ? 'Только Lesta' : 'Только WG' }}</div>
+              <div class="badge" v-if="mod.support && (preferredGameVendor == 'unknown' ||
+                preferredGameVendor == 'wargaming' && mod.support == 'mt-only' ||
+                preferredGameVendor == 'wargaming' && mod.support == 'wot-only')">
+                {{ mod.support == 'mt-only' ? 'Только Lesta' : 'Только WG' }}
+              </div>
             </td>
             <td>{{ mod.version }}</td>
             <td>
               <a :href="mod.source.url" target="_blank" rel="noopener noreferrer" @click.stop>{{ mod.source.name }}</a>
+            </td>
+            <td>
+              <Download class="download" @click.stop="e => onClickDownload(e, mod.tag)" />
             </td>
           </tr>
         </tbody>
@@ -211,6 +238,8 @@
                 <span class="bold">Только WG</span>
               </template>
             </p>
+
+            <Download class="download" @click.stop="e => onClickDownload(e, selectedModInDetail!.tag)" />
           </div>
         </div>
       </div>
@@ -236,7 +265,7 @@ import ListIcon from "./assets/list.svg";
 import SidebarIcon from "./assets/sidebar.svg";
 import Github from './assets/github.svg'
 import OpenExternal from './assets/open-external.svg';
-import Download from './assets/download.svg';
+import Download from './assets/download.svg?component';
 import Points from './assets/points.svg';
 
 
@@ -261,7 +290,10 @@ import i18n from './i18n.json';
 import { useLocalStorage } from '@vueuse/core';
 import { useHasScroll } from '@/composition/useHasScroll';
 import SmallCheckbox from './SmallCheckbox.vue';
-import { POSITIONS_URL } from '@/utils/externalUrl';
+import { INSTALL_URL, POSITIONS_URL } from '@/utils/externalUrl';
+import { showContextMenu } from './cardIntaractionControl';
+import { button, simpleContextMenu } from '@/components/contextMenu/simpleContextMenu';
+
 
 const detailContentContainer = ref<HTMLElement | null>(null);
 const displayType = useLocalStorage<'detail' | 'table'>('install:otherModsDisplayType', 'table')
@@ -358,6 +390,48 @@ async function install() {
   installMods()
 }
 
+function onClickDownload(event: MouseEvent, tag: string) {
+  const mod = latestModsMap.value.get(tag);
+  if (!mod) return console.warn(`Mod ${tag} not found in latest mods`);
+
+  function beginDownload() {
+    if (preferredGameVendor.value === 'unknown') return console.warn('Game vendor is unknown, cannot download mod');
+    if (!mod) return console.warn(`Mod ${tag} not found in latest mods`);
+
+    const target = mod[preferredGameVendor.value == 'wargaming' ? 'wotmod' : 'mtmod'];
+
+    if (!target) return console.warn(`Mod ${tag} does not have a target for ${preferredGameVendor.value}`);
+
+    const url = `${INSTALL_URL}/${target.url}`;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = target.filename;
+    a.click();
+  }
+
+  if (preferredGameVendor.value === 'unknown') {
+
+    simpleContextMenu({
+      position: (event.currentTarget as HTMLElement).getBoundingClientRect(),
+      alignY: 'bottom'
+    }, [
+      button('Lesta', () => {
+        preferredGameVendor.value = 'lesta';
+        beginDownload()
+      }),
+      button('Wargaming', () => {
+        preferredGameVendor.value = 'wargaming';
+        beginDownload()
+      }),
+    ])
+
+    return;
+  }
+
+  beginDownload();
+
+}
+
 </script>
 
 
@@ -374,7 +448,8 @@ async function install() {
     }
 
     a {
-      color: white;
+      color: inherit;
+      font-weight: bold;
 
       .open-external {
         width: 13px;
@@ -388,6 +463,7 @@ async function install() {
 
       &:hover {
         text-decoration: underline;
+        color: #ffffff;
 
         .open-external {
           color: #ffffff;
@@ -554,6 +630,60 @@ async function install() {
     }
   }
 
+  .preferred-game {
+    .switcher {
+      display: flex;
+
+      button {
+        display: flex;
+        gap: 0.5em;
+        align-items: center;
+        padding: 10px;
+        border-radius: 0;
+        border: none;
+        width: 150px;
+
+        .logo {
+          height: 20px;
+          display: block;
+        }
+
+        .logo-name {
+          height: 15px;
+          display: block;
+        }
+
+        &.mt {
+          border-top-left-radius: 10px;
+          border-bottom-left-radius: 10px;
+          justify-content: right;
+        }
+
+        &.wot {
+          border-top-right-radius: 10px;
+          border-bottom-right-radius: 10px;
+
+          .logo-name {
+            height: 17px;
+          }
+        }
+
+        &.divider {
+          width: 40px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          font-weight: bold;
+        }
+
+        &.active {
+          background: #4a90e2;
+        }
+
+      }
+    }
+  }
+
   .main-mods-header {
     align-items: center;
 
@@ -693,6 +823,24 @@ async function install() {
           font-weight: bold;
           line-height: 1.2;
         }
+
+        .download {
+          width: 18px;
+          height: 18px;
+          display: block;
+          fill: currentColor;
+          cursor: pointer;
+          transition: filter 0.2s ease-out;
+          padding: 5px;
+          margin: -5px;
+          margin-right: 8px;
+          margin-left: -10px;
+
+          &:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+          }
+        }
       }
 
       .checkbox {
@@ -816,6 +964,30 @@ async function install() {
           bottom: 0;
           margin-top: 1em;
           padding-top: 1em;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1em;
+
+          p {
+            flex: 1;
+          }
+
+          .download {
+            width: 20px;
+            height: 20px;
+            float: right;
+            fill: currentColor;
+            cursor: pointer;
+            transition: filter 0.2s ease-out;
+            padding: 5px;
+            margin: -5px 0;
+
+            &:hover {
+              background-color: rgba(255, 255, 255, 0.1);
+              border-radius: 5px;
+            }
+          }
         }
       }
     }

@@ -1,9 +1,10 @@
 import { MaybeElementRef, useMouseInElement } from "@vueuse/core";
-import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, MaybeRefOrGetter, onMounted, onUnmounted, Ref, ref, toValue, watch } from "vue";
 
 
 export function useCardRotation(target: MaybeElementRef, options: {
   transitionDuration?: number;
+  enabled?: MaybeRefOrGetter<boolean>;
 }) {
 
   let animationHandle: ReturnType<typeof requestAnimationFrame> | null = null;
@@ -21,13 +22,17 @@ export function useCardRotation(target: MaybeElementRef, options: {
   const animY = ref(0);
 
   const isAnimated = ref(false);
+  const isEnabled = computed(() => toValue(options.enabled) ?? true);
 
-  const resultX = computed(() => isAnimated.value ? animX.value : targetX.value);
-  const resultY = computed(() => isAnimated.value ? animY.value : targetY.value);
+  const resultX = computed(() => !isEnabled.value ? 0 : isAnimated.value ? animX.value : targetX.value);
+  const resultY = computed(() => !isEnabled.value ? 0 : isAnimated.value ? animY.value : targetY.value);
+
 
   let animationStartTime = 0;
 
   watch(isOutside, (outside) => {
+    if (!isEnabled.value) return;
+
     animationStartTime = performance.now();
 
     if (!isAnimated.value) {
@@ -67,10 +72,11 @@ export function useCardRotation(target: MaybeElementRef, options: {
     animationHandle = requestAnimationFrame(animationLoop);
   }
 
-  const aspect = computed(() => elementWidth.value / elementHeight.value)
+  const aspect = computed(() => isEnabled.value ? elementWidth.value / elementHeight.value : 0)
 
 
   onMounted(() => {
+    if (!isEnabled.value) return;
     animationLoop()
   })
 
