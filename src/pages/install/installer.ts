@@ -2,7 +2,12 @@ import { useEventListener } from '@vueuse/core';
 import { get, set, del } from 'idb-keyval';
 import { ref, shallowRef } from 'vue';
 
-const DIRECTORY_KEY = 'MOD_INSTALLER_DIRECTORY_HAndle';
+const DIRECTORY_KEY = 'MOD_INSTALLER_DIRECTORY_HANDLE';
+
+export function gameVendor(realm: string): 'lesta' | 'wargaming' {
+  if (realm === 'RU' || realm === 'RPT') return 'lesta';
+  return 'wargaming';
+}
 
 function browserSupport() {
   return 'showDirectoryPicker' in window;
@@ -192,6 +197,12 @@ export function useInstaller() {
 
   }
 
+  function close() {
+    gameInfo.value = null;
+    rootHandle.value = null;
+    del(DIRECTORY_KEY);
+  }
+
   useEventListener(window, 'focus', () => fastVerifyAccess());
 
   return {
@@ -200,6 +211,7 @@ export function useInstaller() {
     gameInfo,
     requestDirectory,
     requestGameFolderAccess,
-    installMods
+    installMods,
+    close
   }
 }

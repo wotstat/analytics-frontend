@@ -13,7 +13,7 @@
         </div>
 
         <div class="select">
-          <button @click="selectFolder">Выбрать</button>
+          <button @click="selectFolder" class="primary">Выбрать</button>
         </div>
       </div>
     </div>
@@ -33,36 +33,49 @@
         <div class="info">
           <MTName class="logo-name mt" v-if="gameInfo.realm == 'RU' || gameInfo.realm == 'RPT'" />
           <WOTName class="logo-name wot" v-else />
-          <p class="version">
+          <div class="version">
             <span>{{ gameInfo.version }}</span>
-            <span class="bullet">•</span>
-            <span v-if="gameInfo.modsSet.size">Установлено модов: {{ gameInfo.modsSet.size }}</span>
-          </p>
-        </div>
-
-        <div class="change">
-          <button @click="selectFolder">Выбрать другую</button>
+            <div class="badge" v-if="latestGameVersion">
+              <ArrowRight /> {{ gameVendor(gameInfo.realm) == 'lesta' ? latestGameVersion.lesta.version :
+                latestGameVersion.wargaming.version }}
+            </div>
+            <template v-if="gameInfo.modsSet.size">
+              <span class="bullet">•</span>
+              <span>Установлено модов: {{ gameInfo.modsSet.size }}</span>
+            </template>
+          </div>
         </div>
       </div>
+
+      <button class="close" @click="close">
+        <XIcon />
+      </button>
     </div>
 
-    <div class="space"></div>
-    <h4 class="flex-1">Предпочитаемая игра</h4>
-    <div class="preferred-game">
-      <div class="switcher">
-        <button class="mt" :class="{ active: preferredGameVendor === 'lesta' }" @click="preferredGameVendor = 'lesta'">
-          <MTName class="logo-name" />
-          <MTLogo class="logo" />
-        </button>
-        <button class="divider" :class="{ active: preferredGameVendor === 'unknown' }"
-          @click="preferredGameVendor = 'unknown'">/</button>
-        <button class="wot" :class="{ active: preferredGameVendor === 'wargaming' }"
-          @click="preferredGameVendor = 'wargaming'">
-          <WOTLogo class="logo" />
-          <WOTName class="logo-name" />
-        </button>
+    <template v-if="!gameInfo">
+      <div class="space"></div>
+      <h4 class="flex-1">Предпочитаемая игра</h4>
+      <div class="preferred-game">
+        <div class="switcher">
+          <button class="mt" :class="{ active: preferredGameVendor === 'lesta' }"
+            @click="preferredGameVendor = 'lesta'">
+            <MTName class="logo-name" />
+            <MTLogo class="logo" />
+          </button>
+          <button class="divider" :class="{ active: preferredGameVendor === 'unknown' }"
+            @click="preferredGameVendor = 'unknown'">/</button>
+          <button class="wot" :class="{ active: preferredGameVendor === 'wargaming' }"
+            @click="preferredGameVendor = 'wargaming'">
+            <WOTLogo class="logo" />
+            <WOTName class="logo-name" />
+          </button>
+        </div>
+
+        <div class="version-info" v-if="latestGameVersion && preferredGameVendor !== 'unknown'">
+          {{ preferredGameVendor == 'lesta' ? latestGameVersion.lesta.version : latestGameVersion.wargaming.version }}
+        </div>
       </div>
-    </div>
+    </template>
 
 
     <div class="space"></div>
@@ -248,15 +261,23 @@
     <div class="large-space"></div>
 
     <div class="install-footer">
-      {{ preferredGameVendor }}
-      <button @click="install">Установить</button>
+      <div class="info"></div>
+      <div class="buttons">
+        <button @click="install" class="secondary">Скачать архив</button>
+        <button @click="install" class="primary">Установить</button>
+      </div>
     </div>
+
+    <!-- <PopupWindow>
+
+      tetst
+    </PopupWindow> -->
   </div>
 </template>
 
 
 <script setup lang="ts">
-import { useInstaller } from './installer';
+import { gameVendor, useInstaller } from './installer';
 import MTLogo from './assets/mt-logo.svg';
 import WOTLogo from './assets/wot-logo.svg';
 import MTName from './assets/mt-name.svg';
@@ -267,6 +288,8 @@ import Github from './assets/github.svg'
 import OpenExternal from './assets/open-external.svg';
 import Download from './assets/download.svg?component';
 import Points from './assets/points.svg';
+import ArrowRight from './assets/arrow-right.svg';
+import XIcon from '@/assets/icons/x.svg'
 
 
 
@@ -293,6 +316,8 @@ import SmallCheckbox from './SmallCheckbox.vue';
 import { INSTALL_URL, POSITIONS_URL } from '@/utils/externalUrl';
 import { showContextMenu } from './cardIntaractionControl';
 import { button, simpleContextMenu } from '@/components/contextMenu/simpleContextMenu';
+import { latestGameVersion } from '@/components/mdUtils/gameVersion';
+import PopupWindow from '@/components/PopupWindow.vue';
 
 
 const detailContentContainer = ref<HTMLElement | null>(null);
@@ -305,12 +330,11 @@ const { hasScrollY } = useHasScroll(detailContentContainer);
 
 const { t } = useI18n(i18n)
 
-const { isBrowserSupported, requestGameFolderAccess, gameInfo, installMods } = useInstaller()
+const { isBrowserSupported, requestGameFolderAccess, gameInfo, installMods, close } = useInstaller()
 
 watch(gameInfo, info => {
   if (!info) return preferredGameVendor.value = 'unknown';
-  if (info.realm === 'RU' || info.realm === 'RPT') preferredGameVendor.value = 'lesta';
-  else preferredGameVendor.value = 'wargaming';
+  preferredGameVendor.value = gameVendor(info.realm);
 }, { immediate: true });
 
 const displayedModsList = computed(() => {
@@ -590,17 +614,26 @@ function onClickDownload(event: MouseEvent, tag: string) {
     .select {
       display: flex;
       align-items: flex-end;
+
+      .primary {
+        padding: 0.6em 1.2em;
+      }
     }
   }
 
   .game-info {
+    position: relative;
 
     .logo-container {
-      width: 40px;
 
       .logo {
+        height: 52.08px;
         display: block;
       }
+    }
+
+    .secondary {
+      padding: calc(0.6em - 2px) 1.2em;
     }
 
     .info {
@@ -621,6 +654,28 @@ function onClickDownload(event: MouseEvent, tag: string) {
           margin: 0 0.8em;
           color: #888;
         }
+
+        .badge {
+          padding: 0.3em 0.5em;
+          background-color: #4a90e2;
+          color: white;
+          border-radius: 5px;
+          font-size: 0.8em;
+          margin-left: 0.5em;
+          font-weight: bold;
+          line-height: 1;
+          display: inline-flex;
+          align-items: center;
+
+          svg {
+            width: 12px;
+            height: 12px;
+            fill: currentColor;
+            margin-left: -0.2em;
+            margin-right: 0.2em;
+            display: block;
+          }
+        }
       }
     }
 
@@ -628,9 +683,39 @@ function onClickDownload(event: MouseEvent, tag: string) {
       display: flex;
       align-items: flex-end;
     }
+
+    .close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 5px;
+      background-color: rgb(255, 255, 255, 0.1);
+      border-radius: 50%;
+
+      svg {
+        width: 18px;
+        height: 18px;
+        fill: currentColor;
+        display: block;
+      }
+
+      transition: background-color 0.1s ease-out;
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+      }
+    }
   }
 
   .preferred-game {
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
     .switcher {
       display: flex;
 
@@ -803,6 +888,7 @@ function onClickDownload(event: MouseEvent, tag: string) {
           padding-right: 0;
           border-top-left-radius: 10px;
           border-bottom-left-radius: 10px;
+          width: 34px;
         }
 
         &:last-child {
@@ -1005,6 +1091,73 @@ function onClickDownload(event: MouseEvent, tag: string) {
     z-index: 100;
     border-radius: 15px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    display: flex;
+
+    .info {
+      flex: 1;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 1em;
+      align-items: center;
+    }
+  }
+}
+
+button {
+
+  &.primary,
+  &.secondary {
+    font-weight: bold;
+    border: none;
+    padding: 0.9em 1.2em;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  &.primary {
+    background: transparent;
+    color: white;
+    position: relative;
+    z-index: 3;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(0deg, #ff3c00, #ff651d);
+      z-index: -2;
+      border-radius: 8px;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(0deg, #ff561d, #ff8c28);
+      z-index: -1;
+      border-radius: 8px;
+      opacity: 0;
+      transition: opacity 0.2s ease-out;
+    }
+
+
+    &:hover {
+      &::after {
+        opacity: 1;
+      }
+    }
+  }
+
+  &.secondary {
+    padding: calc(0.9em - 2px) 1em;
+    border: 2px solid #ff3c00;
+
+    &:hover {
+      background: linear-gradient(0deg, #ff651d, #ff6c1d);
+    }
   }
 }
 </style>
