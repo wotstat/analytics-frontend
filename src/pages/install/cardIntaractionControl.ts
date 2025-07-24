@@ -1,7 +1,6 @@
 import { closeContextMenu, isContextMenuOpen } from "@/components/contextMenu/createContextMenu";
 import { checkboxItem, simpleContextMenu } from "@/components/contextMenu/simpleContextMenu";
 import { useLocalStorage } from "@vueuse/core";
-import { ref } from "vue";
 
 export const show3dEffect = useLocalStorage('card-hover-3d-effect', true);
 export const showGlowEffect = useLocalStorage('card-hover-glow-effect', true);
@@ -21,7 +20,7 @@ export function showContextMenu(element: HTMLElement) {
   },
     [
       checkboxItem('3D эффект', show3dEffect),
-      checkboxItem('Эффект свечения', showGlowEffect),
+      checkboxItem('Эффект блика', showGlowEffect),
     ]
   )
 

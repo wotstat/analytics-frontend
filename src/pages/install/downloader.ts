@@ -1,43 +1,75 @@
 import { INSTALL_URL } from "@/utils/externalUrl";
 import { latestModsMap } from "./mods";
+import { ref } from "vue";
 
+type State = { type: 'begin' } |
+{ type: 'downloading', mod: string, index: number, total: number } |
+{ type: 'error', error: string } |
+{ type: 'aborted' } |
+{ type: 'done', mods: { filename: string, blob: Blob }[] };
 
-export async function download(tags: string[], vendor: 'lesta' | 'wargaming') {
+export function download(tags: string[], vendor: 'lesta' | 'wargaming') {
 
-  const JSZip = (await import('jszip')).default;
+  const currentState = ref<State>({ type: 'begin' });
 
   const urls = tags
     .map(tag => latestModsMap.value.get(tag)?.[vendor === 'lesta' ? 'mtmod' : 'wotmod']?.url)
     .filter(t => t !== undefined)
     .map(t => `${INSTALL_URL}/${t}`)
 
-  console.log(`Downloading mods: ${urls.join(', ')}`);
+  console.log(`Downloading mods:`, urls);
 
-  const zip = new JSZip();
+  const controller = new AbortController();
+  const mods: { filename: string, blob: Blob }[] = []
 
-  zip.file('README.txt', `Instruction text`);
-  zip.file('ИНСТРУКЦИЯ.txt', `Текст инструкции`);
-
-  const targetFolder = zip
-    .folder('mods')!
-    .folder('1.36.0.0')!
-
-  urls.forEach(url => {
-    const filename = url.split('/').pop() || '';
-    targetFolder.file(filename, fetch(url).then(res => res.blob()));
+  controller.signal.addEventListener('abort', () => {
+    currentState.value = { type: 'aborted' };
+    console.log(`Download aborted`);
   });
 
-  zip.generateAsync({ type: 'blob' })
-    .then(content => {
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(content);
-      a.download = `wotstat-mods-${vendor}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    })
-    .catch(err => {
-      console.error('Error downloading mods:', err);
-      alert('Failed to download mods. Please try again later.');
-    });
+  async function download() {
+
+    let errorsCount = 0;
+
+    for (let i = 0; i < urls.length; i++) {
+      if (controller.signal.aborted) return;
+
+      currentState.value = { type: 'downloading', mod: urls[i], index: i, total: urls.length };
+
+      try {
+        const response = await fetch(urls[i], { signal: controller.signal });
+
+        if (!response.ok) throw new Error(`Failed to download mod ${i + 1}: ${response.status} ${response.statusText}`);
+
+        const blob = await response.blob();
+        mods.push({ filename: urls[i].split('/').pop() || '', blob });
+
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          currentState.value = { type: 'aborted' };
+          console.log(`Download aborted by user`);
+          return;
+        }
+
+        if (errorsCount > 5) {
+          currentState.value = { type: 'error', error: error instanceof Error ? error.message : `${error}` };
+          console.error(`Too many errors, aborting download`);
+          return;
+        }
+
+        errorsCount++;
+        i--;
+        console.warn(`Error downloading mod ${i + 1}:`, error);
+        continue;
+      }
+    }
+
+    currentState.value = { type: 'done', mods };
+    console.log(`Download complete, ${mods.length} mods downloaded`);
+  }
+
+  download()
+
+
+  return { status: currentState, abortController: controller }
 }

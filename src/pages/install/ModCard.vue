@@ -1,6 +1,6 @@
 <template>
-  <div class="mod card" ref="card" :style="{ ...targetStyleThrottled, ...elementMousePositionStyleThrottled }"
-    @click="isChecked = !isChecked">
+  <div class="mod card" ref="card" :class="{ 'simple': !showGlowEffect }"
+    :style="{ ...targetStyleThrottled, ...elementMousePositionStyleThrottled }" @click="isChecked = !isChecked">
 
     <div class="content-container">
       <div class="image">
@@ -57,13 +57,14 @@ const props = defineProps<{
   title?: string
   description?: string
   version?: string
+  preventEffects?: boolean
 }>()
 
 const slots = useSlots()
 
 const images = computed(() => Array.isArray(props.image) ? props.image : [props.image])
 
-const rot = useCardRotation(card, { enabled: show3dEffect })
+const rot = useCardRotation(card, { enabled: () => show3dEffect.value && !props.preventEffects })
 const { elementX, elementY, elementWidth, elementHeight } = useMouseInElement(card)
 
 const targetStyle = computed(() => {
@@ -82,7 +83,7 @@ const targetStyle = computed(() => {
 
 const UPDATED_OFFSET = 100
 const elementMousePositionStyle = computed<{ '--element-x': string, '--element-y': string, }>((prev) => {
-  if (!showGlowEffect.value) return { '--element-x': '-10000px', '--element-y': '-10000px', }
+  if (!showGlowEffect.value || props.preventEffects) return { '--element-x': '-10000px', '--element-y': '-10000px', }
 
   const distanceX = -Math.min(elementX.value, elementWidth.value - elementX.value);
   const distanceY = -Math.min(elementY.value, elementHeight.value - elementY.value);
@@ -123,6 +124,15 @@ $image-border-radius: calc(15px - $content-border);
 
   transform: perspective(400px) rotateX(var(--x-rotation)) rotateY(var(--y-rotation));
   box-shadow: calc(var(--x-offset) * -2) calc(var(--y-offset) * -2) 10px 0 rgba(0, 0, 0, var(--shadow-opacity));
+
+  &.simple {
+    transition: box-shadow 0.2s ease-out, background-color 0.2s ease-out;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    }
+  }
 
   .content-container {
     display: flex;
