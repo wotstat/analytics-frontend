@@ -263,7 +263,7 @@
     <div class="install-footer">
       <div class="info"></div>
       <div class="buttons">
-        <button @click="install" class="secondary">Скачать архив</button>
+        <button @click="downloadArchive" class="secondary">Скачать архив</button>
         <button @click="install" class="primary">Установить</button>
       </div>
     </div>
@@ -318,6 +318,7 @@ import { showContextMenu } from './cardIntaractionControl';
 import { button, simpleContextMenu } from '@/components/contextMenu/simpleContextMenu';
 import { latestGameVersion } from '@/components/mdUtils/gameVersion';
 import PopupWindow from '@/components/PopupWindow.vue';
+import { download } from './downloader';
 
 
 const detailContentContainer = ref<HTMLElement | null>(null);
@@ -454,6 +455,14 @@ function onClickDownload(event: MouseEvent, tag: string) {
 
   beginDownload();
 
+}
+
+function downloadArchive() {
+  const targetMods = new Set<string>()
+  for (const [tag, enabled] of enabledMods.value.entries()) if (enabled) targetMods.add(tag);
+  for (const dep of dependencies.value) targetMods.add(dep);
+
+  download([...targetMods.values()], 'lesta');
 }
 
 </script>
