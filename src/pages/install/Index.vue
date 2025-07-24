@@ -90,7 +90,7 @@
     <div class="main-mods">
       <ModCard :image="[WidgetsMainScreen, WidgetsBackScreen]"
         :model-value="enabledMods.get('wotstat.widgets') ?? false"
-        @update:model-value="v => enabledMods.set('wotstat.widgets', v)">
+        @update:model-value="v => enabledMods.set('wotstat.widgets', v)" :prevent-effects="downloadPopupShown">
         <template #info>
           <div class="header">
             <h5>Виджеты</h5>
@@ -109,7 +109,8 @@
 
       <ModCard :image="[AnalyticsMain, AnalyticsBack1, AnalyticsBack2]"
         :model-value="enabledMods.get('wotstat.analytics') ?? false"
-        @update:model-value="v => enabledMods.set('wotstat.analytics', v)"> <template #info>
+        @update:model-value="v => enabledMods.set('wotstat.analytics', v)" :prevent-effects="downloadPopupShown">
+        <template #info>
           <div class="header">
             <h5>Аналитика</h5>
             <a href="https://github.com/wotstat/wotstat-analytics" target="_blank" class="circle" @click.stop>
@@ -126,7 +127,8 @@
       </ModCard>
 
       <ModCard :image="[EyeMarkerMain, EyeMarkerBack]" :model-value="enabledMods.get('wotstat.positions') ?? false"
-        @update:model-value="v => enabledMods.set('wotstat.positions', v)"> <template #info>
+        @update:model-value="v => enabledMods.set('wotstat.positions', v)" :prevent-effects="downloadPopupShown">
+        <template #info>
           <div class="header">
             <h5>
               <a :href="POSITIONS_URL" target="_blank" rel="noopener noreferrer" @click.stop>
@@ -268,10 +270,8 @@
       </div>
     </div>
 
-    <!-- <PopupWindow>
-
-      tetst
-    </PopupWindow> -->
+    <ExportArchive v-if="downloadPopupShown" @close="downloadPopupShown = false" :mods="targetInstallMods"
+      :vendor="preferredGameVendor == 'unknown' ? 'lesta' : preferredGameVendor" />
   </div>
 </template>
 
@@ -317,8 +317,8 @@ import { INSTALL_URL, POSITIONS_URL } from '@/utils/externalUrl';
 import { showContextMenu } from './cardIntaractionControl';
 import { button, simpleContextMenu } from '@/components/contextMenu/simpleContextMenu';
 import { latestGameVersion } from '@/components/mdUtils/gameVersion';
-import PopupWindow from '@/components/PopupWindow.vue';
 import { download } from './downloader';
+import ExportArchive from './ExportArchive.vue';
 
 
 const detailContentContainer = ref<HTMLElement | null>(null);
@@ -379,6 +379,13 @@ const dependencies = computed(() => {
     .filter(([k, v]) => v)
     .map(([k, v]) => k)
   );
+});
+
+const targetInstallMods = computed(() => {
+  const targetMods = new Set<string>();
+  for (const [tag, enabled] of enabledMods.value.entries()) if (enabled) targetMods.add(tag);
+  for (const dep of dependencies.value) targetMods.add(dep);
+  return [...targetMods.values()];
 });
 
 function dependenciesForMods(mods: string[]) {
@@ -457,12 +464,10 @@ function onClickDownload(event: MouseEvent, tag: string) {
 
 }
 
+const downloadPopupShown = ref(false);
 function downloadArchive() {
-  const targetMods = new Set<string>()
-  for (const [tag, enabled] of enabledMods.value.entries()) if (enabled) targetMods.add(tag);
-  for (const dep of dependencies.value) targetMods.add(dep);
-
-  download([...targetMods.values()], 'lesta');
+  downloadPopupShown.value = true;
+  // download([...targetMods.values()], 'lesta');
 }
 
 </script>
@@ -585,7 +590,8 @@ function downloadArchive() {
 .page {
   max-width: 1000px;
   margin: auto;
-  padding: 1rem;
+  padding: 1em;
+  padding-bottom: 10px;
 
   h3 {
     margin: 0;
