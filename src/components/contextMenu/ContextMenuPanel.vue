@@ -25,7 +25,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import { ContextMenuItemVariant, type ContextMenuItem, type ContextMenuItemChild } from './createContextMenu';
-import { useElementSize, useElementBounding, useTimeout, useTimeoutFn } from '@vueuse/core';
+import { useElementSize, useElementBounding, useTimeout, useTimeoutFn, useWindowSize } from '@vueuse/core';
 import ContextMenuPanel from './ContextMenuPanel.vue'
 import ContextMenuLine from './lines/Index.vue'
 
@@ -45,7 +45,7 @@ const activeItem = shallowRef<{ menu: ContextMenuItem, element: HTMLElement } | 
 const hoverItem = shallowRef<ContextMenuItem | null>(null)
 const hoverItemActionAnimHide = ref(false)
 
-const containerSize = useElementSize(document.body)
+const containerSize = useWindowSize()
 const menuSize = useElementBounding(panelElement)
 
 const isInitTouch = ref(false)
