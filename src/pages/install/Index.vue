@@ -90,7 +90,7 @@
     <div class="main-mods">
       <ModCard :image="[WidgetsMainScreen, WidgetsBackScreen]"
         :model-value="enabledMods.get('wotstat.widgets') ?? false"
-        @update:model-value="v => enabledMods.set('wotstat.widgets', v)" :prevent-effects="downloadPopupShown">
+        @update:model-value="v => enabledMods.set('wotstat.widgets', v)" :prevent-effects="anyPopupShown">
         <template #info>
           <div class="header">
             <h5>Виджеты</h5>
@@ -109,7 +109,7 @@
 
       <ModCard :image="[AnalyticsMain, AnalyticsBack1, AnalyticsBack2]"
         :model-value="enabledMods.get('wotstat.analytics') ?? false"
-        @update:model-value="v => enabledMods.set('wotstat.analytics', v)" :prevent-effects="downloadPopupShown">
+        @update:model-value="v => enabledMods.set('wotstat.analytics', v)" :prevent-effects="anyPopupShown">
         <template #info>
           <div class="header">
             <h5>Аналитика</h5>
@@ -127,7 +127,7 @@
       </ModCard>
 
       <ModCard :image="[EyeMarkerMain, EyeMarkerBack]" :model-value="enabledMods.get('wotstat.positions') ?? false"
-        @update:model-value="v => enabledMods.set('wotstat.positions', v)" :prevent-effects="downloadPopupShown">
+        @update:model-value="v => enabledMods.set('wotstat.positions', v)" :prevent-effects="anyPopupShown">
         <template #info>
           <div class="header">
             <h5>
@@ -290,6 +290,9 @@
 
     <ExportArchive v-if="downloadPopupShown" @close="downloadPopupShown = false" :mods="targetInstallMods"
       :vendor="preferredGameVendor == 'unknown' ? 'lesta' : preferredGameVendor" />
+
+    <InstallMods v-if="installPopupShown" @close="installPopupShown = false" :mods="targetInstallMods"
+      :vendor="preferredGameVendor == 'unknown' ? 'lesta' : preferredGameVendor" />
   </div>
 </template>
 
@@ -336,6 +339,8 @@ import { button, simpleContextMenu } from '@/components/contextMenu/simpleContex
 import { latestGameVersion } from '@/components/mdUtils/gameVersion';
 import { download } from './downloader';
 import ExportArchive from './ExportArchive.vue';
+import InstallMods from './InstallMods.vue';
+
 
 
 const detailContentContainer = ref<HTMLElement | null>(null);
@@ -449,8 +454,9 @@ async function selectFolder() {
   await requestGameFolderAccess()
 }
 
+const installPopupShown = ref(false);
 async function install() {
-  // installMods()
+  installPopupShown.value = true;
 }
 
 function onClickDownload(event: MouseEvent, tag: string) {
@@ -522,6 +528,8 @@ function downloadArchive(event: MouseEvent) {
 
   beginDownload();
 }
+
+const anyPopupShown = computed(() => downloadPopupShown.value || installPopupShown.value);
 
 </script>
 
