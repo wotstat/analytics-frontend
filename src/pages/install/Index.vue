@@ -1211,25 +1211,21 @@ button {
 
   &.primary,
   &.secondary {
+    color: white;
+    position: relative;
+    background: transparent;
     font-weight: bold;
     border: none;
     padding: 0.9em 1.2em;
     border-radius: 8px;
     cursor: pointer;
     font-size: 14px;
-  }
-
-  &.primary {
-    background: transparent;
-    color: white;
-    position: relative;
     z-index: 3;
 
     &::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(0deg, #ff3c00, #ff651d);
       z-index: -2;
       border-radius: 8px;
     }
@@ -1238,11 +1234,21 @@ button {
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(0deg, #ff561d, #ff8c28);
       z-index: -1;
       border-radius: 8px;
       opacity: 0;
       transition: opacity 0.2s ease-out;
+    }
+  }
+
+  &.primary {
+
+    &::before {
+      background: linear-gradient(0deg, #ff3c00, #ff651d);
+    }
+
+    &::after {
+      background: linear-gradient(0deg, #ff561d, #ff8c28);
     }
 
     &:hover {
@@ -1265,12 +1271,24 @@ button {
   &.secondary {
     padding: calc(0.9em - 2px) 1em;
     border: 2px solid #ff3c00;
+    position: relative;
+
+    &::before {
+      background: #1a1a1a;
+      border-radius: 6px;
+      opacity: 1;
+    }
+
+    &::after {
+      background: linear-gradient(0deg, #ff561d, #ff8c28);
+      inset: -2px;
+    }
 
     &:not([disabled]) {
       &:hover {
-        background: linear-gradient(0deg, #ff651d, #ff6c1d);
-        padding: 0.9em calc(1em + 2px);
-        border: 0px solid #ff6c1d;
+        &::after {
+          opacity: 1;
+        }
       }
     }
 
