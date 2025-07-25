@@ -8,14 +8,19 @@ type State = { type: 'begin' } |
 { type: 'aborted' } |
 { type: 'done', mods: { filename: string, blob: Blob }[] };
 
+
+function getModsUrls(tags: string[], vendor: 'lesta' | 'wargaming') {
+  return tags
+    .map(tag => latestModsMap.value.get(tag)?.[vendor === 'lesta' ? 'mtmod' : 'wotmod']?.url)
+    .filter(t => t !== undefined)
+    .map(t => `${INSTALL_URL}/${t}`);
+}
+
 export function download(tags: string[], vendor: 'lesta' | 'wargaming') {
 
   const currentState = ref<State>({ type: 'begin' });
 
-  const urls = tags
-    .map(tag => latestModsMap.value.get(tag)?.[vendor === 'lesta' ? 'mtmod' : 'wotmod']?.url)
-    .filter(t => t !== undefined)
-    .map(t => `${INSTALL_URL}/${t}`)
+  const urls = getModsUrls(tags, vendor);
 
   console.log(`Downloading mods:`, urls);
 

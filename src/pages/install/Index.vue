@@ -283,7 +283,8 @@
       <div class="buttons">
         <button @click="downloadArchive" class="secondary" :disabled="targetInstallMods.length === 0">Скачать
           архив</button>
-        <button @click="install" class="primary" :disabled="gameInfo == null">Установить</button>
+        <button @click="install" class="primary"
+          :disabled="gameInfo == null || targetInstallMods.length === 0">Установить</button>
       </div>
     </div>
 
@@ -449,7 +450,7 @@ async function selectFolder() {
 }
 
 async function install() {
-  installMods()
+  // installMods()
 }
 
 function onClickDownload(event: MouseEvent, tag: string) {
