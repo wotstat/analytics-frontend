@@ -263,10 +263,27 @@
     <div class="large-space"></div>
 
     <div class="install-footer">
-      <div class="info"></div>
+      <div class="info">
+        <h4>Информация о модах</h4>
+        <p v-if="latestMods.isFetching.value">Загрузка...</p>
+        <p v-else-if="!latestMods.error.value">
+          <span v-if="targetInstallMods.length > 0">
+            Выбрано модов <span class="badge"> {{ targetInstallMods.length }}</span>.
+          </span>
+          <span v-else>Не выбрано ни одного мода</span>
+
+          <span v-if="gameInfo == null">
+            Для установки необходимо <a @click="selectFolder">выбрать</a> папку с игрой.
+          </span>
+        </p>
+        <p v-else>
+          Ошибка при загрузке списка модов. Попробуйте обновить страницу или попробовать позже.
+        </p>
+      </div>
       <div class="buttons">
-        <button @click="downloadArchive" class="secondary">Скачать архив</button>
-        <button @click="install" class="primary">Установить</button>
+        <button @click="downloadArchive" class="secondary" :disabled="targetInstallMods.length === 0">Скачать
+          архив</button>
+        <button @click="install" class="primary" :disabled="gameInfo == null">Установить</button>
       </div>
     </div>
 
@@ -290,7 +307,6 @@ import Download from './assets/download.svg?component';
 import Points from './assets/points.svg';
 import ArrowRight from './assets/arrow-right.svg';
 import XIcon from '@/assets/icons/x.svg'
-
 
 
 import WidgetsMainScreen from './assets/mods/widgets-layer-main.png'
@@ -385,7 +401,21 @@ const targetInstallMods = computed(() => {
   const targetMods = new Set<string>();
   for (const [tag, enabled] of enabledMods.value.entries()) if (enabled) targetMods.add(tag);
   for (const dep of dependencies.value) targetMods.add(dep);
-  return [...targetMods.values()];
+  return [...targetMods.values()]
+    .filter(tag => {
+      const mod = otherModsMap.get(tag);
+      if (!mod) return true;
+
+      const support = mod.support
+      if (!support) return true;
+
+      if (preferredGameVendor.value === 'unknown') return true;
+
+      if (support === 'mt-only' && preferredGameVendor.value === 'lesta') return true;
+      if (support === 'wot-only' && preferredGameVendor.value === 'wargaming') return true;
+
+      return false;
+    });
 });
 
 function dependenciesForMods(mods: string[]) {
@@ -465,9 +495,31 @@ function onClickDownload(event: MouseEvent, tag: string) {
 }
 
 const downloadPopupShown = ref(false);
-function downloadArchive() {
-  downloadPopupShown.value = true;
-  // download([...targetMods.values()], 'lesta');
+function downloadArchive(event: MouseEvent) {
+
+  function beginDownload() {
+    downloadPopupShown.value = true;
+  }
+
+  if (preferredGameVendor.value === 'unknown') {
+
+    simpleContextMenu({
+      position: { x: event.clientX, y: event.clientY }
+    }, [
+      button('Lesta', () => {
+        preferredGameVendor.value = 'lesta';
+        beginDownload()
+      }),
+      button('Wargaming', () => {
+        preferredGameVendor.value = 'wargaming';
+        beginDownload()
+      }),
+    ])
+
+    return;
+  }
+
+  beginDownload();
 }
 
 </script>
@@ -1107,15 +1159,50 @@ function downloadArchive() {
     border-radius: 15px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
     display: flex;
+    gap: 1em;
 
     .info {
       flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 0.5em;
+
+      h4 {
+        margin: 0;
+        line-height: 1;
+      }
+
+      p {
+        line-height: 1.2;
+
+        .badge {
+          padding: 0.2em 0.5em;
+          background-color: #4a90e2;
+          color: white;
+          border-radius: 5px;
+          font-size: 0.8em;
+          font-weight: bold;
+          line-height: 1.2;
+        }
+
+        a {
+          color: #ff741d;
+          text-decoration: none;
+          font-weight: bold;
+          cursor: pointer;
+
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
     }
 
     .buttons {
       display: flex;
       gap: 1em;
-      align-items: center;
+      align-items: flex-end;
     }
   }
 }
@@ -1158,20 +1245,38 @@ button {
       transition: opacity 0.2s ease-out;
     }
 
-
     &:hover {
       &::after {
         opacity: 1;
       }
     }
+
+    &[disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
+
+      &::after {
+        opacity: 0.5;
+      }
+    }
+
   }
 
   &.secondary {
     padding: calc(0.9em - 2px) 1em;
     border: 2px solid #ff3c00;
 
-    &:hover {
-      background: linear-gradient(0deg, #ff651d, #ff6c1d);
+    &:not([disabled]) {
+      &:hover {
+        background: linear-gradient(0deg, #ff651d, #ff6c1d);
+        padding: 0.9em calc(1em + 2px);
+        border: 0px solid #ff6c1d;
+      }
+    }
+
+    &[disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
   }
 }

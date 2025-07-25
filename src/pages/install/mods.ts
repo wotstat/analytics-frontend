@@ -43,8 +43,8 @@ export type Mod = {
   date: string
 }
 
-export const latestMods = useFetch<{}>(`${INSTALL_URL}/api/mods-latest`, {
-  updateDataOnError: true,
+export const latestMods = useFetch(`${INSTALL_URL}/api/mods-latest`, {
+  updateDataOnError: true
 }).json<Record<string, { mtmod: Mod, wotmod: Mod }>>()
 
 
