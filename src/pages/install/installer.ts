@@ -19,6 +19,22 @@ async function fromAsync<T>(it: AsyncIterable<T>) {
   return result;
 }
 
+function parseModName(name: string) {
+  const match = name.match(/^(.*?)_?((?:\d+\.)*(?:\d+))?\.(mtmod|wotmod)$/);
+
+  if (!match || match.length < 4) return null;
+
+  const nameTag = match[1] || '';
+  const nameVersion = match[2] || '';
+  const game = match[3] as 'mtmod' | 'wotmod';
+
+  return {
+    nameTag,
+    nameVersion,
+    game
+  }
+}
+
 async function getGameInfo(directoryHandle: FileSystemDirectoryHandle) {
   const files = new Map(await fromAsync(directoryHandle.entries()))
 
@@ -62,9 +78,10 @@ async function getGameInfo(directoryHandle: FileSystemDirectoryHandle) {
       .map(e => e.name);
 
     for (const mod of mods) {
-      const match = mod.match(`^(.*?)(?:_[\\d.]+)?(?: \\([^)]+\\))?${modExtension}`);
-      if (!match || !match[1]) continue;
-      modsSet.add(match[1]);
+      const parsed = parseModName(mod);
+      if (!parsed) continue;
+
+      modsSet.add(parsed.nameTag);
     }
 
   } catch (error) { }
@@ -202,6 +219,9 @@ export function useInstaller() {
     const writable = await (await modsHandleCache.getFileHandle(filename, { create: true })).createWritable()
     await writable.write(mod);
     await writable.close()
+
+    const parsed = parseModName(filename);
+    if (parsed) gameInfo.value?.modsSet.add(parsed.nameTag);
   }
 
   function close() {
