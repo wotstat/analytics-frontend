@@ -314,21 +314,20 @@ import ArrowRight from './assets/arrow-right.svg';
 import XIcon from '@/assets/icons/x.svg'
 
 
-import WidgetsMainScreen from './assets/mods/widgets-layer-main.png'
-import WidgetsBackScreen from './assets/mods/widgets-layer-back.png'
+import WidgetsMainScreen from './assets/mods/widgets-layer-main.webp'
+import WidgetsBackScreen from './assets/mods/widgets-layer-back.webp'
 
+import EyeMarkerMain from './assets/mods/eye-marker-install-main.webp'
+import EyeMarkerBack from './assets/mods/eye-marker-install-back.webp'
 
-import EyeMarkerMain from './assets/mods/eye-marker-install-main.png'
-import EyeMarkerBack from './assets/mods/eye-marker-install-back.png'
+import AnalyticsMain from './assets/mods/analytics-main.webp'
+import AnalyticsBack1 from './assets/mods/analytics-back-1.webp'
+import AnalyticsBack2 from './assets/mods/analytics-back-2.webp'
 
-
-import AnalyticsMain from './assets/mods/analytics-main.png'
-import AnalyticsBack1 from './assets/mods/analytics-back-1.png'
-import AnalyticsBack2 from './assets/mods/analytics-back-2.png'
 
 import ModCard from './ModCard.vue';
 import { type Component, computed, ref, watch } from 'vue';
-import { latestMods, latestModsMap, lestaLatestMods, ModInfo, otherMods, otherModsMap, wotLatestMods, } from './mods'
+import { latestMods, latestModsMap, ModInfo, otherMods, otherModsMap, } from './mods'
 import { useI18n } from '@/composition/useI18n';
 import i18n from './i18n.json';
 import { useLocalStorage } from '@vueuse/core';
@@ -338,7 +337,6 @@ import { INSTALL_URL, POSITIONS_URL } from '@/utils/externalUrl';
 import { showContextMenu } from './cardIntaractionControl';
 import { button, simpleContextMenu } from '@/components/contextMenu/simpleContextMenu';
 import { latestGameVersion } from '@/components/mdUtils/gameVersion';
-import { download } from './downloader';
 import ExportArchive from './ExportArchive.vue';
 import InstallMods from './InstallMods.vue';
 
