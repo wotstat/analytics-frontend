@@ -20,6 +20,15 @@
           </div>
         </template>
       </div>
+
+      <div class="top-badges">
+        <div class="badge blue"
+          v-if="installedVersion && latestVersion && dotSeparatedCompare(installedVersion, latestVersion) == -1">
+          Обновление {{ installedVersion }}
+          <ArrowRight class="arrow-right" /> {{ latestVersion }}
+        </div>
+        <div class="badge green" v-else-if="installedVersion">Установлен</div>
+      </div>
     </div>
 
     <div class="checkbox-container" :class="{ checked: isChecked }">
@@ -37,13 +46,15 @@
 
 
 <script setup lang="ts">
-import { computed, ref, useSlots, watchEffect } from 'vue';
+import { computed, ref, useSlots } from 'vue';
 import Github from './assets/github.svg'
-import { useMouseInElement, useThrottle, useThrottleFn } from '@vueuse/core';
+import { useMouseInElement } from '@vueuse/core';
 import { useCardRotation } from '@/composition/useCardRotation';
 import CheckMark from './assets/checkmark-bold.svg'
 import { useNextAnimationFrameThrottle } from '@/composition/utils/useNextAnimationFrameThrottle';
 import { show3dEffect, showGlowEffect } from './cardIntaractionControl';
+import { dotSeparatedCompare } from './installer';
+import ArrowRight from './assets/arrow-right.svg'
 
 const card = ref<HTMLElement | null>(null)
 
@@ -54,6 +65,8 @@ const isChecked = defineModel({
 
 const props = defineProps<{
   image: string | string[]
+  latestVersion?: string
+  installedVersion?: string
   title?: string
   description?: string
   version?: string
@@ -190,6 +203,45 @@ $image-border-radius: calc(15px - $content-border);
           width: 20px;
           height: 20px;
         }
+      }
+    }
+  }
+
+  .top-badges {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    right: 0;
+    display: flex;
+    z-index: 10;
+    flex-wrap: wrap;
+    gap: 5px;
+
+    .badge {
+      background-color: rgb(27, 114, 255);
+      color: #fff;
+      padding: 0.2em 0.5em;
+      font-size: 0.8em;
+      line-height: 1.2;
+      border-radius: 50px;
+      margin-right: 0.5em;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.8);
+      font-weight: bold;
+      white-space: nowrap;
+
+      svg {
+        height: 12px;
+        fill: currentColor;
+        display: inline-block;
+        margin-bottom: -0.14em;
+      }
+
+      &.blue {
+        background-color: rgb(27, 114, 255);
+      }
+
+      &.green {
+        background-color: rgb(18, 178, 69);
       }
     }
   }

@@ -91,6 +91,8 @@
     <div class="main-mods">
       <ModCard :image="[WidgetsMainScreen, WidgetsBackScreen]"
         :model-value="enabledMods.get('wotstat.widgets') ?? false"
+        :latest-version="version('wotstat.widgets') ?? undefined"
+        :installed-version="checkedMods.get('wotstat.widgets')"
         @update:model-value="v => enabledMods.set('wotstat.widgets', v)" :prevent-effects="anyPopupShown">
         <template #info>
           <div class="header">
@@ -101,8 +103,7 @@
           </div>
           <p>Модификация позволяет добавлять веб-виджеты прямо в игру.</p>
           <div class="badges">
-            <div class="badge blue" v-if="latestModsMap.get('wotstat.widgets')">v{{
-              latestModsMap.get('wotstat.widgets')?.mtmod.version }}</div>
+            <div class="badge blue" v-if="version('wotstat.widgets')"> v{{ version('wotstat.widgets') }}</div>
             <Download class="download" @click.stop="e => onClickDownload(e, 'wotstat.widgets')" />
           </div>
         </template>
@@ -110,6 +111,8 @@
 
       <ModCard :image="[AnalyticsMain, AnalyticsBack1, AnalyticsBack2]"
         :model-value="enabledMods.get('wotstat.analytics') ?? false"
+        :latest-version="version('wotstat.analytics') ?? undefined"
+        :installed-version="checkedMods.get('mod.wotStat') ?? undefined"
         @update:model-value="v => enabledMods.set('wotstat.analytics', v)" :prevent-effects="anyPopupShown">
         <template #info>
           <div class="header">
@@ -120,14 +123,15 @@
           </div>
           <p>Собирается аналитические данные и отправляет их в базу данных WotStat.</p>
           <div class="badges">
-            <div class="badge blue" v-if="latestModsMap.get('wotstat.analytics')">v{{
-              latestModsMap.get('wotstat.analytics')?.mtmod.version }}</div>
+            <div class="badge blue" v-if="version('wotstat.analytics')">v{{ version('wotstat.analytics') }}</div>
             <Download class="download" @click.stop="e => onClickDownload(e, 'wotstat.analytics')" />
           </div>
         </template>
       </ModCard>
 
       <ModCard :image="[EyeMarkerMain, EyeMarkerBack]" :model-value="enabledMods.get('wotstat.positions') ?? false"
+        :latest-version="version('wotstat.positions') ?? undefined"
+        :installed-version="checkedMods.get('wotstat.positions') ?? undefined"
         @update:model-value="v => enabledMods.set('wotstat.positions', v)" :prevent-effects="anyPopupShown">
         <template #info>
           <div class="header">
@@ -143,8 +147,7 @@
           </div>
           <p>Отображает эффективные позиции для каждого танка на каждой карте.</p>
           <div class="badges">
-            <div class="badge blue" v-if="latestModsMap.get('wotstat.positions')">v{{
-              latestModsMap.get('wotstat.positions')?.mtmod.version }}</div>
+            <div class="badge blue" v-if="version('wotstat.positions')">v{{ version('wotstat.positions') }}</div>
             <div class="badge yellow">Необходима лицензия</div>
             <Download class="download" @click.stop="e => onClickDownload(e, 'wotstat.positions')" />
           </div>
@@ -200,6 +203,14 @@
                 preferredGameVendor == 'wargaming' && mod.support == 'mt-only' ||
                 preferredGameVendor == 'wargaming' && mod.support == 'wot-only')">
                 {{ mod.support == 'mt-only' ? 'Только Lesta' : 'Только WG' }}
+              </div>
+
+              <div class="badge" v-if="preferredGameVendor != 'unknown' && canUpdate(mod.tag)">
+                {{ checkedMods.get(mod.tag) }}
+                <ArrowRight class="arrow-right" />
+              </div>
+              <div class="badge green" v-else-if="checkedMods.get(mod.tag)">
+                <CheckmarkShield class="checkmark-shield" />
               </div>
             </td>
             <td>{{ mod.version }}</td>
@@ -300,7 +311,7 @@
 
 
 <script setup lang="ts">
-import { gameVendor, useInstaller } from './installer';
+import { dotSeparatedCompare, gameVendor, useInstaller } from './installer';
 import MTLogo from './assets/mt-logo.svg';
 import WOTLogo from './assets/wot-logo.svg';
 import MTName from './assets/mt-name.svg';
@@ -312,7 +323,9 @@ import OpenExternal from './assets/open-external.svg';
 import Download from './assets/download.svg?component';
 import Points from './assets/points.svg';
 import ArrowRight from './assets/arrow-right.svg';
+import CheckmarkShield from './assets/checkmark-shield.svg';
 import XIcon from '@/assets/icons/x.svg'
+
 
 
 import WidgetsMainScreen from './assets/mods/widgets-layer-main.webp'
@@ -328,7 +341,7 @@ import AnalyticsBack2 from './assets/mods/analytics-back-2.webp'
 
 import ModCard from './ModCard.vue';
 import { type Component, computed, ref, watch } from 'vue';
-import { latestMods, latestModsMap, ModInfo, otherMods, otherModsMap, } from './mods'
+import { analyticsMod, latestMods, latestModsMap, ModInfo, otherMods, otherModsMap, positionsMod, widgetsMod, } from './mods'
 import { useI18n } from '@/composition/useI18n';
 import i18n from './i18n.json';
 import { useLocalStorage } from '@vueuse/core';
@@ -353,12 +366,12 @@ const { hasScrollY } = useHasScroll(detailContentContainer);
 
 const { t } = useI18n(i18n)
 
-const { isBrowserSupported, requestGameFolderAccess, gameInfo, installMod, close } = useInstaller()
+const modsNames = [...otherMods, analyticsMod, widgetsMod, positionsMod].map(m => m.tag)
+const { isBrowserSupported, requestGameFolderAccess, gameInfo, installMod, close, checkedMods } = useInstaller(modsNames)
 
 watch(gameInfo, info => {
   if (!info) return preferredGameVendor.value = 'unknown';
   preferredGameVendor.value = gameVendor(info.realm);
-  console.log(info);
 
 }, { immediate: true });
 
@@ -450,6 +463,21 @@ function dependenciesForMods(mods: string[]) {
 
 function toggleMod(tag: string) {
   enabledMods.value.set(tag, !enabledMods.value.get(tag))
+}
+
+function version(tag: string) {
+  const mod = latestModsMap.value.get(tag);
+  if (!mod) return null;
+
+  return preferredGameVendor.value === 'wargaming' ? mod.wotmod.version : mod.mtmod.version;
+}
+
+function canUpdate(tag: string) {
+  const installedVersion = checkedMods.value.get(tag);
+  const latestVersion = version(tag);
+
+  if (!installedVersion || !latestVersion) return false;
+  return dotSeparatedCompare(installedVersion, latestVersion) === -1;
 }
 
 async function selectFolder() {
@@ -626,6 +654,11 @@ const anyPopupShown = computed(() => downloadPopupShown.value || installPopupSho
 
       &.yellow {
         background-color: #9a00c9;
+        color: white;
+      }
+
+      &.green {
+        background-color: #2cb030;
         color: white;
       }
     }
@@ -986,6 +1019,28 @@ const anyPopupShown = computed(() => downloadPopupShown.value || installPopupSho
           margin-left: 0.5em;
           font-weight: bold;
           line-height: 1.2;
+
+
+          .arrow-right {
+            width: 12px;
+            height: 12px;
+            fill: currentColor;
+            display: block;
+            margin-bottom: -1.5px;
+          }
+
+          .checkmark-shield {
+            width: 15px;
+            height: 15px;
+            fill: currentColor;
+            display: block;
+            // margin: 2px -2px;
+            // margin-bottom: -1px;
+          }
+
+          &.green {
+            background-color: rgb(18, 178, 69);
+          }
         }
 
         .download {

@@ -45,7 +45,7 @@ const activeItem = shallowRef<{ menu: ContextMenuItem, element: HTMLElement } | 
 const hoverItem = shallowRef<ContextMenuItem | null>(null)
 const hoverItemActionAnimHide = ref(false)
 
-const containerSize = useWindowSize()
+const containerSize = useWindowSize({ includeScrollbar: false })
 const menuSize = useElementBounding(panelElement)
 
 const isInitTouch = ref(false)

@@ -1,8 +1,23 @@
 import { useEventListener } from '@vueuse/core';
 import { get, set, del } from 'idb-keyval';
-import { ref, shallowRef } from 'vue';
+import { ref, shallowRef, watch } from 'vue';
 
 const DIRECTORY_KEY = 'MOD_INSTALLER_DIRECTORY_HANDLE';
+
+export function dotSeparatedCompare(lhs: string, rhs: string) {
+  const lhsParts = lhs.split('.').map(Number);
+  const rhsParts = rhs.split('.').map(Number);
+
+  for (let i = 0; i < Math.max(lhsParts.length, rhsParts.length); i++) {
+    const lhsPart = lhsParts[i] || 0;
+    const rhsPart = rhsParts[i] || 0;
+
+    if (lhsPart < rhsPart) return -1;
+    if (lhsPart > rhsPart) return 1;
+  }
+  return 0;
+
+}
 
 export function gameVendor(realm: string): 'lesta' | 'wargaming' {
   if (realm === 'RU' || realm === 'RPT') return 'lesta';
@@ -20,7 +35,7 @@ async function fromAsync<T>(it: AsyncIterable<T>) {
 }
 
 function parseModName(name: string) {
-  const match = name.match(/^(.*?)_?((?:\d+\.)*(?:\d+))?\.(mtmod|wotmod)$/);
+  const match = name.match(/^(.*?)_?((?:\d+\.)*(?:\d+))?(?:\s\(.*\))?\.(mtmod|wotmod)$/);
 
   if (!match || match.length < 4) return null;
 
@@ -96,6 +111,81 @@ async function getGameInfo(directoryHandle: FileSystemDirectoryHandle) {
 
 }
 
+async function getAllMods(mods: FileSystemDirectoryHandle) {
+
+  const installedMods = new Map<string, { tag: string, nameVersion: string, handler: FileSystemFileHandle, size: number }>();
+
+  async function checkDirectory(mods: FileSystemDirectoryHandle, path = '') {
+    if (!mods) return;
+
+    for await (const [name, entry] of mods.entries()) {
+      if (entry.kind === 'file') {
+        const parsed = parseModName(entry.name);
+        if (!parsed) {
+          console.warn(`Failed to parse mod name: ${entry.name}`);
+          continue;
+        }
+
+        const file = await entry.getFile()
+        installedMods.set(`${path}/${name}`, {
+          tag: parsed.nameTag,
+          nameVersion: parsed.nameVersion,
+          handler: entry,
+          size: file.size,
+        });
+      } else if (entry.kind === 'directory') {
+        await checkDirectory(entry, `${path}/${name}`);
+      }
+    }
+  }
+
+  await checkDirectory(mods);
+
+
+  return installedMods;
+
+}
+
+const JSZip = (await import('jszip')).default;
+
+async function checkModsVersion(mods: FileSystemDirectoryHandle, check: string[]) {
+  const installedMods = await getAllMods(mods);
+
+  const byTags = new Map<string, { tag: string, nameVersion: string, handler: FileSystemFileHandle, size: number }[]>();
+  for (const mod of installedMods.values()) {
+    if (!byTags.has(mod.tag)) byTags.set(mod.tag, []);
+    byTags.get(mod.tag)?.push(mod);
+  }
+
+  const targetMods = check
+    .map(tag => byTags.get(tag == 'wotstat.analytics' ? 'mod.wotStat' : tag))
+    .filter(t => t != undefined)
+
+  const modLatestVersions = new Map<string, string>();
+  for (const mod of targetMods) {
+    const versions = await Promise.all(mod.map(async m => {
+      const file = await m.handler.getFile()
+      const archive = await JSZip.loadAsync(file)
+
+      const meta = archive.file('meta.xml')
+      if (!meta) return null
+      const content = await meta.async('text')
+
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(content, 'application/xml');
+      const version = xmlDoc.querySelector('version')?.textContent;
+      if (!version) return null;
+
+      return version
+    }))
+
+    const latestVersion = versions.filter(v => v !== null).sort(dotSeparatedCompare).pop();
+    if (latestVersion) modLatestVersions.set(mod[0].tag, latestVersion);
+  }
+
+  return modLatestVersions;
+}
+
 
 async function requestDirectory() {
   if (!browserSupport()) return null
@@ -114,7 +204,7 @@ async function directoryPermission(directoryHandle: FileSystemDirectoryHandle) {
   return permissions;
 }
 
-export function useInstaller() {
+export function useInstaller(detailedCheckMods: string[]) {
   const isInitialized = ref(false);
   const isBrowserSupported = ref(false)
   const rootHandle = shallowRef<FileSystemDirectoryHandle | null>(null);
@@ -126,6 +216,17 @@ export function useInstaller() {
     modsSet: Set<string>;
     modExtension: string;
   } | null>(null);
+
+  const checkedMods = shallowRef(new Map<string, string>());
+
+  let lastGetInfoTime = 0;
+  async function getGameInfoCached(directoryHandle: FileSystemDirectoryHandle) {
+    if (!gameInfo.value || Date.now() - lastGetInfoTime > 1000) {
+      gameInfo.value = await getGameInfo(directoryHandle);
+      lastGetInfoTime = Date.now();
+    }
+    return gameInfo.value;
+  }
 
   async function init() {
     if (isInitialized.value) return;
@@ -140,7 +241,7 @@ export function useInstaller() {
     }
 
     if (rootHandle.value) {
-      gameInfo.value = await getGameInfo(rootHandle.value)
+      await getGameInfoCached(rootHandle.value)
     }
 
     isInitialized.value = true;
@@ -166,8 +267,6 @@ export function useInstaller() {
   }
 
   async function reworked(message: string = 'Reworked') {
-    console.log('Reworked:', message);
-
     gameInfo.value = null;
     rootHandle.value = null;
     del(DIRECTORY_KEY);
@@ -184,9 +283,9 @@ export function useInstaller() {
       const permission = await rootHandle.value.queryPermission({ mode: 'readwrite' });
 
       if (permission == 'granted') {
-        const newGameInfo = await getGameInfo(rootHandle.value);
-        if (newGameInfo) return gameInfo.value = newGameInfo
-        else throw new Error("Game info not found or invalid");
+        const newGameInfo = await (getGameInfoCached(rootHandle.value));
+        if (!newGameInfo) throw new Error("Game info not found or invalid");
+        return newGameInfo;
       }
 
       throw new Error("Permission not granted");
@@ -210,23 +309,45 @@ export function useInstaller() {
     return handle;
   }
 
-
   let modsHandleCache: FileSystemDirectoryHandle | undefined = undefined;
-  async function installMod(filename: string, mod: Blob) {
+  async function getModsHandleCached() {
     if (!modsHandleCache) modsHandleCache = await getModsHandle();
-    if (!modsHandleCache) throw new Error("Failed to get mods directory handle");
+    return modsHandleCache;
+  }
 
-    const writable = await (await modsHandleCache.getFileHandle(filename, { create: true })).createWritable()
+
+  watch(gameInfo, async (info, old) => {
+    if (!info) return;
+    if (old) return;
+
+    const modsHandle = await getModsHandleCached();
+    if (!modsHandle) return;
+
+    checkedMods.value = await checkModsVersion(modsHandle, detailedCheckMods)
+  })
+
+
+  async function installMod(filename: string, mod: Blob) {
+    const modsHandle = await getModsHandleCached();
+    if (!modsHandle) throw new Error("Failed to get mods directory handle");
+
+    const writable = await (await modsHandle.getFileHandle(filename, { create: true })).createWritable()
     await writable.write(mod);
     await writable.close()
 
     const parsed = parseModName(filename);
-    if (parsed) gameInfo.value?.modsSet.add(parsed.nameTag);
+    if (parsed) {
+      gameInfo.value?.modsSet.add(parsed.nameTag);
+      const version = (await checkModsVersion(modsHandle, [parsed.nameTag])).get(parsed.nameTag);
+      if (version) checkedMods.value.set(parsed.nameTag, version);
+    }
   }
 
   function close() {
     gameInfo.value = null;
     rootHandle.value = null;
+    checkedMods.value.clear();
+    modsHandleCache = undefined;
     del(DIRECTORY_KEY);
   }
 
@@ -236,6 +357,7 @@ export function useInstaller() {
     isInitialized,
     isBrowserSupported,
     gameInfo,
+    checkedMods,
     requestDirectory,
     requestGameFolderAccess,
     installMod,
