@@ -2,7 +2,7 @@
 
 const prefix = (() => {
   const match = location.host.match(/^(.*)\.wotstat\.info$/i)
-  return match ? `${match[1]}.` : ''
+  return match ? `${match[1]}.` : 'ru.'
 })()
 
 export const CLICKHOUSE_URL = import.meta.env.VITE_CLICKHOUSE_URL || `https://${prefix}db.wotstat.info`;

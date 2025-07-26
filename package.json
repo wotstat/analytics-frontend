@@ -20,6 +20,7 @@
     "@vitejs/plugin-vue": "^5.2.1",
     "@vueuse/components": "^12.5.0",
     "@vueuse/core": "^12.5.0",
+    "canvas-confetti": "^1.9.3",
     "chart.js": "^4.4.7",
     "colorjs.io": "^0.5.2",
     "gsap": "^3.12.7",
@@ -33,6 +34,7 @@
     "vue-tsc": "^2.2.0"
   },
   "devDependencies": {
+    "@types/canvas-confetti": "^1.9.0",
     "@types/wicg-file-system-access": "^2023.10.6",
     "sass": "^1.83.4",
     "typescript": "^5.7.3",

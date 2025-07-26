@@ -87,6 +87,7 @@ function close() {
 
 function closeWithAnim() {
   if (fadeLeaveEndTimeout) clearTimeout(fadeLeaveEndTimeout)
+  if (!currentContextMenu.value) return;
 
   fadeLeaveActive.value = true
   fadeLeaveEndTimeout = setTimeout(() => {
