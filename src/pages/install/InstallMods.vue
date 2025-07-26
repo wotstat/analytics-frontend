@@ -1,6 +1,10 @@
 <template>
   <PopupWindow @close="onClose" v-if="visible">
     <div class="main">
+
+      <img :src="Tada1Src" class="fetch-only">
+      <img :src="Tada2Src" class="fetch-only">
+
       <div class="content downloading" v-if="status.type === 'downloading'">
         <h1>Загружаю модификации</h1>
         <div class="progress">

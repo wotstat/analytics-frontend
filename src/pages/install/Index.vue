@@ -357,6 +357,8 @@ const { isBrowserSupported, requestGameFolderAccess, gameInfo, installMod, close
 watch(gameInfo, info => {
   if (!info) return preferredGameVendor.value = 'unknown';
   preferredGameVendor.value = gameVendor(info.realm);
+  console.log(info);
+
 }, { immediate: true });
 
 const displayedModsList = computed(() => {
