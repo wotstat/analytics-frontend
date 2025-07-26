@@ -35,7 +35,8 @@
           <WOTName class="logo-name wot" v-else />
           <div class="version">
             <span>{{ gameInfo.version }}</span>
-            <div class="badge" v-if="latestGameVersion">
+            <div class="badge" v-if="latestGameVersion && gameInfo.version !== (gameVendor(gameInfo.realm) == 'lesta' ? latestGameVersion.lesta.version :
+              latestGameVersion.wargaming.version)">
               <ArrowRight /> {{ gameVendor(gameInfo.realm) == 'lesta' ? latestGameVersion.lesta.version :
                 latestGameVersion.wargaming.version }}
             </div>
