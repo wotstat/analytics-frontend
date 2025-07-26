@@ -98,6 +98,7 @@ function onKey(params: KeyboardEvent) {
       padding: 8px;
       fill: var(--font-color);
       cursor: pointer;
+      z-index: 100;
 
       top: 15px;
       right: 15px;

@@ -281,10 +281,11 @@
         </p>
       </div>
       <div class="buttons">
-        <button @click="downloadArchive" class="secondary" :disabled="targetInstallMods.length === 0">Скачать
+        <button @click="downloadArchive" class="secondary"
+          :disabled="targetInstallMods.length === 0 || latestMods.isFetching.value">Скачать
           архив</button>
         <button @click="install" class="primary"
-          :disabled="gameInfo == null || targetInstallMods.length === 0">Установить</button>
+          :disabled="gameInfo == null || targetInstallMods.length === 0 || latestMods.isFetching.value">Установить</button>
       </div>
     </div>
 
@@ -292,7 +293,7 @@
       :vendor="preferredGameVendor == 'unknown' ? 'lesta' : preferredGameVendor" />
 
     <InstallMods v-if="installPopupShown" @close="installPopupShown = false" :mods="targetInstallMods"
-      :vendor="preferredGameVendor == 'unknown' ? 'lesta' : preferredGameVendor" />
+      :install-mod="installMod" :vendor="preferredGameVendor == 'unknown' ? 'lesta' : preferredGameVendor" />
   </div>
 </template>
 
@@ -353,7 +354,7 @@ const { hasScrollY } = useHasScroll(detailContentContainer);
 
 const { t } = useI18n(i18n)
 
-const { isBrowserSupported, requestGameFolderAccess, gameInfo, installMods, close } = useInstaller()
+const { isBrowserSupported, requestGameFolderAccess, gameInfo, installMod, close } = useInstaller()
 
 watch(gameInfo, info => {
   if (!info) return preferredGameVendor.value = 'unknown';

@@ -180,7 +180,7 @@ export function useInstaller() {
     }
   }
 
-  async function installMods() {
+  async function getModsHandle() {
     await verifyGameInfo()
     if (!gameInfo.value || !rootHandle.value) return
 
@@ -190,11 +190,18 @@ export function useInstaller() {
     for (const element of modsPath.split('/')) {
       handle = await handle.getDirectoryHandle(element, { create: true });
     }
+    return handle;
+  }
 
-    const writable = await (await handle.getFileHandle('test.txt', { create: true })).createWritable()
-    await writable.write('This is a test file to verify write access.');
+
+  let modsHandleCache: FileSystemDirectoryHandle | undefined = undefined;
+  async function installMod(filename: string, mod: Blob) {
+    if (!modsHandleCache) modsHandleCache = await getModsHandle();
+    if (!modsHandleCache) throw new Error("Failed to get mods directory handle");
+
+    const writable = await (await modsHandleCache.getFileHandle(filename, { create: true })).createWritable()
+    await writable.write(mod);
     await writable.close()
-
   }
 
   function close() {
@@ -211,7 +218,7 @@ export function useInstaller() {
     gameInfo,
     requestDirectory,
     requestGameFolderAccess,
-    installMods,
+    installMod,
     close
   }
 }
