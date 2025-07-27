@@ -55,8 +55,14 @@ async function getGameInfo(directoryHandle: FileSystemDirectoryHandle) {
 
   const versionFile = files.get('version.xml');
   const pathsFile = files.get('paths.xml');
+  const gameInfoFile = files.get('game_info.xml');
 
-  if (!versionFile || !pathsFile || versionFile.kind !== 'file' || pathsFile.kind !== 'file') return null;
+  if (!versionFile ||
+    !pathsFile ||
+    !gameInfoFile ||
+    versionFile.kind !== 'file' ||
+    pathsFile.kind !== 'file' ||
+    gameInfoFile.kind !== 'file') return null;
 
 
   const versionFileContents = await (await versionFile.getFile()).text();
