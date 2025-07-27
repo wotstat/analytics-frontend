@@ -228,12 +228,18 @@
         <div class="info">
           <div class="list">
             <template v-for="mod in displayedModsList">
-              <div class="element" @click="toggleMod(mod.tag)" @pointerover="selectedModInDetail = mod"
+              <div class="element" @click="selectedModInDetail = mod"
                 :class="{ selected: selectedModInDetail?.tag === mod.tag }">
                 <SmallCheckbox class="checkbox" :class="{ 'is-dependency': dependencies.has(mod.tag) }"
                   :model-value="enabledMods.get(mod.tag) || dependencies.has(mod.tag)"
-                  @update:model-value="toggleMod(mod.tag)" />
+                  @update:model-value="toggleMod(mod.tag)" @click.stop />
                 {{ t(`name:${mod.tag}`) }}
+                <div class="badges">
+                  <div class="can-update" v-if="preferredGameVendor != 'unknown' && canUpdate(mod.tag)"></div>
+                  <div class="badge green" v-else-if="checkedMods.get(mod.tag)">
+                    <CheckmarkShield class="checkmark-shield" />
+                  </div>
+                </div>
               </div>
               <div class="separator"></div>
             </template>
@@ -253,14 +259,26 @@
               <a :href="selectedModInDetail.source.url" target="_blank" rel="noopener noreferrer" @click.stop>{{
                 selectedModInDetail.source.name }}</a>
               <span> • </span>
-              <span>v{{ selectedModInDetail.version }} ({{ selectedModInDetail.date }})</span>
+              <span v-if="!canUpdate(selectedModInDetail.tag)">v{{ selectedModInDetail.version }} ({{
+                selectedModInDetail.date }})</span>
+              <span v-else class="update-badge">
+                Можно обновить
+                {{ checkedMods.get(selectedModInDetail.tag) }}
+                <ArrowRight class="arrow-right" />
+                {{ selectedModInDetail.version }}
+              </span>
 
-              <template v-if="selectedModInDetail.support == 'mt-only'">
+              <template v-if="!canUpdate(selectedModInDetail.tag) && checkedMods.get(selectedModInDetail.tag)">
+                <span> • </span>
+                <span class="already-installed">Установлен</span>
+              </template>
+
+              <template v-if="preferredGameVendor == 'unknown' && selectedModInDetail.support == 'mt-only'">
                 <span> • </span>
                 <span class="bold">Только Lesta</span>
               </template>
 
-              <template v-if="selectedModInDetail.support == 'wot-only'">
+              <template v-if="preferredGameVendor == 'unknown' && selectedModInDetail.support == 'wot-only'">
                 <span> • </span>
                 <span class="bold">Только WG</span>
               </template>
@@ -284,7 +302,7 @@
           </span>
           <span v-else>Не выбрано ни одного мода</span>
 
-          <span v-if="gameInfo == null">
+          <span v-if="gameInfo == null && isBrowserSupported">
             Для установки необходимо <a @click="selectFolder">выбрать</a> папку с игрой.
           </span>
         </p>
@@ -1034,8 +1052,6 @@ const anyPopupShown = computed(() => downloadPopupShown.value || installPopupSho
             height: 15px;
             fill: currentColor;
             display: block;
-            // margin: 2px -2px;
-            // margin-bottom: -1px;
           }
 
           &.green {
@@ -1114,6 +1130,8 @@ const anyPopupShown = computed(() => downloadPopupShown.value || installPopupSho
             padding: 0.7em 1em;
             cursor: pointer;
             user-select: none;
+            display: flex;
+            align-items: center;
 
             .checkbox {
               --accent-color: #34ff59;
@@ -1122,11 +1140,47 @@ const anyPopupShown = computed(() => downloadPopupShown.value || installPopupSho
               cursor: pointer;
             }
 
-            &.selected {
-              background-color: rgba(255, 255, 255, 0.05);
+            .badges {
+              display: inline-flex;
+              align-items: center;
+              gap: 0.5em;
+              margin-left: auto;
+
+              .badge {
+                padding: 0.2em 0.5em;
+                background-color: #4a90e2;
+                color: white;
+                border-radius: 5px;
+                font-size: 0.8em;
+                font-weight: bold;
+                line-height: 1.2;
+
+                &.green {
+                  background-color: rgb(18, 178, 69);
+                  color: white;
+                }
+
+                .checkmark-shield {
+                  width: 15px;
+                  height: 15px;
+                  fill: currentColor;
+                  display: block;
+                }
+              }
+
+              .can-update {
+                height: 8px;
+                width: 8px;
+                background-color: #4a90e2;
+                border-radius: 20px;
+              }
             }
 
             &:hover {
+              background-color: rgba(255, 255, 255, 0.025);
+            }
+
+            &.selected {
               background-color: rgba(255, 255, 255, 0.05);
             }
 
@@ -1206,6 +1260,40 @@ const anyPopupShown = computed(() => downloadPopupShown.value || installPopupSho
               background-color: rgba(255, 255, 255, 0.1);
               border-radius: 5px;
             }
+          }
+
+          .update-badge {
+            padding: 0.2em 0.5em;
+            background-color: #4a90e2;
+            color: white;
+            border-radius: 5px;
+            font-size: 0.8em;
+            font-weight: bold;
+            line-height: 1.2;
+            display: inline-flex;
+            align-items: center;
+
+            .arrow-right {
+              width: 12px;
+              height: 12px;
+              fill: currentColor;
+              display: block;
+              margin: 0 0.2em;
+              margin-bottom: -1.5px;
+            }
+          }
+
+          .already-installed {
+            // badge
+            padding: 0.2em 0.5em;
+            background-color: #2cb030;
+            color: white;
+            border-radius: 5px;
+            font-size: 0.8em;
+            font-weight: bold;
+            line-height: 1.2;
+            display: inline-flex;
+            align-items: center;
           }
         }
       }
