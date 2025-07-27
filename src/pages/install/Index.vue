@@ -324,6 +324,9 @@
 
     <InstallMods v-if="installPopupShown" @close="installPopupShown = false" :mods="targetInstallMods"
       :install-mod="installMod" :vendor="preferredGameVendor == 'unknown' ? 'lesta' : preferredGameVendor" />
+
+    <SelectFolderError v-if="selectFolderErrorRootHandle" :handle="selectFolderErrorRootHandle"
+      @close="selectFolderErrorRootHandle = null" />
   </div>
 </template>
 
@@ -371,7 +374,7 @@ import { button, simpleContextMenu } from '@/components/contextMenu/simpleContex
 import { latestGameVersion } from '@/components/mdUtils/gameVersion';
 import ExportArchive from './ExportArchive.vue';
 import InstallMods from './InstallMods.vue';
-
+import SelectFolderError from './SelectFolderError.vue';
 
 
 const detailContentContainer = ref<HTMLElement | null>(null);
@@ -379,6 +382,7 @@ const displayType = useLocalStorage<'detail' | 'table'>('install:otherModsDispla
 const preferredGameVendor = ref<'lesta' | 'wargaming' | 'unknown'>('unknown')
 const enabledMods = useLocalStorage('install:enabledMods', new Map<string, boolean>())
 const selectedModInDetail = ref<(ModInfo & { version: string, date: string }) | null>(null);
+const selectFolderErrorRootHandle = ref<null | FileSystemDirectoryHandle>(null);
 
 const { hasScrollY } = useHasScroll(detailContentContainer);
 
@@ -499,7 +503,9 @@ function canUpdate(tag: string) {
 }
 
 async function selectFolder() {
-  await requestGameFolderAccess()
+  await requestGameFolderAccess(handle => {
+    selectFolderErrorRootHandle.value = handle;
+  })
 }
 
 const installPopupShown = ref(false);
@@ -577,7 +583,7 @@ function downloadArchive(event: MouseEvent) {
   beginDownload();
 }
 
-const anyPopupShown = computed(() => downloadPopupShown.value || installPopupShown.value);
+const anyPopupShown = computed(() => downloadPopupShown.value || installPopupShown.value || selectFolderErrorRootHandle.value !== null);
 
 </script>
 

@@ -195,6 +195,7 @@ async function requestDirectory() {
     await set(DIRECTORY_KEY, handle);
     return handle;
   } catch (error) {
+    console.warn('Error requesting directory:', error);
     return null
   }
 }
@@ -250,7 +251,7 @@ export function useInstaller(detailedCheckMods: string[]) {
   init()
 
 
-  async function requestGameFolderAccess() {
+  async function requestGameFolderAccess(onGameInfoOnFound?: (handle: FileSystemDirectoryHandle) => void) {
     if (!browserSupport()) return
 
     const handle = await requestDirectory();
@@ -263,6 +264,12 @@ export function useInstaller(detailedCheckMods: string[]) {
     }
 
     gameInfo.value = await getGameInfo(handle)
+
+    if (!gameInfo.value) {
+      console.warn('Game info not found or invalid in the selected directory');
+      onGameInfoOnFound?.(handle);
+    }
+
     rootHandle.value = handle;
   }
 
