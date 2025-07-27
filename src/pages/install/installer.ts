@@ -152,9 +152,10 @@ async function getAllMods(mods: FileSystemDirectoryHandle) {
 
 }
 
-const JSZip = (await import('jszip')).default;
 
 async function checkModsVersion(mods: FileSystemDirectoryHandle, check: string[]) {
+  const JSZip = (await import('jszip')).default;
+
   const installedMods = await getAllMods(mods);
 
   const byTags = new Map<string, { tag: string, nameVersion: string, handler: FileSystemFileHandle, size: number }[]>();
