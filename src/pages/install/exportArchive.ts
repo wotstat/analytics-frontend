@@ -1,3 +1,4 @@
+import { latestGameVersion } from '@/components/mdUtils/gameVersion';
 
 
 export async function exportArchive(mods: { filename: string, blob: Blob }[], vendor: 'lesta' | 'wargaming') {
@@ -5,12 +6,25 @@ export async function exportArchive(mods: { filename: string, blob: Blob }[], ve
 
   const zip = new JSZip();
 
-  zip.file('README.txt', `Instruction text`);
-  zip.file('ИНСТРУКЦИЯ.txt', `Текст инструкции`);
+  const modsPath = (vendor == 'lesta' ? latestGameVersion.value?.lesta.modsFolder : latestGameVersion.value?.wargaming.modsFolder) ?? '1.36.0.0';
+
+  const instructionText = `Инструкция по установке модов WotStat
+
+${vendor == 'lesta' ? 'ТОЛЬКО МИР ТАНКОВ (LESTA)' : 'ТОЛЬКО WORLD OF TANKS (WARGAMING)'}
+  
+- Распакуйте этот архив в корневую папку игры.
+  Папку игры можно найти через лаунчер:
+  - Нажмите кнопку "Настройки игры" (слева сверху)
+  - Выберите пункт "Показать в папке"
+
+После распаковки, у вас в папке mods/${modsPath} должны появиться файлы с расширением .${vendor == 'lesta' ? 'mtmod' : 'wotmod'}:
+${mods.map(mod => `- ${mod.filename}`).join('\n')}
+  `
+  zip.file('ИНСТРУКЦИЯ.txt', instructionText);
 
   const targetFolder = zip
     .folder('mods')!
-    .folder('1.36.0.0')!
+    .folder(modsPath)!
 
   mods.forEach(mod => {
     targetFolder.file(mod.filename, mod.blob, { binary: true });
