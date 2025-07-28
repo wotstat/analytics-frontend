@@ -70,54 +70,23 @@
       </section>
     </div>
 
+
+
     <section class="install fluid">
       <div class="center-container">
         <h2>Установка</h2>
 
         <p>
-          <a :href="'https://github.com/wotstat/wotstat-analytics/releases/latest'" target="_blank">Скачайте</a>
-          последнюю версию мода и поместите файл в каталог:
+          Воспользуйтесь веб-установщиком в разделе <RouterLink to="/install">Моды</RouterLink> или скачайте мод файлом
+          и установите его вручную.
         </p>
-        <ul>
-          <li>Леста:
-            <CurrentLestaVersion>Tanki/mods/</CurrentLestaVersion>
-          </li>
-          <li>Wargaming:
-            <CurrentWgVersion>World_Of_Tanks/mods/</CurrentWgVersion>
-          </li>
-        </ul>
 
-        <i>Версии игры актуальны на {{ new Date().toLocaleDateString() }}</i>
+        <br>
 
-        <!-- <i>Проверка на вирусы VirusTotal: <a
-            href="https://www.virustotal.com/gui/file/d2c21e8fbb360e4309f40d459014c40cb80307712fe452e967fc70ae7159b0fa?nocache=1"
-            target="_blank">посмотреть</a>
-        </i> -->
+        <p>Мод имеет версию как для Мира Танков, так и для World of Tanks.</p>
 
-        <!-- <p class="warning">ВАЖНО: НЕ переименовывайте файл с модом. Он должен называться
-          <code v-if="latestWotstat.actual">"{{ latestWotstat.name }}"</code>
-          <span v-else>так же как и скачался. Например "{{ latestWotstat.name }}"</span>
-        </p> -->
-
-        <!-- 
-        <h3 class="streamer-header" @click="streamerOpen = !streamerOpen">
-          <ArrowDownIcon :style="{
-            transform: streamerOpen ? 'rotateZ(0)' : 'rotateZ(-90deg)'
-          }" />
-          Для стримеров
-        </h3>
-        <div class="collapsable-body" ref="collapsableBody" :style="{
-          maxHeight: streamerOpen ? collapsableBody?.scrollHeight + 'px' : '0'
-        }">
-          <p>Если вы хотите скрыть игровой сервер из собираемой статистики, поместите файл <a :href="ConfigUrl"
-              target="_blank" download="config.cfg">config.cfg</a> в папку
-            <code>WOT/mods/configs/wot_stat</code>
-          </p>
-        </div>
-        -->
         <div class="flex center download-buttons">
-          <button @click="download('lesta')">СКАЧАТЬ LESTA</button>
-          <button @click="download('wg')">СКАЧАТЬ WG</button>
+          <button @click="goToDownload">Перейти к загрузке</button>
         </div>
       </div>
 
@@ -407,6 +376,7 @@ import { githubRelease } from '@/components/mdUtils/ghRelease';
 import { useMeta } from '@/composition/useMeta';
 import { useAnalyticsRealtime } from '@/composition/useAnalyticsRealtime';
 import { CLICKHOUSE_URL, CURRENT_URL_PREFIX } from '@/utils/externalUrl';
+import { useRouter } from 'vue-router';
 
 useMeta({
   title: 'WOTSTAT - Сессионная аналитика для игр «Мир танков» и «World of Tanks»',
@@ -430,9 +400,9 @@ const latestWotstat = computedAsync(async () => {
   actual: false
 });
 
-
-function download(vendor: 'lesta' | 'wg' = 'lesta') {
-  window.open(latestWotstat.value[vendor].browser_download_url, "_blank");
+const router = useRouter()
+function goToDownload() {
+  router.push({ path: '/install' })
 }
 
 

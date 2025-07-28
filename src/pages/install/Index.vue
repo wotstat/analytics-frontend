@@ -419,11 +419,15 @@ const displayedModsList = computed(() => {
     .filter(m => m !== null);
 })
 
-const unwatch = watch(displayedModsList, mods => {
-  if (mods.length === 0) return;
-  if (!selectedModInDetail.value) selectedModInDetail.value = mods.at(0) || null;
-  if (selectedModInDetail.value) unwatch();
-});
+if (displayedModsList.value.length == 0) {
+  const unwatch = watch(displayedModsList, mods => {
+    if (mods.length === 0) return;
+    if (!selectedModInDetail.value) selectedModInDetail.value = mods.at(0) || null;
+    if (selectedModInDetail.value) unwatch();
+  });
+} else {
+  if (!selectedModInDetail.value) selectedModInDetail.value = displayedModsList.value.at(0) || null;
+}
 
 const mdDescriptions = import.meta.glob<{ VueComponent: Component }>('./details/*/*.md', { eager: true });
 const detailComponent = computed(() => {

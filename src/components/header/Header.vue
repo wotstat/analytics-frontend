@@ -30,6 +30,8 @@
         <router-link to="/" class="hero">Главная</router-link>
         <router-link to="/session" class="infographics">Инфографика</router-link>
         <router-link to="/widgets" class="widgets">Виджеты</router-link>
+        <router-link to="/install" class="install" :class="visibleMods ? '' : 'new-badge'"
+          @click="visibleMods = true">Моды</router-link>
         <router-link to="/bb25" class="replays bob25">ББ2025</router-link>
         <!-- <router-link to="/replays" class="replays">Реплеи</router-link> -->
 
@@ -40,6 +42,7 @@
             <router-link to="/" class="hero">Главная</router-link>
             <router-link to="/session" class="infographics">Инфографика</router-link>
             <router-link to="/widgets" class="widgets">Виджеты</router-link>
+            <router-link to="/install" class="install">Моды</router-link>
             <router-link to="/bb25" class="replays">ББ2025</router-link>
             <!-- <router-link to="/replays" class="replays">Реплеи</router-link> -->
             <a :href="SQLUrl" target="_blank" rel="noopener noreferrer" class="sql">Доступ к БД </a>
@@ -161,6 +164,8 @@ useDefaultHeaderHeight(headerElement);
 const { additionalHeaderHeight } = useAdditionalHeaderHeight();
 
 const ruHeaderVisible = useLocalStorage('RuAlternativeHeader', true);
+
+const visibleMods = useLocalStorage('visible-mods', false);
 
 function hideHeader(name: string) {
   if (name == 'RuAlternativeHeader') ruHeaderVisible.value = false;
@@ -312,6 +317,24 @@ function hideHeader(name: string) {
       &:hover {
         color: #f5fdffde;
         filter: drop-shadow(0 0 0.3em #3fa5f362);
+      }
+
+
+      &.new-badge {
+        position: relative;
+
+        &::before {
+          position: absolute;
+          content: 'NEW';
+          top: 8px;
+          right: 1px;
+          background-color: #2f80ed;
+          border-radius: 20px;
+          padding: 1px 3px;
+          line-height: 1;
+          font-size: 10px;
+          font-weight: bold;
+        }
       }
     }
 
@@ -498,7 +521,8 @@ $drop-down-menu: 1050px;
 $links-sections: 1050px;
 $sql: 1050px;
 $replays: 830px;
-$widgets: 500px;
+$install: 500px;
+$widgets: 450px;
 $infographics: 400px;
 $positions: 680px;
 $hero: 100px;
@@ -527,6 +551,7 @@ $language-section: 300px;
     @include hide-if-small($sql, sql);
     @include hide-if-small($replays, replays);
     @include hide-if-small($widgets, widgets);
+    @include hide-if-small($install, install);
     @include hide-if-small($infographics, infographics);
     @include hide-if-small($hero, hero);
     @include hide-if-small($positions, positions-section);
@@ -548,6 +573,7 @@ $language-section: 300px;
     @include hide-if-greater($sql, sql);
     @include hide-if-greater($replays, replays);
     @include hide-if-greater($widgets, widgets);
+    @include hide-if-greater($install, install);
     @include hide-if-greater($infographics, infographics);
     @include hide-if-greater($hero, hero);
     @include hide-if-greater($positions, positions-section);
