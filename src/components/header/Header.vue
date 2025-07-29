@@ -518,7 +518,7 @@ function hideHeader(name: string) {
 $drop-down-menu: 1050px;
 $links-sections: 1050px;
 $sql: 1050px;
-$replays: 830px;
+$replays: 850px;
 $install: 500px;
 $widgets: 450px;
 $infographics: 400px;
