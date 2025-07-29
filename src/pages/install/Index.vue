@@ -380,6 +380,9 @@ import InstallMods from './InstallMods.vue';
 import SelectFolderError from './SelectFolderError.vue';
 import { showFocusEffect } from '@/components/focusEffect/focusEffect';
 import { useRoute } from 'vue-router';
+import { setFeatureVisit } from '@/components/newFeatureBadge/newFeatureBadge';
+
+setFeatureVisit('mod-installer')
 
 
 const detailContentContainer = ref<HTMLElement | null>(null);
