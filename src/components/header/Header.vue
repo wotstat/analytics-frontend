@@ -30,8 +30,7 @@
         <router-link to="/" class="hero">Главная</router-link>
         <router-link to="/session" class="infographics">Инфографика</router-link>
         <router-link to="/widgets" class="widgets">Виджеты</router-link>
-        <router-link to="/install" class="install" :class="visibleMods ? '' : 'new-badge'"
-          @click="visibleMods = true">Моды</router-link>
+        <router-link to="/install" class="install" v-new-feature-badge="'mod-installer'">Моды</router-link>
         <router-link to="/bb25" class="replays bob25">ББ2025</router-link>
         <!-- <router-link to="/replays" class="replays">Реплеи</router-link> -->
 
@@ -153,6 +152,7 @@ import I18nIcon from './assets/i18n.svg'
 import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
 import { CLICKHOUSE_URL, CURRENT_URL_PREFIX, POSITIONS_URL } from '@/utils/externalUrl';
 import { useLocalStorage } from '@vueuse/core';
+import { vNewFeatureBadge } from '../newFeatureBadge/newFeatureBadge';
 
 const discordUrl = import.meta.env.VITE_DISCORD_URL
 
@@ -164,8 +164,6 @@ useDefaultHeaderHeight(headerElement);
 const { additionalHeaderHeight } = useAdditionalHeaderHeight();
 
 const ruHeaderVisible = useLocalStorage('RuAlternativeHeader', true);
-
-const visibleMods = useLocalStorage('visible-mods', false);
 
 function hideHeader(name: string) {
   if (name == 'RuAlternativeHeader') ruHeaderVisible.value = false;
@@ -320,7 +318,7 @@ function hideHeader(name: string) {
       }
 
 
-      &.new-badge {
+      &.new-feature-badge {
         position: relative;
 
         &::before {
