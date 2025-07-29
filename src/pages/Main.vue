@@ -402,7 +402,7 @@ const latestWotstat = computedAsync(async () => {
 
 const router = useRouter()
 function goToDownload() {
-  router.push({ path: '/install' })
+  router.push({ path: '/install', query: { preset: 'analytics' } });
 }
 
 

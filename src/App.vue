@@ -16,7 +16,7 @@
       <p>В РАЗРАБОТКЕ</p>
     </div>
 
-
+    <FocusEffectRoot />
     <ContextMenuRoot />
   </div>
 </template>
@@ -28,6 +28,7 @@ import Header from "./components/header/Header.vue";
 import HeaderSpacer from "./components/header/HeaderSpacer.vue";
 import { headerHeight } from './composition/useAdditionalHeaderHeight';
 import ContextMenuRoot from '@/components/contextMenu/ContextMenuRoot.vue';
+import FocusEffectRoot from './components/focusEffect/FocusEffectRoot.vue';
 
 const isWindows = navigator.platform.indexOf('Win') > -1
 const boldWeight = isWindows ? 700 : 800
