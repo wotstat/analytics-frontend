@@ -93,7 +93,8 @@
         :model-value="enabledMods.get('wotstat.widgets') ?? false"
         :latest-version="version('wotstat.widgets') ?? undefined"
         :installed-version="checkedMods.get('wotstat.widgets')"
-        @update:model-value="v => enabledMods.set('wotstat.widgets', v)" :prevent-effects="anyPopupShown">
+        @update:model-value="v => enabledMods.set('wotstat.widgets', v)" :prevent-effects="anyPopupShown"
+        ref="widgetsModCard">
         <template #info>
           <div class="header">
             <h5>Виджеты</h5>
@@ -113,7 +114,8 @@
         :model-value="enabledMods.get('wotstat.analytics') ?? false"
         :latest-version="version('wotstat.analytics') ?? undefined"
         :installed-version="checkedMods.get('mod.wotStat') ?? undefined"
-        @update:model-value="v => enabledMods.set('wotstat.analytics', v)" :prevent-effects="anyPopupShown">
+        @update:model-value="v => enabledMods.set('wotstat.analytics', v)" :prevent-effects="anyPopupShown"
+        ref="analyticsModCard">
         <template #info>
           <div class="header">
             <h5>Аналитика</h5>
@@ -132,7 +134,8 @@
       <ModCard :image="[EyeMarkerMain, EyeMarkerBack]" :model-value="enabledMods.get('wotstat.positions') ?? false"
         :latest-version="version('wotstat.positions') ?? undefined"
         :installed-version="checkedMods.get('wotstat.positions') ?? undefined"
-        @update:model-value="v => enabledMods.set('wotstat.positions', v)" :prevent-effects="anyPopupShown">
+        @update:model-value="v => enabledMods.set('wotstat.positions', v)" :prevent-effects="anyPopupShown"
+        ref="positionsModCard">
         <template #info>
           <div class="header">
             <h5>
@@ -361,7 +364,7 @@ import AnalyticsBack2 from './assets/mods/analytics-back-2.webp'
 
 
 import ModCard from './ModCard.vue';
-import { type Component, computed, ref, watch } from 'vue';
+import { type Component, computed, onMounted, ref, watch } from 'vue';
 import { analyticsMod, latestMods, latestModsMap, ModInfo, otherMods, otherModsMap, positionsMod, widgetsMod, } from './mods'
 import { useI18n } from '@/composition/useI18n';
 import i18n from './i18n.json';
@@ -375,6 +378,8 @@ import { latestGameVersion } from '@/components/mdUtils/gameVersion';
 import ExportArchive from './ExportArchive.vue';
 import InstallMods from './InstallMods.vue';
 import SelectFolderError from './SelectFolderError.vue';
+import { showFocusEffect } from '@/components/focusEffect/focusEffect';
+import { useRoute } from 'vue-router';
 
 
 const detailContentContainer = ref<HTMLElement | null>(null);
@@ -588,6 +593,44 @@ function downloadArchive(event: MouseEvent) {
 }
 
 const anyPopupShown = computed(() => downloadPopupShown.value || installPopupShown.value || selectFolderErrorRootHandle.value !== null);
+
+
+const route = useRoute()
+const analyticsModCard = ref<InstanceType<typeof ModCard> | null>(null);
+const widgetsModCard = ref<InstanceType<typeof ModCard> | null>(null);
+const positionsModCard = ref<InstanceType<typeof ModCard> | null>(null);
+
+
+function enableOnly(tags: string[]) {
+  enabledMods.value.clear();
+  for (const tag of tags) enabledMods.value.set(tag, true);
+}
+onMounted(() => {
+  const { preset } = route.query;
+
+  if (!preset) return;
+
+
+  switch (preset) {
+    case 'analytics':
+      showFocusEffect(analyticsModCard.value?.$el as HTMLElement);
+      enableOnly(['wotstat.analytics']);
+      break;
+
+    case 'widgets':
+      showFocusEffect(widgetsModCard.value?.$el as HTMLElement);
+      enableOnly(['wotstat.widgets']);
+      break;
+
+    case 'positions':
+      showFocusEffect(positionsModCard.value?.$el as HTMLElement);
+      enableOnly(['wotstat.positions', 'izeberg.modssettingsapi', 'me.poliroid.modslistapi']);
+      break;
+
+    default:
+      break;
+  }
+})
 
 </script>
 
