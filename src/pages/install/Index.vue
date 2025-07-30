@@ -303,7 +303,7 @@
           <span v-if="targetInstallMods.length > 0">
             Выбрано модов <span class="badge"> {{ targetInstallMods.length }}</span>.
           </span>
-          <span v-else>Не выбрано ни одного мода</span>
+          <span v-else>Не выбрано ни одного мода.</span>
 
           <span v-if="gameInfo == null && isBrowserSupported">
             Для установки необходимо <a @click="selectFolder">выбрать</a> папку с игрой.
@@ -603,11 +603,11 @@ const analyticsModCard = ref<InstanceType<typeof ModCard> | null>(null);
 const widgetsModCard = ref<InstanceType<typeof ModCard> | null>(null);
 const positionsModCard = ref<InstanceType<typeof ModCard> | null>(null);
 
-
 function enableOnly(tags: string[]) {
   enabledMods.value.clear();
   for (const tag of tags) enabledMods.value.set(tag, true);
 }
+
 onMounted(() => {
   const { preset } = route.query;
 
