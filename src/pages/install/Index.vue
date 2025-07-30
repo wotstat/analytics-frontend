@@ -190,7 +190,7 @@
         </thead>
 
         <tbody>
-          <tr v-for="mod in displayedModsList" @click="toggleMod(mod.tag)">
+          <tr v-for="mod in displayedModsList" @click="toggleMod(mod.tag)" :class="`mod-${mod.tag.replace('.', '-')}`">
             <td>
               <SmallCheckbox class="checkbox" :model-value="enabledMods.get(mod.tag) || dependencies.has(mod.tag)"
                 :class="{ 'is-dependency': dependencies.has(mod.tag) }" @update:model-value="toggleMod(mod.tag)"
@@ -232,7 +232,7 @@
           <div class="list">
             <template v-for="mod in displayedModsList">
               <div class="element" @click="selectedModInDetail = mod"
-                :class="{ selected: selectedModInDetail?.tag === mod.tag }">
+                :class="{ selected: selectedModInDetail?.tag === mod.tag, [`mod-${mod.tag.replace('.', '-')}`]: true }">
                 <SmallCheckbox class="checkbox" :class="{ 'is-dependency': dependencies.has(mod.tag) }"
                   :model-value="enabledMods.get(mod.tag) || dependencies.has(mod.tag)"
                   @update:model-value="toggleMod(mod.tag)" @click.stop />
@@ -364,7 +364,7 @@ import AnalyticsBack2 from './assets/mods/analytics-back-2.webp'
 
 
 import ModCard from './ModCard.vue';
-import { type Component, computed, onMounted, ref, watch } from 'vue';
+import { type Component, computed, nextTick, onMounted, ref, watch } from 'vue';
 import { analyticsMod, latestMods, latestModsMap, ModInfo, otherMods, otherModsMap, positionsMod, widgetsMod, } from './mods'
 import { useI18n } from '@/composition/useI18n';
 import i18n from './i18n.json';
@@ -628,6 +628,28 @@ onMounted(() => {
     case 'positions':
       showFocusEffect(positionsModCard.value?.$el as HTMLElement);
       enableOnly(['wotstat.positions', 'izeberg.modssettingsapi', 'me.poliroid.modslistapi']);
+      break;
+
+    case 'settings':
+
+      function focusAnim() {
+        const element = document.querySelector('.mod-izeberg-modssettingsapi')
+        if (!element) return;
+
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        enableOnly(['izeberg.modssettingsapi', 'me.poliroid.modslistapi']);
+        setTimeout(() => showFocusEffect(element as HTMLElement), 300);
+      }
+
+      if (displayedModsList.value.length > 0) {
+        focusAnim();
+      } else {
+        const unwatch = watch(() => displayedModsList.value, (mods) => {
+          if (mods.length == 0) return
+          unwatch();
+          nextTick(() => focusAnim())
+        });
+      }
       break;
 
     default:
