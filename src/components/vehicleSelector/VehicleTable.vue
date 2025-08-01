@@ -17,18 +17,9 @@
 
     <div class="table-container nice-scrollbar" v-bind="containerProps">
       <div class="wrapper" v-bind="wrapperProps">
-        <div class="line" :class="selected?.has(vehicle.data.tag) ? 'selected' : ''" v-for="vehicle in list"
-          :key="vehicle.index" @click="onClick(vehicle.data.tag)">
-          <Nation :nation="vehicle.data.nation" class="flag" />
-          <div class="type">
-            <VehicleType :type="vehicle.data.type" class="icon" />
-          </div>
-          <VehicleLevel :level="vehicle.data.level" class="level" />
-          <p class="name">
-            <VehicleImage :tag="vehicle.data.tag" :size="'small'" class="tank" />
-            <Highlight :text="vehicle.data.highlightStrings" />
-          </p>
-        </div>
+        <VehicleLine v-for="(vehicle, i) in list" :key="vehicle.index" :nation="vehicle.data.nation"
+          :type="vehicle.data.type" :level="vehicle.data.level" :tag="vehicle.data.tag"
+          :highlightStrings="vehicle.data.highlightStrings" @click="onClick(vehicle.data.tag)" />
       </div>
     </div>
   </div>
@@ -36,15 +27,13 @@
 
 
 <script setup lang="ts">
-import Highlight from '../highlightString/index.vue'
-import Nation from '../vehicles/nation/Nation.vue'
-import VehicleImage from '../vehicles/VehicleImage.vue'
-import { useVirtualList } from '@vueuse/core'
+import { useThrottle, useVirtualList } from '@vueuse/core'
 import VehicleType from '../vehicles/type/VehicleType.vue'
-import VehicleLevel from '../vehicles/VehicleLevel.vue'
 import Globe from "./globe.svg";
 import { HighlightedString } from '../highlightString/highlightUtils'
-import { computed, triggerRef, watch } from 'vue'
+import { computed, shallowRef, toRaw, toValue, triggerRef, watch } from 'vue'
+import VehicleLine from './VehicleLine.vue'
+
 
 const props = defineProps<{
   tankToDisplay: {
@@ -66,6 +55,28 @@ const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(target, 
   itemHeight: 35,
   overscan: 10,
 })
+
+// const delayedList = shallowRef(list.value)
+
+// function frame() {
+//   requestAnimationFrame(frame)
+//   // console.log(list.value);
+
+//   // const randomIndex = new Array(50).fill(0).map(() => Math.floor(Math.random() * target.value.length));
+//   // delayedList.value = randomIndex.map(index => {
+//   //   const item = toRaw(target.value[index])
+//   //   return {
+//   //     index,
+//   //     data: item
+//   //   }
+//   // })
+
+//   // delayedList.value = list.value.map(item => toRaw(item))
+//   // console.log(delayedList.value);
+
+// }
+// frame()
+
 
 watch(() => target.value.length, () => scrollTo(0))
 
@@ -98,7 +109,6 @@ function onClick(tag: string) {
     width: 30px;
     min-width: 30px;
   }
-
 }
 
 .table-header {
@@ -170,87 +180,5 @@ function onClick(tag: string) {
   margin-right: -11.5px;
   margin-left: -10px;
   padding-left: 10px;
-
-  .line {
-    display: flex;
-    white-space: nowrap;
-    height: 34px;
-    align-items: center;
-    border-top: 1px solid #d0d0d008;
-    position: relative;
-    cursor: pointer;
-
-    &::before {
-      content: '';
-      position: absolute;
-      inset: 0 -3px 0 -7px;
-      border-radius: 6px;
-      z-index: -1;
-    }
-
-    &:hover {
-      &::before {
-        background-color: rgba(255, 255, 255, 0.1)
-      }
-    }
-
-
-    &.selected {
-      &::before {
-        background-color: var(--blue-color);
-        background: linear-gradient(90deg, #0182fada, #0182fa44 20%, #0182fa2c 50%, transparent);
-      }
-    }
-
-
-    .type {
-      display: flex;
-      justify-content: center;
-
-      color: white;
-      fill: currentColor;
-
-      .icon {
-        width: 14px;
-      }
-    }
-
-    .flag {
-      user-select: none;
-      pointer-events: none;
-    }
-
-    .level {
-      text-align: center;
-    }
-
-    .name {
-      display: flex;
-      align-items: center;
-      justify-content: left;
-      overflow: hidden;
-      flex: 1;
-
-      .tank {
-        width: 120px;
-        min-width: 120px;
-        user-select: none;
-        pointer-events: none;
-      }
-
-      p {
-        width: 100%;
-        margin-left: -60px;
-        text-overflow: ellipsis;
-        overflow: hidden;
-        font-weight: bold;
-        font-size: 0.8em;
-      }
-    }
-  }
-
-  :deep(.highlight) {
-    color: var(--blue-thin-color);
-  }
 }
 </style>
