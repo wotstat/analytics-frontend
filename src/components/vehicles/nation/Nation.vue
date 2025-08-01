@@ -7,7 +7,7 @@
 import { computed } from 'vue';
 
 
-type AllowedIcon = 'ussr' | 'china' | 'czech' | 'france' | 'germany' | 'italy' | 'japan' | 'poland' | 'sweden' | 'uk' | 'usa'
+type AllowedIcon = 'ussr' | 'china' | 'czech' | 'france' | 'germany' | 'italy' | 'japan' | 'poland' | 'sweden' | 'uk' | 'usa' | 'intunion'
 
 const props = defineProps<{
   nation: AllowedIcon | string,
