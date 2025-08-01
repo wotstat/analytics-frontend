@@ -1,5 +1,5 @@
 <template>
-  <img ref="imgRef" :alt="alt" @error="onError" :loading="loading" :style="{ objectFit: 'cover' }" />
+  <img ref="imgRef" :alt="alt" @error="onError" :loading="loading" />
 </template>
 
 

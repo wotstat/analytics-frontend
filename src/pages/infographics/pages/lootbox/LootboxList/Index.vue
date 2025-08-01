@@ -7,7 +7,8 @@
           <div class="container-info">
             <div class="isOpenedToday" v-if="isOpenedToday(item.end)"></div>
             <p class="title">{{ item.name.replaceAll('\\n', '') }}</p>
-            <FallbackImg :src="containersImages[`./containers/${item.tag}.png`]?.default ?? NoImageLB" class="img" />
+            <FallbackImg :src="`${STATIC_URL}/mt/latest/lootboxes/large/${tagToImageName(item.tag)}.webp`"
+              :fallback="NoImageLB" class="img" />
             <table cellspacing="0" cellpadding="0">
               <tbody>
                 <tr>
@@ -63,6 +64,7 @@ import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue';
 import { useQueryParamStorage } from '@/composition/useQueryParamStorage';
 
 import NoImageLB from "./noImageLB.png";
+import { STATIC_URL } from '@/utils/externalUrl';
 
 const customOrderKeys = new Map<string, number>(objectEntries({
   'mtl_1_24': 1000,
@@ -78,7 +80,19 @@ const customOrderKeys = new Map<string, number>(objectEntries({
   'tanks_birthday_2023_X': -1000,
 }));
 
-const containersImages = import.meta.glob<{ default: string }>('./containers/*.png', { eager: true });
+function tagToImageName(tag: string) {
+  const convert = {
+    'tanks_birthday_2023_premium': 'tanks_birthday_2023_3',
+    'tanks_birthday_2023_VI': 'tanks_birthday_2023_2',
+    'tanks_birthday_2023_X': 'tanks_birthday_2023_1',
+  } as Record<string, string>;
+
+  if (convert[tag]) return convert[tag]
+
+  if (tag.endsWith('_standart')) return tag.replace('_standart', '_1');
+  if (tag.endsWith('_silver')) return tag.replace('_silver', '_2');
+  return tag
+}
 
 const props = defineProps<{
   withoutTest: boolean
