@@ -1,10 +1,5 @@
 <template>
-  <FallbackImg
-    :src="targetUrl"
-    :fallback="fallbackUrl"
-    :style
-    :loading
-  />
+  <FallbackImg :src="targetUrl" :fallback="fallbackUrl" :style :loading />
 </template>
 
 <script setup lang="ts">
@@ -19,19 +14,19 @@ const props = defineProps<{
 }>();
 
 const targetUrl = computed(() => {
-  const name = props.tag.replace(':', '-');
+  const name = props.tag.split(':').at(-1)?.toLowerCase();
   switch (props.size ?? 'preview') {
-    case 'small': return `${STATIC_URL}/vehicles/small/${name}.png`;
-    case 'preview': return `${STATIC_URL}/vehicles/preview/${name}.png`;
-    case 'shop': return `${STATIC_URL}/vehicles/shop/${name}.png`;
+    case 'small': return `${STATIC_URL}/mt/latest/vehicles/small/${name}.webp`;
+    case 'preview': return `${STATIC_URL}/mt/latest/vehicles/preview/${name}.webp`;
+    case 'shop': return `${STATIC_URL}/mt/latest/vehicles/shop/${name}.webp`;
   }
 })
 
 const fallbackUrl = computed(() => {
   switch (props.size ?? 'preview') {
-    case 'small': return `${STATIC_URL}/vehicles/small/noImage.png`;
-    case 'preview': return `${STATIC_URL}/vehicles/preview/noImage.png`;
-    case 'shop': return `${STATIC_URL}/vehicles/preview/noImage.png`;
+    case 'small': return `${STATIC_URL}/mt/latest/vehicles/small/no-image.webp`;
+    case 'preview': return `${STATIC_URL}/mt/latest/vehicles/preview/no-image.webp`;
+    case 'shop': return `${STATIC_URL}/mt/latest/vehicles/preview/no-image.webp`;
   }
 })
 
