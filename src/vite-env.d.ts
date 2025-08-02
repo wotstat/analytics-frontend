@@ -3,6 +3,7 @@
 
 
 interface ImportMetaEnv {
+  VITE_MODE_DEV_LOCAL?: string;
 }
 
 interface ImportMeta {

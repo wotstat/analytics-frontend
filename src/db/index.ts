@@ -4,6 +4,21 @@ import { ResponseJSON, createClient, type ClickHouseSettings } from "@clickhouse
 import { useLocalStorage } from "@vueuse/core";
 import { computed, ref, shallowRef, watch } from "vue";
 
+if (import.meta.env.MODE == 'development' && import.meta.env.VITE_MODE_DEV_LOCAL === 'true' && !window.crypto.randomUUID) {
+  console.warn('crypto.randomUUID is not supported in this browser, using fallback implementation');
+
+  // @ts-ignore
+  window.crypto.randomUUID = () => {
+    // Fallback implementation for browsers that do not support crypto.randomUUID
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  };
+
+}
+
 export const clickhouse = createClient({
   url: CLICKHOUSE_URL,
   username: 'public',
