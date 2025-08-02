@@ -6,9 +6,8 @@ import { computed, ref, shallowRef, watch } from "vue";
 
 export const clickhouse = createClient({
   url: CLICKHOUSE_URL,
-  username: import.meta.env.VITE_CLICKHOUSE_USER,
-  database: import.meta.env.VITE_CLICKHOUSE_DATABASE,
-  password: import.meta.env.VITE_CLICKHOUSE_PASSWORD,
+  username: 'public',
+  database: 'WOT',
   clickhouse_settings: {
     max_temporary_columns: '1000',
     add_http_cors_header: 1

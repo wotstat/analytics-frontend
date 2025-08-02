@@ -73,7 +73,7 @@
               <a href="https://patreon.com/wotstat" target="_blank" class="icon">
                 <PatreonIcon />
               </a>
-              <a :href="discordUrl" target="_blank" class="icon">
+              <a :href="DISCORD_URL" target="_blank" class="icon">
                 <DiscordIcon />
               </a>
               <a href="https://github.com/WOT-STAT/WOTMOD" target="_blank" class="icon">
@@ -110,7 +110,7 @@
             <PatreonIcon />
           </a>
 
-          <a :href="discordUrl" target="_blank" class="icon">
+          <a :href="DISCORD_URL" target="_blank" class="icon">
             <DiscordIcon />
           </a>
 
@@ -150,11 +150,9 @@ import LogoIcon from './assets/logo2.0.svg'
 import HeaderSpacer from './HeaderSpacer.vue';
 import I18nIcon from './assets/i18n.svg'
 import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
-import { CLICKHOUSE_URL, CURRENT_URL_PREFIX, POSITIONS_URL } from '@/utils/externalUrl';
+import { CLICKHOUSE_URL, CURRENT_URL_PREFIX, POSITIONS_URL, DISCORD_URL } from '@/utils/externalUrl';
 import { useLocalStorage } from '@vueuse/core';
 import { vNewFeatureBadge } from '../newFeatureBadge/newFeatureBadge';
-
-const discordUrl = import.meta.env.VITE_DISCORD_URL
 
 const SQLUrl = CLICKHOUSE_URL + '/play?user=public#c2VsZWN0IHRhYmxlLCBuYW1lLCBjb21tZW50LCB0eXBlIGZyb20gZGVzY3JpcHRpb247'
 
