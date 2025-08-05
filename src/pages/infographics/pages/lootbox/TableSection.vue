@@ -2,7 +2,7 @@
   <template v-if="props.data.length > 0">
     <h4>{{ title }}</h4>
     <div class="card">
-      <Table v-bind="props" :localizer="localizer" />
+      <Table v-bind="props" :localizer="localizer" :countGetter="countGetter" />
     </div>
   </template>
 </template>
@@ -24,6 +24,7 @@ const props = defineProps<{
     other?: number
   }[],
   localizer?: (key: string, titleName?: LocalizedName) => string | { prefix?: string, postfix?: string, value: string },
+  countGetter?: (title: string) => number,
   byNumber?: number,
   leftAlign?: boolean,
   showOther: boolean | undefined
