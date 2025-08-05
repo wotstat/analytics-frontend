@@ -4,6 +4,7 @@
 
 interface ImportMetaEnv {
   VITE_MODE_DEV_LOCAL?: string;
+  VITE_DEFAULT_URL_PREFIX?: string;
 }
 
 interface ImportMeta {
