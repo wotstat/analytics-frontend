@@ -87,6 +87,8 @@
   </template>
   <TableSection title="Другие контейнеры" v-bind="lootboxesStats" :localizer="lootboxLocalizer" :showOther />
 
+  <TableSection title="Билеты" v-bind="entitlementsStats" :localizer="entitlementsLocalizer" :by-number="1" :showOther
+    :left-align="true" :count-getter="t => Number(t.split(':')[1])" />
   <TableSection title="Мандарины" v-bind="mandarin25Stats" :by-number="1000" :showOther />
   <TableSection title="Техника" v-bind="vehiclesStats" :localizer="tankTagLocalizer" :showOther />
   <TableSection title="Золото" v-bind="goldStats" :by-number="1000" :showOther />
@@ -116,8 +118,7 @@ import { computed, ref } from 'vue';
 import TableSection from "./TableSection.vue";
 import OpenByTable from "./OpenByTable.vue";
 import RerollTable from './RerollTable.vue';
-import { countLocalize, crewBookName, getBestLocalization, getTankName, LocalizedName } from '@/utils/i18n';
-import SnowCardWrapper from '@/components/shared/SnowCardWrapper.vue';
+import { countLocalize, crewBookName, entitlementsName, getBestLocalization, getTankName, LocalizedName } from '@/utils/i18n';
 import LootboxList from './LootboxList/Index.vue';
 import { useRoute } from 'vue-router';
 import { useMeta } from '@/composition/useMeta';
@@ -425,6 +426,12 @@ const customizationsStats = load(() => getQuery(
   `Customizations`
 ))
 
+const entitlementsStats = load(() => getQuery(
+  `concat(tag, ':', entitlements.count) AS title, tag`,
+  `array join entitlements.tag as tag, entitlements.count where true`,
+  `lootbox_entitlements_mv`
+))
+
 const managementStats = load(() => getQuery(
   `concat(tag, ':', count) as title, tag`,
   `array join arrayConcat(array(slots, berths), equip.count) as count,
@@ -534,6 +541,15 @@ function managementLocalizer(tag: string) {
   return {
     value: localName,
     postfix: count != '1' ? `(x${count})` : undefined
+  }
+}
+
+function entitlementsLocalizer(tag: string) {
+  const [name, count] = tag.split(':')
+
+  return {
+    value: entitlementsName(name),
+    postfix: `(x${count})`
   }
 }
 

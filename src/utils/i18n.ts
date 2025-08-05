@@ -143,6 +143,11 @@ export function crewBookName(tag: string) {
   }[tag] ?? tag
 }
 
+export function entitlementsName(tag: string) {
+  return {
+    'birthday2025_golden_ticket': 'Золотые билеты',
+  }[tag] ?? tag
+}
 
 
 export type LocalizedName = string | [name: string, region: string][]

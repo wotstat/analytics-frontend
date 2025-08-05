@@ -33,14 +33,14 @@
                 {{ percentFormatter(line.other) }}
               </td>
               <td v-if="byNumber" class="text-effect blue">
-                {{ percentFormatter(Number(line.title) / byNumber * line.percent) }}
+                {{ percentFormatter(getCount(line.title) / byNumber * line.percent) }}
               </td>
             </tr>
 
 
             <tr>
               <th>Всего</th>
-              <th class="n-mono text-effect gold">{{ data.reduce((a, v) => a + v.count, 0) }}</th>
+              <th class="n-mono text-effect gold">{{data.reduce((a, v) => a + v.count, 0)}}</th>
 
 
               <th v-if="displayOther" class="n-mono text-effect" :class="getColor(otherSum, percentSum)">
@@ -50,7 +50,7 @@
 
               <th v-if="displayOther" class="n-mono text-effect green"> {{ percentFormatter(otherSum) }} </th>
               <th v-if="byNumber" class="n-mono text-effect blue">
-                {{ percentFormatter(data.reduce((a, v) => a + (Number(v.title) * v.percent / (byNumber ?? 1)), 0)) }}
+                {{percentFormatter(data.reduce((a, v) => a + (getCount(v.title) * v.percent / (byNumber ?? 1)), 0))}}
               </th>
             </tr>
           </tbody>
@@ -86,6 +86,7 @@ const props = defineProps<{
     other?: number
   }[],
   localizer?: (key: string, titleName?: LocalizedName) => string | { prefix?: string, postfix?: string, value: string },
+  countGetter?: (title: string) => number,
   byNumber?: number,
   leftAlign?: boolean,
   showOther: boolean | undefined
@@ -102,6 +103,10 @@ function percentFormatter(value: number) {
 
 function getColor(left: number, right: number) {
   return Math.abs(left - right) < 0.00001 ? 'yellow' : left > right ? 'red' : 'green';
+}
+
+function getCount(title: string) {
+  return props.countGetter ? props.countGetter(title) : Number(title);
 }
 
 

@@ -67,7 +67,7 @@ import NoImageLB from "./noImageLB.png";
 import { STATIC_URL } from '@/utils/externalUrl';
 
 const customOrderKeys = new Map<string, number>(objectEntries({
-  'mtl_1_24': 1000,
+  'mtl_1_35': 1000,
   'rp_2024_tanks_6': -902,
   'rp_2024_tanks_7': -903,
   'rp_2024_tanks_8': -904,
