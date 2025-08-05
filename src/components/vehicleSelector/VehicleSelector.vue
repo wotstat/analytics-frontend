@@ -65,7 +65,7 @@ import VehicleTable from './VehicleTable.vue'
 
 import Search from '@/assets/icons/search.svg'
 import X from '@/assets/icons/x.svg'
-import Reload from '@/assets/icons/reload.svg'
+import Reload from '@/assets/icons/reset.svg'
 import { numberToRoman } from '@/utils'
 import VehicleTypeComponent from '../vehicles/type/VehicleType.vue'
 import { Nation, nations, nationsIndexes, type VehicleType, vehicleTypes } from '@/utils/wot'
@@ -256,7 +256,8 @@ function reset() {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 3px;
+        padding: 4px;
+        color: rgba(255, 255, 255, 0.9);
 
         &:hover {
           background-color: rgba(255, 255, 255, 0.2);
