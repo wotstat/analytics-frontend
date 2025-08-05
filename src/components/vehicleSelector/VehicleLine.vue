@@ -6,6 +6,9 @@
     </div>
     <VehicleLevel :level="level" class="level" />
     <p class="name">
+
+      <!-- <img class="tank"
+        :src="`https://static.wotstat.info/mt/latest/vehicles/small/${tag.split(':')[1].toLowerCase()}.png`"> -->
       <VehicleImage :tag="tag" :size="'small'" class="tank" />
       <Highlight :text="highlightStrings" />
     </p>
@@ -20,7 +23,6 @@ import VehicleLevel from '../vehicles/VehicleLevel.vue'
 import VehicleImage from '../vehicles/VehicleImage.vue'
 import Highlight from '../highlightString/index.vue'
 import { HighlightedString } from '../highlightString/highlightUtils'
-import { onBeforeMount, onMounted } from 'vue'
 
 const props = defineProps<{
   level: number;
@@ -59,11 +61,14 @@ const props = defineProps<{
   border-top: 1px solid #d0d0d008;
   position: relative;
   cursor: pointer;
+  margin: 0 3px;
+  padding-left: 7px;
+  padding-right: 3px;
 
   &::before {
     content: '';
     position: absolute;
-    inset: 0 -3px 0 -7px;
+    inset: 0 0px 0 0px;
     border-radius: 6px;
     z-index: -1;
   }

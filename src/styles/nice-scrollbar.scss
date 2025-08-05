@@ -1,5 +1,4 @@
-.nice-scrollbar {
-
+@mixin nice-scrollbar {
   &::-webkit-scrollbar {
     height: 10px;
     width: 8px;
@@ -18,5 +17,15 @@
 
   &::-webkit-scrollbar-thumb:hover {
     background: #464646;
+  }
+}
+
+.nice-scrollbar {
+  @include nice-scrollbar;
+}
+
+.deep-nice-scrollbar {
+  * {
+    @include nice-scrollbar;
   }
 }

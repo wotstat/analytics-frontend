@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import FallbackImg from '../fallbackImg/FallbackImg.vue';
 import { STATIC_URL } from '@/utils/externalUrl';
 
@@ -13,14 +13,20 @@ const props = defineProps<{
   loading?: 'lazy' | 'eager'
 }>();
 
-const targetUrl = computed(() => {
+function getTargetTag() {
   const name = props.tag.split(':').at(-1)?.toLowerCase();
   switch (props.size ?? 'preview') {
     case 'small': return `${STATIC_URL}/mt/latest/vehicles/small/${name}.webp`;
     case 'preview': return `${STATIC_URL}/mt/latest/vehicles/preview/${name}.webp`;
     case 'shop': return `${STATIC_URL}/mt/latest/vehicles/shop/${name}.webp`;
   }
-})
+}
+
+const targetUrl = ref(getTargetTag());
+
+watch(() => [props.tag, props.size], () => {
+  targetUrl.value = getTargetTag();
+});
 
 const fallbackUrl = computed(() => {
   switch (props.size ?? 'preview') {

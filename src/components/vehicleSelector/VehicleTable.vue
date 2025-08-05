@@ -15,35 +15,43 @@
       </p>
     </div>
 
-    <div class="table-container nice-scrollbar" v-bind="containerProps">
-      <div class="wrapper" v-bind="wrapperProps">
-        <VehicleLine v-for="(vehicle, i) in list" :key="vehicle.index" :nation="vehicle.data.nation"
-          :type="vehicle.data.type" :level="vehicle.data.level" :tag="vehicle.data.tag"
-          :highlightStrings="vehicle.data.highlightStrings" @click="onClick(vehicle.data.tag)" />
-      </div>
+    <div class="table-container deep-nice-scrollbar" :class="{ 'fast-scroll': isFastScroll }">
+      <ReusableTable :data="target" ref="reusableTable" backgroundColor="#2a2a2a" :options="{ height: 35 }">
+        <template v-slot="{ data, index }">
+          <VehicleLine :nation="data.nation" :type="data.type" :level="data.level" :tag="data.tag"
+            :highlightStrings="data.highlightStrings" @click="onClick(data.tag)"
+            :class="{ selected: selected?.has(data.tag) }" />
+        </template>
+      </ReusableTable>
     </div>
   </div>
 </template>
 
 
 <script setup lang="ts">
-import { useThrottle, useVirtualList } from '@vueuse/core'
 import VehicleType from '../vehicles/type/VehicleType.vue'
-import Globe from "./globe.svg";
+import Globe from "./assets/globe.svg";
 import { HighlightedString } from '../highlightString/highlightUtils'
-import { computed, shallowRef, toRaw, toValue, triggerRef, watch } from 'vue'
+import { computed, onMounted, ref, triggerRef, watch } from 'vue'
 import VehicleLine from './VehicleLine.vue'
+import { STATIC_URL } from '@/utils/externalUrl';
+import ReusableTable from '../reusableTable/ReusableTable.vue';
+import { type ComponentInstance } from '@/composition/utils/ComponentInstance'
 
+type Line = {
+  tag: string;
+  level: number;
+  nation: string;
+  type: "MT" | "LT" | "HT" | "AT" | "SPG";
+  short: string;
+  highlightStrings: HighlightedString;
+}
+
+
+const reusableTable = ref<ComponentInstance<typeof ReusableTable<Line>> | null>(null)
 
 const props = defineProps<{
-  tankToDisplay: {
-    tag: string;
-    level: number;
-    nation: string;
-    type: "MT" | "LT" | "HT" | "AT" | "SPG";
-    short: string;
-    highlightStrings: HighlightedString;
-  }[]
+  tankToDisplay: Line[]
 }>()
 
 const nameVariant = defineModel<'full' | 'short'>('nameVariant')
@@ -51,34 +59,18 @@ const selected = defineModel<Set<string>>('selected')
 
 const target = computed(() => props.tankToDisplay)
 
-const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(target, {
-  itemHeight: 35,
-  overscan: 10,
+watch(() => target.value.length, () => reusableTable.value?.scrollTo(0))
+
+const isFastScroll = computed((old) => {
+  if (!reusableTable.value) return false;
+
+  const velocity = Math.abs(reusableTable.value.scrollVelocity)
+
+  if (old && velocity < 300) return false
+  if (!old && velocity >= 1000) return true
+
+  return old
 })
-
-// const delayedList = shallowRef(list.value)
-
-// function frame() {
-//   requestAnimationFrame(frame)
-//   // console.log(list.value);
-
-//   // const randomIndex = new Array(50).fill(0).map(() => Math.floor(Math.random() * target.value.length));
-//   // delayedList.value = randomIndex.map(index => {
-//   //   const item = toRaw(target.value[index])
-//   //   return {
-//   //     index,
-//   //     data: item
-//   //   }
-//   // })
-
-//   // delayedList.value = list.value.map(item => toRaw(item))
-//   // console.log(delayedList.value);
-
-// }
-// frame()
-
-
-watch(() => target.value.length, () => scrollTo(0))
 
 function onClick(tag: string) {
   if (selected.value?.has(tag)) selected.value?.delete(tag)
@@ -87,6 +79,25 @@ function onClick(tag: string) {
 
   triggerRef(selected)
 }
+
+
+const cacheMap = new Map<string, HTMLImageElement>()
+
+// onMounted(() => {
+//   const images = target.value
+//     .map(t => t.tag.split(':')[1].toLowerCase())
+//     .map(t => `${STATIC_URL}/mt/latest/vehicles/small/${t}.webp`)
+
+//   for (const image of images) {
+//     const img = new Image()
+//     img.src = image
+//     img.decode().then(() => {
+//       cacheMap.set(image, img)
+//     }).catch(() => {
+//       console.warn(`Failed to load image: ${image}`)
+//     })
+//   }
+// })
 
 </script>
 
@@ -170,15 +181,24 @@ function onClick(tag: string) {
 }
 
 .table-container {
-  overflow-y: auto;
-  overflow-x: visible;
   width: 340px;
   height: 300px;
   position: relative;
-  padding-right: 3.5px;
-  padding-bottom: 10px;
   margin-right: -11.5px;
   margin-left: -10px;
-  padding-left: 10px;
+  contain: paint layout style;
+
+  :deep(.scroll) {
+    padding-bottom: 10px;
+    box-sizing: border-box;
+  }
+}
+
+.table-container.fast-scroll {
+  .line:not(.selected) {
+    &::before {
+      opacity: 0;
+    }
+  }
 }
 </style>

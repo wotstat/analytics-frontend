@@ -1,5 +1,5 @@
 <template>
-  <img ref="imgRef" :alt="alt" @error="onError" :loading="loading" />
+  <img ref="imgRef" :src="initSrc" :alt="alt" @error="onError" :loading="loading" />
 </template>
 
 
@@ -15,10 +15,11 @@ const props = defineProps<{
 }>()
 
 const imgRef = ref<HTMLImageElement | null>(null)
+const initSrc = isUrlMayValidImage(props.src) ? props.src : props.fallback ?? props.src
 
 function setSrc(url: string) {
   const img = imgRef.value
-  if (img) img.src = url
+  if (img && img.src !== url) img.src = url
 }
 
 function updateSrc() {
