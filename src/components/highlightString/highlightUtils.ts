@@ -88,3 +88,22 @@ export function compareHighlightedStrings(a: HighlightedString, b: HighlightedSt
 
   return a.text.localeCompare(b.text);
 }
+
+export function getHighlightedTextParts(highlightedString: HighlightedString): { text: string, highlight: boolean }[] {
+  const parts: { text: string, highlight: boolean }[] = [];
+  let lastIndex = 0;
+
+  for (const [start, end] of highlightedString.highlight) {
+    if (start > lastIndex) {
+      parts.push({ text: highlightedString.text.slice(lastIndex, start), highlight: false });
+    }
+    parts.push({ text: highlightedString.text.slice(start, end + 1), highlight: true });
+    lastIndex = end + 1;
+  }
+
+  if (lastIndex < highlightedString.text.length) {
+    parts.push({ text: highlightedString.text.slice(lastIndex), highlight: false });
+  }
+
+  return parts;
+}

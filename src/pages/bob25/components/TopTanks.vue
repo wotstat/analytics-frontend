@@ -34,7 +34,7 @@
 
 
 <script setup lang="ts">
-import VehicleImage from '@/components/vehicles/VehicleImage.vue';
+import VehicleImage from '@/components/vehicles/vehicle/VehicleImage.vue';
 import { getTankName } from '@/utils/i18n';
 import { useMediaQuery } from '@vueuse/core';
 import { bloggerNamesArray } from './bloggerNames';

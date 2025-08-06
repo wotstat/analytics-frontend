@@ -2,14 +2,16 @@
   <div class="reusable-table" ref="reusableTable" :style="{ [`--background-color`]: props.backgroundColor }">
     <div class="background-scroll-fallback">
       <div class="fallback-content" ref="fallbackContent">
-        <slot v-for="(d, i) in targetDisplayed" v-bind="{ data: d, index: i + startIndex }">
+        <slot v-if="!options.cellConstructor" v-for="(d, i) in targetDisplayed"
+          v-bind="{ data: d, index: i + startIndex }">
         </slot>
       </div>
     </div>
     <div class="scroll" ref="scroll" @scroll="onScroll">
       <div class="content" ref="content" :style="{ height: (options.height * data.length) + 'px' }">
         <div class="wrapper" ref="wrapper">
-          <slot v-for="(d, i) in targetDisplayed" v-bind="{ data: d, index: i + startIndex }">
+          <slot v-if="!options.cellConstructor" v-for="(d, i) in targetDisplayed"
+            v-bind="{ data: d, index: i + startIndex }">
           </slot>
         </div>
       </div>
@@ -21,6 +23,7 @@
 <script setup lang="ts" generic="T">
 import { useElementSize } from '@vueuse/core';
 import { ref, shallowRef, watch } from 'vue';
+import { type ReusableTableCell } from './ReusableTableCell';
 
 
 const reusableTable = ref<HTMLElement | null>(null)
@@ -35,7 +38,8 @@ const props = defineProps<{
   backgroundColor?: string,
   options: {
     height: number,
-    overscan?: number
+    overscan?: number,
+    cellConstructor?: () => ReusableTableCell<T>
   }
 }>()
 
@@ -63,7 +67,7 @@ function clamp(value: number, min: number, max: number) {
 let handle: ReturnType<typeof requestAnimationFrame> | null = null;
 function scheduleUpdate() {
   if (handle) return
-  handle = requestAnimationFrame(updateScroll);
+  handle = requestAnimationFrame(() => updateScroll());
 }
 
 let lastScrollTop = 0;
@@ -89,17 +93,12 @@ function updateVelocity(scrollTop: number) {
   });
 }
 
-watch(scrollVelocity, (newValue) => {
-  if (newValue == 0) {
-    console.log(`Scroll velocity: ${newValue.toFixed(2)} px/s`);
-  }
-});
-
+let scrollTop = 0;
+let elementHeight = props.options.height;
 function updateScroll() {
   handle = null;
 
-  const scrollTop = scroll.value?.scrollTop || 0;
-  const elementHeight = props.options.height;
+  scrollTop = scroll.value?.scrollTop || 0;
 
   const scrollOffset = scrollTop > 0 ? (scrollTop % elementHeight) : scrollTop;
   if (fallbackContent.value)
@@ -108,18 +107,73 @@ function updateScroll() {
   if (wrapper.value)
     wrapper.value.style.transform = `translateY(${scrollTop - scrollOffset}px)`;
 
+  updateVelocity(scrollTop);
+  updateDisplayed();
+}
+
+let lastStartIndex = -1;
+let lastDisplayedCount = -1;
+function updateDisplayed(forceRefreshCells = false) {
   startIndex = clamp(Math.floor(scrollTop / elementHeight) - (props.options.overscan || 0), 0, props.data.length - 1);
   const displayedCount = Math.ceil(height.value / elementHeight) + 1 + (props.options.overscan || 0) * 2;
 
-  targetDisplayed.value = props.data.slice(startIndex, startIndex + displayedCount);
-  updateVelocity(scrollTop);
+  if (startIndex !== lastStartIndex || displayedCount !== lastDisplayedCount || forceRefreshCells) {
+    lastStartIndex = startIndex;
+    lastDisplayedCount = displayedCount;
+    targetDisplayed.value = props.data.slice(startIndex, startIndex + displayedCount);
+  }
 }
 
-watch(() => [props.data, height.value], updateScroll, { immediate: true });
+watch(() => [height.value], () => updateScroll(), { immediate: true });
+watch(() => props.data, () => updateDisplayed(true), { immediate: true });
 
 function onScroll(event: Event) {
   scheduleUpdate()
 }
+
+
+const mainCells: ReusableTableCell<T>[] = [];
+const fallbackCells: ReusableTableCell<T>[] = [];
+watch(targetDisplayed, (list, old) => {
+  if (!props.options.cellConstructor) return;
+
+  const length = list.length;
+
+  if (mainCells.length < length) {
+
+    if (!wrapper.value || !fallbackContent.value) return;
+
+    for (let i = mainCells.length; i < length; i++) {
+      const cell = props.options.cellConstructor();
+      wrapper.value.appendChild(cell.root);
+      mainCells.push(cell);
+
+      const fallbackCell = props.options.cellConstructor();
+      fallbackContent.value.appendChild(fallbackCell.root);
+      fallbackCells.push(fallbackCell);
+    }
+
+  } else if (mainCells.length > length) {
+    if (!wrapper.value || !fallbackContent.value) return;
+
+    for (let i = length; i < mainCells.length; i++) {
+      mainCells[i].dispose();
+      wrapper.value.removeChild(mainCells[i].root);
+
+      fallbackCells[i].dispose();
+      fallbackContent.value.removeChild(fallbackCells[i].root);
+    }
+
+    mainCells.splice(length, mainCells.length - length);
+    fallbackCells.splice(length, fallbackCells.length - length);
+  }
+
+  for (let i = 0; i < list.length && i < mainCells.length; i++) {
+    mainCells[i].configure(list[i]);
+    fallbackCells[i].configure(list[i]);
+  }
+
+})
 
 
 </script>

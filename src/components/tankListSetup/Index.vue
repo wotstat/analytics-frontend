@@ -55,7 +55,7 @@ import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
 import { getTankName } from '@/utils/i18n';
 import HorizontalScrollItems from '../shared/HorizontalScrollItems.vue';
 import { pausableWatch } from '@vueuse/core';
-import VehicleImage from '../vehicles/VehicleImage.vue';
+import VehicleImage from '../vehicles/vehicle/VehicleImage.vue';
 
 
 
