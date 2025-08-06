@@ -85,7 +85,7 @@ const nameVariant = useLocalStorage<'full' | 'short'>('preferred-vehicle-name-va
 defineProps<{
   targetElement?: HTMLElement | null,
 }>()
-const vehicles = defineModel<Set<string>>()
+const vehicles = defineModel<Set<string>>({ required: true })
 const displayPopup = defineModel<boolean>('displayPopup')
 
 useFocus(searchInout, { initialValue: true })
