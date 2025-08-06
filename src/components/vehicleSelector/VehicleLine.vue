@@ -20,7 +20,7 @@
 import Nation from '../vehicles/nation/Nation.vue'
 import VehicleType from '../vehicles/type/VehicleType.vue'
 import VehicleLevel from '../vehicles/VehicleLevel.vue'
-import VehicleImage from '../vehicles/VehicleImage.vue'
+import VehicleImage from '../vehicles/vehicle/VehicleImage.vue'
 import Highlight from '../highlightString/index.vue'
 import { HighlightedString } from '../highlightString/highlightUtils'
 

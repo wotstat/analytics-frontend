@@ -16,7 +16,8 @@
     </div>
 
     <div class="table-container deep-nice-scrollbar" :class="{ 'fast-scroll': isFastScroll }">
-      <ReusableTable :data="target" ref="reusableTable" backgroundColor="#2a2a2a" :options="{ height: 35 }">
+      <ReusableTable :data="target" ref="reusableTable" backgroundColor="#2a2a2a"
+        :options="{ height: 35, cellConstructor: createCell }">
         <template v-slot="{ data, index }">
           <VehicleLine :nation="data.nation" :type="data.type" :level="data.level" :tag="data.tag"
             :highlightStrings="data.highlightStrings" @click="onClick(data.tag)"
@@ -38,24 +39,18 @@ import { STATIC_URL } from '@/utils/externalUrl';
 import ReusableTable from '../reusableTable/ReusableTable.vue';
 import { type ComponentInstance } from '@/composition/utils/ComponentInstance'
 
-type Line = {
-  tag: string;
-  level: number;
-  nation: string;
-  type: "MT" | "LT" | "HT" | "AT" | "SPG";
-  short: string;
-  highlightStrings: HighlightedString;
-}
+import { type VehicleLineData, VehicleLine as VehicleLineCell } from "./VehicleLine.ts";
+import { vehicleUrl } from '../vehicles/vehicle/utils.ts';
 
 
-const reusableTable = ref<ComponentInstance<typeof ReusableTable<Line>> | null>(null)
+const reusableTable = ref<ComponentInstance<typeof ReusableTable<VehicleLineData>> | null>(null)
 
 const props = defineProps<{
-  tankToDisplay: Line[]
+  tankToDisplay: VehicleLineData[]
 }>()
 
 const nameVariant = defineModel<'full' | 'short'>('nameVariant')
-const selected = defineModel<Set<string>>('selected')
+const selected = defineModel<Set<string>>('selected', { required: true })
 
 const target = computed(() => props.tankToDisplay)
 
@@ -80,24 +75,9 @@ function onClick(tag: string) {
   triggerRef(selected)
 }
 
-
-const cacheMap = new Map<string, HTMLImageElement>()
-
-// onMounted(() => {
-//   const images = target.value
-//     .map(t => t.tag.split(':')[1].toLowerCase())
-//     .map(t => `${STATIC_URL}/mt/latest/vehicles/small/${t}.webp`)
-
-//   for (const image of images) {
-//     const img = new Image()
-//     img.src = image
-//     img.decode().then(() => {
-//       cacheMap.set(image, img)
-//     }).catch(() => {
-//       console.warn(`Failed to load image: ${image}`)
-//     })
-//   }
-// })
+function createCell() {
+  return new VehicleLineCell(onClick, selected)
+}
 
 </script>
 
@@ -198,6 +178,116 @@ const cacheMap = new Map<string, HTMLImageElement>()
   .line:not(.selected) {
     &::before {
       opacity: 0;
+    }
+  }
+}
+
+:deep(.table-container) {
+  .line {
+    .flag {
+      width: 30px;
+      min-width: 30px;
+      margin-right: 7px;
+    }
+
+    .type {
+      width: 40px;
+      min-width: 40px;
+    }
+
+    .level {
+      width: 30px;
+      min-width: 30px;
+    }
+  }
+
+  .line {
+    display: flex;
+    white-space: nowrap;
+    height: 34px;
+    align-items: center;
+    border-top: 1px solid #d0d0d008;
+    position: relative;
+    cursor: pointer;
+    margin: 0 3px;
+    padding-left: 7px;
+    padding-right: 3px;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0 0px 0 0px;
+      border-radius: 6px;
+      z-index: -1;
+    }
+
+    &:hover {
+      &::before {
+        background-color: rgba(255, 255, 255, 0.1)
+      }
+    }
+
+
+    &.selected {
+      &::before {
+        background-color: var(--blue-color);
+        background: linear-gradient(90deg, #0182fada, #0182fa44 20%, #0182fa2c 50%, transparent);
+      }
+    }
+
+
+    .type {
+      display: flex;
+      justify-content: center;
+
+      color: white;
+      fill: currentColor;
+
+      svg {
+        width: 14px;
+      }
+    }
+
+    .flag {
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .level {
+      text-align: center;
+    }
+
+    .name {
+      display: flex;
+      align-items: center;
+      justify-content: left;
+      overflow: hidden;
+      flex: 1;
+
+      .tank {
+        width: 120px;
+        min-width: 120px;
+        height: 31px;
+        user-select: none;
+        pointer-events: none;
+
+        background-image: url('./assets/atlas_0.webp');
+        background-repeat: no-repeat;
+      }
+
+      p {
+        margin-left: -60px;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        font-weight: bold;
+        font-size: 0.8em;
+      }
+    }
+  }
+
+  .name {
+    .highlight {
+      color: var(--blue-thin-color);
     }
   }
 }
