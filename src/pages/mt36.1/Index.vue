@@ -6,7 +6,7 @@
     </div>
     <h1>Сравнительная аналитика<br />обновления 1.36.1</h1>
     <h2 class="description">
-      В обновление Мира Танков 1.26.1 были внесены существенные изменения в серверную часть игры. <br> На этой странице
+      В обновление Мира Танков 1.36.1 были внесены существенные изменения в серверную часть игры. <br> На этой странице
       можно оценить, как эти обновления повлияли на игру.
     </h2>
 
@@ -62,6 +62,12 @@
 
       <div class="card flex">
         <div class="chart-container">
+          <div class="chart-options">
+            <div class="line">
+              <p>Шаг урона:</p>
+              <DropDown :variants="stepVariants" v-model="damageStep" />
+            </div>
+          </div>
           <ShadowLine :data="damageDistributionChartData" :options="damageDistributionOptions" />
         </div>
       </div>
@@ -107,13 +113,14 @@
 import { setFeatureVisit } from '@/components/newFeatureBadge/newFeatureBadge';
 import TeamLevelTable from '@/components/widgets/TeamLevelTable.vue';
 import { LONG_CACHE_SETTINGS, queryComputed } from '@/db';
-import { computed, ref } from 'vue';
+import { computed, ref, watch, watchEffect } from 'vue';
 import LevelSwitcher from './LevelSwitcher.vue';
 import { useDebounce } from '@vueuse/core';
 import { ShadowBar } from '@/components/widgets/charts/ShadowBarController';
 import { ShadowLine } from '@/components/widgets/charts/ShadowLineController';
 import { ChartProps } from 'vue-chartjs';
 
+import DropDown from "@/components/dropdown/DropDown.vue";
 
 
 setFeatureVisit('mt-36-1');
@@ -336,7 +343,7 @@ const damageDistributionData = queryComputed<{
     from "MT-36-1".ShotDamageDistribution
     where region = 'RU' and battleMode = 'REGULAR' and shotDamage > 0 and not isAmmoBayDestroyed and not isKill
       and shellDamage = TARGET and shellTag in TARGET_SHELL and gameVersion in (${gameVersionFilter.value})
-      ${!params.limitDamage ? '' : `and shotDamage >= round(TARGET * 0.75) and shotDamage <= round(TARGET * 1.2501)`}
+      ${!params.limitDamage ? '' : `and shotDamage >= round(TARGET * (1 - damageRandomization)) and shotDamage <= round(TARGET * (1.00001 + damageRandomization))`}
       ${params.targetTank ? `and tankTag in (${params.targetTank.map(t => `'${t}'`).join(', ')})` : ''}
       ${params.cantKill ? 'and not canKill' : ''}
     group by shotDamage, gameVersion
@@ -346,30 +353,96 @@ const damageDistributionData = queryComputed<{
 
 }, { settings: LONG_CACHE_SETTINGS })
 
+const stepVariants = computed(() => {
+  let steps = [1, 3, 5, 7, 11, 13, 15, 17, 21, 47];
+
+  const dmg = damageDistributionDataSettings.value.targetDamage
+  steps = steps.filter(step => step <= dmg / 3);
+
+  if (dmg < 100) steps = steps.filter(step => step <= dmg / 8);
+  if (dmg < 400) steps = steps.filter(step => step <= dmg / 10);
+  else steps = steps.filter(step => step <= dmg / 20);
+
+  return steps.map(step => ({ label: `${step} ед.`, value: step }));
+});
+const damageStep = ref(11);
+
+watch(stepVariants, (newValue) => {
+  if (!newValue.some(v => v.value == damageStep.value)) {
+    damageStep.value = newValue[0].value;
+  }
+}, { immediate: true });
+
+const steppedLabels = computed(() => {
+  const data = damageDistributionData.value.data;
+
+  const labels = new Set(data.map(item => item.shotDamage));
+
+  const min = Math.min(...labels);
+  const max = Math.max(...labels) + 1;
+
+  const median = damageDistributionDataSettings.value.targetDamage
+  const halfStep = Math.floor(damageStep.value / 2);
+  let leftStart = median - halfStep;
+  while (leftStart - damageStep.value > min) leftStart -= damageStep.value;
+
+  const steppedLabels: number[] = [];
+  steppedLabels.push(min);
+  while (leftStart < max) {
+    steppedLabels.push(leftStart);
+    leftStart += damageStep.value
+  }
+
+
+  const textLabels: string[] = [];
+  textLabels.push(steppedLabels[0].toString())
+  for (let i = 1; i < steppedLabels.length - 1; i++) textLabels.push(`${steppedLabels[i] + halfStep}`);
+  textLabels.push(steppedLabels[steppedLabels.length - 1].toString())
+
+  return { steps: steppedLabels, textLabels };
+});
+
 const damageDistributionChartData = computed<ChartProps<'line'>['data']>(() => {
 
   const data = damageDistributionData.value.data;
 
   const labels = new Set(data.map(item => item.shotDamage));
+  const max = Math.max(...labels);
 
-  const labelsText = [...labels].sort((a, b) => a - b).map(String);
+  const { steps, textLabels } = steppedLabels.value;
+
+  function process(data: Map<string, number | null>) {
+    const result = new Map<string, number | null>();
+
+    for (let i = 0; i < steps.length; i++) {
+      const currentLabel = steps[i];
+      const nextLabel = i < steps.length - 1 ? steps[i + 1] : max + 1;
+
+      let currentSum = 0;
+      for (let j = currentLabel; j < nextLabel; j++) currentSum += data.get(String(j)) ?? 0;
+      result.set(String(currentLabel), currentSum == 0 ? null : currentSum);
+    }
+
+
+    return result;
+  }
 
   const leftData = new Map<string, number>(data.filter(item => leftVersions.has(item.gameVersion)).map(item => [String(item.shotDamage), 100 * item.percent]));
   const rightData = new Map<string, number>(data.filter(item => rightVersions.has(item.gameVersion)).map(item => [String(item.shotDamage), 100 * item.percent]));
 
   return {
-    labels: labelsText,
+    labels: textLabels,
     datasets: [
       {
         label: leftVersionString,
-        data: labelsText.map(label => leftData.get(label) ?? null),
+        data: [...process(leftData).values()],
         backgroundColor: '#4a90e2',
         borderColor: '#4a90e200',
         fill: true,
       },
       {
         label: rightVersionString,
-        data: labelsText.map(label => rightData.get(label) ?? null),
+        data: [...process(rightData).values()],
         backgroundColor: '#50e3c2',
         borderColor: '#50e3c200',
         fill: true,
@@ -388,7 +461,7 @@ const damageDistributionOptions = computed<ChartProps<'line'>['options']>(() => 
       min: 0,
     },
     x: {
-      grid: { display: false },
+      grid: { display: false }
     }
   },
   interaction: {
@@ -399,7 +472,9 @@ const damageDistributionOptions = computed<ChartProps<'line'>['options']>(() => 
     tooltip: {
       callbacks: {
         title: function (context) {
-          return `Нанесено ${context[0].label} урона`
+          if (damageStep.value == 1) return `Нанесено ${context[0].label} урона`
+          const half = Math.floor(damageStep.value / 2);
+          return `Нанесено ${context[0].label}+-${half} урона`
         },
         label: function (context) {
           return `${context.dataset.label}: ${(Math.round(context.raw as number * 100) / 100).toFixed(2)}%`
@@ -407,7 +482,7 @@ const damageDistributionOptions = computed<ChartProps<'line'>['options']>(() => 
       }
     },
     // @ts-ignore
-    centerLine: [...new Set(damageDistributionData.value.data.map(item => item.shotDamage)).values()].indexOf(damageDistributionDataSettings.value.targetDamage)
+    centerLine: steppedLabels.value.textLabels.indexOf(String(damageDistributionDataSettings.value.targetDamage))
   }
 }))
 
@@ -528,6 +603,23 @@ const damageDistributionOptions = computed<ChartProps<'line'>['options']>(() => 
 
     .chart-container {
       flex: 1;
+      margin-top: -3px;
+
+      .chart-options {
+        position: absolute;
+        top: 3px;
+        left: 0;
+
+        .line {
+          display: flex;
+          gap: 0.5em;
+          margin-bottom: 0.5em;
+        }
+
+        .dropdown {
+          min-width: 70px;
+        }
+      }
     }
 
     .controls {
