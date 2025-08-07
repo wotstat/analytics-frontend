@@ -41,6 +41,7 @@ const routes = [
     ]
   },
   { path: '/bb25', component: () => import('./pages/bob25/Index.vue') },
+  { path: '/mt-36-1', component: () => import('./pages/mt36.1/Index.vue') },
   { path: '/services/fixed-match-detector', component: () => import('./pages/services/fixedMatchDetect/Index.vue') },
   { path: '/install', component: Install },
 

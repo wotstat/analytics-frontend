@@ -3,7 +3,8 @@ import { computed, Ref, watch } from "vue";
 import { Directive } from 'vue';
 
 const features = [
-  'mod-installer'
+  'mod-installer',
+  'mt-36-1'
 ] as const;
 
 type Features = typeof features[number];
@@ -44,4 +45,9 @@ export const vNewFeatureBadge: Directive<HTMLElement, Features> = {
       el.addEventListener('click', () => setFeatureVisit(binding.value));
     }
   },
+  updated(el, binding) {
+    if (featureState(binding.value).value) el.classList.remove('new-feature-badge');
+    else el.classList.add('new-feature-badge');
+
+  }
 };
