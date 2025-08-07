@@ -454,7 +454,7 @@ const damageDistributionOptions = computed<ChartProps<'line'>['options']>(() => 
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
+    height: 200%;
     z-index: -1;
     overflow: hidden;
 
@@ -464,7 +464,7 @@ const damageDistributionOptions = computed<ChartProps<'line'>['options']>(() => 
       right: -100vw;
       width: 200vw;
       height: 200vw;
-      opacity: 0.1;
+      opacity: 0.05;
       background: radial-gradient(closest-side,
           rgba(0, 115, 255, 1) 0%,
           rgba(0, 115, 255, 0) 100%);
@@ -476,7 +476,7 @@ const damageDistributionOptions = computed<ChartProps<'line'>['options']>(() => 
       left: -130vw;
       width: 200vw;
       height: 200vw;
-      opacity: 0.05;
+      opacity: 0.02;
       background: radial-gradient(closest-side,
           rgb(0, 255, 132) 0%,
           rgba(0, 255, 132, 0) 100%);
