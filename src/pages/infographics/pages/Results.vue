@@ -8,7 +8,7 @@
     </div>
     <div class="card">
       <p class="card-main-info description top">Распределение по уровню боя</p>
-      <TeamLevelTable :params="params" />
+      <TeamLevelTable :data="teamLevelTableData.data" :status="teamLevelTableData.status" />
     </div>
 
     <div class="flex hor-ver-small">
@@ -167,7 +167,7 @@ import { computed, ref } from 'vue';
 import { toRelative, toPercent } from "@/utils";
 import PlayerResultTable from "@/components/widgets/PlayerResultTable.vue";
 import { usePercentProcessor, useFixedProcessor, useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
-import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams';
+import { getQueryStatParamsCache, useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams';
 import TeamLevelTable from '@/components/widgets/TeamLevelTable.vue';
 import { countLocalize } from '@/utils/i18n';
 import { TooltipItem } from 'chart.js';
@@ -307,6 +307,26 @@ function teamScore(win: boolean) {
   const right = win ? res.enemyFragsWin : res.enemyFragsLose
   return [left, right]
 }
+
+const teamLevelTableData = queryAsync<{
+  battleType: 1 | 2 | 3,
+  position: 0 | -1 | -2,
+  percent: number
+}>(`
+select length(visibleLevels)       as battleType,
+       position,
+       sum(count)                 as count,
+       count / sum(count) over () as percent
+from (select visibleLevels,
+             tankLevel,
+             tankLevel - arrayMax(visibleLevels) as position,
+             count()                             as count
+      from Event_OnBattleResult
+      ${params.value ? whereClause(params.value) : ''}
+      group by visibleLevels, tankLevel)
+group by battleType, position
+order by battleType, position;
+`, { enabled, settings: getQueryStatParamsCache(params.value) })
 </script>
 
 

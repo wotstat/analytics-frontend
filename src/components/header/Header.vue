@@ -31,7 +31,8 @@
         <router-link to="/session" class="infographics">Инфографика</router-link>
         <router-link to="/widgets" class="widgets">Виджеты</router-link>
         <router-link to="/install" class="install" v-new-feature-badge="'mod-installer'">Моды</router-link>
-        <router-link to="/bb25" class="replays bob25">ББ2025</router-link>
+        <!-- <router-link to="/bb25" class="replays bob25">ББ2025</router-link> -->
+        <router-link to="/mt-36-1" class="replays bob25" v-new-feature-badge="'mt-36-1'">Разворот 1.36.1</router-link>
         <!-- <router-link to="/replays" class="replays">Реплеи</router-link> -->
 
         <div class="drop-down points-menu">
@@ -42,7 +43,8 @@
             <router-link to="/session" class="infographics">Инфографика</router-link>
             <router-link to="/widgets" class="widgets">Виджеты</router-link>
             <router-link to="/install" class="install">Моды</router-link>
-            <router-link to="/bb25" class="replays">ББ2025</router-link>
+            <!-- <router-link to="/bb25" class="replays">ББ2025</router-link> -->
+            <router-link to="/mt-36-1" class="replays">Разворот 1.36.1</router-link>
             <!-- <router-link to="/replays" class="replays">Реплеи</router-link> -->
             <a :href="SQLUrl" target="_blank" rel="noopener noreferrer" class="sql">Доступ к БД </a>
             <hr class="any-page-divider">

@@ -1,5 +1,5 @@
 <template>
-  <ServerStatusWrapper :status="result.status" v-slot="{ showError, status }">
+  <ServerStatusWrapper :status="status" v-slot="{ showError, status }">
     <div class="container" ref="container" v-if="status != 'error'">
 
       <table class="hover-highlight">
@@ -46,45 +46,28 @@
 
 <script setup lang="ts">
 import { usePercentProcessor } from '@/composition/usePercentProcessor';
-import { StatParams, getQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams';
-import { queryAsync } from '@/db';
 import { useElementVisibility } from '@vueuse/core';
-import { computed, ref, watchEffect } from 'vue';
+import { computed, ref } from 'vue';
 import ServerStatusWrapper from '../ServerStatusWrapper.vue';
+import { Status } from '@/db';
 
 
-const { params } = defineProps<{
-  params: StatParams
+const { data, status } = defineProps<{
+
+  status: Status;
+  data: {
+    battleType: 1 | 2 | 3;
+    position: 0 | -1 | -2;
+    percent: number;
+  }[];
+
 }>()
 
 const container = ref<HTMLElement | null>(null);
-const enabled = useElementVisibility(container);
 
-
-const result = queryAsync<{
-  battleType: 1 | 2 | 3,
-  position: 0 | -1 | -2,
-  percent: number
-}>(`
-select length(visibleLevels)       as battleType,
-       position,
-       sum(count)                 as count,
-       count / sum(count) over () as percent
-from (select visibleLevels,
-             tankLevel,
-             tankLevel - arrayMax(visibleLevels) as position,
-             count()                             as count
-      from Event_OnBattleResult
-      ${params ? whereClause(params) : ''}
-      group by visibleLevels, tankLevel)
-group by battleType, position
-order by battleType, position;
-`, { enabled, settings: getQueryStatParamsCache(params) })
 
 const processed = computed(() => {
-  if (!result.value) return null
-
-  const data = result.value.data
+  if (!data) return null
 
   const singleLevel = data.find(r => r.battleType == 1)
   const doubleLevelTop = data.find(r => r.battleType == 2 && r.position == 0)
