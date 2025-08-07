@@ -43,6 +43,8 @@
             фугас</button>
           <button @click="selectedPreset = 'grille'" :class="{ 'active': selectedPreset == 'grille' }">Grille
             15</button>
+          <!-- <button @click="selectedPreset = 'FSDS420'" :class="{ 'active': selectedPreset == 'FSDS420' }">БОПС
+            420</button> -->
         </div>
 
         <div class="line" v-if="selectedPreset == 'target'">
@@ -50,7 +52,7 @@
             :class="{ 'active': selectedTarget == target }">{{ target }}</button>
         </div>
 
-        <div class="line" v-if="selectedPreset == 'kv2' || selectedPreset == 'fv'">
+        <div class="line" v-if="selectedPreset == 'kv2' || selectedPreset == 'fv' || selectedPreset == 'FSDS420'">
           <label>
             <input type="checkbox" v-model="selectedCantKill" />
             Учитывать урон по танкам, которые невозможно было добить выстрелом <i>(ХП цели > 1.25 урона)</i>
@@ -268,7 +270,7 @@ const possibleTargets = [
 ];
 const selectedTarget = ref<number>(390);
 const selectedCantKill = ref<boolean>(true);
-const selectedPreset = ref<'target' | 'kv2' | 'fv' | 'grille'>('target');
+const selectedPreset = ref<'target' | 'kv2' | 'fv' | 'grille' | 'FSDS420'>('target');
 const damageDistributionDataSettings = computed(() => {
 
   if (selectedPreset.value == 'target') return {
@@ -300,6 +302,13 @@ const damageDistributionDataSettings = computed(() => {
     targetShells: ['ARMOR_PIERCING_CR', 'ARMOR_PIERCING', 'HOLLOW_CHARGE'],
     targetTank: ['germany:G121_Grille_15_L63'],
     cantKill: true,
+  }
+
+  if (selectedPreset.value == 'FSDS420') return {
+    targetDamage: 420,
+    limitDamage: false,
+    targetShells: ['ARMOR_PIERCING_FSDS'],
+    cantKill: selectedCantKill.value,
   }
 
   return {
