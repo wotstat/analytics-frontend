@@ -1,13 +1,14 @@
 <template>
   <div class="dropdown" :class="{ 'open': isOpen }" ref="dropDown">
-    <div class="current" @click="isOpen = !isOpen">
+    <div class="current" @pointerdown="pointerDown">
       <slot name="current" v-if="slots.current" :currentValue></slot>
       <p v-else>{{ valueToLabel(currentValue) }}</p>
       <ArrowDown />
     </div>
 
     <div class="lines">
-      <div class="line" v-for="variant in variants" @click="select(variant.value)">
+      <div class="line" v-for="variant in variants" @click="select(variant.value)"
+        @pointerup="pointerUp(variant.value)">
         <slot name="line" v-if="slots.line" :variant="variant"></slot>
         <p>{{ valueToLabel(variant.value) }}</p>
       </div>
@@ -16,31 +17,49 @@
 </template>
 
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T">
 import ArrowDown from '@/assets/icons/arrow-down.svg'
-import { onClickOutside } from '@vueuse/core';
+import { onClickOutside, useEventListener } from '@vueuse/core';
 import { readonly, ref, useSlots } from 'vue';
 
 const props = defineProps<{
-  variants: readonly { value: string, label?: string }[]
-  valueToLabel?: (value: string | undefined) => string
+  variants: readonly { value: T, label?: string }[]
+  valueToLabel?: (value: T | undefined) => string
 }>()
 
 const isOpen = ref(false)
 const dropDown = ref<HTMLElement | null>(null)
 
 const slots = useSlots()
-const currentValue = defineModel<string>()
+const currentValue = defineModel<T>()
 
 onClickOutside(dropDown, () => isOpen.value = false)
 
-function valueToLabel(value: string | undefined) {
+function valueToLabel(value: T | undefined) {
   if (props.valueToLabel) return props.valueToLabel(value)
   const variant = props.variants.find(v => v.value === value)
   return variant?.label || value
 }
 
-function select(value: string) {
+let allowPointerUp = false
+function pointerDown() {
+  if (isOpen.value) {
+    isOpen.value = false
+    return
+  }
+
+  allowPointerUp = true
+  isOpen.value = true
+  useEventListener('pointerup', () => allowPointerUp = false, { once: true })
+}
+
+function pointerUp(value: T) {
+  if (!allowPointerUp) return
+  currentValue.value = value
+  isOpen.value = false
+}
+
+function select(value: T) {
   currentValue.value = value
   isOpen.value = false
 }
@@ -75,6 +94,12 @@ function select(value: string) {
 
     @supports (height: calc-size(auto, size)) {
       height: calc-size(auto, size);
+    }
+  }
+
+  &:not(.open) {
+    .lines {
+      pointer-events: none;
     }
   }
 
