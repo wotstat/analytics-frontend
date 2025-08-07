@@ -365,7 +365,7 @@ const stepVariants = computed(() => {
 
   return steps.map(step => ({ label: `${step} ед.`, value: step }));
 });
-const damageStep = ref(11);
+const damageStep = ref(1);
 
 watch(stepVariants, (newValue) => {
   if (!newValue.some(v => v.value == damageStep.value)) {
