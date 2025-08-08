@@ -22,14 +22,87 @@
       </ul>
     </section>
 
-    <section>
+    <section class="ballistic-distribution">
       <h3>Распределение снарядов</h3>
+      <div class="line">
+        <label>
+          <input type="checkbox" v-model="ballisticDistributionIdeal" />
+          Учитывать выстрелы только в идеальных условиях (полное сведение, неподвижный танк, стрельба на 100+ метров,
+          пинг менее 100 мс)
+        </label>
+      </div>
 
-      <div class="info">
-        В РАЗРАБОТКЕ. Скоро будет добавлено.
+      <div class="line">
+        <p>
+          Всего выстрелов:
+          <b>
+            {{spaceProcessor(ballisticDistributionData.data.reduce((acc, item) => acc + item.c, 0).toString())}}
+          </b>
+        </p>
+        <p>На картинках прицела по <b>20 000</b> реальных выстрелов. Количество выстрелов одинаковое.</p>
+        <p>При использовании <b>не идеальных условий</b> возникают погрешности связанные с
+          рассинхронизацией клиента и сервера. Резкие перепады графика сглаживаются <i>нормальным</i> распределением
+          погрешности</p>
+      </div>
+
+      <div class="line charts">
+        <div class="left">
+          <div class="card flex">
+            <div class="chart-container" ref="ballisticDistributionContainer">
+              <div class="chart-options">
+                <div class="line">
+                  <DropDown
+                    :variants="[{ value: 'cdf', label: 'CDF - распределение' }, { value: 'pdf', label: 'PDF - плотность вероятности' }]"
+                    v-model="distributionVariant" />
+                </div>
+              </div>
+              <ShadowLine :data="ballisticDistributionChartData" :options="ballisticDistributionOptions" />
+            </div>
+          </div>
+        </div>
+
+        <div class="right">
+          <div class="card">
+            <ShotsCircle :mask-radius="ballisticCircleMask" :limit-shot="20000" :borderColor="'#4a90e2'"
+              :load-next-batch="loadNextBatchLeft" />
+            <p class="card-main-info description bottom">{{ leftVersionString }}</p>
+          </div>
+          <div class="card">
+            <ShotsCircle :mask-radius="ballisticCircleMask" :limit-shot="20000" :borderColor="'#50e3c2'"
+              :load-next-batch="loadNextBatchRight" />
+            <p class="card-main-info description bottom">{{ rightVersionString }}</p>
+          </div>
+        </div>
       </div>
     </section>
 
+    <section>
+      <h3>Уровни боёв</h3>
+      <LevelSwitcher v-model="selectedLevels" />
+      <div class="cards">
+        <div class="card">
+          <p class="card-main-info description top">{{ leftVersionString }}</p>
+          <TeamLevelTable :status="teamLevelTableData.status" :data="leftTeamLevelTableData" />
+        </div>
+        <div class="card">
+          <p class="card-main-info description top">{{ rightVersionString }}</p>
+          <TeamLevelTable :status="teamLevelTableData.status" :data="rightTeamLevelTableData" />
+        </div>
+      </div>
+    </section>
+
+    <section class="type-distribution">
+      <h3>Распределение типов танков по боям</h3>
+      <LevelSwitcher v-model="selectedLevels" />
+      <div class="cards">
+        <div class="card flex" v-for="chart in typeDistributionData">
+          <div class="chart-container flex-1">
+            <ShadowBar :data="chart.data" :options="typeDistributionOptions" />
+          </div>
+          <p class="card-main-info description bottom">{{ chart.chart.label }}</p>
+        </div>
+      </div>
+    </section>
 
     <section class="damage-distribution">
       <h3>Распределение урона</h3>
@@ -73,33 +146,6 @@
       </div>
     </section>
 
-    <section>
-      <h3>Уровни боёв</h3>
-      <LevelSwitcher v-model="selectedLevels" />
-      <div class="cards">
-        <div class="card">
-          <p class="card-main-info description top">{{ leftVersionString }}</p>
-          <TeamLevelTable :status="teamLevelTableData.status" :data="leftTeamLevelTableData" />
-        </div>
-        <div class="card">
-          <p class="card-main-info description top">{{ rightVersionString }}</p>
-          <TeamLevelTable :status="teamLevelTableData.status" :data="rightTeamLevelTableData" />
-        </div>
-      </div>
-    </section>
-
-    <section class="type-distribution">
-      <h3>Распределение типов танков по боям</h3>
-      <LevelSwitcher v-model="selectedLevels" />
-      <div class="cards">
-        <div class="card flex" v-for="chart in typeDistributionData">
-          <div class="chart-container flex-1">
-            <ShadowBar :data="chart.data" :options="typeDistributionOptions" />
-          </div>
-          <p class="card-main-info description bottom">{{ chart.chart.label }}</p>
-        </div>
-      </div>
-    </section>
 
     <footer>
 
@@ -112,15 +158,17 @@
 <script setup lang="ts">
 import { setFeatureVisit } from '@/components/newFeatureBadge/newFeatureBadge';
 import TeamLevelTable from '@/components/widgets/TeamLevelTable.vue';
-import { LONG_CACHE_SETTINGS, queryComputed } from '@/db';
+import { CACHE_SETTINGS, LONG_CACHE_SETTINGS, query, queryComputed } from '@/db';
 import { computed, ref, watch, watchEffect } from 'vue';
 import LevelSwitcher from './LevelSwitcher.vue';
-import { useDebounce } from '@vueuse/core';
+import { useDebounce, useElementHover } from '@vueuse/core';
 import { ShadowBar } from '@/components/widgets/charts/ShadowBarController';
 import { ShadowLine } from '@/components/widgets/charts/ShadowLineController';
 import { ChartProps } from 'vue-chartjs';
 
 import DropDown from "@/components/dropdown/DropDown.vue";
+import ShotsCircle from '@/components/widgets/ShotsCircle.vue';
+import { spaceProcessor } from '@/composition/processors/useSpaceProcessor';
 
 
 setFeatureVisit('mt-36-1');
@@ -486,6 +534,179 @@ const damageDistributionOptions = computed<ChartProps<'line'>['options']>(() => 
   }
 }))
 
+
+
+const ballisticDistributionIdeal = ref<boolean>(true);
+const ballisticDistributionData = queryComputed<{
+  gameVersion: string;
+  r: number;
+  c: number;
+  p: number;
+}>(() => `
+    select gameVersion,
+          round(toDecimal32(ballisticResultClient_r, 3) / 2, 3) * 2 as r,
+          toUInt32(countMerge(count)) as c,
+          c / sum(countMerge(count)) over (partition by gameVersion) as p
+    from "MT-36-1".ShotClientBallisticDistribution
+    where region = 'RU' and tankType != 'SPG' and battleMode = 'REGULAR' and gameVersion in ('ru_1.36.0', 'ru_1.36.1') 
+    ${ballisticDistributionIdeal.value ? 'and isIdealCondition = 1' : ''}  
+    group by r, gameVersion
+    order by gameVersion, r;
+`, { settings: CACHE_SETTINGS })
+
+
+const distributionVariant = ref<'cdf' | 'pdf'>('pdf');
+const ballisticDistributionChartData = computed<ChartProps<'line'>['data']>(() => {
+
+  const labelsSet = new Set(ballisticDistributionData.value.data.map(item => item.r));
+  const labels = [...labelsSet].filter(label => label >= 0 && label <= 1);
+
+  function process(data: Map<string, number | null>) {
+    if (distributionVariant.value == 'pdf') return data;
+
+    const result = new Map<string, number | null>();
+    const entries = [...data.entries()].sort((a, b) => Number(a[0]) - Number(b[0]));
+    let sum = 0;
+    for (let i = 0; i < entries.length; i++) {
+      const [key, value] = entries[i];
+      sum += value ?? 0;
+      result.set(key, sum);
+    }
+
+    return result;
+
+  }
+
+  const leftData = new Map<string, number>(ballisticDistributionData.value.data.filter(item => leftVersions.has(item.gameVersion)).map(item => [String(item.r), 100 * item.p]));
+  const rightData = new Map<string, number>(ballisticDistributionData.value.data.filter(item => rightVersions.has(item.gameVersion)).map(item => [String(item.r), 100 * item.p]));
+
+  const leftProcessed = process(leftData);
+  const rightProcessed = process(rightData);
+
+  return {
+    labels: labels.map(label => String(label)),
+    datasets: [
+      {
+        label: leftVersionString,
+        data: labels.map(label => leftProcessed.get(String(label)) ?? null),
+        backgroundColor: '#4a90e2',
+        borderColor: '#4a90e200',
+        fill: true,
+      },
+      {
+        label: rightVersionString,
+        data: labels.map(label => rightProcessed.get(String(label)) ?? null),
+        backgroundColor: '#50e3c2',
+        borderColor: '#50e3c200',
+        fill: true,
+      }
+    ]
+  }
+})
+
+
+const ballisticDistributionContainer = ref<HTMLDivElement | null>(null);
+const ballisticDistributionContainerHover = useElementHover(ballisticDistributionContainer)
+
+const ballisticCircleMask = computed(() => {
+  if (!lastHover.value || !ballisticDistributionContainerHover.value) return undefined;
+
+  if (distributionVariant.value == 'pdf') return [Math.max(0, lastHover.value - 0.05), Math.min(1, lastHover.value + 0.05)] as [number, number];
+  return lastHover.value
+})
+
+const POINTS_COUNT = 500;
+const lastHover = ref<number | null>(null);
+const ballisticDistributionOptions = computed<ChartProps<'line'>['options']>(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  animation: false,
+  onHover: (e, a) => {
+    const indexes = a.map(t => t.index)
+    if (indexes.length === 0) return lastHover.value = null;
+    lastHover.value = indexes[0] / POINTS_COUNT;
+  },
+  scales: {
+    y: {
+      min: 0,
+      display: false,
+      grid: {
+        display: false
+      },
+    },
+    x: {
+      min: 0,
+      ticks: {
+        maxRotation: 0,
+        callback: (v, i, t) => {
+          if (typeof v !== 'number') return null
+
+          if (v === 0.33 * POINTS_COUNT) return 'Треть'
+          if (v === 0.5 * POINTS_COUNT) return 'Половина'
+          if (v === 0.66 * POINTS_COUNT) return 'Две трети'
+
+          return null
+        },
+      },
+    }
+  },
+  interaction: {
+    intersect: false,
+    mode: 'index',
+  },
+  plugins: {
+    tooltip: {
+      callbacks: {
+        title: (t) => {
+          const v = t[0].raw as number
+          return `Часть снарядов попала в ${Math.round(100 * Number(t[0].label))}% сведения`
+        },
+        label: (t) => {
+          const v = t.raw as number
+          return `${t.dataset.label}: ${(Math.round(v * 10) / 10).toFixed(1)}%`
+        }
+      }
+    },
+    // tooltip: {
+    //   callbacks: {
+    //     title: function (context) {
+    //       if (damageStep.value == 1) return `Нанесено ${context[0].label} урона`
+    //       const half = Math.floor(damageStep.value / 2);
+    //       return `Нанесено ${context[0].label}+-${half} урона`
+    //     },
+    //     label: function (context) {
+    //       return `${context.dataset.label}: ${(Math.round(context.raw as number * 100) / 100).toFixed(2)}%`
+    //     }
+    //   }
+    // },
+  }
+}))
+
+type Options = { loadCount: number, offset: number, startId: string | null }
+
+async function loadNextBatch(options: Options, gameVersion: string[]): Promise<{ id: string, r: number, theta: number, hit: number }[]> {
+
+  const result = await query<{ id: string, r: number, theta: number, hit: number }>(`
+    select id, r, theta, hit
+    from "MT-36-1".ShotHitPoints
+    where region = 'RU' and battleMode = 'REGULAR' and gameVersion in (${gameVersion.map(v => `'${v}'`).join(', ')}) and isIdealCondition = 1
+    ${options.startId ? ` and id < '${options.startId}'` : ''}
+    order by id desc
+    limit ${options.loadCount}
+    offset ${options.offset};
+  `, { settings: CACHE_SETTINGS })
+
+  return result.data
+}
+
+async function loadNextBatchLeft(options: Options) {
+  return await loadNextBatch(options, [...leftVersions])
+}
+
+async function loadNextBatchRight(options: Options) {
+  return await loadNextBatch(options, [...rightVersions])
+}
+
 </script>
 
 
@@ -644,6 +865,80 @@ const damageDistributionOptions = computed<ChartProps<'line'>['options']>(() => 
           &.active {
             background-color: #4a90e2;
           }
+        }
+      }
+    }
+  }
+
+  .ballistic-distribution {
+    .line {
+      margin-bottom: 1em;
+    }
+
+    .line.charts {
+      display: flex;
+      gap: 1em;
+
+      .left {
+        flex: 1;
+        display: flex;
+
+        .card {
+          display: flex;
+          flex-direction: column;
+        }
+      }
+
+      .right {
+        flex: 0.3;
+        display: flex;
+        flex-direction: column;
+        gap: 1em;
+
+        --background: #2e2e31;
+
+        .card {
+          aspect-ratio: 1;
+          position: relative;
+
+          .card-main-info {
+            margin-bottom: -10px;
+          }
+        }
+      }
+
+      @media screen and (max-width: 800px) {
+        flex-direction: column;
+
+        .left {
+          aspect-ratio: 2;
+        }
+
+        .right {
+          flex: 1;
+          flex-direction: row;
+        }
+      }
+
+    }
+
+    .chart-container {
+      flex: 1;
+      margin-top: -3px;
+
+      .chart-options {
+        position: absolute;
+        top: 3px;
+        left: 0;
+
+        .line {
+          display: flex;
+          gap: 0.5em;
+          margin-bottom: 0.5em;
+        }
+
+        .dropdown {
+          min-width: 70px;
         }
       }
     }

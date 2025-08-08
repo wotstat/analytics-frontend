@@ -1,9 +1,15 @@
 <template>
   <div class="shot-container" ref="container" :style="{ cursor: highlighted ? 'pointer' : '' }" @click="onClick">
     <CanvasVue @redraw="redraw" ref="canvasRef" />
-    <svg v-if="maskRadius && maskRadius < 0.99">
+    <svg v-if="maskRadius && typeof maskRadius === 'number' && maskRadius < 0.99">
       <path :d="maskPath" />
-      <circle cx="50%" cy="50%" :r="`${(props.maskRadius ?? 1) / 2 * 100}%`" />
+      <circle cx="50%" cy="50%" :r="`${(maskRadius ?? 1) / 2 * 100}%`" />
+    </svg>
+
+    <svg v-else-if="maskRadius && Array.isArray(maskRadius) && maskRadius[0] < 0.99">
+      <path :d="maskPath" />
+      <circle cx="50%" cy="50%" :r="`${maskRadius[0] / 2 * 100}%`" />
+      <circle cx="50%" cy="50%" :r="`${maskRadius[1] / 2 * 100}%`" />
     </svg>
 
     <svg v-if="highlighted">
@@ -48,9 +54,11 @@ const props = defineProps<{
   limitShot?: number,
   drawDelay?: number,
   drawCount?: number,
-  maskRadius?: number,
+  maskRadius?: number | [number, number],
   params?: StatParams,
   allowHover?: boolean,
+  borderColor?: string,
+  loadNextBatch?: (options: { loadCount: number, offset: number, startId: string | null }) => Promise<{ id: string, r: number, theta: number, hit: number }[]>
 }>()
 
 const emit = defineEmits<{
@@ -72,14 +80,14 @@ function redraw(ctx: CanvasRenderingContext2D, width: number, height: number) {
   const r = radius.value
 
   ctx.setLineDash([r / 20]);
-  ctx.strokeStyle = '#78d63a';
+  ctx.strokeStyle = props.borderColor ?? '#78d63a';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(width / 2, height / 2, r, 0, 2 * Math.PI);
   ctx.closePath();
   ctx.stroke();
 
-  ctx.fillStyle = '#78d63a';
+  ctx.fillStyle = props.borderColor ?? '#78d63a';
   ctx.beginPath();
   ctx.arc(width / 2, height / 2, r / 60, 0, 2 * Math.PI);
   ctx.closePath();
@@ -99,15 +107,26 @@ async function loadNextBatch() {
 
   loading = true;
 
-  console.log(`load ${LOAD_COUNT} shots offset ${shotsData.length} started at ${shotsData.length > 0 ? 'where id < ' + shotsData[0].id : 'all'}`);
+  let resultData: { id: string, r: number, theta: number, hit: number }[] = [];
+  if (props.loadNextBatch) {
 
-  const best = bestMV('accuracy_hit_points', props.params ? props.params : [])
-  const prefix = best ? `
+    resultData = await props.loadNextBatch({
+      loadCount: LOAD_COUNT,
+      offset: shotsData.length,
+      startId: shotsData.length > 0 ? shotsData[0].id : null
+    });
+
+  } else {
+
+    console.log(`load ${LOAD_COUNT} shots offset ${shotsData.length} started at ${shotsData.length > 0 ? 'where id < ' + shotsData[0].id : 'all'}`);
+
+    const best = bestMV('accuracy_hit_points', props.params ? props.params : [])
+    const prefix = best ? `
   id, r, theta, hit FROM ${best}
   ` : `
   id, ballisticResultClient_r as r, ballisticResultClient_theta as theta, length(results.order) > 0 as hit FROM Event_OnShot
   `
-  const result = await query<{ id: string, r: number, theta: number, hit: number }>(`
+    const result = await query<{ id: string, r: number, theta: number, hit: number }>(`
     SELECT ${prefix}
       ${shotsData.length > 0 ? 'where id < ' + shotsData[0].id : ''}
       ${props.params ? whereClause(props.params, { withWhere: shotsData.length == 0 }) : ''}
@@ -115,7 +134,10 @@ async function loadNextBatch() {
       limit ${LOAD_COUNT} 
       offset ${shotsData.length};`)
 
-  const toAdd = result.data.map(row => ({
+    resultData = result.data;
+  }
+
+  const toAdd = resultData.map(row => ({
     id: row.id,
     x: row.r * Math.cos(row.theta),
     y: -row.r * Math.sin(row.theta),
@@ -133,7 +155,7 @@ async function loadNextBatch() {
 
   for (const circle of circles) quadTree.insert(circle)
 
-  loadingFinished = result.data.length < LOAD_COUNT || (props.limitShot != null && LOAD_COUNT + shotsData.length > props.limitShot);
+  loadingFinished = resultData.length < LOAD_COUNT || (props.limitShot != null && LOAD_COUNT + shotsData.length > props.limitShot);
   loading = false;
 }
 
@@ -197,15 +219,19 @@ async function startDrawProcess() {
 }
 
 const maskPath = computed(() => {
+  if (!props.maskRadius) return '';
+
   const width = widthRef.value;
-  const outerRadius = width / 2;
-  const innerRadius = outerRadius * (props.maskRadius ?? 1);
+  const outerRadius = width / 2 * (typeof props.maskRadius === 'number' ? 0 : props.maskRadius[0]);
+  const innerRadius = width / 2 * (typeof props.maskRadius === 'number' ? props.maskRadius : props.maskRadius[1]);
 
   return `M 0, 0 l 0, ${width} l ${width}, 0 l 0, -${width} Z
    M ${width / 2 - 0.5}, ${width / 2}
    m 0 -${outerRadius}
    m 1 ${outerRadius - innerRadius}
    a ${innerRadius}, ${innerRadius}, 0, 1, 1, -1, 0
+   m 0 ${innerRadius - outerRadius}
+   a ${outerRadius}, ${outerRadius}, 0, 1, 0, 1, 0
    Z`
 })
 
@@ -272,7 +298,7 @@ function onClick() {
     height: 100%;
 
     path {
-      fill: $background-secondary;
+      fill: var(--background, $background-secondary);
       fill-opacity: 0.8;
     }
 
@@ -285,11 +311,7 @@ function onClick() {
 
     circle.highlight {
       fill: #cdeafa;
-      // fill: none;
-      // stroke: #cdeafa;
       filter: drop-shadow(0 0 5px #142de9);
-
-      // stroke-width: 1;
     }
   }
 }
