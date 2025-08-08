@@ -128,7 +128,7 @@
                     <td>{{ result.fireHealth ?? '-' }}</td>
                   </template>
                   <td v-if="shotResult.some(t => t.ammoBayDestroyed)">{{ result.ammoBayDestroyed ? 'Да' : '-'
-                    }}</td>
+                  }}</td>
                 </tr>
               </tbody>
             </table>
@@ -338,9 +338,6 @@ const dragProgress = ref(0);
 function updateProgress(t: PointerEvent, shoudReplace = true) {
   if (!barProgress.value) return;
 
-  t.preventDefault();
-  t.stopPropagation();
-
   const bbox = barProgress.value.getBoundingClientRect();
   dragProgress.value = Math.max(0, Math.min(1, (t.clientX - bbox.left) / bbox.width));
 
@@ -363,6 +360,8 @@ const { isDragging: isBarDragging } = useDraggable(barProgress, {
   onStart: (e, t) => updateProgress(t),
   onMove: (e, t) => updateProgress(t),
   onEnd: (e, t) => updateProgress(t, false),
+  preventDefault: true,
+  stopPropagation: true,
 });
 
 onMounted(async () => {
@@ -800,6 +799,7 @@ hr {
     border-radius: 10px;
     cursor: ew-resize;
     overflow: hidden;
+    touch-action: none;
 
     .bar {
       position: absolute;
