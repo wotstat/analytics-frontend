@@ -1,5 +1,5 @@
 import { spaceProcessor } from '@/composition/processors/useSpaceProcessor'
-import { TweenOptions, useTweenComputed, useTweenRef } from '@/composition/tween/useTweenRef'
+import { TweenOptions, useTweenComputed } from '@/composition/tween/useTweenRef'
 import { computed } from 'vue'
 
 

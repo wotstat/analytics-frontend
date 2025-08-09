@@ -77,6 +77,8 @@ export const easeInOutBounce = (x: number): number => {
     : (1 + easeOutBounce(2 * x - 1)) / 2
 }
 
+export const linear = (x: number): number => x
+
 export const easing = {
   'in-sine': easeInSine,
   'out-sine': easeOutSine,
@@ -108,4 +110,5 @@ export const easing = {
   'in-bounce': easeInBounce,
   'out-bounce': easeOutBounce,
   'in-out-bounce': easeInOutBounce,
+  'linear': linear
 }

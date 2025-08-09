@@ -363,20 +363,16 @@ import GenericInfoQuery from '@/components/widgets/GenericInfoQuery.vue'
 import GenericInfo from '@/components/widgets/GenericInfo.vue'
 import MiniBar from '@/components/widgets/charts/MiniBar.vue'
 import ShotsCircle from '@/components/widgets/ShotsCircle.vue'
-import { useTweenCounter } from '@/composition/useTweenCounter'
 import { LONG_CACHE_SETTINGS, queryAsync, queryAsyncFirst } from '@/db'
 import { toRelative, ms2sec, sec2minsec, ms2secLabel } from '@/utils'
-import { computedAsync } from '@vueuse/core'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { getArenaName } from '@/utils/i18n'
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor'
-import CurrentLestaVersion from '@/components/mdUtils/CurrentLestaVersion.vue'
-import CurrentWgVersion from '@/components/mdUtils/CurrentWgVersion.vue'
-import { githubRelease } from '@/components/mdUtils/ghRelease'
 import { useMeta } from '@/composition/useMeta'
 import { useAnalyticsRealtime } from '@/composition/useAnalyticsRealtime'
 import { CLICKHOUSE_URL, CURRENT_URL_PREFIX } from '@/utils/externalUrl'
 import { useRouter } from 'vue-router'
+import { useTweenComputed } from '@/composition/tween/useTweenRef'
 
 useMeta({
   title: 'WOTSTAT - Сессионная аналитика для игр «Мир танков» и «World of Tanks»',
@@ -384,21 +380,6 @@ useMeta({
   keywords: 'wotstat, wot, world of tanks, мир танков, аналитика, статистика, мод, модификация, сессионная аналитика, анализ боёв, анализ выстрелов, анализ урона, анализ результатов, анализ карт, анализ стримснайперов, анализ сетапа, медианные показатели, clickhouse, sql',
 })
 
-const latestWotstat = computedAsync(async () => {
-  const [wg, lesta] = await githubRelease('https://api.github.com/repos/wotstat/wotstat-analytics/releases/latest',
-    [t => t.endsWith('.wotmod'), t => t.endsWith('.mtmod')])
-  return { lesta, wg, actual: true }
-}, {
-  lesta: {
-    browser_download_url: 'https://github.com/wotstat/wotstat-analytics/releases/latest',
-    name: 'mod.wotStat_1.0.0.1-a.3.mtmod',
-  },
-  wg: {
-    browser_download_url: 'https://github.com/WOT-STAT/WOTMOD/releases/latest',
-    name: 'mod.wotStat_1.0.0.1-a.3.wotmod',
-  },
-  actual: false
-})
 
 const router = useRouter()
 function goToDownload() {
@@ -408,7 +389,7 @@ function goToDownload() {
 
 // TOTAL
 const { data: totalCount, hasData: totalCountHasData } = useAnalyticsRealtime('totalEvents')
-const totalEventCount = useTweenCounter(computed(() => totalCount.value ?? 0), { duration: 1 })
+const totalEventCount = useTweenComputed(() => totalCount.value ?? 0, { duration: 1000 })
 
 // DAMAGE
 const damageLabels = new Array(21).fill(0)

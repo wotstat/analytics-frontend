@@ -101,7 +101,7 @@
 <script setup lang="ts">
 import GenericInfo from '@/components/widgets/GenericInfo.vue'
 import { queryAsync, queryAsyncFirst } from '@/db'
-import { computed, ref } from 'vue'
+import { computed, ref, watchEffect } from 'vue'
 import { useElementVisibility } from '@vueuse/core'
 import MiniBar from '@/components/widgets/charts/MiniBar.vue'
 import GenericInfoQuery from '@/components/widgets/GenericInfoQuery.vue'
@@ -174,8 +174,8 @@ with arrayMax(results.shotDamage) as dmg,
     results.shotHealth[idx] as health,
     results.ammoBayDestroyed[idx] as ab,
     health + dmg as healthBeforeShot
-select countIf(dmg > 0 and health = 0 and healthBeforeShot > shellDamage and not ab) as stilled,
-       countIf(dmg > 0 and health != 0 and healthBeforeShot < shellDamage) as saved
+select toUInt32(countIf(dmg > 0 and health = 0 and healthBeforeShot > shellDamage and not ab)) as stilled,
+       toUInt32(countIf(dmg > 0 and health != 0 and healthBeforeShot < shellDamage)) as saved
 from Event_OnShot
 where shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME'
 ${whereClause(params, { withWhere: false })}
@@ -245,10 +245,10 @@ const damageK = computed(() => {
 
 const onShotResult = queryAsyncFirst(`
 select
-  sum(firedCount) as fired,
-  sum(ammoBayDestroyedFragsCount) as ammoBayDestroyed,
-  sum(shotFragsCount) as frags,
-  count() / frags  as shotPerFrag
+  toUInt32(sum(firedCount)) as fired,
+  toUInt32(sum(ammoBayDestroyedFragsCount)) as ammoBayDestroyed,
+  toUInt32(sum(shotFragsCount)) as frags,
+  count() / frags as shotPerFrag
 from Event_OnShot
 ${whereClause(params)};
 `, { fired: 0, ammoBayDestroyed: 0, frags: 0, shotPerFrag: 0 }, { enabled, settings: settings.value })

@@ -22,7 +22,6 @@
     "canvas-confetti": "^1.9.3",
     "chart.js": "^4.4.7",
     "colorjs.io": "^0.5.2",
-    "gsap": "^3.12.7",
     "idb-keyval": "^6.2.2",
     "jszip": "^3.10.1",
     "typescript-cubic-spline": "^1.0.1",
@@ -33,15 +32,16 @@
     "vue-tsc": "^2.2.0"
   },
   "devDependencies": {
-    "@typescript-eslint/parser": "^8.6.0",
-    "eslint": "^9.11.1",
-    "vue-eslint-parser": "^9.4.3",
     "@types/canvas-confetti": "^1.9.0",
     "@types/wicg-file-system-access": "^2023.10.6",
+    "@typescript-eslint/parser": "^8.6.0",
+    "eslint": "^9.11.1",
+    "rollup-plugin-visualizer": "^6.0.3",
     "sass": "^1.83.4",
     "typescript": "^5.7.3",
     "vite": "^6.0.11",
     "vite-plugin-markdown": "^2.2.0",
-    "vite-plugin-vue-devtools": "^7.7.1"
+    "vite-plugin-vue-devtools": "^7.7.1",
+    "vue-eslint-parser": "^9.4.3"
   }
 }
