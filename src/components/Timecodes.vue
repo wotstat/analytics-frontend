@@ -80,11 +80,11 @@
 
 
 <script setup lang="ts">
-import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
-import { queryComputed } from '@/db';
-import { getArenaName, getTankName } from '@/utils/i18n';
-import { useLocalStorage } from '@vueuse/core';
-import { computed, ref, watch } from 'vue';
+import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams'
+import { queryComputed } from '@/db'
+import { getArenaName, getTankName } from '@/utils/i18n'
+import { useLocalStorage } from '@vueuse/core'
+import { computed, ref, watch } from 'vue'
 
 const defaultTemplate = '{time} {tank} | {map} | {chuck} {comment}'
 const formatTemplate = useLocalStorage('timecodesFormatTemplate', defaultTemplate)
@@ -179,14 +179,14 @@ const resultTimecodes = computed(() => {
     )
     .map(t => t
       .replace(/\\t(\d+)/g, (match, p1, offset, wholeString) => {
-        let targetColumn = Number(p1);
-        let currentLength = wholeString.substring(0, offset).length;
-        let spacesToAdd = targetColumn - currentLength;
+        let targetColumn = Number(p1)
+        let currentLength = wholeString.substring(0, offset).length
+        let spacesToAdd = targetColumn - currentLength
 
         if (spacesToAdd > 0) {
-          return ' '.repeat(spacesToAdd) + '\t';
+          return ' '.repeat(spacesToAdd) + '\t'
         } else {
-          return ''; // If target column is already passed, no spaces needed
+          return '' // If target column is already passed, no spaces needed
         }
       })
       .replaceAll('\\t', '\t')

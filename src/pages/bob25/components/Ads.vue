@@ -22,14 +22,14 @@
 
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref } from 'vue'
 import XIcon from '@/assets/icons/x.svg'
-import { useLocalStorage } from '@vueuse/core';
+import { useLocalStorage } from '@vueuse/core'
 
-const visible = useLocalStorage('bob25-show-wotstat-more', true);
+const visible = useLocalStorage('bob25-show-wotstat-more', true)
 
 function close() {
-  visible.value = false;
+  visible.value = false
 }
 
 </script>

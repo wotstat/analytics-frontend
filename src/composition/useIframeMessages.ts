@@ -1,9 +1,9 @@
-import { Ref } from "vue";
+import { Ref } from 'vue'
 
 export function useIframeMessages(iframe: Ref<HTMLIFrameElement | null>, onMessage: (data: any) => void) {
-  window.addEventListener("message", (event) => {
+  window.addEventListener('message', (event) => {
     if (event.source == iframe.value?.contentWindow) {
-      onMessage(event.data);
+      onMessage(event.data)
     }
   })
 }

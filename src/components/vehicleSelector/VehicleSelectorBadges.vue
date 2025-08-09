@@ -13,9 +13,9 @@
 
 <script setup lang="ts">
 import Badge from '@/components/Badge.vue'
-import VehicleSelector from './VehicleSelector.vue';
-import { ref } from 'vue';
-import { getTankName } from '@/utils/i18n';
+import VehicleSelector from './VehicleSelector.vue'
+import { ref } from 'vue'
+import { getTankName } from '@/utils/i18n'
 
 const vehicles = defineModel<Set<string>>({ default: new Set() })
 const displayPopup = ref<boolean>(false)

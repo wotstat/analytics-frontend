@@ -1,10 +1,10 @@
-import { type Component, shallowRef, type MaybeRef, ref } from "vue"
+import { type Component, shallowRef, type MaybeRef, ref } from 'vue'
 
 export const enum ContextMenuItemVariant {
-  Child = "child",
-  Separator = "separator",
-  Header = "header",
-  Button = "button",
+  Child = 'child',
+  Separator = 'separator',
+  Header = 'header',
+  Button = 'button',
 }
 
 export type ContextMenuItemSeparator = {

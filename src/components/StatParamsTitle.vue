@@ -49,9 +49,9 @@
 </template>
 
 <script lang="ts" setup>
-import { useQueryStatParams } from '@/composition/useQueryStatParams';
-import { countLocalize, getTankName } from "@/utils/i18n";
-import { customBattleModes } from '@/utils/wot';
+import { useQueryStatParams } from '@/composition/useQueryStatParams'
+import { countLocalize, getTankName } from '@/utils/i18n'
+import { customBattleModes } from '@/utils/wot'
 
 
 const stat = useQueryStatParams()
@@ -60,34 +60,34 @@ function levelToString(): string {
   // Sort the array to ensure it's in ascending order
   if (!stat.value.level) return ''
 
-  const arr = stat.value.level.sort((a, b) => a - b);
+  const arr = stat.value.level.sort((a, b) => a - b)
 
-  let result: string[] = [];
-  let start = arr[0];
-  let end = start;
+  let result: string[] = []
+  let start = arr[0]
+  let end = start
 
   for (let i = 1; i < arr.length; i++) {
     if (arr[i] === end + 1) {
-      end = arr[i];
+      end = arr[i]
     } else {
       if (start === end) {
-        result.push(`${start}`);
+        result.push(`${start}`)
       } else {
-        result.push(`${start}-${end}`);
+        result.push(`${start}-${end}`)
       }
-      start = arr[i];
-      end = start;
+      start = arr[i]
+      end = start
     }
   }
 
   // Handle the last group or single number
   if (start === end) {
-    result.push(`${start}`);
+    result.push(`${start}`)
   } else {
-    result.push(`${start}-${end}`);
+    result.push(`${start}-${end}`)
   }
 
-  return result.join(', ');
+  return result.join(', ')
 }
 
 const tankTypes = {
@@ -96,9 +96,9 @@ const tankTypes = {
   HT: 'ТТ',
   AT: 'ПТ',
   SPG: 'САУ'
-} as const;
+} as const
 
-const tanksKeys = Object.keys(tankTypes) as (keyof typeof tankTypes)[];
+const tanksKeys = Object.keys(tankTypes) as (keyof typeof tankTypes)[]
 
 function currentTankTypes() {
   if (!stat.value.types) return ''

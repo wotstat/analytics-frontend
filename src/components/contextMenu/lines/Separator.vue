@@ -4,7 +4,7 @@
 
 
 <script setup lang="ts">
-import type { ContextMenuItemSeparator } from '../createContextMenu';
+import type { ContextMenuItemSeparator } from '../createContextMenu'
 
 defineProps<{
   item: ContextMenuItemSeparator

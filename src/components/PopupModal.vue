@@ -19,8 +19,8 @@
 </template>
 
 <script setup lang="ts">
-import { onClickOutside, onKeyDown, useEventListener } from '@vueuse/core';
-import { ref, useSlots, watch } from 'vue';
+import { onClickOutside, onKeyDown, useEventListener } from '@vueuse/core'
+import { ref, useSlots, watch } from 'vue'
 
 const targetElement = ref<HTMLElement | null>(null)
 const popup = ref<HTMLElement | null>(null)

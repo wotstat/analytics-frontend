@@ -4,15 +4,15 @@
 </template>
 
 <script setup lang="ts">
-import CanvasVue from "@/components/Canvas.vue";
-import { useQueryStatParams, whereClause } from "@/composition/useQueryStatParams";
-import { query, queryComputed } from "@/db";
-import { ArenaMeta } from "@/utils/arenas";
-import { useDebounce } from "@vueuse/core";
-import { type Range } from 'colorjs.io';
-import { computed, ref, shallowRef, watch, watchEffect } from "vue";
-import { blur, findIslands } from "./utils";
-import { BloomColor } from "@/components/bloomColors";
+import CanvasVue from '@/components/Canvas.vue'
+import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams'
+import { query, queryComputed } from '@/db'
+import { ArenaMeta } from '@/utils/arenas'
+import { useDebounce } from '@vueuse/core'
+import { type Range } from 'colorjs.io'
+import { computed, ref, shallowRef, watch, watchEffect } from 'vue'
+import { blur, findIslands } from './utils'
+import { BloomColor } from '@/components/bloomColors'
 
 const renderKey = ref(0)
 
@@ -73,13 +73,13 @@ const heatmapData = shallowRef<{ x: number, z: number, value: number }[]>([])
 watch(response, (v) => {
   heatmapData.value = v.data
   renderKey.value++
-  console.log('got');
+  console.log('got')
 }, { deep: true })
 
 watch(queryRequest, () => {
   heatmapData.value = []
   renderKey.value++
-  console.log('reset');
+  console.log('reset')
 
 }, { deep: true })
 
@@ -111,7 +111,7 @@ function redraw(ctx: CanvasRenderingContext2D, width: number, height: number) {
       ctx.fillStyle = color.toString()
       ctx.fillRect(x * cellWidth, height - z * cellHeight, cellWidth, -cellHeight)
 
-      ctx.strokeStyle = "black"
+      ctx.strokeStyle = 'black'
       ctx.lineWidth = 0.1
       ctx.strokeRect(x * cellWidth, height - z * cellHeight, cellWidth, -cellHeight)
     }

@@ -1,16 +1,16 @@
-import { closeContextMenu, isContextMenuOpen } from "@/components/contextMenu/createContextMenu";
-import { checkboxItem, simpleContextMenu } from "@/components/contextMenu/simpleContextMenu";
-import { useLocalStorage } from "@vueuse/core";
+import { closeContextMenu, isContextMenuOpen } from '@/components/contextMenu/createContextMenu'
+import { checkboxItem, simpleContextMenu } from '@/components/contextMenu/simpleContextMenu'
+import { useLocalStorage } from '@vueuse/core'
 
-export const show3dEffect = useLocalStorage('card-hover-3d-effect', true);
-export const showGlowEffect = useLocalStorage('card-hover-glow-effect', true);
+export const show3dEffect = useLocalStorage('card-hover-3d-effect', true)
+export const showGlowEffect = useLocalStorage('card-hover-glow-effect', true)
 
-let contextMenuId = -1;
+let contextMenuId = -1
 export function showContextMenu(element: HTMLElement) {
 
   if (isContextMenuOpen(contextMenuId)) {
-    closeContextMenu(contextMenuId);
-    return;
+    closeContextMenu(contextMenuId)
+    return
   }
 
   const { id } = simpleContextMenu({
@@ -24,5 +24,5 @@ export function showContextMenu(element: HTMLElement) {
     ]
   )
 
-  contextMenuId = id;
+  contextMenuId = id
 }

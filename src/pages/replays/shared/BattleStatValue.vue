@@ -14,9 +14,9 @@
 
 <script lang="ts" setup>
 import DmgIcon from '@/assets/efficiency-icon/dmg.png'
-import Icon from '@/components/efficiencyIcon/Icon.vue';
-import { IconType } from '@/components/efficiencyIcon/utils';
-import Tooltip from '@/components/Tooltip.vue';
+import Icon from '@/components/efficiencyIcon/Icon.vue'
+import { IconType } from '@/components/efficiencyIcon/utils'
+import Tooltip from '@/components/Tooltip.vue'
 
 
 const props = defineProps<{

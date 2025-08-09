@@ -3,5 +3,5 @@
 </template>
 
 <script lang="ts" setup>
-import { gameVersionEU } from "./gameVersion";
+import { gameVersionEU } from './gameVersion'
 </script>

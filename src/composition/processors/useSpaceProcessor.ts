@@ -1,4 +1,4 @@
-import { computed, toValue, WatchSource } from "vue";
+import { computed, toValue, WatchSource } from 'vue'
 
 export function spaceProcessor(value: string) {
   return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')

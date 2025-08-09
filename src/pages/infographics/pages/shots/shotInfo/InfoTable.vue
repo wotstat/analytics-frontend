@@ -13,7 +13,7 @@
 
 defineProps<{
   data: (string | number)[][];
-}>();
+}>()
 
 </script>
 

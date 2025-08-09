@@ -31,16 +31,16 @@
 
 <script setup lang="ts">
 import VehicleType from '../vehicles/type/VehicleType.vue'
-import Globe from "./assets/globe.svg";
+import Globe from './assets/globe.svg'
 import { HighlightedString } from '../highlightString/highlightUtils'
 import { computed, onMounted, ref, triggerRef, watch } from 'vue'
 import VehicleLine from './VehicleLine.vue'
-import { STATIC_URL } from '@/utils/externalUrl';
-import ReusableTable from '../reusableTable/ReusableTable.vue';
+import { STATIC_URL } from '@/utils/externalUrl'
+import ReusableTable from '../reusableTable/ReusableTable.vue'
 import { type ComponentInstance } from '@/composition/utils/ComponentInstance'
 
-import { type VehicleLineData, VehicleLine as VehicleLineCell } from "./VehicleLine.ts";
-import { vehicleUrl } from '../vehicles/vehicle/utils.ts';
+import { type VehicleLineData, VehicleLine as VehicleLineCell } from './VehicleLine.ts'
+import { vehicleUrl } from '../vehicles/vehicle/utils.ts'
 
 
 const reusableTable = ref<ComponentInstance<typeof ReusableTable<VehicleLineData>> | null>(null)
@@ -57,7 +57,7 @@ const target = computed(() => props.tankToDisplay)
 watch(() => target.value.length, () => reusableTable.value?.scrollTo(0))
 
 const isFastScroll = computed((old) => {
-  if (!reusableTable.value) return false;
+  if (!reusableTable.value) return false
 
   const velocity = Math.abs(reusableTable.value.scrollVelocity)
 

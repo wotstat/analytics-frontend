@@ -116,24 +116,24 @@
 
 
 <script setup lang="ts">
-import { StatParams, getQueryStatParamsCache, useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
-import { mergeStatuses, queryAsync } from '@/db';
-import { modeCount } from '@/utils/wot';
-import { useElementVisibility, useElementSize } from '@vueuse/core';
-import { computed, ref } from 'vue';
-import ServerStatusWrapper from '../ServerStatusWrapper.vue';
-import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
-import { bestMV } from '@/db/schema';
+import { StatParams, getQueryStatParamsCache, useQueryStatParams, whereClause } from '@/composition/useQueryStatParams'
+import { mergeStatuses, queryAsync } from '@/db'
+import { modeCount } from '@/utils/wot'
+import { useElementVisibility, useElementSize } from '@vueuse/core'
+import { computed, ref } from 'vue'
+import ServerStatusWrapper from '../ServerStatusWrapper.vue'
+import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor'
+import { bestMV } from '@/db/schema'
 
 const { params } = defineProps<{
   params: StatParams
 }>()
 
 
-const container = ref<HTMLElement | null>(null);
-const enabled = useElementVisibility(container);
+const container = ref<HTMLElement | null>(null)
+const enabled = useElementVisibility(container)
 
-const categoryContainer = ref<HTMLElement | null>(null);
+const categoryContainer = ref<HTMLElement | null>(null)
 const { width } = useElementSize(categoryContainer)
 
 const youTeamResult = ref<'win' | 'lose'>('win')

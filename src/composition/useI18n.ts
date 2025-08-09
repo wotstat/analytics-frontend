@@ -23,9 +23,9 @@ function getLocale<L extends string, K extends string>(i18n: I18n<L, K>, languag
 export function useI18n<L extends string, K extends string>(i18n: I18n<L, K>, fallback?: L) {
   return {
     t: (key: K | string & {}, locale?: L) => {
-      const language = locale ?? fallback;
-      const localeData = getLocale(i18n, language);
-      return localeData[key as K] ?? key;
+      const language = locale ?? fallback
+      const localeData = getLocale(i18n, language)
+      return localeData[key as K] ?? key
     }
   }
 }

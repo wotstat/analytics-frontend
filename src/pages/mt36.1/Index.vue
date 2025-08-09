@@ -156,34 +156,34 @@
 
 
 <script setup lang="ts">
-import { setFeatureVisit } from '@/components/newFeatureBadge/newFeatureBadge';
-import TeamLevelTable from '@/components/widgets/TeamLevelTable.vue';
-import { CACHE_SETTINGS, LONG_CACHE_SETTINGS, query, queryComputed } from '@/db';
-import { computed, ref, watch, watchEffect } from 'vue';
-import LevelSwitcher from './LevelSwitcher.vue';
-import { useDebounce, useElementHover } from '@vueuse/core';
-import { ShadowBar } from '@/components/widgets/charts/ShadowBarController';
-import { ShadowLine } from '@/components/widgets/charts/ShadowLineController';
-import { ChartProps } from 'vue-chartjs';
+import { setFeatureVisit } from '@/components/newFeatureBadge/newFeatureBadge'
+import TeamLevelTable from '@/components/widgets/TeamLevelTable.vue'
+import { CACHE_SETTINGS, LONG_CACHE_SETTINGS, query, queryComputed } from '@/db'
+import { computed, ref, watch, watchEffect } from 'vue'
+import LevelSwitcher from './LevelSwitcher.vue'
+import { useDebounce, useElementHover } from '@vueuse/core'
+import { ShadowBar } from '@/components/widgets/charts/ShadowBarController'
+import { ShadowLine } from '@/components/widgets/charts/ShadowLineController'
+import { ChartProps } from 'vue-chartjs'
 
-import DropDown from "@/components/dropdown/DropDown.vue";
-import ShotsCircle from '@/components/widgets/ShotsCircle.vue';
-import { spaceProcessor } from '@/composition/processors/useSpaceProcessor';
-
-
-setFeatureVisit('mt-36-1');
+import DropDown from '@/components/dropdown/DropDown.vue'
+import ShotsCircle from '@/components/widgets/ShotsCircle.vue'
+import { spaceProcessor } from '@/composition/processors/useSpaceProcessor'
 
 
-const leftVersions = new Set(['ru_1.36.0']);
-const rightVersions = new Set(['ru_1.36.1']);
+setFeatureVisit('mt-36-1')
 
-const selectedLevels = ref(new Set<number>([10]));
+
+const leftVersions = new Set(['ru_1.36.0'])
+const rightVersions = new Set(['ru_1.36.1'])
+
+const selectedLevels = ref(new Set<number>([10]))
 const gameVersionFilter = computed(() => {
-  return [...leftVersions, ...rightVersions].map(v => `'${v}'`).join(', ');
-});
+  return [...leftVersions, ...rightVersions].map(v => `'${v}'`).join(', ')
+})
 
-const leftVersionString = [...leftVersions].map(t => t.split('_')[1]).join(', ');
-const rightVersionString = [...rightVersions].map(t => t.split('_')[1]).join(', ');
+const leftVersionString = [...leftVersions].map(t => t.split('_')[1]).join(', ')
+const rightVersionString = [...rightVersions].map(t => t.split('_')[1]).join(', ')
 
 const levelDebounce = useDebounce(selectedLevels)
 
@@ -218,8 +218,8 @@ group by battleType, position, gameVersion
 order by battleType, position, gameVersion;
 `, { settings: LONG_CACHE_SETTINGS })
 
-const leftTeamLevelTableData = computed(() => teamLevelTableData.value.data.filter(item => leftVersions.has(item.gameVersion)));
-const rightTeamLevelTableData = computed(() => teamLevelTableData.value.data.filter(item => rightVersions.has(item.gameVersion)));
+const leftTeamLevelTableData = computed(() => teamLevelTableData.value.data.filter(item => leftVersions.has(item.gameVersion)))
+const rightTeamLevelTableData = computed(() => teamLevelTableData.value.data.filter(item => rightVersions.has(item.gameVersion)))
 
 const byTankTypeDistributionData = queryComputed<{
   type: 'lt' | 'at' | 'spg',
@@ -250,10 +250,10 @@ const typeDistributionData = computed<{ chart: { key: string, label: string }, d
     { key: 'lt', label: 'ЛТ' }
   ].map(chart => {
     const data = byTankTypeDistributionData.value.data.filter(t => t.type == chart.key)
-    const targetLabels = [...new Set(data.map(item => item.count)).values()].sort((a, b) => a - b).map(String);
+    const targetLabels = [...new Set(data.map(item => item.count)).values()].sort((a, b) => a - b).map(String)
 
-    const left = data.filter(t => leftVersions.has(t.gameVersion));
-    const right = data.filter(t => rightVersions.has(t.gameVersion));
+    const left = data.filter(t => leftVersions.has(t.gameVersion))
+    const right = data.filter(t => rightVersions.has(t.gameVersion))
 
     return {
       chart,
@@ -322,10 +322,10 @@ const possibleTargets = [
   135,
   85,
   11,
-];
-const selectedTarget = ref<number>(390);
-const selectedCantKill = ref<boolean>(true);
-const selectedPreset = ref<'target' | 'kv2' | 'fv' | 'grille' | 'FSDS420'>('target');
+]
+const selectedTarget = ref<number>(390)
+const selectedCantKill = ref<boolean>(true)
+const selectedPreset = ref<'target' | 'kv2' | 'fv' | 'grille' | 'FSDS420'>('target')
 const damageDistributionDataSettings = computed(() => {
 
   if (selectedPreset.value == 'target') return {
@@ -379,7 +379,7 @@ const damageDistributionData = queryComputed<{
   percent: number;
   gameVersion: string;
 }>(() => {
-  const params = damageDistributionDataSettings.value;
+  const params = damageDistributionDataSettings.value
   return `
     with
       ${params.targetDamage} as TARGET,
@@ -391,7 +391,7 @@ const damageDistributionData = queryComputed<{
     from "MT-36-1".ShotDamageDistribution
     where region = 'RU' and battleMode = 'REGULAR' and shotDamage > 0 and not isAmmoBayDestroyed and not isKill
       and shellDamage = TARGET and shellTag in TARGET_SHELL and gameVersion in (${gameVersionFilter.value})
-      ${!params.limitDamage ? '' : `and shotDamage >= round(TARGET * (1 - damageRandomization)) and shotDamage <= round(TARGET * (1.00001 + damageRandomization))`}
+      ${!params.limitDamage ? '' : 'and shotDamage >= round(TARGET * (1 - damageRandomization)) and shotDamage <= round(TARGET * (1.00001 + damageRandomization))'}
       ${params.targetTank ? `and tankTag in (${params.targetTank.map(t => `'${t}'`).join(', ')})` : ''}
       ${params.cantKill ? 'and not canKill' : ''}
     group by shotDamage, gameVersion
@@ -402,81 +402,81 @@ const damageDistributionData = queryComputed<{
 }, { settings: LONG_CACHE_SETTINGS })
 
 const stepVariants = computed(() => {
-  let steps = [1, 3, 5, 7, 11, 13, 15, 17, 21, 47];
+  let steps = [1, 3, 5, 7, 11, 13, 15, 17, 21, 47]
 
   const dmg = damageDistributionDataSettings.value.targetDamage
-  steps = steps.filter(step => step <= dmg / 3);
+  steps = steps.filter(step => step <= dmg / 3)
 
-  if (dmg < 100) steps = steps.filter(step => step <= dmg / 8);
-  if (dmg < 400) steps = steps.filter(step => step <= dmg / 10);
-  else steps = steps.filter(step => step <= dmg / 20);
+  if (dmg < 100) steps = steps.filter(step => step <= dmg / 8)
+  if (dmg < 400) steps = steps.filter(step => step <= dmg / 10)
+  else steps = steps.filter(step => step <= dmg / 20)
 
-  return steps.map(step => ({ label: `${step} ед.`, value: step }));
-});
-const damageStep = ref(1);
+  return steps.map(step => ({ label: `${step} ед.`, value: step }))
+})
+const damageStep = ref(1)
 
 watch(stepVariants, (newValue) => {
   if (!newValue.some(v => v.value == damageStep.value)) {
-    damageStep.value = newValue[0].value;
+    damageStep.value = newValue[0].value
   }
-}, { immediate: true });
+}, { immediate: true })
 
 const steppedLabels = computed(() => {
-  const data = damageDistributionData.value.data;
+  const data = damageDistributionData.value.data
 
-  const labels = new Set(data.map(item => item.shotDamage));
+  const labels = new Set(data.map(item => item.shotDamage))
 
-  const min = Math.min(...labels);
-  const max = Math.max(...labels) + 1;
+  const min = Math.min(...labels)
+  const max = Math.max(...labels) + 1
 
   const median = damageDistributionDataSettings.value.targetDamage
-  const halfStep = Math.floor(damageStep.value / 2);
-  let leftStart = median - halfStep;
-  while (leftStart - damageStep.value > min) leftStart -= damageStep.value;
+  const halfStep = Math.floor(damageStep.value / 2)
+  let leftStart = median - halfStep
+  while (leftStart - damageStep.value > min) leftStart -= damageStep.value
 
-  const steppedLabels: number[] = [];
-  steppedLabels.push(min);
+  const steppedLabels: number[] = []
+  steppedLabels.push(min)
   while (leftStart < max) {
-    steppedLabels.push(leftStart);
+    steppedLabels.push(leftStart)
     leftStart += damageStep.value
   }
 
 
-  const textLabels: string[] = [];
+  const textLabels: string[] = []
   textLabels.push(steppedLabels[0].toString())
-  for (let i = 1; i < steppedLabels.length - 1; i++) textLabels.push(`${steppedLabels[i] + halfStep}`);
+  for (let i = 1; i < steppedLabels.length - 1; i++) textLabels.push(`${steppedLabels[i] + halfStep}`)
   textLabels.push(steppedLabels[steppedLabels.length - 1].toString())
 
-  return { steps: steppedLabels, textLabels };
-});
+  return { steps: steppedLabels, textLabels }
+})
 
 const damageDistributionChartData = computed<ChartProps<'line'>['data']>(() => {
 
-  const data = damageDistributionData.value.data;
+  const data = damageDistributionData.value.data
 
-  const labels = new Set(data.map(item => item.shotDamage));
-  const max = Math.max(...labels);
+  const labels = new Set(data.map(item => item.shotDamage))
+  const max = Math.max(...labels)
 
-  const { steps, textLabels } = steppedLabels.value;
+  const { steps, textLabels } = steppedLabels.value
 
   function process(data: Map<string, number | null>) {
-    const result = new Map<string, number | null>();
+    const result = new Map<string, number | null>()
 
     for (let i = 0; i < steps.length; i++) {
-      const currentLabel = steps[i];
-      const nextLabel = i < steps.length - 1 ? steps[i + 1] : max + 1;
+      const currentLabel = steps[i]
+      const nextLabel = i < steps.length - 1 ? steps[i + 1] : max + 1
 
-      let currentSum = 0;
-      for (let j = currentLabel; j < nextLabel; j++) currentSum += data.get(String(j)) ?? 0;
-      result.set(String(currentLabel), currentSum == 0 ? null : currentSum);
+      let currentSum = 0
+      for (let j = currentLabel; j < nextLabel; j++) currentSum += data.get(String(j)) ?? 0
+      result.set(String(currentLabel), currentSum == 0 ? null : currentSum)
     }
 
 
-    return result;
+    return result
   }
 
-  const leftData = new Map<string, number>(data.filter(item => leftVersions.has(item.gameVersion)).map(item => [String(item.shotDamage), 100 * item.percent]));
-  const rightData = new Map<string, number>(data.filter(item => rightVersions.has(item.gameVersion)).map(item => [String(item.shotDamage), 100 * item.percent]));
+  const leftData = new Map<string, number>(data.filter(item => leftVersions.has(item.gameVersion)).map(item => [String(item.shotDamage), 100 * item.percent]))
+  const rightData = new Map<string, number>(data.filter(item => rightVersions.has(item.gameVersion)).map(item => [String(item.shotDamage), 100 * item.percent]))
 
   return {
     labels: textLabels,
@@ -521,7 +521,7 @@ const damageDistributionOptions = computed<ChartProps<'line'>['options']>(() => 
       callbacks: {
         title: function (context) {
           if (damageStep.value == 1) return `Нанесено ${context[0].label} урона`
-          const half = Math.floor(damageStep.value / 2);
+          const half = Math.floor(damageStep.value / 2)
           return `Нанесено ${context[0].label}+-${half} урона`
         },
         label: function (context) {
@@ -536,7 +536,7 @@ const damageDistributionOptions = computed<ChartProps<'line'>['options']>(() => 
 
 
 
-const ballisticDistributionIdeal = ref<boolean>(true);
+const ballisticDistributionIdeal = ref<boolean>(true)
 const ballisticDistributionData = queryComputed<{
   gameVersion: string;
   r: number;
@@ -555,33 +555,33 @@ const ballisticDistributionData = queryComputed<{
 `, { settings: CACHE_SETTINGS })
 
 
-const distributionVariant = ref<'cdf' | 'pdf'>('pdf');
+const distributionVariant = ref<'cdf' | 'pdf'>('pdf')
 const ballisticDistributionChartData = computed<ChartProps<'line'>['data']>(() => {
 
-  const labelsSet = new Set(ballisticDistributionData.value.data.map(item => item.r));
-  const labels = [...labelsSet].filter(label => label >= 0 && label <= 1);
+  const labelsSet = new Set(ballisticDistributionData.value.data.map(item => item.r))
+  const labels = [...labelsSet].filter(label => label >= 0 && label <= 1)
 
   function process(data: Map<string, number | null>) {
-    if (distributionVariant.value == 'pdf') return data;
+    if (distributionVariant.value == 'pdf') return data
 
-    const result = new Map<string, number | null>();
-    const entries = [...data.entries()].sort((a, b) => Number(a[0]) - Number(b[0]));
-    let sum = 0;
+    const result = new Map<string, number | null>()
+    const entries = [...data.entries()].sort((a, b) => Number(a[0]) - Number(b[0]))
+    let sum = 0
     for (let i = 0; i < entries.length; i++) {
-      const [key, value] = entries[i];
-      sum += value ?? 0;
-      result.set(key, sum);
+      const [key, value] = entries[i]
+      sum += value ?? 0
+      result.set(key, sum)
     }
 
-    return result;
+    return result
 
   }
 
-  const leftData = new Map<string, number>(ballisticDistributionData.value.data.filter(item => leftVersions.has(item.gameVersion)).map(item => [String(item.r), 100 * item.p]));
-  const rightData = new Map<string, number>(ballisticDistributionData.value.data.filter(item => rightVersions.has(item.gameVersion)).map(item => [String(item.r), 100 * item.p]));
+  const leftData = new Map<string, number>(ballisticDistributionData.value.data.filter(item => leftVersions.has(item.gameVersion)).map(item => [String(item.r), 100 * item.p]))
+  const rightData = new Map<string, number>(ballisticDistributionData.value.data.filter(item => rightVersions.has(item.gameVersion)).map(item => [String(item.r), 100 * item.p]))
 
-  const leftProcessed = process(leftData);
-  const rightProcessed = process(rightData);
+  const leftProcessed = process(leftData)
+  const rightProcessed = process(rightData)
 
   return {
     labels: labels.map(label => String(label)),
@@ -605,26 +605,26 @@ const ballisticDistributionChartData = computed<ChartProps<'line'>['data']>(() =
 })
 
 
-const ballisticDistributionContainer = ref<HTMLDivElement | null>(null);
+const ballisticDistributionContainer = ref<HTMLDivElement | null>(null)
 const ballisticDistributionContainerHover = useElementHover(ballisticDistributionContainer)
 
 const ballisticCircleMask = computed(() => {
-  if (!lastHover.value || !ballisticDistributionContainerHover.value) return undefined;
+  if (!lastHover.value || !ballisticDistributionContainerHover.value) return undefined
 
-  if (distributionVariant.value == 'pdf') return [Math.max(0, lastHover.value - 0.05), Math.min(1, lastHover.value + 0.05)] as [number, number];
+  if (distributionVariant.value == 'pdf') return [Math.max(0, lastHover.value - 0.05), Math.min(1, lastHover.value + 0.05)] as [number, number]
   return lastHover.value
 })
 
-const POINTS_COUNT = 500;
-const lastHover = ref<number | null>(null);
+const POINTS_COUNT = 500
+const lastHover = ref<number | null>(null)
 const ballisticDistributionOptions = computed<ChartProps<'line'>['options']>(() => ({
   responsive: true,
   maintainAspectRatio: false,
   animation: false,
   onHover: (e, a) => {
     const indexes = a.map(t => t.index)
-    if (indexes.length === 0) return lastHover.value = null;
-    lastHover.value = indexes[0] / POINTS_COUNT;
+    if (indexes.length === 0) return lastHover.value = null
+    lastHover.value = indexes[0] / POINTS_COUNT
   },
   scales: {
     y: {

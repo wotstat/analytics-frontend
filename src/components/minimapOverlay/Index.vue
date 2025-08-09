@@ -16,18 +16,18 @@
 </template>
 
 <script setup lang="ts">
-import { convertCoordinate, loadArenaMeta } from '@/utils/arenas';
-import { computedAsync } from '@vueuse/core';
-import { computed, watchEffect } from 'vue';
+import { convertCoordinate, loadArenaMeta } from '@/utils/arenas'
+import { computedAsync } from '@vueuse/core'
+import { computed, watchEffect } from 'vue'
 
 const props = defineProps<{
   arenaTag: string;
   gameplay: string;
   allyTeam: number
-}>();
+}>()
 
-const meta = computedAsync(async () => await loadArenaMeta(props.arenaTag), null);
-const gameplayType = computed(() => meta.value?.gameplayTypes[props.gameplay]);
+const meta = computedAsync(async () => await loadArenaMeta(props.arenaTag), null)
+const gameplayType = computed(() => meta.value?.gameplayTypes[props.gameplay])
 
 const allyTeamIndex = computed(() => props.allyTeam - 1)
 const enemyTeamIndex = computed(() => props.allyTeam === 1 ? 1 : 0)
@@ -35,12 +35,12 @@ const enemyTeamIndex = computed(() => props.allyTeam === 1 ? 1 : 0)
 const images = Object.fromEntries(
   Object.entries(import.meta.glob<{ default: string }>('./assets/bases/*', { eager: true }))
   .map(([key, value]) => [key.replace('./assets/bases/', '').replace('.png', ''), value.default])
-);
+)
 
 
 function getStyle(v: { x: number, y: number }) {
-  const bbox = meta.value?.boundingBox;
-  if (!bbox) return;
+  const bbox = meta.value?.boundingBox
+  if (!bbox) return
 
   const { x, y } = convertCoordinate(v, bbox)
   return { left: `${x * 100}%`, top: `${y * 100}%` }

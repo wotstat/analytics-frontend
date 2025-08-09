@@ -4,13 +4,13 @@
 
 <script setup lang="ts">
 
-import CanvasVue from "@/components/Canvas.vue";
-import { useQueryStatParams, whereClause } from "@/composition/useQueryStatParams";
-import { query } from "@/db";
-import { ArenaMeta } from "@/utils/arenas";
-import { useDebounce } from "@vueuse/core";
-import { type Range } from 'colorjs.io';
-import { computed, ref, shallowRef, watch } from "vue";
+import CanvasVue from '@/components/Canvas.vue'
+import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams'
+import { query } from '@/db'
+import { ArenaMeta } from '@/utils/arenas'
+import { useDebounce } from '@vueuse/core'
+import { type Range } from 'colorjs.io'
+import { computed, ref, shallowRef, watch } from 'vue'
 
 const canvasRef = ref<InstanceType<typeof CanvasVue> | null>(null)
 
@@ -108,8 +108,8 @@ function redraw(ctx: CanvasRenderingContext2D, width: number, height: number) {
 
       // ctx.strokeRect(x * cellWidth, height - y * cellHeight, cellWidth, -cellHeight)
 
-      ctx.fillStyle = "white"
-      ctx.font = "5px Arial"
+      ctx.fillStyle = 'white'
+      ctx.font = '5px Arial'
 
       ctx.globalAlpha = 1
       // ctx.fillText(value.toFixed(1), x * cellWidth + 5, height - y * cellHeight - 5)

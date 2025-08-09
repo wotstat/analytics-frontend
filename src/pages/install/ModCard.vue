@@ -46,14 +46,14 @@
 
 
 <script setup lang="ts">
-import { computed, ref, useSlots } from 'vue';
+import { computed, ref, useSlots } from 'vue'
 import Github from './assets/github.svg'
-import { useMouseInElement } from '@vueuse/core';
-import { useCardRotation } from '@/composition/useCardRotation';
+import { useMouseInElement } from '@vueuse/core'
+import { useCardRotation } from '@/composition/useCardRotation'
 import CheckMark from './assets/checkmark-bold.svg'
-import { useNextAnimationFrameThrottle } from '@/composition/utils/useNextAnimationFrameThrottle';
-import { show3dEffect, showGlowEffect } from './cardIntaractionControl';
-import { dotSeparatedCompare } from './installer';
+import { useNextAnimationFrameThrottle } from '@/composition/utils/useNextAnimationFrameThrottle'
+import { show3dEffect, showGlowEffect } from './cardIntaractionControl'
+import { dotSeparatedCompare } from './installer'
 import ArrowRight from './assets/arrow-right.svg'
 
 const card = ref<HTMLElement | null>(null)
@@ -98,10 +98,10 @@ const UPDATED_OFFSET = 100
 const elementMousePositionStyle = computed<{ '--element-x': string, '--element-y': string, }>((prev) => {
   if (!showGlowEffect.value || props.preventEffects) return { '--element-x': '-10000px', '--element-y': '-10000px', }
 
-  const distanceX = -Math.min(elementX.value, elementWidth.value - elementX.value);
-  const distanceY = -Math.min(elementY.value, elementHeight.value - elementY.value);
+  const distanceX = -Math.min(elementX.value, elementWidth.value - elementX.value)
+  const distanceY = -Math.min(elementY.value, elementHeight.value - elementY.value)
 
-  if (prev?.['--element-x'] == '0px' || prev?.['--element-y'] == '0px') prev = undefined;
+  if (prev?.['--element-x'] == '0px' || prev?.['--element-y'] == '0px') prev = undefined
 
   if (distanceX > UPDATED_OFFSET || distanceY > UPDATED_OFFSET) {
     return prev || {

@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
 
-import { ref } from 'vue';
+import { ref } from 'vue'
 import Battle from '../shared/Battle.vue'
 import VehicleSelectorBadges from '@/components/vehicleSelector/VehicleSelectorBadges.vue'
 

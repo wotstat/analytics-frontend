@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import ChevronRightComponent from '../assets/chevron.right.bold.svg'
 import type { ContextMenuItemChild } from '../createContextMenu'
-import { computed } from 'vue';
+import { computed } from 'vue'
 
 const props = defineProps<{
   item: ContextMenuItemChild

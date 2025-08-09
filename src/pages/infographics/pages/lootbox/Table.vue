@@ -69,10 +69,10 @@
 
 <script lang="ts" setup>
 
-import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue';
-import TableTitle from "./TableTitle.vue";
-import { Status } from '@/db';
-import { computed } from 'vue';
+import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue'
+import TableTitle from './TableTitle.vue'
+import { Status } from '@/db'
+import { computed } from 'vue'
 
 type LocalizedName = string | [name: string, region: string][]
 
@@ -92,21 +92,21 @@ const props = defineProps<{
   showOther: boolean | undefined
 }>()
 
-const displayOther = computed(() => props.showOther !== false && props.data.some(line => line.other !== undefined));
-const percentSum = computed(() => props.data.reduce((a, v) => a + v.percent, 0));
-const otherSum = computed(() => props.data.reduce((a, v) => a + (v.other ?? 0), 0));
+const displayOther = computed(() => props.showOther !== false && props.data.some(line => line.other !== undefined))
+const percentSum = computed(() => props.data.reduce((a, v) => a + v.percent, 0))
+const otherSum = computed(() => props.data.reduce((a, v) => a + (v.other ?? 0), 0))
 
 function percentFormatter(value: number) {
-  if (value === 0) return '-';
-  return (Math.round(value * 100 * 1000) / 1000).toFixed(3) + '%';
+  if (value === 0) return '-'
+  return (Math.round(value * 100 * 1000) / 1000).toFixed(3) + '%'
 }
 
 function getColor(left: number, right: number) {
-  return Math.abs(left - right) < 0.00001 ? 'yellow' : left > right ? 'red' : 'green';
+  return Math.abs(left - right) < 0.00001 ? 'yellow' : left > right ? 'red' : 'green'
 }
 
 function getCount(title: string) {
-  return props.countGetter ? props.countGetter(title) : Number(title);
+  return props.countGetter ? props.countGetter(title) : Number(title)
 }
 
 

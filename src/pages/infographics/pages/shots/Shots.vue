@@ -73,18 +73,18 @@
 </template>
 
 <script setup lang="ts">
-import ShotsCircle from "@/components/widgets/ShotsCircle.vue";
-import GenericInfo from '@/components/widgets/GenericInfo.vue';
-import ShotDistribution from '@/components/widgets/ShotDistribution.vue';
-import { useFixedSpaceProcessor, usePercentProcessor } from '@/composition/usePercentProcessor';
-import { SHORT_CACHE_SETTINGS, queryAsyncFirst } from "@/db";
-import { computed, ref } from "vue";
-import { useElementVisibility, useMouseInElement } from "@vueuse/core";
-import { getQueryStatParamsCache, useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
-import PopupWindow from "@/components/PopupWindow.vue";
-import ShotInfo from "./shotInfo/Index.vue";
-import { useRoute, useRouter } from "vue-router";
-import { useMeta } from "@/composition/useMeta";
+import ShotsCircle from '@/components/widgets/ShotsCircle.vue'
+import GenericInfo from '@/components/widgets/GenericInfo.vue'
+import ShotDistribution from '@/components/widgets/ShotDistribution.vue'
+import { useFixedSpaceProcessor, usePercentProcessor } from '@/composition/usePercentProcessor'
+import { SHORT_CACHE_SETTINGS, queryAsyncFirst } from '@/db'
+import { computed, ref } from 'vue'
+import { useElementVisibility, useMouseInElement } from '@vueuse/core'
+import { getQueryStatParamsCache, useQueryStatParams, whereClause } from '@/composition/useQueryStatParams'
+import PopupWindow from '@/components/PopupWindow.vue'
+import ShotInfo from './shotInfo/Index.vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useMeta } from '@/composition/useMeta'
 
 useMeta({
   title: 'Статистика стрельбы',
@@ -93,33 +93,33 @@ useMeta({
 })
 
 
-const route = useRoute();
-const router = useRouter();
+const route = useRoute()
+const router = useRouter()
 
-const container = ref<HTMLElement | null>(null);
-const visible = useElementVisibility(container);
-const params = useQueryStatParams();
+const container = ref<HTMLElement | null>(null)
+const visible = useElementVisibility(container)
+const params = useQueryStatParams()
 
-const percent50 = ref<HTMLElement | null>(null);
+const percent50 = ref<HTMLElement | null>(null)
 const { isOutside: isOutside50 } = useMouseInElement(percent50)
 
-const percent30 = ref<HTMLElement | null>(null);
+const percent30 = ref<HTMLElement | null>(null)
 const { isOutside: isOutside30 } = useMouseInElement(percent30)
 
-const shotDistribution = ref<HTMLElement | null>(null);
+const shotDistribution = ref<HTMLElement | null>(null)
 const { isOutside } = useMouseInElement(shotDistribution)
 
-const chartHoverProgress = ref(1);
+const chartHoverProgress = ref(1)
 const hoverProgress = (progress: number) => {
-  chartHoverProgress.value = progress;
+  chartHoverProgress.value = progress
 }
 
 const maskRadius = computed(() => {
   if (selectedShot.value) return 1
-  if (!isOutside.value) return chartHoverProgress.value;
-  if (!isOutside50.value) return 0.5;
-  if (!isOutside30.value) return 0.3333;
-  return 1;
+  if (!isOutside.value) return chartHoverProgress.value
+  if (!isOutside50.value) return 0.5
+  if (!isOutside30.value) return 0.3333
+  return 1
 })
 
 const shotsCount = queryAsyncFirst(`
@@ -142,14 +142,14 @@ from Event_OnShot
 ${whereClause(params)}
 `, { count: 0, hit: 0, damaged: 0, first50: 0, first30: 0, full: 0, stopped: 0, dist300: 0 }, { enabled: visible, settings: getQueryStatParamsCache(params.value) })
 
-const selectedShot = computed(() => route.query.shot as string | undefined);
+const selectedShot = computed(() => route.query.shot as string | undefined)
 
 function onClickShot(shot: string) {
-  router.push({ query: { ...route.query, shot } });
+  router.push({ query: { ...route.query, shot } })
 }
 
 function closeShotInfo() {
-  router.push({ query: { ...route.query, shot: undefined } });
+  router.push({ query: { ...route.query, shot: undefined } })
 }
 
 </script>

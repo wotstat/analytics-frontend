@@ -48,16 +48,16 @@
 
 
 <script setup lang="ts">
-import PopupWindow from '@/components/PopupWindow.vue';
-import { download } from './downloader';
-import { defineAsyncComponent, ref, watch } from 'vue';
+import PopupWindow from '@/components/PopupWindow.vue'
+import { download } from './downloader'
+import { defineAsyncComponent, ref, watch } from 'vue'
 
 import Tada1Src from './assets/tada-1.webp'
 import Tada2Src from './assets/tada-2.webp'
 
-const Confetti = defineAsyncComponent(() => import('@/components/Confetti.vue'));
+const Confetti = defineAsyncComponent(() => import('@/components/Confetti.vue'))
 
-const confetti = ref<InstanceType<typeof Confetti> | null>(null);
+const confetti = ref<InstanceType<typeof Confetti> | null>(null)
 
 type UnpackState = { type: 'not-started' } |
 { type: 'unpacking', index: number, total: number, mod: string } |
@@ -65,8 +65,8 @@ type UnpackState = { type: 'not-started' } |
 { type: 'error', error: string };
 
 
-const visible = ref(false);
-const unpackState = ref<UnpackState>({ type: 'not-started' });
+const visible = ref(false)
+const unpackState = ref<UnpackState>({ type: 'not-started' })
 
 const props = defineProps<{
   mods: string[],
@@ -79,27 +79,27 @@ const emit = defineEmits<{
 }>()
 
 
-const { status, abortController } = download(props.mods, props.vendor);
+const { status, abortController } = download(props.mods, props.vendor)
 setTimeout(() => {
-  if (status.value.type === 'downloading') visible.value = true;
-}, 100);
+  if (status.value.type === 'downloading') visible.value = true
+}, 100)
 
 async function unpack(mods: { filename: string, blob: Blob }[]) {
 
   for (let i = 0; i < mods.length; i++) {
-    const mod = mods[i];
-    unpackState.value = { type: 'unpacking', index: i, total: mods.length, mod: mod.filename };
+    const mod = mods[i]
+    unpackState.value = { type: 'unpacking', index: i, total: mods.length, mod: mod.filename }
 
     try {
-      await props.installMod(mod.filename, mod.blob);
+      await props.installMod(mod.filename, mod.blob)
     } catch (e) {
-      unpackState.value = { type: 'error', error: `Не удалось установить модификацию ${mod.filename}` };
-      console.error('Error installing mod:', e);
-      return;
+      unpackState.value = { type: 'error', error: `Не удалось установить модификацию ${mod.filename}` }
+      console.error('Error installing mod:', e)
+      return
     }
   }
 
-  unpackState.value = { type: 'done' };
+  unpackState.value = { type: 'done' }
 
   effect()
 }
@@ -107,7 +107,7 @@ async function unpack(mods: { filename: string, blob: Blob }[]) {
 function onClose() {
 
   if (status.value.type === 'downloading') {
-    abortController.abort();
+    abortController.abort()
   }
 
   emit('close')
@@ -117,7 +117,7 @@ watch(status, (v, old) => {
   if (v.type == old.type) return
 
   if (v.type == 'done') {
-    visible.value = true;
+    visible.value = true
     unpack(v.mods)
   }
 })
@@ -130,13 +130,13 @@ function effect() {
     tada2Effect()
   }
 
-  setTimeout(() => fire(), 150);
-  setTimeout(() => fire(), 150);
+  setTimeout(() => fire(), 150)
+  setTimeout(() => fire(), 150)
 }
 
 function tada1Effect() {
-  if (!confetti.value) return;
-  if (!confetti.value.start) return;
+  if (!confetti.value) return
+  if (!confetti.value.start) return
 
   confetti.value.start({
     particleCount: 100,
@@ -152,8 +152,8 @@ function tada1Effect() {
 
 
 function tada2Effect() {
-  if (!confetti.value) return;
-  if (!confetti.value.start) return;
+  if (!confetti.value) return
+  if (!confetti.value.start) return
 
   confetti.value.start({
     particleCount: 100,

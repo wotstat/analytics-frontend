@@ -1,5 +1,5 @@
 // useMeta.ts
-import { reactive, watch, onMounted, onActivated } from 'vue';
+import { reactive, watch, onMounted, onActivated } from 'vue'
 
 export interface Meta {
   title?: string;
@@ -19,40 +19,40 @@ export function useMeta(initialMeta: Meta = {}): Meta {
     title: initialMeta.title || '',
     description: initialMeta.description || '',
     keywords: initialMeta.keywords || '',
-  });
+  })
 
   // Function to update the document's meta tags.
   const updateMeta = (): void => {
     // Update document title if provided.
     if (meta.title) {
-      document.title = meta.title;
+      document.title = meta.title
     }
 
     // Update or create the meta description tag.
-    let descriptionTag: HTMLMetaElement | null = document.querySelector('meta[name="description"]');
+    let descriptionTag: HTMLMetaElement | null = document.querySelector('meta[name="description"]')
     if (!descriptionTag) {
-      descriptionTag = document.createElement('meta');
-      descriptionTag.setAttribute('name', 'description');
-      document.head.appendChild(descriptionTag);
+      descriptionTag = document.createElement('meta')
+      descriptionTag.setAttribute('name', 'description')
+      document.head.appendChild(descriptionTag)
     }
-    descriptionTag.setAttribute('content', meta.description || '');
+    descriptionTag.setAttribute('content', meta.description || '')
 
     // Update or create the meta keywords tag.
-    let keywordsTag: HTMLMetaElement | null = document.querySelector('meta[name="keywords"]');
+    let keywordsTag: HTMLMetaElement | null = document.querySelector('meta[name="keywords"]')
     if (!keywordsTag) {
-      keywordsTag = document.createElement('meta');
-      keywordsTag.setAttribute('name', 'keywords');
-      document.head.appendChild(keywordsTag);
+      keywordsTag = document.createElement('meta')
+      keywordsTag.setAttribute('name', 'keywords')
+      document.head.appendChild(keywordsTag)
     }
-    keywordsTag.setAttribute('content', meta.keywords || '');
-  };
+    keywordsTag.setAttribute('content', meta.keywords || '')
+  }
 
   // Watch the reactive meta object for changes and update the meta tags.
-  watch(meta, updateMeta, { deep: true, immediate: true });
+  watch(meta, updateMeta, { deep: true, immediate: true })
 
   // Ensure meta is updated when the component mounts.
-  onMounted(updateMeta);
-  onActivated(updateMeta);
+  onMounted(updateMeta)
+  onActivated(updateMeta)
 
-  return meta;
+  return meta
 }

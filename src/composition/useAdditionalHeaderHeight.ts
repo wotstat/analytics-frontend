@@ -1,5 +1,5 @@
-import { syncRefs, useElementBounding } from "@vueuse/core";
-import { onUnmounted, Ref, ref } from "vue";
+import { syncRefs, useElementBounding } from '@vueuse/core'
+import { onUnmounted, Ref, ref } from 'vue'
 
 
 const additionalHeaderHeight = ref(0)
@@ -11,6 +11,6 @@ export function useAdditionalHeaderHeight() {
 }
 
 export function useDefaultHeaderHeight(header: Ref<HTMLElement | null>) {
-  const { height } = useElementBounding(header);
+  const { height } = useElementBounding(header)
   syncRefs(height, headerHeight)
 }

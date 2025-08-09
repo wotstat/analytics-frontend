@@ -1,5 +1,5 @@
-import { computed, type Component, type MaybeRef, type Ref } from "vue"
-import { createContextMenu, type ContextMenuItem, ContextMenuItemVariant, ContextMenuOptions } from "./createContextMenu"
+import { computed, type Component, type MaybeRef, type Ref } from 'vue'
+import { createContextMenu, type ContextMenuItem, ContextMenuItemVariant, ContextMenuOptions } from './createContextMenu'
 
 
 export const separator = Symbol('separator')

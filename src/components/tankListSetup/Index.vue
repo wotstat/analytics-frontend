@@ -46,16 +46,16 @@
 </template>
 
 <script lang="ts" setup>
-import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
-import { LONG_CACHE_SETTINGS, queryComputed } from '@/db';
-import { useRoute, useRouter } from 'vue-router';
-import ServerStatusWrapper from '../ServerStatusWrapper.vue';
-import { computed, ref } from 'vue';
-import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
-import { getTankName } from '@/utils/i18n';
-import HorizontalScrollItems from '../shared/HorizontalScrollItems.vue';
-import { pausableWatch } from '@vueuse/core';
-import VehicleImage from '../vehicles/vehicle/VehicleImage.vue';
+import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams'
+import { LONG_CACHE_SETTINGS, queryComputed } from '@/db'
+import { useRoute, useRouter } from 'vue-router'
+import ServerStatusWrapper from '../ServerStatusWrapper.vue'
+import { computed, ref } from 'vue'
+import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor'
+import { getTankName } from '@/utils/i18n'
+import HorizontalScrollItems from '../shared/HorizontalScrollItems.vue'
+import { pausableWatch } from '@vueuse/core'
+import VehicleImage from '../vehicles/vehicle/VehicleImage.vue'
 
 
 
@@ -65,25 +65,25 @@ const route = useRoute()
 
 const stats = useQueryStatParams()
 
-const selectedTanks = ref<string[]>([]);
+const selectedTanks = ref<string[]>([])
 
 const selectedToStats = pausableWatch(() => selectedTanks.value, (tanks) => {
-  statsToSelected.pause();
-  const target = { ...route.query, tank: tanks.length != 0 ? tanks.join(',') : undefined };
-  router.push({ query: target });
-  statsToSelected.resume();
-});
+  statsToSelected.pause()
+  const target = { ...route.query, tank: tanks.length != 0 ? tanks.join(',') : undefined }
+  router.push({ query: target })
+  statsToSelected.resume()
+})
 
 const statsToSelected = pausableWatch(() => stats.value.tanks, (tanks) => {
-  selectedToStats.pause();
-  selectedTanks.value = tanks || [];
-  selectedToStats.resume();
-}, { immediate: true });
+  selectedToStats.pause()
+  selectedTanks.value = tanks || []
+  selectedToStats.resume()
+}, { immediate: true })
 
 const fixedSpaceProcessor = useFixedSpaceProcessor(0)
 function logProcessor(value: number) {
-  if (value < 1e6) return fixedSpaceProcessor(value);
-  if (value < 1e9) return (value / 1e6).toFixed(1) + 'M';
+  if (value < 1e6) return fixedSpaceProcessor(value)
+  if (value < 1e9) return (value / 1e6).toFixed(1) + 'M'
 }
 
 const cacheSettings = computed(() => {
@@ -99,7 +99,7 @@ from (select tankTag, toUInt32(count()) as battleCount from Event_OnBattleStart 
 left join (select tankTag, toUInt32(count()) as shotsCount from Event_OnShot ${whereClause(stats.value, { ignore: ['tanks'] })} group by tankTag) as shots on shots.tankTag = battles.tankTag
 order by battleCount desc
 limit 150;
-`, { settings: cacheSettings.value });
+`, { settings: cacheSettings.value })
 
 </script>
 

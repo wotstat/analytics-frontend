@@ -27,11 +27,11 @@ function loadArenasList() {
   if (loadingArenasList === true) return
 
   loadingArenasList = (async () => {
-    console.log('loading arenas list');
+    console.log('loading arenas list')
 
     const response = await (await fetch(`https://raw.githubusercontent.com/IzeBerg/wot-src/${REGION}/sources/res/scripts/arena_defs/_list_.xml`)).text()
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(response, "text/xml");
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(response, 'text/xml')
 
     doc.querySelectorAll('map').forEach(map => {
       const tag = map.querySelector('name')?.textContent
@@ -66,17 +66,17 @@ export async function loadArenaMeta(tag: string): Promise<ArenaMeta> {
   const url = `https://raw.githubusercontent.com/IzeBerg/wot-src/${REGION}/sources/res/scripts/arena_defs/${tag}.xml`
 
   arenasMeta.set(tag, (async () => {
-    console.log(`loading arena ${tag} meta`);
+    console.log(`loading arena ${tag} meta`)
     const response = await (await fetch(url)).text()
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(response, "text/xml");
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(response, 'text/xml')
 
     const parseV2 = (str: string) => {
       const [x, y] = str.split(' ')
       return { x: parseFloat(x), y: parseFloat(y) }
     }
 
-    console.log(doc);
+    console.log(doc)
 
     const name = doc.querySelector('name')!.textContent!
     const boundingBox = doc.querySelector('boundingBox')!

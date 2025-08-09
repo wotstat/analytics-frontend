@@ -36,7 +36,7 @@
 
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed } from 'vue'
 
 type LocalizedName = string | [name: string, region: string][]
 
@@ -61,7 +61,7 @@ const withPercent = computed(() => props.data.map(l => ({
 
 
 function getColor(left: number, right: number) {
-  return Math.abs(left - right) < 0.00001 ? 'yellow' : left > right ? 'red' : 'green';
+  return Math.abs(left - right) < 0.00001 ? 'yellow' : left > right ? 'red' : 'green'
 }
 
 </script>

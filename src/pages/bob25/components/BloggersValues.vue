@@ -9,9 +9,9 @@
 
 
 <script setup lang="ts" generic="T">
-import TweenValue from '@/components/tween/TweenValue.vue';
-import { TweenOptions } from '@/composition/tween/useTweenRef';
-import { computed } from 'vue';
+import TweenValue from '@/components/tween/TweenValue.vue'
+import { TweenOptions } from '@/composition/tween/useTweenRef'
+import { computed } from 'vue'
 
 const props = defineProps<{
   values: number[]

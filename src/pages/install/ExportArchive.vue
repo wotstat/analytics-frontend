@@ -30,14 +30,14 @@
 
 
 <script setup lang="ts">
-import PopupWindow from '@/components/PopupWindow.vue';
-import { download } from './downloader';
-import { ref, watch } from 'vue';
-import { exportArchive } from './exportArchive';
+import PopupWindow from '@/components/PopupWindow.vue'
+import { download } from './downloader'
+import { ref, watch } from 'vue'
+import { exportArchive } from './exportArchive'
 
 import MedalSrc from './assets/medal.webp'
 
-const visible = ref(false);
+const visible = ref(false)
 
 const props = defineProps<{
   mods: string[],
@@ -49,16 +49,16 @@ const emit = defineEmits<{
 }>()
 
 
-const { status, abortController } = download(props.mods, props.vendor);
+const { status, abortController } = download(props.mods, props.vendor)
 setTimeout(() => {
-  if (status.value.type === 'downloading') visible.value = true;
-}, 100);
+  if (status.value.type === 'downloading') visible.value = true
+}, 100)
 
 
 function onClose() {
 
   if (status.value.type === 'downloading') {
-    abortController.abort();
+    abortController.abort()
   }
 
   emit('close')
@@ -70,8 +70,8 @@ watch(status, (v, old) => {
   if (v.type == 'done') {
     exportArchive(v.mods, props.vendor)
       .then(() => {
-        if (!visible.value) emit('close');
-      });
+        if (!visible.value) emit('close')
+      })
   }
 })
 

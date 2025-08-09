@@ -11,10 +11,10 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue'
 import ContextMenuPanel from './ContextMenuPanel.vue'
-import { currentContextMenu } from './createContextMenu';
-import { useEventListener } from '@vueuse/core';
+import { currentContextMenu } from './createContextMenu'
+import { useEventListener } from '@vueuse/core'
 
 const AFTER_ACTION_CLOSE_DELAY = 150
 const FADE_LEAVE_DURATION = 90
@@ -66,12 +66,12 @@ watch(currentContextMenu, menu => {
 })
 
 useEventListener(document, 'pointermove', e => {
-  if (!currentContextMenu.value || !canActivateCloseByPointerUp) return;
+  if (!currentContextMenu.value || !canActivateCloseByPointerUp) return
 
   const distance = Math.sqrt(
     Math.pow(e.clientX - pointerDownPosition.x, 2) +
     Math.pow(e.clientY - pointerDownPosition.y, 2)
-  );
+  )
 
   if (distance > SHOULD_CLOSE_BY_POINTER_UP_THRESHOLD) {
     shouldCloseByPointerUp.value = true
@@ -87,7 +87,7 @@ function close() {
 
 function closeWithAnim() {
   if (fadeLeaveEndTimeout) clearTimeout(fadeLeaveEndTimeout)
-  if (!currentContextMenu.value) return;
+  if (!currentContextMenu.value) return
 
   fadeLeaveActive.value = true
   fadeLeaveEndTimeout = setTimeout(() => {
@@ -100,7 +100,7 @@ function closeWithAnim() {
 const fadeLeaveActive = ref(false)
 let fadeLeaveEndTimeout: Timeout | null = null
 watch(currentContextMenu, menu => {
-  if (!menu) return;
+  if (!menu) return
   fadeLeaveActive.value = false
   if (fadeLeaveEndTimeout) clearTimeout(fadeLeaveEndTimeout)
 })
@@ -125,9 +125,9 @@ useEventListener(document, 'pointerup', (e) => {
 const targetRect = computed(() => {
   if (!currentContextMenu.value) return
 
-  const pos = currentContextMenu.value.options.position;
+  const pos = currentContextMenu.value.options.position
 
-  if (pos instanceof DOMRect) return pos;
+  if (pos instanceof DOMRect) return pos
 
   return new DOMRect(pos.x, pos.y, 0, 0)
 })
@@ -143,7 +143,7 @@ const panelOptions = computed(() => {
 
 function onAction() {
   if (!currentContextMenu.value) return
-  if (currentContextMenu.value.options.closeOnAction) setTimeout(() => closeWithAnim(), AFTER_ACTION_CLOSE_DELAY);
+  if (currentContextMenu.value.options.closeOnAction) setTimeout(() => closeWithAnim(), AFTER_ACTION_CLOSE_DELAY)
 }
 
 </script>

@@ -19,29 +19,29 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted } from 'vue'
 
 const props = defineProps<{
   title?: string;
-}>();
+}>()
 
 const emit = defineEmits<{
   close: [];
-}>();
+}>()
 
 onMounted(() => {
-  document.body.classList.add('no-scroll');
-  document.addEventListener('keydown', onKey);
-});
+  document.body.classList.add('no-scroll')
+  document.addEventListener('keydown', onKey)
+})
 
 onUnmounted(() => {
-  document.body.classList.remove('no-scroll');
-  document.removeEventListener('keydown', onKey);
-});
+  document.body.classList.remove('no-scroll')
+  document.removeEventListener('keydown', onKey)
+})
 
 function onKey(params: KeyboardEvent) {
   if (params.key == 'Escape') {
-    emit('close');
+    emit('close')
   }
 }
 

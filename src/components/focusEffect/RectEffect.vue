@@ -8,13 +8,13 @@
 
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, shallowRef } from 'vue';
+import { computed, onMounted, onUnmounted, shallowRef } from 'vue'
 
 const { element } = defineProps<{
   element: HTMLElement;
 }>()
 
-const borderRadius = element.computedStyleMap().get('border-radius')?.toString();
+const borderRadius = element.computedStyleMap().get('border-radius')?.toString()
 
 
 const rect = shallowRef<{ top: number; left: number; width: number; height: number } | null>(null)
@@ -25,17 +25,17 @@ const effectStyle = computed(() => (rect.value ? {
   width: `${rect.value.width}px`,
   height: `${rect.value.height}px`,
   ['--border-radius']: borderRadius || '0px',
-} : null));
+} : null))
 
-let animationFrameHandle: ReturnType<typeof requestAnimationFrame> | null = null;
+let animationFrameHandle: ReturnType<typeof requestAnimationFrame> | null = null
 function animationFrame() {
-  if (!element.isConnected) return rect.value = null;
-  animationFrameHandle = requestAnimationFrame(animationFrame);
+  if (!element.isConnected) return rect.value = null
+  animationFrameHandle = requestAnimationFrame(animationFrame)
 
-  const bounding = element.getBoundingClientRect();
+  const bounding = element.getBoundingClientRect()
   if (bounding.width === 0 || bounding.height === 0) {
-    rect.value = null;
-    return;
+    rect.value = null
+    return
   }
 
   rect.value = {
@@ -43,17 +43,17 @@ function animationFrame() {
     left: bounding.left,
     width: bounding.width,
     height: bounding.height,
-  };
+  }
 }
 
 
-onMounted(() => { animationFrame() });
+onMounted(() => { animationFrame() })
 onUnmounted(() => {
   if (animationFrameHandle) {
-    cancelAnimationFrame(animationFrameHandle);
-    animationFrameHandle = null;
+    cancelAnimationFrame(animationFrameHandle)
+    animationFrameHandle = null
   }
-});
+})
 
 </script>
 

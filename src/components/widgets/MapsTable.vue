@@ -115,25 +115,25 @@
 </template>
 
 <script setup lang="ts">
-import { StatParams, getQueryStatParamsCache, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams';
-import { Status, queryAsync, queryComputed } from '@/db';
-import { timeProcessor, whereSum } from '@/utils';
-import { getArenaName } from '@/utils/i18n';
-import { customBattleModesKeys, customBattleModes } from '@/utils/wot';
-import { useElementVisibility, useElementSize, useLocalStorage } from '@vueuse/core';
-import { ShallowRef, computed, ref, shallowRef, watch, watchEffect } from 'vue';
-import ServerStatusWrapper from '../ServerStatusWrapper.vue';
+import { StatParams, getQueryStatParamsCache, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams'
+import { Status, queryAsync, queryComputed } from '@/db'
+import { timeProcessor, whereSum } from '@/utils'
+import { getArenaName } from '@/utils/i18n'
+import { customBattleModesKeys, customBattleModes } from '@/utils/wot'
+import { useElementVisibility, useElementSize, useLocalStorage } from '@vueuse/core'
+import { ShallowRef, computed, ref, shallowRef, watch, watchEffect } from 'vue'
+import ServerStatusWrapper from '../ServerStatusWrapper.vue'
 
 const { params } = defineProps<{
   params: StatParams
 }>()
 
-const container = ref<HTMLElement | null>(null);
-const firstColumn = ref<HTMLElement | null>(null);
-const visible = useElementVisibility(container);
+const container = ref<HTMLElement | null>(null)
+const firstColumn = ref<HTMLElement | null>(null)
+const visible = useElementVisibility(container)
 
-const { width } = useElementSize(container);
-const { width: firstWidth } = useElementSize(firstColumn);
+const { width } = useElementSize(container)
+const { width: firstWidth } = useElementSize(firstColumn)
 
 
 const battleResult = ref<'any' | 'win' | 'lose'>('any')
@@ -141,10 +141,10 @@ const battleMode = ref<keyof typeof customBattleModes | 'any'>('any')
 
 type Selected = 'count' | 'damage' | 'radio' | 'block' | 'kills' | 'duration' | 'lifeTime' | 'mgSum'
 function click(name: Selected) {
-  hightlight.value = name;
+  hightlight.value = name
 }
 
-const hightlight = useLocalStorage<Selected>('MapsTableColumnSelected', 'count');
+const hightlight = useLocalStorage<Selected>('MapsTableColumnSelected', 'count')
 
 const expressions = computed(() => {
   let result = []
@@ -211,8 +211,8 @@ order by count desc;
   `, { settings: getQueryStatParamsCache(params) })
 
 const resultProcessed = computed(() => {
-  const m = battleResult.value;
-  const r = dataQ.value.data ?? [];
+  const m = battleResult.value
+  const r = dataQ.value.data ?? []
 
   return r.map(t => ({
     count: m == 'any' ? t.count : m == 'win' ? t.winCount : t.loseCount,
@@ -229,8 +229,8 @@ const resultProcessed = computed(() => {
 })
 
 const ordered = computed(() => {
-  const percentSum = resultProcessed.value.reduce((acc, item) => acc + item.count, 0) ?? 1;
-  const maxBattleCount = Math.max(...resultProcessed.value.map(item => item.count) ?? [0]);
+  const percentSum = resultProcessed.value.reduce((acc, item) => acc + item.count, 0) ?? 1
+  const maxBattleCount = Math.max(...resultProcessed.value.map(item => item.count) ?? [0])
 
   return resultProcessed.value.sort((a, b) => b[hightlight.value] - a[hightlight.value])
     .map(item => ({
@@ -241,7 +241,7 @@ const ordered = computed(() => {
 
 const hightlighted = computed(() => {
   const hightlightValue = hightlight.value
-  const max = Math.max(...resultProcessed.value.map(item => item[hightlight.value]) ?? [0]);
+  const max = Math.max(...resultProcessed.value.map(item => item[hightlight.value]) ?? [0])
   return resultProcessed.value.map(t => t[hightlightValue] / max * (width.value - firstWidth.value) * 0.9)
 })
 

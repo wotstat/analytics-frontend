@@ -1,9 +1,9 @@
-import { CACHE_SETTINGS, LONG_CACHE_SETTINGS, query, queryAsync, SHORT_CACHE_SETTINGS, Status, success, SUPER_SHORT_CACHE_SETTINGS } from "@/db";
-import { computed, Ref, shallowRef, watch } from "vue";
-import { bloggerGameIdArrayToArray, bloggerGameIdToIndex, bloggerNameByGameId, bloggerRecordToArray, bloggerTimeSeriesProcess } from "./bloggerNames";
-import { useDebounceFn, useIntervalFn, useLocalStorage } from "@vueuse/core";
-import { getLast24HourBorders, getLastHourBorders, getTodayBorders, getYesterdayBorders } from "./timeUtils";
-import { crossTablePeriod } from "../store";
+import { CACHE_SETTINGS, LONG_CACHE_SETTINGS, query, queryAsync, SHORT_CACHE_SETTINGS, Status, success, SUPER_SHORT_CACHE_SETTINGS } from '@/db'
+import { computed, Ref, shallowRef, watch } from 'vue'
+import { bloggerGameIdArrayToArray, bloggerGameIdToIndex, bloggerNameByGameId, bloggerRecordToArray, bloggerTimeSeriesProcess } from './bloggerNames'
+import { useDebounceFn, useIntervalFn, useLocalStorage } from '@vueuse/core'
+import { getLast24HourBorders, getLastHourBorders, getTodayBorders, getYesterdayBorders } from './timeUtils'
+import { crossTablePeriod } from '../store'
 
 export const periodVariants = [
   { value: 'day1', label: 'День 1' },
@@ -582,9 +582,9 @@ export function useSkillsHistory() {
       let currentSkill = { skill: 'default', start: 0, end: 0 }
 
       for (let i = 0; i < data.length; i++) {
-        const t = data[i];
+        const t = data[i]
         // TODO: await 1 hour, ddos break deltas
-        if (t.startD - currentSkill.start < 60 * 40 || t.skill == 'default') continue;
+        if (t.startD - currentSkill.start < 60 * 40 || t.skill == 'default') continue
         skills.push(currentSkill)
         if (currentSkill.end - currentSkill.start > 60 * 60 * 1.2)
           skills.push({ skill: currentSkill.skill, start: currentSkill.end - 60 * 60, end: currentSkill.end })

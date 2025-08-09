@@ -1,4 +1,4 @@
-import { ref, Ref, toValue, watch } from "vue";
+import { ref, Ref, toValue, watch } from 'vue'
 
 
 export function useNextAnimationFrameThrottle<T>(value: Ref<T>): Ref<T> {

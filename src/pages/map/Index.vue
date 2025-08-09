@@ -152,70 +152,70 @@
 
 <script setup lang="ts">
 
-import SettingsTitle from '@/pages/infographics/settings/SettingsTitle.vue';
-import StatParamsTitle from "@/components/StatParamsTitle.vue";
-import MinimapOverlays from '@/components/minimapOverlay/Index.vue';
-import PopupWindow from '@/components/PopupWindow.vue';
-import ShotInfo from "@/pages/infographics/pages/shots/shotInfo/Index.vue";
-import CanvasVue from "@/components/Canvas.vue";
-import EfficiencyPopup from "./Efficiency.vue";
-import Heatmap from "./Heatmap.vue";
-import Clustering from "./Clustering.vue";
+import SettingsTitle from '@/pages/infographics/settings/SettingsTitle.vue'
+import StatParamsTitle from '@/components/StatParamsTitle.vue'
+import MinimapOverlays from '@/components/minimapOverlay/Index.vue'
+import PopupWindow from '@/components/PopupWindow.vue'
+import ShotInfo from '@/pages/infographics/pages/shots/shotInfo/Index.vue'
+import CanvasVue from '@/components/Canvas.vue'
+import EfficiencyPopup from './Efficiency.vue'
+import Heatmap from './Heatmap.vue'
+import Clustering from './Clustering.vue'
 
-import { useQueryStatParams, whereClause } from "@/composition/useQueryStatParams";
-import { query, queryComputed } from '@/db';
-import { aranaMinimapUrl, convertCoordinate, loadArenaMeta } from '@/utils/arenas';
-import { getArenaName } from '@/utils/i18n';
-import { computedAsync, useDebounce, useLocalStorage, useMouseInElement } from '@vueuse/core';
-import { computed, ref, watch, watchEffect } from 'vue';
-import { BloomColor } from '@/components/bloomColors';
-import { Quadtree, Circle } from '@timohausmann/quadtree-ts';
-import { useRoute, useRouter } from 'vue-router';
+import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams'
+import { query, queryComputed } from '@/db'
+import { aranaMinimapUrl, convertCoordinate, loadArenaMeta } from '@/utils/arenas'
+import { getArenaName } from '@/utils/i18n'
+import { computedAsync, useDebounce, useLocalStorage, useMouseInElement } from '@vueuse/core'
+import { computed, ref, watch, watchEffect } from 'vue'
+import { BloomColor } from '@/components/bloomColors'
+import { Quadtree, Circle } from '@timohausmann/quadtree-ts'
+import { useRoute, useRouter } from 'vue-router'
 
-import Color from 'colorjs.io';
-import { useQueryParamStorage } from '@/composition/useQueryParamStorage';
-import { gameplayTypes } from '@/utils/wot';
+import Color from 'colorjs.io'
+import { useQueryParamStorage } from '@/composition/useQueryParamStorage'
+import { gameplayTypes } from '@/utils/wot'
 
-const LOAD_COUNT = 2000;
-const HOVER_RADIUS = 0.05;
-const CLICK_RADIUS = 0.005;
+const LOAD_COUNT = 2000
+const HOVER_RADIUS = 0.05
+const CLICK_RADIUS = 0.005
 
 const MAIN_COLOR_RANGE = new Color(BloomColor.green.main).range(new Color(BloomColor.gold.main), {
   space: 'lch',
   outputSpace: 'srgb',
-});
+})
 
 const BLOOM_COLOR_RANGE = new Color(BloomColor.green.bloom).range(new Color(BloomColor.gold.bloom), {
   space: 'lch',
   outputSpace: 'srgb',
-});
+})
 
 
-const params = useQueryStatParams();
+const params = useQueryStatParams()
 
-const containerRef = ref<HTMLElement | null>(null);
-const canvasRef = ref<InstanceType<typeof CanvasVue> | null>(null);
-const hoverCanvasRef = ref<InstanceType<typeof CanvasVue> | null>(null);
-const tracerCanvasRef = ref<InstanceType<typeof CanvasVue> | null>(null);
-const tracerCtx = computed(() => tracerCanvasRef.value?.context());
+const containerRef = ref<HTMLElement | null>(null)
+const canvasRef = ref<InstanceType<typeof CanvasVue> | null>(null)
+const hoverCanvasRef = ref<InstanceType<typeof CanvasVue> | null>(null)
+const tracerCanvasRef = ref<InstanceType<typeof CanvasVue> | null>(null)
+const tracerCtx = computed(() => tracerCanvasRef.value?.context())
 
-const selectedMap = useQueryParamStorage<string>('map', '');
-const selectedTeam = useQueryParamStorage<1 | 2>('team', 1);
-const selectedGameplay = useQueryParamStorage<string>('gameplay', 'ctf');
-const selectedDisplay = ref<'shots' | 'group'>('shots');
-const selectedPointVariant = ref<'gun' | 'target' | 'all'>('all');
-const selectedTracerEnd = ref<'clientMarkerPoint' | 'serverMarkerPoint' | 'tracerEnd' | 'hitPoint'>('tracerEnd');
-const selectedFrom = ref(0);
-const showTracers = useLocalStorage('mapShowTracers', true);
-const highlightTracers = useLocalStorage('mapHighlightTracers', false);
-const selectedTo = ref(180);
+const selectedMap = useQueryParamStorage<string>('map', '')
+const selectedTeam = useQueryParamStorage<1 | 2>('team', 1)
+const selectedGameplay = useQueryParamStorage<string>('gameplay', 'ctf')
+const selectedDisplay = ref<'shots' | 'group'>('shots')
+const selectedPointVariant = ref<'gun' | 'target' | 'all'>('all')
+const selectedTracerEnd = ref<'clientMarkerPoint' | 'serverMarkerPoint' | 'tracerEnd' | 'hitPoint'>('tracerEnd')
+const selectedFrom = ref(0)
+const showTracers = useLocalStorage('mapShowTracers', true)
+const highlightTracers = useLocalStorage('mapHighlightTracers', false)
+const selectedTo = ref(180)
 
-const selectedEfficiencyVariant = ref<'hits' | 'dmg' | 'custom'>('hits');
+const selectedEfficiencyVariant = ref<'hits' | 'dmg' | 'custom'>('hits')
 const selectedEfficiency = ref({
   expression: 'length(results.order) > 0',
   from: 0,
   to: 1,
-});
+})
 
 const heatmapParams = computed(() => {
   return {
@@ -248,29 +248,29 @@ const clusteringParams = computed(() => {
 
 const efficiencyPopup = ref(false)
 
-const arenaTag = computed(() => selectedMap.value?.split('/')[1]);
-const arenaMeta = computedAsync(async () => arenaTag.value ? await loadArenaMeta(arenaTag.value) : null);
+const arenaTag = computed(() => selectedMap.value?.split('/')[1])
+const arenaMeta = computedAsync(async () => arenaTag.value ? await loadArenaMeta(arenaTag.value) : null)
 
-const totalDraw = ref(0);
+const totalDraw = ref(0)
 const nearestShotId = ref<string | null>(null)
 
 const { elementX, elementY, isOutside } = useMouseInElement(containerRef)
 watch(() => [elementX.value, elementY.value, isOutside.value], () => hoverCanvasRef.value?.redraw())
 
-const bloomCache = new Map<number, string>();
+const bloomCache = new Map<number, string>()
 function bloomColor(efficiency: number) {
-  if (bloomCache.has(efficiency)) return bloomCache.get(efficiency)!;
-  const color = BLOOM_COLOR_RANGE((efficiency - selectedEfficiency.value.from) / (selectedEfficiency.value.to - selectedEfficiency.value.from)).toString();
-  bloomCache.set(efficiency, color);
-  return color;
+  if (bloomCache.has(efficiency)) return bloomCache.get(efficiency)!
+  const color = BLOOM_COLOR_RANGE((efficiency - selectedEfficiency.value.from) / (selectedEfficiency.value.to - selectedEfficiency.value.from)).toString()
+  bloomCache.set(efficiency, color)
+  return color
 }
 
-const mainCache = new Map<number, string>();
+const mainCache = new Map<number, string>()
 function mainColor(efficiency: number) {
-  if (mainCache.has(efficiency)) return mainCache.get(efficiency)!;
-  const color = MAIN_COLOR_RANGE((efficiency - selectedEfficiency.value.from) / (selectedEfficiency.value.to - selectedEfficiency.value.from)).toString();
-  mainCache.set(efficiency, color);
-  return color;
+  if (mainCache.has(efficiency)) return mainCache.get(efficiency)!
+  const color = MAIN_COLOR_RANGE((efficiency - selectedEfficiency.value.from) / (selectedEfficiency.value.to - selectedEfficiency.value.from)).toString()
+  mainCache.set(efficiency, color)
+  return color
 }
 
 const quadTree = new Quadtree({
@@ -279,7 +279,7 @@ const quadTree = new Quadtree({
   width: 1,
   height: 1,
   maxLevels: 5,
-});
+})
 
 
 const arenas = queryComputed<{ tag: string, count: number }>(() => `
@@ -287,17 +287,17 @@ select arenaTag as tag, count() as count from Event_OnShot
 ${whereClause(params)}
 group by arenaTag
 order by count desc
-`);
+`)
 
 const dbGameplayTypes = queryComputed<{ gameplay: string }>(() => `
 select distinct battleGameplay as gameplay from Event_OnShot
 where arenaTag = '${selectedMap.value}'
 ${whereClause(params, { withWhere: false })}
-`);
+`)
 
 const availableGameplayTypes = computed(() => {
   if (!dbGameplayTypes.value) return []
-  return dbGameplayTypes.value.data.map(t => t.gameplay);
+  return dbGameplayTypes.value.data.map(t => t.gameplay)
 })
 
 // watch(arenas, (value) => {
@@ -313,78 +313,78 @@ const availableGameplayTypes = computed(() => {
 // })
 
 const arenaMinimapUrl = computedAsync(() => {
-  if (selectedMap.value == null) return null;
-  return aranaMinimapUrl(selectedMap.value);
+  if (selectedMap.value == null) return null
+  return aranaMinimapUrl(selectedMap.value)
 })
 
 function hoverRender(ctx: CanvasRenderingContext2D, width: number, height: number) {
-  nearestShotId.value = null;
-  if (isOutside.value) return;
+  nearestShotId.value = null
+  if (isOutside.value) return
 
-  const x = elementX.value / width;
-  const y = elementY.value / height;
+  const x = elementX.value / width
+  const y = elementY.value / height
 
   const shots = quadTree.retrieve(new Circle({
     x, y, r: HOVER_RADIUS * 2,
-  })) as Circle<Point>[];
+  })) as Circle<Point>[]
 
-  if (shots.length == 0) return;
+  if (shots.length == 0) return
 
-  const r = width / 500;
-  const tracerWidth = width / 1000;
+  const r = width / 500
+  const tracerWidth = width / 1000
 
 
   let nearest = shots[0]
   let distance = (nearest.x - x) ** 2 + (nearest.y - y) ** 2
   for (const shot of shots) {
-    if (!shot.data) continue;
+    if (!shot.data) continue
 
     const d = (shot.x - x) ** 2 + (shot.y - y) ** 2
     if (d < distance) {
-      distance = d;
-      nearest = shot;
+      distance = d
+      nearest = shot
     }
 
-    if (distance > HOVER_RADIUS ** 2) continue;
+    if (distance > HOVER_RADIUS ** 2) continue
     const alpha = Math.max(0, Math.min(1, 1 - d / HOVER_RADIUS ** 2))
-    if (alpha == 0) continue;
+    if (alpha == 0) continue
 
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = mainColor(shot.data.efficiency);
-    ctx.beginPath();
-    ctx.arc(shot.x * width, shot.y * width, r, 0, 2 * Math.PI);
-    ctx.fill();
+    ctx.globalAlpha = alpha
+    ctx.fillStyle = mainColor(shot.data.efficiency)
+    ctx.beginPath()
+    ctx.arc(shot.x * width, shot.y * width, r, 0, 2 * Math.PI)
+    ctx.fill()
 
-    ctx.strokeStyle = bloomColor(shot.data.efficiency);
-    ctx.beginPath();
-    ctx.moveTo(shot.data.tankPos.x * width, shot.data.tankPos.y * height);
-    ctx.lineTo(shot.data.hitPos.x * width, shot.data.hitPos.y * height);
-    ctx.lineWidth = tracerWidth;
-    ctx.stroke();
+    ctx.strokeStyle = bloomColor(shot.data.efficiency)
+    ctx.beginPath()
+    ctx.moveTo(shot.data.tankPos.x * width, shot.data.tankPos.y * height)
+    ctx.lineTo(shot.data.hitPos.x * width, shot.data.hitPos.y * height)
+    ctx.lineWidth = tracerWidth
+    ctx.stroke()
 
   }
 
   if (distance < CLICK_RADIUS ** 2) {
-    ctx.globalAlpha = 1;
-    ctx.shadowBlur = width / 200;
+    ctx.globalAlpha = 1
+    ctx.shadowBlur = width / 200
 
     if (nearest.data && highlightTracers.value) {
-      ctx.beginPath();
-      ctx.strokeStyle = BloomColor.blue.main;
-      ctx.shadowColor = BloomColor.blue.bloom;
-      ctx.moveTo(nearest.data.tankPos.x * width, nearest.data.tankPos.y * height);
-      ctx.lineTo(nearest.data.hitPos.x * width, nearest.data.hitPos.y * height);
-      ctx.lineWidth = tracerWidth * 2;
-      ctx.stroke();
+      ctx.beginPath()
+      ctx.strokeStyle = BloomColor.blue.main
+      ctx.shadowColor = BloomColor.blue.bloom
+      ctx.moveTo(nearest.data.tankPos.x * width, nearest.data.tankPos.y * height)
+      ctx.lineTo(nearest.data.hitPos.x * width, nearest.data.hitPos.y * height)
+      ctx.lineWidth = tracerWidth * 2
+      ctx.stroke()
     }
 
-    ctx.fillStyle = BloomColor.blue.main;
-    ctx.shadowColor = BloomColor.blue.bloom;
-    ctx.beginPath();
-    ctx.arc(nearest.x * width, nearest.y * width, r * 2, 0, 2 * Math.PI);
-    ctx.fill();
+    ctx.fillStyle = BloomColor.blue.main
+    ctx.shadowColor = BloomColor.blue.bloom
+    ctx.beginPath()
+    ctx.arc(nearest.x * width, nearest.y * width, r * 2, 0, 2 * Math.PI)
+    ctx.fill()
 
-    nearestShotId.value = nearest.data?.id ?? null;
+    nearestShotId.value = nearest.data?.id ?? null
   }
 
 }
@@ -393,17 +393,17 @@ function hoverRender(ctx: CanvasRenderingContext2D, width: number, height: numbe
 let shotsData: { id: string, x: number, z: number, hitX: number, hitZ: number, efficiency: number }[] = []
 type Coord = NonNullable<ReturnType<typeof relativeCoordinate>>
 type Point = typeof shotsData[number] & { tankPos: Coord, hitPos: Coord }
-let loading = false;
-let loadingFinished = false;
+let loading = false
+let loadingFinished = false
 
 async function loadNextBatch() {
-  if (loading) return;
-  if (loadingFinished) return;
-  if (!selectedMap.value) return;
+  if (loading) return
+  if (loadingFinished) return
+  if (!selectedMap.value) return
 
-  loading = true;
+  loading = true
 
-  console.log(`load ${LOAD_COUNT} shots offset ${shotsData.length}`);
+  console.log(`load ${LOAD_COUNT} shots offset ${shotsData.length}`)
 
   const result = await query<{ id: string, x: number, z: number, hitX: number, hitZ: number, efficiency: number }>(`
       select
@@ -461,10 +461,10 @@ async function loadNextBatch() {
     hitX: row.hitX,
     hitZ: row.hitZ,
     efficiency: row.efficiency,
-  })));
+  })))
 
-  loadingFinished = result.data.length < LOAD_COUNT;
-  loading = false;
+  loadingFinished = result.data.length < LOAD_COUNT
+  loading = false
 }
 
 function relativeCoordinate(x: number, y: number) {
@@ -474,11 +474,11 @@ function relativeCoordinate(x: number, y: number) {
 }
 
 function* redrawGenerator(ctx: CanvasRenderingContext2D, width: number, height: number) {
-  const DRAW_COUNT = 500;
-  const r = width / 500;
-  const tracerWidth = width / 5000;
-  tracerCtx.value?.clearRect(0, 0, width, height);
-  quadTree.clear();
+  const DRAW_COUNT = 500
+  const r = width / 500
+  const tracerWidth = width / 5000
+  tracerCtx.value?.clearRect(0, 0, width, height)
+  quadTree.clear()
 
   yield 100
 
@@ -486,7 +486,7 @@ function* redrawGenerator(ctx: CanvasRenderingContext2D, width: number, height: 
     const tankPos = relativeCoordinate(shot.x, shot.z)
     const hitPos = relativeCoordinate(shot.hitX, shot.hitZ)
 
-    if (!tankPos || !hitPos) return;
+    if (!tankPos || !hitPos) return
     if (!tracerCtx.value) return
     const variant = selectedPointVariant.value
 
@@ -501,7 +501,7 @@ function* redrawGenerator(ctx: CanvasRenderingContext2D, width: number, height: 
       }
     }))
 
-    ctx.shadowBlur = width / 200;
+    ctx.shadowBlur = width / 200
     const bloomColorValue = bloomColor(shot.efficiency)
     const mainColorValue = mainColor(shot.efficiency)
     // HIT 
@@ -511,10 +511,10 @@ function* redrawGenerator(ctx: CanvasRenderingContext2D, width: number, height: 
         ctx.shadowColor = bloomColorValue
         ctx.strokeStyle = bloomColorValue
 
-        ctx.beginPath();
-        ctx.arc(hitPos.x * width, hitPos.y * width, r / 2, 0, 2 * Math.PI);
-        ctx.closePath();
-        ctx.fill();
+        ctx.beginPath()
+        ctx.arc(hitPos.x * width, hitPos.y * width, r / 2, 0, 2 * Math.PI)
+        ctx.closePath()
+        ctx.fill()
       }
     }
 
@@ -531,26 +531,26 @@ function* redrawGenerator(ctx: CanvasRenderingContext2D, width: number, height: 
         }
 
 
-        ctx.beginPath();
-        ctx.arc(tankPos.x * width, tankPos.y * width, r, 0, 2 * Math.PI);
-        ctx.closePath();
-        ctx.fill();
+        ctx.beginPath()
+        ctx.arc(tankPos.x * width, tankPos.y * width, r, 0, 2 * Math.PI)
+        ctx.closePath()
+        ctx.fill()
       }
     }
 
     // TRACER
     {
-      const ctx = tracerCtx.value;
+      const ctx = tracerCtx.value
 
       ctx.shadowColor = bloomColorValue
       ctx.strokeStyle = bloomColorValue
-      ctx.shadowBlur = 5;
+      ctx.shadowBlur = 5
 
-      ctx.beginPath();
-      ctx.moveTo(tankPos.x * width, tankPos.y * width);
-      ctx.lineTo(hitPos.x * width, hitPos.y * width);
-      ctx.lineWidth = tracerWidth;
-      ctx.stroke();
+      ctx.beginPath()
+      ctx.moveTo(tankPos.x * width, tankPos.y * width)
+      ctx.lineTo(hitPos.x * width, hitPos.y * width)
+      ctx.lineWidth = tracerWidth
+      ctx.stroke()
     }
 
     drawCount += 1
@@ -571,9 +571,9 @@ function* redrawGenerator(ctx: CanvasRenderingContext2D, width: number, height: 
       drawShot(shot)
     }
 
-    console.log(`Draw ${drawCount} / ${shotsData.length} shots`);
+    console.log(`Draw ${drawCount} / ${shotsData.length} shots`)
 
-    totalDraw.value = drawCount;
+    totalDraw.value = drawCount
     yield 10
   }
 }
@@ -664,7 +664,7 @@ async function loadPreparedHeatmap() {
 
   // console.log('Loaded2', result.data);
 
-  shotsDataPrepared = result.data;
+  shotsDataPrepared = result.data
 
 }
 
@@ -678,7 +678,7 @@ const colorByType = {
 
 function* redrawGeneratorPrepared(ctx: CanvasRenderingContext2D, width: number, height: number) {
   yield 100
-  console.log('redraw');
+  console.log('redraw')
   if (shotsDataPrepared.length == 0)
     loadPreparedHeatmap()
 
@@ -689,38 +689,38 @@ function* redrawGeneratorPrepared(ctx: CanvasRenderingContext2D, width: number, 
       continue
     }
 
-    const targetToDraw = shotsDataPrepared.length - drawCount;
+    const targetToDraw = shotsDataPrepared.length - drawCount
 
     if (targetToDraw == 0) {
-      console.log("DONE")
+      console.log('DONE')
       break
     }
 
-    console.log(shotsDataPrepared);
+    console.log(shotsDataPrepared)
 
     while (shotsDataPrepared.length - drawCount != 0) {
 
       for (drawCount; drawCount < shotsDataPrepared.length; drawCount++) {
-        const shot = shotsDataPrepared[drawCount];
+        const shot = shotsDataPrepared[drawCount]
 
         for (let i = 0; i < 1; i++) {
           const tankPos = relativeCoordinate(shot.x + Math.random() * 2 - 1, shot.z + Math.random() * 2 - 1)
           const hitPos = relativeCoordinate(shot.hitX + Math.random() * 2 - 1, shot.hitZ + Math.random() * 2 - 1)
 
-          if (!tankPos || !hitPos) continue;
+          if (!tankPos || !hitPos) continue
 
-          ctx.lineWidth = 1;
+          ctx.lineWidth = 1
           const colorType = colorByType[shot.tankType as keyof typeof colorByType]
           ctx.strokeStyle = `rgba(${colorType[0]}, ${colorType[1]}, ${colorType[2]}, ${shot.efficiency * 1000})`
 
-          ctx.beginPath();
-          ctx.moveTo(tankPos.x * width, tankPos.y * width);
-          ctx.lineTo(hitPos.x * width, hitPos.y * width);
-          ctx.stroke();
+          ctx.beginPath()
+          ctx.moveTo(tankPos.x * width, tankPos.y * width)
+          ctx.lineTo(hitPos.x * width, hitPos.y * width)
+          ctx.stroke()
         }
 
         if (drawCount % 100000 == 0) {
-          console.log(`Drawed ${drawCount}`);
+          console.log(`Drawed ${drawCount}`)
 
           yield 1
         }
@@ -730,7 +730,7 @@ function* redrawGeneratorPrepared(ctx: CanvasRenderingContext2D, width: number, 
       yield 10
     }
 
-    console.log('draw');
+    console.log('draw')
     break
 
 
@@ -739,8 +739,8 @@ function* redrawGeneratorPrepared(ctx: CanvasRenderingContext2D, width: number, 
   }
 }
 
-const debouncedFrom = useDebounce(selectedFrom, 500);
-const debouncedTo = useDebounce(selectedTo, 500);
+const debouncedFrom = useDebounce(selectedFrom, 500)
+const debouncedTo = useDebounce(selectedTo, 500)
 
 watch(() => [
   selectedTeam.value,
@@ -753,25 +753,25 @@ watch(() => [
   availableGameplayTypes.value], () => {
     shotsData = []
     shotsDataPrepared = []
-    loading = false;
-    loadingFinished = false;
+    loading = false
+    loadingFinished = false
     canvasRef.value?.redraw()
   }, { immediate: true })
 
 
 
-const route = useRoute();
-const router = useRouter();
-const selectedShot = computed(() => route.query.shot as string | undefined);
+const route = useRoute()
+const router = useRouter()
+const selectedShot = computed(() => route.query.shot as string | undefined)
 
 function onClickShot() {
   if (nearestShotId.value) {
-    router.push({ query: { ...route.query, shot: nearestShotId.value } });
+    router.push({ query: { ...route.query, shot: nearestShotId.value } })
   }
 }
 
 function closeShotInfo() {
-  router.push({ query: { ...route.query, shot: undefined } });
+  router.push({ query: { ...route.query, shot: undefined } })
 }
 
 </script>

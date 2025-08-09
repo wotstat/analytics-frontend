@@ -42,15 +42,15 @@
 
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import BloggerName from './blogger/BloggerName.vue';
-import { bloggerNamesArray } from './bloggerNames';
-import DropDown from '@/components/dropdown/DropDown.vue';
-import { crossPeriodVariants, crossTablePeriod } from '../store';
+import { ref, watch } from 'vue'
+import BloggerName from './blogger/BloggerName.vue'
+import { bloggerNamesArray } from './bloggerNames'
+import DropDown from '@/components/dropdown/DropDown.vue'
+import { crossPeriodVariants, crossTablePeriod } from '../store'
 
 
-const table = ref<HTMLTableElement | null>(null);
-const hovered = ref<{ i: number, j: number } | null>(null);
+const table = ref<HTMLTableElement | null>(null)
+const hovered = ref<{ i: number, j: number } | null>(null)
 const disposer: (() => void)[] = []
 
 const props = defineProps<{
@@ -60,12 +60,12 @@ const props = defineProps<{
 }>()
 
 function hover(i: number, j: number) {
-  hovered.value = { i, j };
+  hovered.value = { i, j }
 }
 
 function unHover(i: number, j: number) {
   if (hovered.value?.i == i && hovered.value?.j == j) {
-    hovered.value = null;
+    hovered.value = null
   }
 }
 
@@ -76,24 +76,24 @@ function format(value: number) {
 watch(table, (t, old) => {
 
   if (disposer.length) {
-    disposer.forEach(d => d());
-    disposer.length = 0;
+    disposer.forEach(d => d())
+    disposer.length = 0
   }
 
   if (t) {
-    const rows = t.rows;
+    const rows = t.rows
     for (let i = 0; i < rows.length; i++) {
       for (let j = 0; j < rows[i].cells.length; j++) {
-        const cell = rows[i].cells[j];
+        const cell = rows[i].cells[j]
 
-        const pointerover = () => hover(i, j);
-        const pointerout = () => unHover(i, j);
+        const pointerover = () => hover(i, j)
+        const pointerout = () => unHover(i, j)
         disposer.push(() => {
-          cell.removeEventListener('pointerover', pointerover);
-          cell.removeEventListener('pointerout', pointerout);
+          cell.removeEventListener('pointerover', pointerover)
+          cell.removeEventListener('pointerout', pointerout)
         })
-        cell.addEventListener('pointerover', pointerover);
-        cell.addEventListener('pointerout', pointerout);
+        cell.addEventListener('pointerover', pointerover)
+        cell.addEventListener('pointerout', pointerout)
 
       }
     }

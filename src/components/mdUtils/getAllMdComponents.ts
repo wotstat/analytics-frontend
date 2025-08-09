@@ -1,4 +1,4 @@
-import { Component } from "vue"
+import { Component } from 'vue'
 
 export const allMdComponents = Object.entries(import.meta.glob('./*.vue', { eager: true }))
   .reduce((acc, [key, value]) => {

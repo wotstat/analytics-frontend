@@ -50,10 +50,10 @@
 
 <script setup lang="ts">
 import DownloadFill from '@/assets/icons/download-fill.svg'
-import VehicleImage from '@/components/vehicles/vehicle/VehicleImage.vue';
-import { timeProcessor } from '@/utils';
-import { getArenaName, getTankName } from '@/utils/i18n';
-import BattleStatValue from './BattleStatValue.vue';
+import VehicleImage from '@/components/vehicles/vehicle/VehicleImage.vue'
+import { timeProcessor } from '@/utils'
+import { getArenaName, getTankName } from '@/utils/i18n'
+import BattleStatValue from './BattleStatValue.vue'
 
 
 const props = defineProps<{

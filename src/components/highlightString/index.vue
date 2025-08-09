@@ -5,8 +5,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import type { HighlightedString } from './highlightUtils';
+import { computed } from 'vue'
+import type { HighlightedString } from './highlightUtils'
 
 const props = defineProps<{
   text: HighlightedString

@@ -46,7 +46,7 @@
 
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed } from 'vue'
 
 import Default from './assets/default.png'
 import BattleRush from './assets/battle_rush.png'
@@ -56,8 +56,8 @@ import RiskyAttack from './assets/risky_attack.png'
 import SavingBattle from './assets/saving_battle.png'
 import TerritoryControl from './assets/territory_control.png'
 import WarNeverChanges from './assets/war_never_changes.png'
-import Tooltip from '@/components/Tooltip.vue';
-import { useNow } from '@vueuse/core';
+import Tooltip from '@/components/Tooltip.vue'
+import { useNow } from '@vueuse/core'
 
 
 const props = defineProps<{

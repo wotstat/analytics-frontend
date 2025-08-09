@@ -86,21 +86,21 @@
 </template>
 
 <script lang="ts" setup>
-import FullScreenCard from '@/components/FullScreenCard.vue';
-import PopupWindow from '@/components/PopupWindow.vue';
-import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue';
-import ChuckTable from '@/components/widgets/ChuckTable.vue';
-import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
-import { dbIndexToDate, loading, queryAsync, queryComputed, success } from '@/db';
-import { ChuckResult } from '@/db/schema';
-import { useLocalStorage } from '@vueuse/core';
-import { computed, ref } from 'vue';
+import FullScreenCard from '@/components/FullScreenCard.vue'
+import PopupWindow from '@/components/PopupWindow.vue'
+import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue'
+import ChuckTable from '@/components/widgets/ChuckTable.vue'
+import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams'
+import { dbIndexToDate, loading, queryAsync, queryComputed, success } from '@/db'
+import { ChuckResult } from '@/db/schema'
+import { useLocalStorage } from '@vueuse/core'
+import { computed, ref } from 'vue'
 import Timecodes from '@/components/Timecodes.vue'
 
 import CopyIcon from '@/assets/icons/copy.svg'
 
 import DownloadIcon from '@/assets/icons/download.svg'
-import { useMeta } from '@/composition/useMeta';
+import { useMeta } from '@/composition/useMeta'
 
 useMeta({
   title: 'Очки Чака',
@@ -169,7 +169,7 @@ array join squads as psquad,
            kills as pkill,
            tankTags as ptag,
            teams as pteam
-where psquad = playerSquad and pteam = playerTeam ${withoutObservers.value ? `and ptag != 'ussr:Observer'` : ''} and playerSquad != 0 or pname = playerName 
+where psquad = playerSquad and pteam = playerTeam ${withoutObservers.value ? 'and ptag != \'ussr:Observer\'' : ''} and playerSquad != 0 or pname = playerName 
 group by onBattleStartId, arena, result, duration, id, dateTime, spgCount, enemyTeamMaxHealth
 order by id desc
 `, { enabled: allow })
@@ -298,16 +298,16 @@ function downloadCsv(part: typeof totalResult.value[number]) {
 
   const res = getTable(part).map(t => t.join(',')).join('\n')
 
-  var element = document.createElement('a');
-  element.setAttribute('href', 'data:text/csv;charset=UTF-8,' + encodeURIComponent(res));
-  element.setAttribute('download', 'chuck.csv');
+  var element = document.createElement('a')
+  element.setAttribute('href', 'data:text/csv;charset=UTF-8,' + encodeURIComponent(res))
+  element.setAttribute('download', 'chuck.csv')
 
-  element.style.display = 'none';
-  document.body.appendChild(element);
+  element.style.display = 'none'
+  document.body.appendChild(element)
 
-  element.click();
+  element.click()
 
-  document.body.removeChild(element);
+  document.body.removeChild(element)
 }
 
 </script>

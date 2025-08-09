@@ -21,15 +21,15 @@
 
 
 <script setup lang="ts">
-import GenericInfo from '@/components/widgets/GenericInfo.vue';
-import { queryAsyncFirst } from "@/db";
-import { ref } from "vue";
-import { useElementVisibility } from "@vueuse/core";
-import PlayerCoverageTable from "@/components/widgets/PlayerCoverageTable.vue";
-import { useQueryStatParams, useQueryStatParamsCache, whereClause, whereClauseColumns } from '@/composition/useQueryStatParams';
-import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
-import { bestMV } from '@/db/schema';
-import { useMeta } from '@/composition/useMeta';
+import GenericInfo from '@/components/widgets/GenericInfo.vue'
+import { queryAsyncFirst } from '@/db'
+import { ref } from 'vue'
+import { useElementVisibility } from '@vueuse/core'
+import PlayerCoverageTable from '@/components/widgets/PlayerCoverageTable.vue'
+import { useQueryStatParams, useQueryStatParamsCache, whereClause, whereClauseColumns } from '@/composition/useQueryStatParams'
+import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor'
+import { bestMV } from '@/db/schema'
+import { useMeta } from '@/composition/useMeta'
 
 useMeta({
   title: 'Охват игроков',
@@ -37,9 +37,9 @@ useMeta({
   keywords: 'охват игроков, статистика охвата игроков, статистика игроков, статистика игроков в боях'
 })
 
-const container = ref<HTMLElement | null>(null);
-const enabled = useElementVisibility(container);
-const params = useQueryStatParams();
+const container = ref<HTMLElement | null>(null)
+const enabled = useElementVisibility(container)
+const params = useQueryStatParams()
 const settings = useQueryStatParamsCache(params)
 
 
@@ -56,7 +56,7 @@ const query = mv ? `
 
 const coverageData = queryAsyncFirst(query, { data: 0 }, { enabled, settings: { ...settings.value, query_cache_nondeterministic_function_handling: 'save' } })
 
-console.log(bestMV('player_coverage', params));
+console.log(bestMV('player_coverage', params))
 
 
 

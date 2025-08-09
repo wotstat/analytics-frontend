@@ -18,7 +18,7 @@ ChartJS.defaults.borderColor = 'rgba(255, 255, 255, 0.2)'
 ChartJS.defaults.animation.duration = 400
 
 
-console.log(`WotStat front start in **${import.meta.env.MODE}** mode`);
+console.log(`WotStat front start in **${import.meta.env.MODE}** mode`)
 
 createApp(App)
   .use(router)

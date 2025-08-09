@@ -12,10 +12,10 @@
 
 
 <script setup lang="ts" generic="T">
-import { TweenOptions } from '@/composition/tween/useTweenRef';
-import { useSlots } from 'vue';
+import { TweenOptions } from '@/composition/tween/useTweenRef'
+import { useSlots } from 'vue'
 import { createReusableTemplate } from '@vueuse/core'
-import { useProcessed } from './processed';
+import { useProcessed } from './processed'
 
 const [DefineTemplate, ReuseTemplate] = createReusableTemplate()
 

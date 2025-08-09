@@ -6,7 +6,7 @@
 
 
 <script setup lang="ts">
-import { ref, onMounted, watch, onDeactivated } from 'vue';
+import { ref, onMounted, watch, onDeactivated } from 'vue'
 import { useElementSize, useElementVisibility, watchOnce } from '@vueuse/core'
 
 const emit = defineEmits<{
@@ -22,72 +22,72 @@ defineExpose({
   context: () => context,
 })
 
-const canvas = ref<HTMLCanvasElement | null>(null);
-const container = ref<HTMLElement | null>(null);
-const containerSize = useElementSize(container);
-const visible = useElementVisibility(container);
+const canvas = ref<HTMLCanvasElement | null>(null)
+const container = ref<HTMLElement | null>(null)
+const containerSize = useElementSize(container)
+const visible = useElementVisibility(container)
 
-let context: CanvasRenderingContext2D | null = null;
-let shouldRerenderAfterVisible = false;
+let context: CanvasRenderingContext2D | null = null
+let shouldRerenderAfterVisible = false
 
-let currentGenerator: Generator<number | undefined, void, void> | null = null;
+let currentGenerator: Generator<number | undefined, void, void> | null = null
 
 function redraw() {
-  const dpr = window.devicePixelRatio || 1;
-  const canvasElement = canvas.value;
-  if (!canvasElement) return;
-  canvasElement.width = containerSize.width.value * dpr;
-  canvasElement.height = containerSize.height.value * dpr;
-  canvasElement.style.width = `${containerSize.width.value}px`;
-  canvasElement.style.height = `${containerSize.height.value}px`;
+  const dpr = window.devicePixelRatio || 1
+  const canvasElement = canvas.value
+  if (!canvasElement) return
+  canvasElement.width = containerSize.width.value * dpr
+  canvasElement.height = containerSize.height.value * dpr
+  canvasElement.style.width = `${containerSize.width.value}px`
+  canvasElement.style.height = `${containerSize.height.value}px`
 
-  if (!context) context = canvasElement.getContext('2d');
-  if (!context) return;
-  context.scale(dpr, dpr);
+  if (!context) context = canvasElement.getContext('2d')
+  if (!context) return
+  context.scale(dpr, dpr)
 
   if (!visible.value) {
-    shouldRerenderAfterVisible = true;
-    return;
+    shouldRerenderAfterVisible = true
+    return
   }
 
-  shouldRerenderAfterVisible = false;
-  emit('redraw', context, containerSize.width.value, containerSize.height.value);
+  shouldRerenderAfterVisible = false
+  emit('redraw', context, containerSize.width.value, containerSize.height.value)
   if (props.redrawGenerator) {
-    currentGenerator = props.redrawGenerator!(context, containerSize.width.value, containerSize.height.value);
+    currentGenerator = props.redrawGenerator!(context, containerSize.width.value, containerSize.height.value)
     nextRedrawGeneratorStep()
   } else {
-    currentGenerator = null;
+    currentGenerator = null
   }
 }
 
-let timer: ReturnType<typeof setTimeout> | null = null;
+let timer: ReturnType<typeof setTimeout> | null = null
 function nextRedrawGeneratorStep() {
-  if (timer) clearTimeout(timer);
-  if (!currentGenerator) return;
+  if (timer) clearTimeout(timer)
+  if (!currentGenerator) return
 
   const result = currentGenerator.next()
-  const value = result.value;
+  const value = result.value
 
-  if (value === undefined) return;
-  timer = setTimeout(() => nextRedrawGeneratorStep(), value);
+  if (value === undefined) return
+  timer = setTimeout(() => nextRedrawGeneratorStep(), value)
 }
 
 watch(visible, v => {
-  if (v && shouldRerenderAfterVisible) redraw();
+  if (v && shouldRerenderAfterVisible) redraw()
 })
 
 watch(containerSize.width, width => {
   if (width <= 0) return
-  redraw();
-});
+  redraw()
+})
 
 onMounted(() => {
-  redraw();
-});
+  redraw()
+})
 
 onDeactivated(() => {
-  if (timer) clearTimeout(timer);
-  context = null;
+  if (timer) clearTimeout(timer)
+  context = null
 })
 
 

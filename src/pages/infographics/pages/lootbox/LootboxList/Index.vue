@@ -52,19 +52,19 @@
 </template>
 
 <script lang="ts" setup>
-import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
-import { queryComputed } from '@/db';
-import { computed, ref, watch } from 'vue';
-import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
-import { getBestLocalization } from '@/utils/i18n';
-import { objectEntries, pausableWatch } from '@vueuse/core';
-import FallbackImg from '@/components/fallbackImg/FallbackImg.vue';
-import HorizontalScrollItems from '@/components/shared/HorizontalScrollItems.vue';
-import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue';
-import { useQueryParamStorage } from '@/composition/useQueryParamStorage';
+import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams'
+import { queryComputed } from '@/db'
+import { computed, ref, watch } from 'vue'
+import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor'
+import { getBestLocalization } from '@/utils/i18n'
+import { objectEntries, pausableWatch } from '@vueuse/core'
+import FallbackImg from '@/components/fallbackImg/FallbackImg.vue'
+import HorizontalScrollItems from '@/components/shared/HorizontalScrollItems.vue'
+import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue'
+import { useQueryParamStorage } from '@/composition/useQueryParamStorage'
 
-import NoImageLB from "./noImageLB.png";
-import { STATIC_URL } from '@/utils/externalUrl';
+import NoImageLB from './noImageLB.png'
+import { STATIC_URL } from '@/utils/externalUrl'
 
 const customOrderKeys = new Map<string, number>(objectEntries({
   'mtl_1_35': 1000,
@@ -78,19 +78,19 @@ const customOrderKeys = new Map<string, number>(objectEntries({
   'tanks_birthday_2023_VI': -1000,
   'tanks_birthday_2023_premium': -1000,
   'tanks_birthday_2023_X': -1000,
-}));
+}))
 
 function tagToImageName(tag: string) {
   const convert = {
     'tanks_birthday_2023_premium': 'tanks_birthday_2023_3',
     'tanks_birthday_2023_VI': 'tanks_birthday_2023_2',
     'tanks_birthday_2023_X': 'tanks_birthday_2023_1',
-  } as Record<string, string>;
+  } as Record<string, string>
 
   if (convert[tag]) return convert[tag]
 
-  if (tag.endsWith('_standart')) return tag.replace('_standart', '_1');
-  if (tag.endsWith('_silver')) return tag.replace('_silver', '_2');
+  if (tag.endsWith('_standart')) return tag.replace('_standart', '_1')
+  if (tag.endsWith('_silver')) return tag.replace('_silver', '_2')
   return tag
 }
 
@@ -99,36 +99,36 @@ const props = defineProps<{
 }>()
 
 const stats = useQueryStatParams()
-const selectedContainers = ref<string[]>([]);
+const selectedContainers = ref<string[]>([])
 const selectedContainersQuery = useQueryParamStorage<string | null>('selectedLootbox', null, true)
 
 const selectedToStats = pausableWatch(() => selectedContainers.value, (containers) => {
-  statsToSelected.pause();
-  selectedContainersQuery.value = containers.length != 0 ? containers.join(',') : null;
-  statsToSelected.resume();
-});
+  statsToSelected.pause()
+  selectedContainersQuery.value = containers.length != 0 ? containers.join(',') : null
+  statsToSelected.resume()
+})
 
 const statsToSelected = pausableWatch(() => selectedContainersQuery.value, (containers) => {
-  selectedToStats.pause();
-  selectedContainers.value = containers?.split(',') || [];
-  selectedToStats.resume();
-}, { immediate: true });
+  selectedToStats.pause()
+  selectedContainers.value = containers?.split(',') || []
+  selectedToStats.resume()
+}, { immediate: true })
 
 const model = defineModel<string[]>()
 watch(selectedContainers, (value) => model.value = value, { immediate: true })
 
 const fixedSpaceProcessor = useFixedSpaceProcessor(0)
 function logProcessor(value: number) {
-  if (value < 1e6) return fixedSpaceProcessor(value);
-  if (value < 1e9) return (value / 1e6).toFixed(1) + 'M';
+  if (value < 1e6) return fixedSpaceProcessor(value)
+  if (value < 1e9) return (value / 1e6).toFixed(1) + 'M'
 }
 
 function toDate(date: string) {
-  return new Date(date).toLocaleDateString('ru-RU', { month: '2-digit', year: '2-digit', day: '2-digit' });
+  return new Date(date).toLocaleDateString('ru-RU', { month: '2-digit', year: '2-digit', day: '2-digit' })
 }
 
 function isOpenedToday(date: string) {
-  return (new Date().getTime() - new Date(date).getTime()) < 2 * 24 * 60 * 60 * 1000;
+  return (new Date().getTime() - new Date(date).getTime()) < 2 * 24 * 60 * 60 * 1000
 }
 
 const containersTag = queryComputed<{
@@ -146,7 +146,7 @@ with containers as (
       from Event_OnLootboxOpen
     ${whereClause(stats.value, {
   ignore: ['tanks', 'level', 'types', 'battleMode'],
-  additional: props.withoutTest ? `region not in ('CT')` : ''
+  additional: props.withoutTest ? 'region not in (\'CT\')' : ''
 })}
     group by containerTag
     order by start desc, end desc
@@ -176,19 +176,19 @@ const containersVariants = computed(() => containersTag.value.data
     end: x.end
   }))
   .sort((a, b) => {
-    const aKey = customOrderKeys.get(a.tag) ?? null;
-    const bKey = customOrderKeys.get(b.tag) ?? null;
-    if (aKey != null && bKey != null) return bKey - aKey;
-    if (aKey != null) return aKey > 0 ? -1 : 1;
-    if (bKey != null) return bKey > 0 ? 1 : -1;
+    const aKey = customOrderKeys.get(a.tag) ?? null
+    const bKey = customOrderKeys.get(b.tag) ?? null
+    if (aKey != null && bKey != null) return bKey - aKey
+    if (aKey != null) return aKey > 0 ? -1 : 1
+    if (bKey != null) return bKey > 0 ? 1 : -1
 
-    if (a.start > b.start) return -1;
-    if (a.start < b.start) return 1;
+    if (a.start > b.start) return -1
+    if (a.start < b.start) return 1
 
-    if (a.end > b.end) return -1;
-    if (a.end < b.end) return 1;
+    if (a.end > b.end) return -1
+    if (a.end < b.end) return 1
 
-    return a.name.localeCompare(b.name);
+    return a.name.localeCompare(b.name)
   })
 )
 

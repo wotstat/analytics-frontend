@@ -1,4 +1,4 @@
-import { DefineComponent } from "vue";
+import { DefineComponent } from 'vue'
 
 export type ComponentInstance<T> = T extends new (...args: any[]) => infer R
   ? R

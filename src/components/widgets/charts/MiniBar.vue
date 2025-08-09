@@ -11,13 +11,13 @@
 
 
 <script setup lang="ts">
-import { computed, nextTick, onActivated, onDeactivated, onMounted, ref } from 'vue';
-import { type ChartProps } from 'vue-chartjs';
-import { type TooltipCallbacks } from 'chart.js';
-import { ShadowBar } from "@/components/widgets/charts/ShadowBarController";
-import { BloomColorVariant, getColor } from '../../bloomColors';
-import { Status, loading } from '@/db';
-import ServerStatusWrapper from '../../ServerStatusWrapper.vue';
+import { computed, nextTick, onActivated, onDeactivated, onMounted, ref } from 'vue'
+import { type ChartProps } from 'vue-chartjs'
+import { type TooltipCallbacks } from 'chart.js'
+import { ShadowBar } from '@/components/widgets/charts/ShadowBarController'
+import { BloomColorVariant, getColor } from '../../bloomColors'
+import { Status, loading } from '@/db'
+import ServerStatusWrapper from '../../ServerStatusWrapper.vue'
 
 const props = defineProps<{
   data: number[],

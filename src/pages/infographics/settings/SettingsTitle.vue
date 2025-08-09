@@ -7,8 +7,8 @@
 </template>
 
 <script lang="ts" setup>
-import Settings from './Settings.vue';
-import { ref } from 'vue';
+import Settings from './Settings.vue'
+import { ref } from 'vue'
 import SettingsIcon from '@/assets/icons/settings.svg'
 
 const props = defineProps<{

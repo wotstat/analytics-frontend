@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { ContextMenuItemVariant, type ContextMenuItem } from '../createContextMenu';
+import { ContextMenuItemVariant, type ContextMenuItem } from '../createContextMenu'
 import ChildLine from './Child.vue'
 import ButtonLine from './Button.vue'
 import SeparatorLine from './Separator.vue'

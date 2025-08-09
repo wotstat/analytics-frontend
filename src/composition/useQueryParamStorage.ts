@@ -1,34 +1,34 @@
-import { MaybeRefOrGetter, StorageLike, useLocalStorage, useStorage } from "@vueuse/core";
-import { onDeactivated, onUnmounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { MaybeRefOrGetter, StorageLike, useLocalStorage, useStorage } from '@vueuse/core'
+import { onDeactivated, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 
 
 
 function useRouterStorage(): StorageLike {
-  const router = useRouter();
-  const route = useRoute();
+  const router = useRouter()
+  const route = useRoute()
 
   return {
     getItem: (key: string) => {
       if (key in route.query) {
-        return route.query[key] as string;
+        return route.query[key] as string
       }
-      return null;
+      return null
     },
     setItem: (key: string, value: string) => {
-      router.push({ query: { ...route.query, [key]: value } });
+      router.push({ query: { ...route.query, [key]: value } })
     },
     removeItem: (key: string) => {
-      const query = { ...route.query };
-      delete query[key];
-      router.push({ query });
+      const query = { ...route.query }
+      delete query[key]
+      router.push({ query })
     }
   }
 }
 
 export function useQueryParamStorage<T>(key: string, value: MaybeRefOrGetter<T>, deactivatable?: boolean) {
-  const ref = useStorage(key, value, useRouterStorage());
+  const ref = useStorage(key, value, useRouterStorage())
 
   if (deactivatable) {
     onDeactivated(() => ref.value = null)

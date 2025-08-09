@@ -5,16 +5,16 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 
 const props = defineProps<{
   to: string;
-}>();
+}>()
 
-const route = useRoute();
-const router = useRouter();
+const route = useRoute()
+const router = useRouter()
 
 const classes = computed(() => {
   const res = []
@@ -28,7 +28,7 @@ const classes = computed(() => {
   }
 
   return res
-});
+})
 
 
 function onClick(e: MouseEvent) {

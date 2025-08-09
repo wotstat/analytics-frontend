@@ -36,13 +36,13 @@
 </template>
 
 <script setup lang="ts">
-import { useElementBounding } from '@vueuse/core';
-import QueryPreserveRouterLink from '../QueryPreserveRouterLink.vue';
-import { computed, ref, watchEffect } from 'vue';
-import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight';
-import { type SidebarLink } from './utils.ts';
+import { useElementBounding } from '@vueuse/core'
+import QueryPreserveRouterLink from '../QueryPreserveRouterLink.vue'
+import { computed, ref, watchEffect } from 'vue'
+import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight'
+import { type SidebarLink } from './utils.ts'
 
-const menuBar = ref<HTMLElement | null>(null);
+const menuBar = ref<HTMLElement | null>(null)
 const { top: menuTop, y: menuY, height: menuH } = useElementBounding(menuBar)
 const headerOffset = computed(() => headerHeight.value)
 
@@ -50,10 +50,10 @@ const props = defineProps<{
   links?: SidebarLink[]
 }>()
 
-const { additionalHeaderHeight } = useAdditionalHeaderHeight();
+const { additionalHeaderHeight } = useAdditionalHeaderHeight()
 watchEffect(() => {
-  if (menuY.value == 0) return additionalHeaderHeight.value = 0;
-  if (menuTop.value > headerOffset.value) return additionalHeaderHeight.value = 0;
+  if (menuY.value == 0) return additionalHeaderHeight.value = 0
+  if (menuTop.value > headerOffset.value) return additionalHeaderHeight.value = 0
   additionalHeaderHeight.value = menuH.value - 18
 })
 

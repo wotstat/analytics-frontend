@@ -359,24 +359,24 @@
 </template>
 
 <script setup lang="ts">
-import GenericInfoQuery from '@/components/widgets/GenericInfoQuery.vue';
-import GenericInfo from '@/components/widgets/GenericInfo.vue';
-import MiniBar from '@/components/widgets/charts/MiniBar.vue';
-import ShotsCircle from '@/components/widgets/ShotsCircle.vue';
-import { useTweenCounter } from '@/composition/useTweenCounter';
-import { LONG_CACHE_SETTINGS, queryAsync, queryAsyncFirst } from '@/db';
-import { toRelative, ms2sec, sec2minsec, ms2secLabel } from '@/utils';
-import { computedAsync } from '@vueuse/core';
-import { computed, ref } from 'vue';
-import { getArenaName } from '@/utils/i18n';
-import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
-import CurrentLestaVersion from '@/components/mdUtils/CurrentLestaVersion.vue';
-import CurrentWgVersion from '@/components/mdUtils/CurrentWgVersion.vue';
-import { githubRelease } from '@/components/mdUtils/ghRelease';
-import { useMeta } from '@/composition/useMeta';
-import { useAnalyticsRealtime } from '@/composition/useAnalyticsRealtime';
-import { CLICKHOUSE_URL, CURRENT_URL_PREFIX } from '@/utils/externalUrl';
-import { useRouter } from 'vue-router';
+import GenericInfoQuery from '@/components/widgets/GenericInfoQuery.vue'
+import GenericInfo from '@/components/widgets/GenericInfo.vue'
+import MiniBar from '@/components/widgets/charts/MiniBar.vue'
+import ShotsCircle from '@/components/widgets/ShotsCircle.vue'
+import { useTweenCounter } from '@/composition/useTweenCounter'
+import { LONG_CACHE_SETTINGS, queryAsync, queryAsyncFirst } from '@/db'
+import { toRelative, ms2sec, sec2minsec, ms2secLabel } from '@/utils'
+import { computedAsync } from '@vueuse/core'
+import { computed, ref } from 'vue'
+import { getArenaName } from '@/utils/i18n'
+import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor'
+import CurrentLestaVersion from '@/components/mdUtils/CurrentLestaVersion.vue'
+import CurrentWgVersion from '@/components/mdUtils/CurrentWgVersion.vue'
+import { githubRelease } from '@/components/mdUtils/ghRelease'
+import { useMeta } from '@/composition/useMeta'
+import { useAnalyticsRealtime } from '@/composition/useAnalyticsRealtime'
+import { CLICKHOUSE_URL, CURRENT_URL_PREFIX } from '@/utils/externalUrl'
+import { useRouter } from 'vue-router'
 
 useMeta({
   title: 'WOTSTAT - Сессионная аналитика для игр «Мир танков» и «World of Tanks»',
@@ -385,7 +385,7 @@ useMeta({
 })
 
 const latestWotstat = computedAsync(async () => {
-  const [wg, lesta] = await githubRelease("https://api.github.com/repos/wotstat/wotstat-analytics/releases/latest",
+  const [wg, lesta] = await githubRelease('https://api.github.com/repos/wotstat/wotstat-analytics/releases/latest',
     [t => t.endsWith('.wotmod'), t => t.endsWith('.mtmod')])
   return { lesta, wg, actual: true }
 }, {
@@ -398,17 +398,17 @@ const latestWotstat = computedAsync(async () => {
     name: 'mod.wotStat_1.0.0.1-a.3.wotmod',
   },
   actual: false
-});
+})
 
 const router = useRouter()
 function goToDownload() {
-  router.push({ path: '/install', query: { preset: 'analytics' } });
+  router.push({ path: '/install', query: { preset: 'analytics' } })
 }
 
 
 // TOTAL
 const { data: totalCount, hasData: totalCountHasData } = useAnalyticsRealtime('totalEvents')
-const totalEventCount = useTweenCounter(computed(() => totalCount.value ?? 0), { duration: 1 });
+const totalEventCount = useTweenCounter(computed(() => totalCount.value ?? 0), { duration: 1 })
 
 // DAMAGE
 const damageLabels = new Array(21).fill(0)
@@ -453,7 +453,7 @@ select
   avgIf(allyTeamCount - allyTeamSurvivedCount, result = 'lose') as enemyFragsLose,
   avgIf(enemyTeamCount - enemyTeamSurvivedCount, result = 'lose') as allyFragsLose
   from Event_OnBattleResult where battleMode = 'REGULAR'
-`, { settings: LONG_CACHE_SETTINGS });
+`, { settings: LONG_CACHE_SETTINGS })
 
 // TURBO
 // const turboResult = queryAsyncFirst(`
@@ -506,10 +506,10 @@ const maps = [
 
 // MEDIAN
 
-const medianResults = queryAsyncFirst(`select median(personal.damageDealt) as medDamage, median(personal.mileage) as medMileage from Event_OnBattleResult where tankLevel = 10`,
+const medianResults = queryAsyncFirst('select median(personal.damageDealt) as medDamage, median(personal.mileage) as medMileage from Event_OnBattleResult where tankLevel = 10',
   { medDamage: 0, medMileage: 0 },
   { settings: LONG_CACHE_SETTINGS }
-);
+)
 
 
 </script>

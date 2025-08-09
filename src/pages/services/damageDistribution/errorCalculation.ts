@@ -1,6 +1,6 @@
 
 import CalcWorker from './calcWorker.ts?worker'
-import { ComputedRef, Ref, ShallowRef, WatchSource, computed, ref, shallowRef, toValue, watch, watchEffect } from "vue";
+import { ComputedRef, Ref, ShallowRef, WatchSource, computed, ref, shallowRef, toValue, watch, watchEffect } from 'vue'
 
 type ErrorResult = number[][]
 

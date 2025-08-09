@@ -15,9 +15,9 @@
 
 
 <script setup lang="ts">
-import { ShadowBar } from "@/components/widgets/charts/ShadowBarController";
-import { computed } from "vue";
-import { ChartProps } from "vue-chartjs";
+import { ShadowBar } from '@/components/widgets/charts/ShadowBarController'
+import { computed } from 'vue'
+import { ChartProps } from 'vue-chartjs'
 
 const props = defineProps<{
   data: number[][],
@@ -58,7 +58,7 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
         autoSkip: false,
         maxRotation: 0,
         callback: function (value, index, ctx) {
-          return index % 25 == 0 ? value : '';
+          return index % 25 == 0 ? value : ''
         }
       }
     }

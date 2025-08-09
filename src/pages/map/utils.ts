@@ -1,27 +1,27 @@
 
 
 export function blur(array: number[][], radius: number) {
-  const result = new Array(array.length).fill(null).map(() => new Array(array[0].length).fill(0));
+  const result = new Array(array.length).fill(null).map(() => new Array(array[0].length).fill(0))
 
   for (let i = 0; i < array.length; i++) {
     for (let j = 0; j < array[i].length; j++) {
-      let sum = 0;
-      let count = 0;
+      let sum = 0
+      let count = 0
 
       for (let x = -radius; x <= radius; x++) {
         for (let y = -radius; y <= radius; y++) {
           if (i + x >= 0 && i + x < array.length && j + y >= 0 && j + y < array[i].length) {
-            sum += array[i + x][j + y];
-            count++;
+            sum += array[i + x][j + y]
+            count++
           }
         }
       }
 
-      result[i][j] = sum / count;
+      result[i][j] = sum / count
     }
   }
 
-  return result;
+  return result
 }
 
 class ArrayMap<Key, T> {
@@ -71,28 +71,28 @@ type LineSegment = {
 }
 
 export class Island {
-  points: Point[] = [];
-  totalValue = 0;
+  points: Point[] = []
+  totalValue = 0
 
   constructor(points: Point[] = []) {
-    this.points = points;
+    this.points = points
   }
 
   addCell(point: Point) {
-    this.points.push(point);
+    this.points.push(point)
   }
 
   traceOutline() {
-    const ekey = (x1: number, y1: number, x2: number, y2: number) => `${x1},${y1};${x2},${y2}`;
-    const edges = new Map<string, number>();
+    const ekey = (x1: number, y1: number, x2: number, y2: number) => `${x1},${y1};${x2},${y2}`
+    const edges = new Map<string, number>()
 
     for (const point of this.points) {
-      const { x, y } = point;
+      const { x, y } = point
 
-      const e1 = ekey(x, y, x + 1, y);
-      const e2 = ekey(x, y, x, y + 1);
-      const e3 = ekey(x + 1, y, x + 1, y + 1);
-      const e4 = ekey(x, y + 1, x + 1, y + 1);
+      const e1 = ekey(x, y, x + 1, y)
+      const e2 = ekey(x, y, x, y + 1)
+      const e3 = ekey(x + 1, y, x + 1, y + 1)
+      const e4 = ekey(x, y + 1, x + 1, y + 1)
 
       edges.set(e1, (edges.get(e1) ?? 0) + 1)
       edges.set(e2, (edges.get(e2) ?? 0) + 1)
@@ -100,12 +100,12 @@ export class Island {
       edges.set(e4, (edges.get(e4) ?? 0) + 1)
     }
 
-    const outline: [Point, Point][] = [];
+    const outline: [Point, Point][] = []
 
     for (const [edge, count] of edges) {
       if (count === 1) {
-        const [p1, p2] = edge.split(';').map(p => p.split(',').map(Number));
-        outline.push([{ x: p1[0], y: p1[1] }, { x: p2[0], y: p2[1] }]);
+        const [p1, p2] = edge.split(';').map(p => p.split(',').map(Number))
+        outline.push([{ x: p1[0], y: p1[1] }, { x: p2[0], y: p2[1] }])
       }
     }
 
@@ -168,10 +168,10 @@ export class Island {
   }
 
   processGrid(grid: { value: number }[][]) {
-    this.totalValue = 0;
+    this.totalValue = 0
     for (const point of this.points) {
-      const { x, y } = point;
-      this.totalValue += grid[x][y].value;
+      const { x, y } = point
+      this.totalValue += grid[x][y].value
     }
   }
 
@@ -179,37 +179,37 @@ export class Island {
 }
 
 export function findIslands(grid: (0 | 1)[][]) {
-  const islands: Island[] = [];
+  const islands: Island[] = []
 
-  const xSize = grid.length;
-  const ySize = grid[0].length;
+  const xSize = grid.length
+  const ySize = grid[0].length
 
   function dfs(x: number, y: number, island: Island) {
-    if (x < 0 || x >= xSize || y < 0 || y >= ySize || grid[x][y] === 0) return;
+    if (x < 0 || x >= xSize || y < 0 || y >= ySize || grid[x][y] === 0) return
 
-    grid[x][y] = 0;
-    island.addCell({ x, y });
+    grid[x][y] = 0
+    island.addCell({ x, y })
 
-    dfs(x + 1, y, island);
-    dfs(x - 1, y, island);
-    dfs(x, y + 1, island);
-    dfs(x, y - 1, island);
+    dfs(x + 1, y, island)
+    dfs(x - 1, y, island)
+    dfs(x, y + 1, island)
+    dfs(x, y - 1, island)
 
-    dfs(x - 1, y - 1, island);
-    dfs(x + 1, y + 1, island);
-    dfs(x - 1, y + 1, island);
-    dfs(x + 1, y - 1, island);
+    dfs(x - 1, y - 1, island)
+    dfs(x + 1, y + 1, island)
+    dfs(x - 1, y + 1, island)
+    dfs(x + 1, y - 1, island)
   }
 
   for (let i = 0; i < grid.length; i++) {
     for (let j = 0; j < grid[i].length; j++) {
       if (grid[i][j] === 1) {
-        const newIsland = new Island();
-        dfs(i, j, newIsland);
-        islands.push(newIsland);
+        const newIsland = new Island()
+        dfs(i, j, newIsland)
+        islands.push(newIsland)
       }
     }
   }
 
-  return islands;
+  return islands
 }
