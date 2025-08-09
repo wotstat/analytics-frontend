@@ -8,6 +8,7 @@ import { container } from '@mdit/plugin-container'
 import { align } from '@mdit/plugin-align'
 import MarkdownIt from 'markdown-it'
 import vueDevTools from 'vite-plugin-vue-devtools'
+import { visualizer } from 'rollup-plugin-visualizer'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -28,6 +29,11 @@ export default defineConfig({
         .use(attrs)
         .use(container)
         .use(align)
+    }),
+    visualizer({
+      filename: 'bundle-stats.html',
+      gzipSize: true,
+      brotliSize: true,
     })
   ],
   resolve: {

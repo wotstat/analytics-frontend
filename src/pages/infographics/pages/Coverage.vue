@@ -46,7 +46,7 @@ const settings = useQueryStatParamsCache(params)
 const mv = bestMV('player_coverage', params)
 
 const query = mv ? `
-  select uniqMerge(uniq) as data
+  select toUInt32(uniqMerge(uniq)) as data
   from ${mv}
   ${whereClause(params)}`
   : `

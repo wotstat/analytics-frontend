@@ -254,11 +254,11 @@ const rerollStats = queryComputed<{ tag: string, locale: LocalizedName, count: n
 
 const mainStats = queryComputedFirst(() => `
 select
-    sum(premiumPlus) as prem,
-    sum(credits) as credits,
-    sum(freeXP) as freeXP,
-    sum(equipCoin) as equipCoin,
-    sum(gold) as gold,
+    toUInt32(sum(premiumPlus)) as prem,
+    toUInt32(sum(credits)) as credits,
+    toUInt32(sum(freeXP)) as freeXP,
+    toUInt32(sum(equipCoin)) as equipCoin,
+    toUInt32(sum(gold)) as gold,
     toUInt32(sum(length(addedVehicles))) as vehicles,
     toUInt32(sum(arraySum(arrayFilter(t -> t.1 == 'ny25_mandarin', arrayZip(extra.tag, extra.count)).2))) as mandarin25,
     toUInt32(sum(arraySum(arrayFilter(t -> t.1 == 'ny25_mandarin', arrayZip(compensatedToys.currency, compensatedToys.count)).2))) as compensatedMandarin25
