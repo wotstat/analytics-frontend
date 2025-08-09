@@ -23,12 +23,12 @@
 
 
 <script setup lang="ts">
-import { computed, useSlots } from "vue";
-import BloggersValues from "./BloggersValues.vue";
-import Chart from "../assets/chart.svg";
-import { useLogProcessor } from "@/composition/usePercentProcessor";
-import { preferredLogProcessor } from "../store";
-import { useMediaQuery } from "@vueuse/core";
+import { computed, useSlots } from 'vue'
+import BloggersValues from './BloggersValues.vue'
+import Chart from '../assets/chart.svg'
+import { useLogProcessor } from '@/composition/usePercentProcessor'
+import { preferredLogProcessor } from '../store'
+import { useMediaQuery } from '@vueuse/core'
 
 const props = defineProps<{
   values: number[]
@@ -38,21 +38,21 @@ const props = defineProps<{
   lessIsBetter?: boolean
   collapseToLog?: boolean
 }>()
-const slot = useSlots();
+const slot = useSlots()
 
-const logProc = useLogProcessor();
-const mobile = useMediaQuery('(max-width: 800px)');
+const logProc = useLogProcessor()
+const mobile = useMediaQuery('(max-width: 800px)')
 
 
 const processor = computed(() => {
-  if (props.processor) return props.processor;
-  if (mobile.value) return logProc;
-  return preferredLogProcessor.value ? logProc : undefined;
-});
+  if (props.processor) return props.processor
+  if (mobile.value) return logProc
+  return preferredLogProcessor.value ? logProc : undefined
+})
 
-const percents = computed(() => props.values.map(v => 100 * v / props.values.reduce((a, v) => a + Math.abs(v), 0.0000001)));
+const percents = computed(() => props.values.map(v => 100 * v / props.values.reduce((a, v) => a + Math.abs(v), 0.0000001)))
 
-const showChart = defineModel('showChart');
+const showChart = defineModel('showChart')
 
 </script>
 

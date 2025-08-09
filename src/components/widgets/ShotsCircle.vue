@@ -19,28 +19,28 @@
 </template>
 
 <script setup lang="ts">
-import CanvasVue from "@/components/Canvas.vue";
-import { computed, ref, shallowRef } from "vue";
-import { Quadtree, Circle } from '@timohausmann/quadtree-ts';
+import CanvasVue from '@/components/Canvas.vue'
+import { computed, ref, shallowRef } from 'vue'
+import { Quadtree, Circle } from '@timohausmann/quadtree-ts'
 
 import { useDebounceFn, useMouseInElement } from '@vueuse/core'
-import { query } from "@/db";
-import { BloomColor } from "../bloomColors";
-import { StatParams, whereClause } from "@/composition/useQueryStatParams";
-import { bestMV } from "@/db/schema";
+import { query } from '@/db'
+import { BloomColor } from '../bloomColors'
+import { StatParams, whereClause } from '@/composition/useQueryStatParams'
+import { bestMV } from '@/db/schema'
 
-const COUNT_TO_SMALL_SIZE = 3000;
-const LOAD_COUNT = 1000;
-const RENDER_COUNT = 20;
-const HOVER_RADIUS = 0.02;
-const MOBILE_HOVER_RADIUS = 0.15;
+const COUNT_TO_SMALL_SIZE = 3000
+const LOAD_COUNT = 1000
+const RENDER_COUNT = 20
+const HOVER_RADIUS = 0.02
+const MOBILE_HOVER_RADIUS = 0.15
 
-const container = ref<HTMLElement | null>(null);
-const canvasRef = ref<InstanceType<typeof CanvasVue> | null>(null);
+const container = ref<HTMLElement | null>(null)
+const canvasRef = ref<InstanceType<typeof CanvasVue> | null>(null)
 const { elementX, elementY, elementHeight, elementWidth, isOutside } = useMouseInElement(container)
 
-const widthRef = ref(0);
-const heightRef = ref(0);
+const widthRef = ref(0)
+const heightRef = ref(0)
 
 const quadTree = new Quadtree({
   x: -1,
@@ -48,7 +48,7 @@ const quadTree = new Quadtree({
   width: 2,
   height: 2,
   maxLevels: 5,
-});
+})
 
 const props = defineProps<{
   limitShot?: number,
@@ -65,60 +65,60 @@ const emit = defineEmits<{
   onClickShot: [id: string]
 }>()
 
-const radius = computed(() => Math.min(widthRef.value, heightRef.value) / 2 - 1);
-let timeoutHandler: ReturnType<typeof setTimeout> | null = null;
-let totalCount = -1;
+const radius = computed(() => Math.min(widthRef.value, heightRef.value) / 2 - 1)
+let timeoutHandler: ReturnType<typeof setTimeout> | null = null
+let totalCount = -1
 
 const renderShotsDebounce = useDebounceFn(() => {
-  startDrawProcess();
-}, 200);
+  startDrawProcess()
+}, 200)
 
 function redraw(ctx: CanvasRenderingContext2D, width: number, height: number) {
-  widthRef.value = width;
-  heightRef.value = height;
+  widthRef.value = width
+  heightRef.value = height
 
   const r = radius.value
 
-  ctx.setLineDash([r / 20]);
-  ctx.strokeStyle = props.borderColor ?? '#78d63a';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(width / 2, height / 2, r, 0, 2 * Math.PI);
-  ctx.closePath();
-  ctx.stroke();
+  ctx.setLineDash([r / 20])
+  ctx.strokeStyle = props.borderColor ?? '#78d63a'
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.arc(width / 2, height / 2, r, 0, 2 * Math.PI)
+  ctx.closePath()
+  ctx.stroke()
 
-  ctx.fillStyle = props.borderColor ?? '#78d63a';
-  ctx.beginPath();
-  ctx.arc(width / 2, height / 2, r / 60, 0, 2 * Math.PI);
-  ctx.closePath();
-  ctx.fill();
+  ctx.fillStyle = props.borderColor ?? '#78d63a'
+  ctx.beginPath()
+  ctx.arc(width / 2, height / 2, r / 60, 0, 2 * Math.PI)
+  ctx.closePath()
+  ctx.fill()
 
   if (timeoutHandler) clearTimeout(timeoutHandler)
-  renderShotsDebounce();
+  renderShotsDebounce()
 }
 
 let shotsData: { id: string, x: number, y: number, hit: boolean }[] = []
 
-let loading = false;
-let loadingFinished = false;
+let loading = false
+let loadingFinished = false
 async function loadNextBatch() {
-  if (loading) return;
-  if (loadingFinished) return;
+  if (loading) return
+  if (loadingFinished) return
 
-  loading = true;
+  loading = true
 
-  let resultData: { id: string, r: number, theta: number, hit: number }[] = [];
+  let resultData: { id: string, r: number, theta: number, hit: number }[] = []
   if (props.loadNextBatch) {
 
     resultData = await props.loadNextBatch({
       loadCount: LOAD_COUNT,
       offset: shotsData.length,
       startId: shotsData.length > 0 ? shotsData[0].id : null
-    });
+    })
 
   } else {
 
-    console.log(`load ${LOAD_COUNT} shots offset ${shotsData.length} started at ${shotsData.length > 0 ? 'where id < ' + shotsData[0].id : 'all'}`);
+    console.log(`load ${LOAD_COUNT} shots offset ${shotsData.length} started at ${shotsData.length > 0 ? 'where id < ' + shotsData[0].id : 'all'}`)
 
     const best = bestMV('accuracy_hit_points', props.params ? props.params : [])
     const prefix = best ? `
@@ -134,7 +134,7 @@ async function loadNextBatch() {
       limit ${LOAD_COUNT} 
       offset ${shotsData.length};`)
 
-    resultData = result.data;
+    resultData = result.data
   }
 
   const toAdd = resultData.map(row => ({
@@ -142,9 +142,9 @@ async function loadNextBatch() {
     x: row.r * Math.cos(row.theta),
     y: -row.r * Math.sin(row.theta),
     hit: row.hit == 1,
-  }));
+  }))
 
-  shotsData.push(...toAdd);
+  shotsData.push(...toAdd)
 
   const circles = toAdd.map(p => new Circle({
     x: p.x,
@@ -155,16 +155,16 @@ async function loadNextBatch() {
 
   for (const circle of circles) quadTree.insert(circle)
 
-  loadingFinished = resultData.length < LOAD_COUNT || (props.limitShot != null && LOAD_COUNT + shotsData.length > props.limitShot);
-  loading = false;
+  loadingFinished = resultData.length < LOAD_COUNT || (props.limitShot != null && LOAD_COUNT + shotsData.length > props.limitShot)
+  loading = false
 }
 
 function lerp(from: number, to: number, from2: number, to2: number, value: number) {
-  return (value - from2) / (to2 - from2) * (to - from) + from;
+  return (value - from2) / (to2 - from2) * (to - from) + from
 }
 
 async function startDrawProcess() {
-  if (timeoutHandler) clearTimeout(timeoutHandler);
+  if (timeoutHandler) clearTimeout(timeoutHandler)
 
   if (totalCount == -1) {
 
@@ -176,54 +176,54 @@ async function startDrawProcess() {
 
     const [countResult, _] = await Promise.all([count, loadFirstBatch])
 
-    totalCount = Math.min(countResult.data[0].count, props.limitShot ?? 100000);
+    totalCount = Math.min(countResult.data[0].count, props.limitShot ?? 100000)
   }
 
-  let currentCount = 0;
+  let currentCount = 0
   const r = radius.value
-  const d = Math.min(500, Math.max(150, lerp(150, 500, 250, 5000, totalCount)));
-  const pointRadius = r / d;
-  const renderCount = props.drawCount ?? RENDER_COUNT * (totalCount > COUNT_TO_SMALL_SIZE ? 2 : 1);
+  const d = Math.min(500, Math.max(150, lerp(150, 500, 250, 5000, totalCount)))
+  const pointRadius = r / d
+  const renderCount = props.drawCount ?? RENDER_COUNT * (totalCount > COUNT_TO_SMALL_SIZE ? 2 : 1)
 
   function draw() {
-    let countToDraw = props.drawCount ?? renderCount;
+    let countToDraw = props.drawCount ?? renderCount
 
     if (currentCount + LOAD_COUNT > shotsData.length) {
       loadNextBatch()
-      countToDraw = Math.min(countToDraw, shotsData.length - currentCount);
+      countToDraw = Math.min(countToDraw, shotsData.length - currentCount)
     }
 
     const ctx = canvasRef.value?.context()
     if (!ctx) return
 
     for (let i = 0; i < countToDraw; i++) {
-      const shot = shotsData[currentCount + i];
-      const x = shot.x * r;
-      const y = shot.y * r;
-      ctx.fillStyle = shot.hit ? BloomColor.gold.main : BloomColor.green.main;
-      ctx.shadowColor = shot.hit ? BloomColor.gold.bloom : BloomColor.green.bloom;
-      ctx.shadowBlur = r / 40;
-      ctx.beginPath();
-      ctx.arc(widthRef.value / 2 + x, heightRef.value / 2 + y, pointRadius, 0, 2 * Math.PI);
-      ctx.closePath();
-      ctx.fill();
+      const shot = shotsData[currentCount + i]
+      const x = shot.x * r
+      const y = shot.y * r
+      ctx.fillStyle = shot.hit ? BloomColor.gold.main : BloomColor.green.main
+      ctx.shadowColor = shot.hit ? BloomColor.gold.bloom : BloomColor.green.bloom
+      ctx.shadowBlur = r / 40
+      ctx.beginPath()
+      ctx.arc(widthRef.value / 2 + x, heightRef.value / 2 + y, pointRadius, 0, 2 * Math.PI)
+      ctx.closePath()
+      ctx.fill()
 
     }
-    currentCount += countToDraw;
+    currentCount += countToDraw
 
     if (currentCount < totalCount) {
-      timeoutHandler = setTimeout(draw, props.drawDelay ?? 1);
+      timeoutHandler = setTimeout(draw, props.drawDelay ?? 1)
     }
   }
   draw()
 }
 
 const maskPath = computed(() => {
-  if (!props.maskRadius) return '';
+  if (!props.maskRadius) return ''
 
-  const width = widthRef.value;
-  const outerRadius = width / 2 * (typeof props.maskRadius === 'number' ? 0 : props.maskRadius[0]);
-  const innerRadius = width / 2 * (typeof props.maskRadius === 'number' ? props.maskRadius : props.maskRadius[1]);
+  const width = widthRef.value
+  const outerRadius = width / 2 * (typeof props.maskRadius === 'number' ? 0 : props.maskRadius[0])
+  const innerRadius = width / 2 * (typeof props.maskRadius === 'number' ? props.maskRadius : props.maskRadius[1])
 
   return `M 0, 0 l 0, ${width} l ${width}, 0 l 0, -${width} Z
    M ${width / 2 - 0.5}, ${width / 2}
@@ -237,42 +237,42 @@ const maskPath = computed(() => {
 
 
 function isMobile() {
-  return navigator.maxTouchPoints > 0;
+  return navigator.maxTouchPoints > 0
 }
 
 const highlighted = computed(() => {
-  if (!props.allowHover) return;
-  if (isOutside.value) return;
+  if (!props.allowHover) return
+  if (isOutside.value) return
 
-  const x = elementX.value / elementWidth.value * 2 - 1;
-  const y = elementY.value / elementHeight.value * 2 - 1;
+  const x = elementX.value / elementWidth.value * 2 - 1
+  const y = elementY.value / elementHeight.value * 2 - 1
 
-  const radius = isMobile() ? MOBILE_HOVER_RADIUS : HOVER_RADIUS;
+  const radius = isMobile() ? MOBILE_HOVER_RADIUS : HOVER_RADIUS
 
   const res = quadTree.retrieve(new Circle({
     x, y, r: radius,
-  })) as Circle<string>[];
+  })) as Circle<string>[]
 
-  if (res.length == 0) return;
+  if (res.length == 0) return
 
   let nearest = res[0]
   let distance = (nearest.x - x) ** 2 + (nearest.y - y) ** 2
   for (let i = 1; i < res.length; i++) {
     const d = (res[i].x - x) ** 2 + (res[i].y - y) ** 2
     if (d < distance) {
-      distance = d;
-      nearest = res[i];
+      distance = d
+      nearest = res[i]
     }
   }
 
   if (Math.sqrt(distance) > radius) return
 
-  const SCALE_FIX_FACTOR = 0.996;
+  const SCALE_FIX_FACTOR = 0.996
   return {
     x: (nearest.x * SCALE_FIX_FACTOR + 1) / 2,
     y: (nearest.y * SCALE_FIX_FACTOR + 1) / 2,
     id: nearest.data!
-  };
+  }
 })
 
 function onClick() {

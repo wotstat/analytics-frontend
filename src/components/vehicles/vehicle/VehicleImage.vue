@@ -3,22 +3,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import FallbackImg from '../../fallbackImg/FallbackImg.vue';
-import { vehicleFallbackUrl, vehicleUrl } from './utils';
+import { computed, ref, watch } from 'vue'
+import FallbackImg from '../../fallbackImg/FallbackImg.vue'
+import { vehicleFallbackUrl, vehicleUrl } from './utils'
 
 const props = defineProps<{
   tag: string,
   size?: 'small' | 'preview' | 'shop'
   loading?: 'lazy' | 'eager'
-}>();
+}>()
 
 
-const targetUrl = ref(vehicleUrl(props.tag, props.size));
+const targetUrl = ref(vehicleUrl(props.tag, props.size))
 
 watch(() => [props.tag, props.size], () => {
-  targetUrl.value = vehicleUrl(props.tag, props.size);
-});
+  targetUrl.value = vehicleUrl(props.tag, props.size)
+})
 
 const fallbackUrl = computed(() => vehicleFallbackUrl(props.size))
 
@@ -41,7 +41,7 @@ const style = computed(() => {
     }
   }
 
-  const offset = getOffset();
+  const offset = getOffset()
   if (offset == 0) return {}
   return {
     transform: `translateX(${offset}%)`,

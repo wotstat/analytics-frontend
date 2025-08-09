@@ -27,7 +27,7 @@ import { HighlightedString } from '../highlightString/highlightUtils'
 const props = defineProps<{
   level: number;
   nation: string;
-  type: "MT" | "LT" | "HT" | "AT" | "SPG";
+  type: 'MT' | 'LT' | 'HT' | 'AT' | 'SPG';
   tag: string;
   highlightStrings: HighlightedString;
 }>()

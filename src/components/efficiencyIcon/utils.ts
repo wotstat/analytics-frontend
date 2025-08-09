@@ -1,4 +1,4 @@
-import { playerNameProcessor } from "@/composition/processors/usePlayerNameProcessor"
+import { playerNameProcessor } from '@/composition/processors/usePlayerNameProcessor'
 
 export const shared = [
   'battles',

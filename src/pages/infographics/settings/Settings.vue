@@ -144,20 +144,20 @@
 </template>
 
 <script setup lang="ts">
-import { dateToDbIndex, query, queryAsync } from '@/db';
-import { computed, onMounted, onUnmounted, ref, shallowRef, toRaw, toValue, watch } from 'vue';
-import { useDebounce, useDraggable, useElementBounding, watchOnce, useVirtualList } from '@vueuse/core';
-import { TankLevel, TankType, useQueryStatParams } from '@/composition/useQueryStatParams';
-import { customBattleModes, customBattleModesKeys } from '@/utils/wot';
-import { useRoute, useRouter } from 'vue-router';
-import { getTankName } from '@/utils/i18n';
+import { dateToDbIndex, query, queryAsync } from '@/db'
+import { computed, onMounted, onUnmounted, ref, shallowRef, toRaw, toValue, watch } from 'vue'
+import { useDebounce, useDraggable, useElementBounding, watchOnce, useVirtualList } from '@vueuse/core'
+import { TankLevel, TankType, useQueryStatParams } from '@/composition/useQueryStatParams'
+import { customBattleModes, customBattleModesKeys } from '@/utils/wot'
+import { useRoute, useRouter } from 'vue-router'
+import { getTankName } from '@/utils/i18n'
 
 const route = useRoute()
 const router = useRouter()
 
 const emit = defineEmits<{
   close: [];
-}>();
+}>()
 
 const props = defineProps<{
   reload?: boolean
@@ -174,29 +174,29 @@ type Battle = {
   end: number,
 }
 
-const enablePlayerFilter = ref(false);
-const enableLevelFilter = ref(false);
-const enableTypeFilter = ref(false);
-const enableTankFilter = ref(false);
+const enablePlayerFilter = ref(false)
+const enableLevelFilter = ref(false)
+const enableTypeFilter = ref(false)
+const enableTankFilter = ref(false)
 
 
-const leftXPosition = ref(0);
-const rightXPosition = ref(1);
+const leftXPosition = ref(0)
+const rightXPosition = ref(1)
 
-const moveContainer = ref<SVGElement | null>(null);
-const { left: boundingLeft, width: boundingWidth } = useElementBounding(moveContainer);
-const left = ref<SVGPathElement | null>(null);
-const right = ref<SVGPathElement | null>(null);
+const moveContainer = ref<SVGElement | null>(null)
+const { left: boundingLeft, width: boundingWidth } = useElementBounding(moveContainer)
+const left = ref<SVGPathElement | null>(null)
+const right = ref<SVGPathElement | null>(null)
 
 useDraggable(left, {
   axis: 'x',
   onMove: (e) => leftXPosition.value = Math.min(boundingWidth.value - 20, Math.max(0, e.x - boundingLeft.value)) / boundingWidth.value
-});
+})
 
 useDraggable(right, {
   axis: 'x',
   onMove: (e) => rightXPosition.value = Math.min(boundingWidth.value, Math.max(20, 12 + e.x - boundingLeft.value)) / boundingWidth.value
-});
+})
 
 
 const nickname = ref('')
@@ -208,7 +208,7 @@ const playerBattles = shallowRef<Battle[]>([])
 const battleMode = ref<keyof typeof customBattleModes | 'any'>('any')
 const fromDate = shallowRef<string | null>(null)
 const toDate = shallowRef<string | null>(null)
-const lastX = ref(10);
+const lastX = ref(10)
 
 const tankList = queryAsync<{
   type: 'MT' | 'LT' | 'HT' | 'AT' | 'SPG',
@@ -241,115 +241,115 @@ const tanksProcessed = computed(() => tanks.value.map(t => ({
 })))
 
 const queryParams = toValue(useQueryStatParams())
-if (queryParams.player) { nickname.value = queryParams.player; enablePlayerFilter.value = true; }
-if (queryParams.level) { selectedLevels.value = queryParams.level; enableLevelFilter.value = true; }
-if (queryParams.types) { selectedClasses.value = queryParams.types; enableTypeFilter.value = true; }
-if (queryParams.battleMode) battleMode.value = queryParams.battleMode;
+if (queryParams.player) { nickname.value = queryParams.player; enablePlayerFilter.value = true }
+if (queryParams.level) { selectedLevels.value = queryParams.level; enableLevelFilter.value = true }
+if (queryParams.types) { selectedClasses.value = queryParams.types; enableTypeFilter.value = true }
+if (queryParams.battleMode) battleMode.value = queryParams.battleMode
 if (queryParams.tanks != null) {
-  const tanks = queryParams.tanks;
+  const tanks = queryParams.tanks
   watchOnce(tanksProcessed, () => {
-    selectedTanks.value = tanksProcessed.value.filter(t => tanks.includes(t.tag));
+    selectedTanks.value = tanksProcessed.value.filter(t => tanks.includes(t.tag))
   })
-  enableTankFilter.value = true;
+  enableTankFilter.value = true
 }
 
 if (queryParams.period !== 'allTime') {
-  const period = queryParams.period;
+  const period = queryParams.period
   if (period.type == 'lastX') {
-    periodVariant.value = 'lastX';
-    lastX.value = period.count;
+    periodVariant.value = 'lastX'
+    lastX.value = period.count
   } else if (period.type == 'fromToNow') {
-    periodVariant.value = 'fromToNow';
-    const date = period.from.toISOString().substring(0, 10);
+    periodVariant.value = 'fromToNow'
+    const date = period.from.toISOString().substring(0, 10)
     fromDate.value = date
-    const dateFrom = new Date(date);
+    const dateFrom = new Date(date)
 
-    const delta = new Date().getTime() - dateFrom.getTime();
-    leftXPosition.value = (period.from.getTime() - dateFrom.getTime()) / delta;
+    const delta = new Date().getTime() - dateFrom.getTime()
+    leftXPosition.value = (period.from.getTime() - dateFrom.getTime()) / delta
   } else if (period.type == 'fromTo') {
-    periodVariant.value = 'fromTo';
-    const fromDateStr = period.from.toISOString().substring(0, 10);
-    const targetStr = period.to.toISOString().substring(0, 10);
-    const targetDate = new Date(targetStr);
-    targetDate.setDate(targetDate.getDate() + 1);
+    periodVariant.value = 'fromTo'
+    const fromDateStr = period.from.toISOString().substring(0, 10)
+    const targetStr = period.to.toISOString().substring(0, 10)
+    const targetDate = new Date(targetStr)
+    targetDate.setDate(targetDate.getDate() + 1)
 
-    fromDate.value = fromDateStr;
-    toDate.value = targetDate.toISOString().substring(0, 10);
+    fromDate.value = fromDateStr
+    toDate.value = targetDate.toISOString().substring(0, 10)
 
-    const dateFrom = new Date(fromDateStr);
-    const delta = targetDate.getTime() - dateFrom.getTime();
-    leftXPosition.value = (period.from.getTime() - dateFrom.getTime()) / delta;
-    rightXPosition.value = (period.to.getTime() - dateFrom.getTime()) / delta;
+    const dateFrom = new Date(fromDateStr)
+    const delta = targetDate.getTime() - dateFrom.getTime()
+    leftXPosition.value = (period.from.getTime() - dateFrom.getTime()) / delta
+    rightXPosition.value = (period.to.getTime() - dateFrom.getTime()) / delta
   }
 }
 
-const debouncedNickname = useDebounce(nickname, 500);
+const debouncedNickname = useDebounce(nickname, 500)
 
-const searchText = ref('');
+const searchText = ref('')
 
 function clickClass(params: TankType) {
   if (selectedClasses.value.includes(params)) {
-    selectedClasses.value = selectedClasses.value.filter((i) => i != params);
+    selectedClasses.value = selectedClasses.value.filter((i) => i != params)
   } else {
-    selectedClasses.value.push(params);
+    selectedClasses.value.push(params)
   }
 }
 
 function clickLevel(params: TankLevel) {
   if (selectedLevels.value.includes(params)) {
-    selectedLevels.value = selectedLevels.value.filter((i) => i != params);
+    selectedLevels.value = selectedLevels.value.filter((i) => i != params)
   } else {
-    selectedLevels.value.push(params);
+    selectedLevels.value.push(params)
   }
 }
 
 function clickTank(tank: Tank) {
   if (selectedTanks.value.map(t => t.tag).includes(tank.tag)) {
-    selectedTanks.value = selectedTanks.value.filter((i) => i.tag != tank.tag);
+    selectedTanks.value = selectedTanks.value.filter((i) => i.tag != tank.tag)
   } else {
-    selectedTanks.value.push(tank);
+    selectedTanks.value.push(tank)
   }
 }
 
 function clearTankFilter() {
-  selectedTanks.value = [];
-  enableTankFilter.value = false;
+  selectedTanks.value = []
+  enableTankFilter.value = false
 }
 
 watch(periodVariant, (val) => {
   if (val == 'allTime') {
-    fromDate.value = null;
-    toDate.value = null;
+    fromDate.value = null
+    toDate.value = null
   } else if (val == 'fromToNow') {
-    toDate.value = null;
-    leftXPosition.value = 0;
-    rightXPosition.value = 1;
+    toDate.value = null
+    leftXPosition.value = 0
+    rightXPosition.value = 1
   } else if (val == 'fromTo') {
-    leftXPosition.value = 0;
-    rightXPosition.value = 1;
+    leftXPosition.value = 0
+    rightXPosition.value = 1
   }
 })
 
 watch(lastX, (val) => {
   if (val < 0) {
-    lastX.value = 1;
+    lastX.value = 1
   }
-});
+})
 
 watch(nickname, val => {
-  playerBattles.value = [];
+  playerBattles.value = []
 })
 
 
-const timeLineStart = shallowRef(new Date());
-const timeLineEnd = shallowRef(new Date());
+const timeLineStart = shallowRef(new Date())
+const timeLineEnd = shallowRef(new Date())
 
 const timelineLabels = computed(() => {
-  const start = timeLineStart.value;
-  const end = timeLineEnd.value;
+  const start = timeLineStart.value
+  const end = timeLineEnd.value
 
-  const startT = start.getTime();
-  const endT = end.getTime();
+  const startT = start.getTime()
+  const endT = end.getTime()
 
   if (startT == endT) {
     return {
@@ -357,53 +357,53 @@ const timelineLabels = computed(() => {
     }
   }
 
-  const remapPercent = (val: Date) => (val.getTime() - startT) / (endT - startT) * 100;
+  const remapPercent = (val: Date) => (val.getTime() - startT) / (endT - startT) * 100
 
-  const deltaInMonths = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+  const deltaInMonths = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth())
 
   let ticks = []
   if (deltaInMonths < 1) {
     for (var day = new Date(startT); day <= end; day.setDate(day.getDate() + 1)) {
-      ticks.push({ x: remapPercent(day) });
+      ticks.push({ x: remapPercent(day) })
     }
   } else {
-    const startMonth = new Date(startT);
-    startMonth.setDate(1);
+    const startMonth = new Date(startT)
+    startMonth.setDate(1)
 
     for (var month = startMonth; month <= end; month.setMonth(month.getMonth() + 1)) {
       if (deltaInMonths < 12) {
-        ticks.push({ x: remapPercent(month), labels: shortDate(month) });
+        ticks.push({ x: remapPercent(month), labels: shortDate(month) })
       } else {
-        ticks.push({ x: remapPercent(month) });
+        ticks.push({ x: remapPercent(month) })
       }
     }
   }
 
   return {
     ticks,
-  };
+  }
 
 })
 
 function shortDate(date: Date) {
   return date.toLocaleString(undefined, {
-    month: "numeric", day: "numeric",
+    month: 'numeric', day: 'numeric',
   })
 }
 
 watch(() => [enablePlayerFilter.value, debouncedNickname.value, fromDate.value, toDate.value] as const, async ([enablePlayerFilter, nickname, fromDate, toDate]) => {
   if (!enablePlayerFilter || nickname == '') {
-    playerBattles.value = [];
-    return;
+    playerBattles.value = []
+    return
   }
 
-  playerBattles.value = [];
+  playerBattles.value = []
 
   const from = fromDate ? new Date(fromDate) : null
   const to = toDate ? new Date(toDate) : new Date()
 
-  if (from) timeLineStart.value = new Date(from.getTime());
-  if (to) timeLineEnd.value = new Date(to.getTime());
+  if (from) timeLineStart.value = new Date(from.getTime())
+  if (to) timeLineEnd.value = new Date(to.getTime())
 
   const { data: battles } = await query<{ duration: number, id: number }>(`
   select duration, id 
@@ -413,11 +413,11 @@ watch(() => [enablePlayerFilter.value, debouncedNickname.value, fromDate.value, 
   ${to ? `and id <= '${dateToDbIndex(to)}'` : ''}
   order by dateTime
   limit 400;
-  `);
+  `)
 
   const processed = battles.map(t => {
-    const end = new Date(t.id / 1e10);
-    const start = new Date(end.getTime() - t.duration * 1000);
+    const end = new Date(t.id / 1e10)
+    const start = new Date(end.getTime() - t.duration * 1000)
     return {
       start: start.getTime(),
       end: end.getTime(),
@@ -425,21 +425,21 @@ watch(() => [enablePlayerFilter.value, debouncedNickname.value, fromDate.value, 
   })
 
   if (processed.length == 0) {
-    playerBattles.value = [];
-    return;
+    playerBattles.value = []
+    return
   }
 
-  const min = from ? from.getTime() : processed[0].start;
-  const max = to ? to.getTime() : processed[processed.length - 1].end;
+  const min = from ? from.getTime() : processed[0].start
+  const max = to ? to.getTime() : processed[processed.length - 1].end
 
-  timeLineStart.value = new Date(min);
-  timeLineEnd.value = new Date(max);
+  timeLineStart.value = new Date(min)
+  timeLineEnd.value = new Date(max)
 
 
   playerBattles.value = processed.map(t => ({
     start: (t.start - min) / (max - min),
     end: (t.end - min) / (max - min)
-  }));
+  }))
 }, { immediate: true })
 
 const sortedTanks = computed<Tank[]>(() =>
@@ -458,43 +458,43 @@ const { list: sortedTankList,
   wrapperProps: sortedTankWrapperProps } = useVirtualList(sortedTanks, { itemHeight: 34 })
 
 watch(sortedTanks, () => {
-  sortedTankContainerProps.ref.value?.scrollTo(0, 0);
+  sortedTankContainerProps.ref.value?.scrollTo(0, 0)
 })
 
 function apply() {
-  let target = window.location.pathname + '?';
+  let target = window.location.pathname + '?'
 
-  if (enablePlayerFilter.value && nickname.value != '') target += `nickname=${nickname.value}&`;
-  if (enableLevelFilter.value && selectedLevels.value.length > 0) target += `level=${selectedLevels.value.join(',')}&`;
-  if (enableTypeFilter.value && selectedClasses.value.length > 0) target += `type=${selectedClasses.value.join(',')}&`;
-  if (enableTankFilter.value && selectedTanks.value.length > 0) target += `tank=${selectedTanks.value.map(t => t.tag).join(',')}&`;
-  if (battleMode.value != 'normalAny') target += `mode=${battleMode.value}&`;
+  if (enablePlayerFilter.value && nickname.value != '') target += `nickname=${nickname.value}&`
+  if (enableLevelFilter.value && selectedLevels.value.length > 0) target += `level=${selectedLevels.value.join(',')}&`
+  if (enableTypeFilter.value && selectedClasses.value.length > 0) target += `type=${selectedClasses.value.join(',')}&`
+  if (enableTankFilter.value && selectedTanks.value.length > 0) target += `tank=${selectedTanks.value.map(t => t.tag).join(',')}&`
+  if (battleMode.value != 'normalAny') target += `mode=${battleMode.value}&`
 
   function processPeriod() {
-    if (periodVariant.value == 'allTime') return;
-    if (periodVariant.value == 'lastX') return target += `lastX=${lastX.value}&`;
+    if (periodVariant.value == 'allTime') return
+    if (periodVariant.value == 'lastX') return target += `lastX=${lastX.value}&`
 
     const processFromTo = () => {
-      const from = new Date(fromDate.value!);
-      const to = toDate.value ? new Date(toDate.value) : new Date();
+      const from = new Date(fromDate.value!)
+      const to = toDate.value ? new Date(toDate.value) : new Date()
 
       if (!enablePlayerFilter.value || nickname.value == '') return { from, to }
 
-      const delta = to.getTime() - from.getTime();
-      const fromT = new Date(from.getTime() + delta * leftXPosition.value);
-      const toT = new Date(fromT.getTime() + delta * (rightXPosition.value - leftXPosition.value));
+      const delta = to.getTime() - from.getTime()
+      const fromT = new Date(from.getTime() + delta * leftXPosition.value)
+      const toT = new Date(fromT.getTime() + delta * (rightXPosition.value - leftXPosition.value))
 
       return { from: fromT, to: toT }
     }
 
     if (periodVariant.value == 'fromToNow') {
       if (fromDate.value == null) return
-      const { from } = processFromTo();
-      target += `from=${from.toISOString()}&`;
+      const { from } = processFromTo()
+      target += `from=${from.toISOString()}&`
     } else if (periodVariant.value == 'fromTo') {
       if (fromDate.value == null || toDate.value == null) return
-      const { from, to } = processFromTo();
-      target += `from=${from.toISOString()}&to=${to.toISOString()}&`;
+      const { from, to } = processFromTo()
+      target += `from=${from.toISOString()}&to=${to.toISOString()}&`
     }
   }
 
@@ -515,9 +515,9 @@ function apply() {
   if (props.reload !== false) {
     const old = Object.entries(route.query).filter(t => !keys.includes(t[0])).map(t => t.join('=')).join('&')
 
-    if (old != '') target += (!target.includes('?') ? '?' : '&') + old;
+    if (old != '') target += (!target.includes('?') ? '?' : '&') + old
 
-    window.open(target, '_self');
+    window.open(target, '_self')
   } else {
     const targetParams = target.split('?')
     if (targetParams.length > 1) {
@@ -529,28 +529,28 @@ function apply() {
           ...Object.fromEntries(keys.map(t => [t, undefined])),
           ...p
         }
-      });
+      })
     } else {
-      router.push(target);
+      router.push(target)
     }
   }
 
-  if (props.reload !== true) emit('close');
+  if (props.reload !== true) emit('close')
 }
 
 onMounted(() => {
-  document.body.classList.add('no-scroll');
-  document.addEventListener('keydown', onKey);
-});
+  document.body.classList.add('no-scroll')
+  document.addEventListener('keydown', onKey)
+})
 
 onUnmounted(() => {
-  document.body.classList.remove('no-scroll');
-  document.removeEventListener('keydown', onKey);
-});
+  document.body.classList.remove('no-scroll')
+  document.removeEventListener('keydown', onKey)
+})
 
 function onKey(params: KeyboardEvent) {
   if (params.key == 'Escape') {
-    emit('close');
+    emit('close')
   }
 }
 

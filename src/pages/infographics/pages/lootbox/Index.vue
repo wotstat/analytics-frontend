@@ -110,19 +110,19 @@
 </template>
 
 <script lang="ts" setup>
-import GenericInfo from '@/components/widgets/GenericInfo.vue';
-import { useFixedSpaceProcessor, useLogProcessor } from '@/composition/usePercentProcessor';
-import { useQueryStatParams, useQueryStatParamsCache } from '@/composition/useQueryStatParams';
-import { Status, dateToDbIndex, queryComputed, queryComputedFirst, success } from '@/db';
-import { computed, ref } from 'vue';
-import TableSection from "./TableSection.vue";
-import OpenByTable from "./OpenByTable.vue";
-import RerollTable from './RerollTable.vue';
-import { countLocalize, crewBookName, entitlementsName, getBestLocalization, getTankName, LocalizedName } from '@/utils/i18n';
-import LootboxList from './LootboxList/Index.vue';
-import { useRoute } from 'vue-router';
-import { useMeta } from '@/composition/useMeta';
-import { useLocalStorage } from '@vueuse/core';
+import GenericInfo from '@/components/widgets/GenericInfo.vue'
+import { useFixedSpaceProcessor, useLogProcessor } from '@/composition/usePercentProcessor'
+import { useQueryStatParams, useQueryStatParamsCache } from '@/composition/useQueryStatParams'
+import { Status, dateToDbIndex, queryComputed, queryComputedFirst, success } from '@/db'
+import { computed, ref } from 'vue'
+import TableSection from './TableSection.vue'
+import OpenByTable from './OpenByTable.vue'
+import RerollTable from './RerollTable.vue'
+import { countLocalize, crewBookName, entitlementsName, getBestLocalization, getTankName, LocalizedName } from '@/utils/i18n'
+import LootboxList from './LootboxList/Index.vue'
+import { useRoute } from 'vue-router'
+import { useMeta } from '@/composition/useMeta'
+import { useLocalStorage } from '@vueuse/core'
 
 useMeta({
   title: 'Статистика коробок',
@@ -157,15 +157,15 @@ function whereClause(ignore: ('player' | 'tag' | 'date' | 'region')[] = []) {
 
   if (valueParams.period !== 'allTime' && !ignore.includes('date')) {
     if (valueParams.period.type == 'fromTo') {
-      result.push(`id >= ${dateToDbIndex(valueParams.period.from)}`);
-      result.push(`id <= ${dateToDbIndex(valueParams.period.to)}`);
+      result.push(`id >= ${dateToDbIndex(valueParams.period.from)}`)
+      result.push(`id <= ${dateToDbIndex(valueParams.period.to)}`)
     } else if (valueParams.period.type == 'fromToNow') {
-      result.push(`id >= ${dateToDbIndex(valueParams.period.from)}`);
+      result.push(`id >= ${dateToDbIndex(valueParams.period.from)}`)
     }
   }
 
   if (!showTestData.value && !ignore.includes('region')) {
-    result.push(`region not in ('CT')`)
+    result.push('region not in (\'CT\')')
   }
 
   return result.join(' and ') || 'true'
@@ -346,17 +346,17 @@ function load(queryString: () => string) {
 }
 
 const lootboxesStats = load(() => getQuery(
-  `concat(tag, ':', count) as title, tag`,
-  `array join lootboxes.tag as tag, lootboxes.count as count where true`,
-  `lootbox_lootbox_mv`,
+  'concat(tag, \':\', count) as title, tag',
+  'array join lootboxes.tag as tag, lootboxes.count as count where true',
+  'lootbox_lootbox_mv',
   undefined,
   'Lootboxes'
 ))
 
 const vehiclesStatsData = load(() => getQuery(
-  `title`,
-  `array join arrayConcat(addedVehicles, compensatedVehicles.tag) as title where true`,
-  `lootbox_vehicle_mv`,
+  'title',
+  'array join arrayConcat(addedVehicles, compensatedVehicles.tag) as title where true',
+  'lootbox_vehicle_mv',
   'title'
 ))
 
@@ -366,98 +366,98 @@ const vehiclesStats = computed(() => ({
 }))
 
 const mandarin25Stats = load(() => getQuery(
-  `title`,
+  'title',
   `array join arrayFilter(
     t -> t.1 = 'ny25_mandarin' and not has(arrayZip(compensatedToys.currency, compensatedToys.count), t),
     arrayZip(extra.tag, extra.count)
   ).2 as title where title > 0`,
-  `lootbox_ny25mandarin_mv`,
+  'lootbox_ny25mandarin_mv',
   'title'
 ))
 
 const toysStats = load(() => getQuery(
-  `concat(tag, '|', toys.count) as title, tag`,
-  `array join toys.tag as tag, toys.count where tag != ''`,
-  `lootbox_toys_mv`,
-  `splitByChar('|', tag)[1]`,
-  `Toys`
+  'concat(tag, \'|\', toys.count) as title, tag',
+  'array join toys.tag as tag, toys.count where tag != \'\'',
+  'lootbox_toys_mv',
+  'splitByChar(\'|\', tag)[1]',
+  'Toys'
 ))
 
 const goldStats = load(() => getQuery(
-  `(gold - arraySum(compensatedVehicles.gold)) as title`,
-  `where title > 0`,
-  `lootbox_gold_mv`,
+  '(gold - arraySum(compensatedVehicles.gold)) as title',
+  'where title > 0',
+  'lootbox_gold_mv',
   'title'
 ))
 
 const crystalStats = load(() => getQuery(
-  `crystal as title`,
-  `where title > 0`,
-  `lootbox_crystal_mv`,
+  'crystal as title',
+  'where title > 0',
+  'lootbox_crystal_mv',
   'title'
 ))
 
 const creditsStats = load(() => getQuery(
-  `credits as title`,
-  `where credits > 0`,
-  `lootbox_credits_mv`,
+  'credits as title',
+  'where credits > 0',
+  'lootbox_credits_mv',
   'title'
 ))
 
 const freeXpStats = load(() => getQuery(
-  `freeXP as title`,
-  `where freeXP > 0`,
-  `lootbox_free_xp_mv`,
+  'freeXP as title',
+  'where freeXP > 0',
+  'lootbox_free_xp_mv',
   'title'
 ))
 
 const premStats = load(() => getQuery(
-  `premiumPlus as title`,
-  `where premiumPlus > 0`,
-  `lootbox_premium_mv`,
+  'premiumPlus as title',
+  'where premiumPlus > 0',
+  'lootbox_premium_mv',
   'title'
 ))
 
 const customizationsStats = load(() => getQuery(
-  `concat(customizations.type, '|', tag, '|', customizations.count) as title, tag`,
-  `array join customizations.type, customizations.tag as tag, customizations.count where true`,
-  `lootbox_customizations_mv`,
-  `splitByChar(':', tag)[2]`,
-  `Customizations`
+  'concat(customizations.type, \'|\', tag, \'|\', customizations.count) as title, tag',
+  'array join customizations.type, customizations.tag as tag, customizations.count where true',
+  'lootbox_customizations_mv',
+  'splitByChar(\':\', tag)[2]',
+  'Customizations'
 ))
 
 const entitlementsStats = load(() => getQuery(
-  `concat(tag, ':', entitlements.count) AS title, tag`,
-  `array join entitlements.tag as tag, entitlements.count where true`,
-  `lootbox_entitlements_mv`
+  'concat(tag, \':\', entitlements.count) AS title, tag',
+  'array join entitlements.tag as tag, entitlements.count where true',
+  'lootbox_entitlements_mv'
 ))
 
 const managementStats = load(() => getQuery(
-  `concat(tag, ':', count) as title, tag`,
+  'concat(tag, \':\', count) as title, tag',
   `array join arrayConcat(array(slots, berths), equip.count) as count,
   arrayConcat(array('slots', 'berths'), equip.tag) as tag
      where count > 0`,
-  `lootbox_equipment_mv`
+  'lootbox_equipment_mv'
 ))
 
 const boostersStats = load(() => getQuery(
-  `concat(tag, ':', boosters.value, ':', boosters.time, ':', boosters.count) as title, tag`,
-  `array join boosters.tag as tag, boosters.value, boosters.time, boosters.count where true`,
-  `lootbox_boosters_mv`
+  'concat(tag, \':\', boosters.value, \':\', boosters.time, \':\', boosters.count) as title, tag',
+  'array join boosters.tag as tag, boosters.value, boosters.time, boosters.count where true',
+  'lootbox_boosters_mv'
 ))
 
 const crewbooksStats = load(() => getQuery(
-  `concat(tag, ':', count) as title, tag`,
-  `array join crewBooks.tag as tag, crewBooks.count as count where true`,
-  `lootbox_crewbook_mv`
+  'concat(tag, \':\', count) as title, tag',
+  'array join crewBooks.tag as tag, crewBooks.count as count where true',
+  'lootbox_crewbook_mv'
 ))
 
 const itemsStats = load(() => getQuery(
-  `concat(tag, ':', itemCount) as title, tag`,
-  `array join items.tag as tag, items.count as itemCount where true`,
-  `lootbox_item_mv`,
+  'concat(tag, \':\', itemCount) as title, tag',
+  'array join items.tag as tag, items.count as itemCount where true',
+  'lootbox_item_mv',
   undefined,
-  `Artefacts`
+  'Artefacts'
 ))
 
 const itemsStatsSorted = computed(() => {

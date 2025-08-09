@@ -70,17 +70,17 @@
 </template>
 
 <script setup lang="ts">
-import GenericInfo from '@/components/widgets/GenericInfo.vue';
-import MiniBar from '@/components/widgets/charts/MiniBar.vue';
-import MniiPie from '@/components/widgets/charts/MiniPie.vue';
-import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams';
-import { queryAsync, queryAsyncFirst } from "@/db";
-import { useElementVisibility } from '@vueuse/core';
-import { computed, ref } from 'vue';
+import GenericInfo from '@/components/widgets/GenericInfo.vue'
+import MiniBar from '@/components/widgets/charts/MiniBar.vue'
+import MniiPie from '@/components/widgets/charts/MiniPie.vue'
+import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams'
+import { queryAsync, queryAsyncFirst } from '@/db'
+import { useElementVisibility } from '@vueuse/core'
+import { computed, ref } from 'vue'
 
-import { ms2sec, sec2minsec, sec2hour, ms2secLabel } from "@/utils";
-import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor';
-import { useMeta } from '@/composition/useMeta';
+import { ms2sec, sec2minsec, sec2hour, ms2secLabel } from '@/utils'
+import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor'
+import { useMeta } from '@/composition/useMeta'
 
 useMeta({
   title: 'Сессионная инфографика',
@@ -89,12 +89,12 @@ useMeta({
 })
 
 
-const container = ref<HTMLElement | null>(null);
-const visible = useElementVisibility(container);
-const params = useQueryStatParams();
+const container = ref<HTMLElement | null>(null)
+const visible = useElementVisibility(container)
+const params = useQueryStatParams()
 const settings = useQueryStatParamsCache(params)
 
-const tankLabels = ['СТ', 'ТТ', 'ПТ', 'ЛТ', 'САУ'];
+const tankLabels = ['СТ', 'ТТ', 'ПТ', 'ЛТ', 'САУ']
 
 const dataStart = queryAsyncFirst(`
 select toUInt32(sum(inQueueWaitTime + loadTime + preBattleWaitTime) / 1000 / 60 / 60)as waitTime,
@@ -136,7 +136,7 @@ ${whereClause(params)};
 
 const winrateResult = queryAsync<{
   count: number, result: 'win' | 'tie' | 'lose'
-}>(`select toUInt32(count(*)) as count, result from Event_OnBattleResult ${whereClause(params)} group by result`, { enabled: visible, settings: settings.value });
+}>(`select toUInt32(count(*)) as count, result from Event_OnBattleResult ${whereClause(params)} group by result`, { enabled: visible, settings: settings.value })
 
 const winrateData = computed(() => {
   const res = {
@@ -145,32 +145,32 @@ const winrateData = computed(() => {
     lose: 0,
   }
 
-  const { data } = winrateResult.value;
+  const { data } = winrateResult.value
 
   for (const iterator of data) {
-    res[iterator.result] = iterator.count;
+    res[iterator.result] = iterator.count
   }
 
-  const total = res.win + res.tie + res.lose;
-  return [res.win / total, res.lose / total, res.tie / total].map(t => Math.round(t * 10000) / 100);
+  const total = res.win + res.tie + res.lose
+  return [res.win / total, res.lose / total, res.tie / total].map(t => Math.round(t * 10000) / 100)
 })
 
 const avgChart = computed(() => {
-  const { data: r } = avgTypeResult.value;
-  return [r.MT, r.HT, r.AT, r.LT, r.SPG].map(t => t * 30 / 2).map(t => Math.round(t * 100) / 100);
+  const { data: r } = avgTypeResult.value
+  return [r.MT, r.HT, r.AT, r.LT, r.SPG].map(t => t * 30 / 2).map(t => Math.round(t * 100) / 100)
 })
 
 const durationData = computed(() => {
-  const { data: durations } = durationResult.value;
+  const { data: durations } = durationResult.value
 
   const keyed = durations.reduce((prev, curr) => {
-    prev[curr.duration] = { p: curr.percent, l: curr.lifetime };
-    return prev;
-  }, {} as any);
+    prev[curr.duration] = { p: curr.percent, l: curr.lifetime }
+    return prev
+  }, {} as any)
 
   for (let i = 1; i < 15; i++) {
     if (!(i in keyed)) {
-      keyed[i] = { p: 0, l: 0 };
+      keyed[i] = { p: 0, l: 0 }
     }
   }
 

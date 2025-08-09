@@ -1,4 +1,4 @@
-import { IconType } from "./utils";
+import { IconType } from './utils'
 
 export const i18n = {
   ru: {

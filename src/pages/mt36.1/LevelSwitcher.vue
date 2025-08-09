@@ -10,20 +10,20 @@
 
 
 <script setup lang="ts">
-import { numberToRoman } from '@/utils';
+import { numberToRoman } from '@/utils'
 
-const levels = defineModel<Set<number>>({ required: true });
+const levels = defineModel<Set<number>>({ required: true })
 
 
 function onClickLevel(event: MouseEvent, level: number) {
-  event.preventDefault();
-  event.stopPropagation();
+  event.preventDefault()
+  event.stopPropagation()
   if (levels.value.has(level)) {
-    levels.value.delete(level);
+    levels.value.delete(level)
   } else {
 
-    if (!event.shiftKey) levels.value.clear();
-    levels.value.add(level);
+    if (!event.shiftKey) levels.value.clear()
+    levels.value.add(level)
   }
 }
 

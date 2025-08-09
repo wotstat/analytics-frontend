@@ -4,20 +4,20 @@
 
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue'
 import Confetti from 'canvas-confetti'
 
-const canvas = ref<HTMLCanvasElement | null>(null);
+const canvas = ref<HTMLCanvasElement | null>(null)
 
-const confetti = ref<Confetti.CreateTypes | null>(null);
+const confetti = ref<Confetti.CreateTypes | null>(null)
 
 onMounted(() => {
-  if (!canvas.value) return;
+  if (!canvas.value) return
 
   confetti.value = Confetti.create(canvas.value, {
     resize: true,
     useWorker: true
-  });
+  })
 
 })
 

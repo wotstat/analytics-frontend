@@ -141,11 +141,11 @@
 </template>
 
 <script lang="ts" setup>
-import { roundProcessor, usePercentProcessor } from '@/composition/usePercentProcessor';
-import { dbIndexToDate } from '@/db';
-import { ChuckResult } from '@/db/schema';
-import { timeProcessor } from '@/utils';
-import { getArenaName, getTankName } from '@/utils/i18n';
+import { roundProcessor, usePercentProcessor } from '@/composition/usePercentProcessor'
+import { dbIndexToDate } from '@/db'
+import { ChuckResult } from '@/db/schema'
+import { timeProcessor } from '@/utils'
+import { getArenaName, getTankName } from '@/utils/i18n'
 
 const props = defineProps<{
   part: {
@@ -169,7 +169,7 @@ const props = defineProps<{
     scoreAvg: number
   },
   showDate: boolean
-}>();
+}>()
 
 function getResultColor(result: string) {
   return {

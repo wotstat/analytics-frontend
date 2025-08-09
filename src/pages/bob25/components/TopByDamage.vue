@@ -25,11 +25,11 @@
 
 <script setup lang="ts">
 
-import { useMediaQuery } from '@vueuse/core';
+import { useMediaQuery } from '@vueuse/core'
 import { jove, lebwa, yusha, nearyou } from '../assets/top-by-level'
-import { ref } from 'vue';
-import VehicleImage from '@/components/vehicles/vehicle/VehicleImage.vue';
-import { bloggerNamesArray } from './bloggerNames';
+import { ref } from 'vue'
+import VehicleImage from '@/components/vehicles/vehicle/VehicleImage.vue'
+import { bloggerNamesArray } from './bloggerNames'
 const isMore = ref(false)
 
 

@@ -162,16 +162,16 @@
 </template>
 
 <script lang="ts" setup>
-import { dbIndexToDate, query } from '@/db';
-import { computed, onMounted, ref, shallowRef, watch } from 'vue';
-import { shellNames, wotinspectorLog, wotinspectorURLNew } from '@/utils/wot';
-import { aranaMinimapUrl, convertCoordinate, loadArenaMeta } from '@/utils/arenas';
-import { computedAsync, useDraggable, useMediaQuery } from '@vueuse/core';
-import { useRoute, useRouter } from 'vue-router';
-import { sec2minsec } from '@/utils';
-import InfoTable from "./InfoTable.vue";
-import { getArenaName } from '@/utils/i18n';
-import MinimapOverlays from '@/components/minimapOverlay/Index.vue';
+import { dbIndexToDate, query } from '@/db'
+import { computed, onMounted, ref, shallowRef, watch } from 'vue'
+import { shellNames, wotinspectorLog, wotinspectorURLNew } from '@/utils/wot'
+import { aranaMinimapUrl, convertCoordinate, loadArenaMeta } from '@/utils/arenas'
+import { computedAsync, useDraggable, useMediaQuery } from '@vueuse/core'
+import { useRoute, useRouter } from 'vue-router'
+import { sec2minsec } from '@/utils'
+import InfoTable from './InfoTable.vue'
+import { getArenaName } from '@/utils/i18n'
+import MinimapOverlays from '@/components/minimapOverlay/Index.vue'
 
 type UInt128 = string;
 type DateTime64 = string;
@@ -280,12 +280,12 @@ type Shot = {
 
 const props = defineProps<{
   shotID: string;
-}>();
+}>()
 
-const shotIndex = ref(0);
-const allShots = shallowRef<Shot[] | null>(null);
+const shotIndex = ref(0)
+const allShots = shallowRef<Shot[] | null>(null)
 const selectedShoot = computed(() => allShots.value?.[shotIndex.value] ?? null)
-const arenaTag = computed(() => selectedShoot.value?.arenaTag.split('spaces/')[1] ?? null);
+const arenaTag = computed(() => selectedShoot.value?.arenaTag.split('spaces/')[1] ?? null)
 
 watch(selectedShoot, shot => {
   console.log(JSON.stringify({
@@ -329,26 +329,26 @@ const thirdTable = (s: Shot) => [
   ['Автоприцел', s.autoAim ? 'Да' : 'Нет']
 ]
 
-const router = useRouter();
-const route = useRoute();
+const router = useRouter()
+const route = useRoute()
 
-const barProgress = ref<HTMLElement | null>(null);
-const dragProgress = ref(0);
+const barProgress = ref<HTMLElement | null>(null)
+const dragProgress = ref(0)
 
 function updateProgress(t: PointerEvent, shoudReplace = true) {
-  if (!barProgress.value) return;
+  if (!barProgress.value) return
 
-  const bbox = barProgress.value.getBoundingClientRect();
-  dragProgress.value = Math.max(0, Math.min(1, (t.clientX - bbox.left) / bbox.width));
+  const bbox = barProgress.value.getBoundingClientRect()
+  dragProgress.value = Math.max(0, Math.min(1, (t.clientX - bbox.left) / bbox.width))
 
   updateDisplayIndex(shoudReplace)
 }
 
 function updateDisplayIndex(shoudReplace: boolean) {
   const max = Math.max(0, (allShots.value?.length ?? 0) - 1)
-  const index = Math.round(dragProgress.value * max);
-  if (index < 0 || index >= (allShots.value?.length ?? 0)) return;
-  if (index === shotIndex.value) return;
+  const index = Math.round(dragProgress.value * max)
+  if (index < 0 || index >= (allShots.value?.length ?? 0)) return
+  if (index === shotIndex.value) return
 
   if (shoudReplace) router.replace({ query: { ...route.query, shot: allShots.value?.[index].id } })
   else router.push({ query: { ...route.query, shot: allShots.value?.[index].id } })
@@ -362,49 +362,49 @@ const { isDragging: isBarDragging } = useDraggable(barProgress, {
   onEnd: (e, t) => updateProgress(t, false),
   preventDefault: true,
   stopPropagation: true,
-});
+})
 
 onMounted(async () => {
-  console.log('OnMounted');
+  console.log('OnMounted')
 
   const shotTime = dbIndexToDate(props.shotID)
   const currentID = await query<{ onBattleStartId: string }>(`
   SELECT onBattleStartId FROM Event_OnShot
   WHERE id = '${props.shotID}'
-  and dateTime > toDateTime(${shotTime}) and dateTime < toDateTime(${shotTime + 1})`);
+  and dateTime > toDateTime(${shotTime}) and dateTime < toDateTime(${shotTime + 1})`)
 
-  const onBattleStartId = currentID.data[0].onBattleStartId;
+  const onBattleStartId = currentID.data[0].onBattleStartId
 
   const shots = await query<Shot>(`
   SELECT * FROM Event_OnShot
   WHERE onBattleStartId = '${onBattleStartId}'
   and dateTime > toDateTime(${dbIndexToDate(onBattleStartId)})
   and dateTime < toDateTime(${dbIndexToDate(onBattleStartId)}) + interval 1 hour
-  order by battleTime`);
-  allShots.value = shots.data;
-  console.log('AllShots', allShots.value);
+  order by battleTime`)
+  allShots.value = shots.data
+  console.log('AllShots', allShots.value)
 
-  shotIndex.value = shots.data.findIndex(s => s.id === props.shotID);
+  shotIndex.value = shots.data.findIndex(s => s.id === props.shotID)
 })
 
-const arenaMeta = computedAsync(async () => arenaTag.value ? await loadArenaMeta(arenaTag.value) : null);
+const arenaMeta = computedAsync(async () => arenaTag.value ? await loadArenaMeta(arenaTag.value) : null)
 
 function getWotinspectorParams() {
-  if (selectedShoot.value == null) return null;
+  if (selectedShoot.value == null) return null
 
   const r = selectedShoot.value
-  if (r.hitPoint_x == null || r.hitPoint_y == null || r.hitPoint_z == null) return null;
+  if (r.hitPoint_x == null || r.hitPoint_y == null || r.hitPoint_z == null) return null
   if (r.hitVehicleDescr == null || r.hitChassisDescr == null || r.hitTurretDescr == null ||
-    r.hitGunDescr == null || r.hitTurretPitch == null || r.hitTurretYaw == null || r.hitSegment == null) return null;
+    r.hitGunDescr == null || r.hitTurretPitch == null || r.hitTurretYaw == null || r.hitSegment == null) return null
 
   const gunPoint = { x: r.gunPoint_x, y: r.gunPoint_y, z: r.gunPoint_z, }
-  const hitPoint = { x: r.hitPoint_x, y: r.hitPoint_y, z: r.hitPoint_z, };
+  const hitPoint = { x: r.hitPoint_x, y: r.hitPoint_y, z: r.hitPoint_z, }
 
   const distance = Math.sqrt(
     Math.pow(gunPoint.x - hitPoint.x, 2) +
     Math.pow(gunPoint.y - hitPoint.y, 2) +
     Math.pow(gunPoint.z - hitPoint.z, 2)
-  );
+  )
 
   return {
     tank: {
@@ -422,28 +422,28 @@ function getWotinspectorParams() {
       turretPitch: r.hitTurretYaw,
       segment: r.hitSegment,
     }, distance, isWOT: r.region != 'RU'
-  };
+  }
 }
 
 async function wotinspectorClick() {
-  const params = getWotinspectorParams();
-  if (!params) return;
-  wotinspectorLog(params.tank, params.target, params.distance, params.isWOT);
+  const params = getWotinspectorParams()
+  if (!params) return
+  wotinspectorLog(params.tank, params.target, params.distance, params.isWOT)
 
-  const url = wotinspectorURLNew(params.tank, params.target, params.distance, params.isWOT);
-  const data = await fetch(url);
-  const json = await data.json();
+  const url = wotinspectorURLNew(params.tank, params.target, params.distance, params.isWOT)
+  const data = await fetch(url)
+  const json = await data.json()
 
   if ('url' in json) {
-    window.open(json.url, '_blank');
+    window.open(json.url, '_blank')
   } else {
-    console.error('Error', json);
-    alert('Ошибка при получении данных от WotInspector');
+    console.error('Error', json)
+    alert('Ошибка при получении данных от WotInspector')
   }
 }
 
 function getHitPointServer(isServer: boolean) {
-  if (selectedShoot.value == null) return null;
+  if (selectedShoot.value == null) return null
 
   const r = isServer ? selectedShoot.value.ballisticResultServer_r : selectedShoot.value.ballisticResultClient_r
   const theta = isServer ? selectedShoot.value.ballisticResultServer_theta : selectedShoot.value.ballisticResultClient_theta
@@ -458,7 +458,7 @@ const hitPointServer = computed(() => getHitPointServer(true))
 const hitPointClient = computed(() => getHitPointServer(false))
 
 const mapHitPoint = computed(() => {
-  if (selectedShoot.value == null) return null;
+  if (selectedShoot.value == null) return null
   return {
     x: selectedShoot.value.hitPoint_x ?? selectedShoot.value.tracerEnd_x,
     z: selectedShoot.value.hitPoint_z ?? selectedShoot.value.tracerEnd_z,
@@ -467,19 +467,19 @@ const mapHitPoint = computed(() => {
 })
 
 const possibleMin = computed(() => {
-  if (selectedShoot.value == null) return null;
+  if (selectedShoot.value == null) return null
 
   return selectedShoot.value.gunDispersion / selectedShoot.value.serverShotDispersion
 })
 
 const arenaMinimapUrl = computedAsync(() => {
-  if (selectedShoot.value == null) return null;
-  return aranaMinimapUrl(selectedShoot.value.arenaTag);
+  if (selectedShoot.value == null) return null
+  return aranaMinimapUrl(selectedShoot.value.arenaTag)
 })
 
 const playerTank = computed(() => {
-  if (selectedShoot.value == null) return null;
-  return { tag: selectedShoot.value.tankTag, type: selectedShoot.value.tankType, x: selectedShoot.value.gunPoint_x, y: selectedShoot.value.gunPoint_z };
+  if (selectedShoot.value == null) return null
+  return { tag: selectedShoot.value.tankTag, type: selectedShoot.value.tankType, x: selectedShoot.value.gunPoint_x, y: selectedShoot.value.gunPoint_z }
 })
 
 const shotResult = computed(() => {
@@ -499,7 +499,7 @@ const shotResult = computed(() => {
   })
 })
 
-const images = import.meta.glob<{ default: string }>('./tank-markers/*.png', { eager: true });
+const images = import.meta.glob<{ default: string }>('./tank-markers/*.png', { eager: true })
 function getTankImg(tankType: string, ally: boolean, dead: boolean) {
   const tag = {
     'HT': 'heavyTank',
@@ -507,19 +507,19 @@ function getTankImg(tankType: string, ally: boolean, dead: boolean) {
     'LT': 'lightTank',
     'SPG': 'SPG',
     'AT': 'AT-SPG',
-  }[tankType] ?? 'heavyTank';
+  }[tankType] ?? 'heavyTank'
 
   return images[`./tank-markers/${tag}_${ally ? 'ally' : 'enemy'}_${dead ? 'dead_' : ''}${ally ? 'green' : 'red'}.png`].default
 }
 
 const serverMakerPoint = computed(() => {
-  if (selectedShoot.value == null) return null;
-  return { x: selectedShoot.value.serverMarkerPoint_x, y: selectedShoot.value.serverMarkerPoint_y, z: selectedShoot.value.serverMarkerPoint_z };
+  if (selectedShoot.value == null) return null
+  return { x: selectedShoot.value.serverMarkerPoint_x, y: selectedShoot.value.serverMarkerPoint_y, z: selectedShoot.value.serverMarkerPoint_z }
 })
 
 const clientMakerPoint = computed(() => {
-  if (selectedShoot.value == null) return null;
-  return { x: selectedShoot.value.clientMarkerPoint_x, y: selectedShoot.value.clientMarkerPoint_y, z: selectedShoot.value.clientMarkerPoint_z };
+  if (selectedShoot.value == null) return null
+  return { x: selectedShoot.value.clientMarkerPoint_x, y: selectedShoot.value.clientMarkerPoint_y, z: selectedShoot.value.clientMarkerPoint_z }
 })
 
 function absoluteStyleMapPosition(x: number, y: number) {
@@ -533,19 +533,19 @@ function absoluteStyleMapPosition(x: number, y: number) {
 }
 
 function changeShot(delta: number) {
-  if (shotIndex.value == null || allShots.value == null) return;
+  if (shotIndex.value == null || allShots.value == null) return
 
-  const nextIndex = shotIndex.value + delta;
-  if (nextIndex >= allShots.value.length || nextIndex < 0) return;
+  const nextIndex = shotIndex.value + delta
+  if (nextIndex >= allShots.value.length || nextIndex < 0) return
 
-  const nextShot = allShots.value[nextIndex];
+  const nextShot = allShots.value[nextIndex]
   router.push({ query: { ...route.query, shot: nextShot.id } })
 }
 
 watch(() => props.shotID, () => {
-  if (allShots.value == null) return;
-  const index = allShots.value.findIndex(s => s.id === props.shotID);
-  shotIndex.value = index;
+  if (allShots.value == null) return
+  const index = allShots.value.findIndex(s => s.id === props.shotID)
+  shotIndex.value = index
 })
 
 function next() {
@@ -556,24 +556,24 @@ function prev() {
   changeShot(-1)
 }
 
-const scrolling = ref(false);
-const currentX = ref(0);
-let timerHandler: ReturnType<typeof setTimeout> | null = null;
+const scrolling = ref(false)
+const currentX = ref(0)
+let timerHandler: ReturnType<typeof setTimeout> | null = null
 function onScroll(e: WheelEvent) {
-  currentX.value += e.deltaY;
+  currentX.value += e.deltaY
 
-  scrolling.value = true;
+  scrolling.value = true
 
-  if (timerHandler != null) clearTimeout(timerHandler);
-  timerHandler = setTimeout(() => { scrolling.value = false; currentX.value = 0; }, 200);
+  if (timerHandler != null) clearTimeout(timerHandler)
+  timerHandler = setTimeout(() => { scrolling.value = false; currentX.value = 0 }, 200)
 
   if (Math.abs(currentX.value) > 50) {
-    currentX.value < 0 ? next() : prev();
-    currentX.value = 0;
+    currentX.value < 0 ? next() : prev()
+    currentX.value = 0
   }
 }
 
-const shouldBeVerticalResult = useMediaQuery('(min-width: 768px)');
+const shouldBeVerticalResult = useMediaQuery('(min-width: 768px)')
 
 </script>
 

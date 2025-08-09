@@ -42,18 +42,18 @@
 </template>
 
 <script setup lang="ts">
-import { StatParams, whereClause } from '@/composition/useQueryStatParams';
-import { queryAsync, semverCompareStartFrom } from '@/db';
-import { useElementVisibility } from '@vueuse/core';
-import { computed, ref } from 'vue';
-import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue';
+import { StatParams, whereClause } from '@/composition/useQueryStatParams'
+import { queryAsync, semverCompareStartFrom } from '@/db'
+import { useElementVisibility } from '@vueuse/core'
+import { computed, ref } from 'vue'
+import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue'
 
 const { params } = defineProps<{
   params?: StatParams
 }>()
 
-const container = ref<HTMLElement | null>(null);
-const enabled = useElementVisibility(container);
+const container = ref<HTMLElement | null>(null)
+const enabled = useElementVisibility(container)
 
 
 const result = queryAsync<{
@@ -93,7 +93,7 @@ limit 30`, { enabled })
 
 const data = computed(() => {
   return result.value.data?.map((item, index) => {
-    const prefix = ['ru', 'ct'].includes(item.region.toLowerCase()) ? 'https://tanki.su/ru/community/accounts/' : 'https://worldoftanks.eu/en/community/accounts/';
+    const prefix = ['ru', 'ct'].includes(item.region.toLowerCase()) ? 'https://tanki.su/ru/community/accounts/' : 'https://worldoftanks.eu/en/community/accounts/'
     return {
       ...item,
       url: `${prefix}${item.bdid}-${item.name}/`,

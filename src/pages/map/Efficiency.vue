@@ -40,11 +40,11 @@
 
 
 <script setup lang="ts">
-import PopupWindow from '@/components/PopupWindow.vue';
-import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
-import { query, queryAsyncFirst } from '@/db';
-import { useDebounce, useLocalStorage } from '@vueuse/core';
-import { nextTick, onMounted, ref, watch } from 'vue';
+import PopupWindow from '@/components/PopupWindow.vue'
+import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams'
+import { query, queryAsyncFirst } from '@/db'
+import { useDebounce, useLocalStorage } from '@vueuse/core'
+import { nextTick, onMounted, ref, watch } from 'vue'
 
 const props = defineProps<{
   value: {
@@ -69,7 +69,7 @@ const emit = defineEmits<{
 }>()
 
 
-const params = useQueryStatParams();
+const params = useQueryStatParams()
 
 watch(currentExpression, () => {
   minMax.value = null

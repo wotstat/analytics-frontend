@@ -12,17 +12,17 @@
 
 <script setup lang="ts">
 
-import { ShadowLine } from "@/components/widgets/charts/ShadowLineController";
-import { computed, ref } from "vue";
-import { ChartProps } from "vue-chartjs";
-import { BloomColor } from "../bloomColors";
-import { loading, queryAsync } from "@/db";
-import { useElementVisibility } from "@vueuse/core";
-import { StatParams, whereClause } from "@/composition/useQueryStatParams";
-import ServerStatusWrapper from "../ServerStatusWrapper.vue";
+import { ShadowLine } from '@/components/widgets/charts/ShadowLineController'
+import { computed, ref } from 'vue'
+import { ChartProps } from 'vue-chartjs'
+import { BloomColor } from '../bloomColors'
+import { loading, queryAsync } from '@/db'
+import { useElementVisibility } from '@vueuse/core'
+import { StatParams, whereClause } from '@/composition/useQueryStatParams'
+import ServerStatusWrapper from '../ServerStatusWrapper.vue'
 
-const container = ref<HTMLElement | null>(null);
-const enabled = useElementVisibility(container);
+const container = ref<HTMLElement | null>(null)
+const enabled = useElementVisibility(container)
 
 const { params } = defineProps<{
   params?: StatParams
@@ -52,7 +52,7 @@ from (select rHealth = 0                                      as isKilled,
         ${params ? whereClause(params, { withWhere: false }) : ''})
 group by canSurvive, canKill, roundedHealthDamage
 order by canSurvive, roundedHealthDamage desc
-`, { enabled });
+`, { enabled })
 
 const processed = computed(() => {
   const canSurviveObj = Object.fromEntries(query.value.data.filter(r => r.canSurvive).map(r => [r.roundedHealthDamage, r.cumSurvice]))

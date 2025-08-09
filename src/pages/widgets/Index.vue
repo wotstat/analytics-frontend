@@ -84,18 +84,18 @@
 
 
 <script setup lang="ts">
-import According from '@/components/According.vue';
-import PopupWindow from '@/components/PopupWindow.vue';
-import { useIframeContentBounding } from '@/composition/useIframeContentBounding';
-import { useIframeMessages } from '@/composition/useIframeMessages';
-import { computed, onDeactivated, onMounted, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import According from '@/components/According.vue'
+import PopupWindow from '@/components/PopupWindow.vue'
+import { useIframeContentBounding } from '@/composition/useIframeContentBounding'
+import { useIframeMessages } from '@/composition/useIframeMessages'
+import { computed, onDeactivated, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
-import { VueComponentWith as InstructionGameWith } from "./instructionGame/index.md";
-import { VueComponentWith as InstructionOBSWith } from "./instructionOBS/index.md";
-import { allMdComponents } from '@/components/mdUtils/getAllMdComponents';
-import { useMeta } from '@/composition/useMeta';
-import { WIDGETS_URL } from '@/utils/externalUrl';
+import { VueComponentWith as InstructionGameWith } from './instructionGame/index.md'
+import { VueComponentWith as InstructionOBSWith } from './instructionOBS/index.md'
+import { allMdComponents } from '@/components/mdUtils/getAllMdComponents'
+import { useMeta } from '@/composition/useMeta'
+import { WIDGETS_URL } from '@/utils/externalUrl'
 
 useMeta({
   title: 'Виджеты',
@@ -103,92 +103,92 @@ useMeta({
   keywords: 'виджеты, виджеты для стримеров, виджеты для игр, виджеты для стрима, виджеты для трансляции, виджеты мир танков'
 })
 
-const InstructionGame = InstructionGameWith(allMdComponents);
-const InstructionOBS = InstructionOBSWith(allMdComponents);
+const InstructionGame = InstructionGameWith(allMdComponents)
+const InstructionOBS = InstructionOBSWith(allMdComponents)
 
-const selectedTitle = ref<string>('');
-const collection = ref<HTMLIFrameElement | null>(null);
-const preview = ref<HTMLIFrameElement | null>(null);
-const isPreviewLoading = ref(true);
-const isCollectionLoading = ref(true);
+const selectedTitle = ref<string>('')
+const collection = ref<HTMLIFrameElement | null>(null)
+const preview = ref<HTMLIFrameElement | null>(null)
+const isPreviewLoading = ref(true)
+const isCollectionLoading = ref(true)
 
 const route = useRoute()
 const router = useRouter()
 
 function currentPreviewRoute() {
-  const targetWidget = route.params.widget;
+  const targetWidget = route.params.widget
 
   if (Array.isArray(targetWidget) && targetWidget.length > 0) {
-    return '/' + targetWidget.join('/');
+    return '/' + targetWidget.join('/')
   }
 
   if (targetWidget)
-    return '/' + route.params.widget;
+    return '/' + route.params.widget
 
   return null
 }
 
-const showCollection = ref(currentPreviewRoute() === null);
+const showCollection = ref(currentPreviewRoute() === null)
 
 const selectedRoute = computed(() => {
   return currentPreviewRoute()
-});
+})
 
 watch(selectedRoute, (value, old) => {
-  if (value && !old) isPreviewLoading.value = true;
-});
+  if (value && !old) isPreviewLoading.value = true
+})
 
 
-const { height } = useIframeContentBounding(collection);
+const { height } = useIframeContentBounding(collection)
 
 useIframeMessages(collection, data => {
   if (data.type === 'widget-click') {
-    selectedTitle.value = data.title;
+    selectedTitle.value = data.title
 
     router.push({
       query: { ...route.query },
       params: { widget: data.route.split('/').filter(Boolean) }
-    });
+    })
   } else if (data.type === 'collection-mounted') {
     if (collection.value)
-      isCollectionLoading.value = false;
+      isCollectionLoading.value = false
   }
-});
+})
 
 useIframeMessages(preview, data => {
   if (data.type === 'readme-loaded') {
-    const attributes = data.attributes as Record<string, string>;
-    if ('title' in attributes) selectedTitle.value = attributes.title;
+    const attributes = data.attributes as Record<string, string>
+    if ('title' in attributes) selectedTitle.value = attributes.title
   } else if (data.type === 'preview-mounted') {
-    if (preview.value) isPreviewLoading.value = false;
+    if (preview.value) isPreviewLoading.value = false
   } else if (data.type === 'preview-component-loaded') {
-    showCollection.value = true;
+    showCollection.value = true
   }
-});
+})
 
 onDeactivated(() => {
   if (collection.value)
-    isCollectionLoading.value = false;
+    isCollectionLoading.value = false
 
-  if (selectedRoute.value) onClosePreview();
-});
+  if (selectedRoute.value) onClosePreview()
+})
 
 function onClosePreview() {
-  showCollection.value = true;
+  showCollection.value = true
   router.push({
     query: { ...route.query },
     params: { widget: '' }
-  });
+  })
 }
 
 function onCollectionLoad() {
-  if (!collection.value) return;
+  if (!collection.value) return
   isCollectionLoading.value = false
 }
 
 function onPreviewLoad() {
-  if (!preview.value) return;
-  isPreviewLoading.value = false;
+  if (!preview.value) return
+  isPreviewLoading.value = false
 }
 
 

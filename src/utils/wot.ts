@@ -59,7 +59,7 @@ export const nations = ['ussr', 'germany', 'usa', 'china', 'france', 'uk', 'japa
 export const nationsIndexes = new Map<Nation, number>(nations.map((nation, index) => [nation, index]))
 export type Nation = typeof nations[number]
 
-export const customBattleModesKeys = Object.keys(customBattleModes) as (keyof typeof customBattleModes)[];
+export const customBattleModesKeys = Object.keys(customBattleModes) as (keyof typeof customBattleModes)[]
 
 type VehicleDescriptor = {
   vehicle: number,
@@ -96,12 +96,12 @@ TARGET:
     distance: ${hitDistance}
 
 URL: ${wotinspectorURLNew(vehicle, hitVehicle, hitDistance, isWOT)}
-  `);
+  `)
 }
 
 
 function rad2deg(rad: number) {
-  return rad * 180 / Math.PI;
+  return rad * 180 / Math.PI
 }
 
 export function wotinspectorURLNew(vehicle: VehicleDescriptor & { shell: number },
@@ -125,7 +125,7 @@ export function wotinspectorURLNew(vehicle: VehicleDescriptor & { shell: number 
     'target.vehicle': hitVehicle.vehicle,
   }
 
-  return `https://api.wotinspector.com/v2/ai/shotsimulate?${Object.entries(query).map(([key, value]) => `${key}=${value}`).join('&')}`;
+  return `https://api.wotinspector.com/v2/ai/shotsimulate?${Object.entries(query).map(([key, value]) => `${key}=${value}`).join('&')}`
 }
 
 
@@ -154,5 +154,5 @@ export function wotinspectorURLOld(vehicle: VehicleDescriptor & { shell: number 
   view.setBigUint64(28, BigInt(hitVehicle.segment), true)
   view.setFloat32(36, hitDistance, true)
 
-  return `https://armor.wotinspector.com/ru/${isWOT ? 'pc' : 'mirtankov'}?data=${encodeURIComponent(btoa(String.fromCharCode.apply(null, Array.from(buffer))))}`;
+  return `https://armor.wotinspector.com/ru/${isWOT ? 'pc' : 'mirtankov'}?data=${encodeURIComponent(btoa(String.fromCharCode.apply(null, Array.from(buffer))))}`
 }

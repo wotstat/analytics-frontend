@@ -19,16 +19,16 @@ const props = defineProps<{
 const selected = defineModel<string[]>('selected')
 
 function onClick(e: MouseEvent, tag: string) {
-  if (!props.selectable) return;
-  const currentTanks = selected.value || [];
+  if (!props.selectable) return
+  const currentTanks = selected.value || []
   if (currentTanks.includes(tag)) {
-    selected.value = currentTanks.filter(t => t !== tag);
+    selected.value = currentTanks.filter(t => t !== tag)
   } else if (e.ctrlKey || e.metaKey) {
-    selected.value = [...currentTanks, tag];
+    selected.value = [...currentTanks, tag]
     // const target = { ...route.query, tank: [...currentTanks, tag].join(',') };
     // router.push({ query: target });
   } else {
-    selected.value = [tag];
+    selected.value = [tag]
     // router.push({ query: { ...route.query, tank: tag } });
   }
 }

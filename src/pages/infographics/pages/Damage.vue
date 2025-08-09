@@ -99,20 +99,20 @@
 </template>
 
 <script setup lang="ts">
-import GenericInfo from '@/components/widgets/GenericInfo.vue';
-import { queryAsync, queryAsyncFirst } from "@/db";
-import { computed, ref } from "vue";
-import { useElementVisibility } from "@vueuse/core";
-import MiniBar from "@/components/widgets/charts/MiniBar.vue";
-import GenericInfoQuery from "@/components/widgets/GenericInfoQuery.vue";
-import StillSurviveDistribution from "@/components/widgets/StillSurviveDistribution.vue";
-import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams';
-import { toRelative, toPercent } from "@/utils";
-import { useFixedSpaceProcessor, usePercentProcessor } from '@/composition/usePercentProcessor';
-import { shellNames } from '@/utils/wot';
-import QueryPreserveRouterLink from '@/components/QueryPreserveRouterLink.vue';
-import { bestMV } from '@/db/schema';
-import { useMeta } from '@/composition/useMeta';
+import GenericInfo from '@/components/widgets/GenericInfo.vue'
+import { queryAsync, queryAsyncFirst } from '@/db'
+import { computed, ref } from 'vue'
+import { useElementVisibility } from '@vueuse/core'
+import MiniBar from '@/components/widgets/charts/MiniBar.vue'
+import GenericInfoQuery from '@/components/widgets/GenericInfoQuery.vue'
+import StillSurviveDistribution from '@/components/widgets/StillSurviveDistribution.vue'
+import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams'
+import { toRelative, toPercent } from '@/utils'
+import { useFixedSpaceProcessor, usePercentProcessor } from '@/composition/usePercentProcessor'
+import { shellNames } from '@/utils/wot'
+import QueryPreserveRouterLink from '@/components/QueryPreserveRouterLink.vue'
+import { bestMV } from '@/db/schema'
+import { useMeta } from '@/composition/useMeta'
 
 useMeta({
   title: 'Инфографика урона',
@@ -127,8 +127,8 @@ const settings = useQueryStatParamsCache(params)
 const shellLabels = Object.values(shellNames).map(t => t[0])
 const shellFullNames = Object.values(shellNames).map(t => t[1])
 
-const container = ref<HTMLElement | null>(null);
-const enabled = useElementVisibility(container);
+const container = ref<HTMLElement | null>(null)
+const enabled = useElementVisibility(container)
 
 const damageLabels = new Array(21).fill(0).map((v, i) => `${i == 10 ? '' : i < 10 ? '-' : '+'}${Math.abs((i - 10) * 2.5)}%`)
 

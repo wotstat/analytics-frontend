@@ -11,17 +11,17 @@
 </template>
 
 <script setup lang="ts">
-import { loading, mergeStatuses, queryAsync } from '@/db';
-import { useElementVisibility, useLocalStorage } from '@vueuse/core';
-import { computed, ref } from 'vue';
-import { type ChartProps } from 'vue-chartjs';
-import { ShadowLine } from "@/components/widgets/charts/ShadowLineController";
-import { BloomColor } from '../bloomColors';
-import { StatParams, getQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams';
-import ServerStatusWrapper from '../ServerStatusWrapper.vue';
+import { loading, mergeStatuses, queryAsync } from '@/db'
+import { useElementVisibility, useLocalStorage } from '@vueuse/core'
+import { computed, ref } from 'vue'
+import { type ChartProps } from 'vue-chartjs'
+import { ShadowLine } from '@/components/widgets/charts/ShadowLineController'
+import { BloomColor } from '../bloomColors'
+import { StatParams, getQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams'
+import ServerStatusWrapper from '../ServerStatusWrapper.vue'
 
-const container = ref<HTMLElement | null>(null);
-const visible = useElementVisibility(container);
+const container = ref<HTMLElement | null>(null)
+const visible = useElementVisibility(container)
 
 const { params } = defineProps<{
   params: StatParams
@@ -80,7 +80,7 @@ const sharedClient = computed(() => calc(sharedClientResult.value.data))
 
 const status = computed(() => mergeStatuses(clientMarkerResult.value.status, serverMarkerResult.value.status, sharedClientResult.value.status))
 
-const labels = new Array(101).fill(0).map((_, i) => i);
+const labels = new Array(101).fill(0).map((_, i) => i)
 
 const isHideServer = useLocalStorage('shotDistributionChartServerHide', false)
 const isHideClient = useLocalStorage('shotDistributionChartClientHide', false)

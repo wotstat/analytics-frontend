@@ -23,9 +23,9 @@
 
 
 <script lang="ts" setup>
-import { computed, onMounted, ref, shallowRef, watch } from 'vue';
-import { ContextMenuItemVariant, type ContextMenuItem, type ContextMenuItemChild } from './createContextMenu';
-import { useElementSize, useElementBounding, useTimeout, useTimeoutFn, useWindowSize } from '@vueuse/core';
+import { computed, onMounted, ref, shallowRef, watch } from 'vue'
+import { ContextMenuItemVariant, type ContextMenuItem, type ContextMenuItemChild } from './createContextMenu'
+import { useElementSize, useElementBounding, useTimeout, useTimeoutFn, useWindowSize } from '@vueuse/core'
 import ContextMenuPanel from './ContextMenuPanel.vue'
 import ContextMenuLine from './lines/Index.vue'
 
@@ -104,7 +104,7 @@ const contextMenuStyle = computed(() => {
       pos.x = Math.max(PADDING, pos.x)
     }
   } else {
-    const rightPos = pos.x + width + (isRoot ? 1 : -5);
+    const rightPos = pos.x + width + (isRoot ? 1 : -5)
     const leftPos = pos.x - selfWidth - (isRoot ? 1 : -5)
 
     if (props.direction == 'right') {
@@ -253,20 +253,20 @@ function raycast() {
     const segmentDir = {
       x: segmentEnd.x - segmentStart.x,
       y: segmentEnd.y - segmentStart.y
-    };
+    }
 
     // Calculate denominators
-    const denom = rayDirection.x * segmentDir.y - rayDirection.y * segmentDir.x;
+    const denom = rayDirection.x * segmentDir.y - rayDirection.y * segmentDir.x
 
     // Parallel lines
-    if (Math.abs(denom) < 1e-10) return false;
+    if (Math.abs(denom) < 1e-10) return false
 
-    const t = ((segmentStart.x - rayOrigin.x) * segmentDir.y - (segmentStart.y - rayOrigin.y) * segmentDir.x) / denom;
-    const u = ((segmentStart.x - rayOrigin.x) * rayDirection.y - (segmentStart.y - rayOrigin.y) * rayDirection.x) / denom;
+    const t = ((segmentStart.x - rayOrigin.x) * segmentDir.y - (segmentStart.y - rayOrigin.y) * segmentDir.x) / denom
+    const u = ((segmentStart.x - rayOrigin.x) * rayDirection.y - (segmentStart.y - rayOrigin.y) * rayDirection.x) / denom
 
     // If 0 <= u <= 1, the intersection point is on the segment
     // If t >= 0, the intersection is in the ray's direction
-    return t >= 0 && u >= 0 && u <= 1;
+    return t >= 0 && u >= 0 && u <= 1
   }
 
   const rect = childPanelElement.value?.panelElement?.getBoundingClientRect()
@@ -285,14 +285,14 @@ function raycast() {
     { start: { x: rect.right, y: rect.top }, end: { x: rect.right, y: rect.bottom } }, // Right edge
     { start: { x: rect.left, y: rect.bottom }, end: { x: rect.right, y: rect.bottom } }, // Bottom edge
     { start: { x: rect.left, y: rect.top }, end: { x: rect.left, y: rect.bottom } } // Left edge
-  ];
+  ]
 
   for (let edge of edges) {
     if (intersect(edge.start, edge.end)) {
-      return true;
+      return true
     }
   }
-  return false;
+  return false
 }
 
 // restore
@@ -315,8 +315,8 @@ function onAction() {
   emit('onAction')
 
   if (props.options.closeOnAction) {
-    setTimeout(() => hoverItemActionAnimHide.value = true, 0);
-    setTimeout(() => hoverItemActionAnimHide.value = false, 90);
+    setTimeout(() => hoverItemActionAnimHide.value = true, 0)
+    setTimeout(() => hoverItemActionAnimHide.value = false, 90)
   }
 }
 

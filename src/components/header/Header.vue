@@ -140,8 +140,8 @@
 </template>
 
 <script setup lang="ts">
-import { useAdditionalHeaderHeight, useDefaultHeaderHeight } from '@/composition/useAdditionalHeaderHeight';
-import { ref } from 'vue';
+import { useAdditionalHeaderHeight, useDefaultHeaderHeight } from '@/composition/useAdditionalHeaderHeight'
+import { ref } from 'vue'
 import GitHubIcon from './assets/github.svg'
 import DiscordIcon from './assets/discord.svg'
 import PatreonIcon from './assets/patreon.svg'
@@ -149,24 +149,24 @@ import BoostyIcon from './assets/boosty.svg'
 import DatabaseIcon from './assets/database.svg'
 import PointsIcon from './assets/points.svg'
 import LogoIcon from './assets/logo2.0.svg'
-import HeaderSpacer from './HeaderSpacer.vue';
+import HeaderSpacer from './HeaderSpacer.vue'
 import I18nIcon from './assets/i18n.svg'
 import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
-import { CLICKHOUSE_URL, CURRENT_URL_PREFIX, POSITIONS_URL, DISCORD_URL } from '@/utils/externalUrl';
-import { useLocalStorage } from '@vueuse/core';
-import { vNewFeatureBadge } from '../newFeatureBadge/newFeatureBadge';
+import { CLICKHOUSE_URL, CURRENT_URL_PREFIX, POSITIONS_URL, DISCORD_URL } from '@/utils/externalUrl'
+import { useLocalStorage } from '@vueuse/core'
+import { vNewFeatureBadge } from '../newFeatureBadge/newFeatureBadge'
 
 const SQLUrl = CLICKHOUSE_URL + '/play?user=public#c2VsZWN0IHRhYmxlLCBuYW1lLCBjb21tZW50LCB0eXBlIGZyb20gZGVzY3JpcHRpb247'
 
-const headerElement = ref<HTMLElement | null>(null);
-useDefaultHeaderHeight(headerElement);
+const headerElement = ref<HTMLElement | null>(null)
+useDefaultHeaderHeight(headerElement)
 
-const { additionalHeaderHeight } = useAdditionalHeaderHeight();
+const { additionalHeaderHeight } = useAdditionalHeaderHeight()
 
-const ruHeaderVisible = useLocalStorage('RuAlternativeHeader', true);
+const ruHeaderVisible = useLocalStorage('RuAlternativeHeader', true)
 
 function hideHeader(name: string) {
-  if (name == 'RuAlternativeHeader') ruHeaderVisible.value = false;
+  if (name == 'RuAlternativeHeader') ruHeaderVisible.value = false
 }
 
 </script>

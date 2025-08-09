@@ -4,7 +4,7 @@
 
 
 <script setup lang="ts">
-import { numberToRoman } from '@/utils';
+import { numberToRoman } from '@/utils'
 
 const props = defineProps<{
   level: number

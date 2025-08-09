@@ -10,12 +10,12 @@
 
 <script setup lang="ts">
 
-import { computed } from 'vue';
+import { computed } from 'vue'
 import Jove from './jove.webp'
 import Lebwa from './lebwa.webp'
 import Nearyou from './nearyou.webp'
 import Yusha from './yusha.webp'
-import BloggerName from './BloggerName.vue';
+import BloggerName from './BloggerName.vue'
 
 
 const props = defineProps<{

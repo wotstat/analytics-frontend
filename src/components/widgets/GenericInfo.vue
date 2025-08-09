@@ -18,11 +18,11 @@
 </template>
 
 <script setup lang="ts" generic="T extends number | number[]">
-import { useTweenCounter } from '@/composition/useTweenCounter';
-import { toRef, type Ref, ref, computed } from 'vue';
-import { useElementVisibility } from '@vueuse/core';
-import { Status } from '@/db';
-import ServerStatusWrapper from '../ServerStatusWrapper.vue';
+import { useTweenCounter } from '@/composition/useTweenCounter'
+import { toRef, type Ref, ref, computed } from 'vue'
+import { useElementVisibility } from '@vueuse/core'
+import { Status } from '@/db'
+import ServerStatusWrapper from '../ServerStatusWrapper.vue'
 
 
 const main = ref<HTMLElement | null>(null)
@@ -45,7 +45,7 @@ const status = computed(() => props.status || (isStatusValue(props.value) ? prop
 const data = useTweenCounter(value, {
   fixedValue: props.processor ? 10 : 0,
   enabled: visible,
-});
+})
 
 
 function isStatusValue(value: T | { status: Status, data: T }): value is { status: Status, data: T } {

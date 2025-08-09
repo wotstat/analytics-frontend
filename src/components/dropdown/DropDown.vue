@@ -19,8 +19,8 @@
 
 <script setup lang="ts" generic="T">
 import ArrowDown from '@/assets/icons/arrow-down.svg'
-import { onClickOutside, useEventListener } from '@vueuse/core';
-import { readonly, ref, useSlots } from 'vue';
+import { onClickOutside, useEventListener } from '@vueuse/core'
+import { readonly, ref, useSlots } from 'vue'
 
 const props = defineProps<{
   variants: readonly { value: T, label?: string }[]

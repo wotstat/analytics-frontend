@@ -17,7 +17,7 @@
 
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref } from 'vue'
 import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
 
 

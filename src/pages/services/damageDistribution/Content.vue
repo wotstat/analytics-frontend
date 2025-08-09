@@ -127,20 +127,20 @@
 
 <script lang="ts" setup>
 
-import GenericInfo from '@/components/widgets/GenericInfo.vue';
-import { useQueryStatParams, useQueryStatParamsCache, whereClause } from "@/composition/useQueryStatParams";
-import { LONG_CACHE_SETTINGS, query, queryAsync, queryComputed } from '@/db';
-import { computed, ref, shallowRef, watch, watchEffect } from 'vue';
+import GenericInfo from '@/components/widgets/GenericInfo.vue'
+import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams'
+import { LONG_CACHE_SETTINGS, query, queryAsync, queryComputed } from '@/db'
+import { computed, ref, shallowRef, watch, watchEffect } from 'vue'
 import { VueComponent as Description } from './description.md'
 
-import { type ChartProps } from 'vue-chartjs';
-import { ShadowBar } from "@/components/widgets/charts/ShadowBarController";
-import { setup as setupShadowLine } from "@/components/widgets/charts/ShadowLineController";
-import { getColor } from '@/components/bloomColors';
-import { useErrorCalculation } from './errorCalculation';
-import { useFixedProcessor, usePercentProcessor } from '@/composition/usePercentProcessor';
-import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue';
-import { bestMV } from '@/db/schema';
+import { type ChartProps } from 'vue-chartjs'
+import { ShadowBar } from '@/components/widgets/charts/ShadowBarController'
+import { setup as setupShadowLine } from '@/components/widgets/charts/ShadowLineController'
+import { getColor } from '@/components/bloomColors'
+import { useErrorCalculation } from './errorCalculation'
+import { useFixedProcessor, usePercentProcessor } from '@/composition/usePercentProcessor'
+import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue'
+import { bestMV } from '@/db/schema'
 
 
 setupShadowLine()
@@ -199,9 +199,9 @@ watch(selectedTotal, val => selectedTotalTarget.value = val)
 
 const errorConfidenceStep = computed(() => {
   const num = 1 / experimentsCount.value
-  const magnitude = Math.floor(Math.log10(num));
-  const nearestLowerPowerOf10 = Math.pow(10, magnitude);
-  return +nearestLowerPowerOf10.toFixed(Math.abs(magnitude));
+  const magnitude = Math.floor(Math.log10(num))
+  const nearestLowerPowerOf10 = Math.pow(10, magnitude)
+  return +nearestLowerPowerOf10.toFixed(Math.abs(magnitude))
 })
 
 const table = computed(() => {
@@ -305,7 +305,7 @@ watch([selectedDamage, selectedStep], async ([damage, step]) => {
 
   const limit = delta + 1
 
-  console.log(`${leftEnough} + ${barCount * 2 + 1}*${step} + ${rightEnough}; Limit: ${limit}`);
+  console.log(`${leftEnough} + ${barCount * 2 + 1}*${step} + ${rightEnough}; Limit: ${limit}`)
 
   const group = `floor((nDmg + ${step - leftEnough}) / ${step})`
 
@@ -360,7 +360,7 @@ const lowHight = computed(() => {
 
   const count = errorResult.value[0].length - 1
 
-  const t = 1 - selectedConfidence.value;
+  const t = 1 - selectedConfidence.value
 
   const low = Math.round(t / 2 * count)
   const high = Math.round((1 - t / 2) * count)
@@ -453,7 +453,7 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
           const from = distribution.value.from[item[0].dataIndex]
           const to = distribution.value.to[item[0].dataIndex]
 
-          return from == to ? `` : `${to - from + 1} значений на столбик`
+          return from == to ? '' : `${to - from + 1} значений на столбик`
         },
         label: (i) => ''
       },

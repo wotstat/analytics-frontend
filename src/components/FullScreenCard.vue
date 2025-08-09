@@ -25,8 +25,8 @@
 </template>
 
 <script lang="ts" setup>
-import { useElementBounding, useWindowSize } from '@vueuse/core';
-import { ref, watch } from 'vue';
+import { useElementBounding, useWindowSize } from '@vueuse/core'
+import { ref, watch } from 'vue'
 import FullscreenOpenIcon from '@/assets/icons/fullscreenOpen.svg'
 import XIcon from '@/assets/icons/x.svg'
 
@@ -39,17 +39,17 @@ const { height: windowHeight } = useWindowSize()
 
 watch(isFull, (val) => {
   if (val) {
-    document.body.classList.add('no-scroll');
-    document.addEventListener('keydown', onKey);
+    document.body.classList.add('no-scroll')
+    document.addEventListener('keydown', onKey)
   } else {
-    document.body.classList.remove('no-scroll');
-    document.removeEventListener('keydown', onKey);
+    document.body.classList.remove('no-scroll')
+    document.removeEventListener('keydown', onKey)
   }
-}, { immediate: true });
+}, { immediate: true })
 
 function onKey(params: KeyboardEvent) {
   if (params.key == 'Escape') {
-    isFull.value = false;
+    isFull.value = false
   }
 }
 

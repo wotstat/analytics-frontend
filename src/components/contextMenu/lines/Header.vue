@@ -6,7 +6,7 @@
 
 
 <script setup lang="ts">
-import type { ContextMenuItemHeader } from '../createContextMenu';
+import type { ContextMenuItemHeader } from '../createContextMenu'
 
 defineProps<{
   item: ContextMenuItemHeader

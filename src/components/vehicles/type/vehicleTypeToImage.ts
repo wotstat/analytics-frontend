@@ -19,7 +19,7 @@ const vehicleTypeName: Record<VehicleType, string> = {
   'at-spg': 'at-spg',
   spg: 'spg',
   any: 'any'
-};
+}
 
 
 export function vehicleTypeToImage(type: VehicleType, format?: 'component'): FunctionalComponent<SVGAttributes>
@@ -27,9 +27,9 @@ export function vehicleTypeToImage(type: VehicleType, format?: 'raw'): string
 export function vehicleTypeToImage(type: VehicleType, format?: 'url'): string
 export function vehicleTypeToImage(type: VehicleType, format: 'url' | 'raw' | 'component' = 'component'): any {
 
-  const name = vehicleTypeName[type] || vehicleTypeName['any'];
+  const name = vehicleTypeName[type] || vehicleTypeName['any']
 
-  if (format === 'component') return components[`./images/${name}.svg`];
-  if (format === 'raw') return raw[`./images/${name}.svg`].default;
-  if (format === 'url') return url[`./images/${name}.svg`].default;
+  if (format === 'component') return components[`./images/${name}.svg`]
+  if (format === 'raw') return raw[`./images/${name}.svg`].default
+  if (format === 'url') return url[`./images/${name}.svg`].default
 }

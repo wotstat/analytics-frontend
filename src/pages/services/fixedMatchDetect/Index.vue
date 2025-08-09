@@ -41,10 +41,10 @@
 
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { createClient } from '@clickhouse/client-web';
-import { useDropZone, useLocalStorage } from '@vueuse/core';
-import { CLICKHOUSE_URL } from '@/utils/externalUrl';
+import { ref } from 'vue'
+import { createClient } from '@clickhouse/client-web'
+import { useDropZone, useLocalStorage } from '@vueuse/core'
+import { CLICKHOUSE_URL } from '@/utils/externalUrl'
 // import data from './bb.json';
 
 const data = {}
@@ -62,7 +62,7 @@ function onDrop(files: File[] | null) {
     const text = e.target?.result as string
     const json = JSON.parse(text)
     suspicious.value = json
-    console.log(json);
+    console.log(json)
 
   }
   reader.readAsText(files[0])
@@ -98,13 +98,13 @@ function unhover(id: string) {
 }
 
 function save() {
-  const blob = new Blob([JSON.stringify(suspicious.value, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'suspicious.json';
-  a.click();
-  URL.revokeObjectURL(url);
+  const blob = new Blob([JSON.stringify(suspicious.value, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'suspicious.json'
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 function reset() {
@@ -112,14 +112,14 @@ function reset() {
 }
 
 function openSelectFileDialog() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'application/json';
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = 'application/json'
   input.onchange = (e) => {
-    const files = (e.target as HTMLInputElement).files;
-    onDrop([...files?.length ? files : []]);
+    const files = (e.target as HTMLInputElement).files
+    onDrop([...files?.length ? files : []])
   }
-  input.click();
+  input.click()
 }
 
 
@@ -143,11 +143,11 @@ async function load() {
     username: 'default',
     password: password.value,
     database: 'WOT',
-  });
+  })
 
 
   for (let i = 0; i < mapped.length; i++) {
-    const item = mapped[i];
+    const item = mapped[i]
     current.value = i + 1
     console.log(item.name, item.wotId, item.totalScores)
 
@@ -217,7 +217,7 @@ async function load() {
     array join players as player
     group by player
 order by count() desc;
-  `});
+  `})
 
 
 

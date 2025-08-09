@@ -8,8 +8,8 @@
 
 
 <script setup lang="ts">
-import { computed, toValue, onRenderTriggered } from 'vue';
-import type { ContextMenuItemButton } from '../createContextMenu';
+import { computed, toValue, onRenderTriggered } from 'vue'
+import type { ContextMenuItemButton } from '../createContextMenu'
 import CheckmarkComponent from '../assets/checkmark.bold.svg'
 
 

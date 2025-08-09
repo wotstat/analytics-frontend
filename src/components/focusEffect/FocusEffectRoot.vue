@@ -8,8 +8,8 @@
 
 
 <script setup lang="ts">
-import { activeShowEffects } from './focusEffect';
-import RectEffect from './RectEffect.vue';
+import { activeShowEffects } from './focusEffect'
+import RectEffect from './RectEffect.vue'
 
 
 </script>

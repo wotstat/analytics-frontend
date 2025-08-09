@@ -8,8 +8,8 @@
 </template>
 
 <script lang="ts" setup>
-import { Status } from "@/db";
-import Table from "./Table.vue";
+import { Status } from '@/db'
+import Table from './Table.vue'
 
 type LocalizedName = string | [name: string, region: string][]
 

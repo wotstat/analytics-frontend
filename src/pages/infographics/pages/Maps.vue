@@ -16,11 +16,11 @@
 
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { useElementVisibility } from "@vueuse/core";
-import MapsTable from "@/components/widgets/MapsTable.vue";
-import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams';
-import { useMeta } from "@/composition/useMeta";
+import { ref } from 'vue'
+import { useElementVisibility } from '@vueuse/core'
+import MapsTable from '@/components/widgets/MapsTable.vue'
+import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams'
+import { useMeta } from '@/composition/useMeta'
 
 useMeta({
   title: 'Статистика карт',
@@ -29,9 +29,9 @@ useMeta({
 })
 
 
-const container = ref<HTMLElement | null>(null);
-const visible = useElementVisibility(container);
-const params = useQueryStatParams();
+const container = ref<HTMLElement | null>(null)
+const visible = useElementVisibility(container)
+const params = useQueryStatParams()
 
 
 </script>

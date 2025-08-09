@@ -335,19 +335,19 @@
 
 
 <script setup lang="ts">
-import { dotSeparatedCompare, gameVendor, useInstaller } from './installer';
-import MTLogo from './assets/mt-logo.svg';
-import WOTLogo from './assets/wot-logo.svg';
-import MTName from './assets/mt-name.svg';
-import WOTName from './assets/wot-name.svg';
-import ListIcon from "./assets/list.svg";
-import SidebarIcon from "./assets/sidebar.svg";
+import { dotSeparatedCompare, gameVendor, useInstaller } from './installer'
+import MTLogo from './assets/mt-logo.svg'
+import WOTLogo from './assets/wot-logo.svg'
+import MTName from './assets/mt-name.svg'
+import WOTName from './assets/wot-name.svg'
+import ListIcon from './assets/list.svg'
+import SidebarIcon from './assets/sidebar.svg'
 import Github from './assets/github.svg'
-import OpenExternal from './assets/open-external.svg';
-import Download from './assets/download.svg?component';
-import Points from './assets/points.svg';
-import ArrowRight from './assets/arrow-right.svg';
-import CheckmarkShield from './assets/checkmark-shield.svg';
+import OpenExternal from './assets/open-external.svg'
+import Download from './assets/download.svg?component'
+import Points from './assets/points.svg'
+import ArrowRight from './assets/arrow-right.svg'
+import CheckmarkShield from './assets/checkmark-shield.svg'
 import XIcon from '@/assets/icons/x.svg'
 
 
@@ -363,36 +363,36 @@ import AnalyticsBack1 from './assets/mods/analytics-back-1.webp'
 import AnalyticsBack2 from './assets/mods/analytics-back-2.webp'
 
 
-import ModCard from './ModCard.vue';
-import { type Component, computed, nextTick, onMounted, ref, watch } from 'vue';
+import ModCard from './ModCard.vue'
+import { type Component, computed, nextTick, onMounted, ref, watch } from 'vue'
 import { analyticsMod, latestMods, latestModsMap, ModInfo, otherMods, otherModsMap, positionsMod, widgetsMod, } from './mods'
-import { useI18n } from '@/composition/useI18n';
-import i18n from './i18n.json';
-import { useLocalStorage } from '@vueuse/core';
-import { useHasScroll } from '@/composition/useHasScroll';
-import SmallCheckbox from './SmallCheckbox.vue';
-import { INSTALL_URL, POSITIONS_URL } from '@/utils/externalUrl';
-import { showContextMenu } from './cardIntaractionControl';
-import { button, simpleContextMenu } from '@/components/contextMenu/simpleContextMenu';
-import { latestGameVersion } from '@/components/mdUtils/gameVersion';
-import ExportArchive from './ExportArchive.vue';
-import InstallMods from './InstallMods.vue';
-import SelectFolderError from './SelectFolderError.vue';
-import { showFocusEffect } from '@/components/focusEffect/focusEffect';
-import { useRoute } from 'vue-router';
-import { setFeatureVisit } from '@/components/newFeatureBadge/newFeatureBadge';
+import { useI18n } from '@/composition/useI18n'
+import i18n from './i18n.json'
+import { useLocalStorage } from '@vueuse/core'
+import { useHasScroll } from '@/composition/useHasScroll'
+import SmallCheckbox from './SmallCheckbox.vue'
+import { INSTALL_URL, POSITIONS_URL } from '@/utils/externalUrl'
+import { showContextMenu } from './cardIntaractionControl'
+import { button, simpleContextMenu } from '@/components/contextMenu/simpleContextMenu'
+import { latestGameVersion } from '@/components/mdUtils/gameVersion'
+import ExportArchive from './ExportArchive.vue'
+import InstallMods from './InstallMods.vue'
+import SelectFolderError from './SelectFolderError.vue'
+import { showFocusEffect } from '@/components/focusEffect/focusEffect'
+import { useRoute } from 'vue-router'
+import { setFeatureVisit } from '@/components/newFeatureBadge/newFeatureBadge'
 
 setFeatureVisit('mod-installer')
 
 
-const detailContentContainer = ref<HTMLElement | null>(null);
+const detailContentContainer = ref<HTMLElement | null>(null)
 const displayType = useLocalStorage<'detail' | 'table'>('install:otherModsDisplayType', 'table')
 const preferredGameVendor = ref<'lesta' | 'wargaming' | 'unknown'>('unknown')
 const enabledMods = useLocalStorage('install:enabledMods', new Map<string, boolean>())
-const selectedModInDetail = ref<(ModInfo & { version: string, date: string }) | null>(null);
-const selectFolderErrorRootHandle = ref<null | FileSystemDirectoryHandle>(null);
+const selectedModInDetail = ref<(ModInfo & { version: string, date: string }) | null>(null)
+const selectFolderErrorRootHandle = ref<null | FileSystemDirectoryHandle>(null)
 
-const { hasScrollY } = useHasScroll(detailContentContainer);
+const { hasScrollY } = useHasScroll(detailContentContainer)
 
 const { t } = useI18n(i18n)
 
@@ -400,10 +400,10 @@ const modsNames = [...otherMods, analyticsMod, widgetsMod, positionsMod].map(m =
 const { isBrowserSupported, requestGameFolderAccess, gameInfo, installMod, close, checkedMods } = useInstaller(modsNames)
 
 watch(gameInfo, info => {
-  if (!info) return preferredGameVendor.value = 'unknown';
-  preferredGameVendor.value = gameVendor(info.realm);
+  if (!info) return preferredGameVendor.value = 'unknown'
+  preferredGameVendor.value = gameVendor(info.realm)
 
-}, { immediate: true });
+}, { immediate: true })
 
 const displayedModsList = computed(() => {
   return otherMods
@@ -413,78 +413,78 @@ const displayedModsList = computed(() => {
       (m.support == undefined) ||
       (preferredGameVendor.value == 'unknown'))
     .map(m => {
-      const latestMod = latestModsMap.value.get(m.tag);
-      if (!latestMod) return null;
+      const latestMod = latestModsMap.value.get(m.tag)
+      if (!latestMod) return null
 
-      const target = latestMod[preferredGameVendor.value == 'wargaming' ? 'wotmod' : 'mtmod'];
+      const target = latestMod[preferredGameVendor.value == 'wargaming' ? 'wotmod' : 'mtmod']
 
       return {
         ...m,
         version: target.version,
         date: target.date,
-      };
+      }
     })
-    .filter(m => m !== null);
+    .filter(m => m !== null)
 })
 
 if (displayedModsList.value.length == 0) {
   const unwatch = watch(displayedModsList, mods => {
-    if (mods.length === 0) return;
-    if (!selectedModInDetail.value) selectedModInDetail.value = mods.at(0) || null;
-    if (selectedModInDetail.value) unwatch();
-  });
+    if (mods.length === 0) return
+    if (!selectedModInDetail.value) selectedModInDetail.value = mods.at(0) || null
+    if (selectedModInDetail.value) unwatch()
+  })
 } else {
-  if (!selectedModInDetail.value) selectedModInDetail.value = displayedModsList.value.at(0) || null;
+  if (!selectedModInDetail.value) selectedModInDetail.value = displayedModsList.value.at(0) || null
 }
 
-const mdDescriptions = import.meta.glob<{ VueComponent: Component }>('./details/*/*.md', { eager: true });
+const mdDescriptions = import.meta.glob<{ VueComponent: Component }>('./details/*/*.md', { eager: true })
 const detailComponent = computed(() => {
-  if (!selectedModInDetail.value) return null;
-  const modTag = selectedModInDetail.value.tag;
-  const path = `./details/ru/${modTag}.md`;
-  return mdDescriptions[path]?.VueComponent || null;
-});
+  if (!selectedModInDetail.value) return null
+  const modTag = selectedModInDetail.value.tag
+  const path = `./details/ru/${modTag}.md`
+  return mdDescriptions[path]?.VueComponent || null
+})
 
 const dependencies = computed(() => {
   return dependenciesForMods([...enabledMods.value.entries()]
     .filter(([k, v]) => v)
     .map(([k, v]) => k)
-  );
-});
+  )
+})
 
 const targetInstallMods = computed(() => {
-  const targetMods = new Set<string>();
-  for (const [tag, enabled] of enabledMods.value.entries()) if (enabled) targetMods.add(tag);
-  for (const dep of dependencies.value) targetMods.add(dep);
+  const targetMods = new Set<string>()
+  for (const [tag, enabled] of enabledMods.value.entries()) if (enabled) targetMods.add(tag)
+  for (const dep of dependencies.value) targetMods.add(dep)
   return [...targetMods.values()]
     .filter(tag => {
-      const mod = otherModsMap.get(tag);
-      if (!mod) return true;
+      const mod = otherModsMap.get(tag)
+      if (!mod) return true
 
       const support = mod.support
-      if (!support) return true;
+      if (!support) return true
 
-      if (preferredGameVendor.value === 'unknown') return true;
+      if (preferredGameVendor.value === 'unknown') return true
 
-      if (support === 'mt-only' && preferredGameVendor.value === 'lesta') return true;
-      if (support === 'wot-only' && preferredGameVendor.value === 'wargaming') return true;
+      if (support === 'mt-only' && preferredGameVendor.value === 'lesta') return true
+      if (support === 'wot-only' && preferredGameVendor.value === 'wargaming') return true
 
-      return false;
-    });
-});
+      return false
+    })
+})
 
 function dependenciesForMods(mods: string[]) {
-  const dependencies = new Set<string>();
-  const stack = [mods];
+  const dependencies = new Set<string>()
+  const stack = [mods]
 
   while (stack.length > 0) {
-    const current = stack.pop() || [];
+    const current = stack.pop() || []
     for (const dep of current) {
       if (!dependencies.has(dep)) {
-        dependencies.add(dep);
-        const depInfo = otherModsMap.get(dep);
+        dependencies.add(dep)
+        const depInfo = otherModsMap.get(dep)
         if (depInfo && depInfo.required) {
-          stack.push(depInfo.required);
+          stack.push(depInfo.required)
         }
       }
     }
@@ -500,48 +500,48 @@ function toggleMod(tag: string) {
 }
 
 function version(tag: string) {
-  const mod = latestModsMap.value.get(tag);
-  if (!mod) return null;
+  const mod = latestModsMap.value.get(tag)
+  if (!mod) return null
 
-  return preferredGameVendor.value === 'wargaming' ? mod.wotmod.version : mod.mtmod.version;
+  return preferredGameVendor.value === 'wargaming' ? mod.wotmod.version : mod.mtmod.version
 }
 
 function canUpdate(tag: string) {
-  const installedVersion = checkedMods.value.get(tag);
-  const latestVersion = version(tag);
+  const installedVersion = checkedMods.value.get(tag)
+  const latestVersion = version(tag)
 
-  if (!installedVersion || !latestVersion) return false;
-  return dotSeparatedCompare(installedVersion, latestVersion) === -1;
+  if (!installedVersion || !latestVersion) return false
+  return dotSeparatedCompare(installedVersion, latestVersion) === -1
 }
 
 async function selectFolder() {
   await requestGameFolderAccess(handle => {
-    selectFolderErrorRootHandle.value = handle;
+    selectFolderErrorRootHandle.value = handle
   })
 }
 
-const installPopupShown = ref(false);
+const installPopupShown = ref(false)
 async function install() {
-  installPopupShown.value = true;
+  installPopupShown.value = true
 }
 
 function onClickDownload(event: MouseEvent, tag: string) {
-  const mod = latestModsMap.value.get(tag);
-  if (!mod) return console.warn(`Mod ${tag} not found in latest mods`);
+  const mod = latestModsMap.value.get(tag)
+  if (!mod) return console.warn(`Mod ${tag} not found in latest mods`)
 
   function beginDownload() {
-    if (preferredGameVendor.value === 'unknown') return console.warn('Game vendor is unknown, cannot download mod');
-    if (!mod) return console.warn(`Mod ${tag} not found in latest mods`);
+    if (preferredGameVendor.value === 'unknown') return console.warn('Game vendor is unknown, cannot download mod')
+    if (!mod) return console.warn(`Mod ${tag} not found in latest mods`)
 
-    const target = mod[preferredGameVendor.value == 'wargaming' ? 'wotmod' : 'mtmod'];
+    const target = mod[preferredGameVendor.value == 'wargaming' ? 'wotmod' : 'mtmod']
 
-    if (!target) return console.warn(`Mod ${tag} does not have a target for ${preferredGameVendor.value}`);
+    if (!target) return console.warn(`Mod ${tag} does not have a target for ${preferredGameVendor.value}`)
 
-    const url = `${INSTALL_URL}/${target.url}`;
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = target.filename;
-    a.click();
+    const url = `${INSTALL_URL}/${target.url}`
+    const a = document.createElement('a')
+    a.href = url
+    a.download = target.filename
+    a.click()
   }
 
   if (preferredGameVendor.value === 'unknown') {
@@ -551,27 +551,27 @@ function onClickDownload(event: MouseEvent, tag: string) {
       alignY: 'bottom'
     }, [
       button('Lesta', () => {
-        preferredGameVendor.value = 'lesta';
+        preferredGameVendor.value = 'lesta'
         beginDownload()
       }),
       button('Wargaming', () => {
-        preferredGameVendor.value = 'wargaming';
+        preferredGameVendor.value = 'wargaming'
         beginDownload()
       }),
     ])
 
-    return;
+    return
   }
 
-  beginDownload();
+  beginDownload()
 
 }
 
-const downloadPopupShown = ref(false);
+const downloadPopupShown = ref(false)
 function downloadArchive(event: MouseEvent) {
 
   function beginDownload() {
-    downloadPopupShown.value = true;
+    downloadPopupShown.value = true
   }
 
   if (preferredGameVendor.value === 'unknown') {
@@ -580,80 +580,80 @@ function downloadArchive(event: MouseEvent) {
       position: { x: event.clientX, y: event.clientY }
     }, [
       button('Lesta', () => {
-        preferredGameVendor.value = 'lesta';
+        preferredGameVendor.value = 'lesta'
         beginDownload()
       }),
       button('Wargaming', () => {
-        preferredGameVendor.value = 'wargaming';
+        preferredGameVendor.value = 'wargaming'
         beginDownload()
       }),
     ])
 
-    return;
+    return
   }
 
-  beginDownload();
+  beginDownload()
 }
 
-const anyPopupShown = computed(() => downloadPopupShown.value || installPopupShown.value || selectFolderErrorRootHandle.value !== null);
+const anyPopupShown = computed(() => downloadPopupShown.value || installPopupShown.value || selectFolderErrorRootHandle.value !== null)
 
 
 const route = useRoute()
-const analyticsModCard = ref<InstanceType<typeof ModCard> | null>(null);
-const widgetsModCard = ref<InstanceType<typeof ModCard> | null>(null);
-const positionsModCard = ref<InstanceType<typeof ModCard> | null>(null);
+const analyticsModCard = ref<InstanceType<typeof ModCard> | null>(null)
+const widgetsModCard = ref<InstanceType<typeof ModCard> | null>(null)
+const positionsModCard = ref<InstanceType<typeof ModCard> | null>(null)
 
 function enableOnly(tags: string[]) {
-  enabledMods.value.clear();
-  for (const tag of tags) enabledMods.value.set(tag, true);
+  enabledMods.value.clear()
+  for (const tag of tags) enabledMods.value.set(tag, true)
 }
 
 onMounted(() => {
-  const { preset } = route.query;
+  const { preset } = route.query
 
-  if (!preset) return;
+  if (!preset) return
 
 
   switch (preset) {
     case 'analytics':
-      showFocusEffect(analyticsModCard.value?.$el as HTMLElement);
-      enableOnly(['wotstat.analytics']);
-      break;
+      showFocusEffect(analyticsModCard.value?.$el as HTMLElement)
+      enableOnly(['wotstat.analytics'])
+      break
 
     case 'widgets':
-      showFocusEffect(widgetsModCard.value?.$el as HTMLElement);
-      enableOnly(['wotstat.widgets']);
-      break;
+      showFocusEffect(widgetsModCard.value?.$el as HTMLElement)
+      enableOnly(['wotstat.widgets'])
+      break
 
     case 'positions':
-      showFocusEffect(positionsModCard.value?.$el as HTMLElement);
-      enableOnly(['wotstat.positions', 'izeberg.modssettingsapi', 'me.poliroid.modslistapi']);
-      break;
+      showFocusEffect(positionsModCard.value?.$el as HTMLElement)
+      enableOnly(['wotstat.positions', 'izeberg.modssettingsapi', 'me.poliroid.modslistapi'])
+      break
 
     case 'settings':
 
       function focusAnim() {
         const element = document.querySelector('.mod-izeberg-modssettingsapi')
-        if (!element) return;
+        if (!element) return
 
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        enableOnly(['izeberg.modssettingsapi', 'me.poliroid.modslistapi']);
-        setTimeout(() => showFocusEffect(element as HTMLElement), 300);
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        enableOnly(['izeberg.modssettingsapi', 'me.poliroid.modslistapi'])
+        setTimeout(() => showFocusEffect(element as HTMLElement), 300)
       }
 
       if (displayedModsList.value.length > 0) {
-        focusAnim();
+        focusAnim()
       } else {
         const unwatch = watch(() => displayedModsList.value, (mods) => {
           if (mods.length == 0) return
-          unwatch();
+          unwatch()
           nextTick(() => focusAnim())
-        });
+        })
       }
-      break;
+      break
 
     default:
-      break;
+      break
   }
 })
 

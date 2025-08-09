@@ -1,4 +1,4 @@
-import { computed, toValue, WatchSource } from "vue";
+import { computed, toValue, WatchSource } from 'vue'
 
 export function playerNameProcessor(name: string | undefined) {
   if (!name) return undefined

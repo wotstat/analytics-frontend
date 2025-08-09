@@ -11,16 +11,16 @@
 </template>
 
 <script lang="ts" setup>
-import { Status, loading, error, success, isErrorStatus } from '@/db';
-import { computed, ref } from 'vue';
-import PopupWindow from './PopupWindow.vue';
+import { Status, loading, error, success, isErrorStatus } from '@/db'
+import { computed, ref } from 'vue'
+import PopupWindow from './PopupWindow.vue'
 
 const showErrorPopup = ref(false)
 
 
 const props = defineProps<{
   status?: Status
-}>();
+}>()
 
 
 const hasError = computed(() => {

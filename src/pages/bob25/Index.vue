@@ -170,26 +170,26 @@
 
 
 <script setup lang="ts">
-import Background from "./assets/background.webp";
-import Blogger from "./components/blogger/Blogger.vue";
-import BloggersLine from "./components/BloggersLine.vue";
-import { useElementBounding, useLocalStorage } from "@vueuse/core";
-import TopTanks from "./components/TopTanks.vue";
-import TimeSeriesChart from "./components/TimeSeriesChart.vue";
-import { period, step, useAvgBattleDuration, useAvgBattleDurationChart, useCrossBattleCount, useCrossWinrate, useHourTotalScoreDelta, usePlayerDistribution, usePopularTanks, useScoredPopularTanks, useScoredTanks, useSkillsHistory, useTodayTotalScoreDelta, useTotalBattles, useTotalBattlesChart, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart, useTotalWinrate, useWinrateChart, useYesterdayTotalScoreDelta } from "./components/queryLoader";
-import ServerStatusWrapper from "@/components/ServerStatusWrapper.vue";
-import { timeProcessor } from "@/utils";
-import InstallMod from "./components/InstallMod.vue";
-import BloggerName from "./components/blogger/BloggerName.vue";
-import { computed, onMounted, ref, watchEffect } from "vue";
-import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight';
-import { displayVariant, preferredLogProcessor } from "./store";
-import { useMeta } from "@/composition/useMeta";
-import Skills from "./components/skills/Skills.vue";
-import CrossTable from "./components/CrossTable.vue";
-import BattlesPerWinrate from "./components/BattlesPerWinrate.vue";
-import Ads from "./components/Ads.vue";
-import TopByDamage from "./components/TopByDamage.vue";
+import Background from './assets/background.webp'
+import Blogger from './components/blogger/Blogger.vue'
+import BloggersLine from './components/BloggersLine.vue'
+import { useElementBounding, useLocalStorage } from '@vueuse/core'
+import TopTanks from './components/TopTanks.vue'
+import TimeSeriesChart from './components/TimeSeriesChart.vue'
+import { period, step, useAvgBattleDuration, useAvgBattleDurationChart, useCrossBattleCount, useCrossWinrate, useHourTotalScoreDelta, usePlayerDistribution, usePopularTanks, useScoredPopularTanks, useScoredTanks, useSkillsHistory, useTodayTotalScoreDelta, useTotalBattles, useTotalBattlesChart, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart, useTotalWinrate, useWinrateChart, useYesterdayTotalScoreDelta } from './components/queryLoader'
+import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue'
+import { timeProcessor } from '@/utils'
+import InstallMod from './components/InstallMod.vue'
+import BloggerName from './components/blogger/BloggerName.vue'
+import { computed, onMounted, ref, watchEffect } from 'vue'
+import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight'
+import { displayVariant, preferredLogProcessor } from './store'
+import { useMeta } from '@/composition/useMeta'
+import Skills from './components/skills/Skills.vue'
+import CrossTable from './components/CrossTable.vue'
+import BattlesPerWinrate from './components/BattlesPerWinrate.vue'
+import Ads from './components/Ads.vue'
+import TopByDamage from './components/TopByDamage.vue'
 
 
 useMeta({
@@ -199,19 +199,19 @@ useMeta({
 })
 
 
-const showTotalPlayersChart = useLocalStorage('bob25-show-total-players-chart', false);
-const showTotalBattlesChart = useLocalStorage('bob25-show-total-battles-chart', false);
-const showTotalScoreChart = useLocalStorage('bob25-show-total-score-chart', true);
-const showDurationChart = useLocalStorage('bob25-show-duration-chart', false);
-const showWinrateChart = useLocalStorage('bob25-show-winrate-chart', false);
-const onlyPopularTanks = useLocalStorage('bob25-only-popular-tanks', false);
+const showTotalPlayersChart = useLocalStorage('bob25-show-total-players-chart', false)
+const showTotalBattlesChart = useLocalStorage('bob25-show-total-battles-chart', false)
+const showTotalScoreChart = useLocalStorage('bob25-show-total-score-chart', true)
+const showDurationChart = useLocalStorage('bob25-show-duration-chart', false)
+const showWinrateChart = useLocalStorage('bob25-show-winrate-chart', false)
+const onlyPopularTanks = useLocalStorage('bob25-only-popular-tanks', false)
 
-const totalScoreDeltaHightFilter = useLocalStorage('bob25-total-score-delta-hight-filter', false);
+const totalScoreDeltaHightFilter = useLocalStorage('bob25-total-score-delta-hight-filter', false)
 const totalScoreHightPass = computed(() => totalScoreDeltaHightFilter.value && displayVariant.value === 'delta')
 const shouldInterpolateScore = computed(() => displayVariant.value === 'total' && step.value == 'min1')
 
 
-const subHeader = ref<HTMLElement | null>(null);
+const subHeader = ref<HTMLElement | null>(null)
 const loaded = ref(false)
 const { top: subHeaderTop, y: menuY, height: menuH, update } = useElementBounding(subHeader)
 const headerOffset = computed(() => headerHeight.value)
@@ -232,10 +232,10 @@ onMounted(async () => {
 })
 
 
-const { additionalHeaderHeight } = useAdditionalHeaderHeight();
+const { additionalHeaderHeight } = useAdditionalHeaderHeight()
 watchEffect(() => {
-  if (menuY.value == 0) return additionalHeaderHeight.value = 0;
-  if (subHeaderTop.value > headerOffset.value) return additionalHeaderHeight.value = 0;
+  if (menuY.value == 0) return additionalHeaderHeight.value = 0
+  if (subHeaderTop.value > headerOffset.value) return additionalHeaderHeight.value = 0
   additionalHeaderHeight.value = menuH.value - 5
 })
 

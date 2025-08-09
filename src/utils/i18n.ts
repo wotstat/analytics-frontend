@@ -1,27 +1,27 @@
-import { queryAsync } from "@/db";
-import { computed, shallowRef } from "vue";
+import { queryAsync } from '@/db'
+import { computed, shallowRef } from 'vue'
 
 class Parser {
 
   private transitions: Map<string, string>
 
   constructor(po: string) {
-    const translations = po.split('msgid');
+    const translations = po.split('msgid')
 
     const parsed = translations
       .filter(t => t.includes('msgstr'))
       .map(t => {
-        const splitted = t.split('msgstr');
-        const msgid = splitted[0].trim().slice(1, -1);
+        const splitted = t.split('msgstr')
+        const msgid = splitted[0].trim().slice(1, -1)
 
         const lines = splitted[1]
           .split('\n')
           .map(l => l.trim())
           .filter(l => l.length > 0)
           .map(l => l.slice(1, -1))
-          .filter(l => l.length > 0);
+          .filter(l => l.length > 0)
 
-        const msgstr = lines.join('\n');
+        const msgstr = lines.join('\n')
 
         return {
           msgid,
@@ -102,9 +102,9 @@ const languageToPostfix = {
 export const selectVehiclesLocalization = `select tag, type, level, role, nation, short${languageToPostfix[LANGUAGE]} as short, name${languageToPostfix[LANGUAGE]} as name from VehiclesLocalization`
 export const selectTagVehiclesLocalization = `select tag, short${languageToPostfix[LANGUAGE]} as short, name${languageToPostfix[LANGUAGE]} as name from VehiclesLocalization`
 
-const tankNames = queryAsync<{ tag: string, short: string, name: string }>(selectVehiclesLocalization);
+const tankNames = queryAsync<{ tag: string, short: string, name: string }>(selectVehiclesLocalization)
 
-const tankNamesMap = computed(() => new Map<string, [string, string]>(tankNames.value.data.map(t => [t.tag, [t.name, t.short]])));
+const tankNamesMap = computed(() => new Map<string, [string, string]>(tankNames.value.data.map(t => [t.tag, [t.name, t.short]])))
 
 function getBestLocale(tag: string, short: boolean = false) {
   const locales = tankNamesMap.value.get(tag)
@@ -122,7 +122,7 @@ export function getTankName(tag: string, short: boolean = false) {
 
 export function tankTagToReadable(tag: string) {
 
-  const idName = tag.split(':')[1];
+  const idName = tag.split(':')[1]
 
   if (!idName) return tag
 

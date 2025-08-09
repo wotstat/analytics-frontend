@@ -77,32 +77,32 @@
 
 
 <script setup lang="ts">
-import PopupWindow from '@/components/PopupWindow.vue';
-import { computedAsync } from '@vueuse/core';
-import { computed } from 'vue';
+import PopupWindow from '@/components/PopupWindow.vue'
+import { computedAsync } from '@vueuse/core'
+import { computed } from 'vue'
 
 import ShowGameFolder from './assets/show-game-folder.jpg'
-import { latestGameVersion } from '@/components/mdUtils/gameVersion';
+import { latestGameVersion } from '@/components/mdUtils/gameVersion'
 
 const props = defineProps<{
   handle: FileSystemDirectoryHandle
 }>()
 
 async function fromAsync<T>(it: AsyncIterable<T>) {
-  const result: T[] = [];
-  for await (const value of it) result.push(value);
-  return result;
+  const result: T[] = []
+  for await (const value of it) result.push(value)
+  return result
 }
 
 const looksLikeModsFolder = computedAsync(async () => {
-  const entries = await fromAsync(props.handle.entries());
+  const entries = await fromAsync(props.handle.entries())
   const versionLike = entries.some(([name, handle]) => handle.kind === 'directory' && name.match(/^\d+\.\d+\.\d+\.\d+$/))
 
-  return (props.handle.name === 'mods' || props.handle.name === 'res_mods') && versionLike;
+  return (props.handle.name === 'mods' || props.handle.name === 'res_mods') && versionLike
 })
 
 const looksLikeModsVersionFolder = computed(() => {
-  return props.handle.name.match(/^\d+\.\d+\.\d+\.\d+$/) !== null;
+  return props.handle.name.match(/^\d+\.\d+\.\d+\.\d+$/) !== null
 })
 
 

@@ -2,7 +2,7 @@
 // TODO: Replace to ./tween
 
 
-import { Ref, ComputedRef, watch, reactive, computed } from "vue";
+import { Ref, ComputedRef, watch, reactive, computed } from 'vue'
 import gsap from 'gsap'
 
 export function useTweenCounter<T extends number | number[]>(value: Ref<T> | ComputedRef<T>, options?: {
@@ -38,7 +38,7 @@ export function useTweenCounter<T extends number | number[]>(value: Ref<T> | Com
 
     watch(enabled, n => {
       if (!n) return
-      setTimeout(() => startTween(value.value), 100);
+      setTimeout(() => startTween(value.value), 100)
     })
   }
 

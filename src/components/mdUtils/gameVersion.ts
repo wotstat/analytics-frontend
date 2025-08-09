@@ -1,6 +1,6 @@
-import { INSTALL_URL } from "@/utils/externalUrl";
-import { useFetch } from "@vueuse/core";
-import { computed } from "vue";
+import { INSTALL_URL } from '@/utils/externalUrl'
+import { useFetch } from '@vueuse/core'
+import { computed } from 'vue'
 
 type GameVersion = {
   actual: string

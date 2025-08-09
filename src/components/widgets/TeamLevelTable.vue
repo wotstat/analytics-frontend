@@ -45,11 +45,11 @@
 </template>
 
 <script setup lang="ts">
-import { usePercentProcessor } from '@/composition/usePercentProcessor';
-import { useElementVisibility } from '@vueuse/core';
-import { computed, ref } from 'vue';
-import ServerStatusWrapper from '../ServerStatusWrapper.vue';
-import { Status } from '@/db';
+import { usePercentProcessor } from '@/composition/usePercentProcessor'
+import { useElementVisibility } from '@vueuse/core'
+import { computed, ref } from 'vue'
+import ServerStatusWrapper from '../ServerStatusWrapper.vue'
+import { Status } from '@/db'
 
 
 const { data, status } = defineProps<{
@@ -63,7 +63,7 @@ const { data, status } = defineProps<{
 
 }>()
 
-const container = ref<HTMLElement | null>(null);
+const container = ref<HTMLElement | null>(null)
 
 
 const processed = computed(() => {

@@ -50,17 +50,17 @@
 
 <script setup lang="ts">
 
-import SettingsTitle from '@/pages/infographics/settings/SettingsTitle.vue';
-import StatParamsTitle from "@/components/StatParamsTitle.vue";
-import { useQueryStatParams } from "@/composition/useQueryStatParams";
-import { totalRequests, totalElapsed, totalRowsRead } from "@/db";
-import { countLocalize } from "@/utils/i18n";
-import { ref, watch } from 'vue';
-import { useRoute } from "vue-router";
-import TankListSetup from "@/components/tankListSetup/Index.vue";
+import SettingsTitle from '@/pages/infographics/settings/SettingsTitle.vue'
+import StatParamsTitle from '@/components/StatParamsTitle.vue'
+import { useQueryStatParams } from '@/composition/useQueryStatParams'
+import { totalRequests, totalElapsed, totalRowsRead } from '@/db'
+import { countLocalize } from '@/utils/i18n'
+import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import TankListSetup from '@/components/tankListSetup/Index.vue'
 
 import SidebarLayout from '@/components/sidebarLayout/Index.vue'
-import { SidebarLink } from '@/components/sidebarLayout/utils';
+import { SidebarLink } from '@/components/sidebarLayout/utils'
 
 const links: SidebarLink[] = [
   { to: '/session', labels: 'Бои' },
@@ -83,8 +83,8 @@ const key = ref(0)
 
 const stat = useQueryStatParams()
 watch(stat, (current, old) => {
-  if (JSON.stringify(current) == JSON.stringify(old)) return;
-  key.value++;
+  if (JSON.stringify(current) == JSON.stringify(old)) return
+  key.value++
 })
 
 </script>

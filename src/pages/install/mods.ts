@@ -1,6 +1,6 @@
-import { INSTALL_URL } from "@/utils/externalUrl"
-import { useFetch } from "@vueuse/core"
-import { computed, ref, watch, watchEffect } from "vue"
+import { INSTALL_URL } from '@/utils/externalUrl'
+import { useFetch } from '@vueuse/core'
+import { computed, ref, watch, watchEffect } from 'vue'
 
 
 export type ModInfo = {
@@ -56,13 +56,13 @@ export const wotLatestMods = ref(new Map<string, Mod>())
 
 watch(latestMods.data, data => {
   if (!data) {
-    latestModsMap.value.clear();
-    lestaLatestMods.value.clear();
-    wotLatestMods.value.clear();
-    return;
+    latestModsMap.value.clear()
+    lestaLatestMods.value.clear()
+    wotLatestMods.value.clear()
+    return
   }
 
-  latestModsMap.value = new Map(Object.entries(data));
-  lestaLatestMods.value = new Map(Object.entries(data).map(([key, value]) => [key, value.mtmod]));
-  wotLatestMods.value = new Map(Object.entries(data).map(([key, value]) => [key, value.wotmod]));
+  latestModsMap.value = new Map(Object.entries(data))
+  lestaLatestMods.value = new Map(Object.entries(data).map(([key, value]) => [key, value.mtmod]))
+  wotLatestMods.value = new Map(Object.entries(data).map(([key, value]) => [key, value.wotmod]))
 })

@@ -1,4 +1,4 @@
-import { shallowRef, triggerRef } from "vue";
+import { shallowRef, triggerRef } from 'vue'
 
 
 export type FocusEffectTarget = {
@@ -8,10 +8,10 @@ export type FocusEffectTarget = {
   }
 }
 
-export const activeShowEffects = shallowRef(new Set<FocusEffectTarget>());
+export const activeShowEffects = shallowRef(new Set<FocusEffectTarget>())
 
 
-let effectId = 0;
+let effectId = 0
 export function showFocusEffect(element: HTMLElement): void {
 
   const effect: FocusEffectTarget = {
@@ -22,9 +22,9 @@ export function showFocusEffect(element: HTMLElement): void {
   activeShowEffects.value.add(effect)
 
   setTimeout(() => {
-    activeShowEffects.value.delete(effect);
+    activeShowEffects.value.delete(effect)
     triggerRef(activeShowEffects)
-  }, 1000);
+  }, 1000)
 
   triggerRef(activeShowEffects)
 
