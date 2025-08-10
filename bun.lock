@@ -29,6 +29,7 @@
       "devDependencies": {
         "@types/canvas-confetti": "^1.9.0",
         "@types/wicg-file-system-access": "^2023.10.6",
+        "@types/yandex-metrika-tag": "^2.0.7",
         "@typescript-eslint/parser": "^8.6.0",
         "eslint": "^9.11.1",
         "rollup-plugin-visualizer": "^6.0.3",
@@ -311,6 +312,8 @@
     "@types/web-bluetooth": ["@types/web-bluetooth@0.0.21", "", {}, "sha512-oIQLCGWtcFZy2JW77j9k8nHzAOpqMHLQejDA48XXMWH6tjCQHz5RCFz1bzsmROyL6PUm+LLnUiI4BCn221inxA=="],
 
     "@types/wicg-file-system-access": ["@types/wicg-file-system-access@2023.10.6", "", {}, "sha512-YO/183gNRzZFSdKu+ikkD7ambAj4PhgjFAF2A/Mw/7wroSF6ne8r804RkpZzqrJ/F6DO2/IYlQF/ULOZ/bhKyA=="],
+
+    "@types/yandex-metrika-tag": ["@types/yandex-metrika-tag@2.0.7", "", {}, "sha512-N7hzN0CyH8rLPXbKQ4EiiL8kpKlUhUL75uucP93bGI/50J3sQ5lJJG7NKJmkToCth8RsMFWHLVmuD0vXxqhc3Q=="],
 
     "@typescript-eslint/parser": ["@typescript-eslint/parser@8.39.0", "", { "dependencies": { "@typescript-eslint/scope-manager": "8.39.0", "@typescript-eslint/types": "8.39.0", "@typescript-eslint/typescript-estree": "8.39.0", "@typescript-eslint/visitor-keys": "8.39.0", "debug": "^4.3.4" }, "peerDependencies": { "eslint": "^8.57.0 || ^9.0.0", "typescript": ">=4.8.4 <6.0.0" } }, "sha512-g3WpVQHngx0aLXn6kfIYCZxM6rRJlWzEkVpqEFLT3SgEDsp9cpCbxxgwnE504q4H+ruSDh/VGS6nqZIDynP+vg=="],
 
