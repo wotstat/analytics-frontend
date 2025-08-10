@@ -74,6 +74,16 @@
           </div>
         </div>
       </div>
+
+      <div class="line flex">
+        <CompareCard :min-step="0.01" :processor="percent" :title="'Процент попаданий'"
+          :left="hitPercents.data.find(item => leftVersions.has(item.gameVersion))?.hitPercent ?? 0"
+          :right="hitPercents.data.find(item => rightVersions.has(item.gameVersion))?.hitPercent ?? 0" />
+
+        <CompareCard :min-step="0.01" :processor="percent" :title="'Процент пробитий относительно попаданий'"
+          :left="hitPercents.data.find(item => leftVersions.has(item.gameVersion))?.piercingPercent ?? 0"
+          :right="hitPercents.data.find(item => rightVersions.has(item.gameVersion))?.piercingPercent ?? 0" />
+      </div>
     </section>
 
     <section class="type-distribution">
@@ -169,6 +179,25 @@
       </div>
     </section>
 
+    <section class="type-distribution">
+      <h3>Другое</h3>
+      <div class="cards">
+        <div class="card flex">
+          <div class="chart-container flex-1">
+            <ShadowBar :data="averageSpgDamageChartData" :options="averageChartOptions" />
+          </div>
+          <p class="card-main-info description bottom">Средний урон САУ</p>
+        </div>
+
+        <div class="card flex">
+          <div class="chart-container flex-1">
+            <ShadowBar :data="averageLtAssistChartData" :options="averageChartOptions" />
+          </div>
+          <div class="card-main-info description bottom">Средний насвет ЛТ</div>
+        </div>
+      </div>
+    </section>
+
 
     <footer>
 
@@ -193,7 +222,9 @@ import DropDown from '@/components/dropdown/DropDown.vue'
 import ShotsCircle from '@/components/widgets/ShotsCircle.vue'
 import { spaceProcessor } from '@/composition/processors/useSpaceProcessor'
 import { numberToRoman, sec2minsec } from '@/utils'
-import { usePercentProcessor } from '@/composition/usePercentProcessor'
+import { roundProcessor, usePercentProcessor } from '@/composition/usePercentProcessor'
+import SimpleTweenValue from '@/components/tween/SimpleTweenValue.vue'
+import CompareCard from './CompareCard.vue'
 
 
 setFeatureVisit('mt-36-1')
@@ -211,8 +242,105 @@ const leftVersionString = [...leftVersions].map(t => t.split('_')[1]).join(', ')
 const rightVersionString = [...rightVersions].map(t => t.split('_')[1]).join(', ')
 
 const levelDebounce = useDebounce(selectedLevels)
-
 const durationSelectedLevel = ref(10)
+
+
+const hitPercents = queryComputed<{ gameVersion: string, hitPercent: number, piercingPercent: number }>(() => `
+select
+    gameVersion,
+    avgMerge(directEnemyHits) / avgMerge(shots) as hitPercent,
+    avgMerge(piercingEnemyHits) / avgMerge(directEnemyHits) as piercingPercent
+from "MT-36-1".AveragePlayerResults
+where battleMode = 'REGULAR' and region = 'RU' and gameVersion in (${gameVersionFilter.value})
+group by gameVersion;
+`, { settings: LONG_CACHE_SETTINGS })
+
+
+const averageDamageAndAssist = queryComputed<{ gameVersion: string, tankType: string, tankLevel: number, damage: number, assistRadio: number }>(() => `
+select
+    gameVersion, tankType, tankLevel,
+    avgMerge(damage) as damage,
+    avgMerge(assistRadio) as assistRadio
+from "MT-36-1".AveragePlayerResults
+where battleMode = 'REGULAR' and region = 'RU' and gameVersion in (${gameVersionFilter.value})
+group by gameVersion, tankType, tankLevel
+order by gameVersion, tankType, tankLevel;
+`, { settings: LONG_CACHE_SETTINGS })
+
+const averageSpgDamageChartData = computed<ChartProps<'bar'>['data']>(() => {
+  const data = averageDamageAndAssist.value.data.filter(item => item.tankType == 'SPG')
+  const targetLabels = [...new Set(data.map(item => item.tankLevel)).values()].sort((a, b) => a - b)
+  const left = data.filter(item => leftVersions.has(item.gameVersion))
+  const right = data.filter(item => rightVersions.has(item.gameVersion))
+
+  return {
+    labels: targetLabels.map(t => numberToRoman(t)),
+    datasets: [
+      {
+        label: leftVersionString,
+        data: targetLabels.map(label => left.find(t => t.tankLevel == Number(label))?.damage || 0),
+        backgroundColor: '#4a90e2',
+      },
+      {
+        label: rightVersionString,
+        data: targetLabels.map(label => right.find(t => t.tankLevel == Number(label))?.damage || 0),
+        backgroundColor: '#50e3c2',
+      }
+    ]
+  }
+})
+
+const averageLtAssistChartData = computed<ChartProps<'bar'>['data']>(() => {
+  const data = averageDamageAndAssist.value.data.filter(item => item.tankType == 'LT')
+  const targetLabels = [...new Set(data.map(item => item.tankLevel)).values()].sort((a, b) => a - b)
+  const left = data.filter(item => leftVersions.has(item.gameVersion))
+  const right = data.filter(item => rightVersions.has(item.gameVersion))
+
+  return {
+    labels: targetLabels.map(t => numberToRoman(t)),
+    datasets: [
+      {
+        label: leftVersionString,
+        data: targetLabels.map(label => left.find(t => t.tankLevel == Number(label))?.assistRadio || 0),
+        backgroundColor: '#4a90e2',
+      },
+      {
+        label: rightVersionString,
+        data: targetLabels.map(label => right.find(t => t.tankLevel == Number(label))?.assistRadio || 0),
+        backgroundColor: '#50e3c2',
+      }
+    ]
+  }
+})
+
+const averageChartOptions = computed<ChartProps<'bar'>['options']>(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    y: {
+      grid: { display: true },
+      ticks: { callback: (value) => spaceProcessor(value) }
+    },
+    x: { grid: { display: false } }
+  },
+  interaction: { mode: 'index' },
+  plugins: {
+    tooltip: {
+      callbacks: {
+        title: ctx => `Уровень ${ctx[0].label}`,
+        label: ctx => {
+
+          const values = ctx.chart.data.datasets.map(t => t.data[ctx.dataIndex]) as number[]
+          const minValue = Math.min(...values)
+          const delta = (ctx.raw as number) - minValue
+
+          return `${ctx.dataset.label}: ${spaceProcessor(roundProcessor(ctx.raw as number))}` + (delta > 0 ? ` | +${spaceProcessor(roundProcessor(delta))}` : '')
+        }
+      }
+    }
+  }
+}))
+
 
 const durationDistributionData = queryComputed<{ gameVersion: string, tankLevel: number, time: number, p: number }>(() => `
 select gameVersion,
@@ -665,7 +793,6 @@ const damageDistributionOptions = computed<ChartProps<'line'>['options']>(() => 
 }))
 
 
-
 const ballisticDistributionIdeal = ref<boolean>(true)
 const ballisticDistributionData = queryComputed<{
   gameVersion: string;
@@ -760,9 +887,7 @@ const ballisticDistributionOptions = computed<ChartProps<'line'>['options']>(() 
     y: {
       min: 0,
       display: false,
-      grid: {
-        display: false
-      },
+      grid: { display: false },
     },
     x: {
       min: 0,
@@ -787,28 +912,10 @@ const ballisticDistributionOptions = computed<ChartProps<'line'>['options']>(() 
   plugins: {
     tooltip: {
       callbacks: {
-        title: (t) => {
-          const v = t[0].raw as number
-          return `Часть снарядов попала в ${Math.round(100 * Number(t[0].label))}% сведения`
-        },
-        label: (t) => {
-          const v = t.raw as number
-          return `${t.dataset.label}: ${(Math.round(v * 10) / 10).toFixed(1)}%`
-        }
+        title: (t) => `Часть снарядов попала в ${Math.round(100 * Number(t[0].label))}% сведения`,
+        label: (t) => `${t.dataset.label}: ${(Math.round((t.raw as number) * 10) / 10).toFixed(1)}%`
       }
-    },
-    // tooltip: {
-    //   callbacks: {
-    //     title: function (context) {
-    //       if (damageStep.value == 1) return `Нанесено ${context[0].label} урона`
-    //       const half = Math.floor(damageStep.value / 2);
-    //       return `Нанесено ${context[0].label}+-${half} урона`
-    //     },
-    //     label: function (context) {
-    //       return `${context.dataset.label}: ${(Math.round(context.raw as number * 100) / 100).toFixed(2)}%`
-    //     }
-    //   }
-    // },
+    }
   }
 }))
 
@@ -1090,7 +1197,7 @@ async function loadNextBatchRight(options: Options) {
   }
 
   section {
-    margin-bottom: 2em;
+    margin-bottom: 3em;
 
     h3 {
       margin: 0;
