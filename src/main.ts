@@ -2,6 +2,7 @@ import './styles/index.scss'
 import { createApp } from 'vue'
 import App from './App.vue'
 import { router } from './routes'
+import { setup as setupYmMetrika } from './composition/ym/metrika'
 
 import {
   Chart as ChartJS,
@@ -23,3 +24,9 @@ console.log(`WotStat front start in **${import.meta.env.MODE}** mode`)
 createApp(App)
   .use(router)
   .mount('#app')
+
+setupYmMetrika({
+  clickmap: false,
+  trackLinks: true,
+  accurateTrackBounce: true,
+})
