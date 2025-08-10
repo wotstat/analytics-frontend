@@ -1,16 +1,18 @@
 <template>
-  <div class="dropdown" :class="{ 'open': isOpen }" ref="dropDown">
-    <div class="current" @pointerdown="pointerDown">
-      <slot name="current" v-if="slots.current" :currentValue></slot>
-      <p v-else>{{ valueToLabel(currentValue) }}</p>
-      <ArrowDown />
-    </div>
+  <div class="dropdown-container">
+    <div class="dropdown" :class="{ 'open': isOpen }" ref="dropDown">
+      <div class="current" @pointerdown="pointerDown">
+        <slot name="current" v-if="slots.current" :currentValue></slot>
+        <p v-else>{{ valueToLabel(currentValue) }}</p>
+        <ArrowDown />
+      </div>
 
-    <div class="lines">
-      <div class="line" v-for="variant in variants" @click="select(variant.value)"
-        @pointerup="pointerUp(variant.value)">
-        <slot name="line" v-if="slots.line" :variant="variant"></slot>
-        <p>{{ valueToLabel(variant.value) }}</p>
+      <div class="lines">
+        <div class="line" v-for="variant in variants" @click="select(variant.value)"
+          @pointerup="pointerUp(variant.value)">
+          <slot name="line" v-if="slots.line" :variant="variant"></slot>
+          <p>{{ valueToLabel(variant.value) }}</p>
+        </div>
       </div>
     </div>
   </div>
@@ -68,6 +70,10 @@ function select(value: T) {
 
 
 <style lang="scss" scoped>
+.dropdown-container {
+  height: 1.6em;
+}
+
 .dropdown {
   background: #2c2c2cb2;
   font-size: 14px;

@@ -76,6 +76,29 @@
       </div>
     </section>
 
+    <section class="type-distribution">
+      <h3>Продолжительность боя</h3>
+      <div class="cards">
+        <div class="card flex">
+          <div class="chart-container flex-1">
+            <ShadowBar :data="durationByLevelChartData" :options="durationByLevelOptions" />
+          </div>
+          <p class="card-main-info description bottom">Среднее время боя по уровню</p>
+        </div>
+
+        <div class="card flex">
+          <div class="chart-container flex-1">
+            <ShadowBar :data="durationDistributionChartData" :options="durationDistributionOptions" />
+          </div>
+          <div class="card-main-info description bottom">Распределение боёв по продолжительности на
+            <DropDown class="dropdown-container mt-font" v-model="durationSelectedLevel"
+              :variants="new Array(11).fill(0).map((_, i) => ({ value: i + 1, label: numberToRoman(i + 1) }))" />
+            уровне
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section>
       <h3>Уровни боёв</h3>
       <LevelSwitcher v-model="selectedLevels" />
@@ -169,6 +192,8 @@ import { ChartProps } from 'vue-chartjs'
 import DropDown from '@/components/dropdown/DropDown.vue'
 import ShotsCircle from '@/components/widgets/ShotsCircle.vue'
 import { spaceProcessor } from '@/composition/processors/useSpaceProcessor'
+import { numberToRoman, sec2minsec } from '@/utils'
+import { usePercentProcessor } from '@/composition/usePercentProcessor'
 
 
 setFeatureVisit('mt-36-1')
@@ -186,6 +211,125 @@ const leftVersionString = [...leftVersions].map(t => t.split('_')[1]).join(', ')
 const rightVersionString = [...rightVersions].map(t => t.split('_')[1]).join(', ')
 
 const levelDebounce = useDebounce(selectedLevels)
+
+const durationSelectedLevel = ref(10)
+
+const durationDistributionData = queryComputed<{ gameVersion: string, tankLevel: number, time: number, p: number }>(() => `
+select gameVersion,
+       tankLevel,
+       round(duration / 60 * 2) / 2 as time,
+       count() / sum(count()) over (partition by gameVersion, tankLevel) as p
+from WOT.Event_OnBattleResult
+where gameVersion in (${gameVersionFilter.value}) and battleMode = 'REGULAR' and region = 'RU'
+group by gameVersion, time, tankLevel;
+`)
+
+const durationDistributionChartData = computed<ChartProps<'bar'>['data']>(() => {
+  const data = durationDistributionData.value.data.filter(item => item.tankLevel == durationSelectedLevel.value)
+  const targetLabels = new Array(27).fill(0).map((_, i) => 2 + i * 0.5)
+  const left = data.filter(item => leftVersions.has(item.gameVersion))
+  const right = data.filter(item => rightVersions.has(item.gameVersion))
+  return {
+    labels: targetLabels,
+    datasets: [
+      {
+        label: leftVersionString,
+        data: targetLabels.map(label => left.find(t => t.time == label)?.p || 0),
+        backgroundColor: '#4a90e2',
+      },
+      {
+        label: rightVersionString,
+        data: targetLabels.map(label => right.find(t => t.time == label)?.p || 0),
+        backgroundColor: '#50e3c2',
+      }
+    ]
+  }
+})
+
+const percent = usePercentProcessor(2)
+const durationDistributionOptions = computed<ChartProps<'bar'>['options']>(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    y: { display: false, min: 0 },
+    x: {
+      grid: { display: false },
+      ticks: {
+        maxRotation: 0,
+      }
+    }
+  },
+  interaction: { mode: 'index' },
+  plugins: {
+    tooltip: {
+      callbacks: {
+        title: function (context) {
+          return `Продолжительность ${sec2minsec(Number.parseFloat(context[0].label) * 60)}`
+        },
+        label: function (context) {
+          return `${context.dataset.label}: ${percent(context.raw as number)}`
+        }
+      }
+    }
+  }
+}))
+
+
+const durationByLevelData = queryComputed<{ gameVersion: string, tankLevel: number, dur: number }>(() => `
+select gameVersion,
+       tankLevel,
+       avg(duration) as dur
+from WOT.Event_OnBattleResult
+where gameVersion in (${gameVersionFilter.value}) and battleMode = 'REGULAR' and region = 'RU'
+group by gameVersion, tankLevel
+`, { settings: LONG_CACHE_SETTINGS })
+
+const durationByLevelChartData = computed<ChartProps<'bar'>['data']>(() => {
+  const data = durationByLevelData.value.data
+  const targetLabels = [...new Set(data.map(item => item.tankLevel)).values()].sort((a, b) => a - b)
+  const left = data.filter(item => leftVersions.has(item.gameVersion))
+  const right = data.filter(item => rightVersions.has(item.gameVersion))
+  return {
+    labels: targetLabels.map(t => numberToRoman(t)),
+    datasets: [
+      {
+        label: leftVersionString,
+        data: targetLabels.map(label => left.find(t => t.tankLevel == Number(label))?.dur || 0),
+        backgroundColor: '#4a90e2',
+      },
+      {
+        label: rightVersionString,
+        data: targetLabels.map(label => right.find(t => t.tankLevel == Number(label))?.dur || 0),
+        backgroundColor: '#50e3c2',
+      }
+    ]
+  }
+})
+
+const durationByLevelOptions = computed<ChartProps<'bar'>['options']>(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    y: {
+      grid: { display: true },
+      min: 4 * 60,
+      ticks: {
+        stepSize: 60,
+        callback: (value) => sec2minsec(value as number)
+      }
+    },
+    x: { grid: { display: false } }
+  },
+  interaction: { mode: 'index' },
+  plugins: {
+    tooltip: {
+      callbacks: {
+        title: ctx => `Уровень ${ctx[0].label}`,
+        label: ctx => `${ctx.dataset.label}: ${sec2minsec(ctx.raw as number)}`
+      }
+    }
+  }
+}))
 
 const teamLevelTableData = queryComputed<{
   battleType: 1 | 2 | 3,
@@ -249,7 +393,7 @@ const typeDistributionData = computed<{ chart: { key: string, label: string }, d
     { key: 'at', label: 'ПТ' },
     { key: 'lt', label: 'ЛТ' }
   ].map(chart => {
-    const data = byTankTypeDistributionData.value.data.filter(t => t.type == chart.key)
+    const data = byTankTypeDistributionData.value.data.filter(t => t.type == chart.key).filter(t => t.battles > 0.0001)
     const targetLabels = [...new Set(data.map(item => item.count)).values()].sort((a, b) => a - b).map(String)
 
     const left = data.filter(t => leftVersions.has(t.gameVersion))
@@ -283,27 +427,15 @@ const typeDistributionOptions = computed<ChartProps<'bar'>['options']>(() => ({
   responsive: true,
   maintainAspectRatio: false,
   scales: {
-    y: {
-      display: false,
-      min: 0,
-    },
-    x: {
-      grid: { display: false },
-      min: 0,
-    }
+    y: { display: false, min: 0 },
+    x: { grid: { display: false }, min: 0 }
   },
-  interaction: {
-    mode: 'index'
-  },
+  interaction: { mode: 'index' },
   plugins: {
     tooltip: {
       callbacks: {
-        title: function (context) {
-          return `Боёв с ${context[0].label} ${(context[0].chart.data.datasets[0] as any).meta.label} на команду`
-        },
-        label: function (context) {
-          return `${context.dataset.label}: ${(Math.round(context.raw as number * 1000) / 10).toFixed(1)}%`
-        }
+        title: ctx => `Боёв с ${ctx[0].label} ${(ctx[0].chart.data.datasets[0] as any).meta.label} на команду`,
+        label: ctx => `${ctx.dataset.label}: ${(Math.round(ctx.raw as number * 1000) / 10).toFixed(1)}%`
       }
     }
   }
@@ -750,7 +882,7 @@ async function loadNextBatchRight(options: Options) {
     top: 0;
     left: 0;
     width: 100%;
-    height: 200%;
+    height: 250%;
     z-index: -1;
     overflow: hidden;
 
@@ -789,6 +921,21 @@ async function loadNextBatchRight(options: Options) {
     flex: 1;
     background: rgba(102, 102, 102, 0.15);
     box-shadow: none;
+
+    div.card-main-info {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 0.5em;
+      margin-bottom: -0.3em;
+      margin-top: 0.2em;
+
+      .dropdown-container {
+        font-weight: normal;
+        text-align: left;
+        display: inline-block;
+      }
+    }
   }
 
   .levels {

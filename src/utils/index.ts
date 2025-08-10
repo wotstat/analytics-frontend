@@ -29,7 +29,7 @@ export const sec2hour = (sec: number) => (sec / 60 / 60).toFixed(1)
 export const hour2hour = (hour: number) => hour.toFixed(1)
 
 export function numberToRoman(value: number) {
-  if (value < 1 || value > 3999) return value
+  if (value < 1 || value > 3999) return value.toString()
   const roman = ['I', 'IV', 'V', 'IX', 'X', 'XL', 'L', 'XC', 'C', 'CD', 'D', 'CM', 'M']
   const decimal = [1, 4, 5, 9, 10, 40, 50, 90, 100, 400, 500, 900, 1000]
   let result = ''
