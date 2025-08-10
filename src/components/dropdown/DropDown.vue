@@ -95,7 +95,7 @@ function select(value: T) {
 
   &.open {
     height: auto;
-    z-index: 2;
+    z-index: 20;
     box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.1);
 
     @supports (height: calc-size(auto, size)) {
