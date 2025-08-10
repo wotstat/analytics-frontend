@@ -10,7 +10,7 @@ import { easing } from './easing'
  * @property minStep - The minimum step value for the tween animation. Optional.
  */
 export type TweenOptions = {
-  duration: number
+  duration?: number
   easing?: keyof typeof easing | null
   minStep?: number
 }
