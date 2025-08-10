@@ -222,7 +222,7 @@ select gameVersion,
 from WOT.Event_OnBattleResult
 where gameVersion in (${gameVersionFilter.value}) and battleMode = 'REGULAR' and region = 'RU'
 group by gameVersion, time, tankLevel;
-`)
+`, { settings: LONG_CACHE_SETTINGS })
 
 const durationDistributionChartData = computed<ChartProps<'bar'>['data']>(() => {
   const data = durationDistributionData.value.data.filter(item => item.tankLevel == durationSelectedLevel.value)
@@ -529,8 +529,6 @@ const damageDistributionData = queryComputed<{
     group by shotDamage, gameVersion
     order by shotDamage, gameVersion;
 `
-
-
 }, { settings: LONG_CACHE_SETTINGS })
 
 const stepVariants = computed(() => {
