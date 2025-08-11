@@ -18,8 +18,6 @@ export const metrikaId = Number.parseInt(import.meta.env.VITE_YM_ID)
 export function setup(params: ym.InitParameters) {
   if (isInit.value) return console.warn('Metrika already initialized')
 
-  console.log('Metrika initialized with ID:', metrikaId)
-
   // @ts-ignore
   window['ym'] = window.ym || function () { (window.ym.a = window.ym.a || []).push(arguments) }
   // @ts-ignore
