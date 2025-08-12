@@ -270,9 +270,27 @@ function createCell() {
         height: 31px;
         user-select: none;
         pointer-events: none;
-
-        background-image: url('./assets/atlas_0.webp');
         background-repeat: no-repeat;
+
+        &.atlas-0 {
+          background-image: url('./assets/atlas_0.webp');
+        }
+
+        &.atlas-1 {
+          background-image: url('./assets/atlas_1.webp');
+        }
+
+        &.atlas-2 {
+          background-image: url('./assets/atlas_2.webp');
+        }
+
+        &.atlas-3 {
+          background-image: url('./assets/atlas_3.webp');
+        }
+
+        &.atlas-4 {
+          background-image: url('./assets/atlas_4.webp');
+        }
       }
 
       p {
