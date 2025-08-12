@@ -4,7 +4,7 @@ import { ReusableTableCellBase } from '../reusableTable/ReusableTableCell'
 import { vehicleTypeToImage } from '../vehicles/type/vehicleTypeToImage'
 import { tagToImageName, vehicleFallbackUrl, vehicleUrl } from '../vehicles/vehicle/utils'
 
-import Atlas0 from './assets/atlas_0.json'
+import Atlases from './assets/atlases.json'
 import { Ref, watch } from 'vue'
 
 const vehicleTypes = ['MT', 'LT', 'HT', 'AT', 'SPG'] as const
@@ -38,9 +38,9 @@ function getTypeElement(type: VehicleLineData['type']): Node {
 for (const element of vehicleTypes) getTypeElement(element)
 
 
-const atlasMap = new Map<string, { x: number, y: number }>(Atlas0.data.map((item) => {
-  return [item.image, { x: item.x, y: item.y }]
-}))
+const atlasMap = new Map<string, { atlas: number, x: number, y: number }>(Atlases.flatMap(atlas => atlas.data.map((item) => {
+  return [item.image, { atlas: atlas.info.index, x: item.x, y: item.y }]
+})))
 
 export class VehicleLine extends ReusableTableCellBase<VehicleLineData> {
   readonly root: HTMLElement
@@ -103,19 +103,27 @@ export class VehicleLine extends ReusableTableCellBase<VehicleLineData> {
     this.highlightedName.style.display = visible ? '' : 'none'
   }
 
+  private getAtlasPosition(tag: string) {
+    if (!atlasMap.has(tagToImageName(tag))) console.warn(`No atlas entry for tag: ${tag}`)
+    const sprite = atlasMap.get(tagToImageName(tag)) ?? atlasMap.get('no-image')
+    if (!sprite) return { x: 0, y: 0, index: 0 }
+    return { x: sprite.x, y: sprite.y, index: sprite.atlas }
+  }
+
   configure(data: VehicleLineData): void {
     this.currentTag = data.tag
+    // this.name.textContent = tagToImageName(data.tag)
     this.name.textContent = data.highlightStrings.text
 
     this.level.textContent = romanNumerals[data.level] || data.level.toString()
     this.flag.src = nationFlags[`/src/components/vehicles/nation/60x40/${data.nation}.png`]?.default || ''
 
-    const firstChild = this.type.firstChild
-    const target = this.getTypeElement(data.type)
+    const currentTypeElement = this.type.firstChild
+    const targetTypeElement = this.getTypeElement(data.type)
 
-    if (firstChild !== target) {
-      if (firstChild !== null) this.type.replaceChild(target, firstChild)
-      else this.type.appendChild(target)
+    if (currentTypeElement !== targetTypeElement) {
+      if (currentTypeElement !== null) this.type.replaceChild(targetTypeElement, currentTypeElement)
+      else this.type.appendChild(targetTypeElement)
     }
 
     this.setHighlightedVisible(data.highlightStrings.highlight.length > 0)
@@ -129,8 +137,14 @@ export class VehicleLine extends ReusableTableCellBase<VehicleLineData> {
       }).join('')
     }
 
-    const sprite = atlasMap.get(tagToImageName(data.tag))
+    const sprite = this.getAtlasPosition(data.tag)
     this.tank.style.backgroundPosition = `${-(sprite?.x || 0)}px ${-(sprite?.y || 0)}px`
+
+    const targetAtlas = `atlas-${sprite?.index || 0}`
+    if (!this.tank.classList.contains(targetAtlas)) {
+      this.tank.classList.remove(...[...this.tank.classList].filter(c => c.startsWith('atlas-')))
+      this.tank.classList.add(targetAtlas)
+    }
 
     this.updateSelectedState()
   }
