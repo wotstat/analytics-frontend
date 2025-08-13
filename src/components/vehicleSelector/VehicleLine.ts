@@ -2,7 +2,7 @@ import { numberToRoman } from '@/utils'
 import { getHighlightedTextParts, HighlightedString } from '../highlightString/highlightUtils'
 import { ReusableTableCellBase } from '../reusableTable/ReusableTableCell'
 import { vehicleTypeToImage } from '../vehicles/type/vehicleTypeToImage'
-import { smallVehiclesAtlasMt, tagToImageName, vehicleFallbackUrl, vehicleUrl } from '../vehicles/vehicle/utils'
+import { smallVehiclesAtlasMt, smallVehiclesAtlasWot, tagToImageName } from '../vehicles/vehicle/utils'
 
 import { Ref, watch } from 'vue'
 import { nationFlagAtlas } from '../vehicles/nation/utils'

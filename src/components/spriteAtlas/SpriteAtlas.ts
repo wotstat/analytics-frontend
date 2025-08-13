@@ -98,8 +98,6 @@ export class SpriteAtlas {
         background-image: url('${this.atlases.get(index)}');
       }`
 
-      console.log(`Sprite atlas for class "${this.options.classPrefix}" loaded successfully.`)
-
       document.head.appendChild(this.styleTag)
     } else {
       console.warn(`Sprite atlas for class "${this.options.classPrefix}" is already loaded.`)

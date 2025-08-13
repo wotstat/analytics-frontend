@@ -23,4 +23,4 @@ export function vehicleFallbackUrl(size: 'small' | 'preview' | 'shop' = 'preview
 }
 
 export const smallVehiclesAtlasMt = new SpriteAtlas({ atlasRoot: `${STATIC_URL}/mt/latest/vehicles/small/atlas/1024`, classPrefix: 'mt-small-vehicles-background' })
-export const smallVehiclesAtlasWot = new SpriteAtlas({ atlasRoot: `${STATIC_URL}/mt/latest/vehicles/small/atlas/1024`, classPrefix: 'wot-small-vehicles-background' })
+export const smallVehiclesAtlasWot = new SpriteAtlas({ atlasRoot: `${STATIC_URL}/wot/latest/vehicles/small/atlas/1024`, classPrefix: 'wot-small-vehicles-background' })
