@@ -1,3 +1,4 @@
+import { SpriteAtlas } from '@/components/spriteAtlas/SpriteAtlas'
 import { STATIC_URL } from '@/utils/externalUrl'
 
 export function tagToImageName(tag: string): string {
@@ -20,3 +21,6 @@ export function vehicleFallbackUrl(size: 'small' | 'preview' | 'shop' = 'preview
     case 'shop': return `${STATIC_URL}/mt/latest/vehicles/shop/no-image.${format}`
   }
 }
+
+export const smallVehiclesAtlasMt = new SpriteAtlas({ atlasRoot: `${STATIC_URL}/mt/latest/vehicles/small/atlas/1024`, classPrefix: 'mt-small-vehicles-background' })
+export const smallVehiclesAtlasWot = new SpriteAtlas({ atlasRoot: `${STATIC_URL}/mt/latest/vehicles/small/atlas/1024`, classPrefix: 'wot-small-vehicles-background' })

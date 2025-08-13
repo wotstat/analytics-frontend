@@ -1,0 +1,20 @@
+[
+  {
+    "info": { "index": 0, "defaultItemSize": {"width": 60, "height": 40} },
+    "data": [
+      {"image": "china",    "x":   0, "y":   0},
+      {"image": "czech",    "x":  60, "y":   0},
+      {"image": "france",   "x": 120, "y":   0},
+      {"image": "sweden",   "x": 180, "y":   0},
+      {"image": "ussr",     "x":   0, "y":  40},
+      {"image": "usa",      "x":  60, "y":  40},
+      {"image": "uk",       "x": 120, "y":  40},
+      {"image": "poland",   "x": 180, "y":  40},
+      {"image": "japan",    "x":   0, "y":  80},
+      {"image": "italy",    "x":  60, "y":  80},
+      {"image": "intunion", "x": 120, "y":  80},
+      {"image": "germany",  "x": 180, "y":  80},
+      {"image": "no-image", "x":   0, "y": 120}
+    ]
+  }
+]
