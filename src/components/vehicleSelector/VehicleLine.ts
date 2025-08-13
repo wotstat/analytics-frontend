@@ -2,10 +2,10 @@ import { numberToRoman } from '@/utils'
 import { getHighlightedTextParts, HighlightedString } from '../highlightString/highlightUtils'
 import { ReusableTableCellBase } from '../reusableTable/ReusableTableCell'
 import { vehicleTypeToImage } from '../vehicles/type/vehicleTypeToImage'
-import { tagToImageName, vehicleFallbackUrl, vehicleUrl } from '../vehicles/vehicle/utils'
+import { smallVehiclesAtlasMt, tagToImageName, vehicleFallbackUrl, vehicleUrl } from '../vehicles/vehicle/utils'
 
-import Atlases from './assets/atlases.json'
 import { Ref, watch } from 'vue'
+import { nationFlagAtlas } from '../vehicles/nation/utils'
 
 const vehicleTypes = ['MT', 'LT', 'HT', 'AT', 'SPG'] as const
 export type VehicleLineData = {
@@ -21,9 +21,6 @@ const romanNumerals: Record<number, string> = Object.fromEntries(
   [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((num) => [num, numberToRoman(num).toString()])
 )
 
-const nationFlags = import.meta.glob<{ default: string }>('/src/components/vehicles/nation/60x40/*.png', { eager: true })
-
-
 const typeIconElements = new Map<string, Node>()
 function getTypeElement(type: VehicleLineData['type']): Node {
   if (typeIconElements.has(type)) return typeIconElements.get(type)!
@@ -38,14 +35,10 @@ function getTypeElement(type: VehicleLineData['type']): Node {
 for (const element of vehicleTypes) getTypeElement(element)
 
 
-const atlasMap = new Map<string, { atlas: number, x: number, y: number }>(Atlases.flatMap(atlas => atlas.data.map((item) => {
-  return [item.image, { atlas: atlas.info.index, x: item.x, y: item.y }]
-})))
-
 export class VehicleLine extends ReusableTableCellBase<VehicleLineData> {
   readonly root: HTMLElement
 
-  private readonly flag: HTMLImageElement
+  private readonly flag: HTMLElement
   private readonly type: HTMLElement
   private readonly level: HTMLParagraphElement
   private readonly tank: HTMLElement
@@ -55,14 +48,17 @@ export class VehicleLine extends ReusableTableCellBase<VehicleLineData> {
   private readonly typeElements = new Map<string, Node>()
 
   private currentTag: string | null = null
+  private currentVehicleClass: string | null = null
+  private currentFlagClass: string | null = null
   private unwatch: (() => void)
 
   constructor(private onClick: (tag: string) => void, private selected: Ref<Set<string>>) {
     super()
+
     this.root = document.createElement('div')
     this.root.classList.add('line')
 
-    this.flag = document.createElement('img')
+    this.flag = document.createElement('div')
     this.flag.classList.add('flag')
     this.root.appendChild(this.flag)
 
@@ -103,11 +99,27 @@ export class VehicleLine extends ReusableTableCellBase<VehicleLineData> {
     this.highlightedName.style.display = visible ? '' : 'none'
   }
 
-  private getAtlasPosition(tag: string) {
-    if (!atlasMap.has(tagToImageName(tag))) console.warn(`No atlas entry for tag: ${tag}`)
-    const sprite = atlasMap.get(tagToImageName(tag)) ?? atlasMap.get('no-image')
-    if (!sprite) return { x: 0, y: 0, index: 0 }
-    return { x: sprite.x, y: sprite.y, index: sprite.atlas }
+  private setClass(element: HTMLElement, oldClass: string | null, className: string | null): string | null {
+    if (oldClass == className) return className
+    if (oldClass) element.classList.remove(oldClass)
+    if (className) element.classList.add(className)
+    return className
+  }
+
+  private setVehicleImage(tag: string): void {
+    const smallVehicle = smallVehiclesAtlasMt.getSprite(tagToImageName(tag)) ?? smallVehiclesAtlasMt.getSprite('no-image')
+    if (!smallVehicle) return
+
+    this.tank.style.backgroundPosition = smallVehicle.backgroundPosition
+    this.currentVehicleClass = this.setClass(this.tank, this.currentVehicleClass, smallVehicle.atlasClass)
+  }
+
+  private setFlagImage(nation: string): void {
+    const nationFlag = nationFlagAtlas.getSprite(nation) ?? nationFlagAtlas.getSprite('no-image')
+    if (!nationFlag) return
+
+    this.flag.style.backgroundPosition = `${-nationFlag.x / 2}px ${-nationFlag.y / 2}px`
+    this.currentFlagClass = this.setClass(this.flag, this.currentFlagClass, nationFlag.atlasClass)
   }
 
   configure(data: VehicleLineData): void {
@@ -116,7 +128,7 @@ export class VehicleLine extends ReusableTableCellBase<VehicleLineData> {
     this.name.textContent = data.highlightStrings.text
 
     this.level.textContent = romanNumerals[data.level] || data.level.toString()
-    this.flag.src = nationFlags[`/src/components/vehicles/nation/60x40/${data.nation}.png`]?.default || ''
+    this.setFlagImage(data.nation)
 
     const currentTypeElement = this.type.firstChild
     const targetTypeElement = this.getTypeElement(data.type)
@@ -137,15 +149,7 @@ export class VehicleLine extends ReusableTableCellBase<VehicleLineData> {
       }).join('')
     }
 
-    const sprite = this.getAtlasPosition(data.tag)
-    this.tank.style.backgroundPosition = `${-(sprite?.x || 0)}px ${-(sprite?.y || 0)}px`
-
-    const targetAtlas = `atlas-${sprite?.index || 0}`
-    if (!this.tank.classList.contains(targetAtlas)) {
-      this.tank.classList.remove(...[...this.tank.classList].filter(c => c.startsWith('atlas-')))
-      this.tank.classList.add(targetAtlas)
-    }
-
+    this.setVehicleImage(data.tag)
     this.updateSelectedState()
   }
 

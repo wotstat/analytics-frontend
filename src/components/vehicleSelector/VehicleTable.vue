@@ -40,7 +40,7 @@ import ReusableTable from '../reusableTable/ReusableTable.vue'
 import { type ComponentInstance } from '@/composition/utils/ComponentInstance'
 
 import { type VehicleLineData, VehicleLine as VehicleLineCell } from './VehicleLine.ts'
-import { vehicleUrl } from '../vehicles/vehicle/utils.ts'
+import { smallVehiclesAtlasMt, vehicleUrl } from '../vehicles/vehicle/utils.ts'
 
 
 const reusableTable = ref<ComponentInstance<typeof ReusableTable<VehicleLineData>> | null>(null)
@@ -167,6 +167,7 @@ function createCell() {
   margin-right: -11.5px;
   margin-left: -10px;
   contain: paint layout style;
+  user-select: none;
 
   :deep(.scroll) {
     padding-bottom: 10px;
@@ -186,8 +187,11 @@ function createCell() {
   .line {
     .flag {
       width: 30px;
+      height: 20px;
       min-width: 30px;
       margin-right: 7px;
+      background-size: 128px;
+      background-repeat: no-repeat;
     }
 
     .type {
@@ -271,26 +275,6 @@ function createCell() {
         user-select: none;
         pointer-events: none;
         background-repeat: no-repeat;
-
-        &.atlas-0 {
-          background-image: url('./assets/atlas_0.webp');
-        }
-
-        &.atlas-1 {
-          background-image: url('./assets/atlas_1.webp');
-        }
-
-        &.atlas-2 {
-          background-image: url('./assets/atlas_2.webp');
-        }
-
-        &.atlas-3 {
-          background-image: url('./assets/atlas_3.webp');
-        }
-
-        &.atlas-4 {
-          background-image: url('./assets/atlas_4.webp');
-        }
       }
 
       p {

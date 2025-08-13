@@ -175,13 +175,17 @@ function selectType(e: MouseEvent, type: VehicleType) {
   if (currentTypes.value.has(type)) currentTypes.value.delete(type)
   else {
     if (e.shiftKey) {
-      const index = vehicleTypes.indexOf(type)
-      const types = Array.from(currentTypes.value).map(t => vehicleTypes.indexOf(t))
-      const min = Math.min(...types)
-      const max = Math.max(...types)
+      if (currentTypes.value.size === 0) {
+        currentTypes.value.add(type)
+      } else {
+        const index = vehicleTypes.indexOf(type)
+        const types = Array.from(currentTypes.value).map(t => vehicleTypes.indexOf(t))
+        const min = Math.min(...types)
+        const max = Math.max(...types)
 
-      if (index < min) for (let i = index; i <= max; i++) currentTypes.value.add(vehicleTypes[i])
-      else for (let i = min; i <= index; i++) currentTypes.value.add(vehicleTypes[i])
+        if (index < min) for (let i = index; i <= max; i++) currentTypes.value.add(vehicleTypes[i])
+        else for (let i = min; i <= index; i++) currentTypes.value.add(vehicleTypes[i])
+      }
     }
     else if (!e.ctrlKey && !e.metaKey) currentTypes.value.clear()
 
