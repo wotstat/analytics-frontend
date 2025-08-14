@@ -16,14 +16,7 @@
     </div>
 
     <div class="table-container deep-nice-scrollbar" :class="{ 'fast-scroll': isFastScroll }">
-      <ReusableTable :data="target" ref="reusableTable" backgroundColor="#2a2a2a"
-        :options="{ height: 35, cellConstructor: createCell }">
-        <template v-slot="{ data, index }">
-          <VehicleLine :nation="data.nation" :type="data.type" :level="data.level" :tag="data.tag"
-            :highlightStrings="data.highlightStrings" @click="onClick(data.tag)"
-            :class="{ selected: selected?.has(data.tag) }" />
-        </template>
-      </ReusableTable>
+      <ReusableTable :data="target" ref="reusableTable" backgroundColor="#2a2a2a" :delegate />
     </div>
   </div>
 </template>
@@ -34,16 +27,18 @@ import VehicleType from '../vehicles/type/VehicleType.vue'
 import Globe from './assets/globe.svg'
 import { computed, ref, triggerRef, watch } from 'vue'
 import VehicleLine from './VehicleLine.vue'
-import ReusableTable from '../reusableTable/ReusableTable.vue'
+import ReusableTable from '../reusableTable/ReusableTable2.vue'
 import { type ComponentInstance } from '@/composition/utils/ComponentInstance'
 
 import { type VehicleLineData, VehicleLine as VehicleLineCell } from './VehicleLine.ts'
+import { ReusableTableDelegate } from '../reusableTable/ReusableTable.ts'
+import { HeaderLine } from './HeaderLine.ts'
 
 
 const reusableTable = ref<ComponentInstance<typeof ReusableTable<VehicleLineData>> | null>(null)
 
 const props = defineProps<{
-  tankToDisplay: VehicleLineData[]
+  tankToDisplay: (VehicleLineData | { header: string })[]
 }>()
 
 const nameVariant = defineModel<'full' | 'short'>('nameVariant')
@@ -72,8 +67,26 @@ function onClick(tag: string) {
   triggerRef(selected)
 }
 
-function createCell() {
-  return new VehicleLineCell(onClick, selected)
+
+const delegate: ReusableTableDelegate = {
+  heightForIndex: (_, index) => {
+    const element = props.tankToDisplay[index]
+    return 'header' in element ? 33 : 35
+  },
+  numberOfRows: (_) => props.tankToDisplay.length,
+  cellForIndex: (_, index) => {
+    const element = props.tankToDisplay[index]
+
+    if ('header' in element) {
+      const cell = new HeaderLine()
+      cell.setTitle(element.header)
+      return cell
+    } else {
+      const cell = new VehicleLineCell(onClick, selected)
+      cell.configure(element)
+      return cell
+    }
+  }
 }
 
 </script>
@@ -287,6 +300,15 @@ function createCell() {
   .name {
     .highlight {
       color: var(--blue-thin-color);
+    }
+  }
+
+  .header-line {
+    padding: 10px 10px 3px 10px;
+    height: 20px;
+
+    h5 {
+      margin: 0;
     }
   }
 }

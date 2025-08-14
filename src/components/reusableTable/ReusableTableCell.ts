@@ -11,3 +11,7 @@ export abstract class ReusableTableCellBase<T> implements ReusableTableCell<T> {
   abstract configure(data: T): void
   dispose(): void { }
 }
+
+export interface ReusableTableDataSource<Data> {
+
+}
