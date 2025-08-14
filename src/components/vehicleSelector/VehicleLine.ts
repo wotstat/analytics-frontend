@@ -151,6 +151,8 @@ export class VehicleLine extends ReusableTableCellBase<VehicleLineData> {
 
     this.setVehicleImage(data.tag)
     this.updateSelectedState()
+
+    this.root.setAttribute('data-tag', data.tag)
   }
 
   private getTypeElement(type: VehicleLineData['type']): Node {

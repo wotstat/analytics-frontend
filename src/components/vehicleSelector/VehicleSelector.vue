@@ -108,46 +108,116 @@ from tanks
 left any join locals using tag;
 `, { settings: CACHE_SETTINGS })
 
-const tankToDisplay = computed(() => {
-  const filtered = tankList.value.data
-    .filter(t =>
-      isRegionForCurrentGame(t.region) &&
-      (currentLevels.value.has(t.level) || currentLevels.value.size == 0) &&
-      (currentTypes.value.has(t.type) || currentTypes.value.size == 0) &&
-      (currentNations.value.has(t.tag.split(':')[0] as Nation) || currentNations.value.size == 0)
-    )
-    .map(tank => {
-      const name = nameVariant.value == 'full' ? tank.name : tank.short
+const groupedList = computed(() => {
+  type Data = typeof tankList.value.data
+  const regular: Data = []
+  const stealHunter: Data = []
+  const hb25: Data = []
+  const may24Hb: Data = []
+  const race: Data = []
+  const observer: Data = []
+  const space: Data = []
+  const bob: Data = []
+  const _7x7: Data = []
+  const lastWT: Data = []
+  const test: Data = []
 
-      return {
-        tag: tank.tag,
-        level: tank.level,
-        nation: tank.tag.split(':')[0],
-        type: tank.type,
-        short: tank.short,
-        highlightStrings: highlight(name || tankTagToReadable(tank.tag), currentSearch.value)
-      }
-    })
-    .filter(tank => !currentSearch.value || tank.highlightStrings.highlight.length > 0)
+  const raceTags = new Set([
+    'uk:GB00_AEC_Armoured_Car_02',
+    'uk:GB00_AEC_Armoured_Car_03',
+    'france:F00_AMD_Panhard_178B_02',
+    'france:F00_AMD_Panhard_178B_03'
+  ])
 
-  function compare(a: typeof filtered[number], b: typeof filtered[number]) {
-    if (a.level !== b.level) return b.level - a.level
-    if (a.nation !== b.nation) {
-      const aIndex = nationsIndexes.get(a.nation as any) ?? 0
-      const bIndex = nationsIndexes.get(b.nation as any) ?? 0
-      return aIndex - bIndex
-    }
-    return a.highlightStrings.text.localeCompare(b.highlightStrings.text)
+  const lastWt = new Set([
+    'czech:Cz04_T50_51_Waf_Hound_3DSt',
+  ])
+
+  for (const tank of tankList.value.data) {
+    if (tank.tag.endsWith('_SH')) stealHunter.push(tank)
+    else if (tank.tag.endsWith('_hb25')) hb25.push(tank)
+    else if (tank.tag.endsWith('_may24_hb')) may24Hb.push(tank)
+    else if (tank.tag.endsWith('_bob')) bob.push(tank)
+    else if (tank.tag.endsWith('_7x7')) _7x7.push(tank)
+    else if (tank.tag.endsWith('_T')) test.push(tank)
+    else if (tank.tag == 'ussr:Observer') observer.push(tank)
+    else if (raceTags.has(tank.tag)) race.push(tank)
+    else if (tank.tag.includes('_COSM_')) space.push(tank)
+    else if (tank.tag.includes('_TLXXL') || lastWt.has(tank.tag)) lastWT.push(tank)
+    else regular.push(tank)
   }
 
-  if (currentSearch.value)
-    return filtered.sort((a, b) => {
-      const comp = compareIntervals(a.highlightStrings.highlight, b.highlightStrings.highlight)
-      if (comp !== 0) return comp
-      return compare(a, b)
-    })
+  return [
+    { header: 'Доступные в рандоме', data: regular },
+    { header: 'Стальной Охотник', data: stealHunter },
+    { header: 'День рождения 2025', data: hb25 },
+    { header: 'Битва блогеров', data: bob },
+    { header: 'Май 2024', data: may24Hb },
+    { header: 'Гонки', data: race },
+    { header: 'На марс', data: space },
+    { header: '7x7', data: _7x7 },
+    { header: 'Последний WT', data: lastWT },
+    { header: 'Тестовые', data: test },
+    { header: 'Служебные', data: observer },
+  ]
+})
 
-  return filtered.sort((a, b) => compare(a, b))
+const tankToDisplay = computed(() => {
+
+  const filteredGroups = groupedList.value.map(tankList => {
+
+    const filtered = tankList.data
+      .filter(t =>
+        isRegionForCurrentGame(t.region) &&
+        (currentLevels.value.has(t.level) || currentLevels.value.size == 0) &&
+        (currentTypes.value.has(t.type) || currentTypes.value.size == 0) &&
+        (currentNations.value.has(t.tag.split(':')[0] as Nation) || currentNations.value.size == 0)
+      )
+      .map(tank => {
+        const name = nameVariant.value == 'full' ? tank.name : tank.short
+
+        return {
+          tag: tank.tag,
+          level: tank.level,
+          nation: tank.tag.split(':')[0],
+          type: tank.type,
+          short: tank.short,
+          highlightStrings: highlight(name || tankTagToReadable(tank.tag), currentSearch.value)
+        }
+      })
+      .filter(tank => !currentSearch.value || tank.highlightStrings.highlight.length > 0)
+
+    function compare(a: typeof filtered[number], b: typeof filtered[number]) {
+      if (a.level !== b.level) return b.level - a.level
+      if (a.nation !== b.nation) {
+        const aIndex = nationsIndexes.get(a.nation as any) ?? 0
+        const bIndex = nationsIndexes.get(b.nation as any) ?? 0
+        return aIndex - bIndex
+      }
+      return a.highlightStrings.text.localeCompare(b.highlightStrings.text)
+    }
+
+    function sort() {
+      if (currentSearch.value)
+        return filtered.sort((a, b) => {
+          const comp = compareIntervals(a.highlightStrings.highlight, b.highlightStrings.highlight)
+          if (comp !== 0) return comp
+          const lc = a.highlightStrings.text.localeCompare(b.highlightStrings.text)
+          if (lc !== 0) return lc
+          return compare(a, b)
+        })
+
+      return filtered.sort((a, b) => compare(a, b))
+    }
+    return {
+      header: tankList.header,
+      data: sort()
+    }
+  })
+
+  return filteredGroups
+    .filter(tankList => tankList.data.length > 0)
+    .flatMap(t => [{ header: t.header }, ...t.data])
 })
 
 const shouldVisibleReset = computed(() => currentLevels.value.size > 0 || currentTypes.value.size > 0 || currentNations.value.size > 0 || currentSearch.value != '')
