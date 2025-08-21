@@ -10,8 +10,19 @@ import Coverage from './pages/infographics/pages/Coverage.vue'
 import Distribution from './pages/services/damageDistribution/Content.vue'
 import Lootbox from './pages/infographics/pages/lootbox/Index.vue'
 import Install from './pages/install/Index.vue'
+import { AsyncComponentLoader, defineAsyncComponent } from 'vue'
+import PageLoader from './components/pageLoader/PageLoader.vue'
 
 
+
+function asyncPage(loader: AsyncComponentLoader): any {
+  return defineAsyncComponent({
+    loader,
+    loadingComponent: PageLoader,
+    delay: 200,
+    suspensible: true,
+  })
+}
 
 const routes = [
   { path: '/', component: () => import('./pages/Main.vue') },
@@ -25,30 +36,30 @@ const routes = [
       { path: 'results', component: Results },
       { path: 'maps', component: Maps },
       { path: 'players', component: Coverage },
-      { path: 'chuck-norris-tournament', component: () => import('./pages/infographics/pages/Chuck.vue') },
+      { path: 'chuck-norris-tournament', component: asyncPage(() => import('./pages/infographics/pages/Chuck.vue')) },
       { path: 'distribution', component: Distribution },
       { path: 'lootbox', component: Lootbox, meta: { hideTankList: true } },
-      { path: 'widgets/:widget*', component: () => import('./pages/widgets/Index.vue'), meta: { hideTankList: true, customTitle: 'Виджеты' } },
+      { path: 'widgets/:widget*', component: asyncPage(() => import('./pages/widgets/Index.vue')), meta: { hideTankList: true, customTitle: 'Виджеты' } },
     ]
   },
   {
     path: '/replays',
-    component: () => import('./pages/replays/Index.vue'),
+    component: asyncPage(() => import('./pages/replays/Index.vue')),
     children: [
-      { path: '', component: () => import('./pages/replays/search/Index.vue') },
-      { path: 'analyze', component: () => import('./pages/replays/localAnalyzer/Index.vue') },
-      { path: 'my', component: () => import('./pages/replays/my/Index.vue') },
+      { path: '', component: asyncPage(() => import('./pages/replays/search/Index.vue')) },
+      { path: 'analyze', component: asyncPage(() => import('./pages/replays/localAnalyzer/Index.vue')) },
+      { path: 'my', component: asyncPage(() => import('./pages/replays/my/Index.vue')) },
     ]
   },
-  { path: '/bb25', component: () => import('./pages/bob25/Index.vue') },
-  { path: '/mt-36-1', component: () => import('./pages/mt36.1/Index.vue') },
-  { path: '/services/fixed-match-detector', component: () => import('./pages/services/fixedMatchDetect/Index.vue') },
+  { path: '/bb25', component: asyncPage(() => import('./pages/bob25/Index.vue')) },
+  { path: '/mt-36-1', component: asyncPage(() => import('./pages/mt36.1/Index.vue')) },
+  { path: '/services/fixed-match-detector', component: asyncPage(() => import('./pages/services/fixedMatchDetect/Index.vue')) },
   { path: '/install', component: Install },
 
-  { path: '/widgets/:widget*', component: () => import('./pages/widgets/Index.vue') },
+  { path: '/widgets/:widget*', component: asyncPage(() => import('./pages/widgets/Index.vue')) },
 
-  { path: '/damage', component: () => import('./pages/services/damageDistribution/Index.vue') },
-  { path: '/map', component: () => import('./pages/map/Index.vue') }
+  { path: '/damage', component: asyncPage(() => import('./pages/services/damageDistribution/Index.vue')) },
+  { path: '/map', component: asyncPage(() => import('./pages/map/Index.vue')) }
 ] satisfies RouteRecordRaw[]
 
 export const router = createRouter({
