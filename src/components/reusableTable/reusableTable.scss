@@ -23,7 +23,6 @@
     overscroll-behavior: contain;
 
     .wrapper {
-      // background: var(--background-color, #480039);
       will-change: transform;
     }
 
@@ -46,6 +45,11 @@
         bottom: 0;
         display: flex;
         flex-direction: column-reverse;
+      }
+
+      .content-container {
+        position: relative;
+        z-index: -2;
       }
     }
   }
