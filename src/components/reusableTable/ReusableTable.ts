@@ -169,8 +169,8 @@ export class ReusableTable {
 
   private visibleCells: ReusableTableCell[] = []
   private visibleSections: Section[] = []
-  private visibleHeaders: ReusableTableHeader[] = []
-  private visibleFooters: ReusableTableFooter[] = []
+  private visibleHeaders: (ReusableTableHeader | null)[] = []
+  private visibleFooters: (ReusableTableFooter | null)[] = []
   private readonly mayReuseSections = new Set<Section>()
 
   private updateScroll() {
@@ -186,7 +186,7 @@ export class ReusableTable {
 
     const sectionsToOffsetUpdate = new Set<number>()
 
-    const setupSection = (section: Section, index: number) => {
+    const setupSection = (section: Section, index: number, unshift: boolean) => {
       section.setup(
         index,
         this.headersHeight[index],
@@ -200,7 +200,12 @@ export class ReusableTable {
       const footerElement = this.delegate.footerCellForSection?.(this, index)
 
       if (headerElement) section.headerContainer.appendChild(headerElement.root)
+      if (unshift) this.visibleHeaders.unshift(headerElement ?? null)
+      else this.visibleHeaders.push(headerElement ?? null)
+
       if (footerElement) section.footerContainer.appendChild(footerElement.root)
+      if (unshift) this.visibleFooters.unshift(footerElement ?? null)
+      else this.visibleFooters.push(footerElement ?? null)
     }
 
     if (!intervalEqual(this.rowsInterval, rowsInterval)) {
@@ -227,28 +232,39 @@ export class ReusableTable {
       const from = this.sectionsInterval
       const to = sectionsInterval
 
-      const cleanupSection = new Set<Section>()
-      for (let i = from[0]; i < to[0] && i <= from[1] && i != -1; i++) cleanupSection.add(this.visibleSections[i - from[0]])
-      for (let i = Math.max(to[1] + 1, from[0]); i <= from[1] && i != -1; i++) cleanupSection.add(this.visibleSections[i - from[0]])
+      const shouldRemove = new Set<number>()
+      for (let i = from[0]; i < to[0] && i <= from[1] && i != -1; i++) shouldRemove.add(i - from[0])
+      for (let i = Math.max(to[1] + 1, from[0]); i <= from[1] && i != -1; i++) shouldRemove.add(i - from[0])
 
-      this.visibleSections = this.visibleSections.filter((section) => !cleanupSection.has(section))
-      for (const element of cleanupSection) {
-        this.mayReuseSections.add(element)
-        // element.
-        this.wrapper.removeChild(element.root)
+      for (const index of shouldRemove) {
+        const section = this.visibleSections[index]
+        this.mayReuseSections.add(section)
+
+        const header = this.visibleHeaders[index]
+        const footer = this.visibleFooters[index]
+
+        if (header) section.headerContainer.removeChild(header.root)
+        if (footer) section.footerContainer.removeChild(footer.root)
+
+        this.wrapper.removeChild(section.root)
       }
+
+
+      this.visibleSections = this.visibleSections.filter((_, i) => !shouldRemove.has(i))
+      this.visibleHeaders = this.visibleHeaders.filter((_, i) => !shouldRemove.has(i))
+      this.visibleFooters = this.visibleFooters.filter((_, i) => !shouldRemove.has(i))
 
       const reuse = this.mayReuseSections.values()
       for (let i = Math.min(from[0] - 1, to[1]); i >= to[0]; i--) {
         const section = reuse.next().value ?? new Section()
-        setupSection(section, i)
+        setupSection(section, i, true)
         this.visibleSections.unshift(section)
         this.wrapper.insertBefore(section.root, this.wrapper.firstChild)
       }
 
       for (let i = Math.max(from[1] + 1, to[0]); i <= to[1]; i++) {
         const section = reuse.next().value ?? new Section()
-        setupSection(section, i)
+        setupSection(section, i, false)
         this.visibleSections.push(section)
         this.wrapper.appendChild(section.root)
       }
