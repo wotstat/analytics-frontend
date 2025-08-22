@@ -168,9 +168,9 @@ export class ReusableTable {
   }
 
   private visibleCells: ReusableTableCell[] = []
-  private visibleSections: Section[] = []
-  private visibleHeaders: (ReusableTableHeader | null)[] = []
-  private visibleFooters: (ReusableTableFooter | null)[] = []
+  private visibleSections = new Map<number, Section>()
+  private visibleHeaders = new Map<number, ReusableTableHeader>()
+  private visibleFooters = new Map<number, ReusableTableFooter>()
   private readonly mayReuseSections = new Set<Section>()
 
   private updateScroll() {
@@ -186,7 +186,11 @@ export class ReusableTable {
 
     const sectionsToOffsetUpdate = new Set<number>()
 
-    const setupSection = (section: Section, index: number, unshift: boolean) => {
+    const setupSection = (index: number) => {
+
+      const section = this.mayReuseSections.values().next().value ?? new Section()
+      this.mayReuseSections.delete(section)
+
       section.setup(
         index,
         this.headersHeight[index],
@@ -199,13 +203,19 @@ export class ReusableTable {
       const headerElement = this.delegate.headerCellForSection?.(this, index)
       const footerElement = this.delegate.footerCellForSection?.(this, index)
 
-      if (headerElement) section.headerContainer.appendChild(headerElement.root)
-      if (unshift) this.visibleHeaders.unshift(headerElement ?? null)
-      else this.visibleHeaders.push(headerElement ?? null)
+      if (headerElement) {
+        this.visibleHeaders.set(index, headerElement)
+        section.headerContainer.appendChild(headerElement.root)
+      }
 
-      if (footerElement) section.footerContainer.appendChild(footerElement.root)
-      if (unshift) this.visibleFooters.unshift(footerElement ?? null)
-      else this.visibleFooters.push(footerElement ?? null)
+      if (footerElement) {
+        this.visibleFooters.set(index, footerElement)
+        section.footerContainer.appendChild(footerElement.root)
+      }
+
+      this.visibleSections.set(index, section)
+
+      return section
     }
 
     if (!intervalEqual(this.rowsInterval, rowsInterval)) {
@@ -221,7 +231,7 @@ export class ReusableTable {
 
       for (const [index, cell] of shouldRemove) {
         const path = this.indexPathForRowOffset[index]
-        const section = this.visibleSections[path.section - this.sectionsInterval[0]]
+        const section = this.visibleSections.get(path.section)!
         section.contentContainer.removeChild(cell.root)
         sectionsToOffsetUpdate.add(path.section)
       }
@@ -233,43 +243,31 @@ export class ReusableTable {
       const to = sectionsInterval
 
       const shouldRemove = new Set<number>()
-      for (let i = from[0]; i < to[0] && i <= from[1] && i != -1; i++) shouldRemove.add(i - from[0])
-      for (let i = Math.max(to[1] + 1, from[0]); i <= from[1] && i != -1; i++) shouldRemove.add(i - from[0])
+      for (let i = from[0]; i < to[0] && i <= from[1] && i != -1; i++) shouldRemove.add(i)
+      for (let i = Math.max(to[1] + 1, from[0]); i <= from[1] && i != -1; i++) shouldRemove.add(i)
 
       for (const index of shouldRemove) {
-        const section = this.visibleSections[index]
+        const section = this.visibleSections.get(index)!
         this.mayReuseSections.add(section)
 
-        const header = this.visibleHeaders[index]
-        const footer = this.visibleFooters[index]
+        const header = this.visibleHeaders.get(index) ?? null
+        const footer = this.visibleFooters.get(index) ?? null
 
         if (header) section.headerContainer.removeChild(header.root)
         if (footer) section.footerContainer.removeChild(footer.root)
 
+        this.visibleHeaders.delete(index)
+        this.visibleFooters.delete(index)
+
         this.wrapper.removeChild(section.root)
+        this.visibleSections.delete(index)
       }
 
 
-      this.visibleSections = this.visibleSections.filter((_, i) => !shouldRemove.has(i))
-      this.visibleHeaders = this.visibleHeaders.filter((_, i) => !shouldRemove.has(i))
-      this.visibleFooters = this.visibleFooters.filter((_, i) => !shouldRemove.has(i))
+      for (let i = Math.min(from[0] - 1, to[1]); i >= to[0]; i--) this.wrapper.insertBefore(setupSection(i).root, this.wrapper.firstChild)
+      for (let i = Math.max(from[1] + 1, to[0]); i <= to[1]; i++) this.wrapper.appendChild(setupSection(i).root)
 
-      const reuse = this.mayReuseSections.values()
-      for (let i = Math.min(from[0] - 1, to[1]); i >= to[0]; i--) {
-        const section = reuse.next().value ?? new Section()
-        setupSection(section, i, true)
-        this.visibleSections.unshift(section)
-        this.wrapper.insertBefore(section.root, this.wrapper.firstChild)
-      }
-
-      for (let i = Math.max(from[1] + 1, to[0]); i <= to[1]; i++) {
-        const section = reuse.next().value ?? new Section()
-        setupSection(section, i, false)
-        this.visibleSections.push(section)
-        this.wrapper.appendChild(section.root)
-      }
-
-      for (const element of this.visibleSections) this.mayReuseSections.delete(element)
+      for (const element of this.visibleSections.values()) this.mayReuseSections.delete(element)
       this.sectionsInterval = sectionsInterval
     }
 
@@ -279,7 +277,7 @@ export class ReusableTable {
 
       for (let i = Math.min(from[0] - 1, to[1]); i >= to[0]; i--) {
         const indexPath = this.indexPathForRowOffset[i]
-        const section = this.visibleSections[indexPath.section - this.sectionsInterval[0]]
+        const section = this.visibleSections.get(indexPath.section)!
         const cell = this.delegate.cellForIndex(this, indexPath)
         this.visibleCells.unshift(cell)
         section.contentContainer.insertBefore(cell.root, section.contentContainer.firstChild)
@@ -288,7 +286,7 @@ export class ReusableTable {
 
       for (let i = Math.max(from[1] + 1, to[0]); i <= to[1]; i++) {
         const indexPath = this.indexPathForRowOffset[i]
-        const section = this.visibleSections[indexPath.section - this.sectionsInterval[0]]
+        const section = this.visibleSections.get(indexPath.section)!
         const cell = this.delegate.cellForIndex(this, indexPath)
         this.visibleCells.push(cell)
         section.contentContainer.appendChild(cell.root)
@@ -299,11 +297,10 @@ export class ReusableTable {
 
     this.rowsInterval = rowsInterval
 
-    for (const section of this.visibleSections) {
-      const sectionIndex = section.index ?? -1
-      if (!sectionsToOffsetUpdate.has(sectionIndex)) continue
+    for (const [index, section] of this.visibleSections) {
+      if (!sectionsToOffsetUpdate.has(index)) continue
 
-      const start = this.rowIndex(sectionIndex, 0)
+      const start = this.rowIndex(index, 0)
 
       if (start < rowsInterval[0]) section.contentContainer.style.marginTop = `${this.rowsTopOffset[rowsInterval[0]] - this.rowsTopOffset[start]}px`
       else section.contentContainer.style.marginTop = '0'
@@ -372,6 +369,7 @@ export class ReusableTable {
     // for (const element of this.visibleCellsOld) this.wrapper.removeChild(element.element.root)
     // this.visibleCellsOld = []
     this.recalculateTotalHeight()
+    console.log(this.visibleSections, this.visibleFooters, this.visibleHeaders)
   }
 
   dispose() {
