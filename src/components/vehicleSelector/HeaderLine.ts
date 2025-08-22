@@ -1,7 +1,7 @@
-import { ReusableTableCell } from '../reusableTable/ReusableTable'
+import { ReusableTableHeader } from '../reusableTable/ReusableTable'
 
 
-export class HeaderLine implements ReusableTableCell {
+export class HeaderLine implements ReusableTableHeader {
   readonly root: HTMLElement
 
   private readonly header: HTMLElement

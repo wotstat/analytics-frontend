@@ -33,18 +33,22 @@ import { type ComponentInstance } from '@/composition/utils/ComponentInstance'
 import { type VehicleLineData, VehicleLine as VehicleLineCell } from './VehicleLine.ts'
 import { ReusableTableDelegate } from '../reusableTable/ReusableTable.ts'
 import { HeaderLine } from './HeaderLine.ts'
+import { FooterLine } from './FooterLine.ts'
 
 
 const reusableTable = ref<ComponentInstance<typeof ReusableTable<VehicleLineData>> | null>(null)
 
 const props = defineProps<{
-  tankToDisplay: (VehicleLineData | { header: string })[]
+  displaySections: {
+    header: string,
+    lines: VehicleLineData[]
+  }[]
 }>()
 
 const nameVariant = defineModel<'full' | 'short'>('nameVariant')
 const selected = defineModel<Set<string>>('selected', { required: true })
 
-const target = computed(() => props.tankToDisplay)
+const target = computed(() => props.displaySections)
 
 watch(() => target.value.length, () => reusableTable.value?.scrollTo(0))
 
@@ -69,24 +73,29 @@ function onClick(tag: string) {
 
 
 const delegate: ReusableTableDelegate = {
-  heightForIndex: (_, index) => {
-    const element = props.tankToDisplay[index]
-    return 'header' in element ? 33 : 35
-  },
-  numberOfRows: (_) => props.tankToDisplay.length,
-  cellForIndex: (_, index) => {
-    const element = props.tankToDisplay[index]
+  numberOfSections: () => props.displaySections.length,
+  numberOfRowsInSection: (_, section) => props.displaySections[section].lines.length,
 
-    if ('header' in element) {
-      const cell = new HeaderLine()
-      cell.setTitle(element.header)
-      return cell
-    } else {
-      const cell = new VehicleLineCell(onClick, selected)
-      cell.configure(element)
-      return cell
-    }
-  }
+  heightForCellByIndex: (_, index) => 35,
+  cellForIndex: (_, index) => {
+    const cell = new VehicleLineCell(onClick, selected)
+    cell.configure(props.displaySections[index.section].lines[index.row])
+    return cell
+  },
+
+  heightForHeaderInSection: (_, section) => 33,
+  headerCellForSection: (_, section) => {
+    const cell = new HeaderLine()
+    cell.setTitle(props.displaySections[section].header)
+    return cell
+  },
+
+  heightForFooterInSection: (_, section) => 20,
+  footerCellForSection: (_, section) => {
+    const cell = new FooterLine()
+    cell.setTitle(`Footer for section ${section}`)
+    return cell
+  },
 }
 
 </script>
@@ -180,7 +189,7 @@ const delegate: ReusableTableDelegate = {
   user-select: none;
 
   :deep(.scroll) {
-    padding-bottom: 10px;
+    // padding-bottom: 10px;
     box-sizing: border-box;
   }
 }
@@ -303,11 +312,75 @@ const delegate: ReusableTableDelegate = {
     }
   }
 
+  .content-container {
+    background-color: #ffffff14;
+  }
+
+  .section-1 {
+    background-color: #6b4a1b4c;
+  }
+
+  .section-2 {
+    background-color: #1b4a6b4c;
+  }
+
+  .section-3 {
+    background-color: #4a6b1b4c;
+  }
+
+  .section-4 {
+    background-color: #6b1b4a4c;
+  }
+
+  .section-5 {
+    background-color: #4a1b6b4c;
+  }
+
+  .section-6 {
+    background-color: #1b6b4a4c;
+  }
+
+  .section-7 {
+    background-color: #4a1b6b4c;
+  }
+
+  .section-8 {
+    background-color: #1b4a6b4c;
+  }
+
+  .section-9 {
+    background-color: #6b4a1b4c;
+  }
+
+  .section-10 {
+    background-color: #4a1b6b4c;
+  }
+
   .header-line {
     padding: 10px 10px 3px 10px;
     height: 20px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+
+    background-color: #9a01fa44;
 
     h5 {
+      margin: 0;
+    }
+  }
+
+  .footer-line {
+    padding: 0 10px 0 10px;
+    height: 20px;
+    font-size: 14px;
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+
+    background-color: #0182fa44;
+
+    p {
       margin: 0;
     }
   }

@@ -44,7 +44,7 @@
             </div>
           </header>
 
-          <VehicleTable :tank-to-display="tankToDisplay" ref="vehicleTable" v-model:name-variant="nameVariant"
+          <VehicleTable :display-sections="tankToDisplay" ref="vehicleTable" v-model:name-variant="nameVariant"
             v-model:selected="vehicles" />
         </div>
       </template>
@@ -217,7 +217,10 @@ const tankToDisplay = computed(() => {
 
   return filteredGroups
     .filter(tankList => tankList.data.length > 0)
-    .flatMap(t => [{ header: t.header }, ...t.data])
+    .map(t => ({
+      header: t.header,
+      lines: t.data
+    }))
 })
 
 const shouldVisibleReset = computed(() => currentLevels.value.size > 0 || currentTypes.value.size > 0 || currentNations.value.size > 0 || currentSearch.value != '')
