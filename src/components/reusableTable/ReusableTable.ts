@@ -167,10 +167,11 @@ export class ReusableTable {
     ]
   }
 
-  private visibleCells = new Map<number, ReusableTableCell>()
-  private visibleSections = new Map<number, Section>()
-  private visibleHeaders = new Map<number, ReusableTableHeader>()
-  private visibleFooters = new Map<number, ReusableTableFooter>()
+  private readonly visibleCells = new Map<number, ReusableTableCell>()
+  private readonly visibleSections = new Map<number, Section>()
+  private readonly visibleHeaders = new Map<number, ReusableTableHeader>()
+  private readonly visibleFooters = new Map<number, ReusableTableFooter>()
+
   private readonly mayReuseSections = new Set<Section>()
 
   private updateScroll() {
@@ -241,7 +242,6 @@ export class ReusableTable {
         const path = this.indexPathForRowOffset[index]
         const section = this.visibleSections.get(path.section)!
         const cell = this.visibleCells.get(index)!
-
         section.contentContainer.removeChild(cell.root)
         this.visibleCells.delete(index)
 
@@ -369,11 +369,47 @@ export class ReusableTable {
   }
 
   dataDidUpdate() {
-    // this.currentInterval = [-1, -1]
-    // for (const element of this.visibleCellsOld) this.wrapper.removeChild(element.element.root)
-    // this.visibleCellsOld = []
+    for (const [index, cell] of this.visibleCells.entries()) {
+      const path = this.indexPathForRowOffset[index]
+      const section = this.visibleSections.get(path.section)!
+
+      section.contentContainer.removeChild(cell.root)
+    }
+
+    for (const [index, section] of this.visibleSections.entries()) {
+      this.mayReuseSections.add(section)
+
+      const header = this.visibleHeaders.get(index) ?? null
+      const footer = this.visibleFooters.get(index) ?? null
+
+      if (header) section.headerContainer.removeChild(header.root)
+      if (footer) section.footerContainer.removeChild(footer.root)
+
+      this.visibleHeaders.delete(index)
+      this.visibleFooters.delete(index)
+
+      this.wrapper.removeChild(section.root)
+    }
+
+    this.visibleSections.clear()
+    this.visibleCells.clear()
+
+    this.rowsInterval = [-1, -1]
+    this.sectionsInterval = [-1, -1]
+
+    this.cellsHeight = []
+    this.rowsTopOffset = []
+
+    this.sectionCellsHeight = []
+    this.headersHeight = []
+    this.footersHeight = []
+    this.sectionTopOffset = []
+
+    this.rowsCountBySection = []
+    this.rowIndexOffsetBySection = []
+    this.indexPathForRowOffset = []
+
     this.recalculateTotalHeight()
-    console.log(this.visibleSections, this.visibleFooters, this.visibleHeaders, this.visibleCells)
   }
 
   dispose() {
