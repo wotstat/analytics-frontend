@@ -312,56 +312,12 @@ const delegate: ReusableTableDelegate = {
     }
   }
 
-  .content-container {
-    background-color: #ffffff14;
-  }
-
-  .section-1 {
-    background-color: #6b4a1b4c;
-  }
-
-  .section-2 {
-    background-color: #1b4a6b4c;
-  }
-
-  .section-3 {
-    background-color: #4a6b1b4c;
-  }
-
-  .section-4 {
-    background-color: #6b1b4a4c;
-  }
-
-  .section-5 {
-    background-color: #4a1b6b4c;
-  }
-
-  .section-6 {
-    background-color: #1b6b4a4c;
-  }
-
-  .section-7 {
-    background-color: #4a1b6b4c;
-  }
-
-  .section-8 {
-    background-color: #1b4a6b4c;
-  }
-
-  .section-9 {
-    background-color: #6b4a1b4c;
-  }
-
-  .section-10 {
-    background-color: #4a1b6b4c;
-  }
-
   .header-line {
     padding: 10px 10px 3px 10px;
     height: 20px;
     position: sticky;
     top: 0;
-    z-index: 1;
+    z-index: -1;
 
     background-color: #9a01fa44;
 
