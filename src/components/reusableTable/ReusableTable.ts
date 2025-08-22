@@ -167,7 +167,7 @@ export class ReusableTable {
     ]
   }
 
-  private visibleCells: ReusableTableCell[] = []
+  private visibleCells = new Map<number, ReusableTableCell>()
   private visibleSections = new Map<number, Section>()
   private visibleHeaders = new Map<number, ReusableTableHeader>()
   private visibleFooters = new Map<number, ReusableTableFooter>()
@@ -218,21 +218,33 @@ export class ReusableTable {
       return section
     }
 
+    const setupCell = (index: number) => {
+      const indexPath = this.indexPathForRowOffset[index]
+      const section = this.visibleSections.get(indexPath.section)!
+      const cell = this.delegate.cellForIndex(this, indexPath)
+      this.visibleCells.set(index, cell)
+      sectionsToOffsetUpdate.add(indexPath.section)
+
+      return [cell, section] as const
+    }
+
     if (!intervalEqual(this.rowsInterval, rowsInterval)) {
       const from = this.rowsInterval
       const to = rowsInterval
 
-      const shouldRemove = new Set<[number, ReusableTableCell]>()
+      const shouldRemove = new Set<number>()
 
-      for (let i = from[0]; i < to[0] && i <= from[1] && i != -1; i++) shouldRemove.add([i, this.visibleCells[i - from[0]]])
-      for (let i = Math.max(to[1] + 1, from[0]); i <= from[1] && i != -1; i++) shouldRemove.add([i, this.visibleCells[i - from[0]]])
+      for (let i = from[0]; i < to[0] && i <= from[1] && i != -1; i++) shouldRemove.add(i)
+      for (let i = Math.max(to[1] + 1, from[0]); i <= from[1] && i != -1; i++) shouldRemove.add(i)
 
-      this.visibleCells = this.visibleCells.filter((cell, i) => i >= to[0] - from[0] && i <= to[1] - from[0])
-
-      for (const [index, cell] of shouldRemove) {
+      for (const index of shouldRemove) {
         const path = this.indexPathForRowOffset[index]
         const section = this.visibleSections.get(path.section)!
+        const cell = this.visibleCells.get(index)!
+
         section.contentContainer.removeChild(cell.root)
+        this.visibleCells.delete(index)
+
         sectionsToOffsetUpdate.add(path.section)
       }
     }
@@ -276,21 +288,13 @@ export class ReusableTable {
       const to = rowsInterval
 
       for (let i = Math.min(from[0] - 1, to[1]); i >= to[0]; i--) {
-        const indexPath = this.indexPathForRowOffset[i]
-        const section = this.visibleSections.get(indexPath.section)!
-        const cell = this.delegate.cellForIndex(this, indexPath)
-        this.visibleCells.unshift(cell)
+        const [cell, section] = setupCell(i)
         section.contentContainer.insertBefore(cell.root, section.contentContainer.firstChild)
-        sectionsToOffsetUpdate.add(indexPath.section)
       }
 
       for (let i = Math.max(from[1] + 1, to[0]); i <= to[1]; i++) {
-        const indexPath = this.indexPathForRowOffset[i]
-        const section = this.visibleSections.get(indexPath.section)!
-        const cell = this.delegate.cellForIndex(this, indexPath)
-        this.visibleCells.push(cell)
+        const [cell, section] = setupCell(i)
         section.contentContainer.appendChild(cell.root)
-        sectionsToOffsetUpdate.add(indexPath.section)
       }
     }
 
@@ -369,7 +373,7 @@ export class ReusableTable {
     // for (const element of this.visibleCellsOld) this.wrapper.removeChild(element.element.root)
     // this.visibleCellsOld = []
     this.recalculateTotalHeight()
-    console.log(this.visibleSections, this.visibleFooters, this.visibleHeaders)
+    console.log(this.visibleSections, this.visibleFooters, this.visibleHeaders, this.visibleCells)
   }
 
   dispose() {
