@@ -124,12 +124,11 @@ from (select ceil(duration / 60)         as duration,
       order by duration)`, { enabled: visible, settings: settings.value })
 
 const avgTypeResult = queryAsyncFirst(`
-with length(playersResults.tankType) as tankCount
-select avg(ltCount / tankCount) as LT,
-      avg(htCount / tankCount) as HT,
-      avg(mtCount / tankCount) as MT,
-      avg(atCount / tankCount) as AT,
-      avg(spgCount / tankCount) as SPG
+select avg(ltCount / playersCount) as LT,
+      avg(htCount / playersCount) as HT,
+      avg(mtCount / playersCount) as MT,
+      avg(atCount / playersCount) as AT,
+      avg(spgCount / playersCount) as SPG
 from Event_OnBattleResult
 ${whereClause(params)};
 `, { LT: 0, HT: 0, MT: 0, AT: 0, SPG: 0 }, { enabled: visible, settings: settings.value })
