@@ -317,9 +317,9 @@ const delegate: ReusableTableDelegate = {
     height: 20px;
     position: sticky;
     top: 0;
-    z-index: -1;
+    z-index: 1;
 
-    background-color: #9a01fa44;
+    background-color: #44006e;
 
     h5 {
       margin: 0;
