@@ -1,5 +1,5 @@
 .reusable-table-root {
-  .background-scroll-fallback {
+  .fallback-scroll {
     position: absolute;
     top: 0;
     left: 0;
@@ -12,9 +12,12 @@
     background: var(--background-color, #480039);
     scrollbar-gutter: stable;
     overflow: hidden;
+
+    opacity: 1;
   }
 
   .scroll {
+    opacity: 1;
     height: 100%;
     width: 100%;
 
@@ -27,6 +30,15 @@
       will-change: transform;
     }
 
+    .section {
+      .content-container {
+        background-color: rgba(102, 51, 153, 0.156);
+      }
+    }
+  }
+
+  .fallback-scroll,
+  .scroll {
     .section {
       position: relative;
       box-sizing: border-box;
