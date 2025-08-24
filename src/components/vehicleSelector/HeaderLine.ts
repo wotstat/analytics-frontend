@@ -1,7 +1,10 @@
-import { ReusableTableHeader } from '../reusableTable/ReusableTable'
+import { TableHeader } from '../reusableTable/ReusableTable'
 
 
-export class HeaderLine implements ReusableTableHeader {
+export class HeaderLine implements TableHeader {
+
+  static readonly reusableKey = Symbol('HeaderLine')
+
   readonly root: HTMLElement
 
   private readonly header: HTMLElement

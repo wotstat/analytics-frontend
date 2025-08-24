@@ -1,7 +1,7 @@
-import { ReusableTableFooter } from '../reusableTable/ReusableTable'
+import { TableFooter } from '../reusableTable/ReusableTable'
 
 
-export class FooterLine implements ReusableTableFooter {
+export class FooterLine implements TableFooter {
   readonly root: HTMLElement
 
   private readonly text: HTMLElement
