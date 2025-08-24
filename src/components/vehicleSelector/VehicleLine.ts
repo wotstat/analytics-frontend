@@ -36,6 +36,9 @@ for (const element of vehicleTypes) getTypeElement(element)
 
 
 export class VehicleLine extends ReusableTableCellBase<VehicleLineData> {
+
+  static readonly reusableKey = Symbol('VehicleLine')
+
   readonly root: HTMLElement
 
   private readonly flag: HTMLElement

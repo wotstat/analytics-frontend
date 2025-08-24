@@ -1,54 +1,88 @@
 import './reusableTable.scss'
 
-export interface ReusableTableElement {
+export interface TableElement {
   root: HTMLElement;
 }
 
-export interface ReusableTableCell extends ReusableTableElement { }
-export interface ReusableTableHeader extends ReusableTableElement { }
-export interface ReusableTableFooter extends ReusableTableElement { }
+export interface TableCell extends TableElement { }
+export interface TableHeader extends TableElement { }
+export interface TableFooter extends TableElement { }
+
+function isTableElement(obj: Object): obj is TableElement {
+  return 'root' in obj
+}
 
 type IndexPath = { section: number, row: number }
 export interface ReusableTableDelegate {
-  overscan?: number,
+  onSetupComplete?: (table: ReusableTable) => void
 
   numberOfSections: (table: ReusableTable) => number
   numberOfRowsInSection: (table: ReusableTable, section: number) => number
 
   heightForCellByIndex: (table: ReusableTable, index: IndexPath) => number
-  cellForIndex: (table: ReusableTable, index: IndexPath) => ReusableTableCell
+  cellForIndex: (table: ReusableTable, index: IndexPath) => TableCell | { cell: TableCell, reusableKey: symbol }
 
 
   heightForHeaderInSection?: (table: ReusableTable, section: number) => number | null
-  headerCellForSection?: (table: ReusableTable, section: number) => ReusableTableHeader | null
+  headerCellForSection?: (table: ReusableTable, section: number) => null | TableHeader | { header: TableHeader, reusableKey: symbol }
 
   heightForFooterInSection?: (table: ReusableTable, section: number) => number | null
-  footerCellForSection?: (table: ReusableTable, section: number) => ReusableTableFooter | null
+  footerCellForSection?: (table: ReusableTable, section: number) => null | TableFooter | { footer: TableFooter, reusableKey: symbol }
 }
 
+function divWithClass(className: string, parent?: HTMLElement) {
+  const div = document.createElement('div')
+  div.classList.add(className)
+  if (parent) parent.appendChild(div)
+  return div
+}
+
+type ReusableEntry = {
+  ctor: () => unknown,
+  limit: number,
+  free: unknown[]
+}
+
+class ReusableStorage {
+
+  private readonly storage = new Map<symbol, ReusableEntry>()
+
+  constructor() { }
+
+  registerElement(key: symbol, ctor: () => unknown, limit: number = 10) {
+    this.storage.set(key, { ctor, free: [], limit })
+  }
+
+  getElement<T>(key: symbol): T {
+    const entry = this.storage.get(key)
+    if (!entry) throw new Error(`Element not found for key: ${key.toString()}`)
+    if (entry.free.length > 0) return entry.free.pop() as T
+    return entry.ctor() as T
+  }
+
+  releaseElement<T>(key: symbol, element: T) {
+    const entry = this.storage.get(key)
+    if (!entry) throw new Error(`Element not found for key: ${key.toString()}`)
+    if (entry.free.length < entry.limit) {
+      entry.free.push(element)
+    }
+  }
+}
 
 class Section {
-
   root: HTMLElement
   headerContainer: HTMLElement
   footerContainer: HTMLElement
   contentContainer: HTMLElement
   index: number | null = null
 
+  static readonly reusableKey = Symbol()
+
   constructor() {
-    this.root = document.createElement('div')
-    this.root.classList.add('section')
-
-    this.headerContainer = document.createElement('div')
-    this.headerContainer.classList.add('header-container')
-    this.root.appendChild(this.headerContainer)
-
-    this.footerContainer = document.createElement('div')
-    this.footerContainer.classList.add('footer-container')
-    this.root.appendChild(this.footerContainer)
-
-    this.contentContainer = document.createElement('div')
-    this.contentContainer.classList.add('content-container')
+    this.root = divWithClass('section')
+    this.headerContainer = divWithClass('header-container', this.root)
+    this.footerContainer = divWithClass('footer-container', this.root)
+    this.contentContainer = divWithClass('content-container', this.root)
     this.root.appendChild(this.contentContainer)
 
     console.log('Generate')
@@ -74,18 +108,55 @@ class Section {
     }
   }
 }
-function divWithClass(className: string, parent?: HTMLElement) {
-  const div = document.createElement('div')
-  div.classList.add(className)
-  if (parent) parent.appendChild(div)
-  return div
-}
 
 type Interval = [from: number, to: number]
 
 function intervalEqual(interval1: Interval, interval2: Interval) {
   return interval1[0] === interval2[0] && interval1[1] === interval2[1]
 }
+
+type Storage = {
+  cells: Map<number, { cell: TableCell, reusableKey: symbol | undefined }>
+  headers: Map<number, { header: TableHeader, reusableKey: symbol | undefined }>
+  footers: Map<number, { footer: TableFooter, reusableKey: symbol | undefined }>
+
+  sections: Map<number, Section>
+}
+
+function cleanupCell(index: number, indexPath: IndexPath, storage: Storage, reusableStorage: ReusableStorage) {
+  const section = storage.sections.get(indexPath.section)!
+  const reusable = storage.cells.get(index)!
+  section.contentContainer.removeChild(reusable.cell.root)
+  storage.cells.delete(index)
+  if (reusable.reusableKey) reusableStorage.releaseElement(reusable.reusableKey, reusable.cell)
+}
+
+function cleanupSection(index: number, storage: Storage, reusableStorage: ReusableStorage) {
+
+  const section = storage.sections.get(index)!
+  reusableStorage.releaseElement(Section.reusableKey, section)
+
+  const header = storage.headers.get(index) ?? null
+  const footer = storage.footers.get(index) ?? null
+
+  if (header) {
+    section.headerContainer.removeChild(header.header.root)
+    if (header.reusableKey) reusableStorage.releaseElement(header.reusableKey, header.header)
+  }
+
+  if (footer) {
+    section.footerContainer.removeChild(footer.footer.root)
+    if (footer.reusableKey) reusableStorage.releaseElement(footer.reusableKey, footer.footer)
+  }
+
+  storage.headers.delete(index)
+  storage.footers.delete(index)
+
+  storage.sections.delete(index)
+
+  return section
+}
+
 
 export class ReusableTable {
 
@@ -102,6 +173,9 @@ export class ReusableTable {
   private cellsHeight: number[] = []
   private rowsTopOffset: number[] = []
 
+  private sectionsInterval: Interval = [-1, -1]
+  private rowsInterval: Interval = [-1, -1]
+
   private sectionCellsHeight: number[] = []
   private headersHeight: number[] = []
   private footersHeight: number[] = []
@@ -111,10 +185,28 @@ export class ReusableTable {
   private rowIndexOffsetBySection: number[] = []
   private indexPathForRowOffset: IndexPath[] = []
 
+  private readonly sectionsPendingOffsetUpdate = new Set<number>()
+  private readonly reusableStorage = new ReusableStorage()
+
+  private readonly scrollStorage: Storage = {
+    cells: new Map(),
+    sections: new Map(),
+    headers: new Map(),
+    footers: new Map()
+  }
+
+  private readonly fallbackStorage: Storage = {
+    cells: new Map(),
+    sections: new Map(),
+    headers: new Map(),
+    footers: new Map()
+  }
 
   constructor(
     private readonly root: HTMLElement,
-    private readonly delegate: ReusableTableDelegate,) {
+    private readonly delegate: ReusableTableDelegate) {
+
+    this.reusableStorage.registerElement(Section.reusableKey, () => new Section(), 20)
 
     this.root.classList.add('reusable-table-root')
 
@@ -127,250 +219,47 @@ export class ReusableTable {
 
     this.scroll.addEventListener('scroll', this.onScroll.bind(this), { passive: true })
 
+    this.delegate.onSetupComplete?.(this)
+
     this.dataDidUpdate()
   }
 
-  private rowIndex(section: number, rowInSection: number) {
-    if (rowInSection >= 0) return this.rowIndexOffsetBySection[section] + rowInSection
-    return this.rowIndexOffsetBySection[section] + this.rowsCountBySection[section] + rowInSection
+  dataDidUpdate() {
+    for (let i = this.rowsInterval[0]; i <= this.rowsInterval[1] && i != -1; i++) this.cleanupCell(i)
+    for (let i = this.sectionsInterval[0]; i <= this.sectionsInterval[1] && i != -1; i++) this.cleanupSection(i)
+
+    this.scrollStorage.sections.clear()
+    this.scrollStorage.cells.clear()
+
+    this.rowsInterval = [-1, -1]
+    this.sectionsInterval = [-1, -1]
+
+    this.cellsHeight = []
+    this.rowsTopOffset = []
+
+    this.sectionCellsHeight = []
+    this.headersHeight = []
+    this.footersHeight = []
+    this.sectionTopOffset = []
+
+    this.rowsCountBySection = []
+    this.rowIndexOffsetBySection = []
+    this.indexPathForRowOffset = []
+
+    this.recalculateTotalHeight()
   }
 
-  private scheduleUpdate() {
-    if (this.updateHandle) return
-    this.updateHandle = requestAnimationFrame(this.updateScroll.bind(this))
+  registerReusable(key: symbol, ctor: () => unknown, limit: number = 10) {
+    this.reusableStorage.registerElement(key, ctor, limit)
   }
 
-  sectionsInterval: Interval = [-1, -1]
-  rowsInterval: Interval = [-1, -1]
-  private getVisibleSectionsInterval(top: number, bottom: number): Interval {
-    let firstIndexBefore = -1
-    let lastIndexAfter = -1
-
-    for (let i = 0; i < this.sectionCellsHeight.length; i++) {
-      const sectionHeight = this.sectionCellsHeight[i] + this.headersHeight[i] + this.footersHeight[i]
-      if (sectionHeight + this.sectionTopOffset[i] > top && firstIndexBefore === -1) firstIndexBefore = i
-      if (sectionHeight + this.sectionTopOffset[i] > bottom && lastIndexAfter === -1) lastIndexAfter = i
-    }
-
-    return [
-      firstIndexBefore === -1 ? (this.sectionCellsHeight.length - 1) : firstIndexBefore,
-      lastIndexAfter === -1 ? (this.sectionCellsHeight.length - 1) : lastIndexAfter
-    ]
+  getReusable<T>(key: symbol): T {
+    return this.reusableStorage.getElement(key)
   }
 
-  private getVisibleRowsInterval(top: number, bottom: number): Interval {
-    let firstIndexBefore = -1
-    let lastIndexAfter = -1
-
-    for (let i = 0; i <= this.rowsTopOffset.length; i++) {
-      if (this.rowsTopOffset[i] + this.cellsHeight[i] > top && firstIndexBefore === -1) firstIndexBefore = i
-      if (this.rowsTopOffset[i] > bottom && lastIndexAfter === -1) lastIndexAfter = i - 1
-    }
-
-    return [
-      firstIndexBefore === -1 ? (this.rowsTopOffset.length - 1) : firstIndexBefore,
-      lastIndexAfter === -1 ? (this.rowsTopOffset.length - 1) : lastIndexAfter
-    ]
-  }
-
-  private readonly visibleCells = new Map<number, ReusableTableCell>()
-  private readonly visibleSections = new Map<number, Section>()
-  private readonly visibleHeaders = new Map<number, ReusableTableHeader>()
-  private readonly visibleFooters = new Map<number, ReusableTableFooter>()
-
-  private readonly mayReuseSections = new Set<Section>()
-
-  private readonly visibleFallbackCells = new Map<number, ReusableTableCell>()
-  private readonly visibleFallbackSections = new Map<number, Section>()
-  private readonly visibleFallbackHeaders = new Map<number, ReusableTableHeader>()
-  private readonly visibleFallbackFooters = new Map<number, ReusableTableFooter>()
-  private readonly mayReuseFallbackSections = new Set<Section>()
-
-  private readonly sectionsToOffsetUpdate = new Set<number>()
-
-  private cleanupSection(index: number) {
-
-    const cleanup = (index: number,
-      mayReuseSections: Set<Section>,
-      visibleSections: Map<number, Section>,
-      visibleHeaders: Map<number, ReusableTableHeader>,
-      visibleFooters: Map<number, ReusableTableFooter>) => {
-
-      const section = visibleSections.get(index)!
-      mayReuseSections.add(section)
-
-      const header = visibleHeaders.get(index) ?? null
-      const footer = visibleFooters.get(index) ?? null
-
-      if (header) section.headerContainer.removeChild(header.root)
-      if (footer) section.footerContainer.removeChild(footer.root)
-
-      visibleHeaders.delete(index)
-      visibleFooters.delete(index)
-
-      visibleSections.delete(index)
-
-      return section
-    }
-
-    this.wrapper.removeChild(cleanup(index, this.mayReuseSections, this.visibleSections, this.visibleHeaders, this.visibleFooters).root)
-    this.fallbackWrapper.removeChild(cleanup(index, this.mayReuseFallbackSections, this.visibleFallbackSections, this.visibleFallbackHeaders, this.visibleFallbackFooters).root)
-  }
-
-  private cleanupCell(index: number) {
-    const indexPath = this.indexPathForRowOffset[index]
-    this.sectionsToOffsetUpdate.add(indexPath.section)
-
-    const cleanup = (index: number, visibleSections: Map<number, Section>, visibleCells: Map<number, ReusableTableCell>) => {
-      const section = visibleSections.get(indexPath.section)!
-      const cell = visibleCells.get(index)!
-      section.contentContainer.removeChild(cell.root)
-      visibleCells.delete(index)
-    }
-
-    cleanup(index, this.visibleSections, this.visibleCells)
-    cleanup(index, this.visibleFallbackSections, this.visibleFallbackCells)
-  }
-
-  private updateScroll() {
-    this.updateHandle = null
-    const scrollHeight = this.scroll.clientHeight
-    const scrollTop = this.scroll.scrollTop
-    const scrollBottom = scrollTop + scrollHeight
-
-    const sectionsInterval = this.getVisibleSectionsInterval(scrollTop, scrollBottom)
-    const rowsInterval = this.getVisibleRowsInterval(scrollTop, scrollBottom)
-
-    this.wrapper.style.paddingTop = `${this.sectionTopOffset[sectionsInterval[0]]}px`
-    this.fallbackWrapper.style.paddingTop = `${this.sectionTopOffset[sectionsInterval[0]]}px`
-    this.fallbackContent.style.marginTop = `${-scrollTop}px`
-
-    this.sectionsToOffsetUpdate.clear()
-
-    const setupSection = (index: number) => {
-
-      const setup = (index: number,
-        isFallback: boolean,
-        mayReuseSections: Set<Section>,
-        visibleSections: Map<number, Section>,
-        visibleHeaders: Map<number, ReusableTableHeader>,
-        visibleFooters: Map<number, ReusableTableFooter>) => {
-
-        const section = mayReuseSections.values().next().value ?? new Section()
-        mayReuseSections.delete(section)
-
-        section.setup(
-          index,
-          this.headersHeight[index],
-          this.footersHeight[index],
-          this.cellsHeight[this.rowIndex(index, 0)],
-          this.cellsHeight[this.rowIndex(index, -1)],
-          this.sectionCellsHeight[index]
-        )
-
-        const headerElement = this.delegate.headerCellForSection?.(this, index)
-        const footerElement = this.delegate.footerCellForSection?.(this, index)
-
-        if (headerElement) {
-          visibleHeaders.set(index, headerElement)
-          section.headerContainer.appendChild(headerElement.root)
-        }
-
-        if (footerElement) {
-          visibleFooters.set(index, footerElement)
-          section.footerContainer.appendChild(footerElement.root)
-        }
-
-        visibleSections.set(index, section)
-
-        return section
-      }
-
-      const section = setup(index, false, this.mayReuseSections, this.visibleSections, this.visibleHeaders, this.visibleFooters)
-      const fallbackSection = setup(index, true, this.mayReuseFallbackSections, this.visibleFallbackSections, this.visibleFallbackHeaders, this.visibleFallbackFooters)
-
-      return [section, fallbackSection]
-    }
-
-    const setupCell = (index: number, first: boolean) => {
-      const indexPath = this.indexPathForRowOffset[index]
-      this.sectionsToOffsetUpdate.add(indexPath.section)
-
-      const setup = (index: number, visibleSections: Map<number, Section>, visibleCells: Map<number, ReusableTableCell>) => {
-        const section = visibleSections.get(indexPath.section)!
-        const cell = this.delegate.cellForIndex(this, indexPath)
-        visibleCells.set(index, cell)
-        if (first) section.contentContainer.insertBefore(cell.root, section.contentContainer.firstChild)
-        else section.contentContainer.appendChild(cell.root)
-      }
-
-      setup(index, this.visibleSections, this.visibleCells)
-      setup(index, this.visibleFallbackSections, this.visibleFallbackCells)
-    }
-
-    if (!intervalEqual(this.rowsInterval, rowsInterval)) {
-      const from = this.rowsInterval
-      const to = rowsInterval
-
-      const shouldRemove = new Set<number>()
-
-      for (let i = from[0]; i < to[0] && i <= from[1] && i != -1; i++) shouldRemove.add(i)
-      for (let i = Math.max(to[1] + 1, from[0]); i <= from[1] && i != -1; i++) shouldRemove.add(i)
-
-      for (const index of shouldRemove) this.cleanupCell(index)
-    }
-
-    if (!intervalEqual(this.sectionsInterval, sectionsInterval)) {
-
-      const from = this.sectionsInterval
-      const to = sectionsInterval
-
-      const shouldRemove = new Set<number>()
-      for (let i = from[0]; i < to[0] && i <= from[1] && i != -1; i++) shouldRemove.add(i)
-      for (let i = Math.max(to[1] + 1, from[0]); i <= from[1] && i != -1; i++) shouldRemove.add(i)
-
-      for (const index of shouldRemove) {
-        this.cleanupSection(index)
-        this.sectionsToOffsetUpdate.delete(index)
-      }
-
-      for (let i = Math.min(from[0] - 1, to[1]); i >= to[0]; i--) {
-        const [section, fallbackSection] = setupSection(i)
-        this.wrapper.insertBefore(section.root, this.wrapper.firstChild)
-        this.fallbackWrapper.insertBefore(fallbackSection.root, this.fallbackWrapper.firstChild)
-      }
-
-      for (let i = Math.max(from[1] + 1, to[0]); i <= to[1]; i++) {
-        const [section, fallbackSection] = setupSection(i)
-        this.wrapper.appendChild(section.root)
-        this.fallbackWrapper.appendChild(fallbackSection.root)
-      }
-
-      this.sectionsInterval = sectionsInterval
-    }
-
-    if (!intervalEqual(this.rowsInterval, rowsInterval)) {
-      const from = this.rowsInterval
-      const to = rowsInterval
-
-      for (let i = Math.min(from[0] - 1, to[1]); i >= to[0]; i--) setupCell(i, true)
-      for (let i = Math.max(from[1] + 1, to[0]); i <= to[1]; i++) setupCell(i, false)
-    }
-
-
-    this.rowsInterval = rowsInterval
-
-    for (const index of this.sectionsToOffsetUpdate) {
-      const start = this.rowIndex(index, 0)
-
-      const targetOffset = start < rowsInterval[0] ? this.rowsTopOffset[rowsInterval[0]] - this.rowsTopOffset[start] : 0
-      this.visibleSections.get(index)!.contentContainer.style.marginTop = `${targetOffset}px`
-      this.visibleFallbackSections.get(index)!.contentContainer.style.marginTop = `${targetOffset}px`
-    }
-  }
-
-  private onScroll(ev: Event) {
-    this.scheduleUpdate()
+  dispose() {
+    this.root.removeChild(this.scroll)
+    if (this.updateHandle) cancelAnimationFrame(this.updateHandle)
   }
 
   private recalculateTotalHeight() {
@@ -425,33 +314,174 @@ export class ReusableTable {
     this.scheduleUpdate()
   }
 
-  dataDidUpdate() {
-    for (let i = this.rowsInterval[0]; i <= this.rowsInterval[1] && i != -1; i++) this.cleanupCell(i)
-    for (let i = this.sectionsInterval[0]; i <= this.sectionsInterval[1] && i != -1; i++) this.cleanupSection(i)
-
-    this.visibleSections.clear()
-    this.visibleCells.clear()
-
-    this.rowsInterval = [-1, -1]
-    this.sectionsInterval = [-1, -1]
-
-    this.cellsHeight = []
-    this.rowsTopOffset = []
-
-    this.sectionCellsHeight = []
-    this.headersHeight = []
-    this.footersHeight = []
-    this.sectionTopOffset = []
-
-    this.rowsCountBySection = []
-    this.rowIndexOffsetBySection = []
-    this.indexPathForRowOffset = []
-
-    this.recalculateTotalHeight()
+  private rowIndex(section: number, rowInSection: number) {
+    if (rowInSection >= 0) return this.rowIndexOffsetBySection[section] + rowInSection
+    return this.rowIndexOffsetBySection[section] + this.rowsCountBySection[section] + rowInSection
   }
 
-  dispose() {
-    this.root.removeChild(this.scroll)
-    if (this.updateHandle) cancelAnimationFrame(this.updateHandle)
+  private getVisibleSectionsInterval(top: number, bottom: number): Interval {
+    let firstIndexBefore = -1
+    let lastIndexAfter = -1
+
+    for (let i = 0; i < this.sectionCellsHeight.length; i++) {
+      const sectionHeight = this.sectionCellsHeight[i] + this.headersHeight[i] + this.footersHeight[i]
+      if (sectionHeight + this.sectionTopOffset[i] > top && firstIndexBefore === -1) firstIndexBefore = i
+      if (sectionHeight + this.sectionTopOffset[i] > bottom && lastIndexAfter === -1) lastIndexAfter = i
+    }
+
+    return [
+      firstIndexBefore === -1 ? (this.sectionCellsHeight.length - 1) : firstIndexBefore,
+      lastIndexAfter === -1 ? (this.sectionCellsHeight.length - 1) : lastIndexAfter
+    ]
+  }
+
+  private getVisibleRowsInterval(top: number, bottom: number): Interval {
+    let firstIndexBefore = -1
+    let lastIndexAfter = -1
+
+    for (let i = 0; i <= this.rowsTopOffset.length; i++) {
+      if (this.rowsTopOffset[i] + this.cellsHeight[i] > top && firstIndexBefore === -1) firstIndexBefore = i
+      if (this.rowsTopOffset[i] > bottom && lastIndexAfter === -1) lastIndexAfter = i - 1
+    }
+
+    return [
+      firstIndexBefore === -1 ? (this.rowsTopOffset.length - 1) : firstIndexBefore,
+      lastIndexAfter === -1 ? (this.rowsTopOffset.length - 1) : lastIndexAfter
+    ]
+  }
+
+  private setupSection(index: number, first: boolean) {
+    const setup = (getSection: () => Section, storage: Storage, wrapper: HTMLElement) => {
+
+      const section = getSection()
+
+      section.setup(
+        index,
+        this.headersHeight[index],
+        this.footersHeight[index],
+        this.cellsHeight[this.rowIndex(index, 0)],
+        this.cellsHeight[this.rowIndex(index, -1)],
+        this.sectionCellsHeight[index]
+      )
+
+      const headerElement = this.delegate.headerCellForSection?.(this, index)
+      const footerElement = this.delegate.footerCellForSection?.(this, index)
+
+      if (headerElement) {
+        const reusable = isTableElement(headerElement) ? { header: headerElement, reusableKey: undefined } : headerElement
+        storage.headers.set(index, reusable)
+        section.headerContainer.appendChild(reusable.header.root)
+      }
+
+      if (footerElement) {
+        const reusable = isTableElement(footerElement) ? { footer: footerElement, reusableKey: undefined } : footerElement
+        storage.footers.set(index, reusable)
+        section.footerContainer.appendChild(reusable.footer.root)
+      }
+
+      storage.sections.set(index, section)
+
+      if (first) wrapper.insertBefore(section.root, wrapper.firstChild)
+      else wrapper.appendChild(section.root)
+    }
+
+    setup(() => this.getReusable<Section>(Section.reusableKey), this.scrollStorage, this.wrapper)
+    setup(() => this.getReusable<Section>(Section.reusableKey), this.fallbackStorage, this.fallbackWrapper)
+  }
+
+  private cleanupSection(index: number) {
+    this.wrapper.removeChild(cleanupSection(index, this.scrollStorage, this.reusableStorage).root)
+    this.fallbackWrapper.removeChild(cleanupSection(index, this.fallbackStorage, this.reusableStorage).root)
+    this.sectionsPendingOffsetUpdate.delete(index)
+  }
+
+  private setupCell(index: number, first: boolean) {
+    const indexPath = this.indexPathForRowOffset[index]
+    this.sectionsPendingOffsetUpdate.add(indexPath.section)
+
+    const setup = (storage: Storage) => {
+      const section = storage.sections.get(indexPath.section)!
+      const cell = this.delegate.cellForIndex(this, indexPath)
+      const reusable = isTableElement(cell) ? { cell: cell, reusableKey: undefined } : cell
+      storage.cells.set(index, reusable)
+      if (first) section.contentContainer.insertBefore(reusable.cell.root, section.contentContainer.firstChild)
+      else section.contentContainer.appendChild(reusable.cell.root)
+    }
+
+    setup(this.scrollStorage)
+    setup(this.fallbackStorage)
+  }
+
+  private cleanupCell(index: number) {
+    const indexPath = this.indexPathForRowOffset[index]
+    this.sectionsPendingOffsetUpdate.add(indexPath.section)
+    cleanupCell(index, indexPath, this.scrollStorage, this.reusableStorage)
+    cleanupCell(index, indexPath, this.fallbackStorage, this.reusableStorage)
+  }
+
+  private scheduleUpdate() {
+    if (this.updateHandle) return
+    this.updateHandle = requestAnimationFrame(this.updateScroll.bind(this))
+  }
+
+  private updateScroll() {
+    this.updateHandle = null
+    const scrollHeight = this.scroll.clientHeight
+    const scrollTop = this.scroll.scrollTop
+    const scrollBottom = scrollTop + scrollHeight
+
+    const sectionsInterval = this.getVisibleSectionsInterval(scrollTop, scrollBottom)
+    const rowsInterval = this.getVisibleRowsInterval(scrollTop, scrollBottom)
+
+    this.wrapper.style.paddingTop = `${this.sectionTopOffset[sectionsInterval[0]]}px`
+    this.fallbackWrapper.style.paddingTop = `${this.sectionTopOffset[sectionsInterval[0]]}px`
+    this.fallbackContent.style.marginTop = `${-scrollTop}px`
+
+    this.sectionsPendingOffsetUpdate.clear()
+
+    if (!intervalEqual(this.rowsInterval, rowsInterval)) {
+      const from = this.rowsInterval
+      const to = rowsInterval
+
+      for (let i = from[0]; i < to[0] && i <= from[1] && i != -1; i++) this.cleanupCell(i)
+      for (let i = Math.max(to[1] + 1, from[0]); i <= from[1] && i != -1; i++) this.cleanupCell(i)
+    }
+
+    if (!intervalEqual(this.sectionsInterval, sectionsInterval)) {
+
+      const from = this.sectionsInterval
+      const to = sectionsInterval
+
+      for (let i = from[0]; i < to[0] && i <= from[1] && i != -1; i++) this.cleanupSection(i)
+      for (let i = Math.max(to[1] + 1, from[0]); i <= from[1] && i != -1; i++) this.cleanupSection(i)
+
+      for (let i = Math.min(from[0] - 1, to[1]); i >= to[0]; i--) this.setupSection(i, true)
+      for (let i = Math.max(from[1] + 1, to[0]); i <= to[1]; i++) this.setupSection(i, false)
+
+      this.sectionsInterval = sectionsInterval
+    }
+
+    if (!intervalEqual(this.rowsInterval, rowsInterval)) {
+      const from = this.rowsInterval
+      const to = rowsInterval
+
+      for (let i = Math.min(from[0] - 1, to[1]); i >= to[0]; i--) this.setupCell(i, true)
+      for (let i = Math.max(from[1] + 1, to[0]); i <= to[1]; i++) this.setupCell(i, false)
+    }
+
+
+    this.rowsInterval = rowsInterval
+
+    for (const index of this.sectionsPendingOffsetUpdate) {
+      const start = this.rowIndex(index, 0)
+
+      const targetOffset = start < rowsInterval[0] ? this.rowsTopOffset[rowsInterval[0]] - this.rowsTopOffset[start] : 0
+      this.scrollStorage.sections.get(index)!.contentContainer.style.marginTop = `${targetOffset}px`
+      this.fallbackStorage.sections.get(index)!.contentContainer.style.marginTop = `${targetOffset}px`
+    }
+  }
+
+  private onScroll(ev: Event) {
+    this.scheduleUpdate()
   }
 }

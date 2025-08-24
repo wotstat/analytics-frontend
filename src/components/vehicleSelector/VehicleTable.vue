@@ -73,21 +73,27 @@ function onClick(tag: string) {
 
 
 const delegate: ReusableTableDelegate = {
+
+  onSetupComplete: (table) => {
+    table.registerReusable(HeaderLine.reusableKey, () => new HeaderLine())
+    table.registerReusable(VehicleLineCell.reusableKey, () => new VehicleLineCell(onClick, selected), 50)
+  },
+
   numberOfSections: () => props.displaySections.length,
   numberOfRowsInSection: (_, section) => props.displaySections[section].lines.length,
 
   heightForCellByIndex: (_, index) => 35,
-  cellForIndex: (_, index) => {
-    const cell = new VehicleLineCell(onClick, selected)
+  cellForIndex: (table, index) => {
+    const cell = table.getReusable<VehicleLineCell>(VehicleLineCell.reusableKey)
     cell.configure(props.displaySections[index.section].lines[index.row])
-    return cell
+    return { cell, reusableKey: VehicleLineCell.reusableKey }
   },
 
   heightForHeaderInSection: (_, section) => 33,
-  headerCellForSection: (_, section) => {
-    const cell = new HeaderLine()
+  headerCellForSection: (table, section) => {
+    const cell = table.getReusable<HeaderLine>(HeaderLine.reusableKey)
     cell.setTitle(props.displaySections[section].header)
-    return cell
+    return { header: cell, reusableKey: HeaderLine.reusableKey }
   },
 
   heightForFooterInSection: (_, section) => 20,
@@ -235,6 +241,7 @@ const delegate: ReusableTableDelegate = {
     margin: 0 3px;
     padding-left: 7px;
     padding-right: 3px;
+    z-index: 1;
 
     &::before {
       content: '';
@@ -317,9 +324,11 @@ const delegate: ReusableTableDelegate = {
     height: 20px;
     position: sticky;
     top: 0;
-    z-index: 1;
+    z-index: 2;
 
-    background-color: #44006e;
+    background-color: #2a2a2a;
+    border-bottom: 1px solid #ffffff18;
+    // background: linear-gradient(180deg, #2a2a2a 40%, #2a2a2a53);
 
     h5 {
       margin: 0;
@@ -332,7 +341,7 @@ const delegate: ReusableTableDelegate = {
     font-size: 14px;
     position: sticky;
     bottom: 0;
-    z-index: 1;
+    z-index: 2;
 
     background-color: #0182fa44;
 
