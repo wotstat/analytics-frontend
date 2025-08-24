@@ -42,6 +42,7 @@ const props = defineProps<{
     header: string,
     lines: VehicleLineData[]
   }[]
+  game: 'mt' | 'wot'
 }>()
 
 const nameVariant = defineModel<'full' | 'short'>('nameVariant')
@@ -81,7 +82,7 @@ const delegate: TableViewDelegate = {
   heightForCellByIndex: (_, index) => 35,
   cellForIndex: (table, index) => {
     const cell = table.getReusable<VehicleLineCell>(VehicleLineCell.reusableKey)
-    cell.configure(props.displaySections[index.section].lines[index.row])
+    cell.configure(props.displaySections[index.section].lines[index.row], props.game)
     return { cell, reusableKey: VehicleLineCell.reusableKey }
   },
 
