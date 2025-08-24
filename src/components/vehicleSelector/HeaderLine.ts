@@ -1,4 +1,4 @@
-import { TableHeader } from '../reusableTable/ReusableTable'
+import { TableHeader } from '../tableView/tableView/TableView'
 
 
 export class HeaderLine implements TableHeader {

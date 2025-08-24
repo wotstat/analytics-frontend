@@ -1,11 +1,11 @@
 import { numberToRoman } from '@/utils'
 import { getHighlightedTextParts, HighlightedString } from '../highlightString/highlightUtils'
-import { ReusableTableCellBase } from '../reusableTable/ReusableTableCell'
 import { vehicleTypeToImage } from '../vehicles/type/vehicleTypeToImage'
 import { smallVehiclesAtlasMt, smallVehiclesAtlasWot, tagToImageName } from '../vehicles/vehicle/utils'
 
 import { Ref, watch } from 'vue'
 import { nationFlagAtlas } from '../vehicles/nation/utils'
+import { TableCell } from '../tableView/tableView/TableView'
 
 const vehicleTypes = ['MT', 'LT', 'HT', 'AT', 'SPG'] as const
 export type VehicleLineData = {
@@ -35,7 +35,7 @@ function getTypeElement(type: VehicleLineData['type']): Node {
 for (const element of vehicleTypes) getTypeElement(element)
 
 
-export class VehicleLine extends ReusableTableCellBase<VehicleLineData> {
+export class VehicleLine implements TableCell {
 
   static readonly reusableKey = Symbol('VehicleLine')
 
@@ -56,7 +56,6 @@ export class VehicleLine extends ReusableTableCellBase<VehicleLineData> {
   private unwatch: (() => void)
 
   constructor(private onClick: (tag: string) => void, private selected: Ref<Set<string>>) {
-    super()
 
     this.root = document.createElement('div')
     this.root.classList.add('line')

@@ -18,7 +18,7 @@ const vehicleTypeName: Record<VehicleType, string> = {
   heavytank: 'heavytank',
   'at-spg': 'at-spg',
   spg: 'spg',
-  any: 'any'
+  any: 'vehicle-types'
 }
 
 

@@ -1,120 +1,12 @@
+import { ReusableStorage } from './ReusableStorage'
 import './reusableTable.scss'
+import { Section } from './Section'
+import { divWithClass, isTableElement, TableCell, TableFooter, TableHeader } from './utils'
 
-export interface TableElement {
-  root: HTMLElement;
-}
+export type { TableCell, TableFooter, TableHeader }
 
-export interface TableCell extends TableElement { }
-export interface TableHeader extends TableElement { }
-export interface TableFooter extends TableElement { }
-
-function isTableElement(obj: Object): obj is TableElement {
-  return 'root' in obj
-}
-
-type IndexPath = { section: number, row: number }
-export interface ReusableTableDelegate {
-  onSetupComplete?: (table: ReusableTable) => void
-
-  numberOfSections: (table: ReusableTable) => number
-  numberOfRowsInSection: (table: ReusableTable, section: number) => number
-
-  heightForCellByIndex: (table: ReusableTable, index: IndexPath) => number
-  cellForIndex: (table: ReusableTable, index: IndexPath) => TableCell | { cell: TableCell, reusableKey: symbol }
-
-
-  heightForHeaderInSection?: (table: ReusableTable, section: number) => number | null
-  headerCellForSection?: (table: ReusableTable, section: number) => null | TableHeader | { header: TableHeader, reusableKey: symbol }
-
-  heightForFooterInSection?: (table: ReusableTable, section: number) => number | null
-  footerCellForSection?: (table: ReusableTable, section: number) => null | TableFooter | { footer: TableFooter, reusableKey: symbol }
-}
-
-function divWithClass(className: string, parent?: HTMLElement) {
-  const div = document.createElement('div')
-  div.classList.add(className)
-  if (parent) parent.appendChild(div)
-  return div
-}
-
-type ReusableEntry = {
-  ctor: () => unknown,
-  limit: number,
-  free: unknown[]
-}
-
-class ReusableStorage {
-
-  private readonly storage = new Map<symbol, ReusableEntry>()
-
-  constructor() { }
-
-  registerElement(key: symbol, ctor: () => unknown, limit: number = 10) {
-    this.storage.set(key, { ctor, free: [], limit })
-  }
-
-  getElement<T>(key: symbol): T {
-    const entry = this.storage.get(key)
-    if (!entry) throw new Error(`Element not found for key: ${key.toString()}`)
-    if (entry.free.length > 0) return entry.free.pop() as T
-    return entry.ctor() as T
-  }
-
-  releaseElement<T>(key: symbol, element: T) {
-    const entry = this.storage.get(key)
-    if (!entry) throw new Error(`Element not found for key: ${key.toString()}`)
-    if (entry.free.length < entry.limit) {
-      entry.free.push(element)
-    }
-  }
-}
-
-class Section {
-  root: HTMLElement
-  headerContainer: HTMLElement
-  footerContainer: HTMLElement
-  contentContainer: HTMLElement
-  index: number | null = null
-
-  static readonly reusableKey = Symbol()
-
-  constructor() {
-    this.root = divWithClass('section')
-    this.headerContainer = divWithClass('header-container', this.root)
-    this.footerContainer = divWithClass('footer-container', this.root)
-    this.contentContainer = divWithClass('content-container', this.root)
-    this.root.appendChild(this.contentContainer)
-
-    console.log('Generate')
-  }
-
-  setup(index: number,
-    headerHeight: number,
-    footerHeight: number,
-    firstElementHeight: number,
-    lastElementHeight: number,
-    contentHeight: number) {
-    const totalHeight = headerHeight + footerHeight + contentHeight
-
-    this.root.style.height = `${totalHeight}px`
-    this.root.style.paddingTop = `${headerHeight}px`
-
-    this.headerContainer.style.height = `${totalHeight - footerHeight - firstElementHeight}px`
-    this.footerContainer.style.height = `${totalHeight - headerHeight - lastElementHeight}px`
-
-    if (this.index !== index) {
-      this.index = index
-      this.root.className = `section section-${index}`
-    }
-  }
-}
-
+export type IndexPath = { section: number, row: number }
 type Interval = [from: number, to: number]
-
-function intervalEqual(interval1: Interval, interval2: Interval) {
-  return interval1[0] === interval2[0] && interval1[1] === interval2[1]
-}
-
 type Storage = {
   cells: Map<number, { cell: TableCell, reusableKey: symbol | undefined }>
   headers: Map<number, { header: TableHeader, reusableKey: symbol | undefined }>
@@ -123,42 +15,26 @@ type Storage = {
   sections: Map<number, Section>
 }
 
-function cleanupCell(index: number, indexPath: IndexPath, storage: Storage, reusableStorage: ReusableStorage) {
-  const section = storage.sections.get(indexPath.section)!
-  const reusable = storage.cells.get(index)!
-  section.contentContainer.removeChild(reusable.cell.root)
-  storage.cells.delete(index)
-  if (reusable.reusableKey) reusableStorage.releaseElement(reusable.reusableKey, reusable.cell)
+export interface TableViewDelegate {
+  onSetupComplete?: (table: TableView) => void
+
+  numberOfSections: (table: TableView) => number
+  numberOfRowsInSection: (table: TableView, section: number) => number
+
+  heightForCellByIndex: (table: TableView, index: IndexPath) => number
+  cellForIndex: (table: TableView, index: IndexPath) => TableCell | { cell: TableCell, reusableKey: symbol }
+
+
+  heightForHeaderInSection?: (table: TableView, section: number) => number | null
+  headerCellForSection?: (table: TableView, section: number) => null | TableHeader | { header: TableHeader, reusableKey: symbol }
+
+  heightForFooterInSection?: (table: TableView, section: number) => number | null
+  footerCellForSection?: (table: TableView, section: number) => null | TableFooter | { footer: TableFooter, reusableKey: symbol }
+
+  onScrollVelocityChange?: (table: TableView, velocity: number) => void
 }
 
-function cleanupSection(index: number, storage: Storage, reusableStorage: ReusableStorage) {
-
-  const section = storage.sections.get(index)!
-  reusableStorage.releaseElement(Section.reusableKey, section)
-
-  const header = storage.headers.get(index) ?? null
-  const footer = storage.footers.get(index) ?? null
-
-  if (header) {
-    section.headerContainer.removeChild(header.header.root)
-    if (header.reusableKey) reusableStorage.releaseElement(header.reusableKey, header.header)
-  }
-
-  if (footer) {
-    section.footerContainer.removeChild(footer.footer.root)
-    if (footer.reusableKey) reusableStorage.releaseElement(footer.reusableKey, footer.footer)
-  }
-
-  storage.headers.delete(index)
-  storage.footers.delete(index)
-
-  storage.sections.delete(index)
-
-  return section
-}
-
-
-export class ReusableTable {
+export class TableView {
 
   private readonly fallbackScroll: HTMLElement
   private readonly fallbackContent: HTMLElement
@@ -185,6 +61,10 @@ export class ReusableTable {
   private rowIndexOffsetBySection: number[] = []
   private indexPathForRowOffset: IndexPath[] = []
 
+  private lastScrollTop: number = 0
+  private lastScrollTime: number = 0
+  private updateVelocityHandle: ReturnType<typeof requestAnimationFrame> | null = null
+
   private readonly sectionsPendingOffsetUpdate = new Set<number>()
   private readonly reusableStorage = new ReusableStorage()
 
@@ -204,7 +84,7 @@ export class ReusableTable {
 
   constructor(
     private readonly root: HTMLElement,
-    private readonly delegate: ReusableTableDelegate) {
+    private readonly delegate: TableViewDelegate) {
 
     this.reusableStorage.registerElement(Section.reusableKey, () => new Section(), 20)
 
@@ -222,6 +102,14 @@ export class ReusableTable {
     this.delegate.onSetupComplete?.(this)
 
     this.dataDidUpdate()
+  }
+
+  scrollTo(path: IndexPath, behavior: ScrollBehavior) {
+    const target = this.sectionTopOffset[path.section] + this.rowsTopOffset[path.row] - this.headersHeight[path.section]
+    if (target !== undefined) {
+      this.scroll.scrollTo({ top: target, behavior })
+      this.scheduleUpdate()
+    }
   }
 
   dataDidUpdate() {
@@ -260,6 +148,7 @@ export class ReusableTable {
   dispose() {
     this.root.removeChild(this.scroll)
     if (this.updateHandle) cancelAnimationFrame(this.updateHandle)
+    if (this.updateVelocityHandle) cancelAnimationFrame(this.updateVelocityHandle)
   }
 
   private recalculateTotalHeight() {
@@ -311,6 +200,8 @@ export class ReusableTable {
 
     this.totalHeight = totalHeight
     this.content.style.height = `${totalHeight}px`
+    if (totalHeight > this.scroll.clientHeight) this.fallbackScroll.classList.add('has-scroll')
+    else this.fallbackScroll.classList.remove('has-scroll')
     this.scheduleUpdate()
   }
 
@@ -424,11 +315,41 @@ export class ReusableTable {
     this.updateHandle = requestAnimationFrame(this.updateScroll.bind(this))
   }
 
+  private updateScrollVelocity(scrollTop: number) {
+    const scrollDelta = scrollTop - this.lastScrollTop
+    this.lastScrollTop = scrollTop
+
+    const currentTime = performance.now()
+    const timeDelta = currentTime - this.lastScrollTime
+
+    if (this.lastScrollTime != 0) {
+      const velocity = timeDelta ? 1000 * scrollDelta / timeDelta : 0
+      this.delegate.onScrollVelocityChange?.(this, velocity)
+    }
+
+    if (this.updateVelocityHandle) {
+      cancelAnimationFrame(this.updateVelocityHandle)
+      this.updateVelocityHandle = null
+    }
+
+    this.updateVelocityHandle = requestAnimationFrame(() => {
+      this.updateVelocityHandle = null
+      requestAnimationFrame(() => {
+        if (this.updateVelocityHandle) return
+        this.delegate.onScrollVelocityChange?.(this, 0)
+      })
+    })
+
+    this.lastScrollTime = currentTime
+  }
+
   private updateScroll() {
     this.updateHandle = null
     const scrollHeight = this.scroll.clientHeight
     const scrollTop = this.scroll.scrollTop
     const scrollBottom = scrollTop + scrollHeight
+
+    this.updateScrollVelocity(scrollTop)
 
     const sectionsInterval = this.getVisibleSectionsInterval(scrollTop, scrollBottom)
     const rowsInterval = this.getVisibleRowsInterval(scrollTop, scrollBottom)
@@ -469,7 +390,6 @@ export class ReusableTable {
       for (let i = Math.max(from[1] + 1, to[0]); i <= to[1]; i++) this.setupCell(i, false)
     }
 
-
     this.rowsInterval = rowsInterval
 
     for (const index of this.sectionsPendingOffsetUpdate) {
@@ -484,4 +404,42 @@ export class ReusableTable {
   private onScroll(ev: Event) {
     this.scheduleUpdate()
   }
+}
+
+function intervalEqual(interval1: Interval, interval2: Interval) {
+  return interval1[0] === interval2[0] && interval1[1] === interval2[1]
+}
+
+function cleanupCell(index: number, indexPath: IndexPath, storage: Storage, reusableStorage: ReusableStorage) {
+  const section = storage.sections.get(indexPath.section)!
+  const reusable = storage.cells.get(index)!
+  section.contentContainer.removeChild(reusable.cell.root)
+  storage.cells.delete(index)
+  if (reusable.reusableKey) reusableStorage.releaseElement(reusable.reusableKey, reusable.cell)
+}
+
+function cleanupSection(index: number, storage: Storage, reusableStorage: ReusableStorage) {
+
+  const section = storage.sections.get(index)!
+  reusableStorage.releaseElement(Section.reusableKey, section)
+
+  const header = storage.headers.get(index) ?? null
+  const footer = storage.footers.get(index) ?? null
+
+  if (header) {
+    section.headerContainer.removeChild(header.header.root)
+    if (header.reusableKey) reusableStorage.releaseElement(header.reusableKey, header.header)
+  }
+
+  if (footer) {
+    section.footerContainer.removeChild(footer.footer.root)
+    if (footer.reusableKey) reusableStorage.releaseElement(footer.reusableKey, footer.footer)
+  }
+
+  storage.headers.delete(index)
+  storage.footers.delete(index)
+
+  storage.sections.delete(index)
+
+  return section
 }
