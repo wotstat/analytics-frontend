@@ -26,7 +26,8 @@ createApp(App)
   .mount('#app')
 
 setupYmMetrika({
+  webvisor: false,
   clickmap: false,
-  trackLinks: true,
-  accurateTrackBounce: true,
+  trackLinks: false,
+  accurateTrackBounce: false
 })
