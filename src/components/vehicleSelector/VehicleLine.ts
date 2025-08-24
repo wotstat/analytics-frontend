@@ -35,6 +35,11 @@ function getTypeElement(type: VehicleLineData['type']): Node {
 for (const element of vehicleTypes) getTypeElement(element)
 
 
+const vehicleAtlas = {
+  'mt': smallVehiclesAtlasMt,
+  'wot': smallVehiclesAtlasWot
+} as const
+
 export class VehicleLine implements TableCell {
 
   static readonly reusableKey = Symbol('VehicleLine')
@@ -108,8 +113,8 @@ export class VehicleLine implements TableCell {
     return className
   }
 
-  private setVehicleImage(tag: string): void {
-    const smallVehicle = smallVehiclesAtlasMt.getSprite(tagToImageName(tag)) ?? smallVehiclesAtlasMt.getSprite('no-image')
+  private setVehicleImage(tag: string, game: 'mt' | 'wot'): void {
+    const smallVehicle = vehicleAtlas[game].getSprite(tagToImageName(tag)) ?? vehicleAtlas[game].getSprite('no-image')
     if (!smallVehicle) return
 
     this.tank.style.backgroundPosition = smallVehicle.backgroundPosition
@@ -124,9 +129,8 @@ export class VehicleLine implements TableCell {
     this.currentFlagClass = this.setClass(this.flag, this.currentFlagClass, nationFlag.atlasClass)
   }
 
-  configure(data: VehicleLineData): void {
+  configure(data: VehicleLineData, game: 'mt' | 'wot'): void {
     this.currentTag = data.tag
-    // this.name.textContent = tagToImageName(data.tag)
     this.name.textContent = data.highlightStrings.text
 
     this.level.textContent = romanNumerals[data.level] || data.level.toString()
@@ -151,7 +155,7 @@ export class VehicleLine implements TableCell {
       }).join('')
     }
 
-    this.setVehicleImage(data.tag)
+    this.setVehicleImage(data.tag, game)
     this.updateSelectedState()
 
     this.root.setAttribute('data-tag', data.tag)
