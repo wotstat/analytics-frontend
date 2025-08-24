@@ -16,7 +16,7 @@
     </div>
 
     <div class="table-container deep-nice-scrollbar" :class="{ 'fast-scroll': isFastScroll }">
-      <ReusableTable :data="target" ref="reusableTable" backgroundColor="#2a2a2a" :delegate />
+      <TableView :data="target" ref="table" backgroundColor="#2a2a2a" :delegate />
     </div>
   </div>
 </template>
@@ -26,17 +26,16 @@
 import VehicleType from '../vehicles/type/VehicleType.vue'
 import Globe from './assets/globe.svg'
 import { computed, ref, triggerRef, watch } from 'vue'
-import VehicleLine from './VehicleLine.vue'
-import ReusableTable from '../reusableTable/ReusableTable2.vue'
+import TableView from '../tableView/TableView.vue'
 import { type ComponentInstance } from '@/composition/utils/ComponentInstance'
 
 import { type VehicleLineData, VehicleLine as VehicleLineCell } from './VehicleLine.ts'
-import { ReusableTableDelegate } from '../reusableTable/ReusableTable.ts'
+import { TableViewDelegate } from '../tableView/tableView/TableView.ts'
 import { HeaderLine } from './HeaderLine.ts'
 import { FooterLine } from './FooterLine.ts'
 
 
-const reusableTable = ref<ComponentInstance<typeof ReusableTable<VehicleLineData>> | null>(null)
+const table = ref<ComponentInstance<typeof TableView> | null>(null)
 
 const props = defineProps<{
   displaySections: {
@@ -47,17 +46,16 @@ const props = defineProps<{
 
 const nameVariant = defineModel<'full' | 'short'>('nameVariant')
 const selected = defineModel<Set<string>>('selected', { required: true })
+const scrollVelocity = ref(0)
 
 const target = computed(() => props.displaySections)
 
-watch(() => target.value.length, () => reusableTable.value?.scrollTo(0))
+watch(() => target.value.length, () => table.value?.scrollTo({ section: 0, row: 0 }, 'instant'))
 
 const isFastScroll = computed((old) => {
-  if (!reusableTable.value) return false
+  const velocity = Math.abs(scrollVelocity.value)
 
-  const velocity = Math.abs(reusableTable.value.scrollVelocity)
-
-  if (old && velocity < 300) return false
+  if (old && velocity < 100) return false
   if (!old && velocity >= 1000) return true
 
   return old
@@ -66,13 +64,11 @@ const isFastScroll = computed((old) => {
 function onClick(tag: string) {
   if (selected.value?.has(tag)) selected.value?.delete(tag)
   else selected.value?.add(tag)
-
-
   triggerRef(selected)
 }
 
 
-const delegate: ReusableTableDelegate = {
+const delegate: TableViewDelegate = {
 
   onSetupComplete: (table) => {
     table.registerReusable(HeaderLine.reusableKey, () => new HeaderLine())
@@ -102,30 +98,15 @@ const delegate: ReusableTableDelegate = {
     cell.setTitle(`Footer for section ${section}`)
     return cell
   },
+
+  onScrollVelocityChange: (_, velocity) => scrollVelocity.value = velocity
 }
 
 </script>
 
 
 <style lang="scss" scoped>
-.table-header,
-.line {
-  .flag {
-    width: 30px;
-    min-width: 30px;
-    margin-right: 7px;
-  }
-
-  .type {
-    width: 40px;
-    min-width: 40px;
-  }
-
-  .level {
-    width: 30px;
-    min-width: 30px;
-  }
-}
+@use './styles/vehicleLine.scss' as vehicleLine;
 
 .table-header {
   display: flex;
@@ -162,10 +143,14 @@ const delegate: ReusableTableDelegate = {
   }
 
   .level {
+    width: 30px;
+    min-width: 30px;
     text-align: center;
   }
 
   .type {
+    width: 40px;
+    min-width: 40px;
     display: flex;
     justify-content: center;
 
@@ -178,6 +163,9 @@ const delegate: ReusableTableDelegate = {
   .flag {
     display: flex;
     justify-content: center;
+    width: 30px;
+    min-width: 30px;
+    margin-right: 7px;
 
     .img {
       width: 14px;
@@ -191,144 +179,31 @@ const delegate: ReusableTableDelegate = {
   position: relative;
   margin-right: -11.5px;
   margin-left: -10px;
-  contain: paint layout style;
   user-select: none;
-
-  :deep(.scroll) {
-    // padding-bottom: 10px;
-    box-sizing: border-box;
-  }
 }
 
-.table-container.fast-scroll {
-  .line:not(.selected) {
-    &::before {
-      opacity: 0;
-    }
-  }
-}
 
 :deep(.table-container) {
-  .line {
-    .flag {
-      width: 30px;
-      height: 20px;
-      min-width: 30px;
-      margin-right: 7px;
-      background-size: 128px;
-      background-repeat: no-repeat;
-    }
 
-    .type {
-      width: 40px;
-      min-width: 40px;
-    }
-
-    .level {
-      width: 30px;
-      min-width: 30px;
-    }
-  }
-
-  .line {
-    display: flex;
-    white-space: nowrap;
-    height: 34px;
-    align-items: center;
-    border-top: 1px solid #d0d0d008;
-    position: relative;
-    cursor: pointer;
-    margin: 0 3px;
-    padding-left: 7px;
-    padding-right: 3px;
-    z-index: 1;
-
-    &::before {
-      content: '';
-      position: absolute;
-      inset: 0 0px 0 0px;
-      border-radius: 6px;
-      z-index: -1;
-    }
-
-    &:hover {
+  &.fast-scroll {
+    .line:not(.selected) {
       &::before {
-        background-color: rgba(255, 255, 255, 0.1)
-      }
-    }
-
-
-    &.selected {
-      &::before {
-        background-color: var(--blue-color);
-        background: linear-gradient(90deg, #0182fada, #0182fa44 20%, #0182fa2c 50%, transparent);
-      }
-    }
-
-
-    .type {
-      display: flex;
-      justify-content: center;
-
-      color: white;
-      fill: currentColor;
-
-      svg {
-        width: 14px;
-      }
-    }
-
-    .flag {
-      user-select: none;
-      pointer-events: none;
-    }
-
-    .level {
-      text-align: center;
-    }
-
-    .name {
-      display: flex;
-      align-items: center;
-      justify-content: left;
-      overflow: hidden;
-      flex: 1;
-
-      .tank {
-        width: 120px;
-        min-width: 120px;
-        height: 31px;
-        user-select: none;
-        pointer-events: none;
-        background-repeat: no-repeat;
-      }
-
-      p {
-        margin-left: -60px;
-        text-overflow: ellipsis;
-        overflow: hidden;
-        font-weight: bold;
-        font-size: 0.8em;
+        opacity: 0;
       }
     }
   }
 
-  .name {
-    .highlight {
-      color: var(--blue-thin-color);
-    }
-  }
+  @include vehicleLine.vehicleLine;
 
   .header-line {
     padding: 10px 10px 3px 10px;
     height: 20px;
-    position: sticky;
-    top: 0;
     z-index: 2;
 
     background-color: #2a2a2a;
     border-bottom: 1px solid #ffffff18;
     // background: linear-gradient(180deg, #2a2a2a 40%, #2a2a2a53);
+    background-color: #fb30be2c;
 
     h5 {
       margin: 0;
@@ -339,14 +214,24 @@ const delegate: ReusableTableDelegate = {
     padding: 0 10px 0 10px;
     height: 20px;
     font-size: 14px;
-    position: sticky;
-    bottom: 0;
     z-index: 2;
 
     background-color: #0182fa44;
 
     p {
       margin: 0;
+    }
+  }
+
+  .scroll {
+    .header-line {
+      position: sticky;
+      top: 0;
+    }
+
+    .footer-line {
+      position: sticky;
+      bottom: 0;
     }
   }
 }

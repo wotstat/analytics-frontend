@@ -1,4 +1,4 @@
-import { TableFooter } from '../reusableTable/ReusableTable'
+import { TableFooter } from '../tableView/tableView/TableView'
 
 
 export class FooterLine implements TableFooter {

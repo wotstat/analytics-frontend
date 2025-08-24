@@ -1,4 +1,6 @@
 .reusable-table-root {
+  contain: paint layout style;
+
   .fallback-scroll {
     position: absolute;
     top: 0;
@@ -10,15 +12,16 @@
 
     contain: strict;
     background: var(--background-color, #480039);
-    scrollbar-gutter: stable;
     overflow: hidden;
 
-    opacity: 1;
-    background-color: #480039;
+    // background-color: #480039;
+
+    &.has-scroll {
+      scrollbar-gutter: stable;
+    }
   }
 
   .scroll {
-    opacity: 1;
     height: 100%;
     width: 100%;
 
@@ -32,6 +35,29 @@
     }
 
     .section {
+
+      .sticky-background-fixer {
+        position: absolute;
+        inset: 0;
+
+        .header-background {
+          position: absolute;
+          top: 0;
+          width: 100%;
+          z-index: -1;
+          background-color: var(--background-color, #900071);
+        }
+
+        .footer-background {
+          position: absolute;
+          bottom: 0;
+          width: 100%;
+          z-index: -1;
+          background-color: var(--background-color, #900071);
+        }
+
+      }
+
       .content-container {
         background-color: var(--background-color, #900071);
       }
