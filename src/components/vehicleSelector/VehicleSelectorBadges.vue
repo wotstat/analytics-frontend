@@ -1,6 +1,6 @@
 <template>
   <div>
-    <VehicleSelector v-model:display-popup="displayPopup" v-model="vehicles" :targetElement>
+    <VehicleSelector v-model:display-popup="displayPopup" v-model="vehicles" :targetElement :singleSelect="true">
       <div class="badges">
         <Badge :text="getTankName(vehicle, true)" closable v-for="vehicle in [...vehicles]"
           @close="onRemove(vehicle)" />
@@ -28,7 +28,6 @@ function openSelect() {
 function onRemove(tag: string) {
   vehicles.value.delete(tag)
 }
-
 
 </script>
 
