@@ -1,27 +1,35 @@
 <template>
   <div class="vehicle-selector">
-    <PopupModal v-model="displayPopup" :target="targetElement" no-padding>
-      <slot></slot>
-      <template #popup>
-        <VehiclePopup :tank-list="tankList.data" v-model="vehicles" />
-      </template>
-    </PopupModal>
+    <slot></slot>
+    <PopoverStyled :target="targetElement" :display="displayPopup" @click-outside="onClickOutside"
+      @target-outside-window="onTargetOutside" :placement="['bottom-start', 'bottom-float']" :viewport-offset="{
+        top: headerHeight + additionalHeaderHeight,
+        bottom: 10,
+        left: 10,
+        right: 10
+      }" :arrow-size="0">
+      <VehiclePopup :tank-list="tankList.data" v-model="vehicles" />
+    </PopoverStyled>
   </div>
 </template>
 
 <script setup lang="ts">
 
-import PopupModal from '../PopupModal.vue'
 import { CACHE_SETTINGS, queryAsync } from '@/db'
 import { selectTagVehiclesLocalization } from '@/utils/i18n'
 import VehiclePopup from './VehiclePopup.vue'
+import PopoverStyled from '../popover/PopoverStyled.vue'
+import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight'
+
 
 defineProps<{
-  targetElement?: HTMLElement | null,
+  targetElement: HTMLElement | null,
+  singleSelect: boolean
 }>()
 
 const vehicles = defineModel<Set<string>>({ required: true })
-const displayPopup = defineModel<boolean>('displayPopup')
+const displayPopup = defineModel<boolean>('displayPopup', { required: true })
+const { additionalHeaderHeight } = useAdditionalHeaderHeight(true)
 
 
 const tankList = queryAsync<{
@@ -35,6 +43,14 @@ select tag, type, role, level, short, name, region
 from tanks
 left any join locals using tag;
 `, { settings: CACHE_SETTINGS })
+
+function onClickOutside(event: PointerEvent) {
+  displayPopup.value = false
+}
+
+function onTargetOutside() {
+  displayPopup.value = false
+}
 
 </script>
 
