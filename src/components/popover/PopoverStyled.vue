@@ -1,7 +1,7 @@
 <template>
   <PopoverAnimated :target :display :offset="targetOffset" :viewportOffset :placement :preserveLastPlacement
-    @click-outside="e => emit('clickOutside', e)" @target-outside-window="emit('targetOutsideWindow')"
-    v-slot="{ arrow, transitionClass }" :duration="200">
+    @pointer-down-outside="e => emit('pointerDownOutside', e)" @target-outside-window="emit('targetOutsideWindow')"
+    @pointer-click-outside="e => emit('pointerClickOutside', e)" v-slot="{ arrow, transitionClass }" :duration="200">
     <div class="popover-card" ref="popoverCard" :class="{
       [`arrow-${arrow.direction}`]: arrow.direction,
       'arrow-disabled': arrowSize == 0,
@@ -43,8 +43,9 @@ const { target,
 }>()
 
 const emit = defineEmits<{
-  (e: 'clickOutside', event: PointerEvent): void,
-  (e: 'targetOutsideWindow'): void
+  (e: 'pointerDownOutside', event: PointerEvent): void,
+  (e: 'pointerClickOutside', event: PointerEvent): void,
+  (e: 'targetOutsideWindow'): void,
 }>()
 
 const targetOffset = computed<OffsetValue>(() => {

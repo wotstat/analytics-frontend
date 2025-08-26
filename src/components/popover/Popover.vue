@@ -24,7 +24,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'clickOutside', event: PointerEvent): void,
+  (e: 'pointerDownOutside', event: PointerEvent): void,
+  (e: 'pointerClickOutside', event: PointerEvent): void,
   (e: 'targetOutsideWindow'): void
   (e: 'readyToVisible'): void
 }>()
@@ -35,10 +36,14 @@ const isTargetOutsideViewport = ref(false)
 
 useEventListener(window, 'pointerdown', (event: PointerEvent) => {
   if (!props.display) return
-
   if (!popupContainer.value) return
+  if (!popupContainer.value.contains(event.target as Node) && !props.target?.contains(event.target as Node)) emit('pointerDownOutside', event)
+})
 
-  if (!popupContainer.value.contains(event.target as Node) && !props.target?.contains(event.target as Node)) emit('clickOutside', event)
+useEventListener(window, 'click', (event: PointerEvent) => {
+  if (!props.display) return
+  if (!popupContainer.value) return
+  if (!popupContainer.value.contains(event.target as Node) && !props.target?.contains(event.target as Node)) emit('pointerClickOutside', event)
 })
 
 function isElementOutsideViewport(element: { x: number; y: number; width: number; height: number }, viewPort: { width: number; height: number }) {
