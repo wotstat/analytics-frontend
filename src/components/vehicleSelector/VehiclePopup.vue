@@ -55,10 +55,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { tankTagToReadable } from '@/utils/i18n'
-import { Highlighted, compareIntervals, highlight } from '../highlightString/highlightUtils'
-import { useFocus, useLocalStorage, useMediaQuery } from '@vueuse/core'
+import { Highlighted, compareIntervals } from '../highlightString/highlightUtils'
+import { useLocalStorage, useMediaQuery } from '@vueuse/core'
 
 import VehicleTable from './VehicleTable.vue'
 
