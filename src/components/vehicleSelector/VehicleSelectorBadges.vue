@@ -1,10 +1,11 @@
 <template>
   <div>
-    <VehicleSelector v-model:display-popup="displayPopup" v-model="vehicles" :targetElement :singleSelect="true">
-      <div class="badges">
+    <VehicleSelector v-model:display-popup="displayPopup" v-model="vehicles" :targetElement="badges"
+      :singleSelect="true">
+      <div class="badges" ref="badges">
         <Badge :text="getTankName(vehicle, true)" closable v-for="vehicle in [...vehicles]"
           @close="onRemove(vehicle)" />
-        <button class="select" @click="openSelect" ref="targetElement">выбрать</button>
+        <button class="select" @click="openSelect">выбрать</button>
       </div>
     </VehicleSelector>
   </div>
@@ -19,7 +20,7 @@ import { getTankName } from '@/utils/i18n'
 
 const vehicles = defineModel<Set<string>>({ default: new Set() })
 const displayPopup = ref<boolean>(false)
-const targetElement = ref<HTMLElement | null>(null)
+const badges = ref<HTMLElement | null>(null)
 
 function openSelect() {
   displayPopup.value = !displayPopup.value
