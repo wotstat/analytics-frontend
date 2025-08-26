@@ -1,15 +1,15 @@
 <template>
   <div class="vehicle-selector">
     <slot></slot>
-    <PopoverStyled :target="targetElement" :display="displayPopup" @click-outside="onClickOutside"
-      @target-outside-window="onTargetOutside" :placement="['bottom-start', 'bottom-float']" :viewport-offset="{
+    <PopoverAutoClose :target="targetElement" v-model="displayPopup" :placement="['bottom-start', 'bottom-float']"
+      :viewport-offset="{
         top: headerHeight + additionalHeaderHeight,
         bottom: 10,
         left: 10,
         right: 10
       }" :arrow-size="0">
       <VehiclePopup :tank-list="tankList.data" v-model="vehicles" />
-    </PopoverStyled>
+    </PopoverAutoClose>
   </div>
 </template>
 
@@ -21,6 +21,8 @@ import VehiclePopup from './VehiclePopup.vue'
 import PopoverStyled from '../popover/PopoverStyled.vue'
 import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight'
 import { Nation } from '@/utils/wot'
+import PopoverAutoClose from '../popover/PopoverAutoClose.vue'
+
 
 
 defineProps<{
@@ -45,13 +47,13 @@ from tanks
 left any join locals using tag;
 `, { settings: CACHE_SETTINGS })
 
-function onClickOutside(event: PointerEvent) {
-  displayPopup.value = false
-}
+// function onClickOutside(event: PointerEvent) {
+//   displayPopup.value = false
+// }
 
-function onTargetOutside() {
-  displayPopup.value = false
-}
+// function onTargetOutside() {
+//   displayPopup.value = false
+// }
 
 </script>
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="badge">
+  <div class="badge" @auxclick="handleClose">
     <p>{{ text }}</p>
     <XIcon class="x-icon" @click="handleClose" v-if="props.closable" />
   </div>
@@ -21,7 +21,6 @@ const emit = defineEmits<{
 function handleClose() {
   emit('close')
 }
-
 
 </script>
 
