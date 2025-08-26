@@ -20,6 +20,7 @@ import { selectTagVehiclesLocalization } from '@/utils/i18n'
 import VehiclePopup from './VehiclePopup.vue'
 import PopoverStyled from '../popover/PopoverStyled.vue'
 import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight'
+import { Nation } from '@/utils/wot'
 
 
 defineProps<{
@@ -34,12 +35,12 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight(true)
 
 const tankList = queryAsync<{
   type: 'MT' | 'LT' | 'HT' | 'AT' | 'SPG',
-  tag: string, level: number, short: string, name: string, region: string
+  tag: string, level: number, short: string, name: string, region: string, nation: Nation
 }>(`
 with
-    tanks as (select tag, type, level, role, region, from LatestBattleVehicleInfo final),
+    tanks as (select tag, type, level, role, nation, region, from LatestBattleVehicleInfo final),
     locals as (${selectTagVehiclesLocalization})
-select tag, type, role, level, short, name, region
+select tag, type, role, level, short, name, region, nation
 from tanks
 left any join locals using tag;
 `, { settings: CACHE_SETTINGS })
