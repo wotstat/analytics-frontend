@@ -48,7 +48,7 @@
 
       <div class="empty-list" v-if="tankToDisplay.length === 0">
         <h5>Танков не найдено</h5>
-        <button @click="reset">Сбросить фильтр</button>
+        <button @click="reset">Очистить фильтр</button>
       </div>
     </div>
   </div>
@@ -57,7 +57,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { tankTagToReadable } from '@/utils/i18n'
-import { highlight, compareIntervals } from '../highlightString/highlightUtils'
+import { Highlighted, compareIntervals, highlight } from '../highlightString/highlightUtils'
 import { useFocus, useLocalStorage, useMediaQuery } from '@vueuse/core'
 
 import VehicleTable from './VehicleTable.vue'
@@ -84,7 +84,7 @@ const nameVariant = useLocalStorage<'full' | 'short'>('preferred-vehicle-name-va
 const props = defineProps<{
   tankList: {
     type: 'MT' | 'LT' | 'HT' | 'AT' | 'SPG',
-    tag: string, level: number, short: string, name: string, region: string
+    tag: string, level: number, short: string, name: string, region: string, nation: Nation
   }[]
 }>()
 
@@ -96,12 +96,30 @@ onMounted(() => {
   if (isMobile.value) searchInout.value?.focus()
 })
 
-function isRegionForCurrentGame(region: string) {
-  return currentGame.value == 'Lesta' ? region == 'RU' : region == 'EU'
-}
+
+const preparedTankList = computed(() => {
+  return props.tankList.map(tank => {
+
+    const shortName = tank.short || tankTagToReadable(tank.tag)
+    const name = tank.name || tankTagToReadable(tank.tag)
+
+    return {
+      region: tank.region,
+      tag: tank.tag,
+      level: tank.level,
+      nation: tank.tag.split(':')[0] as Nation,
+      type: tank.type,
+      shortName,
+      name,
+      highlightedShort: new Highlighted(shortName),
+      highlightedName: new Highlighted(name),
+      highlighted: new Highlighted(name)
+    }
+  })
+})
 
 const groupedList = computed(() => {
-  type Data = typeof props.tankList
+  type Data = typeof preparedTankList.value
   const regular: Data = []
   const stealHunter: Data = []
   const hb25: Data = []
@@ -125,7 +143,7 @@ const groupedList = computed(() => {
     'czech:Cz04_T50_51_Waf_Hound_3DSt',
   ])
 
-  for (const tank of props.tankList) {
+  for (const tank of preparedTankList.value) {
     if (tank.tag.endsWith('_SH')) stealHunter.push(tank)
     else if (tank.tag.endsWith('_hb25')) hb25.push(tank)
     else if (tank.tag.endsWith('_may24_hb')) may24Hb.push(tank)
@@ -156,28 +174,34 @@ const groupedList = computed(() => {
 
 const tankToDisplay = computed(() => {
 
+  const currentLevelsCached = new Set(currentLevels.value)
+  const currentTypesCached = new Set(currentTypes.value)
+  const currentNationsCached = new Set(currentNations.value)
+  const currentSearchCached = currentSearch.value
+
+  const hasLevels = currentLevelsCached.size > 0
+  const hasTypes = currentTypesCached.size > 0
+  const hasNations = currentNationsCached.size > 0
+
   const filteredGroups = groupedList.value.map(tankList => {
 
-    const filtered = tankList.data
-      .filter(t =>
-        isRegionForCurrentGame(t.region) &&
-        (currentLevels.value.has(t.level) || currentLevels.value.size == 0) &&
-        (currentTypes.value.has(t.type) || currentTypes.value.size == 0) &&
-        (currentNations.value.has(t.tag.split(':')[0] as Nation) || currentNations.value.size == 0)
-      )
-      .map(tank => {
-        const name = nameVariant.value == 'full' ? tank.name : tank.short
+    const targetRegion = currentGame.value == 'Lesta' ? 'RU' : 'EU'
+    const data = tankList.data
 
-        return {
-          tag: tank.tag,
-          level: tank.level,
-          nation: tank.tag.split(':')[0],
-          type: tank.type,
-          short: tank.short,
-          highlightStrings: highlight(name || tankTagToReadable(tank.tag), currentSearch.value)
-        }
-      })
-      .filter(tank => !currentSearch.value || tank.highlightStrings.highlight.length > 0)
+    const prefiltered = data
+      .filter(t =>
+        t.region == targetRegion &&
+        (!hasLevels || currentLevelsCached.has(t.level)) &&
+        (!hasTypes || currentTypesCached.has(t.type)) &&
+        (!hasNations || currentNationsCached.has(t.nation))
+      )
+
+    for (const tank of prefiltered) {
+      tank.highlighted = nameVariant.value == 'full' ? tank.highlightedName : tank.highlightedShort
+      tank.highlighted.setSubstring(currentSearchCached)
+    }
+
+    const filtered = prefiltered.filter(tank => !currentSearchCached || tank.highlighted.intervals.length > 0)
 
     function compare(a: typeof filtered[number], b: typeof filtered[number]) {
       if (a.level !== b.level) return b.level - a.level
@@ -186,24 +210,24 @@ const tankToDisplay = computed(() => {
         const bIndex = nationsIndexes.get(b.nation as any) ?? 0
         return aIndex - bIndex
       }
-      return a.highlightStrings.text.localeCompare(b.highlightStrings.text)
+      return a.highlighted.text.localeCompare(b.highlighted.text)
     }
 
-    function sort() {
-      if (currentSearch.value)
-        return filtered.sort((a, b) => {
-          const comp = compareIntervals(a.highlightStrings.highlight, b.highlightStrings.highlight)
-          if (comp !== 0) return comp
-          const lc = a.highlightStrings.text.localeCompare(b.highlightStrings.text)
-          if (lc !== 0) return lc
-          return compare(a, b)
-        })
+    function sorted() {
+      if (currentSearchCached) return filtered.sort((a, b) => {
+        const comp = compareIntervals(a.highlighted.intervals, b.highlighted.intervals)
+        if (comp !== 0) return comp
+        const lc = a.highlighted.text.localeCompare(b.highlighted.text)
+        if (lc !== 0) return lc
+        return compare(a, b)
+      })
 
       return filtered.sort((a, b) => compare(a, b))
     }
+
     return {
       header: tankList.header,
-      data: sort()
+      data: sorted()
     }
   })
 
@@ -216,8 +240,6 @@ const tankToDisplay = computed(() => {
 })
 
 const shouldVisibleReset = computed(() => currentLevels.value.size > 0 || currentTypes.value.size > 0 || currentNations.value.size > 0 || currentSearch.value != '')
-
-watch(currentGame, game => { if (game == 'WG') currentLevels.value.delete(11) })
 
 function selectLevel(e: MouseEvent, level: number) {
   if (currentLevels.value.has(level)) currentLevels.value.delete(level)

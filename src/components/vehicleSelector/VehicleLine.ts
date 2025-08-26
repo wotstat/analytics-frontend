@@ -1,5 +1,5 @@
 import { numberToRoman } from '@/utils'
-import { getHighlightedTextParts, HighlightedString } from '../highlightString/highlightUtils'
+import { getHighlightedTextParts, Highlighted, HighlightedString } from '../highlightString/highlightUtils'
 import { vehicleTypeToImage } from '../vehicles/type/vehicleTypeToImage'
 import { smallVehiclesAtlasMt, smallVehiclesAtlasWot, tagToImageName } from '../vehicles/vehicle/utils'
 
@@ -13,8 +13,9 @@ export type VehicleLineData = {
   level: number;
   nation: string;
   type: typeof vehicleTypes[number];
-  short: string;
-  highlightStrings: HighlightedString;
+  shortName: string;
+  name: string;
+  highlighted: Highlighted;
 }
 
 const romanNumerals: Record<number, string> = Object.fromEntries(
@@ -131,7 +132,7 @@ export class VehicleLine implements TableCell {
 
   configure(data: VehicleLineData, game: 'mt' | 'wot'): void {
     this.currentTag = data.tag
-    this.name.textContent = data.highlightStrings.text
+    this.name.textContent = data.highlighted.text
 
     this.level.textContent = romanNumerals[data.level] || data.level.toString()
     this.setFlagImage(data.nation)
@@ -144,9 +145,9 @@ export class VehicleLine implements TableCell {
       else this.type.appendChild(targetTypeElement)
     }
 
-    this.setHighlightedVisible(data.highlightStrings.highlight.length > 0)
-    if (data.highlightStrings.highlight.length > 0) {
-      const parts = getHighlightedTextParts(data.highlightStrings)
+    this.setHighlightedVisible(data.highlighted.intervals.length > 0)
+    if (data.highlighted.intervals.length > 0) {
+      const parts = getHighlightedTextParts(data.highlighted.highlightedString)
       this.highlightedName.innerHTML = parts.map(part => {
         if (part.highlight) {
           return `<span class="highlight">${part.text}</span>`

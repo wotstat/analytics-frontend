@@ -143,7 +143,7 @@ const targetStyle = computed(() => {
   if (!positions.value) return {}
 
   return {
-    transform: `translate3d(${positions.value.x}px, ${positions.value.y}px, 0px)`
+    transform: `translate3d(${Math.round(positions.value.x)}px, ${Math.round(positions.value.y)}px, 0px)`
   }
 })
 

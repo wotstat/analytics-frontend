@@ -60,6 +60,53 @@ function normalize(string: string) {
     .replaceAll('ł', 'l')
 }
 
+export class Highlighted {
+
+  private normalizedString: string
+  private substring: string = ''
+  private normalizedSubstring: string = ''
+  private computedIntervals: HighlightedIntervals | null = null
+
+  constructor(public readonly text: string) {
+    this.normalizedString = normalize(text)
+  }
+
+  setSubstring(substring: string, lazy = true) {
+    if (this.substring === substring) return
+
+    this.substring = substring
+    this.computedIntervals = null
+    this.normalizedSubstring = ''
+    if (!lazy) this.compute()
+  }
+
+  private compute() {
+    this.normalizedSubstring = normalize(this.substring)
+
+    let searchIndex = 0
+    let matches: number[] = []
+    for (let i = 0; i < this.normalizedString.length; i++) {
+      if (this.normalizedString[i] === this.normalizedSubstring[searchIndex]) {
+        matches.push(i)
+        searchIndex++
+        if (searchIndex === this.normalizedSubstring.length) {
+          this.computedIntervals = arrayToIntervaledArray(matches)
+          return
+        }
+      }
+    }
+  }
+
+  get intervals(): HighlightedIntervals {
+    if (!this.computedIntervals) this.compute()
+    return this.computedIntervals ?? []
+  }
+
+  get highlightedString(): HighlightedString {
+    return { text: this.text, highlight: this.computedIntervals || [] }
+  }
+}
+
 export function highlight(string: string, substring: string): HighlightedString {
   if (string.trim().length === 0) return { text: string, highlight: [] }
 
