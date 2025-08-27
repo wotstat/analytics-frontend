@@ -1,5 +1,8 @@
 import { DefineComponent } from 'vue'
 
+/**
+ * InstanceType<T> for Generic components.
+ */
 export type ComponentInstance<T> = T extends new (...args: any[]) => infer R
   ? R
   : T extends (...args: any[]) => infer R
