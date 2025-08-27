@@ -99,18 +99,73 @@ function selectRegion(e: MouseEvent, region: string) {
 }
 
 const prepared = computed(() => {
+
+  function parseVersion(version: string) {
+    const parts = version.match(/v\.(\d+)\.(\d+)\.(\d+)\.(\d+) #(\d+)/)
+    if (!parts) return null
+
+    return {
+      version: parseInt(parts[1]),
+      major: parseInt(parts[2]),
+      minor: parseInt(parts[3]),
+      patch: parseInt(parts[4]),
+      hash: parseInt(parts[5])
+    }
+  }
+
   return props.versionList.map(item => ({
     region: item.region,
+    parsedVersion: parseVersion(item.version),
     version: item.version,
     highlighted: new Highlighted(item.version)
   }))
 })
 
 const grouped = computed(() => {
-  return [{
-    header: 'Версии',
-    lines: prepared.value
-  }]
+
+  const regions = new Set(prepared.value.map(v => v.region))
+
+  const versions = new Map<string, Set<string>>()
+  for (const version of prepared.value) {
+    const key = `${version.parsedVersion!.version}.${version.parsedVersion!.major}`
+    if (versions.has(version.region)) versions.get(version.region)?.add(key)
+    else versions.set(version.region, new Set([key]))
+  }
+
+  const versionsResult = [...versions.entries()].flatMap(([region, versionSet]) => [...versionSet.values()].map(v => ({
+    region,
+    version: v,
+    highlighted: new Highlighted(v)
+  })))
+
+  const patches = new Map<string, Set<string>>()
+  for (const version of prepared.value) {
+    const key = `${version.parsedVersion!.version}.${version.parsedVersion!.major}.${version.parsedVersion!.minor}`
+    if (patches.has(version.region)) patches.get(version.region)?.add(key)
+    else patches.set(version.region, new Set([key]))
+  }
+
+  const patchesResult = [...patches.entries()].flatMap(([region, versionSet]) => [...versionSet.values()].map(v => ({
+    region,
+    version: v,
+    highlighted: new Highlighted(v)
+  })))
+
+
+  return [
+    {
+      header: 'Версии',
+      lines: versionsResult
+    },
+    {
+      header: 'Патчи',
+      lines: patchesResult
+    },
+    {
+      header: 'Микропатчи',
+      lines: prepared.value
+    }
+  ]
 })
 
 const displaySections = computed(() => {
@@ -190,7 +245,7 @@ const delegate: TableViewDelegate = {
     return { cell, reusableKey: VersionLine.reusableKey }
   },
 
-  heightForHeaderInSection: (_, section) => 33,
+  heightForHeaderInSection: (_, section) => 23,
   headerCellForSection: (table, section) => {
     const cell = table.getReusable<HeaderLine>(HeaderLine.reusableKey)
     cell.setTitle(sections[section].header)
@@ -291,6 +346,7 @@ const delegate: TableViewDelegate = {
       margin-right: -11.5px;
       margin-left: -10px;
       user-select: none;
+      padding-top: 5px;
     }
 
 
@@ -331,13 +387,28 @@ const delegate: TableViewDelegate = {
         }
 
         &.selected::before {
-          background: linear-gradient(90deg, #0182faa8, transparent) !important;
+          background: linear-gradient(90deg, #0182fa8c, transparent) !important;
         }
 
         p {
           .highlight {
             color: var(--blue-thin-color);
           }
+        }
+      }
+
+      .scroll {
+        .header-line {
+          position: sticky;
+          top: 0px;
+          background: #383838;
+          padding: 3px 10px;
+          height: 17px;
+          display: flex;
+          align-items: center;
+          margin-right: 3px;
+          margin-left: 3px;
+          border-radius: 5px;
         }
       }
     }
