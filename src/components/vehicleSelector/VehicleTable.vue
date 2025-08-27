@@ -31,8 +31,8 @@ import { type ComponentInstance } from '@/composition/utils/ComponentInstance'
 
 import { type VehicleLineData, VehicleLine as VehicleLineCell } from './VehicleLine.ts'
 import { TableViewDelegate } from '../tableView/tableView/TableView.ts'
-import { HeaderLine } from './HeaderLine.ts'
-import { FooterLine } from './FooterLine.ts'
+import { HeaderLine } from '../tableView/tableView/default/HeaderLine.ts'
+import { FooterLine } from '../tableView/tableView/default/FooterLine.ts'
 
 
 const table = ref<ComponentInstance<typeof TableView> | null>(null)
@@ -51,7 +51,10 @@ const scrollVelocity = ref(0)
 
 const target = computed(() => props.displaySections)
 
-watch(() => target.value.length, () => table.value?.scrollTo({ section: 0, row: 0 }, 'instant'))
+watch(() => target.value, () => {
+  table.value?.dataDidUpdate()
+  table.value?.scrollTo({ section: 0, row: 0 }, 'instant')
+})
 
 const isFastScroll = computed((old) => {
   const velocity = Math.abs(scrollVelocity.value)
@@ -197,10 +200,6 @@ const delegate: TableViewDelegate = {
   @include vehicleLine.vehicleLine;
 
   .header-line {
-    padding: 10px 10px 3px 10px;
-    height: 20px;
-    z-index: 2;
-
     background-color: #2a2a2a;
     border-bottom: 1px solid #ffffff18;
     // background: linear-gradient(180deg, #2a2a2a 40%, #2a2a2a53);

@@ -8,43 +8,39 @@
       </h1>
 
       <div class="types mt-font">
-        <div class="type selectable" @click="currentGame = 'Lesta'" :class="currentGame == 'Lesta' ? 'active' : ''">
-          Lesta</div>
-        <div class="type selectable" @click="currentGame = 'WG'" :class="currentGame == 'WG' ? 'active' : ''">
-          WG</div>
+        <button class="type selectable" @click="preferredGame = 'mt'" :class="preferredGame == 'mt' ? 'active' : ''">
+          Lesta
+        </button>
+        <button class="type selectable" @click="preferredGame = 'wot'" :class="preferredGame != 'mt' ? 'active' : ''">
+          WG
+        </button>
         <div class="vr"></div>
-        <div class="type selectable" :class="currentTypes.has(type) ? 'active' : ''" v-for="type in vehicleTypes"
+        <button class="type selectable" :class="currentTypes.has(type) ? 'active' : ''" v-for="type in vehicleTypes"
           @click="e => selectType(e, type)">
           <VehicleTypeComponent :type="type" class="icon" />
-        </div>
+        </button>
       </div>
 
       <div class="nations mt-font">
-        <div class="nation selectable" v-for="nation in (currentGame == 'Lesta' ? mtNations : wotNations)"
+        <button class="nation selectable" v-for="nation in (preferredGame == 'mt' ? mtNations : wotNations)"
           :class="currentNations.has(nation) ? 'active' : ''" @click="e => selectNation(e, nation)">
           <NationComponent :nation="nation" class="flag" />
-        </div>
+        </button>
       </div>
 
       <div class="levels mt-font">
-        <div class="level selectable" :class="currentLevels.has(i + 1) ? 'active' : ''" v-for="(_, i) in new Array(11)"
-          @click="e => selectLevel(e, i + 1)">
+        <button class="level selectable" :class="currentLevels.has(i + 1) ? 'active' : ''"
+          v-for="(_, i) in new Array(11)" @click="e => selectLevel(e, i + 1)">
           {{ numberToRoman(i + 1) }}
-        </div>
-      </div>
-
-      <div class="search">
-        <Search class="search-icon" />
-        <input type="text" placeholder="Поиск по названию" v-model="currentSearch" ref="searchInout" />
-        <button class="clear-input" @click="currentSearch = ''" :class="currentSearch == '' ? 'empty' : ''">
-          <X class="clear-icon" />
         </button>
       </div>
+
+      <SearchLine v-model="currentSearch" />
     </header>
 
     <div class="content">
       <VehicleTable :display-sections="tankToDisplay" ref="vehicleTable" v-model:name-variant="nameVariant"
-        v-model:selected="vehicles" :game="currentGame == 'Lesta' ? 'mt' : 'wot'" />
+        v-model:selected="vehicles" :game="preferredGame == 'wot' ? 'wot' : 'mt'" />
 
       <div class="empty-list" v-if="tankToDisplay.length === 0">
         <h5>Танков не найдено</h5>
@@ -62,20 +58,19 @@ import { useLocalStorage, useMediaQuery } from '@vueuse/core'
 
 import VehicleTable from './VehicleTable.vue'
 
-import Search from '@/assets/icons/search.svg'
-import X from '@/assets/icons/x.svg'
 import Reload from '@/assets/icons/reset.svg'
 import { numberToRoman } from '@/utils'
 import VehicleTypeComponent from '../vehicles/type/VehicleType.vue'
 import { mtNations, Nation, nations, nationsIndexes, type VehicleType, vehicleTypes, wotNations } from '@/utils/wot'
 import NationComponent from '../vehicles/nation/Nation.vue'
+import SearchLine from '../searchLine/SearchLine.vue'
+import { preferredGame } from '@/utils/globalPreferred'
 
 
 const searchInout = ref<HTMLInputElement | null>(null)
 const vehicleTable = ref<InstanceType<typeof VehicleTable> | null>(null)
 
 const currentSearch = ref('')
-const currentGame = useLocalStorage<'Lesta' | 'WG'>('preferred-game-variant', 'Lesta')
 const currentLevels = ref(new Set<number>())
 const currentTypes = ref(new Set<VehicleType>())
 const currentNations = ref(new Set<Nation>())
@@ -204,7 +199,7 @@ const tankToDisplay = computed(() => {
 
   const filteredGroups = groupedList.value.map(tankList => {
 
-    const targetRegion = currentGame.value == 'Lesta' ? 'RU' : 'EU'
+    const targetRegion = preferredGame.value == 'mt' ? 'RU' : 'EU'
     const data = tankList.data
 
     const prefiltered = data
@@ -382,6 +377,10 @@ function reset() {
       }
     }
 
+    button {
+      border: none;
+    }
+
     .selectable {
       background-color: rgba(255, 255, 255, 0.08);
       border-radius: 5px;
@@ -479,72 +478,6 @@ function reset() {
 
         .icon {
           height: 14px;
-        }
-      }
-    }
-
-    .search {
-      width: 100%;
-      background-color: rgba(255, 255, 255, 0.05);
-      border-radius: 5px;
-      display: flex;
-      align-items: center;
-      height: 30px;
-
-      input {
-        border: none;
-        background-color: transparent;
-        flex: 1;
-        height: 100%;
-        font-size: 14px;
-        padding: 0;
-      }
-
-      .search-icon {
-        height: 15px;
-        margin: 0 8px;
-        fill: currentColor;
-      }
-
-      .clear-input {
-        padding: 5px;
-        margin: 0 2px;
-        background-color: #d1d1d100;
-        border: none;
-        position: relative;
-        cursor: pointer;
-        transition: opacity 0.2s;
-
-        &.empty {
-          display: none;
-          opacity: 0;
-        }
-
-        &:not(.empty):hover {
-          .clear-icon {
-            color: #d1d1d1;
-          }
-        }
-
-        .clear-icon {
-          display: block;
-          height: 11px;
-          fill: currentColor;
-        }
-
-        &::before {
-          content: '';
-          position: absolute;
-          inset: 2px;
-          background-color: rgba(255, 255, 255, 0);
-          border-radius: 20px;
-          transition: background-color 0.2s;
-        }
-
-        &:hover {
-          &::before {
-            background-color: rgba(255, 255, 255, 0.05);
-          }
         }
       }
     }

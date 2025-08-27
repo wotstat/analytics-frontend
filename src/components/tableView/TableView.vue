@@ -4,31 +4,31 @@
 </template>
 
 
-<script setup lang="ts" generic="T">
+<script setup lang="ts">
 import { onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import { IndexPath, TableView, TableViewDelegate } from './tableView/TableView.ts'
 
 const reusableTable = ref<HTMLElement | null>(null)
 
 const props = defineProps<{
-  data: T[],
   backgroundColor?: string,
   delegate: TableViewDelegate
 }>()
 
+let reusableTableController: TableView | null = null
+
 defineExpose({
+  reusableTable: reusableTableController,
+  dataDidUpdate: () => {
+    reusableTableController?.dataDidUpdate()
+  },
   scrollTo: (indexPath: IndexPath, behavior: ScrollBehavior) => {
     reusableTableController?.scrollTo(indexPath, behavior)
   },
 })
 
-let reusableTableController: TableView | null = null
 onMounted(() => {
   reusableTableController = new TableView(reusableTable.value!, props.delegate)
-})
-
-watch(() => props.data, () => {
-  reusableTableController?.dataDidUpdate()
 })
 
 onUnmounted(() => {

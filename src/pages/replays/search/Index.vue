@@ -1,8 +1,26 @@
 <template>
   <h2>Поиск реплеев</h2>
-  <div class="tank-select">
-    <p @click="displayPopup = true">Танк:</p>
-    <VehicleSelectorBadges v-model="selectedVehicle" v-model:display-popup="displayPopup" />
+  <div class="filter">
+    <div class="left">
+      <div class="arena-select">
+        Карта:
+      </div>
+      <div class="tank-select badge-selector">
+        <p>Танк:</p>
+        <VehicleSelectorBadges v-model="selectedVehicle" />
+      </div>
+    </div>
+    <div class="separator vertical"></div>
+    <div class="right">
+      <div class="game-select">
+        Игра:
+        <GameSelector />
+      </div>
+      <div class="game-version badge-selector">
+        <p>Версия:</p>
+        <GameVersionSelectorBadges v-model="selectedGameVersion" />
+      </div>
+    </div>
   </div>
   <div class="battles">
     <Battle v-bind="info" />
@@ -17,9 +35,13 @@
 
 <script setup lang="ts">
 
+
 import { ref } from 'vue'
 import Battle from '../shared/Battle.vue'
 import VehicleSelectorBadges from '@/components/vehicleSelector/VehicleSelectorBadges.vue'
+import GameSelector from '@/components/gameSelector/GameSelector.vue'
+import GameVersionSelectorBadges from '@/components/gameVersionSelector/GameVersionSelectorBadges.vue'
+
 
 const info = {
   meta: {
@@ -49,8 +71,7 @@ const info = {
 } as const
 
 const selectedVehicle = ref(new Set<string>())
-
-const displayPopup = ref(false)
+const selectedGameVersion = ref(new Set<string>())
 
 </script>
 
@@ -66,15 +87,32 @@ h2 {
   gap: 1.3em;
 }
 
-.tank-select {
+.filter {
+  display: flex;
+  margin-bottom: 1em;
+
+  .left,
+  .right {
+    flex: 1;
+  }
+
+  .separator.vertical {
+    width: 1px;
+    background-color: rgb(255, 255, 255, 0.1);
+    margin: 0 1em;
+  }
+
+}
+
+.badge-selector {
   display: flex;
   align-items: baseline;
   font-size: 18px;
-  margin-bottom: 1em;
 
   p {
     padding-right: 0.3em;
   }
-
 }
+
+.tank-select {}
 </style>

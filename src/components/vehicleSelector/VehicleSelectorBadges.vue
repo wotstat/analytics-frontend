@@ -1,58 +1,30 @@
 <template>
-  <div>
-    <VehicleSelector v-model:display-popup="displayPopup" v-model="vehicles" :targetElement="badges"
-      :singleSelect="true">
-      <div class="badges" ref="badges">
-        <Badge :text="getTankName(vehicle, true)" closable v-for="vehicle in [...vehicles]"
-          @close="onRemove(vehicle)" />
-        <button class="select" @click="openSelect">выбрать</button>
-      </div>
-    </VehicleSelector>
-  </div>
+  <BadgesLinePopover :tagToText="t => getTankName(t, true)" v-model="vehicles">
+    <VehiclePopup :tank-list="tankList.data" v-model="vehicles" />
+  </BadgesLinePopover>
 </template>
 
 
 <script setup lang="ts">
-import Badge from '@/components/Badge.vue'
-import VehicleSelector from './VehicleSelector.vue'
-import { ref } from 'vue'
-import { getTankName } from '@/utils/i18n'
+import { getTankName, selectTagVehiclesLocalization } from '@/utils/i18n'
+import BadgesLinePopover from '../badges/BadgesLinePopover.vue'
+import { CACHE_SETTINGS, queryAsync } from '@/db'
+import { Nation } from '@/utils/wot'
+import VehiclePopup from './VehiclePopup.vue'
+
+
+const tankList = queryAsync<{
+  type: 'MT' | 'LT' | 'HT' | 'AT' | 'SPG',
+  tag: string, level: number, short: string, name: string, region: string, nation: Nation
+}>(`
+with
+    tanks as (select tag, type, level, role, nation, region, from LatestBattleVehicleInfo final),
+    locals as (${selectTagVehiclesLocalization})
+select tag, type, role, level, short, name, region, nation
+from tanks
+left any join locals using tag;
+`, { settings: CACHE_SETTINGS })
 
 const vehicles = defineModel<Set<string>>({ default: new Set() })
-const displayPopup = ref<boolean>(false)
-const badges = ref<HTMLElement | null>(null)
-
-function openSelect() {
-  displayPopup.value = !displayPopup.value
-}
-
-function onRemove(tag: string) {
-  vehicles.value.delete(tag)
-}
 
 </script>
-
-
-<style lang="scss" scoped>
-.badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.2em;
-
-
-  .select {
-    padding: 2px 8px;
-    line-height: 1;
-    background-color: rgba(255, 255, 255, 0.1);
-    border: none;
-    transition: background-color 0.2s;
-    font-size: 0.9em;
-    border-radius: 1em;
-
-    &:hover {
-      background-color: rgba(255, 255, 255, 0.2);
-    }
-  }
-
-}
-</style>
