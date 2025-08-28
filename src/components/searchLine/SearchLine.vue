@@ -41,7 +41,7 @@ const value = defineModel<string>({ required: true })
 
   .search-icon {
     height: 15px;
-    min-width: fit-content;
+    min-width: 15px;
     margin: 0 8px;
     fill: currentColor;
   }
