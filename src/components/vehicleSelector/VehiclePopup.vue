@@ -35,7 +35,7 @@
         </button>
       </div>
 
-      <SearchLine v-model="currentSearch" />
+      <SearchLine v-model="currentSearch" autofocus />
     </header>
 
     <div class="content">
@@ -67,7 +67,6 @@ import SearchLine from '../searchLine/SearchLine.vue'
 import { preferredGame } from '@/utils/globalPreferred'
 
 
-const searchInout = ref<HTMLInputElement | null>(null)
 const vehicleTable = ref<InstanceType<typeof VehicleTable> | null>(null)
 
 const currentSearch = ref('')
@@ -84,13 +83,6 @@ const props = defineProps<{
 }>()
 
 const vehicles = defineModel<Set<string>>({ required: true })
-
-const isMobile = useMediaQuery('(hover: hover) and (pointer: fine)')
-
-onMounted(() => {
-  if (isMobile.value) searchInout.value?.focus()
-})
-
 
 const preparedTankList = computed(() => {
   return props.tankList.map(tank => {

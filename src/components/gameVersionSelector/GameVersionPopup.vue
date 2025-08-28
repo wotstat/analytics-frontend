@@ -18,13 +18,17 @@
         </button>
       </div>
 
-      <SearchLine v-model="currentSearch" />
+      <SearchLine v-model="currentSearch" autofocus />
     </header>
 
     <div class="content">
       <div class="separator"></div>
       <div class="table-container deep-nice-scrollbar" :class="{ 'fast-scroll': isFastScroll }">
         <TableView ref="table" backgroundColor="#2a2a2a" :delegate />
+      </div>
+      <div class="empty-list" v-if="displaySections.length === 0">
+        <h5>Танков не найдено</h5>
+        <button @click="currentSearch = ''">Очистить фильтр</button>
       </div>
     </div>
   </div>
@@ -41,8 +45,6 @@ import { TableViewDelegate } from '@/components/tableView/tableView/TableView'
 import { HeaderLine } from '../tableView/tableView/default/HeaderLine'
 import { VersionLine } from './VersionLine'
 import { compareIntervals, Highlighted } from '../highlightString/highlightUtils'
-
-
 
 const props = defineProps<{
   versionList: {
@@ -115,15 +117,12 @@ const prepared = computed(() => {
 
   return props.versionList.map(item => ({
     region: item.region,
-    parsedVersion: parseVersion(item.version),
     version: item.version,
-    highlighted: new Highlighted(item.version)
+    parsedVersion: parseVersion(item.version),
   }))
 })
 
 const grouped = computed(() => {
-
-  const regions = new Set(prepared.value.map(v => v.region))
 
   const versions = new Map<string, Set<string>>()
   for (const version of prepared.value) {
@@ -135,6 +134,7 @@ const grouped = computed(() => {
   const versionsResult = [...versions.entries()].flatMap(([region, versionSet]) => [...versionSet.values()].map(v => ({
     region,
     version: v,
+    extendedTags: [],
     highlighted: new Highlighted(v)
   })))
 
@@ -145,12 +145,32 @@ const grouped = computed(() => {
     else patches.set(version.region, new Set([key]))
   }
 
-  const patchesResult = [...patches.entries()].flatMap(([region, versionSet]) => [...versionSet.values()].map(v => ({
-    region,
-    version: v,
-    highlighted: new Highlighted(v)
-  })))
+  const patchesResult = [...patches.entries()].flatMap(([region, versionSet]) => [...versionSet.values()].map(v => {
 
+    const [version, major, minor] = v.split('.')
+
+    return {
+      region,
+      version: v,
+      extendedTags: [`${version}.${major}`],
+      highlighted: new Highlighted(v)
+    }
+  }))
+
+
+  const micropatches = prepared.value.map(v => {
+    const p = v.parsedVersion!
+    const version = `${p.version}.${p.major}.${p.minor}.${p.patch} #${p.hash}`
+    const patchExtends = `${p.version}.${p.major}.${p.minor}`
+    const versionExtends = `${p.version}.${p.major}`
+
+    return {
+      region: v.region,
+      version,
+      extendedTags: [patchExtends, versionExtends],
+      highlighted: new Highlighted(version)
+    }
+  })
 
   return [
     {
@@ -163,7 +183,7 @@ const grouped = computed(() => {
     },
     {
       header: 'Микропатчи',
-      lines: prepared.value
+      lines: micropatches
     }
   ]
 })
@@ -223,9 +243,20 @@ const isFastScroll = computed((old) => {
   return old
 })
 
-function onClick(tag: string) {
+function onClick(tag: string, extendedTags: string[]) {
   if (versions.value?.has(tag)) versions.value?.delete(tag)
-  else versions.value?.add(tag)
+  else {
+    const isExtended = extendedTags.some(t => versions.value?.has(t))
+    if (!isExtended) versions.value?.add(tag)
+
+    for (const section of sections) {
+      for (const line of section.lines) {
+        if (line.extendedTags.includes(tag)) {
+          versions.value?.delete(line.version)
+        }
+      }
+    }
+  }
 }
 
 const delegate: TableViewDelegate = {
@@ -241,16 +272,18 @@ const delegate: TableViewDelegate = {
   heightForCellByIndex: (_, index) => 35,
   cellForIndex: (table, index) => {
     const cell = table.getReusable<VersionLine>(VersionLine.reusableKey)
-    cell.configure(sections[index.section].lines[index.row])
+    cell.configure(sections[index.section].lines, index)
     return { cell, reusableKey: VersionLine.reusableKey }
   },
 
-  heightForHeaderInSection: (_, section) => 23,
+  heightForHeaderInSection: (_, section) => 35,
   headerCellForSection: (table, section) => {
     const cell = table.getReusable<HeaderLine>(HeaderLine.reusableKey)
     cell.setTitle(sections[section].header)
     return { header: cell, reusableKey: HeaderLine.reusableKey }
   },
+
+  heightForFooterInSection: (_, section) => sections.length - 1 == section ? 10 : 0,
 
   onScrollVelocityChange: (_, velocity) => scrollVelocity.value = velocity
 }
@@ -260,7 +293,7 @@ const delegate: TableViewDelegate = {
 
 <style lang="scss" scoped>
 .game-version-selector-popup-container {
-  padding: 15px;
+  padding: 10px;
   padding-bottom: 0;
 
   header {
@@ -334,6 +367,8 @@ const delegate: TableViewDelegate = {
   }
 
   .content {
+    position: relative;
+
     .separator {
       height: 1px;
       background-color: rgba(255, 255, 255, 0.1);
@@ -341,14 +376,12 @@ const delegate: TableViewDelegate = {
     }
 
     .table-container {
-      height: 250px;
+      height: 300px;
       position: relative;
-      margin-right: -11.5px;
-      margin-left: -10px;
+      margin-right: -7px;
+      margin-left: 0px;
       user-select: none;
-      padding-top: 5px;
     }
-
 
     :deep(.table-container) {
       &.fast-scroll {
@@ -362,32 +395,24 @@ const delegate: TableViewDelegate = {
       .line {
         display: flex;
         white-space: nowrap;
-        height: 34px;
+        height: 35px;
         align-items: center;
-        border-top: 1px solid #d0d0d008;
         position: relative;
         cursor: pointer;
-        margin: 0 3px;
         padding-left: 7px;
         padding-right: 3px;
-        z-index: 1;
 
-        &::before {
-          content: '';
-          position: absolute;
-          inset: 0 0px 0 0px;
-          border-radius: 6px;
-          z-index: -1;
-        }
-
-        @media (hover: hover) and (pointer: fine) {
-          &:hover::before {
-            background: rgba(255, 255, 255, 0.1);
+        &.show-separator {
+          &::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -0.5px;
+            height: 1px;
+            z-index: 1;
+            background-color: rgb(75, 75, 75);
           }
-        }
-
-        &.selected::before {
-          background: linear-gradient(90deg, #0182fa8c, transparent) !important;
         }
 
         p {
@@ -395,15 +420,71 @@ const delegate: TableViewDelegate = {
             color: var(--blue-thin-color);
           }
         }
+
+        &.selected:not(.extended) {
+          background: #2c82e7;
+
+          &.show-separator {
+            &::after {
+              background-color: #5c9bec;
+            }
+          }
+
+          p {
+            color: white;
+
+            .highlight {
+              color: white;
+              font-weight: bold;
+            }
+          }
+        }
+
+        &.extended {
+          background: #2e3d4f;
+          cursor: auto;
+
+          &.show-separator {
+            &::after {
+              background-color: #445161;
+            }
+          }
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+          &:hover {
+            background: rgba(255, 255, 255, 0.1);
+          }
+
+          &.selected:hover {
+            background: #3b90f2;
+          }
+
+          &.extended:hover {
+            background: #2e3d4f;
+          }
+        }
+      }
+
+      .content-container {
+        overflow: hidden;
+        border-radius: 6px;
+        margin-right: 3px;
+
+        &::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-color: #393939;
+        }
       }
 
       .scroll {
         .header-line {
-          position: sticky;
-          top: 0px;
-          background: #383838;
-          padding: 3px 10px;
-          height: 17px;
+          box-sizing: border-box;
+          padding-bottom: 4px;
+          padding-left: 4px;
+          height: 35px;
           display: flex;
           align-items: center;
           margin-right: 3px;
@@ -411,6 +492,34 @@ const delegate: TableViewDelegate = {
           border-radius: 5px;
         }
       }
+    }
+
+    .empty-list {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+
+      h5 {
+        margin: 0;
+        font-size: 1em;
+      }
+
+      button {
+        background-color: transparent;
+
+        color: var(--blue-thin-color);
+        font-size: 0.9em;
+        border: none;
+        transition: color 0.2s;
+
+        &:hover {
+          color: var(--blue-thin-color-hover);
+        }
+      }
+
     }
   }
 }

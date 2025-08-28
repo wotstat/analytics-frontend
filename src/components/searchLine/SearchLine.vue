@@ -1,7 +1,7 @@
 <template>
   <div class="search">
     <Search class="search-icon" />
-    <input type="text" :placeholder="placeholder ?? 'Поиск'" v-model="value" ref="searchInout" />
+    <input name="search" type="text" :placeholder="placeholder ?? 'Поиск'" v-model="value" ref="searchInput" />
     <button class="clear-input" @click="value = ''" :class="value == '' ? 'empty' : ''">
       <X class="clear-icon" />
     </button>
@@ -11,13 +11,25 @@
 
 <script setup lang="ts">
 
+import { useMediaQuery } from '@vueuse/core'
 import Search from './assets/search.svg'
 import X from './assets/x.svg'
+import { onMounted, ref } from 'vue'
+
+const searchInput = ref<HTMLInputElement | null>(null)
 
 const props = defineProps<{
   placeholder?: string
+  autofocus?: boolean
 }>()
+
 const value = defineModel<string>({ required: true })
+
+const isPc = useMediaQuery('(hover: hover) and (pointer: fine)')
+
+onMounted(() => {
+  if (isPc.value && props.autofocus) searchInput.value?.focus()
+})
 </script>
 
 
