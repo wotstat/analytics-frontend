@@ -96,12 +96,7 @@ const delegate: TableViewDelegate = {
     return { header: cell, reusableKey: HeaderLine.reusableKey }
   },
 
-  heightForFooterInSection: (_, section) => 20,
-  footerCellForSection: (_, section) => {
-    const cell = new FooterLine()
-    cell.setTitle(`Footer for section ${section}`)
-    return cell
-  },
+  heightForFooterInSection: (_, section) => section == props.displaySections.length - 1 ? 10 : 15,
 
   onScrollVelocityChange: (_, velocity) => scrollVelocity.value = velocity
 }
@@ -200,38 +195,15 @@ const delegate: TableViewDelegate = {
   @include vehicleLine.vehicleLine;
 
   .header-line {
-    background-color: #2a2a2a;
+    background-color: var(--background-color);
     border-bottom: 1px solid #ffffff18;
-    // background: linear-gradient(180deg, #2a2a2a 40%, #2a2a2a53);
-    background-color: #fb30be2c;
+    padding: 10px 7px 3px 7px;
+    margin: 0 3px;
+    position: sticky;
+    top: 0;
 
     h5 {
       margin: 0;
-    }
-  }
-
-  .footer-line {
-    padding: 0 10px 0 10px;
-    height: 20px;
-    font-size: 14px;
-    z-index: 2;
-
-    background-color: #0182fa44;
-
-    p {
-      margin: 0;
-    }
-  }
-
-  .scroll {
-    .header-line {
-      position: sticky;
-      top: 0;
-    }
-
-    .footer-line {
-      position: sticky;
-      bottom: 0;
     }
   }
 }

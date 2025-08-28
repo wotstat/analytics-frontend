@@ -1,6 +1,6 @@
 <template>
   <div class="badges">
-    <Badge :text="tagToText?.(tag) ?? tag" closable v-for="tag in [...selected]" @close="onRemove(tag)" />
+    <Badge :text="tagToText?.(tag) ?? tag" :key="tag" closable v-for="tag in [...selected]" @close="onRemove(tag)" />
     <button class="select" @click="openSelect" v-if="selected.size == 0">
       <p>выбрать</p>
     </button>

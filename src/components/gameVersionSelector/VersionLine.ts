@@ -1,11 +1,12 @@
 import { getHighlightedTextParts, Highlighted } from '../highlightString/highlightUtils'
 
 import { Ref, watch } from 'vue'
-import { TableCell } from '../tableView/tableView/TableView'
+import { IndexPath, TableCell } from '../tableView/tableView/TableView'
 
 
 type LineData = {
   version: string
+  extendedTags: string[]
   highlighted: Highlighted
 }
 
@@ -18,9 +19,12 @@ export class VersionLine implements TableCell {
   private readonly highlightedName: HTMLParagraphElement
 
   private currentTag: string | null = null
+  private extendedTags: string[] = []
+  private index: IndexPath | null = null
+  private lines: LineData[] | null = null
   private unwatch: (() => void)
 
-  constructor(private onClick: (tag: string) => void, private selected: Ref<Set<string>>) {
+  constructor(private onClick: (tag: string, extendedTags: string[]) => void, private selected: Ref<Set<string>>) {
 
     this.root = document.createElement('div')
     this.root.classList.add('line')
@@ -46,8 +50,13 @@ export class VersionLine implements TableCell {
     this.highlightedName.style.display = visible ? '' : 'none'
   }
 
-  configure(data: LineData): void {
+  configure(sectionLines: LineData[], index: IndexPath): void {
+    const data = sectionLines[index.row]
     this.currentTag = data.version
+    this.extendedTags = data.extendedTags
+    this.index = index
+    this.lines = sectionLines
+
     this.name.textContent = data.highlighted.text
 
     this.setHighlightedVisible(data.highlighted.intervals.length > 0)
@@ -62,12 +71,13 @@ export class VersionLine implements TableCell {
     }
 
     this.updateSelectedState()
+    this.updateSeparator()
     this.root.setAttribute('data-tag', data.version)
   }
 
   private onClickListener = () => {
     if (this.currentTag) {
-      this.onClick(this.currentTag)
+      this.onClick(this.currentTag, this.extendedTags)
     }
   }
 
@@ -75,7 +85,19 @@ export class VersionLine implements TableCell {
     if (this.currentTag) {
       const isSelected = this.selected.value.has(this.currentTag)
       this.root.classList.toggle('selected', isSelected)
+      this.root.classList.toggle('extended', this.extendedTags.some(tag => this.selected.value.has(tag)))
     }
+    this.updateSeparator()
+  }
+
+  private updateSeparator(): void {
+    if (this.index === null || this.lines === null || this.currentTag === null) return
+
+    const isSelected = this.selected.value.has(this.currentTag)
+    const nextSelected = this.selected.value.has(this.lines[this.index.row + 1]?.version)
+    const isLastLine = this.index.row === this.lines.length - 1
+    const hide = isSelected && !nextSelected || !isSelected && nextSelected
+    this.root.classList.toggle('show-separator', !isLastLine && !hide)
   }
 
   dispose(): void {
