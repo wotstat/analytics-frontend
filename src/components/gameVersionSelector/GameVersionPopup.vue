@@ -27,7 +27,7 @@
         <TableView ref="table" backgroundColor="#2a2a2a" :delegate />
       </div>
       <div class="empty-list" v-if="displaySections.length === 0">
-        <h5>Танков не найдено</h5>
+        <h5>Ничего не найдено</h5>
         <button @click="currentSearch = ''">Очистить фильтр</button>
       </div>
     </div>

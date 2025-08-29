@@ -14,10 +14,12 @@
     background: var(--background-color, #480039);
     overflow: hidden;
 
-    // background-color: #480039;
-
     &.has-scroll {
       scrollbar-gutter: stable;
+    }
+
+    .sticky-background-fixer {
+      display: none;
     }
   }
 
