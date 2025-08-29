@@ -12,7 +12,7 @@
       </template>
       <h1 class="main-title" v-if="route.meta.customTitle">{{ route.meta.customTitle }}</h1>
 
-      <TankListSetup v-if="!route.meta.hideTankList" />
+      <TankList v-if="!route.meta.hideTankList" />
     </template>
 
     <template #default>
@@ -57,7 +57,7 @@ import { totalRequests, totalElapsed, totalRowsRead } from '@/db'
 import { countLocalize } from '@/utils/i18n'
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import TankListSetup from './shared/tankListSetup/Index.vue'
+import TankList from './shared/tankListSetup/TankList.vue'
 
 import SidebarLayout from '@/components/sidebarLayout/Index.vue'
 import { SidebarLink } from '@/components/sidebarLayout/utils'
