@@ -95,7 +95,7 @@ import { dbIndexToDate, loading, queryAsync, queryComputed, success } from '@/db
 import { ChuckResult } from '@/db/schema'
 import { useLocalStorage } from '@vueuse/core'
 import { computed, ref } from 'vue'
-import Timecodes from '@/components/Timecodes.vue'
+import Timecodes from '../shared/Timecodes.vue'
 
 import CopyIcon from '@/assets/icons/copy.svg'
 

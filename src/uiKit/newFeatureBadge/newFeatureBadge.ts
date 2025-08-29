@@ -2,14 +2,19 @@ import { useLocalStorage } from '@vueuse/core'
 import { computed, Ref, watch } from 'vue'
 import { Directive } from 'vue'
 
-const features = [
+export type Features = 'mod-installer' | 'mt-36-1'
+
+const features: Features[] = [
   'mod-installer',
   'mt-36-1'
-] as const
-
-type Features = typeof features[number];
+]
 
 const visitedFeatures = useLocalStorage('visited-features', new Map<string, boolean>())
+const isFirstVisit = localStorage.getItem('new-feature-already-visit') === null
+if (isFirstVisit) {
+  localStorage.setItem('new-feature-already-visit', 'true')
+  for (const feature of features) setFeatureVisit(feature)
+}
 
 export function setFeatureVisit(feature: Features, visited: boolean = true): void {
   if (visitedFeatures.value.get(feature) === visited) return
