@@ -24,7 +24,7 @@
     <div class="content">
       <div class="separator"></div>
       <div class="table-container deep-nice-scrollbar" :class="{ 'fast-scroll': isFastScroll }">
-        <TableView ref="table" backgroundColor="#2a2a2a" :delegate />
+        <TableView ref="table" :delegate />
       </div>
       <div class="empty-list" v-if="displaySections.length === 0">
         <h5>Ничего не найдено</h5>
@@ -381,6 +381,8 @@ const delegate: TableViewDelegate = {
       margin-right: -7px;
       margin-left: 0px;
       user-select: none;
+
+      --background-color: #2a2a2a;
     }
 
     :deep(.table-container) {

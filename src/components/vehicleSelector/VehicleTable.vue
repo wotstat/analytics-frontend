@@ -16,7 +16,7 @@
     </div>
 
     <div class="table-container deep-nice-scrollbar" :class="{ 'fast-scroll': isFastScroll }">
-      <TableView :data="target" ref="table" backgroundColor="#2a2a2a" :delegate />
+      <TableView ref="table" :delegate />
     </div>
   </div>
 </template>
@@ -180,6 +180,8 @@ const delegate: TableViewDelegate = {
   margin-right: -11.5px;
   margin-left: -10px;
   user-select: none;
+
+  --background-color: #2a2a2a;
 }
 
 

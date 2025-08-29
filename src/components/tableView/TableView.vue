@@ -5,7 +5,7 @@
 
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { IndexPath, TableView, TableViewDelegate } from './tableView/TableView.ts'
 
 const reusableTable = ref<HTMLElement | null>(null)
