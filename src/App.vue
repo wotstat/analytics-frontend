@@ -20,8 +20,8 @@
 
 <script setup lang="ts">
 import { RouterView, useRoute } from 'vue-router'
-import Header from './components/header/Header.vue'
-import HeaderSpacer from './components/header/HeaderSpacer.vue'
+import Header from './pages/shared/header/Header.vue'
+import HeaderSpacer from './pages/shared/header/HeaderSpacer.vue'
 import { headerHeight } from './composition/useAdditionalHeaderHeight'
 import ContextMenuRoot from '@/uiKit/contextMenu/ContextMenuRoot.vue'
 import FocusEffectRoot from './components/focusEffect/FocusEffectRoot.vue'
