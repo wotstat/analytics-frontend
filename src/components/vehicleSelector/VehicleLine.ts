@@ -1,5 +1,5 @@
 import { numberToRoman } from '@/utils'
-import { getHighlightedTextParts, Highlighted, HighlightedString } from '../highlightString/highlightUtils'
+import { getHighlightedTextParts, Highlighted } from '@/uiKit/highlightString/highlightUtils'
 import { vehicleTypeToImage } from '../vehicles/type/vehicleTypeToImage'
 import { smallVehiclesAtlasMt, smallVehiclesAtlasWot, tagToImageName } from '../vehicles/vehicle/utils'
 

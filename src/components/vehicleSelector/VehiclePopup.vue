@@ -51,10 +51,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { tankTagToReadable } from '@/utils/i18n'
-import { Highlighted, compareIntervals } from '../highlightString/highlightUtils'
-import { useLocalStorage, useMediaQuery } from '@vueuse/core'
+import { Highlighted, compareIntervals } from '@/uiKit/highlightString/highlightUtils'
+import { useLocalStorage } from '@vueuse/core'
 
 import VehicleTable from './VehicleTable.vue'
 

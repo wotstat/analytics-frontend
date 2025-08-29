@@ -44,7 +44,7 @@ import TableView from '@/components/tableView/TableView.vue'
 import { TableViewDelegate } from '@/components/tableView/tableView/TableView'
 import { HeaderLine } from '../tableView/tableView/default/HeaderLine'
 import { VersionLine } from './VersionLine'
-import { compareIntervals, Highlighted } from '../highlightString/highlightUtils'
+import { compareIntervals, Highlighted } from '@/uiKit/highlightString/highlightUtils'
 
 const props = defineProps<{
   versionList: {

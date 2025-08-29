@@ -1,4 +1,4 @@
-import { getHighlightedTextParts, Highlighted } from '../highlightString/highlightUtils'
+import { getHighlightedTextParts, Highlighted } from '@/uiKit/highlightString/highlightUtils'
 
 import { Ref, watch } from 'vue'
 import { IndexPath, TableCell } from '../tableView/tableView/TableView'
