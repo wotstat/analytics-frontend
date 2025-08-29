@@ -110,7 +110,7 @@ import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/comp
 import { toRelative, toPercent } from '@/utils'
 import { useFixedSpaceProcessor, usePercentProcessor } from '@/composition/usePercentProcessor'
 import { shellNames } from '@/utils/wot'
-import QueryPreserveRouterLink from '@/components/QueryPreserveRouterLink.vue'
+import QueryPreserveRouterLink from '@/pages/shared/sidebarLayout/QueryPreserveRouterLink.vue'
 import { bestMV } from '@/db/schema'
 import { useMeta } from '@/composition/useMeta'
 
