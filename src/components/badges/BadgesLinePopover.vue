@@ -15,7 +15,7 @@
 import { ref } from 'vue'
 import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight'
 import BadgesLine from './BadgesLine.vue'
-import PopoverAutoClose from '../popover/PopoverAutoClose.vue'
+import PopoverAutoClose from '@/uiKit/popover/PopoverAutoClose.vue'
 
 const props = defineProps<{
   tagToText?: (tag: string) => string
