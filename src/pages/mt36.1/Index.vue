@@ -209,17 +209,17 @@
 
 <script setup lang="ts">
 import { setFeatureVisit } from '@/components/newFeatureBadge/newFeatureBadge'
-import TeamLevelTable from '@/components/widgets/TeamLevelTable.vue'
+import TeamLevelTable from '@/pages/infographics/shared/widgets/TeamLevelTable.vue'
 import { CACHE_SETTINGS, LONG_CACHE_SETTINGS, query, queryComputed } from '@/db'
 import { computed, ref, watch, watchEffect } from 'vue'
 import LevelSwitcher from './LevelSwitcher.vue'
 import { useDebounce, useElementHover } from '@vueuse/core'
-import { ShadowBar } from '@/components/widgets/charts/ShadowBarController'
-import { ShadowLine } from '@/components/widgets/charts/ShadowLineController'
+import { ShadowBar } from '@/pages/infographics/shared/widgets/charts/ShadowBarController'
+import { ShadowLine } from '@/pages/infographics/shared/widgets/charts/ShadowLineController'
 import { ChartProps } from 'vue-chartjs'
 
 import DropDown from '@/components/dropdown/DropDown.vue'
-import ShotsCircle from '@/components/widgets/ShotsCircle.vue'
+import ShotsCircle from '@/pages/infographics/shared/widgets/ShotsCircle.vue'
 import { spaceProcessor } from '@/composition/processors/useSpaceProcessor'
 import { numberToRoman, sec2minsec } from '@/utils'
 import { roundProcessor, usePercentProcessor } from '@/composition/usePercentProcessor'

@@ -60,7 +60,7 @@ import { getBestLocalization } from '@/utils/i18n'
 import { objectEntries, pausableWatch } from '@vueuse/core'
 import FallbackImg from '@/uiKit/fallbackImg/FallbackImg.vue'
 import HorizontalScrollItems from '@/components/shared/HorizontalScrollItems.vue'
-import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue'
+import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
 import { useQueryParamStorage } from '@/composition/useQueryParamStorage'
 
 import NoImageLB from './noImageLB.png'

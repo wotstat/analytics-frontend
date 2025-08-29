@@ -99,13 +99,13 @@
 </template>
 
 <script setup lang="ts">
-import GenericInfo from '@/components/widgets/GenericInfo.vue'
+import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import { queryAsync, queryAsyncFirst } from '@/db'
 import { computed, ref, watchEffect } from 'vue'
 import { useElementVisibility } from '@vueuse/core'
-import MiniBar from '@/components/widgets/charts/MiniBar.vue'
-import GenericInfoQuery from '@/components/widgets/GenericInfoQuery.vue'
-import StillSurviveDistribution from '@/components/widgets/StillSurviveDistribution.vue'
+import MiniBar from '@/pages/infographics/shared/widgets/charts/MiniBar.vue'
+import GenericInfoQuery from '@/pages/infographics/shared/widgets/GenericInfoQuery.vue'
+import StillSurviveDistribution from '@/pages/infographics/shared/widgets/StillSurviveDistribution.vue'
 import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams'
 import { toRelative, toPercent } from '@/utils'
 import { useFixedSpaceProcessor, usePercentProcessor } from '@/composition/usePercentProcessor'

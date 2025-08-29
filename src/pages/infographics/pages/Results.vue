@@ -159,16 +159,16 @@
 </template>
 
 <script setup lang="ts">
-import GenericInfo from '@/components/widgets/GenericInfo.vue'
-import MiniBar from '@/components/widgets/charts/MiniBar.vue'
+import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
+import MiniBar from '@/pages/infographics/shared/widgets/charts/MiniBar.vue'
 import { LONG_CACHE_SETTINGS, Status, mergeStatuses, queryAsync, queryAsyncFirst, queryComputed } from '@/db'
 import { useElementVisibility, useLocalStorage } from '@vueuse/core'
 import { computed, ref } from 'vue'
 import { toRelative, toPercent } from '@/utils'
-import PlayerResultTable from '@/components/widgets/PlayerResultTable.vue'
+import PlayerResultTable from '@/pages/infographics/shared/widgets/PlayerResultTable.vue'
 import { usePercentProcessor, useFixedProcessor, useFixedSpaceProcessor } from '@/composition/usePercentProcessor'
 import { getQueryStatParamsCache, useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams'
-import TeamLevelTable from '@/components/widgets/TeamLevelTable.vue'
+import TeamLevelTable from '@/pages/infographics/shared/widgets/TeamLevelTable.vue'
 import { countLocalize } from '@/utils/i18n'
 import { TooltipItem } from 'chart.js'
 import ArrowDownIcon from '@/assets/icons/arrow-down.svg'

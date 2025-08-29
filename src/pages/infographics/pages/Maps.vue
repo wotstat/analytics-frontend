@@ -18,7 +18,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useElementVisibility } from '@vueuse/core'
-import MapsTable from '@/components/widgets/MapsTable.vue'
+import MapsTable from '@/pages/infographics/shared/widgets/MapsTable.vue'
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams'
 import { useMeta } from '@/composition/useMeta'
 

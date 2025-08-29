@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 
-import { ShadowLine } from '@/components/widgets/charts/ShadowLineController'
+import { ShadowLine } from '@/pages/infographics/shared/widgets/charts/ShadowLineController'
 import { computed, watch } from 'vue'
 import { ChartProps } from 'vue-chartjs'
 import { bloggerNamesArray } from './bloggerNames'

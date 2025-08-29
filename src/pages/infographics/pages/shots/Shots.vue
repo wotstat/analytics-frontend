@@ -73,9 +73,9 @@
 </template>
 
 <script setup lang="ts">
-import ShotsCircle from '@/components/widgets/ShotsCircle.vue'
-import GenericInfo from '@/components/widgets/GenericInfo.vue'
-import ShotDistribution from '@/components/widgets/ShotDistribution.vue'
+import ShotsCircle from '@/pages/infographics/shared/widgets/ShotsCircle.vue'
+import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
+import ShotDistribution from '@/pages/infographics/shared/widgets/ShotDistribution.vue'
 import { useFixedSpaceProcessor, usePercentProcessor } from '@/composition/usePercentProcessor'
 import { SHORT_CACHE_SETTINGS, queryAsyncFirst } from '@/db'
 import { computed, ref } from 'vue'

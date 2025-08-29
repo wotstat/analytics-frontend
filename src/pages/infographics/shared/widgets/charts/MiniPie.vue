@@ -15,7 +15,7 @@
 import { computed, nextTick, onActivated, onDeactivated, ref } from 'vue'
 import { type ChartProps } from 'vue-chartjs'
 import { type TooltipCallbacks } from 'chart.js'
-import { ShadowPie } from '@/components/widgets/charts/ShadowPieController'
+import { ShadowPie } from '@/pages/infographics/shared/widgets/charts/ShadowPieController'
 import { BloomColorVariant, getColor } from '../../bloomColors'
 import ServerStatusWrapper from '../../ServerStatusWrapper.vue'
 import { Status } from '@/db'

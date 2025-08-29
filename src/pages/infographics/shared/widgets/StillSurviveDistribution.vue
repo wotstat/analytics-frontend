@@ -12,7 +12,7 @@
 
 <script setup lang="ts">
 
-import { ShadowLine } from '@/components/widgets/charts/ShadowLineController'
+import { ShadowLine } from '@/pages/infographics/shared/widgets/charts/ShadowLineController'
 import { computed, ref } from 'vue'
 import { ChartProps } from 'vue-chartjs'
 import { BloomColor } from '../bloomColors'

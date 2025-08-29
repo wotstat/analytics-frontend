@@ -15,7 +15,7 @@
 
 
 <script setup lang="ts">
-import { ShadowBar } from '@/components/widgets/charts/ShadowBarController'
+import { ShadowBar } from '@/pages/infographics/shared/widgets/charts/ShadowBarController'
 import { computed } from 'vue'
 import { ChartProps } from 'vue-chartjs'
 

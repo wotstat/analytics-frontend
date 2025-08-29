@@ -70,9 +70,9 @@
 </template>
 
 <script setup lang="ts">
-import GenericInfo from '@/components/widgets/GenericInfo.vue'
-import MiniBar from '@/components/widgets/charts/MiniBar.vue'
-import MniiPie from '@/components/widgets/charts/MiniPie.vue'
+import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
+import MiniBar from '@/pages/infographics/shared/widgets/charts/MiniBar.vue'
+import MniiPie from '@/pages/infographics/shared/widgets/charts/MiniPie.vue'
 import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams'
 import { queryAsync, queryAsyncFirst } from '@/db'
 import { useElementVisibility } from '@vueuse/core'

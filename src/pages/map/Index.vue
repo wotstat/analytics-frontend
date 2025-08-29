@@ -168,7 +168,7 @@ import { aranaMinimapUrl, convertCoordinate, loadArenaMeta } from '@/utils/arena
 import { getArenaName } from '@/utils/i18n'
 import { computedAsync, useDebounce, useLocalStorage, useMouseInElement } from '@vueuse/core'
 import { computed, ref, watch, watchEffect } from 'vue'
-import { BloomColor } from '@/components/bloomColors'
+import { BloomColor } from '@/pages/infographics/shared/bloomColors'
 import { Quadtree, Circle } from '@timohausmann/quadtree-ts'
 import { useRoute, useRouter } from 'vue-router'
 

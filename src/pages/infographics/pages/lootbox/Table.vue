@@ -69,7 +69,7 @@
 
 <script lang="ts" setup>
 
-import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue'
+import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
 import TableTitle from './TableTitle.vue'
 import { Status } from '@/db'
 import { computed } from 'vue'
