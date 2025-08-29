@@ -28,7 +28,7 @@ const value = defineModel<string>({ required: true })
 const isPc = useMediaQuery('(hover: hover) and (pointer: fine)')
 
 onMounted(() => {
-  if (isPc.value && props.autofocus) searchInput.value?.focus()
+  if (isPc.value && props.autofocus) setTimeout(() => searchInput.value?.focus(), 0)
 })
 </script>
 

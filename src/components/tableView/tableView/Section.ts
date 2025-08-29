@@ -16,14 +16,15 @@ export class Section {
 
   constructor() {
     this.root = divWithClass('section')
-    this.headerContainer = divWithClass('header-container', this.root)
-    this.footerContainer = divWithClass('footer-container', this.root)
-    this.contentContainer = divWithClass('content-container', this.root)
-    this.root.appendChild(this.contentContainer)
 
     const stickyBackgroundFixer = divWithClass('sticky-background-fixer', this.root)
     this.headerBackground = divWithClass('header-background', stickyBackgroundFixer)
     this.footerBackground = divWithClass('footer-background', stickyBackgroundFixer)
+
+    this.headerContainer = divWithClass('header-container', this.root)
+    this.footerContainer = divWithClass('footer-container', this.root)
+    this.contentContainer = divWithClass('content-container', this.root)
+    this.root.appendChild(this.contentContainer)
   }
 
   setup(index: number,

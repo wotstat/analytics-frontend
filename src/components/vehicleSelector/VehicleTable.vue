@@ -32,7 +32,6 @@ import { type ComponentInstance } from '@/composition/utils/ComponentInstance'
 import { type VehicleLineData, VehicleLine as VehicleLineCell } from './VehicleLine.ts'
 import { TableViewDelegate } from '../tableView/tableView/TableView.ts'
 import { HeaderLine } from '../tableView/tableView/default/HeaderLine.ts'
-import { FooterLine } from '../tableView/tableView/default/FooterLine.ts'
 
 
 const table = ref<ComponentInstance<typeof TableView> | null>(null)
@@ -51,9 +50,11 @@ const scrollVelocity = ref(0)
 
 const target = computed(() => props.displaySections)
 
-watch(() => target.value, () => {
+watch(() => target.value, (value, old) => {
   table.value?.dataDidUpdate()
-  table.value?.scrollTo({ section: 0, row: 0 }, 'instant')
+  if (old.length != value.length || old.some((section, index) => section.lines.length != value[index].lines.length)) {
+    table.value?.scrollTo({ section: 0, row: 0 }, 'instant')
+  }
 })
 
 const isFastScroll = computed((old) => {
