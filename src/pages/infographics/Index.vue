@@ -57,7 +57,7 @@ import { totalRequests, totalElapsed, totalRowsRead } from '@/db'
 import { countLocalize } from '@/utils/i18n'
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import TankListSetup from '@/components/tankListSetup/Index.vue'
+import TankListSetup from './shared/tankListSetup/Index.vue'
 
 import SidebarLayout from '@/components/sidebarLayout/Index.vue'
 import { SidebarLink } from '@/components/sidebarLayout/utils'
