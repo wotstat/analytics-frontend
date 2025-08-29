@@ -12,7 +12,7 @@ import { useDebounce } from '@vueuse/core'
 import { type Range } from 'colorjs.io'
 import { computed, ref, shallowRef, watch, watchEffect } from 'vue'
 import { blur, findIslands } from './utils'
-import { BloomColor } from '@/components/bloomColors'
+import { BloomColor } from '@/pages/infographics/shared/bloomColors'
 
 const renderKey = ref(0)
 

@@ -46,7 +46,7 @@ import { StatParams, whereClause } from '@/composition/useQueryStatParams'
 import { queryAsync, semverCompareStartFrom } from '@/db'
 import { useElementVisibility } from '@vueuse/core'
 import { computed, ref } from 'vue'
-import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue'
+import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
 
 const { params } = defineProps<{
   params?: StatParams

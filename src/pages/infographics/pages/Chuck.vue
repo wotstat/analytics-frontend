@@ -88,8 +88,8 @@
 <script lang="ts" setup>
 import FullScreenCard from '@/components/FullScreenCard.vue'
 import PopupWindow from '@/components/PopupWindow.vue'
-import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue'
-import ChuckTable from '@/components/widgets/ChuckTable.vue'
+import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
+import ChuckTable from '@/pages/infographics/shared/widgets/ChuckTable.vue'
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams'
 import { dbIndexToDate, loading, queryAsync, queryComputed, success } from '@/db'
 import { ChuckResult } from '@/db/schema'

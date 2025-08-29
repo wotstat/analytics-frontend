@@ -21,11 +21,11 @@
 
 
 <script setup lang="ts">
-import GenericInfo from '@/components/widgets/GenericInfo.vue'
+import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import { queryAsyncFirst } from '@/db'
 import { ref } from 'vue'
 import { useElementVisibility } from '@vueuse/core'
-import PlayerCoverageTable from '@/components/widgets/PlayerCoverageTable.vue'
+import PlayerCoverageTable from '@/pages/infographics/shared/widgets/PlayerCoverageTable.vue'
 import { useQueryStatParams, useQueryStatParamsCache, whereClause, whereClauseColumns } from '@/composition/useQueryStatParams'
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor'
 import { bestMV } from '@/db/schema'

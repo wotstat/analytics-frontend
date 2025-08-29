@@ -110,7 +110,7 @@
 </template>
 
 <script lang="ts" setup>
-import GenericInfo from '@/components/widgets/GenericInfo.vue'
+import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import { useFixedSpaceProcessor, useLogProcessor } from '@/composition/usePercentProcessor'
 import { useQueryStatParams, useQueryStatParamsCache } from '@/composition/useQueryStatParams'
 import { Status, dateToDbIndex, queryComputed, queryComputedFirst, success } from '@/db'

@@ -127,19 +127,20 @@
 
 <script lang="ts" setup>
 
-import GenericInfo from '@/components/widgets/GenericInfo.vue'
+
+import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams'
 import { LONG_CACHE_SETTINGS, query, queryAsync, queryComputed } from '@/db'
 import { computed, ref, shallowRef, watch, watchEffect } from 'vue'
 import { VueComponent as Description } from './description.md'
 
 import { type ChartProps } from 'vue-chartjs'
-import { ShadowBar } from '@/components/widgets/charts/ShadowBarController'
-import { setup as setupShadowLine } from '@/components/widgets/charts/ShadowLineController'
-import { getColor } from '@/components/bloomColors'
+import { ShadowBar } from '@/pages/infographics/shared/widgets/charts/ShadowBarController'
+import { setup as setupShadowLine } from '@/pages/infographics/shared/widgets/charts/ShadowLineController'
+import { getColor } from '@/pages/infographics/shared/bloomColors'
 import { useErrorCalculation } from './errorCalculation'
 import { useFixedProcessor, usePercentProcessor } from '@/composition/usePercentProcessor'
-import ServerStatusWrapper from '@/components/ServerStatusWrapper.vue'
+import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
 import { bestMV } from '@/db/schema'
 
 

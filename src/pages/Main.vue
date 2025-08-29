@@ -359,10 +359,10 @@
 </template>
 
 <script setup lang="ts">
-import GenericInfoQuery from '@/components/widgets/GenericInfoQuery.vue'
-import GenericInfo from '@/components/widgets/GenericInfo.vue'
-import MiniBar from '@/components/widgets/charts/MiniBar.vue'
-import ShotsCircle from '@/components/widgets/ShotsCircle.vue'
+import GenericInfoQuery from '@/pages/infographics/shared/widgets/GenericInfoQuery.vue'
+import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
+import MiniBar from '@/pages/infographics/shared/widgets/charts/MiniBar.vue'
+import ShotsCircle from '@/pages/infographics/shared/widgets/ShotsCircle.vue'
 import { LONG_CACHE_SETTINGS, queryAsync, queryAsyncFirst } from '@/db'
 import { toRelative, ms2sec, sec2minsec, ms2secLabel } from '@/utils'
 import { computed } from 'vue'

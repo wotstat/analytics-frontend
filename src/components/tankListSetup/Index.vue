@@ -49,7 +49,7 @@
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams'
 import { LONG_CACHE_SETTINGS, queryComputed } from '@/db'
 import { useRoute, useRouter } from 'vue-router'
-import ServerStatusWrapper from '../ServerStatusWrapper.vue'
+import ServerStatusWrapper from '../../pages/infographics/shared/ServerStatusWrapper.vue'
 import { computed, ref } from 'vue'
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor'
 import { getTankName } from '@/utils/i18n'
