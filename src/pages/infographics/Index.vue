@@ -51,7 +51,7 @@
 <script setup lang="ts">
 
 import SettingsTitle from '@/pages/infographics/settings/SettingsTitle.vue'
-import StatParamsTitle from '@/components/StatParamsTitle.vue'
+import StatParamsTitle from '@/pages/infographics/settings/StatParamsTitle.vue'
 import { useQueryStatParams } from '@/composition/useQueryStatParams'
 import { totalRequests, totalElapsed, totalRowsRead } from '@/db'
 import { countLocalize } from '@/utils/i18n'

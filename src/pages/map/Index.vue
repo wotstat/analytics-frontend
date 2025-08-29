@@ -153,7 +153,7 @@
 <script setup lang="ts">
 
 import SettingsTitle from '@/pages/infographics/settings/SettingsTitle.vue'
-import StatParamsTitle from '@/components/StatParamsTitle.vue'
+import StatParamsTitle from '@/pages/infographics/settings/StatParamsTitle.vue'
 import MinimapOverlays from '@/components/minimapOverlay/Index.vue'
 import PopupWindow from '@/components/PopupWindow.vue'
 import ShotInfo from '@/pages/infographics/pages/shots/shotInfo/Index.vue'

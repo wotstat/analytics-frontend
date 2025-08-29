@@ -14,7 +14,7 @@
 
 <script lang="ts" setup>
 import SettingsTitle from '@/pages/infographics/settings/SettingsTitle.vue'
-import StatParamsTitle from '@/components/StatParamsTitle.vue'
+import StatParamsTitle from '@/pages/infographics/settings/StatParamsTitle.vue'
 
 import Content from './Content.vue'
 
