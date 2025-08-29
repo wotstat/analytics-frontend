@@ -59,8 +59,8 @@ import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import TankList from './shared/tankListSetup/TankList.vue'
 
-import SidebarLayout from '@/components/sidebarLayout/Index.vue'
-import { SidebarLink } from '@/components/sidebarLayout/utils'
+import SidebarLayout from '../shared/sidebarLayout/SidebarLayout.vue'
+import { SidebarLink } from '../shared/sidebarLayout/utils'
 
 const links: SidebarLink[] = [
   { to: '/session', labels: 'Бои' },
