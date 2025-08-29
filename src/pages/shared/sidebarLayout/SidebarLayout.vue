@@ -37,7 +37,7 @@
 
 <script setup lang="ts">
 import { useElementBounding } from '@vueuse/core'
-import QueryPreserveRouterLink from '../QueryPreserveRouterLink.vue'
+import QueryPreserveRouterLink from '@/components/QueryPreserveRouterLink.vue'
 import { computed, ref, watchEffect } from 'vue'
 import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight'
 import { type SidebarLink } from './utils.ts'

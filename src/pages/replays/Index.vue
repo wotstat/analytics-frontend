@@ -24,8 +24,8 @@
 <script setup lang="ts">
 
 import QueryPreserveRouterLink from '@/components/QueryPreserveRouterLink.vue'
-import SidebarLayout from '@/components/sidebarLayout/Index.vue'
-import { SidebarLink } from '@/components/sidebarLayout/utils'
+import SidebarLayout from '../shared/sidebarLayout/SidebarLayout.vue'
+import { SidebarLink } from '../shared/sidebarLayout/utils'
 import { RouterView } from 'vue-router'
 
 
