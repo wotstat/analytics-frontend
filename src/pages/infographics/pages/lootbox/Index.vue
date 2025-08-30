@@ -6,45 +6,41 @@
     <label for="showTestData">Учитывать данные с тестовых серверов</label>
   </div>
 
-  <i>
-    Из-за бага в базе данных, вызванного новыми марсианскими коробками, примерно 1.5% открытий, сделанных 8 апреля до
-    19:00 МСК, к сожалению, были утеряны.
-  </i>
   <h2 class="page-title">Награды из коробок</h2>
 
   <div class="flex ver">
     <div class="card long">
-      <GenericInfo :status="total.status" :value="total.data.count" :processor="fixedSpaceProcessor(0)"
+      <GenericInfo :status="total.status" :value="total.data.count" :processor="createFixedSpaceProcessor(0)"
         description="Открытых коробок" color="green" />
     </div>
 
     <div class="flex hor-ver-small">
       <div class="card flex-1 order-small-3">
         <GenericInfo :status="mainStats.status" :value="mainStats.data.gold" description="Золото" color="orange"
-          :processor="logProcessor()" />
+          :processor="createLogProcessor()" />
       </div>
       <div class="card flex-1">
         <GenericInfo :status="mainStats.status" :value="mainStats.data.credits" description="Серебро" color="blue"
-          :processor="logProcessor()" />
+          :processor="createLogProcessor()" />
       </div>
       <div class="card flex-1">
         <GenericInfo :status="mainStats.status" :value="mainStats.data.freeXP" description="Свободный опыт"
-          color="green" :processor="logProcessor()" />
+          color="green" :processor="createLogProcessor()" />
       </div>
     </div>
 
     <div class="flex hor-ver-small">
       <div class="card flex-1 order-small-2">
         <GenericInfo :status="mainStats.status" :value="mainStats.data.prem" mini-data="дней" description="Премиум"
-          color="yellow" :processor="logProcessor()" />
+          color="yellow" :processor="createLogProcessor()" />
       </div>
       <div class="card flex-1">
         <GenericInfo :status="mainStats.status" :value="mainStats.data.vehicles" description="Танки" color="gold"
-          :processor="fixedSpaceProcessor(0)" />
+          :processor="createFixedSpaceProcessor(0)" />
       </div>
       <div class="card flex-1">
         <GenericInfo :status="mainStats.status" :value="mainStats.data.equipCoin" description="Компоненты"
-          color="yellow" :processor="logProcessor()" />
+          color="yellow" :processor="createLogProcessor()" />
       </div>
     </div>
 
@@ -111,7 +107,7 @@
 
 <script lang="ts" setup>
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
-import { fixedSpaceProcessor, logProcessor } from '@/shared/processors/processors'
+import { createFixedSpaceProcessor, createLogProcessor } from '@/shared/processors/processors'
 import { useQueryStatParams, useQueryStatParamsCache } from '@/shared/query/useQueryStatParams'
 import { Status, dateToDbIndex, queryComputed, queryComputedFirst, success } from '@/db'
 import { computed, ref } from 'vue'

@@ -76,7 +76,7 @@
             <th>{{ player[1] }}</th>
             <th>{{ player[2] }}</th>
           </template>
-          <th rowspan="2" class="l-b">{{ percentProcessor(1)(part.winrate) }}</th>
+          <th rowspan="2" class="l-b">{{ createPercentProcessor(1)(part.winrate) }}</th>
           <th>{{ part.winScoreSum }}</th>
           <th class="l-b">{{ part.healthSum }}</th>
           <th>{{ part.spgSum }}</th>
@@ -141,7 +141,7 @@
 </template>
 
 <script lang="ts" setup>
-import { roundProcessor, percentProcessor } from '@/shared/processors/processors'
+import { roundProcessor, createPercentProcessor } from '@/shared/processors/processors'
 import { dbIndexToDate } from '@/db'
 import { ChuckResult } from '@/db/schema'
 import { timeProcessor } from '@/utils'

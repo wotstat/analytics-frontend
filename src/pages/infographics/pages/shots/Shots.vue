@@ -3,7 +3,7 @@
 
   <div class="flex ver shots" ref="container">
     <div class="card long">
-      <GenericInfo :status="shotsCount.status" :value="shotsCount.data.count" :processor="fixedSpaceProcessor(0)"
+      <GenericInfo :status="shotsCount.status" :value="shotsCount.data.count" :processor="createFixedSpaceProcessor(0)"
         description="Выстрелов всего" color="green" />
     </div>
     <div class="flex hor main">
@@ -19,19 +19,19 @@
         <div class="grid mincards">
           <div class="card">
             <GenericInfo :status="dataResult.status" :value="dataResult.data.hit" description="Попало по танкам"
-              color="yellow" :processor="percentProcessor()" />
+              color="yellow" :processor="createPercentProcessor()" />
           </div>
           <div class="card">
             <GenericInfo :status="dataResult.status" :value="dataResult.data.damaged" description="С уроном"
-              color="orange" :processor="percentProcessor()" />
+              color="orange" :processor="createPercentProcessor()" />
           </div>
           <div class="card hide-less-medium" ref="percent50">
             <GenericInfo :status="dataResult.status" :value="dataResult.data.first50"
-              description="Попали в первую половину" color="red" :processor="percentProcessor()" />
+              description="Попали в первую половину" color="red" :processor="createPercentProcessor()" />
           </div>
           <div class="card hide-less-medium" ref="percent30">
             <GenericInfo :status="dataResult.status" :value="dataResult.data.first30"
-              description="Попали в первую треть" color="blue" :processor="percentProcessor()" />
+              description="Попали в первую треть" color="blue" :processor="createPercentProcessor()" />
           </div>
         </div>
         <div class="card chart" ref="shotDistribution">
@@ -44,25 +44,25 @@
     <div class="flex hor-ver-x-small show-less-medium">
       <div class="card flex-1">
         <GenericInfo :status="dataResult.status" :value="dataResult.data.first50" description="Попали в первую половину"
-          color="red" :processor="percentProcessor()" />
+          color="red" :processor="createPercentProcessor()" />
       </div>
       <div class="card flex-1">
         <GenericInfo :status="dataResult.status" :value="dataResult.data.first30" description="Попали в первую треть"
-          color="blue" :processor="percentProcessor()" />
+          color="blue" :processor="createPercentProcessor()" />
       </div>
     </div>
     <div class="flex hor-ver-x-small">
       <div class="card flex-1">
         <GenericInfo :status="dataResult.status" :value="dataResult.data.dist300" description="С расстояния 300м+"
-          color="yellow" :processor="percentProcessor()" />
+          color="yellow" :processor="createPercentProcessor()" />
       </div>
       <div class="card flex-1">
         <GenericInfo :status="dataResult.status" :value="dataResult.data.full" description="С полным сведением"
-          color="blue" :processor="percentProcessor()" />
+          color="blue" :processor="createPercentProcessor()" />
       </div>
       <div class="card flex-1">
         <GenericInfo :status="dataResult.status" :value="dataResult.data.stopped" description="Неподвижно" color="green"
-          :processor="percentProcessor()" />
+          :processor="createPercentProcessor()" />
       </div>
     </div>
 
@@ -76,7 +76,7 @@
 import ShotsCircle from '@/pages/infographics/shared/widgets/ShotsCircle.vue'
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import ShotDistribution from '@/pages/infographics/shared/widgets/ShotDistribution.vue'
-import { fixedSpaceProcessor, percentProcessor } from '@/shared/processors/processors'
+import { createFixedSpaceProcessor, createPercentProcessor } from '@/shared/processors/processors'
 import { SHORT_CACHE_SETTINGS, queryAsyncFirst } from '@/db'
 import { computed, ref } from 'vue'
 import { useElementVisibility, useMouseInElement } from '@vueuse/core'

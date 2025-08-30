@@ -50,7 +50,7 @@ import { LONG_CACHE_SETTINGS, queryComputed } from '@/db'
 import { useRoute, useRouter } from 'vue-router'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'
 import { computed, ref } from 'vue'
-import { fixedSpaceProcessor } from '@/shared/processors/processors'
+import { createFixedSpaceProcessor } from '@/shared/processors/processors'
 import { getTankName } from '@/utils/i18n'
 import HorizontalScrollItems from '@/pages/shared/HorizontalScrollItems.vue'
 import { pausableWatch } from '@vueuse/core'
@@ -79,7 +79,7 @@ const statsToSelected = pausableWatch(() => stats.value.tanks, (tanks) => {
   selectedToStats.resume()
 }, { immediate: true })
 
-const fixedSpaceProcessor = fixedSpaceProcessor(0)
+const fixedSpaceProcessor = createFixedSpaceProcessor(0)
 function logProcessor(value: number) {
   if (value < 1e6) return fixedSpaceProcessor(value)
   if (value < 1e9) return (value / 1e6).toFixed(1) + 'M'

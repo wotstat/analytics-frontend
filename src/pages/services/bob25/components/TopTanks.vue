@@ -38,7 +38,7 @@ import VehicleImage from '@/shared/game/vehicles/vehicle/VehicleImage.vue'
 import { getTankName } from '@/utils/i18n'
 import { useMediaQuery } from '@vueuse/core'
 import { bloggerNamesArray } from './bloggerNames'
-import { percentProcessor } from '@/shared/processors/processors'
+import { createPercentProcessor } from '@/shared/processors/processors'
 import Crown from '../assets/crown.png'
 import { ref } from 'vue'
 
@@ -46,7 +46,7 @@ const less800 = useMediaQuery('(max-width: 800px)')
 const isMore = ref(false)
 const selected = ref('')
 
-const percent = percentProcessor(2)
+const percent = createPercentProcessor(2)
 
 const props = defineProps<{
   title?: string

@@ -222,7 +222,7 @@ import DropDown from '@/shared/uiKit/dropdown/DropDown.vue'
 import ShotsCircle from '@/pages/infographics/shared/widgets/ShotsCircle.vue'
 import { spaceProcessor } from '@/shared/processors/useSpaceProcessor'
 import { numberToRoman, sec2minsec } from '@/utils'
-import { roundProcessor, percentProcessor } from '@/shared/processors/processors'
+import { roundProcessor, createPercentProcessor } from '@/shared/processors/processors'
 import CompareCard from './CompareCard.vue'
 
 
@@ -373,7 +373,7 @@ const durationDistributionChartData = computed<ChartProps<'bar'>['data']>(() => 
   }
 })
 
-const percent = percentProcessor(2)
+const percent = createPercentProcessor(2)
 const durationDistributionOptions = computed<ChartProps<'bar'>['options']>(() => ({
   responsive: true,
   maintainAspectRatio: false,

@@ -122,7 +122,7 @@ import { modeCount } from '@/utils/wot'
 import { useElementVisibility, useElementSize } from '@vueuse/core'
 import { computed, ref } from 'vue'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'
-import { fixedSpaceProcessor } from '@/shared/processors/processors'
+import { createFixedSpaceProcessor } from '@/shared/processors/processors'
 import { bestMV } from '@/db/schema'
 
 const { params } = defineProps<{
@@ -267,7 +267,7 @@ const table = computed(() => {
 })
 
 const roundedTable = computed(() => {
-  const processor = fixedSpaceProcessor(0)
+  const processor = createFixedSpaceProcessor(0)
 
   const round = (t: { dmg: number, radio: number, block: number, kill: number }) => ({
     dmg: processor(Math.round(t.dmg)),
