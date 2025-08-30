@@ -23,15 +23,15 @@
 
 
 <script setup lang="ts">
-import VehicleType from '../vehicles/type/VehicleType.vue'
+import VehicleType from '@/components/vehicles/type/VehicleType.vue'
 import Globe from './assets/globe.svg'
 import { computed, ref, triggerRef, watch } from 'vue'
-import TableView from '../../uiKit/tableView/TableView.vue'
+import TableView from '@/uiKit/tableView/TableView.vue'
 import { type ComponentInstance } from '@/composition/utils/ComponentInstance'
 
 import { type VehicleLineData, VehicleLine as VehicleLineCell } from './VehicleLine.ts'
-import { TableViewDelegate } from '../../uiKit/tableView/tableView/TableView.ts'
-import { HeaderLine } from '../../uiKit/tableView/tableView/default/HeaderLine.ts'
+import { TableViewDelegate } from '@/uiKit/tableView/tableView/TableView.ts'
+import { HeaderLine } from '@/uiKit/tableView/tableView/default/HeaderLine.ts'
 
 
 const table = ref<ComponentInstance<typeof TableView> | null>(null)
