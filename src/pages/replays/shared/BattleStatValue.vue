@@ -16,7 +16,7 @@
 import DmgIcon from '@/assets/efficiency-icon/dmg.png'
 import Icon from '@/components/game/efficiencyIcon/Icon.vue'
 import { IconType } from '@/components/game/efficiencyIcon/utils'
-import Tooltip from '@/components/Tooltip.vue'
+import Tooltip from '@/components/shared/Tooltip.vue'
 
 
 const props = defineProps<{

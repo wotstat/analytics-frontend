@@ -2,7 +2,7 @@ import './styles/index.scss'
 import { createApp } from 'vue'
 import App from './App.vue'
 import { router } from './routes'
-import { setup as setupYmMetrika } from './composition/ym/metrika'
+import { setup as setupYmMetrika } from './shared/ym/metrika'
 
 import {
   Chart as ChartJS,

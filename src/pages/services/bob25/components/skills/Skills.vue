@@ -56,7 +56,7 @@ import RiskyAttack from './assets/risky_attack.png'
 import SavingBattle from './assets/saving_battle.png'
 import TerritoryControl from './assets/territory_control.png'
 import WarNeverChanges from './assets/war_never_changes.png'
-import Tooltip from '@/components/Tooltip.vue'
+import Tooltip from '@/components/shared/Tooltip.vue'
 import { useNow } from '@vueuse/core'
 
 

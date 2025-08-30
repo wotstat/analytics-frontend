@@ -1,4 +1,4 @@
-import { SpriteAtlas } from '@/components/spriteAtlas/SpriteAtlas'
+import { SpriteAtlas } from '@/components/uiKit/spriteAtlas/SpriteAtlas'
 import { STATIC_URL } from '@/utils/externalUrl'
 
 export function tagToImageName(tag: string): string {

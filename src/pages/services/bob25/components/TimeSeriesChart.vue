@@ -32,7 +32,7 @@ import { useLocalStorage, useMediaQuery } from '@vueuse/core'
 import { stepVariants, periodVariants, period, step } from './queryLoader'
 import { displayVariant, displayVariants, preferredLogProcessor } from '../store'
 import { useLogProcessor } from '@/composition/usePercentProcessor'
-import Tooltip from '@/components/Tooltip.vue'
+import Tooltip from '@/components/shared/Tooltip.vue'
 
 
 const periodToStep = {

@@ -87,7 +87,7 @@
 
 <script lang="ts" setup>
 import FullScreenCard from '@/pages/infographics/pages/chuck/FullScreenCard.vue'
-import PopupWindow from '@/components/PopupWindow.vue'
+import PopupWindow from '@/components/shared/PopupWindow.vue'
 import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
 import ChuckTable from '@/pages/infographics/shared/widgets/ChuckTable.vue'
 import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams'

@@ -85,7 +85,7 @@
 
 <script setup lang="ts">
 import According from './components/According.vue'
-import PopupWindow from '@/components/PopupWindow.vue'
+import PopupWindow from '@/components/shared/PopupWindow.vue'
 import { useIframeContentBounding } from '@/composition/useIframeContentBounding'
 import { useIframeMessages } from '@/composition/useIframeMessages'
 import { computed, onDeactivated, onMounted, ref, watch } from 'vue'
