@@ -364,7 +364,6 @@ import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import MiniBar from '@/pages/infographics/shared/widgets/charts/MiniBar.vue'
 import ShotsCircle from '@/pages/infographics/shared/widgets/ShotsCircle.vue'
 import { LONG_CACHE_SETTINGS, queryAsync, queryAsyncFirst } from '@/db'
-import { toRelative, } from '@/utils'
 import { computed } from 'vue'
 import { getArenaName } from '@/shared/i18n/i18n'
 import { createFixedSpaceProcessor } from '@/shared/processors/processors'
@@ -374,6 +373,7 @@ import { CLICKHOUSE_URL, CURRENT_URL_PREFIX } from '@/shared/utils/externalUrl'
 import { useRouter } from 'vue-router'
 import { ms2sec, sec2minsec, ms2secLabel } from '@/shared/utils/time'
 import { useTweenComputed } from '@/shared/ui/tween/useTweenRef'
+import { normalizeArray } from '@/shared/utils/math'
 
 useMeta({
   title: 'WOTSTAT - Сессионная аналитика для игр «Мир танков» и «World of Tanks»',
@@ -419,7 +419,7 @@ const damageDistributionData = computed(() => {
 
   const absolute = new Array(21).fill(0).map((v, i) => res[i - 10] ?? 0)
 
-  return toRelative(absolute)
+  return normalizeArray(absolute)
 })
 
 // RESULTS

@@ -31,3 +31,17 @@ export function createLogProcessor(fractionDigits: number = 1) {
     return (value / 1e12).toFixed(1) + 'T'
   }
 }
+
+export function romanNumberProcessor(value: number) {
+  if (value < 1 || value > 3999) return value.toString()
+  const roman = ['I', 'IV', 'V', 'IX', 'X', 'XL', 'L', 'XC', 'C', 'CD', 'D', 'CM', 'M']
+  const decimal = [1, 4, 5, 9, 10, 40, 50, 90, 100, 400, 500, 900, 1000]
+  let result = ''
+  for (let i = 12; i >= 0; i--) {
+    while (value >= decimal[i]) {
+      result += roman[i]
+      value -= decimal[i]
+    }
+  }
+  return result
+}

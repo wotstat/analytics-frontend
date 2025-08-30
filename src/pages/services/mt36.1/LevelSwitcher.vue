@@ -3,14 +3,14 @@
     <button class="level mt-font" :class="{
       'active': levels.has(level)
     }" v-for="level in new Array(11).fill(0).map((_, i) => i + 1)" :key="level" @click="e => onClickLevel(e, level)">
-      {{ numberToRoman(level) }}
+      {{ romanNumberProcessor(level) }}
     </button>
   </div>
 </template>
 
 
 <script setup lang="ts">
-import { numberToRoman } from '@/utils'
+import { romanNumberProcessor } from '@/shared/processors/processors'
 
 const levels = defineModel<Set<number>>({ required: true })
 
