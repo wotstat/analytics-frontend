@@ -86,7 +86,7 @@
 </template>
 
 <script lang="ts" setup>
-import FullScreenCard from '@/components/FullScreenCard.vue'
+import FullScreenCard from '@/pages/infographics/pages/chuck/FullScreenCard.vue'
 import PopupWindow from '@/components/PopupWindow.vue'
 import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
 import ChuckTable from '@/pages/infographics/shared/widgets/ChuckTable.vue'
@@ -95,7 +95,7 @@ import { dbIndexToDate, loading, queryAsync, queryComputed, success } from '@/db
 import { ChuckResult } from '@/db/schema'
 import { useLocalStorage } from '@vueuse/core'
 import { computed, ref } from 'vue'
-import Timecodes from '../shared/Timecodes.vue'
+import Timecodes from '../../shared/Timecodes.vue'
 
 import CopyIcon from '@/assets/icons/copy.svg'
 

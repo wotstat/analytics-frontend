@@ -36,7 +36,7 @@ const routes = [
       { path: 'results', component: Results },
       { path: 'maps', component: Maps },
       { path: 'players', component: Coverage },
-      { path: 'chuck-norris-tournament', component: asyncPage(() => import('./pages/infographics/pages/Chuck.vue')) },
+      { path: 'chuck-norris-tournament', component: asyncPage(() => import('./pages/infographics/pages/chuck/Chuck.vue')) },
       { path: 'distribution', component: Distribution },
       { path: 'lootbox', component: Lootbox, meta: { hideTankList: true } },
       { path: 'widgets/:widget*', component: asyncPage(() => import('./pages/widgets/Index.vue')), meta: { hideTankList: true, customTitle: 'Виджеты' } },

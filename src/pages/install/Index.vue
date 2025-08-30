@@ -378,7 +378,7 @@ import { latestGameVersion } from '@/utils/gameVersion'
 import ExportArchive from './ExportArchive.vue'
 import InstallMods from './InstallMods.vue'
 import SelectFolderError from './SelectFolderError.vue'
-import { showFocusEffect } from '@/components/focusEffect/focusEffect'
+import { showFocusEffect } from '@/pages/install/focusEffect/focusEffect'
 import { useRoute } from 'vue-router'
 import { setFeatureVisit } from '@/uiKit/newFeatureBadge/newFeatureBadge'
 
