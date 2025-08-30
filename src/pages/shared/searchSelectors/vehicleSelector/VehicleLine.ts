@@ -4,7 +4,7 @@ import { vehicleTypeToImage } from '@/shared/game/vehicles/type/vehicleTypeToIma
 import { smallVehiclesAtlasMt, smallVehiclesAtlasWot, tagToImageName } from '@/shared/game/vehicles/vehicle/utils'
 
 import { Ref, watch } from 'vue'
-import { nationFlagAtlas } from '@/shared/game/vehicles/nation/utils'
+import { nationFlagAtlas } from '@/shared/game/vehicles/nations/utils'
 import { TableCell } from '@/shared/uiKit/tableView/tableView/TableView'
 
 const vehicleTypes = ['MT', 'LT', 'HT', 'AT', 'SPG'] as const
