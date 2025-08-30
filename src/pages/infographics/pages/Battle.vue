@@ -2,8 +2,8 @@
   <h2 class="page-title">Бои</h2>
   <div class="flex ver battle" ref="container">
     <div class="card long">
-      <GenericInfo :status="dataStart.status" :value="dataStart.data.battleCount" :processor="fixedSpaceProcessor(0)"
-        description="Боёв проведено" color="green" />
+      <GenericInfo :status="dataStart.status" :value="dataStart.data.battleCount"
+        :processor="createFixedSpaceProcessor(0)" description="Боёв проведено" color="green" />
     </div>
     <div class="flex ver main">
       <div class="grid">
@@ -79,7 +79,7 @@ import { useElementVisibility } from '@vueuse/core'
 import { computed, ref } from 'vue'
 
 import { ms2sec, sec2minsec, sec2hour, ms2secLabel } from '@/utils'
-import { fixedSpaceProcessor } from '@/shared/processors/processors'
+import { createFixedSpaceProcessor } from '@/shared/processors/processors'
 import { useMeta } from '@/composition/useMeta'
 
 useMeta({

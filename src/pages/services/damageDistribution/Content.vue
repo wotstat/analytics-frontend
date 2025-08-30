@@ -109,7 +109,7 @@
   <div class="info-cards flex">
     <div class="card flex-1">
       <GenericInfo :status="infoCardsResult.status" :value="infoCards.avg" description="Средний урон"
-        :processor="fixedProcessor(2)" :color="infoCards.avg < selectedDamage ? 'red' : 'green'" />
+        :processor="createFixedProcessor(2)" :color="infoCards.avg < selectedDamage ? 'red' : 'green'" />
     </div>
     <div class="card flex-1">
       <GenericInfo :status="infoCardsResult.status" :value="infoCards.median" description="Медианный урон"
@@ -117,7 +117,7 @@
     </div>
     <div class="card flex-1">
       <GenericInfo :status="infoCardsResult.status" :value="infoCards.belowDamage"
-        description="Выстрелов с уроном ниже среднего" :processor="percentProcessor(2)"
+        description="Выстрелов с уроном ниже среднего" :processor="createPercentProcessor(2)"
         :color="infoCards.belowDamage > 0.5 ? 'red' : 'green'" />
     </div>
   </div>
@@ -139,7 +139,7 @@ import { ShadowBar } from '@/pages/infographics/shared/widgets/charts/ShadowBarC
 import { setup as setupShadowLine } from '@/pages/infographics/shared/widgets/charts/ShadowLineController'
 import { getColor } from '@/pages/infographics/shared/bloomColors'
 import { useErrorCalculation } from './errorCalculation'
-import { fixedProcessor, percentProcessor } from '@/shared/processors/processors'
+import { createFixedProcessor, createPercentProcessor } from '@/shared/processors/processors'
 import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
 import { bestMV } from '@/db/schema'
 

@@ -55,7 +55,7 @@
 import { useQueryStatParams, whereClause } from '@/shared/query/useQueryStatParams'
 import { queryComputed } from '@/db'
 import { computed, ref, watch } from 'vue'
-import { fixedSpaceProcessor } from '@/shared/processors/processors'
+import { createFixedSpaceProcessor } from '@/shared/processors/processors'
 import { getBestLocalization } from '@/utils/i18n'
 import { objectEntries, pausableWatch } from '@vueuse/core'
 import FallbackImg from '@/shared/uiKit/fallbackImg/FallbackImg.vue'
@@ -117,7 +117,7 @@ const statsToSelected = pausableWatch(() => selectedContainersQuery.value, (cont
 const model = defineModel<string[]>()
 watch(selectedContainers, (value) => model.value = value, { immediate: true })
 
-const fixedSpaceProcessor = fixedSpaceProcessor(0)
+const fixedSpaceProcessor = createFixedSpaceProcessor(0)
 function logProcessor(value: number) {
   if (value < 1e6) return fixedSpaceProcessor(value)
   if (value < 1e9) return (value / 1e6).toFixed(1) + 'M'

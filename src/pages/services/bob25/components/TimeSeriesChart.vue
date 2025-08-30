@@ -31,7 +31,7 @@ import DropDown from '@/shared/uiKit/dropdown/DropDown.vue'
 import { useLocalStorage, useMediaQuery } from '@vueuse/core'
 import { stepVariants, periodVariants, period, step } from './queryLoader'
 import { displayVariant, displayVariants, preferredLogProcessor } from '../store'
-import { logProcessor } from '@/shared/processors/processors'
+import { createLogProcessor } from '@/shared/processors/processors'
 import Tooltip from '@/shared/ui/Tooltip.vue'
 
 
@@ -332,7 +332,7 @@ const targetSkip = computed(() => {
 const smallScreen = useMediaQuery('(max-width: 700px)')
 
 
-const logProc = logProcessor(2)
+const logProc = createLogProcessor(2)
 
 const options = computed<ChartProps<'bar'>['options']>(() => ({
   responsive: true,

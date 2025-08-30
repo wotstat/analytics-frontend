@@ -4,8 +4,8 @@
 
   <div class="flex ver damage" ref="container">
     <div class="card long">
-      <GenericInfo :status="coverageData.status" :value="coverageData.data.data" :processor="fixedSpaceProcessor(0)"
-        mini-data="игроков" description="Вы повстречали" color="green" />
+      <GenericInfo :status="coverageData.status" :value="coverageData.data.data"
+        :processor="createFixedSpaceProcessor(0)" mini-data="игроков" description="Вы повстречали" color="green" />
     </div>
 
     <div class="card">
@@ -27,7 +27,7 @@ import { ref } from 'vue'
 import { useElementVisibility } from '@vueuse/core'
 import PlayerCoverageTable from '@/pages/infographics/shared/widgets/PlayerCoverageTable.vue'
 import { useQueryStatParams, useQueryStatParamsCache, whereClause, whereClauseColumns } from '@/shared/query/useQueryStatParams'
-import { fixedSpaceProcessor } from '@/shared/processors/processors'
+import { createFixedSpaceProcessor } from '@/shared/processors/processors'
 import { bestMV } from '@/db/schema'
 import { useMeta } from '@/composition/useMeta'
 

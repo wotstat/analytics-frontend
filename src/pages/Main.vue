@@ -19,7 +19,7 @@
                 </span>
 
                 <span class="card-main-info green animated counter" :class="totalCountHasData ? '' : 'loading'">
-                  {{ fixedSpaceProcessor(0)(totalEventCount) }}
+                  {{ createFixedSpaceProcessor(0)(totalEventCount) }}
                 </span>
               </p>
               <p class="card-main-info description">Событий уже собрано</p>
@@ -367,7 +367,7 @@ import { LONG_CACHE_SETTINGS, queryAsync, queryAsyncFirst } from '@/db'
 import { toRelative, ms2sec, sec2minsec, ms2secLabel } from '@/utils'
 import { computed } from 'vue'
 import { getArenaName } from '@/utils/i18n'
-import { fixedSpaceProcessor } from '@/shared/processors/processors'
+import { createFixedSpaceProcessor } from '@/shared/processors/processors'
 import { useMeta } from '@/composition/useMeta'
 import { useAnalyticsRealtime } from '@/shared/realtime/useAnalyticsRealtime'
 import { CLICKHOUSE_URL, CURRENT_URL_PREFIX } from '@/utils/externalUrl'

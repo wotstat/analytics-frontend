@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { percentProcessor } from '@/shared/processors/processors'
+import { createPercentProcessor } from '@/shared/processors/processors'
 import { useElementVisibility } from '@vueuse/core'
 import { computed, ref } from 'vue'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'
@@ -89,7 +89,7 @@ const processed = computed(() => {
     res.reduce((a, b) => a as number + (b[2] ?? 0), 0),
   ])
 
-  return res.map(r => r.map(t => t ? percentProcessor(1)(t) : null))
+  return res.map(r => r.map(t => t ? createPercentProcessor(1)(t) : null))
 })
 
 </script>

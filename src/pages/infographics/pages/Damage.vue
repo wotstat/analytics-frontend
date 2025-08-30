@@ -5,7 +5,7 @@
     превышающим максимальный урон снаряда</p>
   <div class="flex ver damage" ref="container">
     <div class="card long">
-      <GenericInfo :status="totalShots.status" :value="totalShots.data.data" :processor="fixedSpaceProcessor(0)"
+      <GenericInfo :status="totalShots.status" :value="totalShots.data.data" :processor="createFixedSpaceProcessor(0)"
         description="Выстрелов с видимым уроном" color="green" />
     </div>
     <div class="flex ver">
@@ -22,7 +22,7 @@
 
         <div class="card mini-card frags full-width-less-small">
           <GenericInfo :status="onShotResult.status" :value="onShotResult.data.frags"
-            :processor="fixedSpaceProcessor(0)" description="Фрагов" color="red" />
+            :processor="createFixedSpaceProcessor(0)" description="Фрагов" color="red" />
         </div>
         <div class="card mini-card shot-per-frag full-width-less-small">
           <GenericInfo :status="onShotResult.status" :value="onShotResult.data.shotPerFrag"
@@ -52,13 +52,13 @@
         <div class="card mini-card full-width-less-small">
           <GenericInfo :status="damageAggregatedResult.status" :value="damageK"
             description="Выстрелов с уроном ниже среднего" :color="damageK > 0.5 ? 'red' : 'green'"
-            :processor="percentProcessor(1)" />
+            :processor="createPercentProcessor(1)" />
         </div>
 
         <div class="card mini-card full-width-less-small">
           <GenericInfo :status="damageAggregatedResult.status" :value="damageAggregatedResult.data.avgDamage * 0.25"
             description="Отклонение от среднего" :color="damageAggregatedResult.data.avgDamage < 0 ? 'red' : 'green'"
-            :processor="percentProcessor(2)" />
+            :processor="createPercentProcessor(2)" />
         </div>
 
 
@@ -108,7 +108,7 @@ import GenericInfoQuery from '@/pages/infographics/shared/widgets/GenericInfoQue
 import StillSurviveDistribution from '@/pages/infographics/shared/widgets/StillSurviveDistribution.vue'
 import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import { toRelative, toPercent } from '@/utils'
-import { fixedSpaceProcessor, percentProcessor } from '@/shared/processors/processors'
+import { createFixedSpaceProcessor, createPercentProcessor } from '@/shared/processors/processors'
 import { shellNames } from '@/utils/wot'
 import QueryPreserveRouterLink from '@/pages/shared/sidebarLayout/QueryPreserveRouterLink.vue'
 import { bestMV } from '@/db/schema'
