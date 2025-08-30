@@ -1,4 +1,4 @@
-import { INSTALL_URL } from '@/shared/utils/externalUrl'
+import { INSTALL_URL } from '@/shared/external/externalUrl'
 import { latestModsMap } from '../mods/mods'
 import { ref } from 'vue'
 

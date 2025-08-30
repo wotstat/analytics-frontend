@@ -44,7 +44,7 @@
 import { ref } from 'vue'
 import { createClient } from '@clickhouse/client-web'
 import { useDropZone, useLocalStorage } from '@vueuse/core'
-import { CLICKHOUSE_URL } from '@/shared/utils/externalUrl'
+import { CLICKHOUSE_URL } from '@/shared/external/externalUrl'
 // import data from './bb.json';
 
 const data = {}

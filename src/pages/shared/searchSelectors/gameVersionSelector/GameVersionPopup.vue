@@ -39,7 +39,7 @@
 import { computed, ref, watch } from 'vue'
 
 import { preferredGame } from '@/shared/global/globalPreferred'
-import SearchLine from '../searchLine/SearchLine.vue'
+import SearchLine from '../components/searchLine/SearchLine.vue'
 import TableView from '@/shared/uiKit/tableView/TableView.vue'
 import { TableViewDelegate } from '@/shared/uiKit/tableView/tableView/TableView'
 import { HeaderLine } from '@/shared/uiKit/tableView/tableView/default/HeaderLine'
