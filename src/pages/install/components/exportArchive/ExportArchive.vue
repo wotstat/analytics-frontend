@@ -30,7 +30,7 @@
 
 
 <script setup lang="ts">
-import PopupWindow from '@/components/shared/PopupWindow.vue'
+import PopupWindow from '@/shared/ui/PopupWindow.vue'
 import { download } from '../../utils/downloader'
 import { ref, watch } from 'vue'
 import { exportArchive } from './exportArchive'

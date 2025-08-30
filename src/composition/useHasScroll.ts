@@ -1,5 +1,5 @@
-import { MaybeElementRef, useElementBounding, useMutationObserver, useResizeObserver } from '@vueuse/core'
-import { MaybeRefOrGetter, onMounted, onUnmounted, Ref, ref, toValue } from 'vue'
+import { MaybeElementRef, useMutationObserver, useResizeObserver } from '@vueuse/core'
+import { MaybeRefOrGetter, onUnmounted, ref, toValue } from 'vue'
 
 
 export function useHasScroll(element: MaybeRefOrGetter<HTMLElement | null | undefined>) {
