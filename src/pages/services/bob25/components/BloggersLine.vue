@@ -26,7 +26,7 @@
 import { computed, useSlots } from 'vue'
 import BloggersValues from './BloggersValues.vue'
 import Chart from '../assets/chart.svg'
-import { useLogProcessor } from '@/composition/usePercentProcessor'
+import { logProcessor } from '@/shared/processors/processors'
 import { preferredLogProcessor } from '../store'
 import { useMediaQuery } from '@vueuse/core'
 
@@ -40,7 +40,7 @@ const props = defineProps<{
 }>()
 const slot = useSlots()
 
-const logProc = useLogProcessor()
+const logProc = logProcessor()
 const mobile = useMediaQuery('(max-width: 800px)')
 
 

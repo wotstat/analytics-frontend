@@ -52,16 +52,16 @@
 </template>
 
 <script lang="ts" setup>
-import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams'
+import { useQueryStatParams, whereClause } from '@/shared/query/useQueryStatParams'
 import { queryComputed } from '@/db'
 import { computed, ref, watch } from 'vue'
-import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor'
+import { fixedSpaceProcessor } from '@/shared/processors/processors'
 import { getBestLocalization } from '@/utils/i18n'
 import { objectEntries, pausableWatch } from '@vueuse/core'
-import FallbackImg from '@/components/uiKit/fallbackImg/FallbackImg.vue'
+import FallbackImg from '@/shared/uiKit/fallbackImg/FallbackImg.vue'
 import HorizontalScrollItems from '@/pages/shared/HorizontalScrollItems.vue'
 import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
-import { useQueryParamStorage } from '@/composition/useQueryParamStorage'
+import { useQueryParamStorage } from '@/shared/query/useQueryParamStorage'
 
 import NoImageLB from './noImageLB.png'
 import { STATIC_URL } from '@/utils/externalUrl'
@@ -117,7 +117,7 @@ const statsToSelected = pausableWatch(() => selectedContainersQuery.value, (cont
 const model = defineModel<string[]>()
 watch(selectedContainers, (value) => model.value = value, { immediate: true })
 
-const fixedSpaceProcessor = useFixedSpaceProcessor(0)
+const fixedSpaceProcessor = fixedSpaceProcessor(0)
 function logProcessor(value: number) {
   if (value < 1e6) return fixedSpaceProcessor(value)
   if (value < 1e9) return (value / 1e6).toFixed(1) + 'M'

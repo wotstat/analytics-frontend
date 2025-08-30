@@ -4,7 +4,7 @@
 
 
 <script setup lang="ts">
-import { headerHeight } from '@/composition/useAdditionalHeaderHeight'
+import { headerHeight } from '@/pages/shared/header/useAdditionalHeaderHeight'
 </script>
 
 

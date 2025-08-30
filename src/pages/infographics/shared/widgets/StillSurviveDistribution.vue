@@ -18,7 +18,7 @@ import { ChartProps } from 'vue-chartjs'
 import { BloomColor } from '../bloomColors'
 import { loading, queryAsync } from '@/db'
 import { useElementVisibility } from '@vueuse/core'
-import { StatParams, whereClause } from '@/composition/useQueryStatParams'
+import { StatParams, whereClause } from '@/shared/query/useQueryStatParams'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'
 
 const container = ref<HTMLElement | null>(null)

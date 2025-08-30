@@ -1,11 +1,11 @@
 import { numberToRoman } from '@/utils'
-import { getHighlightedTextParts, Highlighted } from '@/components/uiKit/highlightString/highlightUtils'
-import { vehicleTypeToImage } from '@/components/game/vehicles/type/vehicleTypeToImage'
-import { smallVehiclesAtlasMt, smallVehiclesAtlasWot, tagToImageName } from '@/components/game/vehicles/vehicle/utils'
+import { getHighlightedTextParts, Highlighted } from '@/shared/uiKit/highlightString/highlightUtils'
+import { vehicleTypeToImage } from '@/shared/game/vehicles/type/vehicleTypeToImage'
+import { smallVehiclesAtlasMt, smallVehiclesAtlasWot, tagToImageName } from '@/shared/game/vehicles/vehicle/utils'
 
 import { Ref, watch } from 'vue'
-import { nationFlagAtlas } from '@/components/game/vehicles/nation/utils'
-import { TableCell } from '@/components/uiKit/tableView/tableView/TableView'
+import { nationFlagAtlas } from '@/shared/game/vehicles/nation/utils'
+import { TableCell } from '@/shared/uiKit/tableView/tableView/TableView'
 
 const vehicleTypes = ['MT', 'LT', 'HT', 'AT', 'SPG'] as const
 export type VehicleLineData = {

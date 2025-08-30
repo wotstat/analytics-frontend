@@ -147,7 +147,7 @@
 import { dateToDbIndex, query, queryAsync } from '@/db'
 import { computed, onMounted, onUnmounted, ref, shallowRef, toRaw, toValue, watch } from 'vue'
 import { useDebounce, useDraggable, useElementBounding, watchOnce, useVirtualList } from '@vueuse/core'
-import { TankLevel, TankType, useQueryStatParams } from '@/composition/useQueryStatParams'
+import { TankLevel, TankType, useQueryStatParams } from '@/shared/query/useQueryStatParams'
 import { customBattleModes, customBattleModesKeys } from '@/utils/wot'
 import { useRoute, useRouter } from 'vue-router'
 import { getTankName } from '@/utils/i18n'

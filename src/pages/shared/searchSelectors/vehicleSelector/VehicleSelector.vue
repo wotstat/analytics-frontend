@@ -10,9 +10,9 @@
 import { CACHE_SETTINGS, queryAsync } from '@/db'
 import { selectTagVehiclesLocalization } from '@/utils/i18n'
 import VehiclePopup from './VehiclePopup.vue'
-import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight'
+import { headerHeight, useAdditionalHeaderHeight } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import { Nation } from '@/utils/wot'
-import PopoverAutoClose from '@/components/uiKit/popover/PopoverAutoClose.vue'
+import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
 
 
 defineProps<{

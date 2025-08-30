@@ -3,7 +3,7 @@
 
   <div class="flex ver shots" ref="container">
     <div class="card long">
-      <GenericInfo :status="shotsCount.status" :value="shotsCount.data.count" :processor="useFixedSpaceProcessor(0)"
+      <GenericInfo :status="shotsCount.status" :value="shotsCount.data.count" :processor="fixedSpaceProcessor(0)"
         description="Выстрелов всего" color="green" />
     </div>
     <div class="flex hor main">
@@ -19,19 +19,19 @@
         <div class="grid mincards">
           <div class="card">
             <GenericInfo :status="dataResult.status" :value="dataResult.data.hit" description="Попало по танкам"
-              color="yellow" :processor="usePercentProcessor()" />
+              color="yellow" :processor="percentProcessor()" />
           </div>
           <div class="card">
             <GenericInfo :status="dataResult.status" :value="dataResult.data.damaged" description="С уроном"
-              color="orange" :processor="usePercentProcessor()" />
+              color="orange" :processor="percentProcessor()" />
           </div>
           <div class="card hide-less-medium" ref="percent50">
             <GenericInfo :status="dataResult.status" :value="dataResult.data.first50"
-              description="Попали в первую половину" color="red" :processor="usePercentProcessor()" />
+              description="Попали в первую половину" color="red" :processor="percentProcessor()" />
           </div>
           <div class="card hide-less-medium" ref="percent30">
             <GenericInfo :status="dataResult.status" :value="dataResult.data.first30"
-              description="Попали в первую треть" color="blue" :processor="usePercentProcessor()" />
+              description="Попали в первую треть" color="blue" :processor="percentProcessor()" />
           </div>
         </div>
         <div class="card chart" ref="shotDistribution">
@@ -44,25 +44,25 @@
     <div class="flex hor-ver-x-small show-less-medium">
       <div class="card flex-1">
         <GenericInfo :status="dataResult.status" :value="dataResult.data.first50" description="Попали в первую половину"
-          color="red" :processor="usePercentProcessor()" />
+          color="red" :processor="percentProcessor()" />
       </div>
       <div class="card flex-1">
         <GenericInfo :status="dataResult.status" :value="dataResult.data.first30" description="Попали в первую треть"
-          color="blue" :processor="usePercentProcessor()" />
+          color="blue" :processor="percentProcessor()" />
       </div>
     </div>
     <div class="flex hor-ver-x-small">
       <div class="card flex-1">
         <GenericInfo :status="dataResult.status" :value="dataResult.data.dist300" description="С расстояния 300м+"
-          color="yellow" :processor="usePercentProcessor()" />
+          color="yellow" :processor="percentProcessor()" />
       </div>
       <div class="card flex-1">
         <GenericInfo :status="dataResult.status" :value="dataResult.data.full" description="С полным сведением"
-          color="blue" :processor="usePercentProcessor()" />
+          color="blue" :processor="percentProcessor()" />
       </div>
       <div class="card flex-1">
         <GenericInfo :status="dataResult.status" :value="dataResult.data.stopped" description="Неподвижно" color="green"
-          :processor="usePercentProcessor()" />
+          :processor="percentProcessor()" />
       </div>
     </div>
 
@@ -76,11 +76,11 @@
 import ShotsCircle from '@/pages/infographics/shared/widgets/ShotsCircle.vue'
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import ShotDistribution from '@/pages/infographics/shared/widgets/ShotDistribution.vue'
-import { useFixedSpaceProcessor, usePercentProcessor } from '@/composition/usePercentProcessor'
+import { fixedSpaceProcessor, percentProcessor } from '@/shared/processors/processors'
 import { SHORT_CACHE_SETTINGS, queryAsyncFirst } from '@/db'
 import { computed, ref } from 'vue'
 import { useElementVisibility, useMouseInElement } from '@vueuse/core'
-import { getQueryStatParamsCache, useQueryStatParams, whereClause } from '@/composition/useQueryStatParams'
+import { getQueryStatParamsCache, useQueryStatParams, whereClause } from '@/shared/query/useQueryStatParams'
 import PopupWindow from '@/components/shared/PopupWindow.vue'
 import ShotInfo from './shotInfo/Index.vue'
 import { useRoute, useRouter } from 'vue-router'

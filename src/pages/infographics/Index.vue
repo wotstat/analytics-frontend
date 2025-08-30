@@ -52,7 +52,7 @@
 
 import SettingsTitle from '@/pages/infographics/settings/SettingsTitle.vue'
 import StatParamsTitle from '@/pages/infographics/settings/StatParamsTitle.vue'
-import { useQueryStatParams } from '@/composition/useQueryStatParams'
+import { useQueryStatParams } from '@/shared/query/useQueryStatParams'
 import { totalRequests, totalElapsed, totalRowsRead } from '@/db'
 import { countLocalize } from '@/utils/i18n'
 import { ref, watch } from 'vue'

@@ -53,16 +53,16 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { tankTagToReadable } from '@/utils/i18n'
-import { Highlighted, compareIntervals } from '@/components/uiKit/highlightString/highlightUtils'
+import { Highlighted, compareIntervals } from '@/shared/uiKit/highlightString/highlightUtils'
 import { useLocalStorage } from '@vueuse/core'
 
 import VehicleTable from './VehicleTable.vue'
 
 import Reload from '@/assets/icons/reset.svg'
 import { numberToRoman } from '@/utils'
-import VehicleTypeComponent from '@/components/game/vehicles/type/VehicleType.vue'
+import VehicleTypeComponent from '@/shared/game/vehicles/type/VehicleType.vue'
 import { mtNations, Nation, nations, nationsIndexes, type VehicleType, vehicleTypes, wotNations } from '@/utils/wot'
-import NationComponent from '@/components/game/vehicles/nation/Nation.vue'
+import NationComponent from '@/shared/game/vehicles/nation/Nation.vue'
 import SearchLine from '../searchLine/SearchLine.vue'
 import { preferredGame } from '@/utils/globalPreferred'
 

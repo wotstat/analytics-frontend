@@ -26,7 +26,7 @@ import { Quadtree, Circle } from '@timohausmann/quadtree-ts'
 import { useDebounceFn, useMouseInElement } from '@vueuse/core'
 import { query } from '@/db'
 import { BloomColor } from '../bloomColors'
-import { StatParams, whereClause } from '@/composition/useQueryStatParams'
+import { StatParams, whereClause } from '@/shared/query/useQueryStatParams'
 import { bestMV } from '@/db/schema'
 
 const COUNT_TO_SMALL_SIZE = 3000

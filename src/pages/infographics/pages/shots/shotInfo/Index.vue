@@ -171,7 +171,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { sec2minsec } from '@/utils'
 import InfoTable from './InfoTable.vue'
 import { getArenaName } from '@/utils/i18n'
-import MinimapOverlays from '@/components/game/minimapOverlay/Index.vue'
+import MinimapOverlays from '@/shared/game/minimapOverlay/Index.vue'
 
 type UInt128 = string;
 type DateTime64 = string;

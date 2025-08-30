@@ -80,7 +80,7 @@
 
 
 <script setup lang="ts">
-import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams'
+import { useQueryStatParams, whereClause } from '@/shared/query/useQueryStatParams'
 import { queryComputed } from '@/db'
 import { getArenaName, getTankName } from '@/utils/i18n'
 import { useLocalStorage } from '@vueuse/core'

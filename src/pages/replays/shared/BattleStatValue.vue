@@ -14,8 +14,8 @@
 
 <script lang="ts" setup>
 import DmgIcon from '@/assets/efficiency-icon/dmg.png'
-import Icon from '@/components/game/efficiencyIcon/Icon.vue'
-import { IconType } from '@/components/game/efficiencyIcon/utils'
+import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
+import { IconType } from '@/shared/game/efficiencyIcon/utils'
 import Tooltip from '@/components/shared/Tooltip.vue'
 
 
