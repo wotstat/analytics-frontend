@@ -1,5 +1,5 @@
 import { SpriteAtlas } from '@/shared/uiKit/spriteAtlas/SpriteAtlas'
-import { STATIC_URL } from '@/shared/utils/externalUrl'
+import { STATIC_URL } from '@/shared/external/externalUrl'
 
 export const vehicleTypes = ['HT', 'MT', 'LT', 'AT', 'SPG'] as const
 export type VehicleType = typeof vehicleTypes[number]

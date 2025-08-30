@@ -64,7 +64,7 @@ import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper
 import { useQueryParamStorage } from '@/shared/query/useQueryParamStorage'
 
 import NoImageLB from './noImageLB.png'
-import { STATIC_URL } from '@/shared/utils/externalUrl'
+import { STATIC_URL } from '@/shared/external/externalUrl'
 
 const customOrderKeys = new Map<string, number>(objectEntries({
   'mtl_1_35': 1000,

@@ -1,4 +1,4 @@
-import { ANALYTICS_REALTIME_URL } from '@/shared/utils/externalUrl'
+import { ANALYTICS_REALTIME_URL } from '@/shared/external/externalUrl'
 import { useWebSocket } from '@vueuse/core'
 import { ref, ShallowRef, shallowRef, watch } from 'vue'
 

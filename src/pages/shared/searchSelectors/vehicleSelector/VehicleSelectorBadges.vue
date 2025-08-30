@@ -7,7 +7,7 @@
 
 <script setup lang="ts">
 import { getTankName, selectTagVehiclesLocalization } from '@/shared/i18n/i18n'
-import BadgesLinePopover from '../badges/BadgesLinePopover.vue'
+import BadgesLinePopover from '../components/badges/BadgesLinePopover.vue'
 import { CACHE_SETTINGS, queryAsync } from '@/db'
 import VehiclePopup from './VehiclePopup.vue'
 import { Nation } from '@/shared/game/vehicles/nations/nations'

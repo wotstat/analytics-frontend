@@ -128,7 +128,7 @@
                     <td>{{ result.fireHealth ?? '-' }}</td>
                   </template>
                   <td v-if="shotResult.some(t => t.ammoBayDestroyed)">{{ result.ammoBayDestroyed ? 'Да' : '-'
-                    }}</td>
+                  }}</td>
                 </tr>
               </tbody>
             </table>
@@ -171,7 +171,7 @@ import InfoTable from './InfoTable.vue'
 import { getArenaName } from '@/shared/i18n/i18n'
 import MinimapOverlays from '@/shared/game/arenas/minimapOverlay/Index.vue'
 import { sec2minsec } from '@/shared/utils/time'
-import { wotinspectorLog, wotinspectorURLNew } from '@/shared/theirdParty/wotInspector/wotInspector'
+import { wotinspectorLog, wotinspectorURLNew } from '@/shared/external/wotInspector/wotInspector'
 import { shellNames } from '@/shared/game/wot'
 
 type UInt128 = string;
