@@ -7,7 +7,7 @@
 
 <script setup lang="ts">
 
-import CheckmarkIcon from './assets/checkmark-bold.svg'
+import CheckmarkIcon from '../assets/checkmark-bold.svg'
 const props = defineProps<{}>()
 
 const value = defineModel<boolean>({

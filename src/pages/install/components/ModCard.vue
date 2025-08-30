@@ -47,14 +47,14 @@
 
 <script setup lang="ts">
 import { computed, ref, useSlots } from 'vue'
-import Github from './assets/github.svg'
+import Github from '../assets/github.svg'
 import { useMouseInElement } from '@vueuse/core'
 import { useCardRotation } from '@/composition/useCardRotation'
-import CheckMark from './assets/checkmark-bold.svg'
+import CheckMark from '../assets/checkmark-bold.svg'
 import { useNextAnimationFrameThrottle } from '@/composition/utils/useNextAnimationFrameThrottle'
 import { show3dEffect, showGlowEffect } from './cardIntaractionControl'
-import { dotSeparatedCompare } from './installer'
-import ArrowRight from './assets/arrow-right.svg'
+import { dotSeparatedCompare } from '../utils/installer'
+import ArrowRight from '../assets/arrow-right.svg'
 
 const card = ref<HTMLElement | null>(null)
 

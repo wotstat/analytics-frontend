@@ -81,7 +81,7 @@ import PopupWindow from '@/components/PopupWindow.vue'
 import { computedAsync } from '@vueuse/core'
 import { computed } from 'vue'
 
-import ShowGameFolder from './assets/show-game-folder.jpg'
+import ShowGameFolder from '../assets/show-game-folder.jpg'
 import { latestGameVersion } from '@/utils/gameVersion'
 
 const props = defineProps<{
