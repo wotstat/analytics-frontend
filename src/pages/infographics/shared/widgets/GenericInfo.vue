@@ -22,7 +22,7 @@ import { ref, computed, watch } from 'vue'
 import { useElementVisibility } from '@vueuse/core'
 import { Status } from '@/db'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'
-import { Tween } from '@/composition/tween/useTweenRef'
+import { Tween } from '@/shared/tween/useTweenRef'
 
 
 const main = ref<HTMLElement | null>(null)

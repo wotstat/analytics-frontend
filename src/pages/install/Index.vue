@@ -363,7 +363,7 @@ import AnalyticsBack1 from './assets/mods/analytics-back-1.webp'
 import AnalyticsBack2 from './assets/mods/analytics-back-2.webp'
 
 
-import ModCard from './components/ModCard.vue'
+import ModCard from './components/modCard/ModCard.vue'
 import { type Component, computed, nextTick, onMounted, ref, watch } from 'vue'
 import { analyticsMod, latestMods, latestModsMap, ModInfo, otherMods, otherModsMap, positionsMod, widgetsMod, } from './mods/mods'
 import { useI18n } from '@/composition/useI18n'
@@ -378,7 +378,7 @@ import { latestGameVersion } from '@/utils/gameVersion'
 import ExportArchive from './components/exportArchive/ExportArchive.vue'
 import InstallMods from './components/InstallMods.vue'
 import SelectFolderError from './components/SelectFolderError.vue'
-import { showFocusEffect } from '@/pages/install/components/focusEffect/focusEffect'
+import { showFocusEffect } from '@/components/uiKit/focusEffect/focusEffect'
 import { useRoute } from 'vue-router'
 import { setFeatureVisit } from '@/components/uiKit/newFeatureBadge/newFeatureBadge'
 

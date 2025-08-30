@@ -13,7 +13,7 @@
 <script lang="ts" setup>
 import { Status, loading, error, success, isErrorStatus } from '@/db'
 import { computed, ref } from 'vue'
-import PopupWindow from '@/components/PopupWindow.vue'
+import PopupWindow from '@/components/shared/PopupWindow.vue'
 
 const showErrorPopup = ref(false)
 

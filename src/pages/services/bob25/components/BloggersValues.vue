@@ -9,8 +9,8 @@
 
 
 <script setup lang="ts" generic="T">
-import TweenValue from '@/components/tween/TweenValue.vue'
-import { TweenOptions } from '@/composition/tween/useTweenRef'
+import TweenValue from '@/shared/tween/TweenValue.vue'
+import { TweenOptions } from '@/shared/tween/useTweenRef'
 import { computed } from 'vue'
 
 const props = defineProps<{
