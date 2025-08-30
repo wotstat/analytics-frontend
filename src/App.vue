@@ -24,7 +24,7 @@ import Header from './pages/shared/header/Header.vue'
 import HeaderSpacer from './pages/shared/header/HeaderSpacer.vue'
 import { headerHeight } from './composition/useAdditionalHeaderHeight'
 import ContextMenuRoot from '@/uiKit/contextMenu/ContextMenuRoot.vue'
-import FocusEffectRoot from './pages/install/focusEffect/FocusEffectRoot.vue'
+import FocusEffectRoot from './pages/install/components/focusEffect/FocusEffectRoot.vue'
 
 const isWindows = navigator.platform.indexOf('Win') > -1
 const boldWeight = isWindows ? 700 : 800

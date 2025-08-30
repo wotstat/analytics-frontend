@@ -49,13 +49,13 @@
 
 <script setup lang="ts">
 import PopupWindow from '@/components/PopupWindow.vue'
-import { download } from './downloader'
+import { download } from '../utils/downloader'
 import { defineAsyncComponent, ref, watch } from 'vue'
 
-import Tada1Src from './assets/tada-1.webp'
-import Tada2Src from './assets/tada-2.webp'
+import Tada1Src from '../assets/tada-1.webp'
+import Tada2Src from '../assets/tada-2.webp'
 
-const Confetti = defineAsyncComponent(() => import('@/components/Confetti.vue'))
+const Confetti = defineAsyncComponent(() => import('@/pages/install/components/Confetti.vue'))
 
 const confetti = ref<InstanceType<typeof Confetti> | null>(null)
 

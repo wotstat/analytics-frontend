@@ -31,11 +31,11 @@
 
 <script setup lang="ts">
 import PopupWindow from '@/components/PopupWindow.vue'
-import { download } from './downloader'
+import { download } from '../../utils/downloader'
 import { ref, watch } from 'vue'
 import { exportArchive } from './exportArchive'
 
-import MedalSrc from './assets/medal.webp'
+import MedalSrc from '../../assets/medal.webp'
 
 const visible = ref(false)
 

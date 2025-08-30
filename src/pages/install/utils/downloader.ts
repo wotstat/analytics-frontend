@@ -1,5 +1,5 @@
 import { INSTALL_URL } from '@/utils/externalUrl'
-import { latestModsMap } from './mods'
+import { latestModsMap } from '../mods/mods'
 import { ref } from 'vue'
 
 type State = { type: 'begin' } |
