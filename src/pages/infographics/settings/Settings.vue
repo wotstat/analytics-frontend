@@ -150,7 +150,7 @@ import { useDebounce, useDraggable, useElementBounding, watchOnce, useVirtualLis
 import { TankLevel, TankType, useQueryStatParams } from '@/shared/query/useQueryStatParams'
 import { customBattleModes, customBattleModesKeys } from '@/utils/wot'
 import { useRoute, useRouter } from 'vue-router'
-import { getTankName } from '@/utils/i18n'
+import { getTankName } from '@/shared/i18n/i18n'
 
 const route = useRoute()
 const router = useRouter()

@@ -112,7 +112,7 @@ import { createFixedSpaceProcessor, createPercentProcessor } from '@/shared/proc
 import { shellNames } from '@/utils/wot'
 import QueryPreserveRouterLink from '@/pages/shared/sidebarLayout/QueryPreserveRouterLink.vue'
 import { bestMV } from '@/db/schema'
-import { useMeta } from '@/composition/useMeta'
+import { useMeta } from '@/shared/composition/useMeta'
 
 useMeta({
   title: 'Инфографика урона',

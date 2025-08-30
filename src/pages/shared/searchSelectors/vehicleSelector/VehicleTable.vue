@@ -27,7 +27,7 @@ import VehicleType from '@/shared/game/vehicles/type/VehicleType.vue'
 import Globe from './assets/globe.svg'
 import { computed, ref, triggerRef, watch } from 'vue'
 import TableView from '@/shared/uiKit/tableView/TableView.vue'
-import { type ComponentInstance } from '@/composition/utils/ComponentInstance'
+import { type ComponentInstance } from '@/shared/utils/types/ComponentInstance.ts'
 
 import { type VehicleLineData, VehicleLine as VehicleLineCell } from './VehicleLine.ts'
 import { TableViewDelegate } from '@/shared/uiKit/tableView/tableView/TableView.ts'

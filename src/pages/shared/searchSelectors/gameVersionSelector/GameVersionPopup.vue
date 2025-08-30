@@ -38,7 +38,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 
-import { preferredGame } from '@/utils/globalPreferred'
+import { preferredGame } from '@/shared/global/globalPreferred'
 import SearchLine from '../searchLine/SearchLine.vue'
 import TableView from '@/shared/uiKit/tableView/TableView.vue'
 import { TableViewDelegate } from '@/shared/uiKit/tableView/tableView/TableView'

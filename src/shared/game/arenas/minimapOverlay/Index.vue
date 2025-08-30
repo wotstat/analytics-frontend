@@ -16,9 +16,9 @@
 </template>
 
 <script setup lang="ts">
-import { convertCoordinate, loadArenaMeta } from '@/utils/arenas'
+import { convertCoordinate, loadArenaMeta } from '../arenas'
 import { computedAsync } from '@vueuse/core'
-import { computed, watchEffect } from 'vue'
+import { computed } from 'vue'
 
 const props = defineProps<{
   arenaTag: string;
@@ -34,7 +34,7 @@ const enemyTeamIndex = computed(() => props.allyTeam === 1 ? 1 : 0)
 
 const images = Object.fromEntries(
   Object.entries(import.meta.glob<{ default: string }>('./assets/bases/*', { eager: true }))
-  .map(([key, value]) => [key.replace('./assets/bases/', '').replace('.png', ''), value.default])
+    .map(([key, value]) => [key.replace('./assets/bases/', '').replace('.png', ''), value.default])
 )
 
 

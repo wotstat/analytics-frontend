@@ -93,8 +93,8 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { VueComponent as InstructionGame } from './instructionGame/index.md'
 import { VueComponent as InstructionOBS } from './instructionOBS/index.md'
-import { useMeta } from '@/composition/useMeta'
-import { WIDGETS_URL } from '@/utils/externalUrl'
+import { useMeta } from '@/shared/composition/useMeta'
+import { WIDGETS_URL } from '@/shared/utils/externalUrl'
 
 useMeta({
   title: 'Виджеты',

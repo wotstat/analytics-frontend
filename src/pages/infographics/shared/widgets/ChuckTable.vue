@@ -144,8 +144,8 @@
 import { roundProcessor, createPercentProcessor } from '@/shared/processors/processors'
 import { dbIndexToDate } from '@/db'
 import { ChuckResult } from '@/db/schema'
-import { timeProcessor } from '@/utils'
-import { getArenaName, getTankName } from '@/utils/i18n'
+import { getArenaName, getTankName } from '@/shared/i18n/i18n'
+import { timeProcessor } from '@/shared/utils/time'
 
 const props = defineProps<{
   part: {
