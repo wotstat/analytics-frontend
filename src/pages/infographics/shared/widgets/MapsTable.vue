@@ -118,7 +118,7 @@
 import { StatParams, getQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import { queryComputed } from '@/db'
 import { getArenaName } from '@/shared/i18n/i18n'
-import { customBattleModesKeys, customBattleModes } from '@/utils/wot'
+import { customBattleModesKeys, customBattleModes } from '@/shared/game/wot'
 import { useElementVisibility, useElementSize, useLocalStorage } from '@vueuse/core'
 import { computed, ref } from 'vue'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'

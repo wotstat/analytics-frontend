@@ -77,7 +77,7 @@
 
 
 <script setup lang="ts">
-import PopupWindow from '@/shared/ui/PopupWindow.vue'
+import PopupWindow from '@/shared/ui/components/PopupWindow.vue'
 import { computedAsync } from '@vueuse/core'
 import { computed } from 'vue'
 

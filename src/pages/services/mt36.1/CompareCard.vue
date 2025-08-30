@@ -15,7 +15,7 @@
 
 
 <script setup lang="ts">
-import SimpleTweenValue from '@/shared/tween/SimpleTweenValue.vue'
+import SimpleTweenValue from '@/shared/ui/tween/SimpleTweenValue.vue'
 
 const props = defineProps<{
   left: number,

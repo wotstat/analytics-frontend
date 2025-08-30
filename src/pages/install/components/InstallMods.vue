@@ -48,7 +48,7 @@
 
 
 <script setup lang="ts">
-import PopupWindow from '@/shared/ui/PopupWindow.vue'
+import PopupWindow from '@/shared/ui/components/PopupWindow.vue'
 import { download } from '../utils/downloader'
 import { defineAsyncComponent, ref, watch } from 'vue'
 

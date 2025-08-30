@@ -372,8 +372,8 @@ import { useMeta } from '@/shared/composition/useMeta'
 import { useAnalyticsRealtime } from '@/shared/realtime/useAnalyticsRealtime'
 import { CLICKHOUSE_URL, CURRENT_URL_PREFIX } from '@/shared/utils/externalUrl'
 import { useRouter } from 'vue-router'
-import { useTweenComputed } from '@/shared/tween/useTweenRef'
 import { ms2sec, sec2minsec, ms2secLabel } from '@/shared/utils/time'
+import { useTweenComputed } from '@/shared/ui/tween/useTweenRef'
 
 useMeta({
   title: 'WOTSTAT - Сессионная аналитика для игр «Мир танков» и «World of Tanks»',

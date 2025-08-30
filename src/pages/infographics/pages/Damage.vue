@@ -13,7 +13,7 @@
         <div class="card chart bar height2 full-width-less-small">
           <MiniBar :status="byShellResult.status" :data="byShellData.damage" color="yellow" :labels="shellLabels"
             :callbacks="{
-              title: (t) => `${toPercent(t)} выстрелов ${t[0].label} нанесли урон`,
+              title: (t) => `${toPercent(t[0].raw as number)} выстрелов ${t[0].label} нанесли урон`,
               label: () => ``,
               beforeBody: () => `Среди попавших`
             }" />
@@ -32,7 +32,7 @@
         <div class="card chart bar height2 full-width-less-small right-column">
           <MiniBar :status="smallDamageResult.status" :data="smallDamageData" color="blue"
             :labels="['1ХП', '2ХП', '3ХП', '4ХП', '5ХП']" :callbacks="{
-              title: (t) => `${toPercent(t)} танков осталось с ${t[0].label}`,
+              title: (t) => `${toPercent(t[0].raw as number)} танков осталось с ${t[0].label}`,
               label: () => ``,
               beforeBody: () => `Среди группы до 5 ХП`
 
@@ -65,7 +65,7 @@
         <div class="card chart bar big damage-distribution">
           <MiniBar :status="damageDistributionResult.status" :data="damageDistributionData" :center-line="true"
             color="green" :labels="damageLabels"
-            :callbacks="{ title: (t) => `${toPercent(t)} выстрелов отклонились на ${t[0].label} от базового урона`, label: () => `` }" />
+            :callbacks="{ title: (t) => `${toPercent(t[0].raw as number)} выстрелов отклонились на ${t[0].label} от базового урона`, label: () => `` }" />
           <div class="absolute">
             <p class="card-main-info description">Распределение урона +- 25
             </p>
@@ -104,22 +104,21 @@ import { queryAsync, queryAsyncFirst } from '@/db'
 import { computed, ref, watchEffect } from 'vue'
 import { useElementVisibility } from '@vueuse/core'
 import MiniBar from '@/pages/infographics/shared/widgets/charts/MiniBar.vue'
-import GenericInfoQuery from '@/pages/infographics/shared/widgets/GenericInfoQuery.vue'
-import StillSurviveDistribution from '@/pages/infographics/shared/widgets/StillSurviveDistribution.vue'
 import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
-import { toRelative, toPercent } from '@/utils'
+import { toRelative } from '@/utils'
 import { createFixedSpaceProcessor, createPercentProcessor } from '@/shared/processors/processors'
-import { shellNames } from '@/utils/wot'
+import { shellNames } from '@/shared/game/wot'
 import QueryPreserveRouterLink from '@/pages/shared/sidebarLayout/QueryPreserveRouterLink.vue'
 import { bestMV } from '@/db/schema'
 import { useMeta } from '@/shared/composition/useMeta'
+
+const toPercent = createPercentProcessor(0)
 
 useMeta({
   title: 'Инфографика урона',
   description: 'Инфографика урона в боях',
   keywords: 'инфографика урона, статистика урона, статистика урона в боях'
 })
-
 
 const params = useQueryStatParams()
 const settings = useQueryStatParamsCache(params)
