@@ -23,7 +23,7 @@
 
 
 <script setup lang="ts">
-import VehicleType from '@/components/vehicles/type/VehicleType.vue'
+import VehicleType from '@/components/game/vehicles/type/VehicleType.vue'
 import Globe from './assets/globe.svg'
 import { computed, ref, triggerRef, watch } from 'vue'
 import TableView from '@/uiKit/tableView/TableView.vue'

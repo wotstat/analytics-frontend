@@ -91,9 +91,8 @@ import { useIframeMessages } from '@/composition/useIframeMessages'
 import { computed, onDeactivated, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import { VueComponentWith as InstructionGameWith } from './instructionGame/index.md'
-import { VueComponentWith as InstructionOBSWith } from './instructionOBS/index.md'
-import { allMdComponents } from '@/components/mdUtils/getAllMdComponents'
+import { VueComponent as InstructionGame } from './instructionGame/index.md'
+import { VueComponent as InstructionOBS } from './instructionOBS/index.md'
 import { useMeta } from '@/composition/useMeta'
 import { WIDGETS_URL } from '@/utils/externalUrl'
 
@@ -102,9 +101,6 @@ useMeta({
   description: 'Виджеты универсальные их можно добавлять как в OBS так и прямо в игру Мир Танков и World of Tanks',
   keywords: 'виджеты, виджеты для стримеров, виджеты для игр, виджеты для стрима, виджеты для трансляции, виджеты мир танков'
 })
-
-const InstructionGame = InstructionGameWith(allMdComponents)
-const InstructionOBS = InstructionOBSWith(allMdComponents)
 
 const selectedTitle = ref<string>('')
 const collection = ref<HTMLIFrameElement | null>(null)
