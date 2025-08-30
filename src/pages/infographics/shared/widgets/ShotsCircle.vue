@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import CanvasVue from '@/shared/ui/Canvas.vue'
+import CanvasVue from '@/shared/ui/components/Canvas.vue'
 import { computed, ref, shallowRef } from 'vue'
 import { Quadtree, Circle } from '@timohausmann/quadtree-ts'
 

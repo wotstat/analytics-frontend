@@ -128,7 +128,7 @@
                     <td>{{ result.fireHealth ?? '-' }}</td>
                   </template>
                   <td v-if="shotResult.some(t => t.ammoBayDestroyed)">{{ result.ammoBayDestroyed ? 'Да' : '-'
-                  }}</td>
+                    }}</td>
                 </tr>
               </tbody>
             </table>
@@ -164,7 +164,6 @@
 <script lang="ts" setup>
 import { dbIndexToDate, query } from '@/db'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
-import { shellNames, wotinspectorLog, wotinspectorURLNew } from '@/utils/wot'
 import { aranaMinimapUrl, convertCoordinate, loadArenaMeta } from '@/shared/game/arenas/arenas'
 import { computedAsync, useDraggable, useMediaQuery } from '@vueuse/core'
 import { useRoute, useRouter } from 'vue-router'
@@ -172,6 +171,8 @@ import InfoTable from './InfoTable.vue'
 import { getArenaName } from '@/shared/i18n/i18n'
 import MinimapOverlays from '@/shared/game/arenas/minimapOverlay/Index.vue'
 import { sec2minsec } from '@/shared/utils/time'
+import { wotinspectorLog, wotinspectorURLNew } from '@/shared/theirdParty/wotInspector/wotInspector'
+import { shellNames } from '@/shared/game/wot'
 
 type UInt128 = string;
 type DateTime64 = string;

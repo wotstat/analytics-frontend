@@ -118,7 +118,7 @@
 <script setup lang="ts">
 import { StatParams, getQueryStatParamsCache, useQueryStatParams, whereClause } from '@/shared/query/useQueryStatParams'
 import { mergeStatuses, queryAsync } from '@/db'
-import { modeCount } from '@/utils/wot'
+import { modeCount } from '@/shared/game/wot'
 import { useElementVisibility, useElementSize } from '@vueuse/core'
 import { computed, ref } from 'vue'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'

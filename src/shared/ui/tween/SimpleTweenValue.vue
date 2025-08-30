@@ -5,7 +5,7 @@
 
 <script setup lang="ts" generic="T">
 import { spaceProcessor } from '@/shared/processors/useSpaceProcessor'
-import { TweenOptions, useTweenRef } from '@/shared/tween/useTweenRef'
+import { TweenOptions, useTweenRef } from '@/shared/ui/tween/useTweenRef'
 import { computed, ref, watch } from 'vue'
 
 const props = defineProps<{
