@@ -40,9 +40,9 @@ import { computed, ref, watch } from 'vue'
 
 import { preferredGame } from '@/utils/globalPreferred'
 import SearchLine from '@/components/searchLine/SearchLine.vue'
-import TableView from '@/components/tableView/TableView.vue'
-import { TableViewDelegate } from '@/components/tableView/tableView/TableView'
-import { HeaderLine } from '../tableView/tableView/default/HeaderLine'
+import TableView from '@/uiKit/tableView/TableView.vue'
+import { TableViewDelegate } from '@/uiKit/tableView/tableView/TableView'
+import { HeaderLine } from '../../uiKit/tableView/tableView/default/HeaderLine'
 import { VersionLine } from './VersionLine'
 import { compareIntervals, Highlighted } from '@/uiKit/highlightString/highlightUtils'
 

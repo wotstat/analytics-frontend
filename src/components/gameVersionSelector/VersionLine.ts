@@ -1,7 +1,7 @@
 import { getHighlightedTextParts, Highlighted } from '@/uiKit/highlightString/highlightUtils'
 
 import { Ref, watch } from 'vue'
-import { IndexPath, TableCell } from '../tableView/tableView/TableView'
+import { IndexPath, TableCell } from '../../uiKit/tableView/tableView/TableView'
 
 
 type LineData = {
