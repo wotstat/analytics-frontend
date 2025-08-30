@@ -60,9 +60,9 @@ import VehicleTable from './VehicleTable.vue'
 
 import Reload from '@/assets/icons/reset.svg'
 import { numberToRoman } from '@/utils'
-import VehicleTypeComponent from '../vehicles/type/VehicleType.vue'
+import VehicleTypeComponent from '@/components/vehicles/type/VehicleType.vue'
 import { mtNations, Nation, nations, nationsIndexes, type VehicleType, vehicleTypes, wotNations } from '@/utils/wot'
-import NationComponent from '../vehicles/nation/Nation.vue'
+import NationComponent from '@/components/vehicles/nation/Nation.vue'
 import SearchLine from '../searchLine/SearchLine.vue'
 import { preferredGame } from '@/utils/globalPreferred'
 

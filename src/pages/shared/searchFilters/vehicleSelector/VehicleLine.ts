@@ -1,11 +1,11 @@
 import { numberToRoman } from '@/utils'
 import { getHighlightedTextParts, Highlighted } from '@/uiKit/highlightString/highlightUtils'
-import { vehicleTypeToImage } from '../vehicles/type/vehicleTypeToImage'
-import { smallVehiclesAtlasMt, smallVehiclesAtlasWot, tagToImageName } from '../vehicles/vehicle/utils'
+import { vehicleTypeToImage } from '@/components/vehicles/type/vehicleTypeToImage'
+import { smallVehiclesAtlasMt, smallVehiclesAtlasWot, tagToImageName } from '@/components/vehicles/vehicle/utils'
 
 import { Ref, watch } from 'vue'
-import { nationFlagAtlas } from '../vehicles/nation/utils'
-import { TableCell } from '../../uiKit/tableView/tableView/TableView'
+import { nationFlagAtlas } from '@/components/vehicles/nation/utils'
+import { TableCell } from '@/uiKit/tableView/tableView/TableView'
 
 const vehicleTypes = ['MT', 'LT', 'HT', 'AT', 'SPG'] as const
 export type VehicleLineData = {
