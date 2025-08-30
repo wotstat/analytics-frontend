@@ -1,5 +1,5 @@
-import { ANALYTICS_REALTIME_URL } from '@/utils/externalUrl'
-import { syncRefs, useWebSocket } from '@vueuse/core'
+import { ANALYTICS_REALTIME_URL } from '@/shared/utils/externalUrl'
+import { useWebSocket } from '@vueuse/core'
 import { ref, ShallowRef, shallowRef, watch } from 'vue'
 
 

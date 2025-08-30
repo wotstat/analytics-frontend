@@ -29,7 +29,7 @@ import PlayerCoverageTable from '@/pages/infographics/shared/widgets/PlayerCover
 import { useQueryStatParams, useQueryStatParamsCache, whereClause, whereClauseColumns } from '@/shared/query/useQueryStatParams'
 import { createFixedSpaceProcessor } from '@/shared/processors/processors'
 import { bestMV } from '@/db/schema'
-import { useMeta } from '@/composition/useMeta'
+import { useMeta } from '@/shared/composition/useMeta'
 
 useMeta({
   title: 'Охват игроков',

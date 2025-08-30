@@ -56,7 +56,7 @@ import { useQueryStatParams, whereClause } from '@/shared/query/useQueryStatPara
 import { queryComputed } from '@/db'
 import { computed, ref, watch } from 'vue'
 import { createFixedSpaceProcessor } from '@/shared/processors/processors'
-import { getBestLocalization } from '@/utils/i18n'
+import { getBestLocalization } from '@/shared/i18n/i18n'
 import { objectEntries, pausableWatch } from '@vueuse/core'
 import FallbackImg from '@/shared/uiKit/fallbackImg/FallbackImg.vue'
 import HorizontalScrollItems from '@/pages/shared/HorizontalScrollItems.vue'
@@ -64,7 +64,7 @@ import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper
 import { useQueryParamStorage } from '@/shared/query/useQueryParamStorage'
 
 import NoImageLB from './noImageLB.png'
-import { STATIC_URL } from '@/utils/externalUrl'
+import { STATIC_URL } from '@/shared/utils/externalUrl'
 
 const customOrderKeys = new Map<string, number>(objectEntries({
   'mtl_1_35': 1000,

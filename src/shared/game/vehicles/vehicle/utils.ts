@@ -1,5 +1,8 @@
 import { SpriteAtlas } from '@/shared/uiKit/spriteAtlas/SpriteAtlas'
-import { STATIC_URL } from '@/utils/externalUrl'
+import { STATIC_URL } from '@/shared/utils/externalUrl'
+
+export const vehicleTypes = ['HT', 'MT', 'LT', 'AT', 'SPG'] as const
+export type VehicleType = typeof vehicleTypes[number]
 
 export function tagToImageName(tag: string): string {
   return tag.split(':').at(-1)?.toLowerCase() || tag.toLowerCase()

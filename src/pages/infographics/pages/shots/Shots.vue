@@ -84,7 +84,7 @@ import { getQueryStatParamsCache, useQueryStatParams, whereClause } from '@/shar
 import PopupWindow from '@/shared/ui/PopupWindow.vue'
 import ShotInfo from './shotInfo/Index.vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useMeta } from '@/composition/useMeta'
+import { useMeta } from '@/shared/composition/useMeta'
 
 useMeta({
   title: 'Статистика стрельбы',

@@ -8,12 +8,11 @@
 <script setup lang="ts">
 
 import { CACHE_SETTINGS, queryAsync } from '@/db'
-import { selectTagVehiclesLocalization } from '@/utils/i18n'
+import { selectTagVehiclesLocalization } from '@/shared/i18n/i18n'
 import VehiclePopup from './VehiclePopup.vue'
 import { headerHeight, useAdditionalHeaderHeight } from '@/pages/shared/header/useAdditionalHeaderHeight'
-import { Nation } from '@/utils/wot'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
-
+import { Nation } from '@/shared/game/nations/nations'
 
 defineProps<{
   targetElement: HTMLElement | null,

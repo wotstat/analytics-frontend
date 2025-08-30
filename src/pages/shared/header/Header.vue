@@ -152,7 +152,7 @@ import LogoIcon from './assets/logo2.0.svg'
 import HeaderSpacer from './HeaderSpacer.vue'
 import I18nIcon from './assets/i18n.svg'
 import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
-import { CLICKHOUSE_URL, CURRENT_URL_PREFIX, POSITIONS_URL, DISCORD_URL } from '@/utils/externalUrl'
+import { CLICKHOUSE_URL, CURRENT_URL_PREFIX, POSITIONS_URL, DISCORD_URL } from '@/shared/utils/externalUrl'
 import { useLocalStorage } from '@vueuse/core'
 import { vNewFeatureBadge } from '@/shared/uiKit/newFeatureBadge/newFeatureBadge'
 

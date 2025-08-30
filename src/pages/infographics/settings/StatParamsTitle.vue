@@ -3,9 +3,9 @@
 
   <template v-if="stat.tanks">
     <span v-if="stat.tanks.length == 1">На танке <span class="text-effect light-blue">{{ getTankName(stat.tanks[0])
-    }}</span>. </span>
+        }}</span>. </span>
     <span v-else>На танках <span class="text-effect light-blue">{{stat.tanks.map(t => getTankName(t)).join(', ')
-    }}</span>.
+        }}</span>.
     </span>
   </template>
   <template v-else>
@@ -50,7 +50,7 @@
 
 <script lang="ts" setup>
 import { useQueryStatParams } from '@/shared/query/useQueryStatParams'
-import { countLocalize, getTankName } from '@/utils/i18n'
+import { countLocalize, getTankName } from '@/shared/i18n/i18n'
 import { customBattleModes } from '@/utils/wot'
 
 

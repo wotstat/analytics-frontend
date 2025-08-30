@@ -169,10 +169,10 @@ import PlayerResultTable from '@/pages/infographics/shared/widgets/PlayerResultT
 import { createPercentProcessor, createFixedProcessor, createFixedSpaceProcessor } from '@/shared/processors/processors'
 import { getQueryStatParamsCache, useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import TeamLevelTable from '@/pages/infographics/shared/widgets/TeamLevelTable.vue'
-import { countLocalize } from '@/utils/i18n'
+import { countLocalize } from '@/shared/i18n/i18n'
 import { TooltipItem } from 'chart.js'
 import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
-import { useMeta } from '@/composition/useMeta'
+import { useMeta } from '@/shared/composition/useMeta'
 
 useMeta({
   title: 'Статистика результатов',

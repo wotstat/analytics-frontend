@@ -1,5 +1,5 @@
 
-import { CLICKHOUSE_URL } from '@/utils/externalUrl'
+import { CLICKHOUSE_URL } from '@/shared/utils/externalUrl'
 import { ResponseJSON, createClient, type ClickHouseSettings } from '@clickhouse/client-web'
 import { useLocalStorage } from '@vueuse/core'
 import { computed, ref, shallowRef, watch } from 'vue'

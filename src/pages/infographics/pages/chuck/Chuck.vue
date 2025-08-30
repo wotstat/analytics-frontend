@@ -100,7 +100,7 @@ import Timecodes from '../../shared/Timecodes.vue'
 import CopyIcon from '@/assets/icons/copy.svg'
 
 import DownloadIcon from '@/assets/icons/download.svg'
-import { useMeta } from '@/composition/useMeta'
+import { useMeta } from '@/shared/composition/useMeta'
 
 useMeta({
   title: 'Очки Чака',

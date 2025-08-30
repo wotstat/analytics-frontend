@@ -165,13 +165,13 @@
 import { dbIndexToDate, query } from '@/db'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { shellNames, wotinspectorLog, wotinspectorURLNew } from '@/utils/wot'
-import { aranaMinimapUrl, convertCoordinate, loadArenaMeta } from '@/utils/arenas'
+import { aranaMinimapUrl, convertCoordinate, loadArenaMeta } from '@/shared/game/arenas/arenas'
 import { computedAsync, useDraggable, useMediaQuery } from '@vueuse/core'
 import { useRoute, useRouter } from 'vue-router'
-import { sec2minsec } from '@/utils'
 import InfoTable from './InfoTable.vue'
-import { getArenaName } from '@/utils/i18n'
-import MinimapOverlays from '@/shared/game/minimapOverlay/Index.vue'
+import { getArenaName } from '@/shared/i18n/i18n'
+import MinimapOverlays from '@/shared/game/arenas/minimapOverlay/Index.vue'
+import { sec2minsec } from '@/shared/utils/time'
 
 type UInt128 = string;
 type DateTime64 = string;

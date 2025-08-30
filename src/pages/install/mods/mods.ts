@@ -1,4 +1,4 @@
-import { INSTALL_URL } from '@/utils/externalUrl'
+import { INSTALL_URL } from '@/shared/utils/externalUrl'
 import { useFetch } from '@vueuse/core'
 import { computed, ref, watch, watchEffect } from 'vue'
 

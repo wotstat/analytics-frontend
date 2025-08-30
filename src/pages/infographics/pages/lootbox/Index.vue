@@ -114,10 +114,10 @@ import { computed, ref } from 'vue'
 import TableSection from './TableSection.vue'
 import OpenByTable from './OpenByTable.vue'
 import RerollTable from './RerollTable.vue'
-import { countLocalize, crewBookName, entitlementsName, getBestLocalization, getTankName, LocalizedName } from '@/utils/i18n'
+import { countLocalize, crewBookName, entitlementsName, getBestLocalization, getTankName, LocalizedName } from '@/shared/i18n/i18n'
 import LootboxList from './lootboxList/Index.vue'
 import { useRoute } from 'vue-router'
-import { useMeta } from '@/composition/useMeta'
+import { useMeta } from '@/shared/composition/useMeta'
 import { useLocalStorage } from '@vueuse/core'
 
 useMeta({

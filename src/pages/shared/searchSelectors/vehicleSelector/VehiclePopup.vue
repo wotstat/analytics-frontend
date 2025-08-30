@@ -52,7 +52,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { tankTagToReadable } from '@/utils/i18n'
+import { tankTagToReadable } from '@/shared/i18n/i18n'
 import { Highlighted, compareIntervals } from '@/shared/uiKit/highlightString/highlightUtils'
 import { useLocalStorage } from '@vueuse/core'
 
@@ -61,11 +61,11 @@ import VehicleTable from './VehicleTable.vue'
 import Reload from '@/assets/icons/reset.svg'
 import { numberToRoman } from '@/utils'
 import VehicleTypeComponent from '@/shared/game/vehicles/type/VehicleType.vue'
-import { mtNations, Nation, nations, nationsIndexes, type VehicleType, vehicleTypes, wotNations } from '@/utils/wot'
 import NationComponent from '@/shared/game/vehicles/nation/Nation.vue'
 import SearchLine from '../searchLine/SearchLine.vue'
-import { preferredGame } from '@/utils/globalPreferred'
-
+import { preferredGame } from '@/shared/global/globalPreferred'
+import { mtNations, wotNations, nations, nationsIndexes, Nation } from '@/shared/game/nations/nations'
+import { VehicleType, vehicleTypes } from '@/shared/game/vehicles/vehicle/utils'
 
 const vehicleTable = ref<InstanceType<typeof VehicleTable> | null>(null)
 

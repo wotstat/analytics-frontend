@@ -115,14 +115,14 @@
 </template>
 
 <script setup lang="ts">
-import { StatParams, getQueryStatParamsCache, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
-import { Status, queryAsync, queryComputed } from '@/db'
-import { timeProcessor, whereSum } from '@/utils'
-import { getArenaName } from '@/utils/i18n'
+import { StatParams, getQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
+import { queryComputed } from '@/db'
+import { getArenaName } from '@/shared/i18n/i18n'
 import { customBattleModesKeys, customBattleModes } from '@/utils/wot'
 import { useElementVisibility, useElementSize, useLocalStorage } from '@vueuse/core'
-import { ShallowRef, computed, ref, shallowRef, watch, watchEffect } from 'vue'
+import { computed, ref } from 'vue'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'
+import { timeProcessor } from '@/shared/utils/time'
 
 const { params } = defineProps<{
   params: StatParams
@@ -168,6 +168,10 @@ type ResultRow = {
   radio: number, loseRadio: number, winRadio: number,
   kills: number, loseKills: number, winKills: number,
   loseMgSum: number, winMgSum: number, mgSum: number,
+}
+
+function whereSum(exp: string[], addWhere: boolean = true) {
+  return exp.length > 0 ? (addWhere ? 'WHERE ' : '') + exp.join(' AND ') : ''
 }
 
 const dataQ = queryComputed<ResultRow>(() => `

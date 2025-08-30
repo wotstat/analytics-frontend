@@ -221,9 +221,10 @@ import { ChartProps } from 'vue-chartjs'
 import DropDown from '@/shared/uiKit/dropdown/DropDown.vue'
 import ShotsCircle from '@/pages/infographics/shared/widgets/ShotsCircle.vue'
 import { spaceProcessor } from '@/shared/processors/useSpaceProcessor'
-import { numberToRoman, sec2minsec } from '@/utils'
+import { numberToRoman } from '@/utils'
 import { roundProcessor, createPercentProcessor } from '@/shared/processors/processors'
 import CompareCard from './CompareCard.vue'
+import { sec2minsec } from '@/shared/utils/time'
 
 
 setFeatureVisit('mt-36-1')
