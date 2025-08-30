@@ -107,7 +107,7 @@
 
 <script lang="ts" setup>
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
-import { createFixedSpaceProcessor, createLogProcessor } from '@/shared/processors/processors'
+import { createFixedSpaceProcessor, createLogProcessor } from '@/shared/utils/processors/processors'
 import { useQueryStatParams, useQueryStatParamsCache } from '@/shared/query/useQueryStatParams'
 import { Status, dateToDbIndex, queryComputed, queryComputedFirst, success } from '@/db'
 import { computed, ref } from 'vue'

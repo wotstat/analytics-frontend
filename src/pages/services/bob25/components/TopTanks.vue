@@ -38,7 +38,7 @@ import VehicleImage from '@/shared/game/vehicles/vehicle/VehicleImage.vue'
 import { getTankName } from '@/shared/i18n/i18n'
 import { useMediaQuery } from '@vueuse/core'
 import { bloggerNamesArray } from './bloggerNames'
-import { createPercentProcessor } from '@/shared/processors/processors'
+import { createPercentProcessor } from '@/shared/utils/processors/processors'
 import Crown from '../assets/crown.png'
 import { ref } from 'vue'
 

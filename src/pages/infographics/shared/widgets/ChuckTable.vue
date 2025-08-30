@@ -141,7 +141,7 @@
 </template>
 
 <script lang="ts" setup>
-import { roundProcessor, createPercentProcessor } from '@/shared/processors/processors'
+import { roundProcessor, createPercentProcessor } from '@/shared/utils/processors/processors'
 import { dbIndexToDate } from '@/db'
 import { ChuckResult } from '@/db/schema'
 import { getArenaName, getTankName } from '@/shared/i18n/i18n'

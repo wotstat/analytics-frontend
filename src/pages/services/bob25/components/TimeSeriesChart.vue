@@ -31,7 +31,7 @@ import DropDown from '@/shared/uiKit/dropdown/DropDown.vue'
 import { useLocalStorage, useMediaQuery } from '@vueuse/core'
 import { stepVariants, periodVariants, period, step } from './queryLoader'
 import { displayVariant, displayVariants, preferredLogProcessor } from '../store'
-import { createLogProcessor } from '@/shared/processors/processors'
+import { createLogProcessor } from '@/shared/utils/processors/processors'
 import Tooltip from '@/shared/ui/components/Tooltip.vue'
 
 

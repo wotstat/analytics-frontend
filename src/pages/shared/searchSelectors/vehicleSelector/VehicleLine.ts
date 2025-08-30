@@ -5,7 +5,7 @@ import { smallVehiclesAtlasMt, smallVehiclesAtlasWot, tagToImageName } from '@/s
 import { Ref, watch } from 'vue'
 import { nationFlagAtlas } from '@/shared/game/vehicles/nations/utils'
 import { TableCell } from '@/shared/uiKit/tableView/tableView/TableView'
-import { romanNumberProcessor } from '@/shared/processors/processors'
+import { romanNumberProcessor } from '@/shared/utils/processors/processors'
 
 const vehicleTypes = ['MT', 'LT', 'HT', 'AT', 'SPG'] as const
 export type VehicleLineData = {

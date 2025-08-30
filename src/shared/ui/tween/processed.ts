@@ -1,4 +1,4 @@
-import { spaceProcessor } from '@/shared/processors/useSpaceProcessor'
+import { spaceProcessor } from '@/shared/utils/processors/useSpaceProcessor'
 import { TweenOptions, useTweenComputed } from './useTweenRef'
 import { computed } from 'vue'
 

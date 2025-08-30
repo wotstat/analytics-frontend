@@ -165,7 +165,7 @@ import { LONG_CACHE_SETTINGS, Status, mergeStatuses, queryAsync, queryAsyncFirst
 import { useElementVisibility, useLocalStorage } from '@vueuse/core'
 import { computed, ref } from 'vue'
 import PlayerResultTable from '@/pages/infographics/shared/widgets/PlayerResultTable.vue'
-import { createPercentProcessor, createFixedProcessor, createFixedSpaceProcessor } from '@/shared/processors/processors'
+import { createPercentProcessor, createFixedProcessor, createFixedSpaceProcessor } from '@/shared/utils/processors/processors'
 import { getQueryStatParamsCache, useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import TeamLevelTable from '@/pages/infographics/shared/widgets/TeamLevelTable.vue'
 import { countLocalize } from '@/shared/i18n/i18n'

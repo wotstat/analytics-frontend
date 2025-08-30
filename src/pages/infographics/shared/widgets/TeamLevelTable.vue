@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { createPercentProcessor } from '@/shared/processors/processors'
+import { createPercentProcessor } from '@/shared/utils/processors/processors'
 import { useElementVisibility } from '@vueuse/core'
 import { computed, ref } from 'vue'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'

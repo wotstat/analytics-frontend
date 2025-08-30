@@ -55,7 +55,7 @@
 import { useQueryStatParams, whereClause } from '@/shared/query/useQueryStatParams'
 import { queryComputed } from '@/db'
 import { computed, ref, watch } from 'vue'
-import { createFixedSpaceProcessor } from '@/shared/processors/processors'
+import { createFixedSpaceProcessor } from '@/shared/utils/processors/processors'
 import { getBestLocalization } from '@/shared/i18n/i18n'
 import { objectEntries, pausableWatch } from '@vueuse/core'
 import FallbackImg from '@/shared/uiKit/fallbackImg/FallbackImg.vue'

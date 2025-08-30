@@ -65,7 +65,7 @@ import SearchLine from '../searchLine/SearchLine.vue'
 import { preferredGame } from '@/shared/global/globalPreferred'
 import { mtNations, wotNations, nations, nationsIndexes, Nation } from '@/shared/game/vehicles/nations/nations'
 import { VehicleType, vehicleTypes } from '@/shared/game/vehicles/vehicle/utils'
-import { romanNumberProcessor } from '@/shared/processors/processors'
+import { romanNumberProcessor } from '@/shared/utils/processors/processors'
 
 const vehicleTable = ref<InstanceType<typeof VehicleTable> | null>(null)
 

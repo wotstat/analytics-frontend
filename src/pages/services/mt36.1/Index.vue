@@ -220,8 +220,8 @@ import { ChartProps } from 'vue-chartjs'
 
 import DropDown from '@/shared/uiKit/dropdown/DropDown.vue'
 import ShotsCircle from '@/pages/infographics/shared/widgets/ShotsCircle.vue'
-import { spaceProcessor } from '@/shared/processors/useSpaceProcessor'
-import { roundProcessor, createPercentProcessor, romanNumberProcessor } from '@/shared/processors/processors'
+import { spaceProcessor } from '@/shared/utils/processors/useSpaceProcessor'
+import { roundProcessor, createPercentProcessor, romanNumberProcessor } from '@/shared/utils/processors/processors'
 import CompareCard from './CompareCard.vue'
 import { sec2minsec } from '@/shared/utils/time'
 
