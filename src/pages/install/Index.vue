@@ -373,14 +373,14 @@ import { useHasScroll } from '@/composition/useHasScroll'
 import SmallCheckbox from './components/SmallCheckbox.vue'
 import { INSTALL_URL, POSITIONS_URL } from '@/utils/externalUrl'
 import { showContextMenu } from './components/cardIntaractionControl'
-import { button, simpleContextMenu } from '@/uiKit/contextMenu/simpleContextMenu'
+import { button, simpleContextMenu } from '@/components/uiKit/contextMenu/simpleContextMenu'
 import { latestGameVersion } from '@/utils/gameVersion'
 import ExportArchive from './components/exportArchive/ExportArchive.vue'
 import InstallMods from './components/InstallMods.vue'
 import SelectFolderError from './components/SelectFolderError.vue'
 import { showFocusEffect } from '@/pages/install/components/focusEffect/focusEffect'
 import { useRoute } from 'vue-router'
-import { setFeatureVisit } from '@/uiKit/newFeatureBadge/newFeatureBadge'
+import { setFeatureVisit } from '@/components/uiKit/newFeatureBadge/newFeatureBadge'
 
 setFeatureVisit('mod-installer')
 

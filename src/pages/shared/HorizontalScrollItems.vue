@@ -25,11 +25,8 @@ function onClick(e: MouseEvent, tag: string) {
     selected.value = currentTanks.filter(t => t !== tag)
   } else if (e.ctrlKey || e.metaKey) {
     selected.value = [...currentTanks, tag]
-    // const target = { ...route.query, tank: [...currentTanks, tag].join(',') };
-    // router.push({ query: target });
   } else {
     selected.value = [tag]
-    // router.push({ query: { ...route.query, tank: tag } });
   }
 }
 </script>

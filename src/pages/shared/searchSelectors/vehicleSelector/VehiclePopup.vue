@@ -53,7 +53,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { tankTagToReadable } from '@/utils/i18n'
-import { Highlighted, compareIntervals } from '@/uiKit/highlightString/highlightUtils'
+import { Highlighted, compareIntervals } from '@/components/uiKit/highlightString/highlightUtils'
 import { useLocalStorage } from '@vueuse/core'
 
 import VehicleTable from './VehicleTable.vue'
