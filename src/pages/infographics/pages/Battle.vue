@@ -79,7 +79,7 @@ import { useElementVisibility } from '@vueuse/core'
 import { computed, ref } from 'vue'
 
 import { ms2sec, sec2minsec, ms2secLabel } from '@/shared/utils/time'
-import { createFixedSpaceProcessor } from '@/shared/processors/processors'
+import { createFixedSpaceProcessor } from '@/shared/utils/processors/processors'
 import { useMeta } from '@/shared/composition/useMeta'
 
 useMeta({

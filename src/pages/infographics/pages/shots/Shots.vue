@@ -76,7 +76,7 @@
 import ShotsCircle from '@/pages/infographics/shared/widgets/ShotsCircle.vue'
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import ShotDistribution from '@/pages/infographics/shared/widgets/ShotDistribution.vue'
-import { createFixedSpaceProcessor, createPercentProcessor } from '@/shared/processors/processors'
+import { createFixedSpaceProcessor, createPercentProcessor } from '@/shared/utils/processors/processors'
 import { SHORT_CACHE_SETTINGS, queryAsyncFirst } from '@/db'
 import { computed, ref } from 'vue'
 import { useElementVisibility, useMouseInElement } from '@vueuse/core'

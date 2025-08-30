@@ -122,7 +122,7 @@ import { modeCount } from '@/shared/game/wot'
 import { useElementVisibility, useElementSize } from '@vueuse/core'
 import { computed, ref } from 'vue'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'
-import { createFixedSpaceProcessor } from '@/shared/processors/processors'
+import { createFixedSpaceProcessor } from '@/shared/utils/processors/processors'
 import { bestMV } from '@/db/schema'
 
 const { params } = defineProps<{

@@ -26,7 +26,7 @@
 import { computed, useSlots } from 'vue'
 import BloggersValues from './BloggersValues.vue'
 import Chart from '../assets/chart.svg'
-import { createLogProcessor } from '@/shared/processors/processors'
+import { createLogProcessor } from '@/shared/utils/processors/processors'
 import { preferredLogProcessor } from '../store'
 import { useMediaQuery } from '@vueuse/core'
 

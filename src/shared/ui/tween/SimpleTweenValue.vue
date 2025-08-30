@@ -4,7 +4,7 @@
 
 
 <script setup lang="ts" generic="T">
-import { spaceProcessor } from '@/shared/processors/useSpaceProcessor'
+import { spaceProcessor } from '@/shared/utils/processors/useSpaceProcessor'
 import { TweenOptions, useTweenRef } from '@/shared/ui/tween/useTweenRef'
 import { computed, ref, watch } from 'vue'
 

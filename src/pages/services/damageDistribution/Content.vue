@@ -63,7 +63,7 @@
   <h3>Погрешность</h3>
   <p>Границы допустимой погрешности рассчитываются индивидуально для <b>выбранного</b> значения урона ({{
     selectedDamage
-  }}) и числа подходящих выстрелов ({{ selectedTotal }})</p>
+    }}) и числа подходящих выстрелов ({{ selectedTotal }})</p>
 
   <template v-if="distribution.labels.length">
     <div v-if="readyToCalculate">
@@ -139,7 +139,7 @@ import { ShadowBar } from '@/pages/infographics/shared/widgets/charts/ShadowBarC
 import { setup as setupShadowLine } from '@/pages/infographics/shared/widgets/charts/ShadowLineController'
 import { getColor } from '@/pages/infographics/shared/bloomColors'
 import { useErrorCalculation } from './errorCalculation'
-import { createFixedProcessor, createPercentProcessor } from '@/shared/processors/processors'
+import { createFixedProcessor, createPercentProcessor } from '@/shared/utils/processors/processors'
 import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
 import { bestMV } from '@/db/schema'
 

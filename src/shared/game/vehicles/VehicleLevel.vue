@@ -4,7 +4,7 @@
 
 
 <script setup lang="ts">
-import { romanNumberProcessor } from '@/shared/processors/processors'
+import { romanNumberProcessor } from '@/shared/utils/processors/processors'
 
 
 const props = defineProps<{

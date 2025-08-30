@@ -27,7 +27,7 @@ import { ref } from 'vue'
 import { useElementVisibility } from '@vueuse/core'
 import PlayerCoverageTable from '@/pages/infographics/shared/widgets/PlayerCoverageTable.vue'
 import { useQueryStatParams, useQueryStatParamsCache, whereClause, whereClauseColumns } from '@/shared/query/useQueryStatParams'
-import { createFixedSpaceProcessor } from '@/shared/processors/processors'
+import { createFixedSpaceProcessor } from '@/shared/utils/processors/processors'
 import { bestMV } from '@/db/schema'
 import { useMeta } from '@/shared/composition/useMeta'
 
