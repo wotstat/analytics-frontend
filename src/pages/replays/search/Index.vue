@@ -38,9 +38,9 @@
 
 import { ref } from 'vue'
 import Battle from '../shared/Battle.vue'
-import VehicleSelectorBadges from '@/pages/shared/searchFilters/vehicleSelector/VehicleSelectorBadges.vue'
-import GameSelector from '@/pages/shared/gameSelector/GameSelector.vue'
-import GameVersionSelectorBadges from '@/pages/shared/searchFilters/gameVersionSelector/GameVersionSelectorBadges.vue'
+import VehicleSelectorBadges from '@/pages/shared/searchSelectors/vehicleSelector/VehicleSelectorBadges.vue'
+import GameSelector from '@/pages/shared/searchSelectors/gameSelector/GameSelector.vue'
+import GameVersionSelectorBadges from '@/pages/shared/searchSelectors/gameVersionSelector/GameVersionSelectorBadges.vue'
 
 
 const info = {
