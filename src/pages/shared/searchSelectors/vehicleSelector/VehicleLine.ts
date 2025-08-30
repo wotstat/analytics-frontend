@@ -1,4 +1,3 @@
-import { numberToRoman } from '@/utils'
 import { getHighlightedTextParts, Highlighted } from '@/shared/uiKit/highlightString/highlightUtils'
 import { vehicleTypeToImage } from '@/shared/game/vehicles/type/vehicleTypeToImage'
 import { smallVehiclesAtlasMt, smallVehiclesAtlasWot, tagToImageName } from '@/shared/game/vehicles/vehicle/utils'
@@ -6,6 +5,7 @@ import { smallVehiclesAtlasMt, smallVehiclesAtlasWot, tagToImageName } from '@/s
 import { Ref, watch } from 'vue'
 import { nationFlagAtlas } from '@/shared/game/vehicles/nations/utils'
 import { TableCell } from '@/shared/uiKit/tableView/tableView/TableView'
+import { romanNumberProcessor } from '@/shared/processors/processors'
 
 const vehicleTypes = ['MT', 'LT', 'HT', 'AT', 'SPG'] as const
 export type VehicleLineData = {
@@ -19,7 +19,7 @@ export type VehicleLineData = {
 }
 
 const romanNumerals: Record<number, string> = Object.fromEntries(
-  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((num) => [num, numberToRoman(num).toString()])
+  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((num) => [num, romanNumberProcessor(num).toString()])
 )
 
 const typeIconElements = new Map<string, Node>()

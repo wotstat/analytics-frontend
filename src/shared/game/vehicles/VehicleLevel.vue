@@ -1,10 +1,11 @@
 <template>
-  <p class="mt-font">{{ numberToRoman(level) }}</p>
+  <p class="mt-font">{{ romanNumberProcessor(level) }}</p>
 </template>
 
 
 <script setup lang="ts">
-import { numberToRoman } from '@/utils'
+import { romanNumberProcessor } from '@/shared/processors/processors'
+
 
 const props = defineProps<{
   level: number

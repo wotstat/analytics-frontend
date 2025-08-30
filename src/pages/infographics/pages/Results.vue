@@ -15,21 +15,21 @@
       <div class="card chart bar flex-1 flex ver gap-0">
         <MiniBar :status="playerDamageDistribution.status" :data="playerDamageDistribution.data" color="orange"
           :labels="places"
-          :callbacks="{ title: t => `В ${toPercent(t, 1)} боёв вы были топ-${t[0].label} по урону`, label: () => ``, afterBody: positionChartAfterBody(playerDamageDistribution) }" />
+          :callbacks="{ title: t => `В ${percentProcessor(t[0].raw as number)} боёв вы были топ-${t[0].label} по урону`, label: () => ``, afterBody: positionChartAfterBody(playerDamageDistribution) }" />
         <p class="card-main-info description">Место по урону</p>
       </div>
 
       <div class="card chart bar flex-1 flex ver gap-0">
         <MiniBar :status="playerAssistedDistribution.status" :data="playerAssistedDistribution.data" color="orange"
           :labels="places"
-          :callbacks="{ title: (t) => `В ${toPercent(t, 1)} боёв вы были топ-${t[0].label} по насвету`, label: () => ``, afterBody: positionChartAfterBody(playerAssistedDistribution) }" />
+          :callbacks="{ title: (t) => `В ${percentProcessor(t[0].raw as number)} боёв вы были топ-${t[0].label} по насвету`, label: () => ``, afterBody: positionChartAfterBody(playerAssistedDistribution) }" />
         <p class="card-main-info description">Место по насвету</p>
       </div>
 
       <div class="card chart bar flex-1 flex ver gap-0">
         <MiniBar :status="playerKillDistribution.status" :data="playerKillDistribution.data" color="orange"
           :labels="places"
-          :callbacks="{ title: (t) => `В ${toPercent(t, 1)} боёв вы были топ-${t[0].label} по фрагам`, label: () => ``, afterBody: positionChartAfterBody(playerKillDistribution) }" />
+          :callbacks="{ title: (t) => `В ${percentProcessor(t[0].raw as number)} боёв вы были топ-${t[0].label} по фрагам`, label: () => ``, afterBody: positionChartAfterBody(playerKillDistribution) }" />
         <p class="card-main-info description">Место по фрагам</p>
       </div>
     </div>
@@ -164,7 +164,6 @@ import MiniBar from '@/pages/infographics/shared/widgets/charts/MiniBar.vue'
 import { LONG_CACHE_SETTINGS, Status, mergeStatuses, queryAsync, queryAsyncFirst, queryComputed } from '@/db'
 import { useElementVisibility, useLocalStorage } from '@vueuse/core'
 import { computed, ref } from 'vue'
-import { toRelative, toPercent } from '@/utils'
 import PlayerResultTable from '@/pages/infographics/shared/widgets/PlayerResultTable.vue'
 import { createPercentProcessor, createFixedProcessor, createFixedSpaceProcessor } from '@/shared/processors/processors'
 import { getQueryStatParamsCache, useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
@@ -173,6 +172,7 @@ import { countLocalize } from '@/shared/i18n/i18n'
 import { TooltipItem } from 'chart.js'
 import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
 import { useMeta } from '@/shared/composition/useMeta'
+import { normalizeArray } from '@/shared/utils/math'
 
 useMeta({
   title: 'Статистика результатов',
@@ -180,6 +180,7 @@ useMeta({
   keywords: 'статистика результатов, статистика результатов боёв, статистика результатов в игре, статистика результатов в world of tanks'
 })
 
+const percentProcessor = createPercentProcessor(1)
 
 const variantSelector = ref<HTMLSelectElement | null>(null)
 
@@ -288,7 +289,7 @@ function usePlayerDistribution(value: 'Damage' | 'Radio' | 'Kills') {
   return computed(() => {
     const countMap = Object.fromEntries(result.value.data.map(r => [r.playerPosition, r.count]))
     const absolute = places.map((_, i) => countMap[i] ?? 0)
-    return { status: result.value.status as Status, data: toRelative(absolute), absolute }
+    return { status: result.value.status as Status, data: normalizeArray(absolute), absolute }
   })
 }
 

@@ -105,7 +105,7 @@ import { computed, ref, watchEffect } from 'vue'
 import { useElementVisibility } from '@vueuse/core'
 import MiniBar from '@/pages/infographics/shared/widgets/charts/MiniBar.vue'
 import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
-import { toRelative } from '@/utils'
+import { normalizeArray } from '@/shared/utils/math'
 import { createFixedSpaceProcessor, createPercentProcessor } from '@/shared/processors/processors'
 import { shellNames } from '@/shared/game/wot'
 import QueryPreserveRouterLink from '@/pages/shared/sidebarLayout/QueryPreserveRouterLink.vue'
@@ -212,7 +212,7 @@ const smallDamageResult = queryAsync<{ healthEnough: number, count: number }>(he
 
 const smallDamageData = computed(() => {
   const res = Object.fromEntries(smallDamageResult.value.data.map(v => [v.healthEnough, v.count]))
-  return toRelative(new Array(5).fill(0).map((v, i) => res[i + 1] ?? 0))
+  return normalizeArray(new Array(5).fill(0).map((v, i) => res[i + 1] ?? 0))
 })
 
 const byShellData = computed(() => {
@@ -234,7 +234,7 @@ const damageDistributionData = computed(() => {
 
   const absolute = new Array(21).fill(0).map((v, i) => res[i - 10] ?? 0)
 
-  return toRelative(absolute)
+  return normalizeArray(absolute)
 })
 
 const damageK = computed(() => {

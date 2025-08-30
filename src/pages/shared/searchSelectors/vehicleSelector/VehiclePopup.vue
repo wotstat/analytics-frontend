@@ -31,7 +31,7 @@
       <div class="levels mt-font">
         <button class="level selectable" :class="currentLevels.has(i + 1) ? 'active' : ''"
           v-for="(_, i) in new Array(11)" @click="e => selectLevel(e, i + 1)">
-          {{ numberToRoman(i + 1) }}
+          {{ romanNumberProcessor(i + 1) }}
         </button>
       </div>
 
@@ -59,13 +59,13 @@ import { useLocalStorage } from '@vueuse/core'
 import VehicleTable from './VehicleTable.vue'
 
 import Reload from '@/assets/icons/reset.svg'
-import { numberToRoman } from '@/utils'
 import VehicleTypeComponent from '@/shared/game/vehicles/type/VehicleType.vue'
 import NationComponent from '@/shared/game/vehicles/nations/Nation.vue'
 import SearchLine from '../searchLine/SearchLine.vue'
 import { preferredGame } from '@/shared/global/globalPreferred'
 import { mtNations, wotNations, nations, nationsIndexes, Nation } from '@/shared/game/vehicles/nations/nations'
 import { VehicleType, vehicleTypes } from '@/shared/game/vehicles/vehicle/utils'
+import { romanNumberProcessor } from '@/shared/processors/processors'
 
 const vehicleTable = ref<InstanceType<typeof VehicleTable> | null>(null)
 

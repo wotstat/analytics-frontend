@@ -102,7 +102,7 @@
           </div>
           <div class="card-main-info description bottom">Распределение боёв по продолжительности на
             <DropDown class="dropdown-container mt-font" v-model="durationSelectedLevel"
-              :variants="new Array(11).fill(0).map((_, i) => ({ value: i + 1, label: numberToRoman(i + 1) }))" />
+              :variants="new Array(11).fill(0).map((_, i) => ({ value: i + 1, label: romanNumberProcessor(i + 1) }))" />
             уровне
           </div>
         </div>
@@ -221,11 +221,9 @@ import { ChartProps } from 'vue-chartjs'
 import DropDown from '@/shared/uiKit/dropdown/DropDown.vue'
 import ShotsCircle from '@/pages/infographics/shared/widgets/ShotsCircle.vue'
 import { spaceProcessor } from '@/shared/processors/useSpaceProcessor'
-import { numberToRoman } from '@/utils'
-import { roundProcessor, createPercentProcessor } from '@/shared/processors/processors'
+import { roundProcessor, createPercentProcessor, romanNumberProcessor } from '@/shared/processors/processors'
 import CompareCard from './CompareCard.vue'
 import { sec2minsec } from '@/shared/utils/time'
-
 
 setFeatureVisit('mt-36-1')
 
@@ -274,7 +272,7 @@ const averageSpgDamageChartData = computed<ChartProps<'bar'>['data']>(() => {
   const right = data.filter(item => rightVersions.has(item.gameVersion))
 
   return {
-    labels: targetLabels.map(t => numberToRoman(t)),
+    labels: targetLabels.map(t => romanNumberProcessor(t)),
     datasets: [
       {
         label: leftVersionString,
@@ -297,7 +295,7 @@ const averageLtAssistChartData = computed<ChartProps<'bar'>['data']>(() => {
   const right = data.filter(item => rightVersions.has(item.gameVersion))
 
   return {
-    labels: targetLabels.map(t => numberToRoman(t)),
+    labels: targetLabels.map(t => romanNumberProcessor(t)),
     datasets: [
       {
         label: leftVersionString,
@@ -418,7 +416,7 @@ const durationByLevelChartData = computed<ChartProps<'bar'>['data']>(() => {
   const left = data.filter(item => leftVersions.has(item.gameVersion))
   const right = data.filter(item => rightVersions.has(item.gameVersion))
   return {
-    labels: targetLabels.map(t => numberToRoman(t)),
+    labels: targetLabels.map(t => romanNumberProcessor(t)),
     datasets: [
       {
         label: leftVersionString,
