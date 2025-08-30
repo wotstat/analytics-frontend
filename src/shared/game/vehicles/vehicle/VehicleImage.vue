@@ -4,7 +4,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import FallbackImg from '@/components/uiKit/fallbackImg/FallbackImg.vue'
+import FallbackImg from '@/shared/uiKit/fallbackImg/FallbackImg.vue'
 import { vehicleFallbackUrl, vehicleUrl } from './utils'
 
 const props = defineProps<{

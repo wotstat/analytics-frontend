@@ -17,7 +17,7 @@ import { computed, ref } from 'vue'
 import { type ChartProps } from 'vue-chartjs'
 import { ShadowLine } from '@/pages/infographics/shared/widgets/charts/ShadowLineController'
 import { BloomColor } from '../bloomColors'
-import { StatParams, getQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams'
+import { StatParams, getQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'
 
 const container = ref<HTMLElement | null>(null)

@@ -115,7 +115,7 @@
 </template>
 
 <script setup lang="ts">
-import { StatParams, getQueryStatParamsCache, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams'
+import { StatParams, getQueryStatParamsCache, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import { Status, queryAsync, queryComputed } from '@/db'
 import { timeProcessor, whereSum } from '@/utils'
 import { getArenaName } from '@/utils/i18n'

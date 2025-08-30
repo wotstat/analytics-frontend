@@ -19,7 +19,7 @@
 import { ref } from 'vue'
 import { useElementVisibility } from '@vueuse/core'
 import MapsTable from '@/pages/infographics/shared/widgets/MapsTable.vue'
-import { useQueryStatParams, whereClause } from '@/composition/useQueryStatParams'
+import { useQueryStatParams, whereClause } from '@/shared/query/useQueryStatParams'
 import { useMeta } from '@/composition/useMeta'
 
 useMeta({

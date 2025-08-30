@@ -3,7 +3,7 @@
 
   <div class="flex ver results" ref="container">
     <div class="card long">
-      <GenericInfo :status="resultsInfo.status" :value="resultsInfo.data.count" :processor="useFixedSpaceProcessor(0)"
+      <GenericInfo :status="resultsInfo.status" :value="resultsInfo.data.count" :processor="fixedSpaceProcessor(0)"
         description="Результатов собрано" color="green" />
     </div>
     <div class="card">
@@ -41,23 +41,23 @@
     <div class="grid-mini">
       <div class="card flex-1">
         <GenericInfo :status="resultsInfo.status" :value="resultsInfo.data.hitPerShot" description="Попаданий/Выстрелов"
-          color="green" :processor="usePercentProcessor()" />
+          color="green" :processor="percentProcessor()" />
       </div>
       <div class="card flex-1">
         <GenericInfo :status="resultsInfo.status" :value="resultsInfo.data.piercingPerHit"
-          description="Пробитий/Попаданий" color="green" :processor="usePercentProcessor()" />
+          description="Пробитий/Попаданий" color="green" :processor="percentProcessor()" />
       </div>
       <div class="card flex-1">
         <GenericInfo :status="resultsInfo.status" :value="resultsInfo.data.DR" description="Коэф. урона" color="green"
-          :processor="useFixedProcessor()" />
+          :processor="fixedProcessor()" />
       </div>
       <div class="card flex-1">
         <GenericInfo :status="resultsInfo.status" :value="resultsInfo.data.KD" description="Коэф. уничтожения"
-          color="green" :processor="useFixedProcessor()" />
+          color="green" :processor="fixedProcessor()" />
       </div>
       <div class="card flex-1">
         <GenericInfo :status="resultsInfo.status" :value="resultsInfo.data.TR" description="Коэф. исп. брони"
-          color="green" :processor="useFixedProcessor()" />
+          color="green" :processor="fixedProcessor()" />
       </div>
     </div>
 
@@ -94,7 +94,7 @@
         <GenericInfo :value="getValue('mgSum')" description="Сумма отметки" color="yellow" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="getValue('spotted')" :processor="useFixedProcessor(1)" description="Обнаруженных"
+        <GenericInfo :value="getValue('spotted')" :processor="fixedProcessor(1)" description="Обнаруженных"
           color="yellow" />
       </div>
       <div class="card flex-1">
@@ -110,7 +110,7 @@
         <GenericInfo :value="getValue('mileage')" description="Дистанция" color="yellow" />
       </div>
       <div class="card flex-1">
-        <GenericInfo :value="getValue('health')" :processor="usePercentProcessor()" description="ХП остаётся"
+        <GenericInfo :value="getValue('health')" :processor="percentProcessor()" description="ХП остаётся"
           color="yellow" />
       </div>
     </div>
@@ -130,13 +130,13 @@
       <h4 ref="turboContainer">Турбобои</h4>
       <p>Бои длинною менее 5 минут и разницей счёта больше 10 (проигравшая команда имеет не более 4 фрагов)</p>
       <div class="card long">
-        <GenericInfo :status="turboResult.status" :value="turboResult.data.count" :processor="useFixedSpaceProcessor(0)"
+        <GenericInfo :status="turboResult.status" :value="turboResult.data.count" :processor="fixedSpaceProcessor(0)"
           description="Всего турбобоёв" color="blue" />
       </div>
       <div class="flex hor-ver-small">
         <div class="card flex-1">
           <GenericInfo :status="mergeStatuses(resultsInfo.status, turboResult.status)" :value="turboPercent"
-            description="Турбо боёв в среднем" color="blue" :processor="usePercentProcessor(1)" />
+            description="Турбо боёв в среднем" color="blue" :processor="percentProcessor(1)" />
         </div>
         <div class="card flex-1">
           <GenericInfo :status="turboResult.status" :value="turboResult.data.maxTurbo"
@@ -166,8 +166,8 @@ import { useElementVisibility, useLocalStorage } from '@vueuse/core'
 import { computed, ref } from 'vue'
 import { toRelative, toPercent } from '@/utils'
 import PlayerResultTable from '@/pages/infographics/shared/widgets/PlayerResultTable.vue'
-import { usePercentProcessor, useFixedProcessor, useFixedSpaceProcessor } from '@/composition/usePercentProcessor'
-import { getQueryStatParamsCache, useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams'
+import { percentProcessor, fixedProcessor, fixedSpaceProcessor } from '@/shared/processors/processors'
+import { getQueryStatParamsCache, useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import TeamLevelTable from '@/pages/infographics/shared/widgets/TeamLevelTable.vue'
 import { countLocalize } from '@/utils/i18n'
 import { TooltipItem } from 'chart.js'

@@ -116,13 +116,13 @@
 
 
 <script setup lang="ts">
-import { StatParams, getQueryStatParamsCache, useQueryStatParams, whereClause } from '@/composition/useQueryStatParams'
+import { StatParams, getQueryStatParamsCache, useQueryStatParams, whereClause } from '@/shared/query/useQueryStatParams'
 import { mergeStatuses, queryAsync } from '@/db'
 import { modeCount } from '@/utils/wot'
 import { useElementVisibility, useElementSize } from '@vueuse/core'
 import { computed, ref } from 'vue'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'
-import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor'
+import { fixedSpaceProcessor } from '@/shared/processors/processors'
 import { bestMV } from '@/db/schema'
 
 const { params } = defineProps<{
@@ -267,7 +267,7 @@ const table = computed(() => {
 })
 
 const roundedTable = computed(() => {
-  const processor = useFixedSpaceProcessor(0)
+  const processor = fixedSpaceProcessor(0)
 
   const round = (t: { dmg: number, radio: number, block: number, kill: number }) => ({
     dmg: processor(Math.round(t.dmg)),

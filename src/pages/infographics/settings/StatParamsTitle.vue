@@ -3,9 +3,9 @@
 
   <template v-if="stat.tanks">
     <span v-if="stat.tanks.length == 1">На танке <span class="text-effect light-blue">{{ getTankName(stat.tanks[0])
-        }}</span>. </span>
-    <span v-else>На танках <span class="text-effect light-blue">{{ stat.tanks.map(t => getTankName(t)).join(', ')
-        }}</span>.
+    }}</span>. </span>
+    <span v-else>На танках <span class="text-effect light-blue">{{stat.tanks.map(t => getTankName(t)).join(', ')
+    }}</span>.
     </span>
   </template>
   <template v-else>
@@ -15,8 +15,8 @@
         уровня, </span>
 
       <span v-if="stat.types && stat.types.length"><span class="text-effect light-blue">{{
-    currentTankTypes()
-  }}</span>. </span>
+        currentTankTypes()
+          }}</span>. </span>
     </template>
     <template v-else>
       <span v-if="stat.level">На танках <span class="text-effect light-blue">{{ levelToString() }} </span> уровня.
@@ -30,7 +30,7 @@
   <span v-if="stat.period == 'allTime'"></span>
   <span v-else-if="stat.period.type == 'fromTo'">С <span class="text-effect light-blue">{{
     stat.period.from.toLocaleDateString() }}</span> по <span class="text-effect light-blue">{{
-    stat.period.to.toLocaleDateString() }}</span>.
+        stat.period.to.toLocaleDateString() }}</span>.
   </span>
   <span v-else-if="stat.period.type == 'fromToNow'">С <span class="text-effect light-blue">{{
     stat.period.from.toLocaleDateString() }}</span> по настоящий момент.
@@ -40,7 +40,7 @@
     бой. </span>
   <span v-else-if="stat.period != 'allTime' && stat.period.type == 'lastX'">За последние <span
       class="text-effect light-blue">{{
-    stat.period.count }}</span> {{ countLocalize(stat.period.count, 'бой', 'боя', 'боёв') }}.
+        stat.period.count }}</span> {{ countLocalize(stat.period.count, 'бой', 'боя', 'боёв') }}.
   </span>
 
   <span v-if="stat.battleMode != 'any'">
@@ -49,7 +49,7 @@
 </template>
 
 <script lang="ts" setup>
-import { useQueryStatParams } from '@/composition/useQueryStatParams'
+import { useQueryStatParams } from '@/shared/query/useQueryStatParams'
 import { countLocalize, getTankName } from '@/utils/i18n'
 import { customBattleModes } from '@/utils/wot'
 

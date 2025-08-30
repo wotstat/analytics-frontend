@@ -2,7 +2,7 @@
   <h2 class="page-title">Бои</h2>
   <div class="flex ver battle" ref="container">
     <div class="card long">
-      <GenericInfo :status="dataStart.status" :value="dataStart.data.battleCount" :processor="useFixedSpaceProcessor(0)"
+      <GenericInfo :status="dataStart.status" :value="dataStart.data.battleCount" :processor="fixedSpaceProcessor(0)"
         description="Боёв проведено" color="green" />
     </div>
     <div class="flex ver main">
@@ -73,13 +73,13 @@
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import MiniBar from '@/pages/infographics/shared/widgets/charts/MiniBar.vue'
 import MniiPie from '@/pages/infographics/shared/widgets/charts/MiniPie.vue'
-import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/composition/useQueryStatParams'
+import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import { queryAsync, queryAsyncFirst } from '@/db'
 import { useElementVisibility } from '@vueuse/core'
 import { computed, ref } from 'vue'
 
 import { ms2sec, sec2minsec, sec2hour, ms2secLabel } from '@/utils'
-import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor'
+import { fixedSpaceProcessor } from '@/shared/processors/processors'
 import { useMeta } from '@/composition/useMeta'
 
 useMeta({

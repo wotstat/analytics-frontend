@@ -22,9 +22,9 @@
 import { RouterView, useRoute } from 'vue-router'
 import Header from './pages/shared/header/Header.vue'
 import HeaderSpacer from './pages/shared/header/HeaderSpacer.vue'
-import { headerHeight } from './composition/useAdditionalHeaderHeight'
-import ContextMenuRoot from '@/components/uiKit/contextMenu/ContextMenuRoot.vue'
-import FocusEffectRoot from './components/uiKit/focusEffect/FocusEffectRoot.vue'
+import { headerHeight } from './pages/shared/header/useAdditionalHeaderHeight'
+import ContextMenuRoot from '@/shared/uiKit/contextMenu/ContextMenuRoot.vue'
+import FocusEffectRoot from './shared/uiKit/focusEffect/FocusEffectRoot.vue'
 
 const isWindows = navigator.platform.indexOf('Win') > -1
 const boldWeight = isWindows ? 700 : 800

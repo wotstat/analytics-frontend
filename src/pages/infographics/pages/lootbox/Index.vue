@@ -14,37 +14,37 @@
 
   <div class="flex ver">
     <div class="card long">
-      <GenericInfo :status="total.status" :value="total.data.count" :processor="useFixedSpaceProcessor(0)"
+      <GenericInfo :status="total.status" :value="total.data.count" :processor="fixedSpaceProcessor(0)"
         description="Открытых коробок" color="green" />
     </div>
 
     <div class="flex hor-ver-small">
       <div class="card flex-1 order-small-3">
         <GenericInfo :status="mainStats.status" :value="mainStats.data.gold" description="Золото" color="orange"
-          :processor="useLogProcessor()" />
+          :processor="logProcessor()" />
       </div>
       <div class="card flex-1">
         <GenericInfo :status="mainStats.status" :value="mainStats.data.credits" description="Серебро" color="blue"
-          :processor="useLogProcessor()" />
+          :processor="logProcessor()" />
       </div>
       <div class="card flex-1">
         <GenericInfo :status="mainStats.status" :value="mainStats.data.freeXP" description="Свободный опыт"
-          color="green" :processor="useLogProcessor()" />
+          color="green" :processor="logProcessor()" />
       </div>
     </div>
 
     <div class="flex hor-ver-small">
       <div class="card flex-1 order-small-2">
         <GenericInfo :status="mainStats.status" :value="mainStats.data.prem" mini-data="дней" description="Премиум"
-          color="yellow" :processor="useLogProcessor()" />
+          color="yellow" :processor="logProcessor()" />
       </div>
       <div class="card flex-1">
         <GenericInfo :status="mainStats.status" :value="mainStats.data.vehicles" description="Танки" color="gold"
-          :processor="useFixedSpaceProcessor(0)" />
+          :processor="fixedSpaceProcessor(0)" />
       </div>
       <div class="card flex-1">
         <GenericInfo :status="mainStats.status" :value="mainStats.data.equipCoin" description="Компоненты"
-          color="yellow" :processor="useLogProcessor()" />
+          color="yellow" :processor="logProcessor()" />
       </div>
     </div>
 
@@ -111,8 +111,8 @@
 
 <script lang="ts" setup>
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
-import { useFixedSpaceProcessor, useLogProcessor } from '@/composition/usePercentProcessor'
-import { useQueryStatParams, useQueryStatParamsCache } from '@/composition/useQueryStatParams'
+import { fixedSpaceProcessor, logProcessor } from '@/shared/processors/processors'
+import { useQueryStatParams, useQueryStatParamsCache } from '@/shared/query/useQueryStatParams'
 import { Status, dateToDbIndex, queryComputed, queryComputedFirst, success } from '@/db'
 import { computed, ref } from 'vue'
 import TableSection from './TableSection.vue'

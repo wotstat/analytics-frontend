@@ -59,10 +59,10 @@
           </td>
           <td class="text-effect"
             :class="getRelativeColor(part.dmgAvg, item.players.reduce((acc, t) => acc + t[2], 0))">
-            {{ item.players.reduce((acc, t) => acc + t[2], 0) }}</td>
+            {{item.players.reduce((acc, t) => acc + t[2], 0)}}</td>
           <td class="text-effect"
             :class="getRelativeColor(part.killAvg, item.players.reduce((acc, t) => acc + t[3], 0))">
-            {{ item.players.reduce((acc, t) => acc + t[3], 0) }}</td>
+            {{item.players.reduce((acc, t) => acc + t[3], 0)}}</td>
           <td class="text-effect" :class="getRelativeColor(part.scoreAvg, item.totalScore)">{{ item.totalScore }}</td>
         </tr>
       </tbody>
@@ -76,7 +76,7 @@
             <th>{{ player[1] }}</th>
             <th>{{ player[2] }}</th>
           </template>
-          <th rowspan="2" class="l-b">{{ usePercentProcessor(1)(part.winrate) }}</th>
+          <th rowspan="2" class="l-b">{{ percentProcessor(1)(part.winrate) }}</th>
           <th>{{ part.winScoreSum }}</th>
           <th class="l-b">{{ part.healthSum }}</th>
           <th>{{ part.spgSum }}</th>
@@ -141,7 +141,7 @@
 </template>
 
 <script lang="ts" setup>
-import { roundProcessor, usePercentProcessor } from '@/composition/usePercentProcessor'
+import { roundProcessor, percentProcessor } from '@/shared/processors/processors'
 import { dbIndexToDate } from '@/db'
 import { ChuckResult } from '@/db/schema'
 import { timeProcessor } from '@/utils'

@@ -27,11 +27,11 @@ import { ShadowLine } from '@/pages/infographics/shared/widgets/charts/ShadowLin
 import { computed, watch } from 'vue'
 import { ChartProps } from 'vue-chartjs'
 import { bloggerNamesArray } from './bloggerNames'
-import DropDown from '@/components/uiKit/dropdown/DropDown.vue'
+import DropDown from '@/shared/uiKit/dropdown/DropDown.vue'
 import { useLocalStorage, useMediaQuery } from '@vueuse/core'
 import { stepVariants, periodVariants, period, step } from './queryLoader'
 import { displayVariant, displayVariants, preferredLogProcessor } from '../store'
-import { useLogProcessor } from '@/composition/usePercentProcessor'
+import { logProcessor } from '@/shared/processors/processors'
 import Tooltip from '@/components/shared/Tooltip.vue'
 
 
@@ -332,7 +332,7 @@ const targetSkip = computed(() => {
 const smallScreen = useMediaQuery('(max-width: 700px)')
 
 
-const logProc = useLogProcessor(2)
+const logProc = logProcessor(2)
 
 const options = computed<ChartProps<'bar'>['options']>(() => ({
   responsive: true,

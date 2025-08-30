@@ -1,5 +1,5 @@
-import { closeContextMenu, isContextMenuOpen } from '@/components/uiKit/contextMenu/createContextMenu'
-import { checkboxItem, simpleContextMenu } from '@/components/uiKit/contextMenu/simpleContextMenu'
+import { closeContextMenu, isContextMenuOpen } from '@/shared/uiKit/contextMenu/createContextMenu'
+import { checkboxItem, simpleContextMenu } from '@/shared/uiKit/contextMenu/simpleContextMenu'
 import { useLocalStorage } from '@vueuse/core'
 
 export const show3dEffect = useLocalStorage('card-hover-3d-effect', true)

@@ -1,4 +1,4 @@
-import { SpriteAtlas } from '@/components/uiKit/spriteAtlas/SpriteAtlas'
+import { SpriteAtlas } from '@/shared/uiKit/spriteAtlas/SpriteAtlas'
 
 import AtlasesJson from './60x40/atlas/atlases.json'
 import Atlas0 from './60x40/atlas/atlas_0.png?url'

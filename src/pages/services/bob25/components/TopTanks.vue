@@ -34,11 +34,11 @@
 
 
 <script setup lang="ts">
-import VehicleImage from '@/components/game/vehicles/vehicle/VehicleImage.vue'
+import VehicleImage from '@/shared/game/vehicles/vehicle/VehicleImage.vue'
 import { getTankName } from '@/utils/i18n'
 import { useMediaQuery } from '@vueuse/core'
 import { bloggerNamesArray } from './bloggerNames'
-import { usePercentProcessor } from '@/composition/usePercentProcessor'
+import { percentProcessor } from '@/shared/processors/processors'
 import Crown from '../assets/crown.png'
 import { ref } from 'vue'
 
@@ -46,7 +46,7 @@ const less800 = useMediaQuery('(max-width: 800px)')
 const isMore = ref(false)
 const selected = ref('')
 
-const percent = usePercentProcessor(2)
+const percent = percentProcessor(2)
 
 const props = defineProps<{
   title?: string

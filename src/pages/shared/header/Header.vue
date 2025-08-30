@@ -140,7 +140,7 @@
 </template>
 
 <script setup lang="ts">
-import { useAdditionalHeaderHeight, useDefaultHeaderHeight } from '@/composition/useAdditionalHeaderHeight'
+import { useAdditionalHeaderHeight, useDefaultHeaderHeight } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import { ref } from 'vue'
 import GitHubIcon from './assets/github.svg'
 import DiscordIcon from './assets/discord.svg'
@@ -154,7 +154,7 @@ import I18nIcon from './assets/i18n.svg'
 import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
 import { CLICKHOUSE_URL, CURRENT_URL_PREFIX, POSITIONS_URL, DISCORD_URL } from '@/utils/externalUrl'
 import { useLocalStorage } from '@vueuse/core'
-import { vNewFeatureBadge } from '@/components/uiKit/newFeatureBadge/newFeatureBadge'
+import { vNewFeatureBadge } from '@/shared/uiKit/newFeatureBadge/newFeatureBadge'
 
 const SQLUrl = CLICKHOUSE_URL + '/play?user=public#c2VsZWN0IHRhYmxlLCBuYW1lLCBjb21tZW50LCB0eXBlIGZyb20gZGVzY3JpcHRpb247'
 

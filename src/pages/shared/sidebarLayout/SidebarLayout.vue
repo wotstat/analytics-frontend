@@ -39,7 +39,7 @@
 import { useElementBounding } from '@vueuse/core'
 import QueryPreserveRouterLink from '@/pages/shared/sidebarLayout/QueryPreserveRouterLink.vue'
 import { computed, ref, watchEffect } from 'vue'
-import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight'
+import { headerHeight, useAdditionalHeaderHeight } from '@/pages/shared/header/useAdditionalHeaderHeight.ts'
 import { type SidebarLink } from './utils.ts'
 
 const menuBar = ref<HTMLElement | null>(null)
