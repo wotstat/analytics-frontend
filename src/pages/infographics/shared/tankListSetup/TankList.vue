@@ -52,7 +52,7 @@ import ServerStatusWrapper from '../ServerStatusWrapper.vue'
 import { computed, ref } from 'vue'
 import { useFixedSpaceProcessor } from '@/composition/usePercentProcessor'
 import { getTankName } from '@/utils/i18n'
-import HorizontalScrollItems from '@/components/shared/HorizontalScrollItems.vue'
+import HorizontalScrollItems from '@/pages/shared/HorizontalScrollItems.vue'
 import { pausableWatch } from '@vueuse/core'
 import VehicleImage from '@/components/game/vehicles/vehicle/VehicleImage.vue'
 

@@ -45,7 +45,7 @@
 import { ref, watch } from 'vue'
 import BloggerName from './blogger/BloggerName.vue'
 import { bloggerNamesArray } from './bloggerNames'
-import DropDown from '@/uiKit/dropdown/DropDown.vue'
+import DropDown from '@/components/uiKit/dropdown/DropDown.vue'
 import { crossPeriodVariants, crossTablePeriod } from '../store'
 
 

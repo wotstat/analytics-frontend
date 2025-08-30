@@ -12,7 +12,7 @@ import { selectTagVehiclesLocalization } from '@/utils/i18n'
 import VehiclePopup from './VehiclePopup.vue'
 import { headerHeight, useAdditionalHeaderHeight } from '@/composition/useAdditionalHeaderHeight'
 import { Nation } from '@/utils/wot'
-import PopoverAutoClose from '@/uiKit/popover/PopoverAutoClose.vue'
+import PopoverAutoClose from '@/components/uiKit/popover/PopoverAutoClose.vue'
 
 
 defineProps<{

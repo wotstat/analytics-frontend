@@ -23,7 +23,7 @@ import { RouterView, useRoute } from 'vue-router'
 import Header from './pages/shared/header/Header.vue'
 import HeaderSpacer from './pages/shared/header/HeaderSpacer.vue'
 import { headerHeight } from './composition/useAdditionalHeaderHeight'
-import ContextMenuRoot from '@/uiKit/contextMenu/ContextMenuRoot.vue'
+import ContextMenuRoot from '@/components/uiKit/contextMenu/ContextMenuRoot.vue'
 import FocusEffectRoot from './pages/install/components/focusEffect/FocusEffectRoot.vue'
 
 const isWindows = navigator.platform.indexOf('Win') > -1

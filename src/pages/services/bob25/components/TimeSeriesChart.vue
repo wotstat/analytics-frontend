@@ -27,7 +27,7 @@ import { ShadowLine } from '@/pages/infographics/shared/widgets/charts/ShadowLin
 import { computed, watch } from 'vue'
 import { ChartProps } from 'vue-chartjs'
 import { bloggerNamesArray } from './bloggerNames'
-import DropDown from '@/uiKit/dropdown/DropDown.vue'
+import DropDown from '@/components/uiKit/dropdown/DropDown.vue'
 import { useLocalStorage, useMediaQuery } from '@vueuse/core'
 import { stepVariants, periodVariants, period, step } from './queryLoader'
 import { displayVariant, displayVariants, preferredLogProcessor } from '../store'

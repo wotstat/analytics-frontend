@@ -40,11 +40,11 @@ import { computed, ref, watch } from 'vue'
 
 import { preferredGame } from '@/utils/globalPreferred'
 import SearchLine from '../searchLine/SearchLine.vue'
-import TableView from '@/uiKit/tableView/TableView.vue'
-import { TableViewDelegate } from '@/uiKit/tableView/tableView/TableView'
-import { HeaderLine } from '@/uiKit/tableView/tableView/default/HeaderLine'
+import TableView from '@/components/uiKit/tableView/TableView.vue'
+import { TableViewDelegate } from '@/components/uiKit/tableView/tableView/TableView'
+import { HeaderLine } from '@/components/uiKit/tableView/tableView/default/HeaderLine'
 import { VersionLine } from './VersionLine'
-import { compareIntervals, Highlighted } from '@/uiKit/highlightString/highlightUtils'
+import { compareIntervals, Highlighted } from '@/components/uiKit/highlightString/highlightUtils'
 
 const props = defineProps<{
   versionList: {
