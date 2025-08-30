@@ -12,7 +12,7 @@
 
 
 <script setup lang="ts">
-import Badge from '@/components/badges/Badge.vue'
+import Badge from './Badge.vue'
 import PlusIcon from '@/assets/icons/plus-bold.svg'
 
 const props = defineProps<{
