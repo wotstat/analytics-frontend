@@ -5,7 +5,7 @@ import { smallVehiclesAtlasMt, smallVehiclesAtlasWot, tagToImageName } from '../
 
 import { Ref, watch } from 'vue'
 import { nationFlagAtlas } from '../vehicles/nation/utils'
-import { TableCell } from '../tableView/tableView/TableView'
+import { TableCell } from '../../uiKit/tableView/tableView/TableView'
 
 const vehicleTypes = ['MT', 'LT', 'HT', 'AT', 'SPG'] as const
 export type VehicleLineData = {
