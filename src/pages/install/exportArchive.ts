@@ -1,4 +1,4 @@
-import { latestGameVersion } from '@/components/mdUtils/gameVersion'
+import { latestGameVersion } from '@/utils/gameVersion'
 
 
 export async function exportArchive(mods: { filename: string, blob: Blob }[], vendor: 'lesta' | 'wargaming') {

@@ -82,7 +82,7 @@ import { computedAsync } from '@vueuse/core'
 import { computed } from 'vue'
 
 import ShowGameFolder from './assets/show-game-folder.jpg'
-import { latestGameVersion } from '@/components/mdUtils/gameVersion'
+import { latestGameVersion } from '@/utils/gameVersion'
 
 const props = defineProps<{
   handle: FileSystemDirectoryHandle

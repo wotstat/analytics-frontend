@@ -1,10 +1,10 @@
 import { numberToRoman } from '@/utils'
 import { getHighlightedTextParts, Highlighted } from '@/uiKit/highlightString/highlightUtils'
-import { vehicleTypeToImage } from '@/components/vehicles/type/vehicleTypeToImage'
-import { smallVehiclesAtlasMt, smallVehiclesAtlasWot, tagToImageName } from '@/components/vehicles/vehicle/utils'
+import { vehicleTypeToImage } from '@/components/game/vehicles/type/vehicleTypeToImage'
+import { smallVehiclesAtlasMt, smallVehiclesAtlasWot, tagToImageName } from '@/components/game/vehicles/vehicle/utils'
 
 import { Ref, watch } from 'vue'
-import { nationFlagAtlas } from '@/components/vehicles/nation/utils'
+import { nationFlagAtlas } from '@/components/game/vehicles/nation/utils'
 import { TableCell } from '@/uiKit/tableView/tableView/TableView'
 
 const vehicleTypes = ['MT', 'LT', 'HT', 'AT', 'SPG'] as const
