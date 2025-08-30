@@ -12,7 +12,7 @@ import { selectTagVehiclesLocalization } from '@/shared/i18n/i18n'
 import VehiclePopup from './VehiclePopup.vue'
 import { headerHeight, useAdditionalHeaderHeight } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
-import { Nation } from '@/shared/game/nations/nations'
+import { Nation } from '@/shared/game/vehicles/nations/nations'
 
 defineProps<{
   targetElement: HTMLElement | null,
