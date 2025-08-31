@@ -72,7 +72,7 @@ onKeyDown('Escape', () => emit('close'))
 
     width: 800px;
     height: 900px;
-    max-height: calc(100vh - 30px);
+    max-height: calc(100dvh - 30px);
     max-width: calc(100vw - 30px);
     margin: auto;
     display: flex;
@@ -119,7 +119,7 @@ onKeyDown('Escape', () => emit('close'))
     .modal {
       width: 100vw;
       max-width: 100vw;
-      height: calc(100vh - 30px);
+      height: calc(100dvh - 30px);
       max-height: 100vh;
       margin: 0;
       margin-top: auto;
