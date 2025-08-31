@@ -493,6 +493,11 @@ const delegate: TableViewDelegate = {
           margin-left: 3px;
           border-radius: 5px;
         }
+
+        &::-webkit-scrollbar-track {
+          margin-block-end: 10px;
+          margin-block-start: 35px;
+        }
       }
     }
 

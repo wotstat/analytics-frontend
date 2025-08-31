@@ -2,8 +2,9 @@
   <h2>Поиск реплеев</h2>
   <div class="filter">
     <div class="left">
-      <div class="arena-select">
+      <div class="arena-select badge-selector">
         Карта:
+        <ArenaSelectorBadges v-model="selectedArena" />
       </div>
       <div class="tank-select badge-selector">
         <p>Танк:</p>
@@ -41,7 +42,7 @@ import Battle from '../shared/Battle.vue'
 import VehicleSelectorBadges from '@/shared/game/selectors/vehicleSelector/VehicleSelectorBadges.vue'
 import GameSelector from '@/shared/game/selectors/gameSelector/GameSelector.vue'
 import GameVersionSelectorBadges from '@/shared/game/selectors/gameVersionSelector/GameVersionSelectorBadges.vue'
-
+import ArenaSelectorBadges from '@/shared/game/selectors/arena/ArenaSelectorBadges.vue'
 
 const info = {
   meta: {
@@ -72,6 +73,7 @@ const info = {
 
 const selectedVehicle = ref(new Set<string>())
 const selectedGameVersion = ref(new Set<string>())
+const selectedArena = ref(new Set<string>())
 
 </script>
 

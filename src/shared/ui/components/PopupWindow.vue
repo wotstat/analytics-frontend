@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <div class="popup-container">
+    <div class="popup-container nice-scrollbar">
       <div class="card flex ver">
         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="15"
           height="15" class="close" @click="emit('close')">
