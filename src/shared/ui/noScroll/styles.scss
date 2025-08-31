@@ -1,0 +1,9 @@
+html {
+  &.no-scroll {
+    overflow: hidden;
+  }
+
+  &.scrollbar-gutter {
+    scrollbar-gutter: stable;
+  }
+}
