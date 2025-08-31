@@ -78,26 +78,8 @@ watch(preferredGame, (newGame, old) => {
 
 
 function selectRegion(e: MouseEvent, region: string) {
-  if (currentRegions.value.has(region)) currentRegions.value.delete(region)
-  else {
-    if (e.shiftKey) {
-      if (currentRegions.value.size === 0) {
-        currentRegions.value.add(region)
-      } else {
-        const index = possibleRegions.value.indexOf(region)
-        const regionsI = Array.from(currentRegions.value).map(n => possibleRegions.value.indexOf(n))
-
-        const min = Math.min(...regionsI)
-        const max = Math.max(...regionsI)
-
-        if (index < min) for (let i = index; i <= max; i++) currentRegions.value.add(possibleRegions.value[i])
-        else for (let i = min; i <= index; i++) currentRegions.value.add(possibleRegions.value[i])
-      }
-    }
-    else if (!e.ctrlKey && !e.metaKey) currentRegions.value.clear()
-
-    if (!e.shiftKey) currentRegions.value.add(region)
-  }
+  currentRegions.value.clear()
+  currentRegions.value.add(region)
 }
 
 const prepared = computed(() => {
