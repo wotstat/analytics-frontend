@@ -3,7 +3,7 @@
   <div class="filter">
     <div class="left">
       <div class="arena-select badge-selector">
-        Карта:
+        <p>Карта:</p>
         <ArenaSelectorBadges v-model="selectedArena" />
       </div>
       <div class="tank-select badge-selector">

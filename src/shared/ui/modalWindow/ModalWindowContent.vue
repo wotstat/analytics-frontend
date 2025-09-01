@@ -1,13 +1,18 @@
 <template>
   <div class="modal-window">
-    <div class="background"></div>
+    <div class="background" @click="emit('close')"></div>
     <div class="modal">
       <header :class="{
         'show-border': showHeaderBorder
       }">
-        <h1>{{ title }}</h1>
-        <div class="controls">
-          <slot name="controls"></slot>
+        <div class="title-line">
+          <h1>{{ title }}</h1>
+          <div class="controls">
+            <slot name="controls"></slot>
+          </div>
+        </div>
+        <div class="content-line">
+          <slot name="header-content"></slot>
         </div>
       </header>
 
@@ -79,26 +84,33 @@ onKeyDown('Escape', () => emit('close'))
     flex-direction: column;
 
     header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      min-height: 50px;
-      max-height: 50px;
-      padding: 0 15px;
-      border-bottom: 1px solid transparent;
+      .title-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        min-height: 50px;
+        max-height: 50px;
+        padding: 0;
+        border-bottom: 1px solid transparent;
+
+        h1 {
+          font-size: 18px;
+          font-weight: normal;
+          margin: 0;
+          font-weight: bold;
+          padding: 0 15px;
+        }
+
+        .controls {
+          margin-right: 10px;
+        }
+      }
+
 
       &.show-border {
         border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       }
 
-      h1 {
-        font-size: 18px;
-        font-weight: normal;
-        margin: 0;
-        font-weight: bold;
-      }
-
-      .controls {}
     }
 
     main {
