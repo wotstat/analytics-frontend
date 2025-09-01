@@ -10,14 +10,15 @@ import { vehicleFallbackUrl, vehicleUrl } from './utils'
 const props = defineProps<{
   tag: string,
   size?: 'small' | 'preview' | 'shop'
+  game?: 'mt' | 'wot'
   loading?: 'lazy' | 'eager'
 }>()
 
 
-const targetUrl = ref(vehicleUrl(props.tag, props.size))
+const targetUrl = ref(vehicleUrl(props.tag, props.size, props.game))
 
-watch(() => [props.tag, props.size], () => {
-  targetUrl.value = vehicleUrl(props.tag, props.size)
+watch(() => [props.tag, props.size, props.game], () => {
+  targetUrl.value = vehicleUrl(props.tag, props.size, props.game)
 })
 
 const fallbackUrl = computed(() => vehicleFallbackUrl(props.size))

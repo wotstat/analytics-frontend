@@ -12,7 +12,7 @@
     </template>
 
     <template #default>
-      <ArenaSelectorModal :arenas="arenas.data" :game="'mt'" />
+      <ArenaSelectorModal :arenas="arenas.data" :game="'mt'" :search="searchText" />
     </template>
   </ModalWindow>
 </template>
@@ -26,14 +26,22 @@ import { ref } from 'vue'
 import CloseButton from '@/shared/ui/modalWindow/buttons/closeButton/CloseButton.vue'
 import SearchLine from '../components/searchLine/SearchLine.vue'
 import ArenaSelectorModal from './arenaSelectorModal/ArenaSelectorModal.vue'
+import { selectTagArenasLocalization } from '@/shared/i18n/i18n'
 
 const visibleModal = ref(false)
 const searchText = ref('')
 
-const arenas = queryAsync<{ region: string, battleMode: string, arenaTag: string }>(`
-  select region, battleMode, arenaTag
-  from Event_OnBattleStart
-  group by arenaTag, region, battleMode
+const arenas = queryAsync<{ region: string, battleMode: string, tag: string, name: string }>(`
+with
+    arenas as (
+      select region, battleMode, splitByChar('/', arenaTag)[2] as tag
+      from Event_OnBattleStart
+      group by arenaTag, region, battleMode
+    ),
+    locals as (${selectTagArenasLocalization})
+select region, battleMode, tag, name
+from arenas
+left any join locals using tag;
 `, { settings: CACHE_SETTINGS })
 
 const selected = defineModel<Set<string>>({ default: new Set() })

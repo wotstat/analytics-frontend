@@ -101,6 +101,7 @@ const languageToPostfix = {
 
 export const selectVehiclesLocalization = `select tag, type, level, role, nation, short${languageToPostfix[LANGUAGE]} as short, name${languageToPostfix[LANGUAGE]} as name from VehiclesLocalization`
 export const selectTagVehiclesLocalization = `select tag, short${languageToPostfix[LANGUAGE]} as short, name${languageToPostfix[LANGUAGE]} as name from VehiclesLocalization`
+export const selectTagArenasLocalization = `select tag, name${languageToPostfix[LANGUAGE]} as name from ArenasLocalization`
 
 const tankNames = queryAsync<{ tag: string, short: string, name: string }>(selectVehiclesLocalization)
 

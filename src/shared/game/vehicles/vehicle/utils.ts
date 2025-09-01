@@ -8,12 +8,12 @@ export function tagToImageName(tag: string): string {
   return tag.split(':').at(-1)?.toLowerCase() || tag.toLowerCase()
 }
 
-export function vehicleUrl(tag: string, size: 'small' | 'preview' | 'shop' = 'preview', format: 'webp' | 'png' = 'webp'): string {
+export function vehicleUrl(tag: string, size: 'small' | 'preview' | 'shop' = 'preview', game: 'mt' | 'wot' = 'mt', format: 'webp' | 'png' = 'webp'): string {
   const name = tagToImageName(tag)
   switch (size) {
-    case 'small': return `${STATIC_URL}/mt/latest/vehicles/small/${name}.${format}`
-    case 'preview': return `${STATIC_URL}/mt/latest/vehicles/preview/${name}.${format}`
-    case 'shop': return `${STATIC_URL}/mt/latest/vehicles/shop/${name}.${format}`
+    case 'small': return `${STATIC_URL}/${game}/latest/vehicles/small/${name}.${format}`
+    case 'preview': return `${STATIC_URL}/${game}/latest/vehicles/preview/${name}.${format}`
+    case 'shop': return `${STATIC_URL}/${game}/latest/vehicles/shop/${name}.${format}`
   }
 }
 
