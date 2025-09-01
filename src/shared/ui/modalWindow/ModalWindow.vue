@@ -6,6 +6,10 @@
           <slot name="controls"></slot>
         </template>
 
+        <template #header-content>
+          <slot name="header-content"></slot>
+        </template>
+
         <slot></slot>
       </ModalWindowContent>
     </Transition>
