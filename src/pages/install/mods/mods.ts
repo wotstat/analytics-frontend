@@ -1,12 +1,11 @@
 import { INSTALL_URL } from '@/shared/external/externalUrl'
 import { useFetch } from '@vueuse/core'
-import { computed, ref, watch, watchEffect } from 'vue'
+import { ref, watch } from 'vue'
 
 
 export type ModInfo = {
   tag: string
   source: { url: string, name: string }
-  support?: 'mt-only' | 'wot-only'
   required?: string[]
 }
 
@@ -25,14 +24,58 @@ export const widgetsMod: ModInfo = {
   source: { url: '', name: '' }
 }
 
-export const otherMods: ModInfo[] = [
-  { tag: 'wotstat.lootbox-open-multiplier', source: { url: 'https://github.com/wotstat/lootbox-open-multiplier', name: 'GitHub' }, support: 'mt-only' },
+export const lestaMods: ModInfo[] = [
+  { tag: 'wotstat.lootbox-open-multiplier', source: { url: 'https://github.com/wotstat/lootbox-open-multiplier', name: 'GitHub' } },
   { tag: 'wotstat.data-provider', source: { url: 'https://github.com/wotstat/wotstat-data-provider', name: 'GitHub' } },
   { tag: 'izeberg.modssettingsapi', source: { url: 'https://github.com/IzeBerg/modssettingsapi', name: 'GitHub' }, required: ['me.poliroid.modslistapi'] },
   { tag: 'me.poliroid.modslistapi', source: { url: 'https://gitlab.com/wot-public-mods/mods-list', name: 'GitLab' } },
 ]
+export const lestaModsMap = new Map<string, ModInfo>(lestaMods.map(mod => [mod.tag, mod]))
 
-export const otherModsMap = new Map<string, ModInfo>(otherMods.map(mod => [mod.tag, mod]))
+export const wgMods: ModInfo[] = [
+  { tag: 'wotstat.data-provider', source: { url: 'https://github.com/wotstat/wotstat-data-provider', name: 'GitHub' } },
+  { tag: 'izeberg.modssettingsapi', source: { url: 'https://github.com/IzeBerg/modssettingsapi', name: 'GitHub' }, required: ['me.poliroid.modslistapi'] },
+  { tag: 'me.poliroid.modslistapi', source: { url: 'https://gitlab.com/wot-public-mods/mods-list', name: 'GitLab' }, required: ['net.openwg.gameface'] },
+  { tag: 'net.openwg.gameface', source: { url: 'https://gitlab.com/openwg/wot.gameface', name: 'GitLab' } },
+]
+export const wgModsMap = new Map<string, ModInfo>(wgMods.map(mod => [mod.tag, mod]))
+
+export const otherModsUnion = (() => {
+  const union = new Map<string, {
+    source: ModInfo['source'],
+    required: Set<string>,
+  }>()
+
+  for (const mod of lestaMods) union.set(mod.tag, {
+    source: mod.source,
+    required: new Set(mod.required || [])
+  })
+
+  for (const mod of wgMods) {
+    const existing = union.get(mod.tag)
+    if (existing) {
+      for (const req of mod.required || []) existing.required.add(req)
+    } else {
+      union.set(mod.tag, {
+        source: mod.source,
+        required: new Set(mod.required || [])
+      })
+    }
+  }
+
+  return [...union.entries()].map(([tag, mod]) => ({
+    tag,
+    source: mod.source,
+    required: [...mod.required],
+    support: lestaModsMap.has(tag) ? (wgModsMap.has(tag) ? undefined : 'mt-only') : 'wot-only' as 'mt-only' | 'wot-only' | undefined
+  }))
+})()
+
+export const otherModsUnionMap = new Map<string, {
+  source: ModInfo['source'],
+  required: string[],
+  support: 'mt-only' | 'wot-only' | undefined
+}>(otherModsUnion.map(mod => [mod.tag, mod]))
 
 export type Mod = {
   id: string
@@ -48,8 +91,7 @@ export const latestMods = useFetch(`${INSTALL_URL}/api/mods-latest`, {
 }).json<Record<string, { mtmod: Mod, wotmod: Mod }>>()
 
 
-
-export const latestModsMap = ref(new Map<string, { mtmod: Mod, wotmod: Mod }>())
+export const latestModsMap = ref(new Map<string, { mtmod?: Mod, wotmod?: Mod }>())
 export const lestaLatestMods = ref(new Map<string, Mod>())
 export const wotLatestMods = ref(new Map<string, Mod>())
 

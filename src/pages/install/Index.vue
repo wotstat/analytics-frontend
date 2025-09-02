@@ -78,6 +78,17 @@
       </div>
     </template>
 
+    <div class="wot-warning" :style="{
+      background: 'rgb(255 80 12 / 24%)',
+      marginTop: '12px',
+      borderRadius: '8px',
+      padding: '8px',
+      fontWeight: 'bold',
+      color: 'white'
+    }" v-if="preferredGameVendor === 'wargaming'">
+      Поддержка WOT 2.0 появится в ближайшие несколько дней.
+    </div>
+
 
     <div class="space"></div>
 
@@ -204,7 +215,7 @@
               {{ t(`description:${mod.tag}`) }}
               <div class="badge" v-if="mod.support && (preferredGameVendor == 'unknown' ||
                 preferredGameVendor == 'wargaming' && mod.support == 'mt-only' ||
-                preferredGameVendor == 'wargaming' && mod.support == 'wot-only')">
+                preferredGameVendor == 'lesta' && mod.support == 'wot-only')">
                 {{ mod.support == 'mt-only' ? 'Только Lesta' : 'Только WG' }}
               </div>
 
@@ -365,7 +376,7 @@ import AnalyticsBack2 from './assets/mods/analytics-back-2.webp'
 
 import ModCard from './components/modCard/ModCard.vue'
 import { type Component, computed, nextTick, onMounted, ref, watch } from 'vue'
-import { analyticsMod, latestMods, latestModsMap, ModInfo, otherMods, otherModsMap, positionsMod, widgetsMod, } from './mods/mods'
+import { analyticsMod, latestMods, latestModsMap, lestaMods, ModInfo, otherModsUnion, otherModsUnionMap, positionsMod, wgMods, widgetsMod, } from './mods/mods'
 import { useI18n } from '@/shared/i18n/useI18n'
 import i18n from './mods/i18n.json'
 import { useLocalStorage } from '@vueuse/core'
@@ -389,14 +400,14 @@ const detailContentContainer = ref<HTMLElement | null>(null)
 const displayType = useLocalStorage<'detail' | 'table'>('install:otherModsDisplayType', 'table')
 const preferredGameVendor = ref<'lesta' | 'wargaming' | 'unknown'>('unknown')
 const enabledMods = useLocalStorage('install:enabledMods', new Map<string, boolean>())
-const selectedModInDetail = ref<(ModInfo & { version: string, date: string }) | null>(null)
+const selectedModInDetail = ref<(ModInfo & { version: string, date: string, support: 'mt-only' | 'wot-only' | undefined } & {}) | null>(null)
 const selectFolderErrorRootHandle = ref<null | FileSystemDirectoryHandle>(null)
 
 const { hasScrollY } = useHasScroll(detailContentContainer)
 
 const { t } = useI18n(i18n)
 
-const modsNames = [...otherMods, analyticsMod, widgetsMod, positionsMod].map(m => m.tag)
+const modsNames = [...otherModsUnion, analyticsMod, widgetsMod, positionsMod].map(m => m.tag)
 const { isBrowserSupported, requestGameFolderAccess, gameInfo, installMod, close, checkedMods } = useInstaller(modsNames)
 
 watch(gameInfo, info => {
@@ -405,26 +416,62 @@ watch(gameInfo, info => {
 
 }, { immediate: true })
 
-const displayedModsList = computed(() => {
-  return otherMods
-    .filter(m =>
-      (m.support == 'mt-only' && preferredGameVendor.value === 'lesta') ||
-      (m.support == 'wot-only' && preferredGameVendor.value === 'wargaming') ||
-      (m.support == undefined) ||
-      (preferredGameVendor.value == 'unknown'))
-    .map(m => {
-      const latestMod = latestModsMap.value.get(m.tag)
+const displayedModsList = computed<{
+  tag: string,
+  source: ModInfo['source'],
+  support: 'mt-only' | 'wot-only' | undefined,
+  required?: string[],
+  version: string,
+  date: string
+}[]>(() => {
+
+  if (preferredGameVendor.value === 'unknown')
+    return otherModsUnion.map(mod => {
+      const latestMod = latestModsMap.value.get(mod.tag)
       if (!latestMod) return null
 
-      const target = latestMod[preferredGameVendor.value == 'wargaming' ? 'wotmod' : 'mtmod']
+      const mtmod = latestMod.mtmod
+      const wotmod = latestMod.wotmod
+
+      if (!mtmod && !wotmod) return null
+
+      const latest = (() => {
+        if (!mtmod && wotmod) return wotmod
+        if (!wotmod && mtmod) return mtmod
+
+        return dotSeparatedCompare(mtmod!.version, wotmod!.version) === 1 ? mtmod : wotmod
+      })()
+
+      if (!latest) return null
 
       return {
-        ...m,
-        version: target.version,
-        date: target.date,
+        tag: mod.tag,
+        source: mod.source,
+        support: mod.support,
+        required: [...mod.required],
+        version: latest.version,
+        date: latest.date,
       }
-    })
-    .filter(m => m !== null)
+    }).filter(m => m !== null)
+
+
+  const targetModsCollection = preferredGameVendor.value === 'lesta' ? lestaMods : wgMods
+  const targetModExtension = preferredGameVendor.value === 'lesta' ? 'mtmod' : 'wotmod'
+
+  return targetModsCollection.map(m => {
+    const latestMod = latestModsMap.value.get(m.tag)
+    if (!latestMod) return null
+
+    const target = latestMod[targetModExtension]!
+    return {
+      tag: m.tag,
+      source: m.source,
+      support: undefined,
+      version: target.version,
+      date: target.date,
+    }
+  }).filter(m => m !== null)
+
 })
 
 if (displayedModsList.value.length == 0) {
@@ -456,9 +503,10 @@ const targetInstallMods = computed(() => {
   const targetMods = new Set<string>()
   for (const [tag, enabled] of enabledMods.value.entries()) if (enabled) targetMods.add(tag)
   for (const dep of dependencies.value) targetMods.add(dep)
+
   return [...targetMods.values()]
     .filter(tag => {
-      const mod = otherModsMap.get(tag)
+      const mod = otherModsUnionMap.get(tag)
       if (!mod) return true
 
       const support = mod.support
@@ -482,7 +530,7 @@ function dependenciesForMods(mods: string[]) {
     for (const dep of current) {
       if (!dependencies.has(dep)) {
         dependencies.add(dep)
-        const depInfo = otherModsMap.get(dep)
+        const depInfo = otherModsUnionMap.get(dep)
         if (depInfo && depInfo.required) {
           stack.push(depInfo.required)
         }
@@ -503,7 +551,7 @@ function version(tag: string) {
   const mod = latestModsMap.value.get(tag)
   if (!mod) return null
 
-  return preferredGameVendor.value === 'wargaming' ? mod.wotmod.version : mod.mtmod.version
+  return preferredGameVendor.value === 'wargaming' ? mod.wotmod?.version : mod.mtmod?.version
 }
 
 function canUpdate(tag: string) {
