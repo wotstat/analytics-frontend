@@ -437,11 +437,11 @@ if (displayedModsList.value.length == 0) {
   if (!selectedModInDetail.value) selectedModInDetail.value = displayedModsList.value.at(0) || null
 }
 
-const mdDescriptions = import.meta.glob<{ VueComponent: Component }>('./details/*/*.md', { eager: true })
+const mdDescriptions = import.meta.glob<{ VueComponent: Component }>('./mods/details/*/*.md', { eager: true })
 const detailComponent = computed(() => {
   if (!selectedModInDetail.value) return null
   const modTag = selectedModInDetail.value.tag
-  const path = `./details/ru/${modTag}.md`
+  const path = `./mods/details/ru/${modTag}.md`
   return mdDescriptions[path]?.VueComponent || null
 })
 
