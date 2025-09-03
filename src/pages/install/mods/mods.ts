@@ -25,6 +25,7 @@ export const widgetsMod: ModInfo = {
 }
 
 export const lestaMods: ModInfo[] = [
+  { tag: 'panikaxa.lesta.quick_demount', source: { url: 'http://forum.tanki.su/index.php?/topic/2204705-13610-quick-demount-20-быстрый-демонтаж-оборудования-20/', name: 'Forum' } },
   { tag: 'wotstat.lootbox-open-multiplier', source: { url: 'https://github.com/wotstat/lootbox-open-multiplier', name: 'GitHub' } },
   { tag: 'wotstat.data-provider', source: { url: 'https://github.com/wotstat/wotstat-data-provider', name: 'GitHub' } },
   { tag: 'izeberg.modssettingsapi', source: { url: 'https://github.com/IzeBerg/modssettingsapi', name: 'GitHub' }, required: ['me.poliroid.modslistapi'] },
