@@ -172,7 +172,15 @@ async function checkModsVersion(mods: FileSystemDirectoryHandle, check: string[]
   for (const mod of targetMods) {
     const versions = await Promise.all(mod.map(async m => {
       const file = await m.handler.getFile()
-      const archive = await JSZip.loadAsync(file)
+      if (!file) return null
+
+      let archive: typeof JSZip
+      try {
+        archive = await JSZip.loadAsync(await file.arrayBuffer())
+      } catch (error) {
+        console.warn('Error loading ZIP archive:', error)
+        return null
+      }
 
       const meta = archive.file('meta.xml')
       if (!meta) return null

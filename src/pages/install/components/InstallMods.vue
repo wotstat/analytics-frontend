@@ -35,7 +35,11 @@
 
       <div class="content error" v-else>
         <h1>Ошибка</h1>
-        <p>Не удалось загрузить модификации</p>
+        <template v-if="unpackState.type === 'error'">
+          <p>{{ unpackState.error }}</p>
+          <p>Попробуйте скачать их архивом</p>
+        </template>
+        <p v-else>Не удалось загрузить модификации</p>
         <p v-if="status.type === 'error'">{{ status.error }}</p>
       </div>
 
@@ -54,6 +58,7 @@ import { defineAsyncComponent, ref, watch } from 'vue'
 
 import Tada1Src from '../assets/tada-1.webp'
 import Tada2Src from '../assets/tada-2.webp'
+import { error } from '@/db'
 
 const Confetti = defineAsyncComponent(() => import('@/pages/install/components/Confetti.vue'))
 
@@ -86,6 +91,7 @@ setTimeout(() => {
 
 async function unpack(mods: { filename: string, blob: Blob }[]) {
 
+  const cannotInstall: { mod: string, error: string }[] = []
   for (let i = 0; i < mods.length; i++) {
     const mod = mods[i]
     unpackState.value = { type: 'unpacking', index: i, total: mods.length, mod: mod.filename }
@@ -93,10 +99,15 @@ async function unpack(mods: { filename: string, blob: Blob }[]) {
     try {
       await props.installMod(mod.filename, mod.blob)
     } catch (e) {
-      unpackState.value = { type: 'error', error: `Не удалось установить модификацию ${mod.filename}` }
+      cannotInstall.push({ mod: mod.filename, error: `${e}` })
       console.error('Error installing mod:', e)
-      return
     }
+  }
+
+  if (cannotInstall.length) {
+    const messages = cannotInstall.map(m => `${m.mod}: ${m.error}`).join('; ')
+    unpackState.value = { type: 'error', error: `Не удалось установить следующие модификации: ${messages}` }
+    return
   }
 
   unpackState.value = { type: 'done' }
