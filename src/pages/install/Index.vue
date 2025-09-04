@@ -78,7 +78,7 @@
       </div>
     </template>
 
-    <div class="wot-warning" :style="{
+    <!-- <div class="wot-warning" :style="{
       background: 'rgb(255 80 12 / 24%)',
       marginTop: '12px',
       borderRadius: '8px',
@@ -87,7 +87,7 @@
       color: 'white'
     }" v-if="preferredGameVendor === 'wargaming'">
       Поддержка WOT 2.0 появится в ближайшие несколько дней.
-    </div>
+    </div> -->
 
 
     <div class="space"></div>
