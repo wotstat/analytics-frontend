@@ -137,6 +137,8 @@ const groupedList = computed(() => {
 
   const lastWt = new Set([
     'czech:Cz04_T50_51_Waf_Hound_3DSt',
+    'ussr:R232_IS-7W',
+    'ussr:R232_IS-7G'
   ])
 
   for (const tank of preparedTankList.value) {
@@ -162,18 +164,18 @@ const groupedList = computed(() => {
   return [
     { header: 'Доступные в рандоме', data: regular },
     { header: 'Стальной Охотник', data: stealHunter },
-    { header: 'День рождения 2025', data: hb25 },
-    { header: 'Битва блогеров', data: bob },
-    { header: 'Май 2024', data: may24Hb },
+    { header: 'Последний WT', data: lastWT },
     { header: 'Гонки', data: race },
     { header: 'На марс', data: space },
+    { header: 'Битва блогеров', data: bob },
     { header: '7x7', data: _7x7 },
-    { header: 'Последний WT', data: lastWT },
-    { header: 'Тестовые', data: test },
+    { header: 'День рождения 2025', data: hb25 },
     { header: 'Гринч', data: grinch },
     { header: 'FEP23', data: fep23 },
     { header: 'Хэллоуин', data: halloween },
+    { header: 'Май 2024', data: may24Hb },
     { header: 'HW21', data: hw21 },
+    { header: 'Тестовые', data: test },
     { header: 'Служебные', data: observer },
   ]
 })

@@ -3,7 +3,7 @@
     <div class="section" v-for="group in filtered">
       <h2 class="header">{{ group.header }}</h2>
       <div class="arenas">
-        <div class="arena" v-for="arena in group.data" :key="arena.tag" :tag="arena">
+        <div class="arena" v-for="arena in group.data" :key="arena.tag" :tag="arena.tag">
           <MinimapBackground :tag="arena.imageName" :game="game" />
           <div class="name mt-font">
             <HighlightString :text="arena.highlighted.highlightedString" />
@@ -116,10 +116,12 @@ h2 {
   .arena {
     border: 1px solid rgba(255, 255, 255, 0.2);
     position: relative;
+    cursor: pointer;
 
     img {
       display: block;
       max-width: 100%;
+      width: 100%;
     }
 
     .name {

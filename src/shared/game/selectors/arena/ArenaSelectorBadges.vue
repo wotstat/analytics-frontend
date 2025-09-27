@@ -1,6 +1,6 @@
 <template>
   <BadgesLine :tagToText="tagToText" v-model="selected" @openSelectModal="openSelect" ref="badges" />
-  <ModalWindow title="Выбор карты" :display="visibleModal" @close="visibleModal = false">
+  <ModalWindow title="Выбор карты" :display="visibleModal" @close="visibleModal = false" :margin-block-start="'35px'">
     <template #controls>
       <CloseButton @click="visibleModal = false" />
     </template>

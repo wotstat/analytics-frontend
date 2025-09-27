@@ -123,6 +123,7 @@ onKeyDown('Escape', () => emit('close'))
 
       &::-webkit-scrollbar-track {
         margin-block-end: 15px;
+        margin-block-start: var(--margin-block-start, 0);
       }
     }
   }
