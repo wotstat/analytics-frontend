@@ -85,7 +85,7 @@ function selectRegion(e: MouseEvent, region: string) {
 const prepared = computed(() => {
 
   function parseVersion(version: string) {
-    const parts = version.match(/v\.(\d+)\.(\d+)\.(\d+)\.(\d+) #(\d+)/)
+    const parts = version.match(/v\.(\d+)\.(\d+)\.(\d+)\.(\d+).*#(\d+)/)
     if (!parts) return null
 
     return {

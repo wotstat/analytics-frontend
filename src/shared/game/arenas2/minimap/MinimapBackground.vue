@@ -23,5 +23,6 @@ const targetUrl = computed(() => minimapUrl(props.tag, props.game, props.format)
 img {
   pointer-events: none;
   user-select: none;
+  aspect-ratio: 1 / 1;
 }
 </style>
