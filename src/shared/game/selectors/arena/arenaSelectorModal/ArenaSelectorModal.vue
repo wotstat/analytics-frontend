@@ -4,7 +4,8 @@
       <h2 class="header">{{ group.header }}</h2>
       <div class="arenas">
         <div class="arena" v-for="arena in group.data" :key="arena.tag" :tag="arena.tag">
-          <MinimapBackground :tag="arena.imageName" :game="game" />
+          <MinimapBackground :tag="arena.imageName" :game="game" class="minimap-background" />
+          <MinimapBases :arenaTag="arena.tag" class="minimap-bases" :gameplay="group.gameplay" />
           <div class="name mt-font">
             <HighlightString :text="arena.highlighted.highlightedString" />
           </div>
@@ -18,6 +19,7 @@
 <script setup lang="ts">
 import { tagToImageName } from '@/shared/game/arenas2/arenas'
 import MinimapBackground from '@/shared/game/arenas2/minimap/MinimapBackground.vue'
+import MinimapBases from '@/shared/game/arenas2/minimap/minimapBases/MinimapBases.vue'
 import HighlightString from '@/shared/uiKit/highlightString/HighlightString.vue'
 import { compareIntervals, Highlighted } from '@/shared/uiKit/highlightString/highlightUtils'
 import { computed } from 'vue'
@@ -25,7 +27,7 @@ import { computed } from 'vue'
 
 const props = defineProps<{
   game: 'mt' | 'wot'
-  arenas: { region: string, battleMode: string, tag: string, name: string }[]
+  arenas: { region: string, battleMode: string, battleGameplay: string, tag: string, name: string }[]
   search: string
 }>()
 
@@ -39,20 +41,29 @@ const groups = computed(() => {
 
   type Arena = typeof prepared.value[number]
 
-  const regular: Arena[] = []
+  const cft: Arena[] = []
+  const ctf30x30: Arena[] = []
+  const domination: Arena[] = []
+  const assault: Arena[] = []
   const battleRoyale: Arena[] = []
   const comp7: Arena[] = []
 
   for (const arena of prepared.value) {
-    if (arena.battleMode === 'REGULAR') regular.push(arena)
+    if (arena.battleMode === 'REGULAR' && arena.battleGameplay === 'ctf') cft.push(arena)
+    else if (arena.battleMode === 'REGULAR' && arena.battleGameplay === 'domination') domination.push(arena)
+    else if (arena.battleMode === 'REGULAR' && arena.battleGameplay === 'assault') assault.push(arena)
+    else if (arena.battleMode === 'EPIC_RANDOM' && arena.battleGameplay === 'ctf30x30') ctf30x30.push(arena)
     else if (arena.battleMode === 'BATTLE_ROYALE_SOLO') battleRoyale.push(arena)
     else if (arena.battleMode === 'COMP7') comp7.push(arena)
   }
 
   return [
-    { header: 'Доступные в рандоме', items: regular },
+    { header: 'Стандартный бой', items: cft },
+    { header: 'Штурм', gameplay: 'assault', items: assault },
+    { header: 'Доминирование', gameplay: 'domination', items: domination },
+    { header: 'Генеральное сражение', gameplay: 'ctf30x30', items: ctf30x30 },
     { header: 'Стальной Охотник', items: battleRoyale },
-    { header: 'Натиск', items: comp7 }
+    { header: 'Натиск', gameplay: 'comp7', items: comp7 }
   ]
 })
 
@@ -85,6 +96,7 @@ const filtered = computed(() => {
 
     return {
       header: arenas.header,
+      gameplay: arenas.gameplay,
       data: sorted()
     }
   })
@@ -116,12 +128,16 @@ h2 {
   .arena {
     border: 1px solid rgba(255, 255, 255, 0.2);
     position: relative;
+    aspect-ratio: 1 / 1;
     cursor: pointer;
 
-    img {
-      display: block;
-      max-width: 100%;
+    .minimap-background,
+    .minimap-bases {
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
+      height: 100%;
     }
 
     .name {

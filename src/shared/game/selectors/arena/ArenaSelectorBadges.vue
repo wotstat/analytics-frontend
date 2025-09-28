@@ -31,15 +31,15 @@ import { selectTagArenasLocalization } from '@/shared/i18n/i18n'
 const visibleModal = ref(false)
 const searchText = ref('')
 
-const arenas = queryAsync<{ region: string, battleMode: string, tag: string, name: string }>(`
+const arenas = queryAsync<{ region: string, battleMode: string, battleGameplay: string, tag: string, name: string }>(`
 with
     arenas as (
-      select region, battleMode, splitByChar('/', arenaTag)[2] as tag
+      select region, battleMode, battleGameplay, splitByChar('/', arenaTag)[2] as tag
       from Event_OnBattleStart
-      group by arenaTag, region, battleMode
+      group by arenaTag, region, battleGameplay, battleMode
     ),
     locals as (${selectTagArenasLocalization})
-select region, battleMode, tag, name
+select region, battleMode, battleGameplay, tag, name
 from arenas
 left any join locals using tag;
 `, { settings: CACHE_SETTINGS })
