@@ -4,7 +4,8 @@
       <h2 class="header">{{ group.header }}</h2>
       <div class="arenas">
         <div class="arena" v-for="arena in group.data" :key="arena.tag" :tag="arena.tag">
-          <MinimapBackground :tag="arena.imageName" :game="game" class="minimap-background" />
+          <MinimapBackground :tag="arena.imageName" :game="game" :gameplay="group.gameplay"
+            class="minimap-background" />
           <MinimapBases :arenaTag="arena.tag" class="minimap-bases" :gameplay="group.gameplay" />
           <div class="name mt-font">
             <HighlightString :text="arena.highlighted.highlightedString" />
@@ -47,6 +48,7 @@ const groups = computed(() => {
   const assault: Arena[] = []
   const battleRoyale: Arena[] = []
   const comp7: Arena[] = []
+  const epic: Arena[] = []
 
   for (const arena of prepared.value) {
     if (arena.battleMode === 'REGULAR' && arena.battleGameplay === 'ctf') cft.push(arena)
@@ -55,13 +57,15 @@ const groups = computed(() => {
     else if (arena.battleMode === 'EPIC_RANDOM' && arena.battleGameplay === 'ctf30x30') ctf30x30.push(arena)
     else if (arena.battleMode === 'BATTLE_ROYALE_SOLO') battleRoyale.push(arena)
     else if (arena.battleMode === 'COMP7') comp7.push(arena)
+    else if (arena.battleGameplay === 'epic') epic.push(arena)
   }
 
   return [
     { header: 'Стандартный бой', items: cft },
     { header: 'Штурм', gameplay: 'assault', items: assault },
-    { header: 'Доминирование', gameplay: 'domination', items: domination },
+    { header: 'Встречный бой', gameplay: 'domination', items: domination },
     { header: 'Генеральное сражение', gameplay: 'ctf30x30', items: ctf30x30 },
+    { header: 'Линия Фронта', gameplay: 'epic', items: epic },
     { header: 'Стальной Охотник', items: battleRoyale },
     { header: 'Натиск', gameplay: 'comp7', items: comp7 }
   ]
@@ -141,6 +145,7 @@ h2 {
     }
 
     .name {
+      user-select: none;
       position: absolute;
       bottom: 0;
       left: 0;
