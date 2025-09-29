@@ -6,8 +6,20 @@ export function tagToImageName(tag: string): string {
   return tag.split('/').at(-1)?.toLowerCase() || tag.toLowerCase()
 }
 
-export function minimapUrl(tag: string, game: 'mt' | 'wot' = 'mt', format: 'webp' | 'png' = 'webp'): string {
-  return `${STATIC_URL}/${game}/latest/arenas/minimap/${tag}.${format}`
+export function minimapUrl(tag: string,
+  game: 'mt' | 'wot' = 'mt',
+  gameplay: null | 'comp7' | (string & {}) = null,
+  format: 'webp' | 'png' = 'webp'): string {
+
+  const defaultUrl = `${STATIC_URL}/${game}/latest/arenas/minimap/${tag}.${format}`
+  if (!gameplay) return defaultUrl
+
+  const meta = getArenaMeta(game == 'mt' ? 'RU' : 'EU', tag, gameplay || 'ctf')
+  if (!meta) return defaultUrl
+
+  if (meta.minimap.includes('_comp7')) return `${STATIC_URL}/${game}/latest/arenas/minimap/comp7/${tag}.${format}`
+
+  return defaultUrl
 }
 
 type Arena = {
@@ -17,6 +29,7 @@ type Arena = {
   season: string;
   winnerIfExtermination: number | null;
   winnerIfTimeout: number | null;
+  minimap: string;
   bbox: {
     bottomLeft: { x: number; y: number };
     upperRight: { x: number; y: number };
@@ -47,6 +60,7 @@ type ArenasLatest = {
   gameVersionComp: string;
   name: string;
   season: string;
+  minimap: string;
 
   winnerIfTimeout: number | null;        // Nullable(UInt8)
   winnerIfExtermination: number | null;  // Nullable(UInt8)
@@ -80,7 +94,7 @@ export function getArenaMeta(region: string, tag: string, gameplay: string) {
 
 async function loadArenas() {
   const response = await query<ArenasLatest>(`
-    select region, tag, gameplay, season, winnerIfExtermination, winnerIfTimeout,
+    select region, tag, gameplay, season, winnerIfExtermination, winnerIfTimeout, minimap,
           "bbox.bottomLeft", "bbox.upperRight", "base.team", "base.positions", "spawn.team",
           "spawn.positions", control, "poi.position", "poi.type"
     from ArenasLatest
@@ -94,6 +108,7 @@ async function loadArenas() {
     season: arena.season,
     winnerIfExtermination: arena.winnerIfExtermination,
     winnerIfTimeout: arena.winnerIfTimeout,
+    minimap: arena.minimap,
     bbox: {
       bottomLeft: { x: arena['bbox.bottomLeft'][0], y: arena['bbox.bottomLeft'][1] },
       upperRight: { x: arena['bbox.upperRight'][0], y: arena['bbox.upperRight'][1] },

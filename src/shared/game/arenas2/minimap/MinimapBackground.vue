@@ -12,10 +12,11 @@ import FallbackImg from '@/shared/uiKit/fallbackImg/FallbackImg.vue'
 const props = defineProps<{
   tag: string
   game?: 'mt' | 'wot'
+  gameplay?: null | 'comp7' | (string & {})
   format?: 'webp' | 'png'
 }>()
 
-const targetUrl = computed(() => minimapUrl(props.tag, props.game, props.format))
+const targetUrl = computed(() => minimapUrl(props.tag, props.game, props.gameplay, props.format))
 </script>
 
 
