@@ -8,11 +8,20 @@
     <template #header-content>
       <div class="header-line">
         <SearchLine v-model="searchText" autofocus class="search-line" />
+        <div class="vr"></div>
+        <button class="variant mt-font selectable" @click="preferredGame = 'mt'"
+          :class="preferredGame == 'mt' ? 'active' : ''">
+          Lesta
+        </button>
+        <button class="variant mt-font selectable" @click="preferredGame = 'wot'"
+          :class="preferredGame != 'mt' ? 'active' : ''">
+          WG
+        </button>
       </div>
     </template>
 
     <template #default>
-      <ArenaSelectorModal :arenas="arenas.data" :game="'mt'" :search="searchText" />
+      <ArenaSelectorModal :arenas="arenas.data" :game="preferredGame == 'mt' ? 'mt' : 'wot'" :search="searchText" />
     </template>
   </ModalWindow>
 </template>
@@ -27,6 +36,7 @@ import CloseButton from '@/shared/ui/modalWindow/buttons/closeButton/CloseButton
 import SearchLine from '../components/searchLine/SearchLine.vue'
 import ArenaSelectorModal from './arenaSelectorModal/ArenaSelectorModal.vue'
 import { selectTagArenasLocalization } from '@/shared/i18n/i18n'
+import { preferredGame } from '@/shared/global/globalPreferred'
 
 const visibleModal = ref(false)
 const searchText = ref('')
@@ -61,9 +71,50 @@ function openSelect() {
 .header-line {
   padding: 0 15px;
   margin-bottom: 10px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+
 
   .search-line {
     width: 200px;
+  }
+
+  .vr {
+    width: 1px;
+    height: 30px;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .variant {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 22px;
+    padding: 0 10px;
+    line-height: 1;
+    font-size: 0.9em;
+
+    .icon {
+      height: 14px;
+    }
+  }
+
+  .selectable {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-radius: 5px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.07s;
+    border: none;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    &.active {
+      background-color: var(--blue-color);
+    }
   }
 }
 </style>

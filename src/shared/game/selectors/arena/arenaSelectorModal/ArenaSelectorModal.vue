@@ -6,7 +6,7 @@
         <div class="arena" v-for="arena in group.data" :key="arena.tag" :tag="arena.tag">
           <MinimapBackground :tag="arena.imageName" :game="game" :gameplay="group.gameplay"
             class="minimap-background" />
-          <MinimapBases :arenaTag="arena.tag" class="minimap-bases" :gameplay="group.gameplay" />
+          <MinimapBases class="minimap-bases" :tag="arena.tag" :game="game" :gameplay="group.gameplay" />
           <div class="name mt-font">
             <HighlightString :text="arena.highlighted.highlightedString" />
           </div>

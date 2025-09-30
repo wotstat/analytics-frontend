@@ -1,5 +1,5 @@
 <template>
-  <div class="overlay" :arenaTag="arenaTag">
+  <div class="overlay" :arenaTag="tag">
     <img v-for="(point, i) in meta?.poi" class="poi-point" :style="pos(point.position)"
       :src="images[`Poi_${point.type}`]" :t="point.type">
 
@@ -27,7 +27,7 @@ import { GameVendor } from '@/shared/game/wot'
 const props = withDefaults(defineProps<{
   game?: GameVendor;
   gameplay?: string;
-  arenaTag: string;
+  tag: string;
   team?: number;
 }>(), {
   game: 'mt',
@@ -35,7 +35,7 @@ const props = withDefaults(defineProps<{
   team: 1
 })
 
-const meta = computed(() => getArenaMeta(props.game, props.arenaTag, props.gameplay))
+const meta = computed(() => getArenaMeta(props.game, props.tag, props.gameplay))
 
 const images = Object.fromEntries(
   Object.entries(import.meta.glob<{ default: string }>('./assets/*', { eager: true }))
