@@ -52,5 +52,10 @@ export const modeCount = {
   'comp7': 7,
 } as const
 
+export type GameVendor = 'wot' | 'mt'
+export function gameToRegion(game: GameVendor): 'RU' | 'EU' { return game === 'mt' ? 'RU' : 'EU' }
+export function regionToGame(region: 'RU' | 'EU' | 'NA' | (string & {})): GameVendor {
+  return region === 'RU' || region === 'RPT' ? 'mt' : 'wot'
+}
 
 export const customBattleModesKeys = Object.keys(customBattleModes) as (keyof typeof customBattleModes)[]

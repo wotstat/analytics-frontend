@@ -36,12 +36,13 @@ import { ref, watch } from 'vue'
 import { exportArchive } from './exportArchive'
 
 import MedalSrc from '../../assets/medal.webp'
+import { GameVendor } from '@/shared/game/wot'
 
 const visible = ref(false)
 
 const props = defineProps<{
   mods: string[],
-  vendor: 'lesta' | 'wargaming'
+  vendor: GameVendor
 }>()
 
 const emit = defineEmits<{

@@ -7,11 +7,12 @@
 import { computed } from 'vue'
 import { minimapUrl } from '../arenas'
 import FallbackImg from '@/shared/uiKit/fallbackImg/FallbackImg.vue'
+import { GameVendor } from '../../wot'
 
 
 const props = defineProps<{
   tag: string
-  game?: 'mt' | 'wot'
+  game?: GameVendor
   gameplay?: null | 'comp7' | (string & {})
   format?: 'webp' | 'png'
 }>()

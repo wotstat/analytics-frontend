@@ -1,6 +1,7 @@
 import { INSTALL_URL } from '@/shared/external/externalUrl'
 import { latestModsMap } from '../mods/mods'
 import { ref } from 'vue'
+import { GameVendor } from '@/shared/game/wot'
 
 type State = { type: 'begin' } |
 { type: 'downloading', mod: string, index: number, total: number } |
@@ -9,14 +10,14 @@ type State = { type: 'begin' } |
 { type: 'done', mods: { filename: string, blob: Blob }[] };
 
 
-function getModsUrls(tags: string[], vendor: 'lesta' | 'wargaming') {
+function getModsUrls(tags: string[], vendor: GameVendor) {
   return tags
-    .map(tag => latestModsMap.value.get(tag)?.[vendor === 'lesta' ? 'mtmod' : 'wotmod']?.url)
+    .map(tag => latestModsMap.value.get(tag)?.[vendor === 'mt' ? 'mtmod' : 'wotmod']?.url)
     .filter(t => t !== undefined)
     .map(t => `${INSTALL_URL}/${t}`)
 }
 
-export function download(tags: string[], vendor: 'lesta' | 'wargaming') {
+export function download(tags: string[], vendor: GameVendor) {
 
   const currentState = ref<State>({ type: 'begin' })
 

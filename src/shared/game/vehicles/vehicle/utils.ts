@@ -1,5 +1,6 @@
 import { SpriteAtlas } from '@/shared/uiKit/spriteAtlas/SpriteAtlas'
 import { STATIC_URL } from '@/shared/external/externalUrl'
+import { GameVendor } from '../../wot'
 
 export const vehicleTypes = ['HT', 'MT', 'LT', 'AT', 'SPG'] as const
 export type VehicleType = typeof vehicleTypes[number]
@@ -8,7 +9,7 @@ export function tagToImageName(tag: string): string {
   return tag.split(':').at(-1)?.toLowerCase() || tag.toLowerCase()
 }
 
-export function vehicleUrl(tag: string, size: 'small' | 'preview' | 'shop' = 'preview', game: 'mt' | 'wot' = 'mt', format: 'webp' | 'png' = 'webp'): string {
+export function vehicleUrl(tag: string, size: 'small' | 'preview' | 'shop' = 'preview', game: GameVendor = 'mt', format: 'webp' | 'png' = 'webp'): string {
   const name = tagToImageName(tag)
   switch (size) {
     case 'small': return `${STATIC_URL}/${game}/latest/vehicles/small/${name}.${format}`

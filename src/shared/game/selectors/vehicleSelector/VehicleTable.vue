@@ -32,6 +32,7 @@ import { type ComponentInstance } from '@/shared/utils/types/ComponentInstance.t
 import { type VehicleLineData, VehicleLine as VehicleLineCell } from './VehicleLine.ts'
 import { TableViewDelegate } from '@/shared/uiKit/tableView/tableView/TableView.ts'
 import { HeaderLine } from '@/shared/uiKit/tableView/tableView/default/HeaderLine.ts'
+import { GameVendor } from '../../wot.ts'
 
 
 const table = ref<ComponentInstance<typeof TableView> | null>(null)
@@ -41,7 +42,7 @@ const props = defineProps<{
     header: string,
     lines: VehicleLineData[]
   }[]
-  game: 'mt' | 'wot'
+  game: GameVendor
 }>()
 
 const nameVariant = defineModel<'full' | 'short'>('nameVariant')

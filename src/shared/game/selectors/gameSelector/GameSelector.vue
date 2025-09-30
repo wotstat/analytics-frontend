@@ -19,8 +19,9 @@ import MTName from './assets/mt-name.svg'
 import MTLogo from './assets/mt-logo.svg'
 import WOTName from './assets/wot-name.svg'
 import WOTLogo from './assets/wot-logo.svg'
+import { GameVendor } from '../../wot'
 
-const game = defineModel<'mt' | 'wot' | 'any'>({ default: 'wot' })
+const game = defineModel<GameVendor | 'any'>({ default: 'wot' })
 
 </script>
 

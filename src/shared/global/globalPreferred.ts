@@ -1,3 +1,4 @@
 import { useLocalStorage } from '@vueuse/core'
+import { GameVendor } from '../game/wot'
 
-export const preferredGame = useLocalStorage<'mt' | 'wot' | 'any' | 'unknown'>('preferred-game-variant', 'unknown')
+export const preferredGame = useLocalStorage<GameVendor | 'any' | 'unknown'>('preferred-game-variant', 'unknown')

@@ -1,3 +1,4 @@
+import { GameVendor } from '@/shared/game/wot'
 import { useEventListener } from '@vueuse/core'
 import { get, set, del } from 'idb-keyval'
 import { ref, shallowRef, watch } from 'vue'
@@ -19,9 +20,9 @@ export function dotSeparatedCompare(lhs: string, rhs: string) {
 
 }
 
-export function gameVendor(realm: string): 'lesta' | 'wargaming' {
-  if (realm === 'RU' || realm === 'RPT') return 'lesta'
-  return 'wargaming'
+export function gameVendor(realm: string): GameVendor {
+  if (realm === 'RU' || realm === 'RPT') return 'mt'
+  return 'wot'
 }
 
 function browserSupport() {

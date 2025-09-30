@@ -1,20 +1,21 @@
 import { LONG_CACHE_SETTINGS, query } from '@/db'
 import { STATIC_URL } from '@/shared/external/externalUrl'
 import { computed, ref } from 'vue'
+import { GameVendor } from '../wot'
 
 export function tagToImageName(tag: string): string {
   return tag.split('/').at(-1)?.toLowerCase() || tag.toLowerCase()
 }
 
 export function minimapUrl(tag: string,
-  game: 'mt' | 'wot' = 'mt',
+  game: GameVendor = 'mt',
   gameplay: null | 'comp7' | (string & {}) = null,
   format: 'webp' | 'png' = 'webp'): string {
 
   const defaultUrl = `${STATIC_URL}/${game}/latest/arenas/minimap/${tag}.${format}`
   if (!gameplay) return defaultUrl
 
-  const meta = getArenaMeta(game == 'mt' ? 'RU' : 'EU', tag, gameplay || 'ctf')
+  const meta = getArenaMeta(game, tag, gameplay || 'ctf')
   if (!meta) return defaultUrl
 
   if (meta.minimap.includes('_comp7')) return `${STATIC_URL}/${game}/latest/arenas/minimap/comp7/${tag}.${format}`
@@ -81,15 +82,15 @@ type ArenasLatest = {
 
 export const arenas = ref(<Arena[]>([]))
 const arenasMap = computed(() => new Map<string, Arena>(
-  arenas.value.map((arena) => [arenaKey(arena.region, arena.tag, arena.gameplay), arena])
+  arenas.value.map((arena) => [arenaKey(arena.region == 'RU' ? 'mt' : 'wot', arena.tag, arena.gameplay), arena])
 ))
 
-function arenaKey(region: string, tag: string, gameplay: string): string {
-  return `${region}:${tag}:${gameplay}`
+function arenaKey(game: GameVendor, tag: string, gameplay: string): string {
+  return `${game}:${tag}:${gameplay}`
 }
 
-export function getArenaMeta(region: string, tag: string, gameplay: string) {
-  return arenasMap.value.get(arenaKey(region, tag, gameplay))
+export function getArenaMeta(game: GameVendor, tag: string, gameplay: string) {
+  return arenasMap.value.get(arenaKey(game, tag, gameplay))
 }
 
 async function loadArenas() {
