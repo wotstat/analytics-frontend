@@ -21,13 +21,14 @@
 import { tagToImageName } from '@/shared/game/arenas2/arenas'
 import MinimapBackground from '@/shared/game/arenas2/minimap/MinimapBackground.vue'
 import MinimapBases from '@/shared/game/arenas2/minimap/minimapBases/MinimapBases.vue'
+import { GameVendor } from '@/shared/game/wot'
 import HighlightString from '@/shared/uiKit/highlightString/HighlightString.vue'
 import { compareIntervals, Highlighted } from '@/shared/uiKit/highlightString/highlightUtils'
 import { computed } from 'vue'
 
 
 const props = defineProps<{
-  game: 'mt' | 'wot'
+  game: GameVendor
   arenas: { region: string, battleMode: string, battleGameplay: string, tag: string, name: string }[]
   search: string
 }>()

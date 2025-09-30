@@ -35,9 +35,9 @@
           <WOTName class="logo-name wot" v-else />
           <div class="version">
             <span>{{ gameInfo.version }}</span>
-            <div class="badge" v-if="latestGameVersion && gameInfo.version !== (gameVendor(gameInfo.realm) == 'lesta' ? latestGameVersion.lesta.version :
+            <div class="badge" v-if="latestGameVersion && gameInfo.version !== (gameVendor(gameInfo.realm) == 'mt' ? latestGameVersion.lesta.version :
               latestGameVersion.wargaming.version)">
-              <ArrowRight /> {{ gameVendor(gameInfo.realm) == 'lesta' ? latestGameVersion.lesta.version :
+              <ArrowRight /> {{ gameVendor(gameInfo.realm) == 'mt' ? latestGameVersion.lesta.version :
                 latestGameVersion.wargaming.version }}
             </div>
             <template v-if="gameInfo.modsSet.size">
@@ -58,22 +58,20 @@
       <h4 class="flex-1">Предпочитаемая игра</h4>
       <div class="preferred-game">
         <div class="switcher">
-          <button class="mt" :class="{ active: preferredGameVendor === 'lesta' }"
-            @click="preferredGameVendor = 'lesta'">
+          <button class="mt" :class="{ active: preferredGameVendor === 'mt' }" @click="preferredGameVendor = 'mt'">
             <MTName class="logo-name" />
             <MTLogo class="logo" />
           </button>
           <button class="divider" :class="{ active: preferredGameVendor === 'unknown' }"
             @click="preferredGameVendor = 'unknown'">/</button>
-          <button class="wot" :class="{ active: preferredGameVendor === 'wargaming' }"
-            @click="preferredGameVendor = 'wargaming'">
+          <button class="wot" :class="{ active: preferredGameVendor === 'wot' }" @click="preferredGameVendor = 'wot'">
             <WOTLogo class="logo" />
             <WOTName class="logo-name" />
           </button>
         </div>
 
         <div class="version-info" v-if="latestGameVersion && preferredGameVendor !== 'unknown'">
-          {{ preferredGameVendor == 'lesta' ? latestGameVersion.lesta.version : latestGameVersion.wargaming.version }}
+          {{ preferredGameVendor == 'mt' ? latestGameVersion.lesta.version : latestGameVersion.wargaming.version }}
         </div>
       </div>
     </template>
@@ -214,8 +212,8 @@
             <td>
               {{ t(`description:${mod.tag}`) }}
               <div class="badge" v-if="mod.support && (preferredGameVendor == 'unknown' ||
-                preferredGameVendor == 'wargaming' && mod.support == 'mt-only' ||
-                preferredGameVendor == 'lesta' && mod.support == 'wot-only')">
+                preferredGameVendor == 'wot' && mod.support == 'mt-only' ||
+                preferredGameVendor == 'mt' && mod.support == 'wot-only')">
                 {{ mod.support == 'mt-only' ? 'Только Lesta' : 'Только WG' }}
               </div>
 
@@ -334,10 +332,10 @@
     </div>
 
     <ExportArchive v-if="downloadPopupShown" @close="downloadPopupShown = false" :mods="targetInstallMods"
-      :vendor="preferredGameVendor == 'unknown' ? 'lesta' : preferredGameVendor" />
+      :vendor="preferredGameVendor == 'unknown' ? 'mt' : preferredGameVendor" />
 
     <InstallMods v-if="installPopupShown" @close="installPopupShown = false" :mods="targetInstallMods"
-      :install-mod="installMod" :vendor="preferredGameVendor == 'unknown' ? 'lesta' : preferredGameVendor" />
+      :install-mod="installMod" :vendor="preferredGameVendor == 'unknown' ? 'mt' : preferredGameVendor" />
 
     <SelectFolderError v-if="selectFolderErrorRootHandle" :handle="selectFolderErrorRootHandle"
       @close="selectFolderErrorRootHandle = null" />
@@ -392,13 +390,14 @@ import SelectFolderError from './components/SelectFolderError.vue'
 import { showFocusEffect } from '@/shared/uiKit/focusEffect/focusEffect'
 import { useRoute } from 'vue-router'
 import { setFeatureVisit } from '@/shared/uiKit/newFeatureBadge/newFeatureBadge'
+import { GameVendor } from '@/shared/game/wot'
 
 setFeatureVisit('mod-installer')
 
 
 const detailContentContainer = ref<HTMLElement | null>(null)
 const displayType = useLocalStorage<'detail' | 'table'>('install:otherModsDisplayType', 'table')
-const preferredGameVendor = ref<'lesta' | 'wargaming' | 'unknown'>('unknown')
+const preferredGameVendor = ref<GameVendor | 'unknown'>('unknown')
 const enabledMods = useLocalStorage('install:enabledMods', new Map<string, boolean>())
 const selectedModInDetail = ref<(ModInfo & { version: string, date: string, support: 'mt-only' | 'wot-only' | undefined } & {}) | null>(null)
 const selectFolderErrorRootHandle = ref<null | FileSystemDirectoryHandle>(null)
@@ -455,8 +454,8 @@ const displayedModsList = computed<{
     }).filter(m => m !== null)
 
 
-  const targetModsCollection = preferredGameVendor.value === 'lesta' ? lestaMods : wgMods
-  const targetModExtension = preferredGameVendor.value === 'lesta' ? 'mtmod' : 'wotmod'
+  const targetModsCollection = preferredGameVendor.value === 'mt' ? lestaMods : wgMods
+  const targetModExtension = preferredGameVendor.value === 'mt' ? 'mtmod' : 'wotmod'
 
   return targetModsCollection.map(m => {
     const latestMod = latestModsMap.value.get(m.tag)
@@ -514,8 +513,8 @@ const targetInstallMods = computed(() => {
 
       if (preferredGameVendor.value === 'unknown') return true
 
-      if (support === 'mt-only' && preferredGameVendor.value === 'lesta') return true
-      if (support === 'wot-only' && preferredGameVendor.value === 'wargaming') return true
+      if (support === 'mt-only' && preferredGameVendor.value === 'mt') return true
+      if (support === 'wot-only' && preferredGameVendor.value === 'wot') return true
 
       return false
     })
@@ -551,7 +550,7 @@ function version(tag: string) {
   const mod = latestModsMap.value.get(tag)
   if (!mod) return null
 
-  return preferredGameVendor.value === 'wargaming' ? mod.wotmod?.version : mod.mtmod?.version
+  return preferredGameVendor.value === 'wot' ? mod.wotmod?.version : mod.mtmod?.version
 }
 
 function canUpdate(tag: string) {
@@ -581,7 +580,7 @@ function onClickDownload(event: MouseEvent, tag: string) {
     if (preferredGameVendor.value === 'unknown') return console.warn('Game vendor is unknown, cannot download mod')
     if (!mod) return console.warn(`Mod ${tag} not found in latest mods`)
 
-    const target = mod[preferredGameVendor.value == 'wargaming' ? 'wotmod' : 'mtmod']
+    const target = mod[preferredGameVendor.value == 'wot' ? 'wotmod' : 'mtmod']
 
     if (!target) return console.warn(`Mod ${tag} does not have a target for ${preferredGameVendor.value}`)
 
@@ -599,11 +598,11 @@ function onClickDownload(event: MouseEvent, tag: string) {
       alignY: 'bottom'
     }, [
       button('Lesta', () => {
-        preferredGameVendor.value = 'lesta'
+        preferredGameVendor.value = 'mt'
         beginDownload()
       }),
       button('Wargaming', () => {
-        preferredGameVendor.value = 'wargaming'
+        preferredGameVendor.value = 'wot'
         beginDownload()
       }),
     ])
@@ -628,11 +627,11 @@ function downloadArchive(event: MouseEvent) {
       position: { x: event.clientX, y: event.clientY }
     }, [
       button('Lesta', () => {
-        preferredGameVendor.value = 'lesta'
+        preferredGameVendor.value = 'mt'
         beginDownload()
       }),
       button('Wargaming', () => {
-        preferredGameVendor.value = 'wargaming'
+        preferredGameVendor.value = 'wot'
         beginDownload()
       }),
     ])

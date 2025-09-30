@@ -6,6 +6,7 @@ import { Ref, watch } from 'vue'
 import { nationFlagAtlas } from '@/shared/game/vehicles/nations/utils'
 import { TableCell } from '@/shared/uiKit/tableView/tableView/TableView'
 import { romanNumberProcessor } from '@/shared/utils/processors/processors'
+import { GameVendor } from '../../wot'
 
 const vehicleTypes = ['MT', 'LT', 'HT', 'AT', 'SPG'] as const
 export type VehicleLineData = {
@@ -114,7 +115,7 @@ export class VehicleLine implements TableCell {
     return className
   }
 
-  private setVehicleImage(tag: string, game: 'mt' | 'wot'): void {
+  private setVehicleImage(tag: string, game: GameVendor): void {
     const smallVehicle = vehicleAtlas[game].getSprite(tagToImageName(tag)) ?? vehicleAtlas[game].getSprite('no-image')
     if (!smallVehicle) return
 
@@ -130,7 +131,7 @@ export class VehicleLine implements TableCell {
     this.currentFlagClass = this.setClass(this.flag, this.currentFlagClass, nationFlag.atlasClass)
   }
 
-  configure(data: VehicleLineData, game: 'mt' | 'wot'): void {
+  configure(data: VehicleLineData, game: GameVendor): void {
     this.currentTag = data.tag
     this.name.textContent = data.highlighted.text
 

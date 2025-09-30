@@ -6,11 +6,12 @@
 import { computed, ref, watch } from 'vue'
 import FallbackImg from '@/shared/uiKit/fallbackImg/FallbackImg.vue'
 import { vehicleFallbackUrl, vehicleUrl } from './utils'
+import { GameVendor } from '../../wot'
 
 const props = defineProps<{
   tag: string,
   size?: 'small' | 'preview' | 'shop'
-  game?: 'mt' | 'wot'
+  game?: GameVendor
   loading?: 'lazy' | 'eager'
 }>()
 

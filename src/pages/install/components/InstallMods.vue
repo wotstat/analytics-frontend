@@ -58,7 +58,7 @@ import { defineAsyncComponent, ref, watch } from 'vue'
 
 import Tada1Src from '../assets/tada-1.webp'
 import Tada2Src from '../assets/tada-2.webp'
-import { error } from '@/db'
+import { GameVendor } from '@/shared/game/wot'
 
 const Confetti = defineAsyncComponent(() => import('@/pages/install/components/Confetti.vue'))
 
@@ -75,7 +75,7 @@ const unpackState = ref<UnpackState>({ type: 'not-started' })
 
 const props = defineProps<{
   mods: string[],
-  vendor: 'lesta' | 'wargaming',
+  vendor: GameVendor,
   installMod: (filename: string, mod: Blob) => Promise<void>
 }>()
 
