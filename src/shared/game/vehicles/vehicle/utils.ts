@@ -11,10 +11,11 @@ export function tagToImageName(tag: string): string {
 
 export function vehicleUrl(tag: string, size: 'small' | 'preview' | 'shop' = 'preview', game: GameVendor = 'mt', format: 'webp' | 'png' = 'webp'): string {
   const name = tagToImageName(tag)
+  const gamePrefix = game === 'mt' ? 'mt' : 'wot'
   switch (size) {
-    case 'small': return `${STATIC_URL}/${game}/latest/vehicles/small/${name}.${format}`
-    case 'preview': return `${STATIC_URL}/${game}/latest/vehicles/preview/${name}.${format}`
-    case 'shop': return `${STATIC_URL}/${game}/latest/vehicles/shop/${name}.${format}`
+    case 'small': return `${STATIC_URL}/${gamePrefix}/latest/vehicles/small/${name}.${format}`
+    case 'preview': return `${STATIC_URL}/${gamePrefix}/latest/vehicles/preview/${name}.${format}`
+    case 'shop': return `${STATIC_URL}/${gamePrefix}/latest/vehicles/shop/${name}.${format}`
   }
 }
 

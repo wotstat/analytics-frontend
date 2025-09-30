@@ -1,7 +1,7 @@
 import { LONG_CACHE_SETTINGS, query } from '@/db'
 import { STATIC_URL } from '@/shared/external/externalUrl'
 import { computed, ref } from 'vue'
-import { GameVendor } from '../wot'
+import { GameVendor, regionToGame } from '../wot'
 
 export function tagToImageName(tag: string): string {
   return tag.split('/').at(-1)?.toLowerCase() || tag.toLowerCase()
@@ -12,19 +12,21 @@ export function minimapUrl(tag: string,
   gameplay: null | 'comp7' | (string & {}) = null,
   format: 'webp' | 'png' = 'webp'): string {
 
-  const defaultUrl = `${STATIC_URL}/${game}/latest/arenas/minimap/${tag}.${format}`
+  const gamePrefix = game === 'mt' ? 'mt' : 'wot'
+  const defaultUrl = `${STATIC_URL}/${gamePrefix}/latest/arenas/minimap/${tag}.${format}`
   if (!gameplay) return defaultUrl
 
   const meta = getArenaMeta(game, tag, gameplay || 'ctf')
   if (!meta) return defaultUrl
 
-  if (meta.minimap.includes('_comp7')) return `${STATIC_URL}/${game}/latest/arenas/minimap/comp7/${tag}.${format}`
+  if (meta.minimap.includes('_comp7')) return `${STATIC_URL}/${gamePrefix}/latest/arenas/minimap/comp7/${tag}.${format}`
 
   return defaultUrl
 }
 
 type Arena = {
   region: string;
+  game: GameVendor;
   tag: string;
   gameplay: string;
   season: string;
@@ -82,7 +84,7 @@ type ArenasLatest = {
 
 export const arenas = ref(<Arena[]>([]))
 const arenasMap = computed(() => new Map<string, Arena>(
-  arenas.value.map((arena) => [arenaKey(arena.region == 'RU' ? 'mt' : 'wot', arena.tag, arena.gameplay), arena])
+  arenas.value.map((arena) => [arenaKey(arena.game, arena.tag, arena.gameplay), arena])
 ))
 
 function arenaKey(game: GameVendor, tag: string, gameplay: string): string {
@@ -104,6 +106,7 @@ async function loadArenas() {
 
   arenas.value = response.data.map((arena) => ({
     region: arena.region,
+    game: regionToGame(arena.region),
     tag: arena.tag,
     gameplay: arena.gameplay,
     season: arena.season,
