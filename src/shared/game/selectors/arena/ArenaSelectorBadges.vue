@@ -28,7 +28,7 @@
 
 
 <script setup lang="ts">
-import { CACHE_SETTINGS, queryAsync } from '@/db'
+import { LONG_CACHE_SETTINGS, queryAsync } from '@/db'
 import BadgesLine from '../components/badges/BadgesLine.vue'
 import ModalWindow from '@/shared/ui/modalWindow/ModalWindow.vue'
 import { ref } from 'vue'
@@ -41,18 +41,19 @@ import { preferredGame } from '@/shared/global/globalPreferred'
 const visibleModal = ref(false)
 const searchText = ref('')
 
-const arenas = queryAsync<{ region: string, battleMode: string, battleGameplay: string, tag: string, name: string }>(`
+const arenas = queryAsync<{ region: string, battleMode: string, battleGameplay: string, tag: string, name: string, gameVersion: string }>(`
 with
     arenas as (
-      select region, battleMode, battleGameplay, splitByChar('/', arenaTag)[2] as tag
+      select region, battleMode, battleGameplay, splitByChar('/', arenaTag)[2] as tag, argMax(gameVersion, dateTime) as gameVersion
       from Event_OnBattleStart
+      where region in ('RU', 'EU')
       group by arenaTag, region, battleGameplay, battleMode
     ),
     locals as (${selectTagArenasLocalization})
-select region, battleMode, battleGameplay, tag, name
+select region, battleMode, battleGameplay, tag, gameVersion, name
 from arenas
 left any join locals using tag;
-`, { settings: CACHE_SETTINGS })
+`, { settings: LONG_CACHE_SETTINGS })
 
 const selected = defineModel<Set<string>>({ default: new Set() })
 

@@ -3,12 +3,15 @@
     <div class="section" v-for="group in filtered">
       <h2 class="header">{{ group.header }}</h2>
       <div class="arenas">
-        <div class="arena" v-for="arena in group.data" :key="arena.tag" :tag="arena.tag">
-          <MinimapBackground :tag="arena.imageName" :game="game" :gameplay="group.gameplay"
-            class="minimap-background" />
-          <MinimapBases class="minimap-bases" :tag="arena.tag" :game="game" :gameplay="group.gameplay" />
+        <div class="arena" v-for="arena in group.data" :key="arena.tag" :tag="arena.tag" :mode="arena.battleMode">
+          <MinimapBackground :tag="arena.imageName" :game="game" :gameplay="arena.battleGameplay"
+            :fallback="FallbackMinimap" class="minimap-background" />
+          <MinimapBases class="minimap-bases" :tag="arena.tag" :game="game" :gameplay="arena.gameplay" />
           <div class="name mt-font">
             <HighlightString :text="arena.highlighted.highlightedString" />
+          </div>
+          <div class="version mt-font" v-if="compareVersion(arena.version, latestGameVersion) != 0">
+            До {{ arena.version.join('.') }}
           </div>
         </div>
       </div>
@@ -19,57 +22,114 @@
 
 <script setup lang="ts">
 import { tagToImageName } from '@/shared/game/arenas2/arenas'
-import MinimapBackground from '@/shared/game/arenas2/minimap/MinimapBackground.vue'
+import MinimapBackground from '@/shared/game/arenas2/minimap/minimapBackground/MinimapBackground.vue'
 import MinimapBases from '@/shared/game/arenas2/minimap/minimapBases/MinimapBases.vue'
 import { GameVendor } from '@/shared/game/wot'
 import HighlightString from '@/shared/uiKit/highlightString/HighlightString.vue'
 import { compareIntervals, Highlighted } from '@/shared/uiKit/highlightString/highlightUtils'
 import { computed } from 'vue'
 
+import FallbackMinimap from './fallback-minimap.webp'
 
 const props = defineProps<{
   game: GameVendor
-  arenas: { region: string, battleMode: string, battleGameplay: string, tag: string, name: string }[]
+  arenas: { region: string, battleMode: string, battleGameplay: string, tag: string, name: string, gameVersion: string }[]
   search: string
 }>()
 
+type VersionParts = [number, number, number]
+function compareVersion(a: VersionParts, b: VersionParts): number {
+  for (let i = 0; i < 3; i++) {
+    if (a[i] < b[i]) return -1
+    if (a[i] > b[i]) return 1
+  }
+  return 0
+}
+
+function parseVersion(string: string): VersionParts {
+  const parts = string.split('_')[1].split('.').map(p => parseInt(p))
+  while (parts.length < 3) parts.push(0)
+  return parts as VersionParts
+}
+
 const prepared = computed(() => props.arenas.map(arena => ({
   ...arena,
+  version: parseVersion(arena.gameVersion),
+  gameplay: arena.battleGameplay,
   imageName: tagToImageName(arena.tag),
-  highlighted: new Highlighted(arena.name)
+  highlighted: new Highlighted((!arena.name || arena.name.endsWith('/name')) ? arena.tag : arena.name)
 })))
 
 const groups = computed(() => {
 
   type Arena = typeof prepared.value[number]
 
-  const cft: Arena[] = []
-  const ctf30x30: Arena[] = []
-  const domination: Arena[] = []
-  const assault: Arena[] = []
-  const battleRoyale: Arena[] = []
-  const comp7: Arena[] = []
-  const epic: Arena[] = []
-
-  for (const arena of prepared.value) {
-    if (arena.battleMode === 'REGULAR' && arena.battleGameplay === 'ctf') cft.push(arena)
-    else if (arena.battleMode === 'REGULAR' && arena.battleGameplay === 'domination') domination.push(arena)
-    else if (arena.battleMode === 'REGULAR' && arena.battleGameplay === 'assault') assault.push(arena)
-    else if (arena.battleMode === 'EPIC_RANDOM' && arena.battleGameplay === 'ctf30x30') ctf30x30.push(arena)
-    else if (arena.battleMode === 'BATTLE_ROYALE_SOLO') battleRoyale.push(arena)
-    else if (arena.battleMode === 'COMP7') comp7.push(arena)
-    else if (arena.battleGameplay === 'epic') epic.push(arena)
+  const groups = {
+    ctf: [] as Arena[],
+    ctf30x30: [] as Arena[],
+    domination: [] as Arena[],
+    assault: [] as Arena[],
+    battleRoyale: [] as Arena[],
+    comp7: [] as Arena[],
+    epic: [] as Arena[],
+    mapbox: [] as Arena[],
+    historicalBattles: [] as Arena[],
+    storyMode: [] as Arena[],
+    whiteTiger: [] as Arena[],
+    other: [] as Arena[]
   }
 
+  const usedTags = new Set<string>()
+  const usedCategoriesTags = new Set<string>()
+  const add = (arena: Arena, category: keyof typeof groups) => {
+    const key = `${category}:${arena.region}:${arena.tag}`
+    if (!usedCategoriesTags.has(key)) groups[category].push(arena)
+    usedCategoriesTags.add(key)
+    usedTags.add(`${arena.region}:${arena.tag}`)
+  }
+
+
+  for (const arena of prepared.value) {
+    if (arena.battleMode === 'REGULAR' && arena.battleGameplay === 'ctf') add(arena, 'ctf')
+    else if (arena.battleMode === 'REGULAR' && arena.battleGameplay === 'domination') add(arena, 'domination')
+    else if (arena.battleMode === 'REGULAR' && arena.battleGameplay === 'assault') add(arena, 'assault')
+    else if (arena.battleMode === 'EPIC_RANDOM' && arena.battleGameplay === 'ctf30x30') add(arena, 'ctf30x30')
+    else if (arena.battleMode === 'BATTLE_ROYALE_SOLO') add(arena, 'battleRoyale')
+    else if (arena.battleMode === 'COMP7') add(arena, 'comp7')
+    else if (arena.battleGameplay === 'epic') add(arena, 'epic')
+    else if (arena.battleMode === 'MAPBOX') add(arena, 'mapbox')
+    else if (arena.battleMode === 'HISTORICAL_BATTLES') add(arena, 'historicalBattles')
+    else if (arena.battleMode === 'WHITE_TIGER_2' || arena.battleMode === 'WHITE_TIGER') add(arena, 'whiteTiger')
+    else if (arena.battleMode === 'STORY_MODE_REGULAR' ||
+      arena.battleMode === 'STORY_MODE_ONBOARDING' ||
+      arena.battleMode === 'STORY_MODE') add(arena, 'storyMode')
+  }
+
+  for (const arena of prepared.value) if (!usedTags.has(`${arena.region}:${arena.tag}`)) add(arena, 'other')
+
   return [
-    { header: 'Стандартный бой', items: cft },
-    { header: 'Штурм', gameplay: 'assault', items: assault },
-    { header: 'Встречный бой', gameplay: 'domination', items: domination },
-    { header: 'Генеральное сражение', gameplay: 'ctf30x30', items: ctf30x30 },
-    { header: 'Линия Фронта', gameplay: 'epic', items: epic },
-    { header: 'Стальной Охотник', items: battleRoyale },
-    { header: 'Натиск', gameplay: 'comp7', items: comp7 }
+    { header: 'Стандартный бой', items: groups.ctf },
+    { header: 'Штурм', items: groups.assault },
+    { header: 'Встречный бой', items: groups.domination },
+    { header: 'Генеральное сражение', items: groups.ctf30x30 },
+    { header: 'Линия Фронта', items: groups.epic },
+    { header: 'Стальной Охотник', items: groups.battleRoyale },
+    { header: 'Натиск', items: groups.comp7 },
+    { header: 'Последний Waffenträger', items: groups.whiteTiger },
+    { header: 'Разведка боем', items: groups.mapbox },
+    { header: 'Исторические бои', items: groups.historicalBattles },
+    { header: 'Сюжетный режим', items: groups.storyMode },
+    { header: 'Другие режимы', items: groups.other }
   ]
+})
+
+const latestGameVersion = computed(() => {
+  const targetRegion = props.game == 'mt' ? 'RU' : 'EU'
+  let latest: VersionParts = [0, 0, 0]
+  for (const arena of prepared.value) {
+    if (arena.region == targetRegion && compareVersion(arena.version, latest) > 0) latest = arena.version
+  }
+  return latest
 })
 
 const filtered = computed(() => {
@@ -93,15 +153,20 @@ const filtered = computed(() => {
       if (search) return filtered.sort((a, b) => {
         const comp = compareIntervals(a.highlighted.intervals, b.highlighted.intervals)
         if (comp !== 0) return comp
+        const versionComp = compareVersion(b.version, a.version)
+        if (versionComp !== 0) return versionComp
         return a.highlighted.text.localeCompare(b.highlighted.text)
       })
 
-      return filtered.sort((a, b) => a.highlighted.text.localeCompare(b.highlighted.text))
+      return filtered.sort((a, b) => {
+        const versionComp = compareVersion(b.version, a.version)
+        if (versionComp !== 0) return versionComp
+        return a.highlighted.text.localeCompare(b.highlighted.text)
+      })
     }
 
     return {
       header: arenas.header,
-      gameplay: arenas.gameplay,
       data: sorted()
     }
   })
@@ -161,6 +226,30 @@ h2 {
       :deep(.highlight) {
         color: var(--blue-thin-color-hover);
       }
+
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .version {
+      user-select: none;
+      position: absolute;
+      top: 5px;
+      right: -1px;
+      font-size: 11px;
+
+      line-height: 1;
+      padding: 2px 6px;
+      padding-right: 2px;
+
+      color: rgb(255, 252, 241);
+      background: rgb(11, 99, 213);
+
+      border-radius: 10px;
+      border-bottom-right-radius: 0;
+      border-top-right-radius: 0;
     }
   }
 }
