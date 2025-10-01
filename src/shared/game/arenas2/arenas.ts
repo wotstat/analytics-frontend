@@ -1,6 +1,6 @@
 import { LONG_CACHE_SETTINGS, query } from '@/db'
 import { STATIC_URL } from '@/shared/external/externalUrl'
-import { computed, ref } from 'vue'
+import { computed, ref, shallowRef } from 'vue'
 import { GameVendor, regionToGame } from '../wot'
 
 export function tagToImageName(tag: string): string {
@@ -82,7 +82,7 @@ type ArenasLatest = {
   'poi.type': number[];                  // Array(UInt8)
 };
 
-export const arenas = ref(<Arena[]>([]))
+export const arenas = shallowRef(<Arena[]>([]))
 const arenasMap = computed(() => new Map<string, Arena>(
   arenas.value.map((arena) => [arenaKey(arena.game, arena.tag, arena.gameplay), arena])
 ))
