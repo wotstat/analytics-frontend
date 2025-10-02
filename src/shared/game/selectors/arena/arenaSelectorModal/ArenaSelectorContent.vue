@@ -17,7 +17,7 @@
       </div>
     </div>
 
-    <div class="empty-list" v-if="filtered.length === 0">
+    <div class="empty-list" v-if="filtered.length === 0 && arenas.length > 0">
       <h5>Карт не найдено</h5>
       <button @click="emit('reset')">Очистить фильтр</button>
     </div>
@@ -270,7 +270,7 @@ h2 {
 }
 
 .empty-list {
-  margin-top: 50px;
+  margin-top: 200px;
   display: flex;
   flex-direction: column;
   align-items: center;
