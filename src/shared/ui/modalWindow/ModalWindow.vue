@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <Transition>
+    <Transition @before-enter="emit('before-open')" @after-leave="emit('after-close')">
       <ModalWindowContent :title="title" v-if="display" @close="emit('close')"
         :style="{ '--margin-block-start': marginBlockStart }">
         <template #controls>
@@ -28,7 +28,9 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'close'): void
+  (e: 'close'): void,
+  (e: 'before-open'): void
+  (e: 'after-close'): void
 }>()
 
 </script>

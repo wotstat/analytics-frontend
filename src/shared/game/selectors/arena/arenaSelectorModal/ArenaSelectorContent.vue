@@ -3,7 +3,7 @@
     <div class="section" v-for="group in filtered">
       <h2 class="header">{{ group.header }}</h2>
       <div class="arenas">
-        <div class="arena" v-for="arena in group.data" :key="arena.tag" :tag="arena.tag" :mode="arena.battleMode">
+        <div class="arena" v-for="arena in group.data" :tag="arena.tag" :mode="arena.battleMode">
           <MinimapBackground :tag="arena.imageName" :game="game" :gameplay="arena.battleGameplay"
             :fallback="FallbackMinimap" class="minimap-background" />
           <MinimapBases class="minimap-bases" :tag="arena.tag" :game="game" :gameplay="arena.gameplay" />
@@ -33,8 +33,10 @@ import FallbackMinimap from './fallback-minimap.webp'
 
 const props = defineProps<{
   game: GameVendor
-  arenas: { region: string, battleMode: string, battleGameplay: string, tag: string, name: string, gameVersion: string }[]
+  arenas: { region: string, battleMode: string, battleGameplay: string, tag: string, name: string, gameVersion: string, season: string }[]
   search: string
+  season: 'winter' | 'summer' | 'desert' | null
+  onlyActual: boolean
 }>()
 
 type VersionParts = [number, number, number]
@@ -76,7 +78,8 @@ const groups = computed(() => {
     historicalBattles: [] as Arena[],
     storyMode: [] as Arena[],
     whiteTiger: [] as Arena[],
-    other: [] as Arena[]
+    globalMap: [] as Arena[],
+    other: [] as Arena[],
   }
 
   const usedTags = new Set<string>()
@@ -103,6 +106,7 @@ const groups = computed(() => {
     else if (arena.battleMode === 'STORY_MODE_REGULAR' ||
       arena.battleMode === 'STORY_MODE_ONBOARDING' ||
       arena.battleMode === 'STORY_MODE') add(arena, 'storyMode')
+    else if (arena.battleMode === 'GLOBAL_MAP' && arena.battleGameplay === 'assault2') add(arena, 'globalMap')
   }
 
   for (const arena of prepared.value) if (!usedTags.has(`${arena.region}:${arena.tag}`)) add(arena, 'other')
@@ -119,6 +123,7 @@ const groups = computed(() => {
     { header: 'Разведка боем', items: groups.mapbox },
     { header: 'Исторические бои', items: groups.historicalBattles },
     { header: 'Сюжетный режим', items: groups.storyMode },
+    { header: 'Глобальная карта', items: groups.globalMap },
     { header: 'Другие режимы', items: groups.other }
   ]
 })
@@ -141,7 +146,9 @@ const filtered = computed(() => {
 
     const data = arenas.items
 
-    const prefiltered = data.filter(t => t.region == targetRegion)
+    const prefiltered = data.filter(t => t.region == targetRegion &&
+      (props.season === null || t.season === props.season) &&
+      (!props.onlyActual || compareVersion(t.version, latestGameVersion.value) == 0))
 
     for (const arena of prefiltered) {
       arena.highlighted.setSubstring(search)
