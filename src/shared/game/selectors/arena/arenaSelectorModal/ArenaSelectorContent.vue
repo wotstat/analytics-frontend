@@ -16,6 +16,11 @@
         </div>
       </div>
     </div>
+
+    <div class="empty-list" v-if="filtered.length === 0">
+      <h5>Карт не найдено</h5>
+      <button @click="emit('reset')">Очистить фильтр</button>
+    </div>
   </div>
 </template>
 
@@ -37,6 +42,10 @@ const props = defineProps<{
   search: string
   season: 'winter' | 'summer' | 'desert' | null
   onlyActual: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'reset'): void
 }>()
 
 type VersionParts = [number, number, number]
@@ -201,7 +210,6 @@ h2 {
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 20px;
 
-
   .arena {
     border: 1px solid rgba(255, 255, 255, 0.2);
     position: relative;
@@ -259,5 +267,32 @@ h2 {
       border-top-right-radius: 0;
     }
   }
+}
+
+.empty-list {
+  margin-top: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  h5 {
+    margin: 0;
+    font-size: 1em;
+  }
+
+  button {
+    background-color: transparent;
+
+    color: var(--blue-thin-color);
+    font-size: 0.9em;
+    border: none;
+    transition: color 0.2s;
+
+    &:hover {
+      color: var(--blue-thin-color-hover);
+    }
+  }
+
 }
 </style>
