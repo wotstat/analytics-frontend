@@ -62,7 +62,6 @@ const enemyTeamSpawnPoints = computed(() => {
   return meta.value.spawn.filter(spawn => spawn.team != props.team).flatMap(spawn => spawn.positions)
 })
 
-
 function pos(position: { x: number, y: number }) {
   const bbox = meta.value?.bbox
   if (!bbox) return { left: '0px', top: '0px' }
