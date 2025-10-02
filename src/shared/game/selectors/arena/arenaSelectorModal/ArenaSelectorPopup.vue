@@ -1,53 +1,76 @@
 <template>
   <ModalWindow title="Выбор карты" :display="visibleModal" @close="emit('close')" :margin-block-start="'35px'"
-    @before-open="reset">
+    @after-close="reset">
     <template #controls>
       <CloseButton @click="emit('close')" />
     </template>
 
     <template #header-content>
       <div class="header-line">
-        <SearchLine v-model="searchText" autofocus class="search-line" />
-        <div class="vr"></div>
-        <button class="variant mt-font selectable" @click="selectSeason('winter')"
-          :class="{ 'active': season === 'winter' }">
-          Зима
-        </button>
-        <button class="variant mt-font selectable" @click="selectSeason('summer')"
-          :class="{ 'active': season === 'summer' }">
-          Лето
-        </button>
-        <button class="variant mt-font selectable" @click="selectSeason('desert')"
-          :class="{ 'active': season === 'desert' }">
-          Пустыня
-        </button>
-        <div class="vr"></div>
-        <label class="mt-font checkbox">
-          <input type="checkbox" v-model="onlyActual">
-          Только актуальные
-        </label>
-        <div class="space flex-1"></div>
-        <div class="reset-container" :class="{ 'disabled': !canReset }">
-          <button class="reset" @click="reset">
-            <Reload />
-          </button>
-          <div class="vr"></div>
+        <div class="search-container">
+          <SearchLine v-model="searchText" autofocus class="search-line" />
+          <div class="game-select">
+            <div class="vr"></div>
+            <button class="variant mt-font selectable" @click="preferredGame = 'mt'"
+              :class="{ 'active': preferredGame === 'mt' }">
+              Lesta
+            </button>
+            <button class="variant mt-font selectable" @click="preferredGame = 'wot'"
+              :class="{ 'active': preferredGame === 'wot' }">
+              WG
+            </button>
+          </div>
         </div>
 
-        <button class="variant mt-font selectable" @click="preferredGame = 'mt'"
-          :class="{ 'active': preferredGame === 'mt' }">
-          Lesta
-        </button>
-        <button class="variant mt-font selectable" @click="preferredGame = 'wot'"
-          :class="{ 'active': preferredGame === 'wot' }">
-          WG
-        </button>
+        <div class="filter">
+          <div class="vr"></div>
+          <div class="season-select">
+            <button class="variant mt-font selectable" @click="selectSeason('winter')"
+              :class="{ 'active': season === 'winter' }">
+              Зима
+            </button>
+            <button class="variant mt-font selectable" @click="selectSeason('summer')"
+              :class="{ 'active': season === 'summer' }">
+              Лето
+            </button>
+            <button class="variant mt-font selectable" @click="selectSeason('desert')"
+              :class="{ 'active': season === 'desert' }">
+              Пустыня
+            </button>
+          </div>
+          <div class="vr"></div>
+
+          <div class="checkbox-section">
+            <label class="mt-font checkbox">
+              <input type="checkbox" v-model="onlyActual">
+              Только актуальные
+            </label>
+            <div class="space flex-1"></div>
+            <div class="reset-container" :class="{ 'disabled': !canReset }">
+              <button class="reset" @click="reset">
+                <Reload />
+              </button>
+              <div class="vr"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="game-select">
+          <button class="variant mt-font selectable" @click="preferredGame = 'mt'"
+            :class="{ 'active': preferredGame === 'mt' }">
+            Lesta
+          </button>
+          <button class="variant mt-font selectable" @click="preferredGame = 'wot'"
+            :class="{ 'active': preferredGame === 'wot' }">
+            WG
+          </button>
+        </div>
       </div>
     </template>
 
     <template #default>
       <ArenaSelectorModal :arenas="arenas" :game="preferredGame == 'mt' ? 'mt' : 'wot'" :search="searchText" :season
-        :onlyActual />
+        :onlyActual @reset="reset" />
     </template>
   </ModalWindow>
 </template>
@@ -90,7 +113,6 @@ function selectSeason(target: 'winter' | 'summer' | 'desert' | null) {
 </script>
 
 
-
 <style lang="scss" scoped>
 .header-line {
   padding: 0 15px;
@@ -98,7 +120,6 @@ function selectSeason(target: 'winter' | 'summer' | 'desert' | null) {
   display: flex;
   gap: 5px;
   align-items: center;
-
 
   .search-line {
     width: 200px;
@@ -108,6 +129,13 @@ function selectSeason(target: 'winter' | 'summer' | 'desert' | null) {
     width: 1px;
     height: 30px;
     background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .season-select,
+  .checkbox-section,
+  .game-select,
+  .filter {
+    display: contents;
   }
 
   .variant {
@@ -147,6 +175,7 @@ function selectSeason(target: 'winter' | 'summer' | 'desert' | null) {
     display: flex;
     align-items: center;
     gap: 5px;
+    white-space: nowrap;
 
     input {
       margin: 0;
@@ -169,6 +198,7 @@ function selectSeason(target: 'winter' | 'summer' | 'desert' | null) {
       padding: 0;
       height: 23px;
       width: 23px;
+      min-width: 23px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -192,5 +222,76 @@ function selectSeason(target: 'winter' | 'summer' | 'desert' | null) {
     }
   }
 
+  .search-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+
+    .game-select {
+      display: none;
+    }
+  }
+
+  @media screen and (max-width: 720px) {
+    flex-direction: column;
+    align-items: normal;
+
+    .search-container {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+
+      .search-line {
+        width: 100%;
+      }
+
+      .game-select {
+        display: contents;
+      }
+    }
+
+    .filter {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 5px;
+
+      .vr:first-child,
+      .vr:last-child {
+        display: none;
+      }
+    }
+
+    &>.game-select {
+      display: none;
+    }
+  }
+
+  @media screen and (max-width: 500px) {
+    .filter {
+      flex-direction: column;
+
+      .vr {
+        display: none;
+      }
+
+      .season-select {
+        display: flex;
+        gap: 5px;
+        width: 100%;
+
+        * {
+          flex: 1;
+        }
+      }
+
+      .checkbox-section {
+        width: 100%;
+        display: flex;
+        align-items: center;
+      }
+    }
+
+  }
 }
 </style>
