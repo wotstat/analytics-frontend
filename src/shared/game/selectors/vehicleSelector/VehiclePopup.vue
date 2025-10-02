@@ -482,7 +482,7 @@ function reset() {
 
     .empty-list {
       position: absolute;
-      inset: 0;
+      inset: 30px 0;
       display: flex;
       flex-direction: column;
       align-items: center;
