@@ -155,8 +155,12 @@ $border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     &:has(footer) {
-      main::-webkit-scrollbar-track {
-        margin-block-end: 5px;
+      main {
+        padding-bottom: 5px;
+
+        &::-webkit-scrollbar-track {
+          margin-block-end: 5px;
+        }
       }
     }
   }

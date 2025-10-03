@@ -69,13 +69,14 @@
     </template>
 
     <template #default>
-      <ArenaSelectorModal :arenas="arenas" :game="preferredGame == 'mt' ? 'mt' : 'wot'" :search="searchText" :season
-        :onlyActual @reset="reset" />
+      <ArenaSelectorModal :arenas="arenas" v-model="selected" :game="preferredGame == 'mt' ? 'mt' : 'wot'"
+        :search="searchText" :season :onlyActual @reset="reset" />
     </template>
 
     <template #footer-content>
       <div class="footer-line">
-        <p class="empty-select">Ничего не выбрано</p>
+        <BadgesLine :tagToText="t => t" v-model="selected" v-if="selected.size > 0" />
+        <p class="empty-select" v-else>Ничего не выбрано</p>
       </div>
     </template>
   </ModalWindow>
@@ -90,11 +91,15 @@ import SearchLine from '../../components/searchLine/SearchLine.vue'
 import ArenaSelectorModal from './ArenaSelectorContent.vue'
 import { preferredGame } from '@/shared/global/globalPreferred'
 import { computed, ref } from 'vue'
+import { hashToArena } from '../utils'
+import BadgesLine from '../../components/badges/BadgesLine.vue'
 
 defineProps<{
   arenas: { region: string, battleMode: string, battleGameplay: string, tag: string, name: string, gameVersion: string, season: string }[],
   visibleModal: boolean
 }>()
+
+
 
 const searchText = ref('')
 const season = ref<'winter' | 'summer' | 'desert' | null>(null)
@@ -105,6 +110,8 @@ const canReset = computed(() => searchText.value.length > 0 || season.value !== 
 const emit = defineEmits<{
   (e: 'close'): void
 }>()
+
+const selected = defineModel<Set<string>>({ default: new Set() })
 
 function reset() {
   searchText.value = ''
@@ -302,8 +309,15 @@ function selectSeason(target: 'winter' | 'summer' | 'desert' | null) {
 }
 
 .footer-line {
+  box-sizing: border-box;
   padding: 10px 15px;
-  font-size: 0.9em;
-  color: rgba(255, 255, 255, 0.7);
+  min-height: 45px;
+  display: flex;
+  align-items: center;
+
+  .empty-select {
+    font-size: 0.9em;
+    color: rgba(255, 255, 255, 0.7);
+  }
 }
 </style>
