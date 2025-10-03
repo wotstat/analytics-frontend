@@ -1,5 +1,6 @@
 <template>
-  <div class="modal-content">
+  <div class="loading" v-if="arenas.length == 0"></div>
+  <div class="modal-content" v-else-if="filtered.length !== 0">
     <div class="section" v-for="group in filtered">
       <h2 class="header">{{ group.header }}</h2>
       <div class="arenas">
@@ -8,7 +9,8 @@
             :fallback="FallbackMinimap" class="minimap-background" />
           <MinimapBases class="minimap-bases" :tag="arena.tag" :game="game" :gameplay="arena.gameplay" />
           <div class="name mt-font">
-            <HighlightString :text="arena.highlighted.highlightedString" />
+            <span v-if="search == ''">{{ arena.name }}</span>
+            <HighlightString v-else :text="arena.highlighted.highlightedString" />
           </div>
           <div class="version mt-font" v-if="compareVersion(arena.version, latestGameVersion) != 0">
             До {{ arena.version.join('.') }}
@@ -16,11 +18,10 @@
         </div>
       </div>
     </div>
-
-    <div class="empty-list" v-if="filtered.length === 0 && arenas.length > 0">
-      <h5>Карт не найдено</h5>
-      <button @click="emit('reset')">Очистить фильтр</button>
-    </div>
+  </div>
+  <div class="empty-list" v-else>
+    <h5>Карт не найдено</h5>
+    <button @click="emit('reset')">Очистить фильтр</button>
   </div>
 </template>
 
@@ -270,11 +271,11 @@ h2 {
 }
 
 .empty-list {
-  margin-top: 200px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  height: 100%;
 
   h5 {
     margin: 0;

@@ -2,7 +2,7 @@
   <div class="modal-window">
     <div class="background" @click="emit('close')"></div>
     <div class="modal">
-      <header :class="{
+      <header v-if="slots['header-content']" :class="{
         'show-border': showHeaderBorder
       }">
         <div class="title-line">
@@ -19,18 +19,25 @@
       <main class="nice-scrollbar" ref="scroll" @scroll="handleScroll">
         <slot></slot>
       </main>
+
+      <footer v-if="slots['footer-content']" :class="{
+        'show-border': showFooterBorder
+      }">
+        <slot name="footer-content"></slot>
+      </footer>
     </div>
   </div>
 </template>
 
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref, useSlots } from 'vue'
 import { useNoScroll } from '../noScroll/noScroll'
 import { onKeyDown } from '@vueuse/core'
 
 const scroll = ref<HTMLElement | null>(null)
 const showHeaderBorder = ref(false)
+const showFooterBorder = ref(false)
 
 defineProps<{
   title: string
@@ -40,12 +47,21 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
+const slots = useSlots()
+
 useNoScroll()
 
 function handleScroll(event: Event) {
   const target = event.target as HTMLElement
   showHeaderBorder.value = target.scrollTop > 0
+  showFooterBorder.value = target.scrollHeight - target.scrollTop > target.clientHeight + 1
 }
+
+onMounted(() => {
+  if (scroll.value) {
+    handleScroll({ target: scroll.value } as unknown as Event)
+  }
+})
 
 onKeyDown('Escape', () => emit('close'))
 
@@ -53,6 +69,9 @@ onKeyDown('Escape', () => emit('close'))
 
 
 <style lang="scss" scoped>
+$border-transparent: 1px solid transparent;
+$border: 1px solid rgba(255, 255, 255, 0.05);
+
 .modal-window {
   position: fixed;
   inset: 0;
@@ -91,7 +110,6 @@ onKeyDown('Escape', () => emit('close'))
         min-height: 50px;
         max-height: 50px;
         padding: 0;
-        border-bottom: 1px solid transparent;
 
         h1 {
           font-size: 18px;
@@ -106,11 +124,19 @@ onKeyDown('Escape', () => emit('close'))
         }
       }
 
+      border-bottom: $border-transparent;
 
       &.show-border {
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        border-bottom: $border;
       }
+    }
 
+    footer {
+      border-top: $border-transparent;
+
+      &.show-border {
+        border-top: $border;
+      }
     }
 
     main {
@@ -120,10 +146,17 @@ onKeyDown('Escape', () => emit('close'))
       margin-right: 3px;
       padding-right: 3px;
       padding-bottom: 15px;
+      flex: 1;
 
       &::-webkit-scrollbar-track {
         margin-block-end: 15px;
         margin-block-start: var(--margin-block-start, 0);
+      }
+    }
+
+    &:has(footer) {
+      main::-webkit-scrollbar-track {
+        margin-block-end: 5px;
       }
     }
   }
