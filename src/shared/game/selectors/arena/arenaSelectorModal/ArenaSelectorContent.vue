@@ -4,7 +4,8 @@
     <div class="section" v-for="group in filtered">
       <h2 class="header">{{ group.header }}</h2>
       <div class="arenas">
-        <div class="arena" v-for="arena in group.data" :tag="arena.tag" :mode="arena.battleMode">
+        <div class="arena" v-for="arena in group.data" :tag="arena.tag" :mode="arena.battleMode"
+          @click="onArenaClick(arena.tag)" :class="{ 'selected': selectedTags.has(arena.tag) }">
           <MinimapBackground :tag="arena.imageName" :game="game" :gameplay="arena.battleGameplay"
             :fallback="FallbackMinimap" class="minimap-background" />
           <MinimapBases class="minimap-bases" :tag="arena.tag" :game="game" :gameplay="arena.gameplay" />
@@ -36,6 +37,7 @@ import { compareIntervals, Highlighted } from '@/shared/uiKit/highlightString/hi
 import { computed } from 'vue'
 
 import FallbackMinimap from './fallback-minimap.webp'
+import { arenaToHash, hashToArena } from '../utils'
 
 const props = defineProps<{
   game: GameVendor
@@ -48,6 +50,10 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'reset'): void
 }>()
+
+const selected = defineModel<Set<string>>({ default: new Set() })
+const parsedSelected = computed(() => new Set([...selected.value.values()].map(tag => hashToArena(tag))))
+const selectedTags = computed(() => new Set([...parsedSelected.value.values()].map(a => a.tag)))
 
 type VersionParts = [number, number, number]
 function compareVersion(a: VersionParts, b: VersionParts): number {
@@ -191,6 +197,14 @@ const filtered = computed(() => {
   return filteredGroups.filter(g => g.data.length > 0)
 })
 
+function onArenaClick(tag: string) {
+  if (selectedTags.value.has(tag)) {
+    selected.value.delete([...selected.value].find(t => hashToArena(t).tag === tag)!)
+  } else {
+    selected.value.add(arenaToHash({ tag, team: null }))
+  }
+}
+
 </script>
 
 
@@ -216,6 +230,10 @@ h2 {
     position: relative;
     aspect-ratio: 1 / 1;
     cursor: pointer;
+
+    &.selected {
+      border-color: var(--blue-thin-color);
+    }
 
     .minimap-background,
     .minimap-bases {

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <BadgesLine :tagToText="tagToText" v-model="selected" @openSelectModal="openSelect" ref="badges" />
+    <BadgesLine :tagToText="tagToText" v-model="selected" show-add-button @openSelectModal="openSelect" ref="badges" />
 
     <PopoverAutoClose :target="badges?.$el" v-model="displayPopup" :placement="['bottom-start', 'bottom-float']"
       :viewport-offset="{ top: headerHeight + additionalHeaderHeight, bottom: 10, left: 10, right: 10 }"
