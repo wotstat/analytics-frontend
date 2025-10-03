@@ -47,6 +47,7 @@ onMounted(() => {
     background-color: transparent;
     flex: 1;
     height: 100%;
+    min-width: 0;
     font-size: 14px;
     padding: 0;
   }

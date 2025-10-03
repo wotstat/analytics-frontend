@@ -72,6 +72,12 @@
       <ArenaSelectorModal :arenas="arenas" :game="preferredGame == 'mt' ? 'mt' : 'wot'" :search="searchText" :season
         :onlyActual @reset="reset" />
     </template>
+
+    <template #footer-content>
+      <div class="footer-line">
+        <p class="empty-select">Ничего не выбрано</p>
+      </div>
+    </template>
   </ModalWindow>
 </template>
 
@@ -293,5 +299,11 @@ function selectSeason(target: 'winter' | 'summer' | 'desert' | null) {
     }
 
   }
+}
+
+.footer-line {
+  padding: 10px 15px;
+  font-size: 0.9em;
+  color: rgba(255, 255, 255, 0.7);
 }
 </style>

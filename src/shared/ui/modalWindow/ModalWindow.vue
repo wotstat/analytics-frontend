@@ -3,15 +3,19 @@
     <Transition @before-enter="emit('before-open')" @after-leave="emit('after-close')">
       <ModalWindowContent :title="title" v-if="display" @close="emit('close')"
         :style="{ '--margin-block-start': marginBlockStart }">
-        <template #controls>
+        <template #controls v-if="slots['controls']">
           <slot name="controls"></slot>
         </template>
 
-        <template #header-content>
+        <template #header-content v-if="slots['header-content']">
           <slot name="header-content"></slot>
         </template>
 
         <slot></slot>
+
+        <template #footer-content v-if="slots['footer-content']">
+          <slot name="footer-content"></slot>
+        </template>
       </ModalWindowContent>
     </Transition>
   </Teleport>
@@ -19,6 +23,7 @@
 
 
 <script setup lang="ts">
+import { useSlots } from 'vue'
 import ModalWindowContent from './ModalWindowContent.vue'
 
 const props = defineProps<{
@@ -32,6 +37,8 @@ const emit = defineEmits<{
   (e: 'before-open'): void
   (e: 'after-close'): void
 }>()
+
+const slots = useSlots()
 
 </script>
 
