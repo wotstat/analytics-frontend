@@ -6,12 +6,13 @@
 
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 import { LONG_CACHE_SETTINGS, queryAsync } from '@/db'
 import BadgesLine from '../components/badges/BadgesLine.vue'
 import { selectTagArenasLocalization } from '@/shared/i18n/i18n'
 import ArenaSelectorPopup from './arenaSelectorModal/ArenaSelectorPopup.vue'
+import { hashToArena } from './utils'
 
 const visibleModal = ref(false)
 
@@ -35,10 +36,16 @@ left any join locals using tag
 left any join seasons using tag
 `, { settings: LONG_CACHE_SETTINGS })
 
+const arenaNames = computed(() => new Map(arenas.value.data.map(a => [a.tag, a.name])))
+
 const selected = defineModel<Set<string>>({ default: new Set() })
 
 function tagToText(tag: string) {
-  return tag
+  const info = hashToArena(tag)
+  if (!info) return tag
+  const name = arenaNames.value.get(info.tag) || info.tag
+  if (info.team == 'any') return name
+  return `${name}/${info.team}`
 }
 
 </script>

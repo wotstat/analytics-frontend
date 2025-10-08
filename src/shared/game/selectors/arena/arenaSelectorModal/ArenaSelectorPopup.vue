@@ -75,7 +75,7 @@
 
     <template #footer-content>
       <div class="footer-line">
-        <BadgesLine :tagToText="t => t" v-model="selected" v-if="selected.size > 0" />
+        <BadgesLine :tagToText="t => badgeLabel(t)" v-model="selected" v-if="selected.size > 0" />
         <p class="empty-select" v-else>Ничего не выбрано</p>
       </div>
     </template>
@@ -94,18 +94,17 @@ import { computed, ref } from 'vue'
 import { hashToArena } from '../utils'
 import BadgesLine from '../../components/badges/BadgesLine.vue'
 
-defineProps<{
+const props = defineProps<{
   arenas: { region: string, battleMode: string, battleGameplay: string, tag: string, name: string, gameVersion: string, season: string }[],
   visibleModal: boolean
 }>()
-
-
 
 const searchText = ref('')
 const season = ref<'winter' | 'summer' | 'desert' | null>(null)
 const onlyActual = ref(true)
 
 const canReset = computed(() => searchText.value.length > 0 || season.value !== null || onlyActual.value == false)
+const arenaNames = computed(() => new Map(props.arenas.map(a => [a.tag, a.name])))
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -123,6 +122,15 @@ function selectSeason(target: 'winter' | 'summer' | 'desert' | null) {
   if (season.value === target) season.value = null
   else season.value = target
 }
+
+function badgeLabel(hash: string) {
+  const info = hashToArena(hash)
+  if (!info) return hash
+  const name = arenaNames.value.get(info.tag) || info.tag
+  if (info.team == 'any') return name
+  return `${name}/${info.team}`
+}
+
 </script>
 
 

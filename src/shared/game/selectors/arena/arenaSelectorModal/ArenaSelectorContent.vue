@@ -8,7 +8,17 @@
           @click="onArenaClick(arena.tag)" :class="{ 'selected': selectedTags.has(arena.tag) }">
           <MinimapBackground :tag="arena.imageName" :game="game" :gameplay="arena.battleGameplay"
             :fallback="FallbackMinimap" class="minimap-background" />
-          <MinimapBases class="minimap-bases" :tag="arena.tag" :game="game" :gameplay="arena.gameplay" />
+          <MinimapBases class="minimap-bases" :tag="arena.tag" :game="game" :gameplay="arena.gameplay"
+            v-if="typeof selectedTeams.get(arena.tag) == 'number'" :team="getTeam(selectedTeams.get(arena.tag))" />
+          <div class="team-switcher mt-font"
+            v-if="selectedTags.has(arena.tag) && arenasTeamCount(game, arena.tag, arena.gameplay) == 2" @click.stop>
+            <button class="left" @click="selectTeam(arena.tag, 1)"
+              :class="{ 'selected': selectedTeams.get(arena.tag) === 1 }">1</button>
+            <button class="slash" @click="selectTeam(arena.tag, 'any')"
+              :class="{ 'selected': selectedTeams.get(arena.tag) === 'any' }">/</button>
+            <button class="right" @click="selectTeam(arena.tag, 2)"
+              :class="{ 'selected': selectedTeams.get(arena.tag) === 2 }">2</button>
+          </div>
           <div class="name mt-font">
             <span v-if="search == ''">{{ arena.name }}</span>
             <HighlightString v-else :text="arena.highlighted.highlightedString" />
@@ -28,7 +38,7 @@
 
 
 <script setup lang="ts">
-import { tagToImageName } from '@/shared/game/arenas2/arenas'
+import { getArenaMeta, tagToImageName } from '@/shared/game/arenas2/arenas'
 import MinimapBackground from '@/shared/game/arenas2/minimap/minimapBackground/MinimapBackground.vue'
 import MinimapBases from '@/shared/game/arenas2/minimap/minimapBases/MinimapBases.vue'
 import { GameVendor } from '@/shared/game/wot'
@@ -54,6 +64,9 @@ const emit = defineEmits<{
 const selected = defineModel<Set<string>>({ default: new Set() })
 const parsedSelected = computed(() => new Set([...selected.value.values()].map(tag => hashToArena(tag))))
 const selectedTags = computed(() => new Set([...parsedSelected.value.values()].map(a => a.tag)))
+const selectedTeams = computed(() => new Map<string, 'any' | number>(
+  [...parsedSelected.value.values()].map(a => [a.tag, a.team])
+))
 
 type VersionParts = [number, number, number]
 function compareVersion(a: VersionParts, b: VersionParts): number {
@@ -198,11 +211,31 @@ const filtered = computed(() => {
 })
 
 function onArenaClick(tag: string) {
-  if (selectedTags.value.has(tag)) {
-    selected.value.delete([...selected.value].find(t => hashToArena(t).tag === tag)!)
-  } else {
-    selected.value.add(arenaToHash({ tag, team: null }))
-  }
+  if (selectedTags.value.has(tag)) selected.value.delete([...selected.value].find(t => hashToArena(t).tag === tag)!)
+  else selectTeam(tag, 'any')
+}
+
+function selectTeam(tag: string, team: 'any' | number) {
+  const existing = [...selected.value].find(t => hashToArena(t).tag === tag)
+  if (existing) selected.value.delete(existing)
+  selected.value.add(arenaToHash({ tag, team }))
+}
+
+const arenaTeamsCountCache = new Map<string, number>()
+function arenasTeamCount(game: GameVendor, tag: string, gameplay: string) {
+  if (arenaTeamsCountCache.has(`${game}:${tag}:${gameplay}`)) return arenaTeamsCountCache.get(`${game}:${tag}:${gameplay}`)!
+  const meta = getArenaMeta(game, tag, gameplay)
+  if (!meta) return 0
+  const teams = new Set()
+  meta.bases.map(b => b.team).forEach(t => teams.add(t))
+  meta.spawn.map(s => s.team).forEach(t => teams.add(t))
+  arenaTeamsCountCache.set(`${game}:${tag}:${gameplay}`, teams.size)
+  return teams.size
+}
+
+function getTeam(team: 'any' | number | undefined) {
+  if (team === 'any') return undefined
+  return team
 }
 
 </script>
@@ -210,7 +243,7 @@ function onArenaClick(tag: string) {
 
 <style lang="scss" scoped>
 h2 {
-  margin: 10px 0;
+  margin: 10px 0 15px 0;
   font-size: 1em;
 }
 
@@ -232,7 +265,18 @@ h2 {
     cursor: pointer;
 
     &.selected {
-      border-color: var(--blue-thin-color);
+      border-color: var(--blue-color);
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        background: var(--blue-color);
+        pointer-events: none;
+        border-radius: 1px;
+      }
+
+      box-shadow: 0 0 20px rgba(44, 79, 255, 0.1);
     }
 
     .minimap-background,
@@ -270,7 +314,7 @@ h2 {
     .version {
       user-select: none;
       position: absolute;
-      top: 5px;
+      top: 14px;
       right: -1px;
       font-size: 11px;
 
@@ -284,6 +328,52 @@ h2 {
       border-radius: 10px;
       border-bottom-right-radius: 0;
       border-top-right-radius: 0;
+    }
+
+    .team-switcher {
+      $border-radius: 5px;
+
+      position: absolute;
+      left: 50%;
+      top: -1px;
+      display: flex;
+      user-select: none;
+      transform: translateX(-50%) translateY(-50%);
+      background-color: var(--blue-color);
+      border-radius: calc(1px + $border-radius);
+      padding: 1px;
+      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 1.5px;
+        background-color: #1a1a1a;
+        border-radius: $border-radius;
+      }
+
+      button {
+        border: none;
+        border-radius: 0;
+        padding: 1px 9px;
+        font-weight: bold;
+        font-size: 14px;
+        z-index: 1;
+
+        &.left {
+          border-top-left-radius: $border-radius;
+          border-bottom-left-radius: $border-radius;
+        }
+
+        &.right {
+          border-top-right-radius: $border-radius;
+          border-bottom-right-radius: $border-radius;
+        }
+
+        &.selected {
+          background-color: var(--blue-color);
+        }
+      }
     }
   }
 }
