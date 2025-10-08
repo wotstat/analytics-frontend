@@ -1,7 +1,5 @@
 <template>
-  <div class="loading-page">
-    <div class="loader"></div>
-  </div>
+  <div class="loader"></div>
 </template>
 
 
@@ -11,14 +9,6 @@
 
 
 <style lang="scss" scoped>
-.loading-page {
-  height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-
 .loader {
   color: rgba(255, 255, 255, 0.87);
   font-size: 10px;

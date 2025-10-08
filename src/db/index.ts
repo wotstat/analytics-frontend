@@ -65,7 +65,7 @@ export async function query<T>(query: string, { allowCache = true, settings = {}
 
   const current = new Promise<ResponseJSON<T>>(async (resolve, reject) => {
     try {
-      // await new Promise(resolve => setTimeout(resolve, 100000));
+      // await new Promise(resolve => setTimeout(resolve, 100000))
 
       const result = await clickhouse.query({ query, format: 'JSON', clickhouse_settings: settings })
       const response = await result.json<T>()
