@@ -11,8 +11,7 @@ import Distribution from './pages/services/damageDistribution/Content.vue'
 import Lootbox from './pages/infographics/pages/lootbox/Index.vue'
 import Install from './pages/install/Index.vue'
 import { AsyncComponentLoader, defineAsyncComponent } from 'vue'
-import PageLoader from './shared/ui/pageLoader/PageLoader.vue'
-
+import PageLoader from './shared/ui/loaders/pageLoader/PageLoader.vue'
 
 
 function asyncPage(loader: AsyncComponentLoader): any {

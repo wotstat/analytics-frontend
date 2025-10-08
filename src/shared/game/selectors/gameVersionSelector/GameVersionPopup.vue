@@ -26,7 +26,11 @@
       <div class="table-container deep-nice-scrollbar" :class="{ 'fast-scroll': isFastScroll }">
         <TableView ref="table" :delegate />
       </div>
-      <div class="empty-list" v-if="displaySections.length === 0">
+
+      <div class="loading" v-if="props.versionList.length === 0">
+        <Loader />
+      </div>
+      <div class="empty-list" v-else-if="displaySections.length === 0">
         <h5>Ничего не найдено</h5>
         <button @click="currentSearch = ''">Очистить фильтр</button>
       </div>
@@ -43,8 +47,9 @@ import SearchLine from '../components/searchLine/SearchLine.vue'
 import TableView from '@/shared/uiKit/tableView/TableView.vue'
 import { TableViewDelegate } from '@/shared/uiKit/tableView/tableView/TableView'
 import { HeaderLine } from '@/shared/uiKit/tableView/tableView/default/HeaderLine'
-import { VersionLine } from './VersionLine'
 import { compareIntervals, Highlighted } from '@/shared/uiKit/highlightString/highlightUtils'
+import { VersionLine } from './VersionLine'
+import Loader from '@/shared/ui/loaders/loader/Loader.vue'
 
 const props = defineProps<{
   versionList: {
@@ -483,6 +488,7 @@ const delegate: TableViewDelegate = {
       }
     }
 
+    .loading,
     .empty-list {
       position: absolute;
       inset: 0;
@@ -491,6 +497,9 @@ const delegate: TableViewDelegate = {
       align-items: center;
       justify-content: center;
 
+    }
+
+    .empty-list {
       h5 {
         margin: 0;
         font-size: 1em;

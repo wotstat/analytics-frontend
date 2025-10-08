@@ -42,7 +42,10 @@
       <VehicleTable :display-sections="tankToDisplay" ref="vehicleTable" v-model:name-variant="nameVariant"
         v-model:selected="vehicles" :game="preferredGame == 'wot' ? 'wot' : 'mt'" />
 
-      <div class="empty-list" v-if="tankToDisplay.length === 0">
+      <div class="loading" v-if="props.tankList.length === 0">
+        <Loader />
+      </div>
+      <div class="empty-list" v-else-if="tankToDisplay.length === 0">
         <h5>Танков не найдено</h5>
         <button @click="reset">Очистить фильтр</button>
       </div>
@@ -55,6 +58,7 @@ import { computed, ref } from 'vue'
 import { tankTagToReadable } from '@/shared/i18n/i18n'
 import { Highlighted, compareIntervals } from '@/shared/uiKit/highlightString/highlightUtils'
 import { useLocalStorage } from '@vueuse/core'
+import Loader from '@/shared/ui/loaders/loader/Loader.vue'
 
 import VehicleTable from './VehicleTable.vue'
 
@@ -480,6 +484,7 @@ function reset() {
   .content {
     position: relative;
 
+    .loading,
     .empty-list {
       position: absolute;
       inset: 30px 0;
@@ -487,7 +492,9 @@ function reset() {
       flex-direction: column;
       align-items: center;
       justify-content: center;
+    }
 
+    .empty-list {
       h5 {
         margin: 0;
         font-size: 1em;

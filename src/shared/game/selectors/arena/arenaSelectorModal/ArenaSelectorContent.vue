@@ -1,5 +1,7 @@
 <template>
-  <div class="loading" v-if="arenas.length == 0"></div>
+  <div class="loading" v-if="arenas.length == 0">
+    <Loader />
+  </div>
   <div class="modal-content" v-else-if="filtered.length !== 0">
     <div class="section" v-for="group in filtered">
       <h2 class="header">{{ group.header }}</h2>
@@ -48,6 +50,7 @@ import { computed } from 'vue'
 
 import FallbackMinimap from './fallback-minimap.webp'
 import { arenaToHash, hashToArena } from '../utils'
+import Loader from '@/shared/ui/loaders/loader/Loader.vue'
 
 const props = defineProps<{
   game: GameVendor
@@ -376,6 +379,14 @@ h2 {
       }
     }
   }
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
 }
 
 .empty-list {
