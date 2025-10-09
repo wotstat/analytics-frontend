@@ -83,7 +83,7 @@ function pos(position: { x: number, y: number }) {
   .control,
   .poi-point {
     position: absolute;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) scale(var(--minimap-scale, 1));
     width: 20%;
   }
 
