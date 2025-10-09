@@ -129,7 +129,7 @@
                     <td>{{ result.fireHealth ?? '-' }}</td>
                   </template>
                   <td v-if="shotResult.some(t => t.ammoBayDestroyed)">{{ result.ammoBayDestroyed ? 'Да' : '-'
-                    }}</td>
+                  }}</td>
                 </tr>
               </tbody>
             </table>
@@ -172,9 +172,9 @@ import { getArenaName, getTankName } from '@/shared/i18n/i18n'
 import { sec2minsec } from '@/shared/utils/time'
 import { wotinspectorLog, wotinspectorURLNew } from '@/shared/external/wotInspector/wotInspector'
 import { regionToGame, shellNames } from '@/shared/game/wot'
-import MinimapBackground from '@/shared/game/arenas2/minimap/minimapBackground/MinimapBackground.vue'
-import MinimapBases from '@/shared/game/arenas2/minimap/minimapBases/MinimapBases.vue'
-import { getArenaMeta, relativeMapPosition } from '@/shared/game/arenas2/arenas'
+import MinimapBackground from '@/shared/game/arenas/minimap/minimapBackground/MinimapBackground.vue'
+import MinimapBases from '@/shared/game/arenas/minimap/minimapBases/MinimapBases.vue'
+import { getArenaMeta, relativeMapPosition } from '@/shared/game/arenas/arenas'
 
 
 
