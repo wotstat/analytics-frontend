@@ -22,7 +22,7 @@
           <img class="border" src="./minimap_b4.png" alt="">
 
           <MinimapBases :tag="arenaTag" :gameplay="selectedShoot.battleGameplay" :allyTeam="selectedShoot.team"
-            class="minimap-bases" />
+            class="minimap-bases" :style="{ '--minimap-scale': 0.9 }" />
 
           <div class="overlay-container" v-if="arenaMeta">
             <svg v-if="playerTank && mapHitPoint" class="full">
