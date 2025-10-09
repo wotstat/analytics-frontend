@@ -1,6 +1,6 @@
 import { LONG_CACHE_SETTINGS, query } from '@/db'
 import { STATIC_URL } from '@/shared/external/externalUrl'
-import { computed, ref, shallowRef } from 'vue'
+import { computed, shallowRef } from 'vue'
 import { GameVendor, regionToGame } from '../wot'
 
 export function tagToImageName(tag: string): string {
@@ -93,6 +93,13 @@ function arenaKey(game: GameVendor, tag: string, gameplay: string): string {
 
 export function getArenaMeta(game: GameVendor, tag: string, gameplay: string) {
   return arenasMap.value.get(arenaKey(game, tag, gameplay))
+}
+
+export function relativeMapPosition(position: { x: number, y: number }, meta: Arena) {
+  const bbox = meta.bbox
+  const x = (position.x - bbox.bottomLeft.x) / (bbox.upperRight.x - bbox.bottomLeft.x)
+  const y = 1 - (position.y - bbox.bottomLeft.y) / (bbox.upperRight.y - bbox.bottomLeft.y)
+  return { x, y }
 }
 
 async function loadArenas() {

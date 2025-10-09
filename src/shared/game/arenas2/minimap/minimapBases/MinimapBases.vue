@@ -21,13 +21,13 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { getArenaMeta } from '../../arenas'
+import { getArenaMeta, relativeMapPosition } from '../../arenas'
 import { GameVendor } from '@/shared/game/wot'
 
 const props = withDefaults(defineProps<{
+  tag: string;
   game?: GameVendor;
   gameplay?: string;
-  tag: string;
   team?: number;
 }>(), {
   game: 'mt',
@@ -63,12 +63,9 @@ const enemyTeamSpawnPoints = computed(() => {
 })
 
 function pos(position: { x: number, y: number }) {
-  const bbox = meta.value?.bbox
-  if (!bbox) return { left: '0px', top: '0px' }
-
-  const x = (position.x - bbox.bottomLeft.x) / (bbox.upperRight.x - bbox.bottomLeft.x) * 100
-  const y = 100 - (position.y - bbox.bottomLeft.y) / (bbox.upperRight.y - bbox.bottomLeft.y) * 100
-  return { left: `${x}%`, top: `${y}%` }
+  if (!meta.value) return { left: '0px', top: '0px' }
+  const { x, y } = relativeMapPosition(position, meta.value!)
+  return { left: `${x * 100}%`, top: `${y * 100}%` }
 }
 
 </script>

@@ -13,17 +13,18 @@
           <!-- <circle v-if="hitPointServer" class="hit-point client" :class="hitPointServer.hit ? 'hit' : ''"
             :cx="hitPointServer.x * 99 + '%'" :cy="hitPointServer.y * 99 + '%'" r="1%" /> -->
         </svg>
-        <div class="minimap">
-          <div class="map-container">
-            <img class="map" v-if="arenaMinimapUrl" :src="arenaMinimapUrl">
+
+        <div class="minimap-container" v-if="arenaTag && selectedShoot">
+          <div class="minimap-background">
+            <MinimapBackground :tag="arenaTag" :gameplay="selectedShoot.battleGameplay" :game="game" :format="'webp'" />
           </div>
+
           <img class="border" src="./minimap_b4.png" alt="">
 
+          <MinimapBases :tag="arenaTag" :gameplay="selectedShoot.battleGameplay" :allyTeam="selectedShoot.team"
+            class="minimap-bases" />
+
           <div class="overlay-container" v-if="arenaMeta">
-
-            <MinimapOverlays v-if="arenaTag && selectedShoot" :arenaTag="arenaTag"
-              :gameplay="selectedShoot.battleGameplay" :allyTeam="selectedShoot.team" />
-
             <svg v-if="playerTank && mapHitPoint" class="full">
               <line class="trajectory" :x1="absoluteStyleMapPosition(playerTank.x, playerTank.y).left"
                 :y1="absoluteStyleMapPosition(playerTank.x, playerTank.y).top"
@@ -120,7 +121,7 @@
                 </tr>
 
                 <tr v-for="result in shotResult">
-                  <td>{{ result.tankTag }}</td>
+                  <td>{{ getTankName(result.tankTag, true) }}</td>
                   <td>{{ result.shotDamage || '-' }}</td>
                   <td>{{ result.shotHealth ?? '-' }}</td>
                   <template v-if="shotResult.some(t => t.fireDamage)">
@@ -128,7 +129,7 @@
                     <td>{{ result.fireHealth ?? '-' }}</td>
                   </template>
                   <td v-if="shotResult.some(t => t.ammoBayDestroyed)">{{ result.ammoBayDestroyed ? 'Да' : '-'
-                  }}</td>
+                    }}</td>
                 </tr>
               </tbody>
             </table>
@@ -164,15 +165,18 @@
 <script lang="ts" setup>
 import { dbIndexToDate, query } from '@/db'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
-import { aranaMinimapUrl, convertCoordinate, loadArenaMeta } from '@/shared/game/arenas/arenas'
-import { computedAsync, useDraggable, useMediaQuery } from '@vueuse/core'
+import { useDraggable, useMediaQuery } from '@vueuse/core'
 import { useRoute, useRouter } from 'vue-router'
 import InfoTable from './InfoTable.vue'
-import { getArenaName } from '@/shared/i18n/i18n'
-import MinimapOverlays from '@/shared/game/arenas/minimapOverlay/Index.vue'
+import { getArenaName, getTankName } from '@/shared/i18n/i18n'
 import { sec2minsec } from '@/shared/utils/time'
 import { wotinspectorLog, wotinspectorURLNew } from '@/shared/external/wotInspector/wotInspector'
-import { shellNames } from '@/shared/game/wot'
+import { regionToGame, shellNames } from '@/shared/game/wot'
+import MinimapBackground from '@/shared/game/arenas2/minimap/minimapBackground/MinimapBackground.vue'
+import MinimapBases from '@/shared/game/arenas2/minimap/minimapBases/MinimapBases.vue'
+import { getArenaMeta, relativeMapPosition } from '@/shared/game/arenas2/arenas'
+
+
 
 type UInt128 = string;
 type DateTime64 = string;
@@ -287,6 +291,9 @@ const shotIndex = ref(0)
 const allShots = shallowRef<Shot[] | null>(null)
 const selectedShoot = computed(() => allShots.value?.[shotIndex.value] ?? null)
 const arenaTag = computed(() => selectedShoot.value?.arenaTag.split('spaces/')[1] ?? null)
+const arenaGameplay = computed(() => selectedShoot.value?.battleGameplay ?? 'ctf')
+
+const game = computed(() => allShots.value && allShots.value.length > 0 ? regionToGame(allShots.value[0].region) : 'mt')
 
 watch(selectedShoot, shot => {
   console.log(JSON.stringify({
@@ -305,7 +312,7 @@ watch(selectedShoot, shot => {
 
 const firstTable = (s: Shot) => [
   ['Игрок', s.playerName],
-  ['Танк', s.tankTag],
+  ['Танк', getTankName(s.tankTag, true)],
   ['Карта', getArenaName(arenaTag.value ?? '').value],
   ['Пушка', s.gunTag],
   ['Калибр', s.shellCaliber],
@@ -388,7 +395,9 @@ onMounted(async () => {
   shotIndex.value = shots.data.findIndex(s => s.id === props.shotID)
 })
 
-const arenaMeta = computedAsync(async () => arenaTag.value ? await loadArenaMeta(arenaTag.value) : null)
+
+
+const arenaMeta = computed(() => arenaTag.value ? getArenaMeta(game.value, arenaTag.value ?? '', arenaGameplay.value) : null)
 
 function getWotinspectorParams() {
   if (selectedShoot.value == null) return null
@@ -473,11 +482,6 @@ const possibleMin = computed(() => {
   return selectedShoot.value.gunDispersion / selectedShoot.value.serverShotDispersion
 })
 
-const arenaMinimapUrl = computedAsync(() => {
-  if (selectedShoot.value == null) return null
-  return aranaMinimapUrl(selectedShoot.value.arenaTag)
-})
-
 const playerTank = computed(() => {
   if (selectedShoot.value == null) return null
   return { tag: selectedShoot.value.tankTag, type: selectedShoot.value.tankType, x: selectedShoot.value.gunPoint_x, y: selectedShoot.value.gunPoint_z }
@@ -525,12 +529,8 @@ const clientMakerPoint = computed(() => {
 
 function absoluteStyleMapPosition(x: number, y: number) {
   if (!arenaMeta.value) return { left: '0%', top: '0%' }
-
-  const { x: nx, y: ny } = convertCoordinate({ x, y }, arenaMeta.value.boundingBox)
-  return {
-    left: (nx * 100) + '%',
-    top: (ny * 100) + '%',
-  }
+  const { x: nx, y: ny } = relativeMapPosition({ x, y }, arenaMeta.value)
+  return { left: `${nx * 100}%`, top: `${ny * 100}%` }
 }
 
 function changeShot(delta: number) {
@@ -682,7 +682,7 @@ const shouldBeVerticalResult = useMediaQuery('(min-width: 768px)')
   }
 }
 
-.minimap {
+.minimap-container {
   width: 250px;
   height: 250px;
   position: relative;
@@ -704,13 +704,28 @@ const shouldBeVerticalResult = useMediaQuery('(min-width: 768px)')
     }
   }
 
-  .map-container,
-  .overlay-container {
+  .minimap-background {
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
+
+  .minimap-background,
+  .overlay-container,
+  .minimap-bases {
     position: absolute;
     margin-left: 12px;
     margin-top: 12px;
     width: 94%;
     height: 94%;
+  }
+
+  .minimap-bases {
+    z-index: 2;
+    pointer-events: none;
+    user-select: none;
   }
 
   .map-container {
