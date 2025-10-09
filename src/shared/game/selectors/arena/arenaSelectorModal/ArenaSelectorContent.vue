@@ -40,9 +40,9 @@
 
 
 <script setup lang="ts">
-import { getArenaMeta, tagToImageName } from '@/shared/game/arenas2/arenas'
-import MinimapBackground from '@/shared/game/arenas2/minimap/minimapBackground/MinimapBackground.vue'
-import MinimapBases from '@/shared/game/arenas2/minimap/minimapBases/MinimapBases.vue'
+import { getArenaMeta, tagToImageName } from '@/shared/game/arenas/arenas'
+import MinimapBackground from '@/shared/game/arenas/minimap/minimapBackground/MinimapBackground.vue'
+import MinimapBases from '@/shared/game/arenas/minimap/minimapBases/MinimapBases.vue'
 import { GameVendor } from '@/shared/game/wot'
 import HighlightString from '@/shared/uiKit/highlightString/HighlightString.vue'
 import { compareIntervals, Highlighted } from '@/shared/uiKit/highlightString/highlightUtils'
