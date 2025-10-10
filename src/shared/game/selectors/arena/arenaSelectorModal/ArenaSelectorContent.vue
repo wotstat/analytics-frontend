@@ -363,6 +363,12 @@ h2 {
         font-size: 14px;
         z-index: 1;
 
+        transition: background-color 0.1s;
+
+        &:hover {
+          background-color: rgb(39, 39, 39);
+        }
+
         &.left {
           border-top-left-radius: $border-radius;
           border-bottom-left-radius: $border-radius;
