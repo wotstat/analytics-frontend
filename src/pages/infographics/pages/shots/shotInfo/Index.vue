@@ -22,7 +22,7 @@
           <img class="border" src="./minimap_b4.png" alt="">
 
           <MinimapBases :tag="arenaTag" :gameplay="selectedShoot.battleGameplay" :allyTeam="selectedShoot.team"
-            class="minimap-bases" :style="{ '--minimap-scale': 0.9 }" />
+            class="minimap-bases" />
 
           <div class="overlay-container" v-if="arenaMeta">
             <svg v-if="playerTank && mapHitPoint" class="full">
@@ -129,7 +129,7 @@
                     <td>{{ result.fireHealth ?? '-' }}</td>
                   </template>
                   <td v-if="shotResult.some(t => t.ammoBayDestroyed)">{{ result.ammoBayDestroyed ? 'Да' : '-'
-                  }}</td>
+                    }}</td>
                 </tr>
               </tbody>
             </table>
@@ -726,6 +726,7 @@ const shouldBeVerticalResult = useMediaQuery('(min-width: 768px)')
     z-index: 2;
     pointer-events: none;
     user-select: none;
+    --minimap-scale: 0.9;
   }
 
   .map-container {
