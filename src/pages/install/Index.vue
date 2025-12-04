@@ -672,6 +672,12 @@ onMounted(() => {
       enableOnly(['wotstat.widgets'])
       break
 
+    case 'widgets-analytics':
+      showFocusEffect(analyticsModCard.value?.$el as HTMLElement)
+      showFocusEffect(widgetsModCard.value?.$el as HTMLElement)
+      enableOnly(['wotstat.widgets', 'wotstat.analytics'])
+      break
+
     case 'positions':
       showFocusEffect(positionsModCard.value?.$el as HTMLElement)
       enableOnly(['wotstat.positions', 'izeberg.modssettingsapi', 'me.poliroid.modslistapi'])
