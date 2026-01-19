@@ -16,6 +16,15 @@
         </div>
       </header>
 
+      <header v-else-if="title">
+        <div class="title-line">
+          <h1>{{ title }}</h1>
+          <div class="controls">
+            <CloseButton @click="emit('close')" />
+          </div>
+        </div>
+      </header>
+
       <main class="nice-scrollbar" ref="scroll" @scroll="handleScroll">
         <slot></slot>
       </main>
@@ -34,6 +43,7 @@
 import { onMounted, ref, useSlots } from 'vue'
 import { useNoScroll } from '../noScroll/noScroll'
 import { onKeyDown } from '@vueuse/core'
+import CloseButton from '@/shared/ui/modalWindow/buttons/closeButton/CloseButton.vue'
 
 const scroll = ref<HTMLElement | null>(null)
 const showHeaderBorder = ref(false)

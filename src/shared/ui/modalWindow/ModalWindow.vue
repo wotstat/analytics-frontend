@@ -2,7 +2,7 @@
   <Teleport to="body">
     <Transition @before-enter="emit('before-open')" @after-leave="emit('after-close')">
       <ModalWindowContent :title="title" v-if="display" @close="emit('close')"
-        :style="{ '--margin-block-start': marginBlockStart }">
+        :style="{ '--margin-block-start': marginBlockStart ?? 0 }">
         <template #controls v-if="slots['controls']">
           <slot name="controls"></slot>
         </template>
@@ -29,7 +29,7 @@ import ModalWindowContent from './ModalWindowContent.vue'
 const props = defineProps<{
   title: string
   display: boolean
-  marginBlockStart: string
+  marginBlockStart?: string
 }>()
 
 const emit = defineEmits<{

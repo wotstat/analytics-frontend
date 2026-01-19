@@ -1,8 +1,20 @@
 <template>
   <div class="header" ref="headerElement">
-    <!-- <div class="upper-header success">
-      Работа WotStat восстановлена. Некоторые аналитические данные будут доступны позже в течение дня.
-    </div> -->
+    <div class="upper-header warning">
+      ВНИМАНИЕ
+      <br>
+      В данный момент имеются проблемы с доступом к серверу WotStat.
+      <br>
+      По предварительным данным, хостер отозвал ip-адреса. Поддержка дата-центра уже работает над решением проблемы.
+      <br>
+      <br>
+      Пропущенные дни лицензии мода на позиции будут компенсированы после восстановления работы.
+      <br>
+      <br>
+      <a @click="problemsVisible = true">Хронология событий</a>
+    </div>
+
+    <HetznerBlock0126 v-model="problemsVisible" />
 
     <div class="upper-header blue" v-if="CURRENT_URL_PREFIX != 'ru.' && ruHeaderVisible">
       Доступен резервный домен на случай замедлений в России <a href="http://ru.wotstat.info"
@@ -155,6 +167,8 @@ import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
 import { CLICKHOUSE_URL, CURRENT_URL_PREFIX, POSITIONS_URL, DISCORD_URL } from '@/shared/external/externalUrl'
 import { useLocalStorage } from '@vueuse/core'
 import { vNewFeatureBadge } from '@/shared/uiKit/newFeatureBadge/newFeatureBadge'
+import HetznerBlock0126 from '../problems/hetznerBlock0126/HetznerBlock0126.vue'
+
 
 const SQLUrl = CLICKHOUSE_URL + '/play?user=public#c2VsZWN0IHRhYmxlLCBuYW1lLCBjb21tZW50LCB0eXBlIGZyb20gZGVzY3JpcHRpb247'
 
@@ -168,6 +182,8 @@ const ruHeaderVisible = useLocalStorage('RuAlternativeHeader', true)
 function hideHeader(name: string) {
   if (name == 'RuAlternativeHeader') ruHeaderVisible.value = false
 }
+
+const problemsVisible = ref(true)
 
 </script>
 
@@ -228,6 +244,7 @@ function hideHeader(name: string) {
     }
 
     a {
+      cursor: pointer;
       font-weight: var(--bold-weight);
     }
 
