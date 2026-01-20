@@ -1,9 +1,6 @@
 <template>
   <ModalWindow title="Выбор карты" :display="visibleModal" @close="emit('close')" :margin-block-start="'35px'"
     @after-close="reset">
-    <template #controls>
-      <CloseButton @click="emit('close')" />
-    </template>
 
     <template #header-content>
       <div class="header-line">
@@ -86,7 +83,6 @@
 <script setup lang="ts">
 import ModalWindow from '@/shared/ui/modalWindow/ModalWindow.vue'
 import Reload from '@/assets/icons/reset.svg'
-import CloseButton from '@/shared/ui/modalWindow/buttons/closeButton/CloseButton.vue'
 import SearchLine from '../../components/searchLine/SearchLine.vue'
 import ArenaSelectorModal from './ArenaSelectorContent.vue'
 import { preferredGame } from '@/shared/global/globalPreferred'

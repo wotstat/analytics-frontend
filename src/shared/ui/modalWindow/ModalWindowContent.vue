@@ -2,26 +2,16 @@
   <div class="modal-window">
     <div class="background" @click="emit('close')"></div>
     <div class="modal">
-      <header v-if="slots['header-content']" :class="{
-        'show-border': showHeaderBorder
-      }">
+      <header :class="headerClass">
         <div class="title-line">
           <h1>{{ title }}</h1>
           <div class="controls">
             <slot name="controls"></slot>
+            <CloseButton v-if="!hideCloseButton" @click="emit('close')" />
           </div>
         </div>
-        <div class="content-line">
+        <div class="content-line" v-if="slots['header-content']">
           <slot name="header-content"></slot>
-        </div>
-      </header>
-
-      <header v-else-if="title">
-        <div class="title-line">
-          <h1>{{ title }}</h1>
-          <div class="controls">
-            <CloseButton @click="emit('close')" />
-          </div>
         </div>
       </header>
 
@@ -29,9 +19,7 @@
         <slot></slot>
       </main>
 
-      <footer v-if="slots['footer-content']" :class="{
-        'show-border': showFooterBorder
-      }">
+      <footer v-if="slots['footer-content']" :class="footerClass">
         <slot name="footer-content"></slot>
       </footer>
     </div>
@@ -40,7 +28,7 @@
 
 
 <script setup lang="ts">
-import { onMounted, ref, useSlots } from 'vue'
+import { computed, onMounted, ref, useSlots } from 'vue'
 import { useNoScroll } from '../noScroll/noScroll'
 import { onKeyDown } from '@vueuse/core'
 import CloseButton from '@/shared/ui/modalWindow/buttons/closeButton/CloseButton.vue'
@@ -51,6 +39,7 @@ const showFooterBorder = ref(false)
 
 defineProps<{
   title: string
+  hideCloseButton?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -66,6 +55,18 @@ function handleScroll(event: Event) {
   showHeaderBorder.value = target.scrollTop > 0
   showFooterBorder.value = target.scrollHeight - target.scrollTop > target.clientHeight + 1
 }
+
+const headerClass = computed(() => {
+  return {
+    'show-border': showHeaderBorder.value
+  }
+})
+
+const footerClass = computed(() => {
+  return {
+    'show-border': showFooterBorder.value
+  }
+})
 
 onMounted(() => {
   if (scroll.value) {
@@ -131,6 +132,7 @@ $border: 1px solid rgba(255, 255, 255, 0.05);
 
         .controls {
           margin-right: 10px;
+          display: flex;
         }
       }
 

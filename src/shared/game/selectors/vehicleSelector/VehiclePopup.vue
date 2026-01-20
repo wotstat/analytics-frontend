@@ -127,6 +127,7 @@ const groupedList = computed(() => {
   const hw21: Data = []
   const halloween: Data = []
   const lsPlayer: Data = []
+  const razlom: Data = []
 
   const raceTags = new Set([
     'uk:GB00_AEC_Armoured_Car_02',
@@ -139,14 +140,22 @@ const groupedList = computed(() => {
     'ussr:R164_U_18_T'
   ])
 
-  const lastWt = new Set([
+  const lastWTTags = new Set([
     'czech:Cz04_T50_51_Waf_Hound_3DSt',
     'ussr:R232_IS-7W',
     'ussr:R232_IS-7G'
   ])
 
+  const razlomTags = new Set([
+    'ussr:R46_KV-13_H',
+    'france:F43_AMC_35_H',
+    'uk:GB107_Cavalier_H',
+    'poland:Pl17_DS_PZlnz_H'
+  ])
+
   for (const tank of preparedTankList.value) {
     if (forceRegular.has(tank.tag)) regular.push(tank)
+    else if (razlomTags.has(tank.tag)) razlom.push(tank)
     else if (tank.tag.endsWith('_SH')) stealHunter.push(tank)
     else if (tank.tag.endsWith('_hb25')) hb25.push(tank)
     else if (tank.tag.endsWith('_may24_hb')) may24Hb.push(tank)
@@ -156,7 +165,7 @@ const groupedList = computed(() => {
     else if (tank.tag == 'ussr:Observer') observer.push(tank)
     else if (raceTags.has(tank.tag)) race.push(tank)
     else if (tank.tag.includes('_COSM_')) space.push(tank)
-    else if (tank.tag.includes('_TLXXL') || lastWt.has(tank.tag)) lastWT.push(tank)
+    else if (tank.tag.includes('_TLXXL') || lastWTTags.has(tank.tag)) lastWT.push(tank)
     else if (tank.tag.endsWith('_grinch')) grinch.push(tank)
     else if (tank.tag.endsWith('_FEP23')) fep23.push(tank)
     else if (tank.tag.endsWith('_hw21') || tank.tag.endsWith('_HW')) hw21.push(tank)
@@ -169,6 +178,7 @@ const groupedList = computed(() => {
     { header: 'Доступные в рандоме', data: regular },
     { header: 'Стальной Охотник', data: stealHunter },
     { header: 'Последний WT', data: lastWT },
+    { header: 'Разлом', data: razlom },
     { header: 'Гонки', data: race },
     { header: 'На марс', data: space },
     { header: 'Битва блогеров', data: bob },

@@ -2,7 +2,7 @@
 
   <ModalWindow :title="'Недоступность серверов'" :display="visible" @close="visible = false">
 
-    <template #default>
+    <template #header-content>
 
       <div class="info">
         <p>
@@ -16,14 +16,11 @@
         <p>
           Выделенный сервер арендуется у компании Aeza и размещается в дата-центре Hetzner в Финляндии.
         </p>
-        <br>
-        <p>
-          В этом разделе представлена хронология событий, связанных с инцидентом.
-        </p>
       </div>
 
-      <hr>
+    </template>
 
+    <template #default>
       <div class="events">
         <div class="event red">
           <div class="time">16:00 МСК</div>
@@ -112,6 +109,11 @@ const visible = defineModel<boolean>({ default: false })
 
 
 <style lang="scss" scoped>
+.info {
+  padding: 0 15px;
+  padding-bottom: 10px;
+}
+
 .event {
   display: flex;
   flex-direction: row;

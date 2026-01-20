@@ -1,12 +1,17 @@
 <template>
   <div class="header" ref="headerElement">
-    <div class="upper-header success">
+    <div class="upper-header success" v-if="maintenanceHeaderVisible">
       Работа серверов WotStat восстановлена.
       <br>
       <a @click="problemsVisible = true">Хронология событий</a>
+
+      <div class="right-section">
+        <button @click="hideHeader('MaintenanceHeader')">Понятно</button>
+      </div>
+
+      <HetznerBlock0126 v-model="problemsVisible" />
     </div>
 
-    <HetznerBlock0126 v-model="problemsVisible" />
 
     <div class="upper-header blue" v-if="CURRENT_URL_PREFIX != 'ru.' && ruHeaderVisible">
       Доступен резервный домен на случай замедлений в России <a href="http://ru.wotstat.info"
@@ -170,9 +175,11 @@ useDefaultHeaderHeight(headerElement)
 const { additionalHeaderHeight } = useAdditionalHeaderHeight()
 
 const ruHeaderVisible = useLocalStorage('RuAlternativeHeader', true)
+const maintenanceHeaderVisible = useLocalStorage('MaintenanceHeader', true)
 
-function hideHeader(name: string) {
+function hideHeader(name: 'RuAlternativeHeader' | 'MaintenanceHeader') {
   if (name == 'RuAlternativeHeader') ruHeaderVisible.value = false
+  else if (name == 'MaintenanceHeader') maintenanceHeaderVisible.value = false
 }
 
 const problemsVisible = ref(false)
