@@ -6,8 +6,9 @@
 
       <div class="info">
         <p>
-          19 января 2026 года с 16:00 МСК сервер WotStat стал недоступен из-за проблем в дата-центре. На данный момент
-          проблема не устранена.
+          19 января 2026 года с 16:00 МСК по 17 января 15:25 МСК сервер WotStat стал недоступен из-за проблем в
+          дата-центре. <b>На данный
+            момент проблема устранена.</b>
         </p>
 
         <br>
@@ -72,12 +73,29 @@
 
         <div class="event orange">
           <div class="time">19:28 МСК</div>
-          <div class="content">Обращение в поддержку дата-центра с уточнением статуса. <b>Пока ответа нет.</b></div>
+          <div class="content">Обращение в поддержку дата-центра с уточнением статуса.</div>
+        </div>
+
+        <div class="event orange">
+          <div class="time">22:30 МСК</div>
+          <div class="content">Добавлена страница с хронологией проблемы</div>
         </div>
 
         <div class="event green">
-          <div class="time">22:30 МСК</div>
-          <div class="content">Добавлена страница с хронологией проблемы</div>
+          <div class="time">02:51 МСК</div>
+          <div class="content">
+            Ответ от поддержки:
+            <blockquote>
+              Вероятнее всего затруднения будут решены в течение дня, пожалуйста ожидайте.
+            </blockquote>
+          </div>
+        </div>
+
+        <div class="event green">
+          <div class="time">15:25 МСК</div>
+          <div class="content">
+            <b>Работа серверов восстановлена.</b>
+          </div>
         </div>
       </div>
     </template>
