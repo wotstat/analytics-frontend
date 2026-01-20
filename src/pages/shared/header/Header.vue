@@ -1,15 +1,7 @@
 <template>
   <div class="header" ref="headerElement">
-    <div class="upper-header warning">
-      ВНИМАНИЕ
-      <br>
-      В данный момент имеются проблемы с доступом к серверу WotStat.
-      <br>
-      По предварительным данным, хостер отозвал ip-адреса. Поддержка дата-центра уже работает над решением проблемы.
-      <br>
-      <br>
-      Пропущенные дни лицензии мода на позиции будут компенсированы после восстановления работы.
-      <br>
+    <div class="upper-header success">
+      Работа серверов WotStat восстановлена.
       <br>
       <a @click="problemsVisible = true">Хронология событий</a>
     </div>
@@ -183,7 +175,7 @@ function hideHeader(name: string) {
   if (name == 'RuAlternativeHeader') ruHeaderVisible.value = false
 }
 
-const problemsVisible = ref(true)
+const problemsVisible = ref(false)
 
 </script>
 
