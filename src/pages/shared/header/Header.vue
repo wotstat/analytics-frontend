@@ -175,9 +175,11 @@ useDefaultHeaderHeight(headerElement)
 const { additionalHeaderHeight } = useAdditionalHeaderHeight()
 
 const ruHeaderVisible = useLocalStorage('RuAlternativeHeader', true)
-const maintenanceHeaderVisible = useLocalStorage('MaintenanceHeader', true)
+const maintenanceHeaderVisible = useLocalStorage('MaintenanceHeader', false)
 
-function hideHeader(name: 'RuAlternativeHeader' | 'MaintenanceHeader') {
+type Headers = 'RuAlternativeHeader' | 'MaintenanceHeader'
+
+function hideHeader(name: Headers) {
   if (name == 'RuAlternativeHeader') ruHeaderVisible.value = false
   else if (name == 'MaintenanceHeader') maintenanceHeaderVisible.value = false
 }
