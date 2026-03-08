@@ -48,6 +48,7 @@ class ShadowBarController extends BarController {
       ctx.lineWidth = 2
 
       const { x, y, width, base } = barElement.getProps(['x', 'y', 'base', 'height', 'width'])
+      if (x == null || y == null) continue
 
       const offset = Math.min(10, width / 2)
       ctx.shadowBlur = width

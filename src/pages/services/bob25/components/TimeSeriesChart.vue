@@ -401,8 +401,8 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
           return `${formatDateFull(t[0].label as any)}`
         },
         label: props.processor ?
-          t => `${bloggerNamesArray[t.datasetIndex]}: ${props.processor!(t.parsed.y)}` :
-          preferredLogProcessor.value ? t => `${bloggerNamesArray[t.datasetIndex]}: ${logProc(t.parsed.y)}` : undefined,
+          t => `${bloggerNamesArray[t.datasetIndex]}: ${props.processor!(t.parsed.y ?? 0)}` :
+          preferredLogProcessor.value ? t => `${bloggerNamesArray[t.datasetIndex]}: ${logProc(t.parsed.y ?? 0)}` : undefined,
       },
 
     },
