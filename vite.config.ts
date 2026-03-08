@@ -4,7 +4,6 @@ import { plugin as mdPlugin, Mode } from 'vite-plugin-markdown'
 import svgLoader from 'vite-svg-loader'
 import { alert } from '@mdit/plugin-alert'
 import { attrs } from '@mdit/plugin-attrs'
-import { container } from '@mdit/plugin-container'
 import { align } from '@mdit/plugin-align'
 import MarkdownIt from 'markdown-it'
 import vueDevTools from 'vite-plugin-vue-devtools'
@@ -27,7 +26,6 @@ export default defineConfig({
       markdownIt: new MarkdownIt({ html: true })
         .use(alert)
         .use(attrs)
-        .use(container)
         .use(align)
     }),
     visualizer({
@@ -41,11 +39,4 @@ export default defineConfig({
       '@': '/src'
     }
   },
-  css: {
-    preprocessorOptions: {
-      scss: {
-        api: 'modern'
-      }
-    }
-  }
 })
