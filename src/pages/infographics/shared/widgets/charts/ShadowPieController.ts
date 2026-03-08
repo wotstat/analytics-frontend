@@ -15,6 +15,7 @@ class ShadowPieController extends PieController {
     ctx.shadowBlur = 50
     for (const arcElement of meta.data as ArcElement[]) {
       const { x, y, endAngle, startAngle, outerRadius } = arcElement.getProps(['x', 'y', 'endAngle', 'startAngle', 'outerRadius'])
+      if (x == null || y == null) continue
 
       ctx.beginPath()
       ctx.moveTo(x, y)
@@ -29,6 +30,7 @@ class ShadowPieController extends PieController {
     ctx.shadowBlur = 0
     for (const arcElement of meta.data as ArcElement[]) {
       const { x, y, endAngle, startAngle, outerRadius } = arcElement.getProps(['x', 'y', 'endAngle', 'startAngle', 'outerRadius'])
+      if (x == null || y == null) continue
 
       ctx.beginPath()
       ctx.moveTo(x, y)

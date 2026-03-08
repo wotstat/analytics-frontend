@@ -1,5 +1,5 @@
-import { MaybeRefOrGetter, StorageLike, useLocalStorage, useStorage } from '@vueuse/core'
-import { onDeactivated, onUnmounted } from 'vue'
+import { StorageLike, useStorage } from '@vueuse/core'
+import { onDeactivated, onUnmounted, type MaybeRefOrGetter } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 
