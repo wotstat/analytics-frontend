@@ -25,16 +25,18 @@ export const widgetsMod: ModInfo = {
 }
 
 export const lestaMods: ModInfo[] = [
-  { tag: 'panikaxa.lesta.quick_demount', source: { url: 'http://forum.tanki.su/index.php?/topic/2204705-13610-quick-demount-20-быстрый-демонтаж-оборудования-20/', name: 'Forum' } },
   { tag: 'wotstat.lootbox-open-multiplier', source: { url: 'https://github.com/wotstat/lootbox-open-multiplier', name: 'GitHub' } },
   { tag: 'wotstat.data-provider', source: { url: 'https://github.com/wotstat/wotstat-data-provider', name: 'GitHub' } },
+  { tag: 'panikaxa.quick_demount', source: { url: 'http://forum.tanki.su/index.php?/topic/2204705-13610-quick-demount-20-быстрый-демонтаж-оборудования-20/', name: 'Forum' } },
   { tag: 'izeberg.modssettingsapi', source: { url: 'https://github.com/IzeBerg/modssettingsapi', name: 'GitHub' }, required: ['me.poliroid.modslistapi'] },
   { tag: 'me.poliroid.modslistapi', source: { url: 'https://gitlab.com/wot-public-mods/mods-list', name: 'GitLab' } },
+  { tag: 'net.openwg.gameface', source: { url: 'https://gitlab.com/openwg/wot.gameface', name: 'GitLab' } },
 ]
 export const lestaModsMap = new Map<string, ModInfo>(lestaMods.map(mod => [mod.tag, mod]))
 
 export const wgMods: ModInfo[] = [
   { tag: 'wotstat.data-provider', source: { url: 'https://github.com/wotstat/wotstat-data-provider', name: 'GitHub' } },
+  { tag: 'panikaxa.quick_demount', source: { url: 'https://wgmods.net/7365/', name: 'WGMods' } },
   { tag: 'izeberg.modssettingsapi', source: { url: 'https://github.com/IzeBerg/modssettingsapi', name: 'GitHub' }, required: ['me.poliroid.modslistapi'] },
   { tag: 'me.poliroid.modslistapi', source: { url: 'https://gitlab.com/wot-public-mods/mods-list', name: 'GitLab' }, required: ['net.openwg.gameface'] },
   { tag: 'net.openwg.gameface', source: { url: 'https://gitlab.com/openwg/wot.gameface', name: 'GitLab' } },
@@ -45,21 +47,30 @@ export const otherModsUnion = (() => {
   const union = new Map<string, {
     source: ModInfo['source'],
     required: Set<string>,
+    lestaRequired: Set<string>,
+    wgRequired: Set<string>,
   }>()
 
   for (const mod of lestaMods) union.set(mod.tag, {
     source: mod.source,
-    required: new Set(mod.required || [])
+    required: new Set(mod.required || []),
+    lestaRequired: new Set(mod.required || []),
+    wgRequired: new Set()
   })
 
   for (const mod of wgMods) {
     const existing = union.get(mod.tag)
     if (existing) {
-      for (const req of mod.required || []) existing.required.add(req)
+      for (const req of mod.required || []) {
+        existing.required.add(req)
+        existing.wgRequired.add(req)
+      }
     } else {
       union.set(mod.tag, {
         source: mod.source,
-        required: new Set(mod.required || [])
+        required: new Set(mod.required || []),
+        lestaRequired: new Set(),
+        wgRequired: new Set(mod.required || [])
       })
     }
   }
@@ -68,6 +79,8 @@ export const otherModsUnion = (() => {
     tag,
     source: mod.source,
     required: [...mod.required],
+    lestaRequired: [...mod.lestaRequired],
+    wgRequired: [...mod.wgRequired],
     support: lestaModsMap.has(tag) ? (wgModsMap.has(tag) ? undefined : 'mt-only') : 'wot-only' as 'mt-only' | 'wot-only' | undefined
   }))
 })()
@@ -75,6 +88,8 @@ export const otherModsUnion = (() => {
 export const otherModsUnionMap = new Map<string, {
   source: ModInfo['source'],
   required: string[],
+  lestaRequired: string[],
+  wgRequired: string[],
   support: 'mt-only' | 'wot-only' | undefined
 }>(otherModsUnion.map(mod => [mod.tag, mod]))
 

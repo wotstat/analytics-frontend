@@ -530,8 +530,15 @@ function dependenciesForMods(mods: string[]) {
       if (!dependencies.has(dep)) {
         dependencies.add(dep)
         const depInfo = otherModsUnionMap.get(dep)
-        if (depInfo && depInfo.required) {
-          stack.push(depInfo.required)
+        if (!depInfo) continue
+        const targetRequired = {
+          'mt': depInfo.lestaRequired,
+          'wot': depInfo.wgRequired,
+          'unknown': depInfo.required
+        }[preferredGameVendor.value]
+
+        if (depInfo && targetRequired) {
+          stack.push(targetRequired)
         }
       }
     }
@@ -1168,6 +1175,8 @@ onMounted(() => {
           margin-left: 0.5em;
           font-weight: bold;
           line-height: 1.2;
+          display: flex;
+          align-items: center;
 
 
           .arrow-right {
