@@ -1,6 +1,10 @@
 <template>
   <div class="search">
-    <Search class="search-icon" />
+    <div class="search-icon">
+      <slot name="icon" v-if="slots.icon"></slot>
+      <Search class="search-icon" v-else />
+    </div>
+    <!-- <Search class="search-icon" /> -->
     <input name="search" type="text" :placeholder="placeholder ?? 'Поиск'" v-model="value" ref="searchInput" />
     <button class="clear-input" @click="value = ''" :class="value == '' ? 'empty' : ''">
       <X class="clear-icon" />
@@ -14,7 +18,7 @@
 import { useMediaQuery } from '@vueuse/core'
 import Search from './assets/search.svg'
 import X from './assets/x.svg'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, useSlots } from 'vue'
 
 const searchInput = ref<HTMLInputElement | null>(null)
 
@@ -23,6 +27,8 @@ const props = defineProps<{
   autofocus?: boolean
 }>()
 
+const slots = useSlots()
+
 const value = defineModel<string>({ required: true })
 
 const isPc = useMediaQuery('(hover: hover) and (pointer: fine)')
@@ -30,6 +36,7 @@ const isPc = useMediaQuery('(hover: hover) and (pointer: fine)')
 onMounted(() => {
   if (isPc.value && props.autofocus) setTimeout(() => searchInput.value?.focus(), 0)
 })
+
 </script>
 
 
@@ -52,7 +59,8 @@ onMounted(() => {
     padding: 0;
   }
 
-  .search-icon {
+  .search-icon>:deep(svg) {
+    display: block;
     height: 15px;
     min-width: 15px;
     margin: 0 8px;
