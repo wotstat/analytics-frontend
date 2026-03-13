@@ -74,6 +74,8 @@ const links: SidebarLink[] = [
   { to: '/session/lootbox', labels: 'Коробки' },
   { to: '/session/chuck-norris-tournament', labels: 'Очки Чака' },
   'separator',
+  // { to: '/session/onslaught', labels: 'Натиск' },
+  // 'separator',
   { to: '/widgets', labels: 'Виджеты' },
 ]
 
@@ -84,6 +86,7 @@ const key = ref(0)
 const stat = useQueryStatParams()
 watch(stat, (current, old) => {
   if (JSON.stringify(current) == JSON.stringify(old)) return
+  if (route.meta.preventRemountOnStatChange) return
   key.value++
 })
 
