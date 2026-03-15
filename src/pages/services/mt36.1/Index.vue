@@ -80,7 +80,7 @@
           :left="hitPercents.data.find(item => leftVersions.has(item.gameVersion))?.hitPercent ?? 0"
           :right="hitPercents.data.find(item => rightVersions.has(item.gameVersion))?.hitPercent ?? 0" />
 
-        <CompareCard :min-step="0.01" :processor="percent" :title="'Процент пробитий относительно попаданий'"
+        <CompareCard :min-step="0.01" :processor="percent" :title="'Пробитий относительно попаданий'"
           :left="hitPercents.data.find(item => leftVersions.has(item.gameVersion))?.piercingPercent ?? 0"
           :right="hitPercents.data.find(item => rightVersions.has(item.gameVersion))?.piercingPercent ?? 0" />
       </div>
@@ -1096,6 +1096,8 @@ async function loadNextBatchRight(options: Options) {
     .controls {
       .line {
         display: flex;
+        flex-wrap: wrap;
+        white-space: nowrap;
         gap: 0.5em;
         margin-bottom: 1em;
 
@@ -1123,6 +1125,10 @@ async function loadNextBatchRight(options: Options) {
   .ballistic-distribution {
     .line {
       margin-bottom: 1em;
+
+      &.flex {
+        flex-wrap: wrap;
+      }
     }
 
     .line.charts {
