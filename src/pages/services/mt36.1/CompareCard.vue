@@ -38,6 +38,10 @@ const props = defineProps<{
     p {
       margin: 0;
       font-size: 2.5em;
+
+      @media screen and (max-width: 600px) {
+        font-size: 2em;
+      }
     }
 
     .left {
