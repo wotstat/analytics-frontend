@@ -1,5 +1,5 @@
 <template>
-  <div class="bar" :class="{
+  <div class="bar mt-font" :class="{
     'selected': props.selected,
     [`rank-${props.value.rank}`]: true,
     [props.value.timeline]: true,
@@ -7,6 +7,12 @@
     height: `${props.value.relativeRating * 100}%`
   }">
     <div class="shadow"></div>
+    <div class="letter" v-if="props.value.divisionLetter && props.value.divisionLetter != '?'">
+      {{ props.value.divisionLetter }}
+    </div>
+    <div class="leaderboard-pos" v-if="leaderboardPosition">
+      {{ leaderboardPosition }}
+    </div>
     <Transition name="fade">
       <div class="selection-box" v-if="props.selected">
         <div class="line left-line vertical"></div>
@@ -15,19 +21,25 @@
         <div class="line top-line horizontal"></div>
       </div>
     </Transition>
-
-
   </div>
 </template>
 
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import { DayChartData } from '../types'
 
 const props = defineProps<{
   value: DayChartData
   selected?: boolean
 }>()
+
+const leaderboardPosition = computed(() => {
+  if (!props.value.leaderboardPosition) return null
+  if (props.value.leaderboardPosition >= 1e4) return Math.round(props.value.leaderboardPosition / 1e3) + 'k'
+  return props.value.leaderboardPosition
+})
+
 </script>
 
 
@@ -38,27 +50,66 @@ const props = defineProps<{
   --background: linear-gradient(-45deg, #ffb86c7e 0%, #ff8c0071 100%);
   --hover-background: linear-gradient(-45deg, #ffb86c9e 0%, #ff8c0091 100%);
   --selected-background: linear-gradient(-45deg, #fff0df 0%, #ff8c0091 100%);
-  --shadow-color: linear-gradient(0deg, #ffb86c20 0%, #ffb86c00 100%);
+  --shadow-color: linear-gradient(0deg, #ffb86c12 0%, #ffb86c00 100%);
   --selected-line: #ffd6a4;
   --selected-line-shadow: #ffac46;
 
+  &.rank-first {
+    --top-color: #b3b3b3;
+    --background: linear-gradient(-10deg, #69696925 0%, #595959 100%);
+    --hover-background: linear-gradient(-10deg, #85858531 0%, #858585 100%);
+    --selected-background: linear-gradient(-45deg, #ffffff 0%, #858585 100%);
+    --shadow-color: linear-gradient(0deg, #85858516 0%, #85858500 100%);
+    --selected-line: #ffffff;
+    --selected-line-shadow: #858585;
+  }
+
+  &.rank-second {
+    --top-color: #ffd5ac;
+    --background: linear-gradient(-10deg, #cd803225 0%, #c4711e 100%);
+    --hover-background: linear-gradient(-10deg, #dc985448 0%, #cd7f32 100%);
+    --selected-background: linear-gradient(-45deg, #fff6ed 0%, #cd7f32 100%);
+    --shadow-color: linear-gradient(0deg, #cd7f3216 0%, #cd7f3200 100%);
+    --selected-line: #ffffff;
+    --selected-line-shadow: #cd7f32;
+  }
+
+  &.rank-third {
+    --top-color: #ffffff;
+    --background: linear-gradient(-10deg, #d2d2d223 0%, #d2d2d2 100%);
+    --hover-background: linear-gradient(-10deg, #a4a4a45d 0%, #d2d2d2 100%);
+    --selected-background: linear-gradient(-45deg, #ffffff 0%, #d2d2d2 100%);
+    --shadow-color: linear-gradient(0deg, #d2d2d216 0%, #d2d2d200 100%);
+    --selected-line: #ffffff;
+    --selected-line-shadow: #d2d2d2;
+  }
 
   &.rank-fourth {
-    --top-color: #ffea81;
-    --background: linear-gradient(-10deg, #ffec8a37 0%, #ffd500c7 100%);
-    --hover-background: linear-gradient(-10deg, #fff3b965 0%, #ffd500c7 100%);
-    --selected-background: linear-gradient(-45deg, #ffffff 0%, #ffde38 100%);
-    --shadow-color: linear-gradient(0deg, #ffd50022 0%, #ffd50000 100%);
+    --top-color: #fff2b4;
+    --background: linear-gradient(-10deg, #ffe88a37 0%, #FFD700c7 100%);
+    --hover-background: linear-gradient(-10deg, #fff3b965 0%, #FFD700c7 100%);
+    --selected-background: linear-gradient(-45deg, #ffffff 0%, #ffd738 100%);
+    --shadow-color: linear-gradient(0deg, #ffd70016 0%, #ffd90000 100%);
     --selected-line: #ffffff;
     --selected-line-shadow: #ffbc04;
   }
 
   &.rank-fifth {
-    --top-color: #eba2ff;
-    --background: linear-gradient(-10deg, #b357cd37 0%, #9b04c5 100%);
-    --hover-background: linear-gradient(-10deg, #bf6bd676 0%, #9b04c5 100%);
-    --selected-background: linear-gradient(-45deg, #ffffff 0%, #9b04c5 100%);
-    --shadow-color: linear-gradient(0deg, #9b04c522 0%, #9b04c500 100%);
+    --top-color: #dcfff8;
+    --background: linear-gradient(-10deg, #41ffd937 0%, #41ffd9 100%);
+    --hover-background: linear-gradient(-10deg, #9effec62 0%, #41ffd9 100%);
+    --selected-background: linear-gradient(-45deg, #ffffff 0%, #41ffd9 100%);
+    --shadow-color: linear-gradient(0deg, #41ffd923 0%, #41ffd900 100%);
+    --selected-line: #dffff9;
+    --selected-line-shadow: #41ffd9;
+  }
+
+  &.rank-sixth {
+    --top-color: #f0baff;
+    --background: linear-gradient(-10deg, #b357cd37 0%, #be25e9 100%);
+    --hover-background: linear-gradient(-10deg, #bf6bd676 0%, #be25e9 100%);
+    --selected-background: linear-gradient(-45deg, #ffffff 0%, #cd47f1 100%);
+    --shadow-color: linear-gradient(0deg, #be1dea23 0%, #be25e900 100%);
     --selected-line: #f5d2ff;
     --selected-line-shadow: #c50bf9;
   }
@@ -69,6 +120,28 @@ const props = defineProps<{
   min-width: 15px;
   position: relative;
   flex: 1;
+  user-select: none;
+  transition: height 0.5s ease;
+
+  .letter,
+  .leaderboard-pos {
+    position: absolute;
+    left: 50%;
+    top: -20px;
+    transform: translateX(-50%);
+    font-size: 12px;
+    color: var(--top-color);
+    z-index: 3;
+  }
+
+  .leaderboard-pos {
+    font-size: 10px;
+    z-index: 3;
+  }
+
+  &:has(.leaderboard-pos) .letter {
+    top: -37px;
+  }
 
   &.played {
     cursor: pointer;
@@ -77,8 +150,20 @@ const props = defineProps<{
       background: var(--hover-background);
     }
 
-    &.selected {
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
       background: var(--selected-background);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 4;
+    }
+
+    &.selected {
+      &::after {
+        opacity: 1;
+      }
     }
 
     .selection-box {
@@ -176,13 +261,36 @@ const props = defineProps<{
     }
   }
 
+  &.active {
+
+    &::after {
+      --line-color: #ffffff;
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to left top, transparent 50%, var(--line-color) 52%, var(--line-color) 65%, transparent 68%),
+        linear-gradient(to left top, var(--line-color) 16%, transparent 18%);
+      background-size: calc(100% + 2px) 8px;
+      background-repeat: repeat;
+      background-position: bottom;
+      mask: linear-gradient(to top, #fff 0, rgba(255, 255, 255, 0.8) 100%);
+      opacity: 0.3;
+      mix-blend-mode: hard-light;
+    }
+  }
+
   &.future {
     background: linear-gradient(0deg, #9898981c 0%, #98989800 100%);
+
+    .letter {
+      display: none;
+    }
   }
 
   &.past {
 
-    // background: linear-gradient(0deg, #9898983d 0%, #98989800 100%);
+    background: #9898981c;
+
     .shadow {
       position: absolute;
       left: 0;
