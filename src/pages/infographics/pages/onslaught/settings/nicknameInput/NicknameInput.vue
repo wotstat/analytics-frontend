@@ -14,9 +14,11 @@ import SearchLine from '@/shared/game/selectors/components/searchLine/SearchLine
 import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PlayerIcon from './player.svg'
+import { refDebounced } from '@vueuse/core';
 
 const props = defineProps<{
   syncToRoute?: boolean
+  syncDebounceTime?: number
 }>()
 
 const nickname = defineModel({
@@ -34,15 +36,16 @@ onMounted(() => {
   }
 })
 
-watch(nickname, (newNickname) => {
+const debouncedNickname = refDebounced(nickname, props.syncDebounceTime ?? 1000)
+
+watch(debouncedNickname, (newNickname) => {
   if (!props.syncToRoute) return
 
   const query = { ...route.query }
   if (newNickname) query.nickname = newNickname
   else delete query.nickname
 
-  router.replace({ ...route, query })
-
+  router.push({ ...route, query })
 })
 </script>
 

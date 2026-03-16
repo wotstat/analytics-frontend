@@ -68,9 +68,21 @@ export function getDivisionByRating(rating: number, region: string) {
   return key ? targetMap[parseInt(key) as keyof typeof targetMap] : 'first_E'
 }
 
-export function getRankByRating(rating: number, region: string) {
+export function getRankByRating(rating: number, region: string, eliteRating: number | null = null) {
+  if (eliteRating !== null && rating >= eliteRating) return 'sixth'
+
   const division = getDivisionByRating(rating, region)
   if (division == 'qual') return 'qual'
 
   return division.split('_')[0] as 'first' | 'second' | 'third' | 'fourth' | 'fifth'
+}
+
+const possibleLetters = new Set(['E', 'D', 'C', 'B', 'A'])
+export function getDivisionLetterByRating(rating: number, region: string) {
+  const division = getDivisionByRating(rating, region)
+  if (division == 'qual') return '?'
+
+  const letter = division.split('_')[1]
+  if (possibleLetters.has(letter)) return letter as 'E' | 'D' | 'C' | 'B' | 'A'
+  return ''
 }

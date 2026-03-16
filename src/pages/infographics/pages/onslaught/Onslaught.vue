@@ -18,7 +18,7 @@ import { preferredGameOrDefault } from '@/shared/global/globalPreferred'
 import { gameToRegion } from '@/shared/game/wot'
 import Settings from './settings/Settings.vue'
 import { refDebounced } from '@vueuse/core'
-import { getRankByRating, getSeasonDuration } from './utils'
+import { getDivisionLetterByRating, getRankByRating, getSeasonDuration } from './utils'
 import { DayChartData } from './types'
 
 const ONE_DAY = 24 * 60 * 60 * 1000
@@ -63,18 +63,23 @@ const seasonInterval = computed(() => {
   return { start, end: new Date(start.getTime() + seasonLength), length: seasonLength / ONE_DAY }
 })
 
-const statistics = shallowRef<{
+
+type StatisticRes = {
   day: string,
   minRating: number,
   maxRating: number,
   lastRating: number,
+  lastEliteRating: number,
+  lastLeaderboardPosition: number | null,
   totalBattles: number,
   totalResults: number,
   wins: number,
   prestigePoints: number,
   dmg: number,
   ratingDelta: number
-}[] | null>(null)
+}
+
+const statistics = shallowRef<StatisticRes[] | null>(null)
 
 async function load() {
   if (!seasonInterval.value) return
@@ -85,29 +90,28 @@ async function load() {
 
   statistics.value = null
 
-  const result = await query<{
-    day: string,
-    minRating: number,
-    maxRating: number,
-    lastRating: number,
-    totalBattles: number,
-    totalResults: number,
-    wins: number,
-    prestigePoints: number,
-    dmg: number,
-    ratingDelta: number
-  }>(`
+  const result = await query<StatisticRes>(`
     with
         '${nickName}' as PLAYER,
         '${startDate}' as START_DATE,
         '${endDate}' as END_DATE,
         '${region}' as REGION,
         -2 as OFFSET,
+        t0 as (
+            select toStartOfDay(dateTime + interval OFFSET hour) as day,
+                argMax(eliteRating, dateTime) as lastEliteRating
+            from Event_OnComp7Info
+            where region = REGION
+                and dateTime between START_DATE and END_DATE
+            group by day
+            order by day
+        ),
         t1 as (
             select toStartOfDay(dateTime + interval OFFSET hour) as day,
                   min(rating) as minRating,
                   max(rating) as maxRating,
-                  argMax(rating, dateTime) as lastRating
+                  argMax(rating, dateTime) as lastRating,
+                  argMax(leaderboardPosition, dateTime) as lastLeaderboardPosition
             from Event_OnComp7Info
             where playerName = PLAYER
               and dateTime between START_DATE and END_DATE
@@ -117,7 +121,7 @@ async function load() {
         ),
         t2 as (
             select toStartOfDay(dateTime + interval OFFSET hour) as day,
-                  count() as totalBattles
+                  toUInt32(count()) as totalBattles
             from Event_OnBattleStart
             where region = REGION
               and playerName = PLAYER
@@ -128,11 +132,11 @@ async function load() {
         ),
         t3 as (
             select toStartOfDay(dateTime + interval OFFSET hour) as day,
-                  count() as totalResults,
-                  countIf(result = 'win') as wins,
+                  toUInt32(count()) as totalResults,
+                  toUInt32(countIf(result = 'win')) as wins,
                   avg(personal.comp7PrestigePoints) as prestigePoints,
                   avg(personal.damageDealt) as dmg,
-                  sum(comp7.ratingDelta) as ratingDelta
+                  toUInt32(sum(comp7.ratingDelta)) as ratingDelta
             from Event_OnBattleResult
             where region = REGION
               and playerName = PLAYER
@@ -141,9 +145,10 @@ async function load() {
             group by day
             order by day
         )
-    select * from t1
-    join t2 using day
-    join t3 using day
+    select * from t0
+    left outer join t1 using day
+    left outer join t2 using day
+    left outer join t3 using day
   `)
 
   if (startDate != dateToDbDate(seasonInterval.value.start) ||
@@ -155,13 +160,16 @@ async function load() {
 }
 
 watch([seasonInterval, debouncedNickname, preferredGameOrDefault], load)
+watch([seasonInterval, nickname, preferredGameOrDefault], () => {
+  statistics.value = null
+})
 
 const days = computed(() => {
   if (!seasonInterval.value) return []
-  if (!statistics.value || statistics.value.length === 0) return []
+  const stat = statistics.value ?? []
 
-  const statByDay = new Map(statistics.value?.map(s => [s.day, s]) ?? [])
-  const maxRating = Math.max(...statistics.value?.map(s => s.maxRating) ?? [0], 0)
+  const statByDay = new Map(stat?.map(s => [s.day, s]) ?? [])
+  const maxRating = Math.max(...stat?.map(s => s.maxRating) ?? [0], 0)
 
   const result = []
   let lastRating = 0
@@ -171,17 +179,21 @@ const days = computed(() => {
     const dbDate = `${isoDate.slice(0, 10)} ${isoDate.slice(11, 19)}`
 
     const stat = statByDay.get(dbDate)
-    if (stat) lastRating = stat.lastRating
-    if (stat && firstDayPlayed == -1) firstDayPlayed = i
+    if (stat?.lastRating) lastRating = stat.lastRating
+    if (stat?.lastRating && firstDayPlayed == -1) firstDayPlayed = i
 
     const isFuture = seasonInterval.value.start.getTime() + i * ONE_DAY > Date.now()
-    const timeline: DayChartData['timeline'] = firstDayPlayed == -1 ? 'past' : isFuture ? 'future' : stat ? 'played' : 'active'
+    const timeline: DayChartData['timeline'] = isFuture ? 'future' : firstDayPlayed == -1 ? 'past' : stat?.totalBattles ? 'played' : 'active'
+
+    const ratingPercent = maxRating ? lastRating / maxRating : 0
 
     result.push({
       dayIndex: i,
       day: dbDate,
+      eliteRating: stat?.lastEliteRating ?? 1e5,
+      leaderboardPosition: stat?.lastLeaderboardPosition ?? null,
       rating: lastRating,
-      ratingPercent: maxRating ? lastRating / maxRating : 0,
+      ratingPercent: timeline == 'future' && firstDayPlayed == -1 ? 0.3 : ratingPercent,
       timeline,
     })
 
@@ -193,7 +205,9 @@ const days = computed(() => {
 const barsData = computed<DayChartData[]>(() => days.value.map(d => ({
   relativeRating: d.ratingPercent,
   timeline: d.timeline,
-  rank: getRankByRating(d.rating, gameToRegion(preferredGameOrDefault.value))
+  rank: getRankByRating(d.rating, gameToRegion(preferredGameOrDefault.value), d.eliteRating),
+  divisionLetter: getDivisionLetterByRating(d.rating, gameToRegion(preferredGameOrDefault.value)),
+  leaderboardPosition: d.leaderboardPosition,
 })))
 
 
