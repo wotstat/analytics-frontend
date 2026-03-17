@@ -3,7 +3,7 @@
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" :seasons="seasons.data ?? []" />
     <DayChart :days="barsData" class="day-chart" @select="selectDay" @deselect="deselectDay"
       :selectedIndex="selectedDayIndex" />
-
+    <MainStat />
   </div>
 </template>
 
@@ -20,6 +20,9 @@ import Settings from './settings/Settings.vue'
 import { refDebounced } from '@vueuse/core'
 import { getDivisionLetterByRating, getRankByRating, getSeasonDuration } from './utils'
 import { DayChartData } from './types'
+import MainStat from './mainStat/MainStat.vue'
+
+
 
 const ONE_DAY = 24 * 60 * 60 * 1000
 
