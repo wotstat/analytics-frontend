@@ -5,6 +5,7 @@ export const shared = [
   'player',
   'tank',
   'win',
+  'winrate'
 ] as const
 
 export const efficiency = [
@@ -33,12 +34,14 @@ export const efficiency = [
   'xp', 'xp-avg', 'xp-max',
   'gun-mark-dmg',
   'gun-mark-percent',
-  'hp'
+  'hp',
+  'prestige-points', 'prestige-points-avg', 'prestige-points-max',
 ] as const
 
 export const efficiencyWithMods = [
   { value: 'battles', modifications: ['battles'] },
   { value: 'win', modifications: ['win'] },
+  { value: 'winrate', modifications: ['winrate'] },
   { value: 'dmg', modifications: ['dmg', 'dmg-avg', 'dmg-max'] },
   { value: 'shot-dmg', modifications: ['shot-dmg', 'shot-dmg-avg', 'shot-dmg-max'] },
   { value: 'block', modifications: ['block', 'block-avg', 'block-max'] },
@@ -68,6 +71,7 @@ export const efficiencyWithMods = [
   { value: 'base-defend', modifications: ['base-defend', 'base-defend-avg', 'base-defend-max'] },
   { value: 'gun-mark-dmg', modifications: ['gun-mark-dmg'] },
   { value: 'gun-mark-percent', modifications: ['gun-mark-percent'] },
+  { value: 'prestige-points', modifications: ['prestige-points', 'prestige-points-avg', 'prestige-points-max'] },
 ] as const satisfies { value: IconType, modifications: IconType[] }[]
 
 

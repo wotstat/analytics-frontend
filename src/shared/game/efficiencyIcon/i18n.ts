@@ -4,6 +4,7 @@ export const i18n = {
   ru: {
     'battles': 'Боёв',
     'win': 'Побед',
+    'winrate': 'Процент побед',
     'player': 'Игрок',
     'tank': 'Танк',
 
@@ -91,6 +92,9 @@ export const i18n = {
     'gun-mark-dmg': 'Сумма для отметок',
     'gun-mark-percent': 'Процент отметки',
     'hp': 'Очки прочности',
+    'prestige-points': 'Очки престижа',
+    'prestige-points-avg': 'Ср. очки престижа',
+    'prestige-points-max': 'Макс. очки престижа',
 
     'total': 'Всего',
     'max': 'Макс.',
