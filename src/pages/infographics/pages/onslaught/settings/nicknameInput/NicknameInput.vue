@@ -14,7 +14,7 @@ import SearchLine from '@/shared/game/selectors/components/searchLine/SearchLine
 import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PlayerIcon from './player.svg'
-import { refDebounced } from '@vueuse/core';
+import { refDebounced } from '@vueuse/core'
 
 const props = defineProps<{
   syncToRoute?: boolean
@@ -34,6 +34,13 @@ onMounted(() => {
   if (props.syncToRoute) {
     nickname.value = route.query.nickname as string || ''
   }
+})
+
+watch(route, (newRoute) => {
+  if (!props.syncToRoute) return
+
+  const newNickname = newRoute.query.nickname as string || ''
+  if (newNickname !== nickname.value) nickname.value = newNickname
 })
 
 const debouncedNickname = refDebounced(nickname, props.syncDebounceTime ?? 1000)

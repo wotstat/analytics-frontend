@@ -3,7 +3,8 @@
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" :seasons="seasons.data ?? []" />
     <DayChart :days="barsData" class="day-chart" @select="selectDay" @deselect="deselectDay"
       :selectedIndex="selectedDayIndex" />
-    <MainStat />
+    <!-- <MainStat :game="preferredGameOrDefault" :topRating @selectDay="selectDay" /> -->
+    <MainStat :game="preferredGameOrDefault" :items="mainStats" @selectDay="selectDay" />
   </div>
 </template>
 
@@ -13,16 +14,15 @@ import { computed, onMounted, ref, shallowRef, watch, watchEffect } from 'vue'
 import DayChart from './dayChart/DayChart.vue'
 import { dateToDbDate, LONG_CACHE_SETTINGS, query, queryAsync, queryComputed } from '@/db'
 import { useI18n } from '@/shared/i18n/useI18n'
-import i18n from './i18n.json'
+import i18n from '@/shared/game/comp7/i18n.json'
 import { preferredGameOrDefault } from '@/shared/global/globalPreferred'
 import { gameToRegion } from '@/shared/game/wot'
 import Settings from './settings/Settings.vue'
 import { refDebounced } from '@vueuse/core'
-import { getDivisionLetterByRating, getRankByRating, getSeasonDuration } from './utils'
 import { DayChartData } from './types'
 import MainStat from './mainStat/MainStat.vue'
-
-
+import { getDivisionLetterByRating, getRankByRating, getSeasonDuration } from '@/shared/game/comp7/utils'
+import { StatItem, useMainStat } from './mainStat/useMainStat'
 
 const ONE_DAY = 24 * 60 * 60 * 1000
 
@@ -71,6 +71,7 @@ type StatisticRes = {
   day: string,
   minRating: number,
   maxRating: number,
+  topRating: [rating: number, eliteRating: number],
   lastRating: number,
   lastEliteRating: number,
   lastLeaderboardPosition: number | null,
@@ -79,6 +80,7 @@ type StatisticRes = {
   wins: number,
   prestigePoints: number,
   dmg: number,
+  assist: number,
   ratingDelta: number
 }
 
@@ -92,6 +94,7 @@ async function load() {
   const nickName = debouncedNickname.value
 
   statistics.value = null
+  selectedDayIndex.value = null
 
   const result = await query<StatisticRes>(`
     with
@@ -113,6 +116,7 @@ async function load() {
             select toStartOfDay(dateTime + interval OFFSET hour) as day,
                   min(rating) as minRating,
                   max(rating) as maxRating,
+                  argMax((rating, eliteRating), rating) as topRating,
                   argMax(rating, dateTime) as lastRating,
                   argMax(leaderboardPosition, dateTime) as lastLeaderboardPosition
             from Event_OnComp7Info
@@ -137,9 +141,10 @@ async function load() {
             select toStartOfDay(dateTime + interval OFFSET hour) as day,
                   toUInt32(count()) as totalResults,
                   toUInt32(countIf(result = 'win')) as wins,
-                  avg(personal.comp7PrestigePoints) as prestigePoints,
-                  avg(personal.damageDealt) as dmg,
-                  toUInt32(sum(comp7.ratingDelta)) as ratingDelta
+                  toUInt32(sum(personal.comp7PrestigePoints)) as prestigePoints,
+                  toUInt32(sum(personal.damageDealt)) as dmg,
+                  toUInt32(sum(personal.damageAssistedRadio + personal.damageAssistedTrack + personal.damageAssistedStun)) as assist,
+                  toInt32(sum(comp7.ratingDelta)) as ratingDelta
             from Event_OnBattleResult
             where region = REGION
               and playerName = PLAYER
@@ -198,6 +203,16 @@ const days = computed(() => {
       rating: lastRating,
       ratingPercent: timeline == 'future' && firstDayPlayed == -1 ? 0.3 : ratingPercent,
       timeline,
+      topRating: stat?.topRating ?? [0, 0],
+      totalBattles: stat?.totalBattles ?? 0,
+      totalResults: stat?.totalResults ?? 0,
+      wins: stat?.wins ?? 0,
+      prestigePoints: stat?.prestigePoints ?? 0,
+      damage: stat?.dmg ?? 0,
+      assist: stat?.assist ?? 0,
+      ratingDelta: stat?.ratingDelta ?? 0,
+      lastRating: stat?.lastRating ?? 0,
+      lastEliteRating: stat?.lastEliteRating ?? 0,
     })
 
   }
@@ -208,15 +223,13 @@ const days = computed(() => {
 const barsData = computed<DayChartData[]>(() => days.value.map(d => ({
   relativeRating: d.ratingPercent,
   timeline: d.timeline,
-  rank: getRankByRating(d.rating, gameToRegion(preferredGameOrDefault.value), d.eliteRating),
-  divisionLetter: getDivisionLetterByRating(d.rating, gameToRegion(preferredGameOrDefault.value)),
+  rank: getRankByRating(d.rating, preferredGameOrDefault.value, d.eliteRating),
+  divisionLetter: getDivisionLetterByRating(d.rating, preferredGameOrDefault.value),
   leaderboardPosition: d.leaderboardPosition,
 })))
 
+const mainStats = useMainStat(days, preferredGameOrDefault, selectedSeason, selectedDayIndex)
 
-onMounted(() => {
-
-})
 </script>
 
 

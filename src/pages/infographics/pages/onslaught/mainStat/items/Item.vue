@@ -29,12 +29,20 @@ const props = defineProps<{
   .icon {
     display: flex;
     align-items: center;
+    user-select: none;
+    pointer-events: none;
   }
 
   .right {
     display: flex;
     flex-direction: column;
     justify-content: center;
+  }
+
+  .value {
+    font-size: 24px;
+    font-weight: bold;
+    line-height: 1;
   }
 }
 </style>

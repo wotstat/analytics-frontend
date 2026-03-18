@@ -1,29 +1,61 @@
 <template>
-  <div class="stats">
-    <SimpleItem :icon="'battles'" :value="342" :text="'Боёв проведено'" />
-    <SimpleItem :icon="'win'" :value="'75%'" :text="'Процент побед'" />
-    <SimpleItem :icon="'winrate'" :value="'75%'" :text="'Процент побед'" />
-    <SimpleItem :icon="'dmg'" :value="3342" :text="'Средний урон'" />
-    <SimpleItem :icon="'assist'" :value="444" :text="'Среднее содействие'" />
-    <SimpleItem :icon="'prestige-points'" :value="444" :text="'Очков престижа'" />
+  <div class="stats" :style="{ '--cols': items.length }">
+    <div class="items">
+      <template v-for="item in items">
+        <TopRating v-if="item.type === 'top-rating'" :day="item.dayIndex" :value="item.rating" :season="item.season"
+          :eliteRating="item.eliteRating" :game @selectDay="emit('selectDay', $event)" />
+        <SimpleItem v-else-if="item.type === 'simple'" :icon="item.icon" :value="item.value" :text="item.text" />
+        <Winrate v-else-if="item.type === 'winrate'" :value="item.value" :text="item.text" />
+        <RatingDelta v-else-if="item.type === 'rating-delta'" :value="item.rating" :eliteRating="item.eliteRating"
+          :delta="item.delta" :season="item.season" :game />
+      </template>
+    </div>
   </div>
 </template>
 
 
 <script setup lang="ts">
+import { GameVendor } from '@/shared/game/wot'
+import { StatItem } from './useMainStat'
 import SimpleItem from './items/SimpleItem.vue'
+import TopRating from './items/TopRating.vue'
+import Winrate from './items/Winrate.vue'
+import RatingDelta from './items/RatingDelta.vue'
 
+const props = defineProps<{
+  items: StatItem[]
+  game?: GameVendor
+}>()
 
-const props = defineProps<{}>()
+const emit = defineEmits<{
+  (e: 'selectDay', dayIndex: number): void
+}>()
 </script>
 
 
 <style lang="scss" scoped>
 .stats {
-  display: flex;
-  gap: 20px;
-  height: 80px;
-
+  margin-top: 20px;
+  container: main-stats / inline-size;
   color: #fffef7;
+
+  .items {
+    display: grid;
+    grid-template-columns: repeat(var(--cols), 1fr);
+    gap: 20px;
+
+    @container main-stats (width < 1000px) {
+      grid-template-columns: repeat(calc(var(--cols) / 2), 1fr);
+    }
+
+    @container main-stats (width < 550px) {
+      gap: 10px;
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @container main-stats (width < 350px) {
+      grid-template-columns: 1fr;
+    }
+  }
 }
 </style>
