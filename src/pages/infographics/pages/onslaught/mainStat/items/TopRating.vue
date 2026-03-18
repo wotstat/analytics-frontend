@@ -4,7 +4,7 @@
       <RankIcon :rank="{ value: value, eliteRating: eliteRating }" :size="'medium'" :season :game class='icon' />
     </template>
     <template #value>
-      <p class="value">{{ value }}</p>
+      <p>{{ value }}</p>
     </template>
     <template #subline>
       <p class="text">
@@ -38,21 +38,12 @@ const emit = defineEmits<{
 
 <style lang="scss" scoped>
 .icon {
-  width: 55px;
-  height: 55px;
-  user-select: none;
-  pointer-events: none;
-}
-
-.value {
-  margin-left: 8px;
+  height: 100%;
 }
 
 .text {
   font-size: 14px;
   line-height: 1.2;
-  margin-left: 8px;
-  margin-top: 2px;
 
   .semi-transparent {
     opacity: 0.7;
@@ -66,6 +57,28 @@ const emit = defineEmits<{
     &:hover {
       text-decoration: underline;
     }
+  }
+}
+
+:deep(.normal) {
+  .text {
+    margin-top: 2px;
+  }
+
+  .text,
+  .value {
+    margin-left: 8px;
+  }
+}
+
+:deep(.small) {
+  .icon {
+    height: 80%;
+    margin-left: -2px;
+  }
+
+  .value {
+    margin-left: 2px;
   }
 }
 </style>

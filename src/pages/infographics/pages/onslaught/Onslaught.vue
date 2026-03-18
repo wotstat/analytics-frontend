@@ -18,7 +18,7 @@ import i18n from '@/shared/game/comp7/i18n.json'
 import { preferredGameOrDefault } from '@/shared/global/globalPreferred'
 import { gameToRegion } from '@/shared/game/wot'
 import Settings from './settings/Settings.vue'
-import { refDebounced } from '@vueuse/core'
+import { onKeyStroke, refDebounced } from '@vueuse/core'
 import { DayChartData } from './types'
 import MainStat from './mainStat/MainStat.vue'
 import { getDivisionLetterByRating, getRankByRating, getSeasonDuration } from '@/shared/game/comp7/utils'
@@ -41,6 +41,24 @@ function selectDay(index: number) {
 function deselectDay() {
   selectedDayIndex.value = null
 }
+
+onKeyStroke('ArrowLeft', () => {
+  if (selectedDayIndex.value == null) return
+  if (selectedDayIndex.value - 1 < 0) return
+
+  const nextIndex = days.value.slice(0, selectedDayIndex.value).findLastIndex(d => d.timeline == 'played')
+  if (nextIndex == -1) return
+  selectDay(nextIndex)
+})
+
+onKeyStroke('ArrowRight', () => {
+  if (selectedDayIndex.value == null) return
+  if (selectedDayIndex.value + 1 >= days.value.length) return
+
+  const nextIndex = days.value.slice(selectedDayIndex.value + 1).findIndex(d => d.timeline == 'played')
+  if (nextIndex == -1) return
+  selectDay(selectedDayIndex.value + 1 + nextIndex)
+})
 
 const seasons = queryAsync<{ region: string, season: string, start: string, end: string }>(`
   select region, season,
@@ -239,6 +257,8 @@ const mainStats = useMainStat(days, preferredGameOrDefault, selectedSeason, sele
 
   .day-chart {
     margin-top: 20px;
+    margin-left: calc(var(--content-page-margin, 0) * -1);
+    margin-right: calc(var(--content-page-margin, 0) * -1);
   }
 }
 </style>

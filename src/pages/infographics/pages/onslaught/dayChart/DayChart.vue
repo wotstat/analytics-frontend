@@ -34,9 +34,12 @@ function click(index: number) {
 <style lang="scss" scoped>
 .chart {
   height: 300px;
-  width: 100%;
-  overflow-x: auto;
+  overflow-x: scroll;
   padding-bottom: 10px;
+
+  &::-webkit-scrollbar-track {
+    margin: 0 var(--content-page-margin, 0);
+  }
 
   .bars {
     height: 100%;
@@ -45,7 +48,7 @@ function click(index: number) {
     display: flex;
     align-items: flex-end;
     gap: 2px;
-    padding: 0 15px;
+    padding: 0 var(--content-page-margin, 0);
     padding-top: 30px;
 
     min-width: 100%;

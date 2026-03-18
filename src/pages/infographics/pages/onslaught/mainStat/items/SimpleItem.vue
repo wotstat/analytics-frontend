@@ -29,14 +29,25 @@ const props = defineProps<{
 
 <style lang="scss" scoped>
 .icon {
-  width: 55px;
-  height: 55px;
+  height: 100%;
 }
 
 .text {
   font-size: 14px;
   opacity: 0.7;
   line-height: 1.2;
-  margin-top: 2px;
+}
+
+:deep(.normal) {
+  .text {
+    margin-top: 2px;
+  }
+}
+
+:deep(.small) {
+  .icon {
+    margin-left: -4px;
+    opacity: 0.8;
+  }
 }
 </style>
