@@ -6,4 +6,5 @@ export type DayChartData = {
   rank: 'qual' | 'first' | 'second' | 'third' | 'fourth' | 'fifth' | 'sixth'
   divisionLetter: 'E' | 'D' | 'C' | 'B' | 'A' | '?' | ''
   leaderboardPosition: number | null
+  dayIndex: number
 }
