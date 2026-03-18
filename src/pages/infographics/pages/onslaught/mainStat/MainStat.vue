@@ -42,13 +42,13 @@ const emit = defineEmits<{
   .items {
     display: grid;
     grid-template-columns: repeat(var(--cols), 1fr);
-    gap: 20px;
+    gap: 20px 30px;
 
-    @container main-stats (width < 1000px) {
+    @container main-stats (width < 800px) {
       grid-template-columns: repeat(calc(var(--cols) / 2), 1fr);
     }
 
-    @container main-stats (width < 550px) {
+    @container main-stats (width < 450px) {
       gap: 10px;
       grid-template-columns: repeat(2, 1fr);
     }

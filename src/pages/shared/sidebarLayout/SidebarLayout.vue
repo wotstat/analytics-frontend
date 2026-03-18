@@ -126,9 +126,10 @@ $mobile-layout: 1100px;
   }
 
   .content {
-    margin: 1rem;
     flex: 1;
     min-width: 0;
+    --content-page-margin: 1rem;
+    margin: var(--content-page-margin);
 
     @media screen and (min-width: 1500px) {
       max-width: calc(1200px - 3rem);
