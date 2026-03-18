@@ -35,7 +35,7 @@ import { preferredGameOrDefault } from '@/shared/global/globalPreferred'
 import { gameToRegion } from '@/shared/game/wot'
 import { computed, watch } from 'vue'
 import { useI18n } from '@/shared/i18n/useI18n'
-import i18n from '../i18n.json'
+import i18n from '@/shared/game/comp7/i18n.json'
 
 
 const { t } = useI18n(i18n)
