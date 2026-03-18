@@ -13,6 +13,9 @@
     <div class="leaderboard-pos" v-if="leaderboardPosition">
       {{ leaderboardPosition }}
     </div>
+    <div class="day">
+      День {{ value.dayIndex + 1 }}
+    </div>
     <Transition name="fade">
       <div class="selection-box" v-if="props.selected">
         <div class="line left-line vertical"></div>
@@ -26,7 +29,7 @@
 
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed } from 'vue'
 import { DayChartData } from '../types'
 
 const props = defineProps<{
@@ -122,6 +125,23 @@ const leaderboardPosition = computed(() => {
   flex: 1;
   user-select: none;
   transition: height 0.5s ease;
+
+  .day {
+    position: absolute;
+    left: 50%;
+    bottom: -20px;
+    transform: translateX(-50%);
+    font-size: 12px;
+    color: var(--top-color);
+    z-index: 3;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+  }
+
+  &.selected .day {
+    opacity: 1;
+  }
 
   .letter,
   .leaderboard-pos {

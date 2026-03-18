@@ -50,6 +50,7 @@ function click(index: number) {
     gap: 2px;
     padding: 0 var(--content-page-margin, 0);
     padding-top: 30px;
+    padding-bottom: 10px;
 
     min-width: 100%;
     width: max-content;

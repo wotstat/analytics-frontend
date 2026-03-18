@@ -244,6 +244,7 @@ const barsData = computed<DayChartData[]>(() => days.value.map(d => ({
   rank: getRankByRating(d.rating, preferredGameOrDefault.value, d.eliteRating),
   divisionLetter: getDivisionLetterByRating(d.rating, preferredGameOrDefault.value),
   leaderboardPosition: d.leaderboardPosition,
+  dayIndex: d.dayIndex,
 })))
 
 const mainStats = useMainStat(days, preferredGameOrDefault, selectedSeason, selectedDayIndex)

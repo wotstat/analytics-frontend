@@ -9,7 +9,7 @@
     <template #subline>
       <p class="text">
         <span class="semi-transparent">Рекорд</span> <a @click.stop="emit('selectDay', day)">
-          день {{ day }}</a>
+          день {{ day + 1 }}</a>
       </p>
     </template>
   </Item>
