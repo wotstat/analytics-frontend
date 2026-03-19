@@ -9,6 +9,9 @@
     <template #subline>
       <p class="text">{{ text }}</p>
     </template>
+    <template #tooltip v-if="tooltipComponent">
+      <component :is="tooltipComponent" />
+    </template>
   </Item>
 </template>
 
@@ -22,7 +25,8 @@ import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 const props = defineProps<{
   icon: IconType,
   value: string | number,
-  text: string
+  text: string,
+  tooltipComponent?: any
 }>()
 </script>
 
