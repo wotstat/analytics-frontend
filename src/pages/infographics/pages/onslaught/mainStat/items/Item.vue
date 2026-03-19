@@ -1,5 +1,5 @@
 <template>
-  <div class="item mt-font">
+  <div class="item mt-font" ref="item">
     <div class="normal">
       <div class="icon">
         <slot name="icon"></slot>
@@ -26,13 +26,34 @@
         <slot name="subline"></slot>
       </div>
     </div>
+
+    <PopoverAutoClose :target="item" v-model="hover" :placement="['bottom-float']"
+      :viewport-offset="{ top: headerHeight + additionalHeaderHeight, bottom: 10, left: 10, right: 10 }" :arrow-size="0"
+      v-if="slots.tooltip">
+      <div class="tooltip">
+        <slot name="tooltip"></slot>
+      </div>
+    </PopoverAutoClose>
+
   </div>
 </template>
 
 
 <script setup lang="ts">
+import { headerHeight, useAdditionalHeaderHeight } from '@/pages/shared/header/useAdditionalHeaderHeight'
+import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
+import { useElementHover } from '@vueuse/core'
+import { ref, useSlots } from 'vue'
+
 const props = defineProps<{
 }>()
+
+const item = ref<HTMLElement | null>(null)
+const { additionalHeaderHeight } = useAdditionalHeaderHeight(true)
+
+const slots = useSlots()
+const hover = useElementHover(item)
+const t = ref<boolean>(true)
 
 </script>
 
@@ -99,5 +120,9 @@ const props = defineProps<{
       }
     }
   }
+}
+
+.tooltip {
+  padding: 5px 10px;
 }
 </style>

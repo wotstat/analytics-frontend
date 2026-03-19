@@ -9,6 +9,9 @@
     <template #subline>
       <p class="text">{{ text }}</p>
     </template>
+    <template #tooltip v-if="tooltipComponent">
+      <component :is="tooltipComponent" />
+    </template>
   </Item>
 </template>
 
@@ -21,7 +24,8 @@ import { createPercentProcessor } from '@/shared/utils/processors/processors'
 
 const props = defineProps<{
   value: number,
-  text: string
+  text: string,
+  tooltipComponent?: any
 }>()
 
 const processor = createPercentProcessor(2)

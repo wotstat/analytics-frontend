@@ -96,10 +96,16 @@ type StatisticRes = {
   totalBattles: number,
   totalResults: number,
   wins: number,
+  squadBattles: number,
   prestigePoints: number,
+  prestigePointsLose: number,
+  prestigePointsWin: number,
+  prestigePointsMax: number,
   dmg: number,
   assist: number,
-  ratingDelta: number
+  ratingDelta: number,
+  ratingDeltaWin: number,
+  ratingDeltaLose: number,
 }
 
 const statistics = shallowRef<StatisticRes[] | null>(null)
@@ -158,11 +164,17 @@ async function load() {
         t3 as (
             select toStartOfDay(dateTime + interval OFFSET hour) as day,
                   toUInt32(count()) as totalResults,
+                  toUInt32(countIf(personal.squadID != 0)) as squadBattles,
                   toUInt32(countIf(result = 'win')) as wins,
                   toUInt32(sum(personal.comp7PrestigePoints)) as prestigePoints,
+                  toUInt32(sumIf(personal.comp7PrestigePoints, result != 'win')) as prestigePointsLose,
+                  toUInt32(sumIf(personal.comp7PrestigePoints, result = 'win')) as prestigePointsWin,
+                  toUInt32(max(personal.comp7PrestigePoints)) as prestigePointsMax,
                   toUInt32(sum(personal.damageDealt)) as dmg,
                   toUInt32(sum(personal.damageAssistedRadio + personal.damageAssistedTrack + personal.damageAssistedStun)) as assist,
-                  toInt32(sum(comp7.ratingDelta)) as ratingDelta
+                  toInt32(sum(comp7.ratingDelta)) as ratingDelta,
+                  toInt32(sumIf(comp7.ratingDelta, result = 'win')) as ratingDeltaWin,
+                  toInt32(sumIf(comp7.ratingDelta, result != 'win')) as ratingDeltaLose
             from Event_OnBattleResult
             where region = REGION
               and playerName = PLAYER
@@ -226,11 +238,17 @@ const days = computed(() => {
       totalResults: stat?.totalResults ?? 0,
       wins: stat?.wins ?? 0,
       prestigePoints: stat?.prestigePoints ?? 0,
+      prestigePointsLose: stat?.prestigePointsLose ?? 0,
+      prestigePointsWin: stat?.prestigePointsWin ?? 0,
+      prestigePointsMax: stat?.prestigePointsMax ?? 0,
       damage: stat?.dmg ?? 0,
       assist: stat?.assist ?? 0,
       ratingDelta: stat?.ratingDelta ?? 0,
       lastRating: stat?.lastRating ?? 0,
       lastEliteRating: stat?.lastEliteRating ?? 0,
+      ratingDeltaWin: stat?.ratingDeltaWin ?? 0,
+      ratingDeltaLose: stat?.ratingDeltaLose ?? 0,
+      squadBattles: stat?.squadBattles ?? 0,
     })
 
   }

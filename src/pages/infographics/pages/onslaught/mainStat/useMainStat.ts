@@ -1,7 +1,9 @@
 import { IconType } from '@/shared/game/efficiencyIcon/utils'
 import { GameVendor } from '@/shared/game/wot'
-import { computed, Ref } from 'vue'
-
+import { Component, computed, h, Ref } from 'vue'
+import PrestigeTooltip from './tooltips/PrestigeTooltip.vue'
+import WinrateTooltip from './tooltips/WinrateTooltip.vue'
+import BattlesTooltip from './tooltips/BattlesTooltip.vue'
 
 export type TopDayRating = {
   type: 'top-rating',
@@ -24,15 +26,14 @@ export type Simple = {
   value: number | string,
   text: string,
   icon: IconType
+  tooltipComponent?: Component
 }
 
 export type Winrate = {
   type: 'winrate',
   value: number,
   text: string,
-  wins: number,
-  losses: number
-  unknown: number
+  tooltipComponent?: Component
 }
 
 export type StatItem = TopDayRating | Simple | Winrate | RatingDelta
@@ -43,11 +44,17 @@ type Day = {
   timeline: 'played' | (string & {})
   totalBattles: number,
   totalResults: number,
+  squadBattles: number,
   wins: number,
   damage: number,
   assist: number,
   prestigePoints: number,
+  prestigePointsMax: number,
+  prestigePointsWin: number,
+  prestigePointsLose: number,
   ratingDelta: number,
+  ratingDeltaWin: number,
+  ratingDeltaLose: number,
   lastRating: number,
   lastEliteRating: number,
 }
@@ -71,6 +78,22 @@ export function useMainStat(days: Ref<Day[]>,
       const maxDayIndex = data.findLastIndex(d => d.topRating[0] == maxRating && d.timeline == 'played') || data.findLastIndex(d => d.topRating[0] == maxRating)!
 
       const maxStat = data[maxDayIndex]
+
+      const totalResults = data.reduce((sum, d) => sum + d.totalResults, 0)
+      function avg(value: number) {
+        return totalResults > 0 ? Math.round(value / totalResults) : 0
+      }
+
+      function sum<T>(array: T[], value: (item: T) => number) {
+        return array.reduce((sum, d) => sum + value(d), 0)
+      }
+
+      function avgSum<T>(array: T[], value: (item: T) => number) {
+        const total = sum(array, value)
+        return avg(total)
+      }
+
+      const totalBattles = data.reduce((sum, d) => sum + d.totalBattles, 0)
       if (maxStat && maxRating != 0) result.push({
         type: 'top-rating',
         rating: maxStat.topRating[0],
@@ -79,26 +102,37 @@ export function useMainStat(days: Ref<Day[]>,
         season: season.value ?? undefined
       })
 
-      const totalBattles = data.reduce((sum, d) => sum + d.totalBattles, 0)
-      result.push({ type: 'simple', value: totalBattles, text: 'Всего боёв', icon: 'battles' })
+      const squadBattles = sum(data, d => d.squadBattles)
+      result.push({
+        type: 'simple', value: totalBattles, text: 'Всего боёв', icon: 'battles', tooltipComponent: h(BattlesTooltip, {
+          solo: totalResults - squadBattles,
+          squad: squadBattles
+        })
+      })
 
-      const totalResults = data.reduce((sum, d) => sum + d.totalResults, 0)
-      function avg(value: number) {
-        return totalResults > 0 ? Math.round(value / totalResults) : 0
-      }
-
-      const totalWins = data.reduce((sum, d) => sum + d.wins, 0)
+      const totalWins = sum(data, d => d.wins)
       const winrate = totalResults > 0 ? totalWins / totalResults : 0
-      result.push({ type: 'winrate', value: winrate, text: 'Процент побед', wins: totalWins, losses: totalResults - totalWins, unknown: totalBattles - totalResults })
+      result.push({
+        type: 'winrate', value: winrate, text: 'Процент побед',
+        tooltipComponent: h(WinrateTooltip, {
+          lose: totalResults - totalWins,
+          win: totalWins,
+          unknown: totalBattles - totalResults
+        })
+      })
+      result.push({ type: 'simple', value: avgSum(data, d => d.damage), text: 'Урона', icon: 'dmg' })
+      result.push({ type: 'simple', value: avgSum(data, d => d.assist), text: 'Содействия', icon: 'assist' })
 
-      const totalDamage = data.reduce((sum, d) => sum + d.damage, 0)
-      result.push({ type: 'simple', value: avg(totalDamage), text: 'Урона', icon: 'dmg' })
-
-      const totalAssist = data.reduce((sum, d) => sum + d.assist, 0)
-      result.push({ type: 'simple', value: avg(totalAssist), text: 'Содействия', icon: 'assist' })
-
-      const totalPrestigePoints = data.reduce((sum, d) => sum + d.prestigePoints, 0)
-      result.push({ type: 'simple', value: avg(totalPrestigePoints), text: 'Очков престижа', icon: 'prestige-points' })
+      result.push({
+        type: 'simple', value: avgSum(data, d => d.prestigePoints), text: 'Очков престижа', icon: 'prestige-points',
+        tooltipComponent: h(PrestigeTooltip, {
+          lose: avgSum(data, d => d.prestigePointsLose),
+          win: avgSum(data, d => d.prestigePointsWin),
+          max: Math.max(...data.map(d => d.prestigePointsMax), 0),
+          ratingWin: totalResults > 0 ? sum(data, d => d.ratingDeltaWin) / totalWins : 0,
+          ratingLose: (totalResults - totalWins) > 0 ? sum(data, d => d.ratingDeltaLose) / (totalResults - totalWins) : 0
+        })
+      })
     } else {
 
       const day = data.find(d => d.dayIndex === selectedDayIndex)
@@ -117,14 +151,35 @@ export function useMainStat(days: Ref<Day[]>,
         delta: day.ratingDelta
       })
 
-      result.push({ type: 'simple', value: totalResults, text: 'Всего боёв', icon: 'battles' })
+      result.push({
+        type: 'simple', value: totalResults, text: 'Всего боёв', icon: 'battles', tooltipComponent: h(BattlesTooltip, {
+          solo: totalResults - day.squadBattles,
+          squad: day.squadBattles
+        })
+      })
 
       const winrate = totalResults > 0 ? day.wins / totalResults : 0
-      result.push({ type: 'winrate', value: winrate, text: 'Процент побед', wins: day.wins, losses: totalResults - day.wins, unknown: totalBattles - totalResults })
+      result.push({
+        type: 'winrate', value: winrate, text: 'Процент побед',
+        tooltipComponent: h(WinrateTooltip, {
+          lose: totalResults - day.wins,
+          win: day.wins,
+          unknown: totalBattles - totalResults
+        })
+      })
 
       result.push({ type: 'simple', value: avg(day.damage), text: 'Урона', icon: 'dmg' })
       result.push({ type: 'simple', value: avg(day.assist), text: 'Содействия', icon: 'assist' })
-      result.push({ type: 'simple', value: avg(day.prestigePoints), text: 'Очков престижа', icon: 'prestige-points' })
+      result.push({
+        type: 'simple', value: avg(day.prestigePoints), text: 'Очков престижа', icon: 'prestige-points',
+        tooltipComponent: h(PrestigeTooltip, {
+          lose: avg(day.prestigePointsLose),
+          win: avg(day.prestigePointsWin),
+          max: day.prestigePointsMax,
+          ratingWin: totalResults > 0 ? day.ratingDeltaWin / day.wins : 0,
+          ratingLose: (totalResults - day.wins) > 0 ? day.ratingDeltaLose / (totalResults - day.wins) : 0
+        })
+      })
 
     }
 
