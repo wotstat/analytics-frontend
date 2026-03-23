@@ -123,6 +123,6 @@ const t = ref<boolean>(true)
 }
 
 .tooltip {
-  padding: 5px 10px;
+  padding: 11px 15px;
 }
 </style>

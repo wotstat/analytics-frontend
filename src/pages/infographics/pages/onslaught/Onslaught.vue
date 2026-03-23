@@ -24,7 +24,9 @@ import MainStat from './mainStat/MainStat.vue'
 import { getDivisionLetterByRating, getRankByRating, getSeasonDuration } from '@/shared/game/comp7/utils'
 import { StatItem, useMainStat } from './mainStat/useMainStat'
 
-const ONE_DAY = 24 * 60 * 60 * 1000
+const ONE_HOUR = 60 * 60 * 1000
+const ONE_DAY = 24 * ONE_HOUR
+const COMP7_ISO_HOUR_OFFSET = -2
 
 const { t } = useI18n(i18n)
 
@@ -103,6 +105,9 @@ type StatisticRes = {
   prestigePointsMax: number,
   dmg: number,
   assist: number,
+  radioAssist: number,
+  trackAssist: number,
+  stunAssist: number,
   ratingDelta: number,
   ratingDeltaWin: number,
   ratingDeltaLose: number,
@@ -126,7 +131,7 @@ async function load() {
         '${startDate}' as START_DATE,
         '${endDate}' as END_DATE,
         '${region}' as REGION,
-        -2 as OFFSET,
+        ${COMP7_ISO_HOUR_OFFSET} as OFFSET,
         t0 as (
             select toStartOfDay(dateTime + interval OFFSET hour) as day,
                 argMax(eliteRating, dateTime) as lastEliteRating
@@ -172,6 +177,9 @@ async function load() {
                   toUInt32(max(personal.comp7PrestigePoints)) as prestigePointsMax,
                   toUInt32(sum(personal.damageDealt)) as dmg,
                   toUInt32(sum(personal.damageAssistedRadio + personal.damageAssistedTrack + personal.damageAssistedStun)) as assist,
+                  toUInt32(sum(personal.damageAssistedRadio)) as radioAssist,
+                  toUInt32(sum(personal.damageAssistedTrack)) as trackAssist,
+                  toUInt32(sum(personal.damageAssistedStun)) as stunAssist,
                   toInt32(sum(comp7.ratingDelta)) as ratingDelta,
                   toInt32(sumIf(comp7.ratingDelta, result = 'win')) as ratingDeltaWin,
                   toInt32(sumIf(comp7.ratingDelta, result != 'win')) as ratingDeltaLose
@@ -220,7 +228,7 @@ const days = computed(() => {
     if (stat?.lastRating) lastRating = stat.lastRating
     if (stat?.lastRating && firstDayPlayed == -1) firstDayPlayed = i
 
-    const isFuture = seasonInterval.value.start.getTime() + i * ONE_DAY > Date.now()
+    const isFuture = seasonInterval.value.start.getTime() + i * ONE_DAY > Date.now() + COMP7_ISO_HOUR_OFFSET * ONE_HOUR
     const timeline: DayChartData['timeline'] = isFuture ? 'future' : firstDayPlayed == -1 ? 'past' : stat?.totalBattles ? 'played' : 'active'
 
     const ratingPercent = maxRating ? lastRating / maxRating : 0
@@ -243,6 +251,9 @@ const days = computed(() => {
       prestigePointsMax: stat?.prestigePointsMax ?? 0,
       damage: stat?.dmg ?? 0,
       assist: stat?.assist ?? 0,
+      radioAssist: stat?.radioAssist ?? 0,
+      trackAssist: stat?.trackAssist ?? 0,
+      stunAssist: stat?.stunAssist ?? 0,
       ratingDelta: stat?.ratingDelta ?? 0,
       lastRating: stat?.lastRating ?? 0,
       lastEliteRating: stat?.lastEliteRating ?? 0,

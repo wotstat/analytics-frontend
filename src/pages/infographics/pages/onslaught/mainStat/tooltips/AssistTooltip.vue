@@ -1,12 +1,16 @@
 <template>
-  <div class="battles-tooltip">
+  <div class="assist-tooltip">
     <div class="line">
-      <Icon :icon="'solo'" class="icon" />
-      <p>Соло: <span class="value mt-font">{{ solo }}</span></p>
+      <Icon :icon="'assist-radio'" class="icon" />
+      <p>Разведданными: <span class="value mt-font">{{ radio }}</span></p>
     </div>
     <div class="line">
-      <Icon :icon="'platoon'" class="icon" />
-      <p>Взвод: <span class="value mt-font">{{ squad }}</span></p>
+      <Icon :icon="'assist-track'" class="icon" />
+      <p>Обездвиженным: <span class="value mt-font">{{ track }}</span></p>
+    </div>
+    <div class="line">
+      <Icon :icon="'stun'" class="icon" />
+      <p>Оглушением: <span class="value mt-font">{{ stun }}</span></p>
     </div>
   </div>
 </template>
@@ -16,16 +20,17 @@
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 
 const props = defineProps<{
-  solo: number
-  squad: number
+  radio: number
+  track: number
+  stun: number
 }>()
 </script>
 
 
 <style lang="scss" scoped>
-.battles-tooltip {
+.assist-tooltip {
   margin-bottom: -5px;
-  width: 130px;
+  width: 180px;
 }
 
 .line {

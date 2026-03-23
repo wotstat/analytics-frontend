@@ -5,7 +5,9 @@ export const shared = [
   'player',
   'tank',
   'win',
-  'winrate'
+  'winrate',
+  'solo',
+  'platoon'
 ] as const
 
 export const efficiency = [
@@ -17,6 +19,7 @@ export const efficiency = [
   'assist-track', 'assist-track-avg', 'assist-track-max',
   'base-capture', 'base-capture-avg', 'base-capture-max',
   'base-defend', 'base-defend-avg', 'base-defend-max',
+  'stun', 'stun-avg', 'stun-max',
   'block', 'block-avg', 'block-max',
   'chuck-score', 'chuck-score-avg', 'chuck-score-max',
   'crits', 'crits-avg', 'crits-max',
@@ -42,6 +45,8 @@ export const efficiencyWithMods = [
   { value: 'battles', modifications: ['battles'] },
   { value: 'win', modifications: ['win'] },
   { value: 'winrate', modifications: ['winrate'] },
+  { value: 'solo', modifications: ['solo'] },
+  { value: 'platoon', modifications: ['platoon'] },
   { value: 'dmg', modifications: ['dmg', 'dmg-avg', 'dmg-max'] },
   { value: 'shot-dmg', modifications: ['shot-dmg', 'shot-dmg-avg', 'shot-dmg-max'] },
   { value: 'block', modifications: ['block', 'block-avg', 'block-max'] },
@@ -49,6 +54,7 @@ export const efficiencyWithMods = [
   { value: 'discover', modifications: ['discover', 'discover-avg', 'discover-max'] },
   { value: 'assist-radio', modifications: ['assist-radio', 'assist-radio-avg', 'assist-radio-max'] },
   { value: 'assist-track', modifications: ['assist-track', 'assist-track-avg', 'assist-track-max'] },
+  { value: 'stun', modifications: ['stun', 'stun-avg', 'stun-max'] },
   { value: 'kill', modifications: ['kill', 'kill-avg', 'kill-max'] },
   { value: 'crits', modifications: ['crits', 'crits-avg', 'crits-max'] },
   { value: 'xp', modifications: ['xp', 'xp-avg', 'xp-max'] },
