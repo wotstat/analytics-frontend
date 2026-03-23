@@ -4,6 +4,8 @@ import { Component, computed, h, Ref } from 'vue'
 import PrestigeTooltip from './tooltips/PrestigeTooltip.vue'
 import WinrateTooltip from './tooltips/WinrateTooltip.vue'
 import BattlesTooltip from './tooltips/BattlesTooltip.vue'
+import AssistTooltip from './tooltips/AssistTooltip.vue'
+
 
 export type TopDayRating = {
   type: 'top-rating',
@@ -48,6 +50,9 @@ type Day = {
   wins: number,
   damage: number,
   assist: number,
+  radioAssist: number,
+  trackAssist: number,
+  stunAssist: number,
   prestigePoints: number,
   prestigePointsMax: number,
   prestigePointsWin: number,
@@ -79,13 +84,13 @@ export function useMainStat(days: Ref<Day[]>,
 
       const maxStat = data[maxDayIndex]
 
-      const totalResults = data.reduce((sum, d) => sum + d.totalResults, 0)
-      function avg(value: number) {
-        return totalResults > 0 ? Math.round(value / totalResults) : 0
-      }
-
       function sum<T>(array: T[], value: (item: T) => number) {
         return array.reduce((sum, d) => sum + value(d), 0)
+      }
+
+      const totalResults = sum(data, d => d.totalResults)
+      function avg(value: number) {
+        return totalResults > 0 ? Math.round(value / totalResults) : 0
       }
 
       function avgSum<T>(array: T[], value: (item: T) => number) {
@@ -93,7 +98,8 @@ export function useMainStat(days: Ref<Day[]>,
         return avg(total)
       }
 
-      const totalBattles = data.reduce((sum, d) => sum + d.totalBattles, 0)
+      const totalBattles = sum(data, d => d.totalBattles)
+
       if (maxStat && maxRating != 0) result.push({
         type: 'top-rating',
         rating: maxStat.topRating[0],
@@ -121,7 +127,13 @@ export function useMainStat(days: Ref<Day[]>,
         })
       })
       result.push({ type: 'simple', value: avgSum(data, d => d.damage), text: 'Урона', icon: 'dmg' })
-      result.push({ type: 'simple', value: avgSum(data, d => d.assist), text: 'Содействия', icon: 'assist' })
+      result.push({
+        type: 'simple', value: avgSum(data, d => d.assist), text: 'Содействия', icon: 'assist', tooltipComponent: h(AssistTooltip, {
+          radio: avgSum(data, d => d.radioAssist),
+          track: avgSum(data, d => d.trackAssist),
+          stun: avgSum(data, d => d.stunAssist)
+        })
+      })
 
       result.push({
         type: 'simple', value: avgSum(data, d => d.prestigePoints), text: 'Очков престижа', icon: 'prestige-points',
@@ -152,7 +164,7 @@ export function useMainStat(days: Ref<Day[]>,
       })
 
       result.push({
-        type: 'simple', value: totalResults, text: 'Всего боёв', icon: 'battles', tooltipComponent: h(BattlesTooltip, {
+        type: 'simple', value: totalBattles, text: 'Всего боёв', icon: 'battles', tooltipComponent: h(BattlesTooltip, {
           solo: totalResults - day.squadBattles,
           squad: day.squadBattles
         })
@@ -169,14 +181,20 @@ export function useMainStat(days: Ref<Day[]>,
       })
 
       result.push({ type: 'simple', value: avg(day.damage), text: 'Урона', icon: 'dmg' })
-      result.push({ type: 'simple', value: avg(day.assist), text: 'Содействия', icon: 'assist' })
+      result.push({
+        type: 'simple', value: avg(day.assist), text: 'Содействия', icon: 'assist', tooltipComponent: h(AssistTooltip, {
+          radio: avg(day.radioAssist),
+          track: avg(day.trackAssist),
+          stun: avg(day.stunAssist)
+        })
+      })
       result.push({
         type: 'simple', value: avg(day.prestigePoints), text: 'Очков престижа', icon: 'prestige-points',
         tooltipComponent: h(PrestigeTooltip, {
           lose: avg(day.prestigePointsLose),
           win: avg(day.prestigePointsWin),
           max: day.prestigePointsMax,
-          ratingWin: totalResults > 0 ? day.ratingDeltaWin / day.wins : 0,
+          ratingWin: day.wins > 0 ? day.ratingDeltaWin / day.wins : 0,
           ratingLose: (totalResults - day.wins) > 0 ? day.ratingDeltaLose / (totalResults - day.wins) : 0
         })
       })

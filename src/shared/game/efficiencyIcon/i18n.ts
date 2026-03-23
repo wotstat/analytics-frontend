@@ -7,6 +7,8 @@ export const i18n = {
     'winrate': 'Процент побед',
     'player': 'Игрок',
     'tank': 'Танк',
+    'solo': 'Соло',
+    'platoon': 'Взводом',
 
     'ammo-bay-destroyed': 'Взрывов БК',
     'ammo-bay-destroyed-avg': 'Взрывов БК в среднем',
@@ -53,6 +55,9 @@ export const i18n = {
     'duration': 'Время боя',
     'duration-avg': 'Ср. время боя',
     'duration-max': 'Макс. время боя',
+    'stun': 'Оглушений',
+    'stun-avg': 'Ср. оглушений',
+    'stun-max': 'Макс. оглушений',
     'fire': 'Поджогов',
     'fire-avg': 'Ср. поджогов',
     'fire-max': 'Макс. поджогов',
