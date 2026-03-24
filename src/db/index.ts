@@ -1,5 +1,5 @@
 
-import { CLICKHOUSE_URL } from '@/shared/external/externalUrl'
+import { CLICKHOUSE_WEB_PROXY_URL } from '@/shared/external/externalUrl'
 import { ResponseJSON, createClient, type ClickHouseSettings } from '@clickhouse/client-web'
 import { useLocalStorage } from '@vueuse/core'
 import { computed, ref, shallowRef, watch } from 'vue'
@@ -20,7 +20,8 @@ if (import.meta.env.MODE == 'development' && import.meta.env.VITE_MODE_DEV_LOCAL
 }
 
 export const clickhouse = createClient({
-  url: CLICKHOUSE_URL,
+  url: CLICKHOUSE_WEB_PROXY_URL,
+  pathname: '/api/db/',
   username: 'public',
   database: 'WOT',
   clickhouse_settings: {

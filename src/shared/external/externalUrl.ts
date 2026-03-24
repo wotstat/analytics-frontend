@@ -6,6 +6,7 @@ const prefix = (() => {
 })()
 
 export const CLICKHOUSE_URL = `https://${prefix}db.wotstat.info`
+export const CLICKHOUSE_WEB_PROXY_URL = `https://${prefix}wotstat.info`
 export const ANALYTICS_REALTIME_URL = `https://${prefix}realtime.wotstat.info`
 export const STATIC_URL = `https://${prefix}static.wotstat.info`
 export const WIDGETS_URL = `https://${prefix}widgets.wotstat.info`
