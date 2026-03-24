@@ -22,7 +22,7 @@ import { onKeyStroke, refDebounced } from '@vueuse/core'
 import { DayChartData } from './types'
 import MainStat from './mainStat/MainStat.vue'
 import { getDivisionLetterByRating, getRankByRating, getSeasonDuration } from '@/shared/game/comp7/utils'
-import { StatItem, useMainStat } from './mainStat/useMainStat'
+import { StatItem, useMainStat, type StatisticRes } from './mainStat/useMainStat'
 
 const ONE_HOUR = 60 * 60 * 1000
 const ONE_DAY = 24 * ONE_HOUR
@@ -87,32 +87,6 @@ const seasonInterval = computed(() => {
 })
 
 
-type StatisticRes = {
-  day: string,
-  minRating: number,
-  maxRating: number,
-  topRating: [rating: number, eliteRating: number],
-  lastRating: number,
-  lastEliteRating: number,
-  lastLeaderboardPosition: number | null,
-  totalBattles: number,
-  totalResults: number,
-  wins: number,
-  squadBattles: number,
-  prestigePoints: number,
-  prestigePointsLose: number,
-  prestigePointsWin: number,
-  prestigePointsMax: number,
-  dmg: number,
-  assist: number,
-  radioAssist: number,
-  trackAssist: number,
-  stunAssist: number,
-  ratingDelta: number,
-  ratingDeltaWin: number,
-  ratingDeltaLose: number,
-}
-
 const statistics = shallowRef<StatisticRes[] | null>(null)
 
 async function load() {
@@ -175,11 +149,15 @@ async function load() {
                   toUInt32(sumIf(personal.comp7PrestigePoints, result != 'win')) as prestigePointsLose,
                   toUInt32(sumIf(personal.comp7PrestigePoints, result = 'win')) as prestigePointsWin,
                   toUInt32(max(personal.comp7PrestigePoints)) as prestigePointsMax,
-                  toUInt32(sum(personal.damageDealt)) as dmg,
+                  toUInt32(sum(personal.damageDealt)) as damage,
+                  toUInt32(max(personal.damageDealt)) as maxDamage,
                   toUInt32(sum(personal.damageAssistedRadio + personal.damageAssistedTrack + personal.damageAssistedStun)) as assist,
                   toUInt32(sum(personal.damageAssistedRadio)) as radioAssist,
                   toUInt32(sum(personal.damageAssistedTrack)) as trackAssist,
                   toUInt32(sum(personal.damageAssistedStun)) as stunAssist,
+                  toUInt32(sum(personal.piercingEnemyHits)) as piercing,
+                  toUInt32(sum(personal.shots)) as shots,
+                  toUInt32(sum(personal.directEnemyHits)) as hits,
                   toInt32(sum(comp7.ratingDelta)) as ratingDelta,
                   toInt32(sumIf(comp7.ratingDelta, result = 'win')) as ratingDeltaWin,
                   toInt32(sumIf(comp7.ratingDelta, result != 'win')) as ratingDeltaLose
@@ -236,30 +214,10 @@ const days = computed(() => {
     result.push({
       dayIndex: i,
       day: dbDate,
-      eliteRating: stat?.lastEliteRating ?? 1e5,
-      leaderboardPosition: stat?.lastLeaderboardPosition ?? null,
       rating: lastRating,
       ratingPercent: timeline == 'future' && firstDayPlayed == -1 ? 0.3 : ratingPercent,
       timeline,
-      topRating: stat?.topRating ?? [0, 0],
-      totalBattles: stat?.totalBattles ?? 0,
-      totalResults: stat?.totalResults ?? 0,
-      wins: stat?.wins ?? 0,
-      prestigePoints: stat?.prestigePoints ?? 0,
-      prestigePointsLose: stat?.prestigePointsLose ?? 0,
-      prestigePointsWin: stat?.prestigePointsWin ?? 0,
-      prestigePointsMax: stat?.prestigePointsMax ?? 0,
-      damage: stat?.dmg ?? 0,
-      assist: stat?.assist ?? 0,
-      radioAssist: stat?.radioAssist ?? 0,
-      trackAssist: stat?.trackAssist ?? 0,
-      stunAssist: stat?.stunAssist ?? 0,
-      ratingDelta: stat?.ratingDelta ?? 0,
-      lastRating: stat?.lastRating ?? 0,
-      lastEliteRating: stat?.lastEliteRating ?? 0,
-      ratingDeltaWin: stat?.ratingDeltaWin ?? 0,
-      ratingDeltaLose: stat?.ratingDeltaLose ?? 0,
-      squadBattles: stat?.squadBattles ?? 0,
+      stat: stat
     })
 
   }
@@ -270,9 +228,9 @@ const days = computed(() => {
 const barsData = computed<DayChartData[]>(() => days.value.map(d => ({
   relativeRating: d.ratingPercent,
   timeline: d.timeline,
-  rank: getRankByRating(d.rating, preferredGameOrDefault.value, d.eliteRating),
+  rank: getRankByRating(d.rating, preferredGameOrDefault.value, d.stat?.lastEliteRating ?? 0),
   divisionLetter: getDivisionLetterByRating(d.rating, preferredGameOrDefault.value),
-  leaderboardPosition: d.leaderboardPosition,
+  leaderboardPosition: d.stat?.lastLeaderboardPosition ?? null,
   dayIndex: d.dayIndex,
 })))
 
