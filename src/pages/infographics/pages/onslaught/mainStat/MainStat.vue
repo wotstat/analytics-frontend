@@ -44,7 +44,7 @@ const emit = defineEmits<{
   .items {
     display: grid;
     grid-template-columns: repeat(var(--cols), 1fr);
-    gap: 20px 30px;
+    gap: 20px 20px;
 
     @container main-stats (width < 800px) {
       grid-template-columns: repeat(calc(var(--cols) / 2), 1fr);
