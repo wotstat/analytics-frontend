@@ -117,9 +117,8 @@ async function load() {
         ),
         t1 as (
             select toStartOfDay(dateTime + interval OFFSET hour) as day,
-                  min(rating) as minRating,
-                  max(rating) as maxRating,
-                  argMax((rating, eliteRating), rating) as topRating,
+                  argMin((rating, eliteRating), rating) as minRating,
+                  argMax((rating, eliteRating), rating) as maxRating,
                   argMax(rating, dateTime) as lastRating,
                   argMax(leaderboardPosition, dateTime) as lastLeaderboardPosition
             from Event_OnComp7Info
@@ -193,11 +192,12 @@ const days = computed(() => {
   const stat = statistics.value ?? []
 
   const statByDay = new Map(stat?.map(s => [s.day, s]) ?? [])
-  const maxRating = Math.max(...stat?.map(s => s.maxRating) ?? [0], 0)
+  const maxRating = Math.max(...stat?.map(s => s.lastRating) ?? [0], 0)
 
   const result = []
   let lastRating = 0
   let firstDayPlayed = -1
+  let eliteRating = -1
   for (let i = 0; i < seasonInterval.value.length; i++) {
     const isoDate = new Date(seasonInterval.value.start.getTime() + i * ONE_DAY).toISOString()
     const dbDate = `${isoDate.slice(0, 10)} ${isoDate.slice(11, 19)}`
@@ -205,6 +205,7 @@ const days = computed(() => {
     const stat = statByDay.get(dbDate)
     if (stat?.lastRating) lastRating = stat.lastRating
     if (stat?.lastRating && firstDayPlayed == -1) firstDayPlayed = i
+    if (stat?.lastEliteRating) eliteRating = stat.lastEliteRating
 
     const isFuture = seasonInterval.value.start.getTime() + i * ONE_DAY > Date.now() + COMP7_ISO_HOUR_OFFSET * ONE_HOUR
     const timeline: DayChartData['timeline'] = isFuture ? 'future' : firstDayPlayed == -1 ? 'past' : stat?.totalBattles ? 'played' : 'active'
@@ -215,6 +216,7 @@ const days = computed(() => {
       dayIndex: i,
       day: dbDate,
       rating: lastRating,
+      eliteRating,
       ratingPercent: timeline == 'future' && firstDayPlayed == -1 ? 0.3 : ratingPercent,
       timeline,
       stat: stat
@@ -228,7 +230,7 @@ const days = computed(() => {
 const barsData = computed<DayChartData[]>(() => days.value.map(d => ({
   relativeRating: d.ratingPercent,
   timeline: d.timeline,
-  rank: getRankByRating(d.rating, preferredGameOrDefault.value, d.stat?.lastEliteRating ?? 0),
+  rank: getRankByRating(d.rating, preferredGameOrDefault.value, d.eliteRating > 0 ? d.eliteRating : undefined),
   divisionLetter: getDivisionLetterByRating(d.rating, preferredGameOrDefault.value),
   leaderboardPosition: d.stat?.lastLeaderboardPosition ?? null,
   dayIndex: d.dayIndex,

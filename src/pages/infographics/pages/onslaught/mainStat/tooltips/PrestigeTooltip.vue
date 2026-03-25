@@ -18,6 +18,8 @@
 
 
 <script setup lang="ts">
+import { createFixedProcessor } from '@/shared/utils/processors/processors'
+
 const props = defineProps<{
   lose: number
   win: number
@@ -25,6 +27,9 @@ const props = defineProps<{
   ratingWin: number
   ratingLose: number
 }>()
+
+
+const roundProcessor = createFixedProcessor(2)
 </script>
 
 

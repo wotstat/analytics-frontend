@@ -12,6 +12,9 @@
           день {{ day + 1 }}</a>
       </p>
     </template>
+    <template #tooltip v-if="tooltipComponent">
+      <component :is="tooltipComponent" />
+    </template>
   </Item>
 </template>
 
@@ -20,6 +23,7 @@
 import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
 import Item from './Item.vue'
 import { GameVendor } from '@/shared/game/wot'
+import { type Component } from 'vue'
 
 const props = defineProps<{
   value: number,
@@ -27,6 +31,7 @@ const props = defineProps<{
   day: number
   season?: string
   game?: GameVendor
+  tooltipComponent?: Component
 }>()
 
 const emit = defineEmits<{
