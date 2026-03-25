@@ -14,6 +14,9 @@
         <span class="delta" v-else>+0</span>
       </p>
     </template>
+    <template #tooltip v-if="tooltipComponent">
+      <component :is="tooltipComponent" />
+    </template>
   </Item>
 </template>
 
@@ -22,13 +25,15 @@
 import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
 import Item from './Item.vue'
 import { GameVendor } from '@/shared/game/wot'
+import { type Component } from 'vue'
 
 const props = defineProps<{
   value: number,
   eliteRating: number
   delta: number
   season?: string
-  game?: GameVendor
+  game?: GameVendor,
+  tooltipComponent?: Component
 }>()
 </script>
 

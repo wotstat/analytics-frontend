@@ -95,12 +95,13 @@ export function getDivisionLetterByRating(rating: number, game: GameVendor = 'mt
   return ''
 }
 
-export type RankImageDefinition = number | { value: number, eliteRating: number } | Rank | Division
+export type RankImageDefinition = number | { value: number, eliteRating: number } | Rank | Division | [rating: number, eliteRating: number]
 
 function getRankImageName(rank: RankImageDefinition, game: GameVendor = 'mt'): string {
   let division: Division
   if (typeof rank === 'number') division = getDivisionByRating(rank, game)
   else if (typeof rank === 'object' && 'value' in rank) division = getDivisionByRating(rank.value, game, rank.eliteRating)
+  else if (Array.isArray(rank)) division = getDivisionByRating(rank[0], game, rank[1])
   else if (rank === 'qual' || rank === 'fifth' || rank === 'sixth') division = rank
   else division = rank as Division
 
@@ -114,7 +115,11 @@ export function rankImageUrl(rank: RankImageDefinition,
   season: 'latest' | (string & {}) = 'latest',
   format: 'webp' | 'png' = 'webp') {
   const gamePrefix = game === 'mt' ? 'mt' : 'wot'
-  const name = getRankImageName(rank, game)
+  let name = getRankImageName(rank, game)
+
+  if (size == 'small') {
+    name = name.split('_')[0] // для маленького размера убираем букву дивизиона, т.к. в иконках для маленького размера она не отображается
+  }
 
   switch (size) {
     case 'small': return `${STATIC_URL}/${gamePrefix}/latest/comp7/ranks/${season}/small/${name}.${format}`

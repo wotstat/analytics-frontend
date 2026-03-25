@@ -6,6 +6,8 @@ import WinrateTooltip from './tooltips/WinrateTooltip.vue'
 import BattlesTooltip from './tooltips/BattlesTooltip.vue'
 import AssistTooltip from './tooltips/AssistTooltip.vue'
 import DamageTooltip from './tooltips/DamageTooltip.vue'
+import RatingTooltip from './tooltips/RatingTooltip.vue'
+import TopRatingTooltip from './tooltips/TopRatingTooltip.vue'
 
 
 export type TopDayRating = {
@@ -13,7 +15,8 @@ export type TopDayRating = {
   rating: number,
   eliteRating: number,
   dayIndex: number,
-  season?: string
+  season?: string,
+  tooltipComponent?: Component
 }
 
 export type RatingDelta = {
@@ -21,7 +24,8 @@ export type RatingDelta = {
   rating: number,
   eliteRating: number,
   delta: number,
-  season?: string
+  season?: string,
+  tooltipComponent?: Component
 }
 
 export type Simple = {
@@ -45,9 +49,8 @@ export type StatItem = TopDayRating | Simple | Winrate | RatingDelta
 
 export type StatisticRes = {
   day: string,
-  minRating: number,
-  maxRating: number,
-  topRating: [rating: number, eliteRating: number],
+  minRating: [rating: number, eliteRating: number],
+  maxRating: [rating: number, eliteRating: number],
   lastRating: number,
   lastEliteRating: number,
   lastLeaderboardPosition: number | null,
@@ -97,9 +100,9 @@ export function useMainStat(days: Ref<Day[]>,
     if (selectedDayIndex == null) {
       const stats = data.map(d => d.stat).filter((s): s is StatisticRes => s !== undefined)
 
-      const maxRating = Math.max(...data.map(d => d.stat?.topRating[0] ?? 0))
-      const maxDayIndex = data.findLastIndex(d => d.stat?.topRating[0] == maxRating && d.timeline == 'played') ||
-        data.findLastIndex(d => d.stat?.topRating[0] == maxRating)!
+      const maxRating = Math.max(...data.map(d => d.stat?.maxRating[0] ?? 0))
+      const maxDayIndex = data.findLastIndex(d => d.stat?.maxRating[0] == maxRating && d.timeline == 'played') ||
+        data.findLastIndex(d => d.stat?.maxRating[0] == maxRating)!
 
       const maxStat = stats[maxDayIndex]
 
@@ -120,13 +123,23 @@ export function useMainStat(days: Ref<Day[]>,
       }
 
       const totalBattles = sum(stats, d => d.totalBattles)
+      const totalWins = sum(stats, d => d.wins)
 
       if (maxStat && maxRating != 0) result.push({
         type: 'top-rating',
-        rating: maxStat.topRating[0],
-        eliteRating: maxStat.topRating[1],
+        rating: maxStat.maxRating[0],
+        eliteRating: maxStat.maxRating[1],
         dayIndex: maxDayIndex,
-        season: season.value ?? undefined
+        season: season.value ?? undefined,
+        tooltipComponent: h(TopRatingTooltip, {
+          last: [maxStat.lastRating, maxStat.lastEliteRating],
+          totalIncome: sum(stats, d => d.ratingDeltaWin) + sum(stats, d => d.ratingDeltaLose),
+          ratingWin: totalResults > 0 ? sum(stats, d => d.ratingDeltaWin) / totalWins : 0,
+          ratingLose: (totalResults - totalWins) > 0 ? sum(stats, d => d.ratingDeltaLose) / (totalResults - totalWins) : 0,
+          leaderboardPosition: maxStat.lastLeaderboardPosition,
+          season: season.value ?? undefined,
+          game: preferredGame
+        })
       })
 
       const squadBattles = sum(stats, d => d.squadBattles)
@@ -137,7 +150,6 @@ export function useMainStat(days: Ref<Day[]>,
         })
       })
 
-      const totalWins = sum(stats, d => d.wins)
       const winrate = totalResults > 0 ? totalWins / totalResults : 0
       result.push({
         type: 'winrate', value: winrate, text: 'Процент побед',
@@ -192,7 +204,17 @@ export function useMainStat(days: Ref<Day[]>,
         type: 'rating-delta',
         rating: day.lastRating,
         eliteRating: day.lastEliteRating,
-        delta: day.ratingDelta
+        delta: day.ratingDelta,
+        tooltipComponent: h(RatingTooltip, {
+          min: day.minRating,
+          max: day.maxRating,
+          current: day.lastRating,
+          ratingWin: day.wins > 0 ? day.ratingDeltaWin / day.wins : 0,
+          ratingLose: (totalResults - day.wins) > 0 ? day.ratingDeltaLose / (totalResults - day.wins) : 0,
+          leaderboardPosition: day.lastLeaderboardPosition,
+          season: season.value ?? undefined,
+          game: preferredGame
+        })
       })
 
       result.push({
