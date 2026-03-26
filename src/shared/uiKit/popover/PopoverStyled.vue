@@ -69,9 +69,6 @@ $animation-offset: var(--animation-transition-offset, 3px);
   border-radius: 10px;
   border: 1px solid $border-color;
   box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.3);
-
-  $arrow-offset: calc(var(--arrow-size) / -2 - 1px);
-  $arrow-offset-bordered: calc($arrow-offset - 2px);
   position: relative;
 
   .popover-content {
@@ -94,20 +91,25 @@ $animation-offset: var(--animation-transition-offset, 3px);
     clip-path: polygon(0 0, 100% 100%, 100% 0);
   }
 
+  $half-arrow: var(--arrow-size) / -2;
+  $offset-1px: calc($half-arrow - 1px);
+  $offset-2px: calc($half-arrow - 2px);
+  $offset-3px: calc($half-arrow - 3px);
+
   &.arrow-left::after {
-    transform: translate($arrow-offset, $arrow-offset) rotate(-135deg);
+    transform: translate($offset-1px, $offset-1px) rotate(-135deg);
   }
 
   &.arrow-right::after {
-    transform: translate($arrow-offset-bordered, $arrow-offset-bordered) rotate(45deg);
+    transform: translate($offset-3px, $offset-1px) rotate(45deg);
   }
 
   &.arrow-top::after {
-    transform: translate($arrow-offset, $arrow-offset) rotate(-45deg);
+    transform: translate($offset-2px, $offset-1px) rotate(-45deg);
   }
 
   &.arrow-bottom::after {
-    transform: translate($arrow-offset-bordered, $arrow-offset-bordered) rotate(135deg);
+    transform: translate($offset-2px, $offset-3px) rotate(135deg);
   }
 
   &.arrow-disabled::after {
