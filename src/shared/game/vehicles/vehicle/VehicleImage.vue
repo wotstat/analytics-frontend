@@ -24,30 +24,39 @@ watch(() => [props.tag, props.size, props.game], () => {
 
 const fallbackUrl = computed(() => vehicleFallbackUrl(props.size))
 
-const style = computed(() => {
-  if (props.size != 'small') return {}
-
-
-  function getOffset() {
-    switch (props.tag) {
-      case 'ussr:R46_KV-13_SH':
-      case 'usa:A72_T25_2_SH':
-      case 'uk:GB107_Cavalier_SH':
-      case 'sweden:S14_Ikv_103_SH':
-      case 'poland:Pl17_DS_PZlnz_SH':
-      case 'germany:G24_VK3002DB_SH':
-      case 'france:F43_AMC_35_SH':
-      case 'china:Ch24_Type64_SH':
-        return -35
-      default: return 0
-    }
+function getAspect() {
+  switch (props.size ?? 'preview') {
+    case 'small': return '4/1'
+    case 'preview': return '16/10'
+    case 'shop': return '4/3'
+    default: return 'auto'
   }
+}
+
+function getOffset() {
+  switch (props.tag) {
+    case 'ussr:R46_KV-13_SH':
+    case 'usa:A72_T25_2_SH':
+    case 'uk:GB107_Cavalier_SH':
+    case 'sweden:S14_Ikv_103_SH':
+    case 'poland:Pl17_DS_PZlnz_SH':
+    case 'germany:G24_VK3002DB_SH':
+    case 'france:F43_AMC_35_SH':
+    case 'china:Ch24_Type64_SH':
+      return -35
+    default: return 0
+  }
+}
+
+const style = computed(() => {
+  if (props.size != 'small') return { aspectRatio: getAspect() }
 
   const offset = getOffset()
-  if (offset == 0) return {}
+  if (offset == 0) return { aspectRatio: getAspect() }
   return {
     transform: `translateX(${offset}%)`,
-    zIndex: -1
+    zIndex: -1,
+    aspectRatio: getAspect()
   }
 
 })

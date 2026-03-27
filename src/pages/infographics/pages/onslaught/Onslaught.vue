@@ -3,8 +3,8 @@
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" :seasons="seasons.data ?? []" />
     <DayChart :days="barsData" class="day-chart" @select="selectDay" @deselect="deselectDay"
       :selectedIndex="selectedDayIndex" />
-    <!-- <MainStat :game="preferredGameOrDefault" :topRating @selectDay="selectDay" /> -->
     <MainStat :game="preferredGameOrDefault" :items="mainStats" @selectDay="selectDay" />
+    <VehicleTable class="vehicle-statistics" :vehicleStats />
   </div>
 </template>
 
@@ -23,6 +23,10 @@ import { DayChartData } from './types'
 import MainStat from './mainStat/MainStat.vue'
 import { getDivisionLetterByRating, getRankByRating, getSeasonDuration } from '@/shared/game/comp7/utils'
 import { StatItem, useMainStat, type StatisticRes } from './mainStat/useMainStat'
+import VehicleTable from './vehicleTable/VehicleTable.vue'
+import { watchWithAbortSignal } from '@/shared/utils/core'
+import { useVehicleTable, VehicleRes } from './vehicleTable/useVehicleTable'
+
 
 const ONE_HOUR = 60 * 60 * 1000
 const ONE_DAY = 24 * ONE_HOUR
@@ -88,18 +92,26 @@ const seasonInterval = computed(() => {
 
 
 const statistics = shallowRef<StatisticRes[] | null>(null)
+const vehicleStatistics = shallowRef<VehicleRes[] | null>(null)
 
-async function load() {
+async function load(abortSignal: AbortSignal) {
   if (!seasonInterval.value) return
+
+  if (abortSignal.aborted) return
   const startDate = dateToDbDate(seasonInterval.value.start)
   const endDate = dateToDbDate(seasonInterval.value.end)
   const region = gameToRegion(preferredGameOrDefault.value)
   const nickName = debouncedNickname.value
 
+  if (!nickName) return
+
+  console.log('Loading data with params', { startDate, endDate, region, nickName })
+
   statistics.value = null
   selectedDayIndex.value = null
+  vehicleStatistics.value = null
 
-  const result = await query<StatisticRes>(`
+  const mainStatistics = await query<StatisticRes>(`
     with
         '${nickName}' as PLAYER,
         '${startDate}' as START_DATE,
@@ -172,17 +184,44 @@ async function load() {
     left outer join t1 using day
     left outer join t2 using day
     left outer join t3 using day
-  `)
+  `, { abortSignal })
 
-  if (startDate != dateToDbDate(seasonInterval.value.start) ||
-    endDate != dateToDbDate(seasonInterval.value.end) ||
-    region != gameToRegion(preferredGameOrDefault.value) ||
-    nickName != debouncedNickname.value) return
+  if (abortSignal.aborted) return
+  statistics.value = mainStatistics.data
 
-  statistics.value = result.data
+
+  const vehicleStatisticsRes = await query<VehicleRes>(`
+    with
+      '${nickName}' as PLAYER,
+      '${startDate}' as START_DATE,
+      '${endDate}' as END_DATE,
+      '${region}' as REGION,
+      ${COMP7_ISO_HOUR_OFFSET} as OFFSET
+    select toStartOfDay(dateTime + interval OFFSET hour) as day,
+          tankTag,
+          tankType,
+          tankLevel,
+          toUInt32(count()) as totalResults,
+          toUInt32(countIf(result = 'win')) as wins,
+          toUInt32(sum(personal.damageDealt)) as damage,
+          toUInt32(sum(personal.damageAssistedRadio + personal.damageAssistedStun + personal.damageAssistedStun)) as assist,
+          toUInt32(sum(personal.comp7PrestigePoints)) as prestigePoints,
+          toUInt32(sum(personal.kills)) as kills
+    from Event_OnBattleResult
+    where playerName = PLAYER
+      and dateTime between START_DATE and END_DATE
+      and region = REGION
+      and battleMode = 'COMP7'
+    group by day, tankTag, tankType, tankLevel
+    order by day, tankTag
+  `, { abortSignal })
+  if (abortSignal.aborted) return
+
+  vehicleStatistics.value = vehicleStatisticsRes.data
 }
 
-watch([seasonInterval, debouncedNickname, preferredGameOrDefault], load)
+watchWithAbortSignal([seasonInterval, debouncedNickname, preferredGameOrDefault], signal => load(signal))
+
 watch([seasonInterval, nickname, preferredGameOrDefault], () => {
   statistics.value = null
 })
@@ -236,7 +275,13 @@ const barsData = computed<DayChartData[]>(() => days.value.map(d => ({
   dayIndex: d.dayIndex,
 })))
 
+const selectedDay = computed(() => {
+  if (selectedDayIndex.value == null) return null
+  return days.value.find(d => d.dayIndex === selectedDayIndex.value) ?? null
+})
+
 const mainStats = useMainStat(days, preferredGameOrDefault, selectedSeason, selectedDayIndex)
+const vehicleStats = useVehicleTable(computed(() => vehicleStatistics.value ?? []), computed(() => selectedDay.value?.day ?? null))
 
 </script>
 
@@ -249,6 +294,10 @@ const mainStats = useMainStat(days, preferredGameOrDefault, selectedSeason, sele
     margin-top: 20px;
     margin-left: calc(var(--content-page-margin, 0) * -1);
     margin-right: calc(var(--content-page-margin, 0) * -1);
+  }
+
+  .vehicle-statistics {
+    margin-top: 45px;
   }
 }
 </style>

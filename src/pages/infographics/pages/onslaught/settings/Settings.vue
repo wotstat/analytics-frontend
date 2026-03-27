@@ -5,11 +5,11 @@
 
       <div class="game-select">
         <div class="vr"></div>
-        <button class="variant mt-font selectable" @click="preferredGameOrDefault = 'mt'"
+        <button class="variant mt-font selectable" @click="changePreferredGame('mt')"
           :class="{ 'active': preferredGameOrDefault === 'mt' }">
           Lesta
         </button>
-        <button class="variant mt-font selectable" @click="preferredGameOrDefault = 'wot'"
+        <button class="variant mt-font selectable" @click="changePreferredGame('wot')"
           :class="{ 'active': preferredGameOrDefault === 'wot' }">
           WG
         </button>
@@ -32,8 +32,8 @@
 <script setup lang="ts">
 import NicknameInput from './nicknameInput/NicknameInput.vue'
 import { preferredGameOrDefault } from '@/shared/global/globalPreferred'
-import { gameToRegion } from '@/shared/game/wot'
-import { computed, watch } from 'vue'
+import { gameToRegion, GameVendor } from '@/shared/game/wot'
+import { shallowRef, watch } from 'vue'
 import { useI18n } from '@/shared/i18n/useI18n'
 import i18n from '@/shared/game/comp7/i18n.json'
 
@@ -46,14 +46,25 @@ const props = defineProps<{
 
 const selectedSeason = defineModel<string | null>('season')
 const nickname = defineModel<string>('nickname')
+const currentSeasons = shallowRef<{ region: string, season: string }[]>([])
 
-const currentSeasons = computed(() => {
-  return props.seasons.filter(s => s.region === gameToRegion(preferredGameOrDefault.value)) || []
-})
+function updateSeasons() {
+  currentSeasons.value = props.seasons.filter(s => s.region === gameToRegion(preferredGameOrDefault.value)) || []
+  selectedSeason.value = currentSeasons.value?.[0]?.season || null
+}
+
+function changePreferredGame(target: GameVendor) {
+  preferredGameOrDefault.value = target
+  updateSeasons()
+}
 
 watch(currentSeasons, () => {
   selectedSeason.value = currentSeasons.value?.[0]?.season || null
 })
+
+watch(() => props.seasons, () => {
+  updateSeasons()
+}, { deep: true })
 
 </script>
 

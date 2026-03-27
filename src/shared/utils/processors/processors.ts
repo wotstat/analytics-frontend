@@ -4,7 +4,8 @@ export function createPercentProcessor(digits = 0) {
   }
 }
 
-export function roundProcessor(value: number, scale = 1) {
+export function roundProcessor(value: number, digits = 0) {
+  const scale = Math.pow(10, digits)
   return Number.isNaN(value) ? 0 : Math.round(value * scale) / scale
 }
 
