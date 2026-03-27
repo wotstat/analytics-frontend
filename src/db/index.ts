@@ -60,7 +60,10 @@ export function isErrorStatus(status: Status): status is { status: typeof error,
 
 const activeQueries = new Map<string, Promise<unknown>>()
 const cachedResults = new Map<string, unknown>()
-export async function query<T>(query: string, { allowCache = true, settings = {} as ClickHouseSettings } = {}) {
+export async function query<T>(query: string, {
+  allowCache = true,
+  settings = {} as ClickHouseSettings,
+  abortSignal = undefined as AbortSignal | undefined } = {}) {
 
   if (activeQueries.has(query)) return activeQueries.get(query) as Promise<ResponseJSON<T>>
 
@@ -68,7 +71,7 @@ export async function query<T>(query: string, { allowCache = true, settings = {}
     try {
       // await new Promise(resolve => setTimeout(resolve, 100000))
 
-      const result = await clickhouse.query({ query, format: 'JSON', clickhouse_settings: settings })
+      const result = await clickhouse.query({ query, format: 'JSON', clickhouse_settings: settings, abort_signal: abortSignal })
       const response = await result.json<T>()
 
       totalElapsed.value += response.statistics?.elapsed ?? 0
@@ -76,10 +79,14 @@ export async function query<T>(query: string, { allowCache = true, settings = {}
       totalBytesRead.value += response.statistics?.bytes_read ?? 0
       totalRequests.value++
 
+      if (abortSignal?.aborted) return reject(new Error('Query aborted'))
       if (allowCache) cachedResults.set(query, response)
       resolve(response)
     } catch (error) {
       return reject(error)
+    }
+    finally {
+      activeQueries.delete(query)
     }
   })
 
@@ -91,9 +98,12 @@ export async function query<T>(query: string, { allowCache = true, settings = {}
 export function queryComputed<T>(queryString: () => string | null, { settings = {} as ClickHouseSettings, enabled = ref(true), allowCache = true } = {}) {
   const result = shallowRef<{ status: Status, data: T[] }>({ status: loading, data: [] })
 
+  let abortController = new AbortController()
   watch(() => [queryString(), enabled.value] as const, async ([q, enabled]) => {
     if (!q) return
     if (!enabled) return
+    abortController.abort()
+    abortController = new AbortController()
 
     try {
       if (cachedResults.has(q) && allowCache) {
@@ -101,7 +111,7 @@ export function queryComputed<T>(queryString: () => string | null, { settings = 
         return
       }
       result.value = { data: [], status: loading }
-      const { data } = await query<T>(q, { settings, allowCache })
+      const { data } = await query<T>(q, { settings, allowCache, abortSignal: abortController.signal })
       result.value = { data, status: success }
     } catch (reason) {
       console.error(reason)

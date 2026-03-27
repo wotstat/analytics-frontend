@@ -21,6 +21,9 @@ const vehicleTypeName: Record<VehicleType, string> = {
   any: 'vehicle-types'
 }
 
+export function isVehicleType(value: string): value is VehicleType {
+  return value in vehicleTypeName
+}
 
 export function vehicleTypeToImage(type: VehicleType, format?: 'component'): FunctionalComponent<SVGAttributes>
 export function vehicleTypeToImage(type: VehicleType, format?: 'raw'): string

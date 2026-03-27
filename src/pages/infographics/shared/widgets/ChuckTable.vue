@@ -97,14 +97,14 @@
           <template v-for="player in part.avg">
             <th class="l-b"></th>
             <th>{{ roundProcessor(player[0]) }}</th>
-            <th>{{ roundProcessor(player[1], 10) }}</th>
+            <th>{{ roundProcessor(player[1], 1) }}</th>
             <th>{{ roundProcessor(player[2]) }}</th>
           </template>
 
           <th>{{ roundProcessor(part.winScoreAvg) }}</th>
 
           <th class="l-b"> {{ roundProcessor(part.healthAvg) }}</th>
-          <th>{{ roundProcessor(part.spgAvg, 100) }}</th>
+          <th>{{ roundProcessor(part.spgAvg, 2) }}</th>
           <th>
             <div class="time-align">
               <div class="left">{{ timeProcessor(part.timeAvg)[0] }}</div>
@@ -113,7 +113,7 @@
             </div>
           </th>
           <th>{{ roundProcessor(part.dmgAvg) }}</th>
-          <th>{{ roundProcessor(part.killAvg, 100) }}</th>
+          <th>{{ roundProcessor(part.killAvg, 2) }}</th>
           <th>{{ roundProcessor(part.scoreAvg) }}</th>
         </tr>
 
