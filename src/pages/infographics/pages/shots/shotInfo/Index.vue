@@ -168,7 +168,7 @@ import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { useDraggable, useMediaQuery } from '@vueuse/core'
 import { useRoute, useRouter } from 'vue-router'
 import InfoTable from './InfoTable.vue'
-import { getArenaNameLegacy, getTankName } from '@/shared/i18n/i18n'
+import { getArenaName, getTankName } from '@/shared/i18n/i18n'
 import { sec2minsec } from '@/shared/utils/time'
 import { wotinspectorLog, wotinspectorURLNew } from '@/shared/external/wotInspector/wotInspector'
 import { regionToGame, shellNames } from '@/shared/game/wot'
@@ -313,7 +313,7 @@ watch(selectedShoot, shot => {
 const firstTable = (s: Shot) => [
   ['Игрок', s.playerName],
   ['Танк', getTankName(s.tankTag, true)],
-  ['Карта', getArenaNameLegacy(arenaTag.value ?? '').value],
+  ['Карта', getArenaName(arenaTag.value ?? '')],
   ['Пушка', s.gunTag],
   ['Калибр', s.shellCaliber],
   ['Разброс орудия', (s.battleDispersion * 100).toFixed(2)],

@@ -75,7 +75,7 @@
             <td colspan="9"></td>
           </tr>
           <tr v-for="(item, index) in ordered" :key="item.arenaTag">
-            <td>{{ getArenaNameLegacy(item.arenaTag) }}
+            <td>{{ getArenaName(item.arenaTag) }}
               <div v-if="hightlighted[index]" class="bar-box right" :style="{ width: hightlighted[index] + 'px' }">
               </div>
             </td>
@@ -117,7 +117,7 @@
 <script setup lang="ts">
 import { StatParams, getQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import { queryComputed } from '@/db'
-import { getArenaNameLegacy } from '@/shared/i18n/i18n'
+import { getArenaName } from '@/shared/i18n/i18n'
 import { customBattleModesKeys, customBattleModes } from '@/shared/game/wot'
 import { useElementVisibility, useElementSize, useLocalStorage } from '@vueuse/core'
 import { computed, ref } from 'vue'
