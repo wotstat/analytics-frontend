@@ -209,7 +209,7 @@
                 </thead>
                 <tbody>
                   <tr v-for="item in mapsResults.data">
-                    <td>{{ getArenaNameLegacy(item.arenaTag) }}</td>
+                    <td>{{ getArenaName(item.arenaTag) }}</td>
                     <td class="text-effect orange">{{ item.count }}</td>
                     <td class="text-effect green">{{ item.damage }}</td>
                     <td class="text-effect blue">{{ item.assist }}</td>
@@ -365,7 +365,7 @@ import MiniBar from '@/pages/infographics/shared/widgets/charts/MiniBar.vue'
 import ShotsCircle from '@/pages/infographics/shared/widgets/ShotsCircle.vue'
 import { LONG_CACHE_SETTINGS, queryAsync, queryAsyncFirst } from '@/db'
 import { computed } from 'vue'
-import { getArenaNameLegacy } from '@/shared/i18n/i18n'
+import { getArenaName } from '@/shared/i18n/i18n'
 import { createFixedSpaceProcessor } from '@/shared/utils/processors/processors'
 import { useMeta } from '@/shared/composition/useMeta'
 import { useAnalyticsRealtime } from '@/shared/external/realtime/useAnalyticsRealtime'

@@ -29,7 +29,7 @@
               <input type="text" :placeholder="getTimecode(processedTimings[i])" v-model="timings[i]">
             </td>
             <!-- <td>{{ getDate(battle.dateTime) }}</td> -->
-            <td>{{ getArenaNameLegacy(battle.arenaTag).value }}</td>
+            <td>{{ getArenaName(battle.arenaTag) }}</td>
             <td>{{ getTankName(battle.tankTag, true) }}</td>
             <td>{{ battle.pDmg }}</td>
             <td>{{ battle.chuck }}</td>
@@ -82,7 +82,7 @@
 <script setup lang="ts">
 import { useQueryStatParams, whereClause } from '@/shared/query/useQueryStatParams'
 import { queryComputed } from '@/db'
-import { getArenaNameLegacy, getTankName } from '@/shared/i18n/i18n'
+import { getArenaName, getTankName } from '@/shared/i18n/i18n'
 import { useLocalStorage } from '@vueuse/core'
 import { computed, ref, watch } from 'vue'
 
@@ -167,7 +167,7 @@ const resultTimecodes = computed(() => {
       .replaceAll('{n}', (i + 1).toString())
       .replaceAll('{time}', getTimecode(t.time))
       .replaceAll('{tank}', getTankName(t.res.tankTag))
-      .replaceAll('{map}', getArenaNameLegacy(t.res.arenaTag).value)
+      .replaceAll('{map}', getArenaName(t.res.arenaTag))
       .replaceAll('{dmg}', t.res.pDmg.toString())
       .replaceAll('{radio}', t.res.pAssistRadio.toString())
       .replaceAll('{xp}', t.res.pXp.toString())
