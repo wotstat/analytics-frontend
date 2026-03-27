@@ -10,7 +10,7 @@
 
         <VehicleImage :tag="meta.tankTag" size="shop" class="vehicle" />
         <div class="arena-info">
-          <h4>{{ getArenaName(meta.arena) }}</h4>
+          <h4>{{ getArenaNameLegacy(meta.arena) }}</h4>
           <p>{{ meta.battleMode }}</p>
         </div>
         <h5 class="player-name">{{ meta.player }}</h5>
@@ -51,7 +51,7 @@
 <script setup lang="ts">
 import DownloadFill from '@/assets/icons/download-fill.svg'
 import VehicleImage from '@/shared/game/vehicles/vehicle/VehicleImage.vue'
-import { getArenaName, getTankName } from '@/shared/i18n/i18n'
+import { getArenaNameLegacy, getTankName } from '@/shared/i18n/i18n'
 import BattleStatValue from './BattleStatValue.vue'
 import { timeProcessor } from '@/shared/utils/time'
 

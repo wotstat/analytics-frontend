@@ -1,7 +1,7 @@
 <template>
   <div class="minimap">
     <MinimapBackground :tag="tag" :gameplay="gameplay" :game="game" :format="'webp'" class="background" />
-    <MinimapBases :tag="tag" :gameplay="gameplay" :allyTeam="team" />
+    <MinimapBases :tag="tag" :gameplay="gameplay" :team="props.team" v-if="showBases" />
     <div class="overlay">
       <slot />
     </div>
@@ -19,10 +19,12 @@ const props = withDefaults(defineProps<{
   gameplay?: string;
   tag: string;
   team?: number;
+  showBases?: boolean;
 }>(), {
   game: 'mt',
   gameplay: 'ctf',
-  team: 1
+  team: 1,
+  showBases: true
 })
 
 </script>

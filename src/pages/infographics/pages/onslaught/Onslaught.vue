@@ -5,6 +5,7 @@
       :selectedIndex="selectedDayIndex" />
     <MainStat :game="preferredGameOrDefault" :items="mainStats" @selectDay="selectDay" />
     <VehicleTable class="vehicle-statistics" :vehicleStats />
+    <MapsTable class="maps-statistics" :mapsStats />
   </div>
 </template>
 
@@ -26,6 +27,8 @@ import { StatItem, useMainStat, type StatisticRes } from './mainStat/useMainStat
 import VehicleTable from './vehicleTable/VehicleTable.vue'
 import { watchWithAbortSignal } from '@/shared/utils/core'
 import { useVehicleTable, VehicleRes } from './vehicleTable/useVehicleTable'
+import { MapsRes, useMapsTable } from './mapsTable/useMapsTable'
+import MapsTable from './mapsTable/MapsTable.vue'
 
 
 const ONE_HOUR = 60 * 60 * 1000
@@ -93,6 +96,7 @@ const seasonInterval = computed(() => {
 
 const statistics = shallowRef<StatisticRes[] | null>(null)
 const vehicleStatistics = shallowRef<VehicleRes[] | null>(null)
+const mapsStatistics = shallowRef<MapsRes[] | null>(null)
 
 async function load(abortSignal: AbortSignal) {
   if (!seasonInterval.value) return
@@ -218,12 +222,42 @@ async function load(abortSignal: AbortSignal) {
   if (abortSignal.aborted) return
 
   vehicleStatistics.value = vehicleStatisticsRes.data
+
+
+  const mapsStatisticsRes = await query<MapsRes>(`
+    with
+      '${nickName}' as PLAYER,
+      '${startDate}' as START_DATE,
+      '${endDate}' as END_DATE,
+      '${region}' as REGION,
+      ${COMP7_ISO_HOUR_OFFSET} as OFFSET
+    select toStartOfDay(dateTime + interval OFFSET hour) as day,
+          arenaTag,
+          toUInt32(count()) as totalResults,
+          toUInt32(countIf(result = 'win')) as wins,
+          toUInt32(sum(personal.damageDealt)) as damage,
+          toUInt32(sum(personal.damageAssistedRadio + personal.damageAssistedStun + personal.damageAssistedStun)) as assist,
+          toUInt32(sum(personal.comp7PrestigePoints)) as prestigePoints,
+          toUInt32(sum(personal.kills)) as kills
+    from Event_OnBattleResult
+    where playerName = PLAYER
+      and dateTime between START_DATE and END_DATE
+      and region = REGION
+      and battleMode = 'COMP7'
+    group by day, arenaTag
+    order by day, arenaTag
+  `, { abortSignal })
+  if (abortSignal.aborted) return
+
+  mapsStatistics.value = mapsStatisticsRes.data
 }
 
 watchWithAbortSignal([seasonInterval, debouncedNickname, preferredGameOrDefault], signal => load(signal))
 
 watch([seasonInterval, nickname, preferredGameOrDefault], () => {
   statistics.value = null
+  vehicleStatistics.value = null
+  mapsStatistics.value = null
 })
 
 const days = computed(() => {
@@ -277,12 +311,12 @@ const barsData = computed<DayChartData[]>(() => days.value.map(d => ({
 
 const selectedDay = computed(() => {
   if (selectedDayIndex.value == null) return null
-  return days.value.find(d => d.dayIndex === selectedDayIndex.value) ?? null
+  return days.value.find(d => d.dayIndex === selectedDayIndex.value)?.day ?? null
 })
 
 const mainStats = useMainStat(days, preferredGameOrDefault, selectedSeason, selectedDayIndex)
-const vehicleStats = useVehicleTable(computed(() => vehicleStatistics.value ?? []), computed(() => selectedDay.value?.day ?? null))
-
+const vehicleStats = useVehicleTable(computed(() => vehicleStatistics.value ?? []), selectedDay)
+const mapsStats = useMapsTable(computed(() => mapsStatistics.value ?? []), selectedDay)
 </script>
 
 

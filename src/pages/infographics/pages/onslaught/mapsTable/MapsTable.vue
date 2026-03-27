@@ -2,8 +2,8 @@
   <Transition name="fade">
     <section class="vehicle-statistics" v-if="displayed.length > 0">
       <div class="header">
-        <h3>Статистика танков</h3>
-        <button class="more" @click="showMore = !showMore" v-if="props.vehicleStats.length > SHOW_MORE_THRESHOLD">
+        <h3>Статистика карт</h3>
+        <button class="more" @click="showMore = !showMore" v-if="props.mapsStats.length > SHOW_MORE_THRESHOLD">
           {{ showMore ? 'Меньше' : 'Больше' }}
         </button>
       </div>
@@ -14,7 +14,7 @@
           <thead>
             <tr>
               <th>
-                <Icon :icon="'tank'" />
+                <Icon :icon="'arena'" />
               </th>
               <th>
                 <Icon :icon="'battles'" />
@@ -38,19 +38,17 @@
           </thead>
 
           <tbody class="mt-font">
-            <tr v-for="vehicle in displayed" :key="vehicle.tag">
+            <tr v-for="arena in displayed" :key="arena.tag">
               <th class="vehicle">
-                <VehicleImage :tag="vehicle.tag" class="image" :size="'preview'" />
-                <VehicleLevel :level="vehicle.level" />
-                <VehicleType :type="isVehicleType(vehicle.type) ? vehicle.type : 'any'" class="type" />
-                <p>{{ getTankName(vehicle.tag) }}</p>
+                <TooltipedMinimap :tag="arena.tag" class="image" />
+                <p>{{ getArenaName(arena.tag) }}</p>
               </th>
-              <td>{{ vehicle.battles }}</td>
-              <td>{{ roundProcessor(vehicle.winrate * 100, 2) }}%</td>
-              <td>{{ roundProcessor(vehicle.damage) }}</td>
-              <td>{{ roundProcessor(vehicle.assist) }}</td>
-              <td>{{ roundProcessor(vehicle.prestigePoints) }}</td>
-              <td>{{ roundProcessor(vehicle.kills, 2) }}</td>
+              <td>{{ arena.battles }}</td>
+              <td>{{ roundProcessor(arena.winrate * 100, 2) }}%</td>
+              <td>{{ roundProcessor(arena.damage) }}</td>
+              <td>{{ roundProcessor(arena.assist) }}</td>
+              <td>{{ roundProcessor(arena.prestigePoints) }}</td>
+              <td>{{ roundProcessor(arena.kills, 2) }}</td>
 
             </tr>
           </tbody>
@@ -63,29 +61,27 @@
 
 <script setup lang="ts">
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
-import VehicleType from '@/shared/game/vehicles/type/VehicleType.vue'
-import VehicleImage from '@/shared/game/vehicles/vehicle/VehicleImage.vue'
-import VehicleLevel from '@/shared/game/vehicles/VehicleLevel.vue'
-import { useVehicleTable } from './useVehicleTable'
-import { isVehicleType } from '@/shared/game/vehicles/type/vehicleTypeToImage'
-import { getTankName } from '@/shared/i18n/i18n'
+import { useMapsTable } from './useMapsTable'
+import { getArenaName } from '@/shared/i18n/i18n'
 import { roundProcessor } from '@/shared/utils/processors/processors'
 import { computed, ref } from 'vue'
+import TooltipedMinimap from './TooltipedMinimap.vue'
 
-const SHOW_MORE_THRESHOLD = 5
+
+const SHOW_MORE_THRESHOLD = 6
 
 const props = defineProps<{
-  vehicleStats: ReturnType<typeof useVehicleTable>['value']
+  mapsStats: ReturnType<typeof useMapsTable>['value']
 }>()
 
 const showMore = ref(false)
 
 const displayed = computed(() => {
-  if (props.vehicleStats.length > SHOW_MORE_THRESHOLD && !showMore.value) {
-    return props.vehicleStats.sort((a, b) => b.battles - a.battles).slice(0, SHOW_MORE_THRESHOLD - 2)
+  if (props.mapsStats.length > SHOW_MORE_THRESHOLD && !showMore.value) {
+    return props.mapsStats.sort((a, b) => b.battles - a.battles).slice(0, SHOW_MORE_THRESHOLD - 2)
   }
 
-  return props.vehicleStats.sort((a, b) => b.battles - a.battles)
+  return props.mapsStats.sort((a, b) => b.battles - a.battles)
 })
 
 
@@ -110,8 +106,8 @@ const displayed = computed(() => {
     border: none;
     color: var(--blue-thin-color, #fff);
     padding-right: 0;
-    margin-bottom: -10px;
     font-size: 14px;
+    margin-bottom: -10px;
 
     &:hover {
       color: var(--blue-thin-color-hover, #fff);
@@ -163,9 +159,14 @@ table {
         font-weight: normal;
 
         .image {
-          height: 50px;
+          height: 40px;
+          width: 40px;
           user-select: none;
-          pointer-events: none;
+          margin: 5px;
+          border-radius: 4px;
+          overflow: hidden;
+          margin-right: 10px;
+          box-shadow: 0 0 2px rgba(0, 0, 0, 0.1);
         }
 
         .type {
@@ -174,7 +175,7 @@ table {
         }
 
         p {
-          font-size: 14px;
+          font-size: 15px;
           line-height: 16px;
           white-space: nowrap;
         }

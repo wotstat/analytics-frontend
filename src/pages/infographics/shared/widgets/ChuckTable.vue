@@ -36,7 +36,7 @@
           <!-- <td>{{ item }}</td> -->
           <td class="battleNumber"> {{ i + 1 }} </td>
           <td class="l-b num" v-if="showDate">{{ getDate(item.onBattleStartId) }}</td>
-          <td class="l-b">{{ getArenaName(item.arena).value }}</td>
+          <td class="l-b">{{ getArenaNameLegacy(item.arena).value }}</td>
 
           <template v-for="(player, i) in item.players">
             <td class="l-b">{{ getTankName(player[1], true) }}</td>
@@ -144,7 +144,7 @@
 import { roundProcessor, createPercentProcessor } from '@/shared/utils/processors/processors'
 import { dbIndexToDate } from '@/db'
 import { ChuckResult } from '@/db/schema'
-import { getArenaName, getTankName } from '@/shared/i18n/i18n'
+import { getArenaNameLegacy, getTankName } from '@/shared/i18n/i18n'
 import { timeProcessor } from '@/shared/utils/time'
 
 const props = defineProps<{

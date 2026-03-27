@@ -1,4 +1,4 @@
-import { queryAsync } from '@/db'
+import { LONG_CACHE_SETTINGS, query, queryAsync } from '@/db'
 import { computed, shallowRef } from 'vue'
 
 class Parser {
@@ -51,7 +51,10 @@ function isGetText(obj: Parser | Promise<Parser>): obj is Parser {
   return obj instanceof Parser
 }
 
-export function getArenaName(tag: string) {
+/**
+ * @deprecated This function is outdated. Use the getArenaName() instead.
+ */
+export function getArenaNameLegacy(tag: string) {
   const name = tag.replace('spaces/', '')
   const arenaName = shallowRef<string>(name)
 
@@ -103,11 +106,13 @@ export const selectVehiclesLocalization = `select tag, type, level, role, nation
 export const selectTagVehiclesLocalization = `select tag, short${languageToPostfix[LANGUAGE]} as short, name${languageToPostfix[LANGUAGE]} as name from VehiclesLocalization`
 export const selectTagArenasLocalization = `select tag, name${languageToPostfix[LANGUAGE]} as name from ArenasLocalization`
 
-const tankNames = queryAsync<{ tag: string, short: string, name: string }>(selectVehiclesLocalization)
-
+const tankNames = queryAsync<{ tag: string, short: string, name: string }>(selectVehiclesLocalization, { settings: LONG_CACHE_SETTINGS })
 const tankNamesMap = computed(() => new Map<string, [string, string]>(tankNames.value.data.map(t => [t.tag, [t.name, t.short]])))
 
-function getBestLocale(tag: string, short: boolean = false) {
+const arenaNames = queryAsync<{ tag: string, name: string }>(selectTagArenasLocalization, { settings: LONG_CACHE_SETTINGS })
+const arenaNamesMap = computed(() => new Map<string, string>(arenaNames.value.data.map(t => [t.tag, t.name])))
+
+function getBestTankLocale(tag: string, short: boolean = false) {
   const locales = tankNamesMap.value.get(tag)
   if (!locales) return null
   const result = short ? locales[1] : locales[0]
@@ -116,7 +121,7 @@ function getBestLocale(tag: string, short: boolean = false) {
 }
 
 export function getTankName(tag: string, short: boolean = false) {
-  const name = getBestLocale(tag, short)
+  const name = getBestTankLocale(tag, short)
   if (name) return name
   return tankTagToReadable(tag)
 }
@@ -133,6 +138,14 @@ export function tankTagToReadable(tag: string) {
 
   return idName
 }
+
+export function getArenaName(tag: string) {
+  tag = tag.replace('spaces/', '')
+  const name = arenaNamesMap.value.get(tag)
+  if (name) return name
+  return tag
+}
+
 
 export function crewBookName(tag: string) {
   return {
