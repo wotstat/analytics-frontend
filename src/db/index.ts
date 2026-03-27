@@ -132,7 +132,7 @@ export function queryComputedFirst<T>(queryString: () => string | null, defaultV
 
 }
 
-export function queryAsync<T>(queryString: string, { enabled = ref(true), settings = {} as ClickHouseSettings } = {}) {
+export function queryAsync<T>(queryString: string, { enabled = ref(true), settings = {} as ClickHouseSettings, allowCache = true } = {}) {
   const result = shallowRef<{ status: Status, data: T[] }>({ status: loading, data: [] })
 
   const stop = watch(enabled, async (value) => {
@@ -141,7 +141,7 @@ export function queryAsync<T>(queryString: string, { enabled = ref(true), settin
     setTimeout(() => stop(), 0)
 
     try {
-      const { data } = await query<T>(queryString, { settings })
+      const { data } = await query<T>(queryString, { settings, allowCache })
       result.value = { data, status: success }
     } catch (reason) {
       console.error(reason)
@@ -152,8 +152,8 @@ export function queryAsync<T>(queryString: string, { enabled = ref(true), settin
   return result
 }
 
-export function queryAsyncFirst<T>(queryString: string, defaultValue: T, { enabled = ref(true), settings = {} as ClickHouseSettings } = {}) {
-  const result = queryAsync<T>(queryString, { enabled, settings })
+export function queryAsyncFirst<T>(queryString: string, defaultValue: T, { enabled = ref(true), settings = {} as ClickHouseSettings, allowCache = true } = {}) {
+  const result = queryAsync<T>(queryString, { enabled, settings, allowCache })
 
   return computed(() => ({
     status: result.value.status as Status,

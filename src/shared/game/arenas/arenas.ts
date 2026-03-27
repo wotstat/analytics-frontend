@@ -12,6 +12,8 @@ export function minimapUrl(tag: string,
   gameplay: null | 'comp7' | (string & {}) = null,
   format: 'webp' | 'png' = 'webp'): string {
 
+  if (tag.startsWith('spaces/')) tag = tag.replace('spaces/', '')
+
   const gamePrefix = game === 'mt' ? 'mt' : 'wot'
   const defaultUrl = `${STATIC_URL}/${gamePrefix}/latest/arenas/minimap/${tag}.${format}`
   if (!gameplay) return defaultUrl
@@ -92,6 +94,7 @@ function arenaKey(game: GameVendor, tag: string, gameplay: string): string {
 }
 
 export function getArenaMeta(game: GameVendor, tag: string, gameplay: string) {
+  if (tag.startsWith('spaces/')) tag = tag.replace('spaces/', '')
   return arenasMap.value.get(arenaKey(game, tag, gameplay))
 }
 

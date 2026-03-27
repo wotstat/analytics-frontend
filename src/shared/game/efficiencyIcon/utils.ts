@@ -4,6 +4,7 @@ export const shared = [
   'battles',
   'player',
   'tank',
+  'arena',
   'win',
   'winrate',
   'solo',

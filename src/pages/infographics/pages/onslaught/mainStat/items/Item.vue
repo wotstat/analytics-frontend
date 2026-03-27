@@ -28,7 +28,7 @@
     </div>
 
     <PopoverAutoClose :target="item" v-model="hover" :placement="['bottom-float']"
-      :viewport-offset="{ top: headerHeight + additionalHeaderHeight, bottom: 10, left: 10, right: 10 }" :arrow-size="5"
+      :viewport-offset="{ top: headerOffset, bottom: 10, left: 10, right: 10 }" :arrow-size="5"
       :offset="{ top: tooltipTopOffset }" v-if="slots.tooltip">
       <div class="tooltip">
         <slot name="tooltip"></slot>
@@ -40,7 +40,7 @@
 
 
 <script setup lang="ts">
-import { headerHeight, useAdditionalHeaderHeight } from '@/pages/shared/header/useAdditionalHeaderHeight'
+import { headerOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
 import { useElementHover, useElementSize } from '@vueuse/core'
 import { computed, ref, useSlots } from 'vue'
@@ -49,7 +49,6 @@ const props = defineProps<{
 }>()
 
 const item = ref<HTMLElement | null>(null)
-const { additionalHeaderHeight } = useAdditionalHeaderHeight(true)
 
 const { width } = useElementSize(item)
 const tooltipTopOffset = computed(() => width.value <= 160 ? 7 : 0)

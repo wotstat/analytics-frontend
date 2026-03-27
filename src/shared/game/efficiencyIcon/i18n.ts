@@ -7,6 +7,7 @@ export const i18n = {
     'winrate': 'Процент побед',
     'player': 'Игрок',
     'tank': 'Танк',
+    'arena': 'Карта',
     'solo': 'Соло',
     'platoon': 'Взводом',
 

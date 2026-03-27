@@ -26,6 +26,7 @@ const targetUrl = computed(() => minimapUrl(props.tag, props.game, props.gamepla
 
 <style lang="scss" scoped>
 img {
+  display: block;
   pointer-events: none;
   user-select: none;
   aspect-ratio: 1 / 1;
