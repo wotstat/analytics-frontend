@@ -2,7 +2,9 @@
   <Transition name="fade">
     <section class="vehicle-statistics" v-if="displayed.length > 0">
       <div class="header">
-        <h3>Статистика танков</h3>
+        <h3>Статистика танков<Transition name="fade-day"><span v-if="displayedDay">, день {{ displayedDay }}</span>
+          </Transition>
+        </h3>
         <button class="more" @click="showMore = !showMore" v-if="props.vehicleStats.length > SHOW_MORE_THRESHOLD">
           {{ showMore ? 'Меньше' : 'Больше' }}
         </button>
@@ -75,7 +77,8 @@ import { computed, ref } from 'vue'
 const SHOW_MORE_THRESHOLD = 5
 
 const props = defineProps<{
-  vehicleStats: ReturnType<typeof useVehicleTable>['value']
+  vehicleStats: ReturnType<typeof useVehicleTable>['value'],
+  displayedDay: number | null
 }>()
 
 const showMore = ref(false)
@@ -202,8 +205,14 @@ table {
   filter: blur(3px);
 }
 
-.fade-enter-to,
-.fade-leave-from {
-  opacity: 1;
+.fade-day-enter-active,
+.fade-day-leave-active {
+  transition: opacity 0.15s, filter 0.15s;
+}
+
+.fade-day-enter-from,
+.fade-day-leave-to {
+  opacity: 0;
+  filter: blur(4px);
 }
 </style>

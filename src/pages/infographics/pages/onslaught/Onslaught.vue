@@ -2,10 +2,10 @@
   <div class="onslaught-page">
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" :seasons="seasons.data ?? []" />
     <DayChart :days="barsData" class="day-chart" @select="selectDay" @deselect="deselectDay"
-      :selectedIndex="selectedDayIndex" />
+      :selectedIndex="selectedDayIndex" ref="dayChart" />
     <MainStat :game="preferredGameOrDefault" :items="mainStats" @selectDay="selectDay" />
-    <VehicleTable class="vehicle-statistics" :vehicleStats />
-    <MapsTable class="maps-statistics" :mapsStats />
+    <VehicleTable class="vehicle-statistics" :vehicleStats :displayedDay />
+    <MapsTable class="maps-statistics" :mapsStats :displayedDay />
   </div>
 </template>
 
@@ -14,12 +14,10 @@
 import { computed, onMounted, ref, shallowRef, watch, watchEffect } from 'vue'
 import DayChart from './dayChart/DayChart.vue'
 import { dateToDbDate, LONG_CACHE_SETTINGS, query, queryAsync, queryComputed } from '@/db'
-import { useI18n } from '@/shared/i18n/useI18n'
-import i18n from '@/shared/game/comp7/i18n.json'
 import { preferredGameOrDefault } from '@/shared/global/globalPreferred'
 import { gameToRegion } from '@/shared/game/wot'
 import Settings from './settings/Settings.vue'
-import { onKeyStroke, refDebounced } from '@vueuse/core'
+import { onKeyStroke, refDebounced, useElementBounding, useElementVisibility } from '@vueuse/core'
 import { DayChartData } from './types'
 import MainStat from './mainStat/MainStat.vue'
 import { getDivisionLetterByRating, getRankByRating, getSeasonDuration } from '@/shared/game/comp7/utils'
@@ -29,13 +27,14 @@ import { watchWithAbortSignal } from '@/shared/utils/core'
 import { useVehicleTable, VehicleRes } from './vehicleTable/useVehicleTable'
 import { MapsRes, useMapsTable } from './mapsTable/useMapsTable'
 import MapsTable from './mapsTable/MapsTable.vue'
+import { headerOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 
 
 const ONE_HOUR = 60 * 60 * 1000
 const ONE_DAY = 24 * ONE_HOUR
 const COMP7_ISO_HOUR_OFFSET = -2
 
-const { t } = useI18n(i18n)
+const dayChart = ref<HTMLElement | null>(null)
 
 const selectedDayIndex = ref<number | null>(null)
 const selectedSeason = ref<string | null>(null)
@@ -68,6 +67,10 @@ onKeyStroke('ArrowRight', () => {
   if (nextIndex == -1) return
   selectDay(selectedDayIndex.value + 1 + nextIndex)
 })
+
+const { top: chartTop, height: chartHeight } = useElementBounding(dayChart)
+const isChartDayVisible = computed(() => chartTop.value + chartHeight.value - headerOffset.value - 10 > 0)
+const displayedDay = computed(() => !isChartDayVisible.value && selectedDayIndex.value != null ? selectedDayIndex.value + 1 : null)
 
 const seasons = queryAsync<{ region: string, season: string, start: string, end: string }>(`
   select region, season,
