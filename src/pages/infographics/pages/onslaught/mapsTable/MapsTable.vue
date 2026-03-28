@@ -2,7 +2,9 @@
   <Transition name="fade">
     <section class="vehicle-statistics" v-if="displayed.length > 0">
       <div class="header">
-        <h3>Статистика карт</h3>
+        <h3>Статистика карт<Transition name="fade-day"><span v-if="displayedDay">, день {{ displayedDay }}</span>
+          </Transition>
+        </h3>
         <button class="more" @click="showMore = !showMore" v-if="props.mapsStats.length > SHOW_MORE_THRESHOLD">
           {{ showMore ? 'Меньше' : 'Больше' }}
         </button>
@@ -72,6 +74,7 @@ const SHOW_MORE_THRESHOLD = 6
 
 const props = defineProps<{
   mapsStats: ReturnType<typeof useMapsTable>['value']
+  displayedDay: number | null
 }>()
 
 const showMore = ref(false)
@@ -203,8 +206,14 @@ table {
   filter: blur(3px);
 }
 
-.fade-enter-to,
-.fade-leave-from {
-  opacity: 1;
+.fade-day-enter-active,
+.fade-day-leave-active {
+  transition: opacity 0.15s, filter 0.15s;
+}
+
+.fade-day-enter-from,
+.fade-day-leave-to {
+  opacity: 0;
+  filter: blur(4px);
 }
 </style>
