@@ -11,17 +11,17 @@
 
 
 <script setup lang="ts">
-import { computed, onMounted, ref, shallowRef, watch, watchEffect } from 'vue'
+import { computed, ref, shallowRef, watch } from 'vue'
 import DayChart from './dayChart/DayChart.vue'
-import { dateToDbDate, LONG_CACHE_SETTINGS, query, queryAsync, queryComputed } from '@/db'
+import { dateToDbDate, LONG_CACHE_SETTINGS, query, queryAsync } from '@/db'
 import { preferredGameOrDefault } from '@/shared/global/globalPreferred'
 import { gameToRegion } from '@/shared/game/wot'
 import Settings from './settings/Settings.vue'
-import { onKeyStroke, refDebounced, useElementBounding, useElementVisibility } from '@vueuse/core'
+import { onKeyStroke, refDebounced, useElementBounding } from '@vueuse/core'
 import { DayChartData } from './types'
 import MainStat from './mainStat/MainStat.vue'
 import { getDivisionLetterByRating, getRankByRating, getSeasonDuration } from '@/shared/game/comp7/utils'
-import { StatItem, useMainStat, type StatisticRes } from './mainStat/useMainStat'
+import { useMainStat, type StatisticRes } from './mainStat/useMainStat'
 import VehicleTable from './vehicleTable/VehicleTable.vue'
 import { watchWithAbortSignal } from '@/shared/utils/core'
 import { useVehicleTable, VehicleRes } from './vehicleTable/useVehicleTable'
