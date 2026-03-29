@@ -1,4 +1,4 @@
-import { h, ref } from 'vue'
+import { defineComponent, h, ref } from 'vue'
 import TipBubble from './TipBubble.vue'
 
 type Options = {
@@ -15,27 +15,31 @@ export function useTipBubble(options: Options) {
 
   const displayed = ref(options.displayed || false)
 
-  const component = h(TipBubble, {
-    direction: options.direction || 'auto',
-    closable: options.closable || false,
-    extendOnHover: options.extendOnHover || false,
-    displayed: displayed.value
-  })
-
   const setDisplayed = (displayed: boolean) => {
   }
 
   const display = (seconds: number = -1) => {
+    displayed.value = true
   }
 
   const hide = (duration: Duration = 'infinity') => {
+    displayed.value = false
   }
 
   const accept = () => {
   }
 
+  const Component = defineComponent((props) => {
+    return () => h(TipBubble, {
+      direction: options.direction || 'auto',
+      closable: options.closable || false,
+      extendOnHover: options.extendOnHover || false,
+      displayed: displayed.value
+    })
+  })
+
   return {
-    Component: component,
+    Component,
     setDisplayed,
     display,
     hide,

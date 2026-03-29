@@ -43,19 +43,21 @@ const { width: contentWidth, height: contentHeight } = useElementBounding(conten
 .tip-bubble {
   background-color: var(--tip-background-color, var(--dark-blue-color, #4d4d4d));
   border-radius: 10px;
-  z-index: 1000;
   position: relative;
+  z-index: 7;
+  width: 18px;
+  height: 18px;
+  display: flex;
 
   .icon {
     width: 10px;
     height: 10px;
-    fill: #fff;
+    fill: #fff1b1;
     margin: 4px;
     display: block;
-    z-index: 20;
+    z-index: 1;
     position: relative;
   }
-
 
   &:hover {
     .content-container {
@@ -65,20 +67,23 @@ const { width: contentWidth, height: contentHeight } = useElementBounding(conten
       .content {
         opacity: 1;
         filter: blur(0);
+        transition-delay: 0s;
+        transition-duration: 0.1s;
       }
     }
   }
 
-
   .content-container {
     top: 0;
     left: 0;
-    border-radius: 10px;
+    border-radius: 9px;
     position: absolute;
     background-color: var(--tip-background-color, var(--dark-blue-color, #4d4d4d));
     overflow: hidden;
 
 
+    min-width: 18px;
+    min-height: 18px;
     width: 18px;
     height: 18px;
     transition: width 0.3s ease, height 0.3s ease;
@@ -94,7 +99,8 @@ const { width: contentWidth, height: contentHeight } = useElementBounding(conten
 
       opacity: 0;
       filter: blur(5px);
-      transition: opacity 0.3s ease, filter 0.3s ease;
+      transition: opacity 0.2s linear, filter 0.2s linear;
+      transition-delay: 0.1s;
 
       .spacer {
         width: 10px;
@@ -104,5 +110,88 @@ const { width: contentWidth, height: contentHeight } = useElementBounding(conten
 
     }
   }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  // transition: scale-easeOutElastic 1s linear;
+  animation: scale-easeOutElasticReverse 1s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  // opacity: 0;
+  // filter: blur(4px);
+  // transform: scale(0);
+}
+
+@keyframes scale-easeOutElastic {
+  0% {
+    transform: scale(1);
+  }
+
+  16% {
+    transform: scale(-0.32);
+  }
+
+  28% {
+    transform: scale(0.13);
+  }
+
+  44% {
+    transform: scale(-0.05);
+  }
+
+  59% {
+    transform: scale(0.02);
+  }
+
+  73% {
+    transform: scale(-0.01);
+  }
+
+  88% {
+    transform: scale(0);
+  }
+
+  100% {
+    transform: scale(0);
+  }
+
+}
+
+@keyframes scale-easeOutElasticReverse {
+  0% {
+    transform: scale(0);
+  }
+
+  16% {
+    transform: scale(-0.32);
+  }
+
+  28% {
+    transform: scale(0.13);
+  }
+
+  44% {
+    transform: scale(-0.05);
+  }
+
+  59% {
+    transform: scale(0.02);
+  }
+
+  73% {
+    transform: scale(-0.01);
+  }
+
+  88% {
+    transform: scale(1.2);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+
 }
 </style>

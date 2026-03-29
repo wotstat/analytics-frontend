@@ -213,7 +213,7 @@ const problemsVisible = ref(false)
   left: 0;
   top: 0;
   right: 0;
-  z-index: 11;
+  z-index: 100;
   display: flex;
   align-items: center;
   flex-direction: column;
