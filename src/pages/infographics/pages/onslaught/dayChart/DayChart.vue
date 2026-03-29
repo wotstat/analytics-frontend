@@ -1,6 +1,5 @@
 <template>
   <div class="chart nice-scrollbar">
-    <Component class="tip-bubble" />
     <div class="bars">
       <Bar v-for="(day, index) in props.days" :key="index" :value="day" @click="click(index)"
         :selected="index === props.selectedIndex" />
@@ -10,10 +9,8 @@
 
 
 <script setup lang="ts">
-import { useTipBubble } from '@/shared/uiKit/tipBubble/useTipBubble'
 import { DayChartData } from '../types'
 import Bar from './Bar.vue'
-import { createReusableTemplate } from '@vueuse/core'
 
 
 const props = defineProps<{
@@ -32,14 +29,6 @@ function click(index: number) {
   emit('select', index)
 }
 
-
-const { Component } = useTipBubble({
-  key: 'onslaught-day-chart-keyboard',
-  direction: 'auto',
-  extendOnHover: true,
-  closable: false,
-  displayed: true
-})
 </script>
 
 <style lang="scss"></style>
@@ -50,12 +39,6 @@ const { Component } = useTipBubble({
   overflow-x: scroll;
   padding-bottom: 10px;
   position: relative;
-
-  :deep(>.tip-bubble) {
-    position: absolute;
-    top: 0;
-    left: var(--content-page-margin, 0);
-  }
 
   &::-webkit-scrollbar-track {
     margin: 0 var(--content-page-margin, 0);

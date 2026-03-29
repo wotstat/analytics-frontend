@@ -1,8 +1,11 @@
 <template>
   <div class="onslaught-page">
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" :seasons="seasons.data ?? []" />
-    <DayChart :days="barsData" class="day-chart" @select="selectDay" @deselect="deselectDay"
-      :selectedIndex="selectedDayIndex" ref="dayChart" />
+    <div class="chart">
+      <dayChangeTipBubble.Component class="tip-bubble" />
+      <DayChart :days="barsData" class="day-chart" @select="selectDay" @deselect="deselectDay"
+        :selectedIndex="selectedDayIndex" ref="dayChart" />
+    </div>
     <MainStat :game="preferredGameOrDefault" :items="mainStats" @selectDay="selectDay" />
     <VehicleTable class="vehicle-statistics" :vehicleStats :displayedDay />
     <MapsTable class="maps-statistics" :mapsStats :displayedDay />
@@ -28,6 +31,7 @@ import { useVehicleTable, VehicleRes } from './vehicleTable/useVehicleTable'
 import { MapsRes, useMapsTable } from './mapsTable/useMapsTable'
 import MapsTable from './mapsTable/MapsTable.vue'
 import { headerOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
+import { useTipBubble } from '@/shared/uiKit/tipBubble/useTipBubble'
 
 
 const ONE_HOUR = 60 * 60 * 1000
@@ -320,6 +324,19 @@ const selectedDay = computed(() => {
 const mainStats = useMainStat(days, preferredGameOrDefault, selectedSeason, selectedDayIndex)
 const vehicleStats = useVehicleTable(computed(() => vehicleStatistics.value ?? []), selectedDay)
 const mapsStats = useMapsTable(computed(() => mapsStatistics.value ?? []), selectedDay)
+
+const dayChangeTipBubble = useTipBubble({
+  key: 'onslaught-day-chart-keyboard',
+  direction: 'auto',
+  extendOnHover: true,
+  closable: false,
+  displayed: false
+})
+
+watch(selectedDayIndex, dayIndex => {
+  if (dayIndex) dayChangeTipBubble.display()
+  else dayChangeTipBubble.hide()
+})
 </script>
 
 
@@ -327,10 +344,20 @@ const mapsStats = useMapsTable(computed(() => mapsStatistics.value ?? []), selec
 .onslaught-page {
   margin-top: 1em;
 
-  .day-chart {
+  .chart {
     margin-top: 20px;
-    margin-left: calc(var(--content-page-margin, 0) * -1);
-    margin-right: calc(var(--content-page-margin, 0) * -1);
+    position: relative;
+
+    .tip-bubble {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .day-chart {
+      margin-left: calc(var(--content-page-margin, 0) * -1);
+      margin-right: calc(var(--content-page-margin, 0) * -1);
+    }
   }
 
   .vehicle-statistics {
