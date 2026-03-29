@@ -1,74 +1,187 @@
 <template>
-  <Transition name="fade">
-    <div class="tip-bubble" v-if="props.displayed" ref="bubble" :style="{
-      '--left': `${left}px`,
-      '--content-width': `${contentWidth}px`,
-      '--content-height': `${contentHeight}px`
-    }" :class="{
-      displayed: props.displayed && false,
-    }">
+  <div class="tip-bubble" :style="{
+    '--left': `${left}px`,
+    '--content-width': `${contentWidth}px`,
+    '--content-height': `${contentHeight}px`
+  }" :class="{
+    displayed: props.displayed && false,
+    extended: extended
+  }" ref="root" @click="onClick" @pointerdown="onPointerDown" @pointerup="onPointerUp" v-if="displayed">
+    <div class="bubble" ref="bubble">
       <LightbulbIcon class="icon" />
-      <div class="content-container">
-        <div class="content" ref="content">
-          <div class="spacer"></div>
-          Используйте стрелочки ← и → для переключения дней
-        </div>
+    </div>
+    <div class="content-container" ref="contentContainer">
+      <div class="content" ref="content">
+        <div class="spacer"></div>
+        Используйте стрелочки ← и → для переключения дней
       </div>
     </div>
-  </Transition>
+  </div>
 </template>
 
 
 <script setup lang="ts">
-
-import { ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import LightbulbIcon from './assets/lightbulb.svg'
-import { useElementBounding } from '@vueuse/core'
+import { useElementBounding, useElementHover } from '@vueuse/core'
+import { animate } from 'motion/mini'
+import { spring } from 'motion'
 
 const props = defineProps<{
   direction: 'left' | 'right' | 'auto'
-  extendOnHover: boolean
-  closable: boolean
   displayed: boolean
+  autoExtend: boolean
 }>()
 
+const root = ref<HTMLDivElement | null>(null)
 const bubble = ref<HTMLDivElement | null>(null)
 const content = ref<HTMLDivElement | null>(null)
+const contentContainer = ref<HTMLDivElement | null>(null)
 const { left } = useElementBounding(bubble)
 const { width: contentWidth, height: contentHeight } = useElementBounding(content)
+
+const displayed = ref(false)
+const isHover = useElementHover(root)
+const isHoverExistsInCycle = ref(false)
+const isContentClicked = ref(false)
+const canBeExtended = ref(false)
+const canBeAutoExtended = ref(false)
+const isPinned = ref(false)
+
+const extended = computed(() => {
+  if (!canBeExtended.value) return false
+  if (isPinned.value) return true
+  if (isHover.value) return true
+  if (props.autoExtend && canBeAutoExtended.value && !isHoverExistsInCycle.value) return true
+  return false
+})
+
+watch(() => props.displayed, (displayed) => {
+  if (displayed) {
+    showAnimation()
+  } else {
+    hideAnimation()
+  }
+}, { immediate: true })
+
+watch(isHover, (hover) => {
+  isContentClicked.value = false
+  if (!hover && canBeExtended.value) {
+    isHoverExistsInCycle.value = true
+  }
+})
+
+function onClick() {
+  isPinned.value = !isPinned.value
+}
+
+function onPointerDown() {
+  animate(root.value, { scale: 0.9 }, { duration: 0.3 })
+}
+
+function onPointerUp() {
+  animate(root.value, { scale: 1 }, { duration: 0.3 })
+}
+
+let showAnimationController = new AbortController()
+let hideAnimationController = new AbortController()
+
+async function showAnimation() {
+  displayed.value = true
+  showAnimationController.abort()
+  hideAnimationController.abort()
+
+  const controller = new AbortController()
+  showAnimationController = controller
+
+  await new Promise((resolve) => nextTick(() => resolve(null)))
+  if (controller.signal.aborted) return
+
+  animate(bubble.value, { scale: 1, opacity: 1 }, { type: spring, bounce: 0.5, visualDuration: 0.5 })
+  animate(bubble.value, { filter: 'blur(0px)' }, { duration: 0.1 })
+
+  setTimeout(() => {
+    if (controller.signal.aborted) return
+    isHoverExistsInCycle.value = false
+    isContentClicked.value = false
+    canBeExtended.value = true
+    if (contentContainer.value) contentContainer.value.style.display = 'block'
+  }, 400)
+
+  setTimeout(() => {
+    if (controller.signal.aborted) return
+    canBeAutoExtended.value = true
+  }, 800)
+}
+
+async function hideAnimation() {
+  showAnimationController.abort()
+  hideAnimationController.abort()
+
+  const controller = new AbortController()
+  hideAnimationController = controller
+
+  const extendedBefore = extended.value
+  canBeExtended.value = false
+  canBeAutoExtended.value = false
+
+  if (extendedBefore) {
+    await new Promise((resolve) => nextTick(() => resolve(null)))
+    await new Promise((resolve) => setTimeout(resolve, 300))
+  }
+  if (controller.signal.aborted) return
+  if (contentContainer.value) contentContainer.value.style.display = 'none'
+
+  animate(bubble.value, { scale: 0.4, opacity: 0, filter: 'blur(8px)' }, { duration: 0.2, ease: 'easeOut' })
+  await new Promise((resolve) => setTimeout(resolve, 200))
+  if (controller.signal.aborted) return
+  displayed.value = false
+}
 </script>
 
 
 <style lang="scss" scoped>
 .tip-bubble {
-  background-color: var(--tip-background-color, var(--dark-blue-color, #4d4d4d));
-  border-radius: 10px;
   position: relative;
   z-index: 7;
   width: 18px;
   height: 18px;
   display: flex;
+  user-select: none;
 
-  .icon {
-    width: 10px;
-    height: 10px;
-    fill: #fff1b1;
-    margin: 4px;
-    display: block;
-    z-index: 1;
-    position: relative;
+  .bubble {
+    background-color: var(--tip-background-color, var(--dark-blue-color, #4d4d4d));
+    border-radius: 10px;
+    inset: 0;
+    z-index: 2;
+
+    filter: blur(8px);
+    scale: 0.4;
+    opacity: 0;
+
+    .icon {
+      width: 10px;
+      height: 10px;
+      fill: #fff1b1;
+      margin: 4px;
+      display: block;
+      z-index: 1;
+      position: relative;
+    }
   }
 
-  &:hover {
+  &.extended {
+
     .content-container {
       width: var(--content-width);
       height: var(--content-height);
+      transition-delay: 0.1s;
 
       .content {
         opacity: 1;
         filter: blur(0);
         transition-delay: 0s;
-        transition-duration: 0.1s;
+        transition-duration: 0.2s;
       }
     }
   }
@@ -78,15 +191,17 @@ const { width: contentWidth, height: contentHeight } = useElementBounding(conten
     left: 0;
     border-radius: 9px;
     position: absolute;
+    background-color: #d99750;
     background-color: var(--tip-background-color, var(--dark-blue-color, #4d4d4d));
     overflow: hidden;
 
+    display: none;
+    width: 18px;
+    height: 18px;
 
     min-width: 18px;
     min-height: 18px;
-    width: 18px;
-    height: 18px;
-    transition: width 0.3s ease, height 0.3s ease;
+    transition: width 0.25s ease, height 0.25s ease;
 
     .content {
       position: absolute;
@@ -110,88 +225,5 @@ const { width: contentWidth, height: contentHeight } = useElementBounding(conten
 
     }
   }
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  // transition: scale-easeOutElastic 1s linear;
-  animation: scale-easeOutElasticReverse 1s;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  // opacity: 0;
-  // filter: blur(4px);
-  // transform: scale(0);
-}
-
-@keyframes scale-easeOutElastic {
-  0% {
-    transform: scale(1);
-  }
-
-  16% {
-    transform: scale(-0.32);
-  }
-
-  28% {
-    transform: scale(0.13);
-  }
-
-  44% {
-    transform: scale(-0.05);
-  }
-
-  59% {
-    transform: scale(0.02);
-  }
-
-  73% {
-    transform: scale(-0.01);
-  }
-
-  88% {
-    transform: scale(0);
-  }
-
-  100% {
-    transform: scale(0);
-  }
-
-}
-
-@keyframes scale-easeOutElasticReverse {
-  0% {
-    transform: scale(0);
-  }
-
-  16% {
-    transform: scale(-0.32);
-  }
-
-  28% {
-    transform: scale(0.13);
-  }
-
-  44% {
-    transform: scale(-0.05);
-  }
-
-  59% {
-    transform: scale(0.02);
-  }
-
-  73% {
-    transform: scale(-0.01);
-  }
-
-  88% {
-    transform: scale(1.2);
-  }
-
-  100% {
-    transform: scale(1);
-  }
-
 }
 </style>

@@ -23,6 +23,7 @@
     "colorjs.io": "^0.6.1",
     "idb-keyval": "^6.2.2",
     "jszip": "^3.10.1",
+    "motion": "^12.38.0",
     "typescript-cubic-spline": "^1.0.1",
     "vite-svg-loader": "^5.1.1",
     "vue": "^3.5.29",
