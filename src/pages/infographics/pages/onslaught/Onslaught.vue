@@ -328,8 +328,6 @@ const mapsStats = useMapsTable(computed(() => mapsStatistics.value ?? []), selec
 const dayChangeTipBubble = useTipBubble({
   key: 'onslaught-day-chart-keyboard',
   direction: 'auto',
-  extendOnHover: true,
-  closable: false,
   displayed: false
 })
 
