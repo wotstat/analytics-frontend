@@ -3,10 +3,7 @@
     '--left': `${left}px`,
     '--content-width': `${contentWidth}px`,
     '--content-height': `${contentHeight}px`
-  }" :class="{
-    displayed: props.displayed && false,
-    extended: extended
-  }" ref="root" @click="onClick" @pointerdown="onPointerDown" @pointerup="onPointerUp" v-if="displayed">
+  }" :class="{ extended: extended }" ref="root" @click="onClick" @mousedown="onPointerDown" v-if="displayed">
     <div class="bubble" ref="bubble">
       <LightbulbIcon class="icon" />
     </div>
@@ -33,6 +30,13 @@ const props = defineProps<{
   autoExtend: boolean
 }>()
 
+const emits = defineEmits<{
+  (e: 'closeAnimationEnd'): void,
+  (e: 'showAnimationEnd'): void,
+  (e: 'extendChanged', extended: boolean): void,
+  (e: 'interact', type: 'hover' | 'click'): void
+}>()
+
 const root = ref<HTMLDivElement | null>(null)
 const bubble = ref<HTMLDivElement | null>(null)
 const content = ref<HTMLDivElement | null>(null)
@@ -46,45 +50,48 @@ const isHoverExistsInCycle = ref(false)
 const isContentClicked = ref(false)
 const canBeExtended = ref(false)
 const canBeAutoExtended = ref(false)
-const isPinned = ref(false)
+
+let lastExtendTime = 0
+let showAnimationController = new AbortController()
+let hideAnimationController = new AbortController()
 
 const extended = computed(() => {
   if (!canBeExtended.value) return false
-  if (isPinned.value) return true
+  if (isContentClicked.value) return false
   if (isHover.value) return true
   if (props.autoExtend && canBeAutoExtended.value && !isHoverExistsInCycle.value) return true
   return false
 })
 
+watch(extended, (value) => emits('extendChanged', value))
+watch(extended, (value) => {
+  if (!value) return
+  lastExtendTime = Date.now()
+})
+
+if (props.displayed) showAnimation()
 watch(() => props.displayed, (displayed) => {
-  if (displayed) {
-    showAnimation()
-  } else {
-    hideAnimation()
-  }
-}, { immediate: true })
+  if (displayed) showAnimation()
+  else hideAnimation()
+})
 
 watch(isHover, (hover) => {
   isContentClicked.value = false
-  if (!hover && canBeExtended.value) {
-    isHoverExistsInCycle.value = true
-  }
+  if (!hover && canBeExtended.value) isHoverExistsInCycle.value = true
+  if (hover) emits('interact', 'hover')
 })
 
 function onClick() {
-  isPinned.value = !isPinned.value
+  if (Date.now() - lastExtendTime < 500) return
+  isContentClicked.value = !isContentClicked.value
+  emits('interact', 'click')
 }
 
 function onPointerDown() {
-  animate(root.value, { scale: 0.9 }, { duration: 0.3 })
+  if (Date.now() - lastExtendTime < 500) return
+  animate(root.value, { scale: 0.95 }, { duration: 0.2 })
+  document.addEventListener('mouseup', () => animate(root.value, { scale: 1 }, { duration: 0.2 }), { once: true })
 }
-
-function onPointerUp() {
-  animate(root.value, { scale: 1 }, { duration: 0.3 })
-}
-
-let showAnimationController = new AbortController()
-let hideAnimationController = new AbortController()
 
 async function showAnimation() {
   displayed.value = true
@@ -136,6 +143,7 @@ async function hideAnimation() {
   await new Promise((resolve) => setTimeout(resolve, 200))
   if (controller.signal.aborted) return
   displayed.value = false
+  emits('closeAnimationEnd')
 }
 </script>
 
@@ -148,6 +156,7 @@ async function hideAnimation() {
   height: 18px;
   display: flex;
   user-select: none;
+  cursor: pointer;
 
   .bubble {
     background-color: var(--tip-background-color, var(--dark-blue-color, #4d4d4d));
