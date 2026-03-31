@@ -1,4 +1,4 @@
-import { CACHE_SETTINGS, SHORT_CACHE_SETTINGS, dateToDbDate, dateToDbIndex } from '@/db'
+import { CACHE_SETTINGS, MEDIUM_CACHE_SETTINGS, SHORT_CACHE_SETTINGS, dateToDbDate, dateToDbIndex } from '@/db'
 import { customBattleModes } from '@/shared/game/wot'
 import { ClickHouseSettings } from '@clickhouse/client-web'
 import { MaybeRefOrGetter, Ref, ShallowRef, computed, ref, shallowRef, toValue, watchEffect } from 'vue'
@@ -126,7 +126,7 @@ export function useQueryStatParams() {
 
 export function getQueryStatParamsCache(params: StatParams) {
   if (params.player) return {}
-  if (params.period === 'allTime') return CACHE_SETTINGS
+  if (params.period === 'allTime') return MEDIUM_CACHE_SETTINGS
   if (params.period.type == 'lastX') return SHORT_CACHE_SETTINGS
   return CACHE_SETTINGS
 }
