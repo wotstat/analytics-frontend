@@ -11,9 +11,9 @@ type Options = {
   { type: 'after-wrong', count: number }
   autoExtend?: 'always' |
   { type: 'always', interactSnooze?: number } |
-  { type: 'after-open', count: number, deltaTime?: number, interactSnooze?: number } |
-  { type: 'after-show-bubble', count: number, deltaTime?: number, interactSnooze?: number } |
-  { type: 'after-wrong', count: number, deltaTime?: number, interactSnooze?: number }
+  { type: 'after-open', count: number, interactSnooze?: number } |
+  { type: 'after-show-bubble', count: number, interactSnooze?: number } |
+  { type: 'after-wrong', count: number, interactSnooze?: number, hideSnooze?: number | 'reset' }
 }
 
 const openCountStorage = new Map<string, number>()
@@ -25,17 +25,19 @@ export function useTipBubble(options: Options) {
   const openCount = ref(0)
   const showBubbleCount = ref(0)
   const wrongCount = ref(0)
+  const visibleWrongCount = ref(0)
   const lastInteractOpen = ref(0)
   const lastInteractShow = ref(0)
   const lastInteractWrong = ref(0)
+  const lastHideWrong = ref(0)
 
   const shouldShowBubble = computed(() => {
     const showBubble = options.showBubble
     if (!showBubble) return true
     if (showBubble === 'always') return true
 
-    if (showBubble.type === 'after-open') return openCount.value > showBubble.count
-    if (showBubble.type === 'after-wrong') return wrongCount.value > showBubble.count
+    if (showBubble.type === 'after-open') return openCount.value >= showBubble.count
+    if (showBubble.type === 'after-wrong') return wrongCount.value >= showBubble.count
     return false
   })
 
@@ -46,12 +48,39 @@ export function useTipBubble(options: Options) {
     if (autoExtend.type === 'always') return true
 
     const targetSnooze = autoExtend.interactSnooze || 1e10
-    if (autoExtend.type === 'after-open')
-      return openCount.value > autoExtend.count && (lastInteractOpen.value + targetSnooze < openCount.value || !lastInteractOpen.value)
-    if (autoExtend.type === 'after-wrong')
-      return wrongCount.value > autoExtend.count && (lastInteractWrong.value + targetSnooze < wrongCount.value || !lastInteractWrong.value)
-    if (autoExtend.type === 'after-show-bubble')
-      return showBubbleCount.value > autoExtend.count && (lastInteractShow.value + targetSnooze < showBubbleCount.value || !lastInteractShow.value)
+    if (autoExtend.type === 'after-open') {
+      if (openCount.value <= autoExtend.count) return false
+
+      if (lastInteractOpen.value)
+        if (lastInteractOpen.value + targetSnooze > openCount.value) return false
+
+      return true
+    }
+
+    if (autoExtend.type === 'after-wrong') {
+      if (visibleWrongCount.value < autoExtend.count) return false
+
+      if (lastHideWrong && autoExtend.hideSnooze) {
+        const snooze = autoExtend.hideSnooze === 'reset' ? autoExtend.count : autoExtend.hideSnooze
+        if (lastHideWrong.value + snooze > visibleWrongCount.value) return false
+      }
+
+      if (lastInteractWrong.value)
+        if (lastInteractWrong.value + targetSnooze > visibleWrongCount.value) return false
+
+      return true
+    }
+
+    if (autoExtend.type === 'after-show-bubble') {
+      if (showBubbleCount.value < autoExtend.count) return false
+
+      if (lastInteractShow.value) {
+        if (lastInteractShow.value + targetSnooze > showBubbleCount.value) return false
+      }
+
+      return true
+    }
+
     return false
   })
 
@@ -60,9 +89,12 @@ export function useTipBubble(options: Options) {
 
   watch(mayShowBubble, (value, old) => { if (value && !old) openCount.value += 1 })
   watch(showBubble, (value, old) => { if (value && !old) showBubbleCount.value += 1 })
+  watch(showBubble, (value, old) => { if (!value && old) lastHideWrong.value = visibleWrongCount.value })
 
   watchEffect(() => console.log(`${options.key} open count: ${openCount.value}`))
   watchEffect(() => console.log(`${options.key} show bubble count: ${showBubbleCount.value}`))
+  watchEffect(() => console.log(`${options.key} wrong count: ${visibleWrongCount.value}`))
+  watchEffect(() => console.log(`${options.key} last hide wrong count: ${lastHideWrong.value}`))
 
   let changeDisplayedTimeout: ReturnType<typeof setTimeout> | null = null
   function changeDisplayed(display: boolean, force: boolean = false) {
@@ -89,15 +121,15 @@ export function useTipBubble(options: Options) {
     }
   }
 
-
-  const setDisplayed = (visible: boolean, force: boolean = false) => {
-    changeDisplayed(visible, force)
-  }
-
+  const setDisplayed = (visible: boolean, force: boolean = false) => { changeDisplayed(visible, force) }
   const display = (force: boolean = false) => { setDisplayed(true, force) }
   const hide = () => { setDisplayed(false) }
 
   const accept = () => {
+  }
+  const wrong = () => {
+    if (showBubble.value) visibleWrongCount.value += 1
+    wrongCount.value += 1
   }
 
   const Component = defineComponent((props) => {
@@ -108,7 +140,7 @@ export function useTipBubble(options: Options) {
       onInteract: (type) => {
         lastInteractShow.value = showBubbleCount.value
         lastInteractOpen.value = openCount.value
-        lastInteractWrong.value = wrongCount.value
+        lastInteractWrong.value = visibleWrongCount.value
       }
     })
   })
@@ -118,6 +150,7 @@ export function useTipBubble(options: Options) {
     setDisplayed,
     display,
     hide,
-    accept
+    accept,
+    wrong
   }
 }

@@ -46,6 +46,7 @@ const nickname = ref<string>('')
 const debouncedNickname = refDebounced(nickname, 500)
 
 function selectDay(index: number) {
+  if (selectedDayIndex.value !== index && selectedDayIndex.value != null) dayChangeTipBubble.wrong()
   if (selectedDayIndex.value === index) selectedDayIndex.value = null
   else selectedDayIndex.value = index
 }
@@ -54,26 +55,37 @@ function deselectDay() {
   selectedDayIndex.value = null
 }
 
-onKeyStroke('ArrowLeft', () => {
+onKeyStroke('ArrowLeft', (e) => {
   if (selectedDayIndex.value == null) return
   if (selectedDayIndex.value - 1 < 0) return
 
   const nextIndex = days.value.slice(0, selectedDayIndex.value).findLastIndex(d => d.timeline == 'played')
   if (nextIndex == -1) return
+  e.stopPropagation()
+  e.preventDefault()
   selectDay(nextIndex)
 })
 
-onKeyStroke('ArrowRight', () => {
+onKeyStroke('ArrowRight', (e) => {
   if (selectedDayIndex.value == null) return
   if (selectedDayIndex.value + 1 >= days.value.length) return
 
   const nextIndex = days.value.slice(selectedDayIndex.value + 1).findIndex(d => d.timeline == 'played')
   if (nextIndex == -1) return
+  e.stopPropagation()
+  e.preventDefault()
   selectDay(selectedDayIndex.value + 1 + nextIndex)
 })
 
+onKeyStroke('Escape', (e) => {
+  if (selectedDayIndex.value == null) return
+  e.stopPropagation()
+  e.preventDefault()
+  deselectDay()
+})
+
 const { top: chartTop, height: chartHeight } = useElementBounding(dayChart)
-const isChartDayVisible = computed(() => chartTop.value + chartHeight.value - headerOffset.value - 10 > 0)
+const isChartDayVisible = computed(() => chartTop.value + chartHeight.value - headerOffset.value - 25 > 0)
 const displayedDay = computed(() => !isChartDayVisible.value && selectedDayIndex.value != null ? selectedDayIndex.value + 1 : null)
 
 const seasons = queryAsync<{ region: string, season: string, start: string, end: string }>(`
@@ -328,13 +340,13 @@ const mapsStats = useMapsTable(computed(() => mapsStatistics.value ?? []), selec
 const dayChangeTipBubble = useTipBubble({
   key: 'onslaught-day-chart-keyboard',
   direction: 'auto',
-  displayDelay: 1000,
-  showBubble: { type: 'after-open', count: 1 },
-  autoExtend: { type: 'after-show-bubble', count: 3, interactSnooze: 5 },
+  displayDelay: 800,
+  showBubble: 'always',
+  autoExtend: { type: 'after-wrong', count: 10, interactSnooze: 20, hideSnooze: 'reset' },
 })
 
-watch(selectedDayIndex, dayIndex => {
-  if (dayIndex) dayChangeTipBubble.display()
+watch(selectedDayIndex, (dayIndex) => {
+  if (dayIndex != null) dayChangeTipBubble.display()
   else dayChangeTipBubble.hide()
 })
 </script>
