@@ -30,6 +30,7 @@ export const clickhouse = createClient({
   }
 })
 
+export const MEDIUM_CACHE_SETTINGS = { use_query_cache: 1, query_cache_ttl: 60 * 5 } as ClickHouseSettings
 export const CACHE_SETTINGS = { use_query_cache: 1, query_cache_ttl: 60 } as ClickHouseSettings
 export const SHORT_CACHE_SETTINGS = { use_query_cache: 1, query_cache_ttl: 10 } as ClickHouseSettings
 export const SUPER_SHORT_CACHE_SETTINGS = { use_query_cache: 1, query_cache_ttl: 5 } as ClickHouseSettings
@@ -64,6 +65,7 @@ export async function query<T>(query: string, {
   allowCache = true,
   settings = {} as ClickHouseSettings,
   abortSignal = undefined as AbortSignal | undefined } = {}) {
+  if (allowCache && cachedResults.has(query)) return cachedResults.get(query) as ResponseJSON<T>
 
   if (activeQueries.has(query)) return activeQueries.get(query) as Promise<ResponseJSON<T>>
 
@@ -71,7 +73,7 @@ export async function query<T>(query: string, {
     try {
       // await new Promise(resolve => setTimeout(resolve, 100000))
 
-      const result = await clickhouse.query({ query, format: 'JSON', clickhouse_settings: settings, abort_signal: abortSignal })
+      const result = await clickhouse.query({ query, format: 'JSON', clickhouse_settings: settings })
       const response = await result.json<T>()
 
       totalElapsed.value += response.statistics?.elapsed ?? 0
@@ -99,17 +101,23 @@ export function queryComputed<T>(queryString: () => string | null, { settings = 
   const result = shallowRef<{ status: Status, data: T[] }>({ status: loading, data: [] })
 
   let abortController = new AbortController()
-  watch(() => [queryString(), enabled.value] as const, async ([q, enabled]) => {
-    if (!q) return
-    if (!enabled) return
-    abortController.abort()
-    abortController = new AbortController()
+
+  watch(() => [queryString(), enabled.value] as const, async (value, old) => {
+    const [q, enabled] = value
+    const [oldQ, oldEnabled] = old ?? [null, null]
+
+    if (q === oldQ && enabled === oldEnabled) return
+    if (!q || !enabled) return
 
     try {
       if (cachedResults.has(q) && allowCache) {
         result.value = { data: (cachedResults.get(q) as ResponseJSON<T>).data, status: success }
         return
       }
+
+      abortController.abort()
+      abortController = new AbortController()
+
       result.value = { data: [], status: loading }
       const { data } = await query<T>(q, { settings, allowCache, abortSignal: abortController.signal })
       result.value = { data, status: success }
@@ -122,8 +130,8 @@ export function queryComputed<T>(queryString: () => string | null, { settings = 
   return result
 }
 
-export function queryComputedFirst<T>(queryString: () => string | null, defaultValue: T) {
-  const result = queryComputed<T>(queryString)
+export function queryComputedFirst<T>(queryString: () => string | null, defaultValue: T, { settings = {} as ClickHouseSettings, enabled = ref(true), allowCache = true } = {}) {
+  const result = queryComputed<T>(queryString, { settings, enabled, allowCache })
 
   return computed(() => ({
     status: result.value.status as Status,

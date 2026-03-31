@@ -110,7 +110,7 @@ import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import { createFixedSpaceProcessor, createLogProcessor } from '@/shared/utils/processors/processors'
 import { useQueryStatParams, useQueryStatParamsCache } from '@/shared/query/useQueryStatParams'
 import { Status, dateToDbIndex, queryComputed, queryComputedFirst, success } from '@/db'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import TableSection from './TableSection.vue'
 import OpenByTable from './OpenByTable.vue'
 import RerollTable from './RerollTable.vue'
@@ -207,7 +207,7 @@ const openWithStats = queryComputed<{ tag: string, locale: LocalizedName, count:
         group by openByTag
     ) as M
     left join locales using tag
-`})
+`}, { settings: settings.value })
 
 const rerollStats = queryComputed<{ tag: string, locale: LocalizedName, count: number, rerollCount: number, totalCount?: number, totalReroll?: number }>(() => {
   let where: string | null = whereClause(['tag'])
@@ -246,7 +246,7 @@ const rerollStats = queryComputed<{ tag: string, locale: LocalizedName, count: n
     ) as M
     left join locales using tag
   `
-})
+}, { settings: settings.value })
 
 const mainStats = queryComputedFirst(() => `
 select
@@ -260,7 +260,7 @@ select
     toUInt32(sum(arraySum(arrayFilter(t -> t.1 == 'ny25_mandarin', arrayZip(compensatedToys.currency, compensatedToys.count)).2))) as compensatedMandarin25
 from Event_OnLootboxOpen
 where ${whereClause()}
-  `, { prem: 0, credits: 0, freeXP: 0, gold: 0, equipCoin: 0, vehicles: 0, mandarin25: 0, compensatedMandarin25: 0 })
+  `, { prem: 0, credits: 0, freeXP: 0, gold: 0, equipCoin: 0, vehicles: 0, mandarin25: 0, compensatedMandarin25: 0 }, { settings: settings.value })
 
 type Stats = {
   title: string,
