@@ -30,6 +30,7 @@ export function useTipBubble(options: Options) {
   const lastInteractShow = ref(0)
   const lastInteractWrong = ref(0)
   const lastHideWrong = ref(0)
+  const accepted = ref(false)
 
   const shouldShowBubble = computed(() => {
     const showBubble = options.showBubble
@@ -103,6 +104,8 @@ export function useTipBubble(options: Options) {
       return
     }
 
+    if (accepted.value && display) return
+
     if (!display) {
       mayShowBubble.value = false
       if (changeDisplayedTimeout) {
@@ -126,7 +129,9 @@ export function useTipBubble(options: Options) {
   const hide = () => { setDisplayed(false) }
 
   const accept = () => {
+    accepted.value = true
   }
+
   const wrong = () => {
     if (showBubble.value) visibleWrongCount.value += 1
     wrongCount.value += 1
@@ -137,6 +142,7 @@ export function useTipBubble(options: Options) {
       direction: options.direction || 'auto',
       displayed: showBubble.value,
       autoExtend: autoExtend.value,
+      accepted: accepted.value,
       onInteract: (type) => {
         lastInteractShow.value = showBubbleCount.value
         lastInteractOpen.value = openCount.value
