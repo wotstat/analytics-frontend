@@ -3,9 +3,13 @@
     '--left': `${left}px`,
     '--content-width': `${contentWidth}px`,
     '--content-height': `${contentHeight}px`
-  }" :class="{ extended: extended }" ref="root" @click="onClick" @mousedown="onPointerDown" v-if="displayed">
+  }" :class="{ extended: extended, accepted: acceptedInCycle }" ref="root" @click="onClick" @mousedown="onPointerDown"
+    v-if="displayed">
     <div class="bubble" ref="bubble">
-      <LightbulbIcon class="icon" />
+      <LightbulbIcon class="icon lightbulb" />
+      <CheckmarkIcon class="icon checkmark" :style="{
+        '--spring-05': spring(0.5, 0.5)
+      }" />
     </div>
     <div class="content-container" ref="contentContainer">
       <div class="content" ref="content">
@@ -20,6 +24,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import LightbulbIcon from './assets/lightbulb.svg'
+import CheckmarkIcon from './assets/checkmark.svg'
 import { useElementBounding, useElementHover } from '@vueuse/core'
 import { animate } from 'motion/mini'
 import { spring } from 'motion'
@@ -28,6 +33,7 @@ const props = defineProps<{
   direction: 'left' | 'right' | 'auto'
   displayed: boolean
   autoExtend: boolean
+  accepted: boolean
 }>()
 
 const emits = defineEmits<{
@@ -50,6 +56,7 @@ const isHoverExistsInCycle = ref(false)
 const isContentClicked = ref(false)
 const canBeExtended = ref(false)
 const canBeAutoExtended = ref(false)
+const acceptedInCycle = ref(false)
 
 let lastExtendTime = 0
 let showAnimationController = new AbortController()
@@ -58,6 +65,7 @@ let hideAnimationController = new AbortController()
 const extended = computed(() => {
   if (!canBeExtended.value) return false
   if (isContentClicked.value) return false
+  if (acceptedInCycle.value) return false
   if (isHover.value) return true
   if (props.autoExtend && canBeAutoExtended.value && !isHoverExistsInCycle.value) return true
   return false
@@ -73,6 +81,13 @@ if (props.displayed) showAnimation()
 watch(() => props.displayed, (displayed) => {
   if (displayed) showAnimation()
   else hideAnimation()
+})
+
+watch(() => props.accepted, (accepted, old) => {
+  if (accepted && !old) {
+    acceptedInCycle.value = true
+    setTimeout(() => hideAnimation(), 1000)
+  }
 })
 
 watch(isHover, (hover) => {
@@ -105,7 +120,7 @@ async function showAnimation() {
   if (controller.signal.aborted) return
 
   animate(bubble.value, { scale: 1, opacity: 1 }, { type: spring, bounce: 0.5, visualDuration: 0.5 })
-  animate(bubble.value, { filter: 'blur(0px)' }, { duration: 0.1 })
+  animate(bubble.value, { filter: 'blur(0px)' }, { duration: 0.15 })
 
   setTimeout(() => {
     if (controller.signal.aborted) return
@@ -167,15 +182,37 @@ async function hideAnimation() {
     filter: blur(8px);
     scale: 0.4;
     opacity: 0;
+    width: 18px;
+    height: 18px;
+    position: relative;
+    transition: background-color 0.3s ease-out;
 
     .icon {
       width: 10px;
       height: 10px;
-      fill: #fff1b1;
       margin: 4px;
       display: block;
       z-index: 1;
-      position: relative;
+      position: absolute;
+
+      transition: opacity 0.3s ease-out, filter 0.2s ease-out, scale 0.3s ease-out;
+
+      &.checkmark {
+        fill: #9dffa0;
+        opacity: 0;
+        filter: blur(3px);
+        scale: 0.4;
+        transition: opacity 0.3s ease-out,
+          filter 0.2s ease-out,
+          scale var(--spring-05);
+      }
+
+      &.lightbulb {
+        fill: #fff1b1;
+        opacity: 1;
+        filter: blur(0);
+        scale: 1;
+      }
     }
   }
 
@@ -195,6 +232,29 @@ async function hideAnimation() {
     }
   }
 
+  &.accepted {
+    .bubble {
+      background-color: #60ff7b;
+
+      .checkmark {
+        fill: #265e2f;
+        opacity: 1;
+        filter: blur(0);
+        scale: 1;
+      }
+
+      .lightbulb {
+        opacity: 0;
+        filter: blur(3px);
+        scale: 0.4;
+      }
+    }
+
+    .content-container {
+      background-color: #60ff7b;
+    }
+  }
+
   .content-container {
     top: 0;
     left: 0;
@@ -210,7 +270,7 @@ async function hideAnimation() {
 
     min-width: 18px;
     min-height: 18px;
-    transition: width 0.25s ease, height 0.25s ease;
+    transition: width 0.25s ease, height 0.25s ease, background-color 0.3s ease-out;
 
     .content {
       position: absolute;

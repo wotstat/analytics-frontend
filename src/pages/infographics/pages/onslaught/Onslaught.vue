@@ -64,6 +64,7 @@ onKeyStroke('ArrowLeft', (e) => {
   e.stopPropagation()
   e.preventDefault()
   selectDay(nextIndex)
+  dayChangeTipBubble.accept()
 })
 
 onKeyStroke('ArrowRight', (e) => {
@@ -75,6 +76,7 @@ onKeyStroke('ArrowRight', (e) => {
   e.stopPropagation()
   e.preventDefault()
   selectDay(selectedDayIndex.value + 1 + nextIndex)
+  dayChangeTipBubble.accept()
 })
 
 onKeyStroke('Escape', (e) => {
