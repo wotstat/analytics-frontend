@@ -1,5 +1,5 @@
 <template>
-  <PopoverStyled v-bind="targetProps" :display="display" @pointer-click-outside="onClickOutside"
+  <PopoverStyled v-bind="targetProps" :display="display" :styles @pointer-click-outside="onClickOutside"
     @pointer-down-outside="onPointerDownOutside" @target-outside-window="onTargetOutside" :duration="200">
     <slot></slot>
   </PopoverStyled>
@@ -20,6 +20,7 @@ const props = defineProps<{
   arrowSize?: number
   preserveLastPlacement?: boolean
   placement?: PlacementParam
+  styles?: Record<string, string>
 }>()
 
 const display = defineModel<boolean>({ default: false })
@@ -30,7 +31,8 @@ const targetProps = computed(() => ({
   viewportOffset: props.viewportOffset,
   arrowSize: props.arrowSize,
   preserveLastPlacement: props.preserveLastPlacement,
-  placement: props.placement
+  placement: props.placement,
+  styles: props.styles
 }))
 
 const emit = defineEmits<{

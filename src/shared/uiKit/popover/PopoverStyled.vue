@@ -1,5 +1,5 @@
 <template>
-  <PopoverAnimated :target :display :offset="targetOffset" :viewportOffset :placement :preserveLastPlacement
+  <PopoverAnimated :target :display :offset="targetOffset" :viewportOffset :placement :preserveLastPlacement :styles
     @pointer-down-outside="e => emit('pointerDownOutside', e)" @target-outside-window="emit('targetOutsideWindow')"
     @pointer-click-outside="e => emit('pointerClickOutside', e)" v-slot="{ arrow, transitionClass }" :duration="200">
     <div class="popover-card" ref="popoverCard" :class="{
@@ -10,7 +10,7 @@
       '--background-color': '#2a2a2a',
       '--arrow-x': `${arrow.x}px`,
       '--arrow-y': `${arrow.y}px`,
-      '--arrow-size': `${arrowSize ?? 5}px`
+      '--arrow-size': `${arrowSize ?? 5}px`,
     }">
       <div class="popover-content">
         <slot></slot>
@@ -31,7 +31,8 @@ const { target,
   viewportOffset = 10,
   placement,
   preserveLastPlacement = true,
-  arrowSize
+  arrowSize,
+  styles
 } = defineProps<{
   target: HTMLElement | null
   display: boolean
@@ -40,6 +41,7 @@ const { target,
   arrowSize?: number
   preserveLastPlacement?: boolean
   placement?: PlacementParam
+  styles?: Record<string, string>
 }>()
 
 const emit = defineEmits<{

@@ -21,6 +21,7 @@ const props = defineProps<{
   viewportOffset?: OffsetValue
   placement?: PlacementParam
   preserveLastPlacement?: boolean
+  styles?: Record<string, string>
 }>()
 
 const emit = defineEmits<{
@@ -148,7 +149,8 @@ const targetStyle = computed(() => {
   if (!positions.value) return {}
 
   return {
-    transform: `translate3d(${Math.round(positions.value.x)}px, ${Math.round(positions.value.y)}px, 0px)`
+    transform: `translate3d(${Math.round(positions.value.x)}px, ${Math.round(positions.value.y)}px, 0px)`,
+    ...props.styles
   }
 })
 

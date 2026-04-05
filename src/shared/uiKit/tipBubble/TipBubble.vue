@@ -26,7 +26,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import LightbulbIcon from './assets/lightbulb.svg'
 import CheckmarkIcon from './assets/checkmark.svg'
 import { useElementBounding, useElementHover } from '@vueuse/core'
-import { animate } from 'motion/mini'
+import { animate } from 'motion'
 import { spring } from 'motion'
 
 const props = defineProps<{
@@ -86,6 +86,7 @@ watch(() => props.displayed, (displayed) => {
 watch(() => props.accepted, (accepted, old) => {
   if (accepted && !old) {
     acceptedInCycle.value = true
+    animate(root.value, { transform: ['scale(1)', 'scale(1.1)', 'scale(1)'] }, { duration: 0.4 })
     setTimeout(() => hideAnimation(), 1000)
   }
 })
@@ -104,8 +105,8 @@ function onClick() {
 
 function onPointerDown() {
   if (Date.now() - lastExtendTime < 500) return
-  animate(root.value, { scale: 0.95 }, { duration: 0.2 })
-  document.addEventListener('mouseup', () => animate(root.value, { scale: 1 }, { duration: 0.2 }), { once: true })
+  animate(root.value, { transform: 'scale(0.95)' }, { duration: 0.2 })
+  document.addEventListener('mouseup', () => animate(root.value, { transform: 'scale(1)' }, { duration: 0.2 }), { once: true })
 }
 
 async function showAnimation() {
@@ -119,8 +120,14 @@ async function showAnimation() {
   await new Promise((resolve) => nextTick(() => resolve(null)))
   if (controller.signal.aborted) return
 
-  animate(bubble.value, { scale: 1, opacity: 1 }, { type: spring, bounce: 0.5, visualDuration: 0.5 })
-  animate(bubble.value, { filter: 'blur(0px)' }, { duration: 0.15 })
+  animate(
+    bubble.value,
+    { transform: 'scale(1)', opacity: 1, filter: 'blur(0px)' },
+    {
+      type: 'spring', bounce: 0.5, visualDuration: 0.5,
+      filter: { type: 'keyframes', duration: 0.15 }
+    }
+  )
 
   setTimeout(() => {
     if (controller.signal.aborted) return
@@ -154,7 +161,7 @@ async function hideAnimation() {
   if (controller.signal.aborted) return
   if (contentContainer.value) contentContainer.value.style.display = 'none'
 
-  animate(bubble.value, { scale: 0.4, opacity: 0, filter: 'blur(8px)' }, { duration: 0.2, ease: 'easeOut' })
+  animate(bubble.value, { transform: 'scale(0.4)', opacity: 0, filter: 'blur(8px)' }, { duration: 0.2, ease: 'easeOut' })
   await new Promise((resolve) => setTimeout(resolve, 200))
   if (controller.signal.aborted) return
   displayed.value = false
@@ -172,6 +179,7 @@ async function hideAnimation() {
   display: flex;
   user-select: none;
   cursor: pointer;
+  transform: scale(1);
 
   .bubble {
     background-color: var(--tip-background-color, var(--dark-blue-color, #4d4d4d));
@@ -180,7 +188,7 @@ async function hideAnimation() {
     z-index: 2;
 
     filter: blur(8px);
-    scale: 0.4;
+    transform: scale(0.4);
     opacity: 0;
     width: 18px;
     height: 18px;
@@ -195,23 +203,24 @@ async function hideAnimation() {
       z-index: 1;
       position: absolute;
 
-      transition: opacity 0.3s ease-out, filter 0.2s ease-out, scale 0.3s ease-out;
-
       &.checkmark {
         fill: #9dffa0;
         opacity: 0;
         filter: blur(3px);
-        scale: 0.4;
+        transform: scale(0.4);
         transition: opacity 0.3s ease-out,
           filter 0.2s ease-out,
-          scale var(--spring-05);
+          transform var(--spring-05);
       }
 
       &.lightbulb {
         fill: #fff1b1;
         opacity: 1;
         filter: blur(0);
-        scale: 1;
+        transform: scale(1);
+        transition: opacity 0.3s ease-out,
+          filter 0.2s ease-out,
+          transform 0.3s ease-out;
       }
     }
   }
@@ -240,13 +249,13 @@ async function hideAnimation() {
         fill: #265e2f;
         opacity: 1;
         filter: blur(0);
-        scale: 1;
+        transform: scale(1);
       }
 
       .lightbulb {
         opacity: 0;
         filter: blur(3px);
-        scale: 0.4;
+        transform: scale(0.4);
       }
     }
 
