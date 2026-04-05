@@ -2,7 +2,8 @@
   <div class="minimap" ref="minimap">
     <Minimap :tag="tag" :game="game" :gameplay="'comp7'" :showBases="false" />
     <PopoverAutoClose :target="minimap" v-model="hover" :placement="['top-float', 'right-float', 'bottom-float']"
-      :viewport-offset="{ top: headerOffset + 10, bottom: 10, left: 10, right: 10 }" :arrow-size="5">
+      :viewport-offset="{ top: headerOffset + 10, bottom: 10, left: 10, right: 10 }" :arrow-size="5"
+      :styles="{ 'pointer-events': 'none' }">
       <div class="tooltip">
         <Minimap :tag="tag" :game="game" :gameplay="'comp7'" />
       </div>
