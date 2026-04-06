@@ -1,17 +1,21 @@
 <template>
-  <div class="tip-bubble" :style="{
+  <div v-if="displayed" class="tip-bubble" :style="{
     '--left': `${left}px`,
+    '--right': `${right}px`,
     '--content-width': `${contentWidth}px`,
     '--content-height': `${contentHeight}px`
-  }" :class="{ extended: extended, accepted: acceptedInCycle }" ref="root" @click="onClick" @mousedown="onPointerDown"
-    v-if="displayed">
+  }" :class="{
+    extended: extended,
+    accepted: acceptedInCycle,
+    [`align-${targetDirection}`]: true
+  }" ref="root" @click="onClick" @mousedown="onPointerDown">
     <div class="bubble" ref="bubble">
       <LightbulbIcon class="icon lightbulb" />
       <CheckmarkIcon class="icon checkmark" :style="{
         '--spring-05': spring(0.5, 0.5)
       }" />
     </div>
-    <div class="content-container" ref="contentContainer">
+    <div class="content-container" ref="contentContainer" :class="{ 'extending-animation': extendingAnimation }">
       <div class="content" ref="content">
         <div class="spacer"></div>
         Используйте стрелочки ← и → для переключения дней
@@ -47,20 +51,28 @@ const root = ref<HTMLDivElement | null>(null)
 const bubble = ref<HTMLDivElement | null>(null)
 const content = ref<HTMLDivElement | null>(null)
 const contentContainer = ref<HTMLDivElement | null>(null)
-const { left } = useElementBounding(bubble)
+const { left, right } = useElementBounding(bubble)
 const { width: contentWidth, height: contentHeight } = useElementBounding(content)
 
 const displayed = ref(false)
 const isHover = useElementHover(root)
+// const isHover = ref(true)
 const isHoverExistsInCycle = ref(false)
 const isContentClicked = ref(false)
 const canBeExtended = ref(false)
 const canBeAutoExtended = ref(false)
 const acceptedInCycle = ref(false)
+const extendingAnimation = ref(false)
 
 let lastExtendTime = 0
 let showAnimationController = new AbortController()
 let hideAnimationController = new AbortController()
+
+const targetDirection = computed(() => {
+  if (props.direction !== 'auto') return props.direction
+  if (window.innerWidth / 2 > left.value) return 'left'
+  return 'right'
+})
 
 const extended = computed(() => {
   if (!canBeExtended.value) return false
@@ -77,6 +89,16 @@ watch(extended, (value) => {
   lastExtendTime = Date.now()
 })
 
+let animatedTimeout: ReturnType<typeof setTimeout> | null = null
+watch(extended, (value) => {
+  extendingAnimation.value = true
+  if (animatedTimeout) clearTimeout(animatedTimeout)
+  animatedTimeout = setTimeout(() => {
+    animatedTimeout = null
+    extendingAnimation.value = false
+  }, 300)
+})
+
 if (props.displayed) showAnimation()
 watch(() => props.displayed, (displayed) => {
   if (displayed) showAnimation()
@@ -86,7 +108,7 @@ watch(() => props.displayed, (displayed) => {
 watch(() => props.accepted, (accepted, old) => {
   if (accepted && !old) {
     acceptedInCycle.value = true
-    animate(root.value, { transform: ['scale(1)', 'scale(1.1)', 'scale(1)'] }, { duration: 0.4 })
+    animate(root.value, { transform: ['scale(1)', 'scale(0.8)', 'scale(1)'] }, { duration: 0.4 })
     setTimeout(() => hideAnimation(), 1000)
   }
 })
@@ -264,9 +286,39 @@ async function hideAnimation() {
     }
   }
 
+  &.align-left {
+    .content-container {
+      left: 0;
+
+      .content {
+        max-width: calc(100vw - var(--left) - 40px);
+        // max-width: calc(100dvw - var(--left) - 16px - 15px);
+        // max-width: min(100px, calc(100vw - var(--left) - 40px));
+
+        .spacer {
+          float: left;
+        }
+      }
+    }
+  }
+
+  &.align-right {
+    .content-container {
+      right: 0;
+
+      .content {
+        max-width: calc(var(--right) - 40px);
+        right: 0;
+
+        .spacer {
+          float: right;
+        }
+      }
+    }
+  }
+
   .content-container {
     top: 0;
-    left: 0;
     border-radius: 9px;
     position: absolute;
     background-color: #d99750;
@@ -279,7 +331,11 @@ async function hideAnimation() {
 
     min-width: 18px;
     min-height: 18px;
-    transition: width 0.25s ease, height 0.25s ease, background-color 0.3s ease-out;
+    transition: background-color 0.3s ease-out;
+
+    &.extending-animation {
+      transition: width 0.25s ease, height 0.25s ease, background-color 0.3s ease-out;
+    }
 
     .content {
       position: absolute;
@@ -288,7 +344,6 @@ async function hideAnimation() {
       line-height: 1.2;
       padding: 1.2px 8px 1.2px 8px;
       width: max-content;
-      max-width: calc(100vw - var(--left) - 40px);
 
       opacity: 0;
       filter: blur(5px);
@@ -298,7 +353,6 @@ async function hideAnimation() {
       .spacer {
         width: 10px;
         height: 10px;
-        float: left;
       }
 
     }

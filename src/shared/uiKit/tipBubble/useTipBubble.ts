@@ -92,11 +92,6 @@ export function useTipBubble(options: Options) {
   watch(showBubble, (value, old) => { if (value && !old) showBubbleCount.value += 1 })
   watch(showBubble, (value, old) => { if (!value && old) lastHideWrong.value = visibleWrongCount.value })
 
-  watchEffect(() => console.log(`${options.key} open count: ${openCount.value}`))
-  watchEffect(() => console.log(`${options.key} show bubble count: ${showBubbleCount.value}`))
-  watchEffect(() => console.log(`${options.key} wrong count: ${visibleWrongCount.value}`))
-  watchEffect(() => console.log(`${options.key} last hide wrong count: ${lastHideWrong.value}`))
-
   let changeDisplayedTimeout: ReturnType<typeof setTimeout> | null = null
   function changeDisplayed(display: boolean, force: boolean = false) {
     if (!options.displayDelay || force) {
