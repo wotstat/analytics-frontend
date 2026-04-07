@@ -73,7 +73,7 @@ export async function query<T>(query: string, {
     try {
       // await new Promise(resolve => setTimeout(resolve, 100000))
 
-      const result = await clickhouse.query({ query, format: 'JSON', clickhouse_settings: settings })
+      const result = await clickhouse.query({ query, format: 'JSON', clickhouse_settings: { output_format_json_quote_64bit_integers: 0, ...settings } })
       const response = await result.json<T>()
 
       totalElapsed.value += response.statistics?.elapsed ?? 0
