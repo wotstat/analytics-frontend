@@ -212,7 +212,7 @@ const result = queryComputed<{
   playerRank: number
 }>(() => params.value.player === null ? null : `
 select dateTime, arenaTag, tankTag, result, pAssistRadio, pDmg, pXp, pKills, gunMarkSum, playerRank,
-       toUInt32(pDmg + arraySum(squadmateDamage) + (pKills + arraySum(squadmateKills)) * 300 + if(result = 'win', 3000, 0)) as chuck
+       pDmg + arraySum(squadmateDamage) + (pKills + arraySum(squadmateKills)) * 300 + if(result = 'win', 3000, 0) as chuck
 from
 (
     select id, dateTime, tankTag

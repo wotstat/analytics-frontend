@@ -123,13 +123,13 @@ const maskRadius = computed(() => {
 })
 
 const shotsCount = queryAsyncFirst(`
-select toUInt32(count()) as count 
+select count() as count 
 from Event_OnShot
 ${whereClause(params)}
 `, { count: 0 }, { enabled: visible, settings: params.value.player ? {} : SHORT_CACHE_SETTINGS })
 
 const dataResult = queryAsyncFirst(`
-select toUInt32(count())                                                                             as count,
+select count()                                                                                       as count,
        countIf(length(results.shotDamage) > 0) / count                                               as hit,
        countIf(arrayMax(results.shotDamage) > 0) / count                                             as damaged,
        countIf(ballisticResultClient_r <= 0.5) / count                                               as first50,

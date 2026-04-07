@@ -167,7 +167,7 @@ const distribution = shallowRef({
 const best = bestMV('event_OnShot_safe_damage_count_by_base_mv', stats)
 
 const bestQuery = best ? `
-select shellDamage, toUInt32(countMerge(count)) as count
+select shellDamage, countMerge(count) as count
 from ${best}
 where shellTag != 'HIGH_EXPLOSIVE'
   and shellTag != 'FLAME'
@@ -175,7 +175,7 @@ where shellTag != 'HIGH_EXPLOSIVE'
 group by shellDamage
 order by count desc;
 ` : `
-select shellDamage, toUInt32(count()) as count
+select shellDamage, count() as count
 from Event_OnShot
     array join
      results.shotDamage as dmg,
@@ -312,8 +312,8 @@ watch([selectedDamage, selectedStep], async ([damage, step]) => {
 
   const res = await query<{ r: number, from: number, to: number, value: number, percent: number }>(`
 select ${group} as r,
-       toUInt32(to - barCount + 1) as from,
-       toUInt32(sum(barCount) over (order by r) - 1 + ${min}) as to,
+       to - barCount + 1 as from,
+       sum(barCount) over (order by r) - 1 + ${min} as to,
        sum(c) as value,
        value / sum(value) over () * 100 as percent,
        count(c) as barCount

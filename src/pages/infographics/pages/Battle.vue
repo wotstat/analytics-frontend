@@ -97,8 +97,8 @@ const settings = useQueryStatParamsCache(params)
 const tankLabels = ['СТ', 'ТТ', 'ПТ', 'ЛТ', 'САУ']
 
 const dataStart = queryAsyncFirst(`
-select toUInt32(sum(inQueueWaitTime + loadTime + preBattleWaitTime) / 1000 / 60 / 60)as waitTime,
-       toUInt32(count(*))                                                            as battleCount,        
+select sum(inQueueWaitTime + loadTime + preBattleWaitTime) / 1000 / 60 / 60 as waitTime,
+       count(*)                                                             as battleCount,        
        avg(preBattleWaitTime + 
           if(battleTime < 0 and preBattleWaitTime + battleTime < 0, -battleTime, 0)) as avgWaitTime,
        avgIf(inQueueWaitTime, inQueueWaitTime < 300000)                              as avgInQueue
@@ -109,7 +109,7 @@ ${whereClause(params, { isBattleStart: true })}
 const dataResult = queryAsyncFirst(`
 select round(avg(personal.lifeTime))    as lifetime,
        round(avg(duration))             as duration,
-       toUInt32(sum(personal.lifeTime) / 60 / 60) as inBattle
+       sum(personal.lifeTime) / 60 / 60 as inBattle
 from Event_OnBattleResult
 ${whereClause(params)};`, { lifetime: 0, duration: 0, inBattle: 0 }, { enabled: visible, settings: settings.value })
 
@@ -135,7 +135,7 @@ ${whereClause(params)};
 
 const winrateResult = queryAsync<{
   count: number, result: 'win' | 'tie' | 'lose'
-}>(`select toUInt32(count(*)) as count, result from Event_OnBattleResult ${whereClause(params)} group by result`, { enabled: visible, settings: settings.value })
+}>(`select count(*) as count, result from Event_OnBattleResult ${whereClause(params)} group by result`, { enabled: visible, settings: settings.value })
 
 const winrateData = computed(() => {
   const res = {

@@ -94,8 +94,8 @@ const tanks = queryComputed<{ tag: string, battleCount: number, shotsCount: numb
 select battles.tankTag as tag,
        battleCount,
        shotsCount,
-from (select tankTag, toUInt32(count()) as battleCount from Event_OnBattleStart ${whereClause(stats.value, { ignore: ['tanks'], isBattleStart: true })} group by tankTag) as battles
-left join (select tankTag, toUInt32(count()) as shotsCount from Event_OnShot ${whereClause(stats.value, { ignore: ['tanks'] })} group by tankTag) as shots on shots.tankTag = battles.tankTag
+from (select tankTag, count() as battleCount from Event_OnBattleStart ${whereClause(stats.value, { ignore: ['tanks'], isBattleStart: true })} group by tankTag) as battles
+left join (select tankTag, count() as shotsCount from Event_OnShot ${whereClause(stats.value, { ignore: ['tanks'] })} group by tankTag) as shots on shots.tankTag = battles.tankTag
 order by battleCount desc
 limit 150;
 `, { settings: cacheSettings.value })

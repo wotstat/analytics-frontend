@@ -800,7 +800,7 @@ const ballisticDistributionData = queryComputed<{
 }>(() => `
     select gameVersion,
           round(toDecimal32(ballisticResultClient_r, 3) / 2, 3) * 2 as r,
-          toUInt32(countMerge(count)) as c,
+          countMerge(count) as c,
           c / sum(countMerge(count)) over (partition by gameVersion) as p
     from "MT-36-1".ShotClientBallisticDistribution
     where region = 'RU' and tankType != 'SPG' and battleMode = 'REGULAR' and gameVersion in ('ru_1.36.0', 'ru_1.36.1') 
@@ -922,7 +922,7 @@ type Options = { loadCount: number, offset: number, startId: string | null }
 async function loadNextBatch(options: Options, gameVersion: string[]): Promise<{ id: string, r: number, theta: number, hit: number }[]> {
 
   const result = await query<{ id: string, r: number, theta: number, hit: number }>(`
-    select id, r, theta, hit
+    select toString(id) as id, r, theta, hit
     from "MT-36-1".ShotHitPoints
     where region = 'RU' and battleMode = 'REGULAR' and gameVersion in (${gameVersion.map(v => `'${v}'`).join(', ')}) and isIdealCondition = 1
     ${options.startId ? ` and id < '${options.startId}'` : ''}

@@ -169,7 +169,7 @@ async function load(abortSignal: AbortSignal) {
         ),
         t2 as (
             select toStartOfDay(dateTime + interval OFFSET hour) as day,
-                  toUInt32(count()) as totalBattles
+                  count() as totalBattles
             from Event_OnBattleStart
             where region = REGION
               and playerName = PLAYER
@@ -180,25 +180,25 @@ async function load(abortSignal: AbortSignal) {
         ),
         t3 as (
             select toStartOfDay(dateTime + interval OFFSET hour) as day,
-                  toUInt32(count()) as totalResults,
-                  toUInt32(countIf(personal.squadID != 0)) as squadBattles,
-                  toUInt32(countIf(result = 'win')) as wins,
-                  toUInt32(sum(personal.comp7PrestigePoints)) as prestigePoints,
-                  toUInt32(sumIf(personal.comp7PrestigePoints, result != 'win')) as prestigePointsLose,
-                  toUInt32(sumIf(personal.comp7PrestigePoints, result = 'win')) as prestigePointsWin,
-                  toUInt32(max(personal.comp7PrestigePoints)) as prestigePointsMax,
-                  toUInt32(sum(personal.damageDealt)) as damage,
-                  toUInt32(max(personal.damageDealt)) as maxDamage,
-                  toUInt32(sum(personal.damageAssistedRadio + personal.damageAssistedTrack + personal.damageAssistedStun)) as assist,
-                  toUInt32(sum(personal.damageAssistedRadio)) as radioAssist,
-                  toUInt32(sum(personal.damageAssistedTrack)) as trackAssist,
-                  toUInt32(sum(personal.damageAssistedStun)) as stunAssist,
-                  toUInt32(sum(personal.piercingEnemyHits)) as piercing,
-                  toUInt32(sum(personal.shots)) as shots,
-                  toUInt32(sum(personal.directEnemyHits)) as hits,
-                  toInt32(sum(comp7.ratingDelta)) as ratingDelta,
-                  toInt32(sumIf(comp7.ratingDelta, result = 'win')) as ratingDeltaWin,
-                  toInt32(sumIf(comp7.ratingDelta, result != 'win')) as ratingDeltaLose
+                  count() as totalResults,
+                  countIf(personal.squadID != 0) as squadBattles,
+                  countIf(result = 'win') as wins,
+                  sum(personal.comp7PrestigePoints) as prestigePoints,
+                  sumIf(personal.comp7PrestigePoints, result != 'win') as prestigePointsLose,
+                  sumIf(personal.comp7PrestigePoints, result = 'win') as prestigePointsWin,
+                  max(personal.comp7PrestigePoints) as prestigePointsMax,
+                  sum(personal.damageDealt) as damage,
+                  max(personal.damageDealt) as maxDamage,
+                  sum(personal.damageAssistedRadio + personal.damageAssistedTrack + personal.damageAssistedStun) as assist,
+                  sum(personal.damageAssistedRadio) as radioAssist,
+                  sum(personal.damageAssistedTrack) as trackAssist,
+                  sum(personal.damageAssistedStun) as stunAssist,
+                  sum(personal.piercingEnemyHits) as piercing,
+                  sum(personal.shots) as shots,
+                  sum(personal.directEnemyHits) as hits,
+                  sum(comp7.ratingDelta) as ratingDelta,
+                  sumIf(comp7.ratingDelta, result = 'win') as ratingDeltaWin,
+                  sumIf(comp7.ratingDelta, result != 'win') as ratingDeltaLose
             from Event_OnBattleResult
             where region = REGION
               and playerName = PLAYER
@@ -228,12 +228,12 @@ async function load(abortSignal: AbortSignal) {
           tankTag,
           tankType,
           tankLevel,
-          toUInt32(count()) as totalResults,
-          toUInt32(countIf(result = 'win')) as wins,
-          toUInt32(sum(personal.damageDealt)) as damage,
-          toUInt32(sum(personal.damageAssistedRadio + personal.damageAssistedStun + personal.damageAssistedStun)) as assist,
-          toUInt32(sum(personal.comp7PrestigePoints)) as prestigePoints,
-          toUInt32(sum(personal.kills)) as kills
+          count() as totalResults,
+          countIf(result = 'win') as wins,
+          sum(personal.damageDealt) as damage,
+          sum(personal.damageAssistedRadio + personal.damageAssistedStun + personal.damageAssistedStun) as assist,
+          sum(personal.comp7PrestigePoints) as prestigePoints,
+          sum(personal.kills) as kills
     from Event_OnBattleResult
     where playerName = PLAYER
       and dateTime between START_DATE and END_DATE
@@ -256,12 +256,12 @@ async function load(abortSignal: AbortSignal) {
       ${COMP7_ISO_HOUR_OFFSET} as OFFSET
     select toStartOfDay(dateTime + interval OFFSET hour) as day,
           arenaTag,
-          toUInt32(count()) as totalResults,
-          toUInt32(countIf(result = 'win')) as wins,
-          toUInt32(sum(personal.damageDealt)) as damage,
-          toUInt32(sum(personal.damageAssistedRadio + personal.damageAssistedStun + personal.damageAssistedStun)) as assist,
-          toUInt32(sum(personal.comp7PrestigePoints)) as prestigePoints,
-          toUInt32(sum(personal.kills)) as kills
+          count() as totalResults,
+          countIf(result = 'win') as wins,
+          sum(personal.damageDealt) as damage,
+          sum(personal.damageAssistedRadio + personal.damageAssistedStun + personal.damageAssistedStun) as assist,
+          sum(personal.comp7PrestigePoints) as prestigePoints,
+          sum(personal.kills) as kills
     from Event_OnBattleResult
     where playerName = PLAYER
       and dateTime between START_DATE and END_DATE

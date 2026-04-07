@@ -257,7 +257,7 @@ const resultsInfo = queryAsyncFirst(`select
        sumDealt / sumReach                       as DR,
        sumKills / sumDeath                       as KD,
        sumTank / sumReach                        as TR,
-       toUInt32(count())                         as count
+       count()                                   as count
 from Event_OnBattleResult
 ${whereClause(params)};
 `, { count: 0, piercingHits: 0, piercingPerHit: 0, hitPerShot: 0, KD: 0, DR: 0, TR: 0 }, { enabled, settings: settings.value })
@@ -281,7 +281,7 @@ from (select allyTeamCount - allyTeamSurvivedCount                              
 
 function usePlayerDistribution(value: 'Damage' | 'Radio' | 'Kills') {
   const result = queryAsync<{ playerPosition: number, count: number }>(`
-  select playerTeamPositionBy${value} as playerPosition, toUInt32(count()) as count
+  select playerTeamPositionBy${value} as playerPosition, count() as count
   from Event_OnBattleResult
   ${whereClause(params)}
   group by playerPosition;`, { enabled, settings: settings.value })
