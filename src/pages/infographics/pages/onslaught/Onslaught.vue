@@ -2,7 +2,9 @@
   <div class="onslaught-page">
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" :seasons="seasons.data ?? []" />
     <div class="chart">
-      <dayChangeTipBubble.Component class="tip-bubble" />
+      <dayChangeTipBubble.Component class="tip-bubble">
+        Наж
+      </dayChangeTipBubble.Component>
       <DayChart :days="barsData" class="day-chart" @select="selectDay" @deselect="deselectDay"
         :selectedIndex="selectedDayIndex" ref="dayChart" />
     </div>
