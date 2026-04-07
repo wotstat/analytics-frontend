@@ -183,13 +183,13 @@ const openWithStats = queryComputed<{ tag: string, locale: LocalizedName, count:
     from (
         select tag, count, successCount, P2.count as totalCount, P2.successCount as totalSuccess
         from (
-            select openByTag as tag, count()) as count, toUInt32(countIf(isOpenSuccess) as successCount
+            select openByTag as tag, count() as count, countIf(isOpenSuccess) as successCount
             from Event_OnLootboxOpen
             where ${whereClause()} and openByTag != Event_OnLootboxOpen.containerTag
             group by tag
         ) as P
         join (
-            select openByTag as tag, count()) as count, toUInt32(countIf(isOpenSuccess) as successCount
+            select openByTag as tag, count() as count, countIf(isOpenSuccess) as successCount
             from Event_OnLootboxOpen
             where openByTag != Event_OnLootboxOpen.containerTag and ${whereClause(['date', 'player'])}
             group by tag
@@ -219,13 +219,13 @@ const rerollStats = queryComputed<{ tag: string, locale: LocalizedName, count: n
     from (
         select tag, count, rerollCount, P2.count as totalCount, P2.rerollCount as totalReroll
         from (
-            select openByTag as tag, count()) as count, toUInt32(countIf(not claimed) as rerollCount
+            select openByTag as tag, count() as count, countIf(not claimed) as rerollCount
             from Event_OnLootboxOpen
             where ${whereClause()}
             group by tag
         ) as P
         join (
-            select openByTag as tag, count()) as count, toUInt32(countIf(not claimed) as rerollCount
+            select openByTag as tag, count() as count, countIf(not claimed) as rerollCount
             from Event_OnLootboxOpen
             where ${whereClause(['date', 'player'])}
             group by tag
