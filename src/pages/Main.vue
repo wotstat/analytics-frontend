@@ -404,7 +404,7 @@ with arrayMax(results.shotDamage) as dmg,
      max2(-1, min2(1, round(dmgRelativeShell, 1))) as rounded,
      if(rounded = -0, 0, rounded) as trueRounded
 select trueRounded * 10 as k,
-       toUInt32(countIf(representative and hits > 0)) as count
+       countIf(representative and hits > 0) as count
 from Event_OnShot
 where shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME' and battleMode = 'REGULAR'
 group by k

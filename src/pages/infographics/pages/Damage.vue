@@ -131,7 +131,7 @@ const enabled = useElementVisibility(container)
 
 const damageLabels = new Array(21).fill(0).map((v, i) => `${i == 10 ? '' : i < 10 ? '-' : '+'}${Math.abs((i - 10) * 2.5)}%`)
 
-const totalShots = queryAsyncFirst(`select toUInt32(countIf(arrayMax(results.shotDamage) > 0)) as data from Event_OnShot ${whereClause(params)}`, { data: 0 }, { enabled, settings: settings.value })
+const totalShots = queryAsyncFirst(`select countIf(arrayMax(results.shotDamage) > 0) as data from Event_OnShot ${whereClause(params)}`, { data: 0 }, { enabled, settings: settings.value })
 
 const damageDistributionResult = queryAsync<{ k: number, count: number }>(`
 with arrayMax(results.shotDamage) as dmg,
@@ -143,7 +143,7 @@ with arrayMax(results.shotDamage) as dmg,
      max2(-1, min2(1, round(dmgRelativeShell, 1))) as rounded,
      if(rounded = -0, 0, rounded) as trueRounded
 select trueRounded * 10 as k,
-       toUInt32(countIf(representative and hits > 0)) as count
+       countIf(representative and hits > 0) as count
 from Event_OnShot
 where shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME'
 ${whereClause(params, { withWhere: false })}
@@ -159,8 +159,8 @@ with arrayMax(results.shotDamage) as dmg,
      ((toFloat32(dmg) / shellDamage) - 1) / damageRandomization AS dmgRelativeShell
 select
     avgIf(dmgRelativeShell, representative) AS avgDamage,
-    toUInt32(countIf(representative and dmg < shellDamage)) AS less,
-    toUInt32(countIf(representative and dmg > shellDamage)) AS more,
+    countIf(representative and dmg < shellDamage) AS less,
+    countIf(representative and dmg > shellDamage) AS more,
     countIf(representative and dmg = shellDamage) AS equal
 from Event_OnShot
 where shellTag not in ('HIGH_EXPLOSIVE', 'FLAME')
@@ -173,8 +173,8 @@ with arrayMax(results.shotDamage) as dmg,
     results.shotHealth[idx] as health,
     results.ammoBayDestroyed[idx] as ab,
     health + dmg as healthBeforeShot
-select toUInt32(countIf(dmg > 0 and health = 0 and healthBeforeShot > shellDamage and not ab)) as stilled,
-       toUInt32(countIf(dmg > 0 and health != 0 and healthBeforeShot < shellDamage)) as saved
+select countIf(dmg > 0 and health = 0 and healthBeforeShot > shellDamage and not ab) as stilled,
+       countIf(dmg > 0 and health != 0 and healthBeforeShot < shellDamage) as saved
 from Event_OnShot
 where shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME'
 ${whereClause(params, { withWhere: false })}
@@ -193,13 +193,13 @@ group by shellTag;`, { enabled, settings: settings.value })
 
 const healthEnoughBestMV = bestMV('event_OnShot_health_damage', params)
 const healthEnoughQuery = healthEnoughBestMV ? `
-select healthEnough, toUInt32(countMerge(count)) as count
+select healthEnough, countMerge(count) as count
 from ${healthEnoughBestMV}
 where healthEnough between 1 and 5
 ${whereClause(params, { withWhere: false })}
 group by healthEnough;
 ` : `
-select a.1 as healthEnough, toUInt32(count()) as count
+select a.1 as healthEnough, count() as count
 from Event_OnShot
 array join arrayZip(results.shotHealth, results.shotDamage) as a
 where a.2 > 0 and a.1 > 0 and a.1 <= 5
@@ -244,9 +244,9 @@ const damageK = computed(() => {
 
 const onShotResult = queryAsyncFirst(`
 select
-  toUInt32(sum(firedCount)) as fired,
-  toUInt32(sum(ammoBayDestroyedFragsCount)) as ammoBayDestroyed,
-  toUInt32(sum(shotFragsCount)) as frags,
+  sum(firedCount) as fired,
+  sum(ammoBayDestroyedFragsCount) as ammoBayDestroyed,
+  sum(shotFragsCount) as frags,
   count() / frags as shotPerFrag
 from Event_OnShot
 ${whereClause(params)};

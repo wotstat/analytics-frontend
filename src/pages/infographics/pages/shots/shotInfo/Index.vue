@@ -373,18 +373,16 @@ const { isDragging: isBarDragging } = useDraggable(barProgress, {
 })
 
 onMounted(async () => {
-  console.log('OnMounted')
-
   const shotTime = dbIndexToDate(props.shotID)
   const currentID = await query<{ onBattleStartId: string }>(`
-  SELECT onBattleStartId FROM Event_OnShot
+  SELECT toString(onBattleStartId) as onBattleStartId FROM Event_OnShot
   WHERE id = '${props.shotID}'
   and dateTime > toDateTime(${shotTime}) and dateTime < toDateTime(${shotTime + 1})`)
 
   const onBattleStartId = currentID.data[0].onBattleStartId
 
   const shots = await query<Shot>(`
-  SELECT * FROM Event_OnShot
+  SELECT toString(id) as id, * except (id) FROM Event_OnShot
   WHERE onBattleStartId = '${onBattleStartId}'
   and dateTime > toDateTime(${dbIndexToDate(onBattleStartId)})
   and dateTime < toDateTime(${dbIndexToDate(onBattleStartId)}) + interval 1 hour

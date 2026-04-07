@@ -235,7 +235,7 @@ export function useTotalPlayersChart(visible: Ref<boolean>) {
       select
         bloggerId,
         toUnixTimestamp(toStartOfInterval(dateTime, interval ${step} second)) as t,
-        toUInt32(max(count)) as value
+        max(count) as value
       from BOB25.TotalPlayers
       where dateTime between ${from} and ${to + step}
       group by t, bloggerId
@@ -284,7 +284,7 @@ export function useTotalScoreChart(visible: Ref<boolean>) {
       select
           bloggerId,
           toUnixTimestamp(toStartOfInterval(dateTime, interval ${step} second)) as t,
-          toUInt32(argMax(score, t)) as value
+          argMax(score, t) as value
       from prepare
       array join [b1, b2, b3, b4] as score, [1, 2, 3, 4] as bloggerId
       group by bloggerId, t
@@ -443,7 +443,7 @@ export function useAvgBattleDuration() {
     const { data } = await query<{ bloggerId: number, duration: number }>(`
       select
         bloggerId,
-        toUInt32(avgMerge(duration)) as duration
+        avgMerge(duration) as duration
       from BOB25.Battles
       group by bloggerId
     `, { allowCache: false, settings: CACHE_SETTINGS })
@@ -464,7 +464,7 @@ export function useAvgBattleDurationChart(visible: Ref<boolean>) {
       select
         bloggerId,
         toUnixTimestamp(toStartOfInterval(dateTime, interval ${step} second)) as t,
-        toUInt32(avgMerge(duration)) as value
+        avgMerge(duration) as value
       from BOB25.Battles
       where dateTime between ${from} and ${to + step}
       group by t, bloggerId

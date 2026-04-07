@@ -131,7 +131,7 @@ with
    groupArray(ptag) as tag,
    groupArray(pdmg) as dmg,
    groupArray(pkill) as kill,
-   groupArray(toUInt32(pdmg + pkill * 300)) as score
+   groupArray(pdmg + pkill * 300) as score
 select
        id,
        onBattleStartId,
@@ -142,7 +142,7 @@ select
        spgCount,
        enemyTeamMaxHealth,
        arraySort(t -> t.1, arrayZip(name, tag, dmg, kill, score)) as players,
-       toUInt32(arraySum(players.5) + if(result = 'win', 3000, 0)) as totalScore
+       arraySum(players.5) + if(result = 'win', 3000, 0) as totalScore
 from (select arenaTag as arena,
              id,
              dateTime,

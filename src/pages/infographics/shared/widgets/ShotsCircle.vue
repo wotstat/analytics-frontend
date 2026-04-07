@@ -122,13 +122,13 @@ async function loadNextBatch() {
 
     const best = bestMV('accuracy_hit_points', props.params ? props.params : [])
     const prefix = best ? `
-  id, r, theta, hit FROM ${best}
+  toString(id) as id, r, theta, hit FROM ${best}
   ` : `
-  id, ballisticResultClient_r as r, ballisticResultClient_theta as theta, length(results.order) > 0 as hit FROM Event_OnShot
+  toString(id) as id, ballisticResultClient_r as r, ballisticResultClient_theta as theta, length(results.order) > 0 as hit FROM Event_OnShot
   `
     const result = await query<{ id: string, r: number, theta: number, hit: number }>(`
     SELECT ${prefix}
-      ${shotsData.length > 0 ? 'where id < ' + shotsData[0].id : ''}
+      ${shotsData.length > 0 ? `where id < '${shotsData[0].id}'` : ''}
       ${props.params ? whereClause(props.params, { withWhere: shotsData.length == 0 }) : ''}
       order by id desc 
       limit ${LOAD_COUNT} 

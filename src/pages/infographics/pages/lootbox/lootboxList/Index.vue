@@ -140,7 +140,7 @@ const containersTag = queryComputed<{
 }>(() => `
 with containers as (
     select containerTag as tag,
-      toUInt32(count()) as count,
+      count() as count,
       toStartOfDay(min(dateTime)) as start,
       toStartOfDay(max(dateTime)) as end
       from Event_OnLootboxOpen

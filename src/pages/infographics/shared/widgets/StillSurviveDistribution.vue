@@ -32,7 +32,7 @@ const query = queryAsync<{ canSurvive: number, roundedHealthDamage: number, cumS
 select canSurvive,
        canKill,
        round(normalizedHelthDamage * 25) / 25 * 0.25 as roundedHealthDamage,
-       toUInt32(count(*)) as count,
+       count(*) as count,
        sum(count) over (partition by canSurvive order by roundedHealthDamage * if(canSurvive, -1, 1) rows between UNBOUNDED PRECEDING and current row) as cumSurvice
 from (select rHealth = 0                                      as isKilled,
              round(shellDamage + shellDamage * damageRandomization * 1.00001)  as maxPossible,

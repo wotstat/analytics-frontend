@@ -176,9 +176,9 @@ function whereSum(exp: string[], addWhere: boolean = true) {
 
 const dataQ = queryComputed<ResultRow>(() => `
   select arenaTag,
-       toUInt32(count(*))                                    as count,
-       toUInt32(countIf(result = 'lose'))                    as loseCount,
-       toUInt32(countIf(result = 'win'))                     as winCount,
+       count(*)                                              as count,
+       countIf(result = 'lose')                              as loseCount,
+       countIf(result = 'win')                               as winCount,
 
        avg(duration)                                         as avgDuration,
        avgIf(duration, result = 'lose')                      as loseDuration,

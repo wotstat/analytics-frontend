@@ -190,7 +190,7 @@ async function load() {
         query: `
     with ${item.wotId} as WOT_ID
     select
-        player, toUInt32(count()) as count, arrayZip(groupArray(arenaId), groupArray(time)) as arenas
+        player, count() as count, arrayZip(groupArray(arenaId), groupArray(time)) as arenas
     from
     (
       with
