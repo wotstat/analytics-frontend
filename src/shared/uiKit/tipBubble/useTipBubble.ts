@@ -133,7 +133,7 @@ export function useTipBubble(options: Options) {
     wrongCount.value += 1
   }
 
-  const Component = defineComponent((props) => {
+  const Component = defineComponent((props, { attrs, slots }) => {
     return () => h(TipBubble, {
       direction: options.direction || 'auto',
       pagePadding: options.pagePadding,
@@ -145,7 +145,7 @@ export function useTipBubble(options: Options) {
         lastInteractOpen.value = openCount.value
         lastInteractWrong.value = visibleWrongCount.value
       }
-    })
+    }, slots)
   })
 
   return {

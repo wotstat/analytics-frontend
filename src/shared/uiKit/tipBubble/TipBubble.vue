@@ -16,8 +16,9 @@
     </div>
     <div class="content-container" ref="contentContainer" :class="{ 'extending-animation': extendingAnimation }">
       <div class="content" ref="content">
-        <div class="spacer"></div>
-        Используйте стрелочки ← и → для переключения дней
+        <slot></slot>
+        <!-- <div class="spacer"></div>
+        Используйте стрелочки ← и → для переключения дней -->
       </div>
     </div>
   </div>
