@@ -1,9 +1,8 @@
 <template>
   <div v-if="displayed" class="tip-bubble" :style="{
-    '--left': `${left}px`,
-    '--right': `${right}px`,
     '--content-width': `${contentWidth}px`,
-    '--content-height': `${contentHeight}px`
+    '--content-height': `${contentHeight}px`,
+    '--max-content-width': `${maxContentWidth}`
   }" :class="{
     extended: extended,
     accepted: acceptedInCycle,
@@ -29,15 +28,15 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import LightbulbIcon from './assets/lightbulb.svg'
 import CheckmarkIcon from './assets/checkmark.svg'
-import { useElementBounding, useElementHover } from '@vueuse/core'
-import { animate } from 'motion'
-import { spring } from 'motion'
+import { useElementBounding, useElementHover, useWindowSize } from '@vueuse/core'
+import { animate, spring } from 'motion'
 
 const props = defineProps<{
   direction: 'left' | 'right' | 'auto'
   displayed: boolean
   autoExtend: boolean
   accepted: boolean
+  pagePadding?: number | string
 }>()
 
 const emits = defineEmits<{
@@ -51,8 +50,9 @@ const root = ref<HTMLDivElement | null>(null)
 const bubble = ref<HTMLDivElement | null>(null)
 const content = ref<HTMLDivElement | null>(null)
 const contentContainer = ref<HTMLDivElement | null>(null)
-const { left, right } = useElementBounding(bubble)
+const { left, right } = useElementBounding(root)
 const { width: contentWidth, height: contentHeight } = useElementBounding(content)
+const { width: windowWidth } = useWindowSize({ includeScrollbar: false })
 
 const displayed = ref(false)
 const isHover = useElementHover(root)
@@ -72,6 +72,26 @@ const targetDirection = computed(() => {
   if (props.direction !== 'auto') return props.direction
   if (window.innerWidth / 2 > left.value) return 'left'
   return 'right'
+})
+
+const maxContentWidth = computed(() => {
+  if (targetDirection.value === 'left') {
+    if (props.pagePadding) {
+      if (typeof props.pagePadding === 'string') return `calc(${windowWidth.value - left.value}px - var(${props.pagePadding}))`
+      return `${windowWidth.value - left.value - props.pagePadding}px`
+    }
+    if (left.value < windowWidth.value * 0.1 || left.value < 30) return `${windowWidth.value - left.value * 2}px`
+    return `${windowWidth.value - left.value - 10}px`
+  }
+
+  else {
+    if (props.pagePadding) {
+      if (typeof props.pagePadding === 'string') return `calc(${right.value}px - var(${props.pagePadding}))`
+      return `${right.value - props.pagePadding}px`
+    }
+    if (right.value < windowWidth.value * 0.1 || right.value < 30) return `${windowWidth.value - right.value * 2}px`
+    return `${right.value - 10}px`
+  }
 })
 
 const extended = computed(() => {
@@ -291,10 +311,6 @@ async function hideAnimation() {
       left: 0;
 
       .content {
-        max-width: calc(100vw - var(--left) - 40px);
-        // max-width: calc(100dvw - var(--left) - 16px - 15px);
-        // max-width: min(100px, calc(100vw - var(--left) - 40px));
-
         .spacer {
           float: left;
         }
@@ -307,7 +323,6 @@ async function hideAnimation() {
       right: 0;
 
       .content {
-        max-width: calc(var(--right) - 40px);
         right: 0;
 
         .spacer {
@@ -342,8 +357,11 @@ async function hideAnimation() {
       color: #fff;
       font-size: 13px;
       line-height: 1.2;
-      padding: 1.2px 8px 1.2px 8px;
+      // padding: 1.2px 8px 1.2px 8px;
       width: max-content;
+      z-index: 2;
+      max-width: var(--max-content-width);
+
 
       opacity: 0;
       filter: blur(5px);

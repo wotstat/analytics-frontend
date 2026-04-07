@@ -5,6 +5,7 @@ import { refDebounced, refThrottled, useDebounceFn } from '@vueuse/core'
 type Options = {
   key: string,
   direction?: 'left' | 'right' | 'auto',
+  pagePadding?: number | string,
   displayDelay?: number,
   showBubble?: 'always' |
   { type: 'after-open', count: number } |
@@ -135,6 +136,7 @@ export function useTipBubble(options: Options) {
   const Component = defineComponent((props) => {
     return () => h(TipBubble, {
       direction: options.direction || 'auto',
+      pagePadding: options.pagePadding,
       displayed: showBubble.value,
       autoExtend: autoExtend.value,
       accepted: accepted.value,
