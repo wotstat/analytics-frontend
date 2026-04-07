@@ -110,7 +110,7 @@ import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import { createFixedSpaceProcessor, createLogProcessor } from '@/shared/utils/processors/processors'
 import { useQueryStatParams, useQueryStatParamsCache } from '@/shared/query/useQueryStatParams'
 import { Status, dateToDbIndex, queryComputed, queryComputedFirst, success } from '@/db'
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import TableSection from './TableSection.vue'
 import OpenByTable from './OpenByTable.vue'
 import RerollTable from './RerollTable.vue'
@@ -168,7 +168,7 @@ function whereClause(ignore: ('player' | 'tag' | 'date' | 'region')[] = []) {
 }
 
 const total = queryComputedFirst(() => `
-select toUInt32(count()) as count
+select count() as count
 from Event_OnLootboxOpen
 where ${whereClause()} and isOpenSuccess
 `, { count: 0 })
@@ -183,13 +183,13 @@ const openWithStats = queryComputed<{ tag: string, locale: LocalizedName, count:
     from (
         select tag, count, successCount, P2.count as totalCount, P2.successCount as totalSuccess
         from (
-            select openByTag as tag, toUInt32(count()) as count, toUInt32(countIf(isOpenSuccess)) as successCount
+            select openByTag as tag, count()) as count, toUInt32(countIf(isOpenSuccess) as successCount
             from Event_OnLootboxOpen
             where ${whereClause()} and openByTag != Event_OnLootboxOpen.containerTag
             group by tag
         ) as P
         join (
-            select openByTag as tag, toUInt32(count()) as count, toUInt32(countIf(isOpenSuccess)) as successCount
+            select openByTag as tag, count()) as count, toUInt32(countIf(isOpenSuccess) as successCount
             from Event_OnLootboxOpen
             where openByTag != Event_OnLootboxOpen.containerTag and ${whereClause(['date', 'player'])}
             group by tag
@@ -201,7 +201,7 @@ const openWithStats = queryComputed<{ tag: string, locale: LocalizedName, count:
     with locales as (${localeFor('Lootboxes')})
     select tag, locale, count, successCount
     from (
-        select openByTag as tag, toUInt32(count()) as count, toUInt32(countIf(isOpenSuccess)) as successCount
+        select openByTag as tag, count()) as count, toUInt32(countIf(isOpenSuccess) as successCount
         from Event_OnLootboxOpen
         where ${whereClause()} and openByTag != Event_OnLootboxOpen.containerTag
         group by openByTag
@@ -219,13 +219,13 @@ const rerollStats = queryComputed<{ tag: string, locale: LocalizedName, count: n
     from (
         select tag, count, rerollCount, P2.count as totalCount, P2.rerollCount as totalReroll
         from (
-            select openByTag as tag, toUInt32(count()) as count, toUInt32(countIf(not claimed)) as rerollCount
+            select openByTag as tag, count()) as count, toUInt32(countIf(not claimed) as rerollCount
             from Event_OnLootboxOpen
             where ${whereClause()}
             group by tag
         ) as P
         join (
-            select openByTag as tag, toUInt32(count()) as count, toUInt32(countIf(not claimed)) as rerollCount
+            select openByTag as tag, count()) as count, toUInt32(countIf(not claimed) as rerollCount
             from Event_OnLootboxOpen
             where ${whereClause(['date', 'player'])}
             group by tag
@@ -250,14 +250,14 @@ const rerollStats = queryComputed<{ tag: string, locale: LocalizedName, count: n
 
 const mainStats = queryComputedFirst(() => `
 select
-    toUInt32(sum(premiumPlus)) as prem,
-    toUInt32(sum(credits)) as credits,
-    toUInt32(sum(freeXP)) as freeXP,
-    toUInt32(sum(equipCoin)) as equipCoin,
-    toUInt32(sum(gold)) as gold,
-    toUInt32(sum(length(addedVehicles))) as vehicles,
-    toUInt32(sum(arraySum(arrayFilter(t -> t.1 == 'ny25_mandarin', arrayZip(extra.tag, extra.count)).2))) as mandarin25,
-    toUInt32(sum(arraySum(arrayFilter(t -> t.1 == 'ny25_mandarin', arrayZip(compensatedToys.currency, compensatedToys.count)).2))) as compensatedMandarin25
+    sum(premiumPlus) as prem,
+    sum(credits) as credits,
+    sum(freeXP) as freeXP,
+    sum(equipCoin) as equipCoin,
+    sum(gold) as gold,
+    sum(length(addedVehicles)) as vehicles,
+    sum(arraySum(arrayFilter(t -> t.1 == 'ny25_mandarin', arrayZip(extra.tag, extra.count)).2)) as mandarin25,
+    sum(arraySum(arrayFilter(t -> t.1 == 'ny25_mandarin', arrayZip(compensatedToys.currency, compensatedToys.count)).2)) as compensatedMandarin25
 from Event_OnLootboxOpen
 where ${whereClause()}
   `, { prem: 0, credits: 0, freeXP: 0, gold: 0, equipCoin: 0, vehicles: 0, mandarin25: 0, compensatedMandarin25: 0 }, { settings: settings.value })
@@ -296,9 +296,9 @@ with
     ${prefix}
     select title,
   ${tagProcessor ? tagProcessor + ' as tag' : 'tag'},
-toUInt32(playerCount) as count,
+playerCount as count,
   playerCount / personalLootboxesCount as percent,
-  toUInt32(total) as total,
+  total as total,
   total / lootboxesCount as other
 from
   (
@@ -326,7 +326,7 @@ with
     ${simplePrefix}
     select title,
   ${tagProcessor ? tagProcessor + ' as tag' : 'tag'},
-toUInt32(countMerge(count)) as count,
+countMerge(count) as count,
   count / lootboxesCount as percent
     from ${materialized}
     ${whereWhereTag}
