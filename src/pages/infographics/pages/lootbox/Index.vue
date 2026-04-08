@@ -201,7 +201,7 @@ const openWithStats = queryComputed<{ tag: string, locale: LocalizedName, count:
     with locales as (${localeFor('Lootboxes')})
     select tag, locale, count, successCount
     from (
-        select openByTag as tag, count()) as count, countIf(isOpenSuccess) as successCount
+        select openByTag as tag, count() as count, countIf(isOpenSuccess) as successCount
         from Event_OnLootboxOpen
         where ${whereClause()} and openByTag != Event_OnLootboxOpen.containerTag
         group by openByTag
