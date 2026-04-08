@@ -2,8 +2,9 @@
   <div class="onslaught-page">
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" :seasons="seasons.data ?? []" />
     <div class="chart">
-      <dayChangeTipBubble.Component class="tip-bubble">
-        Наж
+      <dayChangeTipBubble.Component class="tip-bubble" v-slot="{ direction }">
+        <p class="tooltip-content"><span class="spacer" :class="`align-${direction}`"></span>Используйте стрелки
+          влево/вправо для переключения между днями</p>
       </dayChangeTipBubble.Component>
       <DayChart :days="barsData" class="day-chart" @select="selectDay" @deselect="deselectDay"
         :selectedIndex="selectedDayIndex" ref="dayChart" />
@@ -373,6 +374,27 @@ watch(selectedDayIndex, (dayIndex) => {
     .day-chart {
       margin-left: calc(var(--content-page-margin, 0) * -1);
       margin-right: calc(var(--content-page-margin, 0) * -1);
+    }
+  }
+
+  .tooltip-content {
+    padding: 1.2px 5px 1.2px 5px;
+
+    color: #fff;
+    font-size: 13px;
+    line-height: 1.2;
+
+    .spacer {
+      &.align-left {
+        float: left;
+      }
+
+      &.align-right {
+        float: right;
+      }
+
+      width: 13px;
+      height: 10px;
     }
   }
 
