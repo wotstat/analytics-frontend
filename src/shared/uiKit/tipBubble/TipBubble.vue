@@ -2,12 +2,13 @@
   <div v-if="displayed" class="tip-bubble" :style="{
     '--content-width': `${contentWidth}px`,
     '--content-height': `${contentHeight}px`,
-    '--max-content-width': `${maxContentWidth}`
+    '--max-content-width': `${maxContentWidth}`,
+    '--left': left
   }" :class="{
     extended: extended,
     accepted: acceptedInCycle,
     [`align-${targetDirection}`]: true
-  }" ref="root" @click="onClick" @mousedown="onPointerDown">
+  }" ref="root" @click="onClick" @mousedown="onMouseDown">
     <div class="bubble" ref="bubble">
       <LightbulbIcon class="icon lightbulb" />
       <CheckmarkIcon class="icon checkmark" :style="{
@@ -16,7 +17,7 @@
     </div>
     <div class="content-container" ref="contentContainer" :class="{ 'extending-animation': extendingAnimation }">
       <div class="content" ref="content">
-        <slot></slot>
+        <slot :direction="targetDirection"></slot>
         <!-- <div class="spacer"></div>
         Используйте стрелочки ← и → для переключения дней -->
       </div>
@@ -29,7 +30,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import LightbulbIcon from './assets/lightbulb.svg'
 import CheckmarkIcon from './assets/checkmark.svg'
-import { useElementBounding, useElementHover, useWindowSize } from '@vueuse/core'
+import { useElementBounding, useElementHover, useElementSize, useResizeObserver, useWindowSize } from '@vueuse/core'
 import { animate, spring } from 'motion'
 
 const props = defineProps<{
@@ -52,12 +53,13 @@ const bubble = ref<HTMLDivElement | null>(null)
 const content = ref<HTMLDivElement | null>(null)
 const contentContainer = ref<HTMLDivElement | null>(null)
 const { left, right } = useElementBounding(root)
-const { width: contentWidth, height: contentHeight } = useElementBounding(content)
 const { width: windowWidth } = useWindowSize({ includeScrollbar: false })
+const contentWidth = ref(0)
+const contentHeight = ref(0)
 
 const displayed = ref(false)
 const isHover = useElementHover(root)
-// const isHover = ref(true)
+// const isHover = ref(false)
 const isHoverExistsInCycle = ref(false)
 const isContentClicked = ref(false)
 const canBeExtended = ref(false)
@@ -93,6 +95,20 @@ const maxContentWidth = computed(() => {
     if (right.value < windowWidth.value * 0.1 || right.value < 30) return `${windowWidth.value - right.value * 2}px`
     return `${right.value - 10}px`
   }
+})
+
+useResizeObserver(content, (entries) => {
+  const entry = entries[0]
+  if (!entry) return
+  if (contentWidth.value === entry.contentRect.width && contentHeight.value === entry.contentRect.height) return
+  const rect = content.value?.getBoundingClientRect()
+  if (!rect) return
+
+  const scale = rect.width / entry.contentRect.width
+  if (Math.abs(scale - 1) > 0.001) return
+
+  contentWidth.value = entry.contentRect.width
+  contentHeight.value = entry.contentRect.height
 })
 
 const extended = computed(() => {
@@ -140,16 +156,24 @@ watch(isHover, (hover) => {
   if (hover) emits('interact', 'hover')
 })
 
-function onClick() {
-  if (Date.now() - lastExtendTime < 500) return
+function clickAction() {
   isContentClicked.value = !isContentClicked.value
   emits('interact', 'click')
 }
 
-function onPointerDown() {
-  if (Date.now() - lastExtendTime < 500) return
+function onClick() {
+  if (navigator.maxTouchPoints == 0) return // disable click on non-touch devices, since mouseUp used
+  clickAction()
+}
+
+function onMouseDown(downEvent: MouseEvent) {
   animate(root.value, { transform: 'scale(0.95)' }, { duration: 0.2 })
-  document.addEventListener('mouseup', () => animate(root.value, { transform: 'scale(1)' }, { duration: 0.2 }), { once: true })
+
+  document.addEventListener('mouseup', (upEvent: MouseEvent) => {
+    animate(root.value, { transform: 'scale(1)' }, { duration: 0.2 })
+    const distance = Math.sqrt((downEvent.clientX - upEvent.clientX) ** 2 + (downEvent.clientY - upEvent.clientY) ** 2)
+    if (distance < 20) clickAction()
+  }, { once: true })
 }
 
 async function showAnimation() {
@@ -280,6 +304,7 @@ async function hideAnimation() {
         filter: blur(0);
         transition-delay: 0s;
         transition-duration: 0.2s;
+        will-change: opacity, filter, transform;
       }
     }
   }
@@ -355,25 +380,14 @@ async function hideAnimation() {
 
     .content {
       position: absolute;
-      color: #fff;
-      font-size: 13px;
-      line-height: 1.2;
-      // padding: 1.2px 8px 1.2px 8px;
       width: max-content;
       z-index: 2;
       max-width: var(--max-content-width);
-
 
       opacity: 0;
       filter: blur(5px);
       transition: opacity 0.2s linear, filter 0.2s linear;
       transition-delay: 0.1s;
-
-      .spacer {
-        width: 10px;
-        height: 10px;
-      }
-
     }
   }
 }
