@@ -865,6 +865,7 @@ onMounted(() => {
     background: transparent;
     border: none;
     padding: 6px;
+    border-radius: 8px;
 
     svg {
       width: 25px;
@@ -994,6 +995,7 @@ onMounted(() => {
         border-radius: 0;
         border: none;
         width: 150px;
+        background: #1a1a1a;
 
         .logo {
           height: 20px;

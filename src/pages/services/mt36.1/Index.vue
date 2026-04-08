@@ -980,6 +980,12 @@ async function loadNextBatchRight(options: Options) {
     }
   }
 
+  button {
+    font-size: 1em;
+    font-weight: 500;
+    padding: .6em 1.2em;
+  }
+
   .background {
     position: absolute;
     top: 0;

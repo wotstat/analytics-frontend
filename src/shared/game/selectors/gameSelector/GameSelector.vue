@@ -38,6 +38,7 @@ const game = defineModel<GameVendor | 'any'>({ default: 'wot' })
     border-radius: 0;
     border: none;
     width: 150px;
+    background-color: #1a1a1a;
 
     .logo {
       height: 20px;

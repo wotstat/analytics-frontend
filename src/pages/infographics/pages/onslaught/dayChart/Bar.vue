@@ -1,5 +1,5 @@
 <template>
-  <div class="bar mt-font" :class="{
+  <button class="bar mt-font" :class="{
     'selected': props.selected,
     [`rank-${props.value.rank}`]: true,
     [props.value.timeline]: true,
@@ -24,7 +24,7 @@
         <div class="line top-line horizontal"></div>
       </div>
     </Transition>
-  </div>
+  </button>
 </template>
 
 
@@ -56,6 +56,7 @@ const leaderboardPosition = computed(() => {
   --shadow-color: linear-gradient(0deg, #ffb86c12 0%, #ffb86c00 100%);
   --selected-line: #ffd6a4;
   --selected-line-shadow: #ffac46;
+  touch-action: manipulation;
 
   &.rank-first {
     --top-color: #b3b3b3;

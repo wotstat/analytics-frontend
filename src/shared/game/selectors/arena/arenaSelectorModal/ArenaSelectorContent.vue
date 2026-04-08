@@ -6,7 +6,7 @@
     <div class="section" v-for="group in filtered">
       <h2 class="header">{{ group.header }}</h2>
       <div class="arenas">
-        <div class="arena" v-for="arena in group.data" :tag="arena.tag" :mode="arena.battleMode"
+        <button class="arena" v-for="arena in group.data" :tag="arena.tag" :mode="arena.battleMode"
           @click="onArenaClick(arena.tag)" :class="{ 'selected': selectedTags.has(arena.tag) }">
           <MinimapBackground :tag="arena.imageName" :game="game" :gameplay="arena.battleGameplay"
             :fallback="FallbackMinimap" class="minimap-background" />
@@ -28,7 +28,7 @@
           <div class="version mt-font" v-if="compareVersion(arena.version, latestGameVersion) != 0">
             До {{ arena.version.join('.') }}
           </div>
-        </div>
+        </button>
       </div>
     </div>
   </div>
@@ -266,6 +266,7 @@ h2 {
     position: relative;
     aspect-ratio: 1 / 1;
     cursor: pointer;
+    touch-action: manipulation;
 
     &.selected {
       border-color: var(--blue-color);
@@ -362,6 +363,7 @@ h2 {
         font-weight: bold;
         font-size: 14px;
         z-index: 1;
+        background-color: #1a1a1a;
 
         transition: background-color 0.1s;
 

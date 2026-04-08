@@ -270,6 +270,7 @@ $image-border-radius: calc(15px - $content-border);
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
+      background: #1a1a1a;
 
       border: 1.5px solid rgb(31, 229, 93);
       width: 30px;

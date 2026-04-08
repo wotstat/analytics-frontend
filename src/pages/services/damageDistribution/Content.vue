@@ -49,8 +49,9 @@
   <h3>Параметры</h3>
   <p>Выберите число уронов на один столбик графика</p>
   <div class="steps-count">
-    <button v-for="item in allowedSteps" :class="item == selectedStep ? 'selected' : ''" @click="selectedStep = item">{{
-      item }}</button>
+    <button v-for="item in allowedSteps" class="legacy-style" :class="item == selectedStep ? 'selected' : ''"
+      @click="selectedStep = item">{{
+        item }}</button>
   </div>
 
   <div class="card">
@@ -63,7 +64,7 @@
   <h3>Погрешность</h3>
   <p>Границы допустимой погрешности рассчитываются индивидуально для <b>выбранного</b> значения урона ({{
     selectedDamage
-    }}) и числа подходящих выстрелов ({{ selectedTotal }})</p>
+  }}) и числа подходящих выстрелов ({{ selectedTotal }})</p>
 
   <template v-if="distribution.labels.length">
     <div v-if="readyToCalculate">

@@ -38,6 +38,9 @@ function onClickLevel(event: MouseEvent, level: number) {
   gap: 0.5rem;
 
   .level {
+    font-size: 1em;
+    font-weight: 500;
+    padding: .6em 1.2em;
     background: rgba(102, 102, 102, 0.15);
     box-shadow: none;
     cursor: pointer;

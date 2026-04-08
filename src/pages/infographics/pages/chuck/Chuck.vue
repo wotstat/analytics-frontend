@@ -16,7 +16,7 @@
 
     <template v-if="allow">
       <div class="flex">
-        <button class="light" @click="showTimecodes = true">Таймкоды для стрима</button>
+        <button class="legacy-style light" @click="showTimecodes = true">Таймкоды для стрима</button>
       </div>
 
       <div :class="classSettings">
