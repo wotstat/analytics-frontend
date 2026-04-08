@@ -18,8 +18,6 @@
     <div class="content-container" ref="contentContainer" :class="{ 'extending-animation': extendingAnimation }">
       <div class="content" ref="content">
         <slot :direction="targetDirection"></slot>
-        <!-- <div class="spacer"></div>
-        Используйте стрелочки ← и → для переключения дней -->
       </div>
     </div>
   </div>
@@ -335,12 +333,6 @@ async function hideAnimation() {
   &.align-left {
     .content-container {
       left: 0;
-
-      .content {
-        .spacer {
-          float: left;
-        }
-      }
     }
   }
 
@@ -350,10 +342,6 @@ async function hideAnimation() {
 
       .content {
         right: 0;
-
-        .spacer {
-          float: right;
-        }
       }
     }
   }

@@ -86,7 +86,7 @@
         <p>Мод имеет версию как для Мира Танков, так и для World of Tanks.</p>
 
         <div class="flex center download-buttons">
-          <button @click="goToDownload">Перейти к загрузке</button>
+          <button class="legacy-style" @click="goToDownload">Перейти к загрузке</button>
         </div>
       </div>
 

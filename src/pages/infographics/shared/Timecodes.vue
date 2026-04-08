@@ -70,7 +70,7 @@
     </div>
     <br>
     <div class="flex">
-      <button @click="copy">Скопировать</button>
+      <button class="legacy-style" @click="copy">Скопировать</button>
     </div>
   </div>
   <div class="popup-container" v-else>

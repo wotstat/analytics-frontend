@@ -137,7 +137,7 @@
             </svg>
           </div>
         </div>
-        <button @click="apply">Применить</button>
+        <button class="legacy-style" @click="apply">Применить</button>
       </div>
     </div>
   </Teleport>

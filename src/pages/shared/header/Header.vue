@@ -249,6 +249,23 @@ const problemsVisible = ref(false)
       font-weight: var(--bold-weight);
     }
 
+    button {
+      border-radius: 8px;
+      border: 1px solid transparent;
+      padding: 0.6em 1.2em;
+      font-size: 1em;
+      font-weight: 500;
+      font-family: inherit;
+      background-color: #1a1a1a;
+      cursor: pointer;
+      color: inherit;
+      transition: background-color 0.25s;
+
+      &:hover {
+        background-color: #2f2f2f;
+      }
+    }
+
     .right-section {
       position: absolute;
       right: 10px;
