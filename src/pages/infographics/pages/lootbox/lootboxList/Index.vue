@@ -85,12 +85,16 @@ function tagToImageName(tag: string) {
     'tanks_birthday_2023_premium': 'tanks_birthday_2023_3',
     'tanks_birthday_2023_VI': 'tanks_birthday_2023_2',
     'tanks_birthday_2023_X': 'tanks_birthday_2023_1',
+    'cosmic_2024_standart': 'cosmic_2024_1',
+    'cosmic_2024_silver': 'cosmic_2024_2',
+    'cosmic_2025_standart': 'cosmic_2025_1',
+    'cosmic_2025_silver': 'cosmic_2025_2',
+    'cosm_2025_silver': 'cosmic_2025_2',
+    'hw_2023_standart': 'hw_2023_1',
+    'hw_2023_silver': 'hw_2023_2',
   } as Record<string, string>
 
   if (convert[tag]) return convert[tag]
-
-  if (tag.endsWith('_standart')) return tag.replace('_standart', '_1')
-  if (tag.endsWith('_silver')) return tag.replace('_silver', '_2')
   return tag
 }
 
