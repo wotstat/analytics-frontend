@@ -1,8 +1,8 @@
 import { computed, defineComponent, h, ref, watch, watchEffect } from 'vue'
-import TipBubble from './TipBubble.vue'
+import TipBubble from './TipBubbleComponent.vue'
 import { refDebounced, refThrottled, useDebounceFn } from '@vueuse/core'
 
-type Options = {
+export type Options = {
   key: string,
   direction?: 'left' | 'right' | 'auto',
   pagePadding?: number | string,
@@ -19,7 +19,22 @@ type Options = {
 
 const openCountStorage = new Map<string, number>()
 
+function isAlwaysHidden(key: string) {
+  return false
+}
+
+const EmptyComponent = {
+  Component: defineComponent(() => () => null),
+  setDisplayed: () => { },
+  display: () => { },
+  hide: () => { },
+  accept: () => { },
+  wrong: () => { },
+}
+
 export function useTipBubble(options: Options) {
+
+  if (isAlwaysHidden(options.key)) return EmptyComponent
 
   const mayShowBubble = ref(false)
 
