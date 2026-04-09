@@ -1,6 +1,5 @@
-import { computed, defineComponent, h, ref, watch, watchEffect } from 'vue'
+import { computed, defineComponent, h, Ref, ref, watch } from 'vue'
 import TipBubble from './TipBubbleComponent.vue'
-import { refDebounced, refThrottled, useDebounceFn } from '@vueuse/core'
 
 export type Options = {
   key: string,
@@ -10,7 +9,7 @@ export type Options = {
   showBubble?: 'always' |
   { type: 'after-open', count: number } |
   { type: 'after-wrong', count: number }
-  autoExtend?: 'always' |
+  autoExtend?: 'always' | 'force-extend' |
   { type: 'always', interactSnooze?: number } |
   { type: 'after-open', count: number, interactSnooze?: number } |
   { type: 'after-show-bubble', count: number, interactSnooze?: number } |
@@ -60,6 +59,7 @@ export function useTipBubble(options: Options) {
 
   const mayAutoExtend = computed(() => {
     const autoExtend = options.autoExtend
+    if (autoExtend === 'force-extend') return true
     if (!autoExtend) return false
     if (autoExtend === 'always') return true
     if (autoExtend.type === 'always') return true
@@ -155,6 +155,7 @@ export function useTipBubble(options: Options) {
       displayed: showBubble.value,
       autoExtend: autoExtend.value,
       accepted: accepted.value,
+      forceExtend: options.autoExtend === 'force-extend',
       onInteract: (type) => {
         lastInteractShow.value = showBubbleCount.value
         lastInteractOpen.value = openCount.value
