@@ -2,10 +2,21 @@
   <div class="onslaught-page">
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" :seasons="seasons.data ?? []" />
     <div class="chart">
-      <dayChangeTipBubble.Component class="tip-bubble" v-slot="{ direction }">
-        <p class="tooltip-content"><span class="spacer" :class="`align-${direction}`"></span>Используйте стрелки
-          влево/вправо для переключения между днями</p>
-      </dayChangeTipBubble.Component>
+      <!-- <dayChangeTipBubble.Component class="tip-bubble" v-slot="{ direction }">
+        <p class="tooltip-content">
+          <span class="spacer" :class="`align-${direction}`"></span>
+          Используйте стрелки влево/вправо для переключения между днями
+        </p>
+      </dayChangeTipBubble.Component> -->
+      <TipBubble class="tip-bubble" ref="dayChangeTipBubble" :bubbleKey="'onslaught-day-chart-keyboard'"
+        :pagePadding="'--content-page-margin'" :displayDelay="800" :showBubble="'always'"
+        :autoExtend="{ type: 'after-wrong', count: 7, interactSnooze: 20, hideSnooze: 'reset' }" v-slot="{ direction }">
+        <p class="tooltip-content">
+          <span class="spacer" :class="`align-${direction}`"></span>
+          Используйте стрелки влево/вправо для переключения между днями
+        </p>
+      </TipBubble>
+
       <DayChart :days="barsData" class="day-chart" @select="selectDay" @deselect="deselectDay"
         :selectedIndex="selectedDayIndex" ref="dayChart" />
     </div>
@@ -35,12 +46,14 @@ import { MapsRes, useMapsTable } from './mapsTable/useMapsTable'
 import MapsTable from './mapsTable/MapsTable.vue'
 import { headerOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import { useTipBubble } from '@/shared/uiKit/tipBubble/useTipBubble'
+import TipBubble from '@/shared/uiKit/tipBubble/TipBubble.vue'
 
 
 const ONE_HOUR = 60 * 60 * 1000
 const ONE_DAY = 24 * ONE_HOUR
 const COMP7_ISO_HOUR_OFFSET = -2
 
+const dayChangeTipBubble = ref<InstanceType<typeof TipBubble> | null>(null)
 const dayChart = ref<HTMLElement | null>(null)
 
 const selectedDayIndex = ref<number | null>(null)
@@ -49,7 +62,7 @@ const nickname = ref<string>('')
 const debouncedNickname = refDebounced(nickname, 500)
 
 function selectDay(index: number) {
-  if (selectedDayIndex.value !== index && selectedDayIndex.value != null) dayChangeTipBubble.wrong()
+  if (selectedDayIndex.value !== index && selectedDayIndex.value != null) dayChangeTipBubble.value?.wrong()
   if (selectedDayIndex.value === index) selectedDayIndex.value = null
   else selectedDayIndex.value = index
 }
@@ -67,7 +80,7 @@ onKeyStroke('ArrowLeft', (e) => {
   e.stopPropagation()
   e.preventDefault()
   selectDay(nextIndex)
-  dayChangeTipBubble.accept()
+  dayChangeTipBubble.value?.accept()
 })
 
 onKeyStroke('ArrowRight', (e) => {
@@ -79,7 +92,7 @@ onKeyStroke('ArrowRight', (e) => {
   e.stopPropagation()
   e.preventDefault()
   selectDay(selectedDayIndex.value + 1 + nextIndex)
-  dayChangeTipBubble.accept()
+  dayChangeTipBubble.value?.accept()
 })
 
 onKeyStroke('Escape', (e) => {
@@ -342,17 +355,17 @@ const mainStats = useMainStat(days, preferredGameOrDefault, selectedSeason, sele
 const vehicleStats = useVehicleTable(computed(() => vehicleStatistics.value ?? []), selectedDay)
 const mapsStats = useMapsTable(computed(() => mapsStatistics.value ?? []), selectedDay)
 
-const dayChangeTipBubble = useTipBubble({
-  key: 'onslaught-day-chart-keyboard',
-  pagePadding: '--content-page-margin',
-  displayDelay: 800,
-  showBubble: 'always',
-  autoExtend: { type: 'after-wrong', count: 10, interactSnooze: 20, hideSnooze: 'reset' },
-})
+// const dayChangeTipBubble = useTipBubble({
+//   key: 'onslaught-day-chart-keyboard',
+//   pagePadding: '--content-page-margin',
+//   displayDelay: 800,
+//   showBubble: 'always',
+//   autoExtend: { type: 'after-wrong', count: 7, interactSnooze: 20, hideSnooze: 'reset' },
+// })
 
 watch(selectedDayIndex, (dayIndex) => {
-  if (dayIndex != null) dayChangeTipBubble.display()
-  else dayChangeTipBubble.hide()
+  if (dayIndex != null) dayChangeTipBubble.value?.display()
+  else dayChangeTipBubble.value?.hide()
 })
 </script>
 
