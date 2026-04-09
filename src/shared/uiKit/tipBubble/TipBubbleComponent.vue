@@ -37,6 +37,7 @@ const props = defineProps<{
   autoExtend: boolean
   accepted: boolean
   pagePadding?: number | string
+  forceExtend?: boolean
 }>()
 
 const emits = defineEmits<{
@@ -111,6 +112,7 @@ useResizeObserver(content, (entries) => {
 
 const extended = computed(() => {
   if (!canBeExtended.value) return false
+  if (props.forceExtend) return true
   if (isContentClicked.value) return false
   if (acceptedInCycle.value) return false
   if (isHover.value) return true
