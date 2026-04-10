@@ -183,15 +183,15 @@ export function whereClause(params: MaybeRefOrGetter<StatParams>, options: Optio
       result.push(`${isBattleStart ? 'id' : 'onBattleStartId'} in (${valueParams.battleId.map(t => `'${t}'`).join(', ')})`)
     } else if (valueParams.period !== 'allTime') {
       if (valueParams.period.type == 'fromTo') {
-        result.push(`id >= ${dateToDbIndex(valueParams.period.from)}`)
-        result.push(`id <= ${dateToDbIndex(valueParams.period.to)}`)
+        result.push(`id >= '${dateToDbIndex(valueParams.period.from)}'`)
+        result.push(`id <= '${dateToDbIndex(valueParams.period.to)}'`)
 
         result.push(`dateTime >= '${dateToDbDate(valueParams.period.from)}'`)
         const toDate = new Date(valueParams.period.to.getTime() + 24 * 60 * 60 * 1000)
         result.push(`dateTime <= '${dateToDbDate(toDate)}'`)
 
       } else if (valueParams.period.type == 'fromToNow') {
-        result.push(`id >= ${dateToDbIndex(valueParams.period.from)}`)
+        result.push(`id >= '${dateToDbIndex(valueParams.period.from)}'`)
         result.push(`dateTime >= '${dateToDbDate(valueParams.period.from)}'`)
       } else if (valueParams.period.type == 'lastX') {
         const whereClause = whereClauseArray(valueParams, ignore)
