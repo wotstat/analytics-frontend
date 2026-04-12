@@ -6,16 +6,25 @@
 
 
 <script setup lang="ts">
+import { watch } from 'vue'
 import { useTipBubble, type Options } from './useTipBubble'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   bubbleKey: string,
-} & Omit<Options, 'key'>>()
+  display?: boolean
+} & Omit<Options, 'key'>>(), { display: undefined })
 
 const bubble = useTipBubble({
   ...props,
   key: props.bubbleKey,
 })
+
+watch(() => props.display, (display) => {
+  if (display === undefined) return
+
+  if (display) bubble.display()
+  else bubble.hide()
+}, { immediate: true })
 
 defineExpose({
   setDisplayed: bubble.setDisplayed,
