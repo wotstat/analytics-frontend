@@ -16,7 +16,7 @@
 
 
 <script setup lang="ts">
-import TipBubble from '@/shared/uiKit/tipBubble/TipBubble.vue'
+import TipBubble from '@/shared/ui/tipBubble/TipBubble.vue'
 import LeftArrowIcon from '@/assets/icons/keyboard/left-arrow.svg'
 import RightArrowIcon from '@/assets/icons/keyboard/right-arrow.svg'
 import { ref } from 'vue'
