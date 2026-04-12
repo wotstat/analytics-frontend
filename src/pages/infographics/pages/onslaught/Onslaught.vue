@@ -2,6 +2,7 @@
   <div class="onslaught-page">
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" :seasons="seasons.data ?? []" />
     <div class="chart">
+      <TipSelectDay class="tip-bubble" ref="daySelectTipBubble" :display="displayedTipSelectDay" />
       <TipKeyboardChangeDay class="tip-bubble" ref="dayChangeTipBubble" />
       <DayChart :days="barsData" class="day-chart" @select="selectDay" @deselect="deselectDay"
         :selectedIndex="selectedDayIndex" ref="dayChart" />
@@ -32,6 +33,7 @@ import { MapsRes, useMapsTable } from './mapsTable/useMapsTable'
 import MapsTable from './mapsTable/MapsTable.vue'
 import { headerOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import TipKeyboardChangeDay from './tips/TipKeyboardChangeDay.vue'
+import TipSelectDay from './tips/TipSelectDay.vue'
 
 
 const ONE_HOUR = 60 * 60 * 1000
@@ -39,6 +41,7 @@ const ONE_DAY = 24 * ONE_HOUR
 const COMP7_ISO_HOUR_OFFSET = -2
 
 const dayChangeTipBubble = ref<InstanceType<typeof TipKeyboardChangeDay> | null>(null)
+const daySelectTipBubble = ref<InstanceType<typeof TipSelectDay> | null>(null)
 const dayChart = ref<HTMLElement | null>(null)
 
 const selectedDayIndex = ref<number | null>(null)
@@ -47,6 +50,7 @@ const nickname = ref<string>('')
 const debouncedNickname = refDebounced(nickname, 500)
 
 function selectDay(index: number) {
+  daySelectTipBubble.value?.accept()
   if (selectedDayIndex.value !== index && selectedDayIndex.value != null) dayChangeTipBubble.value?.wrong()
   if (selectedDayIndex.value === index) selectedDayIndex.value = null
   else selectedDayIndex.value = index
@@ -344,6 +348,13 @@ watch(selectedDayIndex, (dayIndex) => {
   if (dayIndex != null) dayChangeTipBubble.value?.display()
   else dayChangeTipBubble.value?.hide()
 })
+
+const displayedTipSelectDay = computed(() => {
+  if (selectedDayIndex.value != null) return false
+  if (barsData.value.some(d => d.timeline === 'played')) return true
+  return false
+})
+
 </script>
 
 

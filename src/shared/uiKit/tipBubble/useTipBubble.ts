@@ -138,12 +138,13 @@ export function useTipBubble(options: Options) {
 
   let changeDisplayedTimeout: ReturnType<typeof setTimeout> | null = null
   function changeDisplayed(display: boolean, force: boolean = false) {
-    if (!options.displayDelay || force) {
+    if (mayShowBubble.value === display) return
+    if (state.value.accepted) return
+
+    if (display && (!options.displayDelay || force)) {
       mayShowBubble.value = display
       return
     }
-
-    if (state.value.accepted && display) return
 
     if (!display) {
       mayShowBubble.value = false
@@ -163,7 +164,7 @@ export function useTipBubble(options: Options) {
     }
   }
 
-  const setDisplayed = (visible: boolean, force: boolean = false) => { changeDisplayed(visible, force) }
+  const setDisplayed = (visible: boolean, force: boolean = false) => changeDisplayed(visible, force)
   const display = (force: boolean = false) => { setDisplayed(true, force) }
   const hide = () => { setDisplayed(false) }
 
@@ -174,6 +175,7 @@ export function useTipBubble(options: Options) {
   }
 
   const accept = () => {
+    console.log('accept')
     state.value.accepted = true
   }
 

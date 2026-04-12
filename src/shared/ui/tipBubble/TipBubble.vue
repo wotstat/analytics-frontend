@@ -7,10 +7,12 @@
 
 <script setup lang="ts">
 import { isAlwaysHidden, useTipBubble, type Options } from '@/shared/uiKit/tipBubble/useTipBubble'
+import { watch } from 'vue'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   bubbleKey: string,
-} & Omit<Options, 'key'>>()
+  display?: boolean
+} & Omit<Options, 'key'>>(), { display: undefined })
 
 const bubble = useTipBubble({
   ...props,
@@ -21,6 +23,14 @@ const bubble = useTipBubble({
   autoExtend: props.autoExtend ?? { type: 'after-wrong', count: 7, interactSnooze: 20, hideSnooze: 'reset' },
   key: props.bubbleKey,
 })
+
+watch(() => props.display, (display) => {
+  if (display === undefined) return
+
+  if (display) bubble.display()
+  else bubble.hide()
+}, { immediate: true })
+
 
 defineExpose({
   setDisplayed: bubble.setDisplayed,
