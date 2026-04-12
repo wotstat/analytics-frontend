@@ -155,7 +155,6 @@ export function useTipBubble(options: Options) {
       return
     }
 
-
     if (!changeDisplayedTimeout) {
       changeDisplayedTimeout = setTimeout(() => {
         mayShowBubble.value = true
