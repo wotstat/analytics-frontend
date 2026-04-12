@@ -1,12 +1,12 @@
 <template>
-  <component :is="bubble.Component" v-slot="{ direction }">
+  <component :is="bubble.Component" v-slot="{ direction }" v-if="!isAlwaysHidden(props.bubbleKey)">
     <slot :direction></slot>
   </component>
 </template>
 
 
 <script setup lang="ts">
-import { useTipBubble, type Options } from '@/shared/uiKit/tipBubble/useTipBubble'
+import { isAlwaysHidden, useTipBubble, type Options } from '@/shared/uiKit/tipBubble/useTipBubble'
 
 const props = defineProps<{
   bubbleKey: string,

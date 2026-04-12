@@ -7,7 +7,8 @@
   }" :class="{
     extended: extended,
     accepted: acceptedInCycle,
-    [`align-${targetDirection}`]: true
+    [`align-${targetDirection}`]: true,
+    'skip-hover-delay': skipHoverDelay,
   }" ref="root" @click="onClick" @mousedown="onMouseDown">
     <div class="bubble" ref="bubble">
       <LightbulbIcon class="icon lightbulb" />
@@ -28,7 +29,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import LightbulbIcon from './assets/lightbulb.svg'
 import CheckmarkIcon from './assets/checkmark.svg'
-import { useElementBounding, useElementHover, useElementSize, useResizeObserver, useWindowSize } from '@vueuse/core'
+import { useElementBounding, useElementHover, useResizeObserver, useWindowSize } from '@vueuse/core'
 import { animate, spring } from 'motion'
 
 const props = defineProps<{
@@ -58,13 +59,13 @@ const contentHeight = ref(0)
 
 const displayed = ref(false)
 const isHover = useElementHover(root)
-// const isHover = ref(false)
 const isHoverExistsInCycle = ref(false)
 const isContentClicked = ref(false)
 const canBeExtended = ref(false)
 const canBeAutoExtended = ref(false)
 const acceptedInCycle = ref(false)
 const extendingAnimation = ref(false)
+const skipHoverDelay = ref(false)
 
 let lastExtendTime = 0
 let showAnimationController = new AbortController()
@@ -133,20 +134,25 @@ watch(extended, (value) => {
   animatedTimeout = setTimeout(() => {
     animatedTimeout = null
     extendingAnimation.value = false
-  }, 300)
+  }, value ? 400 : 300)
 })
 
 if (props.displayed) showAnimation()
-watch(() => props.displayed, (displayed) => {
+watch(() => [props.displayed, props.autoExtend], ([displayed, autoExtend], [oldDisplayed, oldAutoExtend]) => {
   if (displayed) showAnimation()
-  else hideAnimation()
+  else {
+    const respectCollideDelay = !displayed && !autoExtend && oldDisplayed && oldAutoExtend
+    hideAnimation(respectCollideDelay)
+  }
 })
 
 watch(() => props.accepted, (accepted, old) => {
   if (accepted && !old) {
-    acceptedInCycle.value = true
-    animate(root.value, { transform: ['scale(1)', 'scale(0.8)', 'scale(1)'] }, { duration: 0.4 })
-    setTimeout(() => hideAnimation(), 1000)
+    const delay = extended.value ? 300 : 0
+    canBeExtended.value = false
+    animate(root.value, { transform: ['scale(1)', 'scale(0.8)', 'scale(1)'] }, { duration: 0.4, delay: delay / 1000 })
+    setTimeout(() => hideAnimation(), 1000 + delay)
+    setTimeout(() => acceptedInCycle.value = true, delay)
   }
 })
 
@@ -158,6 +164,8 @@ watch(isHover, (hover) => {
 
 function clickAction() {
   isContentClicked.value = !isContentClicked.value
+  skipHoverDelay.value = true
+  requestAnimationFrame(() => skipHoverDelay.value = false)
   emits('interact', 'click')
 }
 
@@ -210,14 +218,14 @@ async function showAnimation() {
   }, 800)
 }
 
-async function hideAnimation() {
+async function hideAnimation(respectCollideDelay = false) {
   showAnimationController.abort()
   hideAnimationController.abort()
 
   const controller = new AbortController()
   hideAnimationController = controller
 
-  const extendedBefore = extended.value
+  const extendedBefore = extendingAnimation.value || extended.value || respectCollideDelay
   canBeExtended.value = false
   canBeAutoExtended.value = false
 
@@ -294,16 +302,29 @@ async function hideAnimation() {
 
   &.extended {
 
-    .content-container {
+    &.skip-hover-delay {
+      div.content-container {
+        transition-delay: 0s;
+
+        .content {
+          transition-delay: 0s;
+        }
+      }
+    }
+
+
+    div.content-container {
+      $delay: 0.1s;
+
       width: var(--content-width);
       height: var(--content-height);
-      transition-delay: 0.1s;
+      transition-delay: $delay;
 
       .content {
         opacity: 1;
         filter: blur(0);
-        transition-delay: 0s;
-        transition-duration: 0.2s;
+        transition-delay: $delay;
+        transition-duration: 0.1s;
         will-change: opacity, filter, transform;
       }
     }
@@ -365,7 +386,7 @@ async function hideAnimation() {
     transition: background-color 0.3s ease-out;
 
     &.extending-animation {
-      transition: width 0.25s ease, height 0.25s ease, background-color 0.3s ease-out;
+      transition: width 0.25s ease-in-out, height 0.25s ease-in-out, background-color 0.3s ease-out;
     }
 
     .content {
@@ -375,7 +396,7 @@ async function hideAnimation() {
       max-width: var(--max-content-width);
 
       opacity: 0;
-      filter: blur(5px);
+      filter: blur(2px);
       transition: opacity 0.2s linear, filter 0.2s linear;
       transition-delay: 0.1s;
     }
