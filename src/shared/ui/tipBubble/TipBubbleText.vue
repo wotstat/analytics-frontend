@@ -21,13 +21,13 @@ const props = withDefaults(defineProps<{
 })
 
 const bubble = useTipBubble({
-  ...props,
   direction: props.direction,
   pagePadding: props.pagePadding ?? '--content-page-margin',
   displayDelay: props.displayDelay ?? 0,
   showBubble: props.showBubble ?? 'always',
   autoExtend: props.autoExtend ?? { type: 'after-wrong', count: 7, interactSnooze: 20, hideSnooze: 'reset' },
   key: props.bubbleKey,
+  groupKey: props.groupKey,
 })
 
 watch(() => props.display, (display) => {
