@@ -7,6 +7,8 @@
       <DayChart :days="barsData" class="day-chart" @select="selectDay" @deselect="deselectDay"
         :selectedIndex="selectedDayIndex" ref="dayChart" />
     </div>
+
+    <DebugTipWindow class="debug-tip-window" />
     <MainStat :game="preferredGameOrDefault" :items="mainStats" @selectDay="selectDay" />
     <VehicleTable class="vehicle-statistics" :vehicleStats :displayedDay />
     <MapsTable class="maps-statistics" :mapsStats :displayedDay />
@@ -34,6 +36,7 @@ import MapsTable from './mapsTable/MapsTable.vue'
 import { headerOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import TipKeyboardChangeDay from './tips/TipKeyboardChangeDay.vue'
 import TipSelectDay from './tips/TipSelectDay.vue'
+import DebugTipWindow from '@/shared/uiKit/tipBubble/DebugTipWindow.vue'
 
 
 const ONE_HOUR = 60 * 60 * 1000
@@ -359,6 +362,14 @@ const displayedTipSelectDay = computed(() => {
 
 
 <style lang="scss" scoped>
+.debug-tip-window {
+  background: #2a2a2a;
+  padding: 1em;
+  border-radius: 8px;
+  border: 1px solid #ffffff19;
+}
+
+
 .onslaught-page {
   margin-top: 1em;
 
@@ -370,6 +381,11 @@ const displayedTipSelectDay = computed(() => {
       position: absolute;
       top: 0;
       left: 0;
+
+      &.r {
+        left: auto;
+        right: 0;
+      }
     }
 
     .day-chart {

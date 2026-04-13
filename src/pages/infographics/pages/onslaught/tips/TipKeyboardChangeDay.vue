@@ -1,5 +1,6 @@
 <template>
-  <TipBubble ref="bubble" :bubbleKey="'onslaught-day-chart-keyboard'" :displayDelay="800" v-slot="{ direction }">
+  <TipBubble ref="bubble" :bubbleKey="'onslaught-day-chart-keyboard'" :groupKey="'onslaught-chart'" :displayDelay="800"
+    v-slot="{ direction }">
     <p class="content">
       <span class="spacer" :class="`align-${direction}`"></span>
       Используйте клавиши

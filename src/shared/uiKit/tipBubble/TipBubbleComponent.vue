@@ -215,7 +215,7 @@ async function showAnimation() {
   setTimeout(() => {
     if (controller.signal.aborted) return
     canBeAutoExtended.value = true
-  }, 800)
+  }, 500)
 }
 
 async function hideAnimation(respectCollideDelay = false) {
