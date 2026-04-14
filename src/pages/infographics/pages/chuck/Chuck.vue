@@ -134,7 +134,7 @@ with
    groupArray(pdmg + pkill * 300) as score
 select
        id,
-       onBattleStartId,
+       toString(onBattleStartId) as onBattleStartId,
        dateTime,
        arena,
        result,
