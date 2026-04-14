@@ -283,7 +283,6 @@ export function useTipBubble(options: Options) {
   }
 
   const accept = () => {
-    console.log('accept')
     state.value.accepted = true
   }
 

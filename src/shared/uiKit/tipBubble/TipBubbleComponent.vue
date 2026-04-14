@@ -141,18 +141,24 @@ if (props.displayed) showAnimation()
 watch(() => [props.displayed, props.autoExtend], ([displayed, autoExtend], [oldDisplayed, oldAutoExtend]) => {
   if (displayed) showAnimation()
   else {
-    const respectCollideDelay = !displayed && !autoExtend && oldDisplayed && oldAutoExtend
-    hideAnimation(respectCollideDelay)
+    const extendedBefore = !displayed && !autoExtend && oldDisplayed && oldAutoExtend
+    hideAnimation(extendedBefore)
   }
 })
 
 watch(() => props.accepted, (accepted, old) => {
   if (accepted && !old) {
-    const delay = extended.value ? 300 : 0
-    canBeExtended.value = false
-    animate(root.value, { transform: ['scale(1)', 'scale(0.8)', 'scale(1)'] }, { duration: 0.4, delay: delay / 1000 })
-    setTimeout(() => hideAnimation(), 1000 + delay)
-    setTimeout(() => acceptedInCycle.value = true, delay)
+    if (displayed.value) {
+      const delay = extended.value ? 300 : 0
+      canBeExtended.value = false
+      animate(root.value, { transform: ['scale(1)', 'scale(0.8)', 'scale(1)'] }, { duration: 0.4, delay: delay / 1000 })
+      setTimeout(() => hideAnimation(), 1000 + delay)
+      setTimeout(() => acceptedInCycle.value = true, delay)
+    } else {
+      canBeExtended.value = false
+      acceptedInCycle.value = true
+      hideAnimation()
+    }
   }
 })
 
@@ -218,27 +224,29 @@ async function showAnimation() {
   }, 500)
 }
 
-async function hideAnimation(respectCollideDelay = false) {
+async function hideAnimation(respectExtendedBefore = false) {
   showAnimationController.abort()
   hideAnimationController.abort()
 
   const controller = new AbortController()
   hideAnimationController = controller
 
-  const extendedBefore = extendingAnimation.value || extended.value || respectCollideDelay
+  const extendedBefore = extendingAnimation.value || extended.value || respectExtendedBefore
   canBeExtended.value = false
   canBeAutoExtended.value = false
 
   if (extendedBefore) {
     await new Promise((resolve) => nextTick(() => resolve(null)))
     await new Promise((resolve) => setTimeout(resolve, 300))
+    if (controller.signal.aborted) return
   }
-  if (controller.signal.aborted) return
   if (contentContainer.value) contentContainer.value.style.display = 'none'
 
-  animate(bubble.value, { transform: 'scale(0.4)', opacity: 0, filter: 'blur(8px)' }, { duration: 0.2, ease: 'easeOut' })
-  await new Promise((resolve) => setTimeout(resolve, 200))
-  if (controller.signal.aborted) return
+  if (displayed.value) {
+    animate(bubble.value, { transform: 'scale(0.4)', opacity: 0, filter: 'blur(8px)' }, { duration: 0.2, ease: 'easeOut' })
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    if (controller.signal.aborted) return
+  }
   displayed.value = false
   emits('closeAnimationEnd')
 }
