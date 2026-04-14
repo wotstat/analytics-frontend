@@ -1,6 +1,7 @@
 <template>
   <TipBubbleText :bubbleKey="'onslaught-click-to-bar-to-select-day'" :groupKey="'onslaught-chart'"
     :text="'Выберите день, чтобы увидеть статистику за него'" ref="bubble"
+    :showBubble="{ type: 'after-open', count: 4 }"
     :autoExtend="{ type: 'after-show-bubble', count: 7, interactSnooze: 20 }" :display />
 </template>
 
