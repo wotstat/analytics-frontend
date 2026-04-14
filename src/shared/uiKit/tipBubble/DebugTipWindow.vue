@@ -99,7 +99,7 @@ function clearLocalStorage() {
     if (key.startsWith(TIP_BUBBLE_STORAGE_PREFIX)) localStorage.removeItem(key)
   })
 
-  navigation.reload()
+  location.reload()
 }
 
 </script>
