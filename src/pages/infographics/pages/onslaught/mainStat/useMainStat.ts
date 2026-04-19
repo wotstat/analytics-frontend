@@ -94,6 +94,7 @@ export function useMainStat(days: Ref<Day[]>,
     const selectedDayIndex = dayIndex.value
 
     if (!data || !preferredGame) return []
+    if (data.every(d => d.timeline != 'played')) return []
 
     const result: StatItem[] = []
 
@@ -104,7 +105,7 @@ export function useMainStat(days: Ref<Day[]>,
       const maxDayIndex = data.findLastIndex(d => d.stat?.maxRating[0] == maxRating && d.timeline == 'played') ||
         data.findLastIndex(d => d.stat?.maxRating[0] == maxRating)!
 
-      const maxStat = stats[maxDayIndex]
+      const maxStat = stats[maxDayIndex] as StatisticRes
 
       function sum<T>(array: T[], value: (item: T) => number) {
         return array.reduce((sum, d) => sum + value(d), 0)
@@ -125,7 +126,7 @@ export function useMainStat(days: Ref<Day[]>,
       const totalBattles = sum(stats, d => d.totalBattles)
       const totalWins = sum(stats, d => d.wins)
 
-      if (maxStat && maxRating != 0) result.push({
+      result.push({
         type: 'top-rating',
         rating: maxStat.maxRating[0],
         eliteRating: maxStat.maxRating[1],

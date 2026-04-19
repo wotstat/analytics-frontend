@@ -1,19 +1,21 @@
 <template>
-  <div class="stats" :style="{ '--cols': items.length }">
-    <div class="items">
-      <template v-for="item in items">
-        <TopRating v-if="item.type === 'top-rating'" :day="item.dayIndex" :value="item.rating" :season="item.season"
-          :eliteRating="item.eliteRating" :game @selectDay="emit('selectDay', $event)"
-          :tooltipComponent="item.tooltipComponent" />
-        <SimpleItem v-else-if="item.type === 'simple'" :icon="item.icon" :value="item.value" :text="item.text"
-          :tooltipComponent="item.tooltipComponent" />
-        <Winrate v-else-if="item.type === 'winrate'" :value="item.value" :text="item.text"
-          :tooltipComponent="item.tooltipComponent" />
-        <RatingDelta v-else-if="item.type === 'rating-delta'" :value="item.rating" :eliteRating="item.eliteRating"
-          :delta="item.delta" :season="item.season" :game :tooltipComponent="item.tooltipComponent" />
-      </template>
+  <Transition name="fade">
+    <div class="stats" :style="{ '--cols': items.length }" v-if="items.length > 0">
+      <div class="items">
+        <template v-for="item in items">
+          <TopRating v-if="item.type === 'top-rating'" :day="item.dayIndex" :value="item.rating" :season="item.season"
+            :eliteRating="item.eliteRating" :game @selectDay="emit('selectDay', $event)"
+            :tooltipComponent="item.tooltipComponent" />
+          <SimpleItem v-else-if="item.type === 'simple'" :icon="item.icon" :value="item.value" :text="item.text"
+            :tooltipComponent="item.tooltipComponent" />
+          <Winrate v-else-if="item.type === 'winrate'" :value="item.value" :text="item.text"
+            :tooltipComponent="item.tooltipComponent" />
+          <RatingDelta v-else-if="item.type === 'rating-delta'" :value="item.rating" :eliteRating="item.eliteRating"
+            :delta="item.delta" :season="item.season" :game :tooltipComponent="item.tooltipComponent" />
+        </template>
+      </div>
     </div>
-  </div>
+  </Transition>
 </template>
 
 
@@ -60,5 +62,16 @@ const emit = defineEmits<{
       grid-template-columns: 1fr;
     }
   }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s, filter 0.15s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  filter: blur(3px);
 }
 </style>

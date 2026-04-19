@@ -1,6 +1,6 @@
 <template>
   <TipBubbleText :bubbleKey="'onslaught-click-to-bar-to-select-day'" :groupKey="'onslaught-chart'"
-    :text="'Выберите день, чтобы увидеть статистику за него'" ref="bubble"
+    :text="'Нажмите на столбик, чтобы увидеть статистику за день'" ref="bubble"
     :showBubble="{ type: 'after-open', count: 4 }"
     :autoExtend="{ type: 'after-show-bubble', count: 7, interactSnooze: 20 }" :display />
 </template>
@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
 import TipBubble from '@/shared/ui/tipBubble/TipBubble.vue'
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import TipBubbleText from '@/shared/ui/tipBubble/TipBubbleText.vue'
 
 const bubble = ref<InstanceType<typeof TipBubble> | null>(null)

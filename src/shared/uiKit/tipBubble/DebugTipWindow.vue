@@ -7,7 +7,7 @@
         <label for="debug-tips">Show Debug Tips</label>
       </div>
 
-      <button @click="clearLocalStorage">Clear local storage</button>
+      <button @click="clearLocalStorage">Clear bubbles storage</button>
     </div>
 
     <div class="debug-tips" v-if="showDebugTips">
