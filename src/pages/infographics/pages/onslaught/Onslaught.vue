@@ -6,9 +6,9 @@
       <TipKeyboardChangeDay class="tip-bubble" ref="dayChangeTipBubble" />
       <DayChart :days="barsData" class="day-chart" @select="selectDay" @deselect="deselectDay"
         :selectedIndex="selectedDayIndex" ref="dayChart" />
+      <Loader :isLoading="isLoading" />
     </div>
 
-    <DebugTipWindow class="debug-tip-window" />
     <MainStat :game="preferredGameOrDefault" :items="mainStats" @selectDay="selectDay" />
     <VehicleTable class="vehicle-statistics" :vehicleStats :displayedDay />
     <MapsTable class="maps-statistics" :mapsStats :displayedDay />
@@ -36,7 +36,7 @@ import MapsTable from './mapsTable/MapsTable.vue'
 import { headerOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import TipKeyboardChangeDay from './tips/TipKeyboardChangeDay.vue'
 import TipSelectDay from './tips/TipSelectDay.vue'
-import DebugTipWindow from '@/shared/uiKit/tipBubble/DebugTipWindow.vue'
+import Loader from './Loader.vue'
 
 
 const ONE_HOUR = 60 * 60 * 1000
@@ -51,6 +51,7 @@ const selectedDayIndex = ref<number | null>(null)
 const selectedSeason = ref<string | null>(null)
 const nickname = ref<string>('')
 const debouncedNickname = refDebounced(nickname, 500)
+const isLoading = ref(false)
 
 function selectDay(index: number) {
   daySelectTipBubble.value?.accept()
@@ -139,6 +140,7 @@ async function load(abortSignal: AbortSignal) {
   if (!nickName) return
 
   console.log('Loading data with params', { startDate, endDate, region, nickName })
+  isLoading.value = true
 
   statistics.value = null
   selectedDayIndex.value = null
@@ -220,6 +222,7 @@ async function load(abortSignal: AbortSignal) {
   `, { abortSignal })
 
   if (abortSignal.aborted) return
+  isLoading.value = false
   statistics.value = mainStatistics.data
 
 
@@ -281,13 +284,15 @@ async function load(abortSignal: AbortSignal) {
   mapsStatistics.value = mapsStatisticsRes.data
 }
 
-watchWithAbortSignal([seasonInterval, debouncedNickname, preferredGameOrDefault], signal => load(signal))
-
 watch([seasonInterval, nickname, preferredGameOrDefault], () => {
   statistics.value = null
   vehicleStatistics.value = null
   mapsStatistics.value = null
+  isLoading.value = false
 })
+
+watchWithAbortSignal([seasonInterval, debouncedNickname, preferredGameOrDefault], signal => load(signal))
+
 
 const days = computed(() => {
   if (!seasonInterval.value) return []
@@ -362,14 +367,6 @@ const displayedTipSelectDay = computed(() => {
 
 
 <style lang="scss" scoped>
-.debug-tip-window {
-  background: #2a2a2a;
-  padding: 1em;
-  border-radius: 8px;
-  border: 1px solid #ffffff19;
-}
-
-
 .onslaught-page {
   margin-top: 1em;
 
@@ -381,16 +378,20 @@ const displayedTipSelectDay = computed(() => {
       position: absolute;
       top: 0;
       left: 0;
-
-      &.r {
-        left: auto;
-        right: 0;
-      }
     }
 
     .day-chart {
       margin-left: calc(var(--content-page-margin, 0) * -1);
       margin-right: calc(var(--content-page-margin, 0) * -1);
+    }
+
+    .loader {
+      position: absolute;
+      height: 2px;
+      left: 0;
+      right: 0;
+
+      bottom: 0;
     }
   }
 
