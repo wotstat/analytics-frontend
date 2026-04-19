@@ -348,9 +348,9 @@ const selectedDay = computed(() => {
   return days.value.find(d => d.dayIndex === selectedDayIndex.value)?.day ?? null
 })
 
-const mainStats = useMainStat(days, preferredGameOrDefault, selectedSeason, selectedDayIndex)
-const vehicleStats = useVehicleTable(computed(() => vehicleStatistics.value ?? []), selectedDay)
-const mapsStats = useMapsTable(computed(() => mapsStatistics.value ?? []), selectedDay)
+const mainStats = refDebounced(useMainStat(days, preferredGameOrDefault, selectedSeason, selectedDayIndex), 1)
+const vehicleStats = refDebounced(useVehicleTable(computed(() => vehicleStatistics.value ?? []), selectedDay), 1)
+const mapsStats = refDebounced(useMapsTable(computed(() => mapsStatistics.value ?? []), selectedDay), 1)
 
 watch(selectedDayIndex, (dayIndex) => {
   if (dayIndex != null) dayChangeTipBubble.value?.display()
