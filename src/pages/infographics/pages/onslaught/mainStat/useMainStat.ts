@@ -162,7 +162,7 @@ export function useMainStat(days: Ref<Day[]>,
       })
 
       result.push({
-        type: 'simple', value: avgSum(stats, d => d.damage), text: 'Урона', icon: 'dmg', tooltipComponent: h(DamageTooltip, {
+        type: 'simple', value: avgSum(stats, d => d.damage), text: 'Урон', icon: 'dmg', tooltipComponent: h(DamageTooltip, {
           shots: avgSum(stats, d => d.shots, { round: false }),
           hits: avgSum(stats, d => d.hits, { round: false }),
           piercing: avgSum(stats, d => d.piercing, { round: false }),
@@ -171,7 +171,7 @@ export function useMainStat(days: Ref<Day[]>,
       })
 
       result.push({
-        type: 'simple', value: avgSum(stats, d => d.assist), text: 'Сoдействия', icon: 'assist', tooltipComponent: h(AssistTooltip, {
+        type: 'simple', value: avgSum(stats, d => d.assist), text: 'Сoдействие', icon: 'assist', tooltipComponent: h(AssistTooltip, {
           radio: avgSum(stats, d => d.radioAssist),
           track: avgSum(stats, d => d.trackAssist),
           stun: avgSum(stats, d => d.stunAssist)
@@ -179,7 +179,7 @@ export function useMainStat(days: Ref<Day[]>,
       })
 
       result.push({
-        type: 'simple', value: avgSum(stats, d => d.prestigePoints), text: 'Очков престижа', icon: 'prestige-points',
+        type: 'simple', value: avgSum(stats, d => d.prestigePoints), text: 'Очки престижа', icon: 'prestige-points',
         tooltipComponent: h(PrestigeTooltip, {
           lose: avgSum(stats, d => d.prestigePointsLose),
           win: avgSum(stats, d => d.prestigePointsWin),
@@ -236,7 +236,7 @@ export function useMainStat(days: Ref<Day[]>,
       })
 
       result.push({
-        type: 'simple', value: avg(day.damage), text: 'Урона', icon: 'dmg', tooltipComponent: h(DamageTooltip, {
+        type: 'simple', value: avg(day.damage), text: 'Урон', icon: 'dmg', tooltipComponent: h(DamageTooltip, {
           shots: avg(day.shots, { round: false }),
           hits: avg(day.hits, { round: false }),
           piercing: avg(day.piercing, { round: false }),
@@ -245,7 +245,7 @@ export function useMainStat(days: Ref<Day[]>,
       })
 
       result.push({
-        type: 'simple', value: avg(day.assist), text: 'Содействия', icon: 'assist', tooltipComponent: h(AssistTooltip, {
+        type: 'simple', value: avg(day.assist), text: 'Содействие', icon: 'assist', tooltipComponent: h(AssistTooltip, {
           radio: avg(day.radioAssist),
           track: avg(day.trackAssist),
           stun: avg(day.stunAssist)
@@ -253,7 +253,7 @@ export function useMainStat(days: Ref<Day[]>,
       })
 
       result.push({
-        type: 'simple', value: avg(day.prestigePoints), text: 'Очков престижа', icon: 'prestige-points',
+        type: 'simple', value: avg(day.prestigePoints), text: 'Очки престижа', icon: 'prestige-points',
         tooltipComponent: h(PrestigeTooltip, {
           lose: avg(day.prestigePointsLose),
           win: avg(day.prestigePointsWin),
