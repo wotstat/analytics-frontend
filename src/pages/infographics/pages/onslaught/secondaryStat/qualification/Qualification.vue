@@ -1,6 +1,11 @@
 <template>
   <div class="qualification">
     <h3>Квалификация</h3>
+    <div class="rating">
+      <ArrowRight class="arrow-icon" />
+      <RankIcon :rank="rating" class="rank-icon" />
+      <p class="mt-font">{{ rating }}</p>
+    </div>
     <div class="battles">
       <div class="battle" v-for="result in results" :class="{
         [`result-${result}`]: result
@@ -14,8 +19,11 @@
 
 
 <script setup lang="ts">
+import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 import { computed } from 'vue'
+import ArrowRight from './assets/arrow-right.svg'
+
 
 const props = defineProps<{
   battles: { battleIndex: number, result: 'win' | 'loss' | 'draw' }[]
@@ -38,6 +46,32 @@ const results = computed(() => {
   h3 {
     margin: 0;
     font-size: 22px;
+  }
+
+  .arrow-icon {
+    width: 24px;
+    height: 24px;
+    fill: #fffef7;
+  }
+
+  .rating {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 12px;
+
+    .rank-icon {
+      width: 30px;
+      height: 30px;
+      filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.5));
+      user-select: none;
+    }
+
+    p {
+      font-size: 24px;
+      color: #fffef7;
+      font-weight: bold;
+    }
   }
 
   .battles {
