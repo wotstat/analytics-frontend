@@ -169,6 +169,7 @@ async function load(abortSignal: AbortSignal) {
         ),
         t1 as (
             select toStartOfDay(dateTime + interval OFFSET hour) as day,
+                  argMinIf((rating, eliteRating), dateTime, rating > 0) as firstRating,
                   argMin((rating, eliteRating), rating) as minRating,
                   argMax((rating, eliteRating), rating) as maxRating,
                   argMax(rating, dateTime) as lastRating,
@@ -374,10 +375,15 @@ const selectedDay = computed(() => {
 const mainStats = refDebounced(useMainStat(days, preferredGameOrDefault, selectedSeason, selectedDayIndex), 1)
 const vehicleStats = refDebounced(useVehicleTable(computed(() => vehicleStatistics.value ?? []), selectedDay), 1)
 const mapsStats = refDebounced(useMapsTable(computed(() => mapsStatistics.value ?? []), selectedDay), 1)
-const qualificationStats = refDebounced(computed(() => ({
-  battles: qualificationStatistics.value ?? [],
-  rating: 0
-})), 1)
+const qualificationStats = refDebounced(computed(() => {
+
+  const firstPlayedDay = statistics.value?.find(d => d.totalBattles > 0)
+
+  return {
+    battles: qualificationStatistics.value ?? [],
+    rating: firstPlayedDay ? firstPlayedDay.firstRating[0] : 0
+  }
+}), 1)
 
 watch(selectedDayIndex, (dayIndex) => {
   if (dayIndex != null) dayChangeTipBubble.value?.display()

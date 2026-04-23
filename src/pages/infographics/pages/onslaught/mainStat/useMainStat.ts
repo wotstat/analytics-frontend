@@ -49,6 +49,7 @@ export type StatItem = TopDayRating | Simple | Winrate | RatingDelta
 
 export type StatisticRes = {
   day: string,
+  firstRating: [rating: number, eliteRating: number],
   minRating: [rating: number, eliteRating: number],
   maxRating: [rating: number, eliteRating: number],
   lastRating: number,
