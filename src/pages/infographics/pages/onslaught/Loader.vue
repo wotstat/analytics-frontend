@@ -49,7 +49,7 @@ const animationDuration = computed(() => {
   .loader-line {
     width: 10%;
     height: 100%;
-    background: #50b6ffa4;
+    background: var(--blue-thin-color);
     border-radius: 20px;
     animation: loading v-bind(animationDuration) ease-in-out infinite alternate;
     will-change: width;
