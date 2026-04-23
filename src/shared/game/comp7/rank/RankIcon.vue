@@ -1,5 +1,5 @@
 <template>
-  <FallbackImg :src="targetUrl" :fallback="fallbackUrl" :loading />
+  <FallbackImg :src="targetUrl" :fallback="fallbackUrl" :loading class="rank-icon" />
 </template>
 
 
@@ -22,4 +22,8 @@ const fallbackUrl = computed(() => rankImageUrl(props.rank, props.size, props.ga
 </script>
 
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.rank-icon {
+  aspect-ratio: 1 / 1;
+}
+</style>
