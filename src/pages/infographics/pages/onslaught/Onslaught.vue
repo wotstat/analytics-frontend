@@ -10,6 +10,7 @@
     </div>
 
     <MainStat :game="preferredGameOrDefault" :items="mainStats" @selectDay="selectDay" />
+    <SecondaryStat :qualification="qualificationStats" />
     <VehicleTable class="vehicle-statistics" :vehicleStats :displayedDay />
     <MapsTable class="maps-statistics" :mapsStats :displayedDay />
   </div>
@@ -37,6 +38,9 @@ import { headerOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import TipKeyboardChangeDay from './tips/TipKeyboardChangeDay.vue'
 import TipSelectDay from './tips/TipSelectDay.vue'
 import Loader from './Loader.vue'
+import SecondaryStat from './secondaryStat/SecondaryStat.vue'
+
+
 
 
 const ONE_HOUR = 60 * 60 * 1000
@@ -127,6 +131,7 @@ const seasonInterval = computed(() => {
 const statistics = shallowRef<StatisticRes[] | null>(null)
 const vehicleStatistics = shallowRef<VehicleRes[] | null>(null)
 const mapsStatistics = shallowRef<MapsRes[] | null>(null)
+const qualificationStatistics = shallowRef<{ battleIndex: number, result: 'win' | 'loss' | 'draw' }[] | null>(null)
 
 async function load(abortSignal: AbortSignal) {
   if (!seasonInterval.value) return
@@ -226,6 +231,26 @@ async function load(abortSignal: AbortSignal) {
   statistics.value = mainStatistics.data
 
 
+  const qualStatisticsRes = await query<{ battleIndex: number, result: 'win' | 'loss' | 'draw' }>(`
+    with
+      '${nickName}' as PLAYER,
+      '${startDate}' as START_DATE,
+      '${endDate}' as END_DATE,
+      '${region}' as REGION,
+      ${COMP7_ISO_HOUR_OFFSET} as OFFSET
+    select comp7.qualBattleIndex as battleIndex, result
+    from Event_OnBattleResult
+    where playerName = PLAYER
+      and dateTime between START_DATE and END_DATE
+      and region = REGION
+      and battleMode = 'COMP7'
+      and comp7.qualActive = true
+    order by battleIndex
+  `, { abortSignal })
+  if (abortSignal.aborted) return
+  qualificationStatistics.value = qualStatisticsRes.data
+
+
   const vehicleStatisticsRes = await query<VehicleRes>(`
     with
       '${nickName}' as PLAYER,
@@ -252,7 +277,6 @@ async function load(abortSignal: AbortSignal) {
     order by day, tankTag
   `, { abortSignal })
   if (abortSignal.aborted) return
-
   vehicleStatistics.value = vehicleStatisticsRes.data
 
 
@@ -280,7 +304,6 @@ async function load(abortSignal: AbortSignal) {
     order by day, arenaTag
   `, { abortSignal })
   if (abortSignal.aborted) return
-
   mapsStatistics.value = mapsStatisticsRes.data
 }
 
@@ -351,6 +374,10 @@ const selectedDay = computed(() => {
 const mainStats = refDebounced(useMainStat(days, preferredGameOrDefault, selectedSeason, selectedDayIndex), 1)
 const vehicleStats = refDebounced(useVehicleTable(computed(() => vehicleStatistics.value ?? []), selectedDay), 1)
 const mapsStats = refDebounced(useMapsTable(computed(() => mapsStatistics.value ?? []), selectedDay), 1)
+const qualificationStats = refDebounced(computed(() => ({
+  battles: qualificationStatistics.value ?? [],
+  rating: 0
+})), 1)
 
 watch(selectedDayIndex, (dayIndex) => {
   if (dayIndex != null) dayChangeTipBubble.value?.display()
