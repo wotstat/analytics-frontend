@@ -1,6 +1,7 @@
 <template>
   <div class="onslaught-page">
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" :seasons="seasons.data ?? []" />
+    <SecondaryStat :qualification="qualificationStats" />
     <div class="chart">
       <TipSelectDay class="tip-bubble" ref="daySelectTipBubble" :display="displayedTipSelectDay" />
       <TipKeyboardChangeDay class="tip-bubble" ref="dayChangeTipBubble" />
@@ -10,7 +11,6 @@
     </div>
 
     <MainStat :game="preferredGameOrDefault" :items="mainStats" @selectDay="selectDay" />
-    <SecondaryStat :qualification="qualificationStats" />
     <VehicleTable class="vehicle-statistics" :vehicleStats :displayedDay />
     <MapsTable class="maps-statistics" :mapsStats :displayedDay />
   </div>

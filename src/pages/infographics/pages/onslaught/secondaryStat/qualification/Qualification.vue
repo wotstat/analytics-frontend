@@ -1,11 +1,5 @@
 <template>
   <div class="qualification">
-    <h3>Квалификация</h3>
-    <div class="rating">
-      <ArrowRight class="arrow-icon" />
-      <RankIcon :rank="rating" class="rank-icon" />
-      <p class="mt-font">{{ rating }}</p>
-    </div>
     <div class="battles">
       <div class="battle" v-for="result in results" :class="{
         [`result-${result}`]: result
@@ -13,6 +7,11 @@
         <Icon :icon="'battles'" class="result-icon" v-if="result" />
         <p v-else class="unknown mt-font">?</p>
       </div>
+    </div>
+    <div class="rating">
+      <ArrowRight class="arrow-icon" />
+      <RankIcon :rank="rating" class="rank-icon" />
+      <p class="mt-font">{{ rating || '?' }}</p>
     </div>
   </div>
 </template>
@@ -42,11 +41,12 @@ const results = computed(() => {
 
 <style lang="scss" scoped>
 .qualification {
+  display: flex;
 
-  h3 {
-    margin: 0;
-    font-size: 22px;
-  }
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 
   .arrow-icon {
     width: 24px;
@@ -57,8 +57,8 @@ const results = computed(() => {
   .rating {
     display: flex;
     align-items: center;
-    gap: 5px;
-    margin-top: 12px;
+    justify-content: center;
+    gap: 8px;
 
     .rank-icon {
       width: 30px;
@@ -77,7 +77,7 @@ const results = computed(() => {
   .battles {
     display: flex;
     gap: 8px;
-    margin-top: 10px;
+    justify-content: center;
 
     .battle {
       display: flex;
