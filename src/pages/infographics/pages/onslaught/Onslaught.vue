@@ -1,7 +1,8 @@
 <template>
   <div class="onslaught-page">
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" :seasons="seasons.data ?? []" />
-    <SecondaryStat :qualification="qualificationStats" />
+    <SecondaryStat :qualification="qualificationStats" :currentRating :game="preferredGameOrDefault"
+      :season="selectedSeason || 'latest'" />
     <div class="chart">
       <TipSelectDay class="tip-bubble" ref="daySelectTipBubble" :display="displayedTipSelectDay" />
       <TipKeyboardChangeDay class="tip-bubble" ref="dayChangeTipBubble" />
@@ -11,8 +12,8 @@
     </div>
 
     <MainStat :game="preferredGameOrDefault" :items="mainStats" @selectDay="selectDay" />
-    <VehicleTable class="vehicle-statistics" :vehicleStats :displayedDay />
-    <MapsTable class="maps-statistics" :mapsStats :displayedDay />
+    <VehicleTable class="vehicle-statistics" :game="preferredGameOrDefault" :vehicleStats :displayedDay />
+    <MapsTable class="maps-statistics" :game="preferredGameOrDefault" :mapsStats :displayedDay />
   </div>
 </template>
 
@@ -39,8 +40,6 @@ import TipKeyboardChangeDay from './tips/TipKeyboardChangeDay.vue'
 import TipSelectDay from './tips/TipSelectDay.vue'
 import Loader from './Loader.vue'
 import SecondaryStat from './secondaryStat/SecondaryStat.vue'
-
-
 
 
 const ONE_HOUR = 60 * 60 * 1000
@@ -376,7 +375,6 @@ const mainStats = refDebounced(useMainStat(days, preferredGameOrDefault, selecte
 const vehicleStats = refDebounced(useVehicleTable(computed(() => vehicleStatistics.value ?? []), selectedDay), 1)
 const mapsStats = refDebounced(useMapsTable(computed(() => mapsStatistics.value ?? []), selectedDay), 1)
 const qualificationStats = refDebounced(computed(() => {
-
   const firstPlayedDay = statistics.value?.find(d => d.totalBattles > 0)
 
   return {
@@ -384,6 +382,13 @@ const qualificationStats = refDebounced(computed(() => {
     rating: firstPlayedDay ? firstPlayedDay.firstRating[0] : 0
   }
 }), 1)
+const currentRating = computed(() => {
+  const lastPlayedDay = [...days.value].reverse().find(d => d.timeline === 'played')
+  return {
+    rating: lastPlayedDay?.rating ?? 0,
+    eliteRating: lastPlayedDay?.eliteRating ?? 0
+  }
+})
 
 watch(selectedDayIndex, (dayIndex) => {
   if (dayIndex != null) dayChangeTipBubble.value?.display()

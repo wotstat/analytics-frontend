@@ -42,7 +42,7 @@
           <tbody class="mt-font">
             <tr v-for="arena in displayed" :key="arena.tag">
               <th class="vehicle">
-                <TooltipedMinimap :tag="arena.tag" class="image" />
+                <TooltipedMinimap :tag="arena.tag" class="image" :game />
                 <p>{{ getArenaName(arena.tag) }}</p>
               </th>
               <td>{{ arena.battles }}</td>
@@ -68,6 +68,7 @@ import { getArenaName } from '@/shared/i18n/i18n'
 import { roundProcessor } from '@/shared/utils/processors/processors'
 import { computed, ref } from 'vue'
 import TooltipedMinimap from './TooltipedMinimap.vue'
+import { GameVendor } from '@/shared/game/wot'
 
 
 const SHOW_MORE_THRESHOLD = 6
@@ -75,6 +76,7 @@ const SHOW_MORE_THRESHOLD = 6
 const props = defineProps<{
   mapsStats: ReturnType<typeof useMapsTable>['value']
   displayedDay: number | null
+  game: GameVendor
 }>()
 
 const showMore = ref(false)
