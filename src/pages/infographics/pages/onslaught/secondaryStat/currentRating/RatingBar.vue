@@ -1,25 +1,25 @@
 <template>
   <div class="rating-progress">
     <div class="current-rating">
-      <RankIcon :rank="[rating, eliteRating]" class="rank-icon" :size="'large'" />
+      <RankIcon :rank="[rating, eliteRating]" class="rank-icon" :size="'large'" :game :season />
       <p class="mt-font">{{ rating }}</p>
     </div>
 
     <div class="progress-bar mt-font">
       <div class="divisions">
-        <div class="division" v-for="division in ['E', 'D', 'C', 'B', 'A']" :key="division">
-          <div class="letter">{{ division }}</div>
+        <div class="division" v-for="letter in divisionLetters" :key="letter">
+          <div class="letter">{{ letter }}</div>
         </div>
       </div>
 
       <div class="bar" :style="{
-        '--progress': '30%'
+        '--progress': `${progress}%`
       }">
         <div class="bar-progress"></div>
       </div>
 
       <div class="values">
-        <div class="value" v-for="division in ['500', '600', '700', '800', '900', '1000']" :key="division">
+        <div class="value" v-for="division in ratingValues">
           <div class="num">
             {{ division }}
           </div>
@@ -32,12 +32,56 @@
 
 <script setup lang="ts">
 import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
+import { getDivisionsByRank, getNextDivision, getRankByRating, getRatingForDivision } from '@/shared/game/comp7/utils'
+import { GameVendor } from '@/shared/game/wot'
+import { computed } from 'vue'
 
 
 const props = defineProps<{
   rating: number
   eliteRating: number
+  game: GameVendor
+  season: string
 }>()
+
+const rank = computed(() => getRankByRating(props.rating, props.game, props.eliteRating))
+const divisions = computed(() => getDivisionsByRank(rank.value))
+
+const divisionLetters = computed(() => {
+  if (divisions.value.length == 0 || props.eliteRating == 0) return ['?']
+  if (divisions.value.length == 1) {
+    const division = divisions.value[0]
+    if (division == 'qual') return ['?']
+    if (division == 'fifth') return ['Чемпион']
+    if (division == 'sixth') return ['Легенда']
+  }
+  return divisions.value.map(division => division.split('_')[1])
+})
+
+const ratingValues = computed(() => {
+  if (!divisions.value) return []
+  const ratings = divisions.value.map(division => getRatingForDivision(division, props.game))
+
+  const currentDivision = divisions.value[divisions.value.length - 1]
+  if (currentDivision == 'sixth') return [props.eliteRating, props.eliteRating + 1000]
+
+  const nextDivision = getNextDivision(currentDivision)
+  if (!nextDivision) return ratings
+
+  if (nextDivision == 'sixth') return [...ratings, props.eliteRating]
+
+  return [...ratings, getRatingForDivision(nextDivision, props.game)]
+})
+
+const progress = computed(() => {
+  const interval = ratingValues.value
+  if (interval.length < 2) return 0
+  const min = interval[0]
+  const max = interval[interval.length - 1]
+
+  return ((props.rating - min) / (max - min)) * 100
+})
+
 </script>
 
 
@@ -129,6 +173,7 @@ const props = defineProps<{
         background-repeat: repeat;
 
         clip-path: inset(0 calc(100% - var(--progress)) 0 0);
+        transition: clip-path 0.3s ease;
       }
 
       &::after {
@@ -141,6 +186,7 @@ const props = defineProps<{
         background-color: #ffffff;
         filter: drop-shadow(0px 0px 5px rgb(11, 100, 255)) drop-shadow(0px 0px 2px rgb(255, 255, 255));
         transform: translate(-50%, 0);
+        transition: left 0.3s ease;
       }
     }
   }
@@ -151,16 +197,18 @@ const props = defineProps<{
     gap: 5px;
 
     .rank-icon {
+      margin: -5px;
       height: 65px;
       filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.5));
       user-select: none;
-      margin: -5px
+      pointer-events: none;
     }
 
     p {
       font-size: 24px;
       color: #fffef7;
       font-weight: bold;
+      min-width: 52px;
     }
   }
 
@@ -189,6 +237,10 @@ const props = defineProps<{
 
       .rank-icon {
         height: 150px;
+      }
+
+      p {
+        text-align: center;
       }
     }
   }

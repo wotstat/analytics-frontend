@@ -1,14 +1,12 @@
 <template>
   <section>
-    <!-- <CurrentRating :rating="1234" :elite-rating="4445" /> -->
-
     <div class="item rating-progress">
       <h3>Текущий рейтинг</h3>
-      <RatingBar :rating="1234" :elite-rating="4445" />
+      <RatingBar :rating="currentRating.rating" :eliteRating="currentRating.eliteRating" :game :season />
     </div>
     <div class="item qualification">
       <h3>Квалификация</h3>
-      <Qualification :battles="qualification.battles" :rating="qualification.rating" />
+      <Qualification :battles="qualification.battles" :rating="qualification.rating" :game :season />
     </div>
 
   </section>
@@ -16,17 +14,22 @@
 
 
 <script setup lang="ts">
-import CurrentRating from './currentRating/CurrentRating.vue'
+import { GameVendor } from '@/shared/game/wot'
 import RatingBar from './currentRating/RatingBar.vue'
 import Qualification from './qualification/Qualification.vue'
-
 
 
 const props = defineProps<{
   qualification: {
     battles: { battleIndex: number, result: 'win' | 'loss' | 'draw' }[]
     rating: number
-  }
+  },
+  currentRating: {
+    rating: number
+    eliteRating: number
+  },
+  game: GameVendor
+  season: string
 }>()
 
 

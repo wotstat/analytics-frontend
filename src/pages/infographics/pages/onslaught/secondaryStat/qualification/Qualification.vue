@@ -10,7 +10,7 @@
     </div>
     <div class="rating">
       <ArrowRight class="arrow-icon" />
-      <RankIcon :rank="rating" class="rank-icon" />
+      <RankIcon :rank="rating" class="rank-icon" :game="game" :season="season" />
       <p class="mt-font">{{ rating || '?' }}</p>
     </div>
   </div>
@@ -22,11 +22,14 @@ import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 import { computed } from 'vue'
 import ArrowRight from './assets/arrow-right.svg'
+import { GameVendor } from '@/shared/game/wot'
 
 
 const props = defineProps<{
   battles: { battleIndex: number, result: 'win' | 'loss' | 'draw' }[]
   rating: number
+  season: string
+  game: GameVendor
 }>()
 
 const results = computed(() => {
@@ -64,6 +67,7 @@ const results = computed(() => {
       height: 34px;
       filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.5));
       user-select: none;
+      pointer-events: none;
     }
 
     p {

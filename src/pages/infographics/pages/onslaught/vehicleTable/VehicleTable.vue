@@ -42,7 +42,7 @@
           <tbody class="mt-font">
             <tr v-for="vehicle in displayed" :key="vehicle.tag">
               <th class="vehicle">
-                <VehicleImage :tag="vehicle.tag" class="image" :size="'preview'" />
+                <VehicleImage :tag="vehicle.tag" class="image" :size="'preview'" :game />
                 <VehicleLevel :level="vehicle.level" />
                 <VehicleType :type="isVehicleType(vehicle.type) ? vehicle.type : 'any'" class="type" />
                 <p>{{ getTankName(vehicle.tag) }}</p>
@@ -73,12 +73,14 @@ import { isVehicleType } from '@/shared/game/vehicles/type/vehicleTypeToImage'
 import { getTankName } from '@/shared/i18n/i18n'
 import { roundProcessor } from '@/shared/utils/processors/processors'
 import { computed, ref } from 'vue'
+import { GameVendor } from '@/shared/game/wot'
 
 const SHOW_MORE_THRESHOLD = 5
 
 const props = defineProps<{
   vehicleStats: ReturnType<typeof useVehicleTable>['value'],
-  displayedDay: number | null
+  displayedDay: number | null,
+  game: GameVendor
 }>()
 
 const showMore = ref(false)

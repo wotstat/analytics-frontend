@@ -68,6 +68,9 @@ export const rankWgMap: Record<number, Division> = {
   2000: 'fifth'
 }
 
+const reversedRankWgMap = Object.fromEntries(Object.entries(rankWgMap).map(([key, value]) => [value, parseInt(key)]))
+const reversedRanksLestaMap = Object.fromEntries(Object.entries(ranksLestaMap).map(([key, value]) => [value, parseInt(key)]))
+
 export function getDivisionByRating(rating: number, game: GameVendor = 'mt', eliteRating: number | null = null) {
   if (rating == 0) return 'qual'
   if (eliteRating !== null && rating >= eliteRating) return 'sixth'
@@ -83,6 +86,72 @@ export function getRankByRating(rating: number, game: GameVendor = 'mt', eliteRa
   if (division == 'qual') return 'qual'
 
   return division.split('_')[0] as 'first' | 'second' | 'third' | 'fourth' | 'fifth'
+}
+
+export function getNextDivision(currentDivision: Division): Division | null {
+  if (currentDivision == 'qual') return 'first_E'
+  if (currentDivision == 'fifth') return 'sixth'
+  if (currentDivision == 'sixth') return null
+
+  const [rank, letter] = currentDivision.split('_') as [Exclude<Rank, 'qual' | 'sixth' | 'fifth'>, DivisionLetter]
+  if (letter == 'A') {
+    switch (rank) {
+      case 'first': return 'second_E'
+      case 'second': return 'third_E'
+      case 'third': return 'fourth_E'
+      case 'fourth': return 'fifth'
+    }
+  } else {
+    const letters = ['E', 'D', 'C', 'B', 'A'] as DivisionLetter[]
+    const nextLetter = letters[letters.indexOf(letter) + 1]
+    return `${rank}_${nextLetter}` as Division
+  }
+}
+
+export function getPrevDivision(currentDivision: Division): Division | null {
+  if (currentDivision == 'qual') return null
+  if (currentDivision == 'fifth') return 'fourth_A'
+  if (currentDivision == 'sixth') return 'fifth'
+
+  const [rank, letter] = currentDivision.split('_') as [Exclude<Rank, 'qual' | 'sixth' | 'fifth'>, DivisionLetter]
+  if (letter == 'E') {
+    switch (rank) {
+      case 'first': return 'qual'
+      case 'second': return 'first_A'
+      case 'third': return 'second_A'
+      case 'fourth': return 'third_A'
+    }
+  } else {
+    const letters = ['E', 'D', 'C', 'B', 'A'] as DivisionLetter[]
+    const prevLetter = letters[letters.indexOf(letter) - 1]
+    return `${rank}_${prevLetter}` as Division
+  }
+}
+
+export function getDivisionsByRank(rank: Rank): Division[] {
+  if (rank == 'qual' || rank == 'sixth' || rank == 'fifth') return [rank]
+
+  const letters: DivisionLetter[] = ['E', 'D', 'C', 'B', 'A']
+  return letters.map(letter => `${rank}_${letter}` as Division)
+}
+
+export function getRatingForDivision(division: Division, game: GameVendor = 'mt'): number {
+  if (division == 'qual') return 0
+  if (division == 'first_E') return 0
+  const targetMap = game == 'wot' ? reversedRankWgMap : reversedRanksLestaMap
+  return targetMap[division as keyof typeof targetMap]
+}
+
+export function getRatingIntervalForDivision(division: Division, game: GameVendor = 'mt'): [number, number] {
+  if (division == 'qual') return [0, 0]
+
+  const startRating = getRatingForDivision(division, game)
+
+  const nextDivision = getNextDivision(division)
+  if (!nextDivision) return [startRating, Infinity]
+
+  const nextRating = getRatingForDivision(nextDivision, game)
+  return [startRating, nextRating - 1]
 }
 
 const possibleLetters = new Set(['E', 'D', 'C', 'B', 'A'])
