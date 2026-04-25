@@ -46,10 +46,10 @@ const results = computed(() => {
   flex-direction: row;
   align-items: center;
   justify-content: center;
+  flex: 1;
   gap: 10px;
 
   .arrow-icon {
-    width: 24px;
     height: 24px;
     fill: #fffef7;
   }
@@ -61,8 +61,7 @@ const results = computed(() => {
     gap: 8px;
 
     .rank-icon {
-      width: 30px;
-      height: 30px;
+      height: 34px;
       filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.5));
       user-select: none;
     }
@@ -71,6 +70,7 @@ const results = computed(() => {
       font-size: 24px;
       color: #fffef7;
       font-weight: bold;
+      min-width: 52px;
     }
   }
 
@@ -85,8 +85,7 @@ const results = computed(() => {
       justify-content: center;
 
       .result-icon {
-        width: 40px;
-        height: 40px;
+        height: 44px;
         margin: -8px;
       }
 
@@ -103,14 +102,48 @@ const results = computed(() => {
       .unknown {
         color: #e6e6e6;
         filter: drop-shadow(0px 0px 4px rgba(255, 255, 255, 0.4));
-        width: 24px;
-        height: 24px;
+        width: 28px;
+        height: 28px;
         font-size: 20px;
         line-height: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
         user-select: none;
+      }
+    }
+  }
+
+  @container (max-width: 450px) {
+    .battles {
+      gap: 0px;
+      flex: 1;
+      justify-content: space-between;
+    }
+  }
+
+  @container (max-width: 330px) {
+    .battles {
+      .battle {
+        .result-icon {
+          height: 34px;
+        }
+      }
+    }
+
+    .arrow-icon {
+      height: 20px;
+    }
+
+    .rating {
+      gap: 4px;
+
+      .rank-icon {
+        height: 28px;
+      }
+
+      p {
+        font-size: 18px;
       }
     }
   }

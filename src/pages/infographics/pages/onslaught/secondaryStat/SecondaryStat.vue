@@ -1,23 +1,16 @@
 <template>
   <section>
-    <CurrentRating :rating="1234" :elite-rating="4445" />
+    <!-- <CurrentRating :rating="1234" :elite-rating="4445" /> -->
 
-    <div class="vertical">
-      <RatingBar :rating="1234" :elite-rating="4445" />
-      <Qualification :battles="qualification.battles" :rating="qualification.rating" />
-    </div>
-    <!-- <div class="item rating">
+    <div class="item rating-progress">
+      <h3>Текущий рейтинг</h3>
       <RatingBar :rating="1234" :elite-rating="4445" />
     </div>
-    <div class="item">
-      <Qualification :battles="qualification.battles" :rating="qualification.rating" />
-    </div> -->
-    <div class="item">
+    <div class="item qualification">
+      <h3>Квалификация</h3>
       <Qualification :battles="qualification.battles" :rating="qualification.rating" />
     </div>
-    <!-- <div class="item">
-      <Qualification :battles="qualification.battles" :rating="qualification.rating" />
-    </div> -->
+
   </section>
 </template>
 
@@ -44,24 +37,39 @@ const props = defineProps<{
 section {
   margin-top: 45px;
   display: flex;
-  gap: 10px;
+  gap: 80px;
 
-  .vertical {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
 
   .item {
-    flex: 1;
-    border: 1px solid rgba(180, 180, 180, 0.1);
-    border-radius: 8px;
-    padding: 15px;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
 
-    &.rating {
-      flex: 2;
+    h3 {
+      font-size: 16px;
+      color: #e3e3e3;
+      margin: 0;
+      margin-bottom: 5px;
     }
+  }
+
+  .rating-progress {
+    flex: 1;
+  }
+
+  @container content (max-width: 700px) {
+    .qualification {
+      flex: 1;
+      justify-content: flex-start;
+    }
+  }
+
+  @container content (max-width: 900px) {
+    gap: 30px;
+  }
+
+  @container content (max-width: 700px) {
+    flex-direction: column;
   }
 }
 </style>

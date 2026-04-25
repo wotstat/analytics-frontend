@@ -130,6 +130,8 @@ $mobile-layout: 1100px;
     min-width: 0;
     --content-page-margin: 1rem;
     margin: var(--content-page-margin);
+    container-name: content;
+    container-type: inline-size;
 
     @media screen and (min-width: 1500px) {
       max-width: calc(1200px - 3rem);
