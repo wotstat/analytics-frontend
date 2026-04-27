@@ -57,7 +57,9 @@ export type StatisticRes = {
   lastLeaderboardPosition: number | null,
   totalBattles: number,
   totalResults: number,
+  qualificationBattles: number,
   wins: number,
+  qualificationWins: number,
   squadBattles: number,
   prestigePoints: number,
   prestigePointsLose: number,
@@ -75,6 +77,7 @@ export type StatisticRes = {
   ratingDelta: number,
   ratingDeltaWin: number,
   ratingDeltaLose: number,
+  maxQualBattleIndex: number
 }
 
 type Day = {
@@ -84,6 +87,10 @@ type Day = {
   stat: StatisticRes | undefined
 }
 
+function findLastIndexOrDefault<T, N>(array: T[], predicate: (item: T) => boolean, defaultValue: N): number | N {
+  const index = array.findLastIndex(predicate)
+  return index !== -1 ? index : defaultValue
+}
 
 export function useMainStat(days: Ref<Day[]>,
   game: Ref<GameVendor | null>,
@@ -95,16 +102,16 @@ export function useMainStat(days: Ref<Day[]>,
     const selectedDayIndex = dayIndex.value
 
     if (!data || !preferredGame) return []
-    if (data.every(d => d.timeline != 'played')) return []
+    if (data.every(d => d.stat == null || d.stat.totalBattles === 0)) return []
 
     const result: StatItem[] = []
 
     if (selectedDayIndex == null) {
-      const stats = data.map(d => d.stat).filter((s): s is StatisticRes => s !== undefined)
+      const stats = data.map(d => d.stat).filter(s => s !== undefined)
 
       const maxRating = Math.max(...data.map(d => d.stat?.maxRating[0] ?? 0))
-      const maxDayIndex = data.findLastIndex(d => d.stat?.maxRating[0] == maxRating && d.timeline == 'played') ||
-        data.findLastIndex(d => d.stat?.maxRating[0] == maxRating)!
+      const maxDayIndex = findLastIndexOrDefault(data, d => d.stat?.maxRating[0] == maxRating && d.timeline == 'played', null) ||
+        findLastIndexOrDefault(data, d => d.stat != null && d.stat.totalBattles !== 0, -1)
 
       const maxStat = stats[maxDayIndex] as StatisticRes
 
@@ -126,6 +133,14 @@ export function useMainStat(days: Ref<Day[]>,
 
       const totalBattles = sum(stats, d => d.totalBattles)
       const totalWins = sum(stats, d => d.wins)
+      const totalQualificationBattles = sum(stats, d => d.qualificationBattles)
+      const totalQualificationWins = sum(stats, d => d.qualificationWins)
+
+      const nonQualWins = totalWins - totalQualificationWins
+      const nonQualLose = totalBattles - totalQualificationBattles - totalWins + totalQualificationWins
+
+      const ratingWin = nonQualWins == 0 ? 0 : sum(stats, d => d.ratingDeltaWin) / nonQualWins
+      const ratingLose = nonQualLose == 0 ? 0 : sum(stats, d => d.ratingDeltaLose) / nonQualLose
 
       result.push({
         type: 'top-rating',
@@ -136,8 +151,8 @@ export function useMainStat(days: Ref<Day[]>,
         tooltipComponent: h(TopRatingTooltip, {
           last: [maxStat.lastRating, maxStat.lastEliteRating],
           totalIncome: sum(stats, d => d.ratingDeltaWin) + sum(stats, d => d.ratingDeltaLose),
-          ratingWin: totalResults > 0 ? sum(stats, d => d.ratingDeltaWin) / totalWins : 0,
-          ratingLose: (totalResults - totalWins) > 0 ? sum(stats, d => d.ratingDeltaLose) / (totalResults - totalWins) : 0,
+          ratingWin,
+          ratingLose,
           leaderboardPosition: maxStat.lastLeaderboardPosition,
           season: season.value ?? undefined,
           game: preferredGame
@@ -185,8 +200,8 @@ export function useMainStat(days: Ref<Day[]>,
           lose: avgSum(stats, d => d.prestigePointsLose),
           win: avgSum(stats, d => d.prestigePointsWin),
           max: Math.max(...stats.map(d => d.prestigePointsMax), 0),
-          ratingWin: totalResults > 0 ? sum(stats, d => d.ratingDeltaWin) / totalWins : 0,
-          ratingLose: (totalResults - totalWins) > 0 ? sum(stats, d => d.ratingDeltaLose) / (totalResults - totalWins) : 0
+          ratingWin,
+          ratingLose,
         })
       })
     } else {
@@ -202,6 +217,12 @@ export function useMainStat(days: Ref<Day[]>,
         return (options.round ?? true) ? Math.round(avgValue) : avgValue
       }
 
+      const nonQualWins = day.wins - day.qualificationWins
+      const nonQualLose = day.totalBattles - day.qualificationBattles - day.wins + day.qualificationWins
+
+      const ratingWin = nonQualWins == 0 ? 0 : day.ratingDeltaWin / nonQualWins
+      const ratingLose = nonQualLose == 0 ? 0 : day.ratingDeltaLose / nonQualLose
+
       result.push({
         type: 'rating-delta',
         rating: day.lastRating,
@@ -211,8 +232,8 @@ export function useMainStat(days: Ref<Day[]>,
           min: day.minRating,
           max: day.maxRating,
           current: day.lastRating,
-          ratingWin: day.wins > 0 ? day.ratingDeltaWin / day.wins : 0,
-          ratingLose: (totalResults - day.wins) > 0 ? day.ratingDeltaLose / (totalResults - day.wins) : 0,
+          ratingWin,
+          ratingLose,
           leaderboardPosition: day.lastLeaderboardPosition,
           season: season.value ?? undefined,
           game: preferredGame
@@ -259,8 +280,8 @@ export function useMainStat(days: Ref<Day[]>,
           lose: avg(day.prestigePointsLose),
           win: avg(day.prestigePointsWin),
           max: day.prestigePointsMax,
-          ratingWin: day.wins > 0 ? day.ratingDeltaWin / day.wins : 0,
-          ratingLose: (totalResults - day.wins) > 0 ? day.ratingDeltaLose / (totalResults - day.wins) : 0
+          ratingWin,
+          ratingLose,
         })
       })
 

@@ -16,6 +16,14 @@ export function getSeasonDuration(season: string, region: string) {
   return seasonLength
 }
 
+const RU_QUALIFICATION_COUNT = 7
+const EU_QUALIFICATION_COUNT = 10
+export function getSeasonQualificationCount(season: string, region: string) {
+  if (region == 'RU') return RU_QUALIFICATION_COUNT
+  if (region == 'EU') return EU_QUALIFICATION_COUNT
+  return 0
+}
+
 export type Rank = 'qual' | 'first' | 'second' | 'third' | 'fourth' | 'fifth' | 'sixth'
 export type DivisionLetter = 'E' | 'D' | 'C' | 'B' | 'A' | ''
 export type Division = `${Exclude<Rank, 'qual' | 'sixth' | 'fifth'>}_${Exclude<DivisionLetter, ''>}` | 'qual' | 'fifth' | 'sixth'

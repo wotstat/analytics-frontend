@@ -28,7 +28,7 @@ import Settings from './settings/Settings.vue'
 import { onKeyStroke, refDebounced, useElementBounding } from '@vueuse/core'
 import { DayChartData } from './types'
 import MainStat from './mainStat/MainStat.vue'
-import { getDivisionLetterByRating, getRankByRating, getSeasonDuration } from '@/shared/game/comp7/utils'
+import { getDivisionLetterByRating, getRankByRating, getSeasonDuration, getSeasonQualificationCount } from '@/shared/game/comp7/utils'
 import { useMainStat, type StatisticRes } from './mainStat/useMainStat'
 import VehicleTable from './vehicleTable/VehicleTable.vue'
 import { watchWithAbortSignal } from '@/shared/utils/core'
@@ -195,6 +195,8 @@ async function load(abortSignal: AbortSignal) {
             select toStartOfDay(dateTime + interval OFFSET hour) as day,
                   count() as totalResults,
                   countIf(personal.squadID != 0) as squadBattles,
+                  countIf(comp7.qualActive = true) as qualificationBattles,
+                  countIf(comp7.qualActive = true and result = 'win') as qualificationWins,
                   countIf(result = 'win') as wins,
                   sum(personal.comp7PrestigePoints) as prestigePoints,
                   sumIf(personal.comp7PrestigePoints, result != 'win') as prestigePointsLose,
@@ -211,7 +213,8 @@ async function load(abortSignal: AbortSignal) {
                   sum(personal.directEnemyHits) as hits,
                   sum(comp7.ratingDelta) as ratingDelta,
                   sumIf(comp7.ratingDelta, result = 'win') as ratingDeltaWin,
-                  sumIf(comp7.ratingDelta, result != 'win') as ratingDeltaLose
+                  sumIf(comp7.ratingDelta, result != 'win') as ratingDeltaLose,
+                  max(comp7.qualBattleIndex) as maxQualBattleIndex
             from Event_OnBattleResult
             where region = REGION
               and playerName = PLAYER
@@ -323,35 +326,49 @@ const days = computed(() => {
 
   const statByDay = new Map(stat?.map(s => [s.day, s]) ?? [])
   const maxRating = Math.max(...stat?.map(s => s.lastRating) ?? [0], 0)
+  const startRating = stat.find(s => s.totalBattles > 0 && s.firstRating[0] != 0)?.firstRating[0] ?? 0
 
   const result = []
   let lastRating = 0
   let firstDayPlayed = -1
   let eliteRating = -1
+  let lastQualBattleIndex = -1
+
+  const seasonQualificationCount = getSeasonQualificationCount(selectedSeason.value ?? 'latest', gameToRegion(preferredGameOrDefault.value))
+
   for (let i = 0; i < seasonInterval.value.length; i++) {
     const isoDate = new Date(seasonInterval.value.start.getTime() + i * ONE_DAY).toISOString()
     const dbDate = `${isoDate.slice(0, 10)} ${isoDate.slice(11, 19)}`
 
     const stat = statByDay.get(dbDate)
     if (stat?.lastRating) lastRating = stat.lastRating
-    if (stat?.lastRating && firstDayPlayed == -1) firstDayPlayed = i
+    if (stat?.totalBattles && firstDayPlayed == -1) firstDayPlayed = i
     if (stat?.lastEliteRating) eliteRating = stat.lastEliteRating
+    if (stat?.maxQualBattleIndex != undefined && stat.qualificationBattles) lastQualBattleIndex = Math.max(lastQualBattleIndex, stat.maxQualBattleIndex)
 
     const isFuture = seasonInterval.value.start.getTime() + i * ONE_DAY > Date.now() + COMP7_ISO_HOUR_OFFSET * ONE_HOUR
     const timeline: DayChartData['timeline'] = isFuture ? 'future' : firstDayPlayed == -1 ? 'past' : stat?.totalBattles ? 'played' : 'active'
 
-    const ratingPercent = maxRating ? lastRating / maxRating : 0
+    const ratingPercent = (() => {
+      if (lastRating == 0 && lastQualBattleIndex !== -1) {
+        const qualBattleNumber = lastQualBattleIndex + 1
+        if (startRating > 0) return (startRating / maxRating) * (qualBattleNumber / seasonQualificationCount)
+        else return qualBattleNumber / seasonQualificationCount
+      }
+      if (maxRating > 0) return lastRating / maxRating
+      return 0
+    })()
 
     result.push({
       dayIndex: i,
       day: dbDate,
       rating: lastRating,
       eliteRating,
+      maxRating,
       ratingPercent: timeline == 'future' && firstDayPlayed == -1 ? 0.3 : ratingPercent,
       timeline,
       stat: stat
     })
-
   }
 
   return result
@@ -375,7 +392,7 @@ const mainStats = refDebounced(useMainStat(days, preferredGameOrDefault, selecte
 const vehicleStats = refDebounced(useVehicleTable(computed(() => vehicleStatistics.value ?? []), selectedDay), 1)
 const mapsStats = refDebounced(useMapsTable(computed(() => mapsStatistics.value ?? []), selectedDay), 1)
 const qualificationStats = refDebounced(computed(() => {
-  const firstPlayedDay = statistics.value?.find(d => d.totalBattles > 0)
+  const firstPlayedDay = statistics.value?.find(d => d.totalBattles > 0 && d.firstRating[0] != 0)
 
   return {
     battles: qualificationStatistics.value ?? [],
@@ -386,7 +403,8 @@ const currentRating = computed(() => {
   const lastPlayedDay = [...days.value].reverse().find(d => d.timeline === 'played')
   return {
     rating: lastPlayedDay?.rating ?? 0,
-    eliteRating: lastPlayedDay?.eliteRating ?? 0
+    eliteRating: lastPlayedDay?.eliteRating ?? 0,
+    qualIndex: Math.max(...days.value.map(d => d.stat?.qualificationBattles ? d.stat.maxQualBattleIndex : -1), -1)
   }
 })
 

@@ -1,8 +1,9 @@
 <template>
-  <section>
+  <section :class="`game-${game}`">
     <div class="item rating-progress">
       <h3>Текущий рейтинг</h3>
-      <RatingBar :rating="currentRating.rating" :eliteRating="currentRating.eliteRating" :game :season />
+      <RatingBar :rating="currentRating.rating" :eliteRating="currentRating.eliteRating"
+        :qualIndex="currentRating.qualIndex" :game :season />
     </div>
     <div class="item qualification">
       <h3>Квалификация</h3>
@@ -27,6 +28,7 @@ const props = defineProps<{
   currentRating: {
     rating: number
     eliteRating: number
+    qualIndex: number
   },
   game: GameVendor
   season: string
@@ -60,19 +62,35 @@ section {
     flex: 1;
   }
 
-  @container content (max-width: 700px) {
-    .qualification {
-      flex: 1;
-      justify-content: flex-start;
+  &.game-mt {
+    @container content (max-width: 750px) {
+      flex-direction: column;
+
+      .qualification {
+        flex: 1;
+        justify-content: flex-start;
+      }
+    }
+
+    @container content (max-width: 900px) {
+      gap: 30px;
     }
   }
 
-  @container content (max-width: 900px) {
-    gap: 30px;
-  }
+  &.game-wot {
+    @container content (max-width: 800px) {
+      flex-direction: column;
 
-  @container content (max-width: 700px) {
-    flex-direction: column;
+      .qualification {
+        flex: 1;
+        justify-content: flex-start;
+      }
+    }
+
+    @container content (max-width: 950px) {
+      gap: 30px;
+    }
+
   }
 }
 </style>
