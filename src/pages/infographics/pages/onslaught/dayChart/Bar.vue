@@ -58,6 +58,17 @@ const leaderboardPosition = computed(() => {
   --selected-line-shadow: #ffac46;
   touch-action: manipulation;
 
+  &.rank-qual {
+    --top-color: #7275b1;
+    --text-color: #b2b6ff;
+    --background: linear-gradient(-10deg, #13141f25 0%, #353858 100%);
+    --hover-background: linear-gradient(-10deg, #3f468331 0%, #353858 100%);
+    --selected-background: linear-gradient(-45deg, #d9dcff 0%, #353858 100%);
+    --shadow-color: linear-gradient(0deg, #454b8e16 0%, #35385800 100%);
+    --selected-line: #ffffff;
+    --selected-line-shadow: #454b8e;
+  }
+
   &.rank-first {
     --top-color: #b3b3b3;
     --background: linear-gradient(-10deg, #69696925 0%, #595959 100%);
@@ -120,7 +131,7 @@ const leaderboardPosition = computed(() => {
 }
 
 .bar {
-  max-width: 22px;
+  max-width: 30px;
   min-width: 15px;
   position: relative;
   flex: 1;
@@ -133,7 +144,7 @@ const leaderboardPosition = computed(() => {
     bottom: -20px;
     transform: translateX(-50%);
     font-size: 12px;
-    color: var(--top-color);
+    color: var(--text-color, var(--top-color));
     z-index: 3;
     white-space: nowrap;
     opacity: 0;
@@ -151,7 +162,7 @@ const leaderboardPosition = computed(() => {
     top: -20px;
     transform: translateX(-50%);
     font-size: 12px;
-    color: var(--top-color);
+    color: var(--top-color, var(--text-color));
     z-index: 3;
   }
 

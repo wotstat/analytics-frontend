@@ -1,5 +1,5 @@
 <template>
-  <div class="qualification">
+  <div class="qualification" :class="`game-${game}`">
     <div class="battles">
       <div class="battle" v-for="result in results" :class="{
         [`result-${result}`]: result
@@ -22,7 +22,8 @@ import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 import { computed } from 'vue'
 import ArrowRight from './assets/arrow-right.svg'
-import { GameVendor } from '@/shared/game/wot'
+import { gameToRegion, GameVendor } from '@/shared/game/wot'
+import { getSeasonQualificationCount } from '@/shared/game/comp7/utils'
 
 
 const props = defineProps<{
@@ -32,8 +33,10 @@ const props = defineProps<{
   game: GameVendor
 }>()
 
+const seasonQualificationCount = computed(() => getSeasonQualificationCount(props.season, gameToRegion(props.game)))
+
 const results = computed(() => {
-  const indexes = new Array(7).fill(0).map((_, i) => i)
+  const indexes = new Array(seasonQualificationCount.value).fill(0).map((_, i) => i)
   const battlesByIndex = new Map(props.battles.map(battle => [battle.battleIndex, battle.result]))
 
   return indexes.map(index => battlesByIndex.get(index) || null)
@@ -118,36 +121,123 @@ const results = computed(() => {
     }
   }
 
-  @container (max-width: 450px) {
-    .battles {
-      gap: 0px;
-      flex: 1;
-      justify-content: space-between;
-    }
-  }
+  &.game-mt {
+    @container (min-width: 751px) and (max-width: 780px) {
+      .battles {
+        .battle {
+          .result-icon {
+            height: 40px;
+            margin: -8px;
+          }
 
-  @container (max-width: 330px) {
-    .battles {
-      .battle {
-        .result-icon {
-          height: 34px;
+          .unknown {
+            width: 24px;
+            height: 24px;
+            font-size: 18px;
+          }
         }
       }
     }
 
-    .arrow-icon {
-      height: 20px;
+    @container (max-width: 450px) {
+      .battles {
+        gap: 0px;
+        flex: 1;
+        justify-content: space-between;
+      }
     }
 
-    .rating {
-      gap: 4px;
+    @container (max-width: 330px) {
+      .battles {
+        .battle {
+          .result-icon {
+            height: 34px;
+            margin: -6px;
+          }
 
-      .rank-icon {
-        height: 28px;
+          .unknown {
+            width: 22px;
+            height: 22px;
+            font-size: 16px;
+          }
+        }
       }
 
-      p {
-        font-size: 18px;
+      .arrow-icon {
+        height: 20px;
+      }
+
+      .rating {
+        gap: 4px;
+
+        .rank-icon {
+          height: 28px;
+        }
+
+        p {
+          font-size: 18px;
+        }
+      }
+    }
+  }
+
+  &.game-wot {
+    @container (min-width: 801px) and (max-width: 1000px) {
+      .battles {
+        .battle {
+          .result-icon {
+            height: 40px;
+            margin: -8px;
+          }
+
+          .unknown {
+            width: 24px;
+            height: 24px;
+            font-size: 18px;
+          }
+        }
+      }
+    }
+
+    @container (max-width: 550px) {
+      .battles {
+        gap: 0px;
+        flex: 1;
+        justify-content: space-between;
+      }
+    }
+
+    @container (max-width: 450px) {
+      .battles {
+        .battle {
+          .result-icon {
+            height: 34px;
+            margin: -6px;
+          }
+
+          .unknown {
+            width: 22px;
+            height: 22px;
+            font-size: 16px;
+          }
+        }
+      }
+
+      .arrow-icon {
+        height: 20px;
+      }
+
+      .rating {
+        gap: 4px;
+
+        .rank-icon {
+          height: 28px;
+        }
+
+        p {
+          font-size: 18px;
+          min-width: 37px;
+        }
       }
     }
   }

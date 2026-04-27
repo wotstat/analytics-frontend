@@ -32,13 +32,14 @@
 
 <script setup lang="ts">
 import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
-import { getDivisionsByRank, getNextDivision, getRankByRating, getRatingForDivision } from '@/shared/game/comp7/utils'
-import { GameVendor } from '@/shared/game/wot'
+import { getDivisionsByRank, getNextDivision, getRankByRating, getRatingForDivision, getSeasonQualificationCount } from '@/shared/game/comp7/utils'
+import { gameToRegion, GameVendor } from '@/shared/game/wot'
 import { computed } from 'vue'
 
 
 const props = defineProps<{
   rating: number
+  qualIndex: number
   eliteRating: number
   game: GameVendor
   season: string
@@ -51,7 +52,7 @@ const divisionLetters = computed(() => {
   if (divisions.value.length == 0 || props.eliteRating == 0) return ['?']
   if (divisions.value.length == 1) {
     const division = divisions.value[0]
-    if (division == 'qual') return ['?']
+    if (division == 'qual') return ['Квалификация']
     if (division == 'fifth') return ['Чемпион']
     if (division == 'sixth') return ['Легенда']
   }
@@ -60,6 +61,13 @@ const divisionLetters = computed(() => {
 
 const ratingValues = computed(() => {
   if (!divisions.value) return []
+  if (divisions.value.length == 1) {
+    if (divisions.value[0] == 'qual') {
+      const seasonQualificationCount = getSeasonQualificationCount(props.season, gameToRegion(props.game))
+      return new Array(seasonQualificationCount + 1).fill(0).map((_, i) => i)
+    }
+  }
+
   const ratings = divisions.value.map(division => getRatingForDivision(division, props.game))
 
   const currentDivision = divisions.value[divisions.value.length - 1]
@@ -78,6 +86,10 @@ const progress = computed(() => {
   if (interval.length < 2) return 0
   const min = interval[0]
   const max = interval[interval.length - 1]
+
+  if (divisions.value.length == 1 && divisions.value[0] == 'qual') {
+    return ((1 + props.qualIndex - min) / (max - min)) * 100
+  }
 
   return ((props.rating - min) / (max - min)) * 100
 })
