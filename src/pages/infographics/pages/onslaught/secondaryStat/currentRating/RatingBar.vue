@@ -19,9 +19,11 @@
       </div>
 
       <div class="values">
-        <div class="value" v-for="division in ratingValues">
+        <div class="value" v-for="division in ratingValuesWithWidths" :style="{
+          minWidth: typeof division === 'number' ? '' : `calc(${division[1] * 100}% - 1px)`
+        }">
           <div class="num">
-            {{ division }}
+            {{ typeof division === 'number' ? division : division[0] }}
           </div>
         </div>
       </div>
@@ -41,6 +43,9 @@ const props = defineProps<{
   rating: number
   qualIndex: number
   eliteRating: number
+  top1: number
+  top10: number
+  top100: number
   game: GameVendor
   season: string
 }>()
@@ -71,7 +76,7 @@ const ratingValues = computed(() => {
   const ratings = divisions.value.map(division => getRatingForDivision(division, props.game))
 
   const currentDivision = divisions.value[divisions.value.length - 1]
-  if (currentDivision == 'sixth') return [props.eliteRating, props.eliteRating + 1000]
+  if (currentDivision == 'sixth') return [props.eliteRating, props.top100, props.top10, props.top1]
 
   const nextDivision = getNextDivision(currentDivision)
   if (!nextDivision) return ratings
@@ -81,11 +86,30 @@ const ratingValues = computed(() => {
   return [...ratings, getRatingForDivision(nextDivision, props.game)]
 })
 
+const ratingValuesWithWidths = computed(() => {
+  const values = ratingValues.value
+  if (values.length < 2) return values.map(v => [v, 1 / values.length] as [number, number])
+
+  const result: [number, number][] = []
+  const totalWidth = values.length > 1 ? values[values.length - 1] - values[0] : 1
+  for (let i = 0; i < values.length - 1; i++) {
+    const currentValue = values[i]
+    const nextValue = values[i + 1]
+    const width = nextValue - currentValue
+    result.push([currentValue, width / totalWidth])
+  }
+  result.push([values[values.length - 1], 0])
+
+  return result
+})
+
 const progress = computed(() => {
   const interval = ratingValues.value
   if (interval.length < 2) return 0
-  const min = interval[0]
-  const max = interval[interval.length - 1]
+  const firstValue = interval[0]
+  const lastValue = interval[interval.length - 1]
+  const min = typeof firstValue === 'number' ? firstValue : firstValue[0]
+  const max = typeof lastValue === 'number' ? lastValue : lastValue[0]
 
   if (divisions.value.length == 1 && divisions.value[0] == 'qual') {
     return ((1 + props.qualIndex - min) / (max - min)) * 100
@@ -151,6 +175,7 @@ const progress = computed(() => {
         text-align: center;
         position: relative;
         height: 5px;
+        box-sizing: border-box;
 
         &:last-child {
           width: 0;

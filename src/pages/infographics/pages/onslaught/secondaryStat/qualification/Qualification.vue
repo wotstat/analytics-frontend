@@ -1,11 +1,18 @@
 <template>
   <div class="qualification" :class="`game-${game}`">
     <div class="battles">
-      <div class="battle" v-for="result in results" :class="{
-        [`result-${result}`]: result
+      <div class="battle" v-for="(result, i) in results" :class="{
+        [`result-${result}`]: result,
+        [`item-${i}`]: true,
       }">
-        <Icon :icon="'battles'" class="result-icon" v-if="result" />
-        <p v-else class="unknown mt-font">?</p>
+        <Transition name="fade">
+          <div class=" container icon" v-if="result" :key="`${version ?? Math.random()}`">
+            <Icon :icon="'battles'" class="result-icon" />
+          </div>
+          <div class="container text" v-else>
+            <p class="unknown mt-font">?</p>
+          </div>
+        </Transition>
       </div>
     </div>
     <div class="rating">
@@ -25,12 +32,12 @@ import ArrowRight from './assets/arrow-right.svg'
 import { gameToRegion, GameVendor } from '@/shared/game/wot'
 import { getSeasonQualificationCount } from '@/shared/game/comp7/utils'
 
-
 const props = defineProps<{
   battles: { battleIndex: number, result: 'win' | 'loss' | 'draw' }[]
   rating: number
   season: string
   game: GameVendor
+  version?: string
 }>()
 
 const seasonQualificationCount = computed(() => getSeasonQualificationCount(props.season, gameToRegion(props.game)))
@@ -90,6 +97,12 @@ const results = computed(() => {
       display: flex;
       align-items: center;
       justify-content: center;
+
+      .container {
+        svg {
+          display: block;
+        }
+      }
 
       .result-icon {
         height: 44px;
@@ -238,6 +251,44 @@ const results = computed(() => {
           font-size: 18px;
           min-width: 37px;
         }
+      }
+    }
+  }
+
+  .battles {
+
+    @for $i from 1 through 10 {
+      .item-#{$i} {
+
+        .fade-enter-active,
+        .fade-leave-active {
+          transition-delay: ($i * 0.025s);
+        }
+      }
+    }
+
+    .fade-enter-active,
+    .fade-leave-active {
+      transition: filter 0.2s, opacity 0.2s, transform 0.2s;
+    }
+
+    .fade-leave-active {
+      &.icon {
+        svg {
+          transition: filter 1000s;
+        }
+      }
+    }
+
+    .fade-enter-from,
+    .fade-leave-to {
+      position: absolute;
+      opacity: 0;
+      transform: scale(0.5);
+      filter: blur(5px);
+
+      &.icon {
+        filter: blur(2px);
       }
     }
   }

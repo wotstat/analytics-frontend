@@ -21,7 +21,7 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from 'vue'
 import DayChart from './dayChart/DayChart.vue'
-import { dateToDbDate, LONG_CACHE_SETTINGS, query, queryAsync } from '@/db'
+import { dateToDbDate, LONG_CACHE_SETTINGS, query, queryAsync, queryComputedFirst } from '@/db'
 import { preferredGameOrDefault } from '@/shared/global/globalPreferred'
 import { gameToRegion } from '@/shared/game/wot'
 import Settings from './settings/Settings.vue'
@@ -40,7 +40,6 @@ import TipKeyboardChangeDay from './tips/TipKeyboardChangeDay.vue'
 import TipSelectDay from './tips/TipSelectDay.vue'
 import Loader from './Loader.vue'
 import SecondaryStat from './secondaryStat/SecondaryStat.vue'
-
 
 const ONE_HOUR = 60 * 60 * 1000
 const ONE_DAY = 24 * ONE_HOUR
@@ -131,6 +130,17 @@ const statistics = shallowRef<StatisticRes[] | null>(null)
 const vehicleStatistics = shallowRef<VehicleRes[] | null>(null)
 const mapsStatistics = shallowRef<MapsRes[] | null>(null)
 const qualificationStatistics = shallowRef<{ battleIndex: number, result: 'win' | 'loss' | 'draw' }[] | null>(null)
+
+const eliteRatingStatistics = queryComputedFirst<{ top1: number, eliteThreshold: number, top10: number, top100: number }>(() => `
+  with
+    '${gameToRegion(preferredGameOrDefault.value)}' as REGION,
+    '${seasonInterval.value ? dateToDbDate(seasonInterval.value?.start) : '2000-01-01'}' as START_DATE,
+    '${seasonInterval.value ? dateToDbDate(seasonInterval.value?.end) : '2000-01-01'}' as END_DATE,
+    (select max(recalculationTime) from Comp7LeaderboardByRank where region = REGION and recalculationTime between START_DATE and END_DATE) as latestTime
+  select max(rating) as top1, min(rating) as eliteThreshold, anyIf(rating, rank=10) as top10, anyIf(rating, rank=100) as top100
+  from Comp7LeaderboardByRank
+  where region = REGION and recalculationTime = latestTime and elite = true;
+`, { top1: 0, eliteThreshold: 0, top10: 0, top100: 0 })
 
 async function load(abortSignal: AbortSignal) {
   if (!seasonInterval.value) return
@@ -314,6 +324,7 @@ watch([seasonInterval, nickname, preferredGameOrDefault], () => {
   statistics.value = null
   vehicleStatistics.value = null
   mapsStatistics.value = null
+  qualificationStatistics.value = null
   isLoading.value = false
 })
 
@@ -391,20 +402,27 @@ const selectedDay = computed(() => {
 const mainStats = refDebounced(useMainStat(days, preferredGameOrDefault, selectedSeason, selectedDayIndex), 1)
 const vehicleStats = refDebounced(useVehicleTable(computed(() => vehicleStatistics.value ?? []), selectedDay), 1)
 const mapsStats = refDebounced(useMapsTable(computed(() => mapsStatistics.value ?? []), selectedDay), 1)
+
+let qualificationStatsVersion = 0
 const qualificationStats = refDebounced(computed(() => {
   const firstPlayedDay = statistics.value?.find(d => d.totalBattles > 0 && d.firstRating[0] != 0)
 
   return {
     battles: qualificationStatistics.value ?? [],
-    rating: firstPlayedDay ? firstPlayedDay.firstRating[0] : 0
+    rating: firstPlayedDay ? firstPlayedDay.firstRating[0] : 0,
+    version: `${qualificationStatsVersion++}`
   }
 }), 1)
+
 const currentRating = computed(() => {
   const lastPlayedDay = [...days.value].reverse().find(d => d.timeline === 'played')
   return {
     rating: lastPlayedDay?.rating ?? 0,
-    eliteRating: lastPlayedDay?.eliteRating ?? 0,
-    qualIndex: Math.max(...days.value.map(d => d.stat?.qualificationBattles ? d.stat.maxQualBattleIndex : -1), -1)
+    eliteRating: eliteRatingStatistics.value.data.eliteThreshold,
+    qualIndex: Math.max(...days.value.map(d => d.stat?.qualificationBattles ? d.stat.maxQualBattleIndex : -1), -1),
+    top1: eliteRatingStatistics.value.data.top1,
+    top10: eliteRatingStatistics.value.data.top10,
+    top100: eliteRatingStatistics.value.data.top100,
   }
 })
 
