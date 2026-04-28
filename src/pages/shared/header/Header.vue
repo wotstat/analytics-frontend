@@ -1,15 +1,23 @@
 <template>
   <div class="header" ref="headerElement">
-    <div class="upper-header success" v-if="maintenanceHeaderVisible">
+    <!-- <div class="upper-header success" v-if="maintenanceHeaderVisible">
       Работа серверов WotStat восстановлена.
       <br>
       <a @click="problemsVisible = true">Хронология событий</a>
 
       <div class="right-section">
-        <button @click="hideHeader('MaintenanceHeader')">Понятно</button>
+        <button @click="hideHeader('MaintenanceHeader-280426')">Понятно</button>
       </div>
 
       <HetznerBlock0126 v-model="problemsVisible" />
+    </div> -->
+
+    <div class="upper-header warning">
+      Серверы WotStat временно недоступны.
+      <br>
+      <a @click="problemsVisible = true">Что случилось</a>
+
+      <Problem280426 v-model="problemsVisible" />
     </div>
 
 
@@ -165,6 +173,7 @@ import { CLICKHOUSE_URL, CURRENT_URL_PREFIX, POSITIONS_URL, DISCORD_URL } from '
 import { useLocalStorage } from '@vueuse/core'
 import { vNewFeatureBadge } from '@/shared/uiKit/newFeatureBadge/newFeatureBadge'
 import HetznerBlock0126 from '../problems/hetznerBlock0126/HetznerBlock0126.vue'
+import Problem280426 from '../problems/problem280426/problem280426.vue'
 
 
 const SQLUrl = CLICKHOUSE_URL + '/play?user=public#c2VsZWN0IHRhYmxlLCBuYW1lLCBjb21tZW50LCB0eXBlIGZyb20gZGVzY3JpcHRpb247'
@@ -175,16 +184,16 @@ useDefaultHeaderHeight(headerElement)
 const { additionalHeaderHeight } = useAdditionalHeaderHeight()
 
 const ruHeaderVisible = useLocalStorage('RuAlternativeHeader', true)
-const maintenanceHeaderVisible = useLocalStorage('MaintenanceHeader', false)
+const maintenanceHeaderVisible = useLocalStorage('MaintenanceHeader-280426', true)
 
-type Headers = 'RuAlternativeHeader' | 'MaintenanceHeader'
+type Headers = 'RuAlternativeHeader' | 'MaintenanceHeader-280426'
 
 function hideHeader(name: Headers) {
   if (name == 'RuAlternativeHeader') ruHeaderVisible.value = false
-  else if (name == 'MaintenanceHeader') maintenanceHeaderVisible.value = false
+  else if (name == 'MaintenanceHeader-280426') maintenanceHeaderVisible.value = false
 }
 
-const problemsVisible = ref(false)
+const problemsVisible = ref(true)
 
 </script>
 
