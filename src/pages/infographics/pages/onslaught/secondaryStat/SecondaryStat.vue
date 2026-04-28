@@ -2,12 +2,14 @@
   <section :class="`game-${game}`">
     <div class="item rating-progress">
       <h3>Текущий рейтинг</h3>
-      <RatingBar :rating="currentRating.rating" :eliteRating="currentRating.eliteRating"
-        :qualIndex="currentRating.qualIndex" :game :season />
+      <RatingBar :rating="currentRating.rating" :eliteRating="currentRating.eliteRating" :top1="currentRating.top1"
+        :top10="currentRating.top10" :top100="currentRating.top100" :qualIndex="currentRating.qualIndex" :game
+        :season />
     </div>
     <div class="item qualification">
       <h3>Квалификация</h3>
-      <Qualification :battles="qualification.battles" :rating="qualification.rating" :game :season />
+      <Qualification :battles="qualification.battles" :rating="qualification.rating" :game :season
+        :version="qualification.version" />
     </div>
 
   </section>
@@ -24,11 +26,15 @@ const props = defineProps<{
   qualification: {
     battles: { battleIndex: number, result: 'win' | 'loss' | 'draw' }[]
     rating: number
+    version?: string
   },
   currentRating: {
     rating: number
     eliteRating: number
     qualIndex: number
+    top1: number
+    top10: number
+    top100: number
   },
   game: GameVendor
   season: string
