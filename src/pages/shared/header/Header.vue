@@ -12,10 +12,22 @@
       <HetznerBlock0126 v-model="problemsVisible" />
     </div> -->
 
-    <div class="upper-header warning">
+    <!-- <div class="upper-header warning">
       Серверы WotStat временно недоступны.
       <br>
       <a @click="problemsVisible = true">Что случилось</a>
+
+      <Problem280426 v-model="problemsVisible" />
+    </div> -->
+
+    <div class="upper-header success" v-if="maintenanceHeaderVisible">
+      Работа серверов WotStat восстановлена.
+      <br>
+      <a @click="problemsVisible = true">Хронология событий</a>
+
+      <div class="right-section">
+        <button @click="hideHeader('MaintenanceHeader-280426')">Понятно</button>
+      </div>
 
       <Problem280426 v-model="problemsVisible" />
     </div>
@@ -184,7 +196,7 @@ useDefaultHeaderHeight(headerElement)
 const { additionalHeaderHeight } = useAdditionalHeaderHeight()
 
 const ruHeaderVisible = useLocalStorage('RuAlternativeHeader', true)
-const maintenanceHeaderVisible = useLocalStorage('MaintenanceHeader-280426', true)
+const maintenanceHeaderVisible = useLocalStorage('MaintenanceHeader-280426-2', true)
 
 type Headers = 'RuAlternativeHeader' | 'MaintenanceHeader-280426'
 
@@ -193,7 +205,7 @@ function hideHeader(name: Headers) {
   else if (name == 'MaintenanceHeader-280426') maintenanceHeaderVisible.value = false
 }
 
-const problemsVisible = ref(true)
+const problemsVisible = ref(false)
 
 </script>
 
