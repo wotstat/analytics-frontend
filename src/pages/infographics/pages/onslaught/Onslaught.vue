@@ -1,7 +1,7 @@
 <template>
   <div class="onslaught-page">
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" :seasons="seasons.data ?? []" />
-    <SecondaryStat :qualification="qualificationStats" :currentRating :game="preferredGameOrDefault"
+    <SecondaryStat :qualification="qualificationStats" :currentRating="currentRating" :game="preferredGameOrDefault"
       :season="selectedSeason || 'latest'" />
     <div class="chart">
       <TipSelectDay class="tip-bubble" ref="daySelectTipBubble" :display="displayedTipSelectDay" />
@@ -417,7 +417,7 @@ const qualificationStats = refDebounced(computed(() => {
 const currentRating = computed(() => {
   const lastPlayedDay = [...days.value].reverse().find(d => d.timeline === 'played')
   return {
-    rating: lastPlayedDay?.rating ?? 0,
+    rating: lastPlayedDay?.rating ?? null,
     eliteRating: eliteRatingStatistics.value.data.eliteThreshold,
     qualIndex: Math.max(...days.value.map(d => d.stat?.qualificationBattles ? d.stat.maxQualBattleIndex : -1), -1),
     top1: eliteRatingStatistics.value.data.top1,
