@@ -121,12 +121,13 @@ async function loadNextBatch() {
     console.log(`load ${LOAD_COUNT} shots offset ${shotsData.length} started at ${shotsData.length > 0 ? 'where id < ' + shotsData[0].id : 'all'}`)
 
     const best = bestMV('accuracy_hit_points', props.params ? props.params : [])
+
     const prefix = best ? `
-  toString(id) as id, r, theta, hit FROM ${best}
+  toString(id) as idS, r, theta, hit FROM ${best}
   ` : `
-  toString(id) as id, ballisticResultClient_r as r, ballisticResultClient_theta as theta, length(results.order) > 0 as hit FROM Event_OnShot
+  toString(id) as idS, ballisticResultClient_r as r, ballisticResultClient_theta as theta, length(results.order) > 0 as hit FROM Event_OnShot
   `
-    const result = await query<{ id: string, r: number, theta: number, hit: number }>(`
+    const result = await query<{ idS: string, r: number, theta: number, hit: number }>(`
     SELECT ${prefix}
       ${shotsData.length > 0 ? `where id < '${shotsData[0].id}'` : ''}
       ${props.params ? whereClause(props.params, { withWhere: shotsData.length == 0 }) : ''}
@@ -134,7 +135,7 @@ async function loadNextBatch() {
       limit ${LOAD_COUNT} 
       offset ${shotsData.length};`)
 
-    resultData = result.data
+    resultData = result.data.map(t => ({ id: t.idS, r: t.r, theta: t.theta, hit: t.hit }))
   }
 
   const toAdd = resultData.map(row => ({
