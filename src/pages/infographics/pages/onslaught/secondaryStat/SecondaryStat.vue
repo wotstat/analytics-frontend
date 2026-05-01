@@ -29,7 +29,7 @@ const props = defineProps<{
     version?: string
   },
   currentRating: {
-    rating: number
+    rating: number | null
     eliteRating: number
     qualIndex: number
     top1: number

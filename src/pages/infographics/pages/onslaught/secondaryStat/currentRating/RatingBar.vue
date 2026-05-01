@@ -1,29 +1,27 @@
 <template>
   <div class="rating-progress">
     <div class="current-rating">
-      <RankIcon :rank="[rating, eliteRating]" class="rank-icon" :size="'large'" :game :season />
-      <p class="mt-font">{{ rating }}</p>
+      <RankIcon :rank="[rating ?? 0, eliteRating]" class="rank-icon" :size="'large'" :game :season />
+      <p class="mt-font">{{ rating ?? '?' }}</p>
     </div>
 
     <div class="progress-bar mt-font">
       <div class="divisions">
-        <div class="division" v-for="letter in divisionLetters" :key="letter">
+        <div class="division" v-for="letter in (divisionLetters.length ? divisionLetters : [''])" :key="letter">
           <div class="letter">{{ letter }}</div>
         </div>
       </div>
 
-      <div class="bar" :style="{
-        '--progress': `${progress}%`
-      }">
+      <div class="bar" :style="{ '--progress': `${progress}%` }" :class="{ 'hidden': rating == null }">
         <div class="bar-progress"></div>
       </div>
 
       <div class="values">
-        <div class="value" v-for="division in ratingValuesWithWidths" :style="{
-          minWidth: typeof division === 'number' ? '' : `calc(${division[1] * 100}% - 1px)`
-        }">
+        <div class="value"
+          v-for="division in (ratingValuesWithWidths.length ? ratingValuesWithWidths : [['', 1], ['', 0]] as const)"
+          :style="{ minWidth: `calc(${division[1] * 100}% - 1px)` }">
           <div class="num">
-            {{ typeof division === 'number' ? division : division[0] }}
+            {{ division[0] }}
           </div>
         </div>
       </div>
@@ -40,7 +38,7 @@ import { computed } from 'vue'
 
 
 const props = defineProps<{
-  rating: number
+  rating: number | null
   qualIndex: number
   eliteRating: number
   top1: number
@@ -50,11 +48,11 @@ const props = defineProps<{
   season: string
 }>()
 
-const rank = computed(() => getRankByRating(props.rating, props.game, props.eliteRating))
+const rank = computed(() => getRankByRating(props.rating ?? 0, props.game, props.eliteRating))
 const divisions = computed(() => getDivisionsByRank(rank.value))
 
 const divisionLetters = computed(() => {
-  if (divisions.value.length == 0 || props.eliteRating == 0) return ['?']
+  if (divisions.value.length == 0 || props.eliteRating == 0 || props.rating == null) return []
   if (divisions.value.length == 1) {
     const division = divisions.value[0]
     if (division == 'qual') return ['Квалификация']
@@ -65,7 +63,7 @@ const divisionLetters = computed(() => {
 })
 
 const ratingValues = computed(() => {
-  if (!divisions.value) return []
+  if (!divisions.value || props.rating == null) return []
   if (divisions.value.length == 1) {
     if (divisions.value[0] == 'qual') {
       const seasonQualificationCount = getSeasonQualificationCount(props.season, gameToRegion(props.game))
@@ -92,11 +90,12 @@ const ratingValuesWithWidths = computed(() => {
 
   const result: [number, number][] = []
   const totalWidth = values.length > 1 ? values[values.length - 1] - values[0] : 1
+
   for (let i = 0; i < values.length - 1; i++) {
     const currentValue = values[i]
     const nextValue = values[i + 1]
     const width = nextValue - currentValue
-    result.push([currentValue, width / totalWidth])
+    result.push([currentValue, totalWidth == 0 ? 1 / (values.length - 1) : width / totalWidth])
   }
   result.push([values[values.length - 1], 0])
 
@@ -114,6 +113,8 @@ const progress = computed(() => {
   if (divisions.value.length == 1 && divisions.value[0] == 'qual') {
     return ((1 + props.qualIndex - min) / (max - min)) * 100
   }
+
+  if (!props.rating) return 0
 
   return ((props.rating - min) / (max - min)) * 100
 })
@@ -224,6 +225,12 @@ const progress = computed(() => {
         filter: drop-shadow(0px 0px 5px rgb(11, 100, 255)) drop-shadow(0px 0px 2px rgb(255, 255, 255));
         transform: translate(-50%, 0);
         transition: left 0.3s ease;
+      }
+
+      &.hidden {
+        &::after {
+          opacity: 0;
+        }
       }
     }
   }

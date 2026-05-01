@@ -113,7 +113,7 @@ export function useMainStat(days: Ref<Day[]>,
       const maxDayIndex = findLastIndexOrDefault(data, d => d.stat?.maxRating[0] == maxRating && d.timeline == 'played', null) ||
         findLastIndexOrDefault(data, d => d.stat != null && d.stat.totalBattles !== 0, -1)
 
-      const maxStat = stats[maxDayIndex] as StatisticRes
+      const maxStat = data[maxDayIndex].stat!
 
       function sum<T>(array: T[], value: (item: T) => number) {
         return array.reduce((sum, d) => sum + value(d), 0)
