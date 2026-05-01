@@ -61,6 +61,12 @@ export function bestMV(target: keyof typeof schemas, options: string[] | MaybeRe
   return bestMvWithColumns(target, columns)
 }
 
+export function bestMVOrder(target: keyof typeof schemas, materializedView: string) {
+  const schema = schemas[target]
+  const tables = schema[materializedView as keyof typeof schema] as string[]
+  return tables
+}
+
 
 
 export type ChuckResult = {

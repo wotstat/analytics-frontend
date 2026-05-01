@@ -27,10 +27,11 @@ import { useDebounceFn, useMouseInElement } from '@vueuse/core'
 import { query } from '@/db'
 import { BloomColor } from '../bloomColors'
 import { StatParams, whereClause } from '@/shared/query/useQueryStatParams'
-import { bestMV } from '@/db/schema'
+import { bestMV, bestMVOrder } from '@/db/schema'
 
 const COUNT_TO_SMALL_SIZE = 3000
-const LOAD_COUNT = 1000
+const FIRST_LOAD_COUNT = 500
+const LOAD_COUNT = 8000
 const RENDER_COUNT = 20
 const HOVER_RADIUS = 0.02
 const MOBILE_HOVER_RADIUS = 0.15
@@ -108,32 +109,37 @@ async function loadNextBatch() {
   loading = true
 
   let resultData: { id: string, r: number, theta: number, hit: number }[] = []
+  const loadCount = shotsData.length === 0 ? FIRST_LOAD_COUNT : LOAD_COUNT
   if (props.loadNextBatch) {
 
     resultData = await props.loadNextBatch({
-      loadCount: LOAD_COUNT,
+      loadCount: loadCount,
       offset: shotsData.length,
       startId: shotsData.length > 0 ? shotsData[0].id : null
     })
 
   } else {
 
-    console.log(`load ${LOAD_COUNT} shots offset ${shotsData.length} started at ${shotsData.length > 0 ? 'where id < ' + shotsData[0].id : 'all'}`)
+    console.log(`load ${loadCount} shots offset ${shotsData.length} started at ${shotsData.length > 0 ? 'where id < ' + shotsData[0].id : 'all'}`)
 
     const best = bestMV('accuracy_hit_points', props.params ? props.params : [])
+    const order = best && best != 'accuracy_hit_points_mv' ? [...bestMVOrder('accuracy_hit_points', best), 'id'] : ['id']
 
     const prefix = best ? `
-  toString(id) as idS, r, theta, hit FROM ${best}
-  ` : `
-  toString(id) as idS, ballisticResultClient_r as r, ballisticResultClient_theta as theta, length(results.order) > 0 as hit FROM Event_OnShot
-  `
+      toString(id) as idS, r, theta, hit FROM ${best}
+      ` : `
+      toString(id) as idS, ballisticResultClient_r as r, ballisticResultClient_theta as theta, length(results.order) > 0 as hit FROM Event_OnShot
+      `
+
+    const ordering = order.map(o => `${o} desc`).join(', ')
+
     const result = await query<{ idS: string, r: number, theta: number, hit: number }>(`
     SELECT ${prefix}
-      ${shotsData.length > 0 ? `where id < '${shotsData[0].id}'` : ''}
+      ${shotsData.length > 0 ? `where id < '${shotsData[shotsData.length - 1].id}'` : ''}
       ${props.params ? whereClause(props.params, { withWhere: shotsData.length == 0 }) : ''}
-      order by id desc 
-      limit ${LOAD_COUNT} 
-      offset ${shotsData.length};`)
+      order by ${ordering}
+      limit ${loadCount}
+    SETTINGS optimize_read_in_order = 1`)
 
     resultData = result.data.map(t => ({ id: t.idS, r: t.r, theta: t.theta, hit: t.hit }))
   }
@@ -156,7 +162,7 @@ async function loadNextBatch() {
 
   for (const circle of circles) quadTree.insert(circle)
 
-  loadingFinished = resultData.length < LOAD_COUNT || (props.limitShot != null && LOAD_COUNT + shotsData.length > props.limitShot)
+  loadingFinished = resultData.length < loadCount || (props.limitShot != null && loadCount + shotsData.length > props.limitShot)
   loading = false
 }
 
