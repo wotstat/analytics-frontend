@@ -921,8 +921,8 @@ type Options = { loadCount: number, offset: number, startId: string | null }
 
 async function loadNextBatch(options: Options, gameVersion: string[]): Promise<{ id: string, r: number, theta: number, hit: number }[]> {
 
-  const result = await query<{ id: string, r: number, theta: number, hit: number }>(`
-    select toString(id) as id, r, theta, hit
+  const result = await query<{ idS: string, r: number, theta: number, hit: number }>(`
+    select toString(id) as idS, r, theta, hit
     from "MT-36-1".ShotHitPoints
     where region = 'RU' and battleMode = 'REGULAR' and gameVersion in (${gameVersion.map(v => `'${v}'`).join(', ')}) and isIdealCondition = 1
     ${options.startId ? ` and id < '${options.startId}'` : ''}
@@ -931,7 +931,7 @@ async function loadNextBatch(options: Options, gameVersion: string[]): Promise<{
     offset ${options.offset};
   `, { settings: CACHE_SETTINGS })
 
-  return result.data
+  return result.data.map(t => ({ id: t.idS, r: t.r, theta: t.theta, hit: t.hit }))
 }
 
 async function loadNextBatchLeft(options: Options) {
