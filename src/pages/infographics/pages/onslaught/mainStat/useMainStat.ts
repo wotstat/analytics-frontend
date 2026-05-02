@@ -77,7 +77,11 @@ export type StatisticRes = {
   ratingDelta: number,
   ratingDeltaWin: number,
   ratingDeltaLose: number,
-  maxQualBattleIndex: number
+  maxQualBattleIndex: number,
+  lastEliteThreshold: number,
+  lastPlayerRank: number,
+  maxPlayerRank: number
+  minPlayerRank: number
 }
 
 type Day = {
