@@ -245,10 +245,17 @@ export function useTipBubble(options: Options) {
     }
   }, { immediate: true })
 
-  let changeDisplayedTimeout: ReturnType<typeof setTimeout> | null = null
+  let displayBubbleTimeout: ReturnType<typeof setTimeout> | null = null
   function changeDisplayed(display: boolean, force: boolean = false) {
-    if (mayShowBubble.value === display) return
+    if (display && mayShowBubble.value) return
+    if (!display && !mayShowBubble.value && !displayBubbleTimeout) return
     if (state.value.accepted) return
+
+    if (!display && displayBubbleTimeout) {
+      clearTimeout(displayBubbleTimeout)
+      displayBubbleTimeout = null
+      return
+    }
 
     if (display && (!options.displayDelay || force)) {
       mayShowBubble.value = display
@@ -257,17 +264,17 @@ export function useTipBubble(options: Options) {
 
     if (!display) {
       mayShowBubble.value = false
-      if (changeDisplayedTimeout) {
-        clearTimeout(changeDisplayedTimeout)
-        changeDisplayedTimeout = null
+      if (displayBubbleTimeout) {
+        clearTimeout(displayBubbleTimeout)
+        displayBubbleTimeout = null
       }
       return
     }
 
-    if (!changeDisplayedTimeout) {
-      changeDisplayedTimeout = setTimeout(() => {
+    if (!displayBubbleTimeout) {
+      displayBubbleTimeout = setTimeout(() => {
         mayShowBubble.value = true
-        changeDisplayedTimeout = null
+        displayBubbleTimeout = null
       }, options.displayDelay || 0)
     }
   }

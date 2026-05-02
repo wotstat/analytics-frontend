@@ -43,7 +43,7 @@ import SecondaryStat from './secondaryStat/SecondaryStat.vue'
 
 const ONE_HOUR = 60 * 60 * 1000
 const ONE_DAY = 24 * ONE_HOUR
-const COMP7_ISO_HOUR_OFFSET = -2
+const COMP7_ISO_HOUR_OFFSET = -3
 
 const dayChangeTipBubble = ref<InstanceType<typeof TipKeyboardChangeDay> | null>(null)
 const daySelectTipBubble = ref<InstanceType<typeof TipSelectDay> | null>(null)
@@ -136,7 +136,7 @@ const eliteRatingStatistics = queryComputedFirst<{ top1: number, eliteThreshold:
     '${gameToRegion(preferredGameOrDefault.value)}' as REGION,
     '${seasonInterval.value ? dateToDbDate(seasonInterval.value?.start) : '2000-01-01'}' as START_DATE,
     '${seasonInterval.value ? dateToDbDate(seasonInterval.value?.end) : '2000-01-01'}' as END_DATE,
-    (select max(recalculationTime) from Comp7LeaderboardByRank where region = REGION and recalculationTime between START_DATE and END_DATE) as latestTime
+    (select max(recalculationTime) from Comp7LeaderboardByRank where region = REGION and recalculationTime between START_DATE and END_DATE + interval 1 day) as latestTime
   select max(rating) as top1, min(rating) as eliteThreshold, anyIf(rating, rank=10) as top10, anyIf(rating, rank=100) as top100
   from Comp7LeaderboardByRank
   where region = REGION and recalculationTime = latestTime and elite = true;
@@ -232,11 +232,30 @@ async function load(abortSignal: AbortSignal) {
               and battleMode = 'COMP7'
             group by day
             order by day
+        ),
+        t4 as (
+        with prepare as (
+            select recalculationTime,
+                   minIf(rating, elite = true) as rating,
+                   anyIf(rank, name = PLAYER) as rank
+            from Comp7Leaderboard
+            where region = REGION
+            group by recalculationTime
         )
+        select toStartOfDay(recalculationTime + interval OFFSET hour) as day,
+               argMax(rating, recalculationTime) as lastEliteThreshold,
+               argMax(rank, recalculationTime) as lastPlayerRank,
+               max(rank) as maxPlayerRank,
+               min(rank) as minPlayerRank
+        from prepare
+        group by day
+        order by day desc
+    )
     select * from t0
     left outer join t1 using day
     left outer join t2 using day
     left outer join t3 using day
+    left outer join t4 using day
   `, { abortSignal })
 
   if (abortSignal.aborted) return
@@ -390,7 +409,7 @@ const barsData = computed<DayChartData[]>(() => days.value.map(d => ({
   timeline: d.timeline,
   rank: getRankByRating(d.rating, preferredGameOrDefault.value, d.eliteRating > 0 ? d.eliteRating : undefined),
   divisionLetter: getDivisionLetterByRating(d.rating, preferredGameOrDefault.value),
-  leaderboardPosition: d.stat?.lastLeaderboardPosition ?? null,
+  leaderboardPosition: d.stat?.lastPlayerRank || d.stat?.lastLeaderboardPosition || null,
   dayIndex: d.dayIndex,
 })))
 
