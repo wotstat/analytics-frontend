@@ -28,7 +28,7 @@ import Settings from './settings/Settings.vue'
 import { onKeyStroke, refDebounced, useElementBounding } from '@vueuse/core'
 import { DayChartData } from './types'
 import MainStat from './mainStat/MainStat.vue'
-import { getDivisionLetterByRating, getRankByRating, getSeasonDuration, getSeasonQualificationCount } from '@/shared/game/comp7/utils'
+import { getDivisionLetterByRating, getRankByRating, getRegionIsoHourOffset, getSeasonDuration, getSeasonQualificationCount } from '@/shared/game/comp7/utils'
 import { useMainStat, type StatisticRes } from './mainStat/useMainStat'
 import VehicleTable from './vehicleTable/VehicleTable.vue'
 import { watchWithAbortSignal } from '@/shared/utils/core'
@@ -166,7 +166,7 @@ async function load(abortSignal: AbortSignal) {
         '${startDate}' as START_DATE,
         '${endDate}' as END_DATE,
         '${region}' as REGION,
-        ${COMP7_ISO_HOUR_OFFSET} as OFFSET,
+        ${getRegionIsoHourOffset(region)} as OFFSET,
         t0 as (
             select toStartOfDay(dateTime + interval OFFSET hour) as day,
                 argMax(eliteRating, dateTime) as lastEliteRating
@@ -234,22 +234,23 @@ async function load(abortSignal: AbortSignal) {
             order by day
         ),
         t4 as (
-        with prepare as (
+          with prepare as (
             select recalculationTime,
-                   minIf(rating, elite = true) as rating,
-                   anyIf(rank, name = PLAYER) as rank
+                   minIf(rating, elite = true) as eliteThreshold,
+                   anyIf(rank, name = PLAYER) as rank,
+                   anyIf(rating, name = PLAYER) as playerRating
             from Comp7Leaderboard
             where region = REGION
             group by recalculationTime
         )
         select toStartOfDay(recalculationTime + interval OFFSET hour) as day,
-               argMax(rating, recalculationTime) as lastEliteThreshold,
+               argMax(eliteThreshold, recalculationTime) as lastEliteThreshold,
                argMax(rank, recalculationTime) as lastPlayerRank,
+               argMax(playerRating, recalculationTime) as lastPlayerRating,
                max(rank) as maxPlayerRank,
                min(rank) as minPlayerRank
         from prepare
         group by day
-        order by day desc
     )
     select * from t0
     left outer join t1 using day
@@ -269,7 +270,7 @@ async function load(abortSignal: AbortSignal) {
       '${startDate}' as START_DATE,
       '${endDate}' as END_DATE,
       '${region}' as REGION,
-      ${COMP7_ISO_HOUR_OFFSET} as OFFSET
+      ${getRegionIsoHourOffset(region)} as OFFSET
     select comp7.qualBattleIndex as battleIndex, result
     from Event_OnBattleResult
     where playerName = PLAYER
@@ -289,7 +290,7 @@ async function load(abortSignal: AbortSignal) {
       '${startDate}' as START_DATE,
       '${endDate}' as END_DATE,
       '${region}' as REGION,
-      ${COMP7_ISO_HOUR_OFFSET} as OFFSET
+      ${getRegionIsoHourOffset(region)} as OFFSET
     select toStartOfDay(dateTime + interval OFFSET hour) as day,
           tankTag,
           tankType,
@@ -318,7 +319,7 @@ async function load(abortSignal: AbortSignal) {
       '${startDate}' as START_DATE,
       '${endDate}' as END_DATE,
       '${region}' as REGION,
-      ${COMP7_ISO_HOUR_OFFSET} as OFFSET
+      ${getRegionIsoHourOffset(region)} as OFFSET
     select toStartOfDay(dateTime + interval OFFSET hour) as day,
           arenaTag,
           count() as totalResults,
@@ -355,7 +356,7 @@ const days = computed(() => {
   const stat = statistics.value ?? []
 
   const statByDay = new Map(stat?.map(s => [s.day, s]) ?? [])
-  const maxRating = Math.max(...stat?.map(s => s.lastRating) ?? [0], 0)
+  const maxRating = Math.max(...stat?.map(s => s.lastPlayerRating || s.lastRating) ?? [0], 0)
   const startRating = stat.find(s => s.totalBattles > 0 && s.firstRating[0] != 0)?.firstRating[0] ?? 0
 
   const result = []
@@ -365,6 +366,7 @@ const days = computed(() => {
   let lastQualBattleIndex = -1
 
   const seasonQualificationCount = getSeasonQualificationCount(selectedSeason.value ?? 'latest', gameToRegion(preferredGameOrDefault.value))
+  const isoHourOffset = getRegionIsoHourOffset(gameToRegion(preferredGameOrDefault.value))
 
   for (let i = 0; i < seasonInterval.value.length; i++) {
     const isoDate = new Date(seasonInterval.value.start.getTime() + i * ONE_DAY).toISOString()
@@ -376,7 +378,7 @@ const days = computed(() => {
     if (stat?.lastEliteRating) eliteRating = stat.lastEliteRating
     if (stat?.maxQualBattleIndex != undefined && stat.qualificationBattles) lastQualBattleIndex = Math.max(lastQualBattleIndex, stat.maxQualBattleIndex)
 
-    const isFuture = seasonInterval.value.start.getTime() + i * ONE_DAY > Date.now() + COMP7_ISO_HOUR_OFFSET * ONE_HOUR
+    const isFuture = seasonInterval.value.start.getTime() + i * ONE_DAY > Date.now() + isoHourOffset * ONE_HOUR
     const timeline: DayChartData['timeline'] = isFuture ? 'future' : firstDayPlayed == -1 ? 'past' : stat?.totalBattles ? 'played' : 'active'
 
     const ratingPercent = (() => {

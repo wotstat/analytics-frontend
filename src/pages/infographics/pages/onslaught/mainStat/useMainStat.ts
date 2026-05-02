@@ -82,6 +82,7 @@ export type StatisticRes = {
   lastPlayerRank: number,
   maxPlayerRank: number
   minPlayerRank: number
+  lastPlayerRating: number
 }
 
 type Day = {

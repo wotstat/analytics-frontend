@@ -24,6 +24,12 @@ export function getSeasonQualificationCount(season: string, region: string) {
   return 0
 }
 
+export function getRegionIsoHourOffset(region: string) {
+  if (region == 'RU') return -3
+  if (region == 'EU') return -2
+  return -3
+}
+
 export type Rank = 'qual' | 'first' | 'second' | 'third' | 'fourth' | 'fifth' | 'sixth'
 export type DivisionLetter = 'E' | 'D' | 'C' | 'B' | 'A' | ''
 export type Division = `${Exclude<Rank, 'qual' | 'sixth' | 'fifth'>}_${Exclude<DivisionLetter, ''>}` | 'qual' | 'fifth' | 'sixth'
