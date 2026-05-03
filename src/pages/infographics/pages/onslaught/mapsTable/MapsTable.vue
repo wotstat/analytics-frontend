@@ -1,6 +1,6 @@
 <template>
   <Transition name="fade">
-    <section class="vehicle-statistics" v-if="displayed.length > 0">
+    <section class="vehicle-statistics" v-if="data.length > 0">
       <div class="header">
         <h3>Статистика карт<Transition name="fade-day"><span v-if="displayedDay">, день {{ displayedDay }}</span>
           </Transition>
@@ -11,50 +11,32 @@
       </div>
       <hr class="separator">
 
-      <div class="table-container nice-scrollbar">
-        <table>
-          <thead>
-            <tr>
-              <th>
-                <Icon :icon="'arena'" />
-              </th>
-              <th>
-                <Icon :icon="'battles'" />
-              </th>
-              <th>
-                <Icon :icon="'winrate'" />
-              </th>
-              <th>
-                <Icon :icon="'dmg'" />
-              </th>
-              <th>
-                <Icon :icon="'assist'" />
-              </th>
-              <th>
-                <Icon :icon="'prestige-points'" />
-              </th>
-              <th>
-                <Icon :icon="'kill'" />
-              </th>
-            </tr>
-          </thead>
+      <div class="table-container nice-scrollbar mt-font">
+        <SortableTable :data="data" :cols="7" :limit="displayLimit" :is-orderable="i => i !== 0" :default-order-by="1">
 
-          <tbody class="mt-font">
-            <tr v-for="arena in displayed" :key="arena.tag">
-              <th class="vehicle">
-                <TooltipedMinimap :tag="arena.tag" class="image" :game />
-                <p>{{ getArenaName(arena.tag) }}</p>
-              </th>
-              <td>{{ arena.battles }}</td>
-              <td>{{ roundProcessor(arena.winrate * 100, 2) }}%</td>
-              <td>{{ roundProcessor(arena.damage) }}</td>
-              <td>{{ roundProcessor(arena.assist) }}</td>
-              <td>{{ roundProcessor(arena.prestigePoints) }}</td>
-              <td>{{ roundProcessor(arena.kills, 2) }}</td>
+          <template #head-cell="{ col }">
+            <Icon :icon="([
+              'arena',
+              'battles',
+              'winrate',
+              'dmg',
+              'assist',
+              'prestige-points',
+              'kill'
+            ] as const)[col]" />
+          </template>
 
-            </tr>
-          </tbody>
-        </table>
+          <template #data-cell="{ value, index, col }">
+            <th class="minimap" v-if="col === 0">
+              <TooltipedMinimap :tag="props.mapsStats[index].tag" class="image" :game />
+              <p>{{ getArenaName(props.mapsStats[index].tag) }}</p>
+            </th>
+            <td v-else-if="col == 2">{{ roundProcessor(value as number * 100, 2) }}%</td>
+            <td v-else-if="col == 6">{{ roundProcessor(value as number, 2) }}</td>
+            <td v-else>{{ roundProcessor(value as number) }}</td>
+          </template>
+
+        </SortableTable>
       </div>
     </section>
   </Transition>
@@ -69,6 +51,7 @@ import { roundProcessor } from '@/shared/utils/processors/processors'
 import { computed, ref } from 'vue'
 import TooltipedMinimap from './TooltipedMinimap.vue'
 import { GameVendor } from '@/shared/game/wot'
+import SortableTable from '../sortableTable/SortableTable.vue'
 
 
 const SHOW_MORE_THRESHOLD = 6
@@ -81,14 +64,17 @@ const props = defineProps<{
 
 const showMore = ref(false)
 
-const displayed = computed(() => {
-  if (props.mapsStats.length > SHOW_MORE_THRESHOLD && !showMore.value) {
-    return props.mapsStats.sort((a, b) => b.battles - a.battles).slice(0, SHOW_MORE_THRESHOLD - 2)
-  }
+const data = computed(() => props.mapsStats.map(v => [
+  v.tag,
+  v.battles,
+  v.winrate,
+  v.damage,
+  v.assist,
+  v.prestigePoints,
+  v.kills
+]))
 
-  return props.mapsStats.sort((a, b) => b.battles - a.battles)
-})
-
+const displayLimit = computed(() => props.mapsStats.length > SHOW_MORE_THRESHOLD && !showMore.value ? SHOW_MORE_THRESHOLD - 2 : undefined)
 
 </script>
 
@@ -131,71 +117,58 @@ hr {
 
 .table-container {
   overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
+  font-size: 14px;
 
   thead {
-    svg {
-      width: 40px;
-    }
+    th {
 
-    tr {
+      svg {
+        width: 40px;
+        display: block;
+        margin: 0 auto;
+      }
 
-      td:first-child,
-      th:first-child {
+      &:first-child {
         width: 25%;
       }
     }
   }
 
-  tbody {
-    tr {
-      &:nth-child(2n+1) {
-        background-color: rgba(248, 252, 255, 0.025);
-      }
+  .minimap {
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+    font-weight: normal;
 
-      .vehicle {
-        display: flex;
-        align-items: center;
-        margin-left: 10px;
-        font-weight: normal;
-
-        .image {
-          height: 40px;
-          width: 40px;
-          user-select: none;
-          margin: 5px;
-          border-radius: 4px;
-          overflow: hidden;
-          margin-right: 10px;
-          box-shadow: 0 0 2px rgba(0, 0, 0, 0.1);
-        }
-
-        .type {
-          height: 16px;
-          margin: 0 3px;
-        }
-
-        p {
-          font-size: 15px;
-          line-height: 16px;
-          white-space: nowrap;
-        }
-      }
-
-      td {
-        text-align: center;
-      }
+    .image {
+      height: 40px;
+      width: 40px;
+      user-select: none;
+      margin: 5px;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-right: 10px;
+      box-shadow: 0 0 2px rgba(0, 0, 0, 0.1);
     }
 
-    td {
-      font-size: 14px;
+    .type {
+      height: 16px;
+      margin: 0 3px;
+    }
+
+    p {
+      font-size: 15px;
+      line-height: 16px;
+      white-space: nowrap;
     }
   }
+
+  td {
+    text-align: center;
+  }
 }
+
+
 
 .fade-enter-active,
 .fade-leave-active {
