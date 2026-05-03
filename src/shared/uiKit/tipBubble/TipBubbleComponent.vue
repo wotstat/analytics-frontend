@@ -162,10 +162,14 @@ watch(() => props.accepted, (accepted, old) => {
   }
 })
 
+let lastHoverTime = 0
 watch(isHover, (hover) => {
   isContentClicked.value = false
   if (!hover && canBeExtended.value) isHoverExistsInCycle.value = true
-  if (hover) emits('interact', 'hover')
+  if (hover) {
+    emits('interact', 'hover')
+    lastHoverTime = Date.now()
+  }
 })
 
 function clickAction() {
@@ -181,10 +185,12 @@ function onClick() {
 }
 
 function onMouseDown(downEvent: MouseEvent) {
-  animate(root.value, { transform: 'scale(0.95)' }, { duration: 0.2 })
+  if (Date.now() - lastHoverTime < 200) return
+
+  animate(bubble.value, { transform: 'scale(0.8)' }, { duration: 0.2 })
 
   document.addEventListener('mouseup', (upEvent: MouseEvent) => {
-    animate(root.value, { transform: 'scale(1)' }, { duration: 0.2 })
+    animate(bubble.value, { transform: 'scale(1)' }, { duration: 0.2 })
     const distance = Math.sqrt((downEvent.clientX - upEvent.clientX) ** 2 + (downEvent.clientY - upEvent.clientY) ** 2)
     if (distance < 20) clickAction()
   }, { once: true })

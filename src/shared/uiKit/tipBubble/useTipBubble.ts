@@ -2,6 +2,12 @@ import { computed, defineComponent, h, onMounted, onUnmounted, Ref, ref, watch }
 import TipBubble from './TipBubbleComponent.vue'
 import { useLocalStorage } from '@vueuse/core'
 
+declare global {
+  interface Window {
+    resetTipBubbles?: () => void
+  }
+}
+
 
 export type Options = {
   key: string,
@@ -335,5 +341,11 @@ export function useTipBubble(options: Options) {
     hide,
     accept,
     wrong
+  }
+}
+
+window.resetTipBubbles = function () {
+  for (const key in localStorage) {
+    if (key.startsWith(TIP_BUBBLE_STORAGE_PREFIX)) localStorage.removeItem(key)
   }
 }

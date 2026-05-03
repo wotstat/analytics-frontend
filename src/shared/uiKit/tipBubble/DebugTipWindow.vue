@@ -87,18 +87,15 @@
 
 
 <script setup lang="ts">
-import { Ref, ref } from 'vue'
+import { ref } from 'vue'
 import TipBubbleText from './TipBubbleText.vue'
-import { debugInfo, TIP_BUBBLE_STORAGE_PREFIX } from './useTipBubble'
+import { debugInfo } from './useTipBubble'
 
 const showDebugTips = ref(false)
 const displayed = ref(Array.from({ length: 5 }, () => false))
 
 function clearLocalStorage() {
-  Object.keys(localStorage).forEach(key => {
-    if (key.startsWith(TIP_BUBBLE_STORAGE_PREFIX)) localStorage.removeItem(key)
-  })
-
+  window.resetTipBubbles?.()
   location.reload()
 }
 
