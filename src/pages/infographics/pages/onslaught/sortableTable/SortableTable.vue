@@ -7,7 +7,8 @@
           'order-by': orderBy == j - 1,
           'asc': orderDirection == 'asc',
           'desc': orderDirection == 'desc',
-        }" @click="click(j - 1)">
+        }">
+          <button @click="click(j - 1)"></button>
           <slot v-bind="{ col: j - 1 }" name="head-cell"></slot>
           <div class="arrow"></div>
         </th>
@@ -102,16 +103,28 @@ table {
       th {
         position: relative;
 
+        button {
+          display: none;
+          position: absolute;
+          inset: 0;
+        }
+
         &.orderable {
           cursor: pointer;
-
           transition: background-color 0.1s;
 
-          &:hover {
-            background-color: rgba(255, 255, 255, 0.025);
+          button {
+            display: block;
+          }
 
-            &.order-by {
-              background-color: rgba(255, 255, 255, 0.04);
+
+          @media (hover: hover) {
+            &:hover {
+              background-color: rgba(255, 255, 255, 0.025);
+
+              &.order-by {
+                background-color: rgba(255, 255, 255, 0.04);
+              }
             }
           }
         }
