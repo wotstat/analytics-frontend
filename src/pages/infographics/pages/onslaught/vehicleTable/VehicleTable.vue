@@ -1,6 +1,6 @@
 <template>
   <Transition name="fade">
-    <section class="vehicle-statistics" v-if="displayed.length > 0">
+    <section class="vehicle-statistics" v-if="data.length > 0">
       <div class="header">
         <h3>Статистика танков<Transition name="fade-day"><span v-if="displayedDay">, день {{ displayedDay }}</span>
           </Transition>
@@ -11,52 +11,36 @@
       </div>
       <hr class="separator">
 
-      <div class="table-container nice-scrollbar">
-        <table>
-          <thead>
-            <tr>
-              <th>
-                <Icon :icon="'tank'" />
-              </th>
-              <th>
-                <Icon :icon="'battles'" />
-              </th>
-              <th>
-                <Icon :icon="'winrate'" />
-              </th>
-              <th>
-                <Icon :icon="'dmg'" />
-              </th>
-              <th>
-                <Icon :icon="'assist'" />
-              </th>
-              <th>
-                <Icon :icon="'prestige-points'" />
-              </th>
-              <th>
-                <Icon :icon="'kill'" />
-              </th>
-            </tr>
-          </thead>
+      <div class="table-container nice-scrollbar mt-font">
+        <SortableTable :data="data" :cols="7" :limit="displayLimit" :is-orderable="i => i !== 0" :default-order-by="1">
 
-          <tbody class="mt-font">
-            <tr v-for="vehicle in displayed" :key="vehicle.tag">
-              <th class="vehicle">
-                <VehicleImage :tag="vehicle.tag" class="image" :size="'preview'" :game />
-                <VehicleLevel :level="vehicle.level" />
-                <VehicleType :type="isVehicleType(vehicle.type) ? vehicle.type : 'any'" class="type" />
-                <p>{{ getTankName(vehicle.tag) }}</p>
-              </th>
-              <td>{{ vehicle.battles }}</td>
-              <td>{{ roundProcessor(vehicle.winrate * 100, 2) }}%</td>
-              <td>{{ roundProcessor(vehicle.damage) }}</td>
-              <td>{{ roundProcessor(vehicle.assist) }}</td>
-              <td>{{ roundProcessor(vehicle.prestigePoints) }}</td>
-              <td>{{ roundProcessor(vehicle.kills, 2) }}</td>
+          <template #head-cell="{ col }">
+            <Icon :icon="([
+              'tank',
+              'battles',
+              'winrate',
+              'dmg',
+              'assist',
+              'prestige-points',
+              'kill'
+            ] as const)[col]" />
+          </template>
 
-            </tr>
-          </tbody>
-        </table>
+          <template #data-cell="{ value, index, col }">
+            <th class="vehicle" v-if="col === 0">
+              <VehicleImage :tag="props.vehicleStats[index].tag" class="image" :size="'preview'" :game />
+              <VehicleLevel :level="props.vehicleStats[index].level" />
+              <VehicleType
+                :type="isVehicleType(props.vehicleStats[index].type) ? props.vehicleStats[index].type : 'any'"
+                class="type" />
+              <p>{{ getTankName(props.vehicleStats[index].tag, true) }}</p>
+            </th>
+            <td v-else-if="col == 2">{{ roundProcessor(value as number * 100, 2) }}%</td>
+            <td v-else-if="col == 6">{{ roundProcessor(value as number, 2) }}</td>
+            <td v-else>{{ roundProcessor(value as number) }}</td>
+          </template>
+
+        </SortableTable>
       </div>
     </section>
   </Transition>
@@ -74,6 +58,8 @@ import { getTankName } from '@/shared/i18n/i18n'
 import { roundProcessor } from '@/shared/utils/processors/processors'
 import { computed, ref } from 'vue'
 import { GameVendor } from '@/shared/game/wot'
+import SortableTable from '../sortableTable/SortableTable.vue'
+
 
 const SHOW_MORE_THRESHOLD = 5
 
@@ -85,13 +71,17 @@ const props = defineProps<{
 
 const showMore = ref(false)
 
-const displayed = computed(() => {
-  if (props.vehicleStats.length > SHOW_MORE_THRESHOLD && !showMore.value) {
-    return props.vehicleStats.sort((a, b) => b.battles - a.battles).slice(0, SHOW_MORE_THRESHOLD - 2)
-  }
+const data = computed(() => props.vehicleStats.map(v => [
+  v.tag,
+  v.battles,
+  v.winrate,
+  v.damage,
+  v.assist,
+  v.prestigePoints,
+  v.kills
+]))
 
-  return props.vehicleStats.sort((a, b) => b.battles - a.battles)
-})
+const displayLimit = computed(() => props.vehicleStats.length > SHOW_MORE_THRESHOLD && !showMore.value ? SHOW_MORE_THRESHOLD - 2 : undefined)
 
 
 </script>
@@ -135,64 +125,49 @@ hr {
 
 .table-container {
   overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
+  font-size: 14px;
 
   thead {
-    svg {
-      width: 40px;
-    }
+    th {
 
-    tr {
+      svg {
+        width: 40px;
+        display: block;
+        margin: 0 auto;
+      }
 
-      td:first-child,
-      th:first-child {
+      &:first-child {
         width: 25%;
       }
     }
   }
 
-  tbody {
-    tr {
-      &:nth-child(2n+1) {
-        background-color: rgba(248, 252, 255, 0.025);
-      }
+  .vehicle {
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+    font-weight: normal;
 
-      .vehicle {
-        display: flex;
-        align-items: center;
-        margin-left: 10px;
-        font-weight: normal;
-
-        .image {
-          height: 50px;
-          user-select: none;
-          pointer-events: none;
-        }
-
-        .type {
-          height: 16px;
-          margin: 0 3px;
-        }
-
-        p {
-          font-size: 14px;
-          line-height: 16px;
-          white-space: nowrap;
-        }
-      }
-
-      td {
-        text-align: center;
-      }
+    .image {
+      height: 50px;
+      user-select: none;
+      pointer-events: none;
     }
 
-    td {
+    .type {
+      height: 16px;
+      margin: 0 3px;
+    }
+
+    p {
       font-size: 14px;
+      line-height: 16px;
+      white-space: nowrap;
     }
+  }
+
+  td {
+    text-align: center;
   }
 }
 
