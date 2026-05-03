@@ -448,6 +448,7 @@ const currentRating = computed(() => {
 })
 
 watch(selectedDayIndex, (dayIndex) => {
+  if (navigator.maxTouchPoints > 0) return
   if (dayIndex != null) dayChangeTipBubble.value?.display()
   else dayChangeTipBubble.value?.hide()
 })
