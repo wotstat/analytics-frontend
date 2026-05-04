@@ -1,7 +1,8 @@
 <template>
   <div class="onslaught-page">
-    <Settings v-model:season="selectedSeason" v-model:nickname="nickname" :seasons="seasons.data ?? []" />
-    <SecondaryStat :qualification="qualificationStats" :currentRating="currentRating" :game="preferredGameOrDefault"
+    <Settings v-model:season="selectedSeason" v-model:nickname="nickname" v-model:region="selectedRegion"
+      :seasons="seasons.data ?? []" />
+    <SecondaryStat :qualification="qualificationStats" :currentRating="currentRating" :game="game"
       :season="selectedSeason || 'latest'" />
     <div class="chart">
       <TipSelectDay class="tip-bubble" ref="daySelectTipBubble" :display="displayedTipSelectDay" />
@@ -11,9 +12,9 @@
       <Loader :isLoading="isLoading" />
     </div>
 
-    <MainStat :game="preferredGameOrDefault" :items="mainStats" @selectDay="selectDay" />
-    <VehicleTable class="vehicle-statistics" :game="preferredGameOrDefault" :vehicleStats :displayedDay />
-    <MapsTable class="maps-statistics" :game="preferredGameOrDefault" :mapsStats :displayedDay />
+    <MainStat :game="game" :items="mainStats" @selectDay="selectDay" />
+    <VehicleTable class="vehicle-statistics" :game="game" :vehicleStats :displayedDay />
+    <MapsTable class="maps-statistics" :game="game" :mapsStats :displayedDay />
   </div>
 </template>
 
@@ -22,8 +23,7 @@
 import { computed, ref, shallowRef, watch } from 'vue'
 import DayChart from './dayChart/DayChart.vue'
 import { dateToDbDate, LONG_CACHE_SETTINGS, query, queryAsync, queryComputedFirst } from '@/db'
-import { preferredGameOrDefault } from '@/shared/global/globalPreferred'
-import { gameToRegion } from '@/shared/game/wot'
+import { gameToRegion, regionToGame } from '@/shared/game/wot'
 import Settings from './settings/Settings.vue'
 import { onKeyStroke, refDebounced, useElementBounding } from '@vueuse/core'
 import { DayChartData } from './types'
@@ -43,7 +43,6 @@ import SecondaryStat from './secondaryStat/SecondaryStat.vue'
 
 const ONE_HOUR = 60 * 60 * 1000
 const ONE_DAY = 24 * ONE_HOUR
-const COMP7_ISO_HOUR_OFFSET = -3
 
 const dayChangeTipBubble = ref<InstanceType<typeof TipKeyboardChangeDay> | null>(null)
 const daySelectTipBubble = ref<InstanceType<typeof TipSelectDay> | null>(null)
@@ -51,9 +50,11 @@ const dayChart = ref<HTMLElement | null>(null)
 
 const selectedDayIndex = ref<number | null>(null)
 const selectedSeason = ref<string | null>(null)
+const selectedRegion = ref<'RU' | 'EU' | 'NA' | 'ASIA'>('RU')
 const nickname = ref<string>('')
 const debouncedNickname = refDebounced(nickname, 500)
 const isLoading = ref(false)
+const game = computed(() => regionToGame(selectedRegion.value))
 
 function selectDay(index: number) {
   daySelectTipBubble.value?.accept()
@@ -106,15 +107,20 @@ const seasons = queryAsync<{ region: string, season: string, start: string, end:
         min(toStartOfDay(dateTime - interval 4 hour)) as start,
         max(toStartOfDay(dateTime - interval 4 hour)) as end
   from Event_OnComp7Info
-  where region in ('RU', 'EU')
+  where region in ('RU', 'EU', 'NA', 'ASIA')
   group by region, season
   order by start desc
 `, { settings: LONG_CACHE_SETTINGS })
 
+watch(seasons, () => {
+  const seasonList = seasons.value?.data.filter(s => s.region === selectedRegion.value).map(s => s.season) ?? []
+  selectedSeason.value = seasonList.length > 0 ? seasonList[0] : null
+})
+
 const seasonInterval = computed(() => {
   if (!selectedSeason.value) return null
   if (!seasons.value.data) return null
-  const season = seasons.value.data.find(s => s.season === selectedSeason.value && s.region === gameToRegion(preferredGameOrDefault.value))
+  const season = seasons.value.data.find(s => s.season === selectedSeason.value && s.region === selectedRegion.value)
   if (!season) return null
 
   const start = new Date(season.start + 'Z')
@@ -133,7 +139,7 @@ const qualificationStatistics = shallowRef<{ battleIndex: number, result: 'win' 
 
 const eliteRatingStatistics = queryComputedFirst<{ top1: number, eliteThreshold: number, top10: number, top100: number }>(() => `
   with
-    '${gameToRegion(preferredGameOrDefault.value)}' as REGION,
+    '${selectedRegion.value}' as REGION,
     '${seasonInterval.value ? dateToDbDate(seasonInterval.value?.start) : '2000-01-01'}' as START_DATE,
     '${seasonInterval.value ? dateToDbDate(seasonInterval.value?.end) : '2000-01-01'}' as END_DATE,
     (select max(recalculationTime) from Comp7LeaderboardByRank where region = REGION and recalculationTime between START_DATE and END_DATE + interval 1 day) as latestTime
@@ -148,7 +154,7 @@ async function load(abortSignal: AbortSignal) {
   if (abortSignal.aborted) return
   const startDate = dateToDbDate(seasonInterval.value.start)
   const endDate = dateToDbDate(seasonInterval.value.end)
-  const region = gameToRegion(preferredGameOrDefault.value)
+  const region = selectedRegion.value
   const nickName = debouncedNickname.value
 
   if (!nickName) return
@@ -340,7 +346,7 @@ async function load(abortSignal: AbortSignal) {
   mapsStatistics.value = mapsStatisticsRes.data
 }
 
-watch([seasonInterval, nickname, preferredGameOrDefault], () => {
+watch([seasonInterval, nickname, selectedRegion], () => {
   statistics.value = null
   vehicleStatistics.value = null
   mapsStatistics.value = null
@@ -348,7 +354,7 @@ watch([seasonInterval, nickname, preferredGameOrDefault], () => {
   isLoading.value = false
 })
 
-watchWithAbortSignal([seasonInterval, debouncedNickname, preferredGameOrDefault], signal => load(signal))
+watchWithAbortSignal([seasonInterval, debouncedNickname, selectedRegion], signal => load(signal))
 
 
 const days = computed(() => {
@@ -358,7 +364,7 @@ const days = computed(() => {
   const statByDay = new Map(stat?.map(s => [s.day, s]) ?? [])
   const maxRating = Math.max(...stat?.map(s => s.lastPlayerRating || s.lastRating) ?? [0], 0)
   const startRating = stat.find(s => s.totalBattles > 0 && s.firstRating[0] != 0)?.firstRating[0] ?? 0
-  const game = preferredGameOrDefault.value
+  const game = regionToGame(selectedRegion.value)
   const maxEnergyLimit = getMaxEnergyLimit(game)
 
   const result = []
@@ -391,7 +397,7 @@ const days = computed(() => {
 
     if (stat?.totalBattles === 0) {
       if (energy > 0) energy -= 1
-      else lastRating -= getRatingInactiveDecreasePerDay(getRankByRating(lastRating, game, stat?.lastEliteRating), game)
+      else lastRating -= getRatingInactiveDecreasePerDay(getRankByRating(lastRating, game, eliteRating > 0 ? eliteRating : undefined), game)
     }
 
     const isFuture = seasonInterval.value.start.getTime() + i * ONE_DAY > Date.now() + isoHourOffset * ONE_HOUR
@@ -413,7 +419,7 @@ const days = computed(() => {
       rating: lastRating,
       eliteRating,
       maxRating,
-      ratingPercent: timeline == 'future' && firstDayPlayed == -1 ? 0.3 : ratingPercent,
+      ratingPercent: timeline == 'future' && firstDayPlayed == -1 ? 0 : ratingPercent,
       timeline,
       stat: stat,
       energyDelta
@@ -426,8 +432,8 @@ const days = computed(() => {
 const barsData = computed<DayChartData[]>(() => days.value.map(d => ({
   relativeRating: d.ratingPercent,
   timeline: d.timeline,
-  rank: getRankByRating(d.rating, preferredGameOrDefault.value, d.eliteRating > 0 ? d.eliteRating : undefined),
-  divisionLetter: getDivisionLetterByRating(d.rating, preferredGameOrDefault.value),
+  rank: getRankByRating(d.rating, game.value, d.eliteRating > 0 ? d.eliteRating : undefined),
+  divisionLetter: getDivisionLetterByRating(d.rating, game.value),
   leaderboardPosition: d.stat?.lastPlayerRank || d.stat?.lastLeaderboardPosition || null,
   dayIndex: d.dayIndex,
 })))
@@ -437,7 +443,7 @@ const selectedDay = computed(() => {
   return days.value.find(d => d.dayIndex === selectedDayIndex.value)?.day ?? null
 })
 
-const mainStats = refDebounced(useMainStat(days, preferredGameOrDefault, selectedSeason, selectedDayIndex), 1)
+const mainStats = refDebounced(useMainStat(days, game, selectedSeason, selectedDayIndex), 1)
 const vehicleStats = refDebounced(useVehicleTable(computed(() => vehicleStatistics.value ?? []), selectedDay), 1)
 const mapsStats = refDebounced(useMapsTable(computed(() => mapsStatistics.value ?? []), selectedDay), 1)
 

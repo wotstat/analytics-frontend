@@ -21,7 +21,7 @@ const REGION_TIME_OFFSETS: Record<string, number> = {
 
 export function getSeasonDuration(season: string, region: string) {
   const overrideLength = SEASON_LENGTHS[`${region.toLowerCase()}:${season}` as keyof typeof SEASON_LENGTHS]
-  const seasonLength = overrideLength ?? (region == 'EU' ? EU_SEASON_LENGTH : RU_SEASON_LENGTH)
+  const seasonLength = overrideLength ?? (region == 'RU' ? RU_SEASON_LENGTH : EU_SEASON_LENGTH)
   return seasonLength
 }
 

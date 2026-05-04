@@ -3,6 +3,7 @@
     'selected': props.selected,
     [`rank-${props.value.rank}`]: true,
     [props.value.timeline]: true,
+    'unknown-rating': props.value.relativeRating == 0
   }" :style="{
     height: `${props.value.relativeRating * 100}%`
   }">
@@ -316,6 +317,19 @@ const leaderboardPosition = computed(() => {
 
     .letter {
       display: none;
+    }
+
+    &.unknown-rating {
+      background: #9898981c;
+
+      .shadow {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: -80px;
+        height: 80px;
+        background: linear-gradient(0deg, #9898981c 0%, #98989800 100%);
+      }
     }
   }
 
