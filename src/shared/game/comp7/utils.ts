@@ -10,6 +10,15 @@ const SEASON_LENGTHS = {
   'eu:comp7_5_2': 40 * ONE_DAY,
 }
 
+// сдвиг времени относительно UTC для переключения дня. toStartOfDay(recalculationTime - interval OFFSET hour)
+const REGION_TIME_OFFSETS: Record<string, number> = {
+  'RU': -3,
+  'EU': -9,
+  'ASIA': -8,
+  'NA': -20,
+  'CN': -4
+}
+
 export function getSeasonDuration(season: string, region: string) {
   const overrideLength = SEASON_LENGTHS[`${region.toLowerCase()}:${season}` as keyof typeof SEASON_LENGTHS]
   const seasonLength = overrideLength ?? (region == 'EU' ? EU_SEASON_LENGTH : RU_SEASON_LENGTH)
@@ -25,9 +34,55 @@ export function getSeasonQualificationCount(season: string, region: string) {
 }
 
 export function getRegionIsoHourOffset(region: string) {
-  if (region == 'RU') return -3
-  if (region == 'EU') return -2
-  return -3
+  return REGION_TIME_OFFSETS[region.toUpperCase()] ?? -3
+}
+
+export function getMaxEnergyLimit(game: GameVendor = 'mt'): number {
+  return game == 'mt' ? 7 : 14
+}
+
+export function getEnergyPerBattle(lastMaxRank: Rank, rankBeforeBattle: Rank, rankAfterBattle: Rank, game: GameVendor = 'mt'): number {
+  if (game == 'mt') {
+    const additionalEnergy = compareRanks('second', rankAfterBattle) < 0 && compareRanks(lastMaxRank, rankAfterBattle) < 0 ? 2 : 0
+    switch (rankBeforeBattle) {
+      case 'qual': return 0
+      case 'first': return 0
+      case 'second': return additionalEnergy
+      case 'third': return additionalEnergy + 5
+      case 'fourth': return additionalEnergy + 5
+      case 'fifth': return additionalEnergy + 1
+      case 'sixth': return additionalEnergy + 1
+      default: return 0 as never
+    }
+  } else {
+    return 1
+  }
+}
+
+export function getRatingInactiveDecreasePerDay(rank: Rank, game: GameVendor = 'mt'): number {
+  if (game == 'mt') {
+    switch (rank) {
+      case 'qual': return 0
+      case 'first': return 0
+      case 'second': return 0
+      case 'third': return 15
+      case 'fourth': return 25
+      case 'fifth': return 50
+      case 'sixth': return 100
+      default: return 0 as never
+    }
+  } else {
+    switch (rank) {
+      case 'qual': return 0
+      case 'first': return 0
+      case 'second': return 0
+      case 'third': return 20
+      case 'fourth': return 25
+      case 'fifth': return 50
+      case 'sixth': return 75
+      default: return 0 as never
+    }
+  }
 }
 
 export type Rank = 'qual' | 'first' | 'second' | 'third' | 'fourth' | 'fifth' | 'sixth'
@@ -84,6 +139,11 @@ export const rankWgMap: Record<number, Division> = {
 
 const reversedRankWgMap = Object.fromEntries(Object.entries(rankWgMap).map(([key, value]) => [value, parseInt(key)]))
 const reversedRanksLestaMap = Object.fromEntries(Object.entries(ranksLestaMap).map(([key, value]) => [value, parseInt(key)]))
+
+export function compareRanks(rank1: Rank, rank2: Rank): number {
+  const rankOrder: Rank[] = ['qual', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth']
+  return rankOrder.indexOf(rank1) - rankOrder.indexOf(rank2)
+}
 
 export function getDivisionByRating(rating: number, game: GameVendor = 'mt', eliteRating: number | null = null) {
   if (rating == 0) return 'qual'

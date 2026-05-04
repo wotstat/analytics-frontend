@@ -28,7 +28,7 @@ import Settings from './settings/Settings.vue'
 import { onKeyStroke, refDebounced, useElementBounding } from '@vueuse/core'
 import { DayChartData } from './types'
 import MainStat from './mainStat/MainStat.vue'
-import { getDivisionLetterByRating, getRankByRating, getRegionIsoHourOffset, getSeasonDuration, getSeasonQualificationCount } from '@/shared/game/comp7/utils'
+import { compareRanks, getDivisionLetterByRating, getEnergyPerBattle, getMaxEnergyLimit, getRankByRating, getRatingInactiveDecreasePerDay, getRegionIsoHourOffset, getSeasonDuration, getSeasonQualificationCount, Rank } from '@/shared/game/comp7/utils'
 import { useMainStat, type StatisticRes } from './mainStat/useMainStat'
 import VehicleTable from './vehicleTable/VehicleTable.vue'
 import { watchWithAbortSignal } from '@/shared/utils/core'
@@ -358,15 +358,19 @@ const days = computed(() => {
   const statByDay = new Map(stat?.map(s => [s.day, s]) ?? [])
   const maxRating = Math.max(...stat?.map(s => s.lastPlayerRating || s.lastRating) ?? [0], 0)
   const startRating = stat.find(s => s.totalBattles > 0 && s.firstRating[0] != 0)?.firstRating[0] ?? 0
+  const game = preferredGameOrDefault.value
+  const maxEnergyLimit = getMaxEnergyLimit(game)
 
   const result = []
   let lastRating = 0
   let firstDayPlayed = -1
   let eliteRating = -1
   let lastQualBattleIndex = -1
+  let energy = 0
+  let maxRank = 'qual' as Rank
 
-  const seasonQualificationCount = getSeasonQualificationCount(selectedSeason.value ?? 'latest', gameToRegion(preferredGameOrDefault.value))
-  const isoHourOffset = getRegionIsoHourOffset(gameToRegion(preferredGameOrDefault.value))
+  const seasonQualificationCount = getSeasonQualificationCount(selectedSeason.value ?? 'latest', gameToRegion(game))
+  const isoHourOffset = getRegionIsoHourOffset(gameToRegion(game))
 
   for (let i = 0; i < seasonInterval.value.length; i++) {
     const isoDate = new Date(seasonInterval.value.start.getTime() + i * ONE_DAY).toISOString()
@@ -377,6 +381,18 @@ const days = computed(() => {
     if (stat?.totalBattles && firstDayPlayed == -1) firstDayPlayed = i
     if (stat?.lastEliteRating) eliteRating = stat.lastEliteRating
     if (stat?.maxQualBattleIndex != undefined && stat.qualificationBattles) lastQualBattleIndex = Math.max(lastQualBattleIndex, stat.maxQualBattleIndex)
+
+    const rankBeforeBattle = getRankByRating(stat?.firstRating[0] ?? lastRating, game, stat?.firstRating[1] || undefined)
+    const rankAfterBattle = getRankByRating(stat?.maxRating[0] ?? lastRating, game, stat?.maxRating[1] || undefined)
+
+    const energyDelta = getEnergyPerBattle(maxRank, rankBeforeBattle, rankAfterBattle, game) * (stat?.totalBattles ?? 0)
+    maxRank = compareRanks(maxRank, rankAfterBattle) > 0 ? maxRank : rankAfterBattle
+    energy = Math.min(maxEnergyLimit, energy + energyDelta)
+
+    if (stat?.totalBattles === 0) {
+      if (energy > 0) energy -= 1
+      else lastRating -= getRatingInactiveDecreasePerDay(getRankByRating(lastRating, game, stat?.lastEliteRating), game)
+    }
 
     const isFuture = seasonInterval.value.start.getTime() + i * ONE_DAY > Date.now() + isoHourOffset * ONE_HOUR
     const timeline: DayChartData['timeline'] = isFuture ? 'future' : firstDayPlayed == -1 ? 'past' : stat?.totalBattles ? 'played' : 'active'
@@ -399,9 +415,13 @@ const days = computed(() => {
       maxRating,
       ratingPercent: timeline == 'future' && firstDayPlayed == -1 ? 0.3 : ratingPercent,
       timeline,
-      stat: stat
+      stat: stat,
+      energyDelta
     })
   }
+
+  console.log(result.map(r => ({ day: r.day, timeline: r.timeline, energyDelta: r.energyDelta })))
+
 
   return result
 })
