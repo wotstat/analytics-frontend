@@ -420,9 +420,6 @@ const days = computed(() => {
     })
   }
 
-  console.log(result.map(r => ({ day: r.day, timeline: r.timeline, energyDelta: r.energyDelta })))
-
-
   return result
 })
 
