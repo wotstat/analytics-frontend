@@ -7,7 +7,8 @@
 
     <div class="progress-bar mt-font">
       <div class="divisions">
-        <div class="division" v-for="letter in (divisionLetters.length ? divisionLetters : [''])" :key="letter">
+        <div class="division" v-for="letter in (divisionLetters.length ? divisionLetters : [''])" :key="letter"
+          :class="{ 'current': letter === currentDivisionLetter }">
           <div class="letter">{{ letter }}</div>
         </div>
       </div>
@@ -32,7 +33,7 @@
 
 <script setup lang="ts">
 import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
-import { getDivisionsByRank, getNextDivision, getRankByRating, getRatingForDivision, getSeasonQualificationCount } from '@/shared/game/comp7/utils'
+import { getDivisionByRating, getDivisionsByRank, getNextDivision, getRankByRating, getRatingForDivision, getSeasonQualificationCount } from '@/shared/game/comp7/utils'
 import { gameToRegion, GameVendor } from '@/shared/game/wot'
 import { computed } from 'vue'
 
@@ -50,6 +51,12 @@ const props = defineProps<{
 
 const rank = computed(() => getRankByRating(props.rating ?? 0, props.game, props.eliteRating))
 const divisions = computed(() => getDivisionsByRank(rank.value))
+const currentDivisionLetter = computed(() => {
+  if (!divisions.value.length) return null
+  const currentDivision = getDivisionByRating(props.rating ?? 0, props.game, props.eliteRating)
+  if (currentDivision.includes('_')) return currentDivision.split('_')[1]
+  return '-'
+})
 
 const divisionLetters = computed(() => {
   if (divisions.value.length == 0 || props.eliteRating == 0 || props.rating == null) return []
@@ -159,7 +166,25 @@ const progress = computed(() => {
           line-height: 1;
           width: 100%;
           font-size: 18px;
-          color: #fffef7;
+          color: #fffef7eb;
+          z-index: 1;
+        }
+
+        &.current {
+          &::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: linear-gradient(to top in oklab, rgba(0, 119, 255, 0.05) 0%, transparent 100%);
+          }
+
+          .letter {
+            color: #ffffff;
+            filter: drop-shadow(0px 0px 5px rgb(59, 173, 255));
+          }
         }
       }
     }
