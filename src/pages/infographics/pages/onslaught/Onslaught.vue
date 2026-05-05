@@ -458,17 +458,14 @@ const qualificationStats = refDebounced(computed(() => {
   }
 }), 1)
 
-const currentRating = computed(() => {
-  const lastPlayedDay = [...days.value].reverse().find(d => d.timeline === 'played')
-  return {
-    rating: lastPlayedDay?.rating ?? null,
-    eliteRating: eliteRatingStatistics.value.data.eliteThreshold,
-    qualIndex: Math.max(...days.value.map(d => d.stat?.qualificationBattles ? d.stat.maxQualBattleIndex : -1), -1),
-    top1: eliteRatingStatistics.value.data.top1,
-    top10: eliteRatingStatistics.value.data.top10,
-    top100: eliteRatingStatistics.value.data.top100,
-  }
-})
+const currentRating = computed(() => ({
+  rating: days.value.at(-1)?.rating ?? null,
+  eliteRating: eliteRatingStatistics.value.data.eliteThreshold,
+  qualIndex: Math.max(...days.value.map(d => d.stat?.qualificationBattles ? d.stat.maxQualBattleIndex : -1), -1),
+  top1: eliteRatingStatistics.value.data.top1,
+  top10: eliteRatingStatistics.value.data.top10,
+  top100: eliteRatingStatistics.value.data.top100,
+}))
 
 watch(selectedDayIndex, (dayIndex) => {
   if (navigator.maxTouchPoints > 0) return
