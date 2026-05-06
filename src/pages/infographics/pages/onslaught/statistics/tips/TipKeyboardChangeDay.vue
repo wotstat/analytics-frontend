@@ -1,7 +1,7 @@
 <template>
   <TipBubble ref="bubble" :bubbleKey="'onslaught-day-chart-keyboard'" :groupKey="'onslaught-chart'" :displayDelay="800"
     :showBubble="{ type: 'after-wrong', count: 2 }"
-    :autoExtend="{ type: 'after-wrong', count: 5, interactSnooze: 20, hideSnooze: 'reset' }" v-slot="{ direction }">
+    :autoExtend="{ type: 'after-wrong', count: 4, interactSnooze: 20, hideSnooze: 'reset' }" v-slot="{ direction }">
     <p class="content">
       <span class="spacer" :class="`align-${direction}`"></span>
       Используйте клавиши
