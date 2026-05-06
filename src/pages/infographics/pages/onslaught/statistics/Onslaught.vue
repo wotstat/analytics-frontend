@@ -104,8 +104,8 @@ const displayedDay = computed(() => !isChartDayVisible.value && selectedDayIndex
 
 const seasons = queryAsync<{ region: string, season: string, start: string, end: string }>(`
   select region, season,
-        min(toStartOfDay(dateTime - interval 4 hour)) as start,
-        max(toStartOfDay(dateTime - interval 4 hour)) as end
+        min(toStartOfDay(dateTime + interval ${getRegionIsoHourOffset(selectedRegion.value)} hour)) as start,
+        max(toStartOfDay(dateTime + interval ${getRegionIsoHourOffset(selectedRegion.value)} hour)) as end
   from Event_OnComp7Info
   where region in ('RU', 'EU', 'NA', 'ASIA')
   group by region, season
