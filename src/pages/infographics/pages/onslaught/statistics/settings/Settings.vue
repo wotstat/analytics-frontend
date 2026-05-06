@@ -44,11 +44,6 @@ const selectedRegion = defineModel<'RU' | 'EU' | 'NA' | 'ASIA'>('region')
 const nickname = defineModel<string>('nickname')
 const currentSeasons = computed(() => props.seasons.filter(s => s.region === selectedRegion.value) || [])
 
-// watch(selectedRegion, () => {
-//   if (!currentSeasons.value?.length) return
-//   selectedSeason.value = currentSeasons.value[0].season
-// }, { immediate: true })
-
 function changeRegion(target: 'RU' | 'EU' | 'NA' | 'ASIA') {
   selectedRegion.value = target
   if (!currentSeasons.value?.length) return

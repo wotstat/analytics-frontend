@@ -39,9 +39,16 @@ const routes = [
       { path: 'distribution', component: Distribution },
       { path: 'lootbox', component: Lootbox, meta: { hideTankList: true } },
       {
-        path: 'onslaught', component: asyncPage(() => import('./pages/infographics/pages/onslaught/Onslaught.vue')), meta: {
+        path: 'onslaught', component: asyncPage(() => import('./pages/infographics/pages/onslaught/statistics/Onslaught.vue')), meta: {
           hideTankList: true,
           customTitle: 'Статистика Натиска',
+          preventRemountOnStatChange: true,
+        }
+      },
+      {
+        path: 'onslaught-leaderboard', component: asyncPage(() => import('./pages/infographics/pages/onslaught/leaderboard/Leaderboard.vue')), meta: {
+          hideTankList: true,
+          customTitle: 'Таблица лидеров Натиска',
           preventRemountOnStatChange: true,
         }
       },

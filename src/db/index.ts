@@ -27,6 +27,9 @@ export const clickhouse = createClient({
   clickhouse_settings: {
     max_temporary_columns: '1000',
     add_http_cors_header: 1
+  },
+  compression: {
+    response: true
   }
 })
 
