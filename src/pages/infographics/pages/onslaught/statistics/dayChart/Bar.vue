@@ -111,13 +111,13 @@ const leaderboardPosition = computed(() => {
   }
 
   &.rank-fifth {
-    --top-color: #dcfff8;
-    --background: linear-gradient(-10deg, #41ffd937 0%, #41ffd9 100%);
-    --hover-background: linear-gradient(-10deg, #9effec62 0%, #41ffd9 100%);
-    --selected-background: linear-gradient(-45deg, #ffffff 0%, #41ffd9 100%);
-    --shadow-color: linear-gradient(0deg, #41ffd923 0%, #41ffd900 100%);
-    --selected-line: #dffff9;
-    --selected-line-shadow: #41ffd9;
+    --top-color: #dceeff;
+    --background: linear-gradient(-10deg, #419dff37 0%, #63afff 100%);
+    --hover-background: linear-gradient(-10deg, #8bc1ff76 0%, #419dff 100%);
+    --selected-background: linear-gradient(-45deg, #ffffff 0%, #419dff 100%);
+    --shadow-color: linear-gradient(0deg, #419dff23 0%, #419dff00 100%);
+    --selected-line: #dff2ff;
+    --selected-line-shadow: #419dff;
   }
 
   &.rank-sixth {

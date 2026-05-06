@@ -1,4 +1,4 @@
-import { computed, defineComponent, h, onMounted, onUnmounted, Ref, ref, watch } from 'vue'
+import { computed, defineComponent, h, onMounted, onUnmounted, Ref, ref, watch, watchEffect } from 'vue'
 import TipBubble from './TipBubbleComponent.vue'
 import { useLocalStorage } from '@vueuse/core'
 
@@ -175,7 +175,7 @@ export function useTipBubble(options: Options) {
     lastInteractWrong: 0,
     lastHideWrong: 0,
     accepted: false
-  }, { listenToStorageChanges: true, deep: true })
+  }, { listenToStorageChanges: true, deep: true, flush: 'post' })
 
   const shouldShowBubble = computed(() => {
     const showBubble = options.showBubble
