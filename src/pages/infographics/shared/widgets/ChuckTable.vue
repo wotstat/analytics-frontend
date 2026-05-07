@@ -51,11 +51,11 @@
           <td>{{ item.spgCount }}</td>
 
           <td>
-            <div class="time-align">
-              <div class="left">{{ timeProcessor(item.duration)[0] }}</div>
-              <div>:</div>
-              <div class="right">{{ timeProcessor(item.duration)[1] }}</div>
-            </div>
+            <span class="time-align" :style="{
+              marginLeft: item.duration > 600 ? '-0.61em' : '0'
+            }">
+              {{ timeProcessor(item.duration)[0] }}:{{ timeProcessor(item.duration)[1] }}
+            </span>
           </td>
           <td class="text-effect"
             :class="getRelativeColor(part.dmgAvg, item.players.reduce((acc, t) => acc + t[2], 0))">
@@ -218,20 +218,8 @@ td {
 }
 
 .time-align {
-  display: flex;
-  justify-content: center;
-
-  .left {
-    width: 50%;
-    text-align: right;
-  }
-
-  .right {
-    width: 50%;
-    text-align: left;
-  }
+  font-variant-numeric: tabular-nums;
 }
-
 
 table {
   width: 100%;
