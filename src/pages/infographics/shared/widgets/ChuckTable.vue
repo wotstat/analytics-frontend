@@ -51,9 +51,7 @@
           <td>{{ item.spgCount }}</td>
 
           <td>
-            <span class="time-align" :style="{
-              marginLeft: item.duration > 600 ? '-0.61em' : '0'
-            }">
+            <span class="time-align" :style="{ marginLeft: item.duration > 600 ? '-0.61em' : '0' }">
               {{ timeProcessor(item.duration)[0] }}:{{ timeProcessor(item.duration)[1] }}
             </span>
           </td>
@@ -81,11 +79,9 @@
           <th class="l-b">{{ part.healthSum }}</th>
           <th>{{ part.spgSum }}</th>
           <th>
-            <div class="time-align">
-              <div class="left">{{ timeProcessor(part.timeSum)[0] }}</div>
-              <div>:</div>
-              <div class="right">{{ timeProcessor(part.timeSum)[1] }}</div>
-            </div>
+            <span class="time-align" :style="{ marginLeft: part.timeSum > 600 ? '-0.61em' : '0' }">
+              {{ timeProcessor(part.timeSum)[0] }}:{{ timeProcessor(part.timeSum)[1] }}
+            </span>
           </th>
           <th>{{ part.dmgSum }}</th>
           <th>{{ part.killSum }}</th>
@@ -106,11 +102,9 @@
           <th class="l-b"> {{ roundProcessor(part.healthAvg) }}</th>
           <th>{{ roundProcessor(part.spgAvg, 2) }}</th>
           <th>
-            <div class="time-align">
-              <div class="left">{{ timeProcessor(part.timeAvg)[0] }}</div>
-              <div>:</div>
-              <div class="right">{{ timeProcessor(part.timeAvg)[1] }}</div>
-            </div>
+            <span class="time-align" :style="{ marginLeft: part.timeAvg > 600 ? '-0.61em' : '0' }">
+              {{ timeProcessor(part.timeAvg)[0] }}:{{ timeProcessor(part.timeAvg)[1] }}
+            </span>
           </th>
           <th>{{ roundProcessor(part.dmgAvg) }}</th>
           <th>{{ roundProcessor(part.killAvg, 2) }}</th>
