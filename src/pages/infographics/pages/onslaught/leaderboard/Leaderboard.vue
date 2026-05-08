@@ -171,21 +171,23 @@ table {
         background: rgba(255, 255, 255, 0.03);
       }
 
+      @media (hover: hover) {
 
-      &:hover {
-        background: rgba(255, 255, 255, 0.03);
+        &:hover {
+          background: rgba(255, 255, 255, 0.03);
 
-        // &::after {
-        //   content: '';
-        //   position: absolute;
-        //   left: -4px;
-        //   top: 0;
-        //   bottom: 0;
-        //   background: var(--blue-color);
-        //   width: 4px;
-        //   border-top-left-radius: 3px;
-        //   border-bottom-left-radius: 3px;
-        // }
+          // &::after {
+          //   content: '';
+          //   position: absolute;
+          //   left: -4px;
+          //   top: 0;
+          //   bottom: 0;
+          //   background: var(--blue-color);
+          //   width: 4px;
+          //   border-top-left-radius: 3px;
+          //   border-bottom-left-radius: 3px;
+          // }
+        }
       }
 
 
