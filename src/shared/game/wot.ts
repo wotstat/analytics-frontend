@@ -59,3 +59,11 @@ export function regionToGame(region: 'RU' | 'EU' | 'NA' | (string & {})): GameVe
 }
 
 export const customBattleModesKeys = Object.keys(customBattleModes) as (keyof typeof customBattleModes)[]
+
+export function accountLink(bdid: number, name: string, game: GameVendor) {
+  if (game === 'mt') {
+    return `https://tanki.su/ru/community/accounts/${bdid}-${name}/`
+  } else {
+    return `https://worldoftanks.eu/en/community/accounts/${bdid}-${name}/`
+  }
+}
