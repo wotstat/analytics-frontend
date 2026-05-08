@@ -18,55 +18,19 @@
 
       <tbody>
         <template v-for="line in dataResult.data" :key="line.name">
-          <tr @click="click(line.name)" :class="{
+          <LeaderboardLine :line="line" :game="game" @click="click(line.name)" :class="{
             'selected': selectedName == line.name,
-          }">
-            <td class="rank">
-              <span class="value">{{ spaceProcessor(line.lastRank) }}</span>
-              <span v-if="line.lastDayRank == 0" class="new">NEW</span>
-              <span v-else-if="line.lastDayRank - line.lastRank != 0" class="delta" :class="{
-                'up': line.lastDayRank - line.lastRank > 0,
-                'down': line.lastDayRank - line.lastRank < 0,
-              }">
-                <TriangleUp class="triangle" /> {{ Math.abs(line.lastDayRank - line.lastRank) }}
-              </span>
-              <span v-else class="no-change">–</span>
-            </td>
-
-            <td class="player-name">
-              <span class="name">{{ line.name }}</span>
-              <span class="clan-tag" :style="{
-                color: `#${line.clanColor.toString(16).padStart(6, '0')}`,
-              }" v-if="line.clan"> [{{ line.clan }}]</span>
-            </td>
-
-            <td class="battles-today">
-              <span v-if="line.lastDayRank != 0 && line.lastBattlesCount - line.lastDayBattlesCount != 0"
-                class="battles-delta">
-                {{ line.lastBattlesCount - line.lastDayBattlesCount }}
-              </span>
-              <span v-else>–</span>
-            </td>
-
-            <td class="battles-total">
-              <span>{{ line.lastBattlesCount }}</span>
-            </td>
-
-            <td class="rating">
-              <span class="value">{{ spaceProcessor(line.lastRating) }}</span>
-              <span v-if="line.lastDayRank == 0" class="new">NEW</span>
-              <span v-else-if="line.lastRating - line.lastDayRating != 0" class="delta" :class="{
-                'up': line.lastRating - line.lastDayRating > 0,
-                'down': line.lastRating - line.lastDayRating < 0,
-              }">
-                <TriangleUp class="triangle" /> {{ Math.abs(line.lastRating - line.lastDayRating) }}
-              </span>
-              <span v-else class="no-change">–</span>
-            </td>
-          </tr>
+          }" />
           <tr v-if="selectedName == line.name" class="details">
             <td colspan="6">
-              <!-- Additional details for the selected player -->
+              <div class="charts">
+                <div class="chart">
+                  <h3>Очки по дням</h3>
+                </div>
+                <div class="chart">
+                  <h3>Бои по дням</h3>
+                </div>
+              </div>
             </td>
           </tr>
         </template>
@@ -79,15 +43,16 @@
 <script setup lang="ts">
 import { loading, queryComputed } from '@/db'
 import { refDebouncedCheck } from '@/shared/utils/refDebouncedCheck'
-import { ref } from 'vue'
-
-import TriangleUp from './assets/triangle-up.svg'
-import { spaceProcessor } from '@/shared/utils/processors/useSpaceProcessor'
+import { computed, ref } from 'vue'
+import LeaderboardLine from './LeaderboardLine.vue'
+import { regionToGame } from '@/shared/game/wot'
 
 const props = defineProps<{}>()
 
 const page = ref(1)
 const selectedName = ref<string | null>(null)
+const region = ref<'RU' | 'NA' | 'EU' | 'ASIA'>('RU')
+const game = computed(() => regionToGame(region.value))
 
 const data = queryComputed<{
   lastRank: number,
@@ -95,16 +60,17 @@ const data = queryComputed<{
   lastRating: number,
   firstRating: number,
   name: string,
+  bdid: number,
   clan: string,
   clanColor: number,
   lastBattlesCount: number,
   lastDayBattlesCount: number,
   lastDayRating: number
 }>(() => `
-  select lastRank, lastDayRank, lastRating, firstRating, name, clan, clanColor,
+  select lastRank, lastDayRank, lastRating, firstRating, name, bdid, clan, clanColor,
     lastBattlesCount, lastDayBattlesCount, lastDayRating
   from Comp7LeaderboardDailyByRank
-  where region = 'RU' and day = '2026-04-28' and lastRank between ${(page.value - 1) * 100 + 1} and ${page.value * 100}
+  where region = '${region.value}' and day = '2026-04-28' and lastRank between ${(page.value - 1) * 100 + 1} and ${page.value * 100}
   order by lastRank
 `)
 
@@ -159,10 +125,6 @@ table {
       -ms-touch-action: manipulation;
       touch-action: manipulation;
 
-      // &:nth-child(odd) {
-      //   background: rgba(255, 255, 255, 0.025);
-      // }
-
       &:not(.selected) {
         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       }
@@ -175,180 +137,47 @@ table {
 
         &:hover {
           background: rgba(255, 255, 255, 0.03);
-
-          // &::after {
-          //   content: '';
-          //   position: absolute;
-          //   left: -4px;
-          //   top: 0;
-          //   bottom: 0;
-          //   background: var(--blue-color);
-          //   width: 4px;
-          //   border-top-left-radius: 3px;
-          //   border-bottom-left-radius: 3px;
-          // }
         }
       }
 
-
-      td {
-        padding: 20px 15px;
-        line-height: 1.2;
-        white-space: nowrap;
-        color: white;
-      }
-
-      .rank {
-        font-variant-numeric: tabular-nums;
-
-        .value {
-          display: inline-block;
-          min-width: 3ch;
-          text-align: right;
-        }
-      }
-
-      .player-name {
-        white-space: wrap;
-      }
-
-      .rating {
-        font-variant-numeric: tabular-nums;
-        text-align: center;
-
-        .value {
-          display: inline-block;
-          min-width: 5ch;
-          text-align: right;
-          font-weight: bold;
-        }
-
-        .delta,
-        .new,
-        .no-change {
-          display: inline-block;
-          min-width: 5ch;
-          text-align: left;
-        }
-
-        .new {
-          min-width: calc(5ch / 0.75);
-        }
-      }
-
-      .battles-today {
-        text-align: center;
-        color: #c8c8c8;
-      }
-
-      .battles-total {
-        text-align: center;
-        color: #c8c8c8;
-      }
-    }
-
-    .delta {
-
-      .triangle {
-        display: inline-block;
-        height: 0.6em;
-      }
-
-      &.down {
-        color: #ff6060;
-
-        .triangle {
-          transform: rotate(180deg);
-        }
-      }
-
-      &.up {
-        color: #57ff6e;
-      }
-    }
-
-    .new {
-      font-size: 0.75em;
-      color: #ffd557;
-      font-weight: bold;
-    }
-
-    .no-change {
-      color: #717171;
-      font-weight: bold;
-    }
-
-    .delta,
-    .new,
-    .no-change {
-      margin-left: 10px;
     }
 
 
     .details {
       background-color: rgba(255, 255, 255, 0.03);
-    }
-  }
 
-  @container (max-width: 700px) {
-
-    tbody {
-      tr {
-        td {
-          font-size: 14px;
-        }
-      }
-
-      .rank,
-      .rating {
+      .charts {
         display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 10px 15px;
-        gap: 5px;
-        text-align: center;
+        gap: 20px;
+        padding: 20px 20px;
 
-        .value {
-          min-width: auto;
-        }
+        .chart {
+          flex: 1;
+          background-color: rgba(0, 0, 0, 0.602);
+          padding: 10px;
+          border-radius: 4px;
+          aspect-ratio: 2 / 1;
 
-        .delta,
-        .new,
-        .no-change {
-          margin-left: 0;
-        }
-      }
-
-      .rating {
-
-        .delta,
-        .new,
-        .no-change {
-          min-width: auto;
+          h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+          }
         }
       }
     }
   }
 
   @container (max-width: 500px) {
-    .player-name {
-      padding: 10px 5px;
-      word-break: break-all;
 
-      .clan-tag {
-        display: none;
-      }
-    }
-
-    .battles-today-col,
-    .battles-today,
-    .battles-total-multi {
-      display: none;
-    }
 
     thead {
       tr {
+
+        .battles-today-col,
+        .battles-total-multi {
+          display: none;
+        }
+
         .battles-total-single {
           display: table-cell;
         }
@@ -357,10 +186,6 @@ table {
   }
 
   @container (max-width: 400px) {
-
-    .battles-total {
-      display: none;
-    }
 
     thead {
       tr {
