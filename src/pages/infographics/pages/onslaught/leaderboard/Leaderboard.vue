@@ -23,14 +23,7 @@
           }" />
           <tr v-if="selectedName == line.name" class="details">
             <td colspan="6">
-              <div class="charts">
-                <div class="chart">
-                  <h3>Очки по дням</h3>
-                </div>
-                <div class="chart">
-                  <h3>Бои по дням</h3>
-                </div>
-              </div>
+              <Detail />
             </td>
           </tr>
         </template>
@@ -46,6 +39,7 @@ import { refDebouncedCheck } from '@/shared/utils/refDebouncedCheck'
 import { computed, ref } from 'vue'
 import LeaderboardLine from './LeaderboardLine.vue'
 import { regionToGame } from '@/shared/game/wot'
+import Detail from './Detail.vue'
 
 const props = defineProps<{}>()
 
@@ -146,24 +140,6 @@ table {
     .details {
       background-color: rgba(255, 255, 255, 0.03);
 
-      .charts {
-        display: flex;
-        gap: 20px;
-        padding: 20px 20px;
-
-        .chart {
-          flex: 1;
-          background-color: rgba(0, 0, 0, 0.602);
-          padding: 10px;
-          border-radius: 4px;
-          aspect-ratio: 2 / 1;
-
-          h3 {
-            margin: 0 0 10px 0;
-            font-size: 16px;
-          }
-        }
-      }
     }
   }
 
