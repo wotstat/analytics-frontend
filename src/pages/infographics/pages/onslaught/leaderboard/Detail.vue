@@ -15,6 +15,7 @@
 <script setup lang="ts">
 import Chart from '@/shared/uiKit/chart/Chart.vue'
 import { Line, DataSource } from '@/shared/uiKit/chart/plugins/line/Line'
+import { SimpleLayout } from '@/shared/uiKit/chart/plugins/simpleLayout/SimpleLayout'
 import { onMounted, ref } from 'vue'
 
 const chartElement = ref<InstanceType<typeof Chart> | null>(null)
@@ -23,7 +24,7 @@ const props = defineProps<{}>()
 
 const dataSource: DataSource = {
   getPointsCount() {
-    return 50
+    return 100
   },
   getPoint(index: number) {
     return { x: index, y: Math.random() * 100 }
@@ -35,7 +36,13 @@ onMounted(() => {
 
   const chart = chartElement.value.chart
 
-  chart.addPlugin(new Line(dataSource))
+
+  chart.addPlugin(
+    new SimpleLayout()
+      .addSpacedPlugin(new Line(dataSource))
+  )
+
+
 })
 </script>
 

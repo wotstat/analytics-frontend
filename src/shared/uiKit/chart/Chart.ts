@@ -1,14 +1,29 @@
 
 export interface ChartPlugin {
   apply?(delegate: ChartDelegate): void
-  getPaddings?(): { top: number, right: number, bottom: number, left: number }
   render?(): void
 }
 
 export interface ChartDelegate {
-  scheduleRender(): void
+  addPlugin(plugin: ChartPlugin): void
   addChild(element: SVGElement): void
   removeChild(element: SVGElement): void
+  scheduleRender(): void
+  width(): number
+  height(): number
+}
+
+export interface ChartSpace {
+  setup(params: {
+    top: number,
+    left: number,
+    width: number,
+    height: number,
+    paddingTop: number,
+    paddingLeft: number,
+    paddingRight: number,
+    paddingBottom: number
+  }): void
 }
 
 export class Chart {
@@ -34,11 +49,15 @@ export class Chart {
     this.root = root
     this.root.appendChild(this.svg)
     this.resizeObserver.observe(this.root)
+    const rect = this.root.getClientRects()[0]
+    this.resize(rect.width, rect.height)
   }
 
   public addPlugin(plugin: ChartPlugin) {
-    plugin.apply?.(this.createDelegate(plugin))
     this.plugins.push(plugin)
+
+    plugin.apply?.(this.createDelegate(plugin))
+
     this.scheduleRender(plugin)
     return this
   }
@@ -46,17 +65,25 @@ export class Chart {
   private onResize(entries: ResizeObserverEntry[], observer: ResizeObserver) {
     if (entries.length === 0) return
     const { contentRect } = entries[0]
-    this.size.width = contentRect.width
-    this.size.height = contentRect.height
+    this.resize(contentRect.width, contentRect.height)
+  }
+
+  private resize(width: number, height: number) {
+    if (this.size.width === width && this.size.height === height) return
+    this.size.width = width
+    this.size.height = height
     this.svg.setAttribute('viewBox', `0 0 ${this.size.width} ${this.size.height}`)
     this.render(true)
   }
 
   private createDelegate(plugin: ChartPlugin): ChartDelegate {
     return {
+      addPlugin: (plugin: ChartPlugin) => this.addPlugin(plugin),
       scheduleRender: () => this.scheduleRender(plugin),
       addChild: (element: SVGElement) => this.addChild(element),
-      removeChild: (element: SVGElement) => this.removeChild(element)
+      removeChild: (element: SVGElement) => this.removeChild(element),
+      width: () => this.size.width,
+      height: () => this.size.height,
     }
   }
 
@@ -82,6 +109,8 @@ export class Chart {
   }
 
   private render(all: boolean = false) {
+    if (this.size.width === 0 || this.size.height === 0) return
+
     if (this.renderCallScheduler != null) {
       cancelAnimationFrame(this.renderCallScheduler)
       this.renderCallScheduler = null
