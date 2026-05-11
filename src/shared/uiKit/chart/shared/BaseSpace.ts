@@ -1,4 +1,4 @@
-import { ChartSpace } from './Chart'
+import { ChartSpace } from '../Chart'
 
 export class BaseSpace implements ChartSpace {
   private _top = 0
@@ -50,7 +50,7 @@ export class BaseSpace implements ChartSpace {
    */
   transform(x: number, y: number): { x: number, y: number } {
     const transformedX = this._left + this._leftPadding + x * this.contentWidth
-    const transformedY = this._top + this._topPadding + y * this.contentHeight
+    const transformedY = this._top + this._topPadding + (1 - y) * this.contentHeight
     return { x: transformedX, y: transformedY }
   }
 }

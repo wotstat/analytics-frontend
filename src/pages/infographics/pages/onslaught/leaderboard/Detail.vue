@@ -14,8 +14,9 @@
 
 <script setup lang="ts">
 import Chart from '@/shared/uiKit/chart/Chart.vue'
-import { Line, DataSource } from '@/shared/uiKit/chart/plugins/line/Line'
-import { SimpleLayout } from '@/shared/uiKit/chart/plugins/simpleLayout/SimpleLayout'
+import { XLabels } from '@/shared/uiKit/chart/plugins/labels/x-labels/XLabels'
+import { BasicLayout } from '@/shared/uiKit/chart/plugins/layouts/basicLayout/BasicLayout'
+import { Line, DataSource } from '@/shared/uiKit/chart/plugins/plots/line/Line'
 import { onMounted, ref } from 'vue'
 
 const chartElement = ref<InstanceType<typeof Chart> | null>(null)
@@ -35,12 +36,13 @@ onMounted(() => {
   if (!chartElement.value) return
 
   const chart = chartElement.value.chart
+  const layout = new BasicLayout({
+    defaultPaddings: { left: 10, right: 10 }
+  })
+    .addSpacedPlugin(new Line(dataSource), 'main')
+    .addSpacedPlugin(new XLabels(), 'bottom')
 
-
-  chart.addPlugin(
-    new SimpleLayout()
-      .addSpacedPlugin(new Line(dataSource))
-  )
+  chart.addPlugin(layout)
 
 
 })
