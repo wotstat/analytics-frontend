@@ -1,12 +1,12 @@
-import { ChartDelegate, ChartPlugin, ChartSpace } from '../../Chart'
+import { ChartDelegate, ChartPlugin, ChartSpace } from '../../../Chart'
 
 export class SimpleLayout implements ChartPlugin {
   private delegate: ChartDelegate | null = null
   private spaces: ChartSpace[] = []
   private chartPlugins: ChartPlugin[] = []
 
-  private chartWidth = 0
-  private chartHeight = 0
+  protected chartWidth = 0
+  protected chartHeight = 0
 
   constructor() { }
 
@@ -36,10 +36,10 @@ export class SimpleLayout implements ChartPlugin {
       left: 0,
       width: this.chartWidth,
       height: this.chartHeight,
-      paddingTop: 10,
-      paddingLeft: 10,
-      paddingRight: 10,
-      paddingBottom: 10,
+      paddingTop: 0,
+      paddingLeft: 0,
+      paddingRight: 0,
+      paddingBottom: 0,
     }
 
     for (const space of this.spaces) space.setup(spaceParams)

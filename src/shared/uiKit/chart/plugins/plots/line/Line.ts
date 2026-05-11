@@ -1,6 +1,6 @@
-import { BaseSpace } from '../../BaseSpace'
-import { type ChartPlugin, type Chart, type ChartDelegate } from '../../Chart'
 import './style.scss'
+import { type ChartDelegate } from '../../../Chart'
+import { BaseRenderablePlugin } from '../../../shared/BaseRenderablePlugin'
 
 
 type Point = { x: number, y: number } | number | [number, number]
@@ -20,9 +20,8 @@ function processPoint(point: Point): { x: number, y: number } {
   }
 }
 
-export class Line extends BaseSpace implements ChartPlugin {
+export class Line extends BaseRenderablePlugin {
 
-  private chartDelegate: ChartDelegate | null = null
   private group = document.createElementNS('http://www.w3.org/2000/svg', 'g')
   private lineElement = document.createElementNS('http://www.w3.org/2000/svg', 'path')
 
@@ -35,7 +34,7 @@ export class Line extends BaseSpace implements ChartPlugin {
 
   public apply(delegate: ChartDelegate): void {
     this.chartDelegate?.removeChild(this.group)
-    this.chartDelegate = delegate
+    super.apply(delegate)
     delegate.addChild(this.group)
   }
 
