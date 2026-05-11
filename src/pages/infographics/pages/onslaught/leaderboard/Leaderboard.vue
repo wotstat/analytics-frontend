@@ -49,20 +49,18 @@ const region = ref<'RU' | 'NA' | 'EU' | 'ASIA'>('RU')
 const game = computed(() => regionToGame(region.value))
 
 const data = queryComputed<{
-  lastRank: number,
-  lastDayRank: number,
-  lastRating: number,
-  firstRating: number,
-  name: string,
-  bdid: number,
-  clan: string,
-  clanColor: number,
-  lastBattlesCount: number,
-  lastDayBattlesCount: number,
+  name: string
+  bdid: number
+  clan: string | null
+  clanColor: number
+  lastRank: number
+  lastDayRank: number
+  lastBattlesCount: number
+  lastDayBattlesCount: number
+  lastRating: number
   lastDayRating: number
 }>(() => `
-  select lastRank, lastDayRank, lastRating, firstRating, name, bdid, clan, clanColor,
-    lastBattlesCount, lastDayBattlesCount, lastDayRating
+  select name, bdid, clan, clanColor, lastRank, lastDayRank, lastBattlesCount, lastDayBattlesCount, lastRating, lastDayRating
   from Comp7LeaderboardDailyByRank
   where region = '${region.value}' and day = '2026-04-28' and lastRank between ${(page.value - 1) * 100 + 1} and ${page.value * 100}
   order by lastRank
@@ -99,9 +97,15 @@ table {
         }
 
         &:nth-child(3),
-        &:nth-child(4) {
+        &:nth-child(4),
+        &:nth-child(5) {
           text-align: center;
           padding: 0px 5px;
+          width: 100px;
+        }
+
+        &:nth-child(6) {
+          width: 150px;
         }
       }
     }
@@ -143,8 +147,19 @@ table {
     }
   }
 
-  @container (max-width: 500px) {
+  @container (max-width: 700px) {
+    thead {
+      tr {
+        th {
+          &:nth-child(6) {
+            width: 50px;
+          }
+        }
+      }
+    }
+  }
 
+  @container (max-width: 500px) {
 
     thead {
       tr {
@@ -156,6 +171,17 @@ table {
 
         .battles-total-single {
           display: table-cell;
+        }
+
+        th {
+
+          &:nth-child(1),
+          &:nth-child(3),
+          &:nth-child(4),
+          &:nth-child(5),
+          &:nth-child(6) {
+            width: 55px;
+          }
         }
       }
     }
