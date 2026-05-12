@@ -9,6 +9,7 @@
     "preview": "vite preview --host"
   },
   "dependencies": {
+    "@chenglou/pretext": "^0.0.7",
     "@clickhouse/client-web": "^1.18.4",
     "@mdit/plugin-alert": "^0.23.2",
     "@mdit/plugin-align": "^0.24.2",

@@ -14,36 +14,27 @@
 
 <script setup lang="ts">
 import Chart from '@/shared/uiKit/chart/Chart.vue'
-import { XLabels } from '@/shared/uiKit/chart/plugins/labels/x-labels/XLabels'
-import { BasicLayout } from '@/shared/uiKit/chart/plugins/layouts/basicLayout/BasicLayout'
-import { Line, DataSource } from '@/shared/uiKit/chart/plugins/plots/line/Line'
+import { MultiLineChart, SimpleLine } from '@/shared/uiKit/chart/plugins/plots/multiLine/MultiLine'
 import { onMounted, ref } from 'vue'
+
 
 const chartElement = ref<InstanceType<typeof Chart> | null>(null)
 
 const props = defineProps<{}>()
 
-const dataSource: DataSource = {
-  getPointsCount() {
-    return 100
-  },
-  getPoint(index: number) {
-    return { x: index, y: Math.random() * 100 }
-  }
-}
-
 onMounted(() => {
   if (!chartElement.value) return
 
   const chart = chartElement.value.chart
-  const layout = new BasicLayout({
-    defaultPaddings: { left: 10, right: 10 }
-  })
-    .addSpacedPlugin(new Line(dataSource), 'main')
-    .addSpacedPlugin(new XLabels(), 'bottom')
 
-  chart.addPlugin(layout)
+  const multiLine = new MultiLineChart({})
+  const sinLine = new SimpleLine(new Array(1000).fill(0).map((_, i) => ({ x: i, y: Math.sin(i / 10) * 50 + 50 })), ['sin'])
+  const randomLine = new SimpleLine(new Array(100).fill(0).map((_, i) => ({ x: i * 10, y: 20 + Math.random() * 50 })), ['random'])
 
+  multiLine.addLine(sinLine)
+  multiLine.addLine(randomLine)
+
+  chart.addPlugin(multiLine)
 
 })
 </script>
@@ -54,6 +45,7 @@ onMounted(() => {
   display: flex;
   gap: 20px;
   padding: 20px 20px;
+  cursor: default;
 
   .chart {
     flex: 1;
@@ -68,6 +60,19 @@ onMounted(() => {
     h3 {
       margin: 0 0 10px 0;
       font-size: 16px;
+    }
+
+    :deep(.line) {
+      stroke-width: 2px;
+
+      &.sin {
+        stroke: rgb(24, 169, 247);
+      }
+
+      &.random {
+        stroke-width: 1px;
+        stroke: rgb(255, 153, 0);
+      }
     }
   }
 }
