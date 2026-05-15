@@ -20,7 +20,7 @@
       <Problem280426 v-model="problemsVisible" />
     </div> -->
 
-    <div class="upper-header success" v-if="maintenanceHeaderVisible">
+    <!-- <div class="upper-header success" v-if="maintenanceHeaderVisible">
       Работа серверов WotStat восстановлена.
       <br>
       <a @click="problemsVisible = true">Хронология событий</a>
@@ -30,7 +30,7 @@
       </div>
 
       <Problem280426 v-model="problemsVisible" />
-    </div>
+    </div> -->
 
 
     <div class="upper-header blue" v-if="CURRENT_URL_PREFIX != 'ru.' && ruHeaderVisible">
