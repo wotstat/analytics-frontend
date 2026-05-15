@@ -3,12 +3,13 @@
     <div class="chart">
       <h3>Очки по дням</h3>
       <Chart ref="chartElement" />
-      <input type="range" min="-1000" max="1000" v-model.number="offset" />
-      <input type="number" v-model.number="offset" />
     </div>
     <div class="chart">
       <h3>Бои по дням</h3>
       <Chart />
+      <input type="range" min="-1000" max="1000" v-model.number="offset" />
+      <input type="number" v-model.number="offset" />
+      <input type="range" min="0" max="80" step="0.001" v-model.number="scale" />
     </div>
   </div>
 </template>
@@ -16,6 +17,7 @@
 
 <script setup lang="ts">
 import Chart from '@/shared/uiKit/chart/Chart.vue'
+import { StepLabels } from '@/shared/uiKit/chart/plugins/plots/multiLine/labels/StepLabels'
 import { MultiLineChart } from '@/shared/uiKit/chart/plugins/plots/multiLine/MultiLine'
 import { SimpleLine } from '@/shared/uiKit/chart/plugins/plots/multiLine/plot/line/SimpleLine'
 import { onMounted, ref, watchEffect } from 'vue'
@@ -25,6 +27,7 @@ const chartElement = ref<InstanceType<typeof Chart> | null>(null)
 
 const props = defineProps<{}>()
 const offset = ref(0)
+const scale = ref(1)
 
 onMounted(() => {
   if (!chartElement.value) return
@@ -32,16 +35,25 @@ onMounted(() => {
   const chart = chartElement.value.chart
 
   const multiLine = new MultiLineChart({
-    axis: {
-      xAxis: {
-        // showEdgeLabels: true,
-        // showZeroLabel: true,
-        step: 100,
-        // offset: 10,
-        labelForValue: v => `${v}m`,
-      }
-    }
+    // axis: {
+    //   xAxis: {
+    //     // showEdgeLabels: true,
+    //     // showZeroLabel: true,
+    //     step: 1,
+    //     // offset: 10,
+    //     labelForValue: v => `${v}`,
+    //   }
+    // }
   })
+
+  multiLine.setXLabels(new StepLabels({
+    // showEdgeLabels: true,
+    step: [1, 5, 10, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000, 10000],
+    offset: 0,
+    // padding: 10,
+    labelForValue: v => `${v.toFixed(0)}`,
+  }))
+
   const sinLine = new SimpleLine(new Array(1000).fill(0).map((_, i) => ({ x: i, y: Math.sin(i / 10) * 50 + 50 })), ['sin'])
   const randomLine = new SimpleLine(new Array(100).fill(0).map((_, i) => ({ x: i * 10, y: 20 + Math.random() * 50 })), ['random'])
   const redLine = new SimpleLine([
@@ -68,7 +80,7 @@ onMounted(() => {
   watchEffect(() => {
     multiLine.setRenderBounds({
       minX: -offset.value,
-      maxX: -offset.value + 1000,
+      maxX: -offset.value + 1000 / scale.value,
     })
   })
 

@@ -3,7 +3,7 @@ import './style.scss'
 
 import { ChartDelegate, ChartPlugin } from '../../../Chart'
 import { Font } from './labels/shared'
-import { XAxisOptions, XLables } from './labels/XLables'
+// import { XAxisOptions } from './labels/XLables'
 import { Bounds } from './utils/Bounds'
 import { ChartSpace } from './utils/ChartSpace'
 import { Line } from './plot/line/Line'
@@ -11,9 +11,14 @@ import { Line } from './plot/line/Line'
 
 type Options = {
   renderBounds?: { minX?: number, maxX?: number, minY?: number, maxY?: number }
-  axis?: Font & {
-    xAxis?: XAxisOptions
-  }
+}
+
+export interface LabelsRenderer {
+  attach(root: SVGGElement, multiLine: MultiLineChart): void
+  detach(): void
+  render(space: ChartSpace, overflow: { start: number, end: number }): void
+  recalculateFont(): void
+  getHeight(): number
 }
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
@@ -26,7 +31,7 @@ export class MultiLineChart implements ChartPlugin {
   private height = 0
   private mainSpace = new ChartSpace({ x: 0, y: 0, width: 0, height: 0 }, new Bounds())
 
-  private xLabels: XLables
+  private xLabels: LabelsRenderer | null = null
   private lines = new Set<Line>()
   private linesBounds = new Bounds()
 
@@ -52,20 +57,31 @@ export class MultiLineChart implements ChartPlugin {
     this.root.appendChild(this.plotRoot)
     this.root.appendChild(this.xLabelsRoot)
     this.setRenderBounds(options.renderBounds)
-    this.xLabels = new XLables(this.xLabelsRoot, options.axis?.xAxis ?? {}, options.axis)
+    // this.xLabels = new XLables(this.xLabelsRoot, options.axis?.xAxis ?? {}, options.axis)
   }
 
   apply(delegate: ChartDelegate): void {
     this.chartDelegate?.removeChild(this.root)
     this.chartDelegate = delegate
     delegate.addChild(this.root)
-    this.xLabels.recalculateFont(this.options.axis ?? {})
+    this.xLabels?.recalculateFont()
     this.root.parentElement?.classList.add('chart-multiline-container')
   }
 
   addLine(line: Line) {
     this.lines.add(line)
     line.attach(this.plotRoot, this)
+  }
+
+  setXLabels(xLabels: LabelsRenderer | null) {
+    if (this.xLabels === xLabels) return
+    if (this.xLabels) this.xLabels.detach()
+
+    this.xLabels = xLabels
+    if (this.xLabels) {
+      this.xLabels.attach(this.xLabelsRoot, this)
+      this.xLabels.recalculateFont()
+    }
   }
 
   removeLine(line: Line) {
@@ -106,6 +122,11 @@ export class MultiLineChart implements ChartPlugin {
       changed = true
     }
 
+    if (ud.maxX && Math.abs(ud.maxX) == Infinity) ud.maxX = null
+    if (ud.minX && Math.abs(ud.minX) == Infinity) ud.minX = null
+    if (ud.maxY && Math.abs(ud.maxY) == Infinity) ud.maxY = null
+    if (ud.minY && Math.abs(ud.minY) == Infinity) ud.minY = null
+
     if (changed) this.dataDidChange()
   }
 
@@ -136,7 +157,12 @@ export class MultiLineChart implements ChartPlugin {
   }
 
   private layout() {
-    this.mainSpace.layout = { x: 10, y: 0, width: this.width - 20, height: this.height - 20 }
+
+    const xHeight = this.xLabels ? this.xLabels.getHeight() : 0
+    console.log('xHeight', xHeight)
+
+
+    this.mainSpace.layout = { x: 10, y: 0, width: this.width - 20, height: this.height - xHeight }
     this.updatePlotSpace()
   }
 
@@ -147,7 +173,7 @@ export class MultiLineChart implements ChartPlugin {
   }
 
   private renderLabels(overflow: { top: number, right: number, bottom: number, left: number }) {
-    this.xLabels.render(this.mainSpace, {
+    this.xLabels?.render(this.mainSpace, {
       start: overflow.left,
       end: overflow.right
     })
