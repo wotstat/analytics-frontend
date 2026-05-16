@@ -6,6 +6,7 @@ type LabelData = {
   key: string
   x: number
   label: string
+  value: number
 }
 
 const DEFAULT_LABEL_PADDING = 5
@@ -20,6 +21,7 @@ export abstract class BaseLabels implements LabelsRenderer {
 
   private elementByKey = new Map<string, SVGTextElement>()
   private lastY = 0
+  private lastRenderedTicks: number[] = []
 
   constructor(options?: { padding?: number }) {
     if (options?.padding !== undefined) this.padding = options.padding
@@ -41,6 +43,7 @@ export abstract class BaseLabels implements LabelsRenderer {
   }
 
   render(space: ChartSpace, overflow: { start: number, end: number }) {
+    this.lastRenderedTicks = []
     if (!this.root) {
       console.warn('Trying to render labels without root element')
       return
@@ -48,6 +51,7 @@ export abstract class BaseLabels implements LabelsRenderer {
 
     const labels = this.calculateLabelPositions(space, overflow)
     const usedKeys = new Set<string>(labels.map(l => l.key))
+    this.lastRenderedTicks = labels.map(l => l.value)
 
     for (const [key, element] of this.elementByKey) {
       if (!usedKeys.has(key)) {
@@ -84,6 +88,10 @@ export abstract class BaseLabels implements LabelsRenderer {
         element.textContent = label.label
       }
     }
+  }
+
+  getRequiredTicks(): number[] {
+    return this.lastRenderedTicks
   }
 
   recalculateFont() {
@@ -161,7 +169,6 @@ export abstract class BaseLabels implements LabelsRenderer {
     if (!this.ctx) return new TextMetrics()
     const metrics = this.ctx.measureText('M')
     this.cachedHeight = metrics
-    console.log(metrics)
 
     return this.cachedHeight
   }
