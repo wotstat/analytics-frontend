@@ -94,14 +94,15 @@ export class StepLabels extends BaseLabels {
     const result: {
       x: number,
       label: string,
-      key: string
+      key: string,
+      value: number
     }[] = []
 
     const labelForValue = options.labelForValue ? options.labelForValue : (v: number) => v.toString()
     const keyForValue = options.keyForValue ? options.keyForValue : (v: number, label: string) => label
 
-    const rightLimit = tx(space.bounds.maxX)
     const leftLimit = tx(space.bounds.minX)
+    const rightLimit = tx(space.bounds.maxX)
 
     const getPox = (value: number, text: string) => {
       const width = this.getTextWidth(text)
@@ -132,14 +133,14 @@ export class StepLabels extends BaseLabels {
       const leftLabel = labelForValue(left)
       const leftKey = 'left-edge-interval-key'
       const leftPos = getPox(left, leftLabel)
-      result.push({ x: leftPos.x, label: leftLabel, key: leftKey })
+      result.push({ x: leftPos.x, label: leftLabel, key: leftKey, value: left })
       forceIntervals.addCenterWidth(leftPos.x, leftPos.width)
 
       const right = space.bounds.maxX
       const rightLabel = labelForValue(right)
       const rightKey = 'right-edge-interval-key'
       const rightPos = getPox(right, rightLabel)
-      result.push({ x: rightPos.x, label: rightLabel, key: rightKey })
+      result.push({ x: rightPos.x, label: rightLabel, key: rightKey, value: right })
       forceIntervals.addCenterWidth(rightPos.x, rightPos.width)
     }
 
@@ -148,7 +149,7 @@ export class StepLabels extends BaseLabels {
       const key = 'zero-label-key'
       const zeroPos = getPox(0, label)
       if (!forceIntervals.intersectsStartEnd(zeroPos.left, zeroPos.right)) {
-        result.push({ x: zeroPos.x, label, key })
+        result.push({ x: zeroPos.x, label, key, value: 0 })
         forceIntervals.addCenterWidth(zeroPos.x, zeroPos.width)
       }
     }
@@ -187,7 +188,7 @@ export class StepLabels extends BaseLabels {
 
           if (hasIntersection && i == 1) {
             labels.pop()
-            labels.push({ x: pos.x, label, key })
+            labels.push({ x: pos.x, label, key, value: x })
             stepIntervals.addCenterWidth(pos.x, pos.width)
             continue
           }
@@ -197,7 +198,7 @@ export class StepLabels extends BaseLabels {
             break
           }
 
-          labels.push({ x: pos.x, label, key })
+          labels.push({ x: pos.x, label, key, value: x })
           stepIntervals.addCenterWidth(pos.x, pos.width)
         }
 

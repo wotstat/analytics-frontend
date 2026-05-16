@@ -20,6 +20,7 @@ import Chart from '@/shared/uiKit/chart/Chart.vue'
 import { StepLabels } from '@/shared/uiKit/chart/plugins/plots/multiLine/labels/StepLabels'
 import { MultiLineChart } from '@/shared/uiKit/chart/plugins/plots/multiLine/MultiLine'
 import { SimpleLine } from '@/shared/uiKit/chart/plugins/plots/multiLine/plot/line/SimpleLine'
+import { TicksByLabels } from '@/shared/uiKit/chart/plugins/plots/multiLine/ticks/TicksByLabels'
 import { onMounted, ref, watchEffect } from 'vue'
 
 
@@ -46,13 +47,14 @@ onMounted(() => {
     // }
   })
 
-  multiLine.setXLabels(new StepLabels({
+  const xLabels = new StepLabels({
     // showEdgeLabels: true,
     step: [1, 5, 10, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000, 10000],
     offset: 0,
     // padding: 10,
-    labelForValue: v => `${v.toFixed(0)}`,
-  }))
+    labelForValue: v => `${v.toFixed(0)}mmm`,
+  })
+
 
   const sinLine = new SimpleLine(new Array(1000).fill(0).map((_, i) => ({ x: i, y: Math.sin(i / 10) * 50 + 50 })), ['sin'])
   const randomLine = new SimpleLine(new Array(100).fill(0).map((_, i) => ({ x: i * 10, y: 20 + Math.random() * 50 })), ['random'])
@@ -64,9 +66,13 @@ onMounted(() => {
     { x: 0, y: 0 },
   ], ['red'])
 
+  const xTicks = new TicksByLabels(xLabels)
+
+  multiLine.setXTicks(xTicks)
+  multiLine.setXLabels(xLabels)
   multiLine.addLine(sinLine)
   multiLine.addLine(randomLine)
-  multiLine.addLine(redLine)
+  // multiLine.addLine(redLine)
 
   chart.addPlugin(multiLine)
 
@@ -116,6 +122,15 @@ onMounted(() => {
         fill: white;
         font-size: 14px;
         font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      }
+
+      .ticks {
+        .x-ticks {
+          .tick {
+            stroke: rgba(255, 255, 255, 1);
+            stroke-width: 1px;
+          }
+        }
       }
 
       .line {

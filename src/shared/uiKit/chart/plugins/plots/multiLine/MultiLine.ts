@@ -2,8 +2,6 @@ import './style.scss'
 
 
 import { ChartDelegate, ChartPlugin } from '../../../Chart'
-import { Font } from './labels/shared'
-// import { XAxisOptions } from './labels/XLables'
 import { Bounds } from './utils/Bounds'
 import { ChartSpace } from './utils/ChartSpace'
 import { Line } from './plot/line/Line'
@@ -17,8 +15,15 @@ export interface LabelsRenderer {
   attach(root: SVGGElement, multiLine: MultiLineChart): void
   detach(): void
   render(space: ChartSpace, overflow: { start: number, end: number }): void
+  getRequiredTicks(): number[]
   recalculateFont(): void
   getHeight(): number
+}
+
+export interface TicksRenderer {
+  attach(root: SVGGElement, multiLine: MultiLineChart): void
+  detach(): void
+  render(space: ChartSpace): void
 }
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
@@ -32,6 +37,7 @@ export class MultiLineChart implements ChartPlugin {
   private mainSpace = new ChartSpace({ x: 0, y: 0, width: 0, height: 0 }, new Bounds())
 
   private xLabels: LabelsRenderer | null = null
+  private xTicks: TicksRenderer | null = null
   private lines = new Set<Line>()
   private linesBounds = new Bounds()
 
@@ -41,23 +47,28 @@ export class MultiLineChart implements ChartPlugin {
   private plotClipRect = document.createElementNS(NAMESPACE, 'rect')
   private plotRoot = document.createElementNS(NAMESPACE, 'g')
   private xLabelsRoot = document.createElementNS(NAMESPACE, 'g')
+  private ticksRoot = document.createElementNS(NAMESPACE, 'g')
+  private xTicksRoot = document.createElementNS(NAMESPACE, 'g')
 
   constructor(readonly options: Options) {
     this.root.classList.add('chart-multiline-root')
     this.root.appendChild(this.defs)
     this.defs.appendChild(this.clipPathRoot)
-    this.clipPathRoot.appendChild(this.plotClipRect)
 
     const clipId = `multiline-clip-${Math.random().toString(16).slice(2)}`
     this.clipPathRoot.setAttribute('id', clipId)
     this.plotRoot.setAttribute('clip-path', `url(#${clipId})`)
     this.plotRoot.classList.add('plot')
     this.xLabelsRoot.classList.add('x-labels')
+    this.ticksRoot.classList.add('ticks')
+    this.xTicksRoot.classList.add('x-ticks')
 
+    this.clipPathRoot.appendChild(this.plotClipRect)
+    this.ticksRoot.appendChild(this.xTicksRoot)
     this.root.appendChild(this.plotRoot)
     this.root.appendChild(this.xLabelsRoot)
+    this.root.appendChild(this.ticksRoot)
     this.setRenderBounds(options.renderBounds)
-    // this.xLabels = new XLables(this.xLabelsRoot, options.axis?.xAxis ?? {}, options.axis)
   }
 
   apply(delegate: ChartDelegate): void {
@@ -82,6 +93,14 @@ export class MultiLineChart implements ChartPlugin {
       this.xLabels.attach(this.xLabelsRoot, this)
       this.xLabels.recalculateFont()
     }
+  }
+
+  setXTicks(xTicks: TicksRenderer | null) {
+    if (this.xTicks === xTicks) return
+    if (this.xTicks) this.xTicks.detach()
+
+    this.xTicks = xTicks
+    if (this.xTicks) this.xTicks.attach(this.xTicksRoot, this)
   }
 
   removeLine(line: Line) {
@@ -143,6 +162,7 @@ export class MultiLineChart implements ChartPlugin {
       bottom: this.height - this.mainSpace.layout.y - this.mainSpace.layout.height,
       left: this.mainSpace.layout.x
     })
+    this.renderTicks()
   }
 
   private layoutIfNeeded() {
@@ -157,10 +177,7 @@ export class MultiLineChart implements ChartPlugin {
   }
 
   private layout() {
-
     const xHeight = this.xLabels ? this.xLabels.getHeight() : 0
-    console.log('xHeight', xHeight)
-
 
     this.mainSpace.layout = { x: 10, y: 0, width: this.width - 20, height: this.height - xHeight }
     this.updatePlotSpace()
@@ -177,6 +194,10 @@ export class MultiLineChart implements ChartPlugin {
       start: overflow.left,
       end: overflow.right
     })
+  }
+
+  private renderTicks() {
+    this.xTicks?.render(this.mainSpace)
   }
 
   private updatePlotSpace() {
