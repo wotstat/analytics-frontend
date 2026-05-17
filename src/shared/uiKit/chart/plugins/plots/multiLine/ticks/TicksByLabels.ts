@@ -11,9 +11,11 @@ export class TicksByLabels extends BaseTicks {
 
   getTicks(space: ChartSpace): { x: number; value: number; }[] {
     const requiredTicks = this.labels.getRequiredTicks()
-    return requiredTicks.map(value => {
-      const x = space.translateX(value)
-      return { x, value }
-    })
+    return requiredTicks
+      .map(value => {
+        const x = space.translateX(value)
+        return { x, value }
+      })
+      .filter(tick => tick.x >= space.layout.x && tick.x <= space.layout.x + space.layout.width)
   }
 }

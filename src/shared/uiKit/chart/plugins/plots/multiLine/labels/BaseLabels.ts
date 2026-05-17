@@ -12,20 +12,17 @@ type LabelData = {
 const DEFAULT_LABEL_PADDING = 5
 export abstract class BaseLabels implements LabelsRenderer {
 
-  private root: SVGGElement | null = null
+  protected root: SVGGElement | null = null
   private cachedSizes = new Map<string, number>()
   private cachedHeight: TextMetrics | null = null
   private ctx = document.createElement('canvas').getContext('2d')
-  private padding = DEFAULT_LABEL_PADDING
 
 
   private elementByKey = new Map<string, SVGTextElement>()
   private lastY = 0
   private lastRenderedTicks: number[] = []
 
-  constructor(options?: { padding?: number }) {
-    if (options?.padding !== undefined) this.padding = options.padding
-  }
+  constructor() { }
 
   attach(root: SVGGElement, multiLine: MultiLineChart): void {
     this.root = root
@@ -157,7 +154,7 @@ export abstract class BaseLabels implements LabelsRenderer {
     if (!this.ctx) return 30
     if (this.cachedSizes.has(text)) return this.cachedSizes.get(text) as number
 
-    const width = this.ctx.measureText(text).width + this.padding
+    const width = this.ctx.measureText(text).width
 
     this.cachedSizes.set(text, width)
 

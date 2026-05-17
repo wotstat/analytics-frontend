@@ -83,7 +83,7 @@ export class StepLabels extends BaseLabels {
   private lastStep = 0
 
   constructor(private options: Options) {
-    super({ padding: options.padding })
+    super()
   }
 
   calculateLabelPositions(space: ChartSpace, overflow: { start: number, end: number }) {
