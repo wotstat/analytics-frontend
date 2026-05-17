@@ -179,7 +179,7 @@ export class MultiLineChart implements ChartPlugin {
   private layout() {
     const xHeight = this.xLabels ? this.xLabels.getHeight() : 0
 
-    this.mainSpace.layout = { x: 10, y: 0, width: this.width - 20, height: this.height - xHeight }
+    this.mainSpace.layout = { x: 30, y: 0, width: this.width - 40, height: this.height - xHeight }
     this.updatePlotSpace()
   }
 

@@ -32,7 +32,6 @@ export abstract class BaseTicks implements TicksRenderer {
     }
 
     const ticks = this.getTicks(space)
-    if (ticks.length == 0) return
 
     const usedKeys = new Set<number>(ticks.map(t => t.value))
     for (const [key, element] of this.elementsByKey) {

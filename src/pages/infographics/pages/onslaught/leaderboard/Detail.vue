@@ -17,6 +17,7 @@
 
 <script setup lang="ts">
 import Chart from '@/shared/uiKit/chart/Chart.vue'
+import { arrayGenerator, FixedLabels, stepped, steppedGenerator } from '@/shared/uiKit/chart/plugins/plots/multiLine/labels/FixedLabels'
 import { StepLabels } from '@/shared/uiKit/chart/plugins/plots/multiLine/labels/StepLabels'
 import { MultiLineChart } from '@/shared/uiKit/chart/plugins/plots/multiLine/MultiLine'
 import { SimpleLine } from '@/shared/uiKit/chart/plugins/plots/multiLine/plot/line/SimpleLine'
@@ -52,9 +53,27 @@ onMounted(() => {
     step: [1, 5, 10, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000, 10000],
     offset: 0,
     // padding: 10,
-    labelForValue: v => `${v.toFixed(0)}mmm`,
+    labelForValue: v => `${v.toFixed(0)}`,
   })
 
+  const fixedLabels = new FixedLabels({
+    labelForValue: (v, step) => step < 5 && v == 500 ? `${v.toFixed(10)}` : `${v.toFixed(0)}`,
+    // labeledValues: [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
+    padding: 15,
+    values: [
+      // {
+      //   gen: arrayGenerator([0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]),
+      //   labelForValue: v => v == 500 ? `${v.toFixed(10)}` : `${v.toFixed(0)}`,
+      // },
+      ...stepped({
+        step: [1, 2, 5, 10, 25, 50, 100, 200, 250, 500],
+        offset: 0,
+        // labelForValue: v => `${v.toFixed(0)}`,
+        padding: 0
+      })
+    ],
+    from: 0,
+  })
 
   const sinLine = new SimpleLine(new Array(1000).fill(0).map((_, i) => ({ x: i, y: Math.sin(i / 10) * 50 + 50 })), ['sin'])
   const randomLine = new SimpleLine(new Array(100).fill(0).map((_, i) => ({ x: i * 10, y: 20 + Math.random() * 50 })), ['random'])
@@ -66,10 +85,10 @@ onMounted(() => {
     { x: 0, y: 0 },
   ], ['red'])
 
-  const xTicks = new TicksByLabels(xLabels)
+  const xTicks = new TicksByLabels(fixedLabels)
 
   multiLine.setXTicks(xTicks)
-  multiLine.setXLabels(xLabels)
+  multiLine.setXLabels(fixedLabels)
   multiLine.addLine(sinLine)
   multiLine.addLine(randomLine)
   // multiLine.addLine(redLine)
@@ -127,8 +146,8 @@ onMounted(() => {
       .ticks {
         .x-ticks {
           .tick {
-            stroke: rgba(255, 255, 255, 1);
-            stroke-width: 1px;
+            stroke: rgba(255, 255, 255, 0.5);
+            stroke-width: 0.5px;
           }
         }
       }

@@ -18,10 +18,10 @@ export class Bounds {
 
   static fromMinMax(minX: number, maxX: number, minY: number, maxY: number) {
     const bounds = new Bounds()
-    bounds.minX = minX
-    bounds.maxX = maxX
-    bounds.minY = minY
-    bounds.maxY = maxY
+    bounds.minX = Math.min(maxX, minX)
+    bounds.maxX = Math.max(maxX, minX)
+    bounds.minY = Math.min(maxY, minY)
+    bounds.maxY = Math.max(maxY, minY)
     bounds.dataCount = 1
     return bounds
   }
