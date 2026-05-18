@@ -1,8 +1,9 @@
 import { Bounds } from '../../utils/Bounds'
 import { Point } from '../../utils/Point'
-import { Line } from './Line'
+import { BaseLine } from './BaseLine'
 
-export class SimpleLine extends Line {
+
+export class SimpleLine extends BaseLine {
   constructor(private points: Point[], classes: string[] = []) {
     super(classes)
   }

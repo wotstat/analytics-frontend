@@ -1,6 +1,5 @@
 import { LabelsRenderer, MultiLineChart } from '../MultiLine'
 import { ChartSpace } from '../utils/ChartSpace'
-import { Font } from './shared'
 
 type LabelData = {
   key: string
@@ -93,37 +92,18 @@ export abstract class BaseLabels implements LabelsRenderer {
 
   recalculateFont() {
     if (!this.ctx) return
-    const font = this.getFont()
 
-    let changed = false
+    const probeLabel = this.createLabel()
+    const fontFamily = probeLabel.computedStyleMap().get('font-family')?.toString()
+    const fontSize = probeLabel.computedStyleMap().get('font-size')?.toString()
+    probeLabel.remove()
 
-    if (font && 'font' in font && font.font) {
-      if (this.ctx.font != font.font) changed = true
-      this.ctx.font = font.font
-    } else if (font && 'fontSize' in font && 'fontFamily' in font && font.fontSize && font.fontFamily) {
-      const target = `${font.fontSize}px ${font.fontFamily}`
-      if (this.ctx.font != target) changed = true
-      this.ctx.font = target
-    } else {
-      const probeLabel = this.createLabel()
+    const target = `${fontSize} ${fontFamily}`
+    if (this.ctx.font == target) return
 
-      const defaultFontFamily = probeLabel.computedStyleMap().get('font-family')?.toString()
-      const defaultFontSize = probeLabel.computedStyleMap().get('font-size')?.toString()
-
-      probeLabel.remove()
-
-      const fontFamily = font && 'fontFamily' in font && font.fontFamily ? font.fontFamily : defaultFontFamily
-      const fontSize = font && 'fontSize' in font && font.fontSize ? font.fontSize : defaultFontSize
-
-      const target = `${fontSize} ${fontFamily}`
-      if (this.ctx.font != target) changed = true
-      this.ctx.font = target
-    }
-
-    if (changed) {
-      this.cachedSizes.clear()
-      this.cachedHeight = null
-    }
+    this.ctx.font = target
+    this.cachedSizes.clear()
+    this.cachedHeight = null
   }
 
   getHeight(): number {
@@ -137,10 +117,6 @@ export abstract class BaseLabels implements LabelsRenderer {
   }
 
   abstract calculateLabelPositions(space: ChartSpace, overflow: { start: number, end: number }): LabelData[]
-
-  getFont(): Font | undefined {
-    return undefined
-  }
 
   protected createLabel(textContent = ''): SVGTextElement {
     const label = document.createElementNS('http://www.w3.org/2000/svg', 'text')

@@ -5,6 +5,7 @@ type TickData = {
   x: number
   value: number
 }
+
 export abstract class BaseTicks implements TicksRenderer {
 
   private root: SVGGElement | null = null

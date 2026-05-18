@@ -4,7 +4,7 @@ import './style.scss'
 import { ChartDelegate, ChartPlugin } from '../../../Chart'
 import { Bounds } from './utils/Bounds'
 import { ChartSpace } from './utils/ChartSpace'
-import { Line } from './plot/line/Line'
+import { BaseLine } from './plot/line/BaseLine'
 
 
 type Options = {
@@ -38,7 +38,7 @@ export class MultiLineChart implements ChartPlugin {
 
   private xLabels: LabelsRenderer | null = null
   private xTicks: TicksRenderer | null = null
-  private lines = new Set<Line>()
+  private lines = new Set<BaseLine>()
   private linesBounds = new Bounds()
 
   private root = document.createElementNS(NAMESPACE, 'g')
@@ -79,7 +79,7 @@ export class MultiLineChart implements ChartPlugin {
     this.root.parentElement?.classList.add('chart-multiline-container')
   }
 
-  addLine(line: Line) {
+  addLine(line: BaseLine) {
     this.lines.add(line)
     line.attach(this.plotRoot, this)
   }
@@ -103,7 +103,7 @@ export class MultiLineChart implements ChartPlugin {
     if (this.xTicks) this.xTicks.attach(this.xTicksRoot, this)
   }
 
-  removeLine(line: Line) {
+  removeLine(line: BaseLine) {
     this.lines.delete(line)
     line.detach()
   }
