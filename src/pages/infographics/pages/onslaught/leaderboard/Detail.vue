@@ -57,7 +57,7 @@ onMounted(() => {
   })
 
   const fixedLabels = new FixedLabels({
-    labelForValue: (v, step) => step < 5 && v == 500 ? `${v.toFixed(10)}` : `${v.toFixed(0)}`,
+    labelForValue: (v, step) => step < 7 && v == 500 ? `${v.toFixed(10)}` : `${v.toFixed(0)}`,
     // labeledValues: [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
     padding: 15,
     values: [
@@ -69,10 +69,11 @@ onMounted(() => {
         step: [1, 2, 5, 10, 25, 50, 100, 200, 250, 500],
         offset: 0,
         // labelForValue: v => `${v.toFixed(0)}`,
-        padding: 0
+        // padding: 0
       })
     ],
-    from: 0,
+    strategy: 'classic'
+    // from: 0,
   })
 
   const sinLine = new SimpleLine(new Array(1000).fill(0).map((_, i) => ({ x: i, y: Math.sin(i / 10) * 50 + 50 })), ['sin'])
