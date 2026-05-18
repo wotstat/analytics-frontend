@@ -1,32 +1,44 @@
-import { Prettify } from '@/shared/utils/types/Prettify'
 import { ChartSpace } from '../utils/ChartSpace'
 import { BaseLabels } from './BaseLabels'
-import { EdgeLabels, KeyForValue, LabelForValue, Padding, ZeroLabel } from './shared'
 import { MultiLineChart } from '../MultiLine'
 
 
-export function arrayGenerator(values: number[]) {
-  return function* (startFrom: number) {
-    for (const v of values) {
-      if (v < startFrom) continue
-      yield v
-    }
-  }
+export function arrayGenerator(values: number[]): ValueGenerator {
+  return (startFrom: number) => ({
+    forward: (function* () {
+      for (const v of values) {
+        if (v < startFrom) continue
+        yield v
+      }
+    })(),
+    backward: (function* () {
+      for (let i = values.length - 1; i >= 0; i--) {
+        if (values[i] > startFrom) continue
+        yield values[i]
+      }
+    })()
+  })
 }
 
 export function steppedGenerator(options: {
   step: number
   offset?: number
-}) {
-  return function* (startFrom: number) {
-    const { step, offset = 0 } = options
-    let current = Math.ceil((startFrom - offset) / step) * step + offset
-    for (let i = 0; i < 1e3; i++) {
-      yield current
-      current += step
+}): ValueGenerator {
+
+  return (startFrom: number) => {
+    const gen = function* (step: number, offset: number) {
+      let current = Math.ceil((startFrom - offset) / step) * step + offset
+      for (let i = 0; i < 1e3; i++) {
+        yield current
+        current += step
+      }
     }
 
-    yield 404
+    const { step, offset = 0 } = options
+    return {
+      forward: gen(step, offset),
+      backward: gen(-step, offset),
+    }
   }
 }
 
@@ -55,8 +67,8 @@ export function stepped(options: {
 }
 
 
-type Strategy = 'classic-flow'
-type ValueGenerator = (startFrom: number) => Generator<number>
+type Strategy = 'classic-flow' | 'classic'
+type ValueGenerator = (startFrom: number) => { forward: Generator<number, void, unknown>, backward: Generator<number, void, unknown> }
 type Overrides = {
   gen: ValueGenerator
 } & Omit<Options, 'values'>
@@ -145,7 +157,81 @@ function fit<T extends Fittable>(intervals: T[],
   return result
 }
 
+function calculateClassic(ctx: {
+  space: ChartSpace,
+  overflow: { start: number, end: number },
+  from: number,
+  to: number,
+  padding: number,
+  compute: (v: number) => { x: number, label: string, size: number, half: number, key: string },
+  generator: ValueGenerator,
+  force: boolean,
+}) {
+
+  const { space, overflow, from, to, padding, compute, generator, force } = ctx
+  const left = space.layout.x - overflow.start
+  const right = space.layout.x + space.layout.width + overflow.end
+
+  const result: { middle: number, label: string, key: string, value: number, size: number, half: number }[] = []
+
+  let lastMaxX = -Infinity
+  const gen = generator(from == -Infinity ? space.bounds.minX : from).forward
+  for (const v of gen) {
+    if (v > to) break
+
+    const { x, label, size, half, key } = compute(v)
+    if (x + size < left) continue
+    if (x - half < lastMaxX + padding) {
+      if (force) continue
+      return null
+    }
+
+    const isLastValue = lastMaxX > right
+    lastMaxX = x + half
+
+    result.push({ middle: x, label, key, value: v, size, half })
+
+    if (isLastValue) break
+  }
+
+  if (from == -Infinity) {
+    let lastMinX = result.length > 0 ? (result[0].middle - result[0].half) : Infinity
+    const reverseGen = generator(space.bounds.minX - 1).backward
+    for (const v of reverseGen) {
+
+      const { x, label, size, half, key } = compute(v)
+
+      if (x + half > lastMinX - padding) {
+        if (force) continue
+        return null
+      }
+
+      const isLastValue = lastMinX < left
+      lastMinX = x - half
+
+      result.unshift({ middle: x, label, key, value: v, size, half })
+
+      if (isLastValue) break
+    }
+  }
+
+
+  // for (const element of extended) {
+  //   const size = element.max - element.min
+  //   this.renderDebugBox(element.min + size / 2, size)
+  // }
+
+  // for (const element of fitted) {
+  //   this.renderDebugBox(element.middle, element.size)
+  // }
+
+
+  // return fitted.map(f => ({ x: f.middle, label: f.label, key: f.key, value: f.value }))
+  return result
+}
+
 const DEFAULT_LABEL_PADDING = 15
+const DEFAULT_STRATEGY: Strategy = 'classic-flow'
 export class FixedLabels extends BaseLabels {
 
   private debugBoxes: SVGRectElement[] = []
@@ -156,7 +242,6 @@ export class FixedLabels extends BaseLabels {
 
   override attach(root: SVGGElement, multiLine: MultiLineChart): void {
     super.attach(root, multiLine)
-
   }
 
   private getOverridesForStep(step: number): Overrides | null {
@@ -174,29 +259,15 @@ export class FixedLabels extends BaseLabels {
   }
 
   calculateLabelPositions(space: ChartSpace, overflow: { start: number, end: number }) {
-
-    const tx = space.translateX.bind(space)
     const options = this.options
 
     const defaultLabelForValue = (v: number, step: number) => v.toString()
     const defaultKeyForValue = (v: number, label: string, step: number) => label
 
-    let result: {
-      middle: number,
-      label: string,
-      key: string,
-      value: number,
-      size: number,
-      half: number,
-    }[] = []
-
-    const left = space.layout.x - overflow.start
-    const right = space.layout.x + space.layout.width + overflow.end
     let padding = 0
+    let strategy = options.strategy ?? DEFAULT_STRATEGY
 
     for (let i = 0; i < options.values.length; i++) {
-      result = []
-
       const current = this.getOverridesForStep(i)
       if (!current) break
 
@@ -205,89 +276,34 @@ export class FixedLabels extends BaseLabels {
       const from = current.from ?? options.from ?? -Infinity
       const to = current.to ?? options.to ?? Infinity
       padding = current.padding ?? options.padding ?? DEFAULT_LABEL_PADDING
+      strategy = current.strategy ?? options.strategy ?? DEFAULT_STRATEGY
 
-
-      const startFrom = (() => {
-        if (from != -Infinity) return from
-
-        const step = space.bounds.maxX - space.bounds.minX
-        for (const p of [0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 0.8, 1]) {
-          const startFrom = space.bounds.minX - step * p
-          const gen = current.gen(startFrom)
-
-          let i = 0
-          for (const v of gen) {
-            if (v > to) break
-            i++
-
-            const x = tx(v)
-            if (i == 1 && x > left) break
-
-            const size = this.getTextWidth(labelForValue(v, i))
-            const right = x + size / 2
-            if (i == 1 && right > left) break
-            if (right > left) return startFrom
-          }
-        }
-
-        return space.bounds.minX
-      })()
-
-
-      const gen = current.gen(startFrom)
-
-      let lastMaxX = -Infinity
-      let isDone = true
-
-      for (const v of gen) {
-        if (v > to) break
-
-        const x = tx(v)
+      const compute = (v: number) => {
+        const x = space.translateX(v)
         const label = labelForValue(v, i)
         const size = this.getTextWidth(label)
-
-        const half = size / 2
-        if (x + size < left) continue
-        if (x - half < lastMaxX + padding) {
-          if (i == options.values.length - 1) continue
-          isDone = false
-          break
-        }
-
-        const isLastValue = lastMaxX > right
-        lastMaxX = x + half
-
         const key = keyForValue(v, label, i)
-        result.push({ middle: x, label, key, value: v, size, half })
-
-        if (isLastValue) break
+        return { x, label, size, key, half: size / 2 }
       }
 
-      if (isDone) break
+      if (strategy == 'classic-flow' || strategy == 'classic') {
+        const res = calculateClassic({
+          space, overflow, from, to, padding,
+          compute, generator: current.gen,
+          force: i == options.values.length - 1
+        })
+
+        if (!res) continue
+
+        return (strategy == 'classic' ?
+          res :
+          fit(extend(res, padding), { min: space.layout.x, max: space.layout.x + space.layout.width }, overflow)
+        ).map(f => ({ x: f.middle, label: f.label, key: f.key, value: f.value, }))
+      }
     }
 
-    const extended = extend(result, padding)
-    const fitted = fit(extended,
-      { min: space.layout.x, max: space.layout.x + space.layout.width },
-      overflow)
-
-    // for (const element of extended) {
-    //   const size = element.max - element.min
-    //   this.renderDebugBox(element.min + size / 2, size)
-    // }
-
-    // for (const element of fitted) {
-    //   this.renderDebugBox(element.middle, element.size)
-    // }
-
-    return fitted.map(f => ({
-      x: f.middle,
-      label: f.label,
-      key: f.key,
-      value: f.value,
-    }))
+    return []
   }
-
 
   override render(space: ChartSpace, overflow: { start: number; end: number }): void {
 
