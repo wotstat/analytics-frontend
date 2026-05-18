@@ -17,8 +17,8 @@
 
 <script setup lang="ts">
 import Chart from '@/shared/uiKit/chart/Chart.vue'
-import { arrayGenerator, FixedLabels, stepped, steppedGenerator } from '@/shared/uiKit/chart/plugins/plots/multiLine/labels/FixedLabels'
-import { StepLabels } from '@/shared/uiKit/chart/plugins/plots/multiLine/labels/StepLabels'
+import { AutoLabels } from '@/shared/uiKit/chart/plugins/plots/multiLine/labels/autoLabels/AutoLabels'
+import { steppedOverrides } from '@/shared/uiKit/chart/plugins/plots/multiLine/labels/autoLabels/generators/steppedGenerator'
 import { MultiLineChart } from '@/shared/uiKit/chart/plugins/plots/multiLine/MultiLine'
 import { SimpleLine } from '@/shared/uiKit/chart/plugins/plots/multiLine/plot/line/SimpleLine'
 import { TicksByLabels } from '@/shared/uiKit/chart/plugins/plots/multiLine/ticks/TicksByLabels'
@@ -48,15 +48,7 @@ onMounted(() => {
     // }
   })
 
-  const xLabels = new StepLabels({
-    // showEdgeLabels: true,
-    step: [1, 5, 10, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000, 10000],
-    offset: 0,
-    // padding: 10,
-    labelForValue: v => `${v.toFixed(0)}`,
-  })
-
-  const fixedLabels = new FixedLabels({
+  const fixedLabels = new AutoLabels({
     labelForValue: (v, step) => step < 7 && v == 500 ? `${v.toFixed(10)}` : `${v.toFixed(0)}`,
     // labeledValues: [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
     padding: 15,
@@ -65,16 +57,17 @@ onMounted(() => {
       //   gen: arrayGenerator([0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]),
       //   labelForValue: v => v == 500 ? `${v.toFixed(10)}` : `${v.toFixed(0)}`,
       // },
-      ...stepped({
+      ...steppedOverrides({
         step: [1, 2, 5, 10, 25, 50, 100, 200, 250, 500],
         offset: 0,
         // labelForValue: v => `${v.toFixed(0)}`,
         // padding: 0
       })
     ],
+    // strategy: 'classic'
     strategy: {
       type: 'interval',
-      placement: 'start',
+      placement: 'end',
       fit: true,
       offset: [5, 5],
     },
@@ -101,12 +94,12 @@ onMounted(() => {
 
   chart.addPlugin(multiLine)
 
-  // setInterval(() => {
-  //   multiLine.setRenderBounds({
-  //     minX: (1 + Math.sin(Date.now() / 1000)) * 200 - 200,
-  //     maxX: (1 + Math.cos(Date.now() / 1000)) * 200 + 900,
-  //   })
-  // }, 16)
+  setInterval(() => {
+    multiLine.setRenderBounds({
+      minX: (1 + Math.sin(Date.now() / 1000)) * 200 - 200,
+      maxX: (1 + Math.cos(Date.now() / 1000)) * 200 + 900,
+    })
+  }, 16)
 
   watchEffect(() => {
     multiLine.setRenderBounds({

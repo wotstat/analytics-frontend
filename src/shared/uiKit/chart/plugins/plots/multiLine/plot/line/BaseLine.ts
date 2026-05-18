@@ -4,7 +4,7 @@ import { ChartSpace } from '../../utils/ChartSpace'
 import { Point } from '../../utils/Point'
 
 
-export abstract class Line {
+export abstract class BaseLine {
   protected multiLine: MultiLineChart | null = null
   protected bounds: Bounds | null = null
   protected isDirty = true
