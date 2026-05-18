@@ -72,7 +72,12 @@ onMounted(() => {
         // padding: 0
       })
     ],
-    strategy: 'classic'
+    strategy: {
+      type: 'interval',
+      placement: 'start',
+      fit: true,
+      offset: [5, 5],
+    },
     // from: 0,
   })
 

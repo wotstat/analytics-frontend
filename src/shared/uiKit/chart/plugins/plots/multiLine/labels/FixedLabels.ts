@@ -67,7 +67,12 @@ export function stepped(options: {
 }
 
 
-type Strategy = 'classic-flow' | 'classic'
+type Strategy = 'classic-flow' | 'classic' | {
+  type: 'interval',
+  placement: 'start' | 'end' | 'middle',
+  fit: boolean
+  offset?: [start: number, end: number] | number
+}
 type ValueGenerator = (startFrom: number) => { forward: Generator<number, void, unknown>, backward: Generator<number, void, unknown> }
 type Overrides = {
   gen: ValueGenerator
@@ -86,23 +91,23 @@ type Options = {
 type Extendable = { middle: number, size: number }
 function extend<T extends Extendable>(intervals: T[], padding: number) {
 
-  const result: (T & { min: number, max: number })[] = []
+  const result: (T & { start: number, end: number })[] = []
 
   let lastEnd = -Infinity
   for (let i = 0; i < intervals.length; i++) {
     const nextStart = i < intervals.length - 1 ? intervals[i + 1].middle - intervals[i + 1].size / 2 : Infinity
     const interval = intervals[i]
 
-    const min = Math.max(lastEnd + padding, interval.middle - interval.size)
-    const max = Math.min(nextStart - padding, interval.middle + interval.size)
-    result.push({ ...interval, min, max })
+    const start = Math.max(lastEnd + padding, interval.middle - interval.size)
+    const end = Math.min(nextStart - padding, interval.middle + interval.size)
+    result.push({ ...interval, start, end })
     lastEnd = interval.middle + interval.size / 2
   }
 
   return result
 }
 
-type Fittable = { middle: number, size: number, min: number, max: number }
+type Fittable = { middle: number, size: number, start: number, end: number }
 function fit<T extends Fittable>(intervals: T[],
   limits: { min: number, max: number },
   overflow: { start: number, end: number }) {
@@ -114,9 +119,9 @@ function fit<T extends Fittable>(intervals: T[],
   const oMax = max + overflow.end
 
   for (const current of intervals) {
-    if (current.max < oMin || current.min > oMax) continue
+    if (current.end < oMin || current.start > oMax) continue
 
-    if (current.min >= oMin && current.max <= oMax && current.middle > min && current.middle < max) {
+    if (current.start >= oMin && current.end <= oMax && current.middle > min && current.middle < max) {
       result.push(current)
       continue
     }
@@ -140,18 +145,60 @@ function fit<T extends Fittable>(intervals: T[],
       const middle = Math.min(
         oMin + half,
         mid - overflow.start + half,
-        current.max - half,
+        current.end - half,
       )
       result.push({ ...current, middle })
     } else if (right > oMax || mid > max) {
       const middle = Math.max(
         oMax - half,
         mid + overflow.end - half,
-        current.min + half
+        current.start + half
       )
       result.push({ ...current, middle })
     }
 
+  }
+
+  return result
+}
+
+type AlignFittable = { size: number, start: number, end: number }
+function intervalFit<T extends AlignFittable>(intervals: T[],
+  limits: { min: number, max: number },
+  overflow: { start: number, end: number },
+  strategy: 'start' | 'end' | 'middle', fit: boolean, offset: [start: number, end: number]) {
+  const result: (T & { middle: number })[] = []
+
+  const min = limits.min
+  const max = limits.max
+  const oMin = min - overflow.start
+  const oMax = max + overflow.end
+
+  for (const current of intervals) {
+    if (current.end < oMin || current.start > oMax) continue
+
+    const half = current.size / 2
+
+    const start = current.start
+    const end = current.end
+
+    let middle = 0
+
+
+    if (!fit) {
+      if (strategy === 'start') middle = start + offset[0] + half
+      else if (strategy === 'end') middle = end - offset[1] - half
+      else middle = (start + end) / 2
+
+    } else {
+      if (strategy === 'middle') middle = (Math.max(start, min) + Math.min(end, max)) / 2
+      else if (strategy === 'start') middle = Math.max(min, start) + offset[0] + half
+      else if (strategy === 'end') middle = Math.min(max, end) - offset[1] - half
+
+      middle = Math.max(middle, start + half + offset[0])
+      middle = Math.min(middle, end - half - offset[1])
+    }
+    result.push({ ...current, middle })
   }
 
   return result
@@ -225,8 +272,62 @@ function calculateClassic(ctx: {
   //   this.renderDebugBox(element.middle, element.size)
   // }
 
+  return result
+}
 
-  // return fitted.map(f => ({ x: f.middle, label: f.label, key: f.key, value: f.value }))
+function calculateInterval(ctx: {
+  space: ChartSpace,
+  overflow: { start: number, end: number },
+  from: number,
+  to: number,
+  padding: number,
+  tx: (v: number) => number,
+  compute: (v: number) => { x: number, label: string, size: number, half: number, key: string },
+  generator: ValueGenerator,
+  force: boolean,
+  placement: 'start' | 'end' | 'middle'
+}) {
+  const { space, overflow, padding, tx, compute, generator, force, placement } = ctx
+  const left = space.layout.x - overflow.start
+  const right = space.layout.x + space.layout.width + overflow.end
+
+  const from = (() => {
+    if (ctx.from != -Infinity) return ctx.from
+    for (const value of generator(space.bounds.minX).backward) if (tx(value) < left) return value
+    return space.bounds.minX
+  })()
+
+  const to = (() => {
+    if (ctx.to != Infinity) return ctx.to
+    for (const value of generator(space.bounds.maxX).forward) if (tx(value) > right) return value
+    return space.bounds.maxX
+  })()
+
+
+  const gen = generator(to).backward
+  let lastEnd = tx(to) - padding / 2
+  const result: { label: string, key: string, value: number, size: number, start: number, end: number }[] = []
+
+  gen.next() // skip the first value which is out of bounds
+  for (const value of gen) {
+
+    const { x, label, size, half, key } = compute(value)
+
+    const start = x
+    const end = lastEnd
+
+    const width = end - start - padding
+    if (width < size) {
+      if (force) continue
+      return null
+    }
+
+    result.push({ label, key, value, size, start, end })
+    lastEnd = x
+
+    if (value <= from) break
+  }
+
   return result
 }
 
@@ -264,6 +365,8 @@ export class FixedLabels extends BaseLabels {
     const defaultLabelForValue = (v: number, step: number) => v.toString()
     const defaultKeyForValue = (v: number, label: string, step: number) => label
 
+    const convert = (v: { middle: number, label: string, key: string, value: number }) => ({ x: v.middle, label: v.label, key: v.key, value: v.value })
+
     let padding = 0
     let strategy = options.strategy ?? DEFAULT_STRATEGY
 
@@ -286,19 +389,33 @@ export class FixedLabels extends BaseLabels {
         return { x, label, size, key, half: size / 2 }
       }
 
+      const ctx = {
+        space, overflow, from, to, padding, compute, generator: current.gen, force: i == options.values.length - 1
+      }
+
       if (strategy == 'classic-flow' || strategy == 'classic') {
-        const res = calculateClassic({
-          space, overflow, from, to, padding,
-          compute, generator: current.gen,
-          force: i == options.values.length - 1
+        const res = calculateClassic(ctx)
+
+        if (!res) continue
+
+        return (strategy == 'classic-flow' ?
+          fit(extend(res, padding), { min: space.layout.x, max: space.layout.x + space.layout.width }, overflow) :
+          res
+        ).map(convert)
+      } else if (strategy.type == 'interval') {
+
+        const res = calculateInterval({
+          ...ctx,
+          tx: space.translateX.bind(space),
+          placement: strategy.placement,
         })
 
         if (!res) continue
 
-        return (strategy == 'classic' ?
-          res :
-          fit(extend(res, padding), { min: space.layout.x, max: space.layout.x + space.layout.width }, overflow)
-        ).map(f => ({ x: f.middle, label: f.label, key: f.key, value: f.value, }))
+        const offset: [number, number] = strategy.offset ? typeof strategy.offset === 'number' ? [strategy.offset, strategy.offset] : strategy.offset : [padding, padding]
+        return intervalFit(res,
+          { min: space.layout.x, max: space.layout.x + space.layout.width },
+          overflow, strategy.placement, strategy.fit, offset).map(convert)
       }
     }
 
