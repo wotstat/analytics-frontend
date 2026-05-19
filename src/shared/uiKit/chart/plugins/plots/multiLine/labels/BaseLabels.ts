@@ -3,25 +3,25 @@ import { ChartSpace } from '../utils/ChartSpace'
 
 type LabelData = {
   key: string
-  x: number
+  p: number
   label: string
   value: number
 }
 
-const DEFAULT_LABEL_PADDING = 5
+export type Axis = 'vertical' | 'horizontal'
 export abstract class BaseLabels implements LabelsRenderer {
 
   protected root: SVGGElement | null = null
   private cachedSizes = new Map<string, number>()
-  private cachedHeight: TextMetrics | null = null
+  private cachedMetrics: TextMetrics | null = null
   private ctx = document.createElement('canvas').getContext('2d')
 
 
   private elementByKey = new Map<string, SVGTextElement>()
-  private lastY = 0
+  private lastPersistent = 0
   private lastRenderedTicks: number[] = []
 
-  constructor() { }
+  constructor(readonly axis: Axis) { }
 
   attach(root: SVGGElement, multiLine: MultiLineChart): void {
     this.root = root
@@ -34,7 +34,7 @@ export abstract class BaseLabels implements LabelsRenderer {
     }
     this.elementByKey.clear()
     this.cachedSizes.clear()
-    this.cachedHeight = null
+    this.cachedMetrics = null
     this.root = null
   }
 
@@ -60,18 +60,24 @@ export abstract class BaseLabels implements LabelsRenderer {
       if (!usedKeys.has(key)) this.cachedSizes.delete(key)
     }
 
-    const y = space.translateY(0) + this.getYOffset()
+    if (this.axis === 'horizontal') this.renderHorizontalLabel(space, labels)
+    else this.renderVerticalLabel(space, labels)
+
+  }
+
+  protected renderHorizontalLabel(space: ChartSpace, labels: LabelData[]) {
+    const y = space.layout.y + space.layout.height + this.getYOffset()
     const yStr = y.toString()
 
-    if (this.lastY !== y) {
+    if (this.lastPersistent !== y) {
       for (const element of this.elementByKey.values()) element.setAttribute('y', yStr)
-      this.lastY = y
+      this.lastPersistent = y
     }
 
-    for (const key of usedKeys) {
-      if (!this.elementByKey.has(key)) {
+    for (const label of labels) {
+      if (!this.elementByKey.has(label.key)) {
         const element = this.createLabel()
-        this.elementByKey.set(key, element)
+        this.elementByKey.set(label.key, element)
         element.setAttribute('y', yStr)
       }
     }
@@ -79,7 +85,34 @@ export abstract class BaseLabels implements LabelsRenderer {
     for (const label of labels) {
       const element = this.elementByKey.get(label.key)
       if (!element) continue
-      element.setAttribute('x', label.x.toString())
+      element.setAttribute('x', label.p.toString())
+      if (element.textContent !== label.label) {
+        element.textContent = label.label
+      }
+    }
+  }
+
+  protected renderVerticalLabel(space: ChartSpace, labels: LabelData[]) {
+    const x = space.layout.x
+    const xStr = x.toString()
+
+    if (this.lastPersistent !== x) {
+      for (const element of this.elementByKey.values()) element.setAttribute('x', xStr)
+      this.lastPersistent = x
+    }
+
+    for (const label of labels) {
+      if (!this.elementByKey.has(label.key)) {
+        const element = this.createLabel()
+        this.elementByKey.set(label.key, element)
+        element.setAttribute('x', xStr)
+      }
+    }
+
+    for (const label of labels) {
+      const element = this.elementByKey.get(label.key)
+      if (!element) continue
+      element.setAttribute('y', label.p.toString())
       if (element.textContent !== label.label) {
         element.textContent = label.label
       }
@@ -103,7 +136,7 @@ export abstract class BaseLabels implements LabelsRenderer {
 
     this.ctx.font = target
     this.cachedSizes.clear()
-    this.cachedHeight = null
+    this.cachedMetrics = null
   }
 
   getHeight(): number {
@@ -137,12 +170,17 @@ export abstract class BaseLabels implements LabelsRenderer {
     return width
   }
 
+  getTextHeight(text: string): number {
+    const metrics = this.getTextMetrics()
+    return metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent
+  }
+
   getTextMetrics() {
-    if (this.cachedHeight !== null) return this.cachedHeight
+    if (this.cachedMetrics !== null) return this.cachedMetrics
     if (!this.ctx) return new TextMetrics()
     const metrics = this.ctx.measureText('M')
-    this.cachedHeight = metrics
+    this.cachedMetrics = metrics
 
-    return this.cachedHeight
+    return this.cachedMetrics
   }
 }

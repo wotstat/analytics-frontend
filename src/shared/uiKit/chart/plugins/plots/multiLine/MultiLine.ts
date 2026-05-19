@@ -36,6 +36,7 @@ export class MultiLineChart implements ChartPlugin {
   private height = 0
   private mainSpace = new ChartSpace({ x: 0, y: 0, width: 0, height: 0 }, new Bounds())
 
+  private yLabels: LabelsRenderer | null = null
   private xLabels: LabelsRenderer | null = null
   private xTicks: TicksRenderer | null = null
   private lines = new Set<BaseLine>()
@@ -46,7 +47,11 @@ export class MultiLineChart implements ChartPlugin {
   private clipPathRoot = document.createElementNS(NAMESPACE, 'clipPath')
   private plotClipRect = document.createElementNS(NAMESPACE, 'rect')
   private plotRoot = document.createElementNS(NAMESPACE, 'g')
+
+  private labelsRoot = document.createElementNS(NAMESPACE, 'g')
+  private yLabelsRoot = document.createElementNS(NAMESPACE, 'g')
   private xLabelsRoot = document.createElementNS(NAMESPACE, 'g')
+
   private ticksRoot = document.createElementNS(NAMESPACE, 'g')
   private xTicksRoot = document.createElementNS(NAMESPACE, 'g')
 
@@ -59,14 +64,22 @@ export class MultiLineChart implements ChartPlugin {
     this.clipPathRoot.setAttribute('id', clipId)
     this.plotRoot.setAttribute('clip-path', `url(#${clipId})`)
     this.plotRoot.classList.add('plot')
+
+    this.labelsRoot.classList.add('labels')
+    this.yLabelsRoot.classList.add('y-labels')
     this.xLabelsRoot.classList.add('x-labels')
+
     this.ticksRoot.classList.add('ticks')
     this.xTicksRoot.classList.add('x-ticks')
 
     this.clipPathRoot.appendChild(this.plotClipRect)
     this.ticksRoot.appendChild(this.xTicksRoot)
     this.root.appendChild(this.plotRoot)
-    this.root.appendChild(this.xLabelsRoot)
+
+    this.root.appendChild(this.labelsRoot)
+    this.labelsRoot.appendChild(this.xLabelsRoot)
+    this.labelsRoot.appendChild(this.yLabelsRoot)
+
     this.root.appendChild(this.ticksRoot)
     this.setRenderBounds(options.renderBounds)
   }
@@ -92,6 +105,17 @@ export class MultiLineChart implements ChartPlugin {
     if (this.xLabels) {
       this.xLabels.attach(this.xLabelsRoot, this)
       this.xLabels.recalculateFont()
+    }
+  }
+
+  setYLabels(yLabels: LabelsRenderer | null) {
+    if (this.yLabels === yLabels) return
+    if (this.yLabels) this.yLabels.detach()
+
+    this.yLabels = yLabels
+    if (this.yLabels) {
+      this.yLabels.attach(this.yLabelsRoot, this)
+      this.yLabels.recalculateFont()
     }
   }
 
@@ -193,6 +217,11 @@ export class MultiLineChart implements ChartPlugin {
     this.xLabels?.render(this.mainSpace, {
       start: overflow.left,
       end: overflow.right
+    })
+
+    this.yLabels?.render(this.mainSpace, {
+      start: overflow.top,
+      end: overflow.bottom
     })
   }
 

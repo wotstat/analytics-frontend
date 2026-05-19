@@ -1,6 +1,5 @@
 import { ChartSpace } from '../../utils/ChartSpace'
-import { BaseLabels } from '../BaseLabels'
-import { MultiLineChart } from '../../MultiLine'
+import { Axis, BaseLabels } from '../BaseLabels'
 import { calculateClassic, calculateInterval, extend, fit, intervalFit } from './utils'
 
 export type Strategy = 'classic-flow' | 'classic' | {
@@ -34,8 +33,8 @@ const DEFAULT_STRATEGY: Strategy = 'classic-flow'
 
 export class AutoLabels extends BaseLabels {
 
-  constructor(private options: Options) {
-    super()
+  constructor(axis: Axis, private options: Options) {
+    super(axis)
   }
 
   private getOverridesForStep(step: number): Overrides | null {
@@ -58,10 +57,18 @@ export class AutoLabels extends BaseLabels {
     const defaultLabelForValue = (v: number, step: number) => v.toString()
     const defaultKeyForValue = (v: number, label: string, step: number) => label
 
-    const convert = (v: { middle: number, label: string, key: string, value: number }) => ({ x: v.middle, label: v.label, key: v.key, value: v.value })
+    const convert = (v: { middle: number, label: string, key: string, value: number }) => ({ p: v.middle, label: v.label, key: v.key, value: v.value })
+    const translate = this.axis === 'horizontal' ? space.translateX.bind(space) : space.translateY.bind(space)
 
     let padding = 0
     let strategy = options.strategy ?? DEFAULT_STRATEGY
+
+    const limits = this.axis === 'horizontal' ?
+      { min: space.layout.x, max: space.layout.x + space.layout.width } :
+      { min: space.layout.y, max: space.layout.y + space.layout.height }
+
+    const getSize = this.axis === 'horizontal' ? this.getTextWidth.bind(this) : this.getTextHeight.bind(this)
+    const softLimits = this.axis === 'horizontal' ? { start: space.bounds.minX, end: space.bounds.maxX } : { start: space.bounds.minY, end: space.bounds.maxY }
 
     for (let i = 0; i < options.values.length; i++) {
       const current = this.getOverridesForStep(i)
@@ -75,21 +82,24 @@ export class AutoLabels extends BaseLabels {
       strategy = current.strategy ?? options.strategy ?? DEFAULT_STRATEGY
 
       const compute = (v: number) => {
-        const x = space.translateX(v)
+        const p = translate(v)
         const label = labelForValue(v, i)
-        const size = this.getTextWidth(label)
+        const size = getSize(label)
         const key = keyForValue(v, label, i)
-        return { x, label, size, key, half: size / 2 }
+        return { p, label, size, key, half: size / 2 }
       }
 
       const ctx = {
-        space, overflow, from, to, padding, compute, generator: current.gen, force: i == options.values.length - 1
+        padding, compute, generator: current.gen, force: i == options.values.length - 1,
+        spaceLimits: { start: from, end: to },
+        layoutLimits: { start: limits.min, end: limits.max },
+        spaceSoftLimits: softLimits
       }
 
       if (strategy == 'classic-flow') {
         const res = calculateClassic(ctx)
         if (!res) continue
-        return fit(extend(res, padding), { min: space.layout.x, max: space.layout.x + space.layout.width }, overflow).map(convert)
+        return fit(extend(res, padding), limits, overflow).map(convert)
       }
       else if (strategy == 'classic') {
         const res = calculateClassic(ctx)
@@ -99,7 +109,7 @@ export class AutoLabels extends BaseLabels {
       else if (strategy.type == 'interval') {
         const res = calculateInterval({
           ...ctx,
-          tx: space.translateX.bind(space),
+          translate: translate,
           placement: strategy.placement,
         })
 
@@ -107,9 +117,7 @@ export class AutoLabels extends BaseLabels {
 
         const offset: [number, number] = strategy.offset ? typeof strategy.offset === 'number' ? [strategy.offset, strategy.offset] : strategy.offset : [padding, padding]
         return intervalFit(
-          res,
-          { min: space.layout.x, max: space.layout.x + space.layout.width },
-          overflow, strategy.placement, strategy.fit, offset
+          res, limits, overflow, strategy.placement, strategy.fit, offset
         ).map(convert)
       }
     }
