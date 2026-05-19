@@ -7,6 +7,7 @@
     <div class="chart">
       <h3>Бои по дням</h3>
       <Chart />
+      <input type="range" min="-100" max="100" step="0.01" v-model.number="yOffset" />
       <input type="range" min="-1000" max="1000" v-model.number="offset" />
       <input type="number" v-model.number="offset" />
       <input type="range" min="0" max="80" step="0.001" v-model.number="scale" />
@@ -18,6 +19,7 @@
 <script setup lang="ts">
 import Chart from '@/shared/uiKit/chart/Chart.vue'
 import { AutoLabels } from '@/shared/uiKit/chart/plugins/plots/multiLine/labels/autoLabels/AutoLabels'
+import { arrayGenerator } from '@/shared/uiKit/chart/plugins/plots/multiLine/labels/autoLabels/generators/arrayGenerator'
 import { steppedOverrides } from '@/shared/uiKit/chart/plugins/plots/multiLine/labels/autoLabels/generators/steppedGenerator'
 import { MultiLineChart } from '@/shared/uiKit/chart/plugins/plots/multiLine/MultiLine'
 import { SimpleLine } from '@/shared/uiKit/chart/plugins/plots/multiLine/plot/line/SimpleLine'
@@ -29,6 +31,7 @@ const chartElement = ref<InstanceType<typeof Chart> | null>(null)
 
 const props = defineProps<{}>()
 const offset = ref(0)
+const yOffset = ref(0)
 const scale = ref(1)
 
 onMounted(() => {
@@ -36,21 +39,10 @@ onMounted(() => {
 
   const chart = chartElement.value.chart
 
-  const multiLine = new MultiLineChart({
-    // axis: {
-    //   xAxis: {
-    //     // showEdgeLabels: true,
-    //     // showZeroLabel: true,
-    //     step: 1,
-    //     // offset: 10,
-    //     labelForValue: v => `${v}`,
-    //   }
-    // }
-  })
+  const multiLine = new MultiLineChart({})
 
-  const fixedLabels = new AutoLabels({
+  const autoLabelsX = new AutoLabels('horizontal', {
     labelForValue: (v, step) => step < 7 && v == 500 ? `${v.toFixed(10)}` : `${v.toFixed(0)}`,
-    // labeledValues: [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
     padding: 15,
     values: [
       // {
@@ -60,18 +52,31 @@ onMounted(() => {
       ...steppedOverrides({
         step: [1, 2, 5, 10, 25, 50, 100, 200, 250, 500],
         offset: 0,
-        // labelForValue: v => `${v.toFixed(0)}`,
-        // padding: 0
       })
     ],
-    // strategy: 'classic'
-    strategy: {
-      type: 'interval',
-      placement: 'end',
-      fit: true,
-      offset: [5, 5],
-    },
+    strategy: 'classic-flow',
+    // strategy: 'classic-flow',
+    // strategy: {
+    //   type: 'interval',
+    //   placement: 'middle',
+    //   fit: true,
+    //   offset: [5, 5],
+    // },
     // from: 0,
+    // to: 1000
+  })
+
+  const autoLabelsY = new AutoLabels('vertical', {
+    labelForValue: (v, step) => `${v.toFixed(0)}`,
+    padding: 15,
+    values: [
+      arrayGenerator([-40, -20, 0, 20, 40, 60, 80, 100]),
+      // ...steppedOverrides({
+      //   step: [1, 2, 5, 10, 25, 50, 100, 200, 250, 500],
+      //   offset: 0,
+      // }),
+    ],
+    strategy: 'classic',
   })
 
   const sinLine = new SimpleLine(new Array(1000).fill(0).map((_, i) => ({ x: i, y: Math.sin(i / 10) * 50 + 50 })), ['sin'])
@@ -84,27 +89,30 @@ onMounted(() => {
     { x: 0, y: 0 },
   ], ['red'])
 
-  const xTicks = new TicksByLabels(fixedLabels)
+  const xTicks = new TicksByLabels(autoLabelsX)
 
   multiLine.setXTicks(xTicks)
-  multiLine.setXLabels(fixedLabels)
+  multiLine.setXLabels(autoLabelsX)
+  multiLine.setYLabels(autoLabelsY)
   multiLine.addLine(sinLine)
   multiLine.addLine(randomLine)
   // multiLine.addLine(redLine)
 
   chart.addPlugin(multiLine)
 
-  setInterval(() => {
-    multiLine.setRenderBounds({
-      minX: (1 + Math.sin(Date.now() / 1000)) * 200 - 200,
-      maxX: (1 + Math.cos(Date.now() / 1000)) * 200 + 900,
-    })
-  }, 16)
+  // setInterval(() => {
+  //   multiLine.setRenderBounds({
+  //     minX: (1 + Math.sin(Date.now() / 1000)) * 200 - 200,
+  //     maxX: (1 + Math.cos(Date.now() / 1000)) * 200 + 900,
+  //   })
+  // }, 16)
 
   watchEffect(() => {
     multiLine.setRenderBounds({
       minX: -offset.value,
       maxX: -offset.value + 1000 / scale.value,
+      minY: 0 + yOffset.value,
+      maxY: 100 + yOffset.value,
     })
   })
 
@@ -145,8 +153,10 @@ onMounted(() => {
       .ticks {
         .x-ticks {
           .tick {
-            stroke: rgba(255, 255, 255, 0.5);
-            stroke-width: 0.5px;
+            stroke: rgba(255, 255, 255, 0.3);
+            stroke-width: 1px;
+            stroke-dasharray: 3px 8px;
+            stroke-linecap: round;
           }
         }
       }

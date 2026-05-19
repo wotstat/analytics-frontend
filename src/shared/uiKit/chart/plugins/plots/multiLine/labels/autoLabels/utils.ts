@@ -1,4 +1,3 @@
-import { ChartSpace } from '../../utils/ChartSpace'
 import { ValueGenerator } from './AutoLabels'
 
 type Extendable = { middle: number, size: number }
@@ -118,58 +117,62 @@ export function intervalFit<T extends AlignFittable>(intervals: T[],
 }
 
 export function calculateClassic(ctx: {
-  space: ChartSpace,
-  overflow: { start: number, end: number },
-  from: number,
-  to: number,
+  spaceLimits: { start: number, end: number },
+  spaceSoftLimits: { start: number, end: number },
+  layoutLimits: { start: number, end: number },
   padding: number,
-  compute: (v: number) => { x: number, label: string, size: number, half: number, key: string },
+  compute: (v: number) => { p: number, label: string, size: number, half: number, key: string },
   generator: ValueGenerator,
   force: boolean,
 }) {
 
-  const { space, overflow, from, to, padding, compute, generator, force } = ctx
-  const left = space.layout.x - overflow.start
-  const right = space.layout.x + space.layout.width + overflow.end
+  const { spaceLimits, layoutLimits, spaceSoftLimits, padding, compute, generator, force } = ctx
+  const start = layoutLimits.start
+  const end = layoutLimits.end
+
+  const from = spaceLimits.start
+  const to = spaceLimits.end
 
   const result: { middle: number, label: string, key: string, value: number, size: number, half: number }[] = []
 
   let lastMaxX = -Infinity
-  const gen = generator(from == -Infinity ? space.bounds.minX : from).forward
+  const gen = generator(from == -Infinity ? spaceSoftLimits.start : from).forward
   for (const v of gen) {
     if (v > to) break
 
-    const { x, label, size, half, key } = compute(v)
-    if (x + size < left) continue
-    if (x - half < lastMaxX + padding) {
+    const { p, label, size, half, key } = compute(v)
+    // console.log('Generated value', v, p, size,)
+
+    if (p + size < start) continue
+    if (p - half < lastMaxX + padding) {
       if (force) continue
       return null
     }
 
-    const isLastValue = lastMaxX > right
-    lastMaxX = x + half
+    const isLastValue = lastMaxX > end
+    lastMaxX = p + half
 
-    result.push({ middle: x, label, key, value: v, size, half })
+    result.push({ middle: p, label, key, value: v, size, half })
 
     if (isLastValue) break
   }
 
   if (from == -Infinity) {
     let lastMinX = result.length > 0 ? (result[0].middle - result[0].half) : Infinity
-    const reverseGen = generator(space.bounds.minX - 1).backward
+    const reverseGen = generator(spaceSoftLimits.start - 1).backward
     for (const v of reverseGen) {
 
-      const { x, label, size, half, key } = compute(v)
+      const { p, label, size, half, key } = compute(v)
 
-      if (x + half > lastMinX - padding) {
+      if (p + half > lastMinX - padding) {
         if (force) continue
         return null
       }
 
-      const isLastValue = lastMinX < left
-      lastMinX = x - half
+      const isLastValue = lastMinX < start
+      lastMinX = p - half
 
-      result.unshift({ middle: x, label, key, value: v, size, half })
+      result.unshift({ middle: p, label, key, value: v, size, half })
 
       if (isLastValue) break
     }
@@ -179,44 +182,42 @@ export function calculateClassic(ctx: {
 }
 
 export function calculateInterval(ctx: {
-  space: ChartSpace,
-  overflow: { start: number, end: number },
-  from: number,
-  to: number,
+  spaceLimits: { start: number, end: number },
+  spaceSoftLimits: { start: number, end: number },
+  layoutLimits: { start: number, end: number },
   padding: number,
-  tx: (v: number) => number,
-  compute: (v: number) => { x: number, label: string, size: number, half: number, key: string },
+  translate: (v: number) => number,
+  compute: (v: number) => { p: number, label: string, size: number, half: number, key: string },
   generator: ValueGenerator,
   force: boolean,
   placement: 'start' | 'end' | 'middle'
 }) {
-  const { space, overflow, padding, tx, compute, generator, force, placement } = ctx
-  const left = space.layout.x - overflow.start
-  const right = space.layout.x + space.layout.width + overflow.end
+
+  const { spaceSoftLimits, layoutLimits, padding, translate: tr, compute, generator, force } = ctx
+  const left = layoutLimits.start
+  const right = layoutLimits.end
 
   const from = (() => {
-    if (ctx.from != -Infinity) return ctx.from
-    for (const value of generator(space.bounds.minX).backward) if (tx(value) < left) return value
-    return space.bounds.minX
+    if (ctx.spaceLimits.start != -Infinity) return ctx.spaceLimits.start
+    for (const value of generator(spaceSoftLimits.start).backward) if (tr(value) < left) return value
+    return spaceSoftLimits.start
   })()
 
   const to = (() => {
-    if (ctx.to != Infinity) return ctx.to
-    for (const value of generator(space.bounds.maxX).forward) if (tx(value) > right) return value
-    return space.bounds.maxX
+    if (ctx.spaceLimits.end != Infinity) return ctx.spaceLimits.end
+    for (const value of generator(spaceSoftLimits.end).forward) if (tr(value) > right) return value
+    return spaceSoftLimits.end
   })()
 
 
   const gen = generator(to).backward
-  let lastEnd = tx(to) - padding / 2
+  let lastEnd = tr(to) - padding / 2
   const result: { label: string, key: string, value: number, size: number, start: number, end: number }[] = []
 
   gen.next() // skip the first value which is out of bounds
   for (const value of gen) {
 
-    const { x, label, size, half, key } = compute(value)
-
-    const start = x
+    const { p: start, label, size, half, key } = compute(value)
     const end = lastEnd
 
     const width = end - start - padding
@@ -226,7 +227,7 @@ export function calculateInterval(ctx: {
     }
 
     result.push({ label, key, value, size, start, end })
-    lastEnd = x
+    lastEnd = start
 
     if (value <= from) break
   }

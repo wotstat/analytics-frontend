@@ -60,7 +60,7 @@ export abstract class BaseTicks implements TicksRenderer {
       tick.x,
       0,
       tick.x,
-      space.translateY(0) + 2
+      space.layout.y + space.layout.height + 20
     )
   }
 
