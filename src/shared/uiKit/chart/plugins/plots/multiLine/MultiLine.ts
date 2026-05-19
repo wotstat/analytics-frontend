@@ -39,6 +39,7 @@ export class MultiLineChart implements ChartPlugin {
   private yLabels: LabelsRenderer | null = null
   private xLabels: LabelsRenderer | null = null
   private xTicks: TicksRenderer | null = null
+  private yTicks: TicksRenderer | null = null
   private lines = new Set<BaseLine>()
   private linesBounds = new Bounds()
 
@@ -54,6 +55,7 @@ export class MultiLineChart implements ChartPlugin {
 
   private ticksRoot = document.createElementNS(NAMESPACE, 'g')
   private xTicksRoot = document.createElementNS(NAMESPACE, 'g')
+  private yTicksRoot = document.createElementNS(NAMESPACE, 'g')
 
   constructor(readonly options: Options) {
     this.root.classList.add('chart-multiline-root')
@@ -71,9 +73,11 @@ export class MultiLineChart implements ChartPlugin {
 
     this.ticksRoot.classList.add('ticks')
     this.xTicksRoot.classList.add('x-ticks')
+    this.yTicksRoot.classList.add('y-ticks')
 
     this.clipPathRoot.appendChild(this.plotClipRect)
     this.ticksRoot.appendChild(this.xTicksRoot)
+    this.ticksRoot.appendChild(this.yTicksRoot)
     this.root.appendChild(this.plotRoot)
 
     this.root.appendChild(this.labelsRoot)
@@ -125,6 +129,14 @@ export class MultiLineChart implements ChartPlugin {
 
     this.xTicks = xTicks
     if (this.xTicks) this.xTicks.attach(this.xTicksRoot, this)
+  }
+
+  setYTicks(yTicks: TicksRenderer | null) {
+    if (this.yTicks === yTicks) return
+    if (this.yTicks) this.yTicks.detach()
+
+    this.yTicks = yTicks
+    if (this.yTicks) this.yTicks.attach(this.yTicksRoot, this)
   }
 
   removeLine(line: BaseLine) {
@@ -203,7 +215,8 @@ export class MultiLineChart implements ChartPlugin {
   private layout() {
     const xHeight = this.xLabels ? this.xLabels.getHeight() : 0
 
-    this.mainSpace.layout = { x: 30, y: 0, width: this.width - 40, height: this.height - xHeight }
+    // this.mainSpace.layout = { x: 30, y: 0, width: this.width - 40, height: this.height - xHeight }
+    this.mainSpace.layout = { x: 40, y: 20, width: this.width - 40, height: this.height - xHeight - 20 }
     this.updatePlotSpace()
   }
 
@@ -227,6 +240,7 @@ export class MultiLineChart implements ChartPlugin {
 
   private renderTicks() {
     this.xTicks?.render(this.mainSpace)
+    this.yTicks?.render(this.mainSpace)
   }
 
   private updatePlotSpace() {

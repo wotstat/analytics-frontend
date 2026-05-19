@@ -57,15 +57,16 @@ export class AutoLabels extends BaseLabels {
     const defaultLabelForValue = (v: number, step: number) => v.toString()
     const defaultKeyForValue = (v: number, label: string, step: number) => label
 
-    const convert = (v: { middle: number, label: string, key: string, value: number }) => ({ p: v.middle, label: v.label, key: v.key, value: v.value })
-    const translate = this.axis === 'horizontal' ? space.translateX.bind(space) : space.translateY.bind(space)
+    const translate = this.axis === 'horizontal' ? space.chartToLocalX.bind(space) : space.chartToLocalY.bind(space)
+    const inverseTranslate = this.axis === 'horizontal' ? space.localToLayoutX.bind(space) : space.localToLayoutY.bind(space)
+    const convert = (v: { middle: number, label: string, key: string, value: number }) => ({ p: inverseTranslate(v.middle), label: v.label, key: v.key, value: v.value })
 
     let padding = 0
     let strategy = options.strategy ?? DEFAULT_STRATEGY
 
     const limits = this.axis === 'horizontal' ?
-      { min: space.layout.x, max: space.layout.x + space.layout.width } :
-      { min: space.layout.y, max: space.layout.y + space.layout.height }
+      { min: 0, max: space.layout.width } :
+      { min: 0, max: space.layout.height }
 
     const getSize = this.axis === 'horizontal' ? this.getTextWidth.bind(this) : this.getTextHeight.bind(this)
     const softLimits = this.axis === 'horizontal' ? { start: space.bounds.minX, end: space.bounds.maxX } : { start: space.bounds.minY, end: space.bounds.maxY }

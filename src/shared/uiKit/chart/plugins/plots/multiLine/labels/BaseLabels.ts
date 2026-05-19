@@ -93,7 +93,7 @@ export abstract class BaseLabels implements LabelsRenderer {
   }
 
   protected renderVerticalLabel(space: ChartSpace, labels: LabelData[]) {
-    const x = space.layout.x
+    const x = space.layout.x - this.getXOffset(space)
     const xStr = x.toString()
 
     if (this.lastPersistent !== x) {
@@ -147,6 +147,11 @@ export abstract class BaseLabels implements LabelsRenderer {
   getYOffset(): number {
     const metrics = this.getTextMetrics()
     return metrics.hangingBaseline + 8
+  }
+
+  getXOffset(space: ChartSpace): number {
+    // return space.layout.x
+    return 5
   }
 
   abstract calculateLabelPositions(space: ChartSpace, overflow: { start: number, end: number }): LabelData[]

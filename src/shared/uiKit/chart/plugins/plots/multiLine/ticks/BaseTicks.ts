@@ -1,8 +1,8 @@
 import { MultiLineChart, TicksRenderer } from '../MultiLine'
 import { ChartSpace } from '../utils/ChartSpace'
 
-type TickData = {
-  x: number
+export type TickData = {
+  p: number
   value: number
 }
 
@@ -12,6 +12,8 @@ export abstract class BaseTicks implements TicksRenderer {
 
   private elementsByKey = new Map<number, SVGLineElement>()
   private elementsXYCache = new Map<SVGLineElement, { x1: number, y1: number, x2: number, y2: number }>()
+
+  constructor() { }
 
   attach(root: SVGGElement, multiLine: MultiLineChart): void {
     this.root = root
@@ -57,9 +59,9 @@ export abstract class BaseTicks implements TicksRenderer {
 
   protected setupElement(space: ChartSpace, element: SVGLineElement, tick: TickData) {
     this.setXY(element,
-      tick.x,
+      tick.p,
       0,
-      tick.x,
+      tick.p,
       space.layout.y + space.layout.height + 20
     )
   }
