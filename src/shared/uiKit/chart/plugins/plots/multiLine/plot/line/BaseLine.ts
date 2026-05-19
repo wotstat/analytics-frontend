@@ -67,7 +67,7 @@ export abstract class BaseLine {
         continue
       }
 
-      const p = space.translate(point)
+      const p = space.chartToLayout(point)
       d += `${lastPointIsNull ? 'M' : 'L'} ${p.x} ${p.y} `
       lastPointIsNull = false
     }

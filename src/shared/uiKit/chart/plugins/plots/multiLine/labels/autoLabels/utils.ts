@@ -141,7 +141,6 @@ export function calculateClassic(ctx: {
     if (v > to) break
 
     const { p, label, size, half, key } = compute(v)
-    // console.log('Generated value', v, p, size,)
 
     if (p + size < start) continue
     if (p - half < lastMaxX + padding) {
@@ -159,9 +158,10 @@ export function calculateClassic(ctx: {
 
   if (from == -Infinity) {
     let lastMinX = result.length > 0 ? (result[0].middle - result[0].half) : Infinity
-    const reverseGen = generator(spaceSoftLimits.start - 1).backward
-    for (const v of reverseGen) {
 
+    const reverseGen = generator(spaceSoftLimits.start).backward
+    for (const v of reverseGen) {
+      if (v == spaceSoftLimits.start) continue
       const { p, label, size, half, key } = compute(v)
 
       if (p + half > lastMinX - padding) {

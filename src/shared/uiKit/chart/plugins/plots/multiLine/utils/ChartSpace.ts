@@ -13,7 +13,7 @@ export class ChartSpace {
     public bounds: Bounds
   ) { }
 
-  translate(p: Point): Point {
+  chartToLayout(p: Point): Point {
     const { x, y } = p
     const { minX, maxX, minY, maxY } = this.bounds
     const { x: layoutX, y: layoutY, width: layoutWidth, height: layoutHeight } = this.layout
@@ -27,7 +27,7 @@ export class ChartSpace {
     }
   }
 
-  translateX(x: number): number {
+  chartToLayoutX(x: number): number {
     const { minX, maxX } = this.bounds
     const { x: layoutX, width: layoutWidth } = this.layout
 
@@ -36,13 +36,60 @@ export class ChartSpace {
     return layoutX + (x - minX) * scaleX
   }
 
-  translateY(y: number): number {
+  chartToLayoutY(y: number): number {
     const { minY, maxY } = this.bounds
     const { y: layoutY, height: layoutHeight } = this.layout
 
     const scaleY = layoutHeight / (maxY - minY)
 
     return layoutY + (maxY - y) * scaleY
+  }
+
+  chartToLocal(points: Point): Point {
+    const { x, y } = points
+    const { minX, maxX, minY, maxY } = this.bounds
+    const { width: layoutWidth, height: layoutHeight } = this.layout
+
+    return {
+      x: (x - minX) / (maxX - minX) * layoutWidth,
+      y: (y - minY) / (maxY - minY) * layoutHeight
+    }
+  }
+
+  chartToLocalX(x: number): number {
+    const { minX, maxX } = this.bounds
+    const { width: layoutWidth } = this.layout
+
+    return (x - minX) / (maxX - minX) * layoutWidth
+  }
+
+  chartToLocalY(y: number): number {
+    const { minY, maxY } = this.bounds
+    const { height: layoutHeight } = this.layout
+
+    return (y - minY) / (maxY - minY) * layoutHeight
+  }
+
+  localToLayout(p: Point): Point {
+    const { x, y } = p
+    const { x: layoutX, y: layoutY, height } = this.layout
+
+    return {
+      x: layoutX + x,
+      y: y + height - layoutY
+    }
+  }
+
+  localToLayoutX(x: number): number {
+    const { x: layoutX } = this.layout
+
+    return layoutX + x
+  }
+
+  localToLayoutY(y: number): number {
+    const { y: layoutY, height } = this.layout
+
+    return layoutY + height - y
   }
 
   getHash(): string {

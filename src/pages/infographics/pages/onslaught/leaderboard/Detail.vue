@@ -8,9 +8,13 @@
       <h3>Бои по дням</h3>
       <Chart />
       <input type="range" min="-100" max="100" step="0.01" v-model.number="yOffset" />
+      <input type="number" v-model.number="yOffset" />
+      <input type="range" min="0" max="80" step="0.001" v-model.number="yScale" />
+
+      <hr>
       <input type="range" min="-1000" max="1000" v-model.number="offset" />
       <input type="number" v-model.number="offset" />
-      <input type="range" min="0" max="80" step="0.001" v-model.number="scale" />
+      <input type="range" min="0" max="80" step="0.001" v-model.number="xScale" />
     </div>
   </div>
 </template>
@@ -32,7 +36,8 @@ const chartElement = ref<InstanceType<typeof Chart> | null>(null)
 const props = defineProps<{}>()
 const offset = ref(0)
 const yOffset = ref(0)
-const scale = ref(1)
+const yScale = ref(1)
+const xScale = ref(1)
 
 onMounted(() => {
   if (!chartElement.value) return
@@ -70,11 +75,11 @@ onMounted(() => {
     labelForValue: (v, step) => `${v.toFixed(0)}`,
     padding: 15,
     values: [
-      arrayGenerator([-40, -20, 0, 20, 40, 60, 80, 100]),
-      // ...steppedOverrides({
-      //   step: [1, 2, 5, 10, 25, 50, 100, 200, 250, 500],
-      //   offset: 0,
-      // }),
+      // arrayGenerator([-200, -180, -160, -140, -120, -100, -80, -60, -40, -20, 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200]),
+      ...steppedOverrides({
+        step: [1, 2, 5, 10, 25, 50, 100, 200, 250, 500],
+        offset: 0,
+      }),
     ],
     strategy: 'classic',
   })
@@ -90,8 +95,10 @@ onMounted(() => {
   ], ['red'])
 
   const xTicks = new TicksByLabels(autoLabelsX)
+  const yTicks = new TicksByLabels(autoLabelsY)
 
   multiLine.setXTicks(xTicks)
+  multiLine.setYTicks(yTicks)
   multiLine.setXLabels(autoLabelsX)
   multiLine.setYLabels(autoLabelsY)
   multiLine.addLine(sinLine)
@@ -110,9 +117,9 @@ onMounted(() => {
   watchEffect(() => {
     multiLine.setRenderBounds({
       minX: -offset.value,
-      maxX: -offset.value + 1000 / scale.value,
+      maxX: -offset.value + 1000 / xScale.value,
       minY: 0 + yOffset.value,
-      maxY: 100 + yOffset.value,
+      maxY: yOffset.value + 100 / yScale.value,
     })
   })
 
@@ -143,20 +150,40 @@ onMounted(() => {
     }
 
     :deep(.chart-multiline-root) {
+      // useless rule to syntax highlight fix
+      background: inherit;
 
-      .label {
-        fill: white;
-        font-size: 14px;
-        font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      .labels {
+        .y-labels {
+          .label {
+            text-anchor: end;
+            alignment-baseline: middle;
+          }
+        }
+
+        .label {
+          fill: white;
+          font-size: 14px;
+          font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+        }
       }
 
       .ticks {
+        .tick {
+          stroke: rgba(255, 255, 255, 0.3);
+          stroke-width: 1px;
+        }
+
         .x-ticks {
           .tick {
-            stroke: rgba(255, 255, 255, 0.3);
-            stroke-width: 1px;
             stroke-dasharray: 3px 8px;
             stroke-linecap: round;
+          }
+        }
+
+        .y-ticks {
+          .tick {
+            stroke: rgba(255, 255, 255, 0.15);
           }
         }
       }
