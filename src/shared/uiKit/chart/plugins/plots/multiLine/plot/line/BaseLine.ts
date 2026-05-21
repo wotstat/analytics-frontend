@@ -1,10 +1,10 @@
-import { MultiLineChart } from '../../MultiLine'
+import { MultiLineChart, PlotBoundsRenderer } from '../../MultiLine'
 import { Bounds } from '../../utils/Bounds'
 import { ChartSpace } from '../../utils/ChartSpace'
 import { Point } from '../../utils/Point'
 
 
-export abstract class BaseLine {
+export abstract class BaseLine implements PlotBoundsRenderer {
   protected multiLine: MultiLineChart | null = null
   protected bounds: Bounds | null = null
   protected isDirty = true

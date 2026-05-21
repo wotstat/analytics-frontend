@@ -123,6 +123,10 @@ export abstract class BaseLabels implements LabelsRenderer {
     return this.lastRenderedTicks
   }
 
+  getTicksOffset(): number {
+    return 0
+  }
+
   recalculateFont() {
     if (!this.ctx) return
 

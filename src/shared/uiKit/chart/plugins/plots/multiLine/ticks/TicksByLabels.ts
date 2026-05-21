@@ -5,11 +5,14 @@ import { BaseTicks, TickData } from './BaseTicks'
 
 export class TicksByLabels extends BaseTicks {
 
+  private offset = 0
+
   constructor(private labels: BaseLabels) {
     super()
   }
 
   getTicks(space: ChartSpace): TickData[] {
+    this.offset = this.labels.getTicksOffset()
     const requiredTicks = this.labels.getRequiredTicks()
 
     if (this.labels.axis === 'horizontal') {
@@ -25,9 +28,9 @@ export class TicksByLabels extends BaseTicks {
 
   override setupElement(space: ChartSpace, element: SVGLineElement, tick: TickData) {
     if (this.labels.axis === 'horizontal') {
-      this.setXY(element, tick.p, space.layout.y, tick.p, space.layout.y + space.layout.height + 20)
+      this.setXY(element, tick.p, space.layout.y + space.layout.height + this.offset, tick.p, space.layout.y)
     } else {
-      this.setXY(element, space.layout.x - 50, tick.p, space.layout.x + space.layout.width, tick.p)
+      this.setXY(element, space.layout.x - this.offset, tick.p, space.layout.x + space.layout.width, tick.p)
     }
   }
 }

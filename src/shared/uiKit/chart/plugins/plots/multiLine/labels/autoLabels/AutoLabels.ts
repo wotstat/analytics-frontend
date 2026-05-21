@@ -154,5 +154,11 @@ export class AutoLabels extends BaseLabels {
 
     return ticks
   }
+
+  getTicksOffset(): number {
+    if (this.options.strategy === 'classic-flow' || this.options.strategy === 'classic') return 4
+    if (this.options.strategy?.type === 'interval') return Infinity
+    return 0
+  }
 }
 
