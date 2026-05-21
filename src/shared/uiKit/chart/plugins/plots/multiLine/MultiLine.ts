@@ -27,6 +27,33 @@ export interface TicksRenderer {
 }
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
+class RectClip {
+  private clipPath = document.createElementNS(NAMESPACE, 'clipPath')
+  private rect = document.createElementNS(NAMESPACE, 'rect')
+  private id = `clip-${Math.random().toString(16).slice(2)}`
+
+  constructor(root: SVGElement) {
+    this.clipPath.setAttribute('id', this.id)
+    this.clipPath.appendChild(this.rect)
+    root.appendChild(this.clipPath)
+  }
+
+  dispose() {
+    this.clipPath.remove()
+  }
+
+  getClipPath() {
+    return `url(#${this.id})`
+  }
+
+  setRect(x: number, y: number, width: number, height: number) {
+    this.rect.setAttribute('x', x.toString())
+    this.rect.setAttribute('y', y.toString())
+    this.rect.setAttribute('width', width.toString())
+    this.rect.setAttribute('height', height.toString())
+  }
+}
+
 export class MultiLineChart implements ChartPlugin {
   private chartDelegate: ChartDelegate | null = null
 
@@ -44,10 +71,11 @@ export class MultiLineChart implements ChartPlugin {
   private linesBounds = new Bounds()
 
   private root = document.createElementNS(NAMESPACE, 'g')
-  private defs = document.createElementNS(NAMESPACE, 'defs')
-  private clipPathRoot = document.createElementNS(NAMESPACE, 'clipPath')
-  private plotClipRect = document.createElementNS(NAMESPACE, 'rect')
   private plotRoot = document.createElementNS(NAMESPACE, 'g')
+
+  private defs = document.createElementNS(NAMESPACE, 'defs')
+  private plotClip = new RectClip(this.defs)
+  private yLabelsClip = new RectClip(this.defs)
 
   private labelsRoot = document.createElementNS(NAMESPACE, 'g')
   private yLabelsRoot = document.createElementNS(NAMESPACE, 'g')
@@ -60,11 +88,10 @@ export class MultiLineChart implements ChartPlugin {
   constructor(readonly options: Options) {
     this.root.classList.add('chart-multiline-root')
     this.root.appendChild(this.defs)
-    this.defs.appendChild(this.clipPathRoot)
 
-    const clipId = `multiline-clip-${Math.random().toString(16).slice(2)}`
-    this.clipPathRoot.setAttribute('id', clipId)
-    this.plotRoot.setAttribute('clip-path', `url(#${clipId})`)
+    this.plotRoot.setAttribute('clip-path', this.plotClip.getClipPath())
+    this.yLabelsRoot.setAttribute('clip-path', this.yLabelsClip.getClipPath())
+
     this.plotRoot.classList.add('plot')
 
     this.labelsRoot.classList.add('labels')
@@ -75,7 +102,6 @@ export class MultiLineChart implements ChartPlugin {
     this.xTicksRoot.classList.add('x-ticks')
     this.yTicksRoot.classList.add('y-ticks')
 
-    this.clipPathRoot.appendChild(this.plotClipRect)
     this.ticksRoot.appendChild(this.xTicksRoot)
     this.ticksRoot.appendChild(this.yTicksRoot)
     this.root.appendChild(this.plotRoot)
@@ -215,9 +241,8 @@ export class MultiLineChart implements ChartPlugin {
   private layout() {
     const xHeight = this.xLabels ? this.xLabels.getHeight() : 0
 
-    // this.mainSpace.layout = { x: 30, y: 0, width: this.width - 40, height: this.height - xHeight }
-    this.mainSpace.layout = { x: 40, y: 20, width: this.width - 40, height: this.height - xHeight - 20 }
-    this.updatePlotSpace()
+    this.mainSpace.layout = { x: 40, y: 0, width: this.width - 40, height: this.height - xHeight }
+    this.updateClips()
   }
 
   private renderLines() {
@@ -227,6 +252,7 @@ export class MultiLineChart implements ChartPlugin {
   }
 
   private renderLabels(overflow: { top: number, right: number, bottom: number, left: number }) {
+
     this.xLabels?.render(this.mainSpace, {
       start: overflow.left,
       end: overflow.right
@@ -234,7 +260,7 @@ export class MultiLineChart implements ChartPlugin {
 
     this.yLabels?.render(this.mainSpace, {
       start: overflow.top,
-      end: overflow.bottom
+      end: 0
     })
   }
 
@@ -243,11 +269,9 @@ export class MultiLineChart implements ChartPlugin {
     this.yTicks?.render(this.mainSpace)
   }
 
-  private updatePlotSpace() {
-    this.plotClipRect.setAttribute('x', this.mainSpace.layout.x.toString())
-    this.plotClipRect.setAttribute('y', this.mainSpace.layout.y.toString())
-    this.plotClipRect.setAttribute('width', this.mainSpace.layout.width.toString())
-    this.plotClipRect.setAttribute('height', this.mainSpace.layout.height.toString())
+  private updateClips() {
+    this.plotClip.setRect(this.mainSpace.layout.x, this.mainSpace.layout.y, this.mainSpace.layout.width, this.mainSpace.layout.height)
+    this.yLabelsClip.setRect(0, this.mainSpace.layout.y, this.mainSpace.layout.x, this.mainSpace.layout.height)
   }
 
   private calculateRenderBounds() {

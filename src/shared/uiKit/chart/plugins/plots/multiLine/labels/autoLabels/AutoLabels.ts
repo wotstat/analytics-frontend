@@ -33,6 +33,8 @@ const DEFAULT_STRATEGY: Strategy = 'classic-flow'
 
 export class AutoLabels extends BaseLabels {
 
+  private lastIntervalStart: number | null = null
+
   constructor(axis: Axis, private options: Options) {
     super(axis)
   }
@@ -64,12 +66,19 @@ export class AutoLabels extends BaseLabels {
     let padding = 0
     let strategy = options.strategy ?? DEFAULT_STRATEGY
 
-    const limits = this.axis === 'horizontal' ?
-      { min: 0, max: space.layout.width } :
-      { min: 0, max: space.layout.height }
+    const spaceBounds = this.axis === 'horizontal' ?
+      { start: space.bounds.minX, end: space.bounds.maxX } :
+      { start: space.bounds.minY, end: space.bounds.maxY }
+
+    const layoutLimits = this.axis === 'horizontal' ?
+      { start: 0, end: space.layout.width } :
+      { start: 0, end: space.layout.height }
+
+    const overflowLimits = this.axis === 'horizontal' ?
+      { start: layoutLimits.start - overflow.start, end: layoutLimits.end + overflow.end } :
+      { start: layoutLimits.start - overflow.end, end: layoutLimits.end + overflow.start }
 
     const getSize = this.axis === 'horizontal' ? this.getTextWidth.bind(this) : this.getTextHeight.bind(this)
-    const softLimits = this.axis === 'horizontal' ? { start: space.bounds.minX, end: space.bounds.maxX } : { start: space.bounds.minY, end: space.bounds.maxY }
 
     for (let i = 0; i < options.values.length; i++) {
       const current = this.getOverridesForStep(i)
@@ -92,15 +101,16 @@ export class AutoLabels extends BaseLabels {
 
       const ctx = {
         padding, compute, generator: current.gen, force: i == options.values.length - 1,
-        spaceLimits: { start: from, end: to },
-        layoutLimits: { start: limits.min, end: limits.max },
-        spaceSoftLimits: softLimits
+        bounds: spaceBounds,
+        limits: { start: from, end: to },
+        layoutLimits,
+        overflowLimits
       }
 
       if (strategy == 'classic-flow') {
         const res = calculateClassic(ctx)
         if (!res) continue
-        return fit(extend(res, padding), limits, overflow).map(convert)
+        return fit(extend(res, padding), layoutLimits, overflowLimits).map(convert)
       }
       else if (strategy == 'classic') {
         const res = calculateClassic(ctx)
@@ -113,17 +123,36 @@ export class AutoLabels extends BaseLabels {
           translate: translate,
           placement: strategy.placement,
         })
-
         if (!res) continue
 
-        const offset: [number, number] = strategy.offset ? typeof strategy.offset === 'number' ? [strategy.offset, strategy.offset] : strategy.offset : [padding, padding]
-        return intervalFit(
-          res, limits, overflow, strategy.placement, strategy.fit, offset
-        ).map(convert)
+        const offset = (() => {
+          if (!strategy.offset) return [padding, padding] as [number, number]
+          if (typeof strategy.offset === 'number') return [strategy.offset, strategy.offset] as [number, number]
+          return strategy.offset
+        })()
+
+        const fitted = intervalFit(res.filter(t => t.key != ''), layoutLimits, overflowLimits, strategy.placement, strategy.fit, offset)
+
+        this.lastIntervalStart = res[0].value
+        return fitted.map(convert)
       }
     }
 
     return []
+  }
+
+  getRequiredTicks(): number[] {
+    const ticks = super.getRequiredTicks()
+
+    if (this.options.strategy === 'classic-flow' || this.options.strategy === 'classic') return ticks
+
+    if (this.options.strategy?.type === 'interval') {
+      if (this.lastIntervalStart === null) return ticks
+
+      return [...ticks, this.lastIntervalStart]
+    }
+
+    return ticks
   }
 }
 
