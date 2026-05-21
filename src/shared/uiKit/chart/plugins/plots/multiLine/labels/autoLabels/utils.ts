@@ -21,14 +21,17 @@ export function extend<T extends Extendable>(intervals: T[], padding: number) {
 
 type Fittable = { middle: number, size: number, start: number, end: number }
 export function fit<T extends Fittable>(intervals: T[],
-  limits: { min: number, max: number },
-  overflow: { start: number, end: number }) {
+  layoutLimits: { start: number, end: number },
+  overflowLimits: { start: number, end: number }) {
   const result: T[] = []
 
-  const min = limits.min
-  const max = limits.max
-  const oMin = min - overflow.start
-  const oMax = max + overflow.end
+  const min = layoutLimits.start
+  const max = layoutLimits.end
+  const oMin = overflowLimits.start
+  const oMax = overflowLimits.end
+
+  const overflowStart = layoutLimits.start - overflowLimits.start
+  const overflowEnd = overflowLimits.end - layoutLimits.end
 
   for (const current of intervals) {
     if (current.end < oMin || current.start > oMax) continue
@@ -48,7 +51,7 @@ export function fit<T extends Fittable>(intervals: T[],
       continue
     }
 
-    if (mid < min && half < overflow.start || mid > max && half < overflow.end) {
+    if (mid < min && half < overflowStart || mid > max && half < overflowEnd) {
       result.push(current)
       continue
     }
@@ -56,14 +59,14 @@ export function fit<T extends Fittable>(intervals: T[],
     if (left < oMin || mid < min) {
       const middle = Math.min(
         oMin + half,
-        mid - overflow.start + half,
+        mid - overflowStart + half,
         current.end - half,
       )
       result.push({ ...current, middle })
     } else if (right > oMax || mid > max) {
       const middle = Math.max(
         oMax - half,
-        mid + overflow.end - half,
+        mid + overflowEnd - half,
         current.start + half
       )
       result.push({ ...current, middle })
@@ -76,15 +79,15 @@ export function fit<T extends Fittable>(intervals: T[],
 
 type AlignFittable = { size: number, start: number, end: number }
 export function intervalFit<T extends AlignFittable>(intervals: T[],
-  limits: { min: number, max: number },
-  overflow: { start: number, end: number },
+  layoutLimits: { start: number, end: number },
+  overflowLimits: { start: number, end: number },
   strategy: 'start' | 'end' | 'middle', fit: boolean, offset: [start: number, end: number]) {
   const result: (T & { middle: number })[] = []
 
-  const min = limits.min
-  const max = limits.max
-  const oMin = min - overflow.start
-  const oMax = max + overflow.end
+  const min = layoutLimits.start
+  const max = layoutLimits.end
+  const oMin = overflowLimits.start
+  const oMax = overflowLimits.end
 
   for (const current of intervals) {
     if (current.end < oMin || current.start > oMax) continue
@@ -117,51 +120,50 @@ export function intervalFit<T extends AlignFittable>(intervals: T[],
 }
 
 export function calculateClassic(ctx: {
-  spaceLimits: { start: number, end: number },
-  spaceSoftLimits: { start: number, end: number },
+  bounds: { start: number, end: number },
+  limits: { start: number, end: number },
   layoutLimits: { start: number, end: number },
+  overflowLimits: { start: number, end: number },
   padding: number,
   compute: (v: number) => { p: number, label: string, size: number, half: number, key: string },
   generator: ValueGenerator,
   force: boolean,
 }) {
 
-  const { spaceLimits, layoutLimits, spaceSoftLimits, padding, compute, generator, force } = ctx
-  const start = layoutLimits.start
-  const end = layoutLimits.end
-
-  const from = spaceLimits.start
-  const to = spaceLimits.end
+  const { bounds, limits, layoutLimits, overflowLimits, padding, compute, generator, force } = ctx
+  const left = overflowLimits.start
+  const right = overflowLimits.end
+  const from = Math.max(limits.start, bounds.start)
 
   const result: { middle: number, label: string, key: string, value: number, size: number, half: number }[] = []
 
   let lastMaxX = -Infinity
-  const gen = generator(from == -Infinity ? spaceSoftLimits.start : from).forward
+  const gen = generator(from).forward
   for (const v of gen) {
-    if (v > to) break
+    if (v < limits.start) continue
+    if (v > limits.end) break
 
     const { p, label, size, half, key } = compute(v)
 
-    if (p + size < start) continue
+    if (p + size < left) continue
     if (p - half < lastMaxX + padding) {
       if (force) continue
       return null
     }
 
-    const isLastValue = lastMaxX > end
+    // delayd cycle end to return null if overlap
+    if (lastMaxX > right) break
     lastMaxX = p + half
 
     result.push({ middle: p, label, key, value: v, size, half })
-
-    if (isLastValue) break
   }
 
-  if (from == -Infinity) {
+  if (limits.start < bounds.start) {
     let lastMinX = result.length > 0 ? (result[0].middle - result[0].half) : Infinity
 
-    const reverseGen = generator(spaceSoftLimits.start).backward
+    const reverseGen = generator(from).backward
     for (const v of reverseGen) {
-      if (v == spaceSoftLimits.start) continue
+      if (v == from) continue
       const { p, label, size, half, key } = compute(v)
 
       if (p + half > lastMinX - padding) {
@@ -169,12 +171,10 @@ export function calculateClassic(ctx: {
         return null
       }
 
-      const isLastValue = lastMinX < start
+      if (lastMinX < left) break
       lastMinX = p - half
 
       result.unshift({ middle: p, label, key, value: v, size, half })
-
-      if (isLastValue) break
     }
   }
 
@@ -182,9 +182,10 @@ export function calculateClassic(ctx: {
 }
 
 export function calculateInterval(ctx: {
-  spaceLimits: { start: number, end: number },
-  spaceSoftLimits: { start: number, end: number },
+  bounds: { start: number, end: number },
+  limits: { start: number, end: number },
   layoutLimits: { start: number, end: number },
+  overflowLimits: { start: number, end: number },
   padding: number,
   translate: (v: number) => number,
   compute: (v: number) => { p: number, label: string, size: number, half: number, key: string },
@@ -193,26 +194,27 @@ export function calculateInterval(ctx: {
   placement: 'start' | 'end' | 'middle'
 }) {
 
-  const { spaceSoftLimits, layoutLimits, padding, translate: tr, compute, generator, force } = ctx
-  const left = layoutLimits.start
-  const right = layoutLimits.end
+  const { bounds, limits, layoutLimits, overflowLimits, padding, translate: tr, compute, generator, force } = ctx
+  const left = overflowLimits.start
+  const right = overflowLimits.end
 
   const from = (() => {
-    if (ctx.spaceLimits.start != -Infinity) return ctx.spaceLimits.start
-    for (const value of generator(spaceSoftLimits.start).backward) if (tr(value) < left) return value
-    return spaceSoftLimits.start
+    if (ctx.limits.start != -Infinity) return ctx.limits.start
+    for (const value of generator(bounds.start).backward) if (tr(value) < left) return value
+    return bounds.start
   })()
 
   const to = (() => {
-    if (ctx.spaceLimits.end != Infinity) return ctx.spaceLimits.end
-    for (const value of generator(spaceSoftLimits.end).forward) if (tr(value) > right) return value
-    return spaceSoftLimits.end
+    if (ctx.limits.end != Infinity) return ctx.limits.end
+    for (const value of generator(bounds.end).forward) if (tr(value) > right) return value
+    return bounds.end
   })()
 
 
   const gen = generator(to).backward
-  let lastEnd = tr(to) - padding / 2
+  let lastEnd = tr(to)
   const result: { label: string, key: string, value: number, size: number, start: number, end: number }[] = []
+  result.push({ label: '', key: '', value: to, size: 0, start: lastEnd, end: lastEnd })
 
   gen.next() // skip the first value which is out of bounds
   for (const value of gen) {
@@ -227,8 +229,8 @@ export function calculateInterval(ctx: {
     }
 
     result.push({ label, key, value, size, start, end })
-    lastEnd = start
 
+    lastEnd = start
     if (value <= from) break
   }
 

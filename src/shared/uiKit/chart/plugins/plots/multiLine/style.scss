@@ -3,13 +3,23 @@
 
   .line {
     fill: none;
-    stroke: rgb(23, 151, 255);
+    stroke: currentColor;
     stroke-width: 2px;
   }
 
-  .label {
-    fill: rgb(23, 151, 255);
-    font-size: 12px;
-    text-anchor: middle;
+  .labels {
+
+    .label {
+      fill: currentColor;
+      font-size: inherit;
+      text-anchor: middle;
+    }
+
+    .y-labels {
+      .label {
+        text-anchor: end;
+        alignment-baseline: central;
+      }
+    }
   }
 }

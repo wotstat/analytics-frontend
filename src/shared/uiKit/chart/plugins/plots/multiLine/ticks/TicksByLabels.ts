@@ -27,7 +27,7 @@ export class TicksByLabels extends BaseTicks {
     if (this.labels.axis === 'horizontal') {
       this.setXY(element, tick.p, space.layout.y, tick.p, space.layout.y + space.layout.height + 20)
     } else {
-      this.setXY(element, space.layout.x, tick.p, space.layout.x + space.layout.width, tick.p)
+      this.setXY(element, space.layout.x - 50, tick.p, space.layout.x + space.layout.width, tick.p)
     }
   }
 }

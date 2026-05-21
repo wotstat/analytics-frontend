@@ -60,7 +60,7 @@ onMounted(() => {
       })
     ],
     strategy: 'classic-flow',
-    // strategy: 'classic-flow',
+    // strategy: 'classic',
     // strategy: {
     //   type: 'interval',
     //   placement: 'middle',
@@ -69,6 +69,13 @@ onMounted(() => {
     // },
     // from: 0,
     // to: 1000
+    // strategy: {
+    //   type: 'interval',
+    //   placement: 'middle',
+    //   fit: true,
+    //   offset: [0, 0],
+    // },
+    // from: 200, to: 800
   })
 
   const autoLabelsY = new AutoLabels('vertical', {
@@ -81,7 +88,14 @@ onMounted(() => {
         offset: 0,
       }),
     ],
-    strategy: 'classic',
+    // strategy: 'classic-flow',
+    strategy: {
+      type: 'interval',
+      placement: 'start',
+      fit: true,
+      offset: [5, 5],
+    },
+    // from: -50, to: 50
   })
 
   const sinLine = new SimpleLine(new Array(1000).fill(0).map((_, i) => ({ x: i, y: Math.sin(i / 10) * 50 + 50 })), ['sin'])
@@ -107,12 +121,14 @@ onMounted(() => {
 
   chart.addPlugin(multiLine)
 
-  // setInterval(() => {
-  //   multiLine.setRenderBounds({
-  //     minX: (1 + Math.sin(Date.now() / 1000)) * 200 - 200,
-  //     maxX: (1 + Math.cos(Date.now() / 1000)) * 200 + 900,
-  //   })
-  // }, 16)
+  setInterval(() => {
+    multiLine.setRenderBounds({
+      minX: (1 + Math.sin(Date.now() / 1000)) * 200 - 200,
+      maxX: (1 + Math.cos(Date.now() / 1000)) * 200 + 900,
+      minY: (1 + Math.cos(Date.now() / 1000)) * 50 - 100,
+      maxY: (1 + Math.sin(Date.now() / 1000)) * 50 + 100,
+    })
+  }, 16)
 
   watchEffect(() => {
     multiLine.setRenderBounds({
@@ -157,12 +173,11 @@ onMounted(() => {
         .y-labels {
           .label {
             text-anchor: end;
-            alignment-baseline: middle;
           }
         }
 
         .label {
-          fill: white;
+          color: rgb(255, 255, 255);
           font-size: 14px;
           font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
         }
