@@ -147,14 +147,14 @@ export function compareRanks(rank1: Rank, rank2: Rank): number {
 
 export function getDivisionByRating(rating: number, game: GameVendor = 'mt', eliteRating: number | null = null) {
   if (rating == 0) return 'qual'
-  if (eliteRating !== null && rating >= eliteRating) return 'sixth'
+  if (eliteRating !== null && eliteRating !== 0 && rating >= eliteRating) return 'sixth'
   const targetMap = game == 'wot' ? rankWgMap : ranksLestaMap
   const key = Object.keys(targetMap).reverse().find(key => rating >= parseInt(key))
   return key ? targetMap[parseInt(key) as keyof typeof targetMap] : 'first_E'
 }
 
 export function getRankByRating(rating: number, game: GameVendor = 'mt', eliteRating: number | null = null): Rank {
-  if (eliteRating !== null && rating >= eliteRating) return 'sixth'
+  if (eliteRating !== null && eliteRating !== 0 && rating >= eliteRating) return 'sixth'
 
   const division = getDivisionByRating(rating, game)
   if (division == 'qual') return 'qual'

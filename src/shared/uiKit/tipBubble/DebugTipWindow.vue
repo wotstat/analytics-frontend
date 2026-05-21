@@ -95,7 +95,7 @@ const showDebugTips = ref(false)
 const displayed = ref(Array.from({ length: 5 }, () => false))
 
 function clearLocalStorage() {
-  window.resetTipBubbles?.()
+  window.wotstat.resetTipBubbles?.()
   location.reload()
 }
 

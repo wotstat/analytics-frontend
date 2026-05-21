@@ -50,7 +50,7 @@ const dayChart = ref<HTMLElement | null>(null)
 
 const selectedDayIndex = ref<number | null>(null)
 const selectedSeason = ref<string | null>(null)
-const selectedRegion = ref<'RU' | 'EU' | 'NA' | 'ASIA'>('RU')
+const selectedRegion = ref<'RU' | 'EU' | 'NA' | 'ASIA' | 'CT'>('RU')
 const nickname = ref<string>('')
 const debouncedNickname = refDebounced(nickname, 500)
 const isLoading = ref(false)
@@ -107,7 +107,7 @@ const seasons = queryAsync<{ region: string, season: string, start: string, end:
         min(toStartOfDay(dateTime + interval ${getRegionIsoHourOffset(selectedRegion.value)} hour)) as start,
         max(toStartOfDay(dateTime + interval ${getRegionIsoHourOffset(selectedRegion.value)} hour)) as end
   from Event_OnComp7Info
-  where region in ('RU', 'EU', 'NA', 'ASIA')
+  where region in ('RU', 'EU', 'NA', 'ASIA', 'CT')
   group by region, season
   order by start desc
 `, { settings: LONG_CACHE_SETTINGS })
