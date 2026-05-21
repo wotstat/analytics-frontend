@@ -4,7 +4,9 @@ import { useLocalStorage } from '@vueuse/core'
 
 declare global {
   interface Window {
-    resetTipBubbles?: () => void
+    wotstat: {
+      resetTipBubbles?: () => void
+    }
   }
 }
 
@@ -344,7 +346,8 @@ export function useTipBubble(options: Options) {
   }
 }
 
-window.resetTipBubbles = function () {
+if (!window.wotstat) window.wotstat = {}
+window.wotstat.resetTipBubbles = function () {
   for (const key in localStorage) {
     if (key.startsWith(TIP_BUBBLE_STORAGE_PREFIX)) localStorage.removeItem(key)
   }

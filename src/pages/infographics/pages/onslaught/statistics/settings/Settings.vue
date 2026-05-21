@@ -37,17 +37,22 @@ const props = defineProps<{
   seasons: { region: string, season: string }[]
 }>()
 
-const regions = ['RU', 'EU', 'NA', 'ASIA'] as const
+const regions = ['RU', 'EU', 'NA', 'ASIA', 'CT'] as const
 
 const selectedSeason = defineModel<string | null>('season')
-const selectedRegion = defineModel<'RU' | 'EU' | 'NA' | 'ASIA'>('region')
+const selectedRegion = defineModel<'RU' | 'EU' | 'NA' | 'ASIA' | 'CT'>('region')
 const nickname = defineModel<string>('nickname')
 const currentSeasons = computed(() => props.seasons.filter(s => s.region === selectedRegion.value) || [])
 
-function changeRegion(target: 'RU' | 'EU' | 'NA' | 'ASIA') {
+function changeRegion(target: 'RU' | 'EU' | 'NA' | 'ASIA' | 'CT') {
   selectedRegion.value = target
-  if (!currentSeasons.value?.length) return
-  selectedSeason.value = currentSeasons.value[0].season
+  const seasonsForRegion = props.seasons.filter(s => s.region === target)
+  if (!seasonsForRegion.length) {
+    selectedSeason.value = null
+    return
+  }
+
+  selectedSeason.value = seasonsForRegion[0].season
 }
 
 </script>
