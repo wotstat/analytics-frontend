@@ -88,13 +88,13 @@ onMounted(() => {
         offset: 0,
       }),
     ],
-    // strategy: 'classic-flow',
-    strategy: {
-      type: 'interval',
-      placement: 'start',
-      fit: true,
-      offset: [5, 5],
-    },
+    strategy: 'classic-flow',
+    // strategy: {
+    //   type: 'interval',
+    //   placement: 'end',
+    //   fit: true,
+    //   offset: [5, 5],
+    // },
     // from: -50, to: 50
   })
 
@@ -115,20 +115,20 @@ onMounted(() => {
   multiLine.setYTicks(yTicks)
   multiLine.setXLabels(autoLabelsX)
   multiLine.setYLabels(autoLabelsY)
-  multiLine.addLine(sinLine)
-  multiLine.addLine(randomLine)
+  multiLine.addPlot(sinLine)
+  multiLine.addPlot(randomLine)
   // multiLine.addLine(redLine)
 
   chart.addPlugin(multiLine)
 
-  setInterval(() => {
-    multiLine.setRenderBounds({
-      minX: (1 + Math.sin(Date.now() / 1000)) * 200 - 200,
-      maxX: (1 + Math.cos(Date.now() / 1000)) * 200 + 900,
-      minY: (1 + Math.cos(Date.now() / 1000)) * 50 - 100,
-      maxY: (1 + Math.sin(Date.now() / 1000)) * 50 + 100,
-    })
-  }, 16)
+  // setInterval(() => {
+  //   multiLine.setRenderBounds({
+  //     minX: (1 + Math.sin(Date.now() / 1000)) * 200 - 200,
+  //     maxX: (1 + Math.cos(Date.now() / 1000)) * 200 + 900,
+  //     minY: (1 + Math.cos(Date.now() / 1000)) * 50 - 100,
+  //     maxY: (1 + Math.sin(Date.now() / 1000)) * 50 + 100,
+  //   })
+  // }, 16)
 
   watchEffect(() => {
     multiLine.setRenderBounds({
