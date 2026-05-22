@@ -22,4 +22,12 @@
       }
     }
   }
+
+  .chart-axis {
+    path {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1px;
+    }
+  }
 }

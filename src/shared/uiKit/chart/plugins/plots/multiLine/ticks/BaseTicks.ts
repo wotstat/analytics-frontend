@@ -1,4 +1,5 @@
-import { MultiLineChart, TicksRenderer } from '../MultiLine'
+import { Axis } from '../labels/BaseLabels'
+import { MultiLineChart, PlotRenderer } from '../MultiLine'
 import { ChartSpace } from '../utils/ChartSpace'
 
 export type TickData = {
@@ -6,26 +7,26 @@ export type TickData = {
   value: number
 }
 
-export abstract class BaseTicks implements TicksRenderer {
+export abstract class BaseTicks implements PlotRenderer {
 
-  private root: SVGGElement | null = null
+  protected root = document.createElementNS('http://www.w3.org/2000/svg', 'g')
 
   private elementsByKey = new Map<number, SVGLineElement>()
   private elementsXYCache = new Map<SVGLineElement, { x1: number, y1: number, x2: number, y2: number }>()
 
-  constructor() { }
+  constructor(axis: Axis) {
+    this.root.classList.add(axis === 'horizontal' ? 'x-ticks' : 'y-ticks')
+  }
 
   attach(root: SVGGElement, multiLine: MultiLineChart): void {
-    this.root = root
+    root.appendChild(this.root)
   }
 
   detach(): void {
     if (!this.root) return
-    for (const element of this.elementsByKey.values()) {
-      this.root.removeChild(element)
-    }
+    this.root.remove()
     this.elementsByKey.clear()
-    this.root = null
+    this.elementsXYCache.clear()
   }
 
   render(space: ChartSpace): void {

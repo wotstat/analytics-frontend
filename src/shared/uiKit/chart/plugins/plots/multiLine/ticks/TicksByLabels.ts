@@ -8,7 +8,7 @@ export class TicksByLabels extends BaseTicks {
   private offset = 0
 
   constructor(private labels: BaseLabels) {
-    super()
+    super(labels.axis)
   }
 
   getTicks(space: ChartSpace): TickData[] {

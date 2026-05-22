@@ -22,7 +22,5 @@ defineExpose({
 
 
 <style lang="scss" scoped>
-.chart-container {
-  background-color: rgba(106, 0, 156, 0.1);
-}
+.chart-container {}
 </style>

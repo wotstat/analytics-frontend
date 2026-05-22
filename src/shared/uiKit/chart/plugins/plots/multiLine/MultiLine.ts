@@ -1,73 +1,31 @@
 import './style.scss'
 
-
 import { ChartDelegate, ChartPlugin } from '../../../Chart'
 import { Bounds } from './utils/Bounds'
 import { ChartSpace } from './utils/ChartSpace'
-import { BaseLine } from './plot/line/BaseLine'
-
 
 type Options = {
   renderBounds?: { minX?: number, maxX?: number, minY?: number, maxY?: number }
 }
 
-export interface PlotBoundsRenderer {
+export type Overflow = { top: number, right: number, bottom: number, left: number }
+export interface BaseRenderer {
   attach(root: SVGGElement, multiLine: MultiLineChart): void
-  render(space: ChartSpace): void
-  getBounds(): Bounds
   detach(): void
+  didMount?(): void
+  didLayout?(space: ChartSpace, full: { width: number, height: number }): void
+  render(space: ChartSpace, overflow: Overflow, full: { width: number, height: number }): void
 }
 
-export interface LabelsRenderer {
-  attach(root: SVGGElement, multiLine: MultiLineChart): void
-  detach(): void
-  render(space: ChartSpace, overflow: { start: number, end: number }): void
-  getRequiredTicks(): number[]
-  recalculateFont(): void
-  getHeight(): number
+export interface SlotRenderer extends BaseRenderer {
+  getSize(): { width: number | null, height: number | null }
 }
 
-export interface TicksRenderer {
-  attach(root: SVGGElement, multiLine: MultiLineChart): void
-  detach(): void
-  render(space: ChartSpace): void
+export interface PlotRenderer extends BaseRenderer {
+  getBounds?(): Bounds
 }
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
-class RectClip {
-  private clipPath = document.createElementNS(NAMESPACE, 'clipPath')
-  private rect = document.createElementNS(NAMESPACE, 'rect')
-  private id = `clip-${Math.random().toString(16).slice(2)}`
-
-  constructor(root: SVGElement) {
-    this.clipPath.setAttribute('id', this.id)
-    this.clipPath.appendChild(this.rect)
-    root.appendChild(this.clipPath)
-  }
-
-  dispose() {
-    this.clipPath.remove()
-  }
-
-  getClipPath() {
-    return `url(#${this.id})`
-  }
-
-  setRect(x: number, y: number, width: number, height: number) {
-    this.rect.setAttribute('x', x.toString())
-    this.rect.setAttribute('y', y.toString())
-    this.rect.setAttribute('width', width.toString())
-    this.rect.setAttribute('height', height.toString())
-  }
-}
-
-
-function g(root: SVGGElement, ...classes: string[]) {
-  const g = document.createElementNS(NAMESPACE, 'g')
-  g.classList.add(...classes)
-  root.appendChild(g)
-  return g
-}
 
 export class MultiLineChart implements ChartPlugin {
   private chartDelegate: ChartDelegate | null = null
@@ -77,35 +35,23 @@ export class MultiLineChart implements ChartPlugin {
   private width = 0
   private height = 0
   private mainSpace = new ChartSpace({ x: 0, y: 0, width: 0, height: 0 }, new Bounds())
-
-  private yLabels: LabelsRenderer | null = null
-  private xLabels: LabelsRenderer | null = null
-  private xTicks: TicksRenderer | null = null
-  private yTicks: TicksRenderer | null = null
-  private plots = new Set<PlotBoundsRenderer>()
   private plotBounds = new Bounds()
 
-  private defs = document.createElementNS(NAMESPACE, 'defs')
-  private plotClip = new RectClip(this.defs)
-  private yLabelsClip = new RectClip(this.defs)
+  private topRenderers: SlotRenderer[] = []
+  private rightRenderers: SlotRenderer[] = []
+  private bottomRenderers: SlotRenderer[] = []
+  private leftRenderers: SlotRenderer[] = []
+  private plotRenderers: PlotRenderer[] = []
+  private allRenderers: BaseRenderer[] = []
 
+  private hierarchyCache = new Map<string, SVGGElement>()
   private root = document.createElementNS(NAMESPACE, 'g')
-  private plotRoot = g(this.root, 'plot')
 
-  private labelsRoot = g(this.root, 'labels')
-  private yLabelsRoot = g(this.labelsRoot, 'y-labels')
-  private xLabelsRoot = g(this.labelsRoot, 'x-labels')
-
-  private ticksRoot = g(this.root, 'ticks')
-  private xTicksRoot = g(this.ticksRoot, 'x-ticks')
-  private yTicksRoot = g(this.ticksRoot, 'y-ticks')
+  private defs = document.createElementNS(NAMESPACE, 'defs')
 
   constructor(readonly options: Options) {
     this.root.classList.add('chart-multiline-root')
     this.root.appendChild(this.defs)
-
-    this.plotRoot.setAttribute('clip-path', this.plotClip.getClipPath())
-    this.yLabelsRoot.setAttribute('clip-path', this.yLabelsClip.getClipPath())
 
     this.setRenderBounds(options.renderBounds)
   }
@@ -114,57 +60,65 @@ export class MultiLineChart implements ChartPlugin {
     this.chartDelegate?.removeChild(this.root)
     this.chartDelegate = delegate
     delegate.addChild(this.root)
-    this.xLabels?.recalculateFont()
     this.root.parentElement?.classList.add('chart-multiline-container')
+
+    for (const renderer of this.allRenderers) renderer.didMount?.()
   }
 
-  addPlot(plot: PlotBoundsRenderer) {
-    if (this.plots.has(plot)) return console.warn('Trying to add a plot that is already added to MultiLineChart')
-    this.plots.add(plot)
-    plot.attach(this.plotRoot, this)
-  }
+  addSlot(position: 'top' | 'right' | 'bottom' | 'left', slot: SlotRenderer, path: string | string[] = []) {
+    const root = this.getRootFor(Array.isArray(path) ? path : path.split('>'))
+    slot.attach(root, this)
 
-  setXLabels(xLabels: LabelsRenderer | null) {
-    if (this.xLabels === xLabels) return
-    if (this.xLabels) this.xLabels.detach()
-
-    this.xLabels = xLabels
-    if (this.xLabels) {
-      this.xLabels.attach(this.xLabelsRoot, this)
-      this.xLabels.recalculateFont()
+    switch (position) {
+      case 'top':
+        this.topRenderers.push(slot)
+        break
+      case 'right':
+        this.rightRenderers.push(slot)
+        break
+      case 'bottom':
+        this.bottomRenderers.push(slot)
+        break
+      case 'left':
+        this.leftRenderers.push(slot)
+        break
     }
+    this.allRenderers.push(slot)
+    return this
   }
 
-  setYLabels(yLabels: LabelsRenderer | null) {
-    if (this.yLabels === yLabels) return
-    if (this.yLabels) this.yLabels.detach()
+  addPlot(plot: PlotRenderer, path: string | string[] = []) {
+    const root = this.getRootFor(Array.isArray(path) ? path : path.split('>'))
+    plot.attach(root, this)
+    this.plotRenderers.push(plot)
+    this.allRenderers.push(plot)
+    return this
+  }
 
-    this.yLabels = yLabels
-    if (this.yLabels) {
-      this.yLabels.attach(this.yLabelsRoot, this)
-      this.yLabels.recalculateFont()
+  addDefs(element: SVGElement) {
+    this.defs.appendChild(element)
+    return this
+  }
+
+  private getRootFor(path: string[]) {
+    if (path.length === 0) return this.root
+
+    const key = path.join('/')
+    if (this.hierarchyCache.has(key)) return this.hierarchyCache.get(key)!
+
+    let currentRoot = this.root
+    for (const part of path) {
+      let nextRoot = currentRoot.querySelector<SVGGElement>(`:scope > g.${part}`)
+      if (!nextRoot) {
+        nextRoot = document.createElementNS(NAMESPACE, 'g')
+        nextRoot.classList.add(...part.split('.'))
+        currentRoot.appendChild(nextRoot)
+      }
+      currentRoot = nextRoot
     }
-  }
 
-  setXTicks(xTicks: TicksRenderer | null) {
-    if (this.xTicks === xTicks) return
-    if (this.xTicks) this.xTicks.detach()
-
-    this.xTicks = xTicks
-    if (this.xTicks) this.xTicks.attach(this.xTicksRoot, this)
-  }
-
-  setYTicks(yTicks: TicksRenderer | null) {
-    if (this.yTicks === yTicks) return
-    if (this.yTicks) this.yTicks.detach()
-
-    this.yTicks = yTicks
-    if (this.yTicks) this.yTicks.attach(this.yTicksRoot, this)
-  }
-
-  removePlot(plot: PlotBoundsRenderer) {
-    this.plots.delete(plot)
-    plot.detach()
+    this.hierarchyCache.set(key, currentRoot)
+    return currentRoot
   }
 
   dataDidChange() {
@@ -214,15 +168,18 @@ export class MultiLineChart implements ChartPlugin {
 
     this.mainSpace.bounds = this.calculateRenderBounds()
     const overflow = {
-      top: this.mainSpace.layout.y,
+      top: 0,
       right: this.width - this.mainSpace.layout.x - this.mainSpace.layout.width,
-      bottom: this.height - this.mainSpace.layout.y - this.mainSpace.layout.height,
+      bottom: 0,
       left: this.mainSpace.layout.x
     }
 
-    this.renderLines()
-    this.renderLabels(overflow)
-    this.renderTicks()
+    const full = { width: this.width, height: this.height }
+    for (const slot of this.topRenderers) slot.render(this.mainSpace, overflow, full)
+    for (const slot of this.rightRenderers) slot.render(this.mainSpace, overflow, full)
+    for (const slot of this.bottomRenderers) slot.render(this.mainSpace, overflow, full)
+    for (const slot of this.leftRenderers) slot.render(this.mainSpace, overflow, full)
+    for (const plot of this.plotRenderers) plot.render(this.mainSpace, overflow, full)
   }
 
   private layoutIfNeeded() {
@@ -237,39 +194,23 @@ export class MultiLineChart implements ChartPlugin {
   }
 
   private layout() {
-    const xHeight = this.xLabels ? this.xLabels.getHeight() : 0
 
-    this.mainSpace.layout = { x: 40, y: 0, width: this.width - 40, height: this.height - xHeight }
-    this.updateClips()
-  }
+    let xTop = 0
+    let xBottom = 0
+    let yLeft = 0
+    let yRight = 0
 
-  private renderLines() {
-    for (const line of this.plots) {
-      line.render(this.mainSpace)
+    for (const slot of this.topRenderers) xTop = Math.max(xTop, slot.getSize().height ?? 0)
+    for (const slot of this.bottomRenderers) xBottom = Math.max(xBottom, slot.getSize().height ?? 0)
+    for (const slot of this.leftRenderers) yLeft = Math.max(yLeft, slot.getSize().width ?? 0)
+    for (const slot of this.rightRenderers) yRight = Math.max(yRight, slot.getSize().width ?? 0)
+
+    this.mainSpace.layout = {
+      x: yLeft, y: xTop,
+      width: this.width - yLeft - yRight,
+      height: this.height - xBottom - xTop
     }
-  }
-
-  private renderLabels(overflow: { top: number, right: number, bottom: number, left: number }) {
-
-    this.xLabels?.render(this.mainSpace, {
-      start: overflow.left,
-      end: overflow.right
-    })
-
-    this.yLabels?.render(this.mainSpace, {
-      start: overflow.top,
-      end: 0
-    })
-  }
-
-  private renderTicks() {
-    this.xTicks?.render(this.mainSpace)
-    this.yTicks?.render(this.mainSpace)
-  }
-
-  private updateClips() {
-    this.plotClip.setRect(this.mainSpace.layout.x, this.mainSpace.layout.y, this.mainSpace.layout.width, this.mainSpace.layout.height)
-    this.yLabelsClip.setRect(0, this.mainSpace.layout.y, this.mainSpace.layout.x, this.mainSpace.layout.height)
+    for (const renderer of this.allRenderers) renderer.didLayout?.(this.mainSpace, { width: this.width, height: this.height })
   }
 
   private calculateRenderBounds() {
@@ -291,7 +232,9 @@ export class MultiLineChart implements ChartPlugin {
 
   private recalculateDataBounds() {
     const bounds = new Bounds()
-    for (const line of this.plots) bounds.extend(line.getBounds())
+    for (const line of this.plotRenderers) {
+      if (line.getBounds) bounds.extend(line.getBounds())
+    }
     this.plotBounds = bounds
   }
 

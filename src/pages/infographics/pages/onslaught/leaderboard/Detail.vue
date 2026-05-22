@@ -22,12 +22,14 @@
 
 <script setup lang="ts">
 import Chart from '@/shared/uiKit/chart/Chart.vue'
+import { Axis } from '@/shared/uiKit/chart/plugins/plots/multiLine/axis/Axis'
 import { AutoLabels } from '@/shared/uiKit/chart/plugins/plots/multiLine/labels/autoLabels/AutoLabels'
-import { arrayGenerator } from '@/shared/uiKit/chart/plugins/plots/multiLine/labels/autoLabels/generators/arrayGenerator'
 import { steppedOverrides } from '@/shared/uiKit/chart/plugins/plots/multiLine/labels/autoLabels/generators/steppedGenerator'
+import { ClipChart } from '@/shared/uiKit/chart/plugins/plots/multiLine/masks/ClipChart'
 import { MultiLineChart } from '@/shared/uiKit/chart/plugins/plots/multiLine/MultiLine'
 import { SimpleLine } from '@/shared/uiKit/chart/plugins/plots/multiLine/plot/line/SimpleLine'
 import { TicksByLabels } from '@/shared/uiKit/chart/plugins/plots/multiLine/ticks/TicksByLabels'
+import { PlotGroup } from '@/shared/uiKit/chart/plugins/plots/multiLine/utils/PlotGroup'
 import { onMounted, ref, watchEffect } from 'vue'
 
 
@@ -46,7 +48,10 @@ onMounted(() => {
 
   const multiLine = new MultiLineChart({})
 
-  const autoLabelsX = new AutoLabels('horizontal', {
+  const clipMain = new ClipChart('center')
+  const clipLeft = new ClipChart('left')
+
+  const labelsX = new AutoLabels('horizontal', {
     labelForValue: (v, step) => step < 7 && v == 500 ? `${v.toFixed(10)}` : `${v.toFixed(0)}`,
     padding: 15,
     values: [
@@ -78,7 +83,7 @@ onMounted(() => {
     // from: 200, to: 800
   })
 
-  const autoLabelsY = new AutoLabels('vertical', {
+  const labelsY = new AutoLabels('vertical', {
     labelForValue: (v, step) => `${v.toFixed(0)}`,
     padding: 15,
     values: [
@@ -96,6 +101,15 @@ onMounted(() => {
     //   offset: [5, 5],
     // },
     // from: -50, to: 50
+  }).clipBy(clipLeft)
+
+
+  const xTicks = new TicksByLabels(labelsX)
+  const yTicks = new TicksByLabels(labelsY)
+
+  const axis = new Axis({
+    left: 'space',
+    bottom: 'space',
   })
 
   const sinLine = new SimpleLine(new Array(1000).fill(0).map((_, i) => ({ x: i, y: Math.sin(i / 10) * 50 + 50 })), ['sin'])
@@ -108,16 +122,20 @@ onMounted(() => {
     { x: 0, y: 0 },
   ], ['red'])
 
-  const xTicks = new TicksByLabels(autoLabelsX)
-  const yTicks = new TicksByLabels(autoLabelsY)
+  const plotRoot = new PlotGroup()
+    .addPlot(sinLine)
+    .addPlot(randomLine)
+    .clipBy(clipMain)
 
-  multiLine.setXTicks(xTicks)
-  multiLine.setYTicks(yTicks)
-  multiLine.setXLabels(autoLabelsX)
-  multiLine.setYLabels(autoLabelsY)
-  multiLine.addPlot(sinLine)
-  multiLine.addPlot(randomLine)
-  // multiLine.addLine(redLine)
+  multiLine
+    .addPlot(plotRoot, 'plot')
+    .addPlot(clipMain)
+    .addPlot(clipLeft)
+    .addPlot(axis, 'ticks')
+    .addPlot(xTicks, 'ticks')
+    .addPlot(yTicks, 'ticks')
+    .addSlot('bottom', labelsX, 'labels')
+    .addSlot('left', labelsY, 'labels')
 
   chart.addPlugin(multiLine)
 
@@ -184,8 +202,18 @@ onMounted(() => {
       }
 
       .ticks {
+        opacity: 0.3;
+
+        .chart-axis {
+          path {
+            stroke: rgba(255, 255, 255, 1);
+            stroke-width: 1px;
+            stroke-linejoin: round;
+          }
+        }
+
         .tick {
-          stroke: rgba(255, 255, 255, 0.3);
+          stroke: rgba(255, 255, 255, 1);
           stroke-width: 1px;
         }
 
@@ -198,7 +226,7 @@ onMounted(() => {
 
         .y-ticks {
           .tick {
-            stroke: rgba(255, 255, 255, 0.15);
+            stroke: rgba(255, 255, 255, 0.5);
           }
         }
       }
