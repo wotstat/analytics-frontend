@@ -181,7 +181,7 @@ export function calculateClassic(ctx: {
   return result
 }
 
-export function calculateInterval(ctx: {
+type IntervalOptions = {
   bounds: { start: number, end: number },
   limits: { start: number, end: number },
   layoutLimits: { start: number, end: number },
@@ -191,22 +191,29 @@ export function calculateInterval(ctx: {
   compute: (v: number) => { p: number, label: string, size: number, half: number, key: string },
   generator: ValueGenerator,
   force: boolean,
-  placement: 'start' | 'end' | 'middle'
-}) {
+  placement: 'start' | 'end' | 'middle',
+  direction: 'forward' | 'backward',
+}
 
+export function calculateInterval(ctx: IntervalOptions) {
+  if (ctx.direction === 'forward') return calculateForward(ctx)
+  else return calculateBackward(ctx)
+}
+
+// TODO: Тут есть баг у левого края как минимум, если широкое значение отстаёт больше чем на один элемент 
+function calculateForward(ctx: IntervalOptions) {
   const { bounds, limits, layoutLimits, overflowLimits, padding, translate: tr, compute, generator, force } = ctx
   const left = overflowLimits.start
   const right = overflowLimits.end
 
   const from = (() => {
-    if (ctx.limits.start != -Infinity) return ctx.limits.start
-    for (const value of generator(bounds.start).backward) if (tr(value) < left) return value
+    for (const value of generator(bounds.start).backward) if (tr(value) < left) return Math.max(limits.start, value)
     return bounds.start
   })()
 
   const to = (() => {
-    if (ctx.limits.end != Infinity) return ctx.limits.end
-    for (const value of generator(bounds.end).forward) if (tr(value) > right) return value
+    if (limits.end != Infinity) return limits.end
+    for (const value of generator(bounds.end).forward) if (tr(value) > right) return Math.min(limits.end, value)
     return bounds.end
   })()
 
@@ -232,6 +239,47 @@ export function calculateInterval(ctx: {
 
     lastEnd = start
     if (value <= from) break
+  }
+
+  return result
+}
+
+function calculateBackward(ctx: IntervalOptions) {
+  const { bounds, limits, layoutLimits, overflowLimits, padding, translate: tr, compute, generator, force } = ctx
+  const left = overflowLimits.start
+  const right = overflowLimits.end
+
+  const from = (() => {
+    for (const value of generator(bounds.start).backward) if (tr(value) < left) return Math.max(limits.start, value)
+    return bounds.start
+  })()
+
+  const to = (() => {
+    for (const value of generator(bounds.end).forward) if (tr(value) > right) return Math.min(limits.end, value)
+    return bounds.end
+  })()
+
+  const gen = generator(from).forward
+  let lastStart = tr(from)
+  const result: { label: string, key: string, value: number, size: number, start: number, end: number }[] = []
+  result.push({ label: '', key: '', value: from, size: 0, start: lastStart, end: lastStart })
+
+  gen.next() // skip the first value which is out of bounds
+  for (const value of gen) {
+
+    const { p: end, label, size, half, key } = compute(value)
+    const start = lastStart
+
+    const width = end - start - padding
+    if (width < size) {
+      if (force) continue
+      return null
+    }
+
+    result.push({ label, key, value, size, start, end })
+
+    lastStart = end
+    if (value >= to) break
   }
 
   return result
