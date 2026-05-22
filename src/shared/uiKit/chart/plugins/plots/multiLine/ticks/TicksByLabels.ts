@@ -1,4 +1,5 @@
 import { BaseLabels } from '../labels/BaseLabels'
+import { Overflow, Size } from '../MultiLine'
 import { ChartSpace } from '../utils/ChartSpace'
 import { BaseTicks, TickData } from './BaseTicks'
 
@@ -26,11 +27,11 @@ export class TicksByLabels extends BaseTicks {
     }
   }
 
-  override setupElement(space: ChartSpace, element: SVGLineElement, tick: TickData) {
+  override setupElement(element: SVGLineElement, tick: TickData, space: ChartSpace, overflow: Overflow, full: Size) {
     if (this.labels.axis === 'horizontal') {
-      this.setXY(element, tick.p, space.layout.y + space.layout.height + this.offset, tick.p, space.layout.y)
+      this.setXY(element, tick.p, Math.min(space.layout.y + space.layout.height + this.offset, full.height), tick.p, space.layout.y)
     } else {
-      this.setXY(element, space.layout.x - this.offset, tick.p, space.layout.x + space.layout.width, tick.p)
+      this.setXY(element, Math.max(0, space.layout.x - this.offset), tick.p, space.layout.x + space.layout.width, tick.p)
     }
   }
 }

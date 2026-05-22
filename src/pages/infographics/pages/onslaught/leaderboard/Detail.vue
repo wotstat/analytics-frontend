@@ -64,14 +64,14 @@ onMounted(() => {
         offset: 0,
       })
     ],
-    strategy: 'classic-flow',
+    // strategy: 'classic-flow',
     // strategy: 'classic',
-    // strategy: {
-    //   type: 'interval',
-    //   placement: 'middle',
-    //   fit: true,
-    //   offset: [5, 5],
-    // },
+    strategy: {
+      type: 'interval',
+      placement: 'middle',
+      fit: true,
+      offset: [5, 5],
+    },
     // from: 0,
     // to: 1000
     // strategy: {
@@ -139,14 +139,14 @@ onMounted(() => {
 
   chart.addPlugin(multiLine)
 
-  // setInterval(() => {
-  //   multiLine.setRenderBounds({
-  //     minX: (1 + Math.sin(Date.now() / 1000)) * 200 - 200,
-  //     maxX: (1 + Math.cos(Date.now() / 1000)) * 200 + 900,
-  //     minY: (1 + Math.cos(Date.now() / 1000)) * 50 - 100,
-  //     maxY: (1 + Math.sin(Date.now() / 1000)) * 50 + 100,
-  //   })
-  // }, 16)
+  setInterval(() => {
+    multiLine.setRenderBounds({
+      minX: (1 + Math.sin(Date.now() / 1000)) * 200 - 200,
+      maxX: (1 + Math.cos(Date.now() / 1000)) * 200 + 900,
+      minY: (1 + Math.cos(Date.now() / 1000)) * 50 - 100,
+      maxY: (1 + Math.sin(Date.now() / 1000)) * 50 + 100,
+    })
+  }, 16)
 
   watchEffect(() => {
     multiLine.setRenderBounds({
