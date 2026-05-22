@@ -1,5 +1,5 @@
 import { Axis } from '../labels/BaseLabels'
-import { MultiLineChart, PlotRenderer } from '../MultiLine'
+import { MultiLineChart, Overflow, PlotRenderer, Size } from '../MultiLine'
 import { ChartSpace } from '../utils/ChartSpace'
 
 export type TickData = {
@@ -29,7 +29,7 @@ export abstract class BaseTicks implements PlotRenderer {
     this.elementsXYCache.clear()
   }
 
-  render(space: ChartSpace): void {
+  render(space: ChartSpace, overflow: Overflow, full: Size): void {
     if (!this.root) {
       console.warn('Trying to render ticks without root element')
       return
@@ -52,13 +52,13 @@ export abstract class BaseTicks implements PlotRenderer {
         element = this.createElement()
         this.elementsByKey.set(tick.value, element)
       }
-      this.setupElement(space, element, tick)
+      this.setupElement(element, tick, space, overflow, full)
     }
   }
 
   abstract getTicks(space: ChartSpace): TickData[]
 
-  protected setupElement(space: ChartSpace, element: SVGLineElement, tick: TickData) {
+  protected setupElement(element: SVGLineElement, tick: TickData, space: ChartSpace, overflow: Overflow, full: Size) {
     this.setXY(element,
       tick.p,
       0,

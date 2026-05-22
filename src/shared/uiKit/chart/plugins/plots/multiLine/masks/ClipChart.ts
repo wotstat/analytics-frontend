@@ -8,6 +8,7 @@ export class ClipChart implements PlotRenderer {
   private clipPath = document.createElementNS(NAMESPACE, 'clipPath')
   private rect = document.createElementNS(NAMESPACE, 'rect')
   private id = `clip-${Math.random().toString(16).slice(2)}`
+  private cachedSize = { x: 0, y: 0, width: 0, height: 0 }
 
   private layoutClip: (space: ChartSpace, full: Size) => void
 
@@ -79,6 +80,8 @@ export class ClipChart implements PlotRenderer {
   }
 
   setRect(x: number, y: number, width: number, height: number) {
+    if (this.cachedSize.x === x && this.cachedSize.y === y && this.cachedSize.width === width && this.cachedSize.height === height) return
+    this.cachedSize = { x, y, width, height }
     this.rect.setAttribute('x', x.toString())
     this.rect.setAttribute('y', y.toString())
     this.rect.setAttribute('width', width.toString())
