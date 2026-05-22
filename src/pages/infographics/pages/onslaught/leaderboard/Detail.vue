@@ -64,14 +64,14 @@ onMounted(() => {
         offset: 0,
       })
     ],
-    // strategy: 'classic-flow',
+    strategy: 'classic-flow',
     // strategy: 'classic',
-    strategy: {
-      type: 'interval',
-      placement: 'middle',
-      fit: true,
-      offset: [5, 5],
-    },
+    // strategy: {
+    //   type: 'interval',
+    //   placement: 'middle',
+    //   fit: true,
+    //   offset: [5, 5],
+    // },
     // from: 0,
     // to: 1000
     // strategy: {
@@ -86,6 +86,7 @@ onMounted(() => {
   const labelsY = new AutoLabels('vertical', {
     labelForValue: (v, step) => `${v.toFixed(0)}`,
     padding: 15,
+    labelOffset: 5,
     values: [
       // arrayGenerator([-200, -180, -160, -140, -120, -100, -80, -60, -40, -20, 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200]),
       ...steppedOverrides({
@@ -96,7 +97,7 @@ onMounted(() => {
     strategy: 'classic-flow',
     // strategy: {
     //   type: 'interval',
-    //   placement: 'end',
+    //   placement: 'middle',
     //   fit: true,
     //   offset: [5, 5],
     // },
@@ -139,14 +140,14 @@ onMounted(() => {
 
   chart.addPlugin(multiLine)
 
-  setInterval(() => {
-    multiLine.setRenderBounds({
-      minX: (1 + Math.sin(Date.now() / 1000)) * 200 - 200,
-      maxX: (1 + Math.cos(Date.now() / 1000)) * 200 + 900,
-      minY: (1 + Math.cos(Date.now() / 1000)) * 50 - 100,
-      maxY: (1 + Math.sin(Date.now() / 1000)) * 50 + 100,
-    })
-  }, 16)
+  // setInterval(() => {
+  //   multiLine.setRenderBounds({
+  //     minX: (1 + Math.sin(Date.now() / 1000)) * 200 - 200,
+  //     maxX: (1 + Math.cos(Date.now() / 1000)) * 200 + 900,
+  //     minY: (1 + Math.cos(Date.now() / 1000)) * 50 - 100,
+  //     maxY: (1 + Math.sin(Date.now() / 1000)) * 50 + 100,
+  //   })
+  // }, 16)
 
   watchEffect(() => {
     multiLine.setRenderBounds({
