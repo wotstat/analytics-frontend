@@ -7,6 +7,7 @@ export type Strategy = 'classic-flow' | 'classic' | {
   placement: 'start' | 'end' | 'middle',
   fit: boolean
   offset?: [start: number, end: number] | number
+  direction?: 'forward' | 'backward'
 }
 
 export type ValueGenerator = (startFrom: number) => {
@@ -123,6 +124,7 @@ export class AutoLabels extends BaseLabels {
           ...ctx,
           translate: translate,
           placement: strategy.placement,
+          direction: strategy.direction ?? 'forward',
         })
         if (!res) continue
 
