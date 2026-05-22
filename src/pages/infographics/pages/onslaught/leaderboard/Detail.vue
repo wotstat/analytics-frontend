@@ -105,8 +105,8 @@ onMounted(() => {
   }).clipBy(clipLeft)
 
 
-  const xTicks = new TicksByLabels(labelsX)
-  const yTicks = new TicksByLabels(labelsY)
+  const xTicks = new TicksByLabels(labelsX, { start: 0 })
+  const yTicks = new TicksByLabels(labelsY, { start: 0 })
 
   const axis = new Axis({
     left: 'space',
