@@ -1,4 +1,5 @@
-import { LabelsRenderer, MultiLineChart } from '../MultiLine'
+import { ClipChart } from '../masks/ClipChart'
+import { SlotRenderer, MultiLineChart, Overflow } from '../MultiLine'
 import { ChartSpace } from '../utils/ChartSpace'
 
 type LabelData = {
@@ -9,9 +10,9 @@ type LabelData = {
 }
 
 export type Axis = 'vertical' | 'horizontal'
-export abstract class BaseLabels implements LabelsRenderer {
+export abstract class BaseLabels implements SlotRenderer {
 
-  protected root: SVGGElement | null = null
+  protected root = document.createElementNS('http://www.w3.org/2000/svg', 'g')
   private cachedSizes = new Map<string, number>()
   private cachedMetrics: TextMetrics | null = null
   private ctx = document.createElement('canvas').getContext('2d')
@@ -21,31 +22,37 @@ export abstract class BaseLabels implements LabelsRenderer {
   private lastPersistent = 0
   private lastRenderedTicks: number[] = []
 
-  constructor(readonly axis: Axis) { }
+  constructor(readonly axis: Axis) {
+    this.root.classList.add(axis == 'horizontal' ? 'x-labels' : 'y-labels')
+  }
 
   attach(root: SVGGElement, multiLine: MultiLineChart): void {
-    this.root = root
+    root.appendChild(this.root)
   }
 
   detach(): void {
-    if (!this.root) return
-    for (const element of this.elementByKey.values()) {
-      this.root.removeChild(element)
-    }
+    this.root.remove()
     this.elementByKey.clear()
     this.cachedSizes.clear()
     this.cachedMetrics = null
-    this.root = null
   }
 
-  render(space: ChartSpace, overflow: { start: number, end: number }) {
-    this.lastRenderedTicks = []
-    if (!this.root) {
-      console.warn('Trying to render labels without root element')
-      return
-    }
+  didMount() {
+    this.recalculateFont()
+  }
 
-    const labels = this.calculateLabelPositions(space, overflow)
+  clipBy(clip: ClipChart) {
+    clip.clip(this.root)
+    return this
+  }
+
+  abstract getSize(): { width: number | null; height: number | null }
+
+  render(space: ChartSpace, overflow: Overflow) {
+    this.lastRenderedTicks = []
+    const localOverflow = this.axis === 'horizontal' ? { start: overflow.left, end: overflow.right } : { start: overflow.top, end: overflow.bottom }
+
+    const labels = this.calculateLabelPositions(space, localOverflow)
     const usedKeys = new Set<string>(labels.map(l => l.key))
     this.lastRenderedTicks = labels.map(l => l.value)
 
@@ -164,7 +171,7 @@ export abstract class BaseLabels implements LabelsRenderer {
     const label = document.createElementNS('http://www.w3.org/2000/svg', 'text')
     label.classList.add('label')
     label.textContent = textContent
-    this.root?.appendChild(label)
+    this.root.appendChild(label)
     return label
   }
 

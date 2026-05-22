@@ -1,10 +1,10 @@
-import { MultiLineChart, PlotBoundsRenderer } from '../../MultiLine'
+import { MultiLineChart, PlotRenderer } from '../../MultiLine'
 import { Bounds } from '../../utils/Bounds'
 import { ChartSpace } from '../../utils/ChartSpace'
 import { Point } from '../../utils/Point'
 
 
-export abstract class BaseLine implements PlotBoundsRenderer {
+export abstract class BaseLine implements PlotRenderer {
   protected multiLine: MultiLineChart | null = null
   protected bounds: Bounds | null = null
   protected isDirty = true
@@ -48,8 +48,8 @@ export abstract class BaseLine implements PlotBoundsRenderer {
     return this.bounds
   }
 
-  render(space: ChartSpace, force: boolean = false) {
-    if (!this.isDirty && !force && this.lastRenderedBoundsHash === space.getHash()) return
+  render(space: ChartSpace) {
+    if (!this.isDirty && this.lastRenderedBoundsHash === space.getHash()) return
 
     const points = this.getPointsInBounds(space.bounds)
 
