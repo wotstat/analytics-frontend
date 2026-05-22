@@ -1,4 +1,3 @@
-import { ClipChart } from '../../masks/ClipChart'
 import { ChartSpace } from '../../utils/ChartSpace'
 import { Axis, BaseLabels } from '../BaseLabels'
 import { calculateClassic, calculateInterval, extend, fit, intervalFit } from './utils'
@@ -23,6 +22,7 @@ type Options = {
   values: (Overrides | ValueGenerator)[]
   labelForValue?: (v: number, step: number) => string
   keyForValue?: (v: number, label: string, step: number) => string
+  labelOffset?: number
   padding?: number
   strategy?: Strategy
   from?: number
@@ -37,7 +37,7 @@ export class AutoLabels extends BaseLabels {
   private lastIntervalStart: number | null = null
 
   constructor(axis: Axis, private options: Options) {
-    super(axis)
+    super(axis, { offset: options.labelOffset })
   }
 
   private getOverridesForStep(step: number): Overrides | null {
@@ -160,15 +160,6 @@ export class AutoLabels extends BaseLabels {
     if (this.options.strategy === 'classic-flow' || this.options.strategy === 'classic') return 4
     if (this.options.strategy?.type === 'interval') return Infinity
     return 0
-  }
-
-  getSize(): { width: number | null; height: number | null } {
-    if (this.axis === 'horizontal') {
-      return { width: null, height: this.getHeight() }
-    } else {
-      const w = 40
-      return { width: w, height: null }
-    }
   }
 }
 

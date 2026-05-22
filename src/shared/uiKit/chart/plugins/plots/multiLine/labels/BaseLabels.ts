@@ -1,5 +1,5 @@
 import { ClipChart } from '../masks/ClipChart'
-import { SlotRenderer, MultiLineChart, Overflow } from '../MultiLine'
+import { SlotRenderer, MultiLineChart, Overflow, Size } from '../MultiLine'
 import { ChartSpace } from '../utils/ChartSpace'
 
 type LabelData = {
@@ -9,6 +9,7 @@ type LabelData = {
   value: number
 }
 
+const DEFAULT_LABEL_OFFSET = 15
 export type Axis = 'vertical' | 'horizontal'
 export abstract class BaseLabels implements SlotRenderer {
 
@@ -22,8 +23,11 @@ export abstract class BaseLabels implements SlotRenderer {
   private lastPersistent = 0
   private lastRenderedTicks: number[] = []
 
-  constructor(readonly axis: Axis) {
+  private offset: number
+
+  constructor(readonly axis: Axis, options: { offset?: number } = {}) {
     this.root.classList.add(axis == 'horizontal' ? 'x-labels' : 'y-labels')
+    this.offset = options.offset ?? DEFAULT_LABEL_OFFSET
   }
 
   attach(root: SVGGElement, multiLine: MultiLineChart): void {
@@ -46,7 +50,15 @@ export abstract class BaseLabels implements SlotRenderer {
     return this
   }
 
-  abstract getSize(): { width: number | null; height: number | null }
+  getSize(space: ChartSpace, overflow: Overflow, full: Size): { width: number | null; height: number | null } {
+    if (this.axis === 'horizontal') {
+      return { width: null, height: this.getHeight() }
+    } else {
+      const labels = this.calculateLabelPositions(space, { start: overflow.top, end: overflow.bottom })
+      const maxWidth = labels.reduce((max, l) => Math.max(max, this.getTextWidth(l.label)), 0)
+      return { width: maxWidth + this.offset, height: null }
+    }
+  }
 
   render(space: ChartSpace, overflow: Overflow) {
     this.lastRenderedTicks = []
@@ -157,12 +169,11 @@ export abstract class BaseLabels implements SlotRenderer {
 
   getYOffset(): number {
     const metrics = this.getTextMetrics()
-    return metrics.hangingBaseline + 8
+    return metrics.hangingBaseline + this.offset
   }
 
   getXOffset(space: ChartSpace): number {
-    // return space.layout.x
-    return 5
+    return this.offset
   }
 
   abstract calculateLabelPositions(space: ChartSpace, overflow: { start: number, end: number }): LabelData[]

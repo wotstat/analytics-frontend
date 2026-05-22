@@ -8,17 +8,18 @@ type Options = {
   renderBounds?: { minX?: number, maxX?: number, minY?: number, maxY?: number }
 }
 
+export type Size = { width: number, height: number }
 export type Overflow = { top: number, right: number, bottom: number, left: number }
 export interface BaseRenderer {
   attach(root: SVGGElement, multiLine: MultiLineChart): void
   detach(): void
   didMount?(): void
-  didLayout?(space: ChartSpace, full: { width: number, height: number }): void
-  render(space: ChartSpace, overflow: Overflow, full: { width: number, height: number }): void
+  didLayout?(space: ChartSpace, full: Size): void
+  render(space: ChartSpace, overflow: Overflow, full: Size): void
 }
 
 export interface SlotRenderer extends BaseRenderer {
-  getSize(): { width: number | null, height: number | null }
+  getSize(space: ChartSpace, overflow: Overflow, full: Size): { width: number | null, height: number | null }
 }
 
 export interface PlotRenderer extends BaseRenderer {
@@ -164,9 +165,11 @@ export class MultiLineChart implements ChartPlugin {
 
   render() {
     this.recalculateDataBounds()
-    this.layoutIfNeeded()
-
     this.mainSpace.bounds = this.calculateRenderBounds()
+
+    this.updateChartSize()
+    this.layout()
+
     const overflow = {
       top: 0,
       right: this.width - this.mainSpace.layout.x - this.mainSpace.layout.width,
@@ -182,34 +185,42 @@ export class MultiLineChart implements ChartPlugin {
     for (const plot of this.plotRenderers) plot.render(this.mainSpace, overflow, full)
   }
 
-  private layoutIfNeeded() {
+  private updateChartSize() {
     const width = this.chartDelegate?.width() ?? 0
     const height = this.chartDelegate?.height() ?? 0
-
-    if (width !== this.width || height !== this.height) {
-      this.width = width
-      this.height = height
-      this.layout()
-    }
+    this.width = width
+    this.height = height
   }
 
+  private layoutCacheKey = ''
   private layout() {
+
+    const key = `${this.width}x${this.height}-${this.plotBounds.getHash()}-${this.userDefinedBounds ? `${this.userDefinedBounds.minX ?? 'n'}-${this.userDefinedBounds.maxX ?? 'n'}-${this.userDefinedBounds.minY ?? 'n'}-${this.userDefinedBounds.maxY ?? 'n'}` : 'd'}`
+    if (key === this.layoutCacheKey) return
+    this.layoutCacheKey = key
 
     let xTop = 0
     let xBottom = 0
     let yLeft = 0
     let yRight = 0
 
-    for (const slot of this.topRenderers) xTop = Math.max(xTop, slot.getSize().height ?? 0)
-    for (const slot of this.bottomRenderers) xBottom = Math.max(xBottom, slot.getSize().height ?? 0)
-    for (const slot of this.leftRenderers) yLeft = Math.max(yLeft, slot.getSize().width ?? 0)
-    for (const slot of this.rightRenderers) yRight = Math.max(yRight, slot.getSize().width ?? 0)
+    let layout = new ChartSpace({ x: 0, y: 0, width: this.width, height: this.height }, this.mainSpace.bounds)
+    let overflow = { top: 0, right: 0, bottom: 0, left: 0 }
+    const full = { width: this.width, height: this.height }
 
-    this.mainSpace.layout = {
-      x: yLeft, y: xTop,
-      width: this.width - yLeft - yRight,
-      height: this.height - xBottom - xTop
-    }
+    for (const slot of this.topRenderers) xTop = Math.max(xTop, slot.getSize(layout, overflow, full).height ?? 0)
+    layout.layout.y = xTop
+
+    for (const slot of this.bottomRenderers) xBottom = Math.max(xBottom, slot.getSize(layout, overflow, full).height ?? 0)
+    layout.layout.height = this.height - xBottom - xTop
+
+    for (const slot of this.leftRenderers) yLeft = Math.max(yLeft, slot.getSize(layout, overflow, full).width ?? 0)
+    layout.layout.x = yLeft
+
+    for (const slot of this.rightRenderers) yRight = Math.max(yRight, slot.getSize(layout, overflow, full).width ?? 0)
+    layout.layout.width = this.width - yLeft - yRight
+
+    this.mainSpace.layout = layout.layout
     for (const renderer of this.allRenderers) renderer.didLayout?.(this.mainSpace, { width: this.width, height: this.height })
   }
 
