@@ -39,21 +39,25 @@ const props = defineProps<{}>()
 const offset = ref(0)
 const yOffset = ref(0)
 const yScale = ref(1)
-const xScale = ref(1)
+const xScale = ref(4)
 
 onMounted(() => {
   if (!chartElement.value) return
 
   const chart = chartElement.value.chart
 
-  const multiLine = new MultiLineChart({})
+  const multiLine = new MultiLineChart({
+    layoutVariant: 'horizontal'
+  })
 
   const clipMain = new ClipChart('center')
   const clipLeft = new ClipChart('left')
+  const clipBottom = new ClipChart('bottom')
 
   const labelsX = new AutoLabels('horizontal', {
     labelForValue: (v, step) => step < 7 && v == 500 ? `${v.toFixed(10)}` : `${v.toFixed(0)}`,
     padding: 15,
+    labelOffset: 10,
     values: [
       // {
       //   gen: arrayGenerator([0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]),
@@ -69,8 +73,9 @@ onMounted(() => {
     // strategy: {
     //   type: 'interval',
     //   placement: 'middle',
-    //   fit: true,
-    //   offset: [5, 5],
+    //   fit: false,
+    //   offset: [0, 0],
+    //   direction: 'backward',
     // },
     // from: 0,
     // to: 1000
@@ -80,8 +85,8 @@ onMounted(() => {
     //   fit: true,
     //   offset: [0, 0],
     // },
-    // from: 200, to: 800
-  })
+    from: 0, to: 1000
+  }).clipBy(clipBottom)
 
   const labelsY = new AutoLabels('vertical', {
     labelForValue: (v, step) => `${v.toFixed(0)}`,
@@ -132,6 +137,7 @@ onMounted(() => {
     .addPlot(plotRoot, 'plot')
     .addPlot(clipMain)
     .addPlot(clipLeft)
+    .addPlot(clipBottom)
     .addPlot(axis, 'ticks')
     .addPlot(xTicks, 'ticks')
     .addPlot(yTicks, 'ticks')
