@@ -1,7 +1,7 @@
-import { ClipChart } from '../masks/ClipChart'
 import { MultiLineChart, Overflow, PlotRenderer } from '../MultiLine'
 import { Bounds } from './Bounds'
 import { ChartSpace } from './ChartSpace'
+import { ClipChart } from './ClipChart'
 
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'

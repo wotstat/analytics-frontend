@@ -1,4 +1,4 @@
-import { ClipChart } from '../masks/ClipChart'
+import { ClipChart } from '../utils/ClipChart'
 import { SlotRenderer, MultiLineChart, Overflow, Size } from '../MultiLine'
 import { ChartSpace } from '../utils/ChartSpace'
 
