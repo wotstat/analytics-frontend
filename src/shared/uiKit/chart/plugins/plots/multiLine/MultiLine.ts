@@ -5,7 +5,8 @@ import { Bounds } from './utils/Bounds'
 import { ChartSpace } from './utils/ChartSpace'
 
 type Options = {
-  renderBounds?: { minX?: number, maxX?: number, minY?: number, maxY?: number }
+  renderBounds?: { minX?: number, maxX?: number, minY?: number, maxY?: number },
+  layoutVariant?: 'horizontal' | 'vertical' | 'square'
 }
 
 export type Size = { width: number, height: number }
@@ -45,6 +46,7 @@ export class MultiLineChart implements ChartPlugin {
   private plotRenderers: PlotRenderer[] = []
   private allRenderers: BaseRenderer[] = []
 
+  private layoutCacheKey = ''
   private hierarchyCache = new Map<string, SVGGElement>()
   private root = document.createElementNS(NAMESPACE, 'g')
 
@@ -170,11 +172,22 @@ export class MultiLineChart implements ChartPlugin {
     this.updateChartSize()
     this.layout()
 
-    const overflow = {
-      top: 0,
-      right: this.width - this.mainSpace.layout.x - this.mainSpace.layout.width,
-      bottom: 0,
-      left: this.mainSpace.layout.x
+    let overflow = { top: 0, right: 0, bottom: 0, left: 0 }
+    switch (this.options.layoutVariant ?? 'horizontal') {
+      case 'horizontal':
+        overflow = {
+          top: 0, bottom: 0,
+          right: this.width - this.mainSpace.layout.x - this.mainSpace.layout.width,
+          left: this.mainSpace.layout.x
+        }
+        break
+      case 'vertical':
+        overflow = {
+          right: 0, left: 0,
+          top: this.mainSpace.layout.y,
+          bottom: this.height - this.mainSpace.layout.y - this.mainSpace.layout.height
+        }
+        break
     }
 
     const full = { width: this.width, height: this.height }
@@ -185,6 +198,44 @@ export class MultiLineChart implements ChartPlugin {
     for (const plot of this.plotRenderers) plot.render(this.mainSpace, overflow, full)
   }
 
+  getSlotRect(slot: 'top' | 'right' | 'bottom' | 'left') {
+    const l = this.mainSpace.layout
+    const w = this.width
+    const h = this.height
+    const bH = h - (l.y + l.height)
+    const rW = w - (l.x + l.width)
+
+    switch (this.options.layoutVariant ?? 'horizontal') {
+      case 'horizontal': {
+        switch (slot) {
+          case 'top': return { x: 0, y: 0, width: w, height: l.y }
+          case 'bottom': return { x: 0, y: l.y + l.height, width: w, height: bH }
+          case 'left': return { x: 0, y: l.y, width: l.x, height: l.height }
+          case 'right': return { x: l.x + l.width, y: l.y, width: rW, height: h - l.y - bH }
+        }
+      }
+
+      case 'vertical': {
+        const rW = w - (l.x + l.width)
+        switch (slot) {
+          case 'top': return { x: l.x, y: 0, width: w - l.x - rW, height: l.y }
+          case 'bottom': return { x: l.x, y: l.y + l.height, width: w - l.x - rW, height: bH }
+          case 'right': return { x: l.x + l.width, y: 0, width: rW, height: h }
+          case 'left': return { x: 0, y: 0, width: l.x, height: h }
+        }
+      }
+
+      case 'square': {
+        switch (slot) {
+          case 'top': return { x: l.x, y: 0, width: w - l.x - rW, height: l.y }
+          case 'bottom': return { x: l.x, y: l.y + l.height, width: w - l.x - rW, height: bH }
+          case 'left': return { x: 0, y: l.y, width: l.x, height: l.height }
+          case 'right': return { x: l.x + l.width, y: l.y, width: rW, height: h - l.y - bH }
+        }
+      }
+    }
+  }
+
   private updateChartSize() {
     const width = this.chartDelegate?.width() ?? 0
     const height = this.chartDelegate?.height() ?? 0
@@ -192,18 +243,13 @@ export class MultiLineChart implements ChartPlugin {
     this.height = height
   }
 
-  private layoutCacheKey = ''
   private layout() {
 
     const key = `${this.width}x${this.height}-${this.plotBounds.getHash()}-${this.userDefinedBounds ? `${this.userDefinedBounds.minX ?? 'n'}-${this.userDefinedBounds.maxX ?? 'n'}-${this.userDefinedBounds.minY ?? 'n'}-${this.userDefinedBounds.maxY ?? 'n'}` : 'd'}`
     if (key === this.layoutCacheKey) return
     this.layoutCacheKey = key
 
-    let xTop = 0
-    let xBottom = 0
-    let yLeft = 0
-    let yRight = 0
-
+    let xTop = 0, xBottom = 0, yLeft = 0, yRight = 0
     let layout = new ChartSpace({ x: 0, y: 0, width: this.width, height: this.height }, this.mainSpace.bounds)
     let overflow = { top: 0, right: 0, bottom: 0, left: 0 }
     const full = { width: this.width, height: this.height }

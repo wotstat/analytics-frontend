@@ -10,32 +10,15 @@ export class ClipChart implements PlotRenderer {
   private id = `clip-${Math.random().toString(16).slice(2)}`
   private cachedSize = { x: 0, y: 0, width: 0, height: 0 }
 
-  private layoutClip: (space: ChartSpace, full: Size) => void
+  private multiLine: MultiLineChart | null = null
 
-  constructor(private target: 'top' | 'right' | 'bottom' | 'left' | 'center' = 'center') {
-    switch (this.target) {
-      case 'top':
-        this.layoutClip = this.clipTop.bind(this)
-        break
-      case 'right':
-        this.layoutClip = this.clipRight.bind(this)
-        break
-      case 'bottom':
-        this.layoutClip = this.clipBottom.bind(this)
-        break
-      case 'left':
-        this.layoutClip = this.clipLeft.bind(this)
-        break
-      case 'center':
-        this.layoutClip = this.clipCenter.bind(this)
-        break
-    }
-  }
+  constructor(private target: 'top' | 'right' | 'bottom' | 'left' | 'center' = 'center') { }
 
   attach(root: SVGGElement, multiLine: MultiLineChart): void {
     this.clipPath.setAttribute('id', this.id)
     this.clipPath.appendChild(this.rect)
     multiLine.addDefs(this.clipPath)
+    this.multiLine = multiLine
   }
 
   detach(): void {
@@ -43,34 +26,9 @@ export class ClipChart implements PlotRenderer {
   }
 
   didLayout(space: ChartSpace, full: Size): void {
-    this.layoutClip(space, full)
-  }
-
-  protected clipTop(space: ChartSpace, full: Size) {
-    this.setRect(0, 0, full.width, full.height)
-  }
-
-  protected clipRight(space: ChartSpace, full: Size) {
-    const x = space.layout.x + space.layout.width
-    this.setRect(x, space.layout.y, full.width - x, space.layout.height)
-  }
-
-  protected clipBottom(space: ChartSpace, full: Size) {
-    const y = space.layout.y + space.layout.height
-    this.setRect(0, y, full.width, full.height - y)
-  }
-
-  protected clipLeft(space: ChartSpace, full: Size) {
-    this.setRect(0, space.layout.y, space.layout.x, space.layout.y + space.layout.height)
-  }
-
-  protected clipCenter(space: ChartSpace, full: Size) {
-    this.setRect(
-      space.layout.x,
-      space.layout.y,
-      space.layout.width,
-      space.layout.height
-    )
+    if (!this.multiLine) return
+    const layout = this.target === 'center' ? space.layout : this.multiLine.getSlotRect(this.target)
+    this.setRect(layout.x, layout.y, layout.width, layout.height)
   }
 
   render(space: ChartSpace, overflow: Overflow): void { }
