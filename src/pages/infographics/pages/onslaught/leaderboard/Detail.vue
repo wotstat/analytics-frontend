@@ -22,14 +22,14 @@
 
 <script setup lang="ts">
 import Chart from '@/shared/uiKit/chart/Chart.vue'
-import { Axis } from '@/shared/uiKit/chart/plugins/plots/multiLine/axis/Axis'
-import { AutoLabels } from '@/shared/uiKit/chart/plugins/plots/multiLine/labels/autoLabels/AutoLabels'
-import { steppedOverrides } from '@/shared/uiKit/chart/plugins/plots/multiLine/labels/autoLabels/generators/steppedGenerator'
-import { MultiLineChart } from '@/shared/uiKit/chart/plugins/plots/multiLine/MultiLine'
-import { SimpleLine } from '@/shared/uiKit/chart/plugins/plots/multiLine/plot/line/SimpleLine'
-import { TicksByLabels } from '@/shared/uiKit/chart/plugins/plots/multiLine/ticks/TicksByLabels'
-import { ClipChart } from '@/shared/uiKit/chart/plugins/plots/multiLine/utils/ClipChart'
-import { PlotGroup } from '@/shared/uiKit/chart/plugins/plots/multiLine/utils/PlotGroup'
+import { Axis } from '@/shared/uiKit/chart/plugins/multiLine/axis/Axis'
+import { AutoLabels } from '@/shared/uiKit/chart/plugins/multiLine/labels/autoLabels/AutoLabels'
+import { steppedOverrides } from '@/shared/uiKit/chart/plugins/multiLine/labels/autoLabels/generators/steppedGenerator'
+import { MultiLineChart } from '@/shared/uiKit/chart/plugins/multiLine/MultiLine'
+import { SimpleLine } from '@/shared/uiKit/chart/plugins/multiLine/plot/line/SimpleLine'
+import { TicksByLabels } from '@/shared/uiKit/chart/plugins/multiLine/ticks/TicksByLabels'
+import { ClipChart } from '@/shared/uiKit/chart/plugins/multiLine/utils/ClipChart'
+import { PlotGroup } from '@/shared/uiKit/chart/plugins/multiLine/utils/PlotGroup'
 import { onMounted, ref, watchEffect } from 'vue'
 
 

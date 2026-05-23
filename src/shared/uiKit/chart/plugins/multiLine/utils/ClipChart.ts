@@ -1,5 +1,5 @@
 import { MultiLineChart, Overflow, PlotRenderer } from '../MultiLine'
-import { ChartSpace } from '../utils/ChartSpace'
+import { ChartSpace } from './ChartSpace'
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
 type Size = { width: number, height: number }

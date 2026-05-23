@@ -13,19 +13,6 @@ export interface ChartDelegate {
   height(): number
 }
 
-export interface ChartSpace {
-  setup(params: {
-    top: number,
-    left: number,
-    width: number,
-    height: number,
-    paddingTop: number,
-    paddingLeft: number,
-    paddingRight: number,
-    paddingBottom: number
-  }): void
-}
-
 export class Chart {
 
   private root: HTMLElement | null = null
