@@ -1,6 +1,6 @@
 import './style.scss'
 
-import { ChartDelegate, ChartPlugin } from '../../../Chart'
+import { ChartDelegate, ChartPlugin } from '../../Chart'
 import { Bounds } from './utils/Bounds'
 import { ChartSpace } from './utils/ChartSpace'
 
