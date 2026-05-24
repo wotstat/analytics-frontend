@@ -22,12 +22,15 @@ export abstract class BaseLabels implements SlotRenderer {
   private elementByKey = new Map<string, SVGTextElement>()
   private lastPersistent = 0
   private lastRenderedTicks: number[] = []
+  private maxLabelWidth = 0
 
   private offset: number
+  private stableWidth: boolean | number = false
 
-  constructor(readonly axis: Axis, options: { offset?: number } = {}) {
+  constructor(readonly axis: Axis, options: { offset?: number, stableWidth?: boolean | number } = {}) {
     this.root.classList.add(axis == 'horizontal' ? 'x-labels' : 'y-labels')
     this.offset = options.offset ?? DEFAULT_LABEL_OFFSET
+    this.stableWidth = options.stableWidth ?? false
   }
 
   attach(root: SVGGElement, multiLine: MultiLineChart): void {
@@ -54,9 +57,15 @@ export abstract class BaseLabels implements SlotRenderer {
     if (this.axis === 'horizontal') {
       return { width: null, height: this.getHeight() }
     } else {
+      if (typeof this.stableWidth === 'number') return { width: this.stableWidth, height: null }
+
       const labels = this.calculateLabelPositions(space, { start: overflow.top, end: overflow.bottom })
       const maxWidth = labels.reduce((max, l) => Math.max(max, this.getTextWidth(l.label)), 0)
-      return { width: maxWidth + this.offset, height: null }
+      const width = maxWidth + this.offset
+
+      this.maxLabelWidth = Math.max(this.maxLabelWidth, width)
+      if (this.stableWidth) return { width: this.maxLabelWidth, height: null }
+      return { width, height: null }
     }
   }
 

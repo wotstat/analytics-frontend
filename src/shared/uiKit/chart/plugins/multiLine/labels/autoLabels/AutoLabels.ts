@@ -24,6 +24,7 @@ type Options = {
   labelForValue?: (v: number, step: number) => string
   keyForValue?: (v: number, label: string, step: number) => string
   labelOffset?: number
+  stableWidth?: boolean | number
   padding?: number
   strategy?: Strategy
   from?: number
@@ -38,7 +39,7 @@ export class AutoLabels extends BaseLabels {
   private lastIntervalStart: number | null = null
 
   constructor(axis: Axis, private options: Options) {
-    super(axis, { offset: options.labelOffset })
+    super(axis, { offset: options.labelOffset, stableWidth: options.stableWidth })
   }
 
   private getOverridesForStep(step: number): Overrides | null {
