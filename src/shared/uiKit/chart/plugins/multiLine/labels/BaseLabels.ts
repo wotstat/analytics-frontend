@@ -33,12 +33,13 @@ export abstract class BaseLabels implements SlotRenderer {
     this.stableWidth = options.stableWidth ?? false
   }
 
-  attach(root: SVGGElement, multiLine: MultiLineChart): void {
-    root.appendChild(this.root)
+  getRootElement(): Element {
+    return this.root
   }
 
+  attach(root: SVGGElement, multiLine: MultiLineChart): void { }
+
   detach(): void {
-    this.root.remove()
     this.elementByKey.clear()
     this.cachedSizes.clear()
     this.cachedMetrics = null

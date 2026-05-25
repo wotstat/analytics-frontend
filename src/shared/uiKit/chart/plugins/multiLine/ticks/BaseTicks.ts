@@ -18,13 +18,13 @@ export abstract class BaseTicks implements PlotRenderer {
     this.root.classList.add(axis === 'horizontal' ? 'x-ticks' : 'y-ticks')
   }
 
-  attach(root: SVGGElement, multiLine: MultiLineChart): void {
-    root.appendChild(this.root)
+  getRootElement(): Element {
+    return this.root
   }
 
+  attach(root: SVGGElement, multiLine: MultiLineChart): void { }
+
   detach(): void {
-    if (!this.root) return
-    this.root.remove()
     this.elementsByKey.clear()
     this.elementsXYCache.clear()
   }
