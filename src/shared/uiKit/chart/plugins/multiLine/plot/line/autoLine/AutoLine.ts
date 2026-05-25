@@ -41,9 +41,12 @@ export class AutoLine implements PlotRenderer {
     this.multiLine?.dataDidChange()
   }
 
+  getRootElement(): Element {
+    return this.root
+  }
+
   attach(root: SVGGElement, multiLine: MultiLineChart) {
     this.multiLine = multiLine
-    root.appendChild(this.root)
   }
 
   detach() {
