@@ -6,6 +6,7 @@ import { ChartSpace } from './utils/ChartSpace'
 
 type Options = {
   renderBounds?: { minX?: number, maxX?: number, minY?: number, maxY?: number },
+  renderBoundsPadding?: { top?: number, right?: number, bottom?: number, left?: number } | { horizontal?: number, vertical?: number },
   layoutVariant?: 'horizontal' | 'vertical' | 'square'
 }
 
@@ -36,6 +37,7 @@ export class MultiLineChart implements ChartPlugin {
   private chartDelegate: ChartDelegate | null = null
 
   private userDefinedBounds: { minX: number | null, maxX: number | null, minY: number | null, maxY: number | null } | null = null
+  private renderBoundsPadding: { top: number, right: number, bottom: number, left: number } = { top: 0, right: 0, bottom: 0, left: 0 }
 
   private width = 0
   private height = 0
@@ -52,8 +54,8 @@ export class MultiLineChart implements ChartPlugin {
 
   private layoutCacheKey = ''
   private hierarchyCache = new Map<string, SVGGElement>()
-  private root = document.createElementNS(NAMESPACE, 'g')
 
+  private root = document.createElementNS(NAMESPACE, 'g')
   private defs = document.createElementNS(NAMESPACE, 'defs')
 
   constructor(readonly options: Options) {
@@ -61,6 +63,7 @@ export class MultiLineChart implements ChartPlugin {
     this.root.appendChild(this.defs)
 
     this.setRenderBounds(options.renderBounds)
+    this.setRenderBoundsPadding(options.renderBoundsPadding ?? { horizontal: 0, vertical: 0 })
   }
 
   apply(delegate: ChartDelegate): void {
@@ -184,6 +187,23 @@ export class MultiLineChart implements ChartPlugin {
     if (changed) this.dataDidChange()
   }
 
+  setRenderBoundsPadding(padding: Required<Options>['renderBoundsPadding']) {
+    if ('horizontal' in padding || 'vertical' in padding) {
+      const horizontal = padding.horizontal ?? 0
+      const vertical = padding.vertical ?? 0
+      this.renderBoundsPadding = { top: vertical, right: horizontal, bottom: vertical, left: horizontal }
+    } else {
+      const o = padding as { top?: number, right?: number, bottom?: number, left?: number }
+      this.renderBoundsPadding = {
+        top: o.top ?? 0,
+        right: o.right ?? 0,
+        bottom: o.bottom ?? 0,
+        left: o.left ?? 0,
+      }
+    }
+    this.dataDidChange()
+  }
+
   render() {
     this.recalculateDataBounds()
     this.mainSpace.bounds = this.calculateRenderBounds()
@@ -297,13 +317,12 @@ export class MultiLineChart implements ChartPlugin {
     }
 
     const bounds = this.plotBounds.clone()
-    if (!ud) return bounds
 
     return Bounds.fromMinMax(
-      ud.minX ?? bounds.minX,
-      ud.maxX ?? bounds.maxX,
-      ud.minY ?? bounds.minY,
-      ud.maxY ?? bounds.maxY,
+      ud?.minX ?? (bounds.minX - this.renderBoundsPadding.left),
+      ud?.maxX ?? (bounds.maxX + this.renderBoundsPadding.right),
+      ud?.minY ?? (bounds.minY - this.renderBoundsPadding.bottom),
+      ud?.maxY ?? (bounds.maxY + this.renderBoundsPadding.top),
     )
   }
 
