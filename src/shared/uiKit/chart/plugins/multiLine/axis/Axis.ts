@@ -68,12 +68,8 @@ export class Axis implements PlotRenderer {
     this.root.classList.add('chart-axis')
   }
 
-  attach(root: SVGGElement, multiLine: MultiLineChart): void {
-    root.appendChild(this.root)
-  }
-
-  detach(): void {
-    this.root.remove()
+  getRootElement(): Element {
+    return this.root
   }
 
   render(space: ChartSpace, overflow: Overflow, full: { width: number, height: number }): void {
