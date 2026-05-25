@@ -1,5 +1,4 @@
-import { MultiLineChart, Overflow, PlotRenderer } from '../MultiLine'
-import { Bounds } from '../utils/Bounds'
+import { Overflow, PlotRenderer } from '../MultiLine'
 import { ChartSpace } from '../utils/ChartSpace'
 
 
