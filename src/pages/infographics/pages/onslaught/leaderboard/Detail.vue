@@ -202,12 +202,12 @@ onMounted(() => {
   // }, 16)
 
   watchEffect(() => {
-    // multiLine.setRenderBounds({
-    //   minX: -offset.value,
-    //   maxX: -offset.value + 1000 / xScale.value,
-    //   minY: 0 + yOffset.value,
-    //   maxY: yOffset.value + 100 / yScale.value,
-    // })
+    multiLine.setRenderBounds({
+      minX: -offset.value,
+      maxX: -offset.value + 1000 / xScale.value,
+      minY: 0 + yOffset.value,
+      maxY: yOffset.value + 100 / yScale.value,
+    })
   })
 
 })
