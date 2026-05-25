@@ -164,6 +164,7 @@ onMounted(() => {
 
   const gradient = new ChartGradient({
     classes: 'green-gradient',
+    direction: 'horizontal',
   })
 
   gradientId.value = gradient.getClipPath()
