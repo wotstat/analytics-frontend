@@ -63,7 +63,10 @@ onMounted(() => {
   const chart = chartElement.value.chart
 
   const multiLine = new MultiLineChart({
-    layoutVariant: 'horizontal'
+    layoutVariant: 'horizontal',
+    renderBoundsPadding: {
+      vertical: 5,
+    }
   })
 
   const clipMain = new ChartClip('center')
@@ -106,7 +109,10 @@ onMounted(() => {
 
   const labelsY = new AutoLabels('vertical', {
     labelForValue: (v, step) => `${v.toFixed(0)}`,
-    padding: 15,
+    padding: {
+      clip: 10,
+      flow: 5,
+    },
     labelOffset: 5,
     values: [
       // arrayGenerator([-200, -180, -160, -140, -120, -100, -80, -60, -40, -20, 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200]),
@@ -136,7 +142,7 @@ onMounted(() => {
 
 
 
-  const points: ({ x: number, y: number } | null)[] = new Array(100).fill(0).map((_, i) => ({ x: i * 10, y: 20 + rand() * 50 }))
+  const points: ({ x: number, y: number } | null)[] = new Array(101).fill(0).map((_, i) => ({ x: i * 10, y: 20 + rand() * 50 }))
 
   points[10] = null
   points[11] = null
@@ -164,7 +170,6 @@ onMounted(() => {
 
   const gradient = new ChartGradient({
     classes: 'green-gradient',
-    direction: 'horizontal',
   })
 
   gradientId.value = gradient.getClipPath()
@@ -197,12 +202,12 @@ onMounted(() => {
   // }, 16)
 
   watchEffect(() => {
-    multiLine.setRenderBounds({
-      minX: -offset.value,
-      maxX: -offset.value + 1000 / xScale.value,
-      minY: 0 + yOffset.value,
-      maxY: yOffset.value + 100 / yScale.value,
-    })
+    // multiLine.setRenderBounds({
+    //   minX: -offset.value,
+    //   maxX: -offset.value + 1000 / xScale.value,
+    //   minY: 0 + yOffset.value,
+    //   maxY: yOffset.value + 100 / yScale.value,
+    // })
   })
 
 })
@@ -298,7 +303,7 @@ onMounted(() => {
 
         &.monotone {
           stroke-width: 1px;
-          stroke: rgb(4, 255, 0);
+          stroke: rgb(45, 212, 45);
         }
 
         &.red {
@@ -320,11 +325,11 @@ onMounted(() => {
 
       .green-gradient {
         .stop-1 {
-          stop-color: rgba(0, 255, 0, 0.3);
+          stop-color: rgba(45, 212, 45, 0.3);
         }
 
         .stop-2 {
-          stop-color: rgba(0, 255, 0, 0);
+          stop-color: rgba(45, 212, 45, 0);
         }
       }
     }

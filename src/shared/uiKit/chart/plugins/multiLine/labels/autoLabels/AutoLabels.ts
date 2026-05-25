@@ -25,7 +25,10 @@ type Options = {
   keyForValue?: (v: number, label: string, step: number) => string
   labelOffset?: number
   stableWidth?: boolean | number
-  padding?: number
+  padding?: number | {
+    clip: number,
+    flow: number
+  },
   strategy?: Strategy
   from?: number
   to?: number
@@ -33,6 +36,16 @@ type Options = {
 
 const DEFAULT_LABEL_PADDING = 15
 const DEFAULT_STRATEGY: Strategy = 'classic-flow'
+
+function getClipPadding(padding: Options['padding']) {
+  if (typeof padding === 'number') return padding
+  return padding?.clip
+}
+
+function getFlowPadding(padding: Options['padding']) {
+  if (typeof padding === 'number') return padding
+  return padding?.flow
+}
 
 export class AutoLabels extends BaseLabels {
 
@@ -57,6 +70,9 @@ export class AutoLabels extends BaseLabels {
   }
 
   calculateLabelPositions(space: ChartSpace, overflow: { start: number, end: number }) {
+
+    // console.log('calculateLabelPositions', this, { space, overflow })
+
     const options = this.options
 
     const defaultLabelForValue = (v: number, step: number) => v.toString()
@@ -66,7 +82,8 @@ export class AutoLabels extends BaseLabels {
     const inverseTranslate = this.axis === 'horizontal' ? space.localToLayoutX.bind(space) : space.localToLayoutY.bind(space)
     const convert = (v: { middle: number, label: string, key: string, value: number }) => ({ p: inverseTranslate(v.middle), label: v.label, key: v.key, value: v.value })
 
-    let padding = 0
+    let clipPadding = 0
+    let flowPadding = 0
     let strategy = options.strategy ?? DEFAULT_STRATEGY
 
     const spaceBounds = this.axis === 'horizontal' ?
@@ -91,7 +108,8 @@ export class AutoLabels extends BaseLabels {
       const keyForValue = current.keyForValue ?? options.keyForValue ?? defaultKeyForValue
       const from = current.from ?? options.from ?? -Infinity
       const to = current.to ?? options.to ?? Infinity
-      padding = current.padding ?? options.padding ?? DEFAULT_LABEL_PADDING
+      clipPadding = getClipPadding(current.padding) ?? getClipPadding(options.padding) ?? DEFAULT_LABEL_PADDING
+      flowPadding = getFlowPadding(current.padding) ?? getFlowPadding(options.padding) ?? DEFAULT_LABEL_PADDING
       strategy = current.strategy ?? options.strategy ?? DEFAULT_STRATEGY
 
       const compute = (v: number) => {
@@ -103,7 +121,7 @@ export class AutoLabels extends BaseLabels {
       }
 
       const ctx = {
-        padding, compute, generator: current.gen, force: i == options.values.length - 1,
+        padding: clipPadding, compute, generator: current.gen, force: i == options.values.length - 1,
         bounds: spaceBounds,
         limits: { start: from, end: to },
         layoutLimits,
@@ -113,7 +131,7 @@ export class AutoLabels extends BaseLabels {
       if (strategy == 'classic-flow') {
         const res = calculateClassic(ctx)
         if (!res) continue
-        return fit(extend(res, padding), layoutLimits, overflowLimits).map(convert)
+        return fit(extend(res, flowPadding), layoutLimits, overflowLimits).map(convert)
       }
       else if (strategy == 'classic') {
         const res = calculateClassic(ctx)
@@ -130,7 +148,7 @@ export class AutoLabels extends BaseLabels {
         if (!res) continue
 
         const offset = (() => {
-          if (!strategy.offset) return [padding, padding] as [number, number]
+          if (!strategy.offset) return [flowPadding, flowPadding] as [number, number]
           if (typeof strategy.offset === 'number') return [strategy.offset, strategy.offset] as [number, number]
           return strategy.offset
         })()

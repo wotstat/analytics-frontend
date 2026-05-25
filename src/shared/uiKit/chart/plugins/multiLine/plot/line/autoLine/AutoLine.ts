@@ -1,6 +1,7 @@
 import { MultiLineChart, PlotRenderer } from '../../../MultiLine'
 import { Bounds } from '../../../utils/Bounds'
 import { ChartSpace } from '../../../utils/ChartSpace'
+import { addClasses, Classes } from '../../../utils/utils'
 import { monotoneXPath, smoothPath } from './utils'
 
 
@@ -9,7 +10,7 @@ const DEFAULT_PRECISION = 2
 const DEFAULT_SMOOTHING = 1
 
 type Options = {
-  classes?: string[]
+  classes?: Classes
   area?: boolean
   precision?: number
   smoothing?: number
@@ -24,8 +25,8 @@ export class AutoLine implements PlotRenderer {
   protected isDirty = true
 
   protected root = document.createElementNS(NAMESPACE, 'g')
-  protected lines: SVGPathElement[] = []
-  protected areas: SVGPathElement[] = []
+  protected line: SVGPathElement | null = null
+  protected area: SVGPathElement | null = null
 
   protected points: (Point | null)[] = []
   protected segments: Point[][] = []
@@ -50,8 +51,8 @@ export class AutoLine implements PlotRenderer {
   }
 
   detach() {
-    for (const line of this.lines) line.remove()
-    for (const area of this.areas) area.remove()
+    this.line?.remove()
+    this.area?.remove()
   }
 
   setPoints(points: (Point | null)[]) {
@@ -90,26 +91,37 @@ export class AutoLine implements PlotRenderer {
     this.isDirty = false
     this.lastRenderedBoundsHash = space.getHash()
 
-    this.prepareRender()
-
+    const paths: { area?: string, line: string }[] = []
     for (let i = 0; i < this.segments.length; i++) {
       const segment = this.segments[i]
-      this.drawSegment(i, segment, space)
+      paths.push(this.calculateSegmentPath(i, segment, space))
     }
-  }
-
-  private drawSegment(lineIndex: number, points: Point[], space: ChartSpace) {
-    const line = this.lines[lineIndex]
-    const p = points.map(p => space.chartToLayout(p))
-    const path = this.getSmoothPath(p)
-    line.setAttribute('d', path)
 
     if (this.options.area) {
-      const area = this.areas[lineIndex]
-
-      const areaPath = path + `L ${p[p.length - 1].x} ${space.layout.y + space.layout.height + 1} L ${p[0].x} ${space.layout.y + space.layout.height + 1} Z`
-      area.setAttribute('d', areaPath)
+      if (!this.area) {
+        this.area = document.createElementNS(NAMESPACE, 'path')
+        addClasses(this.area, 'area', this.options.classes)
+        this.root.appendChild(this.area)
+      }
+      this.area?.setAttribute('d', paths.map(t => t.area ?? '').join(' '))
     }
+
+    if (!this.line) {
+      this.line = document.createElementNS(NAMESPACE, 'path')
+      addClasses(this.line, 'line', this.options.classes)
+      this.root.appendChild(this.line)
+    }
+    this.line?.setAttribute('d', paths.map(t => t.line).join(' '))
+  }
+
+  private calculateSegmentPath(lineIndex: number, points: Point[], space: ChartSpace) {
+    const p = points.map(p => space.chartToLayout(p))
+    const path = this.getSmoothPath(p)
+
+    if (!this.options.area) return { line: path }
+
+    const areaPath = path + `L ${p[p.length - 1].x} ${space.layout.y + space.layout.height + 1} L ${p[0].x} ${space.layout.y + space.layout.height + 1} Z`
+    return { line: path, area: areaPath }
   }
 
   private getSmoothPath(points: Point[]) {
@@ -131,30 +143,5 @@ export class AutoLine implements PlotRenderer {
       d.push(`${i === 0 ? 'M' : 'L'} ${p.x.toFixed(precision)} ${p.y.toFixed(precision)}`)
     }
     return d.join(' ')
-  }
-
-  private prepareRender() {
-
-    if (this.options.area) {
-      for (let i = this.segments.length; i < this.areas.length; i++) this.areas[i].remove()
-      this.areas = this.areas.slice(0, this.segments.length)
-
-      for (let i = this.areas.length; i < this.segments.length; i++) {
-        const area = document.createElementNS(NAMESPACE, 'path')
-        area.classList.add('area', ...(this.options.classes ?? []))
-        this.areas.push(area)
-        this.root.appendChild(area)
-      }
-    }
-
-    for (let i = this.segments.length; i < this.lines.length; i++) this.lines[i].remove()
-    this.lines = this.lines.slice(0, this.segments.length)
-
-    for (let i = this.lines.length; i < this.segments.length; i++) {
-      const line = document.createElementNS(NAMESPACE, 'path')
-      line.classList.add('line', ...(this.options.classes ?? []))
-      this.lines.push(line)
-      this.root.appendChild(line)
-    }
   }
 }
