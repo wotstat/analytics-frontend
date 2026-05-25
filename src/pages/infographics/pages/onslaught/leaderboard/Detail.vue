@@ -26,9 +26,11 @@ import { Axis } from '@/shared/uiKit/chart/plugins/multiLine/axis/Axis'
 import { AutoLabels } from '@/shared/uiKit/chart/plugins/multiLine/labels/autoLabels/AutoLabels'
 import { steppedOverrides } from '@/shared/uiKit/chart/plugins/multiLine/labels/autoLabels/generators/steppedGenerator'
 import { MultiLineChart } from '@/shared/uiKit/chart/plugins/multiLine/MultiLine'
+import { AutoLine } from '@/shared/uiKit/chart/plugins/multiLine/plot/line/autoLine/AutoLine'
 import { SimpleLine } from '@/shared/uiKit/chart/plugins/multiLine/plot/line/SimpleLine'
 import { TicksByLabels } from '@/shared/uiKit/chart/plugins/multiLine/ticks/TicksByLabels'
-import { ClipChart } from '@/shared/uiKit/chart/plugins/multiLine/utils/ClipChart'
+import { ChartClip } from '@/shared/uiKit/chart/plugins/multiLine/utils/ChartClip'
+import { ChartGradient } from '@/shared/uiKit/chart/plugins/multiLine/utils/ChartGradient'
 import { PlotGroup } from '@/shared/uiKit/chart/plugins/multiLine/utils/PlotGroup'
 import { onMounted, ref, watchEffect } from 'vue'
 
@@ -39,7 +41,21 @@ const props = defineProps<{}>()
 const offset = ref(0)
 const yOffset = ref(0)
 const yScale = ref(1)
-const xScale = ref(4)
+const xScale = ref(1)
+
+function mulberry32(a: number) {
+  return function () {
+    var t = a += 0x6D2B79F5
+    t = Math.imul(t ^ t >>> 15, t | 1)
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61)
+    return ((t ^ t >>> 14) >>> 0) / 4294967296
+  }
+}
+
+const seed = 12345
+const rand = mulberry32(seed)
+
+const gradientId = ref('')
 
 onMounted(() => {
   if (!chartElement.value) return
@@ -50,9 +66,9 @@ onMounted(() => {
     layoutVariant: 'horizontal'
   })
 
-  const clipMain = new ClipChart('center')
-  const clipLeft = new ClipChart('left')
-  const clipBottom = new ClipChart('bottom')
+  const clipMain = new ChartClip('center')
+  const clipLeft = new ChartClip('left')
+  const clipBottom = new ChartClip('bottom')
 
   const labelsX = new AutoLabels('horizontal', {
     labelForValue: (v, step) => step < 7 && v == 500 ? `${v.toFixed(10)}` : `${v.toFixed(0)}`,
@@ -118,8 +134,17 @@ onMounted(() => {
     bottom: 'space',
   })
 
-  const sinLine = new SimpleLine(new Array(1000).fill(0).map((_, i) => ({ x: i, y: Math.sin(i / 10) * 50 + 50 })), ['sin'])
-  const randomLine = new SimpleLine(new Array(100).fill(0).map((_, i) => ({ x: i * 10, y: 20 + Math.random() * 50 })), ['random'])
+
+
+  const points: ({ x: number, y: number } | null)[] = new Array(100).fill(0).map((_, i) => ({ x: i * 10, y: 20 + rand() * 50 }))
+
+  points[10] = null
+  points[11] = null
+  points[20] = null
+  points[23] = null
+
+  // const sinLine = new SimpleLine(new Array(1000).fill(0).map((_, i) => ({ x: i, y: Math.sin(i / 10) * 50 + 50 })), ['sin'])
+  // const randomLine = new SimpleLine(points, ['random'])
   const redLine = new SimpleLine([
     { x: 0, y: 0 },
     { x: 0, y: 100 },
@@ -128,21 +153,36 @@ onMounted(() => {
     { x: 0, y: 0 },
   ], ['red'])
 
+  const smoothRandom = new AutoLine({ classes: ['random', 'smooth'], area: true, smoothingMethod: 'smooth' })
+    .setPoints(points)
+
+  const monotoneRandom = new AutoLine({ classes: ['random', 'monotone'], area: false, smoothingMethod: 'monotone' })
+    .setPoints(points)
+
+  const sinLine = new AutoLine({ classes: ['sin', 'smooth'], area: false })
+    .setPoints(new Array(1000).fill(0).map((_, i) => ({ x: i, y: Math.sin(i / 10) * 50 + 50 })))
+
+  const gradient = new ChartGradient({
+    classes: 'green-gradient',
+  })
+
+  gradientId.value = gradient.getClipPath()
+
   const plotRoot = new PlotGroup()
-    .addPlot(sinLine)
-    .addPlot(randomLine)
+    // .addPlot(sinLine)
+    // .addPlot(randomLine)
+    .addPlot(smoothRandom)
+    .addPlot(monotoneRandom)
     .clipBy(clipMain)
 
   multiLine
     .addPlot(plotRoot, 'plot')
-    .addPlot(clipMain)
-    .addPlot(clipLeft)
-    .addPlot(clipBottom)
     .addPlot(axis, 'ticks')
     .addPlot(xTicks, 'ticks')
     .addPlot(yTicks, 'ticks')
     .addSlot('bottom', labelsX, 'labels')
     .addSlot('left', labelsY, 'labels')
+    .addDefs(gradient, clipMain, clipLeft, clipBottom)
 
   chart.addPlugin(multiLine)
 
@@ -247,12 +287,43 @@ onMounted(() => {
 
         &.random {
           stroke-width: 1px;
-          stroke: rgb(255, 153, 0);
+          stroke: rgb(20, 153, 255);
+        }
+
+        &.smooth {
+          stroke-width: 1px;
+          stroke: rgb(255, 191, 0);
+        }
+
+        &.monotone {
+          stroke-width: 1px;
+          stroke: rgb(4, 255, 0);
         }
 
         &.red {
           stroke-width: 1px;
           stroke: rgb(255, 0, 0);
+        }
+      }
+
+      .area {
+        &.sin {
+          fill: rgba(24, 247, 95, 0.1);
+        }
+
+        &.random {
+          // fill: rgba(0, 255, 128, 0.1);
+          fill: v-bind('gradientId');
+        }
+      }
+
+      .green-gradient {
+        .stop-1 {
+          stop-color: rgba(0, 255, 0, 0.3);
+        }
+
+        .stop-2 {
+          stop-color: rgba(0, 255, 0, 0);
         }
       }
     }

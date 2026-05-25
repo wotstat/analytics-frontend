@@ -1,7 +1,7 @@
 import { MultiLineChart, Overflow, PlotRenderer } from '../MultiLine'
 import { Bounds } from './Bounds'
 import { ChartSpace } from './ChartSpace'
-import { ClipChart } from './ClipChart'
+import { ChartClip } from './ChartClip'
 
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
@@ -17,14 +17,18 @@ export class PlotGroup implements PlotRenderer {
     this.root.classList.add('plot-group', ...classes)
   }
 
-  clipBy(clip: ClipChart) {
+  clipBy(clip: ChartClip) {
     clip.clip(this.root)
     return this
   }
 
   addPlot(plot: PlotRenderer, path: string[] = []) {
     const root = this.getRootFor(path)
-    if (this.multiLine) plot.attach(root, this.multiLine)
+
+    const element = plot.getRootElement?.()
+    if (element) root.appendChild(element)
+
+    if (this.multiLine) plot.attach?.(root, this.multiLine)
     this.plots.push({ plot, root })
     return this
   }
@@ -41,16 +45,16 @@ export class PlotGroup implements PlotRenderer {
     root.appendChild(this.root)
     if (!this.multiLine) {
       this.multiLine = multiLine
-      for (const { plot, root } of this.plots) plot.attach(root, multiLine)
+      for (const { plot, root } of this.plots) plot.attach?.(root, multiLine)
     }
   }
 
   detach(): void {
-    for (const { plot } of this.plots) plot.detach()
+    for (const { plot } of this.plots) plot.detach?.()
   }
 
   render(space: ChartSpace, overflow: Overflow, full: { width: number, height: number }): void {
-    for (const { plot } of this.plots) plot.render(space, overflow, full)
+    for (const { plot } of this.plots) plot.render?.(space, overflow, full)
   }
 
   private getRootFor(path: string[]) {

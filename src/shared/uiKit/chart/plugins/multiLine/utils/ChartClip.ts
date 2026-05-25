@@ -1,9 +1,9 @@
-import { MultiLineChart, Overflow, PlotRenderer } from '../MultiLine'
+import { MultiLineChart, Overflow, DefsRenderer } from '../MultiLine'
 import { ChartSpace } from './ChartSpace'
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
 type Size = { width: number, height: number }
-export class ClipChart implements PlotRenderer {
+export class ChartClip implements DefsRenderer {
 
   private clipPath = document.createElementNS(NAMESPACE, 'clipPath')
   private rect = document.createElementNS(NAMESPACE, 'rect')
@@ -12,12 +12,16 @@ export class ClipChart implements PlotRenderer {
 
   private multiLine: MultiLineChart | null = null
 
-  constructor(private target: 'top' | 'right' | 'bottom' | 'left' | 'center' = 'center') { }
-
-  attach(root: SVGGElement, multiLine: MultiLineChart): void {
+  constructor(private target: 'top' | 'right' | 'bottom' | 'left' | 'center' = 'center') {
     this.clipPath.setAttribute('id', this.id)
     this.clipPath.appendChild(this.rect)
-    multiLine.addDefs(this.clipPath)
+  }
+
+  getRootElement(): Element {
+    return this.clipPath
+  }
+
+  attach(root: SVGGElement, multiLine: MultiLineChart): void {
     this.multiLine = multiLine
   }
 
@@ -30,8 +34,6 @@ export class ClipChart implements PlotRenderer {
     const layout = this.target === 'center' ? space.layout : this.multiLine.getSlotRect(this.target)
     this.setRect(layout.x, layout.y, layout.width, layout.height)
   }
-
-  render(space: ChartSpace, overflow: Overflow): void { }
 
   clip(element: SVGGElement) {
     element.setAttribute('clip-path', this.getClipPath())

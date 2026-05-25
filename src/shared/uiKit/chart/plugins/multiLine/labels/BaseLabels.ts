@@ -1,4 +1,4 @@
-import { ClipChart } from '../utils/ClipChart'
+import { ChartClip } from '../utils/ChartClip'
 import { SlotRenderer, MultiLineChart, Overflow, Size } from '../MultiLine'
 import { ChartSpace } from '../utils/ChartSpace'
 
@@ -48,7 +48,7 @@ export abstract class BaseLabels implements SlotRenderer {
     this.recalculateFont()
   }
 
-  clipBy(clip: ClipChart) {
+  clipBy(clip: ChartClip) {
     clip.clip(this.root)
     return this
   }

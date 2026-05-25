@@ -12,11 +12,12 @@ type Options = {
 export type Size = { width: number, height: number }
 export type Overflow = { top: number, right: number, bottom: number, left: number }
 export interface BaseRenderer {
-  attach(root: SVGGElement, multiLine: MultiLineChart): void
-  detach(): void
+  attach?(root: SVGGElement, multiLine: MultiLineChart): void
+  detach?(): void
   didMount?(): void
   didLayout?(space: ChartSpace, full: Size): void
-  render(space: ChartSpace, overflow: Overflow, full: Size): void
+  render?(space: ChartSpace, overflow: Overflow, full: Size): void
+  getRootElement?(): Element
 }
 
 export interface SlotRenderer extends BaseRenderer {
@@ -26,6 +27,8 @@ export interface SlotRenderer extends BaseRenderer {
 export interface PlotRenderer extends BaseRenderer {
   getBounds?(): Bounds
 }
+
+export interface DefsRenderer extends BaseRenderer { }
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
 
@@ -45,6 +48,7 @@ export class MultiLineChart implements ChartPlugin {
   private leftRenderers: SlotRenderer[] = []
   private plotRenderers: PlotRenderer[] = []
   private allRenderers: BaseRenderer[] = []
+  private defsRenderers: BaseRenderer[] = []
 
   private layoutCacheKey = ''
   private hierarchyCache = new Map<string, SVGGElement>()
@@ -64,13 +68,16 @@ export class MultiLineChart implements ChartPlugin {
     this.chartDelegate = delegate
     delegate.addChild(this.root)
     this.root.parentElement?.classList.add('chart-multiline-container')
-
     for (const renderer of this.allRenderers) renderer.didMount?.()
   }
 
   addSlot(position: 'top' | 'right' | 'bottom' | 'left', slot: SlotRenderer, path: string | string[] = []) {
     const root = this.getRootFor(Array.isArray(path) ? path : path.split('>'))
-    slot.attach(root, this)
+
+    const element = slot.getRootElement?.()
+    if (element) root.appendChild(element)
+
+    slot.attach?.(root, this)
 
     switch (position) {
       case 'top':
@@ -92,14 +99,26 @@ export class MultiLineChart implements ChartPlugin {
 
   addPlot(plot: PlotRenderer, path: string | string[] = []) {
     const root = this.getRootFor(Array.isArray(path) ? path : path.split('>'))
-    plot.attach(root, this)
+
+    const element = plot.getRootElement?.()
+    if (element) root.appendChild(element)
+
+    plot.attach?.(root, this)
     this.plotRenderers.push(plot)
     this.allRenderers.push(plot)
     return this
   }
 
-  addDefs(element: SVGElement) {
-    this.defs.appendChild(element)
+  addDefs(...defs: DefsRenderer[]) {
+    for (const def of defs) {
+      const element = def.getRootElement?.()
+      if (element) this.defs.appendChild(element)
+
+      def.attach?.(this.defs, this)
+      this.defsRenderers.push(def)
+      this.allRenderers.push(def)
+    }
+
     return this
   }
 
@@ -191,11 +210,12 @@ export class MultiLineChart implements ChartPlugin {
     }
 
     const full = { width: this.width, height: this.height }
-    for (const slot of this.topRenderers) slot.render(this.mainSpace, overflow, full)
-    for (const slot of this.rightRenderers) slot.render(this.mainSpace, overflow, full)
-    for (const slot of this.bottomRenderers) slot.render(this.mainSpace, overflow, full)
-    for (const slot of this.leftRenderers) slot.render(this.mainSpace, overflow, full)
-    for (const plot of this.plotRenderers) plot.render(this.mainSpace, overflow, full)
+    for (const plot of this.defsRenderers) plot.render?.(this.mainSpace, overflow, full)
+    for (const slot of this.topRenderers) slot.render?.(this.mainSpace, overflow, full)
+    for (const slot of this.rightRenderers) slot.render?.(this.mainSpace, overflow, full)
+    for (const slot of this.bottomRenderers) slot.render?.(this.mainSpace, overflow, full)
+    for (const slot of this.leftRenderers) slot.render?.(this.mainSpace, overflow, full)
+    for (const plot of this.plotRenderers) plot.render?.(this.mainSpace, overflow, full)
   }
 
   getSlotRect(slot: 'top' | 'right' | 'bottom' | 'left') {
