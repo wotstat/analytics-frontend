@@ -2,6 +2,7 @@ import { MultiLineChart, PlotRenderer } from '../../../MultiLine'
 import { Bounds } from '../../../utils/Bounds'
 import { ChartSpace } from '../../../utils/ChartSpace'
 import { addClasses, Classes } from '../../../utils/utils'
+import { BasePlotRenderer } from '../../BasePlotRenderer'
 import { monotoneXPath, smoothPath } from './utils'
 
 
@@ -19,35 +20,21 @@ type Options = {
 
 type Point = { x: number, y: number }
 
-export class AutoLine implements PlotRenderer {
-  protected multiLine: MultiLineChart | null = null
+export class AutoLine extends BasePlotRenderer {
   protected bounds: Bounds | null = null
-  protected isDirty = true
-
-  protected root = document.createElementNS(NAMESPACE, 'g')
   protected line: SVGPathElement | null = null
   protected area: SVGPathElement | null = null
 
   protected points: (Point | null)[] = []
   protected segments: Point[][] = []
 
-  private lastRenderedBoundsHash = ''
-
   constructor(readonly options: Options) {
+    super(options.classes)
   }
 
   protected pointsDidChange() {
-    this.isDirty = true
     this.bounds = null
-    this.multiLine?.dataDidChange()
-  }
-
-  getRootElement(): Element {
-    return this.root
-  }
-
-  attach(root: SVGGElement, multiLine: MultiLineChart) {
-    this.multiLine = multiLine
+    this.requestRender()
   }
 
   detach() {
@@ -86,11 +73,7 @@ export class AutoLine implements PlotRenderer {
     return this.bounds
   }
 
-  render(space: ChartSpace) {
-    if (!this.isDirty && this.lastRenderedBoundsHash === space.getHash()) return
-    this.isDirty = false
-    this.lastRenderedBoundsHash = space.getHash()
-
+  renderImpl(space: ChartSpace) {
     const paths: { area?: string, line: string }[] = []
     for (let i = 0; i < this.segments.length; i++) {
       const segment = this.segments[i]
