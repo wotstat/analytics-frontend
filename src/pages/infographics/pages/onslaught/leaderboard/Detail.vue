@@ -27,7 +27,6 @@ import { AutoLabels } from '@/shared/uiKit/chart/plugins/multiLine/labels/autoLa
 import { steppedOverrides } from '@/shared/uiKit/chart/plugins/multiLine/labels/autoLabels/generators/steppedGenerator'
 import { MultiLineChart } from '@/shared/uiKit/chart/plugins/multiLine/MultiLine'
 import { AutoLine } from '@/shared/uiKit/chart/plugins/multiLine/plot/line/autoLine/AutoLine'
-import { SimpleLine } from '@/shared/uiKit/chart/plugins/multiLine/plot/line/SimpleLine'
 import { TicksByLabels } from '@/shared/uiKit/chart/plugins/multiLine/ticks/TicksByLabels'
 import { ChartClip } from '@/shared/uiKit/chart/plugins/multiLine/utils/ChartClip'
 import { ChartGradient } from '@/shared/uiKit/chart/plugins/multiLine/utils/ChartGradient'
@@ -151,13 +150,14 @@ onMounted(() => {
 
   // const sinLine = new SimpleLine(new Array(1000).fill(0).map((_, i) => ({ x: i, y: Math.sin(i / 10) * 50 + 50 })), ['sin'])
   // const randomLine = new SimpleLine(points, ['random'])
-  const redLine = new SimpleLine([
-    { x: 0, y: 0 },
-    { x: 0, y: 100 },
-    { x: 1000, y: 100 },
-    { x: 1000, y: 0 },
-    { x: 0, y: 0 },
-  ], ['red'])
+  const redLine = new AutoLine({ classes: ['red'] })
+    .setPoints([
+      { x: 0, y: 0 },
+      { x: 0, y: 100 },
+      { x: 1000, y: 100 },
+      { x: 1000, y: 0 },
+      { x: 0, y: 0 },
+    ])
 
   const smoothRandom = new AutoLine({ classes: ['random', 'smooth'], area: true, smoothingMethod: 'smooth' })
     .setPoints(points)
@@ -179,6 +179,7 @@ onMounted(() => {
     // .addPlot(randomLine)
     .addPlot(smoothRandom)
     .addPlot(monotoneRandom)
+    // .addPlot(redLine)
     .clipBy(clipMain)
 
   multiLine
