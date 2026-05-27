@@ -8,7 +8,8 @@ type Variant = 'circle' | 'square' | 'diamond'
 
 type DefaultOptions = {
   variant: Variant
-  radius: number
+  size: number
+  maskSize: number
   markerClasses: Classes
 }
 
@@ -19,6 +20,12 @@ type MarkerData = {
 
 type OptionalMarkerData = { x: number, y: number } & Partial<DefaultOptions>
 
+const DEFAULT_OPTIONS: DefaultOptions = {
+  variant: 'circle',
+  size: 3,
+  maskSize: 5,
+  markerClasses: []
+}
 
 class AutoMarker implements Marker<MarkerData> {
 
@@ -30,20 +37,21 @@ class AutoMarker implements Marker<MarkerData> {
     readonly data: DefaultOptions) {
 
     const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
-    circle.setAttribute('r', data.radius.toString())
+    circle.setAttribute('r', data.size.toString())
     root.appendChild(circle)
     addClasses(circle, data.markerClasses)
     this.elements.push(circle)
 
-    for (const mask of this.targetMasks) {
-      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
-      circle.setAttribute('r', (data.radius + 2).toString())
-      circle.setAttribute('fill', 'black')
-      mask.appendChild(circle)
-      addClasses(circle, data.markerClasses)
-      this.elements.push(circle)
+    if (data.maskSize > data.size) {
+      for (const mask of this.targetMasks) {
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+        circle.setAttribute('r', data.maskSize.toString())
+        circle.setAttribute('fill', 'black')
+        mask.appendChild(circle)
+        addClasses(circle, data.markerClasses)
+        this.elements.push(circle)
+      }
     }
-
   }
 
   render(data: MarkerData, space: ChartSpace): void {
@@ -64,12 +72,6 @@ class AutoMarker implements Marker<MarkerData> {
   }
 }
 
-const DEFAULT_OPTIONS: DefaultOptions = {
-  variant: 'circle',
-  radius: 3,
-  markerClasses: []
-}
-
 export class AutoMarkers extends BaseMarkers<MarkerData> {
 
   readonly targetMasks: Element[]
@@ -83,7 +85,8 @@ export class AutoMarkers extends BaseMarkers<MarkerData> {
 
     this.defaultData = {
       variant: this.options.variant ?? DEFAULT_OPTIONS.variant,
-      radius: this.options.radius ?? DEFAULT_OPTIONS.radius,
+      size: this.options.size ?? DEFAULT_OPTIONS.size,
+      maskSize: this.options.maskSize ?? DEFAULT_OPTIONS.maskSize,
       markerClasses: this.options.markerClasses ?? DEFAULT_OPTIONS.markerClasses
     }
 

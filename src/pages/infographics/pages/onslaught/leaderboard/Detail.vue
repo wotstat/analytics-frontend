@@ -179,7 +179,8 @@ onMounted(() => {
 
   const markers = new AutoMarkers({
     classes: 'markers',
-    radius: 3,
+    size: 2.5,
+    maskSize: 4.5,
     targetMasks: [maskMain.root]
   }).setMarkers(points.filter(p => p !== null))
 
@@ -188,7 +189,6 @@ onMounted(() => {
     // .addPlot(randomLine)
     .addPlot(smoothRandom.maskBy(maskMain))
     .addPlot(monotoneRandom.maskBy(maskMain))
-    .addPlot(markers)
     // .addPlot(redLine)
     .clipBy(clipMain)
 
@@ -198,6 +198,7 @@ onMounted(() => {
     .addPlot(xTicks, 'ticks')
     .addPlot(yTicks, 'ticks')
     .addPlot(plotRoot, 'plot')
+    .addPlot(markers, 'plot')
     .addSlot('bottom', labelsX, 'labels')
     .addSlot('left', labelsY, 'labels')
     .addDefs(gradient, clipMain, clipLeft, clipBottom, maskMain)
