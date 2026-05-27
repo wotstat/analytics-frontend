@@ -27,9 +27,11 @@ import { AutoLabels } from '@/shared/uiKit/chart/plugins/multiLine/labels/autoLa
 import { steppedOverrides } from '@/shared/uiKit/chart/plugins/multiLine/labels/autoLabels/generators/steppedGenerator'
 import { MultiLineChart } from '@/shared/uiKit/chart/plugins/multiLine/MultiLine'
 import { AutoLine } from '@/shared/uiKit/chart/plugins/multiLine/plot/line/autoLine/AutoLine'
+import { AutoMarkers } from '@/shared/uiKit/chart/plugins/multiLine/plot/markers/autoMarkers/AutoMarkers'
 import { TicksByLabels } from '@/shared/uiKit/chart/plugins/multiLine/ticks/TicksByLabels'
 import { ChartClip } from '@/shared/uiKit/chart/plugins/multiLine/utils/ChartClip'
 import { ChartGradient } from '@/shared/uiKit/chart/plugins/multiLine/utils/ChartGradient'
+import { ChartMask } from '@/shared/uiKit/chart/plugins/multiLine/utils/ChartMask'
 import { PlotGroup } from '@/shared/uiKit/chart/plugins/multiLine/utils/PlotGroup'
 import { onMounted, ref, watchEffect } from 'vue'
 
@@ -71,6 +73,7 @@ onMounted(() => {
   const clipMain = new ChartClip('center')
   const clipLeft = new ChartClip('left')
   const clipBottom = new ChartClip('bottom')
+  const maskMain = new ChartMask('center')
 
   const labelsX = new AutoLabels('horizontal', {
     labelForValue: (v, step) => step < 7 && v == 500 ? `${v.toFixed(10)}` : `${v.toFixed(0)}`,
@@ -159,10 +162,10 @@ onMounted(() => {
       { x: 0, y: 0 },
     ])
 
-  const smoothRandom = new AutoLine({ classes: ['random', 'smooth'], area: true, smoothingMethod: 'smooth' })
+  const smoothRandom = new AutoLine({ classes: ['random', 'smooth'], area: false, smoothingMethod: 'smooth' })
     .setPoints(points)
 
-  const monotoneRandom = new AutoLine({ classes: ['random', 'monotone'], area: false, smoothingMethod: 'monotone' })
+  const monotoneRandom = new AutoLine({ classes: ['random', 'monotone'], area: true, smoothingMethod: 'monotone' })
     .setPoints(points)
 
   const sinLine = new AutoLine({ classes: ['sin', 'smooth'], area: false })
@@ -174,22 +177,30 @@ onMounted(() => {
 
   gradientId.value = gradient.getClipPath()
 
+  const markers = new AutoMarkers({
+    classes: 'markers',
+    radius: 3,
+    targetMasks: [maskMain.root]
+  }).setMarkers(points.filter(p => p !== null))
+
   const plotRoot = new PlotGroup()
     // .addPlot(sinLine)
     // .addPlot(randomLine)
-    .addPlot(smoothRandom)
-    .addPlot(monotoneRandom)
+    .addPlot(smoothRandom.maskBy(maskMain))
+    .addPlot(monotoneRandom.maskBy(maskMain))
+    .addPlot(markers)
     // .addPlot(redLine)
     .clipBy(clipMain)
 
+
   multiLine
-    .addPlot(plotRoot, 'plot')
     .addPlot(axis, 'ticks')
     .addPlot(xTicks, 'ticks')
     .addPlot(yTicks, 'ticks')
+    .addPlot(plotRoot, 'plot')
     .addSlot('bottom', labelsX, 'labels')
     .addSlot('left', labelsY, 'labels')
-    .addDefs(gradient, clipMain, clipLeft, clipBottom)
+    .addDefs(gradient, clipMain, clipLeft, clipBottom, maskMain)
 
   chart.addPlugin(multiLine)
 
@@ -303,7 +314,7 @@ onMounted(() => {
         }
 
         &.monotone {
-          stroke-width: 1px;
+          stroke-width: 2px;
           stroke: rgb(45, 212, 45);
         }
 
@@ -321,6 +332,12 @@ onMounted(() => {
         &.random {
           // fill: rgba(0, 255, 128, 0.1);
           fill: v-bind('gradientId');
+        }
+      }
+
+      .markers {
+        circle {
+          fill: rgb(45, 212, 45);
         }
       }
 

@@ -2,6 +2,7 @@ import { MultiLineChart, Overflow, PlotRenderer } from '../MultiLine'
 import { Bounds } from './Bounds'
 import { ChartSpace } from './ChartSpace'
 import { ChartClip } from './ChartClip'
+import { ChartMask } from './ChartMask'
 
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
@@ -19,6 +20,11 @@ export class PlotGroup implements PlotRenderer {
 
   clipBy(clip: ChartClip) {
     clip.clip(this.root)
+    return this
+  }
+
+  maskBy(mask: ChartMask) {
+    mask.mask(this.root)
     return this
   }
 
