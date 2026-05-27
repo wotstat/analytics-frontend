@@ -1,4 +1,6 @@
 import { MultiLineChart, Overflow, PlotRenderer, Size } from '../MultiLine'
+import { ChartClip } from '../utils/ChartClip'
+import { ChartMask } from '../utils/ChartMask'
 import { ChartSpace } from '../utils/ChartSpace'
 import { addClasses, Classes } from '../utils/utils'
 
@@ -20,6 +22,16 @@ export class BasePlotRenderer implements PlotRenderer {
 
   getRootElement(): Element {
     return this.root
+  }
+
+  clipBy(clip: ChartClip) {
+    clip.clip(this.root)
+    return this
+  }
+
+  maskBy(mask: ChartMask) {
+    mask.mask(this.root)
+    return this
   }
 
   protected requestRender() {

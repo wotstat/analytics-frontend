@@ -4,8 +4,8 @@ import { addClasses, Classes } from '../../utils/utils'
 import { BasePlotRenderer } from '../BasePlotRenderer'
 
 
-export interface Marker {
-  render(space: ChartSpace): void
+export interface Marker<T> {
+  render(data: T, space: ChartSpace): void
   dispose(): void
 }
 
@@ -13,7 +13,7 @@ export abstract class BaseMarkers<T> extends BasePlotRenderer {
 
   protected markers: T[] = []
   protected multiLine: MultiLineChart | null = null
-  protected markerInstances: Marker[] = []
+  protected markerInstances: Marker<T>[] = []
 
   constructor(classes: Classes) {
     super(classes)
@@ -22,6 +22,7 @@ export abstract class BaseMarkers<T> extends BasePlotRenderer {
   setMarkers(markers: T[]) {
     this.markers = markers
     this.dataDidChange()
+    return this
   }
 
   dataDidChange() {
@@ -31,19 +32,18 @@ export abstract class BaseMarkers<T> extends BasePlotRenderer {
   renderImpl(space: ChartSpace, overflow: Overflow, full: Size): void {
 
     for (let i = this.markers.length; i < this.markerInstances.length; i++) {
-      this.markerInstances[i].dispose()
+      this.markerInstances.pop()?.dispose()
     }
-    this.markerInstances.length = this.markers.length
 
     for (let i = this.markerInstances.length; i < this.markers.length; i++) {
-      this.markerInstances[i] = this.createMarker(this.markers[i])
+      this.markerInstances.push(this.createMarker(this.markers[i]))
     }
 
     for (let i = 0; i < this.markers.length; i++) {
       const marker = this.markerInstances[i]
-      marker.render(space)
+      marker.render(this.markers[i], space)
     }
   }
 
-  abstract createMarker(data: T): Marker
+  abstract createMarker(data: T): Marker<T>
 }
