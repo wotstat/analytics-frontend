@@ -92,6 +92,31 @@ export class ChartSpace {
     return layoutY + height - y
   }
 
+  layoutToChart(p: Point): Point {
+    const { x, y } = p
+    const { minX, maxX, minY, maxY } = this.bounds
+    const { x: layoutX, y: layoutY, width: layoutWidth, height: layoutHeight } = this.layout
+
+    return {
+      x: minX + (x - layoutX) / layoutWidth * (maxX - minX),
+      y: maxY - (y - layoutY) / layoutHeight * (maxY - minY)
+    }
+  }
+
+  layoutToChartX(x: number): number {
+    const { minX, maxX } = this.bounds
+    const { x: layoutX, width: layoutWidth } = this.layout
+
+    return minX + (x - layoutX) / layoutWidth * (maxX - minX)
+  }
+
+  layoutToChartY(y: number): number {
+    const { minY, maxY } = this.bounds
+    const { y: layoutY, height: layoutHeight } = this.layout
+
+    return maxY - (y - layoutY) / layoutHeight * (maxY - minY)
+  }
+
   getHash(): string {
     const { minX, maxX, minY, maxY } = this.bounds
     const { x, y, width, height } = this.layout

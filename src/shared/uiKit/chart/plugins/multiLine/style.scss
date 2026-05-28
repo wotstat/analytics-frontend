@@ -1,10 +1,12 @@
 .chart-multiline-root {
   contain: strict;
 
-  .line {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2px;
+  .plot {
+    .line {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2px;
+    }
   }
 
   .labels {
@@ -23,11 +25,41 @@
     }
   }
 
-  .chart-axis {
-    path {
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 1px;
+  .ticks {
+    .chart-axis {
+      path {
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1px;
+      }
+    }
+  }
+
+  .hover {
+    .interactive-zone {
+      fill: transparent;
+    }
+
+    // &:hover {
+    //   .hover-components {
+    //     opacity: 1;
+    //   }
+    // }
+
+    .hover-components {
+
+      .hover-line {
+        display: none;
+        pointer-events: none;
+
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.3);
+        stroke-width: 1px;
+
+        &.visible {
+          display: block;
+        }
+      }
     }
   }
 }

@@ -41,7 +41,7 @@ export class MultiLineChart implements ChartPlugin {
 
   private width = 0
   private height = 0
-  private mainSpace = new ChartSpace({ x: 0, y: 0, width: 0, height: 0 }, new Bounds())
+  mainSpace = new ChartSpace({ x: 0, y: 0, width: 0, height: 0 }, new Bounds())
   private plotBounds = new Bounds()
 
   private topRenderers: SlotRenderer[] = []

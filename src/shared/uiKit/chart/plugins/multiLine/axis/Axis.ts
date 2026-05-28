@@ -1,4 +1,5 @@
-import { Overflow, PlotRenderer } from '../MultiLine'
+import { Overflow, PlotRenderer, Size } from '../MultiLine'
+import { BasePlotRenderer } from '../plot/BasePlotRenderer'
 import { ChartSpace } from '../utils/ChartSpace'
 
 
@@ -52,11 +53,9 @@ function mergeContinuousLines(lines: Line[]): Point[][] {
   return result
 }
 
-export class Axis implements PlotRenderer {
+export class Axis extends BasePlotRenderer {
 
-  protected root = document.createElementNS('http://www.w3.org/2000/svg', 'g')
   private lines: SVGPathElement[] = []
-  private lastSpaceHash = ''
 
   constructor(readonly axises: {
     top?: AxisVariant
@@ -64,19 +63,10 @@ export class Axis implements PlotRenderer {
     bottom?: AxisVariant
     left?: AxisVariant
   }) {
-    this.root.classList.add('chart-axis')
+    super('chart-axis')
   }
 
-  getRootElement(): Element {
-    return this.root
-  }
-
-  render(space: ChartSpace, overflow: Overflow, full: { width: number, height: number }): void {
-
-    const spaceHash = `${space.layout.x},${space.layout.y},${space.layout.width},${full.width},${full.height}`
-    if (spaceHash === this.lastSpaceHash) return
-    this.lastSpaceHash = spaceHash
-
+  protected renderImpl(space: ChartSpace, overflow: Overflow, full: Size): void {
     const lines: [{ x: number, y: number }, { x: number, y: number }][] = []
 
     if (this.axises.top) {
