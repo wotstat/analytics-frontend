@@ -26,6 +26,9 @@ import { Axis } from '@/shared/uiKit/chart/plugins/multiLine/axis/Axis'
 import { AutoLabels } from '@/shared/uiKit/chart/plugins/multiLine/labels/autoLabels/AutoLabels'
 import { steppedOverrides } from '@/shared/uiKit/chart/plugins/multiLine/labels/autoLabels/generators/steppedGenerator'
 import { MultiLineChart } from '@/shared/uiKit/chart/plugins/multiLine/MultiLine'
+import { HorizontalLine } from '@/shared/uiKit/chart/plugins/multiLine/plot/hover/composableHover/components/lines/HorizontalLine'
+import { VerticalLine } from '@/shared/uiKit/chart/plugins/multiLine/plot/hover/composableHover/components/lines/VerticalLine'
+import { ComposableHover } from '@/shared/uiKit/chart/plugins/multiLine/plot/hover/composableHover/ComposableHover'
 import { AutoLine } from '@/shared/uiKit/chart/plugins/multiLine/plot/line/autoLine/AutoLine'
 import { AutoMarkers } from '@/shared/uiKit/chart/plugins/multiLine/plot/markers/autoMarkers/AutoMarkers'
 import { TicksByLabels } from '@/shared/uiKit/chart/plugins/multiLine/ticks/TicksByLabels'
@@ -184,6 +187,10 @@ onMounted(() => {
     targetMasks: [maskMain.root]
   }).setMarkers(points.filter(p => p !== null))
 
+  const hover = new ComposableHover('hover')
+    .addComponent(new VerticalLine({ offset: { end: 0.5 } }))
+    .addComponent(new HorizontalLine({ offset: { start: 0.5 } }))
+
   const plotRoot = new PlotGroup()
     // .addPlot(sinLine)
     // .addPlot(randomLine)
@@ -201,6 +208,7 @@ onMounted(() => {
     .addPlot(markers, 'plot')
     .addSlot('bottom', labelsX, 'labels')
     .addSlot('left', labelsY, 'labels')
+    .addPlot(hover)
     .addDefs(gradient, clipMain, clipLeft, clipBottom, maskMain)
 
   chart.addPlugin(multiLine)
@@ -297,48 +305,51 @@ onMounted(() => {
         }
       }
 
-      .line {
-        stroke-width: 2px;
+      .plot {
 
-        &.sin {
-          stroke: rgb(24, 169, 247);
-        }
-
-        &.random {
-          stroke-width: 1px;
-          stroke: rgb(20, 153, 255);
-        }
-
-        &.smooth {
-          stroke-width: 1px;
-          stroke: rgb(255, 191, 0);
-        }
-
-        &.monotone {
+        .line {
           stroke-width: 2px;
-          stroke: rgb(45, 212, 45);
+
+          &.sin {
+            stroke: rgb(24, 169, 247);
+          }
+
+          &.random {
+            stroke-width: 1px;
+            stroke: rgb(20, 153, 255);
+          }
+
+          &.smooth {
+            stroke-width: 1px;
+            stroke: rgb(255, 191, 0);
+          }
+
+          &.monotone {
+            stroke-width: 2px;
+            stroke: rgb(45, 212, 45);
+          }
+
+          &.red {
+            stroke-width: 1px;
+            stroke: rgb(255, 0, 0);
+          }
         }
 
-        &.red {
-          stroke-width: 1px;
-          stroke: rgb(255, 0, 0);
-        }
-      }
+        .area {
+          &.sin {
+            fill: rgba(24, 247, 95, 0.1);
+          }
 
-      .area {
-        &.sin {
-          fill: rgba(24, 247, 95, 0.1);
+          &.random {
+            // fill: rgba(0, 255, 128, 0.1);
+            fill: v-bind('gradientId');
+          }
         }
 
-        &.random {
-          // fill: rgba(0, 255, 128, 0.1);
-          fill: v-bind('gradientId');
-        }
-      }
-
-      .markers {
-        circle {
-          fill: rgb(45, 212, 45);
+        .markers {
+          circle {
+            fill: rgb(45, 212, 45);
+          }
         }
       }
 

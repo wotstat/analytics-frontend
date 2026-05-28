@@ -20,6 +20,10 @@ export class BasePlotRenderer implements PlotRenderer {
     this.multiLine = multiLine
   }
 
+  detach(): void {
+    this.multiLine = null
+  }
+
   getRootElement(): Element {
     return this.root
   }
@@ -38,6 +42,8 @@ export class BasePlotRenderer implements PlotRenderer {
     this.isDirty = true
     this.multiLine?.dataDidChange()
   }
+
+  didLayout(space: ChartSpace, full: Size): void { }
 
   render(space: ChartSpace, overflow: Overflow, full: Size): void {
     const spaceHash = space.getHash()
