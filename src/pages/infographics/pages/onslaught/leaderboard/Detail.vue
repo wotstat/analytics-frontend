@@ -45,7 +45,7 @@ const props = defineProps<{}>()
 const offset = ref(0)
 const yOffset = ref(0)
 const yScale = ref(1)
-const xScale = ref(1)
+const xScale = ref(5)
 
 function mulberry32(a: number) {
   return function () {
@@ -149,6 +149,8 @@ onMounted(() => {
 
   const points: ({ x: number, y: number } | null)[] = new Array(101).fill(0).map((_, i) => ({ x: i * 10, y: 20 + rand() * 50 }))
 
+  const points2: ({ x: number, y: number } | null)[] = new Array(101).fill(0).map((_, i) => ({ x: i * 10, y: 10 + rand() * 80 }))
+
   points[10] = null
   points[11] = null
   points[20] = null
@@ -166,9 +168,9 @@ onMounted(() => {
     ])
 
   const smoothRandom = new AutoLine({ classes: ['random', 'smooth'], area: false, smoothingMethod: 'smooth' })
-    .setPoints(points)
+    .setPoints(points2)
 
-  const monotoneRandom = new AutoLine({ classes: ['random', 'monotone'], area: true, smoothingMethod: 'monotone' })
+  const monotoneRandom = new AutoLine({ classes: ['random', 'monotone'], area: false, smoothingMethod: 'monotone' })
     .setPoints(points)
 
   const sinLine = new AutoLine({ classes: ['sin', 'smooth'], area: false })
@@ -182,14 +184,22 @@ onMounted(() => {
 
   const markers = new AutoMarkers({
     classes: 'markers',
-    size: 2.5,
-    maskSize: 4.5,
+    size: 2,
+    maskSize: 4,
     targetMasks: [maskMain.root]
   }).setMarkers(points.filter(p => p !== null))
 
+  const markers2 = new AutoMarkers({
+    classes: 'markers.m2',
+    size: 2,
+    maskSize: 4,
+    targetMasks: [maskMain.root]
+  }).setMarkers(points2.filter(p => p !== null))
+
   const hover = new ComposableHover('hover')
-    .addComponent(new VerticalLine({ offset: { end: 0.5 } }))
-    .addComponent(new HorizontalLine({ offset: { start: 0.5 } }))
+    .addComponent(new VerticalLine({ offset: { end: 0.5 }, position: 'data-point-x' }))
+    .addComponent(new HorizontalLine({ offset: { start: 0.5 }, position: 'data-point-y' }))
+    .setDataSources(points, points2)
 
   const plotRoot = new PlotGroup()
     // .addPlot(sinLine)
@@ -202,10 +212,11 @@ onMounted(() => {
 
   multiLine
     .addPlot(axis, 'ticks')
-    .addPlot(xTicks, 'ticks')
-    .addPlot(yTicks, 'ticks')
+    // .addPlot(xTicks, 'ticks')
+    // .addPlot(yTicks, 'ticks')
     .addPlot(plotRoot, 'plot')
     .addPlot(markers, 'plot')
+    .addPlot(markers2, 'plot')
     .addSlot('bottom', labelsX, 'labels')
     .addSlot('left', labelsY, 'labels')
     .addPlot(hover)
@@ -320,12 +331,12 @@ onMounted(() => {
           }
 
           &.smooth {
-            stroke-width: 1px;
+            stroke-width: 1.5px;
             stroke: rgb(255, 191, 0);
           }
 
           &.monotone {
-            stroke-width: 2px;
+            stroke-width: 1.5px;
             stroke: rgb(45, 212, 45);
           }
 
@@ -349,6 +360,12 @@ onMounted(() => {
         .markers {
           circle {
             fill: rgb(45, 212, 45);
+          }
+
+          &.m2 {
+            circle {
+              fill: rgb(255, 191, 0);
+            }
           }
         }
       }

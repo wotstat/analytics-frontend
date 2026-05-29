@@ -56,6 +56,16 @@ export class ChartSpace {
     }
   }
 
+  chartToLocalScale(): { scaleX: number, scaleY: number } {
+    const { minX, maxX, minY, maxY } = this.bounds
+    const { width: layoutWidth, height: layoutHeight } = this.layout
+
+    return {
+      scaleX: layoutWidth / (maxX - minX),
+      scaleY: layoutHeight / (maxY - minY)
+    }
+  }
+
   chartToLocalX(x: number): number {
     const { minX, maxX } = this.bounds
     const { width: layoutWidth } = this.layout
