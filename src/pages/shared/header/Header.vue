@@ -107,7 +107,7 @@
               <a :href="DISCORD_URL" target="_blank" class="icon">
                 <DiscordIcon />
               </a>
-              <a href="https://github.com/WOT-STAT/WOTMOD" target="_blank" class="icon">
+              <a href="https://github.com/wotstat" target="_blank" class="icon">
                 <GitHubIcon />
               </a>
             </div>
@@ -151,7 +151,7 @@
             <DatabaseIcon />
           </a>
 
-          <a href="https://github.com/WOT-STAT/WOTMOD" target="_blank" class="icon">
+          <a href="https://github.com/wotstat" target="_blank" class="icon">
             <GitHubIcon />
           </a>
 
