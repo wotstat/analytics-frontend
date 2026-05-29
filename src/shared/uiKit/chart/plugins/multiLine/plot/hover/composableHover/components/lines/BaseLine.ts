@@ -18,6 +18,7 @@ export abstract class BaseLine implements HoverComponent {
   protected position: 'cursor' | 'data-point-x' | 'data-point-y' | 'data-point'
 
   protected lastDataPoints: HoveredDataPoint | null = null
+  protected spaceHash = ''
 
   constructor(options: Options = {}) {
     addClasses(this.line, 'hover-line', 'vertical', options.classes)
@@ -52,18 +53,6 @@ export abstract class BaseLine implements HoverComponent {
     this.process(point, space, composable)
   }
 
-  // onDataPointChange(point: Point, space: ChartSpace, hovered: HoveredDataPoint[]) {
-  //   if (this.position !== 'data-point') return
-  //   if (hovered.length === 0) {
-  //     this.line.classList.remove('visible')
-  //     return
-  //   }
-
-  //   const nearest = hovered[0]
-  //   const nearestPoint = { x: nearest.xValue, y: nearest.yValue }
-  //   this.setLinePosition(nearestPoint, space)
-  // }
-
   protected process(point: Point, space: ChartSpace, composable: ComposableHover) {
     if (this.position === 'cursor') {
       this.setLinePosition(point, space)
@@ -86,7 +75,10 @@ export abstract class BaseLine implements HoverComponent {
     }
 
     const nearest = nearestDataPoints[0]
-    if (this.lastDataPoints && isDataPointEqual(nearest, this.lastDataPoints)) return
+
+    const spaceHash = space.getHash()
+    if (this.spaceHash === space.getHash() && this.lastDataPoints && isDataPointEqual(nearest, this.lastDataPoints)) return
+    this.spaceHash = spaceHash
 
     if (!this.lastDataPoints) this.line.classList.add('visible')
     this.lastDataPoints = nearest

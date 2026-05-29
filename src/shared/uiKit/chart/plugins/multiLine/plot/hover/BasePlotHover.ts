@@ -36,6 +36,9 @@ export abstract class BasePlotHover extends BasePlotRenderer {
   protected lastNearestXDataPoints: HoveredDataPoint[] | null = null
   protected lastNearestYDataPoints: HoveredDataPoint[] | null = null
 
+  protected lastMousePosition: { offsetX: number, offsetY: number } | null = null
+  protected interactiveZoneOffsets = { x: 0, y: 0 }
+
   constructor(classes: Classes = []) {
     super(classes)
 
@@ -60,6 +63,7 @@ export abstract class BasePlotHover extends BasePlotRenderer {
   protected onMouseLeave(event: MouseEvent) {
     this.root.classList.remove('hovered')
     if (this.multiLine) this.onLeave(this.getLocalPoint(event), this.multiLine.mainSpace)
+    this.lastMousePosition = null
   }
 
   private updateMouse(event: MouseEvent) {
@@ -68,16 +72,24 @@ export abstract class BasePlotHover extends BasePlotRenderer {
     this.lastNearestDataPoints = null
     this.lastNearestXDataPoints = null
     this.lastNearestYDataPoints = null
+    this.lastMousePosition = { offsetX: event.offsetX, offsetY: event.offsetY }
 
     this.onPositionChange(this.getLocalPoint(event), this.multiLine.mainSpace)
   }
 
-  private getLocalPoint(event: MouseEvent): Point {
-    const rect = this.interactiveZone.getBoundingClientRect()
-    const x = this.multiLine!.mainSpace.layout.x + event.clientX - rect.left
-    const y = this.multiLine!.mainSpace.layout.y + event.clientY - rect.top
+  private getLocalPoint(event: { offsetX: number, offsetY: number }): Point {
+    const x = this.multiLine!.mainSpace.layout.x + event.offsetX - this.interactiveZoneOffsets.x
+    const y = this.multiLine!.mainSpace.layout.y + event.offsetY - this.interactiveZoneOffsets.y
 
     return { x, y }
+  }
+
+  protected renderImpl(space: ChartSpace, overflow: Overflow, full: Size): void {
+    this.lastNearestDataPoints = null
+    this.lastNearestXDataPoints = null
+    this.lastNearestYDataPoints = null
+
+    if (this.lastMousePosition) this.onPositionChange(this.getLocalPoint(this.lastMousePosition), space)
   }
 
   protected onEnter(point: Point, space: ChartSpace) { }
@@ -198,6 +210,7 @@ export abstract class BasePlotHover extends BasePlotRenderer {
     this.interactiveZone.setAttribute('y', space.layout.y.toString())
     this.interactiveZone.setAttribute('width', space.layout.width.toString())
     this.interactiveZone.setAttribute('height', space.layout.height.toString())
+    this.interactiveZoneOffsets = { x: space.layout.x, y: space.layout.y }
   }
 
   setDataSources(...sources: DataSource[]) {
