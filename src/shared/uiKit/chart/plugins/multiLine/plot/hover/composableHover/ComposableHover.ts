@@ -4,10 +4,10 @@ import { Classes } from '../../../utils/utils'
 import { BasePlotHover } from '../BasePlotHover'
 
 export interface HoverComponent {
-  attach?(root: SVGGElement): void
-  onEnter(point: Point, space: ChartSpace): void
-  onLeave(point: Point, space: ChartSpace): void
-  onPositionChange(point: Point, space: ChartSpace): void
+  attach?(root: SVGGElement, composable: ComposableHover): void
+  onEnter?(point: Point, space: ChartSpace, composable: ComposableHover): void
+  onLeave?(point: Point, space: ChartSpace, composable: ComposableHover): void
+  onPositionChange?(point: Point, space: ChartSpace, composable: ComposableHover): void
 }
 
 export class ComposableHover extends BasePlotHover {
@@ -25,20 +25,23 @@ export class ComposableHover extends BasePlotHover {
 
   addComponent(component: HoverComponent) {
     this.components.push(component)
-    component.attach?.(this.componentsRoot)
+    component.attach?.(this.componentsRoot, this)
 
     return this
   }
 
-  onEnter(point: Point, space: ChartSpace): void {
-    for (const component of this.components) component.onEnter(point, space)
+  protected onEnter(point: Point, space: ChartSpace): void {
+    super.onEnter(point, space)
+    for (const component of this.components) component.onEnter?.(point, space, this)
   }
 
-  onLeave(point: Point, space: ChartSpace): void {
-    for (const component of this.components) component.onLeave(point, space)
+  protected onLeave(point: Point, space: ChartSpace): void {
+    super.onLeave(point, space)
+    for (const component of this.components) component.onLeave?.(point, space, this)
   }
 
-  onPositionChange(point: Point, space: ChartSpace): void {
-    for (const component of this.components) component.onPositionChange(point, space)
+  protected onPositionChange(point: Point, space: ChartSpace): void {
+    super.onPositionChange(point, space)
+    for (const component of this.components) component.onPositionChange?.(point, space, this)
   }
 }

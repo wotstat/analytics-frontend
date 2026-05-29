@@ -1,20 +1,27 @@
 import { ChartSpace } from '../../../../../utils/ChartSpace'
 import { Point } from '../../../../../utils/Point'
 import { addClasses, Classes } from '../../../../../utils/utils'
-import { HoverComponent } from '../../ComposableHover'
+import { HoveredDataPoint, isDataPointArrayEqual, isDataPointEqual } from '../../../BasePlotHover'
+import { ComposableHover, HoverComponent } from '../../ComposableHover'
 
 type Options = {
   classes?: Classes
   offset?: number | { start?: number, end?: number } | [start: number, end: number]
+  position?: 'cursor' | 'data-point-x' | 'data-point-y' | 'data-point'
+
 }
 
 export abstract class BaseLine implements HoverComponent {
 
   protected line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
   protected offset: { start: number, end: number }
+  protected position: 'cursor' | 'data-point-x' | 'data-point-y' | 'data-point'
+
+  protected lastDataPoints: HoveredDataPoint | null = null
 
   constructor(options: Options = {}) {
     addClasses(this.line, 'hover-line', 'vertical', options.classes)
+    this.position = options.position ?? 'cursor'
 
     if (typeof options.offset === 'number') {
       this.offset = { start: options.offset, end: options.offset }
@@ -31,14 +38,75 @@ export abstract class BaseLine implements HoverComponent {
     root.appendChild(this.line)
   }
 
-  onEnter(point: Point, space: ChartSpace): void {
-    this.line.classList.add('visible')
+  onEnter(point: Point, space: ChartSpace, composable: ComposableHover): void {
+    if (this.position === 'cursor') this.line.classList.add('visible')
+    this.process(point, space, composable)
   }
 
-  onLeave(point: Point, space: ChartSpace): void {
+  onLeave(point: Point, space: ChartSpace, composable: ComposableHover): void {
     this.line.classList.remove('visible')
+    this.lastDataPoints = null
   }
 
-  abstract onPositionChange(point: Point, space: ChartSpace): void
+  onPositionChange(point: Point, space: ChartSpace, composable: ComposableHover) {
+    this.process(point, space, composable)
+  }
+
+  // onDataPointChange(point: Point, space: ChartSpace, hovered: HoveredDataPoint[]) {
+  //   if (this.position !== 'data-point') return
+  //   if (hovered.length === 0) {
+  //     this.line.classList.remove('visible')
+  //     return
+  //   }
+
+  //   const nearest = hovered[0]
+  //   const nearestPoint = { x: nearest.xValue, y: nearest.yValue }
+  //   this.setLinePosition(nearestPoint, space)
+  // }
+
+  protected process(point: Point, space: ChartSpace, composable: ComposableHover) {
+    if (this.position === 'cursor') {
+      this.setLinePosition(point, space)
+      return
+    }
+
+    let nearestDataPoints: HoveredDataPoint[] = []
+    if (this.position === 'data-point-x') {
+      nearestDataPoints = composable.findNearestByAxis(point, space, 'x', true)
+    } else if (this.position === 'data-point-y') {
+      nearestDataPoints = composable.findNearestByAxis(point, space, 'y', true)
+    } else if (this.position === 'data-point') {
+      nearestDataPoints = composable.findNearest(point, space, true)
+    }
+
+    if (nearestDataPoints.length === 0) {
+      this.line.classList.remove('visible')
+      this.lastDataPoints = null
+      return
+    }
+
+    const nearest = nearestDataPoints[0]
+    if (this.lastDataPoints && isDataPointEqual(nearest, this.lastDataPoints)) return
+
+    if (!this.lastDataPoints) this.line.classList.add('visible')
+    this.lastDataPoints = nearest
+
+    if (this.position === 'data-point') {
+      this.setLinePosition(space.chartToLayout({ x: nearest.xValue, y: nearest.yValue }), space)
+      return
+    }
+
+    if (this.position === 'data-point-x') {
+      this.setLinePosition(space.chartToLayout({ x: nearest.xValue, y: point.y }), space)
+      return
+    }
+
+    if (this.position === 'data-point-y') {
+      this.setLinePosition(space.chartToLayout({ x: point.x, y: nearest.yValue }), space)
+      return
+    }
+  }
+
+  abstract setLinePosition(point: Point, space: ChartSpace): void
 
 }
