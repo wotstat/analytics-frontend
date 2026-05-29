@@ -15,6 +15,10 @@ export function classNames(...classes: (Classes | false | null | undefined)[]): 
   return result
 }
 
+export function joinClasses(...classes: (Classes | false | null | undefined)[]): Classes {
+  return classNames(...classes).join(' ')
+}
+
 export function addClasses(element: { classList: { add(...classes: string[]): void } }, ...classes: (Classes | false | null | undefined)[]) {
   element.classList.add(...classNames(...classes))
 }

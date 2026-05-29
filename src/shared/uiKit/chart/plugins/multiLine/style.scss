@@ -61,5 +61,14 @@
         }
       }
     }
+
+    .hover-markers {
+
+      .hover-marker {
+        pointer-events: none;
+        fill: red;
+
+      }
+    }
   }
 }

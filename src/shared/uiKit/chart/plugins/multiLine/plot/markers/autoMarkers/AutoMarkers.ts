@@ -27,7 +27,7 @@ const DEFAULT_OPTIONS: DefaultOptions = {
   markerClasses: []
 }
 
-class AutoMarker implements Marker<MarkerData> {
+export class AutoMarker implements Marker<MarkerData> {
 
   private elements: SVGCircleElement[] = []
 
@@ -54,7 +54,7 @@ class AutoMarker implements Marker<MarkerData> {
     }
   }
 
-  render(data: MarkerData, space: ChartSpace): void {
+  render(data: { x: number, y: number }, space: ChartSpace): void {
     const { x, y } = data
     const layoutX = space.chartToLayoutX(x)
     const layoutY = space.chartToLayoutY(y)

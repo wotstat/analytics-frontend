@@ -28,6 +28,7 @@ import { steppedOverrides } from '@/shared/uiKit/chart/plugins/multiLine/labels/
 import { MultiLineChart } from '@/shared/uiKit/chart/plugins/multiLine/MultiLine'
 import { HorizontalLine } from '@/shared/uiKit/chart/plugins/multiLine/plot/hover/composableHover/components/lines/HorizontalLine'
 import { VerticalLine } from '@/shared/uiKit/chart/plugins/multiLine/plot/hover/composableHover/components/lines/VerticalLine'
+import { NearestMarker } from '@/shared/uiKit/chart/plugins/multiLine/plot/hover/composableHover/components/nearestMarker/NearestMarker'
 import { ComposableHover } from '@/shared/uiKit/chart/plugins/multiLine/plot/hover/composableHover/ComposableHover'
 import { AutoLine } from '@/shared/uiKit/chart/plugins/multiLine/plot/line/autoLine/AutoLine'
 import { AutoMarkers } from '@/shared/uiKit/chart/plugins/multiLine/plot/markers/autoMarkers/AutoMarkers'
@@ -198,7 +199,15 @@ onMounted(() => {
 
   const hover = new ComposableHover('hover')
     .addComponent(new VerticalLine({ offset: { end: 0.5 }, position: 'data-point-x' }))
-    .addComponent(new HorizontalLine({ offset: { start: 0.5 }, position: 'data-point-y' }))
+    // .addComponent(new HorizontalLine({ offset: { start: 0.5 }, position: 'data-point-y' }))
+    .addComponent(new NearestMarker({
+      classes: 'markers',
+      markerClasses: 'marker',
+      size: 4,
+      maskSize: 6,
+      classesForDataSource: ['m1', 'm2'],
+      targetMasks: [maskMain.root]
+    }))
     .setDataSources(points, points2)
 
   const plotRoot = new PlotGroup()
@@ -366,6 +375,18 @@ onMounted(() => {
             circle {
               fill: rgb(255, 191, 0);
             }
+          }
+        }
+      }
+
+      .hover {
+        .marker {
+          &.m1 {
+            fill: rgb(45, 212, 45);
+          }
+
+          &.m2 {
+            fill: rgb(255, 191, 0);
           }
         }
       }
