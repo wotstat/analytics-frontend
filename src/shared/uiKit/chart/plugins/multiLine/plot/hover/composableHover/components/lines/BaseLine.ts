@@ -8,7 +8,8 @@ type Options = {
   classes?: Classes
   offset?: number | { start?: number, end?: number } | [start: number, end: number]
   position?: 'cursor' | 'data-point-x' | 'data-point-y' | 'data-point'
-
+  activateDistance?: number
+  outOfDistanceVisibility?: boolean
 }
 
 export abstract class BaseLine implements HoverComponent {
@@ -20,7 +21,7 @@ export abstract class BaseLine implements HoverComponent {
   protected lastDataPoints: HoveredDataPoint | null = null
   protected spaceHash = ''
 
-  constructor(options: Options = {}) {
+  constructor(protected options: Options = {}) {
     addClasses(this.line, 'hover-line', 'vertical', options.classes)
     this.position = options.position ?? 'cursor'
 
@@ -66,6 +67,14 @@ export abstract class BaseLine implements HoverComponent {
       nearestDataPoints = composable.findNearestByAxis(point, space, 'y', true)
     } else if (this.position === 'data-point') {
       nearestDataPoints = composable.findNearest(point, space, true)
+    }
+
+    nearestDataPoints = nearestDataPoints.filter(p => p.distance <= (this.options.activateDistance ?? Infinity))
+    if (this.options.outOfDistanceVisibility && nearestDataPoints.length === 0) {
+      this.setLinePosition(point, space)
+      this.line.classList.add('visible')
+      this.lastDataPoints = null
+      return
     }
 
     if (nearestDataPoints.length === 0) {

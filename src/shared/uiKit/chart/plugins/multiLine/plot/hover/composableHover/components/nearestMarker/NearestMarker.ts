@@ -15,6 +15,7 @@ type Options = {
   size?: number
   maskSize?: number
   position?: 'data-point-x' | 'data-point-y' | 'data-point'
+  activateDistance?: number
 }
 
 export class NearestMarker implements HoverComponent {
@@ -66,6 +67,8 @@ export class NearestMarker implements HoverComponent {
     } else {
       nearestDataPoints = composable.findNearest(point, space)
     }
+
+    nearestDataPoints = nearestDataPoints.filter(p => p.distance <= (this.options.activateDistance ?? Infinity))
 
     const spaceHash = space.getHash()
     if (this.spaceHash === spaceHash &&

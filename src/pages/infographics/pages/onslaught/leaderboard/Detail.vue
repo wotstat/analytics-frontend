@@ -198,7 +198,10 @@ onMounted(() => {
   }).setMarkers(points2.filter(p => p !== null))
 
   const hover = new ComposableHover('hover')
-    .addComponent(new VerticalLine({ offset: { end: 0.5 }, position: 'data-point-x' }))
+    .addComponent(new VerticalLine({
+      offset: { end: 0.5 },
+      position: 'data-point-x',
+    }))
     // .addComponent(new HorizontalLine({ offset: { start: 0.5 }, position: 'data-point-y' }))
     .addComponent(new NearestMarker({
       classes: 'markers',
@@ -206,7 +209,8 @@ onMounted(() => {
       size: 4,
       maskSize: 6,
       classesForDataSource: ['m1', 'm2'],
-      targetMasks: [maskMain.root]
+      targetMasks: [maskMain.root],
+      position: 'data-point-x',
     }))
     .setDataSources(points, points2)
 
