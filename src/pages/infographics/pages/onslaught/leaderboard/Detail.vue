@@ -26,6 +26,7 @@ import { Axis } from '@/shared/uiKit/chart/plugins/multiLine/axis/Axis'
 import { AutoLabels } from '@/shared/uiKit/chart/plugins/multiLine/labels/autoLabels/AutoLabels'
 import { steppedOverrides } from '@/shared/uiKit/chart/plugins/multiLine/labels/autoLabels/generators/steppedGenerator'
 import { MultiLineChart } from '@/shared/uiKit/chart/plugins/multiLine/MultiLine'
+import { ChartTooltip } from '@/shared/uiKit/chart/plugins/multiLine/plot/hover/composableHover/components/chartTooltip/ChartTooltip'
 import { HorizontalLine } from '@/shared/uiKit/chart/plugins/multiLine/plot/hover/composableHover/components/lines/HorizontalLine'
 import { VerticalLine } from '@/shared/uiKit/chart/plugins/multiLine/plot/hover/composableHover/components/lines/VerticalLine'
 import { NearestMarker } from '@/shared/uiKit/chart/plugins/multiLine/plot/hover/composableHover/components/nearestMarker/NearestMarker'
@@ -211,6 +212,10 @@ onMounted(() => {
       classesForDataSource: ['m1', 'm2'],
       targetMasks: [maskMain.root],
       position: 'data-point-x',
+    }))
+    .addComponent(new ChartTooltip({
+      position: 'data-point-x',
+      tooltipOrigin: 'cursor'
     }))
     .setDataSources(points, points2)
 
