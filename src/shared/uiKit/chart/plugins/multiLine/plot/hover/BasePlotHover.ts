@@ -131,6 +131,7 @@ export abstract class BasePlotHover extends BasePlotRenderer {
     let nearestDistance = Infinity
 
     const chartPoint = space.layoutToChart(point)
+    const chartScale = space.chartToLocalScale()
 
     for (let i = 0; i < dataSource.length; i++) {
       const dataPoint = dataSource[i]
@@ -150,7 +151,7 @@ export abstract class BasePlotHover extends BasePlotRenderer {
       index: nearestPointIndex,
       xValue: nearestDataPoint!.x,
       yValue: nearestDataPoint!.y,
-      distance: nearestDistance
+      distance: nearestDistance * chartScale[axis === 'x' ? 'scaleX' : 'scaleY']
     }
   }
 
