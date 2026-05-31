@@ -225,14 +225,11 @@ onMounted(() => {
     }))
     .addComponent(new ChartTooltip({
       position: 'data-point-x',
-      tooltipPivot: 'nearest',
+      tooltipPivot: 'avg',
       onHide: () => tooltipVisible.value = false,
       onShow: () => tooltipVisible.value = true,
       onPositionChange: (ctx) => {
-        tooltipPos.value = {
-          x: ctx.cursor.x + window.scrollX,
-          y: ctx.cursor.y + window.scrollY,
-        }
+        tooltipPos.value = ctx.absolutePivot
       },
     }))
     .setDataSources(points, points2)

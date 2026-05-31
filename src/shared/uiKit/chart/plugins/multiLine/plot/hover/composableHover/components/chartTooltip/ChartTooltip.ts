@@ -9,6 +9,10 @@ type TooltipCtx = {
     x: number
     y: number
   },
+  absolutePivot: {
+    x: number
+    y: number
+  },
   cursor: {
     x: number
     y: number
@@ -27,6 +31,7 @@ type Options = {
 
 export class ChartTooltip implements HoverComponent {
   private lastNearestDataPoints: HoveredDataPoint[] | null = null
+  private windowScroll = { x: 0, y: 0 }
 
   constructor(protected options: Options = {}) {
   }
@@ -36,6 +41,10 @@ export class ChartTooltip implements HoverComponent {
       this.options.onHide?.()
       this.lastNearestDataPoints = null
     }
+  }
+
+  beforeLayoutChange() {
+    this.windowScroll = { x: window.scrollX, y: window.scrollY }
   }
 
   onPositionChange(cursor: Point, point: Point, space: ChartSpace, composable: ComposableHover): void {
@@ -106,6 +115,10 @@ export class ChartTooltip implements HoverComponent {
 
     const ctx = {
       pivot: pivot,
+      absolutePivot: {
+        x: pivot.x + this.windowScroll.x,
+        y: pivot.y + this.windowScroll.y
+      },
       cursor: cursor,
       nearestDataPoints
     }
@@ -116,6 +129,4 @@ export class ChartTooltip implements HoverComponent {
 
     this.lastNearestDataPoints = nearestDataPoints
   }
-
-  // protected 
 }
