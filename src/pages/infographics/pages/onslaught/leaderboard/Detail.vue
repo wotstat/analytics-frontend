@@ -228,7 +228,12 @@ onMounted(() => {
       tooltipPivot: 'nearest',
       onHide: () => tooltipVisible.value = false,
       onShow: () => tooltipVisible.value = true,
-      onPositionChange: (ctx) => tooltipPos.value = ctx.pivot,
+      onPositionChange: (ctx) => {
+        tooltipPos.value = {
+          x: ctx.cursor.x + window.scrollX,
+          y: ctx.cursor.y + window.scrollY,
+        }
+      },
     }))
     .setDataSources(points, points2)
 
@@ -426,7 +431,7 @@ onMounted(() => {
 
     .tooltip {
       pointer-events: none;
-      position: fixed;
+      position: absolute;
       background: rgba(38, 38, 38, 0.8);
       padding: 10px;
       border-radius: 4px;
@@ -434,7 +439,7 @@ onMounted(() => {
       box-sizing: border-box;
       top: 0;
       left: 0;
-      transition: transform 0.05s ease-out;
+      // transition: transform 0.05s ease-out;
     }
   }
 }

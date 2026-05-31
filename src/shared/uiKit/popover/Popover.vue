@@ -149,7 +149,7 @@ const targetStyle = computed(() => {
   if (!positions.value) return {}
 
   return {
-    transform: `translate3d(${Math.round(positions.value.x)}px, ${Math.round(positions.value.y)}px, 0px)`,
+    transform: `translate3d(${Math.round(positions.value.x + window.scrollX)}px, ${Math.round(positions.value.y + window.scrollY)}px, 0px)`,
     ...props.styles
   }
 })
@@ -169,7 +169,7 @@ const arrowProps = computed(() => {
 
 <style lang="scss" scoped>
 .popup-container {
-  position: fixed;
+  position: absolute;
   z-index: 1000;
   will-change: transform;
   top: 0px;
