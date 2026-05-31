@@ -228,12 +228,7 @@ onMounted(() => {
       tooltipPivot: 'nearest',
       onHide: () => tooltipVisible.value = false,
       onShow: () => tooltipVisible.value = true,
-      onPositionChange(ctx) {
-        tooltipPos.value = {
-          x: ctx.pivot.x,
-          y: ctx.pivot.y,
-        }
-      },
+      onPositionChange: (ctx) => tooltipPos.value = ctx.pivot,
     }))
     .setDataSources(points, points2)
 

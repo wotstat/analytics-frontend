@@ -32,6 +32,8 @@ export abstract class BasePlotHover extends BasePlotRenderer {
   private readonly interactiveZone = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
   protected dataSources: DataSource[] = []
 
+  private interactiveZoneRect = new DOMRect()
+
   protected lastNearestDataPoints: HoveredDataPoint[] | null = null
   protected lastNearestXDataPoints: HoveredDataPoint[] | null = null
   protected lastNearestYDataPoints: HoveredDataPoint[] | null = null
@@ -75,6 +77,7 @@ export abstract class BasePlotHover extends BasePlotRenderer {
     this.lastNearestXDataPoints = null
     this.lastNearestYDataPoints = null
     this.lastMousePosition = { offsetX: event.offsetX, offsetY: event.offsetY, clientX: event.clientX, clientY: event.clientY }
+    this.interactiveZoneRect = this.interactiveZone.getBoundingClientRect()
 
     this.onPositionChange(
       { x: this.lastMousePosition.clientX, y: this.lastMousePosition.clientY },
@@ -90,13 +93,11 @@ export abstract class BasePlotHover extends BasePlotRenderer {
   }
 
   chartToPage(point: Point): Point {
-    const rect = this.interactiveZone.getBoundingClientRect()
-    const x = point.x - this.multiLine!.mainSpace.layout.x + rect.left
-    const y = point.y - this.multiLine!.mainSpace.layout.y + rect.top
+    const x = point.x - this.multiLine!.mainSpace.layout.x + this.interactiveZoneRect.left
+    const y = point.y - this.multiLine!.mainSpace.layout.y + this.interactiveZoneRect.top
 
     return { x, y }
   }
-
 
   protected renderImpl(space: ChartSpace, overflow: Overflow, full: Size): void {
     this.lastNearestDataPoints = null
@@ -107,7 +108,8 @@ export abstract class BasePlotHover extends BasePlotRenderer {
       this.onPositionChange(
         { x: this.lastMousePosition.clientX, y: this.lastMousePosition.clientY },
         this.offsetToChart(this.lastMousePosition),
-        space)
+        space
+      )
   }
 
   protected onEnter(cursor: Point, point: Point, space: ChartSpace) { }
