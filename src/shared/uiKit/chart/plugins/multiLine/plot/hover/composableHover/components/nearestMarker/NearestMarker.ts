@@ -14,7 +14,7 @@ type Options = {
   targetMasks?: Element[] | Element
   size?: number
   maskSize?: number
-  position?: 'data-point-x' | 'data-point-y' | 'data-point'
+  position?: 'data-point-x' | 'data-point-y' | 'data-point' | 'nearest-data-point'
   activateDistance?: number
 }
 
@@ -24,7 +24,7 @@ export class NearestMarker implements HoverComponent {
 
   protected targetMasks: Element[] = []
   protected getClassesForDataSource: (dataSource: DataSource, index: number) => Classes
-  protected position: 'data-point-x' | 'data-point-y' | 'data-point'
+  protected position: 'data-point-x' | 'data-point-y' | 'data-point' | 'nearest-data-point'
 
   protected markers: AutoMarker[] = []
   protected lastNearestDataPoints: HoveredDataPoint[] | null = null
@@ -49,13 +49,13 @@ export class NearestMarker implements HoverComponent {
     root.appendChild(this.root)
   }
 
-  onLeave(point: Point, space: ChartSpace, composable: ComposableHover): void {
+  onLeave(cursor: Point, point: Point, space: ChartSpace, composable: ComposableHover): void {
     for (const marker of this.markers) marker.dispose()
     this.markers = []
     this.lastNearestDataPoints = null
   }
 
-  onPositionChange(point: Point, space: ChartSpace, composable: ComposableHover): void {
+  onPositionChange(cursor: Point, point: Point, space: ChartSpace, composable: ComposableHover): void {
     let nearestDataPoints: HoveredDataPoint[]
 
     if (this.position === 'data-point-x') {
@@ -65,7 +65,8 @@ export class NearestMarker implements HoverComponent {
       const dp = composable.findNearestByAxis(point, space, 'y', true)
       nearestDataPoints = dp.filter(p => p.yValue === dp[0].yValue)
     } else {
-      nearestDataPoints = composable.findNearest(point, space)
+      nearestDataPoints = composable.findNearest(point, space, true)
+      if (this.position === 'nearest-data-point' && nearestDataPoints.length > 1) nearestDataPoints = [nearestDataPoints[0]]
     }
 
     nearestDataPoints = nearestDataPoints.filter(p => p.distance <= (this.options.activateDistance ?? Infinity))

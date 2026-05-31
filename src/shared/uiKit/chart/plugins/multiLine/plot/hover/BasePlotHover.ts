@@ -36,7 +36,7 @@ export abstract class BasePlotHover extends BasePlotRenderer {
   protected lastNearestXDataPoints: HoveredDataPoint[] | null = null
   protected lastNearestYDataPoints: HoveredDataPoint[] | null = null
 
-  protected lastMousePosition: { offsetX: number, offsetY: number } | null = null
+  protected lastMousePosition: { offsetX: number, offsetY: number, clientX: number, clientY: number } | null = null
   protected interactiveZoneOffsets = { x: 0, y: 0 }
 
   constructor(classes: Classes = []) {
@@ -56,13 +56,15 @@ export abstract class BasePlotHover extends BasePlotRenderer {
 
   protected onMouseEnter(event: MouseEvent) {
     this.root.classList.add('hovered')
-    if (this.multiLine) this.onEnter(this.getLocalPoint(event), this.multiLine.mainSpace)
+    if (this.multiLine)
+      this.onEnter({ x: event.clientX, y: event.clientY }, this.offsetToChart(event), this.multiLine.mainSpace)
     this.updateMouse(event)
   }
 
   protected onMouseLeave(event: MouseEvent) {
     this.root.classList.remove('hovered')
-    if (this.multiLine) this.onLeave(this.getLocalPoint(event), this.multiLine.mainSpace)
+    if (this.multiLine)
+      this.onLeave({ x: event.clientX, y: event.clientY }, this.offsetToChart(event), this.multiLine.mainSpace)
     this.lastMousePosition = null
   }
 
@@ -72,29 +74,45 @@ export abstract class BasePlotHover extends BasePlotRenderer {
     this.lastNearestDataPoints = null
     this.lastNearestXDataPoints = null
     this.lastNearestYDataPoints = null
-    this.lastMousePosition = { offsetX: event.offsetX, offsetY: event.offsetY }
+    this.lastMousePosition = { offsetX: event.offsetX, offsetY: event.offsetY, clientX: event.clientX, clientY: event.clientY }
 
-    this.onPositionChange(this.getLocalPoint(event), this.multiLine.mainSpace)
+    this.onPositionChange(
+      { x: this.lastMousePosition.clientX, y: this.lastMousePosition.clientY },
+      this.offsetToChart(event),
+      this.multiLine.mainSpace)
   }
 
-  private getLocalPoint(event: { offsetX: number, offsetY: number }): Point {
+  offsetToChart(event: { offsetX: number, offsetY: number }): Point {
     const x = this.multiLine!.mainSpace.layout.x + event.offsetX - this.interactiveZoneOffsets.x
     const y = this.multiLine!.mainSpace.layout.y + event.offsetY - this.interactiveZoneOffsets.y
 
     return { x, y }
   }
 
+  chartToPage(point: Point): Point {
+    const rect = this.interactiveZone.getBoundingClientRect()
+    const x = point.x - this.multiLine!.mainSpace.layout.x + rect.left
+    const y = point.y - this.multiLine!.mainSpace.layout.y + rect.top
+
+    return { x, y }
+  }
+
+
   protected renderImpl(space: ChartSpace, overflow: Overflow, full: Size): void {
     this.lastNearestDataPoints = null
     this.lastNearestXDataPoints = null
     this.lastNearestYDataPoints = null
 
-    if (this.lastMousePosition) this.onPositionChange(this.getLocalPoint(this.lastMousePosition), space)
+    if (this.lastMousePosition)
+      this.onPositionChange(
+        { x: this.lastMousePosition.clientX, y: this.lastMousePosition.clientY },
+        this.offsetToChart(this.lastMousePosition),
+        space)
   }
 
-  protected onEnter(point: Point, space: ChartSpace) { }
-  protected onLeave(point: Point, space: ChartSpace) { }
-  protected onPositionChange(point: Point, space: ChartSpace) { }
+  protected onEnter(cursor: Point, point: Point, space: ChartSpace) { }
+  protected onLeave(cursor: Point, point: Point, space: ChartSpace) { }
+  protected onPositionChange(cursor: Point, point: Point, space: ChartSpace) { }
 
   findNearestInDataSource(point: Point, space: ChartSpace, dataSource: DataSource) {
     let nearestPointIndex = -1

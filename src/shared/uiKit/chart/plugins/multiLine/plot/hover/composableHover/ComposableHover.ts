@@ -5,9 +5,9 @@ import { BasePlotHover } from '../BasePlotHover'
 
 export interface HoverComponent {
   attach?(root: SVGGElement, composable: ComposableHover): void
-  onEnter?(point: Point, space: ChartSpace, composable: ComposableHover): void
-  onLeave?(point: Point, space: ChartSpace, composable: ComposableHover): void
-  onPositionChange?(point: Point, space: ChartSpace, composable: ComposableHover): void
+  onEnter?(cursor: Point, point: Point, space: ChartSpace, composable: ComposableHover): void
+  onLeave?(cursor: Point, point: Point, space: ChartSpace, composable: ComposableHover): void
+  onPositionChange?(cursor: Point, point: Point, space: ChartSpace, composable: ComposableHover): void
 }
 
 export class ComposableHover extends BasePlotHover {
@@ -30,18 +30,18 @@ export class ComposableHover extends BasePlotHover {
     return this
   }
 
-  protected onEnter(point: Point, space: ChartSpace): void {
-    super.onEnter(point, space)
-    for (const component of this.components) component.onEnter?.(point, space, this)
+  protected onEnter(cursor: Point, point: Point, space: ChartSpace): void {
+    super.onEnter(cursor, point, space)
+    for (const component of this.components) component.onEnter?.(cursor, point, space, this)
   }
 
-  protected onLeave(point: Point, space: ChartSpace): void {
-    super.onLeave(point, space)
-    for (const component of this.components) component.onLeave?.(point, space, this)
+  protected onLeave(cursor: Point, point: Point, space: ChartSpace): void {
+    super.onLeave(cursor, point, space)
+    for (const component of this.components) component.onLeave?.(cursor, point, space, this)
   }
 
-  protected onPositionChange(point: Point, space: ChartSpace): void {
-    super.onPositionChange(point, space)
-    for (const component of this.components) component.onPositionChange?.(point, space, this)
+  protected onPositionChange(cursor: Point, point: Point, space: ChartSpace): void {
+    super.onPositionChange(cursor, point, space)
+    for (const component of this.components) component.onPositionChange?.(cursor, point, space, this)
   }
 }

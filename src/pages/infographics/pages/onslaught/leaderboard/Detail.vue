@@ -3,6 +3,10 @@
     <div class="chart">
       <h3>Очки по дням</h3>
       <Chart ref="chartElement" />
+      <div class="tooltip" :style="{ transform: `translate(${tooltipPos.x}px, ${tooltipPos.y}px)` }"
+        v-if="tooltipVisible">
+        tooltip
+      </div>
     </div>
     <div class="chart">
       <h3>Бои по дням</h3>
@@ -27,7 +31,6 @@ import { AutoLabels } from '@/shared/uiKit/chart/plugins/multiLine/labels/autoLa
 import { steppedOverrides } from '@/shared/uiKit/chart/plugins/multiLine/labels/autoLabels/generators/steppedGenerator'
 import { MultiLineChart } from '@/shared/uiKit/chart/plugins/multiLine/MultiLine'
 import { ChartTooltip } from '@/shared/uiKit/chart/plugins/multiLine/plot/hover/composableHover/components/chartTooltip/ChartTooltip'
-import { HorizontalLine } from '@/shared/uiKit/chart/plugins/multiLine/plot/hover/composableHover/components/lines/HorizontalLine'
 import { VerticalLine } from '@/shared/uiKit/chart/plugins/multiLine/plot/hover/composableHover/components/lines/VerticalLine'
 import { NearestMarker } from '@/shared/uiKit/chart/plugins/multiLine/plot/hover/composableHover/components/nearestMarker/NearestMarker'
 import { ComposableHover } from '@/shared/uiKit/chart/plugins/multiLine/plot/hover/composableHover/ComposableHover'
@@ -48,6 +51,13 @@ const offset = ref(0)
 const yOffset = ref(0)
 const yScale = ref(1)
 const xScale = ref(5)
+
+const tooltipPos = ref({
+  x: 0,
+  y: 0,
+})
+
+const tooltipVisible = ref(false)
 
 function mulberry32(a: number) {
   return function () {
@@ -215,7 +225,15 @@ onMounted(() => {
     }))
     .addComponent(new ChartTooltip({
       position: 'data-point-x',
-      tooltipOrigin: 'cursor'
+      tooltipPivot: 'nearest',
+      onHide: () => tooltipVisible.value = false,
+      onShow: () => tooltipVisible.value = true,
+      onPositionChange(ctx) {
+        tooltipPos.value = {
+          x: ctx.pivot.x,
+          y: ctx.pivot.y,
+        }
+      },
     }))
     .setDataSources(points, points2)
 
@@ -409,6 +427,19 @@ onMounted(() => {
           stop-color: rgba(45, 212, 45, 0);
         }
       }
+    }
+
+    .tooltip {
+      pointer-events: none;
+      position: fixed;
+      background: rgba(38, 38, 38, 0.8);
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      box-sizing: border-box;
+      top: 0;
+      left: 0;
+      transition: transform 0.05s ease-out;
     }
   }
 }

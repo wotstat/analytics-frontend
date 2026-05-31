@@ -118,7 +118,7 @@ table {
 
   tbody {
     tr {
-      position: relative;
+      // position: relative;
       cursor: pointer;
       -ms-touch-action: manipulation;
       touch-action: manipulation;
