@@ -2,7 +2,7 @@
   <div class="charts">
     <div class="chart">
       <h3>Очки по дням</h3>
-      <Chart ref="chartElement" />
+      <div ref="chartElement" class="chart-container"></div>
       <div class="tooltip" :style="{ transform: `translate(${tooltipPos.x}px, ${tooltipPos.y}px)` }"
         v-if="tooltipVisible">
         tooltip
@@ -26,25 +26,25 @@
 
 <script setup lang="ts">
 import Chart from '@/shared/uiKit/chart/Chart.vue'
-import { Axis } from '@/shared/uiKit/chart/plugins/multiLine/axis/Axis'
-import { AutoLabels } from '@/shared/uiKit/chart/plugins/multiLine/labels/autoLabels/AutoLabels'
-import { steppedOverrides } from '@/shared/uiKit/chart/plugins/multiLine/labels/autoLabels/generators/steppedGenerator'
-import { MultiLineChart } from '@/shared/uiKit/chart/plugins/multiLine/MultiLine'
-import { ChartTooltip } from '@/shared/uiKit/chart/plugins/multiLine/plot/hover/composableHover/components/chartTooltip/ChartTooltip'
-import { VerticalLine } from '@/shared/uiKit/chart/plugins/multiLine/plot/hover/composableHover/components/lines/VerticalLine'
-import { NearestMarker } from '@/shared/uiKit/chart/plugins/multiLine/plot/hover/composableHover/components/nearestMarker/NearestMarker'
-import { ComposableHover } from '@/shared/uiKit/chart/plugins/multiLine/plot/hover/composableHover/ComposableHover'
-import { AutoLine } from '@/shared/uiKit/chart/plugins/multiLine/plot/line/autoLine/AutoLine'
-import { AutoMarkers } from '@/shared/uiKit/chart/plugins/multiLine/plot/markers/autoMarkers/AutoMarkers'
-import { TicksByLabels } from '@/shared/uiKit/chart/plugins/multiLine/ticks/TicksByLabels'
-import { ChartClip } from '@/shared/uiKit/chart/plugins/multiLine/utils/ChartClip'
-import { ChartGradient } from '@/shared/uiKit/chart/plugins/multiLine/utils/ChartGradient'
-import { ChartMask } from '@/shared/uiKit/chart/plugins/multiLine/utils/ChartMask'
-import { PlotGroup } from '@/shared/uiKit/chart/plugins/multiLine/utils/PlotGroup'
+import { Axis } from '@/shared/uiKit/chart/universalChart/axis/Axis'
+import { AutoLabels } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
+import { steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator'
+import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
+import { ChartTooltip } from '@/shared/uiKit/chart/universalChart/plot/hover/composableHover/components/chartTooltip/ChartTooltip'
+import { VerticalLine } from '@/shared/uiKit/chart/universalChart/plot/hover/composableHover/components/lines/VerticalLine'
+import { NearestMarker } from '@/shared/uiKit/chart/universalChart/plot/hover/composableHover/components/nearestMarker/NearestMarker'
+import { ComposableHover } from '@/shared/uiKit/chart/universalChart/plot/hover/composableHover/ComposableHover'
+import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
+import { AutoMarkers } from '@/shared/uiKit/chart/universalChart/plot/markers/autoMarkers/AutoMarkers'
+import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
+import { ChartClip } from '@/shared/uiKit/chart/universalChart/defs/ChartClip'
+import { ChartGradient } from '@/shared/uiKit/chart/universalChart/defs/ChartGradient'
+import { ChartMask } from '@/shared/uiKit/chart/universalChart/defs/ChartMask'
+import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
 import { onMounted, ref, watchEffect } from 'vue'
 
 
-const chartElement = ref<InstanceType<typeof Chart> | null>(null)
+const chartElement = ref<HTMLElement | null>(null)
 
 const props = defineProps<{}>()
 const offset = ref(0)
@@ -76,13 +76,12 @@ const gradientId = ref('')
 onMounted(() => {
   if (!chartElement.value) return
 
-  const chart = chartElement.value.chart
-
-  const multiLine = new MultiLineChart({
+  const multiLine = new UniversalChart({
     layoutVariant: 'horizontal',
     renderBoundsPadding: {
       vertical: 5,
-    }
+    },
+    root: chartElement.value
   })
 
   const clipMain = new ChartClip('center')
@@ -255,7 +254,7 @@ onMounted(() => {
     .addPlot(hover)
     .addDefs(gradient, clipMain, clipLeft, clipBottom, maskMain)
 
-  chart.addPlugin(multiLine)
+  // chart.addPlugin(multiLine)
 
   // setInterval(() => {
   //   multiLine.setRenderBounds({
@@ -301,7 +300,7 @@ onMounted(() => {
       font-size: 16px;
     }
 
-    :deep(.chart-multiline-root) {
+    :deep(.universal-chart-root) {
       // useless rule to syntax highlight fix
       background: inherit;
 

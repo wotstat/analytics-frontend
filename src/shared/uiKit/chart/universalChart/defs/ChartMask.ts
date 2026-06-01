@@ -1,5 +1,5 @@
-import { MultiLineChart, Overflow, DefsRenderer } from '../MultiLine'
-import { ChartSpace } from './ChartSpace'
+import { UniversalChart, Overflow, DefsRenderer } from '../UniversalChart'
+import { ChartSpace } from '../utils/ChartSpace'
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
 type Size = { width: number, height: number }
@@ -10,7 +10,7 @@ export class ChartMask implements DefsRenderer {
   private id = `mask-${Math.random().toString(16).slice(2)}`
   private cachedSize = { x: 0, y: 0, width: 0, height: 0 }
 
-  private multiLine: MultiLineChart | null = null
+  private chart: UniversalChart | null = null
 
   constructor(
     private readonly target: 'top' | 'right' | 'bottom' | 'left' | 'center' = 'center',
@@ -27,8 +27,8 @@ export class ChartMask implements DefsRenderer {
     return this.root
   }
 
-  attach(root: SVGGElement, multiLine: MultiLineChart): void {
-    this.multiLine = multiLine
+  attach(root: SVGGElement, chart: UniversalChart): void {
+    this.chart = chart
   }
 
   detach(): void {
@@ -36,9 +36,9 @@ export class ChartMask implements DefsRenderer {
   }
 
   didLayout(space: ChartSpace, full: Size): void {
-    if (!this.multiLine) return
+    if (!this.chart) return
     if (!this.fillTarget) return
-    const layout = this.target === 'center' ? space.layout : this.multiLine.getSlotRect(this.target)
+    const layout = this.target === 'center' ? space.layout : this.chart.getSlotRect(this.target)
     this.setRect(layout.x, layout.y, layout.width, layout.height)
   }
 

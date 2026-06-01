@@ -1,13 +1,13 @@
-import { MultiLineChart, Overflow, PlotRenderer, Size } from '../MultiLine'
-import { ChartClip } from '../utils/ChartClip'
-import { ChartMask } from '../utils/ChartMask'
+import { UniversalChart, Overflow, PlotRenderer, Size } from '../UniversalChart'
+import { ChartClip } from '../defs/ChartClip'
+import { ChartMask } from '../defs/ChartMask'
 import { ChartSpace } from '../utils/ChartSpace'
 import { addClasses, Classes } from '../utils/utils'
 
 
 export class BasePlotRenderer implements PlotRenderer {
   protected root = document.createElementNS('http://www.w3.org/2000/svg', 'g')
-  protected multiLine: MultiLineChart | null = null
+  protected chart: UniversalChart | null = null
 
   private isDirty = true
   private spaceCache = ''
@@ -16,12 +16,12 @@ export class BasePlotRenderer implements PlotRenderer {
     addClasses(this.root, classes)
   }
 
-  attach(root: SVGGElement, multiLine: MultiLineChart): void {
-    this.multiLine = multiLine
+  attach(root: SVGGElement, chart: UniversalChart): void {
+    this.chart = chart
   }
 
   detach(): void {
-    this.multiLine = null
+    this.chart = null
   }
 
   getRootElement(): Element {
@@ -40,7 +40,7 @@ export class BasePlotRenderer implements PlotRenderer {
 
   protected requestRender() {
     this.isDirty = true
-    this.multiLine?.dataDidChange()
+    this.chart?.dataDidChange()
   }
 
   didLayout(space: ChartSpace, full: Size): void { }

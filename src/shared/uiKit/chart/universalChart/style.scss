@@ -1,4 +1,4 @@
-.chart-multiline-root {
+.universal-chart-root {
   contain: strict;
 
   .plot {
@@ -40,12 +40,6 @@
       fill: transparent;
     }
 
-    // &:hover {
-    //   .hover-components {
-    //     opacity: 1;
-    //   }
-    // }
-
     .hover-components {
 
       .hover-line {
@@ -60,15 +54,14 @@
           display: block;
         }
       }
-    }
 
-    .hover-markers {
-
-      .hover-marker {
-        pointer-events: none;
-        fill: red;
-
+      .hover-markers {
+        .hover-marker {
+          pointer-events: none;
+          fill: red;
+        }
       }
     }
+
   }
 }

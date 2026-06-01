@@ -1,8 +1,8 @@
-import { MultiLineChart, Overflow, PlotRenderer } from '../MultiLine'
+import { UniversalChart, Overflow, PlotRenderer } from '../UniversalChart'
 import { Bounds } from './Bounds'
 import { ChartSpace } from './ChartSpace'
-import { ChartClip } from './ChartClip'
-import { ChartMask } from './ChartMask'
+import { ChartClip } from '../defs/ChartClip'
+import { ChartMask } from '../defs/ChartMask'
 
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
@@ -12,7 +12,7 @@ export class PlotGroup implements PlotRenderer {
 
   protected plots: { plot: PlotRenderer, root: SVGGElement }[] = []
   protected hierarchyCache = new Map<string, SVGGElement>()
-  protected multiLine: MultiLineChart | null = null
+  protected chart: UniversalChart | null = null
 
   constructor(readonly classes: string[] = []) {
     this.root.classList.add('plot-group', ...classes)
@@ -34,7 +34,7 @@ export class PlotGroup implements PlotRenderer {
     const element = plot.getRootElement?.()
     if (element) root.appendChild(element)
 
-    if (this.multiLine) plot.attach?.(root, this.multiLine)
+    if (this.chart) plot.attach?.(root, this.chart)
     this.plots.push({ plot, root })
     return this
   }
@@ -47,11 +47,11 @@ export class PlotGroup implements PlotRenderer {
     return bounds
   }
 
-  attach(root: SVGGElement, multiLine: MultiLineChart): void {
+  attach(root: SVGGElement, chart: UniversalChart): void {
     root.appendChild(this.root)
-    if (!this.multiLine) {
-      this.multiLine = multiLine
-      for (const { plot, root } of this.plots) plot.attach?.(root, multiLine)
+    if (!this.chart) {
+      this.chart = chart
+      for (const { plot, root } of this.plots) plot.attach?.(root, chart)
     }
   }
 

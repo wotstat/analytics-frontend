@@ -1,4 +1,4 @@
-import { MultiLineChart, PlotRenderer } from '../../../MultiLine'
+import { UniversalChart, PlotRenderer } from '../../../UniversalChart'
 import { Bounds } from '../../../utils/Bounds'
 import { ChartSpace } from '../../../utils/ChartSpace'
 import { addClasses, Classes } from '../../../utils/utils'
