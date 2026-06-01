@@ -2,8 +2,7 @@
   <div class="charts">
     <div class="chart">
       <h3>Очки по дням</h3>
-      <UniversalChartComponent :chart="multiLine" />
-      <!-- <div ref="chartElement" class="chart-container"></div> -->
+      <UniversalChartComponent :chart="chart" />
       <div class="tooltip" :style="{ transform: `translate(${tooltipPos.x}px, ${tooltipPos.y}px)` }"
         v-if="tooltipVisible">
         tooltip
@@ -11,7 +10,6 @@
     </div>
     <div class="chart">
       <h3>Бои по дням</h3>
-      <!-- <Chart /> -->
       <input type="range" min="-100" max="100" step="0.01" v-model.number="yOffset" />
       <input type="number" v-model.number="yOffset" />
       <input type="range" min="0" max="80" step="0.001" v-model.number="yScale" />
@@ -69,10 +67,7 @@ function mulberry32(a: number) {
 const seed = 12345
 const rand = mulberry32(seed)
 
-const gradientId = ref('')
-
-
-const multiLine = markRaw(new UniversalChart({
+const chart = markRaw(new UniversalChart({
   layoutVariant: 'horizontal',
   renderBoundsPadding: {
     vertical: 5,
@@ -151,10 +146,7 @@ const axis = new Axis({
   bottom: 'space',
 })
 
-
-
 const points: ({ x: number, y: number } | null)[] = new Array(101).fill(0).map((_, i) => ({ x: i * 10, y: 20 + rand() * 50 }))
-
 const points2: ({ x: number, y: number } | null)[] = new Array(101).fill(0).map((_, i) => ({ x: i * 10, y: 10 + rand() * 80 }))
 
 points[10] = null
@@ -173,20 +165,18 @@ const redLine = new AutoLine({ classes: ['red'] })
     { x: 0, y: 0 },
   ])
 
-const smoothRandom = new AutoLine({ classes: ['random', 'smooth'], area: false, smoothingMethod: 'smooth' })
-  .setPoints(points2)
-
-const monotoneRandom = new AutoLine({ classes: ['random', 'monotone'], area: false, smoothingMethod: 'monotone' })
-  .setPoints(points)
-
-const sinLine = new AutoLine({ classes: ['sin', 'smooth'], area: false })
-  .setPoints(new Array(1000).fill(0).map((_, i) => ({ x: i, y: Math.sin(i / 10) * 50 + 50 })))
-
 const gradient = new ChartGradient({
   classes: 'green-gradient',
 })
 
-gradientId.value = gradient.getClipPath()
+const smoothRandom = new AutoLine({ classes: ['random', 'smooth'], area: false, smoothingMethod: 'monotone' })
+  .setPoints(points2)
+
+const monotoneRandom = new AutoLine({ classes: ['random', 'monotone'], area: gradient, smoothingMethod: 'monotone' })
+  .setPoints(points)
+
+const sinLine = new AutoLine({ classes: ['sin', 'smooth'], area: false })
+  .setPoints(new Array(1000).fill(0).map((_, i) => ({ x: i, y: Math.sin(i / 10) * 50 + 50 })))
 
 const markers = new AutoMarkers({
   classes: 'markers',
@@ -237,7 +227,7 @@ const plotRoot = new PlotGroup()
   .clipBy(clipMain)
 
 
-multiLine
+chart
   .addPlot(axis, 'ticks')
   // .addPlot(xTicks, 'ticks')
   // .addPlot(yTicks, 'ticks')
@@ -261,7 +251,7 @@ multiLine
 // }, 16)
 
 watchEffect(() => {
-  multiLine.setRenderBounds({
+  chart.setRenderBounds({
     minX: -offset.value,
     maxX: -offset.value + 1000 / xScale.value,
     minY: 0 + yOffset.value,
@@ -375,11 +365,6 @@ watchEffect(() => {
         .area {
           &.sin {
             fill: rgba(24, 247, 95, 0.1);
-          }
-
-          &.random {
-            // fill: rgba(0, 255, 128, 0.1);
-            fill: v-bind('gradientId');
           }
         }
 
