@@ -1,5 +1,5 @@
 import { Axis } from '../labels/BaseLabels'
-import { MultiLineChart, Overflow, PlotRenderer, Size } from '../MultiLine'
+import { UniversalChart, Overflow, PlotRenderer, Size } from '../UniversalChart'
 import { ChartSpace } from '../utils/ChartSpace'
 
 export type TickData = {
@@ -22,7 +22,7 @@ export abstract class BaseTicks implements PlotRenderer {
     return this.root
   }
 
-  attach(root: SVGGElement, multiLine: MultiLineChart): void { }
+  attach(root: SVGGElement, chart: UniversalChart): void { }
 
   detach(): void {
     this.elementsByKey.clear()

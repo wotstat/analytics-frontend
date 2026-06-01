@@ -1,4 +1,4 @@
-import { Overflow, Size } from '../../MultiLine'
+import { Overflow, Size } from '../../UniversalChart'
 import { ChartSpace } from '../../utils/ChartSpace'
 import { Point } from '../../utils/Point'
 import { Classes } from '../../utils/utils'
@@ -58,20 +58,20 @@ export abstract class BasePlotHover extends BasePlotRenderer {
 
   protected onMouseEnter(event: MouseEvent) {
     this.root.classList.add('hovered')
-    if (this.multiLine)
-      this.onEnter({ x: event.clientX, y: event.clientY }, this.offsetToChart(event), this.multiLine.mainSpace)
+    if (this.chart)
+      this.onEnter({ x: event.clientX, y: event.clientY }, this.offsetToChart(event), this.chart.space)
     this.updateMouse(event)
   }
 
   protected onMouseLeave(event: MouseEvent) {
     this.root.classList.remove('hovered')
-    if (this.multiLine)
-      this.onLeave({ x: event.clientX, y: event.clientY }, this.offsetToChart(event), this.multiLine.mainSpace)
+    if (this.chart)
+      this.onLeave({ x: event.clientX, y: event.clientY }, this.offsetToChart(event), this.chart.space)
     this.lastMousePosition = null
   }
 
   private updateMouse(event: MouseEvent) {
-    if (!this.multiLine) return
+    if (!this.chart) return
 
     this.lastNearestDataPoints = null
     this.lastNearestXDataPoints = null
@@ -83,19 +83,19 @@ export abstract class BasePlotHover extends BasePlotRenderer {
     this.onPositionChange(
       { x: this.lastMousePosition.clientX, y: this.lastMousePosition.clientY },
       this.offsetToChart(event),
-      this.multiLine.mainSpace)
+      this.chart.space)
   }
 
   offsetToChart(event: { offsetX: number, offsetY: number }): Point {
-    const x = this.multiLine!.mainSpace.layout.x + event.offsetX - this.interactiveZoneOffsets.x
-    const y = this.multiLine!.mainSpace.layout.y + event.offsetY - this.interactiveZoneOffsets.y
+    const x = this.chart!.space.layout.x + event.offsetX - this.interactiveZoneOffsets.x
+    const y = this.chart!.space.layout.y + event.offsetY - this.interactiveZoneOffsets.y
 
     return { x, y }
   }
 
   chartToPage(point: Point): Point {
-    const x = point.x - this.multiLine!.mainSpace.layout.x + this.interactiveZoneRect.left
-    const y = point.y - this.multiLine!.mainSpace.layout.y + this.interactiveZoneRect.top
+    const x = point.x - this.chart!.space.layout.x + this.interactiveZoneRect.left
+    const y = point.y - this.chart!.space.layout.y + this.interactiveZoneRect.top
 
     return { x, y }
   }

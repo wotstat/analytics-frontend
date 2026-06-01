@@ -5,10 +5,10 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { Chart } from './Chart'
+import BaseChart from './BaseChart'
 
 const chartContainer = ref<HTMLDivElement | null>(null)
-const chart = new Chart()
+const chart = new BaseChart()
 
 onMounted(() => {
   chart.attach(chartContainer.value!)

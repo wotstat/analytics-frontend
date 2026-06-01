@@ -1,5 +1,5 @@
-import { ChartClip } from '../utils/ChartClip'
-import { SlotRenderer, MultiLineChart, Overflow, Size } from '../MultiLine'
+import { ChartClip } from '../defs/ChartClip'
+import { SlotRenderer, UniversalChart, Overflow, Size } from '../UniversalChart'
 import { ChartSpace } from '../utils/ChartSpace'
 
 type LabelData = {
@@ -37,7 +37,7 @@ export abstract class BaseLabels implements SlotRenderer {
     return this.root
   }
 
-  attach(root: SVGGElement, multiLine: MultiLineChart): void { }
+  attach(root: SVGGElement, chart: UniversalChart): void { }
 
   detach(): void {
     this.elementByKey.clear()

@@ -1,19 +1,21 @@
 import './style.scss'
 
-import { ChartDelegate, ChartPlugin } from '../../Chart'
+import BaseChart from '../BaseChart'
 import { Bounds } from './utils/Bounds'
 import { ChartSpace } from './utils/ChartSpace'
 
 type Options = {
   renderBounds?: { minX?: number, maxX?: number, minY?: number, maxY?: number },
   renderBoundsPadding?: { top?: number, right?: number, bottom?: number, left?: number } | { horizontal?: number, vertical?: number },
-  layoutVariant?: 'horizontal' | 'vertical' | 'square'
+  layoutVariant?: 'horizontal' | 'vertical' | 'square',
+  root?: HTMLElement
 }
 
 export type Size = { width: number, height: number }
 export type Overflow = { top: number, right: number, bottom: number, left: number }
+
 export interface BaseRenderer {
-  attach?(root: SVGGElement, multiLine: MultiLineChart): void
+  attach?(root: SVGGElement, chart: UniversalChart): void
   detach?(): void
   didMount?(): void
   didLayout?(space: ChartSpace, full: Size): void
@@ -33,15 +35,12 @@ export interface DefsRenderer extends BaseRenderer { }
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
 
-export class MultiLineChart implements ChartPlugin {
-  private chartDelegate: ChartDelegate | null = null
+export class UniversalChart extends BaseChart {
 
   private userDefinedBounds: { minX: number | null, maxX: number | null, minY: number | null, maxY: number | null } | null = null
   private renderBoundsPadding: { top: number, right: number, bottom: number, left: number } = { top: 0, right: 0, bottom: 0, left: 0 }
 
-  private width = 0
-  private height = 0
-  mainSpace = new ChartSpace({ x: 0, y: 0, width: 0, height: 0 }, new Bounds())
+  private chartSpace = new ChartSpace({ x: 0, y: 0, width: 0, height: 0 }, new Bounds())
   private plotBounds = new Bounds()
 
   private topRenderers: SlotRenderer[] = []
@@ -55,22 +54,26 @@ export class MultiLineChart implements ChartPlugin {
   private layoutCacheKey = ''
   private hierarchyCache = new Map<string, SVGGElement>()
 
-  private root = document.createElementNS(NAMESPACE, 'g')
   private defs = document.createElementNS(NAMESPACE, 'defs')
 
+  get space() {
+    return this.chartSpace
+  }
+
   constructor(readonly options: Options) {
-    this.root.classList.add('chart-multiline-root')
-    this.root.appendChild(this.defs)
+    super()
+
+    this.svg.classList.add('universal-chart-root')
+    this.svg.appendChild(this.defs)
 
     this.setRenderBounds(options.renderBounds)
     this.setRenderBoundsPadding(options.renderBoundsPadding ?? { horizontal: 0, vertical: 0 })
+
+    if (this.options.root) this.attach(this.options.root)
   }
 
-  apply(delegate: ChartDelegate): void {
-    this.chartDelegate?.removeChild(this.root)
-    this.chartDelegate = delegate
-    delegate.addChild(this.root)
-    this.root.parentElement?.classList.add('chart-multiline-container')
+  attach(element: HTMLElement): void {
+    super.attach(element)
     for (const renderer of this.allRenderers) renderer.didMount?.()
   }
 
@@ -125,29 +128,8 @@ export class MultiLineChart implements ChartPlugin {
     return this
   }
 
-  private getRootFor(path: string[]) {
-    if (path.length === 0) return this.root
-
-    const key = path.join('/')
-    if (this.hierarchyCache.has(key)) return this.hierarchyCache.get(key)!
-
-    let currentRoot = this.root
-    for (const part of path) {
-      let nextRoot = currentRoot.querySelector<SVGGElement>(`:scope > g.${part}`)
-      if (!nextRoot) {
-        nextRoot = document.createElementNS(NAMESPACE, 'g')
-        nextRoot.classList.add(...part.split('.'))
-        currentRoot.appendChild(nextRoot)
-      }
-      currentRoot = nextRoot
-    }
-
-    this.hierarchyCache.set(key, currentRoot)
-    return currentRoot
-  }
-
   dataDidChange() {
-    this.chartDelegate?.scheduleRender()
+    this.scheduleRender()
   }
 
   setRenderBounds(bounds: { minX?: number, maxX?: number, minY?: number, maxY?: number } | undefined) {
@@ -204,11 +186,9 @@ export class MultiLineChart implements ChartPlugin {
     this.dataDidChange()
   }
 
-  render() {
+  renderImpl() {
     this.recalculateDataBounds()
-    this.mainSpace.bounds = this.calculateRenderBounds()
-
-    this.updateChartSize()
+    this.chartSpace.bounds = this.calculateRenderBounds()
     this.layout()
 
     let overflow = { top: 0, right: 0, bottom: 0, left: 0 }
@@ -216,32 +196,31 @@ export class MultiLineChart implements ChartPlugin {
       case 'horizontal':
         overflow = {
           top: 0, bottom: 0,
-          right: this.width - this.mainSpace.layout.x - this.mainSpace.layout.width,
-          left: this.mainSpace.layout.x
+          right: this.size.width - this.chartSpace.layout.x - this.chartSpace.layout.width,
+          left: this.chartSpace.layout.x
         }
         break
       case 'vertical':
         overflow = {
           right: 0, left: 0,
-          top: this.mainSpace.layout.y,
-          bottom: this.height - this.mainSpace.layout.y - this.mainSpace.layout.height
+          top: this.chartSpace.layout.y,
+          bottom: this.size.height - this.chartSpace.layout.y - this.chartSpace.layout.height
         }
         break
     }
 
-    const full = { width: this.width, height: this.height }
-    for (const plot of this.defsRenderers) plot.render?.(this.mainSpace, overflow, full)
-    for (const slot of this.topRenderers) slot.render?.(this.mainSpace, overflow, full)
-    for (const slot of this.rightRenderers) slot.render?.(this.mainSpace, overflow, full)
-    for (const slot of this.bottomRenderers) slot.render?.(this.mainSpace, overflow, full)
-    for (const slot of this.leftRenderers) slot.render?.(this.mainSpace, overflow, full)
-    for (const plot of this.plotRenderers) plot.render?.(this.mainSpace, overflow, full)
+    for (const plot of this.defsRenderers) plot.render?.(this.chartSpace, overflow, this.size)
+    for (const slot of this.topRenderers) slot.render?.(this.chartSpace, overflow, this.size)
+    for (const slot of this.rightRenderers) slot.render?.(this.chartSpace, overflow, this.size)
+    for (const slot of this.bottomRenderers) slot.render?.(this.chartSpace, overflow, this.size)
+    for (const slot of this.leftRenderers) slot.render?.(this.chartSpace, overflow, this.size)
+    for (const plot of this.plotRenderers) plot.render?.(this.chartSpace, overflow, this.size)
   }
 
   getSlotRect(slot: 'top' | 'right' | 'bottom' | 'left') {
-    const l = this.mainSpace.layout
-    const w = this.width
-    const h = this.height
+    const l = this.chartSpace.layout
+    const w = this.size.width
+    const h = this.size.height
     const bH = h - (l.y + l.height)
     const rW = w - (l.x + l.width)
 
@@ -276,38 +255,34 @@ export class MultiLineChart implements ChartPlugin {
     }
   }
 
-  private updateChartSize() {
-    const width = this.chartDelegate?.width() ?? 0
-    const height = this.chartDelegate?.height() ?? 0
-    this.width = width
-    this.height = height
-  }
-
   private layout() {
 
-    const key = `${this.width}x${this.height}-${this.plotBounds.getHash()}-${this.userDefinedBounds ? `${this.userDefinedBounds.minX ?? 'n'}-${this.userDefinedBounds.maxX ?? 'n'}-${this.userDefinedBounds.minY ?? 'n'}-${this.userDefinedBounds.maxY ?? 'n'}` : 'd'}`
+    const key = `${this.size.width}x${this.size.height}-${this.plotBounds.getHash()}-${this.userDefinedBounds ? `${this.userDefinedBounds.minX ?? 'n'}-${this.userDefinedBounds.maxX ?? 'n'}-${this.userDefinedBounds.minY ?? 'n'}-${this.userDefinedBounds.maxY ?? 'n'}` : 'd'}`
     if (key === this.layoutCacheKey) return
     this.layoutCacheKey = key
 
+    const full = this.size
+    const w = this.size.width
+    const h = this.size.height
+
     let xTop = 0, xBottom = 0, yLeft = 0, yRight = 0
-    let layout = new ChartSpace({ x: 0, y: 0, width: this.width, height: this.height }, this.mainSpace.bounds)
+    let layout = new ChartSpace({ x: 0, y: 0, width: w, height: h }, this.chartSpace.bounds)
     let overflow = { top: 0, right: 0, bottom: 0, left: 0 }
-    const full = { width: this.width, height: this.height }
 
     for (const slot of this.topRenderers) xTop = Math.max(xTop, slot.getSize(layout, overflow, full).height ?? 0)
     layout.layout.y = xTop
 
     for (const slot of this.bottomRenderers) xBottom = Math.max(xBottom, slot.getSize(layout, overflow, full).height ?? 0)
-    layout.layout.height = this.height - xBottom - xTop
+    layout.layout.height = h - xBottom - xTop
 
     for (const slot of this.leftRenderers) yLeft = Math.max(yLeft, slot.getSize(layout, overflow, full).width ?? 0)
     layout.layout.x = yLeft
 
     for (const slot of this.rightRenderers) yRight = Math.max(yRight, slot.getSize(layout, overflow, full).width ?? 0)
-    layout.layout.width = this.width - yLeft - yRight
+    layout.layout.width = w - yLeft - yRight
 
-    this.mainSpace.layout = layout.layout
-    for (const renderer of this.allRenderers) renderer.didLayout?.(this.mainSpace, { width: this.width, height: this.height })
+    this.chartSpace.layout = layout.layout
+    for (const renderer of this.allRenderers) renderer.didLayout?.(this.chartSpace, { width: w, height: h })
   }
 
   private calculateRenderBounds() {
@@ -332,6 +307,27 @@ export class MultiLineChart implements ChartPlugin {
       if (line.getBounds) bounds.extend(line.getBounds())
     }
     this.plotBounds = bounds
+  }
+
+  private getRootFor(path: string[]) {
+    if (path.length === 0) return this.svg
+
+    const key = path.join('/')
+    if (this.hierarchyCache.has(key)) return this.hierarchyCache.get(key)!
+
+    let currentRoot = this.svg as SVGGElement
+    for (const part of path) {
+      let nextRoot = currentRoot.querySelector<SVGGElement>(`:scope > g.${part}`)
+      if (!nextRoot) {
+        nextRoot = document.createElementNS(NAMESPACE, 'g')
+        nextRoot.classList.add(...part.split('.'))
+        currentRoot.appendChild(nextRoot)
+      }
+      currentRoot = nextRoot
+    }
+
+    this.hierarchyCache.set(key, currentRoot)
+    return currentRoot
   }
 
 }

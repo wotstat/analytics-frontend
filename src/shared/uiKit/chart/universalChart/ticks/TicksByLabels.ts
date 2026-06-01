@@ -1,5 +1,5 @@
 import { BaseLabels } from '../labels/BaseLabels'
-import { Overflow, Size } from '../MultiLine'
+import { Overflow, Size } from '../UniversalChart'
 import { ChartSpace } from '../utils/ChartSpace'
 import { BaseTicks, TickData } from './BaseTicks'
 

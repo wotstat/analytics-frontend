@@ -1,5 +1,5 @@
-import { DefsRenderer } from '../MultiLine'
-import { addClasses, Classes } from './utils'
+import { DefsRenderer } from '../UniversalChart'
+import { addClasses, Classes } from '../utils/utils'
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
 

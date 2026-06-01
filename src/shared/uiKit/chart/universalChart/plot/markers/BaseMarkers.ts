@@ -1,4 +1,4 @@
-import { MultiLineChart, Overflow, PlotRenderer, Size } from '../../MultiLine'
+import { UniversalChart, Overflow, PlotRenderer, Size } from '../../UniversalChart'
 import { ChartSpace } from '../../utils/ChartSpace'
 import { addClasses, Classes } from '../../utils/utils'
 import { BasePlotRenderer } from '../BasePlotRenderer'
@@ -12,7 +12,7 @@ export interface Marker<T> {
 export abstract class BaseMarkers<T> extends BasePlotRenderer {
 
   protected markers: T[] = []
-  protected multiLine: MultiLineChart | null = null
+  protected chart: UniversalChart | null = null
   protected markerInstances: Marker<T>[] = []
 
   constructor(classes: Classes) {
