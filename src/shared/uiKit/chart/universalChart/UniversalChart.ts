@@ -72,9 +72,9 @@ export class UniversalChart extends BaseChart {
     if (this.options.root) this.attach(this.options.root)
   }
 
-  attach(element: HTMLElement): void {
-    super.attach(element)
-    for (const renderer of this.allRenderers) renderer.didMount?.()
+  dispose() {
+    super.dispose()
+    for (const renderer of this.allRenderers) renderer.detach?.()
   }
 
   addSlot(position: 'top' | 'right' | 'bottom' | 'left', slot: SlotRenderer, path: string | string[] = []) {
@@ -186,37 +186,6 @@ export class UniversalChart extends BaseChart {
     this.dataDidChange()
   }
 
-  renderImpl() {
-    this.recalculateDataBounds()
-    this.chartSpace.bounds = this.calculateRenderBounds()
-    this.layout()
-
-    let overflow = { top: 0, right: 0, bottom: 0, left: 0 }
-    switch (this.options.layoutVariant ?? 'horizontal') {
-      case 'horizontal':
-        overflow = {
-          top: 0, bottom: 0,
-          right: this.size.width - this.chartSpace.layout.x - this.chartSpace.layout.width,
-          left: this.chartSpace.layout.x
-        }
-        break
-      case 'vertical':
-        overflow = {
-          right: 0, left: 0,
-          top: this.chartSpace.layout.y,
-          bottom: this.size.height - this.chartSpace.layout.y - this.chartSpace.layout.height
-        }
-        break
-    }
-
-    for (const plot of this.defsRenderers) plot.render?.(this.chartSpace, overflow, this.size)
-    for (const slot of this.topRenderers) slot.render?.(this.chartSpace, overflow, this.size)
-    for (const slot of this.rightRenderers) slot.render?.(this.chartSpace, overflow, this.size)
-    for (const slot of this.bottomRenderers) slot.render?.(this.chartSpace, overflow, this.size)
-    for (const slot of this.leftRenderers) slot.render?.(this.chartSpace, overflow, this.size)
-    for (const plot of this.plotRenderers) plot.render?.(this.chartSpace, overflow, this.size)
-  }
-
   getSlotRect(slot: 'top' | 'right' | 'bottom' | 'left') {
     const l = this.chartSpace.layout
     const w = this.size.width
@@ -253,6 +222,41 @@ export class UniversalChart extends BaseChart {
         }
       }
     }
+  }
+
+  protected didMount(): void {
+    for (const renderer of this.allRenderers) renderer.didMount?.()
+  }
+
+  protected renderImpl() {
+    this.recalculateDataBounds()
+    this.chartSpace.bounds = this.calculateRenderBounds()
+    this.layout()
+
+    let overflow = { top: 0, right: 0, bottom: 0, left: 0 }
+    switch (this.options.layoutVariant ?? 'horizontal') {
+      case 'horizontal':
+        overflow = {
+          top: 0, bottom: 0,
+          right: this.size.width - this.chartSpace.layout.x - this.chartSpace.layout.width,
+          left: this.chartSpace.layout.x
+        }
+        break
+      case 'vertical':
+        overflow = {
+          right: 0, left: 0,
+          top: this.chartSpace.layout.y,
+          bottom: this.size.height - this.chartSpace.layout.y - this.chartSpace.layout.height
+        }
+        break
+    }
+
+    for (const plot of this.defsRenderers) plot.render?.(this.chartSpace, overflow, this.size)
+    for (const slot of this.topRenderers) slot.render?.(this.chartSpace, overflow, this.size)
+    for (const slot of this.rightRenderers) slot.render?.(this.chartSpace, overflow, this.size)
+    for (const slot of this.bottomRenderers) slot.render?.(this.chartSpace, overflow, this.size)
+    for (const slot of this.leftRenderers) slot.render?.(this.chartSpace, overflow, this.size)
+    for (const plot of this.plotRenderers) plot.render?.(this.chartSpace, overflow, this.size)
   }
 
   private layout() {

@@ -18,8 +18,15 @@ export default class BaseChart {
     this.root = element
     this.root.appendChild(this.svg)
     this.resizeObserver.observe(this.root)
+
+    this.didMount()
+
     const rect = this.root.getClientRects()[0]
     this.resize(rect.width, rect.height)
+  }
+
+  dispose() {
+    this.root?.removeChild(this.svg)
   }
 
   scheduleRender() {
@@ -58,4 +65,5 @@ export default class BaseChart {
   }
 
   protected renderImpl() { }
+  protected didMount() { }
 }
