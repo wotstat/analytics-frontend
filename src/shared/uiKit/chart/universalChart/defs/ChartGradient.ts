@@ -83,8 +83,12 @@ export class ChartGradient implements DefsRenderer {
     this.gradient.setAttribute('y2', `${(1 - y) / 2 * 100}%`)
   }
 
-  getClipPath() {
+  getUrl() {
     return `url(#${this.id})`
+  }
+
+  fill(element: SVGGElement) {
+    element.setAttribute('fill', this.getUrl())
   }
 
   private createStop() {

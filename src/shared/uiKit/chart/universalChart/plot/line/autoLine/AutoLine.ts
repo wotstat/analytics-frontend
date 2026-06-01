@@ -1,4 +1,4 @@
-import { UniversalChart, PlotRenderer } from '../../../UniversalChart'
+import { ChartGradient } from '../../../defs/ChartGradient'
 import { Bounds } from '../../../utils/Bounds'
 import { ChartSpace } from '../../../utils/ChartSpace'
 import { addClasses, Classes } from '../../../utils/utils'
@@ -12,7 +12,7 @@ const DEFAULT_SMOOTHING = 1
 
 type Options = {
   classes?: Classes
-  area?: boolean
+  area?: boolean | ChartGradient
   precision?: number
   smoothing?: number
   smoothingMethod?: 'monotone' | 'smooth'
@@ -85,6 +85,7 @@ export class AutoLine extends BasePlotRenderer {
         this.area = document.createElementNS(NAMESPACE, 'path')
         addClasses(this.area, 'area', this.options.classes)
         this.root.appendChild(this.area)
+        if (this.options.area instanceof ChartGradient) this.options.area.fill(this.area)
       }
       this.area?.setAttribute('d', paths.map(t => t.area ?? '').join(' '))
     }
