@@ -1,4 +1,6 @@
 <template>
+  <h1>Таблица Лидеров</h1>
+
   <div class="onslaught-leaderboard-page">
 
     <input type="number" v-model="page" />

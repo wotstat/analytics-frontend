@@ -57,23 +57,27 @@
       <div class="flex-1"></div>
       <div class="header-right flex">
         <router-link to="/" class="hero">Главная</router-link>
-        <router-link to="/session" class="infographics">Инфографика</router-link>
+        <QueryPreserveRouterLink to="/session" class="infographics">Инфографика</QueryPreserveRouterLink>
         <router-link to="/widgets" class="widgets">Виджеты</router-link>
         <router-link to="/install" class="install" v-new-feature-badge="'mod-installer'">Скачать</router-link>
         <!-- <router-link to="/bb25" class="replays bob25">ББ2025</router-link> -->
-        <router-link to="/mt-36-1" class="replays bob25" v-new-feature-badge="'mt-36-1'">Разворот 1.36.1</router-link>
+        <!-- <router-link to="/mt-36-1" class="replays bob25" v-new-feature-badge="'mt-36-1'">Разворот 1.36.1</router-link> -->
         <!-- <router-link to="/replays" class="replays">Реплеи</router-link> -->
+        <QueryPreserveRouterLink to="/onslaught/personal" class="replays bob25" v-new-feature-badge="'onslaught'">Натиск
+        </QueryPreserveRouterLink>
 
         <div class="drop-down points-menu">
           <PointsIcon class="icon" />
           <div class="menu">
 
             <router-link to="/" class="hero">Главная</router-link>
-            <router-link to="/session" class="infographics">Инфографика</router-link>
+            <QueryPreserveRouterLink to="/session" class="infographics">Инфографика</QueryPreserveRouterLink>
             <router-link to="/widgets" class="widgets">Виджеты</router-link>
             <router-link to="/install" class="install">Скачать</router-link>
             <!-- <router-link to="/bb25" class="replays">ББ2025</router-link> -->
-            <router-link to="/mt-36-1" class="replays">Разворот 1.36.1</router-link>
+            <!-- <router-link to="/mt-36-1" class="replays">Разворот 1.36.1</router-link> -->
+            <QueryPreserveRouterLink to="/onslaught/personal" class="comp7" v-new-feature-badge="'onslaught'">Натиск
+            </QueryPreserveRouterLink>
             <!-- <router-link to="/replays" class="replays">Реплеи</router-link> -->
             <a :href="SQLUrl" target="_blank" rel="noopener noreferrer" class="sql">Доступ к БД </a>
             <hr class="any-page-divider">
@@ -186,6 +190,7 @@ import { useLocalStorage } from '@vueuse/core'
 import { vNewFeatureBadge } from '@/shared/uiKit/newFeatureBadge/newFeatureBadge'
 import HetznerBlock0126 from '../problems/hetznerBlock0126/HetznerBlock0126.vue'
 import Problem280426 from '../problems/problem280426/problem280426.vue'
+import QueryPreserveRouterLink from '../sidebarLayout/QueryPreserveRouterLink.vue'
 
 
 const SQLUrl = CLICKHOUSE_URL + '/play?user=public#c2VsZWN0IHRhYmxlLCBuYW1lLCBjb21tZW50LCB0eXBlIGZyb20gZGVzY3JpcHRpb247'
@@ -644,10 +649,10 @@ $language-section: 300px;
   color: white !important;
 
   text-shadow:
-    0.5px 0.3px 4px rgba(0, 195, 255, 0.3),
-    -0.5px -0.5px 4px rgba(225, 0, 255, 0.3),
+    0.5px 0.3px 4px rgba(0, 255, 64, 0.3),
+    -0.5px -0.5px 4px rgba(0, 51, 255, 0.3),
     0.5px 0.5px 1.2px rgb(0, 195, 255, 0.6),
-    -0.5px -0.3px 1.2px rgb(225, 0, 255, 0.6);
+    -0.5px -0.3px 1.2px rgba(0, 123, 255, 0.6);
 
   filter: drop-shadow(0 0 0.5em #0000003e);
 }
