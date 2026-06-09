@@ -57,6 +57,10 @@ onMounted(() => {
     min-width: 0;
     font-size: 14px;
     padding: 0;
+
+    &::placeholder {
+      color: rgb(255, 255, 255, 0.5);
+    }
   }
 
   .search-icon>:deep(svg) {

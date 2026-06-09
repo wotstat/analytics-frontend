@@ -11,8 +11,8 @@
     <template #content-top></template>
 
     <template #default>
+      <img src="./assets/bg-1.jpeg" alt="background" class="background">
       <RouterView></RouterView>
-
       <hr class="footer">
     </template>
   </SidebarLayout>
@@ -44,6 +44,17 @@ setFeatureVisit('onslaught')
 .footer {
   margin-top: 200px;
   margin-bottom: 50px;
-  border: 1px solid #353535;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.background {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  height: 100%;
+  filter: brightness(0.8);
+  user-select: none;
+  object-fit: cover;
+  width: 100%;
 }
 </style>
