@@ -1,4 +1,6 @@
 <template>
+  <h1>Статистика Натиска</h1>
+
   <div class="onslaught-page">
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" v-model:region="selectedRegion"
       :seasons="seasons.data ?? []" />
@@ -11,6 +13,15 @@
         :selectedIndex="selectedDayIndex" ref="dayChart" />
       <Loader :isLoading="isLoading" />
     </div>
+
+    <Transition name="fade">
+      <div class="player-not-found"
+        v-if="!isLoading && statistics && statistics.reduce((acc, stat) => acc + (stat.totalBattles ?? 0), 0) === 0">
+        <b>Статистика для игрока не найдена</b>
+        <p>Для отображения статистики необходимо установить мод <a href="/install?preset=analytics" target="_blank"
+            rel="noopener noreferrer">WotStat Аналитика</a></p>
+      </div>
+    </Transition>
 
     <MainStat :game="game" :items="mainStats" @selectDay="selectDay" />
     <VehicleTable class="vehicle-statistics" :game="game" :vehicleStats :displayedDay />
@@ -511,8 +522,47 @@ const displayedTipSelectDay = computed(() => {
     }
   }
 
+  .player-not-found {
+    margin-top: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 20px;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+
+    a {
+      color: var(--blue-thin-color);
+
+      &:hover {
+        color: var(--blue-color);
+      }
+    }
+
+    &::after {
+      content: '';
+      display: block;
+      width: 6px;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      background: rgb(255, 22, 22);
+    }
+  }
+
   .vehicle-statistics {
     margin-top: 45px;
   }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s, filter 0.15s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  filter: blur(3px);
 }
 </style>

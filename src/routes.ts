@@ -56,6 +56,14 @@ const routes = [
     ]
   },
   {
+    path: '/onslaught',
+    component: asyncPage(() => import('./pages/infographics/pages/onslaught/Layout.vue')),
+    children: [
+      { path: 'leaderboard', component: asyncPage(() => import('./pages/infographics/pages/onslaught/leaderboard/Leaderboard.vue')), },
+      { path: 'personal', component: asyncPage(() => import('./pages/infographics/pages/onslaught/statistics/Onslaught.vue')) },
+    ]
+  },
+  {
     path: '/replays',
     component: asyncPage(() => import('./pages/replays/Index.vue')),
     children: [
