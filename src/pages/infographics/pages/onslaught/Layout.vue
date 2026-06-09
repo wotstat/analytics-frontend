@@ -24,7 +24,7 @@ import QueryPreserveRouterLink from '@/pages/shared/sidebarLayout/QueryPreserveR
 import SidebarLayout from '@/pages/shared/sidebarLayout/SidebarLayout.vue'
 import { SidebarLink } from '@/pages/shared/sidebarLayout/utils'
 import { setFeatureVisit } from '@/shared/uiKit/newFeatureBadge/newFeatureBadge'
-import { RouterView, useRoute } from 'vue-router'
+import { RouterView } from 'vue-router'
 
 const links: SidebarLink[] = [
   { to: '/onslaught/personal', labels: 'Персональная' },
@@ -52,7 +52,7 @@ setFeatureVisit('onslaught')
   inset: 0;
   z-index: -10;
   height: 100%;
-  filter: brightness(0.8);
+  filter: brightness(0.7);
   user-select: none;
   object-fit: cover;
   width: 100%;
