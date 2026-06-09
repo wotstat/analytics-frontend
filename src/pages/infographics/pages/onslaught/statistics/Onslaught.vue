@@ -160,6 +160,8 @@ const eliteRatingStatistics = queryComputedFirst<{ top1: number, eliteThreshold:
 `, { top1: 0, eliteThreshold: 0, top10: 0, top100: 0 })
 
 async function load(abortSignal: AbortSignal) {
+  isLoading.value = true
+
   if (!seasonInterval.value) return
 
   if (abortSignal.aborted) return
@@ -171,7 +173,6 @@ async function load(abortSignal: AbortSignal) {
   if (!nickName) return
 
   console.log('Loading data with params', { startDate, endDate, region, nickName })
-  isLoading.value = true
 
   statistics.value = null
   selectedDayIndex.value = null
@@ -494,6 +495,10 @@ const displayedTipSelectDay = computed(() => {
 
 
 <style lang="scss" scoped>
+h1 {
+  margin-top: 0;
+}
+
 .onslaught-page {
   margin-top: 1em;
 
@@ -546,7 +551,7 @@ const displayedTipSelectDay = computed(() => {
       top: 0;
       bottom: 0;
       left: 0;
-      background: rgb(255, 22, 22);
+      background: rgb(255, 56, 60);
     }
   }
 

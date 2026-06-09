@@ -78,6 +78,10 @@ function click(name: string) {
 
 
 <style lang="scss" scoped>
+h1 {
+  margin-top: 0;
+}
+
 table {
   border-collapse: collapse;
   width: 100%;
