@@ -28,8 +28,8 @@
     </div>
 
     <PopoverAutoClose :target="item" v-model="hover" :placement="['bottom-float']"
-      :viewport-offset="{ top: headerOffset, bottom: 10, left: 10, right: 10 }" :arrow-size="5"
-      :offset="{ top: tooltipTopOffset }" v-if="slots.tooltip">
+      :viewport-offset="{ top: headerOffset, bottom: 10, left: 10, right: 10 }" :arrow-size="7"
+      :offset="{ top: tooltipTopOffset }" :class="'transparent-tooltip'" v-if="slots.tooltip">
       <div class="tooltip">
         <slot name="tooltip"></slot>
       </div>
@@ -37,7 +37,6 @@
 
   </div>
 </template>
-
 
 <script setup lang="ts">
 import { headerOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
@@ -58,6 +57,13 @@ const hover = useElementHover(item)
 const t = ref<boolean>(true)
 
 </script>
+
+<style lang="scss">
+.transparent-tooltip {
+  --popover-background-color: rgba(16, 29, 51, 1);
+  --popover-border-color: rgba(255, 255, 255, 0.2);
+}
+</style>
 
 
 <style lang="scss" scoped>

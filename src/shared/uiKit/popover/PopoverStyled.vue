@@ -2,18 +2,20 @@
   <PopoverAnimated :target :display :offset="targetOffset" :viewportOffset :placement :preserveLastPlacement :styles
     @pointer-down-outside="e => emit('pointerDownOutside', e)" @target-outside-window="emit('targetOutsideWindow')"
     @pointer-click-outside="e => emit('pointerClickOutside', e)" v-slot="{ arrow, transitionClass }" :duration="200">
-    <div class="popover-card" ref="popoverCard" :class="{
+    <div class="popover-card" ref="popoverCard" :class="[{
       [`arrow-${arrow.direction}`]: arrow.direction,
       'arrow-disabled': arrowSize == 0,
-      ...transitionClass.reduce((acc, cls) => ({ ...acc, [cls]: true }), {})
-    }" :style="{
-      '--background-color': '#2a2a2a',
-      '--arrow-x': `${arrow.x}px`,
-      '--arrow-y': `${arrow.y}px`,
+      'arrow-mask': arrowUsingMask,
+      ...transitionClass.reduce((acc, cls) => ({ ...acc, [cls]: true }), {}),
+    }, classes]" :style="{
+      '--arrow-x': `${roundDpr(arrow.x || 0)}px`,
+      '--arrow-y': `${roundDpr(arrow.y || 0)}px`,
       '--arrow-size': `${arrowSize ?? 5}px`,
     }">
-      <div class="popover-content">
-        <slot></slot>
+      <div class="popover-background">
+        <div class="popover-content">
+          <slot></slot>
+        </div>
       </div>
     </div>
   </PopoverAnimated>
@@ -21,9 +23,10 @@
 
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { OffsetValue, PlacementParam } from './utils'
+import { ClassValue, normalizeClass, computed } from 'vue'
+import { OffsetValue, PlacementParam, roundDpr } from './utils'
 import PopoverAnimated from './PopoverAnimated.vue'
+
 
 const { target,
   display,
@@ -32,16 +35,20 @@ const { target,
   placement,
   preserveLastPlacement = true,
   arrowSize,
-  styles
+  arrowUsingMask,
+  styles,
+  class: classes
 } = defineProps<{
   target: HTMLElement | null
   display: boolean
   offset?: OffsetValue
   viewportOffset?: OffsetValue
   arrowSize?: number
+  arrowUsingMask?: boolean
   preserveLastPlacement?: boolean
   placement?: PlacementParam
   styles?: Record<string, string>
+  class?: ClassValue
 }>()
 
 const emit = defineEmits<{
@@ -60,26 +67,14 @@ const targetOffset = computed<OffsetValue>(() => {
 
 
 <style lang="scss" scoped>
-$background-color: var(--background-color, #2a2a2a);
-$border-color: var(--border-color, #444);
+$background-color: var(--popover-background-color, #2a2a2a);
+$border-color: var(--popover-border-color, #444);
 $animation-offset: var(--animation-transition-offset, 3px);
 
-
-.popover-card {
-  background-color: $background-color;
-  color: #f6f6f6;
-  border-radius: 10px;
-  border: 1px solid $border-color;
-  box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.3);
-  position: relative;
-
-  .popover-content {
-    overflow: hidden;
-    border-radius: 9px;
-  }
-
+.popover-card:not(.arrow-disabled) {
   &::after {
     content: '';
+    box-sizing: border-box;
     position: absolute;
     top: var(--arrow-y);
     left: var(--arrow-x);
@@ -94,30 +89,94 @@ $animation-offset: var(--animation-transition-offset, 3px);
   }
 
   $half-arrow: var(--arrow-size) / -2;
-  $offset-1px: calc($half-arrow - 1px);
-  $offset-2px: calc($half-arrow - 2px);
-  $offset-3px: calc($half-arrow - 3px);
+  $offset-0: calc($half-arrow);
+  $offset-p1: calc($half-arrow + 1px);
+  $offset-n1: calc($half-arrow - 1px);
 
   &.arrow-left::after {
-    transform: translate($offset-1px, $offset-1px) rotate(-135deg);
+    transform: translate($offset-p1, $offset-0) rotate(-135deg);
   }
 
   &.arrow-right::after {
-    transform: translate($offset-3px, $offset-1px) rotate(45deg);
+    transform: translate($offset-n1, $offset-0) rotate(45deg);
   }
 
   &.arrow-top::after {
-    transform: translate($offset-2px, $offset-1px) rotate(-45deg);
+    transform: translate($offset-0, $offset-p1) rotate(-45deg);
   }
 
   &.arrow-bottom::after {
-    transform: translate($offset-2px, $offset-3px) rotate(135deg);
+    transform: translate($offset-0, $offset-n1) rotate(135deg);
   }
 
-  &.arrow-disabled::after {
-    display: none;
-  }
+  &.arrow-mask {
+    $sqrt2: 0.7071067812; // sqrt(2) / 2
+    $half: calc(var(--arrow-size) * $sqrt2);
+    $n-half: calc(var(--arrow-size) * $sqrt2 * -1);
+    $x: var(--arrow-x);
+    $y: var(--arrow-y);
 
+    &.arrow-left {
+      $mask-shape: calc($x - $half + 1px) calc($y),
+        calc($x + 1px) calc($y + $half),
+        calc($x + 1px) calc($y - $half),
+        calc($x - $half + 1px) calc($y);
+
+      --mask-shape: #{$mask-shape};
+    }
+
+    &.arrow-right {
+      $mask-shape: calc($x + $half - 1px) calc($y),
+        calc($x - 1px) calc($y + $half),
+        calc($x - 1px) calc($y - $half),
+        calc($x + $half - 1px) calc($y);
+
+      --mask-shape: #{$mask-shape};
+    }
+
+    &.arrow-top {
+      $mask-shape: $x calc($y - $half + 1px),
+        calc($x + $half) 1px,
+        calc($x - $half) 1px,
+        $x calc($y - $half + 1px);
+
+      --mask-shape: #{$mask-shape};
+    }
+
+    &.arrow-bottom {
+      $mask-shape: $x calc($y + $half - 1px),
+        calc($x + $half) calc($y - 1px),
+        calc($x - $half) calc($y - 1px),
+        $x calc($y + $half - 1px);
+
+      --mask-shape: #{$mask-shape};
+    }
+
+    .popover-background {
+      clip-path: polygon(evenodd,
+          -20px -20px,
+          calc(100% - -20px) -20px,
+          calc(100% - -20px) calc(100% - -20px),
+          -20px calc(100% - -20px),
+          -20px -20px,
+          var(--mask-shape),
+        );
+    }
+  }
+}
+
+.popover-background {
+  background-color: $background-color;
+  color: #f6f6f6;
+  border-radius: 10px;
+  border: 1px solid $border-color;
+  box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.3);
+  position: relative;
+
+  .popover-content {
+    overflow: hidden;
+    border-radius: 9px;
+  }
 }
 
 .v-prepare {

@@ -293,3 +293,7 @@ export function getArrowPosition(position: ReturnType<typeof calculatePopoverPos
 
   return { x, y, direction }
 }
+
+export function roundDpr(value: number) {
+  return Math.round(value * window.devicePixelRatio) / window.devicePixelRatio
+}

@@ -1,5 +1,5 @@
 <template>
-  <PopoverStyled v-bind="targetProps" :display="display" :styles @pointer-click-outside="onClickOutside"
+  <PopoverStyled v-bind="targetProps" :display="display" @pointer-click-outside="onClickOutside"
     @pointer-down-outside="onPointerDownOutside" @target-outside-window="onTargetOutside" :duration="200">
     <slot></slot>
   </PopoverStyled>
@@ -9,7 +9,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { OffsetValue, PlacementParam } from './utils'
-import { onKeyDown, useEventListener, useMediaQuery } from '@vueuse/core'
+import { onKeyDown, useMediaQuery } from '@vueuse/core'
 import PopoverStyled from './PopoverStyled.vue'
 
 
@@ -18,9 +18,11 @@ const props = defineProps<{
   offset?: OffsetValue
   viewportOffset?: OffsetValue
   arrowSize?: number
+  arrowUsingMask?: boolean
   preserveLastPlacement?: boolean
   placement?: PlacementParam
   styles?: Record<string, string>
+  class?: string
 }>()
 
 const display = defineModel<boolean>({ default: false })
@@ -30,9 +32,11 @@ const targetProps = computed(() => ({
   offset: props.offset,
   viewportOffset: props.viewportOffset,
   arrowSize: props.arrowSize,
+  arrowUsingMask: props.arrowUsingMask,
   preserveLastPlacement: props.preserveLastPlacement,
   placement: props.placement,
-  styles: props.styles
+  styles: props.styles,
+  class: props.class,
 }))
 
 const emit = defineEmits<{
