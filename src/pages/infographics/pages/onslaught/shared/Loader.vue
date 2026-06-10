@@ -12,9 +12,10 @@ import { computed, ref, watch } from 'vue'
 
 const props = defineProps<{
   isLoading: boolean
+  predictedLoadingTime?: number
 }>()
 
-const loadingTimeHistory = ref([500])
+const loadingTimeHistory = ref([props.predictedLoadingTime ?? 500])
 
 let lastLoadingTimeStart = 0
 watch(() => props.isLoading, (newVal) => {
@@ -34,7 +35,7 @@ watch(() => props.isLoading, (newVal) => {
 const animationDuration = computed(() => {
   if (loadingTimeHistory.value.length === 0) return '1s'
   const avgLoadingTime = loadingTimeHistory.value.reduce((a, b) => a + b, 0) / loadingTimeHistory.value.length
-  return `${Math.max(300, Math.min(avgLoadingTime * 1.5, 3000))}ms`
+  return `${Math.max(500, Math.min(avgLoadingTime * 1.5, 3000))}ms`
 })
 
 </script>

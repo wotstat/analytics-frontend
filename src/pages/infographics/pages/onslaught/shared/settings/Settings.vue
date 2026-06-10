@@ -27,26 +27,33 @@
 
 <script setup lang="ts">
 import NicknameInput from './nicknameInput/NicknameInput.vue'
-import { computed, shallowRef, watch } from 'vue'
+import { computed, shallowRef, watch, watchEffect } from 'vue'
 import { useI18n } from '@/shared/i18n/useI18n'
 import i18n from '@/shared/game/comp7/i18n.json'
+import { useRoute, useRouter } from 'vue-router'
+import { loading, LONG_CACHE_SETTINGS, queryAsync } from '@/db'
+import { getRegionIsoHourOffset } from '@/shared/game/comp7/utils'
 
 const { t } = useI18n(i18n)
 
-const props = defineProps<{
-  seasons: { region: string, season: string }[]
-}>()
+
+const route = useRoute()
+const router = useRouter()
 
 const regions = ['RU', 'EU', 'NA', 'ASIA', 'CT'] as const
 
+const seasons = defineModel<{ region: string, season: string, start: string, end: string }[]>('seasons')
 const selectedSeason = defineModel<string | null>('season')
 const selectedRegion = defineModel<'RU' | 'EU' | 'NA' | 'ASIA' | 'CT'>('region')
 const nickname = defineModel<string>('nickname')
-const currentSeasons = computed(() => props.seasons.filter(s => s.region === selectedRegion.value) || [])
+const currentSeasons = computed(() => seasons.value?.filter(s => s.region === selectedRegion.value) || [])
+
+selectedSeason.value = typeof route.query.season === 'string' ? route.query.season : null
+selectedRegion.value = typeof route.query.region === 'string' ? route.query.region as any : 'RU'
 
 function changeRegion(target: 'RU' | 'EU' | 'NA' | 'ASIA' | 'CT') {
   selectedRegion.value = target
-  const seasonsForRegion = props.seasons.filter(s => s.region === target)
+  const seasonsForRegion = seasons.value?.filter(s => s.region === target) || []
   if (!seasonsForRegion.length) {
     selectedSeason.value = null
     return
@@ -55,8 +62,44 @@ function changeRegion(target: 'RU' | 'EU' | 'NA' | 'ASIA' | 'CT') {
   selectedSeason.value = seasonsForRegion[0].season
 }
 
+watchEffect(() => {
+  router.push({
+    query: {
+      ...route.query,
+      region: selectedRegion.value,
+      season: selectedSeason.value,
+    },
+  })
+})
+
+const seasonsData = queryAsync<{ region: string, season: string, start: string, end: string }>(`
+  select region, season,
+        min(toStartOfDay(dateTime + interval ${getRegionIsoHourOffset(selectedRegion.value ?? 'RU')} hour)) as start,
+        max(toStartOfDay(dateTime + interval ${getRegionIsoHourOffset(selectedRegion.value ?? 'RU')} hour)) as end
+  from Event_OnComp7Info
+  where region in ('RU', 'EU', 'NA', 'ASIA', 'CT')
+  group by region, season
+  order by start desc
+`, { settings: LONG_CACHE_SETTINGS })
+
+watchEffect(() => seasons.value = seasonsData.value?.data ?? [])
+
+watch(seasons, () => {
+  const seasonList = seasonsData.value?.data.filter(s => s.region === selectedRegion.value).map(s => s.season) ?? []
+  if (seasonList.includes(selectedSeason.value ?? '')) return
+
+  if (seasonsData.value.status == loading) return
+
+  selectedSeason.value = seasonList.length > 0 ? seasonList[0] : null
+})
+
 </script>
 
+<style lang="scss">
+html {
+  scrollbar-gutter: stable;
+}
+</style>
 
 <style lang="scss" scoped>
 .settings {
@@ -111,7 +154,6 @@ function changeRegion(target: 'RU' | 'EU' | 'NA' | 'ASIA' | 'CT') {
     }
 
     &.active {
-      // background-color: var(--blue-thin-color);
       background-color: var(--blue-color);
     }
   }
