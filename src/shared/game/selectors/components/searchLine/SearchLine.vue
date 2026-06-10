@@ -6,7 +6,7 @@
     </div>
     <!-- <Search class="search-icon" /> -->
     <input name="search" type="text" :placeholder="placeholder ?? 'Поиск'" v-model="value" ref="searchInput" />
-    <button class="clear-input" @click="value = ''" :class="value == '' ? 'empty' : ''">
+    <button class="clear-input" @click="value = ''; emit('clear')" :class="value == '' ? 'empty' : ''">
       <X class="clear-icon" />
     </button>
   </div>
@@ -25,6 +25,10 @@ const searchInput = ref<HTMLInputElement | null>(null)
 const props = defineProps<{
   placeholder?: string
   autofocus?: boolean
+}>()
+
+const emit = defineEmits<{
+  clear: []
 }>()
 
 const slots = useSlots()
@@ -57,6 +61,10 @@ onMounted(() => {
     min-width: 0;
     font-size: 14px;
     padding: 0;
+
+    &::placeholder {
+      color: rgb(255, 255, 255, 0.5);
+    }
   }
 
   .search-icon>:deep(svg) {
