@@ -8,7 +8,8 @@
 
     <div class="info" v-if="leaderboardDay && leaderboardData.length">
       <PageSelector :start="1" :end="endPage" v-model="page" class="page-selector" />
-      <div class="last-recalculation">Обновлено: {{ leaderboardDay.recalculation }}</div>
+      <div class="last-recalculation">Обновлено: {{ updatedAt }}
+      </div>
     </div>
     <div class="page-selector" v-else></div>
 
@@ -82,6 +83,19 @@ const endPage = computed(() => {
   return Math.ceil(leaderboardDay.value.lastRank / 100)
 })
 
+const updatedAt = computed(() => {
+  if (!leaderboardDay.value) return null
+  const date = new Date(leaderboardDay.value.recalculation + 'Z')
+
+  return date.toLocaleString([], {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).replace(',', '')
+})
+
 type LeaderboardData = {
   day: string
   name: string
@@ -103,9 +117,12 @@ async function load(abortSignal: AbortSignal) {
   isLoading.value = true
   if (!leaderboardDay.value) {
     const lastData = await query<{ day: string, recalculation: string, lastRank: number }>(`
-    with '${seasonInterval.value ? dateToDbDate(seasonInterval.value?.end) : '2200-01-01'}' as END_DATE,
+    with
+      '${dateToDbDate(seasonInterval.value.start)}' as START_DATE,
+      '${dateToDbDate(seasonInterval.value.end)}' as END_DATE,
     select max(day) as day, max(recalculationTime) as recalculation, max(rank) as lastRank
-    from Comp7Leaderboard where region = '${region.value}' and recalculationTime <= END_DATE + interval 5 day
+    from Comp7Leaderboard where region = '${region.value}' and
+      recalculationTime between START_DATE and END_DATE + interval 5 day
   `)
 
     if (abortSignal.aborted) return
