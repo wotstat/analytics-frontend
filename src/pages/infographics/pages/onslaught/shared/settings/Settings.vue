@@ -1,10 +1,10 @@
 <template>
   <div class="settings">
     <div class="line-main">
-      <NicknameInput :syncToRoute="true" class="nickname" v-model="nickname" />
+      <NicknameInput :syncToRoute="true" class="nickname" v-model="nickname" v-if="props.showNameInput" />
 
       <div class="game-select">
-        <div class="vr"></div>
+        <div class="vr" v-if="props.showNameInput"></div>
         <button class="variant mt-font selectable" v-for="region in regions"
           :class="{ 'active': selectedRegion === region }" @click="changeRegion(region)" :key="region">
           {{ region }}
@@ -36,6 +36,9 @@ import { getRegionIsoHourOffset } from '@/shared/game/comp7/utils'
 
 const { t } = useI18n(i18n)
 
+const props = defineProps<{
+  showNameInput?: boolean
+}>()
 
 const route = useRoute()
 const router = useRouter()

@@ -3,7 +3,7 @@
 
   <div class="onslaught-page">
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" v-model:region="selectedRegion"
-      v-model:seasons="seasons" />
+      v-model:seasons="seasons" :showNameInput="true" />
     <SecondaryStat :qualification="qualificationStats" :currentRating="currentRating" :game="game"
       :season="selectedSeason || 'latest'" />
     <div class="chart">
@@ -52,6 +52,7 @@ import TipSelectDay from './tips/TipSelectDay.vue'
 import Loader from '../shared/Loader.vue'
 import SecondaryStat from './secondaryStat/SecondaryStat.vue'
 import { refDebouncedCheck } from '@/shared/utils/refDebouncedCheck'
+import { useSeasonInterval } from '../shared/useSeasonInterval'
 
 const ONE_HOUR = 60 * 60 * 1000
 const ONE_DAY = 24 * ONE_HOUR
@@ -114,21 +115,7 @@ onKeyStroke('Escape', (e) => {
 const { top: chartTop, height: chartHeight } = useElementBounding(dayChart)
 const isChartDayVisible = computed(() => chartTop.value + chartHeight.value - headerOffset.value - 25 > 0)
 const displayedDay = computed(() => !isChartDayVisible.value && selectedDayIndex.value != null ? selectedDayIndex.value + 1 : null)
-
-
-const seasonInterval = computed(() => {
-  if (!selectedSeason.value) return null
-  if (!seasons.value) return null
-  const season = seasons.value.find(s => s.season === selectedSeason.value && s.region === selectedRegion.value)
-  if (!season) return null
-
-  const start = new Date(season.start + 'Z')
-  const end = new Date(season.end + 'Z')
-
-  if (isNaN(start.getTime()) || isNaN(end.getTime())) return null
-  const seasonLength = getSeasonDuration(season.season, season.region)
-  return { start, end: new Date(start.getTime() + seasonLength), length: seasonLength / ONE_DAY }
-})
+const seasonInterval = useSeasonInterval(seasons, selectedSeason, selectedRegion)
 
 const statistics = shallowRef<StatisticRes[] | null>(null)
 const vehicleStatistics = shallowRef<VehicleRes[] | null>(null)
