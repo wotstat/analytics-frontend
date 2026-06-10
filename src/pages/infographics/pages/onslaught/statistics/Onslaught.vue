@@ -3,7 +3,7 @@
 
   <div class="onslaught-page">
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" v-model:region="selectedRegion"
-      :seasons="seasons.data ?? []" />
+      v-model:seasons="seasons" />
     <SecondaryStat :qualification="qualificationStats" :currentRating="currentRating" :game="game"
       :season="selectedSeason || 'latest'" />
     <div class="chart">
@@ -33,9 +33,9 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from 'vue'
 import DayChart from './dayChart/DayChart.vue'
-import { dateToDbDate, LONG_CACHE_SETTINGS, query, queryAsync, queryComputedFirst } from '@/db'
+import { dateToDbDate, query, queryComputedFirst } from '@/db'
 import { gameToRegion, regionToGame } from '@/shared/game/wot'
-import Settings from './settings/Settings.vue'
+import Settings from '../shared/settings/Settings.vue'
 import { onKeyStroke, refDebounced, useElementBounding } from '@vueuse/core'
 import { DayChartData } from './types'
 import MainStat from './mainStat/MainStat.vue'
@@ -49,8 +49,9 @@ import MapsTable from './mapsTable/MapsTable.vue'
 import { headerOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import TipKeyboardChangeDay from './tips/TipKeyboardChangeDay.vue'
 import TipSelectDay from './tips/TipSelectDay.vue'
-import Loader from './Loader.vue'
+import Loader from '../shared/Loader.vue'
 import SecondaryStat from './secondaryStat/SecondaryStat.vue'
+import { refDebouncedCheck } from '@/shared/utils/refDebouncedCheck'
 
 const ONE_HOUR = 60 * 60 * 1000
 const ONE_DAY = 24 * ONE_HOUR
@@ -61,9 +62,10 @@ const dayChart = ref<HTMLElement | null>(null)
 
 const selectedDayIndex = ref<number | null>(null)
 const selectedSeason = ref<string | null>(null)
+const seasons = ref<{ region: string, season: string, start: string, end: string }[]>([])
 const selectedRegion = ref<'RU' | 'EU' | 'NA' | 'ASIA' | 'CT'>('RU')
 const nickname = ref<string>('')
-const debouncedNickname = refDebounced(nickname, 500)
+const debouncedNickname = refDebouncedCheck(nickname, (n, old) => old.length > 0 ? 500 : 0)
 const isLoading = ref(false)
 const game = computed(() => regionToGame(selectedRegion.value))
 
@@ -113,25 +115,11 @@ const { top: chartTop, height: chartHeight } = useElementBounding(dayChart)
 const isChartDayVisible = computed(() => chartTop.value + chartHeight.value - headerOffset.value - 25 > 0)
 const displayedDay = computed(() => !isChartDayVisible.value && selectedDayIndex.value != null ? selectedDayIndex.value + 1 : null)
 
-const seasons = queryAsync<{ region: string, season: string, start: string, end: string }>(`
-  select region, season,
-        min(toStartOfDay(dateTime + interval ${getRegionIsoHourOffset(selectedRegion.value)} hour)) as start,
-        max(toStartOfDay(dateTime + interval ${getRegionIsoHourOffset(selectedRegion.value)} hour)) as end
-  from Event_OnComp7Info
-  where region in ('RU', 'EU', 'NA', 'ASIA', 'CT')
-  group by region, season
-  order by start desc
-`, { settings: LONG_CACHE_SETTINGS })
-
-watch(seasons, () => {
-  const seasonList = seasons.value?.data.filter(s => s.region === selectedRegion.value).map(s => s.season) ?? []
-  selectedSeason.value = seasonList.length > 0 ? seasonList[0] : null
-})
 
 const seasonInterval = computed(() => {
   if (!selectedSeason.value) return null
-  if (!seasons.value.data) return null
-  const season = seasons.value.data.find(s => s.season === selectedSeason.value && s.region === selectedRegion.value)
+  if (!seasons.value) return null
+  const season = seasons.value.find(s => s.season === selectedSeason.value && s.region === selectedRegion.value)
   if (!season) return null
 
   const start = new Date(season.start + 'Z')
@@ -141,7 +129,6 @@ const seasonInterval = computed(() => {
   const seasonLength = getSeasonDuration(season.season, season.region)
   return { start, end: new Date(start.getTime() + seasonLength), length: seasonLength / ONE_DAY }
 })
-
 
 const statistics = shallowRef<StatisticRes[] | null>(null)
 const vehicleStatistics = shallowRef<VehicleRes[] | null>(null)
@@ -160,17 +147,16 @@ const eliteRatingStatistics = queryComputedFirst<{ top1: number, eliteThreshold:
 `, { top1: 0, eliteThreshold: 0, top10: 0, top100: 0 })
 
 async function load(abortSignal: AbortSignal) {
+  const nickName = debouncedNickname.value
+  if (!nickName) return
+  if (abortSignal.aborted) return
+
   isLoading.value = true
 
   if (!seasonInterval.value) return
-
-  if (abortSignal.aborted) return
   const startDate = dateToDbDate(seasonInterval.value.start)
   const endDate = dateToDbDate(seasonInterval.value.end)
   const region = selectedRegion.value
-  const nickName = debouncedNickname.value
-
-  if (!nickName) return
 
   console.log('Loading data with params', { startDate, endDate, region, nickName })
 

@@ -8,7 +8,7 @@ import {
 
 export function refDebouncedCheck<T>(
   value: Ref<T>,
-  delay: (value: T) => number,
+  delay: (value: T, old: T) => number,
   trailing: boolean = true,
   leading: boolean = false,
 ): Readonly<Ref<T>> {
@@ -29,9 +29,9 @@ export function refDebouncedCheck<T>(
     debounced.value = newValue
   }
 
-  const stop = watch(value, (newValue) => {
+  const stop = watch(value, (newValue, oldValue) => {
     // Important: recalculated on every value change
-    const currentDelay = Math.max(0, delay(newValue))
+    const currentDelay = Math.max(0, delay(newValue, oldValue))
 
     pendingValue = newValue
 

@@ -1,6 +1,6 @@
 <template>
   <div class="player-nickname">
-    <SearchLine v-model="nickname" :placeholder="'Никнейм'">
+    <SearchLine v-model="nickname" :placeholder="'Никнейм'" @clear="handleClear">
       <template #icon>
         <PlayerIcon />
       </template>
@@ -47,13 +47,21 @@ const debouncedNickname = refDebounced(nickname, props.syncDebounceTime ?? 1000)
 
 watch(debouncedNickname, (newNickname) => {
   if (!props.syncToRoute) return
+  updateQuery(newNickname)
+})
 
+function handleClear() {
+  updateQuery('')
+}
+
+function updateQuery(newNickname: string) {
   const query = { ...route.query }
   if (newNickname) query.nickname = newNickname
   else delete query.nickname
 
   router.push({ ...route, query })
-})
+}
+
 </script>
 
 

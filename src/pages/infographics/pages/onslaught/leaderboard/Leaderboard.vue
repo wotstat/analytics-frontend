@@ -3,9 +3,14 @@
 
   <div class="onslaught-leaderboard-page">
 
-    <input type="number" v-model="page" />
+    <Settings v-model:season="selectedSeason" v-model:nickname="nickname" v-model:region="region"
+      v-model:seasons="seasons" />
 
-    <table>
+    <Loader :isLoading="isLoading" class="leaderboard-loader" :predictedLoadingTime="100" />
+    <PageSelector :start="1" :end="endPage" v-model="page" class="page-selector" v-if="leaderboardDay" />
+    <div class="page-selector" v-else></div>
+
+    <table v-if="leaderboardData.length">
 
       <thead>
         <tr>
@@ -19,11 +24,11 @@
       </thead>
 
       <tbody>
-        <template v-for="line in dataResult.data" :key="line.name">
+        <template v-for="line in leaderboardData" :key="line.name">
           <LeaderboardLine :line="line" :game="game" @click="click(line.name)" :class="{
-            'selected': selectedName == line.name,
+            'selected': selectedName == line.name && false,
           }" />
-          <tr v-if="selectedName == line.name" class="details">
+          <tr v-if="selectedName == line.name && false" class="details">
             <td colspan="6">
               <Detail />
             </td>
@@ -32,25 +37,47 @@
       </tbody>
     </table>
   </div>
+
+  <PageSelector :start="1" :end="endPage" v-model="page" class="page-selector"
+    v-if="leaderboardDay && leaderboardData.length > 10" />
 </template>
 
 
 <script setup lang="ts">
-import { loading, queryComputed } from '@/db'
-import { refDebouncedCheck } from '@/shared/utils/refDebouncedCheck'
-import { computed, ref } from 'vue'
+import { query } from '@/db'
+import { computed, ref, watch } from 'vue'
 import LeaderboardLine from './LeaderboardLine.vue'
 import { regionToGame } from '@/shared/game/wot'
 import Detail from './Detail.vue'
+import Loader from '../shared/Loader.vue'
 
-const props = defineProps<{}>()
+import Settings from '../shared/settings/Settings.vue'
+import { refDebounced } from '@vueuse/core'
+import { watchWithAbortSignal } from '@/shared/utils/core'
+import PageSelector from './PageSelector.vue'
+
 
 const page = ref(1)
 const selectedName = ref<string | null>(null)
-const region = ref<'RU' | 'NA' | 'EU' | 'ASIA'>('RU')
+
+const seasons = ref<{ region: string, season: string, start: string, end: string }[]>([])
+const selectedSeason = ref<string | null>(null)
+const region = ref<'RU' | 'EU' | 'NA' | 'ASIA' | 'CT'>('RU')
+const nickname = ref<string>('')
+const debouncedNickname = refDebounced(nickname, 500)
 const game = computed(() => regionToGame(region.value))
 
-const data = queryComputed<{
+const leaderboardDay = ref<{ day: string, recalculation: string, lastRank: number } | null>(null)
+const leaderboardData = ref<LeaderboardData[]>([])
+const isLoading = ref(false)
+
+const endPage = computed(() => {
+  if (!leaderboardDay.value) return 0
+  return Math.ceil(leaderboardDay.value.lastRank / 100)
+})
+
+type LeaderboardData = {
+  day: string
   name: string
   bdid: number
   clan: string | null
@@ -61,14 +88,49 @@ const data = queryComputed<{
   lastDayBattlesCount: number
   lastRating: number
   lastDayRating: number
-}>(() => `
-  select name, bdid, clan, clanColor, lastRank, lastDayRank, lastBattlesCount, lastDayBattlesCount, lastRating, lastDayRating
-  from Comp7LeaderboardDailyByRank
-  where region = '${region.value}' and day = '2026-04-28' and lastRank between ${(page.value - 1) * 100 + 1} and ${page.value * 100}
-  order by lastRank
-`)
+}
 
-const dataResult = refDebouncedCheck(data, v => v.status == loading ? 500 : 0)
+
+async function load(abortSignal: AbortSignal) {
+  isLoading.value = true
+  if (!leaderboardDay.value) {
+    const lastData = await query<{ day: string, recalculation: string, lastRank: number }>(`
+    select max(day) as day, max(recalculationTime) as recalculation, max(rank) as lastRank
+    from Comp7Leaderboard where region = '${region.value}'
+  `)
+
+    if (abortSignal.aborted) return
+    if (lastData.data.length == 0) return
+
+    leaderboardDay.value = lastData.data[0]
+  }
+
+  const resetTimeout = setTimeout(() => leaderboardData.value = [], 500)
+  abortSignal.addEventListener('abort', () => clearTimeout(resetTimeout))
+
+  const data = await query<LeaderboardData>(`
+    select day, name, bdid, clan, clanColor, lastRank, lastDayRank, lastBattlesCount, lastDayBattlesCount, lastRating, lastDayRating
+    from Comp7LeaderboardDailyByRank final
+    where region = '${region.value}' and 
+      day = '${leaderboardDay.value.day}' and 
+      lastRank between ${(page.value - 1) * 100 + 1} and ${page.value * 100}
+    order by lastRank
+  `, { abortSignal })
+
+  if (abortSignal.aborted) return
+
+  clearTimeout(resetTimeout)
+  leaderboardData.value = data.data
+  isLoading.value = false
+}
+
+watch([selectedSeason, region], () => {
+  leaderboardDay.value = null
+  leaderboardData.value = []
+  page.value = 1
+})
+
+watchWithAbortSignal([region, page, selectedSeason], signal => load(signal), { immediate: true })
 
 function click(name: string) {
   selectedName.value = selectedName.value == name ? null : name
@@ -80,6 +142,16 @@ function click(name: string) {
 <style lang="scss" scoped>
 h1 {
   margin-top: 0;
+}
+
+.leaderboard-loader {
+  margin: 20px 0;
+  height: 2px;
+}
+
+.page-selector {
+  margin: 10px 0;
+  min-height: 20.5px;
 }
 
 table {
@@ -95,7 +167,7 @@ table {
         padding: 0px 15px;
 
         &:nth-child(1) {
-          width: 60px;
+          width: 85px;
         }
 
         &:nth-child(2) {
