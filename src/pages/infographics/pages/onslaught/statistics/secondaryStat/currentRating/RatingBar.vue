@@ -123,7 +123,7 @@ const progress = computed(() => {
 
   if (!props.rating) return 0
 
-  return ((props.rating - min) / (max - min)) * 100
+  return Math.max(0, Math.min(100, ((props.rating - min) / (max - min)) * 100))
 })
 
 </script>

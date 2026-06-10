@@ -155,11 +155,11 @@ $mobile-layout: 1100px;
       cursor: pointer;
 
       &.router-link-exact-active {
-        background-color: #353535;
+        background-color: #ffffff14;
       }
 
       &:hover {
-        background-color: #353535;
+        background-color: #ffffff14;
       }
     }
   }

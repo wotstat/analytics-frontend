@@ -38,3 +38,9 @@ function onClick(e: MouseEvent) {
   })
 }
 </script>
+
+<style lang="scss" scoped>
+a {
+  cursor: pointer;
+}
+</style>
