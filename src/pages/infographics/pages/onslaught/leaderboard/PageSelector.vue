@@ -114,6 +114,7 @@ const pages = computed(() => {
   .ellipsis {
     width: 20px;
     text-align: center;
+    line-height: normal;
   }
 
 

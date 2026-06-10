@@ -6,9 +6,13 @@
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" v-model:region="region"
       v-model:seasons="seasons" />
 
-    <Loader :isLoading="isLoading" class="leaderboard-loader" :predictedLoadingTime="100" />
-    <PageSelector :start="1" :end="endPage" v-model="page" class="page-selector" v-if="leaderboardDay" />
+    <div class="info" v-if="leaderboardDay && leaderboardData.length">
+      <PageSelector :start="1" :end="endPage" v-model="page" class="page-selector" />
+      <div class="last-recalculation">Обновлено: {{ leaderboardDay.recalculation }}</div>
+    </div>
     <div class="page-selector" v-else></div>
+
+    <Loader :isLoading="isLoading" class="leaderboard-loader" :predictedLoadingTime="100" />
 
     <table v-if="leaderboardData.length">
 
@@ -44,7 +48,7 @@
 
 
 <script setup lang="ts">
-import { query } from '@/db'
+import { dateToDbDate, query } from '@/db'
 import { computed, ref, watch } from 'vue'
 import LeaderboardLine from './LeaderboardLine.vue'
 import { regionToGame } from '@/shared/game/wot'
@@ -55,6 +59,7 @@ import Settings from '../shared/settings/Settings.vue'
 import { refDebounced } from '@vueuse/core'
 import { watchWithAbortSignal } from '@/shared/utils/core'
 import PageSelector from './PageSelector.vue'
+import { useSeasonInterval } from '../shared/useSeasonInterval'
 
 
 const page = ref(1)
@@ -67,6 +72,7 @@ const nickname = ref<string>('')
 const debouncedNickname = refDebounced(nickname, 500)
 const game = computed(() => regionToGame(region.value))
 
+const seasonInterval = useSeasonInterval(seasons, selectedSeason, region)
 const leaderboardDay = ref<{ day: string, recalculation: string, lastRank: number } | null>(null)
 const leaderboardData = ref<LeaderboardData[]>([])
 const isLoading = ref(false)
@@ -92,11 +98,14 @@ type LeaderboardData = {
 
 
 async function load(abortSignal: AbortSignal) {
+  if (!seasonInterval.value) return
+
   isLoading.value = true
   if (!leaderboardDay.value) {
     const lastData = await query<{ day: string, recalculation: string, lastRank: number }>(`
+    with '${seasonInterval.value ? dateToDbDate(seasonInterval.value?.end) : '2200-01-01'}' as END_DATE,
     select max(day) as day, max(recalculationTime) as recalculation, max(rank) as lastRank
-    from Comp7Leaderboard where region = '${region.value}'
+    from Comp7Leaderboard where region = '${region.value}' and recalculationTime <= END_DATE + interval 5 day
   `)
 
     if (abortSignal.aborted) return
@@ -130,7 +139,7 @@ watch([selectedSeason, region], () => {
   page.value = 1
 })
 
-watchWithAbortSignal([region, page, selectedSeason], signal => load(signal), { immediate: true })
+watchWithAbortSignal([region, page, selectedSeason, seasonInterval], signal => load(signal), { immediate: true })
 
 function click(name: string) {
   selectedName.value = selectedName.value == name ? null : name
@@ -144,14 +153,43 @@ h1 {
   margin-top: 0;
 }
 
+.info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  margin-top: 10px;
+
+  .page-selector {
+    margin: 0;
+  }
+
+  .last-recalculation {
+    margin-left: 20px;
+    color: #c8c8c8;
+    font-size: 14px;
+  }
+
+  @media screen and (max-width: 700px) {
+    flex-direction: column;
+    align-items: flex-start;
+
+    .last-recalculation {
+      margin-left: 0;
+      margin-top: 5px;
+    }
+
+  }
+}
+
 .leaderboard-loader {
-  margin: 20px 0;
+  margin: 10px 0;
   height: 2px;
 }
 
 .page-selector {
-  margin: 10px 0;
-  min-height: 20.5px;
+  margin: 20px 0;
+  min-height: 22px;
 }
 
 table {
