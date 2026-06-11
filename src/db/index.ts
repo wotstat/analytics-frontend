@@ -123,6 +123,8 @@ export function queryComputed<T>(queryString: () => string | null, { settings = 
 
       result.value = { data: [], status: loading }
       const { data } = await query<T>(q, { settings, allowCache, abortSignal: abortController.signal })
+      if (abortController.signal.aborted) return
+
       result.value = { data, status: success }
     } catch (reason) {
       console.error(reason)

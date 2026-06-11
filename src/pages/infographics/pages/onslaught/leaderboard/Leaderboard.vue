@@ -6,12 +6,17 @@
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" v-model:region="region"
       v-model:seasons="seasons" />
 
-    <div class="info" v-if="leaderboardDay && leaderboardData.length">
-      <PageSelector :start="1" :end="endPage" v-model="page" class="page-selector" />
-      <div class="last-recalculation">Обновлено: {{ updatedAt }}
+    <div class="info">
+      <PageSelector :start="1" :end="endPage" v-model="page" class="page-selector"
+        v-if="leaderboardDay && endPage > 1" />
+      <div class="page-selector" v-else></div>
+
+      <div class="last-recalculation">
+        <p v-if="updatedAt">Обновлено: {{ updatedAt }}</p>
+        <Live :region="region" :seasonInterval="seasonInterval" :leaderboardDay="leaderboardDay"
+          @mayUpdate="loadLatestData" />
       </div>
     </div>
-    <div class="page-selector" v-else></div>
 
     <Loader :isLoading="isLoading" class="leaderboard-loader" :predictedLoadingTime="100" />
 
@@ -29,13 +34,24 @@
       </thead>
 
       <tbody>
-        <template v-for="line in leaderboardData" :key="line.name">
-          <LeaderboardLine :line="line" :game="game" @click="click(line.name)" :class="{
+        <template v-for="line in leaderboardData">
+          <LeaderboardLine :line="line" :region="region" @click="click(line.name)" :class="{
             'selected': selectedName == line.name && false,
           }" />
+
           <tr v-if="selectedName == line.name && false" class="details">
             <td colspan="6">
               <Detail />
+            </td>
+          </tr>
+
+          <tr v-if="line.lastRank == leaderboardDay?.lastEliteRank" class="elite-separator">
+            <td colspan="6">
+              <div>
+                <RankIcon :rank="'sixth'" :size="'medium'" :season="selectedSeason ?? 'latest'" class="rank" />
+                ПОРОГ ЛЕГЕНДЫ
+                <RankIcon :rank="'sixth'" :size="'medium'" :season="selectedSeason ?? 'latest'" class="rank" />
+              </div>
             </td>
           </tr>
         </template>
@@ -49,18 +65,20 @@
 
 
 <script setup lang="ts">
-import { dateToDbDate, query } from '@/db'
+import { dateToDbDate, query, queryComputedFirst } from '@/db'
 import { computed, ref, watch } from 'vue'
-import LeaderboardLine from './LeaderboardLine.vue'
+import LeaderboardLine from './components/LeaderboardLine.vue'
 import { regionToGame } from '@/shared/game/wot'
-import Detail from './Detail.vue'
+import Detail from './components/Detail.vue'
 import Loader from '../shared/Loader.vue'
 
 import Settings from '../shared/settings/Settings.vue'
 import { refDebounced } from '@vueuse/core'
 import { watchWithAbortSignal } from '@/shared/utils/core'
-import PageSelector from './PageSelector.vue'
+import PageSelector from './components/PageSelector.vue'
 import { useSeasonInterval } from '../shared/useSeasonInterval'
+import Live from './components/Live.vue'
+import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
 
 
 const page = ref(1)
@@ -68,13 +86,13 @@ const selectedName = ref<string | null>(null)
 
 const seasons = ref<{ region: string, season: string, start: string, end: string }[]>([])
 const selectedSeason = ref<string | null>(null)
-const region = ref<'RU' | 'EU' | 'NA' | 'ASIA' | 'CT'>('RU')
+const region = ref<'RU' | 'EU' | 'NA' | 'ASIA' | 'CN' | 'CT'>('RU')
 const nickname = ref<string>('')
 const debouncedNickname = refDebounced(nickname, 500)
 const game = computed(() => regionToGame(region.value))
 
 const seasonInterval = useSeasonInterval(seasons, selectedSeason, region)
-const leaderboardDay = ref<{ day: string, recalculation: string, lastRank: number } | null>(null)
+const leaderboardDay = ref<{ day: string, recalculation: string, lastRank: number, eliteThreshold: number, lastEliteRank: number } | null>(null)
 const leaderboardData = ref<LeaderboardData[]>([])
 const isLoading = ref(false)
 
@@ -110,17 +128,25 @@ type LeaderboardData = {
   lastDayRating: number
 }
 
+function loadLatestData() {
+  console.log('Loading latest data', region.value, selectedSeason.value)
+  load(new AbortController().signal, true)
+}
 
-async function load(abortSignal: AbortSignal) {
+async function load(abortSignal: AbortSignal, latest = false) {
   if (!seasonInterval.value) return
 
   isLoading.value = true
-  if (!leaderboardDay.value) {
-    const lastData = await query<{ day: string, recalculation: string, lastRank: number }>(`
+  if (!leaderboardDay.value || latest) {
+    const lastData = await query<{ day: string, recalculation: string, lastRank: number, lastEliteRank: number, eliteThreshold: number }>(`
     with
       '${dateToDbDate(seasonInterval.value.start)}' as START_DATE,
       '${dateToDbDate(seasonInterval.value.end)}' as END_DATE,
-    select max(day) as day, max(recalculationTime) as recalculation, max(rank) as lastRank
+    select max(day) as day,
+      max(recalculationTime) as recalculation,
+      max(rank) as lastRank,
+      maxIf(rank, elite) as lastEliteRank,
+      maxIf(rank, elite) as eliteThreshold
     from Comp7Leaderboard where region = '${region.value}' and
       recalculationTime between START_DATE and END_DATE + interval 5 day
   `)
@@ -139,7 +165,8 @@ async function load(abortSignal: AbortSignal) {
     from Comp7LeaderboardDailyByRank final
     where region = '${region.value}' and 
       day = '${leaderboardDay.value.day}' and 
-      lastRank between ${(page.value - 1) * 100 + 1} and ${page.value * 100}
+      lastRank between ${(page.value - 1) * 100 + 1} and ${page.value * 100} and
+      lastRecalculationTime = '${leaderboardDay.value.recalculation}'
     order by lastRank
   `, { abortSignal })
 
@@ -182,6 +209,8 @@ h1 {
   }
 
   .last-recalculation {
+    display: flex;
+    align-items: center;
     margin-left: 20px;
     color: #c8c8c8;
     font-size: 14px;
@@ -276,8 +305,37 @@ table {
 
     .details {
       background-color: rgba(255, 255, 255, 0.03);
+    }
+
+    .elite-separator {
+      background-color: rgba(255, 255, 255, 0.03);
+
+      td {
+        cursor: default;
+
+        div {
+          margin: 10px 0px;
+          width: 100%;
+          font-size: 16px;
+          font-weight: bold;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: row;
+          color: #ffffffed;
+          gap: 10px;
+
+          .rank {
+            margin: 0 5px;
+            height: 45px;
+            user-select: none;
+            pointer-events: none;
+          }
+        }
+      }
 
     }
+
   }
 
   @container (max-width: 700px) {

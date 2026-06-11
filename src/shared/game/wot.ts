@@ -53,17 +53,22 @@ export const modeCount = {
 } as const
 
 export type GameVendor = 'wot' | 'mt'
+export type GameRegion = 'RU' | 'EU' | 'NA' | 'ASIA' | 'CT' | (string & {})
 export function gameToRegion(game: GameVendor): 'RU' | 'EU' { return game === 'mt' ? 'RU' : 'EU' }
-export function regionToGame(region: 'RU' | 'EU' | 'NA' | 'ASIA' | 'CT' | (string & {})): GameVendor {
+export function regionToGame(region: GameRegion): GameVendor {
   return region === 'RU' || region === 'RPT' || region === 'CT' ? 'mt' : 'wot'
 }
 
 export const customBattleModesKeys = Object.keys(customBattleModes) as (keyof typeof customBattleModes)[]
 
-export function accountLink(bdid: number, name: string, game: GameVendor) {
-  if (game === 'mt') {
-    return `https://tanki.su/ru/community/accounts/${bdid}-${name}/`
-  } else {
-    return `https://worldoftanks.eu/en/community/accounts/${bdid}-${name}/`
+export function accountLink(bdid: number, name: string, region: GameRegion) {
+
+  switch (region) {
+    case 'RU': return `https://tanki.su/ru/community/accounts/${bdid}-${name}/`
+    case 'EU': return `https://worldoftanks.eu/en/community/accounts/${bdid}-${name}/`
+    case 'NA': return `https://worldoftanks.com/en/community/accounts/${bdid}-${name}/`
+    case 'ASIA': return `https://worldoftanks.asia/en/community/accounts/${bdid}-${name}/`
+    case 'CN': return `https://wotgame.cn/en/community/accounts/${bdid}-${name}/`
+    default: return `https://worldoftanks.eu/en/community/accounts/${bdid}-${name}/`
   }
 }
