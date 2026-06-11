@@ -149,7 +149,7 @@ async function load(abortSignal: AbortSignal, latest = false) {
       maxIf(rank, elite) as eliteThreshold
     from Comp7Leaderboard where region = '${region.value}' and
       recalculationTime between START_DATE and END_DATE + interval 5 day
-  `)
+  `, { allowCache: false })
 
     if (abortSignal.aborted) return
     if (lastData.data.length == 0) return
@@ -168,7 +168,7 @@ async function load(abortSignal: AbortSignal, latest = false) {
       lastRank between ${(page.value - 1) * 100 + 1} and ${page.value * 100} and
       lastRecalculationTime = '${leaderboardDay.value.recalculation}'
     order by lastRank
-  `, { abortSignal })
+  `, { abortSignal, allowCache: false })
 
   if (abortSignal.aborted) return
 
