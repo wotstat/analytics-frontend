@@ -3,11 +3,9 @@
     <div class="chart">
       <h3>Очки по дням</h3>
       <UniversalChartComponent :chart="chart" />
-      <div class="tooltip"
-        :style="{ transform: `translate(${tooltipPos.absolutePivot.x + 10}px, ${tooltipPos.absolutePivot.y}px)` }"
-        v-if="tooltipPos">
-        <p>{{ new Date(tooltipPos.nearestDataPoints[0].xValue).toLocaleString() }}</p>
-        <p>{{ tooltipPos.nearestDataPoints[0].yValue }}</p>
+      <div class="tooltip" :style="{ transform: `translate(${tooltipPos.x}px, ${tooltipPos.y}px)` }"
+        v-if="tooltipVisible">
+        tooltip
       </div>
     </div>
     <div class="chart">
@@ -30,7 +28,7 @@ import { Axis } from '@/shared/uiKit/chart/universalChart/axis/Axis'
 import { AutoLabels } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
 import { steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
-import { ChartTooltip, TooltipCtx } from '@/shared/uiKit/chart/universalChart/plot/hover/composableHover/components/chartTooltip/ChartTooltip'
+import { ChartTooltip } from '@/shared/uiKit/chart/universalChart/plot/hover/composableHover/components/chartTooltip/ChartTooltip'
 import { VerticalLine } from '@/shared/uiKit/chart/universalChart/plot/hover/composableHover/components/lines/VerticalLine'
 import { NearestMarker } from '@/shared/uiKit/chart/universalChart/plot/hover/composableHover/components/nearestMarker/NearestMarker'
 import { ComposableHover } from '@/shared/uiKit/chart/universalChart/plot/hover/composableHover/ComposableHover'
@@ -43,47 +41,31 @@ import { ChartMask } from '@/shared/uiKit/chart/universalChart/defs/ChartMask'
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
 import { markRaw, ref, watchEffect } from 'vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
-import { dateToDbDate, queryComputed } from '@/db'
-import { arrayGenerator } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/arrayGenerator'
 
-const props = defineProps<{
-  bdid: number
-  region: string
-  seasonInterval: { start: Date, end: Date, length: number }
-}>()
-
-
-const data = queryComputed<{ recalculationTime: string, rank: number, rating: number, battlesCount: number }>(() => `
-  with
-    '${dateToDbDate(props.seasonInterval.start)}' as START_DATE,
-    '${dateToDbDate(props.seasonInterval.end)}' as END_DATE,
-    recalculation as (
-        select recalculationTime
-        from Comp7Leaderboard
-        where recalculationTime between START_DATE and END_DATE and region = '${props.region}'
-        group by recalculationTime
-        order by recalculationTime
-    ),
-    player as (
-        select recalculationTime, rank, rating, battlesCount
-        from Comp7Leaderboard
-        where region = '${props.region}' and
-            bdid = ${props.bdid} and
-            recalculationTime between START_DATE and END_DATE
-        order by recalculationTime
-    )
-  select *
-  from player
-  right join recalculation using recalculationTime
-`)
-
-
+const props = defineProps<{}>()
 const offset = ref(0)
 const yOffset = ref(0)
 const yScale = ref(1)
 const xScale = ref(5)
 
-const tooltipPos = ref<TooltipCtx | null>(null)
+const tooltipPos = ref({
+  x: 0,
+  y: 0,
+})
+
+const tooltipVisible = ref(false)
+
+function mulberry32(a: number) {
+  return function () {
+    var t = a += 0x6D2B79F5
+    t = Math.imul(t ^ t >>> 15, t | 1)
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61)
+    return ((t ^ t >>> 14) >>> 0) / 4294967296
+  }
+}
+
+const seed = 12345
+const rand = mulberry32(seed)
 
 const chart = markRaw(new UniversalChart({
   layoutVariant: 'horizontal',
@@ -97,36 +79,30 @@ const clipLeft = new ChartClip('left')
 const clipBottom = new ChartClip('bottom')
 const maskMain = new ChartMask('center')
 
-
-const MINUTE = 1000 * 60
-const HOUR = MINUTE * 60
-const DAY = HOUR * 24
-
-const startTime = new Date(props.seasonInterval.start).getTime()
-
 const labelsX = new AutoLabels('horizontal', {
-  padding: 5,
+  labelForValue: (v, step) => step < 7 && v == 500 ? `${v.toFixed(10)}` : `${v.toFixed(0)}`,
+  padding: 15,
   labelOffset: 10,
-  labelForValue: (v, step) => `${(v - startTime) / DAY}`,
   values: [
+    // {
+    //   gen: arrayGenerator([0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]),
+    //   labelForValue: v => v == 500 ? `${v.toFixed(10)}` : `${v.toFixed(0)}`,
+    // },
     ...steppedOverrides({
-      step: [DAY, 2 * DAY, 7 * DAY],
+      step: [1, 2, 5, 10, 25, 50, 100, 200, 250, 500],
+      offset: 0,
     })
-    // ...steppedOverrides({
-    //   step: [1, 2, 5, 10, 25, 50, 100, 200, 250, 500],
-    //   offset: 0,
-    // })
   ],
-  // strategy: 'classic-flow',
-  strategy: 'classic',
+  strategy: 'classic-flow',
+  // strategy: 'classic',
   // strategy: {
   //   type: 'interval',
   //   placement: 'middle',
-  //   fit: true,
+  //   fit: false,
   //   offset: [0, 0],
-  //   direction: 'forward',
+  //   direction: 'backward',
   // },
-  from: startTime,
+  // from: 0,
   // to: 1000
   // strategy: {
   //   type: 'interval',
@@ -134,6 +110,7 @@ const labelsX = new AutoLabels('horizontal', {
   //   fit: true,
   //   offset: [0, 0],
   // },
+  from: 0, to: 1000
 }).clipBy(clipBottom)
 
 const labelsY = new AutoLabels('vertical', {
@@ -169,13 +146,13 @@ const axis = new Axis({
   bottom: 'space',
 })
 
-// const points: ({ x: number, y: number } | null)[] = new Array(101).fill(0).map((_, i) => ({ x: i * 10, y: 20 + rand() * 50 }))
-// const points2: ({ x: number, y: number } | null)[] = new Array(101).fill(0).map((_, i) => ({ x: i * 10, y: 10 + rand() * 80 }))
+const points: ({ x: number, y: number } | null)[] = new Array(101).fill(0).map((_, i) => ({ x: i * 10, y: 20 + rand() * 50 }))
+const points2: ({ x: number, y: number } | null)[] = new Array(101).fill(0).map((_, i) => ({ x: i * 10, y: 10 + rand() * 80 }))
 
-// points[10] = null
-// points[11] = null
-// points[20] = null
-// points[23] = null
+points[10] = null
+points[11] = null
+points[20] = null
+points[23] = null
 
 // const sinLine = new SimpleLine(new Array(1000).fill(0).map((_, i) => ({ x: i, y: Math.sin(i / 10) * 50 + 50 })), ['sin'])
 // const randomLine = new SimpleLine(points, ['random'])
@@ -193,27 +170,27 @@ const gradient = new ChartGradient({
 })
 
 const smoothRandom = new AutoLine({ classes: ['random', 'smooth'], area: false, smoothingMethod: 'monotone' })
+  .setPoints(points2)
 
-
-// const monotoneRandom = new AutoLine({ classes: ['random', 'monotone'], area: gradient, smoothingMethod: 'monotone' })
-//   .setPoints(points)
+const monotoneRandom = new AutoLine({ classes: ['random', 'monotone'], area: gradient, smoothingMethod: 'monotone' })
+  .setPoints(points)
 
 const sinLine = new AutoLine({ classes: ['sin', 'smooth'], area: false })
   .setPoints(new Array(1000).fill(0).map((_, i) => ({ x: i, y: Math.sin(i / 10) * 50 + 50 })))
 
-// const markers = new AutoMarkers({
-//   classes: 'markers',
-//   size: 2,
-//   maskSize: 4,
-//   targetMasks: [maskMain.root]
-// }).setMarkers(points.filter(p => p !== null))
+const markers = new AutoMarkers({
+  classes: 'markers',
+  size: 2,
+  maskSize: 4,
+  targetMasks: [maskMain.root]
+}).setMarkers(points.filter(p => p !== null))
 
-// const markers2 = new AutoMarkers({
-//   classes: 'markers.m2',
-//   size: 2,
-//   maskSize: 4,
-//   targetMasks: [maskMain.root]
-// }).setMarkers(points2.filter(p => p !== null))
+const markers2 = new AutoMarkers({
+  classes: 'markers.m2',
+  size: 2,
+  maskSize: 4,
+  targetMasks: [maskMain.root]
+}).setMarkers(points2.filter(p => p !== null))
 
 const hover = new ComposableHover('hover')
   .addComponent(new VerticalLine({
@@ -233,45 +210,36 @@ const hover = new ComposableHover('hover')
   .addComponent(new ChartTooltip({
     position: 'data-point-x',
     tooltipPivot: 'avg',
-    onHide: () => tooltipPos.value = null,
+    onHide: () => tooltipVisible.value = false,
+    onShow: () => tooltipVisible.value = true,
     onPositionChange: (ctx) => {
-      tooltipPos.value = ctx
+      tooltipPos.value = ctx.absolutePivot
     },
   }))
-// .setDataSources(points, points2)
-
-
-watchEffect(() => {
-  const points = data.value.data.map(point => point.rating == 0 ? null : { x: new Date(point.recalculationTime).getTime(), y: point.rating })
-  smoothRandom.setPoints(points)
-  hover.setDataSources(points)
-  chart.setRenderBounds({
-    minX: startTime,
-    maxX: new Date(props.seasonInterval.end).getTime(),
-  })
-})
+  .setDataSources(points, points2)
 
 const plotRoot = new PlotGroup()
   // .addPlot(sinLine)
   // .addPlot(randomLine)
   .addPlot(smoothRandom.maskBy(maskMain))
-  // .addPlot(monotoneRandom.maskBy(maskMain))
+  .addPlot(monotoneRandom.maskBy(maskMain))
   // .addPlot(redLine)
   .clipBy(clipMain)
 
 
 chart
   .addPlot(axis, 'ticks')
-  .addPlot(xTicks, 'ticks')
-  .addPlot(yTicks, 'ticks')
+  // .addPlot(xTicks, 'ticks')
+  // .addPlot(yTicks, 'ticks')
   .addPlot(plotRoot, 'plot')
-  // .addPlot(markers, 'plot')
-  // .addPlot(markers2, 'plot')
+  .addPlot(markers, 'plot')
+  .addPlot(markers2, 'plot')
   .addSlot('bottom', labelsX, 'labels')
   .addSlot('left', labelsY, 'labels')
   .addPlot(hover)
   .addDefs(gradient, clipMain, clipLeft, clipBottom, maskMain)
 
+// chart.addPlugin(multiLine)
 
 // setInterval(() => {
 //   multiLine.setRenderBounds({
@@ -282,14 +250,14 @@ chart
 //   })
 // }, 16)
 
-// watchEffect(() => {
-//   chart.setRenderBounds({
-//     minX: -offset.value,
-//     maxX: -offset.value + 1000 / xScale.value,
-//     minY: 0 + yOffset.value,
-//     maxY: yOffset.value + 100 / yScale.value,
-//   })
-// })
+watchEffect(() => {
+  chart.setRenderBounds({
+    minX: -offset.value,
+    maxX: -offset.value + 1000 / xScale.value,
+    minY: 0 + yOffset.value,
+    maxY: yOffset.value + 100 / yScale.value,
+  })
+})
 
 </script>
 
@@ -297,13 +265,14 @@ chart
 <style lang="scss" scoped>
 .charts {
   display: flex;
-  gap: 30px;
-  padding: 20px 30px;
-  padding-top: 0;
+  gap: 20px;
+  padding: 20px 20px;
   cursor: default;
 
   .chart {
     flex: 1;
+    background-color: rgba(0, 0, 0, 0.602);
+    padding: 10px;
     border-radius: 4px;
     aspect-ratio: 2 / 1;
 
@@ -445,6 +414,7 @@ chart
       box-sizing: border-box;
       top: 0;
       left: 0;
+      // transition: transform 0.05s ease-out;
     }
   }
 }
