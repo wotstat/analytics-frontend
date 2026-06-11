@@ -4,7 +4,7 @@ import { HoveredDataPoint, isDataPointArrayEqual } from '../../../BasePlotHover'
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
 
 
-type TooltipCtx = {
+export type TooltipCtx = {
   pivot: {
     x: number
     y: number

@@ -39,11 +39,11 @@
             'selected': selectedName == line.name && false,
           }" />
 
-          <tr v-if="selectedName == line.name && false" class="details">
+          <!-- <tr v-if="selectedName == line.name && seasonInterval" class="details">
             <td colspan="6">
-              <Detail />
+              <Detail :bdid="line.bdid" :region="region" :seasonInterval="seasonInterval" />
             </td>
-          </tr>
+          </tr> -->
 
           <tr v-if="line.lastRank == leaderboardDay?.lastEliteRank" class="elite-separator">
             <td colspan="6">
