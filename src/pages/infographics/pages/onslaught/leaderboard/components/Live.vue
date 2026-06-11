@@ -3,7 +3,7 @@
 
   <PopoverAutoClose v-if="liveUpdate && liveUpdate.isLive" :target="item" v-model="hover" :placement="['bottom-float']"
     :viewport-offset="{ top: headerOffset, bottom: 10, left: 10, right: 10 }" :arrow-size="7" :offset="{ top: 7 }"
-    :class="'transparent-tooltip'">
+    :class="'comp7-tooltip'">
     <div class="tooltip">
       Таблица автоматически синхронизируется с сервером
     </div>
@@ -41,7 +41,7 @@ const liveUpdate = computed(() => {
   if (!props.seasonInterval) return null
   if (!props.leaderboardDay) return null
 
-  const seasonEnd = new Date(props.seasonInterval.end + 'Z')
+  const seasonEnd = props.seasonInterval.end
   const recalculationDate = new Date(current.recalculation + 'Z')
   const lastLoadedDate = new Date(props.leaderboardDay.recalculation + 'Z')
 

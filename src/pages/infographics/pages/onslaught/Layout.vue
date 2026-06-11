@@ -35,6 +35,14 @@ setFeatureVisit('onslaught')
 
 </script>
 
+
+<style lang="scss">
+.comp7-tooltip {
+  --popover-background-color: rgba(16, 29, 51, 1);
+  --popover-border-color: rgba(255, 255, 255, 0.2);
+}
+</style>
+
 <style scoped lang="scss">
 .router-links {
   display: flex;
