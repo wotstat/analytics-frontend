@@ -1,7 +1,9 @@
 <template>
   <div class="loader" :class="{ 'loading': isLoading }">
     <Transition>
-      <div v-if="isLoading" class="loader-line"></div>
+      <div v-if="isLoading" class="loader-line">
+        <div class="progress"></div>
+      </div>
     </Transition>
   </div>
 </template>
@@ -48,12 +50,20 @@ const animationDuration = computed(() => {
   align-items: center;
 
   .loader-line {
-    width: 10%;
+    width: 100%;
     height: 100%;
-    background: var(--blue-thin-color);
     border-radius: 20px;
-    animation: loading v-bind(animationDuration) ease-in-out infinite alternate;
-    will-change: width;
+    display: flex;
+    justify-content: center;
+
+    .progress {
+      width: 100%;
+      height: 100%;
+      background: var(--blue-thin-color);
+      border-radius: 20px;
+      will-change: width;
+      animation: loading v-bind(animationDuration) ease-in-out infinite alternate;
+    }
   }
 
   @keyframes loading {
