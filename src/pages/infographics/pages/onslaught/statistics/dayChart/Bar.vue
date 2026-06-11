@@ -11,7 +11,8 @@
     <div class="letter" v-if="props.value.divisionLetter && props.value.divisionLetter != '?'">
       {{ props.value.divisionLetter }}
     </div>
-    <div class="leaderboard-pos" v-if="leaderboardPosition">
+    <div class="leaderboard-pos"
+      v-if="leaderboardPosition && !(props.value.divisionLetter && props.value.divisionLetter != '?')">
       {{ leaderboardPosition }}
     </div>
     <div class="day">

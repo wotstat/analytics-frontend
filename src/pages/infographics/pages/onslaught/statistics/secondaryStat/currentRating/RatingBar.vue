@@ -178,7 +178,7 @@ const progress = computed(() => {
             left: 0;
             right: 0;
             height: 50px;
-            background: linear-gradient(to top in oklab, rgba(0, 119, 255, 0.05) 0%, transparent 100%);
+            background: linear-gradient(to top in oklab, rgba(0, 119, 255, 0.15) 0%, transparent 100%);
           }
 
           .letter {
