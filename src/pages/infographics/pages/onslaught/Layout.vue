@@ -49,12 +49,15 @@ setFeatureVisit('onslaught')
 
 .background {
   position: fixed;
-  inset: 0;
-  z-index: -10;
+  top: 0;
+  left: 0;
   height: 100%;
+  width: 100%;
+  object-fit: cover;
+  z-index: -1;
+
   filter: brightness(0.7);
   user-select: none;
-  object-fit: cover;
-  width: 100%;
+  pointer-events: none;
 }
 </style>

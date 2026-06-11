@@ -6,9 +6,18 @@ function numberProcessor(value: unknown) {
   return Number(value)
 }
 
+function jsonProcessor(value: unknown) {
+  try {
+    return JSON.parse(String(value))
+  } catch {
+    return null
+  }
+}
+
 type ChannelsTypes = {
   'time': number,
   'totalEvents': number,
+  'comp7LastRecalculation': Record<string, { day: string, recalculation: string }> | null
 }
 
 const defaults = {
@@ -19,6 +28,7 @@ const defaults = {
 const processors = {
   'totalEvents': numberProcessor,
   'time': numberProcessor,
+  'comp7LastRecalculation': jsonProcessor
 }
 
 type Channels = keyof ChannelsTypes;

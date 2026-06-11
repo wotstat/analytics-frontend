@@ -43,18 +43,18 @@ const props = defineProps<{
 const route = useRoute()
 const router = useRouter()
 
-const regions = ['RU', 'EU', 'NA', 'ASIA', 'CT'] as const
+const regions = ['RU', 'EU', 'NA', 'ASIA', 'CN'] as const
 
 const seasons = defineModel<{ region: string, season: string, start: string, end: string }[]>('seasons')
 const selectedSeason = defineModel<string | null>('season')
-const selectedRegion = defineModel<'RU' | 'EU' | 'NA' | 'ASIA' | 'CT'>('region')
+const selectedRegion = defineModel<'RU' | 'EU' | 'NA' | 'ASIA' | 'CN' | 'CT'>('region')
 const nickname = defineModel<string>('nickname')
 const currentSeasons = computed(() => seasons.value?.filter(s => s.region === selectedRegion.value) || [])
 
 selectedSeason.value = typeof route.query.season === 'string' ? route.query.season : null
 selectedRegion.value = typeof route.query.region === 'string' ? route.query.region as any : 'RU'
 
-function changeRegion(target: 'RU' | 'EU' | 'NA' | 'ASIA' | 'CT') {
+function changeRegion(target: 'RU' | 'EU' | 'NA' | 'ASIA' | 'CN' | 'CT') {
   selectedRegion.value = target
   const seasonsForRegion = seasons.value?.filter(s => s.region === target) || []
   if (!seasonsForRegion.length) {
@@ -80,7 +80,7 @@ const seasonsData = queryAsync<{ region: string, season: string, start: string, 
         min(toStartOfDay(dateTime + interval ${getRegionIsoHourOffset(selectedRegion.value ?? 'RU')} hour)) as start,
         max(toStartOfDay(dateTime + interval ${getRegionIsoHourOffset(selectedRegion.value ?? 'RU')} hour)) as end
   from Event_OnComp7Info
-  where region in ('RU', 'EU', 'NA', 'ASIA', 'CT')
+  where region in ('RU', 'EU', 'NA', 'ASIA', 'CN', 'CT')
   group by region, season
   order by start desc
 `, { settings: LONG_CACHE_SETTINGS })

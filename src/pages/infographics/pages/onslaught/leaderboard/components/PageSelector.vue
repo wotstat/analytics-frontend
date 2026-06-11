@@ -1,6 +1,6 @@
 <template>
   <div class="page-selection mt-font">
-    <template v-for="value in pages" :key="page == value ? 'active' : value" v-if="pages.length > 1">
+    <template v-for="value in pages" :key="page == value ? 'active' : null" v-if="pages.length > 1">
       <div class="ellipsis" v-if="value === 'ellipsis'">...
       </div>
       <button @click="click(value)" v-else-if="page !== value">

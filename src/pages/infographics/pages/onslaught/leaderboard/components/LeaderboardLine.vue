@@ -13,7 +13,7 @@
     </td>
 
     <td class="player-name">
-      <a :href="accountLink(line.bdid, line.name, game)" target="_blank" rel="noopener noreferrer">
+      <a :href="accountLink(line.bdid, line.name, region)" target="_blank" rel="noopener noreferrer">
         <span class="name">{{ line.name }}</span>
       </a>
       <span class="clan-tag" :style="{
@@ -48,8 +48,8 @@
 
 
 <script setup lang="ts">
-import { accountLink, GameVendor } from '@/shared/game/wot'
-import TriangleUp from './assets/triangle-up.svg'
+import { accountLink, GameRegion, GameVendor } from '@/shared/game/wot'
+import TriangleUp from '../assets/triangle-up.svg'
 import { spaceProcessor } from '@/shared/utils/processors/useSpaceProcessor'
 
 const props = defineProps<{
@@ -65,7 +65,7 @@ const props = defineProps<{
     lastRating: number
     lastDayRating: number
   }
-  game: GameVendor
+  region: GameRegion
 }>()
 </script>
 
