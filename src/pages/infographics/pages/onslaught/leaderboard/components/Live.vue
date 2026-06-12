@@ -1,5 +1,6 @@
 <template>
-  <div class="live" v-if="lastUpdate.data && liveUpdate" ref="item">{{ liveUpdate.text }}</div>
+  <div class="live" v-if="lastUpdate.data && lastUpdate.status.value == 'OPEN' && liveUpdate" ref="item">{{
+    liveUpdate.text }}</div>
 
   <PopoverAutoClose v-if="liveUpdate && liveUpdate.isLive" :target="item" v-model="hover" :placement="['bottom-float']"
     :viewport-offset="{ top: headerOffset, bottom: 10, left: 10, right: 10 }" :arrow-size="7" :offset="{ top: 7 }"

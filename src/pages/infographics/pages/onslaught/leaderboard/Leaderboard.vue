@@ -79,7 +79,13 @@ import PageSelector from './components/PageSelector.vue'
 import { useSeasonInterval } from '../shared/useSeasonInterval'
 import Live from './components/Live.vue'
 import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
+import { useMeta } from '@/shared/composition/useMeta'
 
+useMeta({
+  title: 'Таблица лидеров Натиска - WotStat',
+  description: 'Таблица лидеров по рейтингу в режиме Натиск Мир Танков и World of Tanks. Рейтинг, количество боёв и динамика за день для каждого игрока.',
+  keywords: 'Натиск, таблица лидеров, рейтинг, бои, динамика, Мир Танков, World of Tanks',
+})
 
 const page = ref(1)
 const selectedName = ref<string | null>(null)

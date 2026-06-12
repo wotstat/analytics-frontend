@@ -15,7 +15,7 @@ export type TopDayRating = {
   rating: number,
   eliteRating: number,
   dayIndex: number,
-  season?: string,
+  season: string,
   tooltipComponent?: Component
 }
 
@@ -24,7 +24,7 @@ export type RatingDelta = {
   rating: number,
   eliteRating: number,
   delta: number,
-  season?: string,
+  season: string,
   tooltipComponent?: Component
 }
 
@@ -152,14 +152,14 @@ export function useMainStat(days: Ref<Day[]>,
         rating: maxStat.maxRating[0],
         eliteRating: maxStat.maxRating[1],
         dayIndex: maxDayIndex,
-        season: season.value ?? undefined,
+        season: season.value ?? 'latest',
         tooltipComponent: h(TopRatingTooltip, {
           last: [maxStat.lastRating, maxStat.lastEliteRating],
           totalIncome: sum(stats, d => d.ratingDeltaWin) + sum(stats, d => d.ratingDeltaLose),
           ratingWin,
           ratingLose,
           leaderboardPosition: maxStat.lastLeaderboardPosition,
-          season: season.value ?? undefined,
+          season: season.value ?? 'latest',
           game: preferredGame
         })
       })
@@ -233,6 +233,7 @@ export function useMainStat(days: Ref<Day[]>,
         rating: day.lastRating,
         eliteRating: day.lastEliteRating,
         delta: day.ratingDelta,
+        season: season.value ?? 'latest',
         tooltipComponent: h(RatingTooltip, {
           min: day.minRating,
           max: day.maxRating,
@@ -240,7 +241,7 @@ export function useMainStat(days: Ref<Day[]>,
           ratingWin,
           ratingLose,
           leaderboardPosition: day.lastLeaderboardPosition,
-          season: season.value ?? undefined,
+          season: season.value ?? 'latest',
           game: preferredGame
         })
       })
