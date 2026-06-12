@@ -1,20 +1,20 @@
 <template>
   <div class="page-selection mt-font">
-    <template v-for="value in pages" :key="page == value ? 'active' : null" v-if="pages.length > 1">
+    <template v-for="value in pages" :key="page == value ? 'active' : value" v-if="pages.length > 1">
       <div class="ellipsis" v-if="value === 'ellipsis'">...
       </div>
       <button @click="click(value)" v-else-if="page !== value">
         {{ value }}
       </button>
-      <input type="number" :value="page" @input="onInput" v-else class="active mt-font"
-        :placeholder="page.toFixed(0)" />
+      <input type="number" :value="page" @input="onInput" v-else class="active mt-font" :placeholder="page.toFixed(0)"
+        @blur="onBlur" />
     </template>
   </div>
 </template>
 
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, triggerRef } from 'vue'
 
 const props = defineProps<{
   start: number
@@ -35,6 +35,10 @@ function onInput(v: InputEvent) {
   if (!isNaN(value) && value >= props.start && value <= props.end) {
     page.value = value
   }
+}
+
+function onBlur() {
+  triggerRef(page)
 }
 
 const pages = computed(() => {

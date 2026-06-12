@@ -4,8 +4,8 @@ import { calculateClassic, calculateInterval, extend, fit, intervalFit } from '.
 
 export type Strategy = 'classic-flow' | 'classic' | {
   type: 'interval',
-  placement: 'start' | 'end' | 'middle',
-  fit: boolean
+  placement?: 'start' | 'end' | 'middle',
+  fit?: boolean
   offset?: [start: number, end: number] | number
   direction?: 'forward' | 'backward'
 }
@@ -70,7 +70,7 @@ export class AutoLabels extends BaseLabels {
   }
 
   calculateLabelPositions(space: ChartSpace, overflow: { start: number, end: number }) {
-
+    if (space.bounds.isEmpty()) return []
     // console.log('calculateLabelPositions', this, { space, overflow })
 
     const options = this.options
@@ -139,10 +139,13 @@ export class AutoLabels extends BaseLabels {
         return res.map(convert)
       }
       else if (strategy.type == 'interval') {
+        const placement = strategy.placement ?? 'start'
+        const fit = strategy.fit ?? false
+
         const res = calculateInterval({
           ...ctx,
           translate: translate,
-          placement: strategy.placement,
+          placement,
           direction: strategy.direction ?? 'forward',
         })
         if (!res) continue
@@ -153,7 +156,7 @@ export class AutoLabels extends BaseLabels {
           return strategy.offset
         })()
 
-        const fitted = intervalFit(res.filter(t => t.key != ''), layoutLimits, overflowLimits, strategy.placement, strategy.fit, offset)
+        const fitted = intervalFit(res.filter(t => t.key != ''), layoutLimits, overflowLimits, placement, fit, offset)
 
         this.lastIntervalStart = res[0].value
         return fitted.map(convert)
