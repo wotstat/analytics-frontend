@@ -53,6 +53,13 @@ import Loader from '../shared/Loader.vue'
 import SecondaryStat from './secondaryStat/SecondaryStat.vue'
 import { refDebouncedCheck } from '@/shared/utils/refDebouncedCheck'
 import { useSeasonInterval } from '../shared/useSeasonInterval'
+import { useMeta } from '@/shared/composition/useMeta'
+
+useMeta({
+  title: 'Статистика Натиска - WotStat',
+  description: 'Персональная статистика по режиму Натиск: динамика рейтинга, эффективность техники, результаты на картах и многое другое.',
+  keywords: 'натиск, статистика, рейтинг, техника, карты, WotStat',
+})
 
 const ONE_HOUR = 60 * 60 * 1000
 const ONE_DAY = 24 * ONE_HOUR

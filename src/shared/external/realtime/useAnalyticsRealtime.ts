@@ -1,5 +1,5 @@
 import { ANALYTICS_REALTIME_URL } from '@/shared/external/externalUrl'
-import { useWebSocket } from '@vueuse/core'
+import { useWebSocket, WebSocketStatus } from '@vueuse/core'
 import { ref, ShallowRef, shallowRef, watch } from 'vue'
 
 function numberProcessor(value: unknown) {
@@ -36,7 +36,7 @@ type Channels = keyof ChannelsTypes;
 type ChannelKey = Channels | string & {};
 
 
-type Result<T> = { data: ShallowRef<T>, hasData: ShallowRef<boolean> };
+type Result<T> = { data: ShallowRef<T>, hasData: ShallowRef<boolean>, status: ShallowRef<WebSocketStatus> };
 
 export function useAnalyticsRealtime<K extends Channels, T = ChannelsTypes[K]>(channel: K): Result<T>;
 export function useAnalyticsRealtime<D>(channel: ChannelKey, defaultValue: D): Result<D>;
@@ -47,7 +47,7 @@ export function useAnalyticsRealtime<K extends ChannelKey, T = unknown>(channel:
   const result = shallowRef<T | null>(def)
   const hasData = ref(false)
 
-  const { data } = useWebSocket<T>(ANALYTICS_REALTIME_URL + '/' + channel, { autoReconnect: true })
+  const { data, status } = useWebSocket<T>(ANALYTICS_REALTIME_URL + '/' + channel, { autoReconnect: true })
 
   watch(data, (newData) => {
     if (newData === null || newData === undefined) result.value = def
@@ -64,5 +64,5 @@ export function useAnalyticsRealtime<K extends ChannelKey, T = unknown>(channel:
     }
   }, { immediate: true })
 
-  return { data: result, hasData, }
+  return { data: result, hasData, status }
 }
