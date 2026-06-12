@@ -2,24 +2,18 @@
   <div class="charts">
     <div class="chart">
       <h3>Очки по дням</h3>
-      <UniversalChartComponent :chart="chart" />
+      <UniversalChartComponent :chart="scoreChart.chart" />
       <div class="tooltip"
-        :style="{ transform: `translate(${tooltipPos.absolutePivot.x + 10}px, ${tooltipPos.absolutePivot.y}px)` }"
-        v-if="tooltipPos">
-        <p>{{ new Date(tooltipPos.nearestDataPoints[0].xValue).toLocaleString() }}</p>
-        <p>{{ tooltipPos.nearestDataPoints[0].yValue }}</p>
+        :style="{ transform: `translate(${scoreTooltip.absolutePivot.x + 10}px, ${scoreTooltip.absolutePivot.y}px)` }"
+        v-if="scoreTooltip">
+        <!-- <p>{{ new Date(tooltipPos.nearestDataPoints[0].xValue).toLocaleString() }}</p> -->
+        <p>{{ scoreTooltip.nearestDataPoints[0].xValue }}</p>
+        <p>{{ scoreTooltip.nearestDataPoints[0].yValue }}</p>
       </div>
     </div>
     <div class="chart">
       <h3>Бои по дням</h3>
-      <input type="range" min="-100" max="100" step="0.01" v-model.number="yOffset" />
-      <input type="number" v-model.number="yOffset" />
-      <input type="range" min="0" max="80" step="0.001" v-model.number="yScale" />
-
-      <hr>
-      <input type="range" min="-1000" max="1000" v-model.number="offset" />
-      <input type="number" v-model.number="offset" />
-      <input type="range" min="0" max="80" step="0.001" v-model.number="xScale" />
+      <UniversalChartComponent :chart="battleChart.chart" />
     </div>
   </div>
 </template>
@@ -41,7 +35,7 @@ import { ChartClip } from '@/shared/uiKit/chart/universalChart/defs/ChartClip'
 import { ChartGradient } from '@/shared/uiKit/chart/universalChart/defs/ChartGradient'
 import { ChartMask } from '@/shared/uiKit/chart/universalChart/defs/ChartMask'
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
-import { markRaw, ref, watchEffect } from 'vue'
+import { markRaw, Ref, ref, watchEffect } from 'vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import { dateToDbDate, queryComputed } from '@/db'
 import { arrayGenerator } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/arrayGenerator'
@@ -51,7 +45,6 @@ const props = defineProps<{
   region: string
   seasonInterval: { start: Date, end: Date, length: number }
 }>()
-
 
 const data = queryComputed<{ recalculationTime: string, rank: number, rating: number, battlesCount: number }>(() => `
   with
@@ -77,219 +70,130 @@ const data = queryComputed<{ recalculationTime: string, rank: number, rating: nu
   right join recalculation using recalculationTime
 `)
 
-
-const offset = ref(0)
-const yOffset = ref(0)
-const yScale = ref(1)
-const xScale = ref(5)
-
-const tooltipPos = ref<TooltipCtx | null>(null)
-
-const chart = markRaw(new UniversalChart({
-  layoutVariant: 'horizontal',
-  renderBoundsPadding: {
-    vertical: 5,
-  }
-}))
-
-const clipMain = new ChartClip('center')
-const clipLeft = new ChartClip('left')
-const clipBottom = new ChartClip('bottom')
-const maskMain = new ChartMask('center')
+const scoreTooltip = ref<TooltipCtx | null>(null)
+const battleTooltip = ref<TooltipCtx | null>(null)
 
 
-const MINUTE = 1000 * 60
+const MINUTE = 1 * 60
 const HOUR = MINUTE * 60
 const DAY = HOUR * 24
 
 const startTime = new Date(props.seasonInterval.start).getTime()
 
-const labelsX = new AutoLabels('horizontal', {
-  padding: 5,
-  labelOffset: 10,
-  labelForValue: (v, step) => `${(v - startTime) / DAY}`,
-  values: [
-    ...steppedOverrides({
-      step: [DAY, 2 * DAY, 7 * DAY],
-    })
-    // ...steppedOverrides({
-    //   step: [1, 2, 5, 10, 25, 50, 100, 200, 250, 500],
-    //   offset: 0,
-    // })
-  ],
-  // strategy: 'classic-flow',
-  strategy: 'classic',
-  // strategy: {
-  //   type: 'interval',
-  //   placement: 'middle',
-  //   fit: true,
-  //   offset: [0, 0],
-  //   direction: 'forward',
-  // },
-  from: startTime,
-  // to: 1000
-  // strategy: {
-  //   type: 'interval',
-  //   placement: 'middle',
-  //   fit: true,
-  //   offset: [0, 0],
-  // },
-}).clipBy(clipBottom)
 
-const labelsY = new AutoLabels('vertical', {
-  labelForValue: (v, step) => `${v.toFixed(0)}`,
-  padding: {
-    clip: 10,
-    flow: 5,
-  },
-  labelOffset: 5,
-  values: [
-    // arrayGenerator([-200, -180, -160, -140, -120, -100, -80, -60, -40, -20, 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200]),
-    ...steppedOverrides({
-      step: [1, 2, 5, 10, 25, 50, 100, 200, 250, 500],
-      offset: 0,
-    }),
-  ],
-  strategy: 'classic-flow',
-  // strategy: {
-  //   type: 'interval',
-  //   placement: 'middle',
-  //   fit: true,
-  //   offset: [5, 5],
-  // },
-  // from: -50, to: 50
-}).clipBy(clipLeft)
+function createChart(tooltip: Ref<TooltipCtx | null>) {
 
+  const clipMain = new ChartClip('center')
+  const clipLeft = new ChartClip('left')
+  const clipBottom = new ChartClip('bottom')
+  const maskMain = new ChartMask('center')
 
-const xTicks = new TicksByLabels(labelsX, { start: 0 })
-const yTicks = new TicksByLabels(labelsY, { start: 0 })
-
-const axis = new Axis({
-  left: 'space',
-  bottom: 'space',
-})
-
-// const points: ({ x: number, y: number } | null)[] = new Array(101).fill(0).map((_, i) => ({ x: i * 10, y: 20 + rand() * 50 }))
-// const points2: ({ x: number, y: number } | null)[] = new Array(101).fill(0).map((_, i) => ({ x: i * 10, y: 10 + rand() * 80 }))
-
-// points[10] = null
-// points[11] = null
-// points[20] = null
-// points[23] = null
-
-// const sinLine = new SimpleLine(new Array(1000).fill(0).map((_, i) => ({ x: i, y: Math.sin(i / 10) * 50 + 50 })), ['sin'])
-// const randomLine = new SimpleLine(points, ['random'])
-const redLine = new AutoLine({ classes: ['red'] })
-  .setPoints([
-    { x: 0, y: 0 },
-    { x: 0, y: 100 },
-    { x: 1000, y: 100 },
-    { x: 1000, y: 0 },
-    { x: 0, y: 0 },
-  ])
-
-const gradient = new ChartGradient({
-  classes: 'green-gradient',
-})
-
-const smoothRandom = new AutoLine({ classes: ['random', 'smooth'], area: false, smoothingMethod: 'monotone' })
-
-
-// const monotoneRandom = new AutoLine({ classes: ['random', 'monotone'], area: gradient, smoothingMethod: 'monotone' })
-//   .setPoints(points)
-
-const sinLine = new AutoLine({ classes: ['sin', 'smooth'], area: false })
-  .setPoints(new Array(1000).fill(0).map((_, i) => ({ x: i, y: Math.sin(i / 10) * 50 + 50 })))
-
-// const markers = new AutoMarkers({
-//   classes: 'markers',
-//   size: 2,
-//   maskSize: 4,
-//   targetMasks: [maskMain.root]
-// }).setMarkers(points.filter(p => p !== null))
-
-// const markers2 = new AutoMarkers({
-//   classes: 'markers.m2',
-//   size: 2,
-//   maskSize: 4,
-//   targetMasks: [maskMain.root]
-// }).setMarkers(points2.filter(p => p !== null))
-
-const hover = new ComposableHover('hover')
-  .addComponent(new VerticalLine({
-    offset: { end: 0.5 },
-    position: 'data-point-x',
+  const chart = markRaw(new UniversalChart({
+    layoutVariant: 'horizontal',
+    renderBoundsPadding: { vertical: 5 }
   }))
-  // .addComponent(new HorizontalLine({ offset: { start: 0.5 }, position: 'data-point-y' }))
-  .addComponent(new NearestMarker({
-    classes: 'markers',
-    markerClasses: 'marker',
-    size: 4,
-    maskSize: 6,
-    classesForDataSource: ['m1', 'm2'],
-    targetMasks: [maskMain.root],
-    position: 'data-point-x',
-  }))
-  .addComponent(new ChartTooltip({
-    position: 'data-point-x',
-    tooltipPivot: 'avg',
-    onHide: () => tooltipPos.value = null,
-    onPositionChange: (ctx) => {
-      tooltipPos.value = ctx
+
+  const labelsX = new AutoLabels('horizontal', {
+    padding: 5,
+    labelOffset: 10,
+    values: [
+      ...steppedOverrides({
+        step: [DAY, 2 * DAY, 7 * DAY],
+      })
+    ],
+    strategy: { type: 'interval', },
+    from: 0,
+  }).clipBy(clipBottom)
+
+  const labelsY = new AutoLabels('vertical', {
+    labelForValue: (v, step) => `${v.toFixed(0)}`,
+    padding: {
+      clip: 10,
+      flow: 5,
     },
-  }))
-// .setDataSources(points, points2)
+    labelOffset: 5,
+    values: [
+      ...steppedOverrides({
+        step: [1, 2, 5, 10, 25, 50, 100, 200, 250, 500],
+        offset: 0,
+      }),
+    ],
+    strategy: { type: 'interval', },
+    // from: 2650
+  }).clipBy(clipLeft)
+
+  const gradient = new ChartGradient({ classes: 'blue-gradient' })
+  const line = new AutoLine({ classes: 'main-line', area: gradient, smoothingMethod: 'monotone' })
+
+  const plotRoot = new PlotGroup()
+    .addPlot(line.maskBy(maskMain))
+    .clipBy(clipMain)
+
+  const hover = new ComposableHover('hover')
+    .addComponent(new VerticalLine({
+      offset: { end: 0.5 },
+      position: 'data-point-x',
+    }))
+    .addComponent(new NearestMarker({
+      classes: 'markers',
+      markerClasses: 'hover-marker',
+      size: 4,
+      maskSize: 6,
+      classesForDataSource: ['m1', 'm2'],
+      targetMasks: [maskMain.root],
+      position: 'data-point-x',
+    }))
+    .addComponent(new ChartTooltip({
+      position: 'data-point-x',
+      tooltipPivot: 'avg',
+      onHide: () => tooltip.value = null,
+      onPositionChange: ctx => tooltip.value = ctx,
+    }))
+
+  chart
+    .addPlot(new TicksByLabels(labelsX, { start: 0 }), 'ticks')
+    .addPlot(new TicksByLabels(labelsY, { start: 0 }), 'ticks')
+    .addPlot(plotRoot, 'plot')
+    .addSlot('bottom', labelsX, 'labels')
+    .addSlot('left', labelsY, 'labels')
+    .addPlot(hover)
+    .addDefs(gradient, clipMain, clipLeft, clipBottom, maskMain)
+
+  return { chart, labelsX, labelsY, line, hover }
+}
+
+const scoreChart = createChart(scoreTooltip)
+const battleChart = createChart(battleTooltip)
 
 
 watchEffect(() => {
-  const points = data.value.data.map(point => point.rating == 0 ? null : { x: new Date(point.recalculationTime).getTime(), y: point.rating })
-  smoothRandom.setPoints(points)
-  hover.setDataSources(points)
-  chart.setRenderBounds({
-    minX: startTime,
-    maxX: new Date(props.seasonInterval.end).getTime(),
+  const score = data.value.data.map(point => point.rating == 0 ? null : {
+    x: (new Date(point.recalculationTime).getTime() - startTime) / 1000,
+    y: point.rating
+  })
+  console.log(score)
+
+  scoreChart.line.setPoints(score)
+  scoreChart.hover.setDataSources(score)
+  scoreChart.chart.setRenderBounds({
+    minX: 0,
+    minY: 2650,
+    // maxX: (new Date(props.seasonInterval.end).getTime() - startTime) / 1000,
+  })
+
+  const battles = data.value.data.map(point => point.battlesCount == 0 ? null : {
+    x: (new Date(point.recalculationTime).getTime() - startTime) / 1000,
+    y: point.battlesCount
+  })
+  battleChart.line.setPoints(battles)
+  battleChart.hover.setDataSources(battles)
+  battleChart.chart.setRenderBounds({
+    minX: 0,
+    minY: 0,
+    // maxX: (new Date(props.seasonInterval.end).getTime() - startTime) / 1000,
   })
 })
 
-const plotRoot = new PlotGroup()
-  // .addPlot(sinLine)
-  // .addPlot(randomLine)
-  .addPlot(smoothRandom.maskBy(maskMain))
-  // .addPlot(monotoneRandom.maskBy(maskMain))
-  // .addPlot(redLine)
-  .clipBy(clipMain)
-
-
-chart
-  .addPlot(axis, 'ticks')
-  .addPlot(xTicks, 'ticks')
-  .addPlot(yTicks, 'ticks')
-  .addPlot(plotRoot, 'plot')
-  // .addPlot(markers, 'plot')
-  // .addPlot(markers2, 'plot')
-  .addSlot('bottom', labelsX, 'labels')
-  .addSlot('left', labelsY, 'labels')
-  .addPlot(hover)
-  .addDefs(gradient, clipMain, clipLeft, clipBottom, maskMain)
-
-
-// setInterval(() => {
-//   multiLine.setRenderBounds({
-//     minX: (1 + Math.sin(Date.now() / 1000)) * 200 - 200,
-//     maxX: (1 + Math.cos(Date.now() / 1000)) * 200 + 900,
-//     minY: (1 + Math.cos(Date.now() / 1000)) * 50 - 100,
-//     maxY: (1 + Math.sin(Date.now() / 1000)) * 50 + 100,
-//   })
-// }, 16)
-
-// watchEffect(() => {
-//   chart.setRenderBounds({
-//     minX: -offset.value,
-//     maxX: -offset.value + 1000 / xScale.value,
-//     minY: 0 + yOffset.value,
-//     maxY: yOffset.value + 100 / yScale.value,
-//   })
-// })
 
 </script>
 
@@ -315,126 +219,6 @@ chart
       font-size: 16px;
     }
 
-    :deep(.universal-chart-root) {
-      // useless rule to syntax highlight fix
-      background: inherit;
-
-      .labels {
-        .y-labels {
-          .label {
-            text-anchor: end;
-          }
-        }
-
-        .label {
-          color: rgb(255, 255, 255);
-          font-size: 14px;
-          font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-        }
-      }
-
-      .ticks {
-        opacity: 0.3;
-
-        .chart-axis {
-          path {
-            stroke: rgba(255, 255, 255, 1);
-            stroke-width: 1px;
-            stroke-linejoin: round;
-          }
-        }
-
-        .tick {
-          stroke: rgba(255, 255, 255, 1);
-          stroke-width: 1px;
-        }
-
-        .x-ticks {
-          .tick {
-            stroke-dasharray: 3px 8px;
-            stroke-linecap: round;
-          }
-        }
-
-        .y-ticks {
-          .tick {
-            stroke: rgba(255, 255, 255, 0.5);
-          }
-        }
-      }
-
-      .plot {
-
-        .line {
-          stroke-width: 2px;
-
-          &.sin {
-            stroke: rgb(24, 169, 247);
-          }
-
-          &.random {
-            stroke-width: 1px;
-            stroke: rgb(20, 153, 255);
-          }
-
-          &.smooth {
-            stroke-width: 1.5px;
-            stroke: rgb(255, 191, 0);
-          }
-
-          &.monotone {
-            stroke-width: 1.5px;
-            stroke: rgb(45, 212, 45);
-          }
-
-          &.red {
-            stroke-width: 1px;
-            stroke: rgb(255, 0, 0);
-          }
-        }
-
-        .area {
-          &.sin {
-            fill: rgba(24, 247, 95, 0.1);
-          }
-        }
-
-        .markers {
-          circle {
-            fill: rgb(45, 212, 45);
-          }
-
-          &.m2 {
-            circle {
-              fill: rgb(255, 191, 0);
-            }
-          }
-        }
-      }
-
-      .hover {
-        .marker {
-          &.m1 {
-            fill: rgb(45, 212, 45);
-          }
-
-          &.m2 {
-            fill: rgb(255, 191, 0);
-          }
-        }
-      }
-
-      .green-gradient {
-        .stop-1 {
-          stop-color: rgba(45, 212, 45, 0.3);
-        }
-
-        .stop-2 {
-          stop-color: rgba(45, 212, 45, 0);
-        }
-      }
-    }
-
     .tooltip {
       pointer-events: none;
       position: absolute;
@@ -446,6 +230,43 @@ chart
       top: 0;
       left: 0;
     }
+
+
+    :deep(.universal-chart-root) {
+      background: inherit;
+
+
+      .main-line {
+        stroke-width: 2px;
+        stroke: rgba(2, 175, 255, 1);
+
+        &.area {
+          stroke: none;
+        }
+      }
+
+      .x-ticks,
+      .y-ticks {
+        stroke: rgba(255, 255, 255, 0.1);
+      }
+
+      .hover {
+        .hover-marker {
+          fill: rgba(2, 175, 255, 1);
+        }
+      }
+
+      .blue-gradient {
+        .stop-1 {
+          stop-color: rgba(29, 108, 255, 0.2);
+        }
+
+        .stop-2 {
+          stop-color: rgba(29, 108, 255, 0);
+        }
+      }
+    }
+
   }
 }
 </style>
