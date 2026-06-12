@@ -1,5 +1,6 @@
 <template>
-  <FallbackImg :src="targetUrl" :fallback="fallbackUrl" :loading class="rank-icon" />
+  <FallbackImg :src="targetUrl" :key="targetUrl" :fallback="fallbackUrl" :loading class="rank-icon"
+    :class="`season-${props.season ?? 'latest'} game-${props.game ?? 'mt'} size-${props.size ?? 'medium'}`" />
 </template>
 
 
@@ -25,5 +26,21 @@ const fallbackUrl = computed(() => rankImageUrl(props.rank, props.size, props.ga
 <style lang="scss" scoped>
 .rank-icon {
   aspect-ratio: 1 / 1;
+}
+
+.game-mt {
+  &.season-comp7_5_4 {
+    &.size-large {
+      transform: translateY(6%) scale(1.15);
+    }
+
+    &.size-medium {
+      transform: translateY(4%) scale(1.15);
+    }
+
+    &.size-small {
+      transform: translateY(7%) scale(1.15);
+    }
+  }
 }
 </style>
