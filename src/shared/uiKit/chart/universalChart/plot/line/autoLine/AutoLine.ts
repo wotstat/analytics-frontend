@@ -53,6 +53,7 @@ export class AutoLine extends BasePlotRenderer {
         currentSegment.push(point)
       } else {
         if (currentSegment.length > 0) {
+          if (currentSegment.length === 1) currentSegment.push(currentSegment[0])
           this.segments.push(currentSegment)
           currentSegment = []
         }
@@ -74,6 +75,8 @@ export class AutoLine extends BasePlotRenderer {
   }
 
   renderImpl(space: ChartSpace) {
+    if (space.bounds.isEmpty()) this.line?.setAttribute('d', '')
+
     const paths: { area?: string, line: string }[] = []
     for (let i = 0; i < this.segments.length; i++) {
       const segment = this.segments[i]
