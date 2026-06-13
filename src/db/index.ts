@@ -200,3 +200,5 @@ export function semverCompareStartFrom(target: string, addWhere = true) {
   // (modVersion_major = ${major} and modVersion_minor = ${minor} and modVersion_patch > ${patch}) or
   // (modVersion_minor = ${major} and modVersion_minor = ${minor} and modVersion_patch = ${patch} and modVersion_revision >= ${revision}))`
 }
+
+export const RESTRICTED_COLUMNS = ['systemInfo.architectureBits', 'systemInfo.architectureLinkage', 'systemInfo.cpuCores', 'systemInfo.cpuFamily', 'systemInfo.cpuFreq', 'systemInfo.cpuName', 'systemInfo.cpuScore', 'systemInfo.cpuVendor', 'systemInfo.cpuVendorName', 'systemInfo.gameDriveName', 'systemInfo.gpuDriverVersion', 'systemInfo.gpuFamily', 'systemInfo.gpuMemory', 'systemInfo.gpuName', 'systemInfo.gpuScore', 'systemInfo.gpuVendor', 'systemInfo.gpuVendorName', 'systemInfo.isLaptop', 'systemInfo.machine', 'systemInfo.nativeResolution', 'systemInfo.platform', 'systemInfo.ramTotal', 'systemInfo.system', 'systemInfo.version', 'systemInfo.windowMode', 'systemInfo.windowResolution', 'systemInfo.workstationVendor']

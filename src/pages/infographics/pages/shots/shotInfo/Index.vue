@@ -129,7 +129,7 @@
                     <td>{{ result.fireHealth ?? '-' }}</td>
                   </template>
                   <td v-if="shotResult.some(t => t.ammoBayDestroyed)">{{ result.ammoBayDestroyed ? 'Да' : '-'
-                    }}</td>
+                  }}</td>
                 </tr>
               </tbody>
             </table>
@@ -163,7 +163,7 @@
 </template>
 
 <script lang="ts" setup>
-import { dbIndexToDate, query } from '@/db'
+import { dbIndexToDate, query, RESTRICTED_COLUMNS } from '@/db'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { useDraggable, useMediaQuery } from '@vueuse/core'
 import { useRoute, useRouter } from 'vue-router'
@@ -382,7 +382,7 @@ onMounted(async () => {
   const onBattleStartId = currentID.data[0].onBattleStartId
 
   const shots = await query<Shot>(`
-  SELECT toString(id) as id, * except (id) FROM Event_OnShot
+  SELECT toString(id) as id, * except (id, ${RESTRICTED_COLUMNS.map(c => `\`${c}\``).join(',')}) FROM Event_OnShot
   WHERE onBattleStartId = '${onBattleStartId}'
   and dateTime > toDateTime(${dbIndexToDate(onBattleStartId)})
   and dateTime < toDateTime(${dbIndexToDate(onBattleStartId)}) + interval 1 hour
