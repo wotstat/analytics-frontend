@@ -69,7 +69,7 @@ import { dateToDbDate, query, queryComputedFirst } from '@/db'
 import { computed, ref, watch } from 'vue'
 import LeaderboardLine from './components/LeaderboardLine.vue'
 import { regionToGame } from '@/shared/game/wot'
-import Detail from './components/Detail.vue'
+import Detail from './components/detail/Detail.vue'
 import Loader from '../shared/Loader.vue'
 
 import Settings from '../shared/settings/Settings.vue'
