@@ -310,6 +310,18 @@ export class UniversalChart extends BaseChart {
     for (const line of this.plotRenderers) {
       if (line.getBounds) bounds.extend(line.getBounds())
     }
+
+    if (!bounds.isEmpty()) {
+      if (bounds.minX == bounds.maxX) {
+        bounds.minX -= 1
+        bounds.maxX += 1
+      }
+
+      if (bounds.minY == bounds.maxY) {
+        bounds.minY -= 1
+        bounds.maxY += 1
+      }
+    }
     this.plotBounds = bounds
   }
 

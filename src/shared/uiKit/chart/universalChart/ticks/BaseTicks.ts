@@ -14,7 +14,7 @@ export abstract class BaseTicks implements PlotRenderer {
   private elementsByKey = new Map<number, SVGLineElement>()
   private elementsXYCache = new Map<SVGLineElement, { x1: number, y1: number, x2: number, y2: number }>()
 
-  constructor(axis: Axis) {
+  constructor(protected axis: Axis) {
     this.root.classList.add(axis === 'horizontal' ? 'x-ticks' : 'y-ticks')
   }
 
@@ -56,7 +56,21 @@ export abstract class BaseTicks implements PlotRenderer {
     }
   }
 
-  abstract getTicks(space: ChartSpace): TickData[]
+  getTicks(space: ChartSpace): TickData[] {
+    const requiredTicks = this.getTicksValues()
+
+    if (this.axis === 'horizontal') {
+      return requiredTicks
+        .map(value => ({ p: space.chartToLayoutX(value), value }))
+        .filter(tick => tick.p >= space.layout.x && tick.p <= space.layout.x + space.layout.width)
+    } else {
+      return requiredTicks
+        .map(value => ({ p: space.chartToLayoutY(value), value }))
+        .filter(tick => tick.p >= space.layout.y && tick.p <= space.layout.y + space.layout.height)
+    }
+  }
+
+  getTicksValues(): number[] { return [] }
 
   protected setupElement(element: SVGLineElement, tick: TickData, space: ChartSpace, overflow: Overflow, full: Size) {
     this.setXY(element,

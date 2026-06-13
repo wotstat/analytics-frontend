@@ -5,6 +5,7 @@ type Point = { x: number, y: number }
 export function smoothPath(points: Point[], smoothing = 1, precision = 2): string {
   if (points.length === 0) return ''
   if (points.length === 1) return `M ${points[0].x.toFixed(precision)} ${points[0].y.toFixed(precision)}`
+  if (points.length === 2) return `M ${points[0].x.toFixed(precision)} ${points[0].y.toFixed(precision)} L ${points[1].x.toFixed(precision)} ${points[1].y.toFixed(precision)}`
 
   const d: string[] = []
 
@@ -36,6 +37,7 @@ export function monotoneXPath(points: Point[], smoothing = 1, precision = 2): st
 
   if (n === 0) return ''
   if (n === 1) return `M ${points[0].x.toFixed(p)} ${points[0].y.toFixed(p)}`
+  if (n === 2) return `M ${points[0].x.toFixed(p)} ${points[0].y.toFixed(p)} L ${points[1].x.toFixed(p)} ${points[1].y.toFixed(p)}`
 
   const dx: number[] = []
   const dy: number[] = []
@@ -44,7 +46,7 @@ export function monotoneXPath(points: Point[], smoothing = 1, precision = 2): st
   for (let i = 0; i < n - 1; i++) {
     dx[i] = points[i + 1].x - points[i].x
     dy[i] = points[i + 1].y - points[i].y
-    slope[i] = dy[i] / dx[i]
+    slope[i] = dy[i] / (dx[i] || 1)
   }
 
   const tangent: number[] = []

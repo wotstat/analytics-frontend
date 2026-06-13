@@ -19,7 +19,7 @@ export type Overrides = {
   gen: ValueGenerator
 } & Omit<Options, 'values'>
 
-type Options = {
+export type Options = {
   values: (Overrides | ValueGenerator)[]
   labelForValue?: (v: number, step: number) => string
   keyForValue?: (v: number, label: string, step: number) => string
