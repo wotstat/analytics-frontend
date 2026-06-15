@@ -85,6 +85,8 @@ const pages = computed(() => {
   button {
     padding: 2px;
     width: 50px;
+    font-size: 0.9em;
+    line-height: 1;
     background-color: rgba(255, 255, 255, 0.08);
     border-radius: 5px;
     cursor: pointer;
@@ -105,6 +107,8 @@ const pages = computed(() => {
     width: 50px;
     text-align: center;
     border-radius: 5px;
+    font-size: 0.9em;
+    line-height: 1;
 
     -moz-appearance: textfield;
 

@@ -367,6 +367,7 @@ const problemsVisible = ref(false)
       color: inherit;
       padding: 15px 10px;
       transition: all 0.2s;
+      font-weight: bold;
 
       &.router-link-active {
         color: #d6fbff;
@@ -415,7 +416,7 @@ const problemsVisible = ref(false)
         display: none;
       }
 
-      @include less-small {
+      @media screen and (max-width: 800px) {
         display: none;
 
         &.small {
@@ -579,11 +580,11 @@ const problemsVisible = ref(false)
 $drop-down-menu: 1050px;
 $links-sections: 1050px;
 $sql: 1050px;
-$replays: 850px;
-$install: 500px;
+$replays: 880px;
+$install: 550px;
 $widgets: 450px;
 $infographics: 400px;
-$positions: 680px;
+$positions: 740px;
 $hero: 100px;
 $language-section: 300px;
 
