@@ -112,21 +112,24 @@ export function queryComputed<T>(queryString: () => string | null, { settings = 
     if (q === oldQ && enabled === oldEnabled) return
     if (!q || !enabled) return
 
+    abortController.abort()
+    abortController = new AbortController()
+    const signal = abortController.signal
+
     try {
       if (cachedResults.has(q) && allowCache) {
         result.value = { data: (cachedResults.get(q) as ResponseJSON<T>).data, status: success }
         return
       }
 
-      abortController.abort()
-      abortController = new AbortController()
-
       result.value = { data: [], status: loading }
-      const { data } = await query<T>(q, { settings, allowCache, abortSignal: abortController.signal })
-      if (abortController.signal.aborted) return
+      const { data } = await query<T>(q, { settings, allowCache, abortSignal: signal })
+      if (signal.aborted) return
 
       result.value = { data, status: success }
     } catch (reason) {
+      if (signal.aborted) return
+
       console.error(reason)
       result.value = { data: [], status: { status: error, reason: (reason as any).message as string } }
     }
@@ -137,6 +140,8 @@ export function queryComputed<T>(queryString: () => string | null, { settings = 
 
 export function queryComputedFirst<T>(queryString: () => string | null, defaultValue: T, { settings = {} as ClickHouseSettings, enabled = ref(true), allowCache = true } = {}) {
   const result = queryComputed<T>(queryString, { settings, enabled, allowCache })
+
+
 
   return computed(() => ({
     status: result.value.status as Status,
