@@ -20,6 +20,23 @@ export function extend<T extends Extendable>(intervals: T[], padding: number) {
 }
 
 type Fittable = { middle: number, size: number, start: number, end: number }
+export function cleanupOutside<T extends Extendable>(intervals: T[],
+  overflowLimits: { start: number, end: number }) {
+  const result: T[] = []
+
+  const oMin = overflowLimits.start
+  const oMax = overflowLimits.end
+
+  for (const current of intervals) {
+    const left = current.middle - current.size / 2
+    const right = current.middle + current.size / 2
+    if (left < oMin || right > oMax) continue
+    result.push(current)
+  }
+
+  return result
+}
+
 export function fit<T extends Fittable>(intervals: T[],
   layoutLimits: { start: number, end: number },
   overflowLimits: { start: number, end: number }) {
@@ -127,7 +144,7 @@ export function calculateClassic(ctx: {
   padding: number,
   compute: (v: number) => { p: number, label: string, size: number, half: number, key: string },
   generator: ValueGenerator,
-  force: boolean,
+  force: boolean
 }) {
 
   const { bounds, limits, layoutLimits, overflowLimits, padding, compute, generator, force } = ctx
