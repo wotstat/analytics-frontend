@@ -33,7 +33,7 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from 'vue'
 import DayChart from './dayChart/DayChart.vue'
-import { dateToDbDate, query, queryComputedFirst } from '@/db'
+import { dateToDbDate, query, queryComputed, queryComputedFirst } from '@/db'
 import { gameToRegion, regionToGame } from '@/shared/game/wot'
 import Settings from '../shared/settings/Settings.vue'
 import { onKeyStroke, refDebounced, useElementBounding } from '@vueuse/core'
@@ -132,8 +132,8 @@ const qualificationStatistics = shallowRef<{ battleIndex: number, result: 'win' 
 const eliteRatingStatistics = queryComputedFirst<{ top1: number, eliteThreshold: number, top10: number, top100: number }>(() => `
   with
     '${selectedRegion.value}' as REGION,
-    '${seasonInterval.value ? dateToDbDate(seasonInterval.value?.start) : '2000-01-01'}' as START_DATE,
-    '${seasonInterval.value ? dateToDbDate(seasonInterval.value?.end) : '2000-01-01'}' as END_DATE,
+    '${seasonInterval.value ? dateToDbDate(seasonInterval.value.start) : '2000-01-01'}' as START_DATE,
+    '${seasonInterval.value ? dateToDbDate(seasonInterval.value.end) : '2000-01-01'}' as END_DATE,
     (select max(recalculationTime) from Comp7LeaderboardByRank where region = REGION and recalculationTime between START_DATE and END_DATE + interval 1 day) as latestTime
   select max(rating) as top1, min(rating) as eliteThreshold, anyIf(rating, rank=10) as top10, anyIf(rating, rank=100) as top100
   from Comp7LeaderboardByRank
