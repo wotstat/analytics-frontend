@@ -110,6 +110,7 @@ const labelsX = new AutoLabels('horizontal', {
   //   fit: true,
   //   offset: [0, 0],
   // },
+  onlyFitted: true,
   from: 0, to: 1000
 }).clipBy(clipBottom)
 
@@ -134,6 +135,7 @@ const labelsY = new AutoLabels('vertical', {
   //   fit: true,
   //   offset: [5, 5],
   // },
+  onlyFitted: true,
   // from: -50, to: 50
 }).clipBy(clipLeft)
 

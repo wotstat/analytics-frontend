@@ -17,6 +17,7 @@ import { ref } from 'vue'
 const MINUTE = 1 * 60
 const HOUR = MINUTE * 60
 const DAY = HOUR * 24
+const WEEK = DAY * 7
 
 
 class BaseChart extends UniversalChart {
@@ -73,6 +74,9 @@ class BaseChart extends UniversalChart {
       .addSlot('left', labelsY, 'labels')
       .addPlot(this.hover)
       .addDefs(gradient, clipMain, clipLeft, clipBottom, maskMain)
+
+    this.setRenderBounds({ minX: 0 })
+    this.setMinLayoutSize({ right: 5, top: 5 })
   }
 
   setPoints(points: ({ x: number, y: number } | null)[]) {
@@ -81,22 +85,36 @@ class BaseChart extends UniversalChart {
   }
 
   protected getXLabelsOptions(): LabelsOptions {
+
+    function label(value: number, step: number) {
+      const day = 1 + value / DAY
+      const week = 1 + value / WEEK
+      if (step == 0) return `${day} день`
+      if (step == 1) return `${day}`
+      if (step == 2) return `${day}`
+      if (step == 3) return `${week} неделя`
+      if (step == 4) return `${week} нед.`
+      return `${value} | ${step}`
+    }
+
     return {
-      padding: 5,
-      labelOffset: 10,
+      padding: 10,
+      labelOffset: 5,
+      labelForValue: (v, s) => label(v, s),
       values: [
         ...steppedOverrides({
-          step: [DAY, 2 * DAY, 7 * DAY],
+          step: [DAY, DAY, 2 * DAY, WEEK, WEEK],
         })
       ],
-      strategy: { type: 'interval', },
+      strategy: { type: 'interval', offset: 3 },
+      // onlyFitted: true,
       from: 0,
     }
   }
 
   protected getYLabelsOptions(): LabelsOptions {
     return {
-      labelForValue: (v, step) => `${v.toFixed(0)}`,
+      labelForValue: (v, step) => `${v}`,
       padding: {
         clip: 10,
         flow: 5,
@@ -108,7 +126,8 @@ class BaseChart extends UniversalChart {
           offset: 0,
         }),
       ],
-      strategy: { type: 'interval', },
+      onlyFitted: true,
+      strategy: 'classic-flow',
     }
   }
 }

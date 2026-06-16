@@ -1,6 +1,6 @@
 import { ChartSpace } from '../../utils/ChartSpace'
 import { Axis, BaseLabels } from '../BaseLabels'
-import { calculateClassic, calculateInterval, extend, fit, intervalFit } from './utils'
+import { calculateClassic, calculateInterval, cleanupOutside, extend, fit, intervalFit } from './utils'
 
 export type Strategy = 'classic-flow' | 'classic' | {
   type: 'interval',
@@ -32,6 +32,7 @@ export type Options = {
   strategy?: Strategy
   from?: number
   to?: number
+  onlyFitted?: boolean
 }
 
 const DEFAULT_LABEL_PADDING = 15
@@ -120,6 +121,7 @@ export class AutoLabels extends BaseLabels {
         return { p, label, size, key, half: size / 2 }
       }
 
+      const onlyFitted = current.onlyFitted ?? options.onlyFitted ?? false
       const ctx = {
         padding: clipPadding, compute, generator: current.gen, force: i == options.values.length - 1,
         bounds: spaceBounds,
@@ -128,15 +130,21 @@ export class AutoLabels extends BaseLabels {
         overflowLimits
       }
 
+      const cleanupIfNeeded = <T extends { middle: number, size: number }>(fitted: T[]) => {
+        if (!onlyFitted) return fitted
+        return cleanupOutside(fitted, overflowLimits)
+      }
+
       if (strategy == 'classic-flow') {
         const res = calculateClassic(ctx)
         if (!res) continue
-        return fit(extend(res, flowPadding), layoutLimits, overflowLimits).map(convert)
+        const fitted = fit(extend(res, flowPadding), layoutLimits, overflowLimits)
+        return cleanupIfNeeded(fitted).map(convert)
       }
       else if (strategy == 'classic') {
         const res = calculateClassic(ctx)
         if (!res) continue
-        return res.map(convert)
+        return cleanupIfNeeded(res).map(convert)
       }
       else if (strategy.type == 'interval') {
         const placement = strategy.placement ?? 'start'
@@ -159,7 +167,7 @@ export class AutoLabels extends BaseLabels {
         const fitted = intervalFit(res.filter(t => t.key != ''), layoutLimits, overflowLimits, placement, fit, offset)
 
         this.lastIntervalStart = res[0].value
-        return fitted.map(convert)
+        return cleanupIfNeeded(fitted).map(convert)
       }
     }
 

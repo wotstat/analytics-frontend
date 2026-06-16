@@ -3,42 +3,28 @@
     <div class="chart">
       <h3>Очки по дням</h3>
       <UniversalChartComponent :chart="scoreChart" />
-      <div class="tooltip"
-        :style="{ transform: `translate(${scoreChart.tooltipCtx.value?.absolutePivot.x || 0 + 10}px, ${scoreChart.tooltipCtx.value?.absolutePivot.y || 0}px)` }"
-        v-if="scoreChart.tooltipCtx.value">
-        <!-- <p>{{ new Date(tooltipPos.nearestDataPoints[0].xValue).toLocaleString() }}</p> -->
-        <p>{{ scoreChart.tooltipCtx.value?.nearestDataPoints[0].xValue }}</p>
-        <p>{{ scoreChart.tooltipCtx.value?.nearestDataPoints[0].yValue }}</p>
-      </div>
     </div>
     <div class="chart">
       <h3>Бои по дням</h3>
       <UniversalChartComponent :chart="battleChart" />
+    </div>
+
+    <div class="tooltip"
+      :style="{ transform: `translate(${(scoreChart.tooltipCtx.value?.absolutePivot.x || 0) + 8}px, ${(scoreChart.tooltipCtx.value?.absolutePivot.y || 0) - 5}px)` }"
+      v-if="scoreChart.tooltipCtx.value">
+      <p>{{ new Date(startTime + scoreChart.tooltipCtx.value?.nearestDataPoints[0].xValue * 1000).toLocaleString() }}
+      </p>
+      <!-- <p>{{ scoreChart.tooltipCtx.value?.nearestDataPoints[0].xValue }}</p> -->
+      <p>{{ scoreChart.tooltipCtx.value?.nearestDataPoints[0].yValue }}</p>
     </div>
   </div>
 </template>
 
 
 <script setup lang="ts">
-import { Axis } from '@/shared/uiKit/chart/universalChart/axis/Axis'
-import { AutoLabels } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
-import { steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator'
-import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
-import { ChartTooltip, TooltipCtx } from '@/shared/uiKit/chart/universalChart/plot/hover/composableHover/components/chartTooltip/ChartTooltip'
-import { VerticalLine } from '@/shared/uiKit/chart/universalChart/plot/hover/composableHover/components/lines/VerticalLine'
-import { NearestMarker } from '@/shared/uiKit/chart/universalChart/plot/hover/composableHover/components/nearestMarker/NearestMarker'
-import { ComposableHover } from '@/shared/uiKit/chart/universalChart/plot/hover/composableHover/ComposableHover'
-import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
-import { AutoMarkers } from '@/shared/uiKit/chart/universalChart/plot/markers/autoMarkers/AutoMarkers'
-import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
-import { ChartClip } from '@/shared/uiKit/chart/universalChart/defs/ChartClip'
-import { ChartGradient } from '@/shared/uiKit/chart/universalChart/defs/ChartGradient'
-import { ChartMask } from '@/shared/uiKit/chart/universalChart/defs/ChartMask'
-import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
-import { markRaw, Ref, ref, watchEffect } from 'vue'
+import { markRaw, watchEffect } from 'vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import { dateToDbDate, queryComputed } from '@/db'
-import { arrayGenerator } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/arrayGenerator'
 import { BattlesChart, ScoreChart } from './Charts'
 
 const props = defineProps<{
@@ -77,6 +63,7 @@ const HOUR = MINUTE * 60
 const DAY = HOUR * 24
 
 const startTime = new Date(props.seasonInterval.start).getTime()
+// const endTime = new Date(props.seasonInterval.end).getTime()
 
 
 const scoreChart = markRaw(new ScoreChart(props.seasonInterval))
@@ -108,6 +95,21 @@ watchEffect(() => {
   padding-top: 0;
   cursor: default;
 
+  .tooltip {
+    pointer-events: none;
+    position: absolute;
+    background: rgba(16, 29, 51, 1);
+    padding: 5px 8px;
+    border-radius: 8px;
+    font-size: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-sizing: border-box;
+    backdrop-filter: blur(10px);
+    top: 0;
+    left: 0;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+  }
+
   .chart {
     flex: 1;
     border-radius: 4px;
@@ -119,18 +121,6 @@ watchEffect(() => {
     h3 {
       margin: 0 0 10px 0;
       font-size: 16px;
-    }
-
-    .tooltip {
-      pointer-events: none;
-      position: absolute;
-      background: rgba(38, 38, 38, 0.8);
-      padding: 10px;
-      border-radius: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.5);
-      box-sizing: border-box;
-      top: 0;
-      left: 0;
     }
 
 
@@ -151,6 +141,11 @@ watchEffect(() => {
       .x-ticks,
       .y-ticks {
         stroke: rgba(255, 255, 255, 0.1);
+      }
+
+      .label {
+        font-weight: bold;
+        font-size: 11px;
       }
 
       .hover {

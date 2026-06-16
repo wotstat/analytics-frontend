@@ -7,6 +7,7 @@ import { ChartSpace } from './utils/ChartSpace'
 type Options = {
   renderBounds?: { minX?: number, maxX?: number, minY?: number, maxY?: number },
   renderBoundsPadding?: { top?: number, right?: number, bottom?: number, left?: number } | { horizontal?: number, vertical?: number },
+  minLayoutSize?: { top?: number, right?: number, bottom?: number, left?: number } | { horizontal?: number, vertical?: number },
   layoutVariant?: 'horizontal' | 'vertical' | 'square',
   root?: HTMLElement
 }
@@ -39,6 +40,7 @@ export class UniversalChart extends BaseChart {
 
   private userDefinedBounds: { minX: number | null, maxX: number | null, minY: number | null, maxY: number | null } | null = null
   private renderBoundsPadding: { top: number, right: number, bottom: number, left: number } = { top: 0, right: 0, bottom: 0, left: 0 }
+  private minLayoutSize: { top: number, right: number, bottom: number, left: number } = { top: 0, right: 0, bottom: 0, left: 0 }
 
   private chartSpace = new ChartSpace({ x: 0, y: 0, width: 0, height: 0 }, new Bounds())
   private plotBounds = new Bounds()
@@ -68,6 +70,7 @@ export class UniversalChart extends BaseChart {
 
     this.setRenderBounds(options.renderBounds)
     this.setRenderBoundsPadding(options.renderBoundsPadding ?? { horizontal: 0, vertical: 0 })
+    this.setMinLayoutSize(options.minLayoutSize ?? { horizontal: 0, vertical: 0 })
 
     if (this.options.root) this.attach(this.options.root)
   }
@@ -167,6 +170,23 @@ export class UniversalChart extends BaseChart {
     if (ud.minY && Math.abs(ud.minY) == Infinity) ud.minY = null
 
     if (changed) this.dataDidChange()
+  }
+
+  setMinLayoutSize(size: Required<Options>['minLayoutSize']) {
+    if ('horizontal' in size || 'vertical' in size) {
+      const horizontal = size.horizontal ?? 0
+      const vertical = size.vertical ?? 0
+      this.minLayoutSize = { top: vertical, right: horizontal, bottom: vertical, left: horizontal }
+    } else {
+      const o = size as { top?: number, right?: number, bottom?: number, left?: number }
+      this.minLayoutSize = {
+        top: o.top ?? 0,
+        right: o.right ?? 0,
+        bottom: o.bottom ?? 0,
+        left: o.left ?? 0,
+      }
+    }
+    this.dataDidChange()
   }
 
   setRenderBoundsPadding(padding: Required<Options>['renderBoundsPadding']) {
@@ -269,7 +289,11 @@ export class UniversalChart extends BaseChart {
     const w = this.size.width
     const h = this.size.height
 
-    let xTop = 0, xBottom = 0, yLeft = 0, yRight = 0
+    let xTop = this.minLayoutSize.top,
+      xBottom = this.minLayoutSize.bottom,
+      yLeft = this.minLayoutSize.left,
+      yRight = this.minLayoutSize.right
+
     let layout = new ChartSpace({ x: 0, y: 0, width: w, height: h }, this.chartSpace.bounds)
     let overflow = { top: 0, right: 0, bottom: 0, left: 0 }
 
