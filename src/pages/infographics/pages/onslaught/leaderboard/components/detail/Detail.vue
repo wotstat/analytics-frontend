@@ -10,12 +10,21 @@
     </div>
 
     <div class="tooltip"
-      :style="{ transform: `translate(${(scoreChart.tooltipCtx.value?.absolutePivot.x || 0) + 8}px, ${(scoreChart.tooltipCtx.value?.absolutePivot.y || 0) - 5}px)` }"
+      :style="{ transform: `translate(${(scoreChart.tooltipCtx.value?.absolutePivot.x || 0) + 5}px, ${(scoreChart.tooltipCtx.value?.cursor.y || 0) + 5}px)` }"
       v-if="scoreChart.tooltipCtx.value">
-      <p>{{ new Date(startTime + scoreChart.tooltipCtx.value?.nearestDataPoints[0].xValue * 1000).toLocaleString() }}
+      <p>{{ new Date(startTime + scoreChart.tooltipCtx.value?.nearestDataPoints[0].xValue *
+        1000).toLocaleString(undefined, {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }).replace(',', '') }}
       </p>
-      <!-- <p>{{ scoreChart.tooltipCtx.value?.nearestDataPoints[0].xValue }}</p> -->
-      <p>{{ scoreChart.tooltipCtx.value?.nearestDataPoints[0].yValue }}</p>
+      <div class="data flex">
+        <p class="flex-1">Очки:</p>
+        <p class="bold">{{ scoreChart.tooltipCtx.value?.nearestDataPoints[0].yValue }}</p>
+      </div>
     </div>
   </div>
 </template>
@@ -75,14 +84,14 @@ watchEffect(() => {
     y: point.rating
   })
 
-  scoreChart.setPoints(score)
+  scoreChart.setPoints(score).setInterval(props.seasonInterval)
 
   const battles = data.value.data.map(point => point.battlesCount == 0 ? null : {
     x: (new Date(point.recalculationTime).getTime() - startTime) / 1000,
     y: point.battlesCount
   })
 
-  battleChart.setPoints(battles)
+  battleChart.setPoints(battles).setInterval(props.seasonInterval)
 })
 </script>
 
@@ -97,7 +106,7 @@ watchEffect(() => {
 
   .tooltip {
     pointer-events: none;
-    position: absolute;
+    position: fixed;
     background: rgba(16, 29, 51, 1);
     padding: 5px 8px;
     border-radius: 8px;
@@ -108,6 +117,7 @@ watchEffect(() => {
     top: 0;
     left: 0;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+    min-width: 140px;
   }
 
   .chart {
@@ -138,9 +148,22 @@ watchEffect(() => {
         }
       }
 
-      .x-ticks,
-      .y-ticks {
-        stroke: rgba(255, 255, 255, 0.1);
+      .ticks {
+        opacity: 0.1;
+
+        .y-ticks {
+          stroke: rgba(255, 255, 255, 1);
+        }
+
+        .day-ticks {
+          stroke: rgba(255, 255, 255, 0.1);
+        }
+
+        .week-ticks {
+          stroke: rgba(255, 255, 255, 1);
+        }
+
+
       }
 
       .label {
@@ -149,6 +172,10 @@ watchEffect(() => {
       }
 
       .hover {
+        .interactive-zone {
+          cursor: crosshair;
+        }
+
         .hover-marker {
           fill: rgba(2, 175, 255, 1);
         }

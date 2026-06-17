@@ -1,3 +1,4 @@
+import { Prettify } from '@/shared/utils/types/Prettify'
 import { Overrides, Strategy, ValueGenerator } from '../AutoLabels'
 
 
@@ -23,8 +24,18 @@ export function steppedGenerator(options: {
   }
 }
 
-export function steppedOverrides(options: {
+type OverridesStep = {
   step: number | number[]
+  offset?: number,
+  labelForValue?: (v: number) => string,
+  keyForValue?: (v: number, label: string) => string,
+  padding?: number,
+  strategy?: Strategy,
+}
+
+type SimpleOverridesStep = Prettify<{ step: number } & Omit<OverridesStep, 'step'>>
+export function steppedOverrides(options: {
+  step: number | number[] | OverridesStep[],
   offset?: number,
   labelForValue?: (v: number, step: number) => string,
   keyForValue?: (v: number, label: string, step: number) => string,
@@ -32,17 +43,39 @@ export function steppedOverrides(options: {
   strategy?: Strategy,
 }): Overrides[] {
 
-  const steps = Array.isArray(options.step) ? options.step : [options.step]
+  const isOverridesSteps = (x: any[]): x is OverridesStep[] => x.length > 0 && typeof x[0] === 'object' && 'step' in x[0]
+
+  const steps: SimpleOverridesStep[] = (() => {
+    const s = options.step
+    if (Array.isArray(s)) {
+      if (s.length == 0) return []
+      if (isOverridesSteps(s)) return s.flatMap(x =>
+        Array.isArray(x.step) ?
+          x.step.map(t => ({ ...x, step: t })) :
+          x as SimpleOverridesStep
+      )
+      return s.map(t => ({ step: t }))
+    }
+    return [{ step: s }]
+  })()
+
   const lastStep = steps[steps.length - 1]
 
+
   return [
-    ...steps.map(step => steppedGenerator({ step, offset: options.offset })),
-    ...new Array(10).fill(0).map((_, i) => steppedGenerator({ step: lastStep * Math.pow(2, i), offset: options.offset }))
-  ].map(gen => ({
-    gen,
-    labelForValue: options.labelForValue,
-    keyForValue: options.keyForValue,
-    padding: options.padding,
-    strategy: options.strategy,
-  }))
+    ...steps.map(step => ({
+      gen: steppedGenerator({ step: step.step, offset: step.offset ?? options.offset }),
+      labelForValue: step.labelForValue ?? options.labelForValue,
+      keyForValue: step.keyForValue ?? options.keyForValue,
+      padding: step.padding ?? options.padding,
+      strategy: step.strategy ?? options.strategy,
+    })),
+    ...new Array(10).fill(0).map((_, i) => ({
+      gen: steppedGenerator({ step: lastStep.step * Math.pow(2, i), offset: options.offset }),
+      labelForValue: options.labelForValue,
+      keyForValue: options.keyForValue,
+      padding: options.padding,
+      strategy: options.strategy,
+    }))
+  ]
 }

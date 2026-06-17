@@ -1,18 +1,19 @@
 import { Axis } from '../labels/BaseLabels'
 import { Overflow, Size } from '../UniversalChart'
 import { ChartSpace } from '../utils/ChartSpace'
+import { Classes } from '../utils/utils'
 import { BaseTicks, TickData } from './BaseTicks'
 
 
 export abstract class BaseOffsetTicks extends BaseTicks {
   protected sizes: { start: number | null, end: number | null }
 
-  constructor(axis: Axis, sizes?: { start?: number, end?: number }) {
-    super(axis)
+  constructor(axis: Axis, options?: { start?: number, end?: number, classes?: Classes }) {
+    super(axis, options?.classes)
 
     this.sizes = {
-      start: sizes?.start ?? null,
-      end: sizes?.end ?? null,
+      start: options?.start ?? null,
+      end: options?.end ?? null,
     }
   }
 

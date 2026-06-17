@@ -1,16 +1,13 @@
-import { Axis, BaseLabels } from '../labels/BaseLabels'
-import { Overflow, Size } from '../UniversalChart'
-import { ChartSpace } from '../utils/ChartSpace'
+import { Axis } from '../labels/BaseLabels'
+import { Classes } from '../utils/utils'
 import { BaseOffsetTicks } from './BaseOffsetTicks'
-import { BaseTicks, TickData } from './BaseTicks'
-
 
 export class TicksByValues extends BaseOffsetTicks {
 
   private ticks: number[] = []
 
-  constructor(axis: Axis, sizes?: { start?: number, end?: number }) {
-    super(axis, sizes)
+  constructor(axis: Axis, options?: { start?: number, end?: number, classes?: Classes }) {
+    super(axis, options)
   }
 
   getTicksValues(): number[] {

@@ -3,11 +3,12 @@ import './style.scss'
 import BaseChart from '../BaseChart'
 import { Bounds } from './utils/Bounds'
 import { ChartSpace } from './utils/ChartSpace'
+import { NormalizedOffset4Side, Offset4Side, unwrapOffset } from './utils/utils'
 
 type Options = {
   renderBounds?: { minX?: number, maxX?: number, minY?: number, maxY?: number },
-  renderBoundsPadding?: { top?: number, right?: number, bottom?: number, left?: number } | { horizontal?: number, vertical?: number },
-  minLayoutSize?: { top?: number, right?: number, bottom?: number, left?: number } | { horizontal?: number, vertical?: number },
+  renderBoundsPadding?: Offset4Side,
+  minLayoutSize?: Offset4Side,
   layoutVariant?: 'horizontal' | 'vertical' | 'square',
   root?: HTMLElement
 }
@@ -39,8 +40,8 @@ const NAMESPACE = 'http://www.w3.org/2000/svg'
 export class UniversalChart extends BaseChart {
 
   private userDefinedBounds: { minX: number | null, maxX: number | null, minY: number | null, maxY: number | null } | null = null
-  private renderBoundsPadding: { top: number, right: number, bottom: number, left: number } = { top: 0, right: 0, bottom: 0, left: 0 }
-  private minLayoutSize: { top: number, right: number, bottom: number, left: number } = { top: 0, right: 0, bottom: 0, left: 0 }
+  private renderBoundsPadding = { top: 0, right: 0, bottom: 0, left: 0 }
+  private minLayoutSize = { top: 0, right: 0, bottom: 0, left: 0 }
 
   private chartSpace = new ChartSpace({ x: 0, y: 0, width: 0, height: 0 }, new Bounds())
   private plotBounds = new Bounds()
@@ -172,37 +173,13 @@ export class UniversalChart extends BaseChart {
     if (changed) this.dataDidChange()
   }
 
-  setMinLayoutSize(size: Required<Options>['minLayoutSize']) {
-    if ('horizontal' in size || 'vertical' in size) {
-      const horizontal = size.horizontal ?? 0
-      const vertical = size.vertical ?? 0
-      this.minLayoutSize = { top: vertical, right: horizontal, bottom: vertical, left: horizontal }
-    } else {
-      const o = size as { top?: number, right?: number, bottom?: number, left?: number }
-      this.minLayoutSize = {
-        top: o.top ?? 0,
-        right: o.right ?? 0,
-        bottom: o.bottom ?? 0,
-        left: o.left ?? 0,
-      }
-    }
+  setMinLayoutSize(size: Offset4Side) {
+    this.minLayoutSize = unwrapOffset(size)
     this.dataDidChange()
   }
 
-  setRenderBoundsPadding(padding: Required<Options>['renderBoundsPadding']) {
-    if ('horizontal' in padding || 'vertical' in padding) {
-      const horizontal = padding.horizontal ?? 0
-      const vertical = padding.vertical ?? 0
-      this.renderBoundsPadding = { top: vertical, right: horizontal, bottom: vertical, left: horizontal }
-    } else {
-      const o = padding as { top?: number, right?: number, bottom?: number, left?: number }
-      this.renderBoundsPadding = {
-        top: o.top ?? 0,
-        right: o.right ?? 0,
-        bottom: o.bottom ?? 0,
-        left: o.left ?? 0,
-      }
-    }
+  setRenderBoundsPadding(padding: Offset4Side) {
+    this.renderBoundsPadding = unwrapOffset(padding)
     this.dataDidChange()
   }
 
