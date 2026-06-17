@@ -1,8 +1,11 @@
 import { UniversalChart, Overflow, DefsRenderer } from '../UniversalChart'
 import { ChartSpace } from '../utils/ChartSpace'
+import { NormalizedOffset4Side, Offset4Side, unwrapOffset } from '../utils/utils'
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
 type Size = { width: number, height: number }
+type Target = 'top' | 'right' | 'bottom' | 'left' | 'center'
+
 export class ChartMask implements DefsRenderer {
 
   readonly root = document.createElementNS(NAMESPACE, 'mask')
@@ -11,9 +14,11 @@ export class ChartMask implements DefsRenderer {
   private cachedSize = { x: 0, y: 0, width: 0, height: 0 }
 
   private chart: UniversalChart | null = null
+  private padding: NormalizedOffset4Side
 
   constructor(
-    private readonly target: 'top' | 'right' | 'bottom' | 'left' | 'center' = 'center',
+    private readonly target: Target = 'center',
+    padding: Offset4Side = 0,
     private readonly fillTarget = true) {
     this.root.setAttribute('id', this.id)
     if (fillTarget) {
@@ -21,6 +26,7 @@ export class ChartMask implements DefsRenderer {
       this.rect.classList.add('chart-mask-target-rect')
       this.root.appendChild(this.rect)
     }
+    this.padding = unwrapOffset(padding)
   }
 
   getRootElement(): Element {
@@ -39,7 +45,14 @@ export class ChartMask implements DefsRenderer {
     if (!this.chart) return
     if (!this.fillTarget) return
     const layout = this.target === 'center' ? space.layout : this.chart.getSlotRect(this.target)
-    this.setRect(layout.x, layout.y, layout.width, layout.height)
+    const targetSize = {
+      x: layout.x + this.padding.left,
+      y: layout.y + this.padding.top,
+      width: layout.width - this.padding.left - this.padding.right,
+      height: layout.height - this.padding.top - this.padding.bottom
+    }
+
+    this.setRect(targetSize.x, targetSize.y, targetSize.width, targetSize.height)
   }
 
   mask(element: SVGGElement) {

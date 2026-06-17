@@ -9,6 +9,7 @@ import { NearestMarker } from '@/shared/uiKit/chart/universalChart/plot/hover/co
 import { ComposableHover } from '@/shared/uiKit/chart/universalChart/plot/hover/composableHover/ComposableHover'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
 import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
+import { TicksByValues } from '@/shared/uiKit/chart/universalChart/ticks/TicksByValues'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
 import { ref } from 'vue'
@@ -25,14 +26,15 @@ class BaseChart extends UniversalChart {
 
   private line: AutoLine
   private hover: ComposableHover
+  private dayTicks: TicksByValues
 
   constructor(protected seasonInterval: { start: Date, end: Date }) {
     super({ layoutVariant: 'vertical' })
 
-    const clipMain = new ChartClip('center')
+    const clipMain = new ChartClip('center', { top: -1 })
     const clipLeft = new ChartClip('left')
     const clipBottom = new ChartClip('bottom')
-    const maskMain = new ChartMask('center')
+    const maskMain = new ChartMask('center', { top: -1 })
 
     const labelsX = new AutoLabels('horizontal', this.getXLabelsOptions()).clipBy(clipBottom)
     const labelsY = new AutoLabels('vertical', this.getYLabelsOptions()).clipBy(clipLeft)
@@ -66,9 +68,11 @@ class BaseChart extends UniversalChart {
         onPositionChange: ctx => this.tooltipCtx.value = ctx,
       }))
 
+    this.dayTicks = new TicksByValues('horizontal', { start: 0, classes: 'day-ticks' })
     this
-      .addPlot(new TicksByLabels(labelsX, { start: 0 }), 'ticks')
       .addPlot(new TicksByLabels(labelsY, { start: 0 }), 'ticks')
+      .addPlot(new TicksByLabels(labelsX, { start: 0, classes: 'week-ticks' }), 'ticks')
+      .addPlot(this.dayTicks, 'ticks')
       .addPlot(plotRoot, 'plot')
       .addSlot('bottom', labelsX, 'labels')
       .addSlot('left', labelsY, 'labels')
@@ -82,32 +86,41 @@ class BaseChart extends UniversalChart {
   setPoints(points: ({ x: number, y: number } | null)[]) {
     this.line.setPoints(points)
     this.hover.setDataSources(points)
+    return this
+  }
+
+  setInterval(seasonInterval: { start: Date, end: Date }) {
+    const start = Math.floor(seasonInterval.start.getTime() / 1000)
+    const end = Math.floor(seasonInterval.end.getTime() / 1000)
+    const delta = end - start
+    this.setRenderBounds({ minX: 0, maxX: Math.ceil(delta / WEEK) * WEEK })
+
+    const dayTicks = []
+    for (let i = 0; i <= end - start; i += DAY) dayTicks.push(i)
+    this.dayTicks.setTicks(dayTicks)
+    return this
   }
 
   protected getXLabelsOptions(): LabelsOptions {
 
-    function label(value: number, step: number) {
-      const day = 1 + value / DAY
-      const week = 1 + value / WEEK
-      if (step == 0) return `${day} день`
-      if (step == 1) return `${day}`
-      if (step == 2) return `${day}`
-      if (step == 3) return `${week} неделя`
-      if (step == 4) return `${week} нед.`
-      return `${value} | ${step}`
-    }
+    const steps: [number, (v: number) => string][] = [
+      [DAY, v => `${1 + v / DAY} день`],
+      [DAY, v => `${1 + v / DAY}`],
+      [2 * DAY, v => `${1 + v / DAY}`],
+      [WEEK, v => `${1 + v / WEEK} неделя`],
+      [WEEK, v => `${1 + v / WEEK} нед.`],
+      [WEEK, v => `${1 + v / WEEK} н.`],
+      [2 * WEEK, v => `${1 + v / WEEK} – ${2 + v / WEEK} нед.`],
+      [2 * WEEK, v => `${1 + v / WEEK} – ${2 + v / WEEK}`],
+      [12 * WEEK, v => `${1 + v / WEEK} – ${1 + (v + 4 * WEEK) / WEEK}`],
+    ]
 
     return {
       padding: 10,
       labelOffset: 5,
-      labelForValue: (v, s) => label(v, s),
-      values: [
-        ...steppedOverrides({
-          step: [DAY, DAY, 2 * DAY, WEEK, WEEK],
-        })
-      ],
+      values: steppedOverrides({ step: steps.map(s => ({ step: s[0], labelForValue: s[1] })) }),
       strategy: { type: 'interval', offset: 3 },
-      // onlyFitted: true,
+      onlyFitted: true,
       from: 0,
     }
   }

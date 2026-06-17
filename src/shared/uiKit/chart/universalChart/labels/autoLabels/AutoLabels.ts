@@ -51,6 +51,7 @@ function getFlowPadding(padding: Options['padding']) {
 export class AutoLabels extends BaseLabels {
 
   private lastIntervalStart: number | null = null
+  private lastRenderedTicksBeforeClip: number[] = []
 
   constructor(axis: Axis, private options: Options) {
     super(axis, { offset: options.labelOffset, stableWidth: options.stableWidth })
@@ -130,21 +131,27 @@ export class AutoLabels extends BaseLabels {
         overflowLimits
       }
 
-      const cleanupIfNeeded = <T extends { middle: number, size: number }>(fitted: T[]) => {
-        if (!onlyFitted) return fitted
-        return cleanupOutside(fitted, overflowLimits)
+      const prepareResult = <T extends { middle: number, size: number, label: string, key: string, value: number }>(fitted: T[]) => {
+        if (!onlyFitted) {
+          const res = fitted.map(convert)
+          this.lastRenderedTicksBeforeClip = res.map(f => f.value)
+          return res
+        }
+
+        this.lastRenderedTicksBeforeClip = fitted.map(convert).map(f => f.value)
+        return cleanupOutside(fitted, overflowLimits).map(convert)
       }
 
       if (strategy == 'classic-flow') {
         const res = calculateClassic(ctx)
         if (!res) continue
         const fitted = fit(extend(res, flowPadding), layoutLimits, overflowLimits)
-        return cleanupIfNeeded(fitted).map(convert)
+        return prepareResult(fitted)
       }
       else if (strategy == 'classic') {
         const res = calculateClassic(ctx)
         if (!res) continue
-        return cleanupIfNeeded(res).map(convert)
+        return prepareResult(res)
       }
       else if (strategy.type == 'interval') {
         const placement = strategy.placement ?? 'start'
@@ -167,7 +174,7 @@ export class AutoLabels extends BaseLabels {
         const fitted = intervalFit(res.filter(t => t.key != ''), layoutLimits, overflowLimits, placement, fit, offset)
 
         this.lastIntervalStart = res[0].value
-        return cleanupIfNeeded(fitted).map(convert)
+        return prepareResult(fitted)
       }
     }
 
@@ -175,7 +182,7 @@ export class AutoLabels extends BaseLabels {
   }
 
   getRequiredTicks(): number[] {
-    const ticks = super.getRequiredTicks()
+    const ticks = this.lastRenderedTicksBeforeClip
 
     if (this.options.strategy === 'classic-flow' || this.options.strategy === 'classic') return ticks
 

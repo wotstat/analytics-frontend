@@ -1,6 +1,7 @@
 import { Axis } from '../labels/BaseLabels'
 import { UniversalChart, Overflow, PlotRenderer, Size } from '../UniversalChart'
 import { ChartSpace } from '../utils/ChartSpace'
+import { addClasses, Classes } from '../utils/utils'
 
 export type TickData = {
   p: number
@@ -14,8 +15,9 @@ export abstract class BaseTicks implements PlotRenderer {
   private elementsByKey = new Map<number, SVGLineElement>()
   private elementsXYCache = new Map<SVGLineElement, { x1: number, y1: number, x2: number, y2: number }>()
 
-  constructor(protected axis: Axis) {
+  constructor(protected axis: Axis, classes?: Classes) {
     this.root.classList.add(axis === 'horizontal' ? 'x-ticks' : 'y-ticks')
+    addClasses(this.root, classes)
   }
 
   getRootElement(): Element {
