@@ -3,10 +3,10 @@ import { ChartGradient } from '@/shared/uiKit/chart/universalChart/defs/ChartGra
 import { ChartMask } from '@/shared/uiKit/chart/universalChart/defs/ChartMask'
 import { AutoLabels, Options as LabelsOptions } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
 import { steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator'
-import { ChartTooltip, TooltipCtx } from '@/shared/uiKit/chart/universalChart/plot/hover/composableHover/components/chartTooltip/ChartTooltip'
-import { VerticalLine } from '@/shared/uiKit/chart/universalChart/plot/hover/composableHover/components/lines/VerticalLine'
-import { NearestMarker } from '@/shared/uiKit/chart/universalChart/plot/hover/composableHover/components/nearestMarker/NearestMarker'
-import { ComposableHover } from '@/shared/uiKit/chart/universalChart/plot/hover/composableHover/ComposableHover'
+import { ChartTooltip, TooltipCtx } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/chartTooltip/ChartTooltip'
+import { VerticalLine } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/lines/VerticalLine'
+import { NearestMarker } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/nearestMarker/NearestMarker'
+import { ComposableHover } from '@/shared/uiKit/chart/universalChart/hover/composableHover/ComposableHover'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
 import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
 import { TicksByValues } from '@/shared/uiKit/chart/universalChart/ticks/TicksByValues'
@@ -31,10 +31,10 @@ class BaseChart extends UniversalChart {
   constructor(protected seasonInterval: { start: Date, end: Date }) {
     super({ layoutVariant: 'vertical' })
 
-    const clipMain = new ChartClip('center', { top: -1 })
+    const clipMain = new ChartClip('center', { top: -1, bottom: -1 })
     const clipLeft = new ChartClip('left')
     const clipBottom = new ChartClip('bottom')
-    const maskMain = new ChartMask('center', { top: -1 })
+    const maskMain = new ChartMask('center', { top: -1, bottom: -1 })
 
     const labelsX = new AutoLabels('horizontal', this.getXLabelsOptions()).clipBy(clipBottom)
     const labelsY = new AutoLabels('vertical', this.getYLabelsOptions()).clipBy(clipLeft)

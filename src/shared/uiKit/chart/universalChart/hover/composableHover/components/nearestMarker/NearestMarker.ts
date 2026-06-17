@@ -1,9 +1,10 @@
-import { ChartSpace } from '../../../../../utils/ChartSpace'
-import { Point } from '../../../../../utils/Point'
-import { addClasses, Classes, joinClasses } from '../../../../../utils/utils'
-import { AutoMarker } from '../../../../markers/autoMarkers/AutoMarkers'
+import { AutoMarker } from '../../../../plot/markers/autoMarkers/AutoMarkers'
+import { ChartSpace } from '../../../../utils/ChartSpace'
+import { Point } from '../../../../utils/Point'
+import { addClasses, Classes, joinClasses } from '../../../../utils/utils'
 import { DataSource, HoveredDataPoint, isDataPointArrayEqual } from '../../../BasePlotHover'
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
+
 
 
 type Options = {

@@ -1,8 +1,8 @@
-import { Overflow, Size } from '../../UniversalChart'
-import { ChartSpace } from '../../utils/ChartSpace'
-import { Point } from '../../utils/Point'
-import { Classes } from '../../utils/utils'
-import { BasePlotRenderer } from '../BasePlotRenderer'
+import { Overflow, Size } from '../UniversalChart'
+import { ChartSpace } from '../utils/ChartSpace'
+import { Point } from '../utils/Point'
+import { Classes } from '../utils/utils'
+import { BasePlotRenderer } from '../plot/BasePlotRenderer'
 
 export type DataSource = ({ x: number, y: number } | null)[]
 

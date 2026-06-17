@@ -1,6 +1,5 @@
-import { ChartSpace } from '../../../../../utils/ChartSpace'
-import { Point } from '../../../../../utils/Point'
-import { HoveredDataPoint } from '../../../BasePlotHover'
+import { ChartSpace } from '../../../../utils/ChartSpace'
+import { Point } from '../../../../utils/Point'
 import { BaseLine } from './BaseLine'
 
 export class HorizontalLine extends BaseLine {
