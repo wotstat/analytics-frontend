@@ -1,6 +1,6 @@
-import { ChartSpace } from '../../../utils/ChartSpace'
-import { Point } from '../../../utils/Point'
-import { Classes } from '../../../utils/utils'
+import { ChartSpace } from '../../utils/ChartSpace'
+import { Point } from '../../utils/Point'
+import { Classes } from '../../utils/utils'
 import { BasePlotHover } from '../BasePlotHover'
 
 export interface HoverComponent {

@@ -1,5 +1,5 @@
-import { ChartSpace } from '../../../../../utils/ChartSpace'
-import { Point } from '../../../../../utils/Point'
+import { ChartSpace } from '../../../../utils/ChartSpace'
+import { Point } from '../../../../utils/Point'
 import { BaseLine } from './BaseLine'
 
 export class VerticalLine extends BaseLine {

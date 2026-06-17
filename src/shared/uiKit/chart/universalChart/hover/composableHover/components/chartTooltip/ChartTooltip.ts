@@ -1,5 +1,5 @@
-import { ChartSpace } from '../../../../../utils/ChartSpace'
-import { Point } from '../../../../../utils/Point'
+import { ChartSpace } from '../../../../utils/ChartSpace'
+import { Point } from '../../../../utils/Point'
 import { HoveredDataPoint, isDataPointArrayEqual } from '../../../BasePlotHover'
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
 
