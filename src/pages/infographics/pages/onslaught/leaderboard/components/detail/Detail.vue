@@ -148,6 +148,11 @@ watchEffect(() => {
         }
       }
 
+      .diagonal-fill-pattern {
+        stroke: rgba(255, 255, 255, 0.1);
+        stroke-width: 1;
+      }
+
       .ticks {
         opacity: 0.1;
 
@@ -162,8 +167,6 @@ watchEffect(() => {
         .week-ticks {
           stroke: rgba(255, 255, 255, 1);
         }
-
-
       }
 
       .label {

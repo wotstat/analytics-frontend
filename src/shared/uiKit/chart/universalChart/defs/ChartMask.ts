@@ -1,44 +1,30 @@
-import { UniversalChart, Overflow, DefsRenderer } from '../UniversalChart'
 import { ChartSpace } from '../utils/ChartSpace'
 import { NormalizedOffset4Side, Offset4Side, unwrapOffset } from '../utils/utils'
+import { BaseDefs } from './BaseDefs'
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
 type Size = { width: number, height: number }
 type Target = 'top' | 'right' | 'bottom' | 'left' | 'center'
 
-export class ChartMask implements DefsRenderer {
+export class ChartMask extends BaseDefs {
 
-  readonly root = document.createElementNS(NAMESPACE, 'mask')
   private rect = document.createElementNS(NAMESPACE, 'rect')
-  private id = `mask-${Math.random().toString(16).slice(2)}`
   private cachedSize = { x: 0, y: 0, width: 0, height: 0 }
-
-  private chart: UniversalChart | null = null
   private padding: NormalizedOffset4Side
 
   constructor(
     private readonly target: Target = 'center',
     padding: Offset4Side = 0,
     private readonly fillTarget = true) {
-    this.root.setAttribute('id', this.id)
+
+    super(document.createElementNS(NAMESPACE, 'mask'), 'mask')
+
     if (fillTarget) {
       this.rect.setAttribute('fill', 'white')
       this.rect.classList.add('chart-mask-target-rect')
       this.root.appendChild(this.rect)
     }
     this.padding = unwrapOffset(padding)
-  }
-
-  getRootElement(): Element {
-    return this.root
-  }
-
-  attach(root: SVGGElement, chart: UniversalChart): void {
-    this.chart = chart
-  }
-
-  detach(): void {
-    this.root.remove()
   }
 
   didLayout(space: ChartSpace, full: Size): void {
@@ -56,7 +42,7 @@ export class ChartMask implements DefsRenderer {
   }
 
   mask(element: SVGGElement) {
-    element.setAttribute('mask', this.getMaskUrl())
+    element.setAttribute('mask', this.getUrl())
   }
 
   setRect(x: number, y: number, width: number, height: number) {
@@ -66,9 +52,5 @@ export class ChartMask implements DefsRenderer {
     this.rect.setAttribute('y', y.toString())
     this.rect.setAttribute('width', width.toString())
     this.rect.setAttribute('height', height.toString())
-  }
-
-  getMaskUrl() {
-    return `url(#${this.id})`
   }
 }

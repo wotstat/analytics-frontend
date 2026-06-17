@@ -13,6 +13,8 @@ import { TicksByValues } from '@/shared/uiKit/chart/universalChart/ticks/TicksBy
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
 import { ref } from 'vue'
+import { RectangleArea } from '@/shared/uiKit/chart/universalChart/plot/area/RectangleArea'
+import { ChartRawPattern } from '@/shared/uiKit/chart/universalChart/defs/ChartRawPattern'
 
 
 const MINUTE = 1 * 60
@@ -27,6 +29,7 @@ class BaseChart extends UniversalChart {
   private line: AutoLine
   private hover: ComposableHover
   private dayTicks: TicksByValues
+  private restrictionArea: RectangleArea
 
   constructor(protected seasonInterval: { start: Date, end: Date }) {
     super({ layoutVariant: 'vertical' })
@@ -42,9 +45,17 @@ class BaseChart extends UniversalChart {
     const gradient = new ChartGradient({ classes: 'blue-gradient' })
     this.line = new AutoLine({ classes: 'main-line', area: gradient, smoothingMethod: 'monotone' })
 
+    const pattern = new ChartRawPattern()
+      .setContent('<path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" class="diagonal-fill-pattern" />',
+        { width: 4, height: 4 })
+      .addAttribute('patternTransform', 'scale(1.5)')
+
+    this.restrictionArea = new RectangleArea('restriction-area', { layoutLimited: true, padding: { right: 0.5 } }).fillByPattern(pattern)
 
     const plotRoot = new PlotGroup()
-      .addPlot(this.line.maskBy(maskMain))
+      .addPlot(this.line)
+      .addPlot(this.restrictionArea)
+      .maskBy(maskMain)
       .clipBy(clipMain)
 
     this.hover = new ComposableHover('hover')
@@ -77,7 +88,7 @@ class BaseChart extends UniversalChart {
       .addSlot('bottom', labelsX, 'labels')
       .addSlot('left', labelsY, 'labels')
       .addPlot(this.hover)
-      .addDefs(gradient, clipMain, clipLeft, clipBottom, maskMain)
+      .addDefs(gradient, clipMain, clipLeft, clipBottom, maskMain, pattern)
 
     this.setRenderBounds({ minX: 0 })
     this.setMinLayoutSize({ right: 5, top: 5 })
@@ -93,11 +104,17 @@ class BaseChart extends UniversalChart {
     const start = Math.floor(seasonInterval.start.getTime() / 1000)
     const end = Math.floor(seasonInterval.end.getTime() / 1000)
     const delta = end - start
-    this.setRenderBounds({ minX: 0, maxX: Math.ceil(delta / WEEK) * WEEK })
+    const roundedDelta = Math.ceil(delta / WEEK) * WEEK
+    this.setRenderBounds({ minX: 0, maxX: roundedDelta })
 
     const dayTicks = []
     for (let i = 0; i <= end - start; i += DAY) dayTicks.push(i)
     this.dayTicks.setTicks(dayTicks)
+
+    if (roundedDelta != delta) {
+      this.restrictionArea.setPoints({ x: delta, y: -Infinity }, { x: roundedDelta, y: Infinity })
+    }
+
     return this
   }
 
