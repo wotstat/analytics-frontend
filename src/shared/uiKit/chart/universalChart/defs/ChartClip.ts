@@ -1,37 +1,21 @@
-import { UniversalChart, DefsRenderer } from '../UniversalChart'
 import { ChartSpace } from '../utils/ChartSpace'
 import { NormalizedOffset4Side, Offset4Side, unwrapOffset } from '../utils/utils'
+import { BaseDefs } from './BaseDefs'
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
 type Size = { width: number, height: number }
 type Target = 'top' | 'right' | 'bottom' | 'left' | 'center'
 
-export class ChartClip implements DefsRenderer {
+export class ChartClip extends BaseDefs {
 
-  private clipPath = document.createElementNS(NAMESPACE, 'clipPath')
   private rect = document.createElementNS(NAMESPACE, 'rect')
-  private id = `clip-${Math.random().toString(16).slice(2)}`
   private cachedSize = { x: 0, y: 0, width: 0, height: 0 }
-
-  private chart: UniversalChart | null = null
   private padding: NormalizedOffset4Side
 
   constructor(private target: Target = 'center', padding: Offset4Side = 0) {
-    this.clipPath.setAttribute('id', this.id)
-    this.clipPath.appendChild(this.rect)
+    super(document.createElementNS(NAMESPACE, 'clipPath'), 'clip')
+    this.root.appendChild(this.rect)
     this.padding = unwrapOffset(padding)
-  }
-
-  getRootElement(): Element {
-    return this.clipPath
-  }
-
-  attach(root: SVGGElement, chart: UniversalChart): void {
-    this.chart = chart
-  }
-
-  detach(): void {
-    this.clipPath.remove()
   }
 
   didLayout(space: ChartSpace, full: Size): void {
@@ -47,7 +31,7 @@ export class ChartClip implements DefsRenderer {
   }
 
   clip(element: SVGGElement) {
-    element.setAttribute('clip-path', this.getClipPath())
+    element.setAttribute('clip-path', this.getUrl())
   }
 
   setRect(x: number, y: number, width: number, height: number) {
@@ -57,9 +41,5 @@ export class ChartClip implements DefsRenderer {
     this.rect.setAttribute('y', y.toString())
     this.rect.setAttribute('width', width.toString())
     this.rect.setAttribute('height', height.toString())
-  }
-
-  getClipPath() {
-    return `url(#${this.id})`
   }
 }

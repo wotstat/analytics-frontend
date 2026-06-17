@@ -1,28 +1,21 @@
-import { DefsRenderer } from '../UniversalChart'
 import { addClasses, Classes } from '../utils/utils'
+import { BaseDefs } from './BaseDefs'
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
 
 type Step = { offset: number, color?: string, class?: Classes } | number
 type Direction = number | 'to top' | 'to right' | 'to bottom' | 'to left' | 'horizontal' | 'vertical'
 
-export class ChartGradient implements DefsRenderer {
-  private id = `clip-${Math.random().toString(16).slice(2)}`
-
-  private gradient = document.createElementNS(NAMESPACE, 'linearGradient')
+export class ChartGradient extends BaseDefs {
   private stepsElement: SVGStopElement[] = []
 
   constructor(options?: { classes?: Classes, steps?: Step[] | number, direction?: Direction }) {
+    super(document.createElementNS(NAMESPACE, 'linearGradient'), 'gradient')
     this.setDirection(options?.direction ?? 'vertical')
     this.setSteps(options?.steps ?? 2)
 
-    this.gradient.classList.add('chart-gradient')
-    this.gradient.setAttribute('id', this.id)
-    addClasses(this.gradient, options?.classes)
-  }
-
-  getRootElement() {
-    return this.gradient
+    this.root.classList.add('chart-gradient')
+    addClasses(this.root, options?.classes)
   }
 
   setSteps(steps: Step[] | number) {
@@ -77,14 +70,10 @@ export class ChartGradient implements DefsRenderer {
     const rad = angle * Math.PI / 180
     const x = Math.cos(rad)
     const y = Math.sin(rad)
-    this.gradient.setAttribute('x1', `${(x + 1) / 2 * 100}%`)
-    this.gradient.setAttribute('y1', `${(y + 1) / 2 * 100}%`)
-    this.gradient.setAttribute('x2', `${(1 - x) / 2 * 100}%`)
-    this.gradient.setAttribute('y2', `${(1 - y) / 2 * 100}%`)
-  }
-
-  getUrl() {
-    return `url(#${this.id})`
+    this.root.setAttribute('x1', `${(x + 1) / 2 * 100}%`)
+    this.root.setAttribute('y1', `${(y + 1) / 2 * 100}%`)
+    this.root.setAttribute('x2', `${(1 - x) / 2 * 100}%`)
+    this.root.setAttribute('y2', `${(1 - y) / 2 * 100}%`)
   }
 
   fill(element: SVGGElement) {
@@ -93,7 +82,7 @@ export class ChartGradient implements DefsRenderer {
 
   private createStop() {
     const stop = document.createElementNS(NAMESPACE, 'stop')
-    this.gradient.appendChild(stop)
+    this.root.appendChild(stop)
     this.stepsElement.push(stop)
     stop.classList.add(`stop-${this.stepsElement.length}`)
     return stop
