@@ -1,11 +1,21 @@
 <template>
   <div class="charts">
     <div class="chart">
-      <h3>Очки по дням</h3>
+      <div class="header">
+        <div class="title">
+          <h3>Очки по дням</h3>
+        </div>
+        <IntervalSelector />
+      </div>
       <UniversalChartComponent :chart="scoreChart" />
     </div>
     <div class="chart">
-      <h3>Бои по дням</h3>
+      <div class="header">
+        <div class="title">
+          <h3>Бои по дням</h3>
+        </div>
+        <IntervalSelector />
+      </div>
       <UniversalChartComponent :chart="battleChart" />
     </div>
 
@@ -35,6 +45,8 @@ import { markRaw, watchEffect } from 'vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import { dateToDbDate, queryComputed } from '@/db'
 import { BattlesChart, ScoreChart } from './Charts'
+
+import IntervalSelector from './intervalSelector/IntervalSelector.vue'
 
 const props = defineProps<{
   bdid: number
@@ -71,7 +83,7 @@ const MINUTE = 1 * 60
 const HOUR = MINUTE * 60
 const DAY = HOUR * 24
 
-const startTime = new Date(props.seasonInterval.start).getTime()
+const startTime = props.seasonInterval.start.getTime()
 // const endTime = new Date(props.seasonInterval.end).getTime()
 
 
@@ -80,14 +92,14 @@ const battleChart = markRaw(new BattlesChart(props.seasonInterval))
 
 watchEffect(() => {
   const score = data.value.data.map(point => point.rating == 0 ? null : {
-    x: (new Date(point.recalculationTime).getTime() - startTime) / 1000,
+    x: (new Date(point.recalculationTime + 'Z').getTime() - startTime) / 1000,
     y: point.rating
   })
 
   scoreChart.setPoints(score).setInterval(props.seasonInterval)
 
   const battles = data.value.data.map(point => point.battlesCount == 0 ? null : {
-    x: (new Date(point.recalculationTime).getTime() - startTime) / 1000,
+    x: (new Date(point.recalculationTime + 'Z').getTime() - startTime) / 1000,
     y: point.battlesCount
   })
 
@@ -118,6 +130,7 @@ watchEffect(() => {
     left: 0;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
     min-width: 140px;
+    font-variant-numeric: tabular-nums;
   }
 
   .chart {
@@ -128,11 +141,21 @@ watchEffect(() => {
     display: flex;
     flex-direction: column;
 
-    h3 {
-      margin: 0 0 10px 0;
-      font-size: 16px;
-    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
 
+      .title {
+        flex: 1;
+      }
+
+      h3 {
+        margin: 0 0 10px 0;
+        font-size: 16px;
+      }
+
+    }
 
     :deep(.universal-chart-root) {
       background: inherit;
