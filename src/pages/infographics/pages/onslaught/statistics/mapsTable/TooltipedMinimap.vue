@@ -5,7 +5,7 @@
       :viewport-offset="{ top: headerOffset + 10, bottom: 10, left: 10, right: 10 }" :arrow-size="7"
       :styles="{ 'pointer-events': 'none' }">
       <div class="tooltip">
-        <Minimap :tag="tag" :game="game" :gameplay="'comp7'" />
+        <Minimap :tag="tag" :game="game" :team="team" :gameplay="'comp7'" />
       </div>
     </PopoverAutoClose>
   </div>
@@ -22,6 +22,7 @@ import { useElementHover } from '@vueuse/core'
 
 const props = defineProps<{
   tag: string;
+  team?: number;
   game?: GameVendor;
 }>()
 

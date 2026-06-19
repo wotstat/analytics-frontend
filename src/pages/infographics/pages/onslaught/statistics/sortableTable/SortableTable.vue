@@ -44,16 +44,24 @@ const displayedData = computed(() => {
   const dataWithKeys = props.data.map((line, index) => {
     const value = line[orderBy.value]
     const sortKey = typeof value === 'object' && 'sortKey' in value ? value.sortKey : value
-    return { line, sortKey, index }
+
+    const defaultValue = line[props.defaultOrderBy ?? 1]
+    const defaultSortKey = typeof defaultValue === 'object' && 'sortKey' in defaultValue ? defaultValue.sortKey : defaultValue
+    return { line, sortKey, defaultSortKey, index }
   })
 
   const direction = orderDirection.value == 'asc' ? 1 : -1
 
   const comparator = (a: typeof dataWithKeys[0], b: typeof dataWithKeys[0]) => {
-    if (typeof a.sortKey === 'string' && typeof b.sortKey === 'string') return a.sortKey.localeCompare(b.sortKey) * direction
-    if (a.sortKey < b.sortKey) return -direction
-    if (a.sortKey > b.sortKey) return direction
-    return 0
+
+    const compare = (a: string | number | T, b: string | number | T) => {
+      if (typeof a === 'string' && typeof b === 'string') return a.localeCompare(b) * direction
+      if (a < b) return -direction
+      if (a > b) return direction
+      return 0
+    }
+
+    return compare(a.sortKey, b.sortKey) || compare(a.defaultSortKey, b.defaultSortKey) || compare(a.index, b.index)
   }
 
   const sortedData = dataWithKeys.sort(comparator)

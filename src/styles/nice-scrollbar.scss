@@ -1,4 +1,4 @@
-@mixin nice-scrollbar {
+@mixin base-nice-scrollbar {
   &::-webkit-scrollbar {
     height: 10px;
     width: 8px;
@@ -9,14 +9,34 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background: var(--background-secondary);
     box-shadow: 0 1px 2px 0px rgb(0, 0, 0, 0.1);
     border-radius: 10px;
     cursor: pointer;
   }
+}
+
+@mixin nice-scrollbar {
+  @include base-nice-scrollbar;
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--background-secondary);
+  }
 
   &::-webkit-scrollbar-thumb:hover {
     background: #464646;
+  }
+}
+
+@mixin nice-scrollbar-transparent {
+  @include base-nice-scrollbar;
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.1);
+    ;
   }
 }
 
@@ -27,5 +47,15 @@
 .deep-nice-scrollbar {
   * {
     @include nice-scrollbar;
+  }
+}
+
+.nice-scrollbar-transparent {
+  @include nice-scrollbar-transparent;
+}
+
+.deep-nice-scrollbar-transparent {
+  * {
+    @include nice-scrollbar-transparent;
   }
 }

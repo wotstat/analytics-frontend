@@ -26,6 +26,8 @@
     <MainStat :game="game" :items="mainStats" @selectDay="selectDay" />
     <VehicleTable class="vehicle-statistics" :game="game" :vehicleStats :displayedDay />
     <MapsTable class="maps-statistics" :game="game" :mapsStats :displayedDay />
+    <BattleHistoryTable class="battle-history-statistics" :game="game" :history="battlesStats" :displayedDay
+      :nickname="nickname" />
   </div>
 </template>
 
@@ -33,19 +35,23 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from 'vue'
 import DayChart from './dayChart/DayChart.vue'
-import { dateToDbDate, query, queryComputed, queryComputedFirst } from '@/db'
+import { dateToDbDate, query, queryComputedFirst } from '@/db'
 import { gameToRegion, regionToGame } from '@/shared/game/wot'
 import Settings from '../shared/settings/Settings.vue'
 import { onKeyStroke, refDebounced, useElementBounding } from '@vueuse/core'
 import { DayChartData } from './types'
 import MainStat from './mainStat/MainStat.vue'
-import { compareRanks, getDivisionLetterByRating, getEnergyPerBattle, getMaxEnergyLimit, getRankByRating, getRatingInactiveDecreasePerDay, getRegionIsoHourOffset, getSeasonDuration, getSeasonQualificationCount, Rank } from '@/shared/game/comp7/utils'
+import {
+  compareRanks, getDivisionLetterByRating, getEnergyPerBattle, getMaxEnergyLimit,
+  getRankByRating, getRatingInactiveDecreasePerDay, getRegionIsoHourOffset, getSeasonQualificationCount, Rank
+} from '@/shared/game/comp7/utils'
 import { useMainStat, type StatisticRes } from './mainStat/useMainStat'
 import VehicleTable from './vehicleTable/VehicleTable.vue'
 import { watchWithAbortSignal } from '@/shared/utils/core'
 import { useVehicleTable, VehicleRes } from './vehicleTable/useVehicleTable'
 import { MapsRes, useMapsTable } from './mapsTable/useMapsTable'
 import MapsTable from './mapsTable/MapsTable.vue'
+import BattleHistoryTable from './battleHistoryTable/BattleHistoryTable.vue'
 import { headerOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import TipKeyboardChangeDay from './tips/TipKeyboardChangeDay.vue'
 import TipSelectDay from './tips/TipSelectDay.vue'
@@ -54,6 +60,7 @@ import SecondaryStat from './secondaryStat/SecondaryStat.vue'
 import { refDebouncedCheck } from '@/shared/utils/refDebouncedCheck'
 import { useSeasonInterval } from '../shared/useSeasonInterval'
 import { useMeta } from '@/shared/composition/useMeta'
+import { BattleRes, useBattleResultTable } from './battleHistoryTable/useBattleHistory'
 
 useMeta({
   title: 'Статистика Натиска - WotStat',
@@ -127,6 +134,7 @@ const seasonInterval = useSeasonInterval(seasons, selectedSeason, selectedRegion
 const statistics = shallowRef<StatisticRes[] | null>(null)
 const vehicleStatistics = shallowRef<VehicleRes[] | null>(null)
 const mapsStatistics = shallowRef<MapsRes[] | null>(null)
+const battleHistoryStatistics = shallowRef<BattleRes[] | null>(null)
 const qualificationStatistics = shallowRef<{ battleIndex: number, result: 'win' | 'loss' | 'draw' }[] | null>(null)
 
 const eliteRatingStatistics = queryComputedFirst<{ top1: number, eliteThreshold: number, top10: number, top100: number }>(() => `
@@ -336,6 +344,33 @@ async function load(abortSignal: AbortSignal) {
   `, { abortSignal })
   if (abortSignal.aborted) return
   mapsStatistics.value = mapsStatisticsRes.data
+
+
+  const battleHistoryRes = await query<BattleRes>(`
+  with
+      '${nickName}' as PLAYER,
+      '${startDate}' as START_DATE,
+      '${endDate}' as END_DATE,
+      '${region}' as REGION,
+      ${getRegionIsoHourOffset(region)} as OFFSET
+    select toStartOfDay(dateTime + interval OFFSET hour) as day, dateTime,
+      result, arenaTag as arena, team, 
+      comp7.ratingDelta as ratingDelta, comp7.qualBattleIndex as qualBattleIndex,
+      tankTag, tankLevel, tankType,
+      personal.damageDealt as damage,
+      personal.damageAssistedRadio + personal.damageAssistedTrack + personal.damageAssistedStun as assist,
+      personal.kills as kills,
+      personal.comp7PrestigePoints as prestigePoints
+    from Event_OnBattleResult
+    where playerName = PLAYER 
+      and dateTime between START_DATE and END_DATE
+      and region = REGION
+      and battleMode = 'COMP7'
+    order by dateTime;
+  `, { abortSignal })
+  if (abortSignal.aborted) return
+  battleHistoryStatistics.value = battleHistoryRes.data
+
 }
 
 watch([seasonInterval, nickname, selectedRegion], () => {
@@ -343,6 +378,7 @@ watch([seasonInterval, nickname, selectedRegion], () => {
   vehicleStatistics.value = null
   mapsStatistics.value = null
   qualificationStatistics.value = null
+  battleHistoryStatistics.value = null
   isLoading.value = false
 })
 
@@ -438,6 +474,7 @@ const selectedDay = computed(() => {
 const mainStats = refDebounced(useMainStat(days, game, selectedSeason, selectedDayIndex), 1)
 const vehicleStats = refDebounced(useVehicleTable(computed(() => vehicleStatistics.value ?? []), selectedDay), 1)
 const mapsStats = refDebounced(useMapsTable(computed(() => mapsStatistics.value ?? []), selectedDay), 1)
+const battlesStats = refDebounced(useBattleResultTable(computed(() => battleHistoryStatistics.value ?? []), selectedDay), 1)
 
 let qualificationStatsVersion = 0
 const qualificationStats = refDebounced(computed(() => {

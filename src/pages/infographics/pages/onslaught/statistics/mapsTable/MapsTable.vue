@@ -11,7 +11,7 @@
       </div>
       <hr class="separator">
 
-      <div class="table-container nice-scrollbar mt-font">
+      <div class="table-container nice-scrollbar-transparent mt-font">
         <SortableTable :data="data" :cols="7" :limit="displayLimit" :is-orderable="i => i !== 0" :default-order-by="1">
 
           <template #head-cell="{ col }">
@@ -118,6 +118,7 @@ hr {
 .table-container {
   overflow-x: auto;
   font-size: 14px;
+  padding-bottom: 5px;
 
   thead {
     th {
