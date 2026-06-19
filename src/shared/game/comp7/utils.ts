@@ -249,6 +249,8 @@ function getRankImageName(rank: RankImageDefinition, game: GameVendor = 'mt'): s
   else division = rank as Division
 
   if (division == 'qual') return 'qualification'
+  if (division == 'sixth') return 'sixth_logo'
+  if (division == 'fifth') return 'fifth_logo'
   return division
 }
 
