@@ -66,7 +66,7 @@
       <div class="footer">
         <div class="spacer flex-1"></div>
         <TipShiftKeyForShowMore ref="shiftKeyForShowMoreBubble"
-          :display="props.history.length > limit && showMore && maxTouchPoints > 0" />
+          :display="props.history.length > limit && showMore && maxTouchPoints == 0" />
         <button class="more" @click="increaseLimit" v-if="props.history.length > limit && showMore">
           Загрузить ещё...
         </button>
