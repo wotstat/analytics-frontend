@@ -337,7 +337,7 @@ const delegate: TableViewDelegate = {
         height: 22px;
         padding: 0 10px;
         line-height: 1;
-        font-size: 0.9em;
+        font-size: 14px;
 
         .icon {
           height: 14px;
@@ -425,7 +425,7 @@ const delegate: TableViewDelegate = {
         background-color: transparent;
 
         color: var(--blue-thin-color);
-        font-size: 0.9em;
+        font-size: 14px;
         border: none;
         transition: color 0.2s;
 

@@ -125,7 +125,7 @@ const looksLikeModsVersionFolder = computed(() => {
 
 
   code {
-    font-size: 0.9em;
+    font-size: 14px;
     border-radius: 5px;
     background-color: #1e1e1e;
     border: 1px solid #555;

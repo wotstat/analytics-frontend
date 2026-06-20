@@ -136,7 +136,7 @@ html {
     height: 22px;
     padding: 0 10px;
     line-height: 1;
-    font-size: 0.9em;
+    font-size: 14px;
     white-space: nowrap;
 
     .icon {

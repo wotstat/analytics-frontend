@@ -414,7 +414,7 @@ function reset() {
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.9em;
+        font-size: 14px;
         flex: 1;
         text-align: center;
         padding: 0 5px;
@@ -482,7 +482,7 @@ function reset() {
         height: 22px;
         padding: 0 10px;
         line-height: 1;
-        font-size: 0.9em;
+        font-size: 14px;
 
         .icon {
           height: 14px;
@@ -514,7 +514,7 @@ function reset() {
         background-color: transparent;
 
         color: var(--blue-thin-color);
-        font-size: 0.9em;
+        font-size: 14px;
         border: none;
         transition: color 0.2s;
 

@@ -189,7 +189,7 @@
         <thead>
           <tr>
             <td></td>
-            <td>Название</td>
+            <td class="name">Название</td>
             <td>Автор</td>
             <td>Описание</td>
             <td>Версия</td>
@@ -205,17 +205,20 @@
                 :class="{ 'is-dependency': dependencies.has(mod.tag) }" @update:model-value="toggleMod(mod.tag)"
                 @click.stop />
             </td>
-            <td>
+            <td class="name">
               {{ t(`name:${mod.tag}`) }}
             </td>
             <td>{{ t(`author:${mod.tag}`) }}</td>
             <td>
-              {{ t(`description:${mod.tag}`) }}
-              <div class="badge" v-if="mod.support && (preferredGameVendor == 'unknown' ||
-                preferredGameVendor == 'wot' && mod.support == 'mt-only' ||
-                preferredGameVendor == 'mt' && mod.support == 'wot-only')">
-                {{ mod.support == 'mt-only' ? 'Только Lesta' : 'Только WG' }}
-              </div>
+              <p class="inline-name">{{ t(`name:${mod.tag}`) }}</p>
+              <p>
+                <span>{{ t(`description:${mod.tag}`) }}</span>
+                <span class="badge" v-if="mod.support && (preferredGameVendor == 'unknown' ||
+                  preferredGameVendor == 'wot' && mod.support == 'mt-only' ||
+                  preferredGameVendor == 'mt' && mod.support == 'wot-only')">
+                  {{ mod.support == 'mt-only' ? 'Только Lesta' : 'Только WG' }}
+                </span>
+              </p>
 
               <div class="badge" v-if="preferredGameVendor != 'unknown' && canUpdate(mod.tag)">
                 {{ checkedMods.get(mod.tag) }}
@@ -1109,7 +1112,7 @@ onMounted(() => {
           padding: 0.5em;
           font-weight: bold;
           text-align: left;
-          font-size: 0.9em;
+          font-size: 14px;
         }
       }
 
@@ -1226,6 +1229,24 @@ onMounted(() => {
         cursor: pointer;
       }
 
+      tbody,
+      thead {
+        .inline-name {
+          font-weight: bold;
+          display: none;
+        }
+
+        @media screen and (max-width: 800px) {
+          td.name {
+            display: none;
+          }
+
+          .inline-name {
+            display: block;
+          }
+        }
+      }
+
       @media screen and (max-width: 800px) {
         td:nth-child(3) {
           display: none;
@@ -1233,7 +1254,7 @@ onMounted(() => {
       }
 
       @media screen and (max-width: 500px) {
-        font-size: 0.9em;
+        font-size: 14px;
 
         td:nth-child(5) {
           display: none;
@@ -1456,6 +1477,11 @@ onMounted(() => {
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
     display: flex;
     gap: 1em;
+
+    @media screen and (max-width: 768px) {
+      flex-direction: column;
+    }
+
 
     .info {
       flex: 1;

@@ -464,7 +464,7 @@ footer {
     border: 1px solid #8c8c8c40;
     padding: 2px 5px;
     border-radius: 3px;
-    font-size: 0.9em;
+    font-size: 14px;
   }
 }
 </style>

@@ -162,7 +162,7 @@ function badgeLabel(hash: string) {
     height: 22px;
     padding: 0 10px;
     line-height: 1;
-    font-size: 0.9em;
+    font-size: 14px;
 
     .icon {
       height: 14px;
@@ -320,7 +320,7 @@ function badgeLabel(hash: string) {
   align-items: center;
 
   .empty-select {
-    font-size: 0.9em;
+    font-size: 14px;
     color: rgba(255, 255, 255, 0.7);
   }
 }
