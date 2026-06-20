@@ -413,7 +413,7 @@ h2 {
     background-color: transparent;
 
     color: var(--blue-thin-color);
-    font-size: 0.9em;
+    font-size: 14px;
     border: none;
     transition: color 0.2s;
 
