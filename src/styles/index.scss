@@ -85,6 +85,7 @@ button {
   background: none;
   cursor: pointer;
   font-family: inherit;
+  touch-action: manipulation;
 }
 
 button.legacy-style {
@@ -96,6 +97,7 @@ button.legacy-style {
   background-color: #1a1a1a;
   cursor: pointer;
   transition: border-color 0.25s;
+  touch-action: manipulation;
 
   &:hover {
     border-color: #65f0ff;
