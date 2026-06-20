@@ -145,6 +145,22 @@ export class TableView {
     return this.reusableStorage.getElement(key)
   }
 
+  getCellInstancesForIndexPath<T extends TableCell>(path: IndexPath): T[] {
+    const getCell = (storage: Storage) => {
+      const cellEntry = storage.cells.get(this.rowIndex(path.section, path.row))
+      if (cellEntry) return cellEntry.cell as T
+      return null
+    }
+
+    const scrollCell = getCell(this.scrollStorage)
+    const fallbackCell = getCell(this.fallbackStorage)
+
+    if (scrollCell && fallbackCell) return [scrollCell, fallbackCell]
+    if (scrollCell) return [scrollCell]
+    if (fallbackCell) return [fallbackCell]
+    return []
+  }
+
   dispose() {
     this.root.removeChild(this.scroll)
     if (this.updateHandle) cancelAnimationFrame(this.updateHandle)

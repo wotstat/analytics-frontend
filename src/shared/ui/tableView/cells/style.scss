@@ -1,0 +1,10 @@
+.reusable-table-root {
+  .highlighted-cell-line {
+
+    .highlighted-name-text {
+      .highlight {
+        color: var(--highlighted-text-color, #5c9bec);
+      }
+    }
+  }
+}
