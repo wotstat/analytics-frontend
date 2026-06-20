@@ -24,7 +24,7 @@
     <div class="content">
       <div class="separator"></div>
       <div class="table-container deep-nice-scrollbar" :class="{ 'fast-scroll': isFastScroll }">
-        <TableView ref="table" :delegate />
+        <TableView ref="table" :delegate :class="'grouped-style'" />
       </div>
 
       <div class="loading" v-if="props.versionList.length === 0">
@@ -259,7 +259,7 @@ const delegate: TableViewDelegate = {
   heightForCellByIndex: (_, index) => 35,
   cellForIndex: (table, index) => {
     const cell = table.getReusable<VersionLine>(VersionLine.reusableKey)
-    cell.configure(sections[index.section].lines, index)
+    cell.configureVersion(sections[index.section].lines[index.row])
     return { cell, reusableKey: VersionLine.reusableKey }
   },
 
@@ -370,6 +370,7 @@ const delegate: TableViewDelegate = {
       user-select: none;
 
       --background-color: #2a2a2a;
+      --highlighted-text-color: var(--blue-thin-color);
     }
 
     :deep(.table-container) {
@@ -381,109 +382,24 @@ const delegate: TableViewDelegate = {
         }
       }
 
-      .line {
-        display: flex;
-        white-space: nowrap;
-        height: 35px;
-        align-items: center;
-        position: relative;
-        cursor: pointer;
-        padding-left: 7px;
-        padding-right: 3px;
-
-        &.show-separator {
-          &::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: -0.5px;
-            height: 1px;
-            z-index: 1;
-            background-color: rgb(75, 75, 75);
-          }
+      .scroll {
+        &::-webkit-scrollbar-track {
+          margin-block-end: 10px;
+          margin-block-start: 35px;
         }
+      }
 
-        p {
-          .highlight {
-            color: var(--blue-thin-color);
-          }
-        }
-
-        &.selected:not(.extended) {
-          background: #2c82e7;
-
-          &.show-separator {
-            &::after {
-              background-color: #5c9bec;
-            }
-          }
-
-          p {
-            color: white;
-
-            .highlight {
-              color: white;
-              font-weight: bold;
-            }
-          }
-        }
+      .cell-line {
 
         &.extended {
           background: #2e3d4f;
           cursor: auto;
-
-          &.show-separator {
-            &::after {
-              background-color: #445161;
-            }
-          }
         }
 
-        @media (hover: hover) and (pointer: fine) {
-          &:hover {
-            background: rgba(255, 255, 255, 0.1);
+        &.extended:has(+.extended) {
+          &::after {
+            background-color: #445161;
           }
-
-          &.selected:hover {
-            background: #3b90f2;
-          }
-
-          &.extended:hover {
-            background: #2e3d4f;
-          }
-        }
-      }
-
-      .content-container {
-        overflow: hidden;
-        border-radius: 6px;
-        margin-right: 3px;
-
-        &::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background-color: #393939;
-        }
-      }
-
-      .scroll {
-        .header-line {
-          box-sizing: border-box;
-          padding-bottom: 4px;
-          padding-left: 4px;
-          height: 35px;
-          display: flex;
-          align-items: center;
-          margin-right: 3px;
-          margin-left: 3px;
-          border-radius: 5px;
-        }
-
-        &::-webkit-scrollbar-track {
-          margin-block-end: 10px;
-          margin-block-start: 35px;
         }
       }
     }
