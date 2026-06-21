@@ -16,8 +16,21 @@ export class ZoomChartComponent implements HoverComponent {
   }
 
   attach(root: SVGGElement, composable: ComposableHover): void {
-    composable.interactiveZone.addEventListener('wheel', this.onWheelEvent.bind(this), { passive: false })
+    composable.interactiveZone.addEventListener('wheel', this.onWheelEvent.bind(this))
+    composable.interactiveZone.addEventListener('mousedown', this.onMouseDownEvent.bind(this))
+    composable.interactiveZone.addEventListener('mousemove', this.onMouseMoveEvent.bind(this))
   }
+
+  private onMouseDownEvent(event: MouseEvent) {
+    document.addEventListener('mouseup', this.onMouseUpEvent.bind(this), { once: true })
+  }
+
+  private onMouseUpEvent(event: MouseEvent) {
+  }
+
+  private onMouseMoveEvent(event: MouseEvent) {
+  }
+
 
   private onWheelEvent(event: WheelEvent) {
     event.preventDefault()
@@ -25,9 +38,13 @@ export class ZoomChartComponent implements HoverComponent {
 
     const { deltaY, deltaX } = event
 
-    const zoomFactor = 1 - deltaY * 0.001
+    const zoomFactor = 1 - deltaY * -0.001
 
     const bounds = this.chart.space.bounds
-    this.chart.setRenderBounds({ ...bounds, maxX: bounds.minX + (bounds.maxX - bounds.minX) * zoomFactor })
+    this.chart.setRenderBounds({
+      ...bounds,
+      minX: bounds.minX + (bounds.maxX - bounds.minX) * (1 - zoomFactor) / 2,
+      maxX: bounds.maxX - (bounds.maxX - bounds.minX) * (1 - zoomFactor) / 2,
+    })
   }
 }
