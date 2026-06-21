@@ -1,3 +1,4 @@
+import { Size } from '../../UniversalChart'
 import { ChartSpace } from '../../utils/ChartSpace'
 import { Point } from '../../utils/Point'
 import { Classes } from '../../utils/utils'
@@ -7,6 +8,7 @@ export interface HoverComponent {
   attach?(root: SVGGElement, composable: ComposableHover): void
   detach?(): void
   beforeLayoutChange?(): void
+  didLayout?(space: ChartSpace, full: Size): void
   onEnter?(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void
   onLeave?(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void
   onPositionChange?(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void
@@ -62,5 +64,10 @@ export class ComposableHover extends BasePlotHover {
   protected onPositionChange(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean): void {
     super.onPositionChange(cursor, point, space, isTouch)
     for (const component of this.components) component.onPositionChange?.(cursor, point, space, isTouch, this)
+  }
+
+  didLayout(space: ChartSpace, full: Size): void {
+    super.didLayout(space, full)
+    for (const component of this.components) component.didLayout?.(space, full)
   }
 }
