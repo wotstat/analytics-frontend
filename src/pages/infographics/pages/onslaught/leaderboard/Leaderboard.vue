@@ -36,14 +36,14 @@
       <tbody>
         <template v-for="line in leaderboardData">
           <LeaderboardLine :line="line" :region="region" @click="click(line.name)" :class="{
-            'selected': selectedName == line.name && false,
+            'selected': selectedName == line.name && ab,
           }" />
 
-          <!-- <tr v-if="selectedName == line.name && seasonInterval" class="details">
+          <tr v-if="selectedName == line.name && seasonInterval && ab" class="details">
             <td colspan="6">
               <Detail :bdid="line.bdid" :region="region" :seasonInterval="seasonInterval" />
             </td>
-          </tr> -->
+          </tr>
 
           <tr v-if="line.lastRank == leaderboardDay?.lastEliteRank" class="elite-separator">
             <td colspan="6">
@@ -80,6 +80,7 @@ import { useSeasonInterval } from '../shared/useSeasonInterval'
 import Live from './components/Live.vue'
 import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
 import { useMeta } from '@/shared/composition/useMeta'
+import { useRoute } from 'vue-router'
 
 useMeta({
   title: 'Таблица лидеров Натиска - WotStat',
@@ -96,6 +97,10 @@ const region = ref<'RU' | 'EU' | 'NA' | 'ASIA' | 'CN' | 'CT'>('RU')
 const nickname = ref<string>('')
 const debouncedNickname = refDebounced(nickname, 500)
 const game = computed(() => regionToGame(region.value))
+
+const route = useRoute()
+const ab = computed(() => route.query['ab'] != undefined)
+
 
 const seasonInterval = useSeasonInterval(seasons, selectedSeason, region)
 const leaderboardDay = ref<{ day: string, recalculation: string, lastRank: number, eliteThreshold: number, lastEliteRank: number } | null>(null)
