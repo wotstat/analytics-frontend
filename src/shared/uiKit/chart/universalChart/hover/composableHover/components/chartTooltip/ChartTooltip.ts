@@ -3,20 +3,11 @@ import { Point } from '../../../../utils/Point'
 import { HoveredDataPoint } from '../../../BasePlotHover'
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
 
-
 export type TooltipCtx = {
-  pivot: {
-    x: number
-    y: number
-  },
-  absolutePivot: {
-    x: number
-    y: number
-  },
-  cursor: {
-    x: number
-    y: number
-  },
+  pivot: Point,
+  absolutePivot: Point,
+  cursor: Point,
+  absoluteCursor: Point,
   nearestDataPoints: HoveredDataPoint[]
   isTouch: boolean
 }
@@ -113,7 +104,6 @@ export class ChartTooltip implements HoverComponent {
         y: space.chartToLayoutY(avg.y)
       })
     }
-
     const ctx = {
       pivot: pivot,
       absolutePivot: {
@@ -121,9 +111,14 @@ export class ChartTooltip implements HoverComponent {
         y: pivot.y + this.windowScroll.y
       },
       cursor: cursor,
+      absoluteCursor: {
+        x: cursor.x + this.windowScroll.x,
+        y: cursor.y + this.windowScroll.y
+      },
       nearestDataPoints,
       isTouch
     }
+
 
     if (!this.lastNearestDataPoints && nearestDataPoints.length > 0) this.options.onShow?.(ctx)
     this.options.onPositionChange?.(ctx)

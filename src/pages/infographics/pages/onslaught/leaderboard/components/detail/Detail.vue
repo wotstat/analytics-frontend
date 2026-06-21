@@ -80,9 +80,9 @@ const data = queryComputed<{ recalculationTime: string, rank: number, rating: nu
 
 function tooltipPosition(ctx: TooltipCtx) {
   if (ctx.isTouch)
-    return `translate(calc(${ctx.absolutePivot.x}px - 50%), calc(${ctx.pivot.y}px - 100% - 10px))`
+    return `translate(calc(${ctx.pivot.x}px - 50%), calc(${ctx.pivot.y}px - 100% - 10px))`
 
-  return `translate(${ctx.absolutePivot.x + 5}px, ${ctx.cursor.y + 5}px)`
+  return `translate(${ctx.pivot.x + 5}px, ${ctx.cursor.y + 5}px)`
 }
 
 
