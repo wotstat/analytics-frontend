@@ -15,6 +15,7 @@ import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
 import { ref } from 'vue'
 import { RectangleArea } from '@/shared/uiKit/chart/universalChart/plot/area/RectangleArea'
 import { ChartRawPattern } from '@/shared/uiKit/chart/universalChart/defs/ChartRawPattern'
+import { ZoomChartComponent } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/zoomChartComponent/ZoomChartComponent'
 
 
 const MINUTE = 1 * 60
@@ -77,6 +78,9 @@ class BaseChart extends UniversalChart {
         tooltipPivot: 'avg',
         onHide: () => this.tooltipCtx.value = null,
         onPositionChange: ctx => this.tooltipCtx.value = ctx,
+      }))
+      .addComponent(new ZoomChartComponent({
+        chart: this,
       }))
 
     this.dayTicks = new TicksByValues('horizontal', { start: 0, classes: 'day-ticks' })

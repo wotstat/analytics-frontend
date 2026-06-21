@@ -29,7 +29,7 @@ export function isDataPointArrayEqual(a: HoveredDataPoint[], b: HoveredDataPoint
 
 export abstract class BasePlotHover extends BasePlotRenderer {
 
-  private readonly interactiveZone = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+  readonly interactiveZone = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
   protected dataSources: DataSource[] = []
 
   private interactiveZoneRect = new DOMRect()
