@@ -88,7 +88,7 @@ function tooltipPosition(ctx: TooltipCtx) {
   if (ctx.isTouch)
     return `translate(calc(${ctx.pivot.x}px - 50%), calc(${ctx.pivot.y}px - 100% - 10px))`
 
-  return `translate(${ctx.pivot.x + 5}px, ${ctx.cursor.y + 5}px)`
+  return `translate(${ctx.pivot.x + 5}px, ${ctx.absoluteCursor.y + 5}px)`
 }
 
 
@@ -140,7 +140,7 @@ watchEffect(() => {
   .tooltip {
     pointer-events: none;
     touch-action: none;
-    position: fixed;
+    position: absolute;
     background: rgba(16, 29, 51, 1);
     padding: 5px 8px;
     border-radius: 8px;

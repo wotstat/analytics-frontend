@@ -162,6 +162,7 @@ class BaseChart extends UniversalChart {
   }
 }
 
+
 export class ScoreChart extends BaseChart {
 
 
