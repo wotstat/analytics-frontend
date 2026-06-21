@@ -1,6 +1,6 @@
 import { ANALYTICS_REALTIME_URL } from '@/shared/external/externalUrl'
 import { useWebSocket, WebSocketStatus } from '@vueuse/core'
-import { ref, ShallowRef, shallowRef, watch } from 'vue'
+import { MaybeRefOrGetter, ref, ShallowRef, shallowRef, toValue, watch } from 'vue'
 
 function numberProcessor(value: unknown) {
   return Number(value)
@@ -14,10 +14,11 @@ function jsonProcessor(value: unknown) {
   }
 }
 
-type ChannelsTypes = {
+export type ChannelsTypes = {
   'time': number,
   'totalEvents': number,
   'comp7LastRecalculation': Record<string, { day: string, recalculation: string }> | null
+  'battleResult': { id: string, battleMode: string, playerName: string, region: string }[]
 }
 
 const defaults = {
@@ -26,9 +27,10 @@ const defaults = {
 }
 
 const processors = {
-  'totalEvents': numberProcessor,
   'time': numberProcessor,
-  'comp7LastRecalculation': jsonProcessor
+  'totalEvents': numberProcessor,
+  'comp7LastRecalculation': jsonProcessor,
+  'battleResult': jsonProcessor
 }
 
 type Channels = keyof ChannelsTypes;
@@ -38,31 +40,59 @@ type ChannelKey = Channels | string & {};
 
 type Result<T> = { data: ShallowRef<T>, hasData: ShallowRef<boolean>, status: ShallowRef<WebSocketStatus> };
 
-export function useAnalyticsRealtime<K extends Channels, T = ChannelsTypes[K]>(channel: K): Result<T>;
-export function useAnalyticsRealtime<D>(channel: ChannelKey, defaultValue: D): Result<D>;
-export function useAnalyticsRealtime<D>(channel: ChannelKey): Result<D | null>;
-export function useAnalyticsRealtime<K extends ChannelKey, T = unknown>(channel: K, defaultValue?: T): Result<T | null> {
 
-  const def = defaultValue ?? (defaults[channel as keyof typeof defaults] as T | null)
-  const result = shallowRef<T | null>(def)
+function getChannelPath(channel: MaybeRefOrGetter<ChannelKey>) {
+  const channelValue = toValue(channel)
+  return String(channelValue).split('?')[0] as ChannelKey
+}
+
+export function useAnalyticsRealtime<K extends Channels, D = ChannelsTypes[K]>(channel: MaybeRefOrGetter<K>): Result<D>;
+export function useAnalyticsRealtime<D>(channel: MaybeRefOrGetter<ChannelKey>, defaultValue: D, onDataChange?: (data: D) => void): Result<D>;
+export function useAnalyticsRealtime<D>(channel: MaybeRefOrGetter<ChannelKey>): Result<D | null>;
+export function useAnalyticsRealtime<K extends ChannelKey, D = unknown>(
+  channel: MaybeRefOrGetter<K>,
+  defaultValue?: D,
+  onDataChange?: (data: D) => void): Result<D | null> {
+
+  const def = defaultValue ?? (defaults[getChannelPath(channel) as keyof typeof defaults] as D | null)
+  const result = shallowRef<D | null>(def)
   const hasData = ref(false)
 
-  const { data, status } = useWebSocket<T>(ANALYTICS_REALTIME_URL + '/' + channel, { autoReconnect: true })
+  let lastMessageChannel: string | null = null
 
-  watch(data, (newData) => {
-    if (newData === null || newData === undefined) result.value = def
+  const { data, status } = useWebSocket<D>(() => ANALYTICS_REALTIME_URL + '/' + toValue(channel), {
+    autoReconnect: true,
+    onMessage: () => lastMessageChannel = toValue(channel)
+  })
+
+  watch(() => toValue(channel), () => {
+    result.value = def
+  })
+
+  watch(() => [toValue(data), toValue(channel)], ([newData, newChannel]) => {
+    if (newData === null || newData === undefined || lastMessageChannel !== newChannel) {
+      result.value = def
+      hasData.value = false
+    }
     else {
-      if (processors[channel as keyof typeof processors]) {
-        const processor = processors[channel as keyof typeof processors] as (v: unknown) => T
+      const channelPath = getChannelPath(channel)
+      if (processors[channelPath as keyof typeof processors]) {
+        const processor = processors[channelPath as keyof typeof processors] as (v: unknown) => D
         result.value = processor(newData)
       }
       else {
-        result.value = newData as T
+        result.value = newData as D
       }
 
       hasData.value = true
     }
   }, { immediate: true })
+
+  watch(result, (newResult) => {
+    if (newResult !== null && newResult !== undefined) {
+      onDataChange?.(newResult)
+    }
+  })
 
   return { data: result, hasData, status }
 }

@@ -38,6 +38,7 @@ const { t } = useI18n(i18n)
 
 const props = defineProps<{
   showNameInput?: boolean
+  showLive?: boolean
 }>()
 
 const route = useRoute()
@@ -121,7 +122,6 @@ html {
     min-width: 100px;
     width: 200px;
   }
-
 
   .line-main,
   .game-select,

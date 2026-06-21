@@ -4,6 +4,11 @@
   <div class="onslaught-page">
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" v-model:region="selectedRegion"
       v-model:seasons="seasons" :showNameInput="true" />
+    <div class="live-line">
+      <Live v-if="showLiveBadge" />
+    </div>
+
+
     <SecondaryStat :qualification="qualificationStats" :currentRating="currentRating" :game="game"
       :season="selectedSeason || 'latest'" />
     <div class="chart">
@@ -38,7 +43,7 @@ import DayChart from './dayChart/DayChart.vue'
 import { dateToDbDate, query, queryComputedFirst } from '@/db'
 import { gameToRegion, regionToGame } from '@/shared/game/wot'
 import Settings from '../shared/settings/Settings.vue'
-import { onKeyStroke, refDebounced, useElementBounding } from '@vueuse/core'
+import { computedWithControl, controlledComputed, onKeyStroke, refDebounced, useElementBounding } from '@vueuse/core'
 import { DayChartData } from './types'
 import MainStat from './mainStat/MainStat.vue'
 import {
@@ -61,6 +66,8 @@ import { refDebouncedCheck } from '@/shared/utils/refDebouncedCheck'
 import { useSeasonInterval } from '../shared/useSeasonInterval'
 import { useMeta } from '@/shared/composition/useMeta'
 import { BattleRes, useBattleResultTable } from './battleHistoryTable/useBattleHistory'
+import { ChannelsTypes, useAnalyticsRealtime } from '@/shared/external/realtime/useAnalyticsRealtime'
+import Live from './components/Live.vue'
 
 useMeta({
   title: 'Статистика Натиска - WotStat',
@@ -148,7 +155,7 @@ const eliteRatingStatistics = queryComputedFirst<{ top1: number, eliteThreshold:
   where region = REGION and recalculationTime = latestTime and elite = true;
 `, { top1: 0, eliteThreshold: 0, top10: 0, top100: 0 })
 
-async function load(abortSignal: AbortSignal) {
+async function load(abortSignal: AbortSignal, soft = false) {
   const nickName = debouncedNickname.value
   if (!nickName) return
   if (abortSignal.aborted) return
@@ -162,9 +169,13 @@ async function load(abortSignal: AbortSignal) {
 
   console.log('Loading data with params', { startDate, endDate, region, nickName })
 
-  statistics.value = null
-  selectedDayIndex.value = null
-  vehicleStatistics.value = null
+  if (!soft) {
+    statistics.value = null
+    selectedDayIndex.value = null
+    vehicleStatistics.value = null
+    mapsStatistics.value = null
+    battleHistoryStatistics.value = null
+  }
 
   const mainStatistics = await query<StatisticRes>(`
     with
@@ -263,12 +274,11 @@ async function load(abortSignal: AbortSignal) {
     left outer join t2 using day
     left outer join t3 using day
     left outer join t4 using day
-  `, { abortSignal })
+  `, { abortSignal, allowCache: false })
 
   if (abortSignal.aborted) return
   isLoading.value = false
   statistics.value = mainStatistics.data
-
 
   const qualStatisticsRes = await query<{ battleIndex: number, result: 'win' | 'loss' | 'draw' }>(`
     with
@@ -285,8 +295,9 @@ async function load(abortSignal: AbortSignal) {
       and battleMode = 'COMP7'
       and comp7.qualActive = true
     order by battleIndex
-  `, { abortSignal })
+  `, { abortSignal, allowCache: false })
   if (abortSignal.aborted) return
+  if (soft) qualificationStatsVersion -= 1
   qualificationStatistics.value = qualStatisticsRes.data
 
 
@@ -314,7 +325,7 @@ async function load(abortSignal: AbortSignal) {
       and battleMode = 'COMP7'
     group by day, tankTag, tankType, tankLevel
     order by day, tankTag
-  `, { abortSignal })
+  `, { abortSignal, allowCache: false })
   if (abortSignal.aborted) return
   vehicleStatistics.value = vehicleStatisticsRes.data
 
@@ -341,7 +352,7 @@ async function load(abortSignal: AbortSignal) {
       and battleMode = 'COMP7'
     group by day, arenaTag
     order by day, arenaTag
-  `, { abortSignal })
+  `, { abortSignal, allowCache: false })
   if (abortSignal.aborted) return
   mapsStatistics.value = mapsStatisticsRes.data
 
@@ -367,7 +378,7 @@ async function load(abortSignal: AbortSignal) {
       and region = REGION
       and battleMode = 'COMP7'
     order by dateTime;
-  `, { abortSignal })
+  `, { abortSignal, allowCache: false })
   if (abortSignal.aborted) return
   battleHistoryStatistics.value = battleHistoryRes.data
 
@@ -384,6 +395,23 @@ watch([seasonInterval, nickname, selectedRegion], () => {
 
 watchWithAbortSignal([seasonInterval, debouncedNickname, selectedRegion], signal => load(signal))
 
+const liveBattleResults = useAnalyticsRealtime(
+  () => `battleResult?battleMode=COMP7&region=${selectedRegion.value}&playerName=${debouncedNickname.value}`,
+  [] as ChannelsTypes['battleResult'],
+  d => {
+    if (d.length === 0) return
+    if (!seasonInterval.value) return
+    if (Date.now() > seasonInterval.value.end.getTime() || Date.now() < seasonInterval.value.start.getTime()) return
+    load(new AbortController().signal, true)
+  }
+)
+
+const showLiveBadge = computed(() => {
+  if (liveBattleResults.status.value != 'OPEN') return false
+  if (!seasonInterval.value) return false
+  const now = Date.now()
+  return now >= seasonInterval.value.start.getTime() && now <= seasonInterval.value.end.getTime()
+})
 
 const days = computed(() => {
   if (!seasonInterval.value) return []
@@ -477,7 +505,7 @@ const mapsStats = refDebounced(useMapsTable(computed(() => mapsStatistics.value 
 const battlesStats = refDebounced(useBattleResultTable(computed(() => battleHistoryStatistics.value ?? []), selectedDay), 1)
 
 let qualificationStatsVersion = 0
-const qualificationStats = refDebounced(computed(() => {
+const qualificationStats = refDebounced(computedWithControl(qualificationStatistics, () => {
   const firstPlayedDay = statistics.value?.find(d => d.totalBattles > 0 && d.firstRating[0] != 0)
 
   return {
@@ -518,6 +546,14 @@ h1 {
 
 .onslaught-page {
   margin-top: 1em;
+
+  .live-line {
+    display: flex;
+    flex-direction: row-reverse;
+    margin-top: 5px;
+    height: 18px;
+    margin-bottom: -25px;
+  }
 
   .chart {
     margin-top: 20px;
