@@ -1,5 +1,5 @@
 import { ANALYTICS_REALTIME_URL } from '@/shared/external/externalUrl'
-import { useWebSocket, WebSocketStatus } from '@vueuse/core'
+import { useIntervalFn, useWebSocket, WebSocketStatus } from '@vueuse/core'
 import { MaybeRefOrGetter, ref, ShallowRef, shallowRef, toValue, watch } from 'vue'
 
 function numberProcessor(value: unknown) {
@@ -19,6 +19,7 @@ export type ChannelsTypes = {
   'totalEvents': number,
   'comp7LastRecalculation': Record<string, { day: string, recalculation: string }> | null
   'battleResult': { id: string, battleMode: string, playerName: string, region: string }[]
+  'comp7Info': { id: string, playerName: string, region: string, rating: number }[]
 }
 
 const defaults = {
@@ -30,7 +31,8 @@ const processors = {
   'time': numberProcessor,
   'totalEvents': numberProcessor,
   'comp7LastRecalculation': jsonProcessor,
-  'battleResult': jsonProcessor
+  'battleResult': jsonProcessor,
+  'comp7Info': jsonProcessor,
 }
 
 type Channels = keyof ChannelsTypes;
@@ -62,7 +64,10 @@ export function useAnalyticsRealtime<K extends ChannelKey, D = unknown>(
 
   const { data, status } = useWebSocket<D>(() => ANALYTICS_REALTIME_URL + '/' + toValue(channel), {
     autoReconnect: true,
-    onMessage: () => lastMessageChannel = toValue(channel)
+    onMessage: () => lastMessageChannel = toValue(channel),
+    heartbeat: {
+      scheduler: cb => useIntervalFn(cb, 5000),
+    }
   })
 
   watch(() => toValue(channel), () => {
@@ -70,6 +75,8 @@ export function useAnalyticsRealtime<K extends ChannelKey, D = unknown>(
   })
 
   watch(() => [toValue(data), toValue(channel)], ([newData, newChannel]) => {
+    if (newData === 'pong') return
+
     if (newData === null || newData === undefined || lastMessageChannel !== newChannel) {
       result.value = def
       hasData.value = false

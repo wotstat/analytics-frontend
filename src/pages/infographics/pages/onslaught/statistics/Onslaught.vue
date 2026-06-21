@@ -4,8 +4,9 @@
   <div class="onslaught-page">
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" v-model:region="selectedRegion"
       v-model:seasons="seasons" :showNameInput="true" />
+
     <div class="live-line">
-      <Live v-if="showLiveBadge" />
+      <Live :show="showLiveBadge" />
     </div>
 
     <SecondaryStat :qualification="qualificationStats" :currentRating="currentRating" :game="game"
@@ -376,7 +377,7 @@ async function load(abortSignal: AbortSignal, soft = false) {
       and dateTime between START_DATE and END_DATE
       and region = REGION
       and battleMode = 'COMP7'
-    order by dateTime;
+    order by onBattleStartId;
   `, { abortSignal, allowCache: false })
   if (abortSignal.aborted) return
   battleHistoryStatistics.value = battleHistoryRes.data
@@ -392,7 +393,14 @@ watch([seasonInterval, nickname, selectedRegion], () => {
   isLoading.value = false
 })
 
-watchWithAbortSignal([seasonInterval, debouncedNickname, selectedRegion], signal => load(signal))
+
+let loadingAbortController = new AbortController()
+
+watch([seasonInterval, debouncedNickname, selectedRegion], () => {
+  loadingAbortController.abort()
+  loadingAbortController = new AbortController()
+  load(loadingAbortController.signal)
+})
 
 const liveBattleResults = useAnalyticsRealtime(
   () => `battleResult?battleMode=COMP7&region=${selectedRegion.value}&playerName=${debouncedNickname.value}`,
@@ -401,16 +409,41 @@ const liveBattleResults = useAnalyticsRealtime(
     if (d.length === 0) return
     if (!seasonInterval.value) return
     if (Date.now() > seasonInterval.value.end.getTime() || Date.now() < seasonInterval.value.start.getTime()) return
-    load(new AbortController().signal, true)
+
+    loadingAbortController.abort()
+    loadingAbortController = new AbortController()
+    load(loadingAbortController.signal, true)
   }
 )
 
-const showLiveBadge = computed(() => {
+useAnalyticsRealtime(
+  () => `comp7Info?region=${selectedRegion.value}&playerName=${debouncedNickname.value}`,
+  [] as ChannelsTypes['comp7Info'],
+  d => {
+    console.log(d)
+
+    const lastInfo = d.length > 0 ? d[d.length - 1] : null
+    if (!lastInfo) return
+    if (!seasonInterval.value) return
+    if (Date.now() > seasonInterval.value.end.getTime() || Date.now() < seasonInterval.value.start.getTime()) return
+    if (lastInfo.rating == 0) return
+
+    if (days.value[0].rating == lastInfo.rating) return
+
+
+    loadingAbortController.abort()
+    loadingAbortController = new AbortController()
+    load(loadingAbortController.signal, true)
+  }
+)
+
+const showLiveBadge = refDebounced(computed(() => {
   if (liveBattleResults.status.value != 'OPEN') return false
   if (!seasonInterval.value) return false
+  if (!debouncedNickname.value) return false
   const now = Date.now()
   return now >= seasonInterval.value.start.getTime() && now <= seasonInterval.value.end.getTime()
-})
+}), 500)
 
 const days = computed(() => {
   if (!seasonInterval.value) return []

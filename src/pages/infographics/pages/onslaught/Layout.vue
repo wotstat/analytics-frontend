@@ -39,7 +39,7 @@ setFeatureVisit('onslaught')
 <style lang="scss">
 .comp7-tooltip {
   --popover-background-color: rgba(16, 29, 51, 1);
-  --popover-border-color: rgba(255, 255, 255, 0.2);
+  --popover-border-color: rgb(40, 57, 85);
 }
 </style>
 
