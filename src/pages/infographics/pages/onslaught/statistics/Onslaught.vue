@@ -8,7 +8,6 @@
       <Live v-if="showLiveBadge" />
     </div>
 
-
     <SecondaryStat :qualification="qualificationStats" :currentRating="currentRating" :game="game"
       :season="selectedSeason || 'latest'" />
     <div class="chart">

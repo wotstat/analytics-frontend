@@ -1,5 +1,5 @@
 <template>
-  <div class="chart nice-scrollbar">
+  <div class="chart nice-scrollbar-transparent">
     <div class="bars">
       <Bar v-for="(day, index) in props.days" :key="index" :value="day" @click="click(index)"
         :selected="index === props.selectedIndex" />
