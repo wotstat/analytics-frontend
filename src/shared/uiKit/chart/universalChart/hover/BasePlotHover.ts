@@ -47,6 +47,8 @@ export abstract class BasePlotHover extends BasePlotRenderer {
     this.root.appendChild(this.interactiveZone)
     this.interactiveZone.classList.add('interactive-zone')
 
+    window.addEventListener('scroll', this.onScroll.bind(this), { passive: true })
+
     this.interactiveZone.addEventListener('mousemove', this.onMouseMove.bind(this))
     this.interactiveZone.addEventListener('mouseleave', this.onMouseLeave.bind(this))
     this.interactiveZone.addEventListener('mouseenter', this.onMouseEnter.bind(this))
@@ -55,14 +57,7 @@ export abstract class BasePlotHover extends BasePlotRenderer {
     this.interactiveZone.addEventListener('touchmove', this.touchMove.bind(this))
   }
 
-  protected touchToEvent(touch: Touch): { offsetX: number, offsetY: number, clientX: number, clientY: number } {
-    return {
-      offsetX: touch.pageX - this.interactiveZoneRect.x + this.interactiveZoneOffsets.x,
-      offsetY: touch.pageY - this.interactiveZoneRect.y + this.interactiveZoneOffsets.y,
-      clientX: touch.clientX,
-      clientY: touch.clientY
-    }
-  }
+  protected onScroll(event: Event) { }
 
   protected touchStart(event: TouchEvent) {
     this.root.classList.add('hovered')
@@ -158,6 +153,15 @@ export abstract class BasePlotHover extends BasePlotRenderer {
         space,
         false
       )
+  }
+
+  protected touchToEvent(touch: Touch): { offsetX: number, offsetY: number, clientX: number, clientY: number } {
+    return {
+      offsetX: touch.pageX - this.interactiveZoneRect.x + this.interactiveZoneOffsets.x,
+      offsetY: touch.pageY - this.interactiveZoneRect.y + this.interactiveZoneOffsets.y,
+      clientX: touch.clientX,
+      clientY: touch.clientY
+    }
   }
 
   protected beforeLayoutChange() { }
