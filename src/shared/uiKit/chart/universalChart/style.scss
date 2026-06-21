@@ -37,6 +37,7 @@
 
   .hover {
     .interactive-zone {
+      touch-action: pan-x;
       fill: transparent;
     }
 

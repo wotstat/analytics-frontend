@@ -7,9 +7,9 @@ export interface HoverComponent {
   attach?(root: SVGGElement, composable: ComposableHover): void
   detach?(): void
   beforeLayoutChange?(): void
-  onEnter?(cursor: Point, point: Point, space: ChartSpace, composable: ComposableHover): void
-  onLeave?(cursor: Point, point: Point, space: ChartSpace, composable: ComposableHover): void
-  onPositionChange?(cursor: Point, point: Point, space: ChartSpace, composable: ComposableHover): void
+  onEnter?(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void
+  onLeave?(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void
+  onPositionChange?(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void
 }
 
 export class ComposableHover extends BasePlotHover {
@@ -49,18 +49,18 @@ export class ComposableHover extends BasePlotHover {
     for (const component of this.components) component.beforeLayoutChange?.()
   }
 
-  protected onEnter(cursor: Point, point: Point, space: ChartSpace): void {
-    super.onEnter(cursor, point, space)
-    for (const component of this.components) component.onEnter?.(cursor, point, space, this)
+  protected onEnter(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean): void {
+    super.onEnter(cursor, point, space, isTouch)
+    for (const component of this.components) component.onEnter?.(cursor, point, space, isTouch, this)
   }
 
-  protected onLeave(cursor: Point, point: Point, space: ChartSpace): void {
-    super.onLeave(cursor, point, space)
-    for (const component of this.components) component.onLeave?.(cursor, point, space, this)
+  protected onLeave(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean): void {
+    super.onLeave(cursor, point, space, isTouch)
+    for (const component of this.components) component.onLeave?.(cursor, point, space, isTouch, this)
   }
 
-  protected onPositionChange(cursor: Point, point: Point, space: ChartSpace): void {
-    super.onPositionChange(cursor, point, space)
-    for (const component of this.components) component.onPositionChange?.(cursor, point, space, this)
+  protected onPositionChange(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean): void {
+    super.onPositionChange(cursor, point, space, isTouch)
+    for (const component of this.components) component.onPositionChange?.(cursor, point, space, isTouch, this)
   }
 }

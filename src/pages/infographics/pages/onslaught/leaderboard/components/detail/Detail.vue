@@ -19,8 +19,7 @@
       <UniversalChartComponent :chart="battleChart" />
     </div>
 
-    <div class="tooltip"
-      :style="{ transform: `translate(${(scoreChart.tooltipCtx.value?.absolutePivot.x || 0) + 5}px, ${(scoreChart.tooltipCtx.value?.cursor.y || 0) + 5}px)` }"
+    <div class="tooltip" :style="{ transform: tooltipPosition(scoreChart.tooltipCtx.value) }"
       v-if="scoreChart.tooltipCtx.value">
       <p>{{ new Date(startTime + scoreChart.tooltipCtx.value?.nearestDataPoints[0].xValue *
         1000).toLocaleString(undefined, {
@@ -47,6 +46,7 @@ import { dateToDbDate, queryComputed } from '@/db'
 import { BattlesChart, ScoreChart } from './Charts'
 
 import IntervalSelector from './intervalSelector/IntervalSelector.vue'
+import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/chartTooltip/ChartTooltip'
 
 const props = defineProps<{
   bdid: number
@@ -77,6 +77,13 @@ const data = queryComputed<{ recalculationTime: string, rank: number, rating: nu
   from player
   right join recalculation using recalculationTime
 `)
+
+function tooltipPosition(ctx: TooltipCtx) {
+  if (ctx.isTouch)
+    return `translate(calc(${ctx.absolutePivot.x}px - 50%), calc(${ctx.pivot.y}px - 100% - 10px))`
+
+  return `translate(${ctx.absolutePivot.x + 5}px, ${ctx.cursor.y + 5}px)`
+}
 
 
 const MINUTE = 1 * 60
@@ -116,8 +123,17 @@ watchEffect(() => {
   padding-top: 0;
   cursor: default;
 
+  @container (max-width: 800px) {
+    flex-direction: column;
+  }
+
+  @container (max-width: 500px) {
+    padding: 20px 10px;
+  }
+
   .tooltip {
     pointer-events: none;
+    touch-action: none;
     position: fixed;
     background: rgba(16, 29, 51, 1);
     padding: 5px 8px;
