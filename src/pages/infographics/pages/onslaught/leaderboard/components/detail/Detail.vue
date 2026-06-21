@@ -5,7 +5,7 @@
         <div class="title">
           <h3>Очки по дням</h3>
         </div>
-        <IntervalSelector />
+        <IntervalSelector v-if="!isZoom" />
       </div>
       <UniversalChartComponent :chart="scoreChart" />
     </div>
@@ -14,7 +14,7 @@
         <div class="title">
           <h3>Бои по дням</h3>
         </div>
-        <IntervalSelector />
+        <IntervalSelector v-if="!isZoom" />
       </div>
       <UniversalChartComponent :chart="battleChart" />
     </div>
@@ -40,13 +40,19 @@
 
 
 <script setup lang="ts">
-import { markRaw, watchEffect } from 'vue'
+import { computed, markRaw, watchEffect } from 'vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import { dateToDbDate, queryComputed } from '@/db'
 import { BattlesChart, ScoreChart } from './Charts'
 
 import IntervalSelector from './intervalSelector/IntervalSelector.vue'
 import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/chartTooltip/ChartTooltip'
+import { useRoute } from 'vue-router'
+
+
+const route = useRoute()
+const isZoom = computed(() => route.query['ab'] == 'zoom')
+
 
 const props = defineProps<{
   bdid: number
