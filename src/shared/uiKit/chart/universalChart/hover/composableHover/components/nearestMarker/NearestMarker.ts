@@ -50,13 +50,13 @@ export class NearestMarker implements HoverComponent {
     root.appendChild(this.root)
   }
 
-  onLeave(cursor: Point, point: Point, space: ChartSpace, composable: ComposableHover): void {
+  onLeave(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
     for (const marker of this.markers) marker.dispose()
     this.markers = []
     this.lastNearestDataPoints = null
   }
 
-  onPositionChange(cursor: Point, point: Point, space: ChartSpace, composable: ComposableHover): void {
+  onPositionChange(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
     let nearestDataPoints: HoveredDataPoint[]
 
     if (this.position === 'data-point-x') {

@@ -1,6 +1,6 @@
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
-import { HoveredDataPoint, isDataPointArrayEqual } from '../../../BasePlotHover'
+import { HoveredDataPoint } from '../../../BasePlotHover'
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
 
 
@@ -18,6 +18,7 @@ export type TooltipCtx = {
     y: number
   },
   nearestDataPoints: HoveredDataPoint[]
+  isTouch: boolean
 }
 
 type Options = {
@@ -36,7 +37,7 @@ export class ChartTooltip implements HoverComponent {
   constructor(protected options: Options = {}) {
   }
 
-  onLeave(cursor: Point, point: Point, space: ChartSpace, composable: ComposableHover): void {
+  onLeave(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
     if (this.lastNearestDataPoints && this.lastNearestDataPoints.length > 0) {
       this.options.onHide?.()
       this.lastNearestDataPoints = null
@@ -47,7 +48,7 @@ export class ChartTooltip implements HoverComponent {
     this.windowScroll = { x: window.scrollX, y: window.scrollY }
   }
 
-  onPositionChange(cursor: Point, point: Point, space: ChartSpace, composable: ComposableHover): void {
+  onPositionChange(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
     let nearestDataPoints: HoveredDataPoint[]
 
     if (this.options.position === 'data-point-x') {
@@ -120,7 +121,8 @@ export class ChartTooltip implements HoverComponent {
         y: pivot.y + this.windowScroll.y
       },
       cursor: cursor,
-      nearestDataPoints
+      nearestDataPoints,
+      isTouch
     }
 
     if (!this.lastNearestDataPoints && nearestDataPoints.length > 0) this.options.onShow?.(ctx)

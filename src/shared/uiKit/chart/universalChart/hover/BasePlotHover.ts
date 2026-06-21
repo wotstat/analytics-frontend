@@ -50,6 +50,45 @@ export abstract class BasePlotHover extends BasePlotRenderer {
     this.interactiveZone.addEventListener('mousemove', this.onMouseMove.bind(this))
     this.interactiveZone.addEventListener('mouseleave', this.onMouseLeave.bind(this))
     this.interactiveZone.addEventListener('mouseenter', this.onMouseEnter.bind(this))
+
+    this.interactiveZone.addEventListener('touchstart', this.touchStart.bind(this))
+    this.interactiveZone.addEventListener('touchmove', this.touchMove.bind(this))
+  }
+
+  protected touchToEvent(touch: Touch): { offsetX: number, offsetY: number, clientX: number, clientY: number } {
+    return {
+      offsetX: touch.pageX - this.interactiveZoneRect.x + this.interactiveZoneOffsets.x,
+      offsetY: touch.pageY - this.interactiveZoneRect.y + this.interactiveZoneOffsets.y,
+      clientX: touch.clientX,
+      clientY: touch.clientY
+    }
+  }
+
+  protected touchStart(event: TouchEvent) {
+    this.root.classList.add('hovered')
+    document.addEventListener('touchend', this.touchEnd.bind(this), { once: true })
+    const touch = this.touchToEvent(event.touches[0])
+
+    if (this.chart)
+      this.onEnter({ x: touch.clientX, y: touch.clientY }, this.offsetToChart(touch), this.chart.space, true)
+
+    this.updateMouse(touch, true)
+  }
+
+  protected touchEnd(event: TouchEvent) {
+    event.preventDefault()
+    this.root.classList.remove('hovered')
+    const touch = this.touchToEvent(event.changedTouches[0])
+
+    if (this.chart)
+      this.onLeave({ x: touch.clientX, y: touch.clientY }, this.offsetToChart(touch), this.chart.space, true)
+
+    this.lastMousePosition = null
+  }
+
+  protected touchMove(event: TouchEvent) {
+    const touch = this.touchToEvent(event.touches[0])
+    if (this.chart) this.updateMouse(touch, true)
   }
 
   protected onMouseMove(event: MouseEvent) {
@@ -59,18 +98,23 @@ export abstract class BasePlotHover extends BasePlotRenderer {
   protected onMouseEnter(event: MouseEvent) {
     this.root.classList.add('hovered')
     if (this.chart)
-      this.onEnter({ x: event.clientX, y: event.clientY }, this.offsetToChart(event), this.chart.space)
+      this.onEnter({ x: event.clientX, y: event.clientY }, this.offsetToChart(event), this.chart.space, false)
     this.updateMouse(event)
   }
 
   protected onMouseLeave(event: MouseEvent) {
     this.root.classList.remove('hovered')
     if (this.chart)
-      this.onLeave({ x: event.clientX, y: event.clientY }, this.offsetToChart(event), this.chart.space)
+      this.onLeave({ x: event.clientX, y: event.clientY }, this.offsetToChart(event), this.chart.space, false)
     this.lastMousePosition = null
   }
 
-  private updateMouse(event: MouseEvent) {
+  private updateMouse(event: {
+    offsetX: number,
+    offsetY: number,
+    clientX: number,
+    clientY: number,
+  }, isTouch: boolean = false) {
     if (!this.chart) return
 
     this.lastNearestDataPoints = null
@@ -83,7 +127,9 @@ export abstract class BasePlotHover extends BasePlotRenderer {
     this.onPositionChange(
       { x: this.lastMousePosition.clientX, y: this.lastMousePosition.clientY },
       this.offsetToChart(event),
-      this.chart.space)
+      this.chart.space,
+      isTouch
+    )
   }
 
   offsetToChart(event: { offsetX: number, offsetY: number }): Point {
@@ -109,14 +155,15 @@ export abstract class BasePlotHover extends BasePlotRenderer {
       this.onPositionChange(
         { x: this.lastMousePosition.clientX, y: this.lastMousePosition.clientY },
         this.offsetToChart(this.lastMousePosition),
-        space
+        space,
+        false
       )
   }
 
   protected beforeLayoutChange() { }
-  protected onEnter(cursor: Point, point: Point, space: ChartSpace) { }
-  protected onLeave(cursor: Point, point: Point, space: ChartSpace) { }
-  protected onPositionChange(cursor: Point, point: Point, space: ChartSpace) { }
+  protected onEnter(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean) { }
+  protected onLeave(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean) { }
+  protected onPositionChange(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean) { }
 
   findNearestInDataSource(point: Point, space: ChartSpace, dataSource: DataSource) {
     let nearestPointIndex = -1

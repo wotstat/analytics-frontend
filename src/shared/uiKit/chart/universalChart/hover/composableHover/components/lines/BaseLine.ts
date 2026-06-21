@@ -40,17 +40,17 @@ export abstract class BaseLine implements HoverComponent {
     root.appendChild(this.line)
   }
 
-  onEnter(cursor: Point, point: Point, space: ChartSpace, composable: ComposableHover): void {
+  onEnter(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
     if (this.position === 'cursor') this.line.classList.add('visible')
     this.process(point, space, composable)
   }
 
-  onLeave(cursor: Point, point: Point, space: ChartSpace, composable: ComposableHover): void {
+  onLeave(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
     this.line.classList.remove('visible')
     this.lastDataPoints = null
   }
 
-  onPositionChange(cursor: Point, point: Point, space: ChartSpace, composable: ComposableHover) {
+  onPositionChange(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover) {
     this.process(point, space, composable)
   }
 
