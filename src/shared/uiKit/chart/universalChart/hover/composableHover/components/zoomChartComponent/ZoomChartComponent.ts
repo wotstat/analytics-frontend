@@ -1,4 +1,5 @@
-import { UniversalChart } from '../../../../UniversalChart'
+import { Size, UniversalChart } from '../../../../UniversalChart'
+import { ChartSpace } from '../../../../utils/ChartSpace'
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
 
 
@@ -10,15 +11,17 @@ type Options = {
 export class ZoomChartComponent implements HoverComponent {
 
   protected readonly chart: UniversalChart
+  protected interactiveZone: SVGRectElement | null = null
 
   constructor(private readonly options: Options) {
     this.chart = options.chart
   }
 
   attach(root: SVGGElement, composable: ComposableHover): void {
-    composable.interactiveZone.addEventListener('wheel', this.onWheelEvent.bind(this))
-    composable.interactiveZone.addEventListener('mousedown', this.onMouseDownEvent.bind(this))
-    composable.interactiveZone.addEventListener('mousemove', this.onMouseMoveEvent.bind(this))
+    this.interactiveZone = composable.interactiveZone
+    this.interactiveZone.addEventListener('wheel', this.onWheelEvent.bind(this))
+    this.interactiveZone.addEventListener('mousedown', this.onMouseDownEvent.bind(this))
+    this.interactiveZone.addEventListener('mousemove', this.onMouseMoveEvent.bind(this))
   }
 
   private onMouseDownEvent(event: MouseEvent) {
@@ -31,8 +34,9 @@ export class ZoomChartComponent implements HoverComponent {
   private onMouseMoveEvent(event: MouseEvent) {
   }
 
-
   private onWheelEvent(event: WheelEvent) {
+    if (!this.interactiveZone) return
+
     event.preventDefault()
     event.stopPropagation()
 
@@ -41,10 +45,19 @@ export class ZoomChartComponent implements HoverComponent {
     const zoomFactor = 1 - deltaY * -0.001
 
     const bounds = this.chart.space.bounds
+
+    const interactiveZoneRect = this.interactiveZone.getBoundingClientRect()
+
+    const dX = event.clientX - interactiveZoneRect.left
+    const dY = event.clientY - interactiveZoneRect.top
+
     this.chart.setRenderBounds({
       ...bounds,
-      minX: bounds.minX + (bounds.maxX - bounds.minX) * (1 - zoomFactor) / 2,
-      maxX: bounds.maxX - (bounds.maxX - bounds.minX) * (1 - zoomFactor) / 2,
+      minX: bounds.minX + (dX / interactiveZoneRect.width) * (1 - zoomFactor) * (bounds.maxX - bounds.minX),
+      maxX: bounds.maxX - (1 - dX / interactiveZoneRect.width) * (1 - zoomFactor) * (bounds.maxX - bounds.minX),
+      minY: undefined
+      // minY: bounds.minY + (dY / interactiveZoneRect.height) * (1 - zoomFactor) * (bounds.maxY - bounds.minY),
+      // maxY: bounds.maxY - (1 - dY / interactiveZoneRect.height) * (1 - zoomFactor) * (bounds.maxY - bounds.minY),
     })
   }
 }
