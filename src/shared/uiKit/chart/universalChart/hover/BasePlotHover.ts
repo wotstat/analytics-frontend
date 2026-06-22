@@ -117,7 +117,7 @@ export abstract class BasePlotHover extends BasePlotRenderer {
     this.lastNearestYDataPoints = null
     this.lastMousePosition = { offsetX: event.offsetX, offsetY: event.offsetY, clientX: event.clientX, clientY: event.clientY }
     this.interactiveZoneRect = this.interactiveZone.getBoundingClientRect()
-    this.beforeLayoutChange()
+    this.beforeLayoutChange(this.interactiveZoneRect)
 
     this.onPositionChange(
       { x: this.lastMousePosition.clientX, y: this.lastMousePosition.clientY },
@@ -164,7 +164,7 @@ export abstract class BasePlotHover extends BasePlotRenderer {
     }
   }
 
-  protected beforeLayoutChange() { }
+  protected beforeLayoutChange(interactiveZoneRect: DOMRect) { }
   protected onEnter(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean) { }
   protected onLeave(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean) { }
   protected onPositionChange(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean) { }

@@ -7,7 +7,7 @@ import { BasePlotHover } from '../BasePlotHover'
 export interface HoverComponent {
   attach?(root: SVGGElement, composable: ComposableHover): void
   detach?(): void
-  beforeLayoutChange?(): void
+  beforeLayoutChange?(interactiveZoneRect: DOMRect): void
   didLayout?(space: ChartSpace, full: Size): void
   onEnter?(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void
   onLeave?(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void
@@ -46,9 +46,9 @@ export class ComposableHover extends BasePlotHover {
     return this
   }
 
-  protected beforeLayoutChange() {
-    super.beforeLayoutChange()
-    for (const component of this.components) component.beforeLayoutChange?.()
+  protected beforeLayoutChange(interactiveZoneRect: DOMRect): void {
+    super.beforeLayoutChange(interactiveZoneRect)
+    for (const component of this.components) component.beforeLayoutChange?.(interactiveZoneRect)
   }
 
   protected onEnter(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean): void {
