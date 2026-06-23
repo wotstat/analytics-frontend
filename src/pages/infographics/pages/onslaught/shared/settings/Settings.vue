@@ -46,7 +46,7 @@ const router = useRouter()
 
 const regions = ['RU', 'EU', 'NA', 'ASIA', 'CN'] as const
 
-const seasons = defineModel<{ region: string, season: string, start: string, end: string }[]>('seasons')
+const seasons = defineModel<{ region: string, season: string, start: string }[]>('seasons')
 const selectedSeason = defineModel<string | null>('season')
 const selectedRegion = defineModel<'RU' | 'EU' | 'NA' | 'ASIA' | 'CN' | 'CT'>('region')
 const nickname = defineModel<string>('nickname')
@@ -76,10 +76,9 @@ watchEffect(() => {
   })
 })
 
-const seasonsData = queryAsync<{ region: string, season: string, start: string, end: string }>(`
+const seasonsData = queryAsync<{ region: string, season: string, start: string }>(`
   select region, season,
-        min(toStartOfDay(dateTime + interval ${getRegionIsoHourOffset(selectedRegion.value ?? 'RU')} hour)) as start,
-        max(toStartOfDay(dateTime + interval ${getRegionIsoHourOffset(selectedRegion.value ?? 'RU')} hour)) as end
+        min(toStartOfDay(dateTime + interval ${getRegionIsoHourOffset(selectedRegion.value ?? 'RU')} hour)) as start
   from Event_OnComp7Info
   where region in ('RU', 'EU', 'NA', 'ASIA', 'CN', 'CT')
   group by region, season

@@ -6,7 +6,7 @@ const ONE_HOUR = 60 * 60 * 1000
 const ONE_DAY = 24 * ONE_HOUR
 
 export function useSeasonInterval(
-  seasons: Ref<{ region: string, season: string, start: string, end: string }[]>,
+  seasons: Ref<{ region: string, season: string, start: string }[]>,
   selectedSeason: Ref<string | null>,
   selectedRegion: Ref<string | null>,) {
 
@@ -17,9 +17,8 @@ export function useSeasonInterval(
     if (!season) return null
 
     const start = new Date(season.start + 'Z')
-    const end = new Date(season.end + 'Z')
 
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) return null
+    if (isNaN(start.getTime())) return null
     const seasonLength = getSeasonDuration(season.season, season.region)
     return { start, end: new Date(start.getTime() + seasonLength), length: seasonLength / ONE_DAY }
   })

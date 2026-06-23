@@ -101,6 +101,7 @@ class BaseChart extends UniversalChart {
   setPoints(points: ({ x: number, y: number } | null)[]) {
     this.line.setPoints(points)
     this.hover.setDataSources(points)
+    this.recalculateRestrictionArea()
     return this
   }
 
@@ -115,11 +116,21 @@ class BaseChart extends UniversalChart {
     for (let i = 0; i <= end - start; i += DAY) dayTicks.push(i)
     this.dayTicks.setTicks(dayTicks)
 
-    if (roundedDelta != delta) {
-      this.restrictionArea.setPoints({ x: delta, y: -Infinity }, { x: roundedDelta, y: Infinity })
-    }
-
+    this.recalculateRestrictionArea()
     return this
+  }
+
+  protected recalculateRestrictionArea() {
+    const start = Math.floor(this.seasonInterval.start.getTime() / 1000)
+    const end = Math.floor(this.seasonInterval.end.getTime() / 1000)
+    const duration = end - start
+    const weakDuration = Math.ceil(duration / WEEK) * WEEK
+
+    if (weakDuration > duration) {
+      this.restrictionArea.setPoints(
+        { x: Math.max(duration, this.line.getBounds().maxX), y: -Infinity },
+        { x: weakDuration, y: Infinity })
+    }
   }
 
   protected getXLabelsOptions(): LabelsOptions {
