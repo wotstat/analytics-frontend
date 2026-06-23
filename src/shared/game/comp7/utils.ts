@@ -2,21 +2,47 @@
 import { GameVendor } from '@/shared/game/wot'
 import { STATIC_URL } from '@/shared/external/externalUrl'
 
-const ONE_DAY = 24 * 60 * 60 * 1000
+const ONE_HOUR = 60 * 60 * 1000
+const ONE_DAY = 24 * ONE_HOUR
 const LESTA_SEASON_LENGTH = 49 * ONE_DAY
 const WG_SEASON_LENGTH = 40 * ONE_DAY
 const SEASON_LENGTHS = {
   'ru:comp7_5_2': 14 * ONE_DAY, // более короткий тк запись модом началась не с начала натиска, а с середины сезона
   'eu:comp7_5_2': 40 * ONE_DAY,
+  'na:comp7_5_3': 41 * ONE_DAY, // в NA сезон 41 день
+  'asia:comp7_5_3': 42 * ONE_DAY, // в ASIA сезон 42 день
 }
 
-// сдвиг времени относительно UTC для переключения дня. toStartOfDay(recalculationTime - interval OFFSET hour)
+/* Сдвиг времени относительно UTC для переключения дня, переключение ближе к НАЧАЛУ следующего дня.
+Используется как toStartOfDay(recalculationTime - interval OFFSET hour)
+
+Проверять так:
+with
+    -8 as OFFSET,
+    30 as STEP
+select toStartOfInterval(dateTime, interval STEP minute) as t,
+       toStartOfDay(t + interval OFFSET hour) as g,
+       toUInt32(count()) as count
+from Event_OnBattleStart
+where battleMode = 'COMP7' and region = 'ASIA' and dateTime > '2026-03-08'
+group by t
+order by t with fill step interval STEP minute
+*/
 const REGION_TIME_OFFSETS: Record<string, number> = {
   'RU': -3,
   'EU': -9,
   'ASIA': -8,
   'NA': -20,
   'CN': -4
+}
+
+// Сдвиг времени относительно UTC для визуальной смены дня в UI. new Date(recalculationTime) + OFFSET
+const REGION_TIME_DAY_CHANGE_OFFSETS: Record<string, number> = {
+  'RU': 0.5, // Прайм тайм до 3:30 по МСК = 0:30 UTC
+  'EU': 0, // Сдвига действительно нет, прайм по UTC
+  'ASIA': 0,
+  'NA': 7, // На самом деле прайм до +6 (23:00PT), но чтоб переход через день совпадал с календарным, ставим +7 (00:00PT)
+  'CN': 0
 }
 
 export function getSeasonDuration(season: string, region: string) {
@@ -35,6 +61,10 @@ export function getSeasonQualificationCount(season: string, region: string) {
 
 export function getRegionIsoHourOffset(region: string) {
   return REGION_TIME_OFFSETS[region.toUpperCase()] ?? -3
+}
+
+export function getRegionDayChangeHourOffset(region: string) {
+  return ONE_HOUR * (REGION_TIME_DAY_CHANGE_OFFSETS[region.toUpperCase()] ?? 0)
 }
 
 export function getMaxEnergyLimit(game: GameVendor = 'mt'): number {

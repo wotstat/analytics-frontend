@@ -48,6 +48,7 @@ import { BattlesChart, ScoreChart } from './Charts'
 import IntervalSelector from './intervalSelector/IntervalSelector.vue'
 import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/chartTooltip/ChartTooltip'
 import { useRoute } from 'vue-router'
+import { getRegionDayChangeHourOffset } from '@/shared/game/comp7/utils'
 
 
 const route = useRoute()
@@ -67,7 +68,7 @@ const data = queryComputed<{ recalculationTime: string, rank: number, rating: nu
     recalculation as (
         select recalculationTime
         from Comp7Leaderboard
-        where recalculationTime between START_DATE and END_DATE and region = '${props.region}'
+        where recalculationTime between START_DATE and END_DATE + interval 5 day and region = '${props.region}'
         group by recalculationTime
         order by recalculationTime
     ),
@@ -76,7 +77,7 @@ const data = queryComputed<{ recalculationTime: string, rank: number, rating: nu
         from Comp7Leaderboard
         where region = '${props.region}' and
             bdid = ${props.bdid} and
-            recalculationTime between START_DATE and END_DATE
+            recalculationTime between START_DATE and END_DATE + interval 5 day
         order by recalculationTime
     )
   select *
@@ -96,9 +97,7 @@ const MINUTE = 1 * 60
 const HOUR = MINUTE * 60
 const DAY = HOUR * 24
 
-const startTime = props.seasonInterval.start.getTime()
-// const endTime = new Date(props.seasonInterval.end).getTime()
-
+const startTime = props.seasonInterval.start.getTime() + getRegionDayChangeHourOffset(props.region)
 
 const scoreChart = markRaw(new ScoreChart(props.seasonInterval))
 const battleChart = markRaw(new BattlesChart(props.seasonInterval))

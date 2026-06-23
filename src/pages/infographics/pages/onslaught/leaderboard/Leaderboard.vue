@@ -91,7 +91,7 @@ useMeta({
 const page = ref(1)
 const selectedName = ref<string | null>(null)
 
-const seasons = ref<{ region: string, season: string, start: string, end: string }[]>([])
+const seasons = ref<{ region: string, season: string, start: string }[]>([])
 const selectedSeason = ref<string | null>(null)
 const region = ref<'RU' | 'EU' | 'NA' | 'ASIA' | 'CN' | 'CT'>('RU')
 const nickname = ref<string>('')
