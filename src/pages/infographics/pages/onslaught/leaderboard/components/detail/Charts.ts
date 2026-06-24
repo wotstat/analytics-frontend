@@ -138,7 +138,7 @@ class BaseChart extends UniversalChart {
     const steps: [number, (v: number) => string][] = [
       [DAY, v => `${1 + v / DAY} день`],
       [DAY, v => `${1 + v / DAY}`],
-      [2 * DAY, v => `${1 + v / DAY}`],
+      // [2 * DAY, v => `${1 + v / DAY}`],
       [WEEK, v => `${1 + v / WEEK} неделя`],
       [WEEK, v => `${1 + v / WEEK} нед.`],
       [WEEK, v => `${1 + v / WEEK} н.`],
@@ -151,8 +151,8 @@ class BaseChart extends UniversalChart {
       padding: 10,
       labelOffset: 5,
       values: steppedOverrides({ step: steps.map(s => ({ step: s[0], labelForValue: s[1] })) }),
-      strategy: { type: 'interval', offset: 3 },
-      onlyFitted: true,
+      strategy: { type: 'interval', fit: true, offset: 3 },
+      // onlyFitted: true,
       from: 0,
     }
   }
