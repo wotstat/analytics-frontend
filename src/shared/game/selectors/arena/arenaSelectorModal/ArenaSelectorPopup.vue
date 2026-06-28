@@ -106,7 +106,7 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
-const selected = defineModel<Set<string>>({ default: new Set() })
+const selected = defineModel<Set<string>>({ default: () => new Set() })
 
 function reset() {
   searchText.value = ''

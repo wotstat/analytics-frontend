@@ -38,7 +38,7 @@ left any join seasons using tag
 
 const arenaNames = computed(() => new Map(arenas.value.data.map(a => [a.tag, a.name])))
 
-const selected = defineModel<Set<string>>({ default: new Set() })
+const selected = defineModel<Set<string>>({ default: () => new Set() })
 
 function tagToText(tag: string) {
   const info = hashToArena(tag)

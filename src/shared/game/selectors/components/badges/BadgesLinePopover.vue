@@ -21,7 +21,7 @@ const props = defineProps<{
   tagToText?: (tag: string) => string
 }>()
 
-const selected = defineModel<Set<string>>({ default: new Set() })
+const selected = defineModel<Set<string>>({ default: () => new Set() })
 const displayPopup = ref<boolean>(false)
 const badges = ref<InstanceType<typeof BadgesLine> | null>(null)
 

@@ -19,6 +19,6 @@ const versions = queryAsync<{ region: string, version: string }>(`
   group by region, gameVersionFull
 `, { settings: CACHE_SETTINGS })
 
-const vehicles = defineModel<Set<string>>({ default: new Set() })
+const vehicles = defineModel<Set<string>>({ default: () => new Set() })
 
 </script>
