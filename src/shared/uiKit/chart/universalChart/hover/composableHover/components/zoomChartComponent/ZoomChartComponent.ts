@@ -1,4 +1,7 @@
 import { UniversalChart } from '../../../../UniversalChart'
+import { ChartSpace } from '../../../../utils/ChartSpace'
+import { Point } from '../../../../utils/Point'
+import { Position } from '../../../BasePlotHover'
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
 
 
@@ -20,10 +23,6 @@ export class ZoomChartComponent implements HoverComponent {
   } | null = null
 
   private readonly wheelHandler = (event: WheelEvent) => this.onWheelEvent(event)
-  private readonly mouseDownHandler = (event: MouseEvent) => this.onMouseDownEvent(event)
-  private readonly mouseMoveHandler = (event: MouseEvent) => this.onMouseMoveEvent(event)
-  private readonly mouseUpHandler = (event: MouseEvent) => this.onMouseUpEvent(event)
-
   constructor(private readonly options: Options) {
     this.chart = options.chart
   }
@@ -31,17 +30,18 @@ export class ZoomChartComponent implements HoverComponent {
   attach(_root: SVGGElement, composable: ComposableHover): void {
     this.interactiveZone = composable.interactiveZone
     this.interactiveZone.addEventListener('wheel', this.wheelHandler, { passive: false })
-    this.interactiveZone.addEventListener('mousedown', this.mouseDownHandler)
   }
 
-  private onMouseDownEvent(event: MouseEvent) {
-    if (event.button !== 0) return
+  mayPan(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
+    return true
+  }
 
-    const { bounds, layout } = this.chart.space
+  onPanBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
+    const { bounds, layout } = space
 
     this.panState = {
-      startClientX: event.clientX,
-      startClientY: event.clientY,
+      startClientX: cursor.clientX,
+      startClientY: cursor.clientY,
       startBounds: {
         minX: bounds.minX,
         maxX: bounds.maxX,
@@ -51,24 +51,13 @@ export class ZoomChartComponent implements HoverComponent {
       layoutWidth: layout.width,
       layoutHeight: layout.height,
     }
-
-    event.preventDefault()
-    event.stopPropagation()
-
-    document.addEventListener('mousemove', this.mouseMoveHandler)
-    document.addEventListener('mouseup', this.mouseUpHandler)
   }
 
-  private onMouseUpEvent(event: MouseEvent) {
-    if (this.panState) {
-      event.preventDefault()
-      event.stopPropagation()
-    }
-
-    this.stopPan()
+  onPanEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
+    this.panState = null
   }
 
-  private onMouseMoveEvent(event: MouseEvent) {
+  onPanMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
     if (!this.panState) return
 
     const { startClientX, startClientY, startBounds, layoutWidth, layoutHeight } = this.panState
@@ -76,24 +65,21 @@ export class ZoomChartComponent implements HoverComponent {
 
     if (this.isXAxisEnabled() && layoutWidth > 0) {
       const rangeX = startBounds.maxX - startBounds.minX
-      const shiftX = -(event.clientX - startClientX) / layoutWidth * rangeX
+      const shiftX = -(cursor.clientX - startClientX) * rangeX / layoutWidth
       nextBounds.minX = startBounds.minX + shiftX
       nextBounds.maxX = startBounds.maxX + shiftX
     }
 
     if (this.isYAxisEnabled() && layoutHeight > 0) {
       const rangeY = startBounds.maxY - startBounds.minY
-      const shiftY = (event.clientY - startClientY) / layoutHeight * rangeY
+      const shiftY = (cursor.clientY - startClientY) * rangeY / layoutHeight
       nextBounds.minY = startBounds.minY + shiftY
       nextBounds.maxY = startBounds.maxY + shiftY
     }
 
     if (Object.keys(nextBounds).length === 0) return
 
-    this.chart.setRenderBounds(nextBounds)
-
-    event.preventDefault()
-    event.stopPropagation()
+    this.chart.setRenderBounds(nextBounds, true)
   }
 
   private onWheelEvent(event: WheelEvent) {
@@ -123,19 +109,6 @@ export class ZoomChartComponent implements HoverComponent {
         maxY: bounds.maxY - (1 - dY / interactiveZoneRect.height) * (1 - zoomFactor) * (bounds.maxY - bounds.minY),
       } : {}),
     })
-  }
-
-  detach(): void {
-    this.interactiveZone?.removeEventListener('wheel', this.wheelHandler)
-    this.interactiveZone?.removeEventListener('mousedown', this.mouseDownHandler)
-    this.stopPan()
-    this.interactiveZone = null
-  }
-
-  private stopPan() {
-    this.panState = null
-    document.removeEventListener('mousemove', this.mouseMoveHandler)
-    document.removeEventListener('mouseup', this.mouseUpHandler)
   }
 
   private isXAxisEnabled() {

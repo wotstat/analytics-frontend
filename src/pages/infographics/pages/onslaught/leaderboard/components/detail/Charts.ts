@@ -60,6 +60,9 @@ class BaseChart extends UniversalChart {
       .clipBy(clipMain)
 
     this.hover = new ComposableHover('hover')
+      .addComponent(new ZoomChartComponent({
+        chart: this,
+      }))
       .addComponent(new VerticalLine({
         offset: { end: 0.5 },
         position: 'data-point-x',
@@ -78,9 +81,6 @@ class BaseChart extends UniversalChart {
         tooltipPivot: 'avg',
         onHide: () => this.tooltipCtx.value = null,
         onPositionChange: ctx => this.tooltipCtx.value = ctx,
-      }))
-      .addComponent(new ZoomChartComponent({
-        chart: this,
       }))
 
     this.dayTicks = new TicksByValues('horizontal', { start: 0, classes: 'day-ticks' })
@@ -180,7 +180,6 @@ class BaseChart extends UniversalChart {
 
 export class ScoreChart extends BaseChart {
 
-
   constructor(seasonInterval: { start: Date, end: Date }) {
     super(seasonInterval)
   }
@@ -188,7 +187,6 @@ export class ScoreChart extends BaseChart {
 
 
 export class BattlesChart extends BaseChart {
-
 
   constructor(seasonInterval: { start: Date, end: Date }) {
     super(seasonInterval)

@@ -1,12 +1,12 @@
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
-import { HoveredDataPoint } from '../../../BasePlotHover'
+import { HoveredDataPoint, Position } from '../../../BasePlotHover'
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
 
 export type TooltipCtx = {
   pivot: Point,
   absolutePivot: Point,
-  cursor: Point,
+  cursor: Position,
   absoluteCursor: Point,
   nearestDataPoints: HoveredDataPoint[]
   isTouch: boolean
@@ -28,7 +28,7 @@ export class ChartTooltip implements HoverComponent {
   constructor(protected options: Options = {}) {
   }
 
-  onLeave(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
+  onHoverEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
     if (this.lastNearestDataPoints && this.lastNearestDataPoints.length > 0) {
       this.options.onHide?.()
       this.lastNearestDataPoints = null
@@ -39,7 +39,7 @@ export class ChartTooltip implements HoverComponent {
     this.windowScroll = { x: window.scrollX, y: window.scrollY }
   }
 
-  onPositionChange(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
+  onHoverMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
     let nearestDataPoints: HoveredDataPoint[]
 
     if (this.options.position === 'data-point-x') {
@@ -66,7 +66,7 @@ export class ChartTooltip implements HoverComponent {
       return
     }
 
-    let pivot = { x: cursor.x, y: cursor.y }
+    let pivot = { x: cursor.clientX, y: cursor.clientY }
 
     if (this.options.tooltipPivot === 'nearest') {
       let nearest = nearestDataPoints[0]
@@ -84,11 +84,11 @@ export class ChartTooltip implements HoverComponent {
         }
       }
 
-
       pivot = composable.chartToPage({
         x: space.chartToLayoutX(nearest.xValue),
         y: space.chartToLayoutY(nearest.yValue)
       })
+
     } else if (this.options.tooltipPivot === 'avg') {
       const avg = nearestDataPoints.reduce((acc, p) => {
         acc.x += p.xValue
@@ -104,6 +104,7 @@ export class ChartTooltip implements HoverComponent {
         y: space.chartToLayoutY(avg.y)
       })
     }
+
     const ctx = {
       pivot: pivot,
       absolutePivot: {
@@ -112,13 +113,12 @@ export class ChartTooltip implements HoverComponent {
       },
       cursor: cursor,
       absoluteCursor: {
-        x: cursor.x + this.windowScroll.x,
-        y: cursor.y + this.windowScroll.y
+        x: cursor.clientX + this.windowScroll.x,
+        y: cursor.clientY + this.windowScroll.y
       },
       nearestDataPoints,
       isTouch
     }
-
 
     if (!this.lastNearestDataPoints && nearestDataPoints.length > 0) this.options.onShow?.(ctx)
     this.options.onPositionChange?.(ctx)

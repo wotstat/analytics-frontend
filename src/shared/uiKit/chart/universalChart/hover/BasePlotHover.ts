@@ -1,8 +1,10 @@
-import { Overflow, Size } from '../UniversalChart'
+import { Overflow, Size, UniversalChart } from '../UniversalChart'
 import { ChartSpace } from '../utils/ChartSpace'
 import { Point } from '../utils/Point'
 import { Classes } from '../utils/utils'
 import { BasePlotRenderer } from '../plot/BasePlotRenderer'
+
+export type Position = { offsetX: number, offsetY: number, clientX: number, clientY: number }
 
 export type DataSource = ({ x: number, y: number } | null)[]
 
@@ -27,6 +29,18 @@ export function isDataPointArrayEqual(a: HoveredDataPoint[], b: HoveredDataPoint
   return a.every((point, i) => isDataPointEqual(point, b[i]))
 }
 
+function event2Position(event: PointerEvent) {
+  return {
+    offsetX: event.offsetX,
+    offsetY: event.offsetY,
+    clientX: event.clientX,
+    clientY: event.clientY
+  }
+}
+
+const PAN_BEGIN_TIMEOUT = 200
+const PAN_BEGIN_DISTANCE = 0
+
 export abstract class BasePlotHover extends BasePlotRenderer {
 
   readonly interactiveZone = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
@@ -38,93 +52,196 @@ export abstract class BasePlotHover extends BasePlotRenderer {
   protected lastNearestXDataPoints: HoveredDataPoint[] | null = null
   protected lastNearestYDataPoints: HoveredDataPoint[] | null = null
 
-  protected lastMousePosition: { offsetX: number, offsetY: number, clientX: number, clientY: number } | null = null
+  protected lastMousePosition: Position | null = null
   protected interactiveZoneOffsets = { x: 0, y: 0 }
+
+  private interactionController = new AbortController()
+
+  private awaitPanBegin = false
+  private awaitPanBeginTimeoutId = 0
+  private hoverActive = false
+  private panActive = false
+
+  get listenerSignal() {
+    return this.interactionController.signal
+  }
 
   constructor(classes: Classes = []) {
     super(classes)
 
     this.root.appendChild(this.interactiveZone)
     this.interactiveZone.classList.add('interactive-zone')
+  }
 
-    window.addEventListener('scroll', this.onScroll.bind(this), { passive: true })
+  attach(root: SVGGElement, chart: UniversalChart): void {
+    super.attach(root, chart)
 
-    this.interactiveZone.addEventListener('mousemove', this.onMouseMove.bind(this))
-    this.interactiveZone.addEventListener('mouseleave', this.onMouseLeave.bind(this))
-    this.interactiveZone.addEventListener('mouseenter', this.onMouseEnter.bind(this))
+    this.interactionController.abort()
+    this.interactionController = new AbortController()
 
-    this.interactiveZone.addEventListener('touchstart', this.touchStart.bind(this))
-    this.interactiveZone.addEventListener('touchmove', this.touchMove.bind(this))
+    document.addEventListener('scroll', this.onScroll.bind(this), { passive: true, signal: this.listenerSignal })
+
+    this.interactiveZone.addEventListener('pointermove', this.onPointerMove.bind(this), { signal: this.listenerSignal })
+    this.interactiveZone.addEventListener('pointerleave', this.onPointerLeave.bind(this), { signal: this.listenerSignal })
+    this.interactiveZone.addEventListener('pointerenter', this.onPointerEnter.bind(this), { signal: this.listenerSignal })
+    this.interactiveZone.addEventListener('pointerdown', this.onPointerDown.bind(this), { signal: this.listenerSignal })
+    this.interactiveZone.addEventListener('pointercancel', this.onPointerCancel.bind(this), { signal: this.listenerSignal })
+
+    // Prevent gesture on ios safari which cancel pointer event on fast swipe
+    this.interactiveZone.addEventListener('touchstart', this.touchStart.bind(this), { signal: this.listenerSignal })
+  }
+
+  detach(): void {
+    super.detach()
+    this.interactionController.abort()
   }
 
   protected onScroll(event: Event) { }
 
+  // just prevent default to avoid swipe gesture on ios safari
   protected touchStart(event: TouchEvent) {
-    this.root.classList.add('hovered')
-    document.addEventListener('touchend', this.touchEnd.bind(this), { once: true })
-    const touch = this.touchToEvent(event.touches[0])
-
-    if (this.chart)
-      this.onEnter({ x: touch.clientX, y: touch.clientY }, this.offsetToChart(touch), this.chart.space, true)
-
-    this.updateMouse(touch, true)
-  }
-
-  protected touchEnd(event: TouchEvent) {
+    event.stopPropagation()
     event.preventDefault()
-    this.root.classList.remove('hovered')
-    const touch = this.touchToEvent(event.changedTouches[0])
+  }
 
-    if (this.chart)
-      this.onLeave({ x: touch.clientX, y: touch.clientY }, this.offsetToChart(touch), this.chart.space, true)
+  protected onPointerMove(event: PointerEvent) {
+    if (!this.chart) return
 
+    const pos = event2Position(event)
+
+    if (this.awaitPanBegin && !this.panActive) {
+      const dx = pos.offsetX - this.lastMousePosition!.offsetX
+      const dy = pos.offsetY - this.lastMousePosition!.offsetY
+      const distance = Math.sqrt(dx * dx + dy * dy)
+
+      if (distance > PAN_BEGIN_DISTANCE) {
+        this.awaitPanBegin = false
+        clearTimeout(this.awaitPanBeginTimeoutId)
+        this.onPanBegin(pos, this.offsetToChart(event), this.chart.space, event.pointerType === 'touch')
+      }
+    }
+
+    this.lastMousePosition = pos
+    if (this.panActive) this.onPanMove(pos, this.offsetToChart(event), this.chart.space, event.pointerType === 'touch')
+    if (this.hoverActive) this.updateHoverPointer(pos)
+  }
+
+  protected onPointerEnter(event: PointerEvent) {
+    if (!this.chart) return
+    this.lastMousePosition = event2Position(event)
+
+    if (event.pointerType == 'mouse' || event.pointerType == 'pen') {
+      this.onHoverBegin(this.lastMousePosition, this.offsetToChart(event), this.chart.space, false)
+    }
+  }
+
+  protected onPointerLeave(event: PointerEvent) {
+    if (!this.chart) return
+
+    const positions = event2Position(event)
+    if (this.hoverActive) this.onHoverEnd(positions, this.offsetToChart(event), this.chart.space, false)
+    if (this.panActive) this.onPanEnd(positions, this.offsetToChart(event), this.chart.space, false)
     this.lastMousePosition = null
   }
 
-  protected touchMove(event: TouchEvent) {
-    const touch = this.touchToEvent(event.touches[0])
-    if (this.chart) this.updateMouse(touch, true)
+  protected onPointerDown(event: PointerEvent) {
+    if (!this.chart) return
+
+
+    this.lastMousePosition = event2Position(event)
+    this.interactiveZone.setPointerCapture(event.pointerId)
+    document.addEventListener('pointerup', this.onPointerUp.bind(this), { once: true, signal: this.listenerSignal })
+
+    if (this.mayPan(this.lastMousePosition, this.offsetToChart(event), this.chart.space, false)) {
+      if (event.pointerType === 'touch') {
+        this.awaitPanBegin = true
+        clearTimeout(this.awaitPanBeginTimeoutId)
+        this.awaitPanBeginTimeoutId = setTimeout(this.onPanBeginTimeout.bind(this), PAN_BEGIN_TIMEOUT)
+      } else {
+        this.onPanBegin(this.lastMousePosition, this.offsetToChart(event), this.chart.space, false)
+      }
+    } else {
+      this.onHoverBegin(this.lastMousePosition, this.offsetToChart(event), this.chart.space, false)
+    }
   }
 
-  protected onMouseMove(event: MouseEvent) {
-    this.updateMouse(event)
+  protected onPointerUp(event: PointerEvent) {
+    this.interactiveZone.releasePointerCapture(event.pointerId)
+    this.awaitPanBegin = false
+    clearTimeout(this.awaitPanBeginTimeoutId)
+
+    if (!this.chart) return
+
+    const pos = event2Position(event)
+    if (this.panActive) this.onPanEnd(pos, this.offsetToChart(event), this.chart.space, false)
   }
 
-  protected onMouseEnter(event: MouseEvent) {
-    this.root.classList.add('hovered')
-    if (this.chart)
-      this.onEnter({ x: event.clientX, y: event.clientY }, this.offsetToChart(event), this.chart.space, false)
-    this.updateMouse(event)
+  protected onPointerCancel(event: PointerEvent) {
+    this.interactiveZone.releasePointerCapture(event.pointerId)
+    this.awaitPanBegin = false
+    clearTimeout(this.awaitPanBeginTimeoutId)
   }
 
-  protected onMouseLeave(event: MouseEvent) {
-    this.root.classList.remove('hovered')
-    if (this.chart)
-      this.onLeave({ x: event.clientX, y: event.clientY }, this.offsetToChart(event), this.chart.space, false)
-    this.lastMousePosition = null
+  private onPanBeginTimeout() {
+    if (!this.awaitPanBegin) return
+    this.awaitPanBegin = false
+
+    if (!this.lastMousePosition || !this.chart) return
+
+    this.onHoverBegin(this.lastMousePosition, this.offsetToChart(this.lastMousePosition), this.chart.space, false)
   }
 
-  private updateMouse(event: {
-    offsetX: number,
-    offsetY: number,
-    clientX: number,
-    clientY: number,
-  }, isTouch: boolean = false) {
+  private updateHoverPointer(position: Position, isTouch: boolean = false) {
     if (!this.chart) return
 
     this.lastNearestDataPoints = null
     this.lastNearestXDataPoints = null
     this.lastNearestYDataPoints = null
-    this.lastMousePosition = { offsetX: event.offsetX, offsetY: event.offsetY, clientX: event.clientX, clientY: event.clientY }
     this.interactiveZoneRect = this.interactiveZone.getBoundingClientRect()
     this.beforeLayoutChange(this.interactiveZoneRect)
 
-    this.onPositionChange(
-      { x: this.lastMousePosition.clientX, y: this.lastMousePosition.clientY },
-      this.offsetToChart(event),
-      this.chart.space,
-      isTouch
-    )
+    this.requestRender()
+    // this.onHoverMove(position, this.offsetToChart(position), this.chart.space, isTouch)
+  }
+
+  protected renderImpl(space: ChartSpace, overflow: Overflow, full: Size): void {
+    this.lastNearestDataPoints = null
+    this.lastNearestXDataPoints = null
+    this.lastNearestYDataPoints = null
+
+    if (this.lastMousePosition) {
+      if (this.hoverActive)
+        this.onHoverMove(this.lastMousePosition, this.offsetToChart(this.lastMousePosition), space, false)
+
+      if (this.panActive)
+        this.onPanMove(this.lastMousePosition, this.offsetToChart(this.lastMousePosition), space, false)
+    }
+  }
+
+  protected beforeLayoutChange(interactiveZoneRect: DOMRect) { }
+  protected mayPan(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): boolean { return false }
+  protected onHoverMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean) { }
+  protected onPanMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean) { }
+
+  protected onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean) {
+    this.hoverActive = true
+    this.root.classList.toggle('hover-active', true)
+    this.updateHoverPointer(cursor)
+  }
+
+  protected onHoverEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean) {
+    this.hoverActive = false
+    this.root.classList.toggle('hover-active', false)
+  }
+
+  protected onPanBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean) {
+    this.panActive = true
+    this.root.classList.toggle('pan-active', true)
+  }
+
+  protected onPanEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean) {
+    this.panActive = false
+    this.root.classList.toggle('pan-active', false)
   }
 
   offsetToChart(event: { offsetX: number, offsetY: number }): Point {
@@ -140,34 +257,6 @@ export abstract class BasePlotHover extends BasePlotRenderer {
 
     return { x, y }
   }
-
-  protected renderImpl(space: ChartSpace, overflow: Overflow, full: Size): void {
-    this.lastNearestDataPoints = null
-    this.lastNearestXDataPoints = null
-    this.lastNearestYDataPoints = null
-
-    if (this.lastMousePosition)
-      this.onPositionChange(
-        { x: this.lastMousePosition.clientX, y: this.lastMousePosition.clientY },
-        this.offsetToChart(this.lastMousePosition),
-        space,
-        false
-      )
-  }
-
-  protected touchToEvent(touch: Touch): { offsetX: number, offsetY: number, clientX: number, clientY: number } {
-    return {
-      offsetX: touch.pageX - this.interactiveZoneRect.x + this.interactiveZoneOffsets.x,
-      offsetY: touch.pageY - this.interactiveZoneRect.y + this.interactiveZoneOffsets.y,
-      clientX: touch.clientX,
-      clientY: touch.clientY
-    }
-  }
-
-  protected beforeLayoutChange(interactiveZoneRect: DOMRect) { }
-  protected onEnter(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean) { }
-  protected onLeave(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean) { }
-  protected onPositionChange(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean) { }
 
   findNearestInDataSource(point: Point, space: ChartSpace, dataSource: DataSource) {
     let nearestPointIndex = -1

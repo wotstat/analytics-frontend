@@ -223,6 +223,12 @@ watchEffect(() => {
           cursor: crosshair;
         }
 
+        &.pan-active {
+          .interactive-zone {
+            cursor: grabbing;
+          }
+        }
+
         .hover-marker {
           fill: rgba(2, 175, 255, 1);
         }

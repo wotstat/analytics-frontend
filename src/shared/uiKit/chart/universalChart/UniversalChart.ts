@@ -136,7 +136,7 @@ export class UniversalChart extends BaseChart {
     this.scheduleRender()
   }
 
-  setRenderBounds(bounds: { minX?: number, maxX?: number, minY?: number, maxY?: number } | undefined) {
+  setRenderBounds(bounds: { minX?: number, maxX?: number, minY?: number, maxY?: number } | undefined, immediate: boolean = false) {
     if (!bounds) {
       this.userDefinedBounds = null
       this.dataDidChange()
@@ -171,6 +171,7 @@ export class UniversalChart extends BaseChart {
     if (ud.minY && Math.abs(ud.minY) == Infinity) ud.minY = null
 
     if (changed) this.dataDidChange()
+    if (immediate) this.relayout()
   }
 
   setMinLayoutSize(size: Offset4Side) {
@@ -226,9 +227,8 @@ export class UniversalChart extends BaseChart {
   }
 
   protected renderImpl() {
-    this.recalculateDataBounds()
-    this.chartSpace.bounds = this.calculateRenderBounds()
-    this.layout()
+    this.relayout()
+    for (const renderer of this.allRenderers) renderer.didLayout?.(this.chartSpace, this.size)
 
     let overflow = { top: 0, right: 0, bottom: 0, left: 0 }
     switch (this.options.layoutVariant ?? 'horizontal') {
@@ -254,6 +254,12 @@ export class UniversalChart extends BaseChart {
     for (const slot of this.bottomRenderers) slot.render?.(this.chartSpace, overflow, this.size)
     for (const slot of this.leftRenderers) slot.render?.(this.chartSpace, overflow, this.size)
     for (const plot of this.plotRenderers) plot.render?.(this.chartSpace, overflow, this.size)
+  }
+
+  relayout() {
+    this.recalculateDataBounds()
+    this.chartSpace.bounds = this.calculateRenderBounds()
+    this.layout()
   }
 
   private layout() {
@@ -287,7 +293,6 @@ export class UniversalChart extends BaseChart {
     layout.layout.width = w - yLeft - yRight
 
     this.chartSpace.layout = layout.layout
-    for (const renderer of this.allRenderers) renderer.didLayout?.(this.chartSpace, { width: w, height: h })
   }
 
   private calculateRenderBounds() {

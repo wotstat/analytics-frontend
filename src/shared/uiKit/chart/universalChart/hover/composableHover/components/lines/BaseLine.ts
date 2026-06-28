@@ -1,7 +1,7 @@
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
 import { addClasses, Classes } from '../../../../utils/utils'
-import { HoveredDataPoint, isDataPointEqual } from '../../../BasePlotHover'
+import { HoveredDataPoint, isDataPointEqual, Position } from '../../../BasePlotHover'
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
 
 type Options = {
@@ -40,17 +40,17 @@ export abstract class BaseLine implements HoverComponent {
     root.appendChild(this.line)
   }
 
-  onEnter(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
+  onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
     if (this.position === 'cursor') this.line.classList.add('visible')
     this.process(point, space, composable)
   }
 
-  onLeave(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
+  onHoverEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
     this.line.classList.remove('visible')
     this.lastDataPoints = null
   }
 
-  onPositionChange(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover) {
+  onHoverMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover) {
     this.process(point, space, composable)
   }
 

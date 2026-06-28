@@ -22,6 +22,8 @@ export function setup(params: ym.InitParameters) {
   window['ym'] = window.ym || function () { (window.ym.a = window.ym.a || []).push(arguments) }
   // @ts-ignore
   window['ym'].l = 1 * new Date()
+  // @ts-ignore
+  window[`disableYaCounter${metrikaId}`] = location.hostname === 'localhost' || location.search.includes('no_metrika=1')
 
   loadScript(async () => {
     ym(metrikaId, 'init', params)

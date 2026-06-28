@@ -2,7 +2,7 @@ import { AutoMarker } from '../../../../plot/markers/autoMarkers/AutoMarkers'
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
 import { addClasses, Classes, joinClasses } from '../../../../utils/utils'
-import { DataSource, HoveredDataPoint, isDataPointArrayEqual } from '../../../BasePlotHover'
+import { DataSource, HoveredDataPoint, isDataPointArrayEqual, Position } from '../../../BasePlotHover'
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
 
 
@@ -50,13 +50,13 @@ export class NearestMarker implements HoverComponent {
     root.appendChild(this.root)
   }
 
-  onLeave(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
+  onHoverEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
     for (const marker of this.markers) marker.dispose()
     this.markers = []
     this.lastNearestDataPoints = null
   }
 
-  onPositionChange(cursor: Point, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
+  onHoverMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
     let nearestDataPoints: HoveredDataPoint[]
 
     if (this.position === 'data-point-x') {
