@@ -39,4 +39,16 @@ export default defineConfig({
       '@': '/src'
     }
   },
+  build: {
+    rollupOptions: {
+      // TODO: Remove when updating vueuse beyond v14.3.0
+      onwarn(warning, warn) {
+        if (warning.code === 'INVALID_ANNOTATION' && warning.message.includes('@vueuse/core')) {
+          return
+        }
+
+        warn(warning)
+      },
+    },
+  }
 })
