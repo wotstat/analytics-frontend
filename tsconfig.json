@@ -9,9 +9,6 @@
       "DOM.Iterable"
     ],
     "skipLibCheck": true,
-    "types": [
-      "yandex-metrika-tag"
-    ],
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
