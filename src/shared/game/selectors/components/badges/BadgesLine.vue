@@ -22,7 +22,7 @@ const props = defineProps<{
   showAddButton?: boolean
 }>()
 
-const selected = defineModel<Set<string>>({ default: new Set() })
+const selected = defineModel<Set<string>>({ default: () => new Set() })
 const emit = defineEmits<{
   (e: 'openSelectModal'): void
 }>()

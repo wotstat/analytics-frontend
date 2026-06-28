@@ -25,6 +25,6 @@ from tanks
 left any join locals using tag;
 `, { settings: CACHE_SETTINGS })
 
-const vehicles = defineModel<Set<string>>({ default: new Set() })
+const vehicles = defineModel<Set<string>>({ default: () => new Set() })
 
 </script>

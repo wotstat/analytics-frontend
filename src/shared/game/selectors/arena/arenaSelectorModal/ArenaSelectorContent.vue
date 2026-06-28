@@ -64,7 +64,7 @@ const emit = defineEmits<{
   (e: 'reset'): void
 }>()
 
-const selected = defineModel<Set<string>>({ default: new Set() })
+const selected = defineModel<Set<string>>({ default: () => new Set() })
 const parsedSelected = computed(() => new Set([...selected.value.values()].map(tag => hashToArena(tag))))
 const selectedTags = computed(() => new Set([...parsedSelected.value.values()].map(a => a.tag)))
 const selectedTeams = computed(() => new Map<string, 'any' | number>(
