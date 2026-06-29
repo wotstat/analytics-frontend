@@ -1,16 +1,28 @@
 import wasmInit from './monotoneXPath.wasm?init'
 
-let monotoneXPathWasm: ((x: number, y: number) => number) | null = null
-
-wasmInit().then((instance) => {
-  const { add } = instance.exports as any
-  monotoneXPathWasm = add
-  console.log('WASM module initialized', instance.exports)
-})
-
-function fmt2(value: number) {
-  return Math.round(value * 100) / 100
+type MonotoneXPathWasm = {
+  memory: WebAssembly.Memory
+  allocF64: (len: number) => number
+  freeF64: (ptr: number, len: number) => void
+  buildMonotoneXPath: (
+    xPtr: number,
+    yPtr: number,
+    len: number,
+    smoothing: number,
+    boundsMinX: number, boundsMaxX: number, boundsMinY: number, boundsMaxY: number,
+    layoutMinX: number, layoutMaxX: number, layoutMinY: number, layoutMaxY: number
+  ) => number
+  resultPtr: () => number
+  resultLen: () => number
 }
+
+let monotoneXPathWasm: MonotoneXPathWasm | null = null
+
+wasmInit()
+  .then((instance) => monotoneXPathWasm = instance.exports as unknown as MonotoneXPathWasm)
+  .catch(() => monotoneXPathWasm = null)
+
+const pathDecoder = new TextDecoder()
 
 type Bounds = {
   minX: number,
@@ -21,20 +33,16 @@ type Bounds = {
 
 export class MonotoneXPath {
 
-  private dx: number[]
-  private slope: number[]
-  private tangent: number[]
-  private x: number[]
-  private y: number[]
-
+  private x: Float64Array
+  private y: Float64Array
+  private wasm: MonotoneXPathWasm | null = null
+  private wasmXPtr = 0
+  private wasmYPtr = 0
 
   constructor(points: { x: number, y: number }[]) {
     const n = points.length
-    this.dx = new Array(n - 1)
-    this.slope = new Array(n - 1)
-    this.tangent = new Array(n)
-    this.x = new Array(n)
-    this.y = new Array(n)
+    this.x = new Float64Array(n)
+    this.y = new Float64Array(n)
 
     for (let i = 0; i < n; i++) {
       this.x[i] = points[i].x
@@ -49,18 +57,33 @@ export class MonotoneXPath {
     if (n === 1) return `M${fmt2(this.x[0])} ${fmt2(this.y[0])}`
     if (n === 2) return `M${fmt2(this.x[0])} ${fmt2(this.y[0])} L${fmt2(this.x[1])} ${fmt2(this.y[1])}`
 
-    if (monotoneXPathWasm) {
-      console.log('Using WASM implementation for monotone path')
-    } else {
-      console.log('Using fallback implementation for monotone path')
+    const wasm = monotoneXPathWasm
+
+    if (wasm) {
+      try {
+        if (this.ensureWasmBuffers(wasm)) {
+
+          const ok = wasm.buildMonotoneXPath(
+            this.wasmXPtr, this.wasmYPtr, n, smoothing,
+            bounds.minX, bounds.maxX, bounds.minY, bounds.maxY,
+            layout.minX, layout.maxX, layout.minY, layout.maxY
+          )
+
+          if (ok) {
+            const ptr = wasm.resultPtr()
+            const len = wasm.resultLen()
+            const res = pathDecoder.decode(new Uint8Array(wasm.memory.buffer, ptr, len))
+            return res
+          }
+        }
+      } catch {
+        this.freeWasmBuffers()
+      }
     }
 
     return monotoneXPathFallback({
       x: this.x,
       y: this.y,
-      dx: this.dx,
-      slope: this.slope,
-      tangent: this.tangent,
       smoothing: smoothing,
       bounds: bounds,
       layout: layout
@@ -68,27 +91,68 @@ export class MonotoneXPath {
   }
 
   dispose() {
-    this.dx = []
-    this.slope = []
-    this.tangent = []
-    this.x = []
-    this.y = []
+    this.freeWasmBuffers()
+    this.x = new Float64Array(0)
+    this.y = new Float64Array(0)
+  }
+
+  private ensureWasmBuffers(wasm: MonotoneXPathWasm): boolean {
+    if (this.wasm === wasm && this.wasmXPtr !== 0 && this.wasmYPtr !== 0) return true
+
+    this.freeWasmBuffers()
+
+    const n = this.x.length
+    const xPtr = wasm.allocF64(n)
+    const yPtr = wasm.allocF64(n)
+
+    if (xPtr === 0 || yPtr === 0) {
+      if (xPtr !== 0) wasm.freeF64(xPtr, n)
+      if (yPtr !== 0) wasm.freeF64(yPtr, n)
+      return false
+    }
+
+    new Float64Array(wasm.memory.buffer, xPtr, n).set(this.x)
+    new Float64Array(wasm.memory.buffer, yPtr, n).set(this.y)
+
+    this.wasm = wasm
+    this.wasmXPtr = xPtr
+    this.wasmYPtr = yPtr
+
+    return true
+  }
+
+  private freeWasmBuffers() {
+    const wasm = this.wasm
+
+    if (wasm) {
+      try {
+        if (this.wasmXPtr !== 0) wasm.freeF64(this.wasmXPtr, this.x.length)
+        if (this.wasmYPtr !== 0) wasm.freeF64(this.wasmYPtr, this.y.length)
+      } catch {
+        // Ignore allocator failures and let the instance fall back to JS.
+      }
+    }
+
+    this.wasm = null
+    this.wasmXPtr = 0
+    this.wasmYPtr = 0
   }
 
 }
 
+function fmt2(value: number) {
+  return Math.round(value * 100) / 100
+}
+
 function monotoneXPathFallback(options: {
-  x: number[],
-  y: number[],
-  dx: number[],
-  slope: number[],
-  tangent: number[],
+  x: Float64Array,
+  y: Float64Array,
   smoothing: number,
   bounds: Bounds,
   layout: Bounds
 }): string {
 
-  const { dx, slope, tangent, smoothing, bounds, layout } = options
+  const { smoothing, bounds, layout } = options
 
   const w = bounds.maxX - bounds.minX
   const h = bounds.maxY - bounds.minY
@@ -99,8 +163,8 @@ function monotoneXPathFallback(options: {
   const transformX = (x: number) => (x - bounds.minX) / w * lW + layout.minX
   const transformY = (y: number) => (bounds.maxY - y) / h * lH + layout.minY
 
-  const x = options.x.map((v, i) => transformX(v))
-  const y = options.y.map((v, i) => transformY(v))
+  const x = options.x.map((v) => transformX(v))
+  const y = options.y.map((v) => transformY(v))
 
   const n = x.length
 
@@ -108,6 +172,10 @@ function monotoneXPathFallback(options: {
   if (n === 1) return `M${fmt2(x[0])} ${fmt2(y[0])}`
   if (n === 2) return `M${fmt2(x[0])} ${fmt2(y[0])} L${fmt2(x[1])} ${fmt2(y[1])}`
 
+
+  const dx = new Array(Math.max(0, n - 1))
+  const slope = new Array(Math.max(0, n - 1))
+  const tangent = new Array(n)
 
   for (let i = 0; i < n - 1; i++) {
     dx[i] = x[i + 1] - x[i]

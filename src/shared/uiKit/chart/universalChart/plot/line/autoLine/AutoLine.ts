@@ -4,7 +4,7 @@ import { ChartSpace } from '../../../utils/ChartSpace'
 import { addClasses, Classes } from '../../../utils/utils'
 import { BasePlotRenderer } from '../../BasePlotRenderer'
 import { MonotoneXPath } from './MonotoneXPath'
-import { monotoneXPath, smoothPath } from './utils'
+import { smoothPath } from './utils'
 
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
@@ -110,70 +110,39 @@ export class AutoLine extends BasePlotRenderer {
 
   private calculateSegmentPath(lineIndex: number, points: Point[], space: ChartSpace) {
 
-    if (this.options.smoothingMethod === 'monotone') {
-      const monotonePath = this.monotonePathSegments[lineIndex]
-      const bounds = space.bounds
-      const layout = { minX: space.layout.x, minY: space.layout.y, maxX: space.layout.x + space.layout.width, maxY: space.layout.y + space.layout.height }
+    const getPath = () => {
+      const smoothing = this.options.smoothing ?? DEFAULT_SMOOTHING
+      const precision = this.options.precision ?? DEFAULT_PRECISION
 
-      const path = monotonePath.getPath(this.options.smoothing ?? DEFAULT_SMOOTHING, bounds, layout)
-      if (!this.options.area) return { line: path }
+      if (this.options.smoothingMethod === 'monotone') {
+        const monotonePath = this.monotonePathSegments[lineIndex]
+        const bounds = space.bounds
+        const layout = { minX: space.layout.x, minY: space.layout.y, maxX: space.layout.x + space.layout.width, maxY: space.layout.y + space.layout.height }
 
-      const firstPoint = space.chartToLayout(points[0])
-      const lastPoint = space.chartToLayout(points[points.length - 1])
+        return monotonePath.getPath(smoothing, bounds, layout)
+      }
 
-      const areaPath = path + `L ${lastPoint.x} ${space.layout.y + space.layout.height + 1} L ${firstPoint.x} ${space.layout.y + space.layout.height + 1} Z`
-      return { line: path, area: areaPath }
+      if (this.options.smoothingMethod === 'smooth' || this.options.smoothing) {
+        const p = points.map(p => space.chartToLayout(p))
+        return smoothPath(p, smoothing, precision)
+      }
+
+      const d: string[] = []
+      for (let i = 0; i < points.length; i++) {
+        const p = space.chartToLayout(points[i])
+        d.push(`${i === 0 ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`)
+      }
+      return d.join(' ')
     }
 
-
-    const p = points.map(p => space.chartToLayout(p))
-    const path = this.getSmoothPath(p)
-
+    const path = getPath()
     if (!this.options.area) return { line: path }
 
-    const areaPath = path + `L ${p[p.length - 1].x} ${space.layout.y + space.layout.height + 1} L ${p[0].x} ${space.layout.y + space.layout.height + 1} Z`
+    const firstPoint = space.chartToLayout(points[0])
+    const lastPoint = space.chartToLayout(points[points.length - 1])
+    const h = space.layout.y + space.layout.height + 1
+
+    const areaPath = path + `L ${lastPoint.x.toFixed(2)} ${h.toFixed(2)} L ${firstPoint.x.toFixed(2)} ${h.toFixed(2)} Z`
     return { line: path, area: areaPath }
-  }
-
-  private getSmoothPathNotTransformed(points: Point[]) {
-
-    const smoothing = this.options.smoothing ?? DEFAULT_SMOOTHING
-    const precision = this.options.precision ?? DEFAULT_PRECISION
-
-    if (this.options.smoothingMethod === 'monotone') {
-      return monotoneXPath(points, smoothing, precision)
-    }
-
-    if (this.options.smoothingMethod === 'smooth' || this.options.smoothing) {
-      return smoothPath(points, smoothing, precision)
-    }
-
-    const d: string[] = []
-    for (let i = 0; i < points.length; i++) {
-      const p = points[i]
-      d.push(`${i === 0 ? 'M' : 'L'} ${p.x.toFixed(precision)} ${p.y.toFixed(precision)}`)
-    }
-    return d.join(' ')
-  }
-
-  private getSmoothPath(points: Point[]) {
-
-    const smoothing = this.options.smoothing ?? DEFAULT_SMOOTHING
-    const precision = this.options.precision ?? DEFAULT_PRECISION
-
-    if (this.options.smoothingMethod === 'monotone') {
-      return monotoneXPath(points, smoothing, precision)
-    }
-
-    if (this.options.smoothingMethod === 'smooth' || this.options.smoothing) {
-      return smoothPath(points, smoothing, precision)
-    }
-
-    const d: string[] = []
-    for (let i = 0; i < points.length; i++) {
-      const p = points[i]
-      d.push(`${i === 0 ? 'M' : 'L'} ${p.x.toFixed(precision)} ${p.y.toFixed(precision)}`)
-    }
-    return d.join(' ')
   }
 }
