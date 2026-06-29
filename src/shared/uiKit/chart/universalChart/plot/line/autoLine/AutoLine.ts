@@ -3,6 +3,7 @@ import { Bounds } from '../../../utils/Bounds'
 import { ChartSpace } from '../../../utils/ChartSpace'
 import { addClasses, Classes } from '../../../utils/utils'
 import { BasePlotRenderer } from '../../BasePlotRenderer'
+import { MonotoneXPath } from './MonotoneXPath'
 import { monotoneXPath, smoothPath } from './utils'
 
 
@@ -27,6 +28,7 @@ export class AutoLine extends BasePlotRenderer {
 
   protected points: (Point | null)[] = []
   protected segments: Point[][] = []
+  protected monotonePathSegments: MonotoneXPath[] = []
 
   constructor(readonly options: Options) {
     super(options.classes)
@@ -60,6 +62,11 @@ export class AutoLine extends BasePlotRenderer {
       }
     }
     if (currentSegment.length > 0) this.segments.push(currentSegment)
+
+    for (const path of this.monotonePathSegments) path.dispose()
+    if (this.options.smoothingMethod === 'monotone')
+      this.monotonePathSegments = this.segments.map(segment => new MonotoneXPath(segment))
+    else this.monotonePathSegments = []
 
     return this
   }
@@ -102,6 +109,23 @@ export class AutoLine extends BasePlotRenderer {
   }
 
   private calculateSegmentPath(lineIndex: number, points: Point[], space: ChartSpace) {
+
+    if (this.options.smoothingMethod === 'monotone') {
+      const monotonePath = this.monotonePathSegments[lineIndex]
+      const bounds = space.bounds
+      const layout = { minX: space.layout.x, minY: space.layout.y, maxX: space.layout.x + space.layout.width, maxY: space.layout.y + space.layout.height }
+
+      const path = monotonePath.getPath(this.options.smoothing ?? DEFAULT_SMOOTHING, bounds, layout)
+      if (!this.options.area) return { line: path }
+
+      const firstPoint = space.chartToLayout(points[0])
+      const lastPoint = space.chartToLayout(points[points.length - 1])
+
+      const areaPath = path + `L ${lastPoint.x} ${space.layout.y + space.layout.height + 1} L ${firstPoint.x} ${space.layout.y + space.layout.height + 1} Z`
+      return { line: path, area: areaPath }
+    }
+
+
     const p = points.map(p => space.chartToLayout(p))
     const path = this.getSmoothPath(p)
 
@@ -109,6 +133,27 @@ export class AutoLine extends BasePlotRenderer {
 
     const areaPath = path + `L ${p[p.length - 1].x} ${space.layout.y + space.layout.height + 1} L ${p[0].x} ${space.layout.y + space.layout.height + 1} Z`
     return { line: path, area: areaPath }
+  }
+
+  private getSmoothPathNotTransformed(points: Point[]) {
+
+    const smoothing = this.options.smoothing ?? DEFAULT_SMOOTHING
+    const precision = this.options.precision ?? DEFAULT_PRECISION
+
+    if (this.options.smoothingMethod === 'monotone') {
+      return monotoneXPath(points, smoothing, precision)
+    }
+
+    if (this.options.smoothingMethod === 'smooth' || this.options.smoothing) {
+      return smoothPath(points, smoothing, precision)
+    }
+
+    const d: string[] = []
+    for (let i = 0; i < points.length; i++) {
+      const p = points[i]
+      d.push(`${i === 0 ? 'M' : 'L'} ${p.x.toFixed(precision)} ${p.y.toFixed(precision)}`)
+    }
+    return d.join(' ')
   }
 
   private getSmoothPath(points: Point[]) {
