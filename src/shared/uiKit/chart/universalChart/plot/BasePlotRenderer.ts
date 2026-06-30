@@ -45,6 +45,14 @@ export class BasePlotRenderer implements PlotRenderer {
 
   didLayout(space: ChartSpace, full: Size): void { }
 
+  beforeLayout(space: ChartSpace, full: Size): void {
+    this.beforeLayoutImpl(space, full)
+  }
+
+  beforeRender(space: ChartSpace, overflow: Overflow, full: Size): void {
+    this.beforeRenderImpl(space, overflow, full)
+  }
+
   render(space: ChartSpace, overflow: Overflow, full: Size): void {
     const spaceHash = space.getHash()
     if (!this.isDirty && this.spaceCache == spaceHash) return
@@ -54,5 +62,7 @@ export class BasePlotRenderer implements PlotRenderer {
     this.renderImpl(space, overflow, full)
   }
 
+  protected beforeLayoutImpl(space: ChartSpace, full: Size): void { }
+  protected beforeRenderImpl(space: ChartSpace, overflow: Overflow, full: Size): void { }
   protected renderImpl(space: ChartSpace, overflow: Overflow, full: Size): void { }
 }

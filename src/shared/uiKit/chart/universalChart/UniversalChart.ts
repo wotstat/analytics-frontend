@@ -3,7 +3,7 @@ import './style.scss'
 import BaseChart from '../BaseChart'
 import { Bounds } from './utils/Bounds'
 import { ChartSpace } from './utils/ChartSpace'
-import { NormalizedOffset4Side, Offset4Side, unwrapOffset } from './utils/utils'
+import { Offset4Side, unwrapOffset } from './utils/utils'
 
 type Options = {
   renderBounds?: { minX?: number, maxX?: number, minY?: number, maxY?: number },
@@ -21,6 +21,8 @@ export interface BaseRenderer {
   detach?(): void
   didMount?(): void
   didLayout?(space: ChartSpace, full: Size): void
+  beforeLayout?(space: ChartSpace, full: Size): void
+  beforeRender?(space: ChartSpace, overflow: Overflow, full: Size): void
   render?(space: ChartSpace, overflow: Overflow, full: Size): void
   getRootElement?(): Element
 }
@@ -227,9 +229,15 @@ export class UniversalChart extends BaseChart {
   }
 
   protected renderImpl() {
-    this.relayout()
-    for (const renderer of this.allRenderers) renderer.didLayout?.(this.chartSpace, this.size)
+    const targets = [
+      this.defsRenderers, this.topRenderers, this.rightRenderers, this.bottomRenderers, this.leftRenderers, this.plotRenderers
+    ]
 
+    for (const target of targets) {
+      for (const renderer of target) renderer.beforeLayout?.(this.chartSpace, this.size)
+    }
+
+    this.relayout()
     let overflow = { top: 0, right: 0, bottom: 0, left: 0 }
     switch (this.options.layoutVariant ?? 'horizontal') {
       case 'horizontal':
@@ -248,24 +256,27 @@ export class UniversalChart extends BaseChart {
         break
     }
 
-    for (const plot of this.defsRenderers) plot.render?.(this.chartSpace, overflow, this.size)
-    for (const slot of this.topRenderers) slot.render?.(this.chartSpace, overflow, this.size)
-    for (const slot of this.rightRenderers) slot.render?.(this.chartSpace, overflow, this.size)
-    for (const slot of this.bottomRenderers) slot.render?.(this.chartSpace, overflow, this.size)
-    for (const slot of this.leftRenderers) slot.render?.(this.chartSpace, overflow, this.size)
-    for (const plot of this.plotRenderers) plot.render?.(this.chartSpace, overflow, this.size)
+    for (const target of targets) {
+      for (const renderer of target) renderer.beforeRender?.(this.chartSpace, overflow, this.size)
+    }
+
+    for (const target of targets) {
+      for (const renderer of target) renderer.render?.(this.chartSpace, overflow, this.size)
+    }
   }
 
   relayout() {
     this.recalculateDataBounds()
     this.chartSpace.bounds = this.calculateRenderBounds()
-    this.layout()
+    const layoutChanged = this.layout()
+    if (layoutChanged) for (const renderer of this.allRenderers) renderer.didLayout?.(this.chartSpace, this.size)
+    return layoutChanged
   }
 
   private layout() {
 
     const key = `${this.size.width}x${this.size.height}-${this.plotBounds.getHash()}-${this.userDefinedBounds ? `${this.userDefinedBounds.minX ?? 'n'}-${this.userDefinedBounds.maxX ?? 'n'}-${this.userDefinedBounds.minY ?? 'n'}-${this.userDefinedBounds.maxY ?? 'n'}` : 'd'}`
-    if (key === this.layoutCacheKey) return
+    if (key === this.layoutCacheKey) return false
     this.layoutCacheKey = key
 
     const full = this.size
@@ -292,7 +303,11 @@ export class UniversalChart extends BaseChart {
     for (const slot of this.rightRenderers) yRight = Math.max(yRight, slot.getSize(layout, overflow, full).width ?? 0)
     layout.layout.width = w - yLeft - yRight
 
+    if (layoutEquals(this.chartSpace.layout, layout.layout)) return false
+
     this.chartSpace.layout = layout.layout
+
+    return true
   }
 
   private calculateRenderBounds() {
@@ -352,4 +367,11 @@ export class UniversalChart extends BaseChart {
     return currentRoot
   }
 
+}
+
+function layoutEquals(a: ChartSpace['layout'], b: ChartSpace['layout']) {
+  return a.x === b.x &&
+    a.y === b.y &&
+    a.width === b.width &&
+    a.height === b.height
 }

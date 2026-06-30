@@ -1,3 +1,4 @@
+import { Overflow, Size } from '../../../../UniversalChart'
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
 import { HoveredDataPoint, Position } from '../../../BasePlotHover'
@@ -24,8 +25,16 @@ type Options = {
 export class ChartTooltip implements HoverComponent {
   private lastNearestDataPoints: HoveredDataPoint[] | null = null
   private windowScroll = { x: 0, y: 0 }
+  private composable: ComposableHover | null = null
+  private lastPoint: Point | null = null
+  private lastCursor: Position | null = null
+  private lastIsTouch = false
 
   constructor(protected options: Options = {}) {
+  }
+
+  attach(root: SVGGElement, composable: ComposableHover): void {
+    this.composable = composable
   }
 
   onHoverEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
@@ -35,12 +44,23 @@ export class ChartTooltip implements HoverComponent {
     }
   }
 
-  beforeLayoutChange() {
+  onBeforeRender(space: ChartSpace, overflow: Overflow, full: Size): void {
     this.windowScroll = { x: window.scrollX, y: window.scrollY }
   }
 
   onHoverMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
+    this.lastPoint = point
+    this.lastCursor = cursor
+    this.lastIsTouch = isTouch
+  }
+
+  render(space: ChartSpace, overflow: Overflow, full: Size): void {
     let nearestDataPoints: HoveredDataPoint[]
+
+    const point = this.lastPoint
+    const cursor = this.lastCursor
+    const composable = this.composable
+    if (!composable || !cursor || !point) return
 
     if (this.options.position === 'data-point-x') {
       const dp = composable.findNearestByAxis(point, space, 'x', true)
@@ -117,7 +137,7 @@ export class ChartTooltip implements HoverComponent {
         y: cursor.clientY + this.windowScroll.y
       },
       nearestDataPoints,
-      isTouch
+      isTouch: this.lastIsTouch
     }
 
     if (!this.lastNearestDataPoints && nearestDataPoints.length > 0) this.options.onShow?.(ctx)

@@ -1,3 +1,4 @@
+import { Overflow, Size } from '../../../../UniversalChart'
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
 import { addClasses, Classes } from '../../../../utils/utils'
@@ -17,9 +18,12 @@ export abstract class BaseLine implements HoverComponent {
   protected line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
   protected offset: { start: number, end: number }
   protected position: 'cursor' | 'data-point-x' | 'data-point-y' | 'data-point'
+  protected composable: ComposableHover | null = null
 
   protected lastDataPoints: HoveredDataPoint | null = null
   protected spaceHash = ''
+
+  protected lastPoint: Point = { x: 0, y: 0 }
 
   constructor(protected options: Options = {}) {
     addClasses(this.line, 'hover-line', 'vertical', options.classes)
@@ -36,13 +40,14 @@ export abstract class BaseLine implements HoverComponent {
     }
   }
 
-  attach(root: SVGGElement): void {
+  attach(root: SVGGElement, composable: ComposableHover): void {
     root.appendChild(this.line)
+    this.composable = composable
   }
 
   onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
     if (this.position === 'cursor') this.line.classList.add('visible')
-    this.process(point, space, composable)
+    this.process(space, point)
   }
 
   onHoverEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
@@ -51,22 +56,30 @@ export abstract class BaseLine implements HoverComponent {
   }
 
   onHoverMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover) {
-    this.process(point, space, composable)
+    this.lastPoint = point
   }
 
-  protected process(point: Point, space: ChartSpace, composable: ComposableHover) {
+  render(space: ChartSpace, overflow: Overflow, full: Size): void {
+    this.process(space)
+  }
+
+  protected process(space: ChartSpace, point: Point = this.lastPoint) {
+    this.lastPoint = point
+
     if (this.position === 'cursor') {
       this.setLinePosition(point, space)
       return
     }
 
+    if (!this.composable) return
+
     let nearestDataPoints: HoveredDataPoint[] = []
     if (this.position === 'data-point-x') {
-      nearestDataPoints = composable.findNearestByAxis(point, space, 'x', true)
+      nearestDataPoints = this.composable.findNearestByAxis(point, space, 'x', true)
     } else if (this.position === 'data-point-y') {
-      nearestDataPoints = composable.findNearestByAxis(point, space, 'y', true)
+      nearestDataPoints = this.composable.findNearestByAxis(point, space, 'y', true)
     } else if (this.position === 'data-point') {
-      nearestDataPoints = composable.findNearest(point, space, true)
+      nearestDataPoints = this.composable.findNearest(point, space, true)
     }
 
     nearestDataPoints = nearestDataPoints.filter(p => p.distance <= (this.options.activateDistance ?? Infinity))

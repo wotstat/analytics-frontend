@@ -1,4 +1,5 @@
 import { AutoMarker } from '../../../../plot/markers/autoMarkers/AutoMarkers'
+import { Overflow, Size } from '../../../../UniversalChart'
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
 import { addClasses, Classes, joinClasses } from '../../../../utils/utils'
@@ -31,6 +32,9 @@ export class NearestMarker implements HoverComponent {
   protected lastNearestDataPoints: HoveredDataPoint[] | null = null
   protected spaceHash = ''
 
+  private composable: ComposableHover | null = null
+  private lastPoint: Point | null = null
+
   constructor(protected options: Options = {}) {
     addClasses(this.root, 'hover-markers', options.classes)
 
@@ -48,6 +52,7 @@ export class NearestMarker implements HoverComponent {
 
   attach(root: SVGGElement, composable: ComposableHover): void {
     root.appendChild(this.root)
+    this.composable = composable
   }
 
   onHoverEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
@@ -57,6 +62,15 @@ export class NearestMarker implements HoverComponent {
   }
 
   onHoverMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
+    this.lastPoint = point
+  }
+
+  render(space: ChartSpace, overflow: Overflow, full: Size): void {
+
+    const composable = this.composable
+    const point = this.lastPoint
+    if (!composable || !point) return
+
     let nearestDataPoints: HoveredDataPoint[]
 
     if (this.position === 'data-point-x') {

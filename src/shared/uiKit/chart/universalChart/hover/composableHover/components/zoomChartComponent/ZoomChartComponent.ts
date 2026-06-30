@@ -1,4 +1,4 @@
-import { UniversalChart } from '../../../../UniversalChart'
+import { Size, UniversalChart } from '../../../../UniversalChart'
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
 import { Position } from '../../../BasePlotHover'
@@ -22,14 +22,15 @@ export class ZoomChartComponent implements HoverComponent {
     layoutHeight: number
   } | null = null
 
-  private readonly wheelHandler = (event: WheelEvent) => this.onWheelEvent(event)
+  private lastCursor: Position | null = null
+
   constructor(private readonly options: Options) {
     this.chart = options.chart
   }
 
   attach(_root: SVGGElement, composable: ComposableHover): void {
     this.interactiveZone = composable.interactiveZone
-    this.interactiveZone.addEventListener('wheel', this.wheelHandler, { passive: false })
+    // this.interactiveZone.addEventListener('wheel', this.wheelHandler, { passive: false })
   }
 
   mayPan(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
@@ -59,6 +60,13 @@ export class ZoomChartComponent implements HoverComponent {
 
   onPanMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
     if (!this.panState) return
+    this.lastCursor = cursor
+  }
+
+  onBeforeLayout(space: ChartSpace, full: Size): void {
+    if (!this.panState) return
+    const cursor = this.lastCursor
+    if (!cursor) return
 
     const { startClientX, startClientY, startBounds, layoutWidth, layoutHeight } = this.panState
     const nextBounds: { minX?: number, maxX?: number, minY?: number, maxY?: number } = {}
