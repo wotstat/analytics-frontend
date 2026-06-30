@@ -1,6 +1,7 @@
 <template>
   <PopoverStyled v-bind="targetProps" :display="display" @pointer-click-outside="onClickOutside"
-    @pointer-down-outside="onPointerDownOutside" @target-outside-window="onTargetOutside" :duration="200">
+    @pointer-down-outside="onPointerDownOutside" @pointer-up-outside="onPointerUpOutside"
+    @target-outside-window="onTargetOutside" :duration="200">
     <slot></slot>
   </PopoverStyled>
 </template>
@@ -41,6 +42,7 @@ const targetProps = computed(() => ({
 
 const emit = defineEmits<{
   (e: 'pointerDownOutside', event: PointerEvent): void,
+  (e: 'pointerUpOutside', event: PointerEvent): void,
   (e: 'pointerClickOutside', event: PointerEvent): void,
   (e: 'targetOutsideWindow'): void
 }>()
@@ -49,9 +51,28 @@ const isDesktop = useMediaQuery('(hover: hover) and (pointer: fine)')
 
 onKeyDown('Escape', () => display.value = false)
 
+let lastPointerDown: {
+  x: number
+  y: number
+  time: number
+} | null = null
+
 function onPointerDownOutside(event: PointerEvent) {
   if (isDesktop.value) display.value = false
+  lastPointerDown = { x: event.clientX, y: event.clientY, time: Date.now() }
   emit('pointerDownOutside', event)
+}
+
+function onPointerUpOutside(event: PointerEvent) {
+  if (isDesktop.value) display.value = false
+  else if (lastPointerDown) {
+    const dx = event.clientX - lastPointerDown.x
+    const dy = event.clientY - lastPointerDown.y
+    const distance = Math.sqrt(dx * dx + dy * dy)
+    const timeDiff = Date.now() - lastPointerDown.time
+    if (distance < 5 && timeDiff < 500) display.value = false
+  }
+  emit('pointerUpOutside', event)
 }
 
 function onClickOutside(event: PointerEvent) {
