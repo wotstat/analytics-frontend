@@ -1,5 +1,5 @@
 <template>
-  <a @click.prevent="onClick" :class="classes">
+  <a @click.prevent="onClick" :href="href" :class="classes">
     <slot></slot>
   </a>
 </template>
@@ -30,6 +30,12 @@ const classes = computed(() => {
   return res
 })
 
+const href = computed(() => {
+  const url = new URL(props.to, window.location.origin)
+  url.search = new URLSearchParams(route.query as Record<string, string>).toString()
+
+  return url.pathname + url.search
+})
 
 function onClick(e: MouseEvent) {
   router.push({
