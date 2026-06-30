@@ -26,6 +26,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'pointerDownOutside', event: PointerEvent): void,
+  (e: 'pointerUpOutside', event: PointerEvent): void,
   (e: 'pointerClickOutside', event: PointerEvent): void,
   (e: 'targetOutsideWindow'): void
   (e: 'readyToVisible'): void
@@ -39,6 +40,12 @@ useEventListener(window, 'pointerdown', (event: PointerEvent) => {
   if (!props.display) return
   if (!popupContainer.value) return
   if (!popupContainer.value.contains(event.target as Node) && !props.target?.contains(event.target as Node)) emit('pointerDownOutside', event)
+})
+
+useEventListener(window, 'pointerup', (event: PointerEvent) => {
+  if (!props.display) return
+  if (!popupContainer.value) return
+  if (!popupContainer.value.contains(event.target as Node) && !props.target?.contains(event.target as Node)) emit('pointerUpOutside', event)
 })
 
 useEventListener(window, 'click', (event: PointerEvent) => {
