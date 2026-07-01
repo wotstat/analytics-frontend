@@ -109,7 +109,13 @@ export abstract class BasePlotHover extends BasePlotRenderer {
     }
   }
 
-  protected onContextmenu(event: MouseEvent) {
+  protected onContextmenu(event: PointerEvent) {
+
+    if (this.hoverActive && event.pointerType === 'touch') {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+
     if (this.panActive) {
       event.preventDefault()
       event.stopPropagation()
@@ -185,6 +191,8 @@ export abstract class BasePlotHover extends BasePlotRenderer {
         this.onPanBegin(this.lastMousePosition, this.offsetToChart(event), this.chart.space, isTouch)
       }
     } else {
+      event.preventDefault()
+      event.stopPropagation()
       this.onHoverBegin(this.lastMousePosition, this.offsetToChart(event), this.chart.space, isTouch)
     }
   }
@@ -251,7 +259,7 @@ export abstract class BasePlotHover extends BasePlotRenderer {
   protected onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean) {
     this.hoverActive = true
     this.root.classList.toggle('hover-active', true)
-    this.updateHoverPointer(cursor, isTouch)
+    setTimeout(() => this.updateHoverPointer(cursor, isTouch), 0)
   }
 
   protected onHoverEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean) {

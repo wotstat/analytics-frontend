@@ -63,8 +63,8 @@ class BaseChart extends UniversalChart {
     this.hover = new ComposableHover('hover')
       .addComponent(new ZoomChartComponent({
         chart: this,
-        zoomDirection: 'all',
-        panDirection: 'all',
+        zoom: true,
+        panDirection: 'horizontal',
       }))
       .addComponent(new VerticalLine({
         offset: { end: 0.5 },

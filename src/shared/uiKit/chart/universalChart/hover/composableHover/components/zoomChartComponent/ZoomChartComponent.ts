@@ -7,7 +7,7 @@ import { ComposableHover, HoverComponent } from '../../ComposableHover'
 
 type Options = {
   chart: UniversalChart
-  zoomDirection?: PanDirection
+  zoom?: true
   panDirection?: PanDirection
 }
 
@@ -123,10 +123,10 @@ export class ZoomChartComponent implements HoverComponent {
   }
 
   private isXAxisEnabled() {
-    return this.options.zoomDirection == 'horizontal' || this.options.zoomDirection == 'all'
+    return this.options.panDirection == 'horizontal' || this.options.panDirection == 'all'
   }
 
   private isYAxisEnabled() {
-    return this.options.zoomDirection === 'vertical' || this.options.zoomDirection === 'all'
+    return this.options.panDirection === 'vertical' || this.options.panDirection === 'all'
   }
 }
