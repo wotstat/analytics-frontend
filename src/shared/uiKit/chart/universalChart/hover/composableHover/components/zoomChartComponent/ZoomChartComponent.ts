@@ -65,6 +65,7 @@ export class ZoomChartComponent implements HoverComponent {
 
   onBeforeLayout(space: ChartSpace, full: Size): void {
     if (!this.panState) return
+
     const cursor = this.lastCursor
     if (!cursor) return
 
