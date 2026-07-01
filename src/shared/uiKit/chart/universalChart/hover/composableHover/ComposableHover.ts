@@ -8,7 +8,6 @@ export interface HoverComponent {
   attach?(root: SVGGElement, composable: ComposableHover): void
   detach?(): void
   onBeforeLayout?(space: ChartSpace, full: Size): void
-  onBeforeRender?(space: ChartSpace, overflow: Overflow, full: Size): void
   render?(space: ChartSpace, overflow: Overflow, full: Size): void
   didLayout?(space: ChartSpace, full: Size): void
   onHoverBegin?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void
@@ -55,11 +54,6 @@ export class ComposableHover extends BasePlotHover {
   protected onBeforeLayout(space: ChartSpace, full: Size): void {
     super.onBeforeLayout(space, full)
     for (const component of this.components) component.onBeforeLayout?.(space, full)
-  }
-
-  protected onBeforeRender(space: ChartSpace, overflow: Overflow, full: Size): void {
-    super.onBeforeRender(space, overflow, full)
-    for (const component of this.components) component.onBeforeRender?.(space, overflow, full)
   }
 
   protected onRender(space: ChartSpace, overflow: Overflow, full: Size): void {

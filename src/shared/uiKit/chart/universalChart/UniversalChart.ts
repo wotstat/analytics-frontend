@@ -24,7 +24,6 @@ export interface BaseRenderer {
   didMount?(): void
   didLayout?(space: ChartSpace, full: Size): void
   beforeLayout?(space: ChartSpace, full: Size): void
-  beforeRender?(space: ChartSpace, overflow: Overflow, full: Size): void
   render?(space: ChartSpace, overflow: Overflow, full: Size): void
   getRootElement?(): Element
 }
@@ -41,7 +40,7 @@ export interface DefsRenderer extends BaseRenderer { }
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
 
-const globalChartRenderManager = new ChartRenderManager(4)
+const globalChartRenderManager = new ChartRenderManager(3)
 
 export class UniversalChart extends BaseChart {
 
@@ -59,6 +58,9 @@ export class UniversalChart extends BaseChart {
   private plotRenderers: PlotRenderer[] = []
   private allRenderers: BaseRenderer[] = []
   private defsRenderers: BaseRenderer[] = []
+  private renderTargets = [
+    this.defsRenderers, this.topRenderers, this.rightRenderers, this.bottomRenderers, this.leftRenderers, this.plotRenderers
+  ]
 
   private layoutCacheKey = ''
   private hierarchyCache = new Map<string, SVGGElement>()
@@ -233,12 +235,8 @@ export class UniversalChart extends BaseChart {
   }
 
   protected renderImpl(step: number): void {
-    const targets = [
-      this.defsRenderers, this.topRenderers, this.rightRenderers, this.bottomRenderers, this.leftRenderers, this.plotRenderers
-    ]
-
     if (step == 0) {
-      for (const target of targets) {
+      for (const target of this.renderTargets) {
         for (const renderer of target) renderer.beforeLayout?.(this.chartSpace, this.size)
       }
       return
@@ -269,14 +267,8 @@ export class UniversalChart extends BaseChart {
     }
 
     if (step == 2) {
-      for (const target of targets) {
-        for (const renderer of target) renderer.beforeRender?.(this.chartSpace, overflow, this.size)
-      }
-    }
-
-    if (step == 3) {
       this.mutateViewBox()
-      for (const target of targets) {
+      for (const target of this.renderTargets) {
         for (const renderer of target) renderer.render?.(this.chartSpace, overflow, this.size)
       }
     }
