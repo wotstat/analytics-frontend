@@ -128,7 +128,11 @@ export abstract class BasePlotHover extends BasePlotRenderer {
     }
 
     this.lastMousePosition = pos
-    if (this.panActive) this.onPanMove(pos, this.offsetToChart(event), this.chart.space, event.pointerType === 'touch')
+
+    if (this.panActive) {
+      this.onPanMove(pos, this.offsetToChart(event), this.chart.space, event.pointerType === 'touch')
+      this.requestRender()
+    }
     if (this.hoverActive) this.updateHoverPointer(pos, event.pointerType === 'touch')
   }
 
