@@ -2,7 +2,7 @@ import { Overflow, Size } from '../../../../UniversalChart'
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
 import { addClasses, Classes } from '../../../../utils/utils'
-import { HoveredDataPoint, isDataPointEqual, Position } from '../../../BasePlotHover'
+import { HoveredDataPoint, InteractionDirection, isDataPointEqual, Position } from '../../../BasePlotHover'
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
 
 type Options = {
@@ -62,6 +62,8 @@ export abstract class BaseLine implements HoverComponent {
     this.lastPoint = point
     return this.hovered
   }
+
+  abstract mayHover(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): InteractionDirection
 
   render(space: ChartSpace, overflow: Overflow, full: Size): void {
     this.process(space)

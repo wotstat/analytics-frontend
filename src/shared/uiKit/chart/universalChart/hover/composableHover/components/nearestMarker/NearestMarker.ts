@@ -3,7 +3,7 @@ import { Overflow, Size } from '../../../../UniversalChart'
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
 import { addClasses, Classes, joinClasses } from '../../../../utils/utils'
-import { DataSource, HoveredDataPoint, isDataPointArrayEqual, Position } from '../../../BasePlotHover'
+import { DataSource, HoveredDataPoint, InteractionDirection, isDataPointArrayEqual, Position } from '../../../BasePlotHover'
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
 
 
@@ -70,6 +70,17 @@ export class NearestMarker implements HoverComponent {
   onHoverMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
     this.lastPoint = point
     return this.hovered
+  }
+
+  mayHover(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): InteractionDirection {
+    const direction = {
+      'data-point-x': 'horizontal',
+      'data-point-y': 'vertical',
+      'data-point': 'all',
+      'nearest-data-point': 'all'
+    } as const
+
+    return direction[this.position]
   }
 
   render(space: ChartSpace, overflow: Overflow, full: Size): void {

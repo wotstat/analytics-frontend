@@ -1,14 +1,14 @@
 import { Size, UniversalChart } from '../../../../UniversalChart'
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
-import { PanDirection, Position } from '../../../BasePlotHover'
+import { InteractionDirection, Position } from '../../../BasePlotHover'
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
 
 
 type Options = {
   chart: UniversalChart
-  zoom?: true
-  panDirection?: PanDirection
+  zoom?: boolean
+  panDirection?: InteractionDirection
 }
 
 export class ZoomChartComponent implements HoverComponent {
@@ -34,7 +34,7 @@ export class ZoomChartComponent implements HoverComponent {
     // this.interactiveZone.addEventListener('wheel', this.wheelHandler, { passive: false })
   }
 
-  mayPan(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): PanDirection {
+  mayPan(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): InteractionDirection {
     return this.options.panDirection ?? false
   }
 
