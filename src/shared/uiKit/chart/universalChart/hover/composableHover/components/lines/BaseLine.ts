@@ -24,6 +24,7 @@ export abstract class BaseLine implements HoverComponent {
   protected spaceHash = ''
 
   protected lastPoint: Point = { x: 0, y: 0 }
+  protected hovered = false
 
   constructor(protected options: Options = {}) {
     addClasses(this.line, 'hover-line', 'vertical', options.classes)
@@ -47,11 +48,13 @@ export abstract class BaseLine implements HoverComponent {
 
   onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
     if (this.position === 'cursor') this.line.classList.add('visible')
+    this.hovered = true
     this.process(space, point)
   }
 
   onHoverEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
     this.line.classList.remove('visible')
+    this.hovered = false
     this.lastDataPoints = null
   }
 
@@ -65,6 +68,7 @@ export abstract class BaseLine implements HoverComponent {
 
   protected process(space: ChartSpace, point: Point = this.lastPoint) {
     this.lastPoint = point
+    if (!this.hovered) return
 
     if (this.position === 'cursor') {
       this.setLinePosition(point, space)

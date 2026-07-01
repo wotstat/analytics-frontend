@@ -153,13 +153,20 @@ async function load(abortSignal: AbortSignal, latest = false) {
     with
       '${dateToDbDate(seasonInterval.value.start)}' as START_DATE,
       '${dateToDbDate(seasonInterval.value.end)}' as END_DATE,
+      (
+        select max(recalculationTime)
+        from Comp7Leaderboard
+        where region = '${region.value}' and 
+        recalculationTime between START_DATE and END_DATE + interval 5 day
+      ) as LAST_RECALCULATION
     select max(day) as day,
       max(recalculationTime) as recalculation,
       max(rank) as lastRank,
       maxIf(rank, elite) as lastEliteRank,
       maxIf(rank, elite) as eliteThreshold
     from Comp7Leaderboard where region = '${region.value}' and
-      recalculationTime between START_DATE and END_DATE + interval 5 day
+      recalculationTime between START_DATE and END_DATE + interval 5 day and
+      recalculationTime = LAST_RECALCULATION
   `, { allowCache: false })
 
     if (abortSignal.aborted) return
