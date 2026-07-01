@@ -1,13 +1,14 @@
 import { Size, UniversalChart } from '../../../../UniversalChart'
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
-import { Position } from '../../../BasePlotHover'
+import { PanDirection, Position } from '../../../BasePlotHover'
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
 
 
 type Options = {
   chart: UniversalChart
-  zoomBy?: 'x' | 'y' | 'both'
+  zoomDirection?: PanDirection
+  panDirection?: PanDirection
 }
 
 export class ZoomChartComponent implements HoverComponent {
@@ -33,8 +34,8 @@ export class ZoomChartComponent implements HoverComponent {
     // this.interactiveZone.addEventListener('wheel', this.wheelHandler, { passive: false })
   }
 
-  mayPan(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
-    return true
+  mayPan(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): PanDirection {
+    return this.options.panDirection ?? false
   }
 
   onPanBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
@@ -58,9 +59,10 @@ export class ZoomChartComponent implements HoverComponent {
     this.panState = null
   }
 
-  onPanMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
-    if (!this.panState) return
+  onPanMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
+    if (!this.panState) return false
     this.lastCursor = cursor
+    return this.panState !== null
   }
 
   onBeforeLayout(space: ChartSpace, full: Size): void {
@@ -121,10 +123,10 @@ export class ZoomChartComponent implements HoverComponent {
   }
 
   private isXAxisEnabled() {
-    return this.options.zoomBy !== 'y'
+    return this.options.zoomDirection == 'horizontal' || this.options.zoomDirection == 'all'
   }
 
   private isYAxisEnabled() {
-    return this.options.zoomBy === 'y' || this.options.zoomBy === 'both'
+    return this.options.zoomDirection === 'vertical' || this.options.zoomDirection === 'all'
   }
 }

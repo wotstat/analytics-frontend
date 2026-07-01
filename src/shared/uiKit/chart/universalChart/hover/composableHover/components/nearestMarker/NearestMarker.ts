@@ -67,8 +67,9 @@ export class NearestMarker implements HoverComponent {
     this.hovered = false
   }
 
-  onHoverMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
+  onHoverMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
     this.lastPoint = point
+    return this.hovered
   }
 
   render(space: ChartSpace, overflow: Overflow, full: Size): void {

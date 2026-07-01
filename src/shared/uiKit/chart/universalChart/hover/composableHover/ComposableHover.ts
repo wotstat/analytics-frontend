@@ -2,7 +2,7 @@ import { Overflow, Size } from '../../UniversalChart'
 import { ChartSpace } from '../../utils/ChartSpace'
 import { Point } from '../../utils/Point'
 import { Classes } from '../../utils/utils'
-import { BasePlotHover, Position } from '../BasePlotHover'
+import { BasePlotHover, PanDirection, Position } from '../BasePlotHover'
 
 export interface HoverComponent {
   attach?(root: SVGGElement, composable: ComposableHover): void
@@ -12,11 +12,11 @@ export interface HoverComponent {
   didLayout?(space: ChartSpace, full: Size): void
   onHoverBegin?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void
   onHoverEnd?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void
-  onHoverMove?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void
-  mayPan?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean
+  onHoverMove?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean
+  mayPan?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): PanDirection
   onPanBegin?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void
   onPanEnd?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void
-  onPanMove?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void
+  onPanMove?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean
 }
 
 export class ComposableHover extends BasePlotHover {
@@ -71,9 +71,14 @@ export class ComposableHover extends BasePlotHover {
     for (const component of this.components) component.onHoverEnd?.(cursor, point, space, isTouch, this)
   }
 
-  protected onHoverMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): void {
+  protected onHoverMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): boolean {
     super.onHoverMove(cursor, point, space, isTouch)
-    for (const component of this.components) component.onHoverMove?.(cursor, point, space, isTouch, this)
+    let shouldRender = false
+    for (const component of this.components) {
+      const componentShouldRender = component.onHoverMove?.(cursor, point, space, isTouch, this)
+      shouldRender ||= componentShouldRender ?? false
+    }
+    return shouldRender
   }
 
   protected onPanBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): void {
@@ -86,16 +91,31 @@ export class ComposableHover extends BasePlotHover {
     for (const component of this.components) component.onPanEnd?.(cursor, point, space, isTouch, this)
   }
 
-  protected mayPan(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): boolean {
+  protected mayPan(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): PanDirection {
+    let vertical = false
+    let horizontal = false
+
     for (const component of this.components) {
-      if (component.mayPan?.(cursor, point, space, isTouch, this)) return true
+      const dir = component.mayPan?.(cursor, point, space, isTouch, this)
+
+      if (!dir) continue
+      if (dir === 'all') return 'all'
+      if (dir === 'horizontal') horizontal = true
+      if (dir === 'vertical') vertical = true
+      if (horizontal && vertical) return 'all'
     }
-    return false
+
+    return horizontal ? (vertical ? 'all' : 'horizontal') : (vertical ? 'vertical' : false)
   }
 
-  protected onPanMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): void {
+  protected onPanMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): boolean {
     super.onPanMove(cursor, point, space, isTouch)
-    for (const component of this.components) component.onPanMove?.(cursor, point, space, isTouch, this)
+    let shouldRender = false
+    for (const component of this.components) {
+      const componentShouldRender = component.onPanMove?.(cursor, point, space, isTouch, this)
+      shouldRender ||= componentShouldRender ?? false
+    }
+    return shouldRender
   }
 
   didLayout(space: ChartSpace, full: Size): void {

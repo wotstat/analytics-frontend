@@ -4,6 +4,8 @@ import { Point } from '../utils/Point'
 import { Classes } from '../utils/utils'
 import { BasePlotRenderer } from '../plot/BasePlotRenderer'
 
+export type PanDirection = 'horizontal' | 'vertical' | 'all' | false
+
 export type Position = { offsetX: number, offsetY: number, clientX: number, clientY: number }
 
 export type DataSource = ({ x: number, y: number } | null)[]
@@ -58,7 +60,7 @@ export abstract class BasePlotHover extends BasePlotRenderer {
 
   private interactionController = new AbortController()
 
-  private awaitPanBegin = false
+  private awaitPanBegin: PanDirection = false
   private awaitPanBeginTimeoutId = 0
   private hoverActive = false
   private panActive = false
@@ -85,10 +87,10 @@ export abstract class BasePlotHover extends BasePlotRenderer {
     this.interactiveZone.addEventListener('pointerenter', this.onPointerEnter.bind(this), { signal: this.listenerSignal })
     this.interactiveZone.addEventListener('pointerdown', this.onPointerDown.bind(this), { signal: this.listenerSignal })
     this.interactiveZone.addEventListener('pointercancel', this.onPointerCancel.bind(this), { signal: this.listenerSignal })
-    this.interactiveZone.addEventListener('wheel', this.onScroll.bind(this), { signal: this.listenerSignal })
+    this.interactiveZone.addEventListener('contextmenu', this.onContextmenu.bind(this), { signal: this.listenerSignal })
+    this.interactiveZone.addEventListener('touchmove', this.touchMove.bind(this), { signal: this.listenerSignal })
 
-    // Prevent gesture on ios safari which cancel pointer event on fast swipe
-    this.interactiveZone.addEventListener('touchstart', this.touchStart.bind(this), { signal: this.listenerSignal })
+    this.interactiveZone.addEventListener('wheel', this.onScroll.bind(this), { signal: this.listenerSignal })
   }
 
   detach(): void {
@@ -98,19 +100,23 @@ export abstract class BasePlotHover extends BasePlotRenderer {
 
   protected onScroll(event: Event) {
     performance.mark('BasePlotHover onScroll')
-    event.preventDefault()
-    event.stopPropagation()
   }
 
-  // just prevent default to avoid swipe gesture on ios safari
-  protected touchStart(event: TouchEvent) {
-    event.stopPropagation()
-    event.preventDefault()
+  protected touchMove(event: TouchEvent) {
+    if (this.panActive || this.hoverActive) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+  }
+
+  protected onContextmenu(event: MouseEvent) {
+    if (this.panActive) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
   }
 
   protected onPointerMove(event: PointerEvent) {
-    performance.mark('BasePlotHover onPointerMove')
-
     if (!this.chart) return
 
     const pos = event2Position(event)
@@ -121,17 +127,22 @@ export abstract class BasePlotHover extends BasePlotRenderer {
       const distance = Math.sqrt(dx * dx + dy * dy)
 
       if (distance > PAN_BEGIN_DISTANCE) {
-        this.awaitPanBegin = false
         clearTimeout(this.awaitPanBeginTimeoutId)
-        this.onPanBegin(pos, this.offsetToChart(event), this.chart.space, event.pointerType === 'touch')
+
+        const allowBegin = this.awaitPanBegin == 'all' ||
+          (this.awaitPanBegin == 'horizontal' && Math.abs(dx) > Math.abs(dy)) ||
+          (this.awaitPanBegin == 'vertical' && Math.abs(dy) > Math.abs(dx))
+        this.awaitPanBegin = false
+
+        if (allowBegin) this.onPanBegin(pos, this.offsetToChart(event), this.chart.space, event.pointerType === 'touch')
       }
     }
 
     this.lastMousePosition = pos
 
     if (this.panActive) {
-      this.onPanMove(pos, this.offsetToChart(event), this.chart.space, event.pointerType === 'touch')
-      this.requestRender()
+      if (this.onPanMove(pos, this.offsetToChart(event), this.chart.space, event.pointerType === 'touch'))
+        this.requestRender()
     }
     if (this.hoverActive) this.updateHoverPointer(pos, event.pointerType === 'touch')
   }
@@ -156,6 +167,7 @@ export abstract class BasePlotHover extends BasePlotRenderer {
 
   protected onPointerDown(event: PointerEvent) {
     if (!this.chart) return
+    if ((event.buttons & 1) !== 1) return
 
     this.lastMousePosition = event2Position(event)
     this.interactiveZone.setPointerCapture(event.pointerId)
@@ -163,9 +175,10 @@ export abstract class BasePlotHover extends BasePlotRenderer {
 
     const isTouch = event.pointerType === 'touch'
 
-    if (this.mayPan(this.lastMousePosition, this.offsetToChart(event), this.chart.space, isTouch)) {
+    const mayPan = this.mayPan(this.lastMousePosition, this.offsetToChart(event), this.chart.space, isTouch)
+    if (mayPan) {
       if (event.pointerType === 'touch') {
-        this.awaitPanBegin = true
+        this.awaitPanBegin = mayPan
         clearTimeout(this.awaitPanBeginTimeoutId)
         this.awaitPanBeginTimeoutId = setTimeout(this.onPanBeginTimeout.bind(this), PAN_BEGIN_TIMEOUT)
       } else {
@@ -210,8 +223,7 @@ export abstract class BasePlotHover extends BasePlotRenderer {
     this.lastNearestYDataPoints = null
     this.interactiveZoneRect = this.interactiveZone.getBoundingClientRect()
 
-    this.onHoverMove(position, this.offsetToChart(position), this.chart.space, isTouch)
-    this.requestRender()
+    if (this.onHoverMove(position, this.offsetToChart(position), this.chart.space, isTouch)) this.requestRender()
   }
 
   protected beforeLayoutImpl(space: ChartSpace, full: Size) {
@@ -229,10 +241,10 @@ export abstract class BasePlotHover extends BasePlotRenderer {
 
   protected onBeforeLayout(space: ChartSpace, full: Size) { }
   protected onRender(space: ChartSpace, overflow: Overflow, full: Size) { }
-  protected mayPan(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): boolean { return false }
-  protected onHoverMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean) { }
-  protected onPanMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean) { }
-  protected onZoomWheel(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean) { }
+  protected mayPan(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): PanDirection { return false }
+  protected onHoverMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): boolean { return false }
+  protected onPanMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): boolean { return false }
+  protected onZoomWheel(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): void { }
 
   onZoomTouchBegin() { }
 
