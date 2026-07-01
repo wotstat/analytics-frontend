@@ -29,6 +29,7 @@ export class ChartTooltip implements HoverComponent {
   private lastPoint: Point | null = null
   private lastCursor: Position | null = null
   private lastIsTouch = false
+  private hovered = false
 
   constructor(protected options: Options = {}) {
   }
@@ -37,11 +38,17 @@ export class ChartTooltip implements HoverComponent {
     this.composable = composable
   }
 
+  onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
+    this.hovered = true
+  }
+
   onHoverEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
     if (this.lastNearestDataPoints && this.lastNearestDataPoints.length > 0) {
       this.options.onHide?.()
       this.lastNearestDataPoints = null
     }
+
+    this.hovered = false
   }
 
   onBeforeLayout(space: ChartSpace, full: Size): void {
@@ -55,6 +62,8 @@ export class ChartTooltip implements HoverComponent {
   }
 
   render(space: ChartSpace, overflow: Overflow, full: Size): void {
+    if (!this.hovered) return
+
     let nearestDataPoints: HoveredDataPoint[]
 
     const point = this.lastPoint
