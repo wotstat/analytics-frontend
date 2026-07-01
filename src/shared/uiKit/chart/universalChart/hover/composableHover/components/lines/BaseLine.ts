@@ -58,8 +58,9 @@ export abstract class BaseLine implements HoverComponent {
     this.lastDataPoints = null
   }
 
-  onHoverMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover) {
+  onHoverMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
     this.lastPoint = point
+    return this.hovered
   }
 
   render(space: ChartSpace, overflow: Overflow, full: Size): void {

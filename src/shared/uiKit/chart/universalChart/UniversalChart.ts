@@ -292,25 +292,28 @@ export class UniversalChart extends BaseChart {
     const w = this.size.width
     const h = this.size.height
 
-    let xTop = this.minLayoutSize.top,
-      xBottom = this.minLayoutSize.bottom,
-      yLeft = this.minLayoutSize.left,
-      yRight = this.minLayoutSize.right
-
     let layout = new ChartSpace({ x: 0, y: 0, width: w, height: h }, this.chartSpace.bounds)
     let overflow = { top: 0, right: 0, bottom: 0, left: 0 }
 
-    for (const slot of this.topRenderers) xTop = Math.max(xTop, slot.getSize(layout, overflow, full).height ?? 0)
-    layout.layout.y = xTop
+    const process = (renderers: SlotRenderer[], dir: keyof typeof overflow) => {
+      let res = 0
+      const prop = dir === 'top' || dir === 'bottom' ? 'height' : 'width'
+      for (const slot of renderers) res = Math.max(res, slot.getSize(layout, overflow, full)[prop] ?? 0)
+      overflow[dir] = res
+      return res
+    }
 
-    for (const slot of this.bottomRenderers) xBottom = Math.max(xBottom, slot.getSize(layout, overflow, full).height ?? 0)
-    layout.layout.height = h - xBottom - xTop
-
-    for (const slot of this.leftRenderers) yLeft = Math.max(yLeft, slot.getSize(layout, overflow, full).width ?? 0)
-    layout.layout.x = yLeft
-
-    for (const slot of this.rightRenderers) yRight = Math.max(yRight, slot.getSize(layout, overflow, full).width ?? 0)
-    layout.layout.width = w - yLeft - yRight
+    if (this.options.layoutVariant === 'vertical') {
+      layout.layout.y = process(this.topRenderers, 'top')
+      layout.layout.height = h - layout.layout.y - process(this.bottomRenderers, 'bottom')
+      layout.layout.x = process(this.leftRenderers, 'left')
+      layout.layout.width = w - layout.layout.x - process(this.rightRenderers, 'right')
+    } else {
+      layout.layout.x = process(this.leftRenderers, 'left')
+      layout.layout.width = w - layout.layout.x - process(this.rightRenderers, 'right')
+      layout.layout.y = process(this.topRenderers, 'top')
+      layout.layout.height = h - layout.layout.y - process(this.bottomRenderers, 'bottom')
+    }
 
     if (layoutEquals(this.chartSpace.layout, layout.layout)) return false
 

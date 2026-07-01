@@ -73,7 +73,6 @@ export class AutoLabels extends BaseLabels {
 
   calculateLabelPositions(space: ChartSpace, overflow: { start: number, end: number }) {
     if (space.bounds.isEmpty()) return []
-    // console.log('calculateLabelPositions', this, { space, overflow })
 
     const options = this.options
 
