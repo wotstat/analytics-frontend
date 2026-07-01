@@ -4,7 +4,7 @@ import { Point } from '../utils/Point'
 import { Classes } from '../utils/utils'
 import { BasePlotRenderer } from '../plot/BasePlotRenderer'
 
-export type PanDirection = 'horizontal' | 'vertical' | 'all' | false
+export type InteractionDirection = 'horizontal' | 'vertical' | 'all' | false
 
 export type Position = { offsetX: number, offsetY: number, clientX: number, clientY: number }
 
@@ -40,6 +40,8 @@ function event2Position(event: PointerEvent) {
   }
 }
 
+const HOVER_BEGIN_TIMEOUT = 75
+const HOVER_BEGIN_DISTANCE = 0
 const PAN_BEGIN_TIMEOUT = 200
 const PAN_BEGIN_DISTANCE = 0
 
@@ -60,8 +62,12 @@ export abstract class BasePlotHover extends BasePlotRenderer {
 
   private interactionController = new AbortController()
 
-  private awaitPanBegin: PanDirection = false
+  private awaitPanBegin: InteractionDirection = false
   private awaitPanBeginTimeoutId = 0
+
+  private awaitHoverBegin: InteractionDirection = false
+  private awaitHoverBeginTimeoutId = 0
+
   private hoverActive = false
   private panActive = false
 
@@ -100,6 +106,7 @@ export abstract class BasePlotHover extends BasePlotRenderer {
 
   protected onScroll(event: Event) {
     performance.mark('BasePlotHover onScroll')
+    console.log(event)
   }
 
   protected touchMove(event: TouchEvent) {
@@ -141,6 +148,23 @@ export abstract class BasePlotHover extends BasePlotRenderer {
         this.awaitPanBegin = false
 
         if (allowBegin) this.onPanBegin(pos, this.offsetToChart(event), this.chart.space, event.pointerType === 'touch')
+      }
+    }
+
+    if (this.awaitHoverBegin && !this.hoverActive) {
+      const dx = pos.offsetX - this.lastMousePosition!.offsetX
+      const dy = pos.offsetY - this.lastMousePosition!.offsetY
+      const distance = Math.sqrt(dx * dx + dy * dy)
+
+      if (distance > HOVER_BEGIN_DISTANCE) {
+        clearTimeout(this.awaitHoverBeginTimeoutId)
+
+        const allowBegin = this.awaitHoverBegin == 'all' ||
+          (this.awaitHoverBegin == 'horizontal' && Math.abs(dx) > Math.abs(dy)) ||
+          (this.awaitHoverBegin == 'vertical' && Math.abs(dy) > Math.abs(dx))
+        this.awaitHoverBegin = false
+
+        if (allowBegin) this.onHoverBegin(pos, this.offsetToChart(event), this.chart.space, event.pointerType === 'touch')
       }
     }
 
@@ -190,10 +214,19 @@ export abstract class BasePlotHover extends BasePlotRenderer {
       } else {
         this.onPanBegin(this.lastMousePosition, this.offsetToChart(event), this.chart.space, isTouch)
       }
-    } else {
-      event.preventDefault()
-      event.stopPropagation()
-      this.onHoverBegin(this.lastMousePosition, this.offsetToChart(event), this.chart.space, isTouch)
+    }
+
+    const mayHover = this.mayHover(this.lastMousePosition, this.offsetToChart(event), this.chart.space, isTouch)
+    if (mayHover) {
+      if (event.pointerType === 'touch') {
+        this.awaitHoverBegin = mayHover
+        clearTimeout(this.awaitHoverBeginTimeoutId)
+        this.awaitHoverBeginTimeoutId = setTimeout(this.onHoverBeginTimeout.bind(this), HOVER_BEGIN_TIMEOUT)
+      } else {
+        event.preventDefault()
+        event.stopPropagation()
+        this.onHoverBegin(this.lastMousePosition, this.offsetToChart(event), this.chart.space, isTouch)
+      }
     }
   }
 
@@ -212,6 +245,15 @@ export abstract class BasePlotHover extends BasePlotRenderer {
     this.interactiveZone.releasePointerCapture(event.pointerId)
     this.awaitPanBegin = false
     clearTimeout(this.awaitPanBeginTimeoutId)
+  }
+
+  private onHoverBeginTimeout() {
+    if (!this.awaitHoverBegin) return
+    this.awaitHoverBegin = false
+
+    if (!this.lastMousePosition || !this.chart) return
+
+    this.onHoverBegin(this.lastMousePosition, this.offsetToChart(this.lastMousePosition), this.chart.space, true)
   }
 
   private onPanBeginTimeout() {
@@ -249,7 +291,8 @@ export abstract class BasePlotHover extends BasePlotRenderer {
 
   protected onBeforeLayout(space: ChartSpace, full: Size) { }
   protected onRender(space: ChartSpace, overflow: Overflow, full: Size) { }
-  protected mayPan(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): PanDirection { return false }
+  protected mayPan(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): InteractionDirection { return false }
+  protected mayHover(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): InteractionDirection { return false }
   protected onHoverMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): boolean { return false }
   protected onPanMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): boolean { return false }
   protected onZoomWheel(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): void { }
@@ -259,7 +302,7 @@ export abstract class BasePlotHover extends BasePlotRenderer {
   protected onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean) {
     this.hoverActive = true
     this.root.classList.toggle('hover-active', true)
-    setTimeout(() => this.updateHoverPointer(cursor, isTouch), 0)
+    queueMicrotask(() => this.updateHoverPointer(cursor, isTouch))
   }
 
   protected onHoverEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean) {

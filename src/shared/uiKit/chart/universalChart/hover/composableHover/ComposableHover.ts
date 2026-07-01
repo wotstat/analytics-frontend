@@ -2,7 +2,7 @@ import { Overflow, Size } from '../../UniversalChart'
 import { ChartSpace } from '../../utils/ChartSpace'
 import { Point } from '../../utils/Point'
 import { Classes } from '../../utils/utils'
-import { BasePlotHover, PanDirection, Position } from '../BasePlotHover'
+import { BasePlotHover, InteractionDirection, Position } from '../BasePlotHover'
 
 export interface HoverComponent {
   attach?(root: SVGGElement, composable: ComposableHover): void
@@ -13,7 +13,8 @@ export interface HoverComponent {
   onHoverBegin?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void
   onHoverEnd?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void
   onHoverMove?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean
-  mayPan?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): PanDirection
+  mayPan?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): InteractionDirection
+  mayHover?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): InteractionDirection
   onPanBegin?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void
   onPanEnd?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void
   onPanMove?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean
@@ -91,12 +92,29 @@ export class ComposableHover extends BasePlotHover {
     for (const component of this.components) component.onPanEnd?.(cursor, point, space, isTouch, this)
   }
 
-  protected mayPan(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): PanDirection {
+  protected mayPan(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): InteractionDirection {
     let vertical = false
     let horizontal = false
 
     for (const component of this.components) {
       const dir = component.mayPan?.(cursor, point, space, isTouch, this)
+
+      if (!dir) continue
+      if (dir === 'all') return 'all'
+      if (dir === 'horizontal') horizontal = true
+      if (dir === 'vertical') vertical = true
+      if (horizontal && vertical) return 'all'
+    }
+
+    return horizontal ? (vertical ? 'all' : 'horizontal') : (vertical ? 'vertical' : false)
+  }
+
+  protected mayHover(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): InteractionDirection {
+    let vertical = false
+    let horizontal = false
+
+    for (const component of this.components) {
+      const dir = component.mayHover?.(cursor, point, space, isTouch, this)
 
       if (!dir) continue
       if (dir === 'all') return 'all'

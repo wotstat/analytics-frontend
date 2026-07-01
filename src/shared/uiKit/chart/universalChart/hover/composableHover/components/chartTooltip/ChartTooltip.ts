@@ -1,7 +1,7 @@
 import { Overflow, Size } from '../../../../UniversalChart'
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
-import { HoveredDataPoint, Position } from '../../../BasePlotHover'
+import { HoveredDataPoint, InteractionDirection, Position } from '../../../BasePlotHover'
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
 
 export type TooltipCtx = {
@@ -60,6 +60,17 @@ export class ChartTooltip implements HoverComponent {
     this.lastCursor = cursor
     this.lastIsTouch = isTouch
     return this.hovered
+  }
+
+  mayHover(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): InteractionDirection {
+    const direction = {
+      'data-point-x': 'horizontal',
+      'data-point-y': 'vertical',
+      'data-point': 'all',
+      'nearest-data-point': 'all'
+    } as const
+
+    return direction[this.options.position ?? 'data-point-x']
   }
 
   render(space: ChartSpace, overflow: Overflow, full: Size): void {

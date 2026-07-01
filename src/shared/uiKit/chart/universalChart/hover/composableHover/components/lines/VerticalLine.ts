@@ -1,5 +1,7 @@
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
+import { Position, InteractionDirection } from '../../../BasePlotHover'
+import { ComposableHover } from '../../ComposableHover'
 import { BaseLine } from './BaseLine'
 
 export class VerticalLine extends BaseLine {
@@ -11,4 +13,7 @@ export class VerticalLine extends BaseLine {
     this.line.setAttribute('y2', (space.layout.y + space.layout.height - this.offset.end).toString())
   }
 
+  mayHover(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): InteractionDirection {
+    return 'horizontal'
+  }
 }
