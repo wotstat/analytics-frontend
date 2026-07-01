@@ -214,10 +214,6 @@ export abstract class BasePlotHover extends BasePlotRenderer {
     this.onBeforeLayout(space, full)
   }
 
-  protected beforeRenderImpl(space: ChartSpace, overflow: Overflow, full: Size) {
-    this.onBeforeRender(space, overflow, full)
-  }
-
   protected renderImpl(space: ChartSpace, overflow: Overflow, full: Size): void {
     this.lastNearestDataPoints = null
     this.lastNearestXDataPoints = null
@@ -228,7 +224,6 @@ export abstract class BasePlotHover extends BasePlotRenderer {
   }
 
   protected onBeforeLayout(space: ChartSpace, full: Size) { }
-  protected onBeforeRender(space: ChartSpace, overflow: Overflow, full: Size) { }
   protected onRender(space: ChartSpace, overflow: Overflow, full: Size) { }
   protected mayPan(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): boolean { return false }
   protected onHoverMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean) { }

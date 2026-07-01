@@ -44,7 +44,7 @@ export class ChartTooltip implements HoverComponent {
     }
   }
 
-  onBeforeRender(space: ChartSpace, overflow: Overflow, full: Size): void {
+  onBeforeLayout(space: ChartSpace, full: Size): void {
     this.windowScroll = { x: window.scrollX, y: window.scrollY }
   }
 
