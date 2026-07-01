@@ -14,4 +14,4 @@ export class VueChartRenderManager extends ChartRenderManager {
   }
 }
 
-export const globalChartRenderManager = new VueChartRenderManager(3, true)
+export const globalChartRenderManager = new VueChartRenderManager(3)
