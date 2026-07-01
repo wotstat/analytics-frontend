@@ -34,6 +34,7 @@ export class NearestMarker implements HoverComponent {
 
   private composable: ComposableHover | null = null
   private lastPoint: Point | null = null
+  private hovered = false
 
   constructor(protected options: Options = {}) {
     addClasses(this.root, 'hover-markers', options.classes)
@@ -55,10 +56,15 @@ export class NearestMarker implements HoverComponent {
     this.composable = composable
   }
 
+  onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
+    this.hovered = true
+  }
+
   onHoverEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
     for (const marker of this.markers) marker.dispose()
     this.markers = []
     this.lastNearestDataPoints = null
+    this.hovered = false
   }
 
   onHoverMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
@@ -66,6 +72,7 @@ export class NearestMarker implements HoverComponent {
   }
 
   render(space: ChartSpace, overflow: Overflow, full: Size): void {
+    if (!this.hovered) return
 
     const composable = this.composable
     const point = this.lastPoint
