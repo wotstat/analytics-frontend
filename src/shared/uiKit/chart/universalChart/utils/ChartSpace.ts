@@ -132,4 +132,9 @@ export class ChartSpace {
     const { x, y, width, height } = this.layout
     return `${minX}_${maxX}_${minY}_${maxY}_${x}_${y}_${width}_${height}`
   }
+
+  getLayoutHash(): string {
+    const { x, y, width, height } = this.layout
+    return `${x}_${y}_${width}_${height}`
+  }
 }

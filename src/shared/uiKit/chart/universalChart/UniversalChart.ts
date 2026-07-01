@@ -4,6 +4,7 @@ import BaseChart from '../BaseChart'
 import { Bounds } from './utils/Bounds'
 import { ChartSpace } from './utils/ChartSpace'
 import { Offset4Side, unwrapOffset } from './utils/utils'
+import { ChartRenderManager } from '../ChartRenderManager'
 
 type Options = {
   renderBounds?: { minX?: number, maxX?: number, minY?: number, maxY?: number },
@@ -39,6 +40,8 @@ export interface DefsRenderer extends BaseRenderer { }
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
 
+const globalMultiStepRender = new ChartRenderManager(4)
+
 export class UniversalChart extends BaseChart {
 
   private userDefinedBounds: { minX: number | null, maxX: number | null, minY: number | null, maxY: number | null } | null = null
@@ -66,7 +69,7 @@ export class UniversalChart extends BaseChart {
   }
 
   constructor(readonly options: Options) {
-    super()
+    super(globalMultiStepRender)
 
     this.svg.classList.add('universal-chart-root')
     this.svg.appendChild(this.defs)
@@ -228,16 +231,24 @@ export class UniversalChart extends BaseChart {
     for (const renderer of this.allRenderers) renderer.didMount?.()
   }
 
-  protected renderImpl() {
+  protected renderImpl(step: number): void {
     const targets = [
       this.defsRenderers, this.topRenderers, this.rightRenderers, this.bottomRenderers, this.leftRenderers, this.plotRenderers
     ]
 
-    for (const target of targets) {
-      for (const renderer of target) renderer.beforeLayout?.(this.chartSpace, this.size)
+    if (step == 0) {
+      for (const target of targets) {
+        for (const renderer of target) renderer.beforeLayout?.(this.chartSpace, this.size)
+      }
+      return
     }
 
-    this.relayout()
+    if (step == 1) {
+      this.relayout()
+      return
+    }
+
+
     let overflow = { top: 0, right: 0, bottom: 0, left: 0 }
     switch (this.options.layoutVariant ?? 'horizontal') {
       case 'horizontal':
@@ -256,12 +267,17 @@ export class UniversalChart extends BaseChart {
         break
     }
 
-    for (const target of targets) {
-      for (const renderer of target) renderer.beforeRender?.(this.chartSpace, overflow, this.size)
+    if (step == 2) {
+      for (const target of targets) {
+        for (const renderer of target) renderer.beforeRender?.(this.chartSpace, overflow, this.size)
+      }
     }
 
-    for (const target of targets) {
-      for (const renderer of target) renderer.render?.(this.chartSpace, overflow, this.size)
+    if (step == 3) {
+      this.mutateViewBox()
+      for (const target of targets) {
+        for (const renderer of target) renderer.render?.(this.chartSpace, overflow, this.size)
+      }
     }
   }
 

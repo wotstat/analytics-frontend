@@ -54,6 +54,7 @@ export abstract class BasePlotHover extends BasePlotRenderer {
 
   protected lastMousePosition: Position | null = null
   protected interactiveZoneOffsets = { x: 0, y: 0 }
+  private interactiveZoneHash = ''
 
   private interactionController = new AbortController()
 
@@ -222,6 +223,7 @@ export abstract class BasePlotHover extends BasePlotRenderer {
     this.lastNearestXDataPoints = null
     this.lastNearestYDataPoints = null
 
+    this.setupInteractiveZone(space)
     this.onRender(space, overflow, full)
   }
 
@@ -254,6 +256,16 @@ export abstract class BasePlotHover extends BasePlotRenderer {
   protected onPanEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean) {
     this.panActive = false
     this.root.classList.toggle('pan-active', false)
+  }
+
+  protected setupInteractiveZone(space: ChartSpace) {
+    const key = space.getLayoutHash()
+    if (this.interactiveZoneHash === key) return
+    this.interactiveZoneHash = key
+    this.interactiveZone.setAttribute('x', space.layout.x.toString())
+    this.interactiveZone.setAttribute('y', space.layout.y.toString())
+    this.interactiveZone.setAttribute('width', space.layout.width.toString())
+    this.interactiveZone.setAttribute('height', space.layout.height.toString())
   }
 
   offsetToChart(event: { offsetX: number, offsetY: number }): Point {
@@ -381,10 +393,6 @@ export abstract class BasePlotHover extends BasePlotRenderer {
   }
 
   didLayout(space: ChartSpace, full: Size): void {
-    this.interactiveZone.setAttribute('x', space.layout.x.toString())
-    this.interactiveZone.setAttribute('y', space.layout.y.toString())
-    this.interactiveZone.setAttribute('width', space.layout.width.toString())
-    this.interactiveZone.setAttribute('height', space.layout.height.toString())
     this.interactiveZoneOffsets = { x: space.layout.x, y: space.layout.y }
   }
 

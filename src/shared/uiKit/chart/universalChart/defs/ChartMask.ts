@@ -11,6 +11,7 @@ export class ChartMask extends BaseDefs {
   private rect = document.createElementNS(NAMESPACE, 'rect')
   private cachedSize = { x: 0, y: 0, width: 0, height: 0 }
   private padding: NormalizedOffset4Side
+  private targetSize: { x: number, y: number, width: number, height: number } | null = null
 
   constructor(
     private readonly target: Target = 'center',
@@ -31,14 +32,18 @@ export class ChartMask extends BaseDefs {
     if (!this.chart) return
     if (!this.fillTarget) return
     const layout = this.target === 'center' ? space.layout : this.chart.getSlotRect(this.target)
-    const targetSize = {
+    this.targetSize = {
       x: layout.x + this.padding.left,
       y: layout.y + this.padding.top,
       width: layout.width - this.padding.left - this.padding.right,
       height: layout.height - this.padding.top - this.padding.bottom
     }
+  }
 
-    this.setRect(targetSize.x, targetSize.y, targetSize.width, targetSize.height)
+  render(): void {
+    if (!this.targetSize) return
+    this.setRect(this.targetSize.x, this.targetSize.y, this.targetSize.width, this.targetSize.height)
+    this.targetSize = null
   }
 
   mask(element: SVGGElement) {

@@ -26,11 +26,15 @@ export abstract class BaseLabels implements SlotRenderer {
 
   private offset: number
   private stableWidth: boolean | number = false
+  private fontStyleDirty = false
+  private probeLabel: SVGTextElement | null = null
 
   constructor(readonly axis: Axis, options: { offset?: number, stableWidth?: boolean | number } = {}) {
     this.root.classList.add(axis == 'horizontal' ? 'x-labels' : 'y-labels')
     this.offset = options.offset ?? DEFAULT_LABEL_OFFSET
     this.stableWidth = options.stableWidth ?? false
+    this.probeLabel = this.createLabel()
+    this.probeLabel.classList.add('probe-label')
   }
 
   getRootElement(): Element {
@@ -46,7 +50,7 @@ export abstract class BaseLabels implements SlotRenderer {
   }
 
   didMount() {
-    this.recalculateFont()
+    this.fontStyleDirty = true
   }
 
   clipBy(clip: ChartClip) {
@@ -68,6 +72,12 @@ export abstract class BaseLabels implements SlotRenderer {
       if (this.stableWidth) return { width: this.maxLabelWidth, height: null }
       return { width, height: null }
     }
+  }
+
+  beforeLayout(space: ChartSpace, full: Size): void {
+    if (!this.fontStyleDirty) return
+    this.recalculateFont()
+    this.fontStyleDirty = false
   }
 
   render(space: ChartSpace, overflow: Overflow) {
@@ -158,12 +168,12 @@ export abstract class BaseLabels implements SlotRenderer {
 
   recalculateFont() {
     if (!this.ctx) return
+    if (!this.probeLabel) return
 
-    const probeLabel = this.createLabel()
-    const fontFamily = probeLabel.computedStyleMap().get('font-family')?.toString()
-    const fontSize = probeLabel.computedStyleMap().get('font-size')?.toString()
-    const fontWeight = probeLabel.computedStyleMap().get('font-weight')?.toString()
-    probeLabel.remove()
+    const style = this.probeLabel.computedStyleMap()
+    const fontFamily = style.get('font-family')?.toString()
+    const fontSize = style.get('font-size')?.toString()
+    const fontWeight = style.get('font-weight')?.toString()
 
     const target = `${fontWeight} ${fontSize} ${fontFamily}`
     if (this.ctx.font == target) return

@@ -1,69 +1,74 @@
+import { ChartRenderManager } from './ChartRenderManager'
+
 export default class BaseChart {
 
   protected root: HTMLElement | null = null
   protected readonly svg: SVGSVGElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
   protected readonly size = { width: 0, height: 0 }
 
-  private readonly resizeObserver = new ResizeObserver((entries, observer) => this.onResize(entries, observer))
   private renderCallScheduler: number | null = null
+  private lastViewportSize = { width: 0, height: 0 }
 
-  constructor() {
+  constructor(readonly scheduler: ChartRenderManager) {
     this.svg.style.position = 'absolute'
   }
 
   attach(element: HTMLElement) {
     this.root?.removeChild(this.svg)
-    if (this.root) this.resizeObserver.unobserve(this.root)
+    if (this.root) this.scheduler.resizeUnobserve(this.root)
 
     this.root = element
     this.root.appendChild(this.svg)
-    this.resizeObserver.observe(this.root)
+    this.scheduler.resizeObserve(this.root, (entry, observer) => this.onResize(entry, observer), (step) => this.render(step))
 
     this.didMount()
 
-    const rect = this.root.getClientRects()[0]
-    this.resize(rect.width, rect.height)
+    this.scheduler.scheduleMicroTask(step => {
+      if (step == 0) {
+        const rect = this.root?.getClientRects()[0]
+        if (!rect) return
+        this.size.width = rect.width
+        this.size.height = rect.height
+      }
+      this.render(step)
+    })
   }
 
   dispose() {
     this.root?.removeChild(this.svg)
+    if (this.root) this.scheduler.resizeUnobserve(this.root)
   }
 
   scheduleRender() {
     if (this.renderCallScheduler != null) return
-    this.renderCallScheduler = requestAnimationFrame(() => {
+
+    this.renderCallScheduler = this.scheduler.scheduleAnimationFrame(step => {
       this.renderCallScheduler = null
-      this.render()
+      this.render(step)
     })
   }
 
-  protected onResize(entries: ResizeObserverEntry[], observer: ResizeObserver) {
-    if (entries.length === 0) return
-    const { contentRect } = entries[0]
-    this.resize(contentRect.width, contentRect.height)
+  protected onResize(entry: ResizeObserverEntry, observer: ResizeObserver) {
+    const { contentRect } = entry
+    if (this.size.width === contentRect.width && this.size.height === contentRect.height) return
+    this.size.width = contentRect.width
+    this.size.height = contentRect.height
   }
 
-  protected resize(width: number, height: number) {
-    if (this.size.width === width && this.size.height === height) return
-    this.size.width = width
-    this.size.height = height
+  private render(step: number = 0) {
+    if (this.size.width === 0 || this.size.height === 0) return
+    this.renderImpl(step)
+  }
+
+  protected mutateViewBox() {
+    if (this.lastViewportSize.width === this.size.width && this.lastViewportSize.height === this.size.height) return
+    this.lastViewportSize.width = this.size.width
+    this.lastViewportSize.height = this.size.height
     this.svg.setAttribute('viewBox', `0 0 ${this.size.width} ${this.size.height}`)
     this.svg.setAttribute('width', `${this.size.width}px`)
     this.svg.setAttribute('height', `${this.size.height}px`)
-    this.render()
   }
 
-  private render() {
-    if (this.size.width === 0 || this.size.height === 0) return
-
-    if (this.renderCallScheduler != null) {
-      cancelAnimationFrame(this.renderCallScheduler)
-      this.renderCallScheduler = null
-    }
-
-    this.renderImpl()
-  }
-
-  protected renderImpl() { }
+  protected renderImpl(step: number) { }
   protected didMount() { }
 }
