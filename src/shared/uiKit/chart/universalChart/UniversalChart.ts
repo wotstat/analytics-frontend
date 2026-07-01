@@ -12,6 +12,7 @@ type Options = {
   minLayoutSize?: Offset4Side,
   layoutVariant?: 'horizontal' | 'vertical' | 'square',
   root?: HTMLElement
+  renderManager?: ChartRenderManager
 }
 
 export type Size = { width: number, height: number }
@@ -40,7 +41,7 @@ export interface DefsRenderer extends BaseRenderer { }
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
 
-const globalMultiStepRender = new ChartRenderManager(4)
+const globalChartRenderManager = new ChartRenderManager(4)
 
 export class UniversalChart extends BaseChart {
 
@@ -69,7 +70,7 @@ export class UniversalChart extends BaseChart {
   }
 
   constructor(readonly options: Options) {
-    super(globalMultiStepRender)
+    super(options.renderManager || globalChartRenderManager)
 
     this.svg.classList.add('universal-chart-root')
     this.svg.appendChild(this.defs)

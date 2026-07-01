@@ -3,17 +3,17 @@ type ResizeHandler = (entry: ResizeObserverEntry, observer: ResizeObserver) => v
 
 export class ChartRenderManager {
 
-  private readonly resizeObserver = new ResizeObserver((entries, observer) => this.onResize(entries, observer))
+  protected readonly resizeObserver = new ResizeObserver((entries, observer) => this.onResize(entries, observer))
 
-  private nextHandlerId = 1
+  protected nextHandlerId = 1
 
-  private animationFrameHandlers = new Map<number, Handler>()
-  private microTaskHandlers = new Map<number, Handler>()
+  protected animationFrameHandlers = new Map<number, Handler>()
+  protected microTaskHandlers = new Map<number, Handler>()
 
-  private resizeHandlers = new Map<HTMLElement, { resize: ResizeHandler, render: Handler }>()
+  protected resizeHandlers = new Map<HTMLElement, { resize: ResizeHandler, render: Handler }>()
 
-  private animationFromHandle: number | null = null
-  private microTaskHandle: number | null = null
+  protected animationFromHandle: number | null = null
+  protected microTaskHandle: number | null = null
 
   constructor(readonly steps: number = 2, readonly performanceMarks: boolean = false) { }
 
@@ -52,12 +52,12 @@ export class ChartRenderManager {
     this.resizeHandlers.delete(root)
   }
 
-  private requestRender() {
+  protected requestRender() {
     if (this.animationFromHandle) return
     this.animationFromHandle = requestAnimationFrame(this.animationFrame.bind(this))
   }
 
-  private requestMicroTask() {
+  protected requestMicroTask() {
     if (this.microTaskHandle) return
     this.microTaskHandle = 1
     queueMicrotask(() => {
@@ -66,13 +66,13 @@ export class ChartRenderManager {
     })
   }
 
-  private microTask() {
+  protected microTask() {
     const handlers = [...this.microTaskHandlers.values()]
     this.microTaskHandlers.clear()
     this.callHandlers(handlers, 'Mic')
   }
 
-  private animationFrame() {
+  protected animationFrame() {
     this.animationFromHandle = null
 
     const handlers = [...this.animationFrameHandlers.values()]
@@ -80,7 +80,7 @@ export class ChartRenderManager {
     this.callHandlers(handlers, 'AF')
   }
 
-  private callHandlers(handlers: Handler[], prefix: string = 'MS') {
+  protected callHandlers(handlers: Handler[], prefix: string = 'MS') {
     if (!this.performanceMarks) {
       for (let step = 0; step < this.steps; step++) {
         for (const handler of handlers) handler(step)
@@ -98,7 +98,7 @@ export class ChartRenderManager {
     }
   }
 
-  private onResize(entries: ResizeObserverEntry[], observer: ResizeObserver) {
+  protected onResize(entries: ResizeObserverEntry[], observer: ResizeObserver) {
     const handlers = []
     for (const entry of entries) {
       const root = entry.target as HTMLElement

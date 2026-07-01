@@ -9,21 +9,21 @@ export default class BaseChart {
   private renderCallScheduler: number | null = null
   private lastViewportSize = { width: 0, height: 0 }
 
-  constructor(readonly scheduler: ChartRenderManager) {
+  constructor(readonly manager: ChartRenderManager) {
     this.svg.style.position = 'absolute'
   }
 
   attach(element: HTMLElement) {
     this.root?.removeChild(this.svg)
-    if (this.root) this.scheduler.resizeUnobserve(this.root)
+    if (this.root) this.manager.resizeUnobserve(this.root)
 
     this.root = element
     this.root.appendChild(this.svg)
-    this.scheduler.resizeObserve(this.root, (entry, observer) => this.onResize(entry, observer), (step) => this.render(step))
+    this.manager.resizeObserve(this.root, (entry, observer) => this.onResize(entry, observer), (step) => this.render(step))
 
     this.didMount()
 
-    this.scheduler.scheduleMicroTask(step => {
+    this.manager.scheduleMicroTask(step => {
       if (step == 0) {
         const rect = this.root?.getClientRects()[0]
         if (!rect) return
@@ -36,13 +36,13 @@ export default class BaseChart {
 
   dispose() {
     this.root?.removeChild(this.svg)
-    if (this.root) this.scheduler.resizeUnobserve(this.root)
+    if (this.root) this.manager.resizeUnobserve(this.root)
   }
 
   scheduleRender() {
     if (this.renderCallScheduler != null) return
 
-    this.renderCallScheduler = this.scheduler.scheduleAnimationFrame(step => {
+    this.renderCallScheduler = this.manager.scheduleAnimationFrame(step => {
       this.renderCallScheduler = null
       this.render(step)
     })
