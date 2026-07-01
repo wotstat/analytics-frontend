@@ -16,6 +16,7 @@ import { ref } from 'vue'
 import { RectangleArea } from '@/shared/uiKit/chart/universalChart/plot/area/RectangleArea'
 import { ChartRawPattern } from '@/shared/uiKit/chart/universalChart/defs/ChartRawPattern'
 import { ZoomChartComponent } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/zoomChartComponent/ZoomChartComponent'
+import { globalChartRenderManager } from '@/shared/ui/chart/VueChartRenderManager'
 
 
 const MINUTE = 1 * 60
@@ -33,7 +34,7 @@ class BaseChart extends UniversalChart {
   private restrictionArea: RectangleArea
 
   constructor(protected seasonInterval: { start: Date, end: Date }) {
-    super({ layoutVariant: 'vertical' })
+    super({ layoutVariant: 'vertical', renderManager: globalChartRenderManager })
 
     const clipMain = new ChartClip('center', { top: -1, bottom: -1 })
     const clipLeft = new ChartClip('left')
