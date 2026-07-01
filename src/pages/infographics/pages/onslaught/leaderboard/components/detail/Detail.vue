@@ -36,6 +36,26 @@
       </div>
     </div>
   </div>
+  <div class="charts">
+    <div class="chart">
+      <div class="header">
+        <div class="title">
+          <h3>Очки по дням</h3>
+        </div>
+        <IntervalSelector v-if="!isZoom" />
+      </div>
+      <UniversalChartComponent :chart="scoreChart2" />
+    </div>
+    <div class="chart">
+      <div class="header">
+        <div class="title">
+          <h3>Бои по дням</h3>
+        </div>
+        <IntervalSelector v-if="!isZoom" />
+      </div>
+      <UniversalChartComponent :chart="battleChart2" />
+    </div>
+  </div>
 </template>
 
 
@@ -101,6 +121,8 @@ const startTime = props.seasonInterval.start.getTime() + getRegionDayChangeHourO
 
 const scoreChart = markRaw(new ScoreChart(props.seasonInterval))
 const battleChart = markRaw(new BattlesChart(props.seasonInterval))
+const scoreChart2 = markRaw(new ScoreChart(props.seasonInterval))
+const battleChart2 = markRaw(new BattlesChart(props.seasonInterval))
 
 watchEffect(() => {
   const score = data.value.data.map(point => point.rating == 0 ? null : {
@@ -109,6 +131,7 @@ watchEffect(() => {
   })
 
   scoreChart.setPoints(score).setInterval(props.seasonInterval)
+  scoreChart2.setPoints(score).setInterval(props.seasonInterval)
 
   const battles = data.value.data.map(point => point.battlesCount == 0 ? null : {
     x: (new Date(point.recalculationTime + 'Z').getTime() - startTime) / 1000,
@@ -116,7 +139,18 @@ watchEffect(() => {
   })
 
   battleChart.setPoints(battles).setInterval(props.seasonInterval)
+  battleChart2.setPoints(battles).setInterval(props.seasonInterval)
 })
+
+// setInterval(() => {
+//   scoreChart2.setRenderBounds({
+//     minX: (1 + Math.sin(Date.now() / 1000)) * 200 - 200,
+//     maxX: (1 + Math.cos(Date.now() / 1000)) * 200 + 4000000,
+//     minY: (1 + Math.cos(Date.now() / 1000)) * 50 + 5000,
+//     maxY: (1 + Math.sin(Date.now() / 1000)) * 5000 + 10000,
+//   })
+// }, 16)
+
 </script>
 
 
