@@ -18,6 +18,7 @@ export interface HoverComponent {
   onPanBegin?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void
   onPanEnd?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void
   onPanMove?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean
+  onWheelZoom?(cursor: Position, point: Point, space: ChartSpace, deltaY: number, deltaX: number, composable: ComposableHover): boolean
 }
 
 export class ComposableHover extends BasePlotHover {
@@ -134,6 +135,16 @@ export class ComposableHover extends BasePlotHover {
       shouldRender ||= componentShouldRender ?? false
     }
     return shouldRender
+  }
+
+  protected onWheelZoom(cursor: Position, point: Point, space: ChartSpace, deltaY: number, deltaX: number): boolean {
+    super.onWheelZoom(cursor, point, space, deltaY, deltaX)
+    let used = false
+    for (const component of this.components) {
+      const componentUsed = component.onWheelZoom?.(cursor, point, space, deltaY, deltaX, this)
+      used ||= componentUsed ?? false
+    }
+    return used
   }
 
   didLayout(space: ChartSpace, full: Size): void {
