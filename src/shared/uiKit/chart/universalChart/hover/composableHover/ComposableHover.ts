@@ -2,7 +2,7 @@ import { Overflow, Size } from '../../UniversalChart'
 import { ChartSpace } from '../../utils/ChartSpace'
 import { Point } from '../../utils/Point'
 import { Classes } from '../../utils/utils'
-import { BasePlotHover, InteractionDirection, Position } from '../BasePlotHover'
+import { BasePlotHover, InteractionDirection, Position, TouchZoomPoint } from '../BasePlotHover'
 
 export interface HoverComponent {
   attach?(root: SVGGElement, composable: ComposableHover): void
@@ -19,6 +19,9 @@ export interface HoverComponent {
   onPanEnd?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void
   onPanMove?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean
   onWheelZoom?(cursor: Position, point: Point, space: ChartSpace, deltaY: number, deltaX: number, composable: ComposableHover): boolean
+  onTouchZoomBegin?(first: TouchZoomPoint, second: TouchZoomPoint, space: ChartSpace, composable: ComposableHover): boolean
+  onTouchZoomUpdate?(first: TouchZoomPoint, second: TouchZoomPoint, space: ChartSpace, composable: ComposableHover): boolean
+  onTouchZoomEnd?(first: TouchZoomPoint, second: TouchZoomPoint, space: ChartSpace, composable: ComposableHover): void
 }
 
 export class ComposableHover extends BasePlotHover {
@@ -145,6 +148,31 @@ export class ComposableHover extends BasePlotHover {
       used ||= componentUsed ?? false
     }
     return used
+  }
+
+  protected onTouchZoomBegin(first: TouchZoomPoint, second: TouchZoomPoint, space: ChartSpace): boolean {
+    super.onTouchZoomBegin(first, second, space)
+    let used = false
+    for (const component of this.components) {
+      const componentUsed = component.onTouchZoomBegin?.(first, second, space, this)
+      used ||= componentUsed ?? false
+    }
+    return used
+  }
+
+  protected onTouchZoomUpdate(first: TouchZoomPoint, second: TouchZoomPoint, space: ChartSpace): boolean {
+    super.onTouchZoomUpdate(first, second, space)
+    let shouldRender = false
+    for (const component of this.components) {
+      const componentShouldRender = component.onTouchZoomUpdate?.(first, second, space, this)
+      shouldRender ||= componentShouldRender ?? false
+    }
+    return shouldRender
+  }
+
+  protected onTouchZoomEnd(first: TouchZoomPoint, second: TouchZoomPoint, space: ChartSpace): void {
+    super.onTouchZoomEnd(first, second, space)
+    for (const component of this.components) component.onTouchZoomEnd?.(first, second, space, this)
   }
 
   didLayout(space: ChartSpace, full: Size): void {

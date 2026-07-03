@@ -1,5 +1,8 @@
 import { Point } from './Point'
 
+export type BoundsPatch = { minX?: number, maxX?: number, minY?: number, maxY?: number }
+export type BoundsAxes = { x?: boolean, y?: boolean }
+
 export class Bounds {
   private dataCount = 0
 
@@ -28,6 +31,22 @@ export class Bounds {
 
   static fromMinMaxObject({ minX, maxX, minY, maxY }: { minX: number, maxX: number, minY: number, maxY: number }) {
     return Bounds.fromMinMax(minX, maxX, minY, maxY)
+  }
+
+  static isPatchValid(patch: BoundsPatch) {
+    const hasX = patch.minX !== undefined || patch.maxX !== undefined
+    const hasY = patch.minY !== undefined || patch.maxY !== undefined
+    if (!hasX && !hasY) return false
+
+    if (patch.minX !== undefined && patch.maxX !== undefined) {
+      if (!Number.isFinite(patch.minX) || !Number.isFinite(patch.maxX) || patch.minX === patch.maxX) return false
+    }
+
+    if (patch.minY !== undefined && patch.maxY !== undefined) {
+      if (!Number.isFinite(patch.minY) || !Number.isFinite(patch.maxY) || patch.minY === patch.maxY) return false
+    }
+
+    return true
   }
 
   addPoint(p: Point) {
@@ -68,6 +87,21 @@ export class Bounds {
     this.dataCount += bounds.dataCount
   }
 
+  patch(patch: BoundsPatch) {
+    if (patch.minX !== undefined) this.minX = patch.minX
+    if (patch.maxX !== undefined) this.maxX = patch.maxX
+    if (patch.minY !== undefined) this.minY = patch.minY
+    if (patch.maxY !== undefined) this.maxY = patch.maxY
+    return this
+  }
+
+  toPatch(axes: BoundsAxes = { x: true, y: true }): BoundsPatch {
+    return {
+      ...(axes.x ? { minX: this.minX, maxX: this.maxX } : {}),
+      ...(axes.y ? { minY: this.minY, maxY: this.maxY } : {}),
+    }
+  }
+
   clone() {
     const clone = new Bounds(this.minX, this.maxX, this.minY, this.maxY)
     clone.dataCount = this.dataCount
@@ -80,6 +114,13 @@ export class Bounds {
 
   isEqualTo(bounds: Bounds) {
     return this.minX === bounds.minX && this.maxX === bounds.maxX && this.minY === bounds.minY && this.maxY === bounds.maxY
+  }
+
+  isEqualToPatch(patch: BoundsPatch) {
+    return (patch.minX === undefined || this.minX === patch.minX) &&
+      (patch.maxX === undefined || this.maxX === patch.maxX) &&
+      (patch.minY === undefined || this.minY === patch.minY) &&
+      (patch.maxY === undefined || this.maxY === patch.maxY)
   }
 
   contains(point: Point) {
