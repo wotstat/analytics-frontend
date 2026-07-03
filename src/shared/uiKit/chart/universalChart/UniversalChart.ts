@@ -295,8 +295,8 @@ export class UniversalChart extends BaseChart {
     let layout = new ChartSpace({ x: 0, y: 0, width: w, height: h }, this.chartSpace.bounds)
     let overflow = { top: 0, right: 0, bottom: 0, left: 0 }
 
-    const process = (renderers: SlotRenderer[], dir: keyof typeof overflow) => {
-      let res = 0
+    const process = (renderers: SlotRenderer[], dir: keyof typeof overflow, minSize: number) => {
+      let res = minSize
       const prop = dir === 'top' || dir === 'bottom' ? 'height' : 'width'
       for (const slot of renderers) res = Math.max(res, slot.getSize(layout, overflow, full)[prop] ?? 0)
       overflow[dir] = res
@@ -304,15 +304,15 @@ export class UniversalChart extends BaseChart {
     }
 
     if (this.options.layoutVariant === 'vertical') {
-      layout.layout.y = process(this.topRenderers, 'top')
-      layout.layout.height = h - layout.layout.y - process(this.bottomRenderers, 'bottom')
-      layout.layout.x = process(this.leftRenderers, 'left')
-      layout.layout.width = w - layout.layout.x - process(this.rightRenderers, 'right')
+      layout.layout.y = process(this.topRenderers, 'top', this.minLayoutSize.top)
+      layout.layout.height = h - layout.layout.y - process(this.bottomRenderers, 'bottom', this.minLayoutSize.bottom)
+      layout.layout.x = process(this.leftRenderers, 'left', this.minLayoutSize.left)
+      layout.layout.width = w - layout.layout.x - process(this.rightRenderers, 'right', this.minLayoutSize.right)
     } else {
-      layout.layout.x = process(this.leftRenderers, 'left')
-      layout.layout.width = w - layout.layout.x - process(this.rightRenderers, 'right')
-      layout.layout.y = process(this.topRenderers, 'top')
-      layout.layout.height = h - layout.layout.y - process(this.bottomRenderers, 'bottom')
+      layout.layout.x = process(this.leftRenderers, 'left', this.minLayoutSize.left)
+      layout.layout.width = w - layout.layout.x - process(this.rightRenderers, 'right', this.minLayoutSize.right)
+      layout.layout.y = process(this.topRenderers, 'top', this.minLayoutSize.top)
+      layout.layout.height = h - layout.layout.y - process(this.bottomRenderers, 'bottom', this.minLayoutSize.bottom)
     }
 
     if (layoutEquals(this.chartSpace.layout, layout.layout)) return false
