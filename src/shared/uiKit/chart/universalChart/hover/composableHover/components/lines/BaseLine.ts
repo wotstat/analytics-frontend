@@ -2,7 +2,8 @@ import { Overflow, Size } from '../../../../UniversalChart'
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
 import { addClasses, Classes } from '../../../../utils/utils'
-import { HoveredDataPoint, InteractionDirection, isDataPointEqual, Position } from '../../../BasePlotHover'
+import { HoveredDataPoint, isDataPointEqual } from '../../../BaseDataSourcedPlotHover'
+import { InteractionDirection, Position } from '../../../basePlotHover/BasePlotHover'
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
 
 type Options = {
@@ -46,19 +47,21 @@ export abstract class BaseLine implements HoverComponent {
     this.composable = composable
   }
 
-  onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
+  onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
     if (this.position === 'cursor') this.line.classList.add('visible')
     this.hovered = true
     this.process(space, point)
+    return true
   }
 
-  onHoverEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
+  onHoverEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
     this.line.classList.remove('visible')
     this.hovered = false
     this.lastDataPoints = null
+    return false
   }
 
-  onHoverMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
+  onHoverUpdate(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
     this.lastPoint = point
     return this.hovered
   }

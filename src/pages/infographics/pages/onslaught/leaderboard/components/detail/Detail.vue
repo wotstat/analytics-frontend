@@ -162,7 +162,7 @@ watchEffect(() => {
   padding-top: 0;
   cursor: default;
 
-  @container (max-width: 800px) {
+  @container (max-width: 1800px) {
     flex-direction: column;
   }
 

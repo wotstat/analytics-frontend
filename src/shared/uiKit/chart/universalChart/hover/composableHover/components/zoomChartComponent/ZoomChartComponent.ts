@@ -2,7 +2,7 @@ import { Size, UniversalChart } from '../../../../UniversalChart'
 import { Bounds, BoundsAxes, BoundsPatch } from '../../../../utils/Bounds'
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
-import { InteractionDirection, Position, TouchZoomPoint } from '../../../BasePlotHover'
+import { InteractionDirection, Position, TouchZoomPoint } from '../../../basePlotHover/BasePlotHover'
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
 
 
@@ -49,11 +49,13 @@ export class ZoomChartComponent implements HoverComponent {
     this.chart = options.chart
   }
 
+  //#region Pan
+
   mayPan(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): InteractionDirection {
     return this.options.panDirection ?? false
   }
 
-  onPanBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
+  onPanBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
     const { bounds, layout } = space
     const startBounds = bounds.clone()
     const touchZoomBounds = this.calculateTouchZoomBounds()
@@ -67,35 +69,34 @@ export class ZoomChartComponent implements HoverComponent {
       layoutHeight: layout.height,
       ended: false,
     }
+
+    return true
   }
 
-  onPanEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
-    if (!this.panState) {
-      this.lastCursor = null
-      return
-    }
-
-    this.lastCursor = cursor
-    this.panState.ended = true
-  }
-
-  onPanMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
+  onPanUpdate(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
     if (!this.panState) return false
     this.lastCursor = cursor
     this.panState.ended = false
     return true
   }
 
-  onWheelZoom(cursor: Position, point: Point, space: ChartSpace, deltaY: number, deltaX: number, composable: ComposableHover): boolean {
-    if (!this.isZoomEnabled()) return false
+  onPanEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
+    if (!this.panState) {
+      this.lastCursor = null
+      return false
+    }
 
-    this.pendingWheelZooms.push({
-      deltaY,
-      point,
-      layout: { ...space.layout },
-    })
-
+    this.lastCursor = cursor
+    this.panState.ended = true
     return true
+  }
+
+  //#endregion
+
+  //#region Touch Zoom
+
+  mayTouchZoom(first: TouchZoomPoint, second: TouchZoomPoint, space: ChartSpace, composable: ComposableHover): InteractionDirection {
+    return this.isZoomEnabled() && this.options.panDirection ? this.options.panDirection : false
   }
 
   onTouchZoomBegin(first: TouchZoomPoint, second: TouchZoomPoint, space: ChartSpace, composable: ComposableHover): boolean {
@@ -134,14 +135,34 @@ export class ZoomChartComponent implements HoverComponent {
     return true
   }
 
-  onTouchZoomEnd(first: TouchZoomPoint, second: TouchZoomPoint, space: ChartSpace, composable: ComposableHover): void {
-    if (!this.touchZoomState) return
+  onTouchZoomEnd(first: TouchZoomPoint, second: TouchZoomPoint, space: ChartSpace, composable: ComposableHover): boolean {
+    if (!this.touchZoomState) return false
 
     this.touchZoomState.currentFirst = first
     this.touchZoomState.currentSecond = second
     this.touchZoomState.dirty = true
     this.touchZoomState.ended = true
+
+    return false
   }
+
+  //#endregion
+
+  //#region Wheel Zoom
+
+  onWheelZoom(cursor: Position, point: Point, space: ChartSpace, deltaY: number, deltaX: number, composable: ComposableHover): boolean {
+    if (!this.isZoomEnabled()) return false
+
+    this.pendingWheelZooms.push({
+      deltaY,
+      point,
+      layout: { ...space.layout },
+    })
+
+    return true
+  }
+
+  //#endregion
 
   onBeforeLayout(space: ChartSpace, full: Size): void {
     const nextBounds = space.bounds.clone()

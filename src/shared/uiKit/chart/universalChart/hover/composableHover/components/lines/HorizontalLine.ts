@@ -1,6 +1,6 @@
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
-import { Position, InteractionDirection } from '../../../BasePlotHover'
+import { Position, InteractionDirection } from '../../../basePlotHover/BasePlotHover'
 import { ComposableHover } from '../../ComposableHover'
 import { BaseLine } from './BaseLine'
 
