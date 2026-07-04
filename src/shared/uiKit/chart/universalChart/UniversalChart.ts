@@ -24,6 +24,7 @@ export interface BaseRenderer {
   didMount?(): void
   didLayout?(space: ChartSpace, full: Size): void
   beforeLayout?(space: ChartSpace, full: Size): void
+  afterLayout?(space: ChartSpace, overflow: Overflow, full: Size): void
   render?(space: ChartSpace, overflow: Overflow, full: Size): void
   getRootElement?(): Element
 }
@@ -40,7 +41,7 @@ export interface DefsRenderer extends BaseRenderer { }
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
 
-const globalChartRenderManager = new ChartRenderManager(3)
+const globalChartRenderManager = new ChartRenderManager(4)
 
 export class UniversalChart extends BaseChart {
 
@@ -247,7 +248,6 @@ export class UniversalChart extends BaseChart {
       return
     }
 
-
     let overflow = { top: 0, right: 0, bottom: 0, left: 0 }
     switch (this.options.layoutVariant ?? 'horizontal') {
       case 'horizontal':
@@ -267,6 +267,12 @@ export class UniversalChart extends BaseChart {
     }
 
     if (step == 2) {
+      for (const target of this.renderTargets) {
+        for (const renderer of target) renderer.afterLayout?.(this.chartSpace, overflow, this.size)
+      }
+    }
+
+    if (step == 3) {
       this.mutateViewBox()
       for (const target of this.renderTargets) {
         for (const renderer of target) renderer.render?.(this.chartSpace, overflow, this.size)

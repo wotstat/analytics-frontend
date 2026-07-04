@@ -1,7 +1,8 @@
 import { Overflow, Size } from '../../../../UniversalChart'
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
-import { HoveredDataPoint, InteractionDirection, Position } from '../../../BasePlotHover'
+import { HoveredDataPoint } from '../../../BaseDataSourcedPlotHover'
+import { InteractionDirection, Position } from '../../../basePlotHover/BasePlotHover'
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
 
 export type TooltipCtx = {
@@ -38,24 +39,29 @@ export class ChartTooltip implements HoverComponent {
     this.composable = composable
   }
 
-  onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
+  onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
     this.hovered = true
+    this.lastPoint = point
+    this.lastCursor = cursor
+    this.lastIsTouch = isTouch
+    return true
   }
 
-  onHoverEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
+  onHoverEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
     if (this.lastNearestDataPoints && this.lastNearestDataPoints.length > 0) {
       this.options.onHide?.()
       this.lastNearestDataPoints = null
     }
 
     this.hovered = false
+    return false
   }
 
   onBeforeLayout(space: ChartSpace, full: Size): void {
     this.windowScroll = { x: window.scrollX, y: window.scrollY }
   }
 
-  onHoverMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
+  onHoverUpdate(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
     this.lastPoint = point
     this.lastCursor = cursor
     this.lastIsTouch = isTouch

@@ -3,7 +3,8 @@ import { Overflow, Size } from '../../../../UniversalChart'
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
 import { addClasses, Classes, joinClasses } from '../../../../utils/utils'
-import { DataSource, HoveredDataPoint, InteractionDirection, isDataPointArrayEqual, Position } from '../../../BasePlotHover'
+import { DataSource, HoveredDataPoint, isDataPointArrayEqual } from '../../../BaseDataSourcedPlotHover'
+import { InteractionDirection, Position } from '../../../basePlotHover/BasePlotHover'
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
 
 
@@ -56,18 +57,21 @@ export class NearestMarker implements HoverComponent {
     this.composable = composable
   }
 
-  onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
+  onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
     this.hovered = true
+    this.lastPoint = point
+    return true
   }
 
-  onHoverEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): void {
+  onHoverEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
     for (const marker of this.markers) marker.dispose()
     this.markers = []
     this.lastNearestDataPoints = null
     this.hovered = false
+    return false
   }
 
-  onHoverMove(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
+  onHoverUpdate(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
     this.lastPoint = point
     return this.hovered
   }
