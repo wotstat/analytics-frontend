@@ -63,13 +63,11 @@ export class AwaitingTouchPanOrHover extends BaseState {
 
   onPointerUp(event: PointerEvent): void {
     if (event.pointerId !== this.activeEvent.pointerId) return
+    this.clearHoverBeginTimeout()
     this.changeState(new StartState())
   }
 
   onPointerCancel(event: PointerEvent): void {
-    if (event.pointerId !== this.activeEvent.pointerId) return
-
-    this.clearHoverBeginTimeout()
-    this.changeState(new StartState())
+    this.onPointerUp(event)
   }
 }

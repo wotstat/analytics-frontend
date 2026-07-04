@@ -90,6 +90,9 @@ export class TouchZoomState extends BaseState {
     this.changeState(new TouchPanState(this.capturedEvents.values().next().value!))
   }
 
+  onPointerCancel(event: PointerEvent): void {
+    this.onPointerUp(event)
+  }
 
   private updateZoomEvent() {
     if (this.activePointers.size < 2) return

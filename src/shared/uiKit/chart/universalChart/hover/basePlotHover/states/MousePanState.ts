@@ -31,6 +31,10 @@ export class MousePanState extends BaseState {
     this.returnToState(this.previousState)
   }
 
+  onPointerCancel(event: PointerEvent): void {
+    this.onPointerUp(event)
+  }
+
   onPointerMove(event: PointerEvent): void {
     if (event.pointerId !== this.initialEvent.pointerId) return
 

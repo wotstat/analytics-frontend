@@ -64,7 +64,7 @@ class BaseChart extends UniversalChart {
       .addComponent(new ZoomChartComponent({
         chart: this,
         zoom: true,
-        panDirection: 'horizontal',
+        panDirection: 'horizontal'
       }))
       .addComponent(new VerticalLine({
         offset: { end: 0.5 },
