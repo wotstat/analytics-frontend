@@ -62,4 +62,8 @@ export abstract class BaseSingleTouchEvent extends BaseState {
     this.releasePointer(this.activeEvent.pointerId)
     this.changeState(new StartState())
   }
+
+  onPointerCancel(event: PointerEvent): void {
+    this.onPointerUp(event)
+  }
 }
