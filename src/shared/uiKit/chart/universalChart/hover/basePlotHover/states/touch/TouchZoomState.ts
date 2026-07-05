@@ -26,7 +26,6 @@ export class TouchZoomState extends BaseState {
 
     const [first, second] = this.activePointers.values()
     this.delegate.onTouchZoomBegin(first, second, this.chart.space)
-    this.updateZoomEvent()
   }
 
   onTouchMove(event: TouchEvent): void {
@@ -82,7 +81,6 @@ export class TouchZoomState extends BaseState {
 
       const [first, second] = this.activePointers.values()
       this.delegate.onTouchZoomBegin(first, second, this.chart.space)
-      this.updateZoomEvent()
       return
     }
 
