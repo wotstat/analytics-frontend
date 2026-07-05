@@ -9,9 +9,10 @@ import { ComposableHover, HoverComponent } from '../../ComposableHover'
 type LayoutValue = { x: number, y: number, width: number, height: number }
 type AxisBounds = { min: number, max: number }
 type TouchZoomAxis = 'x' | 'y'
-type TouchZoomAxisMode = 'projection' | 'distance'
+type TouchZoomAxisMode = 'projection' | 'distance' | 'locked'
 
 const TOUCH_ZOOM_MIN_AXIS_DISTANCE = 48
+const TOUCH_ZOOM_ACTIVATE_AXIS_DISTANCE = 72
 const TOUCH_ZOOM_MIN_DISTANCE = 8
 
 type Options = {
@@ -69,7 +70,7 @@ export class ZoomChartComponent implements HoverComponent {
   onPanBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
     const { bounds, layout } = space
     const startBounds = bounds.clone()
-    const touchZoomBounds = this.calculateTouchZoomBounds()
+    const touchZoomBounds = this.calculateTouchZoomBounds(this.touchZoomState, bounds)
     if (touchZoomBounds) startBounds.patch(touchZoomBounds)
 
     this.panState = {
@@ -187,7 +188,7 @@ export class ZoomChartComponent implements HoverComponent {
 
   onBeforeLayout(space: ChartSpace, full: Size): void {
     const nextBounds = space.bounds.clone()
-    const touchZoomBounds = this.getTouchZoomBounds()
+    const touchZoomBounds = this.getTouchZoomBounds(space.bounds)
 
     if (touchZoomBounds) {
       nextBounds.patch(touchZoomBounds)
@@ -287,20 +288,21 @@ export class ZoomChartComponent implements HoverComponent {
     return changed
   }
 
-  private getTouchZoomBounds(): BoundsPatch | null {
+  private getTouchZoomBounds(currentBounds: Bounds): BoundsPatch | null {
     const state = this.touchZoomState
     if (!state?.dirty) return null
 
     state.dirty = false
     if (state.ended) this.touchZoomState = null
 
-    const bounds = this.calculateTouchZoomBounds(state)
+    const bounds = this.calculateTouchZoomBounds(state, currentBounds)
     state.commitStartBounds = false
     return bounds
   }
 
-  private calculateTouchZoomBounds(state = this.touchZoomState): BoundsPatch | null {
+  private calculateTouchZoomBounds(state = this.touchZoomState, currentBounds = state?.startBounds): BoundsPatch | null {
     if (!state) return null
+    if (!currentBounds) return null
     const nextBounds: BoundsPatch = state.commitStartBounds ? state.startBounds.toPatch(this.enabledAxes) : {}
     const {
       layout,
@@ -311,8 +313,6 @@ export class ZoomChartComponent implements HoverComponent {
       startSecondChartPoint,
       startMidChartPoint,
       startTouchDistance,
-      xAxisMode,
-      yAxisMode,
       currentFirst,
       currentSecond,
     } = state
@@ -326,7 +326,17 @@ export class ZoomChartComponent implements HoverComponent {
       let secondPosition = this.getAxisPosition('x', currentSecond.point, layout)
       let bounds: AxisBounds | null = null
 
-      if (xAxisMode === 'projection') {
+      if (state.xAxisMode === 'locked') {
+        const startMidPosition = (this.getAxisPosition('x', startFirstLayoutPoint, layout) + this.getAxisPosition('x', startSecondLayoutPoint, layout)) / 2
+        const currentMidPosition = (firstPosition + secondPosition) / 2
+        bounds = this.solvePanAxisBounds(startBounds.minX, startBounds.maxX, startMidPosition, currentMidPosition)
+
+        if (this.canActivateTouchZoomAxis('x', currentFirst.point, currentSecond.point, layout)) {
+          this.activateTouchZoomAxis('x', state, this.getBoundsWithAxisBounds(currentBounds, 'x', bounds), firstPosition, secondPosition)
+        }
+      }
+
+      if (state.xAxisMode === 'projection') {
         const startPositionDelta = this.getAxisPosition('x', startSecondLayoutPoint, layout) - this.getAxisPosition('x', startFirstLayoutPoint, layout)
         const positions = this.clampTouchZoomAxisPositions(firstPosition, secondPosition, this.getTouchZoomMinAxisDistance(layout.width) / layout.width, startPositionDelta)
         firstPosition = positions[0]
@@ -337,7 +347,7 @@ export class ZoomChartComponent implements HoverComponent {
           firstPosition,
           secondPosition,
         )
-      } else {
+      } else if (state.xAxisMode === 'distance') {
         bounds = this.solveDistanceAxisBounds(
           startBounds.minX,
           startBounds.maxX,
@@ -359,7 +369,17 @@ export class ZoomChartComponent implements HoverComponent {
       let secondPosition = this.getAxisPosition('y', currentSecond.point, layout)
       let bounds: AxisBounds | null = null
 
-      if (yAxisMode === 'projection') {
+      if (state.yAxisMode === 'locked') {
+        const startMidPosition = (this.getAxisPosition('y', startFirstLayoutPoint, layout) + this.getAxisPosition('y', startSecondLayoutPoint, layout)) / 2
+        const currentMidPosition = (firstPosition + secondPosition) / 2
+        bounds = this.solvePanAxisBounds(startBounds.minY, startBounds.maxY, startMidPosition, currentMidPosition)
+
+        if (this.canActivateTouchZoomAxis('y', currentFirst.point, currentSecond.point, layout)) {
+          this.activateTouchZoomAxis('y', state, this.getBoundsWithAxisBounds(currentBounds, 'y', bounds), firstPosition, secondPosition)
+        }
+      }
+
+      if (state.yAxisMode === 'projection') {
         const startPositionDelta = this.getAxisPosition('y', startSecondLayoutPoint, layout) - this.getAxisPosition('y', startFirstLayoutPoint, layout)
         const positions = this.clampTouchZoomAxisPositions(firstPosition, secondPosition, this.getTouchZoomMinAxisDistance(layout.height) / layout.height, startPositionDelta)
         firstPosition = positions[0]
@@ -370,7 +390,7 @@ export class ZoomChartComponent implements HoverComponent {
           firstPosition,
           secondPosition,
         )
-      } else {
+      } else if (state.yAxisMode === 'distance') {
         bounds = this.solveDistanceAxisBounds(
           startBounds.minY,
           startBounds.maxY,
@@ -401,6 +421,74 @@ export class ZoomChartComponent implements HoverComponent {
     if (!Number.isFinite(min) || !Number.isFinite(max) || min === max) return null
 
     return min < max ? { min, max } : { min: max, max: min }
+  }
+
+  private solvePanAxisBounds(startMin: number, startMax: number, startPosition: number, currentPosition: number): AxisBounds | null {
+    const range = startMax - startMin
+    const positionDelta = currentPosition - startPosition
+    if (!Number.isFinite(range) || !Number.isFinite(positionDelta) || range === 0) return null
+
+    const shift = -positionDelta * range
+    const min = startMin + shift
+    const max = startMax + shift
+
+    if (!Number.isFinite(min) || !Number.isFinite(max) || min === max) return null
+
+    return min < max ? { min, max } : { min: max, max: min }
+  }
+
+  private getBoundsWithAxisBounds(bounds: Bounds, axis: TouchZoomAxis, axisBounds: AxisBounds | null): Bounds {
+    if (!axisBounds) return bounds
+
+    const nextBounds = bounds.clone()
+    if (axis === 'x') {
+      nextBounds.minX = axisBounds.min
+      nextBounds.maxX = axisBounds.max
+    } else {
+      nextBounds.minY = axisBounds.min
+      nextBounds.maxY = axisBounds.max
+    }
+
+    return nextBounds
+  }
+
+  private activateTouchZoomAxis(
+    axis: TouchZoomAxis,
+    state: NonNullable<ZoomChartComponent['touchZoomState']>,
+    currentBounds: Bounds,
+    firstPosition: number,
+    secondPosition: number
+  ): void {
+    const min = axis === 'x' ? currentBounds.minX : currentBounds.minY
+    const max = axis === 'x' ? currentBounds.maxX : currentBounds.maxY
+    const range = max - min
+    if (!Number.isFinite(min) || !Number.isFinite(max) || !Number.isFinite(range) || range === 0) return
+
+    const firstValue = min + firstPosition * range
+    const secondValue = min + secondPosition * range
+    const midValue = min + ((firstPosition + secondPosition) / 2) * range
+    if (!Number.isFinite(firstValue) || !Number.isFinite(secondValue) || !Number.isFinite(midValue)) return
+
+    if (axis === 'x') {
+      state.startBounds.minX = min
+      state.startBounds.maxX = max
+      state.startFirstLayoutPoint.x = state.currentFirst.point.x
+      state.startSecondLayoutPoint.x = state.currentSecond.point.x
+      state.startFirstChartPoint.x = firstValue
+      state.startSecondChartPoint.x = secondValue
+      state.startMidChartPoint.x = midValue
+      state.xAxisMode = 'projection'
+      return
+    }
+
+    state.startBounds.minY = min
+    state.startBounds.maxY = max
+    state.startFirstLayoutPoint.y = state.currentFirst.point.y
+    state.startSecondLayoutPoint.y = state.currentSecond.point.y
+    state.startFirstChartPoint.y = firstValue
+    state.startSecondChartPoint.y = secondValue
+    state.startMidChartPoint.y = midValue
+    state.yAxisMode = 'projection'
   }
 
   private solveDistanceAxisBounds(
@@ -445,11 +533,22 @@ export class ZoomChartComponent implements HoverComponent {
   }
 
   private getTouchZoomAxisMode(firstPosition: number, secondPosition: number, axisSize: number): TouchZoomAxisMode {
-    return Math.abs(secondPosition - firstPosition) >= this.getTouchZoomMinAxisDistance(axisSize) ? 'projection' : 'distance'
+    if (Math.abs(secondPosition - firstPosition) >= this.getTouchZoomMinAxisDistance(axisSize)) return 'projection'
+    return this.options.panDirection === 'all' ? 'locked' : 'distance'
   }
 
   private getTouchZoomMinAxisDistance(axisSize: number): number {
     return Math.min(TOUCH_ZOOM_MIN_AXIS_DISTANCE, axisSize / 4)
+  }
+
+  private getTouchZoomActivateAxisDistance(axisSize: number): number {
+    return Math.min(TOUCH_ZOOM_ACTIVATE_AXIS_DISTANCE, axisSize / 3)
+  }
+
+  private canActivateTouchZoomAxis(axis: TouchZoomAxis, first: Point, second: Point, layout: LayoutValue): boolean {
+    const axisDistance = axis === 'x' ? Math.abs(second.x - first.x) : Math.abs(second.y - first.y)
+    const axisSize = axis === 'x' ? layout.width : layout.height
+    return axisDistance >= this.getTouchZoomActivateAxisDistance(axisSize)
   }
 
   private getTouchDistance(first: Point, second: Point): number {
