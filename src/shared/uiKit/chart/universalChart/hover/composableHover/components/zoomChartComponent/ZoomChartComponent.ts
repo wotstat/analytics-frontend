@@ -10,6 +10,13 @@ type LayoutValue = { x: number, y: number, width: number, height: number }
 type AxisBounds = { min: number, max: number }
 type TouchZoomAxis = 'x' | 'y'
 type TouchZoomAxisMode = 'projection' | 'distance' | 'locked'
+type ProjectionAxisPoints = {
+  firstValue: number,
+  secondValue: number,
+  firstPosition: number,
+  secondPosition: number,
+  startPositionDelta: number
+}
 
 const TOUCH_ZOOM_MIN_AXIS_DISTANCE = 48
 const TOUCH_ZOOM_ACTIVATE_AXIS_DISTANCE = 72
@@ -309,8 +316,6 @@ export class ZoomChartComponent implements HoverComponent {
       startBounds,
       startFirstLayoutPoint,
       startSecondLayoutPoint,
-      startFirstChartPoint,
-      startSecondChartPoint,
       startMidChartPoint,
       startTouchDistance,
       currentFirst,
@@ -337,13 +342,18 @@ export class ZoomChartComponent implements HoverComponent {
       }
 
       if (state.xAxisMode === 'projection') {
-        const startPositionDelta = this.getAxisPosition('x', startSecondLayoutPoint, layout) - this.getAxisPosition('x', startFirstLayoutPoint, layout)
-        const positions = this.clampTouchZoomAxisPositions(firstPosition, secondPosition, this.getTouchZoomMinAxisDistance(layout.width) / layout.width, startPositionDelta)
+        const projection = this.getProjectionAxisPoints('x', state, firstPosition, secondPosition)
+        const positions = this.clampTouchZoomAxisPositions(
+          projection.firstPosition,
+          projection.secondPosition,
+          this.getTouchZoomMinAxisDistance(layout.width) / layout.width,
+          projection.startPositionDelta
+        )
         firstPosition = positions[0]
         secondPosition = positions[1]
         bounds = this.solveAxisBounds(
-          startFirstChartPoint.x,
-          startSecondChartPoint.x,
+          projection.firstValue,
+          projection.secondValue,
           firstPosition,
           secondPosition,
         )
@@ -380,13 +390,18 @@ export class ZoomChartComponent implements HoverComponent {
       }
 
       if (state.yAxisMode === 'projection') {
-        const startPositionDelta = this.getAxisPosition('y', startSecondLayoutPoint, layout) - this.getAxisPosition('y', startFirstLayoutPoint, layout)
-        const positions = this.clampTouchZoomAxisPositions(firstPosition, secondPosition, this.getTouchZoomMinAxisDistance(layout.height) / layout.height, startPositionDelta)
+        const projection = this.getProjectionAxisPoints('y', state, firstPosition, secondPosition)
+        const positions = this.clampTouchZoomAxisPositions(
+          projection.firstPosition,
+          projection.secondPosition,
+          this.getTouchZoomMinAxisDistance(layout.height) / layout.height,
+          projection.startPositionDelta
+        )
         firstPosition = positions[0]
         secondPosition = positions[1]
         bounds = this.solveAxisBounds(
-          startFirstChartPoint.y,
-          startSecondChartPoint.y,
+          projection.firstValue,
+          projection.secondValue,
           firstPosition,
           secondPosition,
         )
@@ -408,6 +423,33 @@ export class ZoomChartComponent implements HoverComponent {
     }
 
     return Bounds.isPatchValid(nextBounds) ? nextBounds : null
+  }
+
+  private getProjectionAxisPoints(
+    axis: TouchZoomAxis,
+    state: NonNullable<ZoomChartComponent['touchZoomState']>,
+    firstPosition: number,
+    secondPosition: number
+  ): ProjectionAxisPoints {
+    const startFirstPosition = this.getAxisPosition(axis, state.startFirstLayoutPoint, state.layout)
+    const startSecondPosition = this.getAxisPosition(axis, state.startSecondLayoutPoint, state.layout)
+    const startFirstValue = axis === 'x' ? state.startFirstChartPoint.x : state.startFirstChartPoint.y
+    const startSecondValue = axis === 'x' ? state.startSecondChartPoint.x : state.startSecondChartPoint.y
+
+    const [firstValue, secondValue] = startFirstPosition <= startSecondPosition
+      ? [startFirstValue, startSecondValue]
+      : [startSecondValue, startFirstValue]
+    const [orderedFirstPosition, orderedSecondPosition] = firstPosition <= secondPosition
+      ? [firstPosition, secondPosition]
+      : [secondPosition, firstPosition]
+
+    return {
+      firstValue,
+      secondValue,
+      firstPosition: orderedFirstPosition,
+      secondPosition: orderedSecondPosition,
+      startPositionDelta: Math.abs(startSecondPosition - startFirstPosition),
+    }
   }
 
   private solveAxisBounds(firstValue: number, secondValue: number, firstPosition: number, secondPosition: number): AxisBounds | null {
