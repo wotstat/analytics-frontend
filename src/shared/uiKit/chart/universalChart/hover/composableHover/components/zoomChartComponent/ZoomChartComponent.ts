@@ -10,6 +10,30 @@ type LayoutValue = { x: number, y: number, width: number, height: number }
 type AxisBounds = { min: number, max: number }
 type TouchZoomAxis = 'x' | 'y'
 type TouchZoomAxisMode = 'projection' | 'distance' | 'locked'
+type BoundsPatchKey = keyof BoundsPatch
+type DecelerationOptions = {
+  mousePan?: number,
+  touchPan?: number,
+  touchZoom?: number
+}
+type InertiaKind = keyof DecelerationOptions
+type PanInertiaKind = Exclude<InertiaKind, 'touchZoom'>
+type BoundsVelocity = BoundsPatch
+type TouchZoomVelocity = {
+  centerX?: number,
+  logRangeX?: number,
+  centerY?: number,
+  logRangeY?: number
+}
+type InertiaStateBase = {
+  deceleration: number,
+  startTime: number,
+  lastElapsed: number
+}
+type InertiaState = InertiaStateBase & (
+  { kind: PanInertiaKind, velocity: BoundsVelocity } |
+  { kind: 'touchZoom', velocity: TouchZoomVelocity }
+)
 type ProjectionAxisPoints = {
   firstValue: number,
   secondValue: number,
@@ -21,11 +45,17 @@ type ProjectionAxisPoints = {
 const TOUCH_ZOOM_MIN_AXIS_DISTANCE = 48
 const TOUCH_ZOOM_ACTIVATE_AXIS_DISTANCE = 72
 const TOUCH_ZOOM_MIN_DISTANCE = 8
+const DEFAULT_DECELERATION = 0.98
+const MIN_VELOCITY_SAMPLE_DT = 1 / 60
+const INPUT_STOP_TIMEOUT = 0.1
+const INERTIA_MIN_REMAINING_PIXELS = 0.05
+const BOUNDS_PATCH_KEYS: BoundsPatchKey[] = ['minX', 'maxX', 'minY', 'maxY']
 
 type Options = {
   chart: UniversalChart
   zoom?: boolean
   panDirection?: InteractionDirection
+  deceleration?: DecelerationOptions
 }
 
 export class ZoomChartComponent implements HoverComponent {
@@ -37,6 +67,12 @@ export class ZoomChartComponent implements HoverComponent {
     startBounds: Bounds,
     layoutWidth: number,
     layoutHeight: number
+    isTouch: boolean,
+    suppressInertia: boolean,
+    lastSampleClientX: number,
+    lastSampleClientY: number,
+    lastSampleTime: number,
+    velocity: BoundsVelocity | null,
     ended: boolean
   } | null = null
 
@@ -60,9 +96,16 @@ export class ZoomChartComponent implements HoverComponent {
     currentFirst: TouchZoomPoint,
     currentSecond: TouchZoomPoint,
     commitStartBounds: boolean
+    updateTime: number,
+    lastBoundsSample: BoundsPatch | null,
+    lastBoundsSampleTime: number | null,
+    velocity: TouchZoomVelocity | null,
+    inertiaCanceled: boolean,
     dirty: boolean
     ended: boolean
   } | null = null
+  private inertia: InertiaState | null = null
+  private pendingTouchZoomInertia: InertiaState | null = null
 
   constructor(private readonly options: Options) {
     this.chart = options.chart
@@ -75,17 +118,27 @@ export class ZoomChartComponent implements HoverComponent {
   }
 
   onPanBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
+    const keepTouchZoomInertia = isTouch && (this.touchZoomState?.ended ?? false)
+    if (!keepTouchZoomInertia) this.stopInertia()
+
     const { bounds, layout } = space
     const startBounds = bounds.clone()
     const touchZoomBounds = this.calculateTouchZoomBounds(this.touchZoomState, bounds)
     if (touchZoomBounds) startBounds.patch(touchZoomBounds)
 
+    const time = this.getNow()
     this.panState = {
       startClientX: cursor.clientX,
       startClientY: cursor.clientY,
       startBounds,
       layoutWidth: layout.width,
       layoutHeight: layout.height,
+      isTouch,
+      suppressInertia: keepTouchZoomInertia,
+      lastSampleClientX: cursor.clientX,
+      lastSampleClientY: cursor.clientY,
+      lastSampleTime: time,
+      velocity: null,
       ended: false,
     }
 
@@ -94,6 +147,13 @@ export class ZoomChartComponent implements HoverComponent {
 
   onPanUpdate(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
     if (!this.panState) return false
+    if (isTouch) {
+      if (!this.panState.suppressInertia) this.cancelTouchZoomInertia()
+    } else {
+      this.stopInertia()
+    }
+    if (!this.panState.suppressInertia) this.inertia = null
+    this.recordPanVelocity(cursor)
     this.lastCursor = cursor
     this.panState.ended = false
     return true
@@ -105,6 +165,7 @@ export class ZoomChartComponent implements HoverComponent {
       return false
     }
 
+    this.recordPanVelocity(cursor)
     this.lastCursor = cursor
     this.panState.ended = true
     return true
@@ -121,8 +182,11 @@ export class ZoomChartComponent implements HoverComponent {
   onTouchZoomBegin(first: TouchZoomPoint, second: TouchZoomPoint, space: ChartSpace, composable: ComposableHover): boolean {
     if (!this.isZoomEnabled()) return false
 
+    this.stopInertia()
+
     const startBounds = space.bounds.clone()
     this.applyPan(startBounds)
+    this.inertia = null
 
     this.panState = null
     this.lastCursor = null
@@ -133,6 +197,7 @@ export class ZoomChartComponent implements HoverComponent {
     const startFirstLayoutPoint = { ...first.point }
     const startSecondLayoutPoint = { ...second.point }
     const startMidLayoutPoint = this.getMidPoint(startFirstLayoutPoint, startSecondLayoutPoint)
+    const time = this.getNow()
     this.touchZoomState = {
       layout,
       startBounds,
@@ -147,6 +212,11 @@ export class ZoomChartComponent implements HoverComponent {
       currentFirst: first,
       currentSecond: second,
       commitStartBounds: true,
+      updateTime: time,
+      lastBoundsSample: null,
+      lastBoundsSampleTime: null,
+      velocity: null,
+      inertiaCanceled: false,
       dirty: true,
       ended: false,
     }
@@ -159,7 +229,9 @@ export class ZoomChartComponent implements HoverComponent {
 
     this.touchZoomState.currentFirst = first
     this.touchZoomState.currentSecond = second
+    this.touchZoomState.updateTime = this.getNow()
     this.touchZoomState.dirty = true
+    this.sampleTouchZoomVelocity(this.touchZoomState, space.bounds)
 
     return true
   }
@@ -169,8 +241,10 @@ export class ZoomChartComponent implements HoverComponent {
 
     this.touchZoomState.currentFirst = first
     this.touchZoomState.currentSecond = second
+    this.touchZoomState.updateTime = this.getNow()
     this.touchZoomState.dirty = true
     this.touchZoomState.ended = true
+    this.sampleTouchZoomVelocity(this.touchZoomState, space.bounds)
 
     return false
   }
@@ -187,6 +261,7 @@ export class ZoomChartComponent implements HoverComponent {
       point,
       layout: { ...space.layout },
     })
+    this.stopInertia()
 
     return true
   }
@@ -204,10 +279,19 @@ export class ZoomChartComponent implements HoverComponent {
 
     const panChanged = this.applyPan(nextBounds)
     const wheelChanged = touchZoomBounds ? false : this.applyWheel(nextBounds)
-    if (!touchZoomBounds && !panChanged && !wheelChanged) return
+    this.activatePendingTouchZoomInertia()
+
+    const directChanged = !!touchZoomBounds || panChanged || wheelChanged
+    const inertiaChanged = this.applyInertia(nextBounds, space.layout)
+    if (inertiaChanged && this.panState && !this.panState.ended) this.panState.startBounds = nextBounds.clone()
+    if (!directChanged && !inertiaChanged) {
+      if (this.inertia) this.chart.scheduleRender()
+      return
+    }
 
     const patch = nextBounds.toPatch(this.enabledAxes)
     if (Bounds.isPatchValid(patch) && !space.bounds.isEqualToPatch(patch)) this.chart.setRenderBounds(patch, true)
+    if (this.inertia) this.chart.scheduleRender()
   }
 
   private applyPan(bounds: Bounds): boolean {
@@ -246,6 +330,7 @@ export class ZoomChartComponent implements HoverComponent {
     bounds.patch(patch)
 
     if (state.ended) {
+      if (!state.suppressInertia) this.startPanInertia(state.isTouch ? 'touchPan' : 'mousePan', state.velocity)
       this.panState = null
       this.lastCursor = null
     } else {
@@ -303,8 +388,528 @@ export class ZoomChartComponent implements HoverComponent {
     if (state.ended) this.touchZoomState = null
 
     const bounds = this.calculateTouchZoomBounds(state, currentBounds)
+    if (bounds) this.recordTouchZoomVelocity(state, bounds)
     state.commitStartBounds = false
+    if (state.ended && !state.inertiaCanceled && bounds) this.queueTouchZoomInertia(state.velocity)
     return bounds
+  }
+
+  private getNow(): number {
+    return performance.now()
+  }
+
+  private stopInertia(): void {
+    this.inertia = null
+    this.pendingTouchZoomInertia = null
+  }
+
+  private cancelTouchZoomInertia(): void {
+    this.pendingTouchZoomInertia = null
+    if (this.touchZoomState?.ended) this.touchZoomState.inertiaCanceled = true
+  }
+
+  private recordPanVelocity(cursor: Position): void {
+    const state = this.panState
+    if (!state) return
+
+    const time = this.getNow()
+    const dt = (time - state.lastSampleTime) / 1000
+    const dx = cursor.clientX - state.lastSampleClientX
+    const dy = cursor.clientY - state.lastSampleClientY
+    const moved = dx !== 0 || dy !== 0
+
+    if (moved && dt >= MIN_VELOCITY_SAMPLE_DT) {
+      const velocity: BoundsVelocity = {}
+
+      if (this.isXAxisEnabled() && state.layoutWidth > 0) {
+        const rangeX = state.startBounds.maxX - state.startBounds.minX
+        const shiftX = -dx * rangeX / state.layoutWidth
+        velocity.minX = shiftX / dt
+        velocity.maxX = shiftX / dt
+      }
+
+      if (this.isYAxisEnabled() && state.layoutHeight > 0) {
+        const rangeY = state.startBounds.maxY - state.startBounds.minY
+        const shiftY = dy * rangeY / state.layoutHeight
+        velocity.minY = shiftY / dt
+        velocity.maxY = shiftY / dt
+      }
+
+      state.velocity = this.filterVelocity(velocity)
+    } else if (dt > INPUT_STOP_TIMEOUT) {
+      state.velocity = null
+    } else if (moved) {
+      return
+    }
+
+    state.lastSampleClientX = cursor.clientX
+    state.lastSampleClientY = cursor.clientY
+    state.lastSampleTime = time
+  }
+
+  private recordTouchZoomVelocity(
+    state: NonNullable<ZoomChartComponent['touchZoomState']>,
+    bounds: BoundsPatch
+  ): void {
+    const sample = this.copyPatch(bounds)
+    const time = state.updateTime
+
+    if (!state.lastBoundsSample || state.lastBoundsSampleTime === null) {
+      state.lastBoundsSample = sample
+      state.lastBoundsSampleTime = time
+      return
+    }
+
+    const dt = (time - state.lastBoundsSampleTime) / 1000
+    const changed = this.hasPatchDelta(state.lastBoundsSample, sample)
+
+    if (changed && dt >= MIN_VELOCITY_SAMPLE_DT) {
+      state.velocity = this.getTouchZoomVelocity(state.lastBoundsSample, sample, dt)
+    } else if (dt > INPUT_STOP_TIMEOUT) {
+      state.velocity = null
+    } else if (changed) {
+      return
+    }
+
+    state.lastBoundsSample = sample
+    state.lastBoundsSampleTime = time
+  }
+
+  private sampleTouchZoomVelocity(
+    state: NonNullable<ZoomChartComponent['touchZoomState']>,
+    currentBounds: Bounds
+  ): void {
+    const bounds = this.calculateTouchZoomBounds(state, currentBounds)
+    if (bounds) this.recordTouchZoomVelocity(state, bounds)
+  }
+
+  private startPanInertia(kind: PanInertiaKind, velocity: BoundsVelocity | null): void {
+    this.inertia = this.createPanInertia(kind, velocity)
+  }
+
+  private queueTouchZoomInertia(velocity: TouchZoomVelocity | null): void {
+    this.pendingTouchZoomInertia = this.createTouchZoomInertia(velocity)
+  }
+
+  private activatePendingTouchZoomInertia(): void {
+    if (!this.pendingTouchZoomInertia) return
+
+    const inertia = this.pendingTouchZoomInertia
+    inertia.lastElapsed = Math.max(0, (this.getNow() - inertia.startTime) / 1000)
+    this.inertia = inertia
+    this.pendingTouchZoomInertia = null
+  }
+
+  private createPanInertia(kind: PanInertiaKind, velocity: BoundsVelocity | null): InertiaState | null {
+    const deceleration = this.getDeceleration(kind)
+    if (deceleration === null) return null
+
+    const filteredVelocity = this.filterVelocity(velocity)
+    if (!filteredVelocity) return null
+
+    return {
+      kind,
+      deceleration,
+      velocity: filteredVelocity,
+      startTime: this.getNow(),
+      lastElapsed: 0,
+    }
+  }
+
+  private createTouchZoomInertia(velocity: TouchZoomVelocity | null): InertiaState | null {
+    const deceleration = this.getDeceleration('touchZoom')
+    if (deceleration === null) return null
+
+    const filteredVelocity = this.filterTouchZoomVelocity(velocity)
+    if (!filteredVelocity) return null
+
+    return {
+      kind: 'touchZoom',
+      deceleration,
+      velocity: filteredVelocity,
+      startTime: this.getNow(),
+      lastElapsed: 0,
+    }
+  }
+
+  private applyInertia(bounds: Bounds, layout: LayoutValue): boolean {
+    const state = this.inertia
+    if (!state) return false
+
+    const elapsed = Math.max(0, (this.getNow() - state.startTime) / 1000)
+    if (elapsed <= state.lastElapsed) return false
+
+    const previousOffset = this.getDecelerationOffset(state.deceleration, state.lastElapsed)
+    const nextOffset = this.getDecelerationOffset(state.deceleration, elapsed)
+    const offsetDelta = nextOffset - previousOffset
+    state.lastElapsed = elapsed
+
+    if (state.kind === 'touchZoom') return this.applyTouchZoomInertia(bounds, layout, state, offsetDelta, elapsed)
+
+    const patch: BoundsPatch = {}
+    this.patchInertiaAxis(bounds, patch, 'x', offsetDelta, state.velocity.minX, state.velocity.maxX)
+    this.patchInertiaAxis(bounds, patch, 'y', offsetDelta, state.velocity.minY, state.velocity.maxY)
+
+    if (!Bounds.isPatchValid(patch)) {
+      this.inertia = null
+      return false
+    }
+
+    const changed = !bounds.isEqualToPatch(patch)
+    bounds.patch(patch)
+
+    if (!this.shouldContinueInertia(state, bounds, layout, elapsed)) this.inertia = null
+    return changed
+  }
+
+  private patchInertiaAxis(
+    bounds: Bounds,
+    patch: BoundsPatch,
+    axis: TouchZoomAxis,
+    offsetDelta: number,
+    minVelocity: number | undefined,
+    maxVelocity: number | undefined
+  ): void {
+    if (axis === 'x') {
+      if (!this.isXAxisEnabled()) return
+      if (Number.isFinite(minVelocity)) patch.minX = bounds.minX + minVelocity! * offsetDelta
+      if (Number.isFinite(maxVelocity)) patch.maxX = bounds.maxX + maxVelocity! * offsetDelta
+      return
+    }
+
+    if (!this.isYAxisEnabled()) return
+    if (Number.isFinite(minVelocity)) patch.minY = bounds.minY + minVelocity! * offsetDelta
+    if (Number.isFinite(maxVelocity)) patch.maxY = bounds.maxY + maxVelocity! * offsetDelta
+  }
+
+  private applyTouchZoomInertia(
+    bounds: Bounds,
+    layout: LayoutValue,
+    state: Extract<InertiaState, { kind: 'touchZoom' }>,
+    offsetDelta: number,
+    elapsed: number
+  ): boolean {
+    const patch: BoundsPatch = {}
+    this.patchTouchZoomInertiaAxis(bounds, patch, 'x', offsetDelta, state.velocity.centerX, state.velocity.logRangeX)
+    this.patchTouchZoomInertiaAxis(bounds, patch, 'y', offsetDelta, state.velocity.centerY, state.velocity.logRangeY)
+
+    if (!Bounds.isPatchValid(patch)) {
+      this.inertia = null
+      return false
+    }
+
+    const changed = !bounds.isEqualToPatch(patch)
+    bounds.patch(patch)
+
+    if (!this.shouldContinueTouchZoomInertia(state, bounds, layout, elapsed)) this.inertia = null
+    return changed
+  }
+
+  private patchTouchZoomInertiaAxis(
+    bounds: Bounds,
+    patch: BoundsPatch,
+    axis: TouchZoomAxis,
+    offsetDelta: number,
+    centerVelocity: number | undefined,
+    logRangeVelocity: number | undefined
+  ): void {
+    if (axis === 'x') {
+      if (!this.isXAxisEnabled()) return
+
+      const nextBounds = this.getTouchZoomInertiaAxisBounds(
+        bounds.minX,
+        bounds.maxX,
+        centerVelocity,
+        logRangeVelocity,
+        offsetDelta,
+      )
+      if (!nextBounds) return
+
+      patch.minX = nextBounds.min
+      patch.maxX = nextBounds.max
+      return
+    }
+
+    if (!this.isYAxisEnabled()) return
+
+    const nextBounds = this.getTouchZoomInertiaAxisBounds(
+      bounds.minY,
+      bounds.maxY,
+      centerVelocity,
+      logRangeVelocity,
+      offsetDelta,
+    )
+    if (!nextBounds) return
+
+    patch.minY = nextBounds.min
+    patch.maxY = nextBounds.max
+  }
+
+  private getTouchZoomInertiaAxisBounds(
+    min: number,
+    max: number,
+    centerVelocity: number | undefined,
+    logRangeVelocity: number | undefined,
+    offsetDelta: number
+  ): AxisBounds | null {
+    if (!Number.isFinite(min) || !Number.isFinite(max) || min === max) return null
+    if (!Number.isFinite(centerVelocity) && !Number.isFinite(logRangeVelocity)) return null
+
+    const range = max - min
+    const center = (min + max) / 2
+    const nextCenter = center + (Number.isFinite(centerVelocity) ? centerVelocity! * offsetDelta : 0)
+    const nextRange = range * Math.exp(Number.isFinite(logRangeVelocity) ? logRangeVelocity! * offsetDelta : 0)
+    if (!Number.isFinite(nextCenter) || !Number.isFinite(nextRange) || nextRange === 0) return null
+
+    const nextMin = nextCenter - nextRange / 2
+    const nextMax = nextCenter + nextRange / 2
+    if (!Number.isFinite(nextMin) || !Number.isFinite(nextMax) || nextMin === nextMax) return null
+
+    return nextMin < nextMax ? { min: nextMin, max: nextMax } : { min: nextMax, max: nextMin }
+  }
+
+  private shouldContinueInertia(
+    state: Extract<InertiaState, { kind: PanInertiaKind }>,
+    bounds: Bounds,
+    layout: LayoutValue,
+    elapsed: number
+  ): boolean {
+    const remainingOffset = this.getRemainingDecelerationOffset(state.deceleration, elapsed)
+    let maxRemainingPixels = 0
+    let hasVelocity = false
+
+    if (this.isXAxisEnabled() && layout.width > 0) {
+      const rangeX = bounds.maxX - bounds.minX
+      if (Number.isFinite(rangeX) && rangeX !== 0) {
+        const scaleX = layout.width / Math.abs(rangeX)
+        for (const key of ['minX', 'maxX'] as const) {
+          const velocity = state.velocity[key]
+          if (!Number.isFinite(velocity)) continue
+          hasVelocity = true
+          maxRemainingPixels = Math.max(maxRemainingPixels, Math.abs(velocity! * remainingOffset) * scaleX)
+        }
+      }
+    }
+
+    if (this.isYAxisEnabled() && layout.height > 0) {
+      const rangeY = bounds.maxY - bounds.minY
+      if (Number.isFinite(rangeY) && rangeY !== 0) {
+        const scaleY = layout.height / Math.abs(rangeY)
+        for (const key of ['minY', 'maxY'] as const) {
+          const velocity = state.velocity[key]
+          if (!Number.isFinite(velocity)) continue
+          hasVelocity = true
+          maxRemainingPixels = Math.max(maxRemainingPixels, Math.abs(velocity! * remainingOffset) * scaleY)
+        }
+      }
+    }
+
+    return hasVelocity && maxRemainingPixels >= INERTIA_MIN_REMAINING_PIXELS
+  }
+
+  private shouldContinueTouchZoomInertia(
+    state: Extract<InertiaState, { kind: 'touchZoom' }>,
+    bounds: Bounds,
+    layout: LayoutValue,
+    elapsed: number
+  ): boolean {
+    const remainingOffset = this.getRemainingDecelerationOffset(state.deceleration, elapsed)
+    let maxRemainingPixels = 0
+    let hasVelocity = false
+
+    if (this.isXAxisEnabled() && layout.width > 0) {
+      const remaining = this.getTouchZoomAxisRemainingPixels(
+        bounds.minX,
+        bounds.maxX,
+        layout.width,
+        state.velocity.centerX,
+        state.velocity.logRangeX,
+        remainingOffset,
+      )
+      if (remaining !== null) {
+        hasVelocity = true
+        maxRemainingPixels = Math.max(maxRemainingPixels, remaining)
+      }
+    }
+
+    if (this.isYAxisEnabled() && layout.height > 0) {
+      const remaining = this.getTouchZoomAxisRemainingPixels(
+        bounds.minY,
+        bounds.maxY,
+        layout.height,
+        state.velocity.centerY,
+        state.velocity.logRangeY,
+        remainingOffset,
+      )
+      if (remaining !== null) {
+        hasVelocity = true
+        maxRemainingPixels = Math.max(maxRemainingPixels, remaining)
+      }
+    }
+
+    return hasVelocity && maxRemainingPixels >= INERTIA_MIN_REMAINING_PIXELS
+  }
+
+  private getTouchZoomAxisRemainingPixels(
+    min: number,
+    max: number,
+    layoutSize: number,
+    centerVelocity: number | undefined,
+    logRangeVelocity: number | undefined,
+    remainingOffset: number
+  ): number | null {
+    const range = max - min
+    if (!Number.isFinite(range) || range === 0) return null
+
+    const scale = layoutSize / Math.abs(range)
+    let remaining = 0
+    let hasVelocity = false
+
+    if (Number.isFinite(centerVelocity)) {
+      remaining += Math.abs(centerVelocity! * remainingOffset)
+      hasVelocity = true
+    }
+
+    if (Number.isFinite(logRangeVelocity)) {
+      remaining += Math.abs(range * (Math.exp(logRangeVelocity! * remainingOffset) - 1)) / 2
+      hasVelocity = true
+    }
+
+    return hasVelocity ? remaining * scale : null
+  }
+
+  private getDecelerationOffset(deceleration: number, elapsed: number): number {
+    return (Math.pow(deceleration, 1000 * elapsed) - 1) / (1000 * Math.log(deceleration))
+  }
+
+  private getRemainingDecelerationOffset(deceleration: number, elapsed: number): number {
+    return -Math.pow(deceleration, 1000 * elapsed) / (1000 * Math.log(deceleration))
+  }
+
+  private getDeceleration(kind: InertiaKind): number | null {
+    const deceleration = this.options.deceleration?.[kind] ?? DEFAULT_DECELERATION
+    if (!Number.isFinite(deceleration) || deceleration <= 0 || deceleration >= 1) return null
+    return deceleration
+  }
+
+  private getTouchZoomVelocity(previous: BoundsPatch, next: BoundsPatch, dt: number): TouchZoomVelocity | null {
+    if (dt <= 0) return null
+
+    return this.filterTouchZoomVelocity({
+      ...this.getTouchZoomAxisVelocity(previous.minX, previous.maxX, next.minX, next.maxX, 'x', dt),
+      ...this.getTouchZoomAxisVelocity(previous.minY, previous.maxY, next.minY, next.maxY, 'y', dt),
+    })
+  }
+
+  private getTouchZoomAxisVelocity(
+    previousMin: number | undefined,
+    previousMax: number | undefined,
+    nextMin: number | undefined,
+    nextMax: number | undefined,
+    axis: TouchZoomAxis,
+    dt: number
+  ): TouchZoomVelocity {
+    if (previousMin === undefined || previousMax === undefined || nextMin === undefined || nextMax === undefined) return {}
+    if (!this.isTouchZoomVelocityAxisEnabled(axis)) return {}
+
+    const previousRange = previousMax - previousMin
+    const nextRange = nextMax - nextMin
+    if (!Number.isFinite(previousRange) || !Number.isFinite(nextRange) || previousRange <= 0 || nextRange <= 0) return {}
+
+    const previousCenter = (previousMin + previousMax) / 2
+    const nextCenter = (nextMin + nextMax) / 2
+    const centerVelocity = (nextCenter - previousCenter) / dt
+    const logRangeVelocity = Math.log(nextRange / previousRange) / dt
+
+    if (axis === 'x') {
+      return {
+        centerX: centerVelocity,
+        logRangeX: logRangeVelocity,
+      }
+    }
+
+    return {
+      centerY: centerVelocity,
+      logRangeY: logRangeVelocity,
+    }
+  }
+
+  private filterTouchZoomVelocity(velocity: TouchZoomVelocity | null): TouchZoomVelocity | null {
+    if (!velocity) return null
+
+    const filtered: TouchZoomVelocity = {}
+    let hasVelocity = false
+
+    if (this.isXAxisEnabled()) {
+      if (Number.isFinite(velocity.centerX) && velocity.centerX !== 0) {
+        filtered.centerX = velocity.centerX
+        hasVelocity = true
+      }
+      if (Number.isFinite(velocity.logRangeX) && velocity.logRangeX !== 0) {
+        filtered.logRangeX = velocity.logRangeX
+        hasVelocity = true
+      }
+    }
+
+    if (this.isYAxisEnabled()) {
+      if (Number.isFinite(velocity.centerY) && velocity.centerY !== 0) {
+        filtered.centerY = velocity.centerY
+        hasVelocity = true
+      }
+      if (Number.isFinite(velocity.logRangeY) && velocity.logRangeY !== 0) {
+        filtered.logRangeY = velocity.logRangeY
+        hasVelocity = true
+      }
+    }
+
+    return hasVelocity ? filtered : null
+  }
+
+  private isTouchZoomVelocityAxisEnabled(axis: TouchZoomAxis): boolean {
+    return axis === 'x' ? this.isXAxisEnabled() : this.isYAxisEnabled()
+  }
+
+  private filterVelocity(velocity: BoundsVelocity | null): BoundsVelocity | null {
+    if (!velocity) return null
+
+    const filtered: BoundsVelocity = {}
+    let hasVelocity = false
+
+    for (const key of BOUNDS_PATCH_KEYS) {
+      if (!this.isVelocityKeyEnabled(key)) continue
+      const value = velocity[key]
+      if (!Number.isFinite(value) || value === 0) continue
+      filtered[key] = value
+      hasVelocity = true
+    }
+
+    return hasVelocity ? filtered : null
+  }
+
+  private isVelocityKeyEnabled(key: BoundsPatchKey): boolean {
+    return (key === 'minX' || key === 'maxX') ? this.isXAxisEnabled() : this.isYAxisEnabled()
+  }
+
+  private hasPatchDelta(previous: BoundsPatch, next: BoundsPatch): boolean {
+    for (const key of BOUNDS_PATCH_KEYS) {
+      if (!this.isVelocityKeyEnabled(key)) continue
+      const previousValue = previous[key]
+      const nextValue = next[key]
+      if (previousValue === undefined || nextValue === undefined) continue
+      if (previousValue !== nextValue) return true
+    }
+
+    return false
+  }
+
+  private copyPatch(patch: BoundsPatch): BoundsPatch {
+    const copy: BoundsPatch = {}
+    for (const key of BOUNDS_PATCH_KEYS) {
+      const value = patch[key]
+      if (value !== undefined) copy[key] = value
+    }
+
+    return copy
   }
 
   private calculateTouchZoomBounds(state = this.touchZoomState, currentBounds = state?.startBounds): BoundsPatch | null {
