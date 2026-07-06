@@ -71,7 +71,7 @@ class BaseChart extends UniversalChart {
           maxDeltaX: 60 * 60 * 24 * 7 * 6,
           minDeltaX: 60 * 60 * 24,
           elastic: true
-        }
+        },
       }))
       .addComponent(new VerticalLine({
         offset: { end: 0.5 },
