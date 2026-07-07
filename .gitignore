@@ -8,8 +8,6 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-# Репозиторий использует Bun, поэтому lockfile от npm не нужен
-package-lock.json
 dist
 dist-ssr
 *.local

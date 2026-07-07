@@ -1,8 +1,5 @@
 const std = @import("std");
 
-// [BUILD]
-// zig build-exe monotoneXPath.zig -target wasm32-freestanding -fno-entry -rdynamic -O ReleaseSmall
-
 const allocator = std.heap.wasm_allocator;
 
 var empty_bytes: [0]u8 = .{};
