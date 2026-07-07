@@ -7,6 +7,9 @@ var result_buffer: []u8 = empty_bytes[0..];
 var result_length: usize = 0;
 
 const NUMBER_CAPACITY = 24;
+const PIXEL_COLUMN_WIDTH: f64 = 1.0;
+const COLLINEAR_EPS: f64 = 0.05;
+const MIN_CORRIDOR_DX: f64 = 1e-6;
 const MOVE_CAPACITY = 2 + NUMBER_CAPACITY + 1 + NUMBER_CAPACITY;
 const SEGMENT_CAPACITY = 2 + NUMBER_CAPACITY + 1 + NUMBER_CAPACITY + 2 + NUMBER_CAPACITY + 1 + NUMBER_CAPACITY + 2 + NUMBER_CAPACITY + 1 + NUMBER_CAPACITY + 1;
 
@@ -243,7 +246,25 @@ export fn buildMonotoneXPath(
         if (!std.math.isFinite(x[i]) or !std.math.isFinite(y[i])) return 0;
     }
 
-    if (visible_len == 1) {
+    var count = visible_len;
+
+    if (count >= 3) {
+        const idx = allocator.alloc(usize, count) catch return 0;
+        defer allocator.free(idx);
+
+        var m = decimatePixelColumns(x, y, idx);
+        m = collapseCollinear(x, y, idx[0..m]);
+
+        if (m < count) {
+            for (0..m) |k| {
+                x[k] = x[idx[k]];
+                y[k] = y[idx[k]];
+            }
+            count = m;
+        }
+    }
+
+    if (count == 1) {
         var writer_single = PathWriter.init(@max(@as(usize, 64), MOVE_CAPACITY)) catch return 0;
         emitMovePath(&writer_single, x[0], y[0]) catch {
             writer_single.deinit();
@@ -253,7 +274,7 @@ export fn buildMonotoneXPath(
         return 1;
     }
 
-    if (visible_len == 2) {
+    if (count == 2) {
         var writer_line = PathWriter.init(@max(@as(usize, 96), MOVE_CAPACITY + SEGMENT_CAPACITY)) catch return 0;
         emitLinePath(&writer_line, x[0], y[0], x[1], y[1]) catch {
             writer_line.deinit();
@@ -263,7 +284,7 @@ export fn buildMonotoneXPath(
         return 1;
     }
 
-    const segment_count = visible_len - 1;
+    const segment_count = count - 1;
 
     const dx = allocator.alloc(f64, segment_count) catch return 0;
     defer allocator.free(dx);
@@ -271,7 +292,7 @@ export fn buildMonotoneXPath(
     const slope = allocator.alloc(f64, segment_count) catch return 0;
     defer allocator.free(slope);
 
-    const tangent = allocator.alloc(f64, visible_len) catch return 0;
+    const tangent = allocator.alloc(f64, count) catch return 0;
     defer allocator.free(tangent);
 
     for (0..segment_count) |i| {
@@ -284,7 +305,7 @@ export fn buildMonotoneXPath(
     }
 
     tangent[0] = slope[0];
-    tangent[visible_len - 1] = slope[segment_count - 1];
+    tangent[count - 1] = slope[segment_count - 1];
 
     for (1..segment_count) |i| {
         const s0 = slope[i - 1];
@@ -312,9 +333,9 @@ export fn buildMonotoneXPath(
 
     const k = if (smoothing < 0.0) 0.0 else if (smoothing > 1.0) 1.0 else smoothing;
 
-    var writer = PathWriter.init(@max(@as(usize, 128), visible_len * 96)) catch return 0;
+    var writer = PathWriter.init(@max(@as(usize, 128), count * 96)) catch return 0;
 
-    emitPath(&writer, x, y, dx, tangent, k) catch {
+    emitPath(&writer, x[0..count], y[0..count], dx, tangent, k) catch {
         writer.deinit();
         return 0;
     };
@@ -326,6 +347,137 @@ export fn buildMonotoneXPath(
 
 fn clearResult() void {
     result_length = 0;
+}
+
+// Убирает точки, не влияющие на видимую форму кривой: подряд идущие точки внутри одного
+// пиксельного столбца сводятся к входу/выходу/минимуму/максимуму. Дополнительно сохраняются
+// соседние с границами точки, чтобы касательные монотонного сплайна в оставшихся узлах
+// не менялись. Заполняет idx индексами оставленных точек, возвращает их количество.
+fn decimatePixelColumns(x: []const f64, y: []const f64, idx: []usize) usize {
+    const n = x.len;
+    var out: usize = 0;
+    var i: usize = 0;
+
+    while (i < n) {
+        const column = @floor(x[i] / PIXEL_COLUMN_WIDTH);
+        var j = i;
+        var min_index = i;
+        var max_index = i;
+
+        while (j + 1 < n and @floor(x[j + 1] / PIXEL_COLUMN_WIDTH) == column) {
+            j += 1;
+            if (y[j] < y[min_index]) min_index = j;
+            if (y[j] > y[max_index]) max_index = j;
+        }
+
+        if (j - i <= 5) {
+            for (i..(j + 1)) |k| {
+                idx[out] = k;
+                out += 1;
+            }
+        } else {
+            var kept = [6]usize{ i, i + 1, @min(min_index, max_index), @max(min_index, max_index), j - 1, j };
+
+            var sort_i: usize = 1;
+            while (sort_i < kept.len) : (sort_i += 1) {
+                const value = kept[sort_i];
+                var p = sort_i;
+                while (p > 0 and kept[p - 1] > value) : (p -= 1) {
+                    kept[p] = kept[p - 1];
+                }
+                kept[p] = value;
+            }
+
+            for (kept, 0..) |value, k| {
+                if (k == 0 or value != kept[k - 1]) {
+                    idx[out] = value;
+                    out += 1;
+                }
+            }
+        }
+
+        i = j + 1;
+    }
+
+    return out;
+}
+
+// «Коридорный» алгоритм: точка принимается в текущий отрезок, пока прямая от якоря до неё
+// проходит в пределах COLLINEAR_EPS от всех промежуточных точек. Концы отрезка и соседние
+// с ними точки сохраняются. Сжимает idx на месте, возвращает новое количество.
+fn collapseCollinear(x: []const f64, y: []const f64, idx: []usize) usize {
+    const m = idx.len;
+    if (m < 5) return m;
+
+    var out: usize = 1;
+    var anchor: usize = 0;
+    var anchor_x = x[idx[0]];
+    var anchor_y = y[idx[0]];
+    var last: usize = 0;
+    var slope_min = -std.math.inf(f64);
+    var slope_max = std.math.inf(f64);
+
+    var i: usize = 1;
+    while (i < m) {
+        const dx = x[idx[i]] - anchor_x;
+        var accepted = false;
+
+        if (dx > MIN_CORRIDOR_DX) {
+            const dy = y[idx[i]] - anchor_y;
+            const slope = dy / dx;
+
+            if (slope >= slope_min and slope <= slope_max) {
+                slope_min = @max(slope_min, (dy - COLLINEAR_EPS) / dx);
+                slope_max = @min(slope_max, (dy + COLLINEAR_EPS) / dx);
+                last = i;
+                accepted = true;
+                i += 1;
+            }
+        }
+
+        if (!accepted) {
+            if (last == anchor) {
+                idx[out] = idx[i];
+                out += 1;
+                anchor = i;
+                last = i;
+                i += 1;
+            } else {
+                out = finalizeCollinearRun(idx, out, anchor, last);
+                anchor = last;
+            }
+
+            anchor_x = x[idx[out - 1]];
+            anchor_y = y[idx[out - 1]];
+            slope_min = -std.math.inf(f64);
+            slope_max = std.math.inf(f64);
+        }
+    }
+
+    if (last > anchor) {
+        out = finalizeCollinearRun(idx, out, anchor, last);
+    }
+
+    return out;
+}
+
+fn finalizeCollinearRun(idx: []usize, out_start: usize, anchor: usize, last: usize) usize {
+    var out = out_start;
+
+    if (anchor + 1 < last) {
+        idx[out] = idx[anchor + 1];
+        out += 1;
+    }
+
+    if (last >= anchor + 3) {
+        idx[out] = idx[last - 1];
+        out += 1;
+    }
+
+    idx[out] = idx[last];
+    out += 1;
+
+    return out;
 }
 
 fn allFinite(values: anytype) bool {
