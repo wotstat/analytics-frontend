@@ -1,4 +1,5 @@
 import { ChartGradient } from '../../../defs/ChartGradient'
+import { Overflow } from '../../../UniversalChart'
 import { Bounds } from '../../../utils/Bounds'
 import { ChartSpace } from '../../../utils/ChartSpace'
 import { addClasses, Classes } from '../../../utils/utils'
@@ -81,13 +82,13 @@ export class AutoLine extends BasePlotRenderer {
     return this.bounds
   }
 
-  renderImpl(space: ChartSpace) {
+  renderImpl(space: ChartSpace, overflow: Overflow) {
     if (space.bounds.isEmpty()) this.line?.setAttribute('d', '')
 
     const paths: { area?: string, line: string }[] = []
     for (let i = 0; i < this.segments.length; i++) {
       const segment = this.segments[i]
-      paths.push(this.calculateSegmentPath(i, segment, space))
+      paths.push(this.calculateSegmentPath(i, segment, space, overflow))
     }
 
     if (this.options.area) {
@@ -108,7 +109,7 @@ export class AutoLine extends BasePlotRenderer {
     this.line?.setAttribute('d', paths.map(t => t.line).join(' '))
   }
 
-  private calculateSegmentPath(lineIndex: number, points: Point[], space: ChartSpace) {
+  private calculateSegmentPath(lineIndex: number, points: Point[], space: ChartSpace, overflow: Overflow) {
 
     const getPath = () => {
       const smoothing = this.options.smoothing ?? DEFAULT_SMOOTHING
@@ -118,8 +119,14 @@ export class AutoLine extends BasePlotRenderer {
         const monotonePath = this.monotonePathSegments[lineIndex]
         const bounds = space.bounds
         const layout = { minX: space.layout.x, minY: space.layout.y, maxX: space.layout.x + space.layout.width, maxY: space.layout.y + space.layout.height }
+        const layoutOverflow = {
+          minX: layout.minX - overflow.left,
+          maxX: layout.maxX + overflow.right,
+          minY: layout.minY - overflow.top,
+          maxY: layout.maxY + overflow.bottom
+        }
 
-        return monotonePath.getPath(smoothing, bounds, layout)
+        return monotonePath.getPath(smoothing, bounds, layout, layoutOverflow)
       }
 
       if (this.options.smoothingMethod === 'smooth' || this.options.smoothing) {
@@ -136,13 +143,25 @@ export class AutoLine extends BasePlotRenderer {
     }
 
     const path = getPath()
+    if (path === '') return { line: '' }
     if (!this.options.area) return { line: path }
 
-    const firstPoint = space.chartToLayout(points[0])
-    const lastPoint = space.chartToLayout(points[points.length - 1])
+    const pointsFromPath = getPathEdgePoints(path)
+    if (!pointsFromPath) return { line: path }
+
     const h = space.layout.y + space.layout.height + 1
 
-    const areaPath = path + `L ${lastPoint.x.toFixed(2)} ${h.toFixed(2)} L ${firstPoint.x.toFixed(2)} ${h.toFixed(2)} Z`
+    const areaPath = path + `L ${pointsFromPath.last.x.toFixed(2)} ${h.toFixed(2)} L ${pointsFromPath.first.x.toFixed(2)} ${h.toFixed(2)} Z`
     return { line: path, area: areaPath }
+  }
+}
+
+function getPathEdgePoints(path: string): { first: Point, last: Point } | null {
+  const values = path.match(/-?\d+(?:\.\d+)?/g)
+  if (!values || values.length < 4 || values.length % 2 !== 0) return null
+
+  return {
+    first: { x: Number(values[0]), y: Number(values[1]) },
+    last: { x: Number(values[values.length - 2]), y: Number(values[values.length - 1]) }
   }
 }

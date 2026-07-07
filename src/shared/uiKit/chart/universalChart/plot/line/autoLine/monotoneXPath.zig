@@ -170,10 +170,14 @@ export fn buildMonotoneXPath(
     layout_max_x: f64,
     layout_min_y: f64,
     layout_max_y: f64,
+    visible_min_x: f64,
+    visible_max_x: f64,
+    visible_min_y: f64,
+    visible_max_y: f64,
 ) u32 {
     clearResult();
 
-    if (x_ptr == 0 or y_ptr == 0 or len < 3) return 0;
+    if (x_ptr == 0 or y_ptr == 0 or len == 0) return 0;
     if (!allFinite(.{
         smoothing,
         bounds_min_x,
@@ -184,18 +188,85 @@ export fn buildMonotoneXPath(
         layout_max_x,
         layout_min_y,
         layout_max_y,
+        visible_min_x,
+        visible_max_x,
+        visible_min_y,
+        visible_max_y,
     })) return 0;
 
     const input_x = @as([*]const f64, @ptrFromInt(x_ptr))[0..len];
     const input_y = @as([*]const f64, @ptrFromInt(y_ptr))[0..len];
 
-    const x = allocator.alloc(f64, len) catch return 0;
+    const w = bounds_max_x - bounds_min_x;
+    const h = bounds_max_y - bounds_min_y;
+    const layout_w = layout_max_x - layout_min_x;
+    const layout_h = layout_max_y - layout_min_y;
+
+    var visible_start = len;
+    var visible_end: usize = 0;
+
+    if (len == 1) {
+        if (input_x[0] >= visible_min_x and input_x[0] <= visible_max_x and input_y[0] >= visible_min_y and input_y[0] <= visible_max_y) {
+            visible_start = 0;
+            visible_end = 0;
+        }
+    } else {
+        for (0..(len - 1)) |i| {
+            const seg_min_x = @min(input_x[i], input_x[i + 1]);
+            const seg_max_x = @max(input_x[i], input_x[i + 1]);
+            if (seg_max_x < visible_min_x or seg_min_x > visible_max_x) continue;
+
+            const seg_min_y = @min(input_y[i], input_y[i + 1]);
+            const seg_max_y = @max(input_y[i], input_y[i + 1]);
+            if (seg_max_y < visible_min_y or seg_min_y > visible_max_y) continue;
+
+            if (visible_start == len) visible_start = i;
+            visible_end = i + 1;
+        }
+    }
+
+    if (visible_start == len) return 1;
+
+    if (visible_start > 0) visible_start -= 1;
+    if (visible_end + 1 < len) visible_end += 1;
+
+    const visible_len = visible_end - visible_start + 1;
+
+    const x = allocator.alloc(f64, visible_len) catch return 0;
     defer allocator.free(x);
 
-    const y = allocator.alloc(f64, len) catch return 0;
+    const y = allocator.alloc(f64, visible_len) catch return 0;
     defer allocator.free(y);
 
-    const segment_count = len - 1;
+    for (0..visible_len) |i| {
+        const source_index = visible_start + i;
+        x[i] = (input_x[source_index] - bounds_min_x) / w * layout_w + layout_min_x;
+        y[i] = (bounds_max_y - input_y[source_index]) / h * layout_h + layout_min_y;
+
+        if (!std.math.isFinite(x[i]) or !std.math.isFinite(y[i])) return 0;
+    }
+
+    if (visible_len == 1) {
+        var writer_single = PathWriter.init(@max(@as(usize, 64), MOVE_CAPACITY)) catch return 0;
+        emitMovePath(&writer_single, x[0], y[0]) catch {
+            writer_single.deinit();
+            return 0;
+        };
+        writer_single.finish();
+        return 1;
+    }
+
+    if (visible_len == 2) {
+        var writer_line = PathWriter.init(@max(@as(usize, 96), MOVE_CAPACITY + SEGMENT_CAPACITY)) catch return 0;
+        emitLinePath(&writer_line, x[0], y[0], x[1], y[1]) catch {
+            writer_line.deinit();
+            return 0;
+        };
+        writer_line.finish();
+        return 1;
+    }
+
+    const segment_count = visible_len - 1;
 
     const dx = allocator.alloc(f64, segment_count) catch return 0;
     defer allocator.free(dx);
@@ -203,20 +274,8 @@ export fn buildMonotoneXPath(
     const slope = allocator.alloc(f64, segment_count) catch return 0;
     defer allocator.free(slope);
 
-    const tangent = allocator.alloc(f64, len) catch return 0;
+    const tangent = allocator.alloc(f64, visible_len) catch return 0;
     defer allocator.free(tangent);
-
-    const w = bounds_max_x - bounds_min_x;
-    const h = bounds_max_y - bounds_min_y;
-    const layout_w = layout_max_x - layout_min_x;
-    const layout_h = layout_max_y - layout_min_y;
-
-    for (0..len) |i| {
-        x[i] = (input_x[i] - bounds_min_x) / w * layout_w + layout_min_x;
-        y[i] = (bounds_max_y - input_y[i]) / h * layout_h + layout_min_y;
-
-        if (!std.math.isFinite(x[i]) or !std.math.isFinite(y[i])) return 0;
-    }
 
     for (0..segment_count) |i| {
         dx[i] = x[i + 1] - x[i];
@@ -228,7 +287,7 @@ export fn buildMonotoneXPath(
     }
 
     tangent[0] = slope[0];
-    tangent[len - 1] = slope[segment_count - 1];
+    tangent[visible_len - 1] = slope[segment_count - 1];
 
     for (1..segment_count) |i| {
         const s0 = slope[i - 1];
@@ -256,7 +315,7 @@ export fn buildMonotoneXPath(
 
     const k = if (smoothing < 0.0) 0.0 else if (smoothing > 1.0) 1.0 else smoothing;
 
-    var writer = PathWriter.init(@max(@as(usize, 128), len * 96)) catch return 0;
+    var writer = PathWriter.init(@max(@as(usize, 128), visible_len * 96)) catch return 0;
 
     emitPath(&writer, x, y, dx, tangent, k) catch {
         writer.deinit();
@@ -310,4 +369,24 @@ fn emitPath(writer: *PathWriter, x: []const f64, y: []const f64, dx: []const f64
         try writer.number2(y[i + 1]);
         writer.byte(' ');
     }
+}
+
+fn emitMovePath(writer: *PathWriter, x: f64, y: f64) !void {
+    try writer.ensure(MOVE_CAPACITY);
+    writer.text("M ");
+    try writer.number2(x);
+    writer.byte(' ');
+    try writer.number2(y);
+}
+
+fn emitLinePath(writer: *PathWriter, x0: f64, y0: f64, x1: f64, y1: f64) !void {
+    try writer.ensure(MOVE_CAPACITY + SEGMENT_CAPACITY);
+    writer.text("M ");
+    try writer.number2(x0);
+    writer.byte(' ');
+    try writer.number2(y0);
+    writer.text(" L ");
+    try writer.number2(x1);
+    writer.byte(' ');
+    try writer.number2(y1);
 }
