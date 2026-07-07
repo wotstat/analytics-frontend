@@ -146,22 +146,12 @@ export class AutoLine extends BasePlotRenderer {
     if (path === '') return { line: '' }
     if (!this.options.area) return { line: path }
 
-    const pointsFromPath = getPathEdgePoints(path)
-    if (!pointsFromPath) return { line: path }
+    const leftPoint = Math.max(space.chartToLayout(points[0]).x, space.chartToLayoutX(space.bounds.minX) - overflow.left)
+    const rightPoint = Math.min(space.chartToLayout(points[points.length - 1]).x, space.chartToLayoutX(space.bounds.maxX) + overflow.right)
 
     const h = space.layout.y + space.layout.height + 1
 
-    const areaPath = path + `L ${pointsFromPath.last.x.toFixed(2)} ${h.toFixed(2)} L ${pointsFromPath.first.x.toFixed(2)} ${h.toFixed(2)} Z`
+    const areaPath = path + `L ${rightPoint.toFixed(2)} ${h.toFixed(2)} L ${leftPoint.toFixed(2)} ${h.toFixed(2)} Z`
     return { line: path, area: areaPath }
-  }
-}
-
-function getPathEdgePoints(path: string): { first: Point, last: Point } | null {
-  const values = path.match(/-?\d+(?:\.\d+)?/g)
-  if (!values || values.length < 4 || values.length % 2 !== 0) return null
-
-  return {
-    first: { x: Number(values[0]), y: Number(values[1]) },
-    last: { x: Number(values[values.length - 2]), y: Number(values[values.length - 1]) }
   }
 }

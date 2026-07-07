@@ -1,0 +1,1 @@
+zig build-exe monotoneXPath.zig -target wasm32-freestanding -fno-entry -rdynamic -O ReleaseSmall

@@ -1,4 +1,4 @@
-import wasmInit from './monotoneXPath.wasm?init'
+import wasmInit from './monotoneXPath/monotoneXPath.wasm?init'
 
 type MonotoneXPathWasm = {
   memory: WebAssembly.Memory
