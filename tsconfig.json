@@ -16,7 +16,6 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "preserve",
-    "allowArbitraryExtensions": true,
     /* Linting */
     "strict": true,
     "paths": {
