@@ -1,18 +1,20 @@
 import { Bounds } from '../../../../utils/Bounds'
+import { Point } from '../../../../utils/Point'
 import { TouchZoomPoint } from '../../../basePlotHover/BasePlotHover'
-import {
-  AxisBounds, LayoutValue, TOUCH_ZOOM_ACTIVATE_AXIS_DISTANCE, TOUCH_ZOOM_MIN_AXIS_DISTANCE, TOUCH_ZOOM_MIN_DISTANCE,
-  TouchZoomAxis, getAxisPosition, getAxisSize, getTouchDistance, orderedAxisBounds
-} from './common'
+import { Axis, AxisBounds, LayoutValue, getAxisPosition, getAxisSize, orderedAxisBounds } from './common'
+
+const MIN_AXIS_DISTANCE = 48
+const ACTIVATE_AXIS_DISTANCE = 72
+const MIN_TOUCH_DISTANCE = 8
 
 // Pinch axis behavior:
 // - 'projection': fingers are separated enough along the axis, both finger chart values track finger positions
 // - 'distance': single enabled axis with fingers nearly perpendicular to it, scale by total finger distance
 // - 'locked': both axes enabled but fingers too close along this one, pan by midpoint until fingers separate
-type TouchZoomAxisMode = 'projection' | 'distance' | 'locked'
+type PinchAxisMode = 'projection' | 'distance' | 'locked'
 
 type AxisGestureState = {
-  mode: TouchZoomAxisMode
+  mode: PinchAxisMode
   startMin: number
   startMax: number
   startFirstPosition: number
@@ -56,7 +58,7 @@ export class PinchGesture {
   }
 
   // Current midpoint screen fraction, used as the hard-clamp anchor
-  midAnchor(axis: TouchZoomAxis): number {
+  midAnchor(axis: Axis): number {
     return (getAxisPosition(axis, this.first.point, this.layout) + getAxisPosition(axis, this.second.point, this.layout)) / 2
   }
 
@@ -64,7 +66,7 @@ export class PinchGesture {
     return { x: this.solveAxis('x'), y: this.solveAxis('y') }
   }
 
-  private createAxisState(axis: TouchZoomAxis, min: number, max: number, lockable: boolean): AxisGestureState | null {
+  private createAxisState(axis: Axis, min: number, max: number, lockable: boolean): AxisGestureState | null {
     const size = getAxisSize(axis, this.layout)
     if (!(size > 0) || !Number.isFinite(max - min) || max - min === 0) return null
 
@@ -75,12 +77,12 @@ export class PinchGesture {
     return buildAxisState(separated ? 'projection' : lockable ? 'locked' : 'distance', min, max, p1, p2)
   }
 
-  private solveAxis(axis: TouchZoomAxis): AxisBounds | null {
+  private solveAxis(axis: Axis): AxisBounds | null {
     const state = this.states[axis]
     if (!state) return null
 
     const currentDistance = getTouchDistance(this.first.point, this.second.point)
-    if (this.startTouchDistance < TOUCH_ZOOM_MIN_DISTANCE || currentDistance < TOUCH_ZOOM_MIN_DISTANCE) return null
+    if (this.startTouchDistance < MIN_TOUCH_DISTANCE || currentDistance < MIN_TOUCH_DISTANCE) return null
 
     const size = getAxisSize(axis, this.layout)
     const p1 = getAxisPosition(axis, this.first.point, this.layout)
@@ -110,7 +112,7 @@ export class PinchGesture {
 
   // A locked axis becomes a regular projection pinch once the fingers separate enough,
   // rebased from the current (pan-shifted) bounds so there is no jump
-  private activateAxis(axis: TouchZoomAxis, state: AxisGestureState, current: AxisBounds | null, p1: number, p2: number): void {
+  private activateAxis(axis: Axis, state: AxisGestureState, current: AxisBounds | null, p1: number, p2: number): void {
     const min = current?.min ?? state.startMin
     const max = current?.max ?? state.startMax
     if (!Number.isFinite(max - min) || max - min === 0) return
@@ -119,7 +121,13 @@ export class PinchGesture {
   }
 }
 
-function buildAxisState(mode: TouchZoomAxisMode, min: number, max: number, p1: number, p2: number): AxisGestureState {
+function getTouchDistance(first: Point, second: Point): number {
+  const dx = second.x - first.x
+  const dy = second.y - first.y
+  return Math.sqrt(dx * dx + dy * dy)
+}
+
+function buildAxisState(mode: PinchAxisMode, min: number, max: number, p1: number, p2: number): AxisGestureState {
   const range = max - min
   return {
     mode,
@@ -134,11 +142,11 @@ function buildAxisState(mode: TouchZoomAxisMode, min: number, max: number, p1: n
 }
 
 function minAxisDistance(axisSize: number): number {
-  return Math.min(TOUCH_ZOOM_MIN_AXIS_DISTANCE, axisSize / 4)
+  return Math.min(MIN_AXIS_DISTANCE, axisSize / 4)
 }
 
 function activateAxisDistance(axisSize: number): number {
-  return Math.min(TOUCH_ZOOM_ACTIVATE_AXIS_DISTANCE, axisSize / 3)
+  return Math.min(ACTIVATE_AXIS_DISTANCE, axisSize / 3)
 }
 
 // Bounds such that both start chart values land at the given screen fractions

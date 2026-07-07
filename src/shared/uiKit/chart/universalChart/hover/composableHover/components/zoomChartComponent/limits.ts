@@ -110,16 +110,6 @@ export function effectiveMaxDelta(limits: AxisLimits): number {
 // noise, treating them as real would e.g. kill an inertia sitting exactly on a limit.
 const LIMITS_EPSILON = 1e-9
 
-export function isAxisInsideLimits(bounds: AxisBounds, limits: AxisLimits): boolean {
-  if (!limits.hasAny) return true
-  const delta = bounds.max - bounds.min
-  const epsilon = Math.abs(delta) * LIMITS_EPSILON
-  return bounds.min >= limits.min - epsilon &&
-    bounds.max <= limits.max + epsilon &&
-    delta >= limits.minDelta - epsilon &&
-    delta <= effectiveMaxDelta(limits) + epsilon
-}
-
 // Valid placements (window min) for a window of the given displayed size. When the
 // window is wider than the whole limits range the band inverts to placements covering
 // all of it — both edges overflow, no gap on either side.
@@ -175,8 +165,4 @@ export function clampAxisToLimits(bounds: AxisBounds, limits: AxisLimits, anchor
   }
 
   return min === bounds.min && max === bounds.max ? bounds : { min, max }
-}
-
-export function nearestValidAxisTarget(bounds: AxisBounds, limits: AxisLimits): AxisBounds {
-  return clampAxisToLimits(bounds, limits, 0.5)
 }
