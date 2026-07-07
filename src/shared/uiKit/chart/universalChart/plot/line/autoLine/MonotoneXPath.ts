@@ -170,7 +170,7 @@ function monotoneXPathFallback(options: {
   const visibleRange = getVisiblePointRange(options.x, options.y, visibleBounds)
   if (!visibleRange) return ''
 
-  const n = visibleRange.end - visibleRange.start + 1
+  let n = visibleRange.end - visibleRange.start + 1
   const x = new Array<number>(n)
   const y = new Array<number>(n)
 
@@ -180,8 +180,10 @@ function monotoneXPathFallback(options: {
     y[i] = transformY(options.y[sourceIndex])
   }
 
-  if (n === 1) return `M${fmt2(x[0])} ${fmt2(y[0])}`
-  if (n === 2) return `M${fmt2(x[0])} ${fmt2(y[0])} L${fmt2(x[1])} ${fmt2(y[1])}`
+  n = simplifyPointsInPlace(x, y, n)
+
+  if (n === 1) return `M ${fmt2(x[0])} ${fmt2(y[0])}`
+  if (n === 2) return `M ${fmt2(x[0])} ${fmt2(y[0])} L ${fmt2(x[1])} ${fmt2(y[1])}`
 
 
   const dx = new Array(Math.max(0, n - 1))
@@ -245,6 +247,123 @@ function monotoneXPathFallback(options: {
   }
 
   return d
+}
+
+const PIXEL_COLUMN_WIDTH = 1
+const COLLINEAR_EPS = 0.05
+const MIN_CORRIDOR_DX = 1e-6
+
+// Убирает точки, не влияющие на видимую форму кривой (координаты уже в пикселях layout):
+// 1) подряд идущие точки внутри одного пиксельного столбца сводятся к входу/выходу/минимуму/максимуму
+// 2) почти коллинеарные последовательности схлопываются до концов отрезка
+// В обоих случаях дополнительно сохраняются соседние с границами точки, чтобы касательные
+// монотонного сплайна в оставшихся узлах не менялись и кривая визуально не отличалась.
+function simplifyPointsInPlace(x: number[], y: number[], n: number): number {
+  if (n < 3) return n
+
+  const idx = decimatePixelColumns(x, y, n)
+  const m = collapseCollinear(x, y, idx)
+
+  if (m === n) return n
+
+  for (let k = 0; k < m; k++) {
+    x[k] = x[idx[k]]
+    y[k] = y[idx[k]]
+  }
+
+  return m
+}
+
+function decimatePixelColumns(x: number[], y: number[], n: number): number[] {
+  const idx: number[] = []
+  let i = 0
+
+  while (i < n) {
+    const column = Math.floor(x[i] / PIXEL_COLUMN_WIDTH)
+    let j = i
+    let minIndex = i
+    let maxIndex = i
+
+    while (j + 1 < n && Math.floor(x[j + 1] / PIXEL_COLUMN_WIDTH) === column) {
+      j++
+      if (y[j] < y[minIndex]) minIndex = j
+      if (y[j] > y[maxIndex]) maxIndex = j
+    }
+
+    if (j - i <= 5) {
+      for (let k = i; k <= j; k++) idx.push(k)
+    } else {
+      const kept = [i, i + 1, Math.min(minIndex, maxIndex), Math.max(minIndex, maxIndex), j - 1, j].sort((a, b) => a - b)
+      for (let k = 0; k < kept.length; k++) {
+        if (k === 0 || kept[k] !== kept[k - 1]) idx.push(kept[k])
+      }
+    }
+
+    i = j + 1
+  }
+
+  return idx
+}
+
+// «Коридорный» алгоритм: точка принимается в текущий отрезок, пока прямая от якоря до неё
+// проходит в пределах COLLINEAR_EPS от всех промежуточных точек. Сжимает idx на месте.
+function collapseCollinear(x: number[], y: number[], idx: number[]): number {
+  const m = idx.length
+  if (m < 5) return m
+
+  let out = 1
+  let anchor = 0
+  let anchorX = x[idx[0]]
+  let anchorY = y[idx[0]]
+  let last = 0
+  let slopeMin = -Infinity
+  let slopeMax = Infinity
+
+  const finalizeRun = () => {
+    if (anchor + 1 < last) idx[out++] = idx[anchor + 1]
+    if (last - 1 > anchor + 1) idx[out++] = idx[last - 1]
+    idx[out++] = idx[last]
+  }
+
+  let i = 1
+  while (i < m) {
+    const dx = x[idx[i]] - anchorX
+    let accepted = false
+
+    if (dx > MIN_CORRIDOR_DX) {
+      const dy = y[idx[i]] - anchorY
+      const slope = dy / dx
+
+      if (slope >= slopeMin && slope <= slopeMax) {
+        slopeMin = Math.max(slopeMin, (dy - COLLINEAR_EPS) / dx)
+        slopeMax = Math.min(slopeMax, (dy + COLLINEAR_EPS) / dx)
+        last = i
+        accepted = true
+        i++
+      }
+    }
+
+    if (!accepted) {
+      if (last === anchor) {
+        idx[out++] = idx[i]
+        anchor = i
+        last = i
+        i++
+      } else {
+        finalizeRun()
+        anchor = last
+      }
+
+      anchorX = x[idx[out - 1]]
+      anchorY = y[idx[out - 1]]
+      slopeMin = -Infinity
+      slopeMax = Infinity
+    }
+  }
+
+  if (last > anchor) finalizeRun()
+
+  return out
 }
 
 function getVisibleChartBounds(bounds: Bounds, layout: Bounds, visibleLayout: Bounds): Bounds {
