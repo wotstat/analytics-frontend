@@ -120,6 +120,30 @@ export function isAxisInsideLimits(bounds: AxisBounds, limits: AxisLimits): bool
     delta <= effectiveMaxDelta(limits) + epsilon
 }
 
+// Valid placements (window min) for a window of the given displayed size. When the
+// window is wider than the whole limits range the band inverts to placements covering
+// all of it — both edges overflow, no gap on either side.
+export function placementBand(range: number, limits: AxisLimits): { lo: number, hi: number } {
+  const nearEdge = limits.min
+  const farEdge = limits.max - range
+  return nearEdge <= farEdge ? { lo: nearEdge, hi: farEdge } : { lo: farEdge, hi: nearEdge }
+}
+
+// Per-channel validity, tolerant to (center, range) recomposition fp noise
+
+export function isRangeWithinLimits(range: number, limits: AxisLimits): boolean {
+  if (!limits.hasAny) return true
+  const epsilon = Math.abs(range) * LIMITS_EPSILON
+  return range >= limits.minDelta - epsilon && range <= effectiveMaxDelta(limits) + epsilon
+}
+
+export function isPlacementWithinLimits(min: number, range: number, limits: AxisLimits): boolean {
+  if (!limits.hasAny) return true
+  const band = placementBand(range, limits)
+  const epsilon = Math.abs(range) * LIMITS_EPSILON
+  return min >= band.lo - epsilon && min <= band.hi + epsilon
+}
+
 // Clamps the window to valid limits preserving the anchor screen fraction where possible.
 // Range is clamped first around the anchor, then the window is shifted inside min/max,
 // so bounds validity always wins over anchor preservation. Returns the input values

@@ -6,14 +6,15 @@ import { InteractionDirection, Position, TouchZoomPoint } from '../../../basePlo
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
 import {
   AxisBounds, DEFAULT_DECELERATION, DEFAULT_TOUCH_ZOOM_DECELERATION, INERTIA_MIN_REMAINING_PIXELS, INPUT_STOP_TIMEOUT, LayoutValue,
-  MIN_VELOCITY_SAMPLE_DT, TouchZoomAxis, VELOCITY_SAMPLE_DT_SMOOTHING, VELOCITY_SAMPLE_OUTLIER_RATIO,
+  MIN_VELOCITY_SAMPLE_DT, RUBBER_BAND_COEFF, SPRING_EPSILON_PX, SPRING_VELOCITY_EPSILON_PX, TouchZoomAxis,
+  VELOCITY_SAMPLE_DT_SMOOTHING, VELOCITY_SAMPLE_OUTLIER_RATIO,
   WHEEL_BATCH_TIMEOUT, axisCenter, axisRange, clamp,
   getAxisBounds, getAxisPosition, getAxisSize, orderedAxisBounds, setAxisBounds
 } from './common'
-import { applyElasticAxis, elasticVelocityFactor, invertElasticAxis } from './elastic'
-import { AxisInertia, decayOffset, decayVelocityAt, inertiaRemainingPixels, totalDecayTravel } from './inertia'
-import { AxisLimits, NormalizedLimits, clampAxisToLimits, effectiveMaxDelta, isAxisInsideLimits, nearestValidAxisTarget, normalizeLimits } from './limits'
-import { AxisSpring, axisSpringBoundsAt, axisSpringTargetBounds, createAxisSpring, isAxisSpringSettled } from './spring'
+import { applyElasticAxis, elasticVelocityFactor, invertElasticAxis, invertResistedAxisRange, invertResistedPlacement, resistedAxisRange } from './elastic'
+import { decayOffset, decayVelocityAt, remainingDecayOffset, totalDecayTravel } from './inertia'
+import { AxisLimits, NormalizedLimits, clampAxisToLimits, effectiveMaxDelta, isPlacementWithinLimits, isRangeWithinLimits, nearestValidAxisTarget, normalizeLimits, placementBand } from './limits'
+import { ScalarSpring } from './spring'
 import { PinchGesture } from './TouchZoomSolver'
 
 // A pan started right after a pinch suppresses its own inertia (the lift-off jitter must
@@ -29,9 +30,16 @@ type InertiaKind = keyof DecelerationOptions
 
 type AxisVelocity = { center: number, logRange: number }
 
-type AxisMotion =
-  | ({ kind: 'inertia', source: InertiaKind } & AxisInertia)
-  | { kind: 'spring', spring: AxisSpring }
+type ChannelMotion =
+  | { kind: 'inertia', source: InertiaKind, velocity: number, deceleration: number, startTime: number, lastElapsed: number }
+  | { kind: 'spring', spring: ScalarSpring, startTime: number }
+
+// Motions run per axis per channel: center (translation) and logRange (zoom) are
+// independent, so e.g. the zoom-return spring keeps running while a pan flick's
+// center inertia glides on the same axis. Inertia integrates raw space directly,
+// springs follow a displayed-space curve written back through the inverse projection —
+// both mutate raw, so they compose with an active pan gesture on top.
+type AxisMotions = { center: ChannelMotion | null, logRange: ChannelMotion | null }
 
 type PanState = {
   startClientX: number,
@@ -62,7 +70,8 @@ type PinchState = {
 
 type WheelBatch = {
   pending: { deltaY: number, point: Point, layout: LayoutValue }[],
-  lastEventTime: number
+  lastEventTime: number,
+  anchor: { x: number, y: number } | null
 }
 
 type Options = {
@@ -88,9 +97,12 @@ type Options = {
 //
 // Event handlers only record state, all bounds changes are computed and applied in
 // onBeforeLayout. Gestures and inertia integrate in "raw" (unresisted) space, the
-// displayed bounds are a stateless projection of raw: identity inside limits, rubber
-// band outside (elastic) or clamp (hard). Springs animate displayed bounds directly
-// and only ever start after user input has ended.
+// displayed bounds are a projection of raw anchored at the active zoom point:
+// identity inside limits, rubber band outside (elastic) or clamp (hard). Motions run
+// per channel (center / logRange): inertia integrates raw directly, springs follow a
+// displayed-space curve written back into raw through the inverse projection, and
+// only ever start after the input owning their channel has ended — so a pan composes
+// with a still-running zoom return on the same axis.
 export class ZoomChartComponent implements HoverComponent {
 
   protected readonly chart: UniversalChart
@@ -103,7 +115,10 @@ export class ZoomChartComponent implements HoverComponent {
   private lastCursor: Position | null = null
   private pinch: PinchState | null = null
   private wheel: WheelBatch | null = null
-  private motions: { x: AxisMotion | null, y: AxisMotion | null } = { x: null, y: null }
+  private motions: { x: AxisMotions, y: AxisMotions } = {
+    x: { center: null, logRange: null },
+    y: { center: null, logRange: null },
+  }
   private raw: Bounds | null = null
 
   constructor(private readonly options: Options) {
@@ -124,9 +139,9 @@ export class ZoomChartComponent implements HoverComponent {
 
   onPanBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
     const afterPinch = isTouch && (this.pinch?.ended ?? false)
-    if (isTouch) this.stopMotionsForTouchPan()
-    else this.stopAllMotions()
+    this.stopMotionsForPan(isTouch)
     this.lastCursor = null
+    if (this.wheel) this.wheel.anchor = null // pan owns the display now, anchor context resets to 0.5
 
     const raw = this.resetRawFrom(space)
     this.applyPinchResidual(raw)
@@ -153,7 +168,7 @@ export class ZoomChartComponent implements HoverComponent {
 
   onPanUpdate(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
     if (!this.pan) return false
-    if (!isTouch) this.stopAllMotions()
+    if (!isTouch) this.stopMotionsForPan(false)
 
     if (this.pan.suppressInertia) {
       const dx = cursor.clientX - this.pan.startClientX
@@ -192,7 +207,8 @@ export class ZoomChartComponent implements HoverComponent {
 
     this.stopAllMotions()
 
-    const raw = this.resetRawFrom(space)
+    const raw = this.resetRawFrom(space, axis =>
+      clamp((getAxisPosition(axis, first.point, space.layout) + getAxisPosition(axis, second.point, space.layout)) / 2, 0, 1))
     this.applyPinchResidual(raw)
     if (this.pan && this.lastCursor) this.applyPanShift(raw, this.pan, this.lastCursor)
     this.pan = null
@@ -248,20 +264,16 @@ export class ZoomChartComponent implements HoverComponent {
     if (!this.isZoomEnabled()) return false
     if (this.pinch && !this.pinch.ended) return false // touch zoom has priority over wheel
 
-    // wheel is active input: it takes over springs and zoom inertia, but pan inertia keeps running
+    // wheel is active input: it takes over zoom motions (inertia and the zoom-return
+    // spring) and center springs, but a pan inertia glide keeps running
     for (const axis of this.activeAxes) {
-      const motion = this.motions[axis]
-      if (!motion) continue
-      if (motion.kind === 'spring') {
-        this.motions[axis] = null
-        this.raw = null
-      } else if (motion.source === 'touchZoom') {
-        this.motions[axis] = null
-      }
+      const motions = this.motions[axis]
+      motions.logRange = null
+      if (motions.center?.kind === 'spring') motions.center = null
     }
     if (this.pinch?.ended) this.pinch.inertiaCanceled = true
 
-    if (!this.wheel) this.wheel = { pending: [], lastEventTime: 0 }
+    if (!this.wheel) this.wheel = { pending: [], lastEventTime: 0, anchor: null }
     this.wheel.pending.push({ deltaY, point: { ...point }, layout: { ...space.layout } })
     this.wheel.lastEventTime = this.now()
 
@@ -276,8 +288,7 @@ export class ZoomChartComponent implements HoverComponent {
     const now = this.now()
 
     const hasGesture = this.pan !== null || this.pinch !== null || this.wheel !== null
-    const hasMotion = this.motions.x !== null || this.motions.y !== null
-    if (!hasGesture && !hasMotion) {
+    if (!hasGesture && !this.hasAnyMotion()) {
       this.raw = null
       return
     }
@@ -289,15 +300,15 @@ export class ZoomChartComponent implements HoverComponent {
     if (pinchApplied || this.pinch) this.wheel = null
     else this.processWheel(raw, space.layout, now)
 
-    const inertiaMoved = this.stepInertias(raw, space.layout, now)
-    if (inertiaMoved && this.pan && !this.pan.ended) this.pan.startBounds = raw.clone()
+    const motionMoved = this.stepMotions(raw, space.layout, now)
+    if (motionMoved && this.pan && !this.pan.ended) this.pan.startBounds = raw.clone()
 
-    const displayed = this.computeDisplayed(raw, space, now)
+    const displayed = this.computeDisplayed(raw, space)
     const patch = displayed.toPatch(this.enabledBoundsAxes)
     if (Bounds.isPatchValid(patch) && !space.bounds.isEqualToPatch(patch)) this.chart.setRenderBounds(patch, true)
 
-    if (this.motions.x !== null || this.motions.y !== null || this.wheel !== null) this.chart.scheduleRender()
-    if (this.pan === null && this.pinch === null && this.wheel === null && this.motions.x === null && this.motions.y === null) this.raw = null
+    if (this.hasAnyMotion() || this.wheel !== null) this.chart.scheduleRender()
+    if (this.pan === null && this.pinch === null && this.wheel === null && !this.hasAnyMotion()) this.raw = null
   }
 
   private processPinch(raw: Bounds, layout: LayoutValue, now: number): boolean {
@@ -309,6 +320,12 @@ export class ZoomChartComponent implements HoverComponent {
 
     if (pinch.ended) {
       this.pinch = null
+
+      // the projection anchor returns to 0.5 with the gesture gone
+      const gesture = pinch.gesture
+      this.rebaseRawAnchor(raw, gesture.layout, axis => clamp(gesture.midAnchor(axis), 0, 1), () => 0.5)
+      if (this.pan) this.pan.startBounds = raw.clone()
+
       if (!pinch.inertiaCanceled) this.releasePinch(raw, layout, pinch.velocity, now)
     }
 
@@ -347,6 +364,17 @@ export class ZoomChartComponent implements HoverComponent {
         const zoomFactor = 1 + zoom.deltaY * 0.001
         if (!Number.isFinite(zoomFactor) || zoomFactor <= 0) continue
 
+        // while the batch drives the display, its projection anchor follows the cursor
+        if (!this.pan) {
+          const previous = wheel.anchor
+          const anchor = {
+            x: clamp(getAxisPosition('x', zoom.point, zoom.layout), 0, 1),
+            y: clamp(getAxisPosition('y', zoom.point, zoom.layout), 0, 1),
+          }
+          this.rebaseRawAnchor(raw, zoom.layout, axis => previous?.[axis] ?? 0.5, axis => anchor[axis])
+          wheel.anchor = anchor
+        }
+
         for (const axis of this.activeAxes) {
           if (!(getAxisSize(axis, zoom.layout) > 0)) continue
 
@@ -370,18 +398,17 @@ export class ZoomChartComponent implements HoverComponent {
     }
 
     if ((now - wheel.lastEventTime) / 1000 > WHEEL_BATCH_TIMEOUT) {
+      const anchor = wheel.anchor
       this.wheel = null
+      if (anchor) this.rebaseRawAnchor(raw, layout, axis => anchor[axis], () => 0.5)
 
       for (const axis of this.activeAxes) {
-        if (this.motions[axis]) continue
-        const limits = this.axisLimits(axis)
-        if (!limits.hasAny) continue
-
-        const bounds = getAxisBounds(raw, axis)
-        if (isAxisInsideLimits(bounds, limits)) continue
-
-        const displayed = applyElasticAxis(bounds, limits, getAxisSize(axis, layout))
-        this.motions[axis] = { kind: 'spring', spring: createAxisSpring(displayed, nearestValidAxisTarget(displayed, limits), 0, 0, now) }
+        if (!this.axisLimits(axis).hasAny) continue
+        const motions = this.motions[axis]
+        this.releaseAxis(axis, raw, getAxisSize(axis, layout), {
+          center: motions.center === null ? 0 : null,
+          logRange: motions.logRange === null ? 0 : null,
+        }, null, 'mousePan', now)
       }
     }
   }
@@ -399,7 +426,7 @@ export class ZoomChartComponent implements HoverComponent {
 
       const start = getAxisBounds(pan.startBounds, axis)
       const clientDelta = axis === 'x' ? cursor.clientX - pan.startClientX : cursor.clientY - pan.startClientY
-      const shift = (axis === 'x' ? -clientDelta : clientDelta) * axisRange(start) / size
+      const shift = (axis === 'x' ? -clientDelta : clientDelta) * this.panConversionRange(axis, start, size) / size
 
       const next = orderedAxisBounds(start.min + shift, start.max + shift)
       if (!next) continue
@@ -441,11 +468,13 @@ export class ZoomChartComponent implements HoverComponent {
     const deceleration = pan.suppressInertia ? null : this.getDeceleration(source)
 
     for (const axis of this.activeAxes) {
-      if (pan.suppressInertia && this.motions[axis]) continue
+      const motions = this.motions[axis]
+      const releaseCenter = !pan.suppressInertia || motions.center === null
 
-      const velocity = { center: pan.velocity?.[axis] ?? 0, logRange: 0 }
-      const motion = this.decideAxisRelease(axis, getAxisBounds(raw, axis), velocity, deceleration, getAxisSize(axis, layout), source, now)
-      if (motion) this.motions[axis] = motion
+      this.releaseAxis(axis, raw, getAxisSize(axis, layout), {
+        center: releaseCenter ? pan.velocity?.[axis] ?? 0 : null,
+        logRange: motions.logRange === null ? 0 : null,
+      }, deceleration, source, now)
     }
   }
 
@@ -453,160 +482,225 @@ export class ZoomChartComponent implements HoverComponent {
     const deceleration = this.getDeceleration('touchZoom')
 
     for (const axis of this.activeAxes) {
-      const axisVelocity = velocity?.[axis] ?? { center: 0, logRange: 0 }
-      const motion = this.decideAxisRelease(axis, getAxisBounds(raw, axis), axisVelocity, deceleration, getAxisSize(axis, layout), 'touchZoom', now)
-      if (motion) this.motions[axis] = motion
+      const axisVelocity = velocity?.[axis]
+      this.releaseAxis(axis, raw, getAxisSize(axis, layout), {
+        center: axisVelocity?.center ?? 0,
+        logRange: axisVelocity?.logRange ?? 0,
+      }, deceleration, 'touchZoom', now)
     }
   }
 
-  // Inside limits: plain inertia. Outside (elastic): inertia when the release velocity
-  // is enough to bring bounds back inside, otherwise an immediate spring carrying the
-  // release velocity mapped into displayed space.
-  private decideAxisRelease(
+  // Per-channel release: inside limits (or with velocity enough to glide back inside)
+  // a channel gets Apple-decay inertia, otherwise a spring carrying the release
+  // velocity mapped into displayed space. A null channel velocity leaves that
+  // channel's current motion untouched.
+  private releaseAxis(
     axis: TouchZoomAxis,
-    rawBounds: AxisBounds,
-    velocity: AxisVelocity,
-    deceleration: number | null,
+    raw: Bounds,
     layoutSize: number,
+    velocity: { center: number | null, logRange: number | null },
+    deceleration: number | null,
     source: InertiaKind,
     now: number
-  ): AxisMotion | null {
+  ): void {
     const limits = this.axisLimits(axis)
-    const outside = this.limits.elastic && limits.hasAny && !isAxisInsideLimits(rawBounds, limits)
+    const elastic = this.limits.elastic && limits.hasAny
+    const motions = this.motions[axis]
+    const rawBounds = getAxisBounds(raw, axis)
+    const displayed = elastic ? applyElasticAxis(rawBounds, limits, layoutSize) : rawBounds
+    const target = nearestValidAxisTarget(displayed, limits)
+    const factor = elastic ? elasticVelocityFactor(rawBounds, limits, layoutSize) : { center: 1, logRange: 1 }
 
-    if (!outside) return createInertiaMotion(velocity, deceleration, source, now)
-
-    const target = nearestValidAxisTarget(rawBounds, limits)
-    const needCenter = axisCenter(target) - axisCenter(rawBounds)
-    const needLogRange = Math.log(axisRange(target) / axisRange(rawBounds))
-    const travelCenter = deceleration !== null ? totalDecayTravel(velocity.center, deceleration) : 0
-    const travelLogRange = deceleration !== null ? totalDecayTravel(velocity.logRange, deceleration) : 0
-
-    if (isTravelSufficient(needCenter, travelCenter) && isTravelSufficient(needLogRange, travelLogRange)) {
-      return createInertiaMotion(velocity, deceleration, source, now)
+    if (velocity.logRange !== null) {
+      const need = elastic ? Math.log(axisRange(target) / axisRange(rawBounds)) : 0
+      // a pan never blocks the zoom return, only zoom inputs own this channel
+      const springAllowed = this.pinch === null && this.wheel === null
+      const motion = this.decideChannelRelease(need, velocity.logRange, Math.log(axisRange(displayed)), Math.log(axisRange(target)), factor.logRange, deceleration, source, springAllowed, now)
+      if (motion) motions.logRange = motion
     }
 
-    // another input is still active (e.g. pan taking over an ended pinch): it owns the
-    // bounds now and its own release will bring them back, springs may not start yet
-    if (this.hasActiveInput()) return null
-
-    const factor = elasticVelocityFactor(rawBounds, limits, layoutSize)
-    const displayed = applyElasticAxis(rawBounds, limits, layoutSize)
-
-    return {
-      kind: 'spring',
-      spring: createAxisSpring(
-        displayed,
-        nearestValidAxisTarget(displayed, limits),
-        velocity.center * factor.center,
-        velocity.logRange * factor.logRange,
-        now
-      ),
+    if (velocity.center !== null) {
+      const need = elastic ? axisCenter(target) - axisCenter(rawBounds) : 0
+      const motion = this.decideChannelRelease(need, velocity.center, axisCenter(displayed), axisCenter(target), factor.center, deceleration, source, !this.hasActiveInput(), now)
+      if (motion) motions.center = motion
     }
+  }
+
+  private decideChannelRelease(
+    need: number,
+    velocity: number,
+    displayedFrom: number,
+    displayedTarget: number,
+    velocityFactor: number,
+    deceleration: number | null,
+    source: InertiaKind,
+    springAllowed: boolean,
+    now: number
+  ): ChannelMotion | null {
+    const v = Number.isFinite(velocity) ? velocity : 0
+    const travel = deceleration !== null ? totalDecayTravel(v, deceleration) : 0
+    const sufficient = need === 0 || (Math.sign(travel) === Math.sign(need) && Math.abs(travel) >= Math.abs(need))
+
+    if (sufficient) {
+      if (deceleration === null || v === 0) return null
+      return { kind: 'inertia', source, velocity: v, deceleration, startTime: now, lastElapsed: 0 }
+    }
+
+    if (!springAllowed) return null
+    return { kind: 'spring', spring: new ScalarSpring(displayedFrom, displayedTarget, v * velocityFactor), startTime: now }
   }
 
   //#endregion
 
   //#region Inertia and spring stepping
 
-  private stepInertias(raw: Bounds, layout: LayoutValue, now: number): boolean {
+  private stepMotions(raw: Bounds, layout: LayoutValue, now: number): boolean {
     let changed = false
 
     for (const axis of this.activeAxes) {
-      const motion = this.motions[axis]
-      if (motion?.kind !== 'inertia') continue
-      changed = this.stepInertiaAxis(axis, motion, raw, getAxisSize(axis, layout), now) || changed
+      changed = this.stepAxisMotions(axis, raw, getAxisSize(axis, layout), now) || changed
     }
 
     return changed
   }
 
-  private stepInertiaAxis(axis: TouchZoomAxis, motion: Extract<AxisMotion, { kind: 'inertia' }>, raw: Bounds, layoutSize: number, now: number): boolean {
-    const elapsed = Math.max(0, (now - motion.startTime) / 1000)
-    if (elapsed <= motion.lastElapsed) return false
-
-    const offsetDelta = decayOffset(motion.deceleration, elapsed) - decayOffset(motion.deceleration, motion.lastElapsed)
-    const current = getAxisBounds(raw, axis)
-    const nextCenter = axisCenter(current) + motion.vCenter * offsetDelta
-    const nextRange = axisRange(current) * Math.exp(motion.vLogRange * offsetDelta)
-    const next = orderedAxisBounds(nextCenter - nextRange / 2, nextCenter + nextRange / 2)
-    if (!next) {
-      this.motions[axis] = null
-      return false
-    }
+  private stepAxisMotions(axis: TouchZoomAxis, raw: Bounds, layoutSize: number, now: number): boolean {
+    const motions = this.motions[axis]
+    if (!motions.center && !motions.logRange) return false
 
     const limits = this.axisLimits(axis)
+    const current = getAxisBounds(raw, axis)
+    let center = axisCenter(current)
+    let rawRange = axisRange(current)
+    let changed = false
 
-    if (limits.hasAny && !this.limits.elastic) {
-      const clamped = clampAxisToLimits(next, limits, 0.5)
-      if (clamped.min !== next.min || clamped.max !== next.max) {
-        setAxisBounds(raw, axis, clamped)
-        this.motions[axis] = null
-        return true
+    // range first: the valid placement band depends on the resulting displayed range
+    if (motions.logRange) {
+      const step = this.stepLogRangeChannel(motions.logRange, rawRange, limits, layoutSize, now)
+      motions.logRange = step.motion
+      if (step.value !== rawRange && Number.isFinite(step.value) && step.value > 0) {
+        rawRange = step.value
+        changed = true
       }
     }
 
-    if (limits.hasAny && this.limits.elastic && isAxisInsideLimits(current, limits) && !isAxisInsideLimits(next, limits)) {
-      // inertia may not overscroll while a gesture is active: springs cannot start here.
-      // A lingering wheel batch does not count, the next wheel tick cancels springs anyway
-      if (this.hasActiveGesture()) {
-        setAxisBounds(raw, axis, clampAxisToLimits(next, limits, 0.5))
-        this.motions[axis] = null
-        return true
+    if (motions.center) {
+      const step = this.stepCenterChannel(motions.center, center, rawRange, limits, layoutSize, now)
+      motions.center = step.motion
+      if (step.value !== center && Number.isFinite(step.value)) {
+        center = step.value
+        changed = true
       }
+    }
 
-      const fraction = crossingFraction(current, next, limits)
-      const timeCross = motion.lastElapsed + (elapsed - motion.lastElapsed) * fraction
-      const crossBounds = lerpAxisBounds(current, next, fraction)
-      const vCenter = decayVelocityAt(motion.vCenter, motion.deceleration, timeCross)
-      const vLogRange = decayVelocityAt(motion.vLogRange, motion.deceleration, timeCross)
-
-      setAxisBounds(raw, axis, crossBounds)
-      this.motions[axis] = {
-        kind: 'spring',
-        spring: createAxisSpring(crossBounds, nearestValidAxisTarget(crossBounds, limits), vCenter, vLogRange, now),
+    if (changed) {
+      const next = orderedAxisBounds(center - rawRange / 2, center + rawRange / 2)
+      if (next) setAxisBounds(raw, axis, next)
+      else {
+        motions.center = null
+        motions.logRange = null
+        changed = false
       }
-      return true
+    }
+
+    // nothing owns the axis anymore: never leave it stranded outside limits
+    if (!motions.center && !motions.logRange && this.limits.elastic && limits.hasAny && !this.hasActiveInput()) {
+      this.releaseAxis(axis, raw, layoutSize, { center: 0, logRange: 0 }, null, 'mousePan', now)
+    }
+
+    return changed
+  }
+
+  private stepLogRangeChannel(motion: ChannelMotion, rawRange: number, limits: AxisLimits, layoutSize: number, now: number): { value: number, motion: ChannelMotion | null } {
+    const elastic = this.limits.elastic && limits.hasAny
+    const elapsed = Math.max(0, (now - motion.startTime) / 1000)
+
+    if (motion.kind === 'spring') {
+      const errorPx = Math.abs(motion.spring.valueAt(elapsed) - motion.spring.target) * layoutSize
+      const velocityPx = Math.abs(motion.spring.velocityAt(elapsed)) * layoutSize
+      const settled = errorPx < SPRING_EPSILON_PX && velocityPx < SPRING_VELOCITY_EPSILON_PX
+      const displayedRange = Math.exp(settled ? motion.spring.target : motion.spring.valueAt(elapsed))
+      const value = elastic ? invertResistedAxisRange(displayedRange, limits, layoutSize) : displayedRange
+      return { value, motion: settled ? null : motion }
+    }
+
+    if (elapsed <= motion.lastElapsed) return { value: rawRange, motion }
+
+    const offsetDelta = decayOffset(motion.deceleration, elapsed) - decayOffset(motion.deceleration, motion.lastElapsed)
+    const next = rawRange * Math.exp(motion.velocity * offsetDelta)
+    if (!Number.isFinite(next) || next <= 0) return { value: rawRange, motion: null }
+
+    if (limits.hasAny && !isRangeWithinLimits(next, limits)) {
+      const boundary = clamp(next, limits.minDelta, effectiveMaxDelta(limits))
+      // inertia may not overscroll while a real gesture is active: springs cannot start
+      // here. A lingering wheel batch does not count, the next tick cancels springs anyway
+      if (!elastic || this.hasActiveGesture()) return { value: boundary, motion: null }
+
+      if (isRangeWithinLimits(rawRange, limits)) {
+        // crossing outward: bounce on a spring carrying the crossing velocity, scaled by
+        // the rubber band slope at the boundary so the displayed motion is seamless
+        const fraction = crossingFractionScalar(rawRange, next, boundary)
+        const timeCross = motion.lastElapsed + (elapsed - motion.lastElapsed) * fraction
+        const velocity = decayVelocityAt(motion.velocity, motion.deceleration, timeCross) * RUBBER_BAND_COEFF
+        return { value: boundary, motion: { kind: 'spring', spring: new ScalarSpring(Math.log(boundary), Math.log(boundary), velocity), startTime: now } }
+      }
     }
 
     motion.lastElapsed = elapsed
-    setAxisBounds(raw, axis, next)
+    const remainingPx = Math.abs(Math.exp(motion.velocity * remainingDecayOffset(motion.deceleration, elapsed)) - 1) * layoutSize / 2
+    return { value: next, motion: remainingPx < INERTIA_MIN_REMAINING_PIXELS ? null : motion }
+  }
 
-    if (inertiaRemainingPixels(motion, next, layoutSize, elapsed) < INERTIA_MIN_REMAINING_PIXELS) {
-      this.motions[axis] = null
+  private stepCenterChannel(motion: ChannelMotion, center: number, rawRange: number, limits: AxisLimits, layoutSize: number, now: number): { value: number, motion: ChannelMotion | null } {
+    const elastic = this.limits.elastic && limits.hasAny
+    const displayedRange = elastic ? resistedAxisRange(rawRange, limits, layoutSize) : rawRange
+    const elapsed = Math.max(0, (now - motion.startTime) / 1000)
 
-      // safety net: never leave bounds stranded outside limits
-      if (this.limits.elastic && limits.hasAny && !isAxisInsideLimits(next, limits) && !this.hasActiveGesture()) {
-        const displayed = applyElasticAxis(next, limits, layoutSize)
-        this.motions[axis] = { kind: 'spring', spring: createAxisSpring(displayed, nearestValidAxisTarget(displayed, limits), 0, 0, now) }
+    if (motion.kind === 'spring') {
+      const pxPerUnit = layoutSize / displayedRange
+      const errorPx = Math.abs(motion.spring.valueAt(elapsed) - motion.spring.target) * pxPerUnit
+      const velocityPx = Math.abs(motion.spring.velocityAt(elapsed)) * pxPerUnit
+      const settled = errorPx < SPRING_EPSILON_PX && velocityPx < SPRING_VELOCITY_EPSILON_PX
+      const displayedCenter = settled ? motion.spring.target : motion.spring.valueAt(elapsed)
+
+      let value = displayedCenter
+      if (elastic) {
+        const displayedMin = displayedCenter - displayedRange / 2
+        value = invertResistedPlacement(displayedMin, displayedRange, limits, layoutSize) + displayedRange / 2
+      }
+      return { value, motion: settled ? null : motion }
+    }
+
+    if (elapsed <= motion.lastElapsed) return { value: center, motion }
+
+    const offsetDelta = decayOffset(motion.deceleration, elapsed) - decayOffset(motion.deceleration, motion.lastElapsed)
+    const next = center + motion.velocity * offsetDelta
+    if (!Number.isFinite(next)) return { value: center, motion: null }
+
+    if (limits.hasAny && !isPlacementWithinLimits(next - displayedRange / 2, displayedRange, limits)) {
+      const band = placementBand(displayedRange, limits)
+      const boundary = clamp(next - displayedRange / 2, band.lo, band.hi) + displayedRange / 2
+      if (!elastic || this.hasActiveGesture()) return { value: boundary, motion: null }
+
+      if (isPlacementWithinLimits(center - displayedRange / 2, displayedRange, limits)) {
+        const fraction = crossingFractionScalar(center, next, boundary)
+        const timeCross = motion.lastElapsed + (elapsed - motion.lastElapsed) * fraction
+        const velocity = decayVelocityAt(motion.velocity, motion.deceleration, timeCross) * RUBBER_BAND_COEFF
+        return { value: boundary, motion: { kind: 'spring', spring: new ScalarSpring(boundary, boundary, velocity), startTime: now } }
       }
     }
 
-    return true
+    motion.lastElapsed = elapsed
+    const remainingPx = Math.abs(motion.velocity * remainingDecayOffset(motion.deceleration, elapsed)) * layoutSize / displayedRange
+    return { value: next, motion: remainingPx < INERTIA_MIN_REMAINING_PIXELS ? null : motion }
   }
 
-  private computeDisplayed(raw: Bounds, space: ChartSpace, now: number): Bounds {
+  private computeDisplayed(raw: Bounds, space: ChartSpace): Bounds {
     const displayed = space.bounds.clone()
 
     for (const axis of this.activeAxes) {
       const size = getAxisSize(axis, space.layout)
-      const motion = this.motions[axis]
-
-      if (motion?.kind === 'spring') {
-        const elapsed = Math.max(0, (now - motion.spring.startTime) / 1000)
-
-        if (isAxisSpringSettled(motion.spring, elapsed, size)) {
-          const target = axisSpringTargetBounds(motion.spring)
-          setAxisBounds(displayed, axis, target)
-          setAxisBounds(raw, axis, target)
-          this.motions[axis] = null
-        } else {
-          setAxisBounds(displayed, axis, axisSpringBoundsAt(motion.spring, elapsed))
-        }
-        continue
-      }
-
-      setAxisBounds(displayed, axis, this.projectAxis(getAxisBounds(raw, axis), axis, size))
+      setAxisBounds(displayed, axis, this.projectAxis(getAxisBounds(raw, axis), axis, size, this.currentAnchor(axis)))
     }
 
     return displayed
@@ -621,15 +715,16 @@ export class ZoomChartComponent implements HoverComponent {
   }
 
   // Starts raw space from the current visual state: the inverse of the elastic
-  // projection, so a gesture picking up mid-overscroll continues without a jump
-  private resetRawFrom(space: ChartSpace): Bounds {
+  // projection, so a gesture picking up mid-overscroll continues without a jump.
+  // The anchor must match the one the following frames will project with.
+  private resetRawFrom(space: ChartSpace, anchorOf: (axis: TouchZoomAxis) => number = () => 0.5): Bounds {
     const raw = space.bounds.clone()
 
     if (this.limits.elastic) {
       for (const axis of this.activeAxes) {
         const limits = this.axisLimits(axis)
         if (!limits.hasAny) continue
-        setAxisBounds(raw, axis, invertElasticAxis(getAxisBounds(raw, axis), limits, getAxisSize(axis, space.layout)))
+        setAxisBounds(raw, axis, invertElasticAxis(getAxisBounds(raw, axis), limits, getAxisSize(axis, space.layout), anchorOf(axis)))
       }
     }
 
@@ -637,11 +732,47 @@ export class ZoomChartComponent implements HoverComponent {
     return raw
   }
 
-  private projectAxis(bounds: AxisBounds, axis: TouchZoomAxis, layoutSize: number): AxisBounds {
+  private projectAxis(bounds: AxisBounds, axis: TouchZoomAxis, layoutSize: number, anchorT: number = 0.5): AxisBounds {
     const limits = this.axisLimits(axis)
     if (!limits.hasAny) return bounds
-    if (this.limits.elastic) return applyElasticAxis(bounds, limits, layoutSize)
+    if (this.limits.elastic) return applyElasticAxis(bounds, limits, layoutSize, anchorT)
     return clampAxisToLimits(bounds, limits, 0.5)
+  }
+
+  // Screen fraction the elastic projection is anchored at: the pinch midpoint or the
+  // wheel cursor while zooming, the window center otherwise. Keeping the anchor pinned
+  // makes elastic overzoom stretch around the point the user is zooming at.
+  private currentAnchor(axis: TouchZoomAxis): number {
+    if (this.pinch) return clamp(this.pinch.gesture.midAnchor(axis), 0, 1)
+    if (this.wheel?.anchor && !this.pan) return this.wheel.anchor[axis]
+    return 0.5
+  }
+
+  // Re-derives raw so the displayed bounds stay identical when the projection anchor
+  // changes (wheel cursor moved, zoom gesture ended)
+  private rebaseRawAnchor(raw: Bounds, layout: LayoutValue, fromT: (axis: TouchZoomAxis) => number, toT: (axis: TouchZoomAxis) => number): void {
+    if (!this.limits.elastic) return
+
+    for (const axis of this.activeAxes) {
+      const limits = this.axisLimits(axis)
+      if (!limits.hasAny) continue
+
+      const from = fromT(axis)
+      const to = toT(axis)
+      if (from === to) continue
+
+      const size = getAxisSize(axis, layout)
+      const displayed = applyElasticAxis(getAxisBounds(raw, axis), limits, size, from)
+      setAxisBounds(raw, axis, invertElasticAxis(displayed, limits, size, to))
+    }
+  }
+
+  // px -> chart units conversion for pan: uses the displayed (resisted) range so the
+  // content keeps tracking the finger 1:1 even while the range is overzoomed
+  private panConversionRange(axis: TouchZoomAxis, start: AxisBounds, layoutSize: number): number {
+    const limits = this.axisLimits(axis)
+    if (this.limits.elastic && limits.hasAny) return resistedAxisRange(axisRange(start), limits, layoutSize)
+    return axisRange(start)
   }
 
   // With hard limits raw is kept clamped at every application step, each gesture
@@ -674,7 +805,8 @@ export class ZoomChartComponent implements HoverComponent {
         if (!(size > 0)) continue
 
         const clientDelta = axis === 'x' ? dx : dy
-        const shift = (axis === 'x' ? -clientDelta : clientDelta) * axisRange(getAxisBounds(pan.startBounds, axis)) / size
+        const start = getAxisBounds(pan.startBounds, axis)
+        const shift = (axis === 'x' ? -clientDelta : clientDelta) * this.panConversionRange(axis, start, size) / size
         if (Number.isFinite(shift) && shift !== 0) velocity[axis] = shift / dt
       }
 
@@ -736,27 +868,27 @@ export class ZoomChartComponent implements HoverComponent {
 
   //#region Motion management
 
+  private hasAnyMotion(): boolean {
+    return this.motions.x.center !== null || this.motions.x.logRange !== null ||
+      this.motions.y.center !== null || this.motions.y.logRange !== null
+  }
+
   private stopAllMotions(): void {
-    if (this.motions.x?.kind === 'spring' || this.motions.y?.kind === 'spring') this.raw = null
-    this.motions.x = null
-    this.motions.y = null
+    this.motions.x = { center: null, logRange: null }
+    this.motions.y = { center: null, logRange: null }
     if (this.pinch?.ended) this.pinch.inertiaCanceled = true
   }
 
-  // Touch pan keeps zoom inertia running (it composes with the pan on top),
-  // only pan inertia and springs are taken over
-  private stopMotionsForTouchPan(): void {
+  // A pan takes over translation but must not interrupt the zoom: the zoom-return
+  // spring always survives, zoom inertia survives a touch pan (a mouse pan interrupts
+  // any inertia)
+  private stopMotionsForPan(isTouch: boolean): void {
     for (const axis of this.activeAxes) {
-      const motion = this.motions[axis]
-      if (!motion) continue
-
-      if (motion.kind === 'spring') {
-        this.motions[axis] = null
-        this.raw = null
-      } else if (motion.source !== 'touchZoom') {
-        this.motions[axis] = null
-      }
+      const motions = this.motions[axis]
+      motions.center = null
+      if (motions.logRange?.kind === 'inertia' && (!isTouch || motions.logRange.source !== 'touchZoom')) motions.logRange = null
     }
+    if (!isTouch && this.pinch?.ended) this.pinch.inertiaCanceled = true
   }
 
   private hasActiveInput(): boolean {
@@ -805,16 +937,6 @@ export class ZoomChartComponent implements HoverComponent {
   //#endregion
 }
 
-function createInertiaMotion(velocity: AxisVelocity, deceleration: number | null, source: InertiaKind, now: number): AxisMotion | null {
-  if (deceleration === null) return null
-
-  const vCenter = Number.isFinite(velocity.center) ? velocity.center : 0
-  const vLogRange = Number.isFinite(velocity.logRange) ? velocity.logRange : 0
-  if (vCenter === 0 && vLogRange === 0) return null
-
-  return { kind: 'inertia', source, vCenter, vLogRange, deceleration, startTime: now, lastElapsed: 0 }
-}
-
 // Move events tick at the input/display rate, but occasionally arrive in random bursts
 // far more frequent than that, producing garbage velocities. Only intervals close to
 // the running average rate are sampled; skipped moves accumulate into the next sample
@@ -822,11 +944,6 @@ function createInertiaMotion(velocity: AxisVelocity, deceleration: number | null
 function isAcceptableSampleDt(dt: number, averageDt: number | null): boolean {
   if (dt < MIN_VELOCITY_SAMPLE_DT) return false
   return averageDt === null || dt >= averageDt * VELOCITY_SAMPLE_OUTLIER_RATIO
-}
-
-function isTravelSufficient(need: number, travel: number): boolean {
-  if (need === 0) return true
-  return Math.sign(travel) === Math.sign(need) && Math.abs(travel) >= Math.abs(need)
 }
 
 function zoomAxisAboutAnchor(bounds: AxisBounds, anchorT: number, zoomFactor: number): AxisBounds | null {
@@ -838,31 +955,11 @@ function zoomAxisAboutAnchor(bounds: AxisBounds, anchorT: number, zoomFactor: nu
   return orderedAxisBounds(min, min + nextRange)
 }
 
-// Fraction of the current -> next segment at which the first limit is crossed
-function crossingFraction(current: AxisBounds, next: AxisBounds, limits: AxisLimits): number {
-  let fraction = 1
-
-  const consider = (from: number, to: number, boundary: number) => {
-    const delta = to - from
-    if (!Number.isFinite(delta) || Math.abs(delta) < 1e-12) return
-    const f = (boundary - from) / delta
-    if (f >= 0 && f < fraction) fraction = f
-  }
-
-  if (next.min < limits.min) consider(current.min, next.min, limits.min)
-  if (next.max > limits.max) consider(current.max, next.max, limits.max)
-
-  const currentRange = axisRange(current)
-  const nextRange = axisRange(next)
-  const maxDelta = effectiveMaxDelta(limits)
-  if (nextRange > maxDelta) consider(currentRange, nextRange, maxDelta)
-  if (nextRange < limits.minDelta) consider(currentRange, nextRange, limits.minDelta)
-
-  return clamp(fraction, 0, 1)
-}
-
-function lerpAxisBounds(from: AxisBounds, to: AxisBounds, t: number): AxisBounds {
-  return { min: from.min + (to.min - from.min) * t, max: from.max + (to.max - from.max) * t }
+// Fraction of the from -> to segment at which the channel crosses the boundary
+function crossingFractionScalar(from: number, to: number, boundary: number): number {
+  const delta = to - from
+  if (!Number.isFinite(delta) || Math.abs(delta) < 1e-12) return 0
+  return clamp((boundary - from) / delta, 0, 1)
 }
 
 function axisVelocityBetween(previous: AxisBounds | null, next: AxisBounds | null, dt: number): AxisVelocity | null {
