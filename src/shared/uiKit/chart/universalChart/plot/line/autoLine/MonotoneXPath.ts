@@ -10,7 +10,8 @@ type MonotoneXPathWasm = {
     len: number,
     smoothing: number,
     boundsMinX: number, boundsMaxX: number, boundsMinY: number, boundsMaxY: number,
-    layoutMinX: number, layoutMaxX: number, layoutMinY: number, layoutMaxY: number
+    layoutMinX: number, layoutMaxX: number, layoutMinY: number, layoutMaxY: number,
+    visibleMinX: number, visibleMaxX: number, visibleMinY: number, visibleMaxY: number
   ) => number
   resultPtr: () => number
   resultLen: () => number
@@ -50,12 +51,12 @@ export class MonotoneXPath {
     }
   }
 
-  getPath(smoothing = 1, bounds: Bounds, layout: Bounds): string {
+  getPath(smoothing = 1, bounds: Bounds, layout: Bounds, visibleLayout: Bounds): string {
     const n = this.x.length
 
     if (n === 0) return ''
-    if (n === 1) return `M${fmt2(this.x[0])} ${fmt2(this.y[0])}`
-    if (n === 2) return `M${fmt2(this.x[0])} ${fmt2(this.y[0])} L${fmt2(this.x[1])} ${fmt2(this.y[1])}`
+
+    const visibleBounds = getVisibleChartBounds(bounds, layout, visibleLayout)
 
     const wasm = monotoneXPathWasm
 
@@ -66,7 +67,8 @@ export class MonotoneXPath {
           const ok = wasm.buildMonotoneXPath(
             this.wasmXPtr, this.wasmYPtr, n, smoothing,
             bounds.minX, bounds.maxX, bounds.minY, bounds.maxY,
-            layout.minX, layout.maxX, layout.minY, layout.maxY
+            layout.minX, layout.maxX, layout.minY, layout.maxY,
+            visibleBounds.minX, visibleBounds.maxX, visibleBounds.minY, visibleBounds.maxY
           )
 
           if (ok) {
@@ -86,7 +88,8 @@ export class MonotoneXPath {
       y: this.y,
       smoothing: smoothing,
       bounds: bounds,
-      layout: layout
+      layout: layout,
+      visibleBounds: visibleBounds
     })
   }
 
@@ -149,10 +152,11 @@ function monotoneXPathFallback(options: {
   y: Float64Array,
   smoothing: number,
   bounds: Bounds,
-  layout: Bounds
+  layout: Bounds,
+  visibleBounds: Bounds
 }): string {
 
-  const { smoothing, bounds, layout } = options
+  const { smoothing, bounds, layout, visibleBounds } = options
 
   const w = bounds.maxX - bounds.minX
   const h = bounds.maxY - bounds.minY
@@ -163,12 +167,19 @@ function monotoneXPathFallback(options: {
   const transformX = (x: number) => (x - bounds.minX) / w * lW + layout.minX
   const transformY = (y: number) => (bounds.maxY - y) / h * lH + layout.minY
 
-  const x = options.x.map((v) => transformX(v))
-  const y = options.y.map((v) => transformY(v))
+  const visibleRange = getVisiblePointRange(options.x, options.y, visibleBounds)
+  if (!visibleRange) return ''
 
-  const n = x.length
+  const n = visibleRange.end - visibleRange.start + 1
+  const x = new Array<number>(n)
+  const y = new Array<number>(n)
 
-  if (n === 0) return ''
+  for (let i = 0; i < n; i++) {
+    const sourceIndex = visibleRange.start + i
+    x[i] = transformX(options.x[sourceIndex])
+    y[i] = transformY(options.y[sourceIndex])
+  }
+
   if (n === 1) return `M${fmt2(x[0])} ${fmt2(y[0])}`
   if (n === 2) return `M${fmt2(x[0])} ${fmt2(y[0])} L${fmt2(x[1])} ${fmt2(y[1])}`
 
@@ -234,4 +245,53 @@ function monotoneXPathFallback(options: {
   }
 
   return d
+}
+
+function getVisibleChartBounds(bounds: Bounds, layout: Bounds, visibleLayout: Bounds): Bounds {
+  const width = bounds.maxX - bounds.minX
+  const height = bounds.maxY - bounds.minY
+  const layoutWidth = layout.maxX - layout.minX
+  const layoutHeight = layout.maxY - layout.minY
+
+  const layoutToChartX = (x: number) => bounds.minX + (x - layout.minX) / layoutWidth * width
+  const layoutToChartY = (y: number) => bounds.maxY - (y - layout.minY) / layoutHeight * height
+
+  return {
+    minX: layoutToChartX(visibleLayout.minX),
+    maxX: layoutToChartX(visibleLayout.maxX),
+    minY: layoutToChartY(visibleLayout.maxY),
+    maxY: layoutToChartY(visibleLayout.minY)
+  }
+}
+
+function getVisiblePointRange(x: Float64Array, y: Float64Array, visibleBounds: Bounds) {
+  const n = x.length
+
+  if (n === 1) {
+    if (x[0] < visibleBounds.minX || x[0] > visibleBounds.maxX || y[0] < visibleBounds.minY || y[0] > visibleBounds.maxY) return null
+    return { start: 0, end: 0 }
+  }
+
+  let start = -1
+  let end = -1
+
+  for (let i = 0; i < n - 1; i++) {
+    const segMinX = Math.min(x[i], x[i + 1])
+    const segMaxX = Math.max(x[i], x[i + 1])
+    if (segMaxX < visibleBounds.minX || segMinX > visibleBounds.maxX) continue
+
+    const segMinY = Math.min(y[i], y[i + 1])
+    const segMaxY = Math.max(y[i], y[i + 1])
+    if (segMaxY < visibleBounds.minY || segMinY > visibleBounds.maxY) continue
+
+    if (start === -1) start = i
+    end = i + 1
+  }
+
+  if (start === -1 || end === -1) return null
+
+  return {
+    start: Math.max(0, start - 1),
+    end: Math.min(n - 1, end + 1)
+  }
 }
