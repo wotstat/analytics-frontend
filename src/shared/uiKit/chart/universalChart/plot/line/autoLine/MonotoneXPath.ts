@@ -1,4 +1,4 @@
-import wasmInit from './monotoneXPath.wasm?init'
+import wasmInit from './monotoneXPath/monotoneXPath.wasm?init'
 
 type MonotoneXPathWasm = {
   memory: WebAssembly.Memory
@@ -10,7 +10,8 @@ type MonotoneXPathWasm = {
     len: number,
     smoothing: number,
     boundsMinX: number, boundsMaxX: number, boundsMinY: number, boundsMaxY: number,
-    layoutMinX: number, layoutMaxX: number, layoutMinY: number, layoutMaxY: number
+    layoutMinX: number, layoutMaxX: number, layoutMinY: number, layoutMaxY: number,
+    visibleMinX: number, visibleMaxX: number, visibleMinY: number, visibleMaxY: number
   ) => number
   resultPtr: () => number
   resultLen: () => number
@@ -50,12 +51,12 @@ export class MonotoneXPath {
     }
   }
 
-  getPath(smoothing = 1, bounds: Bounds, layout: Bounds): string {
+  getPath(smoothing = 1, bounds: Bounds, layout: Bounds, visibleLayout: Bounds): string {
     const n = this.x.length
 
     if (n === 0) return ''
-    if (n === 1) return `M${fmt2(this.x[0])} ${fmt2(this.y[0])}`
-    if (n === 2) return `M${fmt2(this.x[0])} ${fmt2(this.y[0])} L${fmt2(this.x[1])} ${fmt2(this.y[1])}`
+
+    const visibleBounds = getVisibleChartBounds(bounds, layout, visibleLayout)
 
     const wasm = monotoneXPathWasm
 
@@ -66,7 +67,8 @@ export class MonotoneXPath {
           const ok = wasm.buildMonotoneXPath(
             this.wasmXPtr, this.wasmYPtr, n, smoothing,
             bounds.minX, bounds.maxX, bounds.minY, bounds.maxY,
-            layout.minX, layout.maxX, layout.minY, layout.maxY
+            layout.minX, layout.maxX, layout.minY, layout.maxY,
+            visibleBounds.minX, visibleBounds.maxX, visibleBounds.minY, visibleBounds.maxY
           )
 
           if (ok) {
@@ -86,7 +88,8 @@ export class MonotoneXPath {
       y: this.y,
       smoothing: smoothing,
       bounds: bounds,
-      layout: layout
+      layout: layout,
+      visibleBounds: visibleBounds
     })
   }
 
@@ -149,10 +152,11 @@ function monotoneXPathFallback(options: {
   y: Float64Array,
   smoothing: number,
   bounds: Bounds,
-  layout: Bounds
+  layout: Bounds,
+  visibleBounds: Bounds
 }): string {
 
-  const { smoothing, bounds, layout } = options
+  const { smoothing, bounds, layout, visibleBounds } = options
 
   const w = bounds.maxX - bounds.minX
   const h = bounds.maxY - bounds.minY
@@ -163,14 +167,23 @@ function monotoneXPathFallback(options: {
   const transformX = (x: number) => (x - bounds.minX) / w * lW + layout.minX
   const transformY = (y: number) => (bounds.maxY - y) / h * lH + layout.minY
 
-  const x = options.x.map((v) => transformX(v))
-  const y = options.y.map((v) => transformY(v))
+  const visibleRange = getVisiblePointRange(options.x, options.y, visibleBounds)
+  if (!visibleRange) return ''
 
-  const n = x.length
+  let n = visibleRange.end - visibleRange.start + 1
+  const x = new Array<number>(n)
+  const y = new Array<number>(n)
 
-  if (n === 0) return ''
-  if (n === 1) return `M${fmt2(x[0])} ${fmt2(y[0])}`
-  if (n === 2) return `M${fmt2(x[0])} ${fmt2(y[0])} L${fmt2(x[1])} ${fmt2(y[1])}`
+  for (let i = 0; i < n; i++) {
+    const sourceIndex = visibleRange.start + i
+    x[i] = transformX(options.x[sourceIndex])
+    y[i] = transformY(options.y[sourceIndex])
+  }
+
+  n = simplifyPointsInPlace(x, y, n)
+
+  if (n === 1) return `M ${fmt2(x[0])} ${fmt2(y[0])}`
+  if (n === 2) return `M ${fmt2(x[0])} ${fmt2(y[0])} L ${fmt2(x[1])} ${fmt2(y[1])}`
 
 
   const dx = new Array(Math.max(0, n - 1))
@@ -234,4 +247,170 @@ function monotoneXPathFallback(options: {
   }
 
   return d
+}
+
+const PIXEL_COLUMN_WIDTH = 1
+const COLLINEAR_EPS = 0.05
+const MIN_CORRIDOR_DX = 1e-6
+
+// Убирает точки, не влияющие на видимую форму кривой (координаты уже в пикселях layout):
+// 1) подряд идущие точки внутри одного пиксельного столбца сводятся к входу/выходу/минимуму/максимуму
+// 2) почти коллинеарные последовательности схлопываются до концов отрезка
+// В обоих случаях дополнительно сохраняются соседние с границами точки, чтобы касательные
+// монотонного сплайна в оставшихся узлах не менялись и кривая визуально не отличалась.
+function simplifyPointsInPlace(x: number[], y: number[], n: number): number {
+  if (n < 3) return n
+
+  const idx = decimatePixelColumns(x, y, n)
+  const m = collapseCollinear(x, y, idx)
+
+  if (m === n) return n
+
+  for (let k = 0; k < m; k++) {
+    x[k] = x[idx[k]]
+    y[k] = y[idx[k]]
+  }
+
+  return m
+}
+
+function decimatePixelColumns(x: number[], y: number[], n: number): number[] {
+  const idx: number[] = []
+  let i = 0
+
+  while (i < n) {
+    const column = Math.floor(x[i] / PIXEL_COLUMN_WIDTH)
+    let j = i
+    let minIndex = i
+    let maxIndex = i
+
+    while (j + 1 < n && Math.floor(x[j + 1] / PIXEL_COLUMN_WIDTH) === column) {
+      j++
+      if (y[j] < y[minIndex]) minIndex = j
+      if (y[j] > y[maxIndex]) maxIndex = j
+    }
+
+    if (j - i <= 5) {
+      for (let k = i; k <= j; k++) idx.push(k)
+    } else {
+      const kept = [i, i + 1, Math.min(minIndex, maxIndex), Math.max(minIndex, maxIndex), j - 1, j].sort((a, b) => a - b)
+      for (let k = 0; k < kept.length; k++) {
+        if (k === 0 || kept[k] !== kept[k - 1]) idx.push(kept[k])
+      }
+    }
+
+    i = j + 1
+  }
+
+  return idx
+}
+
+// «Коридорный» алгоритм: точка принимается в текущий отрезок, пока прямая от якоря до неё
+// проходит в пределах COLLINEAR_EPS от всех промежуточных точек. Сжимает idx на месте.
+function collapseCollinear(x: number[], y: number[], idx: number[]): number {
+  const m = idx.length
+  if (m < 5) return m
+
+  let out = 1
+  let anchor = 0
+  let anchorX = x[idx[0]]
+  let anchorY = y[idx[0]]
+  let last = 0
+  let slopeMin = -Infinity
+  let slopeMax = Infinity
+
+  const finalizeRun = () => {
+    if (anchor + 1 < last) idx[out++] = idx[anchor + 1]
+    if (last - 1 > anchor + 1) idx[out++] = idx[last - 1]
+    idx[out++] = idx[last]
+  }
+
+  let i = 1
+  while (i < m) {
+    const dx = x[idx[i]] - anchorX
+    let accepted = false
+
+    if (dx > MIN_CORRIDOR_DX) {
+      const dy = y[idx[i]] - anchorY
+      const slope = dy / dx
+
+      if (slope >= slopeMin && slope <= slopeMax) {
+        slopeMin = Math.max(slopeMin, (dy - COLLINEAR_EPS) / dx)
+        slopeMax = Math.min(slopeMax, (dy + COLLINEAR_EPS) / dx)
+        last = i
+        accepted = true
+        i++
+      }
+    }
+
+    if (!accepted) {
+      if (last === anchor) {
+        idx[out++] = idx[i]
+        anchor = i
+        last = i
+        i++
+      } else {
+        finalizeRun()
+        anchor = last
+      }
+
+      anchorX = x[idx[out - 1]]
+      anchorY = y[idx[out - 1]]
+      slopeMin = -Infinity
+      slopeMax = Infinity
+    }
+  }
+
+  if (last > anchor) finalizeRun()
+
+  return out
+}
+
+function getVisibleChartBounds(bounds: Bounds, layout: Bounds, visibleLayout: Bounds): Bounds {
+  const width = bounds.maxX - bounds.minX
+  const height = bounds.maxY - bounds.minY
+  const layoutWidth = layout.maxX - layout.minX
+  const layoutHeight = layout.maxY - layout.minY
+
+  const layoutToChartX = (x: number) => bounds.minX + (x - layout.minX) / layoutWidth * width
+  const layoutToChartY = (y: number) => bounds.maxY - (y - layout.minY) / layoutHeight * height
+
+  return {
+    minX: layoutToChartX(visibleLayout.minX),
+    maxX: layoutToChartX(visibleLayout.maxX),
+    minY: layoutToChartY(visibleLayout.maxY),
+    maxY: layoutToChartY(visibleLayout.minY)
+  }
+}
+
+function getVisiblePointRange(x: Float64Array, y: Float64Array, visibleBounds: Bounds) {
+  const n = x.length
+
+  if (n === 1) {
+    if (x[0] < visibleBounds.minX || x[0] > visibleBounds.maxX || y[0] < visibleBounds.minY || y[0] > visibleBounds.maxY) return null
+    return { start: 0, end: 0 }
+  }
+
+  let start = -1
+  let end = -1
+
+  for (let i = 0; i < n - 1; i++) {
+    const segMinX = Math.min(x[i], x[i + 1])
+    const segMaxX = Math.max(x[i], x[i + 1])
+    if (segMaxX < visibleBounds.minX || segMinX > visibleBounds.maxX) continue
+
+    const segMinY = Math.min(y[i], y[i + 1])
+    const segMaxY = Math.max(y[i], y[i + 1])
+    if (segMaxY < visibleBounds.minY || segMinY > visibleBounds.maxY) continue
+
+    if (start === -1) start = i
+    end = i + 1
+  }
+
+  if (start === -1 || end === -1) return null
+
+  return {
+    start: Math.max(0, start - 1),
+    end: Math.min(n - 1, end + 1)
+  }
 }
