@@ -11,6 +11,8 @@ export type TooltipCtx = {
   cursor: Position,
   absoluteCursor: Point,
   nearestDataPoints: HoveredDataPoint[]
+  chartBox: { top: number, right: number, bottom: number, left: number }
+  absoluteChartBox: { top: number, right: number, bottom: number, left: number }
   isTouch: boolean
 }
 
@@ -152,6 +154,15 @@ export class ChartTooltip implements HoverComponent {
       })
     }
 
+    const layoutTopLeft = composable.chartToPage({ x: space.layout.x, y: space.layout.y })
+    const layoutBottomRight = composable.chartToPage({ x: space.layout.x + space.layout.width, y: space.layout.y + space.layout.height })
+    const layoutBox = {
+      top: layoutTopLeft.y,
+      right: layoutBottomRight.x,
+      bottom: layoutBottomRight.y,
+      left: layoutTopLeft.x
+    }
+
     const ctx = {
       pivot: pivot,
       absolutePivot: {
@@ -164,7 +175,14 @@ export class ChartTooltip implements HoverComponent {
         y: cursor.clientY + this.windowScroll.y
       },
       nearestDataPoints,
-      isTouch: this.lastIsTouch
+      isTouch: this.lastIsTouch,
+      chartBox: layoutBox,
+      absoluteChartBox: {
+        top: layoutBox.top + this.windowScroll.y,
+        right: layoutBox.right + this.windowScroll.x,
+        bottom: layoutBox.bottom + this.windowScroll.y,
+        left: layoutBox.left + this.windowScroll.x
+      }
     }
 
     if (!this.lastNearestDataPoints && nearestDataPoints.length > 0) this.options.onShow?.(ctx)

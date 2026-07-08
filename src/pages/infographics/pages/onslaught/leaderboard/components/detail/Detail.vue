@@ -9,8 +9,10 @@
       </div>
       <UniversalChartComponent :chart="scoreChart" />
     </div>
-    <div class="chart">
-      <div class="header">
+    <div class="chart" ref="battleChartElement">
+      <div class="header" :style="{
+        opacity: battleChart.tooltipCtx.value ? 0 : 1,
+      }">
         <div class="title">
           <h3>Бои по дням</h3>
         </div>
@@ -19,22 +21,25 @@
       <UniversalChartComponent :chart="battleChart" />
     </div>
 
-    <div class="tooltip" :style="{ transform: tooltipPosition(scoreChart.tooltipCtx.value) }"
-      v-if="scoreChart.tooltipCtx.value">
-      <p>{{ new Date(startTime + scoreChart.tooltipCtx.value?.nearestDataPoints[0].xValue *
-        1000).toLocaleString(undefined, {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        }).replace(',', '') }}
-      </p>
+    <div class="tooltip tooltip-score" :style="{ transform: tooltipPosition(scoreChart.tooltipCtx.value, scoreWidth) }"
+      v-if="scoreChart.tooltipCtx.value" ref="scoreTooltip">
+      <p>{{ tooltipDate(scoreChart.tooltipCtx.value) }}</p>
       <div class="data flex">
         <p class="flex-1">Очки:</p>
         <p class="bold">{{ scoreChart.tooltipCtx.value?.nearestDataPoints[0].yValue }}</p>
       </div>
     </div>
+
+    <Transition name="fade">
+      <div class="tooltip-2 tooltip-battles"
+        :style="{ transform: tooltipPosition2(battleChart.tooltipCtx.value, battleWidth) }"
+        v-if="battleChart.tooltipCtx.value" ref="battleTooltip">
+        <div class="data flex">
+          <p class="bold">{{ battleChart.tooltipCtx.value?.nearestDataPoints[0].yValue }}</p>
+        </div>
+        <p class="date">{{ tooltipDate(battleChart.tooltipCtx.value) }}</p>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -49,11 +54,21 @@ import IntervalSelector from './intervalSelector/IntervalSelector.vue'
 import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/chartTooltip/ChartTooltip'
 import { useRoute } from 'vue-router'
 import { getRegionDayChangeHourOffset } from '@/shared/game/comp7/utils'
+import { useElementBounding, useElementSize, useWindowSize } from '@vueuse/core'
 
 
 const route = useRoute()
 const isZoom = computed(() => route.query['ab'] == 'zoom')
 const loading = ref(true)
+
+const scoreTooltip = ref<HTMLElement | null>(null)
+const battleTooltip = ref<HTMLElement | null>(null)
+const battleChartElement = ref<HTMLElement | null>(null)
+
+const { width: windowWidths } = useWindowSize({ includeScrollbar: false })
+const { width: scoreWidth } = useElementSize(scoreTooltip, undefined, { box: 'border-box' })
+const { width: battleWidth } = useElementSize(battleTooltip, undefined, { box: 'border-box' })
+const battleChartBounding = useElementBounding(battleChartElement)
 
 
 const props = defineProps<{
@@ -90,11 +105,38 @@ watchEffect(() => {
   loading.value = data.value.status == loadingState
 })
 
-function tooltipPosition(ctx: TooltipCtx) {
-  if (ctx.isTouch)
-    return `translate(calc(${ctx.absolutePivot.x}px - 50%), calc(${ctx.absolutePivot.y}px - 100% - 10px))`
+function tooltipPosition(ctx: TooltipCtx, tooltipWidth: number = 0) {
+  const PADDING = 10
+
+  if (ctx.isTouch) {
+    const x = Math.min(Math.max(ctx.absolutePivot.x - tooltipWidth / 2, PADDING), windowWidths.value - tooltipWidth - PADDING)
+    return `translate(calc(${x}px), calc(${ctx.absolutePivot.y}px - 100% - 10px))`
+  }
+
+  else return `translate(${ctx.absolutePivot.x + 5}px, ${ctx.absoluteCursor.y + 5}px)`
+}
+
+function tooltipPosition2(ctx: TooltipCtx, tooltipWidth: number = 0) {
+  // if (ctx.isTouch) 
+  const PADDING = 10
+
+  // const x = Math.min(Math.max(ctx.absolutePivot.x - tooltipWidth / 2, PADDING), windowWidths.value - tooltipWidth - PADDING)
+  // return `translate(calc(${x}px), calc(${ctx.absolutePivot.y}px - 100% - 10px))`
+
+  const x = Math.min(Math.max(ctx.absolutePivot.x - tooltipWidth / 2, battleChartBounding.left.value), battleChartBounding.right.value - tooltipWidth - 5)
+  return `translate(calc(${x}px), ${ctx.absoluteChartBox.top - 40}px)`
 
   return `translate(${ctx.absolutePivot.x + 5}px, ${ctx.absoluteCursor.y + 5}px)`
+}
+
+function tooltipDate(ctx: TooltipCtx) {
+  return new Date(startTime + ctx.nearestDataPoints[0].xValue * 1000).toLocaleString(undefined, {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).replace(',', '')
 }
 
 
@@ -211,6 +253,33 @@ watchEffect(() => {
     font-variant-numeric: tabular-nums;
   }
 
+  .tooltip-2 {
+    pointer-events: none;
+    touch-action: none;
+    position: absolute;
+    // background: rgba(16, 29, 51, 1);
+    padding: 0;
+    font-size: 12px;
+    box-sizing: border-box;
+    top: 0;
+    left: 0;
+    font-variant-numeric: tabular-nums;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .data {
+      font-size: 20px;
+      line-height: 20px;
+    }
+
+    .date {
+      font-size: 11px;
+      font-weight: bold;
+      color: rgba(255, 255, 255, 0.5);
+    }
+  }
+
   .chart {
     flex: 1;
     border-radius: 4px;
@@ -223,6 +292,7 @@ watchEffect(() => {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      transition: opacity 0.1s;
 
       .title {
         flex: 1;
@@ -303,5 +373,16 @@ watchEffect(() => {
     }
 
   }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s, filter 0.2s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  filter: blur(1px);
 }
 </style>

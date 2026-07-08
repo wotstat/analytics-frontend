@@ -76,7 +76,7 @@ class BaseChart extends UniversalChart {
         limits: {
           minX: 0,
           maxX: this.maxX,
-          maxDeltaX: 60 * 60 * 24 * 7 * 6,
+          maxDeltaX: this.maxX,
           minDeltaX: 60 * 60 * 12,
           elastic: true
         },
