@@ -147,6 +147,18 @@ export class AutoLine extends BasePlotRenderer {
           maxY: layout.maxY + overflow.bottom
         }
 
+        // Оптимизация в monotoneXPath отсекает точки за пределами видимой области. По вертикали
+        // это ломает area-полигон: когда линия уходит выше/ниже bounds (в т.ч. целиком), выпавшие
+        // точки оставляют заливку под линией незакрашенной. Для area отключаем вертикальную обрезку,
+        // расширяя видимый диапазон до всех данных (горизонтальная обрезка — основной выигрыш — остаётся).
+        if (this.options.area) {
+          const dataBounds = this.getBounds()
+          if (!dataBounds.isEmpty()) {
+            layoutOverflow.minY = Math.min(layoutOverflow.minY, space.chartToLayoutY(dataBounds.maxY) - 1)
+            layoutOverflow.maxY = Math.max(layoutOverflow.maxY, space.chartToLayoutY(dataBounds.minY) + 1)
+          }
+        }
+
         return monotonePath.getPath(smoothing, bounds, layout, layoutOverflow)
       }
 
