@@ -71,6 +71,11 @@ export class AutoLabels extends BaseLabels {
     return current
   }
 
+  updateOptions(options: Options) {
+    this.options = options
+    super.updateOptions({ offset: options.labelOffset, stableWidth: options.stableWidth })
+  }
+
   calculateLabelPositions(space: ChartSpace, overflow: { start: number, end: number }) {
     if (space.bounds.isEmpty()) return []
 

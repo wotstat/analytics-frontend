@@ -36,26 +36,6 @@
       </div>
     </div>
   </div>
-  <div class="charts">
-    <div class="chart">
-      <div class="header">
-        <div class="title">
-          <h3>Очки по дням</h3>
-        </div>
-        <IntervalSelector v-if="!isZoom" />
-      </div>
-      <UniversalChartComponent :chart="scoreChart2" />
-    </div>
-    <div class="chart">
-      <div class="header">
-        <div class="title">
-          <h3>Бои по дням</h3>
-        </div>
-        <IntervalSelector v-if="!isZoom" />
-      </div>
-      <UniversalChartComponent :chart="battleChart2" />
-    </div>
-  </div>
 </template>
 
 
@@ -162,12 +142,16 @@ watchEffect(() => {
   padding-top: 0;
   cursor: default;
 
-  @container (max-width: 1800px) {
+  @container (max-width: 800px) {
     flex-direction: column;
   }
 
   @container (max-width: 500px) {
     padding: 20px 10px;
+
+    div.chart {
+      aspect-ratio: 1.5 / 1;
+    }
   }
 
   .tooltip {
@@ -191,7 +175,7 @@ watchEffect(() => {
   .chart {
     flex: 1;
     border-radius: 4px;
-    aspect-ratio: 2 / 1;
+    aspect-ratio: 1.8 / 1;
 
     display: flex;
     flex-direction: column;

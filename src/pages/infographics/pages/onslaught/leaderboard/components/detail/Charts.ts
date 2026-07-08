@@ -32,6 +32,8 @@ class BaseChart extends UniversalChart {
   private hover: ComposableHover
   private dayTicks: TicksByValues
   private restrictionArea: RectangleArea
+  private labelsX: AutoLabels
+  private currentInterval = { from: 0, to: 0 }
 
   constructor(protected seasonInterval: { start: Date, end: Date }) {
     super({ layoutVariant: 'vertical', renderManager: globalChartRenderManagerSteps4 })
@@ -41,7 +43,7 @@ class BaseChart extends UniversalChart {
     const clipBottom = new ChartClip('bottom')
     const maskMain = new ChartMask('center', { top: -1, bottom: -1 })
 
-    const labelsX = new AutoLabels('horizontal', this.getXLabelsOptions()).clipBy(clipBottom)
+    this.labelsX = new AutoLabels('horizontal', this.getXLabelsOptions()).clipBy(clipBottom)
     const labelsY = new AutoLabels('vertical', this.getYLabelsOptions()).clipBy(clipLeft)
 
     const gradient = new ChartGradient({ classes: 'blue-gradient' })
@@ -96,10 +98,10 @@ class BaseChart extends UniversalChart {
     this.dayTicks = new TicksByValues('horizontal', { start: 0, classes: 'day-ticks' })
     this
       .addPlot(new TicksByLabels(labelsY, { start: 0 }), 'ticks')
-      .addPlot(new TicksByLabels(labelsX, { start: 0, classes: 'week-ticks' }), 'ticks')
+      .addPlot(new TicksByLabels(this.labelsX, { start: 0, classes: 'week-ticks' }), 'ticks')
       .addPlot(this.dayTicks, 'ticks')
       .addPlot(plotRoot, 'plot')
-      .addSlot('bottom', labelsX, 'labels')
+      .addSlot('bottom', this.labelsX, 'labels')
       .addSlot('left', labelsY, 'labels')
       .addPlot(this.hover)
       .addDefs(gradient, clipMain, clipLeft, clipBottom, maskMain, pattern)
@@ -121,11 +123,13 @@ class BaseChart extends UniversalChart {
     const delta = end - start
     const roundedDelta = Math.ceil(delta / WEEK) * WEEK
     this.setRenderBounds({ minX: 0, maxX: roundedDelta })
+    this.currentInterval = { from: 0, to: roundedDelta }
 
     const dayTicks = []
     for (let i = 0; i <= end - start; i += DAY) dayTicks.push(i)
     this.dayTicks.setTicks(dayTicks)
 
+    this.labelsX.updateOptions(this.getXLabelsOptions())
     this.recalculateRestrictionArea()
     return this
   }
@@ -148,7 +152,6 @@ class BaseChart extends UniversalChart {
     const steps: [number, (v: number) => string][] = [
       [DAY, v => `${1 + v / DAY} день`],
       [DAY, v => `${1 + v / DAY}`],
-      // [2 * DAY, v => `${1 + v / DAY}`],
       [WEEK, v => `${1 + v / WEEK} неделя`],
       [WEEK, v => `${1 + v / WEEK} нед.`],
       [WEEK, v => `${1 + v / WEEK} н.`],
@@ -162,8 +165,8 @@ class BaseChart extends UniversalChart {
       labelOffset: 5,
       values: steppedOverrides({ step: steps.map(s => ({ step: s[0], labelForValue: s[1] })) }),
       strategy: { type: 'interval', fit: true, offset: 3 },
-      // onlyFitted: true,
-      from: 0,
+      from: this.currentInterval.from,
+      to: this.currentInterval.to
     }
   }
 

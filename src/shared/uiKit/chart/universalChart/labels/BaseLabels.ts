@@ -37,6 +37,20 @@ export abstract class BaseLabels implements SlotRenderer {
     this.probeLabel.classList.add('probe-label')
   }
 
+  updateOptions(options: { offset?: number, stableWidth?: boolean | number }) {
+    let changed = false
+    if (options.offset !== undefined && options.offset !== this.offset) {
+      this.offset = options.offset
+      changed = true
+    }
+    if (options.stableWidth !== undefined && options.stableWidth !== this.stableWidth) {
+      this.stableWidth = options.stableWidth
+      changed = true
+    }
+
+    if (changed) this.fontStyleDirty = true
+  }
+
   getRootElement(): Element {
     return this.root
   }
