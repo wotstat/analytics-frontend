@@ -1,5 +1,5 @@
 import { Size, UniversalChart } from '../../../../UniversalChart'
-import { Bounds, BoundsAxes } from '../../../../utils/Bounds'
+import { Bounds, BoundsAxes, BoundsConstraint, BoundsPatch } from '../../../../utils/Bounds'
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
 import { InteractionDirection, Position, TouchZoomPoint } from '../../../basePlotHover/BasePlotHover'
@@ -14,6 +14,7 @@ import {
 import { applyElasticAxis, elasticVelocityFactor, invertElasticAxis, invertResistedAxisRange, invertResistedPlacement, resistedAxisRange } from './elastic'
 import { decayOffset, decayVelocityAt, remainingDecayOffset, totalDecayTravel } from './inertia'
 import { AxisLimits, NormalizedLimits, clampAxisToLimits, effectiveMaxDelta, isPlacementWithinLimits, isRangeWithinLimits, normalizeLimits, placementBand } from './limits'
+import { CriticalFollower, DEFAULT_FOLLOW_OMEGA } from './follower'
 import { ScalarSpring } from './spring'
 import { PinchGesture } from './TouchZoomSolver'
 
@@ -43,6 +44,10 @@ type InertiaMotion = Extract<ChannelMotion, { kind: 'inertia' }>
 // springs follow a displayed-space curve written back through the inverse projection —
 // both mutate raw, so they compose with an active pan gesture on top.
 type AxisMotions = { center: ChannelMotion | null, logRange: ChannelMotion | null }
+
+// Eases the opposite (auto-fitted) axis toward its shifting data extent. Min and max glide
+// independently; `lastTime` is the timestamp of the previous step for frame-rate independence.
+type AutoFollow = { min: CriticalFollower, max: CriticalFollower, lastTime: number }
 
 type PanState = {
   startClientX: number,
@@ -82,6 +87,10 @@ type Options = {
   zoom?: boolean
   panDirection?: InteractionDirection
   deceleration?: DecelerationOptions
+  // Eases the auto-fitted (non-driven) axis toward its data extent instead of snapping:
+  // true or omitted = default responsiveness, a positive number = custom natural
+  // frequency (higher = snappier), false = off (the axis snaps synchronously)
+  autoFitFollow?: boolean | number
   limits?: {
     minX?: number
     minY?: number
@@ -114,6 +123,11 @@ export class ZoomChartComponent implements HoverComponent {
   private limits!: NormalizedLimits
   private activeAxes!: Axis[]
   private enabledBoundsAxes!: BoundsAxes
+  // The axis the component does not drive but auto-fits (single-axis pan/zoom only); null
+  // when both axes are driven ('all') or none are. The follower animates this one.
+  private autoFitAxis!: Axis | null
+  // Follower natural frequency, null when the follow animation is disabled
+  private autoFitFollowOmega!: number | null
 
   private pan: PanState | null = null
   private lastCursor: Position | null = null
@@ -124,6 +138,7 @@ export class ZoomChartComponent implements HoverComponent {
     y: { center: null, logRange: null },
   }
   private raw: Bounds | null = null
+  private autoFollow: AutoFollow | null = null
 
   constructor(options: Options) {
     this.applyOptions(options)
@@ -138,6 +153,8 @@ export class ZoomChartComponent implements HoverComponent {
     if (this.isXAxisEnabled()) this.activeAxes.push('x')
     if (this.isYAxisEnabled()) this.activeAxes.push('y')
     this.enabledBoundsAxes = { x: this.isXAxisEnabled(), y: this.isYAxisEnabled() }
+    this.autoFitAxis = this.activeAxes.length === 1 ? (this.activeAxes[0] === 'x' ? 'y' : 'x') : null
+    this.autoFitFollowOmega = normalizeAutoFitFollow(options.autoFitFollow)
   }
 
   // Replaces the current options and recomputes the derived config. Any in-flight
@@ -145,6 +162,7 @@ export class ZoomChartComponent implements HoverComponent {
   // no longer apply (a motion left on a now-disabled axis would never be stepped and
   // would keep scheduling renders forever).
   updateOptions(options: Options): void {
+    this.releaseAutoFit(false) // hand the old auto-fit axis back before the config (and axis) changes
     this.applyOptions(options)
     this.pan = null
     this.lastCursor = null
@@ -306,27 +324,35 @@ export class ZoomChartComponent implements HoverComponent {
   onBeforeLayout(space: ChartSpace, full: Size): void {
     const now = this.now()
 
-    if (!this.hasActiveInput() && !this.hasAnyMotion()) {
+    // the follow animation may outlive the input that started it, so it keeps us awake too
+    const activeBusy = this.hasActiveInput() || this.hasAnyMotion()
+    if (!activeBusy && !this.autoFollow) {
       this.raw = null
       return
     }
 
-    const raw = this.ensureRaw(space)
+    const patch: BoundsPatch = {}
 
-    const pinchApplied = this.processPinch(raw, space.layout, now)
-    this.processPan(raw, space.layout, now)
-    if (pinchApplied || this.pinch) this.wheel = null
-    else this.processWheel(raw, space.layout, now)
+    if (activeBusy) {
+      const raw = this.ensureRaw(space)
 
-    const motionMoved = this.stepMotions(raw, space.layout, now)
-    if (motionMoved && this.pan && !this.pan.ended) this.pan.startBounds = raw.clone()
+      const pinchApplied = this.processPinch(raw, space.layout, now)
+      this.processPan(raw, space.layout, now)
+      if (pinchApplied || this.pinch) this.wheel = null
+      else this.processWheel(raw, space.layout, now)
 
-    const displayed = this.computeDisplayed(raw, space)
-    const patch = displayed.toPatch(this.enabledBoundsAxes)
+      const motionMoved = this.stepMotions(raw, space.layout, now)
+      if (motionMoved && this.pan && !this.pan.ended) this.pan.startBounds = raw.clone()
+
+      Object.assign(patch, this.computeDisplayed(raw, space).toPatch(this.enabledBoundsAxes))
+    }
+
+    this.stepAutoFollow(space, patch, now, activeBusy)
+
     if (Bounds.isPatchValid(patch) && !space.bounds.isEqualToPatch(patch)) this.chart.setRenderBounds(patch, true)
 
-    if (this.hasAnyMotion() || this.wheel !== null) this.chart.scheduleRender()
-    if (!this.hasActiveInput() && !this.hasAnyMotion()) this.raw = null
+    if (this.hasAnyMotion() || this.wheel !== null || this.autoFollow !== null) this.chart.scheduleRender()
+    if (!this.hasActiveInput() && !this.hasAnyMotion() && this.autoFollow === null) this.raw = null
   }
 
   private processPinch(raw: Bounds, layout: LayoutValue, now: number): boolean {
@@ -433,6 +459,98 @@ export class ZoomChartComponent implements HoverComponent {
 
     wheel.pending = []
     if (changed && this.pan) this.pan.startBounds = raw.clone()
+  }
+
+  //#endregion
+
+  //#region Auto-fit axis follow
+
+  // Eases the auto-fitted axis toward its data-fit extent so it glides instead of snapping
+  // each frame while the driven axis is panned or zoomed. Writes the animated bounds into
+  // `patch`; once it catches up and no input remains it hands the axis back to the chart's
+  // synchronous auto-fit and stops. Only input engages it — a data change outside interaction
+  // never starts an animation and falls through to that synchronous path unchanged.
+  private stepAutoFollow(space: ChartSpace, patch: BoundsPatch, now: number, activeBusy: boolean): void {
+    const axis = this.autoFitAxis
+    const omega = this.autoFitFollowOmega
+    if (!axis || omega === null) return
+
+    const fit = getAxisBounds(this.chart.autoFitBounds(this.drivenConstraint(space, patch)), axis)
+    if (!Number.isFinite(fit.min) || !Number.isFinite(fit.max) || fit.min >= fit.max) {
+      this.releaseAutoFit(false) // no usable fit (e.g. no data in range): let the chart's own fallback own the axis
+      return
+    }
+
+    if (!this.autoFollow) {
+      if (!activeBusy) return // engage from input only, never from a passive re-layout
+      const current = getAxisBounds(space.bounds, axis)
+      const start = Number.isFinite(current.min) && Number.isFinite(current.max) && current.min < current.max ? current : fit
+      this.autoFollow = { min: new CriticalFollower(start.min, 0, omega), max: new CriticalFollower(start.max, 0, omega), lastTime: now }
+    }
+
+    const follow = this.autoFollow
+    const dt = (now - follow.lastTime) / 1000
+    follow.lastTime = now
+    follow.min.step(fit.min, dt)
+    follow.max.step(fit.max, dt)
+
+    const layoutSize = getAxisSize(axis, space.layout)
+    const pxPerUnit = layoutSize > 0 ? layoutSize / (fit.max - fit.min) : 0
+    const settled = follow.min.settled(fit.min, pxPerUnit) && follow.max.settled(fit.max, pxPerUnit)
+
+    // caught up and nothing is driving further change: return the axis to synchronous auto-fit
+    if (settled && !activeBusy) {
+      this.releaseAutoFit(false)
+      return
+    }
+
+    if (settled) {
+      follow.min.value = fit.min
+      follow.max.value = fit.max
+    }
+
+    // min and max ease independently; on the off chance they cross mid-flight, hold this
+    // frame rather than emit an inverted range (the next frame resolves it)
+    if (follow.min.value >= follow.max.value) return
+
+    if (axis === 'x') {
+      patch.minX = follow.min.value
+      patch.maxX = follow.max.value
+    } else {
+      patch.minY = follow.min.value
+      patch.maxY = follow.max.value
+    }
+  }
+
+  // The driven-axis bounds about to be rendered — from this frame's patch when the input
+  // pipeline produced them, otherwise the resting bounds — as the constraint for querying
+  // the other axis' auto-fit target.
+  private drivenConstraint(space: ChartSpace, patch: BoundsPatch): BoundsConstraint {
+    const constraint: BoundsConstraint = {}
+
+    for (const axis of this.activeAxes) {
+      const current = getAxisBounds(space.bounds, axis)
+      if (axis === 'x') {
+        constraint.minX = patch.minX ?? current.min
+        constraint.maxX = patch.maxX ?? current.max
+      } else {
+        constraint.minY = patch.minY ?? current.min
+        constraint.maxY = patch.maxY ?? current.max
+      }
+    }
+
+    return constraint
+  }
+
+  // Ends the follow animation and clears the auto-fit axis' explicit bounds, so the chart
+  // recomputes it from data on every layout again. No-op when nothing is being followed.
+  private releaseAutoFit(immediate: boolean): void {
+    if (!this.autoFollow) return
+    this.autoFollow = null
+
+    const axis = this.autoFitAxis
+    if (!axis) return
+    this.chart.setRenderBounds(axis === 'x' ? { minX: null, maxX: null } : { minY: null, maxY: null }, immediate)
   }
 
   //#endregion
@@ -989,6 +1107,18 @@ function inertiaBounceMotion(motion: InertiaMotion, from: number, to: number, bo
   const velocity = decayVelocityAt(motion.velocity, motion.deceleration, timeCross) * RUBBER_BAND_COEFF
 
   return { kind: 'spring', spring: new ScalarSpring(springValue, springValue, velocity), startTime: now }
+}
+
+// true or omitted enables the auto-fit follow with the default responsiveness, a
+// positive number enables it with a custom natural frequency, false disables it
+function normalizeAutoFitFollow(option: boolean | number | undefined): number | null {
+  if (option === false) return null
+  if (option === undefined || option === true) return DEFAULT_FOLLOW_OMEGA
+  if (!Number.isFinite(option) || option <= 0) {
+    console.warn(`ZoomChartComponent: autoFitFollow must be a positive number or a boolean, got ${option}, the default is used`)
+    return DEFAULT_FOLLOW_OMEGA
+  }
+  return option
 }
 
 // Fraction of the from -> to segment at which the channel crosses the boundary

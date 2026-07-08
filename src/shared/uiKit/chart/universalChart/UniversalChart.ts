@@ -145,7 +145,10 @@ export class UniversalChart extends BaseChart {
     this.scheduleRender()
   }
 
-  setRenderBounds(bounds: { minX?: number, maxX?: number, minY?: number, maxY?: number } | undefined, immediate: boolean = false) {
+  // Per axis-bound: a number pins it, `undefined` leaves it unchanged, `null` releases
+  // it back to auto-fit (recomputed from data on every layout). Passing no object at all
+  // releases every axis.
+  setRenderBounds(bounds: { minX?: number | null, maxX?: number | null, minY?: number | null, maxY?: number | null } | undefined, immediate: boolean = false) {
     if (!bounds) {
       this.userDefinedBounds = null
       this.dataDidChange()
@@ -334,23 +337,30 @@ export class UniversalChart extends BaseChart {
       return Bounds.fromMinMax(ud.minX, ud.maxX, ud.minY, ud.maxY)
     }
 
-    const hasConstraint = ud && (ud.minX !== null || ud.maxX !== null || ud.minY !== null || ud.maxY !== null)
-    let bounds = hasConstraint
-      ? this.calculateActualDataBounds({
-        minX: ud.minX ?? undefined,
-        maxX: ud.maxX ?? undefined,
-        minY: ud.minY ?? undefined,
-        maxY: ud.maxY ?? undefined,
-      })
-      : this.plotBounds.clone()
+    return this.autoFitBounds({
+      minX: ud?.minX ?? undefined,
+      maxX: ud?.maxX ?? undefined,
+      minY: ud?.minY ?? undefined,
+      maxY: ud?.maxY ?? undefined,
+    })
+  }
+
+  // The bounds the auto-fit layout path produces for a given axis constraint: axes left
+  // unset are fitted to the data lying inside the set ones, with render padding applied.
+  // Exposed so an interactive controller can read the target an auto-fitted axis is about
+  // to snap to and animate toward it instead (see ZoomChartComponent).
+  autoFitBounds(constraint: BoundsConstraint): Bounds {
+    const hasConstraint = constraint.minX !== undefined || constraint.maxX !== undefined ||
+      constraint.minY !== undefined || constraint.maxY !== undefined
+    let bounds = hasConstraint ? this.calculateActualDataBounds(constraint) : this.plotBounds.clone()
 
     if (bounds.isEmpty()) bounds = this.plotBounds.clone()
 
     return Bounds.fromMinMax(
-      ud?.minX ?? (bounds.minX - this.renderBoundsPadding.left),
-      ud?.maxX ?? (bounds.maxX + this.renderBoundsPadding.right),
-      ud?.minY ?? (bounds.minY - this.renderBoundsPadding.bottom),
-      ud?.maxY ?? (bounds.maxY + this.renderBoundsPadding.top),
+      constraint.minX ?? (bounds.minX - this.renderBoundsPadding.left),
+      constraint.maxX ?? (bounds.maxX + this.renderBoundsPadding.right),
+      constraint.minY ?? (bounds.minY - this.renderBoundsPadding.bottom),
+      constraint.maxY ?? (bounds.maxY + this.renderBoundsPadding.top),
     )
   }
 

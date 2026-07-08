@@ -72,6 +72,7 @@ class BaseChart extends UniversalChart {
         chart: this,
         zoom: true,
         panDirection: 'horizontal',
+        autoFitFollow: true,
         limits: {
           minX: 0,
           maxX: this.maxX,
