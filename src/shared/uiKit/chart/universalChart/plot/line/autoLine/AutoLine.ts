@@ -1,6 +1,6 @@
 import { ChartGradient } from '../../../defs/ChartGradient'
 import { Overflow } from '../../../UniversalChart'
-import { Bounds } from '../../../utils/Bounds'
+import { Bounds, BoundsConstraint } from '../../../utils/Bounds'
 import { ChartSpace } from '../../../utils/ChartSpace'
 import { addClasses, Classes } from '../../../utils/utils'
 import { BasePlotRenderer } from '../../BasePlotRenderer'
@@ -24,6 +24,7 @@ type Point = { x: number, y: number }
 
 export class AutoLine extends BasePlotRenderer {
   protected bounds: Bounds | null = null
+  protected constrainedBounds: { key: string, bounds: Bounds } | null = null
   protected line: SVGPathElement | null = null
   protected area: SVGPathElement | null = null
 
@@ -37,6 +38,7 @@ export class AutoLine extends BasePlotRenderer {
 
   protected pointsDidChange() {
     this.bounds = null
+    this.constrainedBounds = null
     this.requestRender()
   }
 
@@ -72,7 +74,9 @@ export class AutoLine extends BasePlotRenderer {
     return this
   }
 
-  getBounds(): Bounds {
+  getBounds(constraint?: BoundsConstraint): Bounds {
+    if (constraint) return this.getConstrainedBounds(constraint)
+
     if (this.bounds && !this.bounds.isEmpty()) return this.bounds
 
     this.bounds = new Bounds()
@@ -80,6 +84,23 @@ export class AutoLine extends BasePlotRenderer {
       if (point) this.bounds.addPoint(point)
     }
     return this.bounds
+  }
+
+  private getConstrainedBounds(constraint: BoundsConstraint): Bounds {
+    const { minX = -Infinity, maxX = Infinity, minY = -Infinity, maxY = Infinity } = constraint
+
+    const key = `${minX}_${maxX}_${minY}_${maxY}`
+    if (this.constrainedBounds?.key === key) return this.constrainedBounds.bounds
+
+    const bounds = new Bounds()
+    for (const point of this.points) {
+      if (!point) continue
+      if (point.x < minX || point.x > maxX || point.y < minY || point.y > maxY) continue
+      bounds.addPoint(point)
+    }
+
+    this.constrainedBounds = { key, bounds }
+    return bounds
   }
 
   renderImpl(space: ChartSpace, overflow: Overflow) {

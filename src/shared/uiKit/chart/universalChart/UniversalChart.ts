@@ -1,7 +1,7 @@
 import './style.scss'
 
 import BaseChart from '../BaseChart'
-import { Bounds } from './utils/Bounds'
+import { Bounds, BoundsConstraint } from './utils/Bounds'
 import { ChartSpace } from './utils/ChartSpace'
 import { Offset4Side, unwrapOffset } from './utils/utils'
 import { ChartRenderManager } from '../ChartRenderManager'
@@ -34,7 +34,7 @@ export interface SlotRenderer extends BaseRenderer {
 }
 
 export interface PlotRenderer extends BaseRenderer {
-  getBounds?(): Bounds
+  getBounds?(constraint?: BoundsConstraint): Bounds
 }
 
 export interface DefsRenderer extends BaseRenderer { }
@@ -290,7 +290,7 @@ export class UniversalChart extends BaseChart {
 
   private layout() {
 
-    const key = `${this.size.width}x${this.size.height}-${this.plotBounds.getHash()}-${this.userDefinedBounds ? `${this.userDefinedBounds.minX ?? 'n'}-${this.userDefinedBounds.maxX ?? 'n'}-${this.userDefinedBounds.minY ?? 'n'}-${this.userDefinedBounds.maxY ?? 'n'}` : 'd'}`
+    const key = `${this.size.width}x${this.size.height}-${this.chartSpace.bounds.getHash()}-${this.userDefinedBounds ? `${this.userDefinedBounds.minX ?? 'n'}-${this.userDefinedBounds.maxX ?? 'n'}-${this.userDefinedBounds.minY ?? 'n'}-${this.userDefinedBounds.maxY ?? 'n'}` : 'd'}`
     if (key === this.layoutCacheKey) return false
     this.layoutCacheKey = key
 
@@ -334,7 +334,17 @@ export class UniversalChart extends BaseChart {
       return Bounds.fromMinMax(ud.minX, ud.maxX, ud.minY, ud.maxY)
     }
 
-    const bounds = this.plotBounds.clone()
+    const hasConstraint = ud && (ud.minX !== null || ud.maxX !== null || ud.minY !== null || ud.maxY !== null)
+    let bounds = hasConstraint
+      ? this.calculateActualDataBounds({
+        minX: ud.minX ?? undefined,
+        maxX: ud.maxX ?? undefined,
+        minY: ud.minY ?? undefined,
+        maxY: ud.maxY ?? undefined,
+      })
+      : this.plotBounds.clone()
+
+    if (bounds.isEmpty()) bounds = this.plotBounds.clone()
 
     return Bounds.fromMinMax(
       ud?.minX ?? (bounds.minX - this.renderBoundsPadding.left),
@@ -344,10 +354,10 @@ export class UniversalChart extends BaseChart {
     )
   }
 
-  private recalculateDataBounds() {
+  private calculateActualDataBounds(constraint?: BoundsConstraint) {
     const bounds = new Bounds()
     for (const line of this.plotRenderers) {
-      if (line.getBounds) bounds.extend(line.getBounds())
+      if (line.getBounds) bounds.extend(line.getBounds(constraint))
     }
 
     if (!bounds.isEmpty()) {
@@ -361,7 +371,11 @@ export class UniversalChart extends BaseChart {
         bounds.maxY += 1
       }
     }
-    this.plotBounds = bounds
+    return bounds
+  }
+
+  private recalculateDataBounds() {
+    this.plotBounds = this.calculateActualDataBounds()
   }
 
   private getRootFor(path: string[]) {

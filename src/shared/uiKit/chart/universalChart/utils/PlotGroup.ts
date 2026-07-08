@@ -1,5 +1,5 @@
 import { UniversalChart, Overflow, PlotRenderer } from '../UniversalChart'
-import { Bounds } from './Bounds'
+import { Bounds, BoundsConstraint } from './Bounds'
 import { ChartSpace } from './ChartSpace'
 import { ChartClip } from '../defs/ChartClip'
 import { ChartMask } from '../defs/ChartMask'
@@ -39,10 +39,10 @@ export class PlotGroup implements PlotRenderer {
     return this
   }
 
-  getBounds?(): Bounds {
+  getBounds?(constraint?: BoundsConstraint): Bounds {
     const bounds = new Bounds()
     for (const { plot } of this.plots) {
-      if (plot.getBounds) bounds.extend(plot.getBounds())
+      if (plot.getBounds) bounds.extend(plot.getBounds(constraint))
     }
     return bounds
   }

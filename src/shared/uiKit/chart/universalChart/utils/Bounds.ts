@@ -1,6 +1,7 @@
 import { Point } from './Point'
 
 export type BoundsPatch = { minX?: number, maxX?: number, minY?: number, maxY?: number }
+export type BoundsConstraint = { minX?: number, maxX?: number, minY?: number, maxY?: number }
 export type BoundsAxes = { x?: boolean, y?: boolean }
 
 export class Bounds {
