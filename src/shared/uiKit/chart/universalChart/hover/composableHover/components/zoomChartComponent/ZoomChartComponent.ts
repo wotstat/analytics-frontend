@@ -108,11 +108,12 @@ type Options = {
 // with a still-running zoom return on the same axis.
 export class ZoomChartComponent implements HoverComponent {
 
-  private readonly chart: UniversalChart
+  private options!: Options
+  private chart!: UniversalChart
 
-  private readonly limits: NormalizedLimits
-  private readonly activeAxes: Axis[]
-  private readonly enabledBoundsAxes: BoundsAxes
+  private limits!: NormalizedLimits
+  private activeAxes!: Axis[]
+  private enabledBoundsAxes!: BoundsAxes
 
   private pan: PanState | null = null
   private lastCursor: Position | null = null
@@ -124,7 +125,12 @@ export class ZoomChartComponent implements HoverComponent {
   }
   private raw: Bounds | null = null
 
-  constructor(private readonly options: Options) {
+  constructor(options: Options) {
+    this.applyOptions(options)
+  }
+
+  private applyOptions(options: Options): void {
+    this.options = options
     this.chart = options.chart
     this.limits = normalizeLimits(options.limits)
 
@@ -132,6 +138,23 @@ export class ZoomChartComponent implements HoverComponent {
     if (this.isXAxisEnabled()) this.activeAxes.push('x')
     if (this.isYAxisEnabled()) this.activeAxes.push('y')
     this.enabledBoundsAxes = { x: this.isXAxisEnabled(), y: this.isYAxisEnabled() }
+  }
+
+  // Replaces the current options and recomputes the derived config. Any in-flight
+  // gesture, inertia or spring is dropped: it may reference an axis or limits that
+  // no longer apply (a motion left on a now-disabled axis would never be stepped and
+  // would keep scheduling renders forever).
+  updateOptions(options: Options): void {
+    this.applyOptions(options)
+    this.pan = null
+    this.lastCursor = null
+    this.pinch = null
+    this.wheel = null
+    this.motions = {
+      x: { center: null, logRange: null },
+      y: { center: null, logRange: null },
+    }
+    this.raw = null
   }
 
   //#region Pan

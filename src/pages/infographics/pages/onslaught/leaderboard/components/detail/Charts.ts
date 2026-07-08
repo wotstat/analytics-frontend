@@ -28,15 +28,20 @@ const WEEK = DAY * 7
 class BaseChart extends UniversalChart {
   tooltipCtx = ref<TooltipCtx | null>(null)
 
-  private line: AutoLine
-  private hover: ComposableHover
-  private dayTicks: TicksByValues
-  private restrictionArea: RectangleArea
-  private labelsX: AutoLabels
-  private currentInterval = { from: 0, to: 0 }
+  private readonly line: AutoLine
+  private readonly hover: ComposableHover
+  private readonly dayTicks: TicksByValues
+  private readonly restrictionArea: RectangleArea
+  private readonly labelsX: AutoLabels
+  private readonly maxX: number
 
   constructor(protected seasonInterval: { start: Date, end: Date }) {
     super({ layoutVariant: 'vertical', renderManager: globalChartRenderManagerSteps4 })
+
+    const start = Math.floor(seasonInterval.start.getTime() / 1000)
+    const end = Math.floor(seasonInterval.end.getTime() / 1000)
+    const delta = end - start
+    this.maxX = Math.ceil(delta / WEEK) * WEEK
 
     const clipMain = new ChartClip('center', { top: -1, bottom: -1 })
     const clipLeft = new ChartClip('left')
@@ -69,7 +74,7 @@ class BaseChart extends UniversalChart {
         panDirection: 'horizontal',
         limits: {
           minX: 0,
-          maxX: 60 * 60 * 24 * 7 * 6,
+          maxX: this.maxX,
           maxDeltaX: 60 * 60 * 24 * 7 * 6,
           minDeltaX: 60 * 60 * 24,
           elastic: true
@@ -106,30 +111,18 @@ class BaseChart extends UniversalChart {
       .addPlot(this.hover)
       .addDefs(gradient, clipMain, clipLeft, clipBottom, maskMain, pattern)
 
-    this.setRenderBounds({ minX: 0 })
+    const dayTicks = []
+    for (let i = 0; i <= end - start; i += DAY) dayTicks.push(i)
+    this.dayTicks.setTicks(dayTicks)
+
+    this.recalculateRestrictionArea()
+    this.setRenderBounds({ minX: 0, maxX: this.maxX })
     this.setMinLayoutSize({ right: 5, top: 5 })
   }
 
   setPoints(points: ({ x: number, y: number } | null)[]) {
     this.line.setPoints(points)
     this.hover.setDataSources(points)
-    this.recalculateRestrictionArea()
-    return this
-  }
-
-  setInterval(seasonInterval: { start: Date, end: Date }) {
-    const start = Math.floor(seasonInterval.start.getTime() / 1000)
-    const end = Math.floor(seasonInterval.end.getTime() / 1000)
-    const delta = end - start
-    const roundedDelta = Math.ceil(delta / WEEK) * WEEK
-    this.setRenderBounds({ minX: 0, maxX: roundedDelta })
-    this.currentInterval = { from: 0, to: roundedDelta }
-
-    const dayTicks = []
-    for (let i = 0; i <= end - start; i += DAY) dayTicks.push(i)
-    this.dayTicks.setTicks(dayTicks)
-
-    this.labelsX.updateOptions(this.getXLabelsOptions())
     this.recalculateRestrictionArea()
     return this
   }
@@ -165,8 +158,8 @@ class BaseChart extends UniversalChart {
       labelOffset: 5,
       values: steppedOverrides({ step: steps.map(s => ({ step: s[0], labelForValue: s[1] })) }),
       strategy: { type: 'interval', fit: true, offset: 3 },
-      from: this.currentInterval.from,
-      to: this.currentInterval.to
+      from: 0,
+      to: this.maxX
     }
   }
 
