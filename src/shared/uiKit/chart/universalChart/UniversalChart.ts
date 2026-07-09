@@ -43,7 +43,27 @@ const NAMESPACE = 'http://www.w3.org/2000/svg'
 
 const globalChartRenderManager = new ChartRenderManager(4)
 
+class EventEmitter<T> {
+  private listeners: ((arg: T) => void)[] = []
+
+  on(listener: (arg: T) => void) {
+    this.listeners.push(listener)
+    return () => this.off(listener)
+  }
+
+  off(listener: (arg: T) => void) {
+    const index = this.listeners.indexOf(listener)
+    if (index >= 0) this.listeners.splice(index, 1)
+  }
+
+  emit(arg: T) {
+    for (const listener of this.listeners) listener(arg)
+  }
+}
+
 export class UniversalChart extends BaseChart {
+
+  readonly onSetRenderBounds = new EventEmitter<{ minX?: number | null, maxX?: number | null, minY?: number | null, maxY?: number | null, immediate?: boolean }>()
 
   private userDefinedBounds: { minX: number | null, maxX: number | null, minY: number | null, maxY: number | null } | null = null
   private renderBoundsPadding = { top: 0, right: 0, bottom: 0, left: 0 }
@@ -182,8 +202,11 @@ export class UniversalChart extends BaseChart {
     if (ud.maxY && Math.abs(ud.maxY) == Infinity) ud.maxY = null
     if (ud.minY && Math.abs(ud.minY) == Infinity) ud.minY = null
 
-    if (changed) this.dataDidChange()
+    if (!changed) return
+
+    this.dataDidChange()
     if (immediate) this.relayout()
+    this.onSetRenderBounds.emit({ ...ud, immediate })
   }
 
   setMinLayoutSize(size: Offset4Side) {
