@@ -689,6 +689,11 @@ export class ZoomChartComponent implements HoverComponent {
     }
 
     if (!springAllowed) return null
+    // Elastic raw can stay slightly outside while displayed is already clamped within
+    // fp tolerance. A zero-distance spring would settle immediately and be recreated
+    // by the resting release pass forever without changing raw.
+    if (displayedFrom === displayedTarget && v === 0) return null
+
     return { kind: 'spring', spring: new ScalarSpring(displayedFrom, displayedTarget, v * velocityFactor), startTime: now }
   }
 
