@@ -1,45 +1,45 @@
 <template>
   <div class="charts" :class="{ 'loading': loading }">
+
     <div class="chart">
-      <div class="header">
-        <div class="title">
+      <HeaderTooltip :ctx="scoreChart.tooltipCtx.value">
+        <template #left>
           <h3>Очки по дням</h3>
-        </div>
-        <IntervalSelector v-if="!isZoom" />
-      </div>
+        </template>
+
+        <template #right>
+          <IntervalSelector v-if="!isZoom" />
+        </template>
+
+        <template #tooltip="{ ctx }">
+          <div class="tooltip-container">
+            <p class="value">{{ ctx.nearestDataPoints[0].yValue }}</p>
+            <p class="date">{{ tooltipDate(ctx) }}</p>
+          </div>
+        </template>
+      </HeaderTooltip>
       <UniversalChartComponent :chart="scoreChart" />
     </div>
+
     <div class="chart" ref="battleChartElement">
-      <div class="header" :style="{
-        opacity: battleChart.tooltipCtx.value ? 0 : 1,
-      }">
-        <div class="title">
+      <HeaderTooltip :ctx="battleChart.tooltipCtx.value">
+        <template #left>
           <h3>Бои по дням</h3>
-        </div>
-        <IntervalSelector v-if="!isZoom" />
-      </div>
+        </template>
+
+        <template #right>
+          <IntervalSelector v-if="!isZoom" />
+        </template>
+
+        <template #tooltip="{ ctx }">
+          <div class="tooltip-container">
+            <p class="value">{{ ctx.nearestDataPoints[0].yValue }}</p>
+            <p class="date">{{ tooltipDate(ctx) }}</p>
+          </div>
+        </template>
+      </HeaderTooltip>
       <UniversalChartComponent :chart="battleChart" />
     </div>
-
-    <div class="tooltip tooltip-score" :style="{ transform: tooltipPosition(scoreChart.tooltipCtx.value, scoreWidth) }"
-      v-if="scoreChart.tooltipCtx.value" ref="scoreTooltip">
-      <p>{{ tooltipDate(scoreChart.tooltipCtx.value) }}</p>
-      <div class="data flex">
-        <p class="flex-1">Очки:</p>
-        <p class="bold">{{ scoreChart.tooltipCtx.value?.nearestDataPoints[0].yValue }}</p>
-      </div>
-    </div>
-
-    <Transition name="fade">
-      <div class="tooltip-2 tooltip-battles"
-        :style="{ transform: tooltipPosition2(battleChart.tooltipCtx.value, battleWidth) }"
-        v-if="battleChart.tooltipCtx.value" ref="battleTooltip">
-        <div class="data flex">
-          <p class="bold">{{ battleChart.tooltipCtx.value?.nearestDataPoints[0].yValue }}</p>
-        </div>
-        <p class="date">{{ tooltipDate(battleChart.tooltipCtx.value) }}</p>
-      </div>
-    </Transition>
   </div>
 </template>
 
@@ -57,21 +57,11 @@ import { BoundsSynchronizer } from '@/shared/uiKit/chart/universalChart/hover/co
 import { useRoute } from 'vue-router'
 import { getRegionDayChangeHourOffset } from '@/shared/game/comp7/utils'
 import { useElementBounding, useElementSize, useWindowSize } from '@vueuse/core'
-
+import HeaderTooltip from '@/shared/ui/chart/HeaderTooltip.vue'
 
 const route = useRoute()
 const isZoom = computed(() => route.query['ab'] == 'zoom')
 const loading = ref(true)
-
-const scoreTooltip = ref<HTMLElement | null>(null)
-const battleTooltip = ref<HTMLElement | null>(null)
-const battleChartElement = ref<HTMLElement | null>(null)
-
-const { width: windowWidths } = useWindowSize({ includeScrollbar: false })
-const { width: scoreWidth } = useElementSize(scoreTooltip, undefined, { box: 'border-box' })
-const { width: battleWidth } = useElementSize(battleTooltip, undefined, { box: 'border-box' })
-const battleChartBounding = useElementBounding(battleChartElement)
-
 
 const props = defineProps<{
   bdid: number
@@ -106,30 +96,6 @@ const data = queryComputed<{ recalculationTime: string, rank: number, rating: nu
 watchEffect(() => {
   loading.value = data.value.status == loadingState
 })
-
-function tooltipPosition(ctx: TooltipCtx, tooltipWidth: number = 0) {
-  const PADDING = 10
-
-  if (ctx.isTouch) {
-    const x = Math.min(Math.max(ctx.absolutePivot.x - tooltipWidth / 2, PADDING), windowWidths.value - tooltipWidth - PADDING)
-    return `translate(calc(${x}px), calc(${ctx.absolutePivot.y}px - 100% - 10px))`
-  }
-
-  else return `translate(${ctx.absolutePivot.x + 5}px, ${ctx.absoluteCursor.y + 5}px)`
-}
-
-function tooltipPosition2(ctx: TooltipCtx, tooltipWidth: number = 0) {
-  // if (ctx.isTouch) 
-  const PADDING = 10
-
-  // const x = Math.min(Math.max(ctx.absolutePivot.x - tooltipWidth / 2, PADDING), windowWidths.value - tooltipWidth - PADDING)
-  // return `translate(calc(${x}px), calc(${ctx.absolutePivot.y}px - 100% - 10px))`
-
-  const x = Math.min(Math.max(ctx.absolutePivot.x - tooltipWidth / 2, battleChartBounding.left.value), battleChartBounding.right.value - tooltipWidth - 5)
-  return `translate(calc(${x}px), ${ctx.absoluteChartBox.top - 40}px)`
-
-  return `translate(${ctx.absolutePivot.x + 5}px, ${ctx.absoluteCursor.y + 5}px)`
-}
 
 function tooltipDate(ctx: TooltipCtx) {
   return new Date(startTime + ctx.nearestDataPoints[0].xValue * 1000).toLocaleString(undefined, {
@@ -171,14 +137,6 @@ watchEffect(() => {
   battleChart.setPoints(battles)
 })
 
-// setInterval(() => {
-//   scoreChart2.setRenderBounds({
-//     minX: (1 + Math.sin(Date.now() / 1000)) * 200 - 200,
-//     maxX: (1 + Math.cos(Date.now() / 1000)) * 200 + 4000000,
-//     minY: (1 + Math.cos(Date.now() / 1000)) * 50 + 5000,
-//     maxY: (1 + Math.sin(Date.now() / 1000)) * 5000 + 10000,
-//   })
-// }, 16)
 
 </script>
 
@@ -241,49 +199,8 @@ watchEffect(() => {
     }
   }
 
-  .tooltip {
-    pointer-events: none;
-    touch-action: none;
-    position: absolute;
-    background: rgba(16, 29, 51, 1);
-    padding: 5px 8px;
-    border-radius: 8px;
-    font-size: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-sizing: border-box;
-    backdrop-filter: blur(10px);
-    top: 0;
-    left: 0;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
-    min-width: 140px;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .tooltip-2 {
-    pointer-events: none;
-    touch-action: none;
-    position: absolute;
-    // background: rgba(16, 29, 51, 1);
-    padding: 0;
-    font-size: 12px;
-    box-sizing: border-box;
-    top: 0;
-    left: 0;
-    font-variant-numeric: tabular-nums;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    .data {
-      font-size: 20px;
-      line-height: 20px;
-    }
-
-    .date {
-      font-size: 11px;
-      font-weight: bold;
-      color: rgba(255, 255, 255, 0.5);
-    }
+  :deep(.chart-container) {
+    margin-right: -5px;
   }
 
   .chart {
@@ -293,23 +210,6 @@ watchEffect(() => {
 
     display: flex;
     flex-direction: column;
-
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      transition: opacity 0.1s;
-
-      .title {
-        flex: 1;
-      }
-
-      h3 {
-        margin: 0 0 10px 0;
-        font-size: 16px;
-      }
-
-    }
 
     :deep(.universal-chart-root) {
       background: inherit;
@@ -379,16 +279,37 @@ watchEffect(() => {
     }
 
   }
-}
 
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s, filter 0.2s;
-}
+  h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    padding-right: 10px;
+  }
 
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  filter: blur(1px);
+  .tooltip-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .value {
+      font-size: 20px;
+      line-height: 20px;
+      font-weight: bold;
+      color: white;
+    }
+
+    .date {
+      font-size: 11px;
+      line-height: 1;
+      font-weight: bold;
+      color: rgba(255, 255, 255, 0.5);
+      margin-top: 3px;
+      margin-bottom: 3px;
+
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+  }
+
 }
 </style>

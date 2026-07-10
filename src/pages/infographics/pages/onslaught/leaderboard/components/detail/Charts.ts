@@ -85,7 +85,7 @@ class BaseChart extends UniversalChart {
         },
       }))
       .addComponent(new VerticalLine({
-        offset: { end: 0.5 },
+        offset: { end: 0.5, start: -5 },
         position: 'data-point-x',
         hoverSync: sync.hover,
       }))
