@@ -6,6 +6,7 @@ import { addClasses, Classes, joinClasses } from '../../../../utils/utils'
 import { DataSource, HoveredDataPoint, isDataPointArrayEqual } from '../../../BaseDataSourcedPlotHover'
 import { InteractionDirection, Position } from '../../../basePlotHover/BasePlotHover'
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
+import { HoverResolver } from '../../sync/HoverSynchronizer'
 
 
 
@@ -19,6 +20,7 @@ type Options = {
   maskSize?: number
   position?: 'data-point-x' | 'data-point-y' | 'data-point' | 'nearest-data-point'
   activateDistance?: number
+  hoverSync?: HoverResolver
 }
 
 export class NearestMarker implements HoverComponent {
@@ -36,6 +38,8 @@ export class NearestMarker implements HoverComponent {
   private composable: ComposableHover | null = null
   private lastPoint: Point | null = null
   private hovered = false
+
+  private onSyncChange = () => this.composable?.scheduleRender()
 
   constructor(protected options: Options = {}) {
     addClasses(this.root, 'hover-markers', options.classes)
@@ -55,6 +59,12 @@ export class NearestMarker implements HoverComponent {
   attach(root: SVGGElement, composable: ComposableHover): void {
     root.appendChild(this.root)
     this.composable = composable
+    this.options.hoverSync?.subscribeChange(this.onSyncChange)
+  }
+
+  detach(): void {
+    this.options.hoverSync?.unsubscribeChange(this.onSyncChange)
+    this.clearMarkers()
   }
 
   onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
@@ -64,11 +74,15 @@ export class NearestMarker implements HoverComponent {
   }
 
   onHoverEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
+    this.clearMarkers()
+    this.hovered = false
+    return false
+  }
+
+  private clearMarkers(): void {
     for (const marker of this.markers) marker.dispose()
     this.markers = []
     this.lastNearestDataPoints = null
-    this.hovered = false
-    return false
   }
 
   onHoverUpdate(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
@@ -88,20 +102,21 @@ export class NearestMarker implements HoverComponent {
   }
 
   render(space: ChartSpace, overflow: Overflow, full: Size): void {
-    if (!this.hovered) return
-
     const composable = this.composable
-    const point = this.lastPoint
-    if (!composable || !point) return
+    const point = this.hovered ? this.lastPoint : (this.options.hoverSync?.resolve(space) ?? null)
+    if (!composable || !point) {
+      this.clearMarkers()
+      return
+    }
 
     let nearestDataPoints: HoveredDataPoint[]
 
     if (this.position === 'data-point-x') {
       const dp = composable.findNearestByAxis(point, space, 'x', true)
-      nearestDataPoints = dp.filter(p => p.xValue === dp[0].xValue)
+      nearestDataPoints = dp.length ? dp.filter(p => p.xValue === dp[0].xValue) : []
     } else if (this.position === 'data-point-y') {
       const dp = composable.findNearestByAxis(point, space, 'y', true)
-      nearestDataPoints = dp.filter(p => p.yValue === dp[0].yValue)
+      nearestDataPoints = dp.length ? dp.filter(p => p.yValue === dp[0].yValue) : []
     } else {
       nearestDataPoints = composable.findNearest(point, space, true)
       if (this.position === 'nearest-data-point' && nearestDataPoints.length > 1) nearestDataPoints = [nearestDataPoints[0]]

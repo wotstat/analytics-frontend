@@ -17,6 +17,7 @@ import { RectangleArea } from '@/shared/uiKit/chart/universalChart/plot/area/Rec
 import { ChartRawPattern } from '@/shared/uiKit/chart/universalChart/defs/ChartRawPattern'
 import { ZoomChartComponent } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/zoomChartComponent/ZoomChartComponent'
 import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
+import { HoverSynchronizer } from '@/shared/uiKit/chart/universalChart/hover/composableHover/sync/HoverSynchronizer'
 
 
 const MINUTE = 1 * 60
@@ -35,7 +36,7 @@ class BaseChart extends UniversalChart {
   private readonly labelsX: AutoLabels
   private readonly maxX: number
 
-  constructor(protected seasonInterval: { start: Date, end: Date }) {
+  constructor(protected seasonInterval: { start: Date, end: Date }, hoverSync?: HoverSynchronizer) {
     super({ layoutVariant: 'vertical', renderManager: globalChartRenderManagerSteps4 })
 
     const start = Math.floor(seasonInterval.start.getTime() / 1000)
@@ -84,6 +85,7 @@ class BaseChart extends UniversalChart {
       .addComponent(new VerticalLine({
         offset: { end: 0.5 },
         position: 'data-point-x',
+        hoverSync,
       }))
       .addComponent(new NearestMarker({
         classes: 'markers',
@@ -93,13 +95,17 @@ class BaseChart extends UniversalChart {
         classesForDataSource: ['m1', 'm2'],
         targetMasks: [maskMain.root],
         position: 'data-point-x',
+        hoverSync,
       }))
       .addComponent(new ChartTooltip({
         position: 'data-point-x',
         tooltipPivot: 'avg',
         onHide: () => this.tooltipCtx.value = null,
         onPositionChange: ctx => this.tooltipCtx.value = ctx,
+        hoverSync,
       }))
+
+    if (hoverSync) this.hover.addComponent(hoverSync)
 
     this.dayTicks = new TicksByValues('horizontal', { start: 0, classes: 'day-ticks' })
     this
@@ -187,15 +193,15 @@ class BaseChart extends UniversalChart {
 
 export class ScoreChart extends BaseChart {
 
-  constructor(seasonInterval: { start: Date, end: Date }) {
-    super(seasonInterval)
+  constructor(seasonInterval: { start: Date, end: Date }, hoverSync?: HoverSynchronizer) {
+    super(seasonInterval, hoverSync)
   }
 }
 
 
 export class BattlesChart extends BaseChart {
 
-  constructor(seasonInterval: { start: Date, end: Date }) {
-    super(seasonInterval)
+  constructor(seasonInterval: { start: Date, end: Date }, hoverSync?: HoverSynchronizer) {
+    super(seasonInterval, hoverSync)
   }
 }

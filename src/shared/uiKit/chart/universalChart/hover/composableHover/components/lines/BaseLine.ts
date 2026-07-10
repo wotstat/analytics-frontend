@@ -5,6 +5,7 @@ import { addClasses, Classes } from '../../../../utils/utils'
 import { HoveredDataPoint, isDataPointEqual } from '../../../BaseDataSourcedPlotHover'
 import { InteractionDirection, Position } from '../../../basePlotHover/BasePlotHover'
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
+import { HoverResolver } from '../../sync/HoverSynchronizer'
 
 type Options = {
   classes?: Classes
@@ -12,6 +13,7 @@ type Options = {
   position?: 'cursor' | 'data-point-x' | 'data-point-y' | 'data-point'
   activateDistance?: number
   outOfDistanceVisibility?: boolean
+  hoverSync?: HoverResolver
 }
 
 export abstract class BaseLine implements HoverComponent {
@@ -26,6 +28,8 @@ export abstract class BaseLine implements HoverComponent {
 
   protected lastPoint: Point = { x: 0, y: 0 }
   protected hovered = false
+
+  private onSyncChange = () => this.composable?.scheduleRender()
 
   constructor(protected options: Options = {}) {
     addClasses(this.line, 'hover-line', 'vertical', options.classes)
@@ -45,17 +49,22 @@ export abstract class BaseLine implements HoverComponent {
   attach(root: SVGGElement, composable: ComposableHover): void {
     root.appendChild(this.line)
     this.composable = composable
+    this.options.hoverSync?.subscribeChange(this.onSyncChange)
+  }
+
+  detach(): void {
+    this.options.hoverSync?.unsubscribeChange(this.onSyncChange)
   }
 
   onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
-    if (this.position === 'cursor') this.line.classList.add('visible')
+    if (this.position === 'cursor') this.line.classList.toggle('visible', true)
     this.hovered = true
     this.process(space, point)
     return true
   }
 
   onHoverEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
-    this.line.classList.remove('visible')
+    this.line.classList.toggle('visible', false)
     this.hovered = false
     this.lastDataPoints = null
     return false
@@ -69,12 +78,18 @@ export abstract class BaseLine implements HoverComponent {
   abstract mayHover(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): InteractionDirection
 
   render(space: ChartSpace, overflow: Overflow, full: Size): void {
-    this.process(space)
+    const point = this.hovered ? this.lastPoint : (this.options.hoverSync?.resolve(space) ?? null)
+    if (!point) {
+      this.line.classList.toggle('visible', false)
+      this.lastDataPoints = null
+      return
+    }
+    if (this.position === 'cursor') this.line.classList.toggle('visible', true)
+    this.process(space, point)
   }
 
   protected process(space: ChartSpace, point: Point = this.lastPoint) {
     this.lastPoint = point
-    if (!this.hovered) return
 
     if (this.position === 'cursor') {
       this.setLinePosition(point, space)
@@ -95,13 +110,13 @@ export abstract class BaseLine implements HoverComponent {
     nearestDataPoints = nearestDataPoints.filter(p => p.distance <= (this.options.activateDistance ?? Infinity))
     if (this.options.outOfDistanceVisibility && nearestDataPoints.length === 0) {
       this.setLinePosition(point, space)
-      this.line.classList.add('visible')
+      this.line.classList.toggle('visible', true)
       this.lastDataPoints = null
       return
     }
 
     if (nearestDataPoints.length === 0) {
-      this.line.classList.remove('visible')
+      this.line.classList.toggle('visible', false)
       this.lastDataPoints = null
       return
     }
@@ -112,7 +127,7 @@ export abstract class BaseLine implements HoverComponent {
     if (this.spaceHash === space.getHash() && this.lastDataPoints && isDataPointEqual(nearest, this.lastDataPoints)) return
     this.spaceHash = spaceHash
 
-    if (!this.lastDataPoints) this.line.classList.add('visible')
+    if (!this.lastDataPoints) this.line.classList.toggle('visible', true)
     this.lastDataPoints = nearest
 
     if (this.position === 'data-point') {

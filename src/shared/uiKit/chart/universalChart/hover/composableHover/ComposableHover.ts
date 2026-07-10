@@ -7,7 +7,7 @@ import { InteractionDirection, Position, TouchZoomPoint } from '../basePlotHover
 
 export interface HoverComponent {
   attach?(root: SVGGElement, composable: ComposableHover): void
-  detach?(): void
+  detach?(composable: ComposableHover): void
   onBeforeLayout?(space: ChartSpace, full: Size): void
   render?(space: ChartSpace, overflow: Overflow, full: Size): void
   didLayout?(space: ChartSpace, full: Size): void
@@ -71,7 +71,7 @@ export class ComposableHover extends BaseDataSourcedPlotHover {
 
   detach(): void {
     super.detach()
-    for (const component of this.components) component.detach?.()
+    for (const component of this.components) component.detach?.(this)
     this.components = []
   }
 
@@ -84,8 +84,12 @@ export class ComposableHover extends BaseDataSourcedPlotHover {
 
   removeComponent(component: HoverComponent) {
     this.components = this.components.filter(c => c !== component)
-    component.detach?.()
+    component.detach?.(this)
     return this
+  }
+
+  scheduleRender() {
+    this.requestRender()
   }
 
   protected onBeforeLayout(space: ChartSpace, full: Size): void {

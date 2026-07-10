@@ -4,6 +4,7 @@ import { Point } from '../../../../utils/Point'
 import { HoveredDataPoint } from '../../../BaseDataSourcedPlotHover'
 import { InteractionDirection, Position } from '../../../basePlotHover/BasePlotHover'
 import { ComposableHover, HoverComponent } from '../../ComposableHover'
+import { HoverResolver } from '../../sync/HoverSynchronizer'
 
 export type TooltipCtx = {
   pivot: Point,
@@ -23,6 +24,7 @@ type Options = {
   onShow?: (ctx: TooltipCtx) => void
   onPositionChange?: (ctx: TooltipCtx) => void
   onHide?: () => void
+  hoverSync?: HoverResolver
 }
 
 export class ChartTooltip implements HoverComponent {
@@ -34,11 +36,19 @@ export class ChartTooltip implements HoverComponent {
   private lastIsTouch = false
   private hovered = false
 
+  private onSyncChange = () => this.composable?.scheduleRender()
+
   constructor(protected options: Options = {}) {
   }
 
   attach(root: SVGGElement, composable: ComposableHover): void {
     this.composable = composable
+    this.options.hoverSync?.subscribeChange(this.onSyncChange)
+  }
+
+  detach(): void {
+    this.options.hoverSync?.unsubscribeChange(this.onSyncChange)
+    this.clear()
   }
 
   onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
@@ -82,21 +92,28 @@ export class ChartTooltip implements HoverComponent {
   }
 
   render(space: ChartSpace, overflow: Overflow, full: Size): void {
-    if (!this.hovered) return
+    const composable = this.composable
+    const point = this.hovered ? this.lastPoint : (this.options.hoverSync?.resolve(space) ?? null)
+    if (!composable || !point) {
+      this.clear()
+      return
+    }
+
+    // No pointer over this chart on an external hover: synthesize a cursor at the
+    // projected coordinate so tooltip positioning has a sensible page anchor.
+    const cursor = this.hovered && this.lastCursor
+      ? this.lastCursor
+      : this.syntheticCursor(composable, point)
+    const isTouch = this.hovered ? this.lastIsTouch : (this.options.hoverSync?.isTouch ?? false)
 
     let nearestDataPoints: HoveredDataPoint[]
 
-    const point = this.lastPoint
-    const cursor = this.lastCursor
-    const composable = this.composable
-    if (!composable || !cursor || !point) return
-
     if (this.options.position === 'data-point-x') {
       const dp = composable.findNearestByAxis(point, space, 'x', true)
-      nearestDataPoints = dp.filter(p => p.xValue === dp[0].xValue)
+      nearestDataPoints = dp.length ? dp.filter(p => p.xValue === dp[0].xValue) : []
     } else if (this.options.position === 'data-point-y') {
       const dp = composable.findNearestByAxis(point, space, 'y', true)
-      nearestDataPoints = dp.filter(p => p.yValue === dp[0].yValue)
+      nearestDataPoints = dp.length ? dp.filter(p => p.yValue === dp[0].yValue) : []
     } else {
       nearestDataPoints = composable.findNearest(point, space, true)
       if (this.options.position === 'nearest-data-point' && nearestDataPoints.length > 1) nearestDataPoints = [nearestDataPoints[0]]
@@ -175,7 +192,7 @@ export class ChartTooltip implements HoverComponent {
         y: cursor.clientY + this.windowScroll.y
       },
       nearestDataPoints,
-      isTouch: this.lastIsTouch,
+      isTouch,
       chartBox: layoutBox,
       absoluteChartBox: {
         top: layoutBox.top + this.windowScroll.y,
@@ -190,5 +207,15 @@ export class ChartTooltip implements HoverComponent {
 
 
     this.lastNearestDataPoints = nearestDataPoints
+  }
+
+  private clear(): void {
+    if (this.lastNearestDataPoints && this.lastNearestDataPoints.length > 0) this.options.onHide?.()
+    this.lastNearestDataPoints = null
+  }
+
+  private syntheticCursor(composable: ComposableHover, point: Point): Position {
+    const page = composable.chartToPage(point)
+    return { clientX: page.x, clientY: page.y, offsetX: 0, offsetY: 0 }
   }
 }
