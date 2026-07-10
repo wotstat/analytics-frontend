@@ -99,9 +99,7 @@ export class ChartTooltip implements HoverComponent {
       return
     }
 
-    // No pointer over this chart on an external hover: synthesize a cursor at the
-    // projected coordinate so tooltip positioning has a sensible page anchor.
-    const cursor = this.hovered && this.lastCursor
+    let cursor = this.hovered && this.lastCursor
       ? this.lastCursor
       : this.syntheticCursor(composable, point)
     const isTouch = this.hovered ? this.lastIsTouch : (this.options.hoverSync?.isTouch ?? false)
@@ -170,6 +168,9 @@ export class ChartTooltip implements HoverComponent {
         y: space.chartToLayoutY(avg.y)
       })
     }
+
+    // If the hover is not active, we use the pivot point as the cursor position
+    if (!this.hovered) cursor = { clientX: pivot.x, clientY: pivot.y, offsetX: 0, offsetY: 0 }
 
     const layoutTopLeft = composable.chartToPage({ x: space.layout.x, y: space.layout.y })
     const layoutBottomRight = composable.chartToPage({ x: space.layout.x + space.layout.width, y: space.layout.y + space.layout.height })
