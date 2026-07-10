@@ -43,7 +43,7 @@ export default class BaseChart {
     if (this.renderCallScheduler != null) return
 
     this.renderCallScheduler = this.manager.scheduleAnimationFrame(step => {
-      this.renderCallScheduler = null
+      if (step == 0) this.renderCallScheduler = null
       this.render(step)
     })
   }
