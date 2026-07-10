@@ -53,6 +53,7 @@ import { BattlesChart, ScoreChart } from './Charts'
 import IntervalSelector from './intervalSelector/IntervalSelector.vue'
 import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/chartTooltip/ChartTooltip'
 import { HoverSynchronizer } from '@/shared/uiKit/chart/universalChart/hover/composableHover/sync/HoverSynchronizer'
+import { BoundsSynchronizer } from '@/shared/uiKit/chart/universalChart/hover/composableHover/sync/BoundsSynchronizer'
 import { useRoute } from 'vue-router'
 import { getRegionDayChangeHourOffset } from '@/shared/game/comp7/utils'
 import { useElementBounding, useElementSize, useWindowSize } from '@vueuse/core'
@@ -147,9 +148,12 @@ const DAY = HOUR * 24
 
 const startTime = props.seasonInterval.start.getTime() + getRegionDayChangeHourOffset(props.region)
 
-const hoverSync = markRaw(new HoverSynchronizer())
-const scoreChart = markRaw(new ScoreChart(props.seasonInterval, hoverSync))
-const battleChart = markRaw(new BattlesChart(props.seasonInterval, hoverSync))
+const sync = {
+  hover: new HoverSynchronizer(),
+  bounds: new BoundsSynchronizer('horizontal')
+}
+const scoreChart = markRaw(new ScoreChart(props.seasonInterval, sync))
+const battleChart = markRaw(new BattlesChart(props.seasonInterval, sync))
 
 watchEffect(() => {
   const score = data.value.data.map(point => point.rating == 0 ? null : {

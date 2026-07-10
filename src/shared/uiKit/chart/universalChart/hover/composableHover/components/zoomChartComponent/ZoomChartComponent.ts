@@ -17,6 +17,7 @@ import { AxisLimits, NormalizedLimits, clampAxisToLimits, effectiveMaxDelta, isP
 import { CriticalFollower, DEFAULT_FOLLOW_OMEGA } from './follower'
 import { ScalarSpring } from './spring'
 import { PinchGesture } from './TouchZoomSolver'
+import { BoundsSyncState, BoundsSynchronizer } from '../../sync/BoundsSynchronizer'
 
 // A pan started right after a pinch suppresses its own inertia (the lift-off jitter must
 // not fight the pinch inertia) until it moves this far and becomes a deliberate pan
@@ -91,6 +92,10 @@ type Options = {
   // true or omitted = default responsiveness, a positive number = custom natural
   // frequency (higher = snappier), false = off (the axis snaps synchronously)
   autoFitFollow?: boolean | number
+  // Links this chart's driven-axis window to others sharing the hub: gesture one, the rest
+  // follow on the synchronized axes while each auto-fits its own on the rest. Independent of
+  // hover-sync. See BoundsSynchronizer.
+  boundsSync?: BoundsSynchronizer
   limits?: {
     minX?: number
     minY?: number
@@ -140,6 +145,12 @@ export class ZoomChartComponent implements HoverComponent {
   private raw: Bounds | null = null
   private autoFollow: AutoFollow | null = null
 
+  // Cross-chart bounds sync (optional). This component is both publisher (while driven locally)
+  // and consumer (while another chart drives). `composable` doubles as the attached flag.
+  private boundsSync?: BoundsSynchronizer
+  private composable: ComposableHover | null = null
+  private readonly onSyncChange = () => this.onExternalPublish()
+
   constructor(options: Options) {
     this.applyOptions(options)
   }
@@ -147,6 +158,7 @@ export class ZoomChartComponent implements HoverComponent {
   private applyOptions(options: Options): void {
     this.options = options
     this.chart = options.chart
+    this.boundsSync = options.boundsSync
     this.limits = normalizeLimits(options.limits)
 
     this.activeAxes = []
@@ -163,7 +175,11 @@ export class ZoomChartComponent implements HoverComponent {
   // would keep scheduling renders forever).
   updateOptions(options: Options): void {
     this.releaseAutoFit(false) // hand the old auto-fit axis back before the config (and axis) changes
+    const attached = this.composable !== null
+    if (attached) this.boundsSync?.unsubscribeChange(this.onSyncChange)
+    this.boundsSync?.resign(this)
     this.applyOptions(options)
+    if (attached) this.boundsSync?.subscribeChange(this.onSyncChange)
     this.pan = null
     this.lastCursor = null
     this.pinch = null
@@ -175,6 +191,19 @@ export class ZoomChartComponent implements HoverComponent {
     this.raw = null
   }
 
+  // Renders nothing itself; attach/detach only wire the bounds-sync subscription so a peer's
+  // published window wakes this chart's layout, and hand back the source role on unmount.
+  attach(root: SVGGElement, composable: ComposableHover): void {
+    this.composable = composable
+    this.boundsSync?.subscribeChange(this.onSyncChange)
+  }
+
+  detach(composable: ComposableHover): void {
+    this.boundsSync?.unsubscribeChange(this.onSyncChange)
+    this.boundsSync?.resign(this)
+    this.composable = null
+  }
+
   //#region Pan
 
   mayPan(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): InteractionDirection {
@@ -182,6 +211,7 @@ export class ZoomChartComponent implements HoverComponent {
   }
 
   onPanBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, composable: ComposableHover): boolean {
+    this.boundsSync?.claim(this) // this chart is the drive source now
     const afterPinch = isTouch && (this.pinch?.ended ?? false)
     this.stopMotionsForPan(isTouch)
     this.lastCursor = null
@@ -249,6 +279,7 @@ export class ZoomChartComponent implements HoverComponent {
   onTouchZoomBegin(first: TouchZoomPoint, second: TouchZoomPoint, space: ChartSpace, composable: ComposableHover): boolean {
     if (!this.isZoomEnabled()) return false
 
+    this.boundsSync?.claim(this) // this chart is the drive source now
     this.stopAllMotions()
 
     const raw = this.resetRawFrom(space, axis =>
@@ -308,6 +339,7 @@ export class ZoomChartComponent implements HoverComponent {
     if (!this.isZoomEnabled()) return false
     if (this.pinch && !this.pinch.ended) return false // touch zoom has priority over wheel
 
+    this.boundsSync?.claim(this) // this chart is the drive source now
     this.stopMotionsForWheel()
 
     if (!this.wheel) this.wheel = { pending: [], lastEventTime: 0, anchor: null }
@@ -324,9 +356,23 @@ export class ZoomChartComponent implements HoverComponent {
   onBeforeLayout(space: ChartSpace, full: Size): void {
     const now = this.now()
 
+    // Another linked chart is driving: follow its window (unless we are being gestured directly,
+    // in which case the local drive wins and we fall through to the normal pipeline as its source).
+    const external = this.boundsSync?.consume(this) ?? null
+    if (external && !this.hasActiveInput()) {
+      // An active drive is applied synchronously in onExternalPublish — in the *source's* frame,
+      // before this chart's hover renders — so bounds and hover stay in lockstep (no 1-frame lag,
+      // no jitter). Here we only keep the render loop alive. The settling 'end' tail has no lockstep
+      // requirement and is eased locally.
+      if (external.phase === 'active') this.chart.scheduleRender()
+      else this.followExternalBounds(space, now, external)
+      return
+    }
+
     // the follow animation may outlive the input that started it, so it keeps us awake too
     const activeBusy = this.hasActiveInput() || this.hasAnyMotion()
     if (!activeBusy && !this.autoFollow) {
+      this.publishBounds(space, {}, 'end') // flush a final window if we were the source, then idle
       this.raw = null
       return
     }
@@ -351,8 +397,78 @@ export class ZoomChartComponent implements HoverComponent {
 
     if (Bounds.isPatchValid(patch) && !space.bounds.isEqualToPatch(patch)) this.chart.setRenderBounds(patch, true)
 
+    const atRest = !this.hasActiveInput() && !this.hasAnyMotion() && this.autoFollow === null
+    this.publishBounds(space, patch, atRest ? 'end' : 'active')
+
     if (this.hasAnyMotion() || this.wheel !== null || this.autoFollow !== null) this.chart.scheduleRender()
+    if (atRest) this.raw = null
+  }
+
+  // Sync-hub listener: runs synchronously whenever a peer publishes (inside the source's layout
+  // pass). Applies an active drive here and now so our render bounds are updated *before* our own
+  // hover renders this same frame — restoring the single-chart guarantee that bounds settle before
+  // hover reads them, so the marker/tooltip stays glued to a fixed data point instead of lagging a
+  // frame and jittering. The 'end' settle tail is left to onBeforeLayout (no lockstep needed).
+  private onExternalPublish(): void {
+    const external = this.boundsSync?.consume(this) ?? null
+    if (external && external.phase === 'active' && !this.hasActiveInput()) {
+      this.followExternalBounds(this.chart.space, this.now(), external)
+    }
+    this.chart.scheduleRender()
+  }
+
+  // Follower path: pin the synchronized axes to the leader's published window and ease our own
+  // auto-fit axis to its data through the same follower a local gesture would drive — so the
+  // non-synced axis animates instead of snapping (that snap was the whole reason this must route
+  // through the component, not through chart.setRenderBounds directly). Reached only when we are
+  // not the source and have no active input (see onBeforeLayout / consume).
+  private followExternalBounds(space: ChartSpace, now: number, external: BoundsSyncState): void {
+    const active = external.phase === 'active'
+
+    // an incoming drive supersedes our own leftover inertia/springs — we are a follower now
+    if (this.hasAnyMotion()) this.stopAllMotions()
+
+    const patch: BoundsPatch = {}
+    for (const axis of this.boundsSync!.axes) {
+      const window = external.window[axis]
+      if (!window) continue
+      if (axis === 'x') {
+        patch.minX = window.min
+        patch.maxX = window.max
+      } else {
+        patch.minY = window.min
+        patch.maxY = window.max
+      }
+    }
+
+    // ease the auto-fit axis locally (busy while the drive is active so it engages, then keeps
+    // stepping to settle and release after 'end'); skip if that axis is itself synchronized above
+    const autoFit = this.autoFitAxis
+    if (autoFit === null || !this.boundsSync!.axes.includes(autoFit)) {
+      this.stepAutoFollow(space, patch, now, active)
+    }
+
+    if (Bounds.isPatchValid(patch) && !space.bounds.isEqualToPatch(patch)) this.chart.setRenderBounds(patch, true)
+
+    if (active || this.hasAnyMotion() || this.autoFollow !== null) this.chart.scheduleRender()
     if (!this.hasActiveInput() && !this.hasAnyMotion() && this.autoFollow === null) this.raw = null
+  }
+
+  // Broadcasts the synchronized-axis window to followers while we are the source. Uses this frame's
+  // patch where it computed the axis, otherwise the resting bounds (e.g. the 'end' flush). No-op
+  // when there is no hub or we are not the source.
+  private publishBounds(space: ChartSpace, patch: BoundsPatch, phase: BoundsSyncState['phase']): void {
+    const sync = this.boundsSync
+    if (!sync || !sync.isSource(this)) return
+
+    const window: BoundsSyncState['window'] = {}
+    for (const axis of sync.axes) {
+      const min = axis === 'x' ? patch.minX ?? space.bounds.minX : patch.minY ?? space.bounds.minY
+      const max = axis === 'x' ? patch.maxX ?? space.bounds.maxX : patch.maxY ?? space.bounds.maxY
+      if (Number.isFinite(min) && Number.isFinite(max) && min < max) window[axis] = { min, max }
+    }
+
+    sync.publish(this, window, phase)
   }
 
   private processPinch(raw: Bounds, layout: LayoutValue, now: number): boolean {

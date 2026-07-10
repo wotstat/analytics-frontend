@@ -30,6 +30,15 @@
 
 `hover/composableHover/components/zoomChartComponent/` — пан мышью/тачем, зум колесом и пинчем, инерция, «резиновые» лимиты. **Есть подробный `readme.md` прямо в папке** — обязательно читай его перед изменениями; там же список неочевидных решений с пометкой «не чинить». Компонент завершён, автор просил не закладывать в него архитектуру «на будущее». Единственное место использования: `src/pages/infographics/pages/onslaught/leaderboard/components/detail/Charts.ts`.
 
+### Связка графиков (hover / bounds sync)
+
+`hover/composableHover/sync/` — синхронизация нескольких `UniversalChart` по принципу **координатный фрейм ≠ viewport**: примитив синка живёт в chart-space, поэтому не зависит от зума, а каждый график сам проецирует его в свои пиксели и снапит/фитит по **своим** данным. Два независимых хаба (можно включать по отдельности), оба создаются один раз в `Detail.vue` и передаются в компоненты:
+
+- **`HoverSynchronizer`** (hover-sync): навёл на один график — hover (линия/маркер/тултип) зажигается на всех связанных в той же точке фрейма. Добавляется в каждый `ComposableHover` (`addComponent`) и передаётся консьюмерам (`VerticalLine`/`NearestMarker`/`ChartTooltip`, опция `hoverSync`); локальный hover приоритетнее внешнего.
+- **`BoundsSynchronizer`** (bounds-sync): зазумил/пропанил один — связанные синхронно повторяют окно ведущей оси (направление как у `panDirection`: `new BoundsSynchronizer('horizontal' | 'vertical' | 'all')`), каждый анимируя свою auto-fit ось. Передаётся в `ZoomChartComponent` опцией `boundsSync`. **Идёт через `ZoomChartComponent`**, а не через `chart.setRenderBounds` напрямую (иначе auto-fit ось ведомого снапит — детали в его `readme.md`).
+
+Референс проводки — `detail/Charts.ts` + `detail/Detail.vue` (лидерборд Натиска).
+
 ### Пример использования
 
 Смотри `detail/Charts.ts` (лидерборд Натиска) — там собран полный граф: чарт + оси + линии + ховер с тултипом + зум с лимитами. Это лучший референс при создании нового графика на UniversalChart.
