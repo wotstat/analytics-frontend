@@ -41,7 +41,7 @@ const currentSearch = ref('')
 type Interval = { start: Date, end: Date }
 
 const emit = defineEmits<{
-  (e: 'select', value: Interval): void
+  (e: 'select', value: Interval & { name: string }): void
 }>()
 
 const DAY = 24 * 60 * 60 * 1000
@@ -162,7 +162,7 @@ const delegate: TableViewDelegate = {
       if (!c.indexPath) return
 
       const line = sections[c.indexPath.section].lines[c.indexPath.row]
-      emit('select', { start: line.start, end: line.end })
+      emit('select', { start: line.start, end: line.end, name: line.text })
     }))
   },
 

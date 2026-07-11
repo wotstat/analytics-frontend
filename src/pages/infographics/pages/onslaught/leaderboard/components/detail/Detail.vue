@@ -8,7 +8,7 @@
         </template>
 
         <template #right>
-          <IntervalSelector v-if="!isZoom" :seasonInterval="props.seasonInterval" @select="onIntervalSelect" />
+          <IntervalSelector v-if="!isZoom" :seasonInterval="props.seasonInterval" v-model="selectedInterval" />
         </template>
 
         <template #tooltip="{ ctx }">
@@ -28,7 +28,7 @@
         </template>
 
         <template #right>
-          <IntervalSelector v-if="!isZoom" :seasonInterval="props.seasonInterval" @select="onIntervalSelect" />
+          <IntervalSelector v-if="!isZoom" :seasonInterval="props.seasonInterval" v-model="selectedInterval" />
         </template>
 
         <template #tooltip="{ ctx }">
@@ -45,12 +45,12 @@
 
 
 <script setup lang="ts">
-import { computed, markRaw, ref, watchEffect } from 'vue'
+import { computed, markRaw, ref, watch, watchEffect } from 'vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import { dateToDbDate, queryComputed, loading as loadingState } from '@/db'
 import { BattlesChart, ScoreChart } from './Charts'
 
-import IntervalSelector from './intervalSelector/IntervalSelector.vue'
+import IntervalSelector, { type SelectedInterval } from './intervalSelector/IntervalSelector.vue'
 import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/chartTooltip/ChartTooltip'
 import { HoverSynchronizer } from '@/shared/uiKit/chart/universalChart/hover/composableHover/sync/HoverSynchronizer'
 import { BoundsSynchronizer } from '@/shared/uiKit/chart/universalChart/hover/composableHover/sync/BoundsSynchronizer'
@@ -97,9 +97,10 @@ watchEffect(() => {
   loading.value = data.value.status == loadingState
 })
 
-function onIntervalSelect(value: { start: Date, end: Date }) {
+const selectedInterval = ref<SelectedInterval | null>(null)
+watch(() => selectedInterval.value, value => {
   console.log('interval select', value)
-}
+})
 
 function tooltipDate(ctx: TooltipCtx) {
   return new Date(startTime + ctx.nearestDataPoints[0].xValue * 1000).toLocaleString(undefined, {

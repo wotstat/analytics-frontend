@@ -1,7 +1,7 @@
 <template>
   <div class="interval-selector">
     <button ref="btn" @click="openSelect">
-      <p>Всё время</p>
+      <p>{{ label }}</p>
       <DropdownArrow :isOpen="displayPopup" class="icon" />
     </button>
   </div>
@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { headerHeight, useAdditionalHeaderHeight } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import IntervalPopup from './IntervalPopup.vue'
 import DropdownArrow from './DropdownArrow.vue'
@@ -24,15 +24,19 @@ import DropdownArrow from './DropdownArrow.vue'
 
 const btn = ref<HTMLElement | null>(null)
 
-type Interval = { start: Date, end: Date }
+export type SelectedInterval = { start: Date, end: Date, name?: string }
 
 const props = defineProps<{
   seasonInterval: { start: Date, end: Date, length: number }
 }>()
 
-const emit = defineEmits<{
-  (e: 'select', value: Interval): void
-}>()
+// текущий выбранный интервал; изменение извне (например после зума графика) — без name → "Другое"
+const model = defineModel<SelectedInterval | null>({ default: null })
+
+const label = computed(() => {
+  if (!model.value) return 'Всё время'
+  return model.value.name ?? 'Другое'
+})
 
 const displayPopup = ref<boolean>(false)
 
@@ -42,9 +46,9 @@ function openSelect() {
   displayPopup.value = !displayPopup.value
 }
 
-function onSelect(value: Interval) {
+function onSelect(value: SelectedInterval) {
   displayPopup.value = false
-  emit('select', value)
+  model.value = value
 }
 </script>
 
