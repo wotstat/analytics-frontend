@@ -151,6 +151,12 @@ export class ZoomChartComponent implements HoverComponent {
   private composable: ComposableHover | null = null
   private readonly onSyncChange = () => this.onExternalPublish()
 
+  private applyingBounds = false
+  private readonly onChartBoundsSet = () => {
+    if (this.applyingBounds) return
+    this.boundsSync?.invalidate()
+  }
+
   constructor(options: Options) {
     this.applyOptions(options)
   }
@@ -177,9 +183,11 @@ export class ZoomChartComponent implements HoverComponent {
     this.releaseAutoFit(false) // hand the old auto-fit axis back before the config (and axis) changes
     const attached = this.composable !== null
     if (attached) this.boundsSync?.unsubscribeChange(this.onSyncChange)
+    if (attached) this.chart.onSetRenderBounds.off(this.onChartBoundsSet)
     this.boundsSync?.resign(this)
     this.applyOptions(options)
     if (attached) this.boundsSync?.subscribeChange(this.onSyncChange)
+    if (attached) this.chart.onSetRenderBounds.on(this.onChartBoundsSet)
     this.pan = null
     this.lastCursor = null
     this.pinch = null
@@ -196,11 +204,13 @@ export class ZoomChartComponent implements HoverComponent {
   attach(root: SVGGElement, composable: ComposableHover): void {
     this.composable = composable
     this.boundsSync?.subscribeChange(this.onSyncChange)
+    this.chart.onSetRenderBounds.on(this.onChartBoundsSet)
   }
 
   detach(composable: ComposableHover): void {
     this.boundsSync?.unsubscribeChange(this.onSyncChange)
     this.boundsSync?.resign(this)
+    this.chart.onSetRenderBounds.off(this.onChartBoundsSet)
     this.composable = null
   }
 
@@ -395,7 +405,7 @@ export class ZoomChartComponent implements HoverComponent {
 
     this.stepAutoFollow(space, patch, now, activeBusy)
 
-    if (Bounds.isPatchValid(patch) && !space.bounds.isEqualToPatch(patch)) this.chart.setRenderBounds(patch, true)
+    if (Bounds.isPatchValid(patch) && !space.bounds.isEqualToPatch(patch)) this.applyChartBounds(patch, true)
 
     const atRest = !this.hasActiveInput() && !this.hasAnyMotion() && this.autoFollow === null
     this.publishBounds(space, patch, atRest ? 'end' : 'active')
@@ -448,7 +458,7 @@ export class ZoomChartComponent implements HoverComponent {
       this.stepAutoFollow(space, patch, now, active)
     }
 
-    if (Bounds.isPatchValid(patch) && !space.bounds.isEqualToPatch(patch)) this.chart.setRenderBounds(patch, true)
+    if (Bounds.isPatchValid(patch) && !space.bounds.isEqualToPatch(patch)) this.applyChartBounds(patch, true)
 
     if (active || this.hasAnyMotion() || this.autoFollow !== null) this.chart.scheduleRender()
     if (!this.hasActiveInput() && !this.hasAnyMotion() && this.autoFollow === null) this.raw = null
@@ -666,7 +676,7 @@ export class ZoomChartComponent implements HoverComponent {
 
     const axis = this.autoFitAxis
     if (!axis) return
-    this.chart.setRenderBounds(axis === 'x' ? { minX: null, maxX: null } : { minY: null, maxY: null }, immediate)
+    this.applyChartBounds(axis === 'x' ? { minX: null, maxX: null } : { minY: null, maxY: null }, immediate)
   }
 
   //#endregion
@@ -1195,6 +1205,17 @@ export class ZoomChartComponent implements HoverComponent {
 
   private now(): number {
     return performance.now()
+  }
+
+  // Writes bounds computed by this component's own pipeline, flagged so the resulting
+  // onSetRenderBounds does not read as an external override (see onChartBoundsSet).
+  private applyChartBounds(bounds: { minX?: number | null, maxX?: number | null, minY?: number | null, maxY?: number | null }, immediate: boolean): void {
+    this.applyingBounds = true
+    try {
+      this.chart.setRenderBounds(bounds, immediate)
+    } finally {
+      this.applyingBounds = false
+    }
   }
 
   //#endregion

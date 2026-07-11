@@ -57,6 +57,13 @@ export class BoundsSynchronizer {
     this.notify()
   }
 
+  invalidate(): void {
+    if (this.source === null && this.state === null) return
+    this.source = null
+    this.state = null
+    this.notify()
+  }
+
   isSource(source: BoundsSyncSource): boolean {
     return this.source === source
   }
