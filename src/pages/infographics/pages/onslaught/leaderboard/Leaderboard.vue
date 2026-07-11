@@ -35,13 +35,14 @@
 
       <tbody>
         <template v-for="line in leaderboardData">
-          <LeaderboardLine :line="line" :region="region" @click="click(line.name)" :class="{
+          <LeaderboardLine :line="line" :region="region" @click="click(line.name)" @pointerdown="onPointerDown" :class="{
             'selected': selectedName == line.name && ab,
           }" />
 
           <tr v-if="selectedName == line.name && seasonInterval && ab" class="details">
             <td colspan="6">
-              <Detail :bdid="line.bdid" :region="region" :seasonInterval="seasonInterval" />
+              <Detail :bdid="line.bdid" :region="region" :seasonInterval="seasonInterval"
+                v-model:captureClose="captureDetailClose" />
             </td>
           </tr>
 
@@ -66,7 +67,7 @@
 
 <script setup lang="ts">
 import { dateToDbDate, query, queryComputedFirst } from '@/db'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, watchEffect } from 'vue'
 import LeaderboardLine from './components/LeaderboardLine.vue'
 import { regionToGame } from '@/shared/game/wot'
 import Detail from './components/detail/Detail.vue'
@@ -203,7 +204,15 @@ watch([selectedSeason, region], () => {
 
 watchWithAbortSignal([region, page, selectedSeason, seasonInterval], signal => load(signal), { immediate: true })
 
+const captureDetailClose = ref(false)
+
+let preventNextClick = false
+function onPointerDown() {
+  preventNextClick = captureDetailClose.value
+}
+
 function click(name: string) {
+  if (selectedName.value == name && preventNextClick) return
   selectedName.value = selectedName.value == name ? null : name
 }
 

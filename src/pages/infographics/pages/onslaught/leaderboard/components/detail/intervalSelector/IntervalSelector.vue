@@ -31,10 +31,9 @@ const props = defineProps<{
 }>()
 
 const model = defineModel<SelectedInterval | null>({ default: null })
+const displayPopup = defineModel<boolean>('isOpen', { default: false })
 
 const label = computed(() => model.value?.name ?? 'Другое')
-
-const displayPopup = ref<boolean>(false)
 
 const { additionalHeaderHeight } = useAdditionalHeaderHeight(true)
 

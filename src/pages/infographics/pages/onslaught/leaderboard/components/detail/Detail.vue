@@ -9,7 +9,7 @@
 
         <template #right>
           <IntervalSelector v-if="!isZoom" :seasonInterval="props.seasonInterval" :modelValue="selectedInterval"
-            @update:modelValue="updateInterval" />
+            @update:modelValue="updateInterval" v-model:isOpen="isFirstSelectOpen" />
         </template>
 
         <template #tooltip="{ ctx }">
@@ -30,7 +30,7 @@
 
         <template #right>
           <IntervalSelector v-if="!isZoom" :seasonInterval="props.seasonInterval" :modelValue="selectedInterval"
-            @update:modelValue="updateInterval" />
+            @update:modelValue="updateInterval" v-model:isOpen="isSecondSelectOpen" />
         </template>
 
         <template #tooltip="{ ctx }">
@@ -47,7 +47,7 @@
 
 
 <script setup lang="ts">
-import { computed, markRaw, ref, watch, watchEffect } from 'vue'
+import { computed, markRaw, nextTick, ref, watch, watchEffect } from 'vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import { dateToDbDate, queryComputed, loading as loadingState } from '@/db'
 import { BattlesChart, ScoreChart } from './Charts'
@@ -63,6 +63,16 @@ import HeaderTooltip from '@/shared/ui/chart/HeaderTooltip.vue'
 const route = useRoute()
 const isZoom = computed(() => route.query['ab'] == 'zoom')
 const loading = ref(true)
+
+const isFirstSelectOpen = ref(false)
+const isSecondSelectOpen = ref(false)
+
+const captureClose = defineModel<boolean>('captureClose')
+
+watch([isFirstSelectOpen, isSecondSelectOpen], ([first, second]) => {
+  if (first || second) captureClose.value = true
+  else setTimeout(() => captureClose.value = false, 10)
+})
 
 const props = defineProps<{
   bdid: number
@@ -138,7 +148,7 @@ scoreChart.onSetRenderBounds.on(bounds => {
   const fullDelta = props.seasonInterval.length * DAY
 
   if (delta > fullDelta - HOUR) {
-    selectedInterval.value = { start: props.seasonInterval.start, end: props.seasonInterval.end, name: 'Весь сезон2' }
+    selectedInterval.value = { start: props.seasonInterval.start, end: props.seasonInterval.end, name: 'Весь сезон' }
   } else {
     selectedInterval.value = null
   }
