@@ -135,6 +135,19 @@ class BaseChart extends UniversalChart {
     return this
   }
 
+  setViewInterval(interval: { start: Date, end: Date } | null) {
+    if (!interval) {
+      this.setRenderBounds({ minX: 0, maxX: this.maxX })
+      return
+    }
+
+    const seasonStart = this.seasonInterval.start.getTime()
+    this.setRenderBounds({
+      minX: (interval.start.getTime() - seasonStart) / 1000,
+      maxX: (interval.end.getTime() - seasonStart) / 1000,
+    })
+  }
+
   protected recalculateRestrictionArea() {
     const start = Math.floor(this.seasonInterval.start.getTime() / 1000)
     const end = Math.floor(this.seasonInterval.end.getTime() / 1000)

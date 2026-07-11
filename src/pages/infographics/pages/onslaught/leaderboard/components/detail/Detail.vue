@@ -56,7 +56,6 @@ import { HoverSynchronizer } from '@/shared/uiKit/chart/universalChart/hover/com
 import { BoundsSynchronizer } from '@/shared/uiKit/chart/universalChart/hover/composableHover/sync/BoundsSynchronizer'
 import { useRoute } from 'vue-router'
 import { getRegionDayChangeHourOffset } from '@/shared/game/comp7/utils'
-import { useElementBounding, useElementSize, useWindowSize } from '@vueuse/core'
 import HeaderTooltip from '@/shared/ui/chart/HeaderTooltip.vue'
 
 const route = useRoute()
@@ -98,9 +97,6 @@ watchEffect(() => {
 })
 
 const selectedInterval = ref<SelectedInterval | null>(null)
-watch(() => selectedInterval.value, value => {
-  console.log('interval select', value)
-})
 
 function tooltipDate(ctx: TooltipCtx) {
   return new Date(startTime + ctx.nearestDataPoints[0].xValue * 1000).toLocaleString(undefined, {
@@ -125,6 +121,11 @@ const sync = {
 }
 const scoreChart = markRaw(new ScoreChart(props.seasonInterval, sync))
 const battleChart = markRaw(new BattlesChart(props.seasonInterval, sync))
+
+watch(() => selectedInterval.value, value => {
+  scoreChart.setViewInterval(value)
+  battleChart.setViewInterval(value)
+})
 
 watchEffect(() => {
   const score = data.value.data.map(point => point.rating == 0 ? null : {

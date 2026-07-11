@@ -30,7 +30,6 @@ const props = defineProps<{
   seasonInterval: { start: Date, end: Date, length: number }
 }>()
 
-// текущий выбранный интервал; изменение извне (например после зума графика) — без name → "Другое"
 const model = defineModel<SelectedInterval | null>({ default: null })
 
 const label = computed(() => {
