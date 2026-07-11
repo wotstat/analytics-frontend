@@ -32,10 +32,7 @@ const props = defineProps<{
 
 const model = defineModel<SelectedInterval | null>({ default: null })
 
-const label = computed(() => {
-  if (!model.value) return 'Всё время'
-  return model.value.name ?? 'Другое'
-})
+const label = computed(() => model.value?.name ?? 'Другое')
 
 const displayPopup = ref<boolean>(false)
 

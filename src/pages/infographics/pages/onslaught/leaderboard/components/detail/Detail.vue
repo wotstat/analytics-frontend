@@ -8,7 +8,8 @@
         </template>
 
         <template #right>
-          <IntervalSelector v-if="!isZoom" :seasonInterval="props.seasonInterval" v-model="selectedInterval" />
+          <IntervalSelector v-if="!isZoom" :seasonInterval="props.seasonInterval" :modelValue="selectedInterval"
+            @update:modelValue="updateInterval" />
         </template>
 
         <template #tooltip="{ ctx }">
@@ -28,7 +29,8 @@
         </template>
 
         <template #right>
-          <IntervalSelector v-if="!isZoom" :seasonInterval="props.seasonInterval" v-model="selectedInterval" />
+          <IntervalSelector v-if="!isZoom" :seasonInterval="props.seasonInterval" :modelValue="selectedInterval"
+            @update:modelValue="updateInterval" />
         </template>
 
         <template #tooltip="{ ctx }">
@@ -122,9 +124,24 @@ const sync = {
 const scoreChart = markRaw(new ScoreChart(props.seasonInterval, sync))
 const battleChart = markRaw(new BattlesChart(props.seasonInterval, sync))
 
-watch(() => selectedInterval.value, value => {
+function updateInterval(value: SelectedInterval | null) {
   scoreChart.setViewInterval(value)
   battleChart.setViewInterval(value)
+  selectedInterval.value = value
+}
+
+scoreChart.onSetRenderBounds.on(bounds => {
+  const { minX, maxX } = bounds
+  if (minX == null || maxX == null) return
+
+  const delta = maxX - minX
+  const fullDelta = props.seasonInterval.length * DAY
+
+  if (delta > fullDelta - HOUR) {
+    selectedInterval.value = { start: props.seasonInterval.start, end: props.seasonInterval.end, name: 'Весь сезон2' }
+  } else {
+    selectedInterval.value = null
+  }
 })
 
 watchEffect(() => {
@@ -133,13 +150,12 @@ watchEffect(() => {
     y: point.rating
   })
 
-  scoreChart.setPoints(score)
-
   const battles = data.value.data.map(point => point.battlesCount == 0 ? null : {
     x: (new Date(point.recalculationTime + 'Z').getTime() - startTime) / 1000,
     y: point.battlesCount
   })
 
+  scoreChart.setPoints(score)
   battleChart.setPoints(battles)
 })
 
