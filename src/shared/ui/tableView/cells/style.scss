@@ -6,5 +6,13 @@
         color: var(--highlighted-text-color, #5c9bec);
       }
     }
+
+    &.selected {
+      .highlighted-name-text {
+        .highlight {
+          color: var(--selected-highlighted-text-color, #d1e5ff);
+        }
+      }
+    }
   }
 }

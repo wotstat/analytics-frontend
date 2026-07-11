@@ -192,10 +192,10 @@ const displaySections = computed(() => {
       if (search) return filtered.sort((a, b) => {
         const comp = compareIntervals(a.highlighted.intervals, b.highlighted.intervals)
         if (comp !== 0) return comp
-        return -a.highlighted.text.localeCompare(b.highlighted.text)
+        return -a.highlighted.text.localeCompare(b.highlighted.text, undefined, { numeric: true })
       })
 
-      return filtered.sort((a, b) => -a.highlighted.text.localeCompare(b.highlighted.text))
+      return filtered.sort((a, b) => -a.highlighted.text.localeCompare(b.highlighted.text, undefined, { numeric: true }))
     }
 
     return {
@@ -371,6 +371,7 @@ const delegate: TableViewDelegate = {
 
       --background-color: #2a2a2a;
       --highlighted-text-color: var(--blue-thin-color);
+      --selected-highlighted-text-color: #d1e5ff;
     }
 
     :deep(.table-container) {

@@ -7,8 +7,8 @@ export class HighlightedCellLine extends SelectableCellLine {
 
   protected readonly highlightedText: HTMLParagraphElement
 
-  constructor() {
-    super(() => { })
+  constructor(protected onClick: (cell: SelectableCellLine) => void) {
+    super(onClick)
 
     this.root.classList.add('highlighted-cell-line')
 

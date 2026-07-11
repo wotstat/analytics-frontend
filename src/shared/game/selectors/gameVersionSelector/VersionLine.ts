@@ -17,7 +17,9 @@ export class VersionLine extends HighlightedCellLine {
   private unwatch: (() => void)
 
   constructor(private onClickToVersion: (tag: string, extendedTags: string[]) => void, private selectedSet: Ref<Set<string>>) {
-    super()
+    super(() => {
+      if (this.currentTag) this.onClickToVersion(this.currentTag, this.extendedTags)
+    })
     this.unwatch = watch(() => selectedSet.value, () => this.updateSelectedState(), { immediate: true, deep: true })
   }
 
@@ -39,11 +41,6 @@ export class VersionLine extends HighlightedCellLine {
       this.setSelected(isSelected)
       this.setExtended(this.extendedTags.some(tag => this.selectedSet.value.has(tag)))
     }
-  }
-
-  protected onClickListener() {
-    super.onClickListener()
-    if (this.currentTag) this.onClickToVersion(this.currentTag, this.extendedTags)
   }
 
   dispose(): void {
