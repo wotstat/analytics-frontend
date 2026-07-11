@@ -108,7 +108,7 @@ watchEffect(() => {
   loading.value = data.value.status == loadingState
 })
 
-const selectedInterval = ref<SelectedInterval | null>(null)
+const selectedInterval = defineModel<SelectedInterval | null>('selectedInterval', { default: null })
 
 function tooltipDate(ctx: TooltipCtx) {
   return new Date(startTime + ctx.nearestDataPoints[0].xValue * 1000).toLocaleString(undefined, {
@@ -119,7 +119,6 @@ function tooltipDate(ctx: TooltipCtx) {
     minute: '2-digit',
   }).replace(',', '')
 }
-
 
 const MINUTE = 1 * 60
 const HOUR = MINUTE * 60
@@ -133,6 +132,8 @@ const sync = {
 }
 const scoreChart = markRaw(new ScoreChart(props.seasonInterval, sync))
 const battleChart = markRaw(new BattlesChart(props.seasonInterval, sync))
+
+updateInterval(selectedInterval.value)
 
 function updateInterval(value: SelectedInterval | null) {
   scoreChart.setViewInterval(value)
@@ -150,7 +151,7 @@ scoreChart.onSetRenderBounds.on(bounds => {
   if (delta > fullDelta - HOUR) {
     selectedInterval.value = { start: props.seasonInterval.start, end: props.seasonInterval.end, name: 'Весь сезон' }
   } else {
-    selectedInterval.value = null
+    selectedInterval.value = { start: new Date(startTime + minX * 1000), end: new Date(startTime + maxX * 1000) }
   }
 })
 
@@ -219,11 +220,17 @@ watchEffect(() => {
     }
   }
 
-  @container (max-width: 800px) {
+  @container (width <=1000px) {
     flex-direction: column;
   }
 
-  @container (max-width: 500px) {
+  @container (width <=1000px) and (width >=500px) {
+    div.chart {
+      aspect-ratio: 2 / 1;
+    }
+  }
+
+  @container (width <=500px) {
     padding: 20px 10px;
 
     div.chart {

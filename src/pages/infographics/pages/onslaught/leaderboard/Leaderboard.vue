@@ -42,7 +42,7 @@
           <tr v-if="selectedName == line.name && seasonInterval && ab" class="details">
             <td colspan="6">
               <Detail :bdid="line.bdid" :region="region" :seasonInterval="seasonInterval"
-                v-model:captureClose="captureDetailClose" />
+                v-model:captureClose="captureDetailClose" v-model:selectedInterval="selectedInterval" />
             </td>
           </tr>
 
@@ -82,6 +82,7 @@ import Live from './components/Live.vue'
 import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
 import { useMeta } from '@/shared/composition/useMeta'
 import { useRoute } from 'vue-router'
+import { SelectedInterval } from './components/detail/intervalSelector/IntervalSelector.vue'
 
 useMeta({
   title: 'Таблица лидеров Натиска - WotStat',
@@ -107,6 +108,8 @@ const seasonInterval = useSeasonInterval(seasons, selectedSeason, region)
 const leaderboardDay = ref<{ day: string, recalculation: string, lastRank: number, eliteThreshold: number, lastEliteRank: number } | null>(null)
 const leaderboardData = ref<LeaderboardData[]>([])
 const isLoading = ref(false)
+
+const selectedInterval = ref<SelectedInterval | null>(null)
 
 const endPage = computed(() => {
   if (!leaderboardDay.value) return 0
@@ -199,7 +202,25 @@ async function load(abortSignal: AbortSignal, latest = false) {
 watch([selectedSeason, region], () => {
   leaderboardDay.value = null
   leaderboardData.value = []
+  selectedInterval.value = null
   page.value = 1
+})
+
+watch(seasonInterval, interval => {
+  if (!interval) return
+  if (selectedInterval.value) return
+
+  const end = interval.end.getTime()
+  const delta = end - interval.start.getTime()
+  const WEEK = 7 * 24 * 60 * 60 * 1000
+  const endCeiled = Math.ceil(delta / WEEK) * WEEK
+
+  const endDate = new Date(interval.start.getTime() + endCeiled)
+  selectedInterval.value = {
+    start: interval.start,
+    end: endDate,
+    name: 'Весь сезон'
+  }
 })
 
 watchWithAbortSignal([region, page, selectedSeason, seasonInterval], signal => load(signal), { immediate: true })

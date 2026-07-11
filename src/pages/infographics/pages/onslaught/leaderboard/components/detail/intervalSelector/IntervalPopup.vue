@@ -48,7 +48,7 @@ const DAY = 24 * 60 * 60 * 1000
 const WEEK = 7 * DAY
 
 const startMs = props.seasonInterval.start.getTime()
-const endMs = props.seasonInterval.end.getTime()
+const endMs = Math.ceil((props.seasonInterval.end.getTime() - startMs) / WEEK) * WEEK + startMs
 const now = Date.now()
 
 // сезон ещё идёт
