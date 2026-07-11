@@ -14,7 +14,16 @@
 
         <template #tooltip="{ ctx }">
           <div class="tooltip-container">
-            <p class="value">{{ ctx.nearestDataPoints[0].yValue }}</p>
+            <div class="value-row">
+              <span v-if="pointDelta(ctx)" class="delta spacer" aria-hidden="true">
+                <TriangleUp class="triangle" /> {{ Math.abs(pointDelta(ctx)!) }}
+              </span>
+              <p class="value">{{ ctx.nearestDataPoints[0].yValue }}</p>
+              <span v-if="pointDelta(ctx)" class="delta"
+                :class="{ up: pointDelta(ctx)! > 0, down: pointDelta(ctx)! < 0 }">
+                <TriangleUp class="triangle" /> {{ Math.abs(pointDelta(ctx)!) }}
+              </span>
+            </div>
             <p class="date">{{ tooltipDate(ctx) }}</p>
           </div>
         </template>
@@ -35,7 +44,16 @@
 
         <template #tooltip="{ ctx }">
           <div class="tooltip-container">
-            <p class="value">{{ ctx.nearestDataPoints[0].yValue }}</p>
+            <div class="value-row">
+              <span v-if="pointDelta(ctx)" class="delta spacer" aria-hidden="true">
+                <TriangleUp class="triangle" /> {{ Math.abs(pointDelta(ctx)!) }}
+              </span>
+              <p class="value">{{ ctx.nearestDataPoints[0].yValue }}</p>
+              <span v-if="pointDelta(ctx)" class="delta"
+                :class="{ up: pointDelta(ctx)! > 0, down: pointDelta(ctx)! < 0 }">
+                <TriangleUp class="triangle" /> {{ Math.abs(pointDelta(ctx)!) }}
+              </span>
+            </div>
             <p class="date">{{ tooltipDate(ctx) }}</p>
           </div>
         </template>
@@ -59,6 +77,7 @@ import { BoundsSynchronizer } from '@/shared/uiKit/chart/universalChart/hover/co
 import { useRoute } from 'vue-router'
 import { getRegionDayChangeHourOffset } from '@/shared/game/comp7/utils'
 import HeaderTooltip from '@/shared/ui/chart/HeaderTooltip.vue'
+import TriangleUp from '../../assets/triangle-up.svg'
 
 const route = useRoute()
 const isZoom = computed(() => route.query['ab'] == 'zoom')
@@ -128,6 +147,19 @@ function tooltipDate(ctx: TooltipCtx) {
     hour: '2-digit',
     minute: '2-digit',
   }).replace(',', '')
+}
+
+// изменение значения текущей точки относительно предыдущей непустой точки
+function pointDelta(ctx: TooltipCtx): number | null {
+  const dp = ctx.nearestDataPoints[0]
+  if (!dp) return null
+
+  for (let i = dp.pointIndex - 1; i >= 0; i--) {
+    const prev = dp.dataSource[i]
+    if (prev) return dp.yValue - prev.y
+  }
+
+  return null
 }
 
 const MINUTE = 1 * 60
@@ -384,6 +416,10 @@ watchEffect(() => {
     flex-direction: column;
     align-items: center;
 
+    .value-row {
+      display: flex;
+    }
+
     .value {
       font-size: 20px;
       line-height: 20px;
@@ -401,6 +437,42 @@ watchEffect(() => {
 
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
+    }
+
+    .delta {
+      margin-left: 4px;
+
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      font-size: 13px;
+      line-height: 1;
+      font-weight: bold;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+
+      .triangle {
+        height: 0.6em;
+        margin-bottom: 2px;
+      }
+
+      &.spacer {
+        margin-left: 0;
+        margin-right: 6px;
+        visibility: hidden;
+      }
+
+      &.up {
+        color: #57ff6e;
+      }
+
+      &.down {
+        color: #ff6060;
+
+        .triangle {
+          transform: rotate(180deg);
+        }
+      }
     }
   }
 

@@ -45,6 +45,7 @@ const props = defineProps<{
   hideLeft?: 'intersect' | 'always'
   hideCenter?: 'intersect' | 'always'
   hideRight?: 'intersect' | 'always'
+  xOffset?: number
 }>()
 
 const { left: containerLeft, right: containerRight } = useElementBounding(headerTooltip)
@@ -56,7 +57,7 @@ const tooltipBounds = useElementBounding(tooltip)
 const tooltipPosition = computed(() => {
   if (!props.ctx) return 0
   const tooltipWidth = tooltipBounds.width.value
-  const pos = props.ctx.pivot.x - containerLeft.value - tooltipWidth / 2
+  const pos = (props.xOffset ?? 0) + props.ctx.pivot.x - containerLeft.value - tooltipWidth / 2
   return Math.max(0, Math.min(pos, containerRight.value - containerLeft.value - tooltipWidth))
 })
 
