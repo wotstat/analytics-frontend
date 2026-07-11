@@ -109,9 +109,19 @@ watchEffect(() => {
 })
 
 const selectedInterval = defineModel<SelectedInterval | null>('selectedInterval', { default: null })
+const isFullSeason = computed(() => selectedInterval.value == null || selectedInterval.value.name == 'Весь сезон')
 
 function tooltipDate(ctx: TooltipCtx) {
-  return new Date(startTime + ctx.nearestDataPoints[0].xValue * 1000).toLocaleString(undefined, {
+  const x = ctx.nearestDataPoints[0].xValue
+
+  // в режиме «весь сезон» точка стоит в конце дня, показываем дату самого дня без времени
+  if (isFullSeason.value) return new Date(startTime + (x - DAY) * 1000).toLocaleDateString(undefined, {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+
+  return new Date(startTime + x * 1000).toLocaleString(undefined, {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -155,6 +165,26 @@ scoreChart.onSetRenderBounds.on(bounds => {
   }
 })
 
+// границы дней в x-пространстве кратны DAY, т.к. startTime уже включает сдвиг смены дня региона
+function groupByDays(points: ({ x: number, y: number } | null)[]) {
+  const lastByDay = new Map<number, { x: number, y: number }>()
+
+  for (const point of points) {
+    if (!point || point.x < 0) continue
+    const day = Math.floor(point.x / DAY)
+    const last = lastByDay.get(day)
+    if (!last || point.x > last.x) lastByDay.set(day, point)
+  }
+
+  if (lastByDay.size == 0) return []
+
+  const maxDay = Math.max(...lastByDay.keys())
+  return Array.from({ length: maxDay + 1 }, (_, day) => {
+    const last = lastByDay.get(day)
+    return last ? { x: (day + 1) * DAY, y: last.y } : null
+  })
+}
+
 watchEffect(() => {
   const score = data.value.data.map(point => point.rating == 0 ? null : {
     x: (new Date(point.recalculationTime + 'Z').getTime() - startTime) / 1000,
@@ -166,8 +196,8 @@ watchEffect(() => {
     y: point.battlesCount
   })
 
-  scoreChart.setPoints(score)
-  battleChart.setPoints(battles)
+  scoreChart.setPoints(isFullSeason.value ? groupByDays(score) : score)
+  battleChart.setPoints(isFullSeason.value ? groupByDays(battles) : battles)
 })
 
 
