@@ -133,7 +133,6 @@ const isFullSeason = computed(() => selectedInterval.value == null || selectedIn
 function tooltipDate(ctx: TooltipCtx) {
   const x = ctx.nearestDataPoints[0].xValue
 
-  // в режиме «весь сезон» точка стоит в конце дня, показываем дату самого дня без времени
   if (isFullSeason.value) return new Date(startTime + (x - DAY) * 1000).toLocaleDateString(undefined, {
     day: '2-digit',
     month: '2-digit',
@@ -149,17 +148,30 @@ function tooltipDate(ctx: TooltipCtx) {
   }).replace(',', '')
 }
 
-// изменение значения текущей точки относительно предыдущей непустой точки
 function pointDelta(ctx: TooltipCtx): number | null {
   const dp = ctx.nearestDataPoints[0]
   if (!dp) return null
 
-  for (let i = dp.pointIndex - 1; i >= 0; i--) {
-    const prev = dp.dataSource[i]
-    if (prev) return dp.yValue - prev.y
+  if (isFullSeason.value) {
+    for (let i = dp.pointIndex - 1; i >= 0; i--) {
+      const prev = dp.dataSource[i]
+      if (prev) return dp.yValue - prev.y
+    }
+
+    return null
   }
 
-  return null
+  const dayStart = Math.floor((dp.xValue - 20 * MINUTE) / DAY) * DAY + 20 * MINUTE
+  let baseline: { x: number, y: number } | null = null
+  for (let i = dp.pointIndex; i >= 0; i--) {
+    const point = dp.dataSource[i]
+    if (!point) continue
+    if (point.x < dayStart) break
+    baseline = point
+  }
+
+  if (!baseline) return null
+  return dp.yValue - baseline.y
 }
 
 const MINUTE = 1 * 60
@@ -202,7 +214,7 @@ function groupByDays(points: ({ x: number, y: number } | null)[]) {
 
   for (const point of points) {
     if (!point || point.x < 0) continue
-    const day = Math.floor(point.x / DAY)
+    const day = Math.ceil((point.x - 20 * MINUTE) / DAY) - 1
     const current = byDay.get(day)
     if (!current) {
       byDay.set(day, { last: point, min: point.y, max: point.y })
