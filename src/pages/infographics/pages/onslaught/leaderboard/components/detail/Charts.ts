@@ -8,6 +8,7 @@ import { VerticalLine } from '@/shared/uiKit/chart/universalChart/hover/composab
 import { NearestMarker } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/nearestMarker/NearestMarker'
 import { ComposableHover } from '@/shared/uiKit/chart/universalChart/hover/composableHover/ComposableHover'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
+import { AutoLineArea } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineArea'
 import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
 import { TicksByValues } from '@/shared/uiKit/chart/universalChart/ticks/TicksByValues'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
@@ -31,6 +32,7 @@ class BaseChart extends UniversalChart {
   tooltipCtx = ref<TooltipCtx | null>(null)
 
   private readonly line: AutoLine
+  private readonly minMaxArea: AutoLineArea
   private readonly hover: ComposableHover
   private readonly dayTicks: TicksByValues
   private readonly restrictionArea: RectangleArea
@@ -55,6 +57,7 @@ class BaseChart extends UniversalChart {
 
     const gradient = new ChartGradient({ classes: 'blue-gradient' })
     this.line = new AutoLine({ classes: 'main-line', area: gradient, smoothingMethod: 'monotone' })
+    this.minMaxArea = new AutoLineArea({ classes: 'minmax-area', smoothingMethod: 'monotone' })
 
     const pattern = new ChartRawPattern()
       .setContent('<path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" class="diagonal-fill-pattern" />',
@@ -64,6 +67,7 @@ class BaseChart extends UniversalChart {
     this.restrictionArea = new RectangleArea('restriction-area', { layoutLimited: true, padding: { right: 0.5 } }).fillByPattern(pattern)
 
     const plotRoot = new PlotGroup()
+      .addPlot(this.minMaxArea)
       .addPlot(this.line)
       .addPlot(this.restrictionArea)
       .maskBy(maskMain)
@@ -132,6 +136,11 @@ class BaseChart extends UniversalChart {
     this.line.setPoints(points)
     this.hover.setDataSources(points)
     this.recalculateRestrictionArea()
+    return this
+  }
+
+  setMinMaxPoints(max: ({ x: number, y: number } | null)[], min: ({ x: number, y: number } | null)[]) {
+    this.minMaxArea.setPoints(max, min)
     return this
   }
 

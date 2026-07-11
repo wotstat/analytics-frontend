@@ -165,24 +165,37 @@ scoreChart.onSetRenderBounds.on(bounds => {
   }
 })
 
-// границы дней в x-пространстве кратны DAY, т.к. startTime уже включает сдвиг смены дня региона
 function groupByDays(points: ({ x: number, y: number } | null)[]) {
-  const lastByDay = new Map<number, { x: number, y: number }>()
+  const byDay = new Map<number, { last: { x: number, y: number }, min: number, max: number }>()
 
   for (const point of points) {
     if (!point || point.x < 0) continue
     const day = Math.floor(point.x / DAY)
-    const last = lastByDay.get(day)
-    if (!last || point.x > last.x) lastByDay.set(day, point)
+    const current = byDay.get(day)
+    if (!current) {
+      byDay.set(day, { last: point, min: point.y, max: point.y })
+    } else {
+      if (point.x > current.last.x) current.last = point
+      current.min = Math.min(current.min, point.y)
+      current.max = Math.max(current.max, point.y)
+    }
   }
 
-  if (lastByDay.size == 0) return []
+  const line: ({ x: number, y: number } | null)[] = []
+  const min: ({ x: number, y: number } | null)[] = []
+  const max: ({ x: number, y: number } | null)[] = []
+  if (byDay.size == 0) return { line, min, max }
 
-  const maxDay = Math.max(...lastByDay.keys())
-  return Array.from({ length: maxDay + 1 }, (_, day) => {
-    const last = lastByDay.get(day)
-    return last ? { x: (day + 1) * DAY, y: last.y } : null
-  })
+  const maxDay = Math.max(...byDay.keys())
+  for (let day = 0; day <= maxDay; day++) {
+    const value = byDay.get(day)
+    const x = (day + 1) * DAY
+    line.push(value ? { x, y: value.last.y } : null)
+    min.push(value ? { x, y: value.min } : null)
+    max.push(value ? { x, y: value.max } : null)
+  }
+
+  return { line, min, max }
 }
 
 watchEffect(() => {
@@ -196,8 +209,15 @@ watchEffect(() => {
     y: point.battlesCount
   })
 
-  scoreChart.setPoints(isFullSeason.value ? groupByDays(score) : score)
-  battleChart.setPoints(isFullSeason.value ? groupByDays(battles) : battles)
+  if (isFullSeason.value) {
+    const scoreDays = groupByDays(score)
+    const battleDays = groupByDays(battles)
+    scoreChart.setPoints(scoreDays.line).setMinMaxPoints(scoreDays.max, scoreDays.min)
+    battleChart.setPoints(battleDays.line)
+  } else {
+    scoreChart.setPoints(score).setMinMaxPoints([], [])
+    battleChart.setPoints(battles)
+  }
 })
 
 
@@ -292,6 +312,10 @@ watchEffect(() => {
         &.area {
           stroke: none;
         }
+      }
+
+      .minmax-area .area {
+        fill: rgba(2, 175, 255, 0.15);
       }
 
       .diagonal-fill-pattern {
