@@ -8,7 +8,7 @@
         </template>
 
         <template #right>
-          <IntervalSelector v-if="!isZoom" />
+          <IntervalSelector v-if="!isZoom" :seasonInterval="props.seasonInterval" @select="onIntervalSelect" />
         </template>
 
         <template #tooltip="{ ctx }">
@@ -28,7 +28,7 @@
         </template>
 
         <template #right>
-          <IntervalSelector v-if="!isZoom" />
+          <IntervalSelector v-if="!isZoom" :seasonInterval="props.seasonInterval" @select="onIntervalSelect" />
         </template>
 
         <template #tooltip="{ ctx }">
@@ -96,6 +96,10 @@ const data = queryComputed<{ recalculationTime: string, rank: number, rating: nu
 watchEffect(() => {
   loading.value = data.value.status == loadingState
 })
+
+function onIntervalSelect(value: { start: Date, end: Date }) {
+  console.log('interval select', value)
+}
 
 function tooltipDate(ctx: TooltipCtx) {
   return new Date(startTime + ctx.nearestDataPoints[0].xValue * 1000).toLocaleString(undefined, {

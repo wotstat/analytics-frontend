@@ -28,46 +28,88 @@ import { HighlightedCellLine } from '@/shared/ui/tableView/cells/HighlightedCell
 import { compareIntervals, Highlighted } from '@/shared/uiKit/highlightString/highlightUtils'
 import TableView from '@/shared/uiKit/tableView/TableView.vue'
 import { HeaderLine } from '@/shared/uiKit/tableView/tableView/default/HeaderLine'
-import { SelectableCellLine } from '@/shared/uiKit/tableView/tableView/default/SelectableCellLine'
 import { TableViewDelegate } from '@/shared/uiKit/tableView/tableView/TableView'
 import { computed, ref, watch } from 'vue'
 
 const table = ref<InstanceType<typeof TableView> | null>(null)
 
-const props = defineProps<{}>()
+const props = defineProps<{
+  seasonInterval: { start: Date, end: Date, length: number }
+}>()
 const currentSearch = ref('')
 
+type Interval = { start: Date, end: Date }
+
 const emit = defineEmits<{
-  (e: 'select', value: string): void
+  (e: 'select', value: Interval): void
 }>()
 
-const selectedCells = new Set<string>()
+const DAY = 24 * 60 * 60 * 1000
+const WEEK = 7 * DAY
+
+const startMs = props.seasonInterval.start.getTime()
+const endMs = props.seasonInterval.end.getTime()
+const now = Date.now()
+
+// сезон ещё идёт
+const active = now >= startMs && now < endMs
+
+const totalDays = Math.max(1, Math.ceil((endMs - startMs) / DAY))
+const totalWeeks = Math.max(1, Math.ceil((endMs - startMs) / WEEK))
+
+// текущие игровые день/неделя (1-based); могут выйти за пределы сезона, если он закончился
+const currentDayIndex = Math.ceil((now - startMs) / DAY)
+const currentWeekIndex = Math.ceil((now - startMs) / WEEK)
+
+const todayAvailable = currentDayIndex >= 1 && currentDayIndex <= totalDays
+const yesterdayAvailable = currentDayIndex - 1 >= 1 && currentDayIndex - 1 <= totalDays
+const thisWeekAvailable = currentWeekIndex >= 1 && currentWeekIndex <= totalWeeks
+
+function dayRange(i: number): Interval {
+  return {
+    start: new Date(startMs + (i - 1) * DAY),
+    end: new Date(Math.min(endMs, startMs + i * DAY)),
+  }
+}
+
+function weekRange(i: number): Interval {
+  return {
+    start: new Date(startMs + (i - 1) * WEEK),
+    end: new Date(Math.min(endMs, startMs + i * WEEK)),
+  }
+}
+
+const wholeSeason: Interval = { start: new Date(startMs), end: new Date(endMs) }
+
+type IntervalItem = { text: string } & Interval
+
+const specialItems: IntervalItem[] = []
+if (active) {
+  if (todayAvailable) specialItems.push({ text: 'Сегодня', ...dayRange(currentDayIndex) })
+  if (yesterdayAvailable) specialItems.push({ text: 'Вчера', ...dayRange(currentDayIndex - 1) })
+  if (thisWeekAvailable) specialItems.push({ text: 'Эта неделя', ...weekRange(currentWeekIndex) })
+  specialItems.push({ text: 'Весь сезон', ...wholeSeason })
+} else {
+  specialItems.push({ text: 'Весь сезон', ...wholeSeason })
+  if (yesterdayAvailable) specialItems.push({ text: 'Вчера', ...dayRange(currentDayIndex - 1) })
+}
+
+const visibleWeeks = active ? Math.min(currentWeekIndex, totalWeeks) : totalWeeks
+const visibleDays = active ? Math.min(currentDayIndex, totalDays) : totalDays
 
 const fullData = [
-  {
-    name: 'Особенные',
-    items: [
-      'Сегодня',
-      'Вчера',
-      'Эта неделя',
-      'Весь сезон',
-    ]
-  },
-  {
-    name: 'Недели',
-    items: new Array(7).fill(0).map((_, i) => `Неделя ${i + 1}`)
-  },
-  {
-    name: 'Дни',
-    items: new Array(31).fill(0).map((_, i) => `День ${i + 1}`)
-  },
+  { name: 'Особенные', items: specialItems },
+  { name: 'Недели', items: new Array(visibleWeeks).fill(0).map((_, i): IntervalItem => ({ text: `Неделя ${i + 1}`, ...weekRange(i + 1) })) },
+  { name: 'Дни', items: new Array(visibleDays).fill(0).map((_, i): IntervalItem => ({ text: `День ${i + 1}`, ...dayRange(i + 1) })) },
 ]
 
 const grouped = fullData.map(list => ({
   header: list.name,
   items: list.items.map(item => ({
-    text: item,
-    highlighted: new Highlighted(item)
+    text: item.text,
+    start: item.start,
+    end: item.end,
+    highlighted: new Highlighted(item.text)
   }))
 }))
 
@@ -82,13 +124,13 @@ const displaySections = computed(() => {
     const filtered = list.items.filter(item => !search || item.highlighted.intervals.length > 0)
 
     function sorted() {
-      if (search) return filtered.sort((a, b) => {
+      if (!search) return filtered
+
+      return filtered.sort((a, b) => {
         const comp = compareIntervals(a.highlighted.intervals, b.highlighted.intervals)
         if (comp !== 0) return comp
         return a.highlighted.text.localeCompare(b.highlighted.text, undefined, { numeric: true })
       })
-
-      return filtered.sort((a, b) => a.highlighted.text.localeCompare(b.highlighted.text, undefined, { numeric: true }))
     }
 
     return {
@@ -119,12 +161,8 @@ const delegate: TableViewDelegate = {
     table.registerReusable(HighlightedCellLine.reusableKey, () => new HighlightedCellLine(c => {
       if (!c.indexPath) return
 
-      const id = `line-${c.indexPath.section + 1}-${c.indexPath.row + 1}`
-      selectedCells.has(id) ? selectedCells.delete(id) : selectedCells.add(id)
-      const selected = selectedCells.has(id)
-
-      const cells = table.getCellInstancesForIndexPath<SelectableCellLine>(c.indexPath)
-      for (const cell of cells) cell.setSelected(selected)
+      const line = sections[c.indexPath.section].lines[c.indexPath.row]
+      emit('select', { start: line.start, end: line.end })
     }))
   },
 
@@ -134,12 +172,10 @@ const delegate: TableViewDelegate = {
   heightForCellByIndex: (_, index) => 35,
   cellForIndex: (table, index) => {
     const cell = table.getReusable<HighlightedCellLine>(HighlightedCellLine.reusableKey)
-    const id = `line-${index.section + 1}-${index.row + 1}`
     cell.configure({
       text: sections[index.section].lines[index.row].text,
       highlightedText: sections[index.section].lines[index.row].highlighted,
       selectable: true,
-      selected: selectedCells.has(id),
       index: index,
     })
 

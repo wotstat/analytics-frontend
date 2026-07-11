@@ -9,7 +9,7 @@
   <PopoverAutoClose :target="btn" v-model="displayPopup" :placement="['bottom-end', 'bottom-float']"
     :viewport-offset="{ top: headerHeight + additionalHeaderHeight, bottom: 10, left: 10, right: 10 }" :arrow-size="0"
     :class="'comp7-tooltip'">
-    <IntervalPopup />
+    <IntervalPopup :seasonInterval="seasonInterval" @select="onSelect" />
   </PopoverAutoClose>
 </template>
 
@@ -24,7 +24,15 @@ import DropdownArrow from './DropdownArrow.vue'
 
 const btn = ref<HTMLElement | null>(null)
 
-const props = defineProps<{}>()
+type Interval = { start: Date, end: Date }
+
+const props = defineProps<{
+  seasonInterval: { start: Date, end: Date, length: number }
+}>()
+
+const emit = defineEmits<{
+  (e: 'select', value: Interval): void
+}>()
 
 const displayPopup = ref<boolean>(false)
 
@@ -32,6 +40,11 @@ const { additionalHeaderHeight } = useAdditionalHeaderHeight(true)
 
 function openSelect() {
   displayPopup.value = !displayPopup.value
+}
+
+function onSelect(value: Interval) {
+  displayPopup.value = false
+  emit('select', value)
 }
 </script>
 
