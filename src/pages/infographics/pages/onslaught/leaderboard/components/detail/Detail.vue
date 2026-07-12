@@ -9,7 +9,7 @@
         </template>
 
         <template #right>
-          <IntervalSelector v-if="!isZoom" :seasonInterval="props.seasonInterval" :modelValue="selectedInterval"
+          <IntervalSelector :seasonInterval="props.seasonInterval" :modelValue="selectedInterval"
             @update:modelValue="updateInterval" v-model:isOpen="isFirstSelectOpen" />
         </template>
 
@@ -44,7 +44,7 @@
         </template>
 
         <template #right>
-          <IntervalSelector v-if="!isZoom" :seasonInterval="props.seasonInterval" :modelValue="selectedInterval"
+          <IntervalSelector :seasonInterval="props.seasonInterval" :modelValue="selectedInterval"
             @update:modelValue="updateInterval" v-model:isOpen="isSecondSelectOpen" />
         </template>
 
@@ -85,18 +85,13 @@ import IntervalSelector, { type SelectedInterval } from './intervalSelector/Inte
 import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/chartTooltip/ChartTooltip'
 import { HoverSynchronizer } from '@/shared/uiKit/chart/universalChart/hover/composableHover/sync/HoverSynchronizer'
 import { BoundsSynchronizer } from '@/shared/uiKit/chart/universalChart/hover/composableHover/sync/BoundsSynchronizer'
-import { useRoute } from 'vue-router'
 import { getRegionDayChangeHourOffset } from '@/shared/game/comp7/utils'
 import HeaderTooltip from '@/shared/ui/chart/HeaderTooltip.vue'
 import TriangleUp from '../../assets/triangle-up.svg'
 import TipZoomChart from '../tips/TipZoomChart.vue'
 import { useDisposer } from '@/shared/ui/disposer/disposer.ts'
 
-
-const route = useRoute()
-const isZoom = computed(() => route.query['ab'] == 'zoom')
 const loading = ref(true)
-
 
 const tipZoomChart = ref<InstanceType<typeof TipZoomChart> | null>(null)
 

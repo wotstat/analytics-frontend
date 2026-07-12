@@ -4,7 +4,7 @@
   <div class="onslaught-leaderboard-page">
 
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" v-model:region="region"
-      v-model:seasons="seasons" :showNameInput="ab" />
+      v-model:seasons="seasons" :showNameInput="true" />
 
     <div class="search-result-animator" v-if="searchState != 'idle'" :class="{ 'height-animated': animateSearchHeight }"
       :style="{ height: searchResultHeight != null ? `${searchResultHeight}px` : undefined }">
@@ -115,11 +115,11 @@
         <template v-for="line in leaderboardData">
           <LeaderboardLine :line="line" :region="region" :id="`leaderboard-player-${line.bdid}`"
             @click="click(line.name)" @pointerdown="onPointerDown" :class="{
-              'selected': selectedName == line.name && ab,
+              'selected': selectedName == line.name,
               'searched': searchedPlayer?.bdid == line.bdid,
             }" />
 
-          <tr v-if="selectedName == line.name && seasonInterval && ab" class="details" :class="{
+          <tr v-if="selectedName == line.name && seasonInterval" class="details" :class="{
             'searched': searchedPlayer?.bdid == line.bdid,
           }">
             <td colspan="6">
@@ -163,7 +163,6 @@ import { useSeasonInterval } from '../shared/useSeasonInterval'
 import Live from './components/Live.vue'
 import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
 import { useMeta } from '@/shared/composition/useMeta'
-import { useRoute } from 'vue-router'
 import { SelectedInterval } from './components/detail/intervalSelector/IntervalSelector.vue'
 
 useMeta({
@@ -180,11 +179,6 @@ const selectedSeason = ref<string | null>(null)
 const region = ref<'RU' | 'EU' | 'NA' | 'ASIA' | 'CN' | 'CT'>('RU')
 const nickname = ref<string>('')
 const debouncedNickname = refDebounced(nickname, 500)
-const game = computed(() => regionToGame(region.value))
-
-const route = useRoute()
-const ab = computed(() => route.query['ab'] != undefined)
-
 
 const seasonInterval = useSeasonInterval(seasons, selectedSeason, region)
 const leaderboardDay = ref<{ day: string, recalculation: string, lastRank: number, eliteThreshold: number, lastEliteRank: number } | null>(null)
@@ -312,7 +306,7 @@ const searchResolvedFor = ref<string | null>(null)
 
 const searchState = computed<'idle' | 'loading' | 'found' | 'notFound'>(() => {
   const name = nickname.value.trim()
-  if (!name || !ab.value) return 'idle'
+  if (!name) return 'idle'
   if (searchResolvedFor.value != name) return 'loading'
   return searchedPlayer.value ? 'found' : 'notFound'
 })
