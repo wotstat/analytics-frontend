@@ -52,7 +52,6 @@ import {
 } from '@/shared/game/comp7/utils'
 import { useMainStat, type StatisticRes } from './mainStat/useMainStat'
 import VehicleTable from './vehicleTable/VehicleTable.vue'
-import { watchWithAbortSignal } from '@/shared/utils/core'
 import { useVehicleTable, VehicleRes } from './vehicleTable/useVehicleTable'
 import { MapsRes, useMapsTable } from './mapsTable/useMapsTable'
 import MapsTable from './mapsTable/MapsTable.vue'

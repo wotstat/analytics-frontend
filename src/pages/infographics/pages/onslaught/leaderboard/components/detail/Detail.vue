@@ -2,6 +2,7 @@
   <div class="charts" :class="{ 'loading': loading, 'full-season': isFullSeason }">
 
     <div class="chart">
+      <TipZoomChart class="tip-bubble" ref="tipZoomChart" :display="true" />
       <HeaderTooltip :ctx="scoreChart.tooltipCtx.value">
         <template #left>
           <h3>Очки по дням</h3>
@@ -75,7 +76,7 @@
 
 
 <script setup lang="ts">
-import { computed, markRaw, nextTick, ref, watch, watchEffect } from 'vue'
+import { computed, markRaw, ref, watch, watchEffect } from 'vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import { dateToDbDate, queryComputed, loading as loadingState } from '@/db'
 import { BattlesChart, ScoreChart } from './Charts'
@@ -88,10 +89,15 @@ import { useRoute } from 'vue-router'
 import { getRegionDayChangeHourOffset } from '@/shared/game/comp7/utils'
 import HeaderTooltip from '@/shared/ui/chart/HeaderTooltip.vue'
 import TriangleUp from '../../assets/triangle-up.svg'
+import TipZoomChart from '../tips/TipZoomChart.vue'
+
 
 const route = useRoute()
 const isZoom = computed(() => route.query['ab'] == 'zoom')
 const loading = ref(true)
+
+
+const tipZoomChart = ref<InstanceType<typeof TipZoomChart> | null>(null)
 
 const isFirstSelectOpen = ref(false)
 const isSecondSelectOpen = ref(false)
@@ -353,6 +359,15 @@ watchEffect(() => {
 
     display: flex;
     flex-direction: column;
+    position: relative;
+
+    .tip-bubble {
+      position: absolute;
+      top: 40px;
+      left: 40px;
+      z-index: 1;
+    }
+
 
     :deep(.universal-chart-root) {
       background: inherit;
