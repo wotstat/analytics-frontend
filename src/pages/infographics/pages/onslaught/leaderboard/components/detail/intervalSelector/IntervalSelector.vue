@@ -50,8 +50,6 @@ function onSelect(value: SelectedInterval) {
 
 <style lang="scss" scoped>
 .interval-selector {
-  margin-right: 4.5px;
-
   button {
     padding: 2px 5px;
     display: flex;

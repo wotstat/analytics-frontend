@@ -50,9 +50,12 @@
         <template #tooltip="{ ctx }">
           <div class="tooltip-container">
             <div class="value-row">
-              <span v-if="pointDelta(ctx)" class="delta spacer" aria-hidden="true">
-                <TriangleUp class="triangle" /> {{ Math.abs(pointDelta(ctx)!) }}
-              </span>
+              <Transition name="fade">
+                <span v-if="pointDelta(ctx)" class="delta spacer"
+                  :class="{ up: pointDelta(ctx)! > 0, down: pointDelta(ctx)! < 0 }">
+                  <TriangleUp class="triangle" /> {{ Math.abs(pointDelta(ctx)!) }}
+                </span>
+              </Transition>
               <p class="value">{{ ctx.nearestDataPoints[0].yValue }}</p>
               <Transition name="fade">
                 <span v-if="pointDelta(ctx)" class="delta"
@@ -94,6 +97,10 @@ const isFirstSelectOpen = ref(false)
 const isSecondSelectOpen = ref(false)
 
 const captureClose = defineModel<boolean>('captureClose')
+
+window.addEventListener('keydown', e => {
+  if (e.key == 'Escape') debugger
+})
 
 watch([isFirstSelectOpen, isSecondSelectOpen], ([first, second]) => {
   if (first || second) captureClose.value = true
