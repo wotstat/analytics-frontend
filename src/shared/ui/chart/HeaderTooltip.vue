@@ -19,7 +19,7 @@
     </div>
 
     <Transition name="fade">
-      <div class="tooltip" v-if="props.ctx" :style="{ left: tooltipPosition + 'px' }" ref="tooltip">
+      <div class="tooltip" v-if="props.ctx" :style="{ transform: `translateX(${tooltipPosition}px)` }" ref="tooltip">
         <slot name="tooltip" v-bind="{ ctx: props.ctx }"></slot>
       </div>
     </Transition>
@@ -53,10 +53,11 @@ const leftBounds = useElementBounding(leftHeaderItem)
 const centerBounds = useElementBounding(centerHeaderItem)
 const rightBounds = useElementBounding(rightHeaderItem)
 const tooltipBounds = useElementBounding(tooltip)
+const tooltipSize = useElementSize(tooltip)
 
 const tooltipPosition = computed(() => {
   if (!props.ctx) return 0
-  const tooltipWidth = tooltipBounds.width.value
+  const tooltipWidth = tooltipSize.width.value
   const pos = (props.xOffset ?? 0) + props.ctx.pivot.x - containerLeft.value - tooltipWidth / 2
   return Math.max(0, Math.min(pos, containerRight.value - containerLeft.value - tooltipWidth))
 })

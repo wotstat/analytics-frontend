@@ -321,11 +321,11 @@ watchEffect(() => {
     }
   }
 
-  @container (width <=1000px) {
+  @container (width <=900px) {
     flex-direction: column;
   }
 
-  @container (width <=1000px) and (width >=500px) {
+  @container (width <=900px) and (width >=500px) {
     div.chart {
       aspect-ratio: 2 / 1;
     }
