@@ -27,7 +27,7 @@
 Два входа: внутри `/session` (свои фильтры) и публичный `/onslaught` (свой `Layout.vue`).
 
 - `statistics/Onslaught.vue` — личная статистика сезона: `mainStat/` (рейтинг, дельта, винрейт, топ-рейтинг — карточки с тултипами), `secondaryStat/` (текущий рейтинг-бар, квалификация), `dayChart/` (бар-чарт по дням, выбор дня), `battleHistoryTable/`, `vehicleTable/`, `mapsTable/`, `sortableTable/SortableTable.vue` — общий сортируемый стол, `tips/` — подсказки по горячим клавишам. Логика — в композаблах `useMainStat.ts`, `useBattleHistory.ts` и т.п.
-- `leaderboard/Leaderboard.vue` — таблица лидеров с реалтайм-обновлением (`components/Live.vue`), пагинацией (`PageSelector`), деталкой игрока (`detail/Detail.vue` + графики `Charts.ts` на UniversalChart c зумом, выбор интервала `intervalSelector/`).
+- `leaderboard/Leaderboard.vue` — таблица лидеров с реалтайм-обновлением (`components/Live.vue`), пагинацией (`PageSelector`), деталкой игрока (`detail/Detail.vue` + графики `Charts.ts` на UniversalChart c зумом, выбор интервала `intervalSelector/`). Поиск по нику (`NicknameInput` в Settings): карточка найденного игрока над таблицей (строка + Detail + кнопка «Перейти к таблице» со скроллом к подсвеченной строке).
 - `shared/useSeasonInterval.ts` — границы сезонов; `shared/settings/` — настройки, ввод ника (`NicknameInput`).
 - Реалтайм-каналы `comp7Info`, `comp7LastRecalculation`, `battleResult` — см. 08.
 

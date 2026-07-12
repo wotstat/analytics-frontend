@@ -4,7 +4,40 @@
   <div class="onslaught-leaderboard-page">
 
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" v-model:region="region"
-      v-model:seasons="seasons" />
+      v-model:seasons="seasons" :showNameInput="ab" />
+
+    <div class="search-result" v-if="searchedPlayer && seasonInterval && ab">
+      <table>
+        <thead>
+          <tr>
+            <th>№</th>
+            <th>Игрок</th>
+            <th class="battles-today-col">Бои за день</th>
+            <th class="battles-total-multi">Бои всего</th>
+            <th class="battles-total-single">Бои</th>
+            <th>Очки</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <LeaderboardLine :line="searchedPlayer" :region="region" />
+          <tr class="details">
+            <td colspan="6">
+              <Detail :key="`${searchedPlayer.bdid}-${region}-${selectedSeason}`" :bdid="searchedPlayer.bdid"
+                :region="region" :seasonInterval="seasonInterval" v-model:selectedInterval="selectedInterval" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="actions">
+        <button @click="goToPlayerInTable">Перейти к таблице</button>
+      </div>
+    </div>
+
+    <div class="search-result not-found" v-else-if="searchNotFound && ab">
+      <p>Игрок «{{ debouncedNickname.trim() }}» не найден в таблице лидеров</p>
+    </div>
 
     <div class="info">
       <PageSelector :start="1" :end="endPage" v-model="page" class="page-selector"
@@ -35,11 +68,15 @@
 
       <tbody>
         <template v-for="line in leaderboardData">
-          <LeaderboardLine :line="line" :region="region" @click="click(line.name)" @pointerdown="onPointerDown" :class="{
-            'selected': selectedName == line.name && ab,
-          }" />
+          <LeaderboardLine :line="line" :region="region" :id="`leaderboard-player-${line.bdid}`"
+            @click="click(line.name)" @pointerdown="onPointerDown" :class="{
+              'selected': selectedName == line.name && ab,
+              'searched': searchedPlayer?.bdid == line.bdid,
+            }" />
 
-          <tr v-if="selectedName == line.name && seasonInterval && ab" class="details">
+          <tr v-if="selectedName == line.name && seasonInterval && ab" class="details" :class="{
+            'searched': searchedPlayer?.bdid == line.bdid,
+          }">
             <td colspan="6">
               <Detail :bdid="line.bdid" :region="region" :seasonInterval="seasonInterval"
                 v-model:captureClose="captureDetailClose" v-model:selectedInterval="selectedInterval" />
@@ -67,7 +104,7 @@
 
 <script setup lang="ts">
 import { dateToDbDate, query, queryComputedFirst } from '@/db'
-import { computed, ref, watch, watchEffect } from 'vue'
+import { computed, nextTick, ref, watch, watchEffect } from 'vue'
 import LeaderboardLine from './components/LeaderboardLine.vue'
 import { regionToGame } from '@/shared/game/wot'
 import Detail from './components/detail/Detail.vue'
@@ -225,6 +262,68 @@ watch(seasonInterval, interval => {
 
 watchWithAbortSignal([region, page, selectedSeason, seasonInterval], signal => load(signal), { immediate: true })
 
+const searchedPlayer = ref<LeaderboardData | null>(null)
+const searchNotFound = ref(false)
+
+async function searchPlayer(abortSignal: AbortSignal) {
+  const name = debouncedNickname.value.trim()
+  if (!name || !leaderboardDay.value) {
+    searchedPlayer.value = null
+    searchNotFound.value = false
+    return
+  }
+
+  const escapedName = name.replaceAll('\\', '\\\\').replaceAll('\'', '\\\'')
+  const data = await query<LeaderboardData>(`
+    select day, name, bdid, clan, clanColor, lastRank, lastDayRank, lastBattlesCount, lastDayBattlesCount, lastRating, lastDayRating
+    from Comp7LeaderboardDailyByRank final
+    where region = '${region.value}' and
+      day = '${leaderboardDay.value.day}' and
+      lastRecalculationTime = '${leaderboardDay.value.recalculation}' and
+      lower(name) = lower('${escapedName}')
+    limit 1
+  `, { abortSignal, allowCache: false })
+
+  if (abortSignal.aborted) return
+
+  searchedPlayer.value = data.data[0] ?? null
+  searchNotFound.value = data.data.length == 0
+}
+
+watchWithAbortSignal([debouncedNickname, leaderboardDay], signal => searchPlayer(signal), { immediate: true })
+
+let scrollPendingBdid: number | null = null
+
+function scrollToPlayer(bdid: number) {
+  document.getElementById(`leaderboard-player-${bdid}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
+
+function goToPlayerInTable() {
+  const player = searchedPlayer.value
+  if (!player) return
+
+  const targetPage = Math.ceil(player.lastRank / 100)
+  if (page.value != targetPage) {
+    scrollPendingBdid = player.bdid
+    page.value = targetPage
+  } else if (leaderboardData.value.some(line => line.bdid == player.bdid)) {
+    scrollToPlayer(player.bdid)
+  } else {
+    scrollPendingBdid = player.bdid
+  }
+}
+
+watch(leaderboardData, async () => {
+  if (scrollPendingBdid == null) return
+
+  const bdid = scrollPendingBdid
+  scrollPendingBdid = null
+  if (!leaderboardData.value.some(line => line.bdid == bdid)) return
+
+  await nextTick()
+  scrollToPlayer(bdid)
+})
+
 const captureDetailClose = ref(false)
 
 let preventNextClick = false
@@ -281,6 +380,63 @@ h1 {
   height: 2px;
 }
 
+.search-result {
+  margin-top: 15px;
+  background-color: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  padding-top: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  table {
+    tbody {
+      tr {
+        cursor: default;
+
+        &:not(.selected) {
+          border-bottom: none;
+        }
+
+        @media (hover: hover) {
+          &:hover {
+            background: none;
+          }
+        }
+      }
+
+      .details {
+        background: none;
+      }
+    }
+  }
+
+  .actions {
+    display: flex;
+    justify-content: center;
+    padding-bottom: 12px;
+
+    button {
+      background-color: rgba(255, 255, 255, 0.08);
+      border-radius: 5px;
+      padding: 6px 16px;
+      font-size: 14px;
+      line-height: 1;
+      user-select: none;
+      transition: background-color 0.07s;
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
+
+  &.not-found {
+    padding: 15px 20px;
+    text-align: center;
+    color: #c8c8c8;
+    font-size: 14px;
+  }
+}
+
 .page-selector {
   margin: 20px 0;
   min-height: 22px;
@@ -325,10 +481,11 @@ table {
     }
   }
 
+  // $search-highlight-color: rgba(219, 77, 255, 0.5);
+  $search-highlight-color: rgba(193, 217, 255, 0.3);
 
   tbody {
     tr {
-      // position: relative;
       cursor: pointer;
       -ms-touch-action: manipulation;
       touch-action: manipulation;
@@ -348,11 +505,26 @@ table {
         }
       }
 
+      &.searched {
+        &:not(.details) :deep(td) {
+          border-top: 1px solid $search-highlight-color;
+        }
+
+        &:not(.selected) {
+          border-bottom: 1px solid $search-highlight-color;
+        }
+      }
+
     }
 
 
     .details {
       background-color: rgba(255, 255, 255, 0.03);
+
+      &.searched {
+        border-top: none;
+        border-bottom: 1px solid $search-highlight-color;
+      }
     }
 
     .elite-separator {

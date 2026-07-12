@@ -98,10 +98,6 @@ const isSecondSelectOpen = ref(false)
 
 const captureClose = defineModel<boolean>('captureClose')
 
-window.addEventListener('keydown', e => {
-  if (e.key == 'Escape') debugger
-})
-
 watch([isFirstSelectOpen, isSecondSelectOpen], ([first, second]) => {
   if (first || second) captureClose.value = true
   else setTimeout(() => captureClose.value = false, 10)
