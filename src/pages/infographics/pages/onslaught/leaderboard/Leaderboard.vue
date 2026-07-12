@@ -28,7 +28,7 @@
               <tr class="details">
                 <td colspan="6">
                   <Detail :key="`${searchedPlayer.bdid}-${region}-${selectedSeason}`" :bdid="searchedPlayer.bdid"
-                    :region="region" :seasonInterval="seasonInterval" v-model:selectedInterval="selectedInterval" />
+                    :region="region" :seasonInterval="seasonInterval" />
                 </td>
               </tr>
             </tbody>
@@ -355,15 +355,11 @@ useResizeObserver(searchResultElement, () => {
 })
 
 watch(searchState, (_, oldState) => {
-  // при появлении блока с нуля высота прошлого состояния неактуальна —
-  // сбрасываем, чтобы скелетон сразу занял полную высоту без анимации роста
   if (oldState == 'idle') {
     searchResultHeight.value = null
     return
   }
 
-  // transition включается только на время смены состояния поиска,
-  // иначе высота анимировалась бы и при ресайзе страницы
   animateSearchHeight.value = true
   if (animateSearchHeightTimeout) clearTimeout(animateSearchHeightTimeout)
   animateSearchHeightTimeout = setTimeout(() => animateSearchHeight.value = false, 350)
@@ -656,7 +652,6 @@ table {
     }
   }
 
-  // $search-highlight-color: rgba(219, 77, 255, 0.5);
   $search-highlight-color: rgba(193, 217, 255, 0.3);
 
   tbody {
