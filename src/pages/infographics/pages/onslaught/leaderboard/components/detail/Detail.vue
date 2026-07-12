@@ -1,5 +1,5 @@
 <template>
-  <div class="charts" :class="{ 'loading': loading }">
+  <div class="charts" :class="{ 'loading': loading, 'full-season': isFullSeason }">
 
     <div class="chart">
       <HeaderTooltip :ctx="scoreChart.tooltipCtx.value">
@@ -15,14 +15,19 @@
         <template #tooltip="{ ctx }">
           <div class="tooltip-container">
             <div class="value-row">
-              <span v-if="pointDelta(ctx)" class="delta spacer" aria-hidden="true">
-                <TriangleUp class="triangle" /> {{ Math.abs(pointDelta(ctx)!) }}
-              </span>
+              <Transition name="fade">
+                <span v-if="pointDelta(ctx)" class="delta spacer"
+                  :class="{ up: pointDelta(ctx)! > 0, down: pointDelta(ctx)! < 0 }">
+                  <TriangleUp class="triangle" /> {{ Math.abs(pointDelta(ctx)!) }}
+                </span>
+              </Transition>
               <p class="value">{{ ctx.nearestDataPoints[0].yValue }}</p>
-              <span v-if="pointDelta(ctx)" class="delta"
-                :class="{ up: pointDelta(ctx)! > 0, down: pointDelta(ctx)! < 0 }">
-                <TriangleUp class="triangle" /> {{ Math.abs(pointDelta(ctx)!) }}
-              </span>
+              <Transition name="fade">
+                <span v-if="pointDelta(ctx)" class="delta"
+                  :class="{ up: pointDelta(ctx)! > 0, down: pointDelta(ctx)! < 0 }">
+                  <TriangleUp class="triangle" /> {{ Math.abs(pointDelta(ctx)!) }}
+                </span>
+              </Transition>
             </div>
             <p class="date">{{ tooltipDate(ctx) }}</p>
           </div>
@@ -49,10 +54,12 @@
                 <TriangleUp class="triangle" /> {{ Math.abs(pointDelta(ctx)!) }}
               </span>
               <p class="value">{{ ctx.nearestDataPoints[0].yValue }}</p>
-              <span v-if="pointDelta(ctx)" class="delta"
-                :class="{ up: pointDelta(ctx)! > 0, down: pointDelta(ctx)! < 0 }">
-                <TriangleUp class="triangle" /> {{ Math.abs(pointDelta(ctx)!) }}
-              </span>
+              <Transition name="fade">
+                <span v-if="pointDelta(ctx)" class="delta"
+                  :class="{ up: pointDelta(ctx)! > 0, down: pointDelta(ctx)! < 0 }">
+                  <TriangleUp class="triangle" /> {{ Math.abs(pointDelta(ctx)!) }}
+                </span>
+              </Transition>
             </div>
             <p class="date">{{ tooltipDate(ctx) }}</p>
           </div>
@@ -470,7 +477,7 @@ watchEffect(() => {
 
       &.spacer {
         margin-left: 0;
-        margin-right: 6px;
+        margin-right: 4px;
         visibility: hidden;
       }
 
@@ -487,6 +494,32 @@ watchEffect(() => {
       }
     }
   }
+
+
+  &.full-season {
+
+    .fade-enter-active,
+    .fade-leave-active {
+      transition-delay: 0s;
+    }
+  }
+
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: opacity 0.1s, filter 0.1s;
+    transition-delay: 0.2s;
+  }
+
+  .fade-leave-active {
+    transition-delay: 0s;
+  }
+
+  .fade-enter-from,
+  .fade-leave-to {
+    opacity: 0;
+    filter: blur(2px);
+  }
+
 
 }
 </style>
