@@ -6,37 +6,82 @@
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" v-model:region="region"
       v-model:seasons="seasons" :showNameInput="ab" />
 
-    <div class="search-result" v-if="searchedPlayer && seasonInterval && ab">
-      <table>
-        <thead>
-          <tr>
-            <th>№</th>
-            <th>Игрок</th>
-            <th class="battles-today-col">Бои за день</th>
-            <th class="battles-total-multi">Бои всего</th>
-            <th class="battles-total-single">Бои</th>
-            <th>Очки</th>
-          </tr>
-        </thead>
+    <div class="search-result-animator" v-if="searchState != 'idle'" :class="{ 'height-animated': animateSearchHeight }"
+      :style="{ height: searchResultHeight != null ? `${searchResultHeight}px` : undefined }">
+      <div class="search-result" :class="{ 'not-found': searchState == 'notFound' }" ref="searchResultElement">
 
-        <tbody>
-          <LeaderboardLine :line="searchedPlayer" :region="region" />
-          <tr class="details">
-            <td colspan="6">
-              <Detail :key="`${searchedPlayer.bdid}-${region}-${selectedSeason}`" :bdid="searchedPlayer.bdid"
-                :region="region" :seasonInterval="seasonInterval" v-model:selectedInterval="selectedInterval" />
-            </td>
-          </tr>
-        </tbody>
-      </table>
+        <template v-if="searchState == 'found' && searchedPlayer && seasonInterval">
+          <table>
+            <thead>
+              <tr>
+                <th>№</th>
+                <th>Игрок</th>
+                <th class="battles-today-col">Бои за день</th>
+                <th class="battles-total-multi">Бои всего</th>
+                <th class="battles-total-single">Бои</th>
+                <th>Очки</th>
+              </tr>
+            </thead>
 
-      <div class="actions">
-        <button @click="goToPlayerInTable">Перейти к таблице</button>
+            <tbody>
+              <LeaderboardLine :line="searchedPlayer" :region="region" />
+              <tr class="details">
+                <td colspan="6">
+                  <Detail :key="`${searchedPlayer.bdid}-${region}-${selectedSeason}`" :bdid="searchedPlayer.bdid"
+                    :region="region" :seasonInterval="seasonInterval" v-model:selectedInterval="selectedInterval" />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="actions">
+            <button @click="goToPlayerInTable">Перейти к таблице</button>
+          </div>
+        </template>
+
+        <div class="skeleton" v-else-if="searchState != 'notFound'">
+          <table>
+            <thead>
+              <tr>
+                <th>№</th>
+                <th>Игрок</th>
+                <th class="battles-today-col">Бои за день</th>
+                <th class="battles-total-multi">Бои всего</th>
+                <th class="battles-total-single">Бои</th>
+                <th>Очки</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td colspan="6" class="fake-cell">
+                  <div class="fake-line"></div>
+                </td>
+              </tr>
+              <tr class="details">
+                <td colspan="6">
+                  <div class="fake-charts">
+                    <div class="fake-chart">
+                      <div class="header"></div>
+                      <div class="canvas"></div>
+                    </div>
+                    <div class="fake-chart">
+                      <div class="header"></div>
+                      <div class="canvas"></div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="actions">
+            <div class="fake-button"></div>
+          </div>
+        </div>
+
+        <p v-else>Игрок «{{ searchResolvedFor }}» не найден в таблице лидеров</p>
       </div>
-    </div>
-
-    <div class="search-result not-found" v-else-if="searchNotFound && ab">
-      <p>Игрок «{{ debouncedNickname.trim() }}» не найден в таблице лидеров</p>
     </div>
 
     <div class="info">
@@ -111,7 +156,7 @@ import Detail from './components/detail/Detail.vue'
 import Loader from '../shared/Loader.vue'
 
 import Settings from '../shared/settings/Settings.vue'
-import { refDebounced } from '@vueuse/core'
+import { refDebounced, useResizeObserver } from '@vueuse/core'
 import { watchWithAbortSignal } from '@/shared/utils/core'
 import PageSelector from './components/PageSelector.vue'
 import { useSeasonInterval } from '../shared/useSeasonInterval'
@@ -263,13 +308,20 @@ watch(seasonInterval, interval => {
 watchWithAbortSignal([region, page, selectedSeason, seasonInterval], signal => load(signal), { immediate: true })
 
 const searchedPlayer = ref<LeaderboardData | null>(null)
-const searchNotFound = ref(false)
+const searchResolvedFor = ref<string | null>(null)
+
+const searchState = computed<'idle' | 'loading' | 'found' | 'notFound'>(() => {
+  const name = nickname.value.trim()
+  if (!name || !ab.value) return 'idle'
+  if (searchResolvedFor.value != name) return 'loading'
+  return searchedPlayer.value ? 'found' : 'notFound'
+})
 
 async function searchPlayer(abortSignal: AbortSignal) {
   const name = debouncedNickname.value.trim()
   if (!name || !leaderboardDay.value) {
     searchedPlayer.value = null
-    searchNotFound.value = false
+    searchResolvedFor.value = null
     return
   }
 
@@ -287,10 +339,35 @@ async function searchPlayer(abortSignal: AbortSignal) {
   if (abortSignal.aborted) return
 
   searchedPlayer.value = data.data[0] ?? null
-  searchNotFound.value = data.data.length == 0
+  searchResolvedFor.value = name
 }
 
 watchWithAbortSignal([debouncedNickname, leaderboardDay], signal => searchPlayer(signal), { immediate: true })
+
+const searchResultElement = ref<HTMLElement | null>(null)
+const searchResultHeight = ref<number | null>(null)
+const animateSearchHeight = ref(false)
+let animateSearchHeightTimeout: ReturnType<typeof setTimeout> | null = null
+
+useResizeObserver(searchResultElement, () => {
+  const element = searchResultElement.value
+  if (element) searchResultHeight.value = element.getBoundingClientRect().height
+})
+
+watch(searchState, (_, oldState) => {
+  // при появлении блока с нуля высота прошлого состояния неактуальна —
+  // сбрасываем, чтобы скелетон сразу занял полную высоту без анимации роста
+  if (oldState == 'idle') {
+    searchResultHeight.value = null
+    return
+  }
+
+  // transition включается только на время смены состояния поиска,
+  // иначе высота анимировалась бы и при ресайзе страницы
+  animateSearchHeight.value = true
+  if (animateSearchHeightTimeout) clearTimeout(animateSearchHeightTimeout)
+  animateSearchHeightTimeout = setTimeout(() => animateSearchHeight.value = false, 350)
+})
 
 let scrollPendingBdid: number | null = null
 
@@ -380,12 +457,110 @@ h1 {
   height: 2px;
 }
 
-.search-result {
+@keyframes shine {
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@mixin skeleton-shine {
+  $color: rgba(255, 255, 255, 0.01);
+  $highlight-color: rgba(255, 255, 255, 0.05);
+
+  background: linear-gradient(90deg, $color 8%, $highlight-color 18%, $color 33%);
+  background-size: 200% 100%;
+  animation: shine 1.8s infinite linear;
+  background-position: 100% 0;
+}
+
+.search-result-animator {
   margin-top: 15px;
-  background-color: rgba(255, 255, 255, 0.03);
   border-radius: 10px;
-  padding-top: 8px;
+  overflow: hidden;
+  background-color: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
+
+  box-sizing: content-box;
+
+  &.height-animated {
+    transition: height 0.3s ease;
+  }
+}
+
+.search-result {
+  padding-top: 8px;
+
+  .skeleton {
+
+    .fake-cell {
+      padding: 20px 30px;
+      line-height: 1.2;
+
+      .fake-line {
+        height: 1.2em;
+        max-width: 300px;
+        border-radius: 5px;
+        @include skeleton-shine;
+      }
+
+      @container (width <=500px) {
+        padding: 20px 10px;
+      }
+    }
+
+    .fake-charts {
+      display: flex;
+      gap: 30px;
+      padding: 20px 30px;
+      padding-top: 0;
+
+      .fake-chart {
+        flex: 1;
+        aspect-ratio: 1.8 / 1;
+        display: flex;
+        flex-direction: column;
+
+        .header {
+          height: 19px;
+          width: 130px;
+          margin-bottom: 8px;
+          border-radius: 5px;
+          @include skeleton-shine;
+        }
+
+        .canvas {
+          flex: 1;
+          border-radius: 10px;
+          @include skeleton-shine;
+        }
+      }
+
+      @container (width <=900px) {
+        flex-direction: column;
+      }
+
+      @container (width <=900px) and (width >=500px) {
+        .fake-chart {
+          aspect-ratio: 2 / 1;
+        }
+      }
+
+      @container (width <=500px) {
+        padding: 20px 10px;
+
+        .fake-chart {
+          aspect-ratio: 1.5 / 1;
+        }
+      }
+    }
+
+    .fake-button {
+      width: 152px;
+      height: 26px;
+      border-radius: 5px;
+      @include skeleton-shine;
+    }
+  }
 
   table {
     tbody {
