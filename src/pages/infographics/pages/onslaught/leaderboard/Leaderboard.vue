@@ -35,7 +35,7 @@
           </table>
 
           <div class="actions">
-            <button @click="goToPlayerInTable">Перейти к таблице</button>
+            <button @click="goToPlayerInTable">Перейти к месту в таблице</button>
           </div>
         </template>
 
@@ -583,7 +583,14 @@ h1 {
   .actions {
     display: flex;
     justify-content: center;
-    padding-bottom: 12px;
+    padding: 0 10px;
+    padding-bottom: 10px;
+
+    @container (width <=500px) {
+      button {
+        flex: 1;
+      }
+    }
 
     button {
       background-color: rgba(255, 255, 255, 0.08);
