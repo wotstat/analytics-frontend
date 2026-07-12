@@ -1,7 +1,7 @@
 <template>
   <TipBubbleText :bubbleKey="'onslaught-wheel-for-chart-zoom'" :text="text" ref="bubble"
-    :showBubble="{ type: 'after-open', count: 2 }"
-    :autoExtend="{ type: 'after-show-bubble', count: 2, interactSnooze: 20 }" :display />
+    :showBubble="{ type: 'after-open', count: 0 }"
+    :autoExtend="{ type: 'after-show-bubble', count: 0, interactSnooze: 20 }" :display />
 </template>
 
 

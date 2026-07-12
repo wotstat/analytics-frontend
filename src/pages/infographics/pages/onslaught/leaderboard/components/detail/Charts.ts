@@ -20,6 +20,7 @@ import { ZoomChartComponent } from '@/shared/uiKit/chart/universalChart/hover/co
 import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
 import { HoverSynchronizer } from '@/shared/uiKit/chart/universalChart/hover/composableHover/sync/HoverSynchronizer'
 import { BoundsSynchronizer } from '@/shared/uiKit/chart/universalChart/hover/composableHover/sync/BoundsSynchronizer'
+import { CallbackComponent } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/callback/CallbackComponent'
 
 
 const MINUTE = 1 * 60
@@ -38,6 +39,8 @@ class BaseChart extends UniversalChart {
   private readonly restrictionArea: RectangleArea
   private readonly labelsX: AutoLabels
   private readonly maxX: number
+
+  public readonly callback = new CallbackComponent()
 
   constructor(protected seasonInterval: { start: Date, end: Date }, sync: { hover: HoverSynchronizer, bounds: BoundsSynchronizer }) {
     super({ layoutVariant: 'vertical', renderManager: globalChartRenderManagerSteps4 })
@@ -111,6 +114,7 @@ class BaseChart extends UniversalChart {
         hoverSync: sync.hover,
       }))
       .addComponent(sync.hover)
+      .addComponent(this.callback)
 
     this.dayTicks = new TicksByValues('horizontal', { start: 0, classes: 'day-ticks' })
     this

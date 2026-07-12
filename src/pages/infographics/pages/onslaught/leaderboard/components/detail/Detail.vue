@@ -90,6 +90,7 @@ import { getRegionDayChangeHourOffset } from '@/shared/game/comp7/utils'
 import HeaderTooltip from '@/shared/ui/chart/HeaderTooltip.vue'
 import TriangleUp from '../../assets/triangle-up.svg'
 import TipZoomChart from '../tips/TipZoomChart.vue'
+import { useDisposer } from '@/shared/ui/disposer/disposer.ts'
 
 
 const route = useRoute()
@@ -202,6 +203,10 @@ const sync = {
 }
 const scoreChart = markRaw(new ScoreChart(props.seasonInterval, sync))
 const battleChart = markRaw(new BattlesChart(props.seasonInterval, sync))
+
+useDisposer()
+  .add(scoreChart.callback.on('touchZoomBegin', () => tipZoomChart.value?.accept()))
+  .add(scoreChart.callback.on('wheelZoom', () => tipZoomChart.value?.accept()))
 
 updateInterval(selectedInterval.value)
 
