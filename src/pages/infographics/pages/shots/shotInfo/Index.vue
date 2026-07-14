@@ -164,7 +164,7 @@
 
 <script lang="ts" setup>
 import { dbIndexToDate, query, RESTRICTED_COLUMNS } from '@/db'
-import { computed, onMounted, ref, shallowRef, watch } from 'vue'
+import { computed, onMounted, ref, shallowRef, watch, useTemplateRef } from 'vue'
 import { useDraggable, useMediaQuery } from '@vueuse/core'
 import { useRoute, useRouter } from 'vue-router'
 import InfoTable from './InfoTable.vue'
@@ -340,7 +340,7 @@ const thirdTable = (s: Shot) => [
 const router = useRouter()
 const route = useRoute()
 
-const barProgress = ref<HTMLElement | null>(null)
+const barProgress = useTemplateRef<HTMLElement>('barProgress')
 const dragProgress = ref(0)
 
 function updateProgress(t: PointerEvent, shoudReplace = true) {

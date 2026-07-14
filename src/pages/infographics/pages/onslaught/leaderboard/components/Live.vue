@@ -18,7 +18,7 @@ import { headerOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import { useAnalyticsRealtime } from '@/shared/external/realtime/useAnalyticsRealtime'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
 import { useElementHover } from '@vueuse/core'
-import { computed, ref, watch } from 'vue'
+import { computed, watch, useTemplateRef } from 'vue'
 
 const props = defineProps<{
   region: string
@@ -26,7 +26,7 @@ const props = defineProps<{
   leaderboardDay: { day: string, recalculation: string, lastRank: number } | null
 }>()
 
-const item = ref<HTMLElement | null>(null)
+const item = useTemplateRef<HTMLElement>('item')
 const hover = useElementHover(item)
 
 const emit = defineEmits<{

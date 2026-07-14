@@ -45,14 +45,14 @@
 import { StatParams, whereClause } from '@/shared/query/useQueryStatParams'
 import { queryAsync, semverCompareStartFrom } from '@/db'
 import { useElementVisibility } from '@vueuse/core'
-import { computed, ref } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
 
 const { params } = defineProps<{
   params?: StatParams
 }>()
 
-const container = ref<HTMLElement | null>(null)
+const container = useTemplateRef<HTMLElement>('container')
 const enabled = useElementVisibility(container)
 
 

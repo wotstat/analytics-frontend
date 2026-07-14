@@ -78,7 +78,7 @@ import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import ShotDistribution from '@/pages/infographics/shared/widgets/ShotDistribution.vue'
 import { createFixedSpaceProcessor, createPercentProcessor } from '@/shared/utils/processors/processors'
 import { SHORT_CACHE_SETTINGS, queryAsyncFirst } from '@/db'
-import { computed, ref } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import { useElementVisibility, useMouseInElement } from '@vueuse/core'
 import { getQueryStatParamsCache, useQueryStatParams, whereClause } from '@/shared/query/useQueryStatParams'
 import PopupWindow from '@/shared/ui/components/PopupWindow.vue'
@@ -96,17 +96,17 @@ useMeta({
 const route = useRoute()
 const router = useRouter()
 
-const container = ref<HTMLElement | null>(null)
+const container = useTemplateRef<HTMLElement>('container')
 const visible = useElementVisibility(container)
 const params = useQueryStatParams()
 
-const percent50 = ref<HTMLElement | null>(null)
+const percent50 = useTemplateRef<HTMLElement>('percent50')
 const { isOutside: isOutside50 } = useMouseInElement(percent50)
 
-const percent30 = ref<HTMLElement | null>(null)
+const percent30 = useTemplateRef<HTMLElement>('percent30')
 const { isOutside: isOutside30 } = useMouseInElement(percent30)
 
-const shotDistribution = ref<HTMLElement | null>(null)
+const shotDistribution = useTemplateRef<HTMLElement>('shotDistribution')
 const { isOutside } = useMouseInElement(shotDistribution)
 
 const chartHoverProgress = ref(1)

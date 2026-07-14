@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <div id="focus-effect-root" ref="focusEffectRoot">
+    <div id="focus-effect-root">
       <RectEffect v-for="element of activeShowEffects" :key="element.id" :element="element.element" />
     </div>
   </Teleport>

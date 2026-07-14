@@ -12,7 +12,7 @@
 
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, useTemplateRef } from 'vue'
 import { headerHeight, useAdditionalHeaderHeight } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import BadgesLine from './BadgesLine.vue'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
@@ -23,7 +23,7 @@ const props = defineProps<{
 
 const selected = defineModel<Set<string>>({ default: () => new Set() })
 const displayPopup = ref<boolean>(false)
-const badges = ref<InstanceType<typeof BadgesLine> | null>(null)
+const badges = useTemplateRef<InstanceType<typeof BadgesLine>>('badges')
 
 const { additionalHeaderHeight } = useAdditionalHeaderHeight(true)
 

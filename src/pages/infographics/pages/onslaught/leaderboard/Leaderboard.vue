@@ -149,7 +149,7 @@
 
 <script setup lang="ts">
 import { dateToDbDate, query, queryComputedFirst } from '@/db'
-import { computed, nextTick, ref, watch, watchEffect } from 'vue'
+import { computed, nextTick, ref, watch, watchEffect, useTemplateRef } from 'vue'
 import LeaderboardLine from './components/LeaderboardLine.vue'
 import { regionToGame } from '@/shared/game/wot'
 import Detail from './components/detail/Detail.vue'
@@ -338,7 +338,7 @@ async function searchPlayer(abortSignal: AbortSignal) {
 
 watchWithAbortSignal([debouncedNickname, leaderboardDay], signal => searchPlayer(signal), { immediate: true })
 
-const searchResultElement = ref<HTMLElement | null>(null)
+const searchResultElement = useTemplateRef<HTMLElement>('searchResultElement')
 const searchResultHeight = ref<number | null>(null)
 const animateSearchHeight = ref(false)
 let animateSearchHeightTimeout: ReturnType<typeof setTimeout> | null = null

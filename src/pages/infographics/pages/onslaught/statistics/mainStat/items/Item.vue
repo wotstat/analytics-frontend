@@ -1,7 +1,7 @@
 <template>
   <div class="item mt-font" ref="item">
     <div class="normal">
-      <div class="icon" ref="icon">
+      <div class="icon">
         <slot name="icon"></slot>
       </div>
       <div class="right">
@@ -42,12 +42,12 @@
 import { headerOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
 import { useElementHover, useElementSize } from '@vueuse/core'
-import { computed, ref, useSlots } from 'vue'
+import { computed, ref, useSlots, useTemplateRef } from 'vue'
 
 const props = defineProps<{
 }>()
 
-const item = ref<HTMLElement | null>(null)
+const item = useTemplateRef<HTMLElement>('item')
 
 const { width } = useElementSize(item)
 const tooltipTopOffset = computed(() => width.value <= 160 ? 7 : 0)

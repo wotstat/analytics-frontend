@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
 import CanvasVue from '@/shared/ui/components/Canvas.vue'
-import { computed, ref, shallowRef } from 'vue'
+import { computed, ref, shallowRef, useTemplateRef } from 'vue'
 import { Quadtree, Circle } from '@timohausmann/quadtree-ts'
 
 import { useDebounceFn, useMouseInElement } from '@vueuse/core'
@@ -36,8 +36,8 @@ const RENDER_COUNT = 20
 const HOVER_RADIUS = 0.02
 const MOBILE_HOVER_RADIUS = 0.15
 
-const container = ref<HTMLElement | null>(null)
-const canvasRef = ref<InstanceType<typeof CanvasVue> | null>(null)
+const container = useTemplateRef<HTMLElement>('container')
+const canvasRef = useTemplateRef<InstanceType<typeof CanvasVue>>('canvasRef')
 const { elementX, elementY, elementHeight, elementWidth, isOutside } = useMouseInElement(container)
 
 const widthRef = ref(0)

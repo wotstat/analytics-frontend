@@ -28,12 +28,12 @@
 
 
 <script setup lang="ts">
-import { computed, onMounted, ref, useSlots } from 'vue'
+import { computed, onMounted, ref, useSlots, useTemplateRef } from 'vue'
 import { useNoScroll } from '../noScroll/noScroll'
 import { onKeyDown } from '@vueuse/core'
 import CloseButton from '@/shared/ui/modalWindow/buttons/closeButton/CloseButton.vue'
 
-const scroll = ref<HTMLElement | null>(null)
+const scroll = useTemplateRef<HTMLElement>('scroll')
 const showHeaderBorder = ref(false)
 const showFooterBorder = ref(false)
 

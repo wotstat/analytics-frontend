@@ -16,13 +16,13 @@
 
 <script setup lang="ts">
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
-import { computed, ref } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { headerHeight, useAdditionalHeaderHeight } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import IntervalPopup from './IntervalPopup.vue'
 import DropdownArrow from './DropdownArrow.vue'
 
 
-const btn = ref<HTMLElement | null>(null)
+const btn = useTemplateRef<HTMLElement>('btn')
 
 export type SelectedInterval = { start: Date, end: Date, name?: string }
 

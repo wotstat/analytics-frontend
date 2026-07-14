@@ -101,7 +101,7 @@
 <script setup lang="ts">
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import { queryAsync, queryAsyncFirst } from '@/db'
-import { computed, ref, watchEffect } from 'vue'
+import { computed, watchEffect, useTemplateRef } from 'vue'
 import { useElementVisibility } from '@vueuse/core'
 import MiniBar from '@/pages/infographics/shared/widgets/charts/MiniBar.vue'
 import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
@@ -126,7 +126,7 @@ const settings = useQueryStatParamsCache(params)
 const shellLabels = Object.values(shellNames).map(t => t[0])
 const shellFullNames = Object.values(shellNames).map(t => t[1])
 
-const container = ref<HTMLElement | null>(null)
+const container = useTemplateRef<HTMLElement>('container')
 const enabled = useElementVisibility(container)
 
 const damageLabels = new Array(21).fill(0).map((v, i) => `${i == 10 ? '' : i < 10 ? '-' : '+'}${Math.abs((i - 10) * 2.5)}%`)

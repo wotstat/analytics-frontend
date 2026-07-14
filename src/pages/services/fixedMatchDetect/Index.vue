@@ -41,7 +41,7 @@
 
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, useTemplateRef } from 'vue'
 import { createClient } from '@clickhouse/client-web'
 import { useDropZone, useLocalStorage } from '@vueuse/core'
 import { CLICKHOUSE_URL } from '@/shared/external/externalUrl'
@@ -49,7 +49,7 @@ import { CLICKHOUSE_URL } from '@/shared/external/externalUrl'
 
 const data = {}
 
-const dropZoneRef = ref<HTMLDivElement>()
+const dropZoneRef = useTemplateRef<HTMLDivElement>('dropZoneRef')
 const { isOverDropZone } = useDropZone(dropZoneRef, {
   onDrop,
   dataTypes: ['application/json'],

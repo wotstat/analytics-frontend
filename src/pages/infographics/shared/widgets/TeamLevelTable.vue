@@ -47,7 +47,7 @@
 <script setup lang="ts">
 import { createPercentProcessor } from '@/shared/utils/processors/processors'
 import { useElementVisibility } from '@vueuse/core'
-import { computed, ref } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'
 import { Status } from '@/db'
 
@@ -63,7 +63,7 @@ const { data, status } = defineProps<{
 
 }>()
 
-const container = ref<HTMLElement | null>(null)
+const container = useTemplateRef<HTMLElement>('container')
 
 
 const processed = computed(() => {

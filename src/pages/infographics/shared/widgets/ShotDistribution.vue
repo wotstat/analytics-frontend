@@ -13,14 +13,14 @@
 <script setup lang="ts">
 import { loading, mergeStatuses, queryAsync } from '@/db'
 import { useElementVisibility, useLocalStorage } from '@vueuse/core'
-import { computed, ref } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { type ChartProps } from 'vue-chartjs'
 import { ShadowLine } from '@/pages/infographics/shared/widgets/charts/ShadowLineController'
 import { BloomColor } from '../bloomColors'
 import { StatParams, getQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'
 
-const container = ref<HTMLElement | null>(null)
+const container = useTemplateRef<HTMLElement>('container')
 const visible = useElementVisibility(container)
 
 const { params } = defineProps<{

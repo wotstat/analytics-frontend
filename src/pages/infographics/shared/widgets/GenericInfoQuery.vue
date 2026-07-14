@@ -8,10 +8,10 @@
 <script setup lang="ts">
 import { queryAsyncFirst } from '@/db'
 import GenericInfo from './GenericInfo.vue'
-import { computed, ref, toRaw, watchEffect } from 'vue'
+import { computed, toRaw, watchEffect, useTemplateRef } from 'vue'
 import { useElementVisibility } from '@vueuse/core'
 
-const container = ref<HTMLElement | null>(null)
+const container = useTemplateRef<HTMLElement>('container')
 const enabled = useElementVisibility(container)
 
 const props = defineProps<{

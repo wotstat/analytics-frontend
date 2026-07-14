@@ -1,7 +1,7 @@
 <template>
   <div>
     <ServerStatusWrapper :status="status" v-slot="{ showError, status }">
-      <div class="container" ref="container" v-if="status != 'error'">
+      <div class="container" v-if="status != 'error'">
 
         <table class="hover-highlight" :class="[displayOther ? 'with-other' : '', byNumber ? 'by-number' : '']">
           <thead>

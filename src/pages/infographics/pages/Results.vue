@@ -163,7 +163,7 @@ import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import MiniBar from '@/pages/infographics/shared/widgets/charts/MiniBar.vue'
 import { LONG_CACHE_SETTINGS, Status, mergeStatuses, queryAsync, queryAsyncFirst, queryComputed } from '@/db'
 import { useElementVisibility, useLocalStorage } from '@vueuse/core'
-import { computed, ref } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import PlayerResultTable from '@/pages/infographics/shared/widgets/PlayerResultTable.vue'
 import { createPercentProcessor, createFixedProcessor, createFixedSpaceProcessor } from '@/shared/utils/processors/processors'
 import { getQueryStatParamsCache, useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
@@ -182,12 +182,12 @@ useMeta({
 
 const percentProcessor = createPercentProcessor(1)
 
-const variantSelector = ref<HTMLSelectElement | null>(null)
+const variantSelector = useTemplateRef<HTMLSelectElement>('variantSelector')
 
-const container = ref<HTMLElement | null>(null)
+const container = useTemplateRef<HTMLElement>('container')
 const enabled = useElementVisibility(container)
 
-const turboContainer = ref<HTMLElement | null>(null)
+const turboContainer = useTemplateRef<HTMLElement>('turboContainer')
 const turboVisible = useElementVisibility(turboContainer)
 
 const params = useQueryStatParams()

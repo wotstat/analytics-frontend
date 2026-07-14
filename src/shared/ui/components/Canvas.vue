@@ -6,7 +6,7 @@
 
 
 <script setup lang="ts">
-import { ref, onMounted, watch, onDeactivated } from 'vue'
+import { onMounted, watch, onDeactivated, useTemplateRef } from 'vue'
 import { useElementSize, useElementVisibility, watchOnce } from '@vueuse/core'
 
 const emit = defineEmits<{
@@ -22,8 +22,8 @@ defineExpose({
   context: () => context,
 })
 
-const canvas = ref<HTMLCanvasElement | null>(null)
-const container = ref<HTMLElement | null>(null)
+const canvas = useTemplateRef<HTMLCanvasElement>('canvas')
+const container = useTemplateRef<HTMLElement>('container')
 const containerSize = useElementSize(container)
 const visible = useElementVisibility(container)
 

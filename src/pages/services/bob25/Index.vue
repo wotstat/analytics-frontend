@@ -180,7 +180,7 @@ import { step, useAvgBattleDuration, useAvgBattleDurationChart, useCrossBattleCo
 import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
 import InstallMod from './components/InstallMod.vue'
 import BloggerName from './components/blogger/BloggerName.vue'
-import { computed, onMounted, ref, watchEffect } from 'vue'
+import { computed, onMounted, ref, watchEffect, useTemplateRef } from 'vue'
 import { headerHeight, useAdditionalHeaderHeight } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import { displayVariant, preferredLogProcessor } from './store'
 import { useMeta } from '@/shared/composition/useMeta'
@@ -211,7 +211,7 @@ const totalScoreHightPass = computed(() => totalScoreDeltaHightFilter.value && d
 const shouldInterpolateScore = computed(() => displayVariant.value === 'total' && step.value == 'min1')
 
 
-const subHeader = ref<HTMLElement | null>(null)
+const subHeader = useTemplateRef<HTMLElement>('subHeader')
 const loaded = ref(false)
 const { top: subHeaderTop, y: menuY, height: menuH, update } = useElementBounding(subHeader)
 const headerOffset = computed(() => headerHeight.value)

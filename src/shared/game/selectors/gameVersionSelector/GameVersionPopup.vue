@@ -40,7 +40,7 @@
 
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, useTemplateRef } from 'vue'
 
 import { preferredGame } from '@/shared/global/globalPreferred'
 import SearchLine from '../components/searchLine/SearchLine.vue'
@@ -58,7 +58,7 @@ const props = defineProps<{
 }>()
 
 const versions = defineModel<Set<string>>({ required: true })
-const table = ref<InstanceType<typeof TableView> | null>(null)
+const table = useTemplateRef<InstanceType<typeof TableView>>('table')
 
 const currentSearch = ref('')
 const currentRegions = ref<Set<string>>(new Set())

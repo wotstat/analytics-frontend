@@ -30,14 +30,14 @@
 <script setup lang="ts">
 import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/chartTooltip/ChartTooltip'
 import { useElementBounding, useElementSize } from '@vueuse/core'
-import { computed, ref, watch } from 'vue'
+import { computed, watch, useTemplateRef } from 'vue'
 
-const headerTooltip = ref<HTMLDivElement | null>(null)
-const tooltip = ref<HTMLDivElement | null>(null)
+const headerTooltip = useTemplateRef<HTMLDivElement>('headerTooltip')
+const tooltip = useTemplateRef<HTMLDivElement>('tooltip')
 
-const leftHeaderItem = ref<HTMLDivElement | null>(null)
-const centerHeaderItem = ref<HTMLDivElement | null>(null)
-const rightHeaderItem = ref<HTMLDivElement | null>(null)
+const leftHeaderItem = useTemplateRef<HTMLDivElement>('leftHeaderItem')
+const centerHeaderItem = useTemplateRef<HTMLDivElement>('centerHeaderItem')
+const rightHeaderItem = useTemplateRef<HTMLDivElement>('rightHeaderItem')
 
 const props = defineProps<{
   ctx: TooltipCtx | null

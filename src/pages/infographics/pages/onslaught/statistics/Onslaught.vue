@@ -38,7 +38,7 @@
 
 
 <script setup lang="ts">
-import { computed, ref, shallowRef, watch } from 'vue'
+import { computed, ref, shallowRef, watch, useTemplateRef } from 'vue'
 import DayChart from './dayChart/DayChart.vue'
 import { dateToDbDate, query, queryComputedFirst } from '@/db'
 import { gameToRegion, regionToGame } from '@/shared/game/wot'
@@ -77,9 +77,9 @@ useMeta({
 const ONE_HOUR = 60 * 60 * 1000
 const ONE_DAY = 24 * ONE_HOUR
 
-const dayChangeTipBubble = ref<InstanceType<typeof TipKeyboardChangeDay> | null>(null)
-const daySelectTipBubble = ref<InstanceType<typeof TipSelectDay> | null>(null)
-const dayChart = ref<HTMLElement | null>(null)
+const dayChangeTipBubble = useTemplateRef<InstanceType<typeof TipKeyboardChangeDay>>('dayChangeTipBubble')
+const daySelectTipBubble = useTemplateRef<InstanceType<typeof TipSelectDay>>('daySelectTipBubble')
+const dayChart = useTemplateRef<HTMLElement>('dayChart')
 
 const selectedDayIndex = ref<number | null>(null)
 const selectedSeason = ref<string | null>(null)

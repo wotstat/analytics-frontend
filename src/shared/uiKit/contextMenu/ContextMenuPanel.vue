@@ -23,7 +23,7 @@
 
 
 <script lang="ts" setup>
-import { computed, onMounted, ref, shallowRef, watch } from 'vue'
+import { computed, onMounted, ref, shallowRef, watch, useTemplateRef } from 'vue'
 import { ContextMenuItemVariant, type ContextMenuItem, type ContextMenuItemChild } from './createContextMenu'
 import { useElementSize, useElementBounding, useTimeout, useTimeoutFn, useWindowSize } from '@vueuse/core'
 import ContextMenuPanel from './ContextMenuPanel.vue'
@@ -37,9 +37,9 @@ const HIDE_CHILD_PANEL_DELAY = 500
 const ZERO_SPEED_DELAY = 200
 const INCREASE_RECT = 10
 
-const panelElement = ref<HTMLElement | null>(null)
-const childPanelElement = ref<InstanceType<typeof ContextMenuPanel> | null>(null)
-const itemsElement = ref<HTMLElement[] | null>(null)
+const panelElement = useTemplateRef<HTMLElement>('panelElement')
+const childPanelElement = useTemplateRef<InstanceType<typeof ContextMenuPanel>>('childPanelElement')
+const itemsElement = useTemplateRef<HTMLElement[]>('itemsElement')
 
 const activeItem = shallowRef<{ menu: ContextMenuItem, element: HTMLElement } | null>(null)
 const hoverItem = shallowRef<ContextMenuItem | null>(null)

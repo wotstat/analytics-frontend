@@ -54,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import { tankTagToReadable } from '@/shared/i18n/i18n'
 import { Highlighted, compareIntervals } from '@/shared/uiKit/highlightString/highlightUtils'
 import { useLocalStorage } from '@vueuse/core'
@@ -71,7 +71,7 @@ import { mtNations, wotNations, nations, nationsIndexes, Nation } from '@/shared
 import { VehicleType, vehicleTypes } from '@/shared/game/vehicles/vehicle/utils'
 import { romanNumberProcessor } from '@/shared/utils/processors/processors'
 
-const vehicleTable = ref<InstanceType<typeof VehicleTable> | null>(null)
+const vehicleTable = useTemplateRef<InstanceType<typeof VehicleTable>>('vehicleTable')
 
 const currentSearch = ref('')
 const currentLevels = ref(new Set<number>())

@@ -85,7 +85,7 @@ import { useBattleResultTable } from './useBattleHistory'
 import { isVehicleType } from '@/shared/game/vehicles/type/vehicleTypeToImage'
 import { getArenaName, getTankName } from '@/shared/i18n/i18n'
 import { roundProcessor } from '@/shared/utils/processors/processors'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, useTemplateRef } from 'vue'
 import { GameVendor } from '@/shared/game/wot'
 import SortableTable from '../sortableTable/SortableTable.vue'
 import TooltipedMinimap from '../mapsTable/TooltipedMinimap.vue'
@@ -103,7 +103,7 @@ const props = defineProps<{
 
 const showMore = ref(false)
 const limit = ref(START_LIMIT)
-const shiftKeyForShowMoreBubble = ref<InstanceType<typeof TipShiftKeyForShowMore> | null>(null)
+const shiftKeyForShowMoreBubble = useTemplateRef<InstanceType<typeof TipShiftKeyForShowMore>>('shiftKeyForShowMoreBubble')
 
 const maxTouchPoints = navigator.maxTouchPoints || 0
 

@@ -76,7 +76,7 @@ import MniiPie from '@/pages/infographics/shared/widgets/charts/MiniPie.vue'
 import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import { queryAsync, queryAsyncFirst } from '@/db'
 import { useElementVisibility } from '@vueuse/core'
-import { computed, ref } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 
 import { ms2sec, sec2minsec, ms2secLabel } from '@/shared/utils/time'
 import { createFixedSpaceProcessor } from '@/shared/utils/processors/processors'
@@ -89,7 +89,7 @@ useMeta({
 })
 
 
-const container = ref<HTMLElement | null>(null)
+const container = useTemplateRef<HTMLElement>('container')
 const visible = useElementVisibility(container)
 const params = useQueryStatParams()
 const settings = useQueryStatParamsCache(params)

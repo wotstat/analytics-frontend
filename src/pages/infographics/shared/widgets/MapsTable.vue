@@ -120,7 +120,7 @@ import { queryComputed } from '@/db'
 import { getArenaName } from '@/shared/i18n/i18n'
 import { customBattleModesKeys, customBattleModes } from '@/shared/game/wot'
 import { useElementVisibility, useElementSize, useLocalStorage } from '@vueuse/core'
-import { computed, ref } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'
 import { timeProcessor } from '@/shared/utils/time'
 
@@ -128,8 +128,8 @@ const { params } = defineProps<{
   params: StatParams
 }>()
 
-const container = ref<HTMLElement | null>(null)
-const firstColumn = ref<HTMLElement | null>(null)
+const container = useTemplateRef<HTMLElement>('container')
+const firstColumn = useTemplateRef<HTMLElement>('firstColumn')
 const visible = useElementVisibility(container)
 
 const { width } = useElementSize(container)

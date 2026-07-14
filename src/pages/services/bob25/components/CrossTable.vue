@@ -42,14 +42,14 @@
 
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, useTemplateRef } from 'vue'
 import BloggerName from './blogger/BloggerName.vue'
 import { bloggerNamesArray } from './bloggerNames'
 import DropDown from '@/shared/uiKit/dropdown/DropDown.vue'
 import { crossPeriodVariants, crossTablePeriod } from '../store'
 
 
-const table = ref<HTMLTableElement | null>(null)
+const table = useTemplateRef<HTMLTableElement>('table')
 const hovered = ref<{ i: number, j: number } | null>(null)
 const disposer: (() => void)[] = []
 

@@ -25,7 +25,7 @@
 <script setup lang="ts">
 import VehicleType from '@/shared/game/vehicles/type/VehicleType.vue'
 import Globe from './assets/globe.svg'
-import { computed, ref, triggerRef, watch } from 'vue'
+import { computed, ref, triggerRef, watch, useTemplateRef } from 'vue'
 import TableView from '@/shared/uiKit/tableView/TableView.vue'
 import { type ComponentInstance } from '@/shared/utils/types/ComponentInstance.ts'
 
@@ -35,7 +35,7 @@ import { HeaderLine } from '@/shared/uiKit/tableView/tableView/default/HeaderLin
 import { GameVendor } from '../../wot.ts'
 
 
-const table = ref<ComponentInstance<typeof TableView> | null>(null)
+const table = useTemplateRef<ComponentInstance<typeof TableView>>('table')
 
 const props = defineProps<{
   displaySections: {

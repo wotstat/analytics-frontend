@@ -26,7 +26,7 @@
 
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch, useTemplateRef } from 'vue'
 import LightbulbIcon from './assets/lightbulb.svg'
 import CheckmarkIcon from './assets/checkmark.svg'
 import { useElementBounding, useElementHover, useResizeObserver, useWindowSize } from '@vueuse/core'
@@ -48,10 +48,10 @@ const emits = defineEmits<{
   (e: 'interact', type: 'hover' | 'click'): void
 }>()
 
-const root = ref<HTMLDivElement | null>(null)
-const bubble = ref<HTMLDivElement | null>(null)
-const content = ref<HTMLDivElement | null>(null)
-const contentContainer = ref<HTMLDivElement | null>(null)
+const root = useTemplateRef<HTMLDivElement>('root')
+const bubble = useTemplateRef<HTMLDivElement>('bubble')
+const content = useTemplateRef<HTMLDivElement>('content')
+const contentContainer = useTemplateRef<HTMLDivElement>('contentContainer')
 const { left, right } = useElementBounding(root)
 const { width: windowWidth } = useWindowSize({ includeScrollbar: false })
 const contentWidth = ref(0)

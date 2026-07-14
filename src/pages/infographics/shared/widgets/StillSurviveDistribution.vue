@@ -13,7 +13,7 @@
 <script setup lang="ts">
 
 import { ShadowLine } from '@/pages/infographics/shared/widgets/charts/ShadowLineController'
-import { computed, ref } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { ChartProps } from 'vue-chartjs'
 import { BloomColor } from '../bloomColors'
 import { loading, queryAsync } from '@/db'
@@ -21,7 +21,7 @@ import { useElementVisibility } from '@vueuse/core'
 import { StatParams, whereClause } from '@/shared/query/useQueryStatParams'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'
 
-const container = ref<HTMLElement | null>(null)
+const container = useTemplateRef<HTMLElement>('container')
 const enabled = useElementVisibility(container)
 
 const { params } = defineProps<{

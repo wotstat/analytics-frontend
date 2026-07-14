@@ -38,11 +38,11 @@
 <script setup lang="ts">
 import { useElementBounding } from '@vueuse/core'
 import QueryPreserveRouterLink from '@/pages/shared/sidebarLayout/QueryPreserveRouterLink.vue'
-import { computed, ref, watchEffect } from 'vue'
+import { computed, watchEffect, useTemplateRef } from 'vue'
 import { headerHeight, useAdditionalHeaderHeight } from '@/pages/shared/header/useAdditionalHeaderHeight.ts'
 import { type SidebarLink } from './utils.ts'
 
-const menuBar = ref<HTMLElement | null>(null)
+const menuBar = useTemplateRef<HTMLElement>('menuBar')
 const { top: menuTop, y: menuY, height: menuH } = useElementBounding(menuBar)
 const headerOffset = computed(() => headerHeight.value)
 

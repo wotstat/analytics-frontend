@@ -174,7 +174,7 @@
 
 <script setup lang="ts">
 import { useAdditionalHeaderHeight, useDefaultHeaderHeight } from '@/pages/shared/header/useAdditionalHeaderHeight'
-import { ref } from 'vue'
+import { ref, useTemplateRef } from 'vue'
 import GitHubIcon from './assets/github.svg'
 import DiscordIcon from './assets/discord.svg'
 import PatreonIcon from './assets/patreon.svg'
@@ -195,7 +195,7 @@ import QueryPreserveRouterLink from '../sidebarLayout/QueryPreserveRouterLink.vu
 
 const SQLUrl = CLICKHOUSE_URL + '/play?user=public#c2VsZWN0IHRhYmxlLCBuYW1lLCBjb21tZW50LCB0eXBlIGZyb20gZGVzY3JpcHRpb247'
 
-const headerElement = ref<HTMLElement | null>(null)
+const headerElement = useTemplateRef<HTMLElement>('headerElement')
 useDefaultHeaderHeight(headerElement)
 
 const { additionalHeaderHeight } = useAdditionalHeaderHeight()

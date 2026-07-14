@@ -54,7 +54,7 @@
 <script setup lang="ts">
 import PopupWindow from '@/shared/ui/components/PopupWindow.vue'
 import { download } from '../utils/downloader'
-import { defineAsyncComponent, ref, watch } from 'vue'
+import { defineAsyncComponent, ref, watch, useTemplateRef } from 'vue'
 
 import Tada1Src from '../assets/tada-1.webp'
 import Tada2Src from '../assets/tada-2.webp'
@@ -62,7 +62,7 @@ import { GameVendor } from '@/shared/game/wot'
 
 const Confetti = defineAsyncComponent(() => import('@/pages/install/components/Confetti.vue'))
 
-const confetti = ref<InstanceType<typeof Confetti> | null>(null)
+const confetti = useTemplateRef<InstanceType<typeof Confetti>>('confetti')
 
 type UnpackState = { type: 'not-started' } |
 { type: 'unpacking', index: number, total: number, mod: string } |

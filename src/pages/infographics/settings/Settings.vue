@@ -145,7 +145,7 @@
 
 <script setup lang="ts">
 import { dateToDbIndex, query, queryAsync } from '@/db'
-import { computed, onMounted, onUnmounted, ref, shallowRef, toRaw, toValue, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, shallowRef, toRaw, toValue, watch, useTemplateRef } from 'vue'
 import { useDebounce, useDraggable, useElementBounding, watchOnce, useVirtualList } from '@vueuse/core'
 import { TankLevel, TankType, useQueryStatParams } from '@/shared/query/useQueryStatParams'
 import { customBattleModes, customBattleModesKeys } from '@/shared/game/wot'
@@ -183,10 +183,10 @@ const enableTankFilter = ref(false)
 const leftXPosition = ref(0)
 const rightXPosition = ref(1)
 
-const moveContainer = ref<SVGElement | null>(null)
+const moveContainer = useTemplateRef<SVGElement>('moveContainer')
 const { left: boundingLeft, width: boundingWidth } = useElementBounding(moveContainer)
-const left = ref<SVGPathElement | null>(null)
-const right = ref<SVGPathElement | null>(null)
+const left = useTemplateRef<SVGPathElement>('left')
+const right = useTemplateRef<SVGPathElement>('right')
 
 useDraggable(left, {
   axis: 'x',

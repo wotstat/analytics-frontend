@@ -1,5 +1,5 @@
 <template>
-  <BadgesLine :tagToText="tagToText" v-model="selected" show-add-button @openSelectModal="openSelect" ref="badges" />
+  <BadgesLine :tagToText="tagToText" v-model="selected" show-add-button @openSelectModal="openSelect" />
   <ArenaSelectorPopup :arenas="arenas.data" :visible-modal="visibleModal" @close="visibleModal = false"
     v-model="selected" />
 </template>

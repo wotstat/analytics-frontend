@@ -11,7 +11,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, useTemplateRef } from 'vue'
 import ContextMenuPanel from './ContextMenuPanel.vue'
 import { currentContextMenu } from './createContextMenu'
 import { useEventListener } from '@vueuse/core'
@@ -24,9 +24,9 @@ const SHOULD_CLOSE_BY_POINTER_UP_TIMEOUT = 400 // milliseconds
 
 type Timeout = ReturnType<typeof setTimeout>
 
-const currentMenuPanel = ref<InstanceType<typeof ContextMenuPanel> | null>(null)
+const currentMenuPanel = useTemplateRef<InstanceType<typeof ContextMenuPanel>>('currentMenuPanel')
 
-const contextMenuRoot = ref<HTMLElement | null>(null)
+const contextMenuRoot = useTemplateRef<HTMLElement>('contextMenuRoot')
 const shouldCloseByPointerUp = ref(false)
 let canActivateCloseByPointerUp = false
 let isPointerDown = false

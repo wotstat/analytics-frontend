@@ -376,7 +376,7 @@ import AnalyticsBack2 from './assets/mods/analytics-back-2.webp'
 
 
 import ModCard from './components/modCard/ModCard.vue'
-import { type Component, computed, nextTick, onMounted, ref, watch } from 'vue'
+import { type Component, computed, nextTick, onMounted, ref, watch, useTemplateRef } from 'vue'
 import { analyticsMod, latestMods, latestModsMap, lestaMods, ModInfo, otherModsUnion, otherModsUnionMap, positionsMod, wgMods, widgetsMod, } from './mods/mods'
 import { useI18n } from '@/shared/i18n/useI18n'
 import i18n from './mods/i18n.json'
@@ -398,7 +398,7 @@ import { GameVendor } from '@/shared/game/wot'
 setFeatureVisit('mod-installer')
 
 
-const detailContentContainer = ref<HTMLElement | null>(null)
+const detailContentContainer = useTemplateRef<HTMLElement>('detailContentContainer')
 const displayType = useLocalStorage<'detail' | 'table'>('install:otherModsDisplayType', 'table')
 const preferredGameVendor = ref<GameVendor | 'unknown'>('unknown')
 const enabledMods = useLocalStorage('install:enabledMods', new Map<string, boolean>())
@@ -656,9 +656,9 @@ const anyPopupShown = computed(() => downloadPopupShown.value || installPopupSho
 
 
 const route = useRoute()
-const analyticsModCard = ref<InstanceType<typeof ModCard> | null>(null)
-const widgetsModCard = ref<InstanceType<typeof ModCard> | null>(null)
-const positionsModCard = ref<InstanceType<typeof ModCard> | null>(null)
+const analyticsModCard = useTemplateRef<InstanceType<typeof ModCard>>('analyticsModCard')
+const widgetsModCard = useTemplateRef<InstanceType<typeof ModCard>>('widgetsModCard')
+const positionsModCard = useTemplateRef<InstanceType<typeof ModCard>>('positionsModCard')
 
 function enableOnly(tags: string[]) {
   enabledMods.value.clear()

@@ -211,7 +211,7 @@
 import { setFeatureVisit } from '@/shared/uiKit/newFeatureBadge/newFeatureBadge'
 import TeamLevelTable from '@/pages/infographics/shared/widgets/TeamLevelTable.vue'
 import { CACHE_SETTINGS, LONG_CACHE_SETTINGS, query, queryComputed } from '@/db'
-import { computed, ref, watch, watchEffect } from 'vue'
+import { computed, ref, watch, watchEffect, useTemplateRef } from 'vue'
 import LevelSwitcher from './LevelSwitcher.vue'
 import { useDebounce, useElementHover } from '@vueuse/core'
 import { ShadowBar } from '@/pages/infographics/shared/widgets/charts/ShadowBarController'
@@ -860,7 +860,7 @@ const ballisticDistributionChartData = computed<ChartProps<'line'>['data']>(() =
 })
 
 
-const ballisticDistributionContainer = ref<HTMLDivElement | null>(null)
+const ballisticDistributionContainer = useTemplateRef<HTMLDivElement>('ballisticDistributionContainer')
 const ballisticDistributionContainerHover = useElementHover(ballisticDistributionContainer)
 
 const ballisticCircleMask = computed(() => {

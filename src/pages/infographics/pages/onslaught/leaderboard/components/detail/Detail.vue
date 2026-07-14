@@ -37,7 +37,7 @@
       <UniversalChartComponent :chart="scoreChart" />
     </div>
 
-    <div class="chart" ref="battleChartElement">
+    <div class="chart">
       <HeaderTooltip :ctx="battleChart.tooltipCtx.value">
         <template #left>
           <h3>Бои по дням</h3>
@@ -76,7 +76,7 @@
 
 
 <script setup lang="ts">
-import { computed, markRaw, ref, watch, watchEffect } from 'vue'
+import { computed, markRaw, ref, watch, watchEffect, useTemplateRef } from 'vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import { dateToDbDate, queryComputed, loading as loadingState } from '@/db'
 import { BattlesChart, ScoreChart } from './Charts'
@@ -93,7 +93,7 @@ import { useDisposer } from '@/shared/ui/disposer/disposer.ts'
 
 const loading = ref(true)
 
-const tipZoomChart = ref<InstanceType<typeof TipZoomChart> | null>(null)
+const tipZoomChart = useTemplateRef<InstanceType<typeof TipZoomChart>>('tipZoomChart')
 
 const isFirstSelectOpen = ref(false)
 const isSecondSelectOpen = ref(false)

@@ -16,7 +16,7 @@
 
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { useTemplateRef } from 'vue'
 import { useElementVisibility } from '@vueuse/core'
 import MapsTable from '@/pages/infographics/shared/widgets/MapsTable.vue'
 import { useQueryStatParams, whereClause } from '@/shared/query/useQueryStatParams'
@@ -29,7 +29,7 @@ useMeta({
 })
 
 
-const container = ref<HTMLElement | null>(null)
+const container = useTemplateRef<HTMLElement>('container')
 const visible = useElementVisibility(container)
 const params = useQueryStatParams()
 

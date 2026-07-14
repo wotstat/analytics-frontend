@@ -8,7 +8,7 @@
 
 
 <script setup lang="ts">
-import { computed, onBeforeMount, onUnmounted, ref, shallowRef, triggerRef, watch } from 'vue'
+import { computed, onBeforeMount, onUnmounted, ref, shallowRef, triggerRef, watch, useTemplateRef } from 'vue'
 import { calculatePopoverPosition, generateOffset, getArrowPosition, getParams, isParamsEqual, OffsetValue, Params, PlacementParam, PlacementWithModifiers } from './utils'
 import { useEventListener } from '@vueuse/core'
 
@@ -32,7 +32,7 @@ const emit = defineEmits<{
   (e: 'readyToVisible'): void
 }>()
 
-const popupContainer = ref<HTMLElement | null>(null)
+const popupContainer = useTemplateRef<HTMLElement>('popupContainer')
 let animationHandle: number | null = null
 const isTargetOutsideViewport = ref(false)
 

@@ -18,9 +18,9 @@
 import { useMediaQuery } from '@vueuse/core'
 import Search from './assets/search.svg'
 import X from './assets/x.svg'
-import { onMounted, ref, useSlots } from 'vue'
+import { onMounted, useSlots, useTemplateRef } from 'vue'
 
-const searchInput = ref<HTMLInputElement | null>(null)
+const searchInput = useTemplateRef<HTMLInputElement>('searchInput')
 
 const props = defineProps<{
   placeholder?: string

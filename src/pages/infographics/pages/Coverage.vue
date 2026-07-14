@@ -23,7 +23,7 @@
 <script setup lang="ts">
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import { queryAsyncFirst } from '@/db'
-import { ref } from 'vue'
+import { useTemplateRef } from 'vue'
 import { useElementVisibility } from '@vueuse/core'
 import PlayerCoverageTable from '@/pages/infographics/shared/widgets/PlayerCoverageTable.vue'
 import { useQueryStatParams, useQueryStatParamsCache, whereClause, whereClauseColumns } from '@/shared/query/useQueryStatParams'
@@ -37,7 +37,7 @@ useMeta({
   keywords: 'охват игроков, статистика охвата игроков, статистика игроков, статистика игроков в боях'
 })
 
-const container = ref<HTMLElement | null>(null)
+const container = useTemplateRef<HTMLElement>('container')
 const enabled = useElementVisibility(container)
 const params = useQueryStatParams()
 const settings = useQueryStatParamsCache(params)

@@ -17,7 +17,7 @@ import { headerOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
 import Minimap from '@/shared/game/arenas/minimap/Minimap.vue'
 import { GameVendor } from '@/shared/game/wot'
-import { ref } from 'vue'
+import { ref, useTemplateRef } from 'vue'
 import { useElementHover } from '@vueuse/core'
 
 const props = defineProps<{
@@ -26,7 +26,7 @@ const props = defineProps<{
   game?: GameVendor;
 }>()
 
-const minimap = ref<HTMLElement | null>(null)
+const minimap = useTemplateRef<HTMLElement>('minimap')
 const hover = useElementHover(minimap)
 const t = ref<boolean>(true)
 </script>

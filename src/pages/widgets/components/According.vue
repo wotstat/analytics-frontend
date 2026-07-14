@@ -17,12 +17,12 @@
 
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, useTemplateRef } from 'vue'
 import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
 
 
 const isOpen = ref(false)
-const panel = ref<HTMLElement | null>(null)
+const panel = useTemplateRef<HTMLElement>('panel')
 
 
 function toggle() {

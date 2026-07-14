@@ -5,10 +5,10 @@
 
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, useTemplateRef } from 'vue'
 import { IndexPath, TableView, TableViewDelegate } from './tableView/TableView.ts'
 
-const reusableTable = ref<HTMLElement | null>(null)
+const reusableTable = useTemplateRef<HTMLElement>('reusableTable')
 
 const props = defineProps<{
   backgroundColor?: string,

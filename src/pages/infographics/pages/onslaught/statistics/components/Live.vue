@@ -17,13 +17,13 @@
 import { headerOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
 import { useElementHover } from '@vueuse/core'
-import { ref } from 'vue'
+import { useTemplateRef } from 'vue'
 
 const props = defineProps<{
   show: boolean
 }>()
 
-const item = ref<HTMLElement | null>(null)
+const item = useTemplateRef<HTMLElement>('item')
 const hover = useElementHover(item)
 
 </script>

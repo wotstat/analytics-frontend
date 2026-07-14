@@ -88,7 +88,7 @@ import According from './components/According.vue'
 import PopupWindow from '@/shared/ui/components/PopupWindow.vue'
 import { useIframeContentBounding } from './components/useIframeContentBounding'
 import { useIframeMessages } from './components/useIframeMessages'
-import { computed, onDeactivated, onMounted, ref, watch } from 'vue'
+import { computed, onDeactivated, onMounted, ref, watch, useTemplateRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { VueComponent as InstructionGame } from './instructionGame/index.md'
@@ -103,8 +103,8 @@ useMeta({
 })
 
 const selectedTitle = ref<string>('')
-const collection = ref<HTMLIFrameElement | null>(null)
-const preview = ref<HTMLIFrameElement | null>(null)
+const collection = useTemplateRef<HTMLIFrameElement>('collection')
+const preview = useTemplateRef<HTMLIFrameElement>('preview')
 const isPreviewLoading = ref(true)
 const isCollectionLoading = ref(true)
 

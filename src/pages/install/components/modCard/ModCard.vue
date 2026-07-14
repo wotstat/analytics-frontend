@@ -46,7 +46,7 @@
 
 
 <script setup lang="ts">
-import { computed, ref, useSlots } from 'vue'
+import { computed, useSlots, useTemplateRef } from 'vue'
 import Github from '../../assets/github.svg'
 import CheckMark from '../../assets/checkmark-bold.svg'
 import ArrowRight from '../../assets/arrow-right.svg'
@@ -56,7 +56,7 @@ import { useNextAnimationFrameThrottle } from './useNextAnimationFrameThrottle'
 import { show3dEffect, showGlowEffect } from '../cardIntaractionControl'
 import { dotSeparatedCompare } from '../../utils/installer'
 
-const card = ref<HTMLElement | null>(null)
+const card = useTemplateRef<HTMLElement>('card')
 
 const isChecked = defineModel({
   type: Boolean,

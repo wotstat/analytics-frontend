@@ -4,7 +4,7 @@
 
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { watch, onMounted, useTemplateRef } from 'vue'
 import { isUrlMayValidImage, onErrorWithUrl } from './store'
 
 const props = defineProps<{
@@ -14,7 +14,7 @@ const props = defineProps<{
   loading?: 'lazy' | 'eager'
 }>()
 
-const imgRef = ref<HTMLImageElement | null>(null)
+const imgRef = useTemplateRef<HTMLImageElement>('imgRef')
 const initSrc = isUrlMayValidImage(props.src) ? props.src : props.fallback ?? props.src
 
 function setSrc(url: string) {

@@ -21,9 +21,9 @@
 import TipBubble from '@/shared/ui/tipBubble/TipBubble.vue'
 import LeftArrowIcon from '@/assets/icons/keyboard/left-arrow.svg'
 import RightArrowIcon from '@/assets/icons/keyboard/right-arrow.svg'
-import { ref } from 'vue'
+import { useTemplateRef } from 'vue'
 
-const bubble = ref<InstanceType<typeof TipBubble> | null>(null)
+const bubble = useTemplateRef<InstanceType<typeof TipBubble>>('bubble')
 defineExpose({
   setDisplayed: (visible: boolean, force: boolean = false) => bubble.value?.setDisplayed(visible, force),
   display: (force: boolean = false) => bubble.value?.display(force),

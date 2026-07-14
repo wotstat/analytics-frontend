@@ -120,7 +120,7 @@ import { StatParams, getQueryStatParamsCache, useQueryStatParams, whereClause } 
 import { mergeStatuses, queryAsync } from '@/db'
 import { modeCount } from '@/shared/game/wot'
 import { useElementVisibility, useElementSize } from '@vueuse/core'
-import { computed, ref } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'
 import { createFixedSpaceProcessor } from '@/shared/utils/processors/processors'
 import { bestMV } from '@/db/schema'
@@ -130,10 +130,10 @@ const { params } = defineProps<{
 }>()
 
 
-const container = ref<HTMLElement | null>(null)
+const container = useTemplateRef<HTMLElement>('container')
 const enabled = useElementVisibility(container)
 
-const categoryContainer = ref<HTMLElement | null>(null)
+const categoryContainer = useTemplateRef<HTMLElement>('categoryContainer')
 const { width } = useElementSize(categoryContainer)
 
 const youTeamResult = ref<'win' | 'lose'>('win')

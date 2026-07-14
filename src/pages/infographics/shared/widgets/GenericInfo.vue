@@ -18,14 +18,14 @@
 </template>
 
 <script setup lang="ts" generic="T extends number | number[]">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, useTemplateRef } from 'vue'
 import { useElementVisibility } from '@vueuse/core'
 import { Status } from '@/db'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'
 import { Tween } from '@/shared/ui/tween/useTweenRef'
 
 
-const main = ref<HTMLElement | null>(null)
+const main = useTemplateRef<HTMLElement>('main')
 const visible = useElementVisibility(main)
 
 const props = defineProps<{

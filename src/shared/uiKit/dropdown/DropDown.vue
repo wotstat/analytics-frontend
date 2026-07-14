@@ -22,7 +22,7 @@
 <script setup lang="ts" generic="T">
 import ArrowDown from './arrow-down.svg'
 import { onClickOutside, useEventListener } from '@vueuse/core'
-import { ref, useSlots } from 'vue'
+import { ref, useSlots, useTemplateRef } from 'vue'
 
 const props = defineProps<{
   variants: readonly { value: T, label?: string }[]
@@ -30,7 +30,7 @@ const props = defineProps<{
 }>()
 
 const isOpen = ref(false)
-const dropDown = ref<HTMLElement | null>(null)
+const dropDown = useTemplateRef<HTMLElement>('dropDown')
 
 const slots = useSlots()
 const currentValue = defineModel<T>()

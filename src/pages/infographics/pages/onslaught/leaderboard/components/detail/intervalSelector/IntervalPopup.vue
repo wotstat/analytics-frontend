@@ -29,9 +29,9 @@ import { compareIntervals, Highlighted } from '@/shared/uiKit/highlightString/hi
 import TableView from '@/shared/uiKit/tableView/TableView.vue'
 import { HeaderLine } from '@/shared/uiKit/tableView/tableView/default/HeaderLine'
 import { TableViewDelegate } from '@/shared/uiKit/tableView/tableView/TableView'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, useTemplateRef } from 'vue'
 
-const table = ref<InstanceType<typeof TableView> | null>(null)
+const table = useTemplateRef<InstanceType<typeof TableView>>('table')
 
 const props = defineProps<{
   seasonInterval: { start: Date, end: Date, length: number }

@@ -4,10 +4,10 @@
 
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, useTemplateRef } from 'vue'
 import Confetti from 'canvas-confetti'
 
-const canvas = ref<HTMLCanvasElement | null>(null)
+const canvas = useTemplateRef<HTMLCanvasElement>('canvas')
 
 const confetti = ref<Confetti.CreateTypes | null>(null)
 

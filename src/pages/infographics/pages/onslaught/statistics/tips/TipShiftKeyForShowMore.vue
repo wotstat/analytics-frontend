@@ -12,9 +12,9 @@
 
 <script setup lang="ts">
 import TipBubble from '@/shared/ui/tipBubble/TipBubble.vue'
-import { ref } from 'vue'
+import { useTemplateRef } from 'vue'
 
-const bubble = ref<InstanceType<typeof TipBubble> | null>(null)
+const bubble = useTemplateRef<InstanceType<typeof TipBubble>>('bubble')
 
 const props = withDefaults(defineProps<{
   display?: boolean

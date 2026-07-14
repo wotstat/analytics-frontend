@@ -26,13 +26,13 @@
 
 <script lang="ts" setup>
 import { useElementBounding, useWindowSize } from '@vueuse/core'
-import { ref, watch } from 'vue'
+import { ref, watch, useTemplateRef } from 'vue'
 import FullscreenOpenIcon from '@/assets/icons/fullscreenOpen.svg'
 import XIcon from '@/assets/icons/x.svg'
 
 
 const isFull = ref(false)
-const fullscreenElement = ref<HTMLElement | null>(null)
+const fullscreenElement = useTemplateRef<HTMLElement>('fullscreenElement')
 
 const { height } = useElementBounding(fullscreenElement)
 const { height: windowHeight } = useWindowSize()
