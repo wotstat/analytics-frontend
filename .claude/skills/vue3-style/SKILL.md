@@ -1,6 +1,6 @@
 ---
 name: vue3-style
-description: Coding conventions for Vue 3 components and composables in the wotstat analytics-frontend repo (Vue 3 script-setup + TS + Vite + Bun). Use whenever writing or editing a .vue SFC, a useXxx.ts composable, a module store.ts, or reviewing Vue code in this project — before generating the first line. Covers SFC structure, props/emits/model/slots, template refs, composables, state (no global store, URL query / useLocalStorage), VueUse usage, and SCSS.
+description: Coding conventions for Vue 3 components and composables in the wotstat analytics-frontend repo (Vue 3 script-setup + TS + Vite + Bun). Use whenever writing or editing a .vue SFC, a useXxx.ts composable, a module store.ts, deciding where to put a new file/component/asset, or reviewing Vue code in this project — before generating the first line. Covers SFC structure, props/emits/model/slots, template refs, composables, file colocation / asset locality (keep things next to their use, not global), state (no global store, URL query / useLocalStorage), VueUse usage, and SCSS.
 ---
 
 # Vue 3 style — wotstat analytics-frontend
@@ -85,6 +85,35 @@ function select(value: string) {                // handlers are `function`, not 
 - Lean on VueUse instead of hand-rolling: `useResizeObserver`, `useMutationObserver`, `useEventListener`, `useElementVisibility`, `onClickOutside`, `useStorage`/`useLocalStorage`, `useMouse`, etc. It's already a heavy dependency — check there first.
 - Clean up in `onUnmounted` / `onDeactivated` when you touch anything global.
 
+## File colocation — asset locality
+
+**Keep every file as close to where it's used as possible.** Default to *local*, promote to *shared* only on real reuse. Don't create global `components/` / `composables/` / `assets` buckets — a component, composable, helper, type, or image lives next to the thing that uses it, nested as deep as needed.
+
+- A feature is a folder. Its private parts nest inside it: a `components/` folder scoped to *that* feature (not a global one), `useXxx.ts` composables sitting right beside the component that calls them, `utils.ts` / `types.ts` / helper `.ts` next to their consumers.
+- **Assets are local too.** SVG icons and images live inside the feature that renders them — either a local `assets/` folder or a loose `icon.svg` right next to the component. Never route a one-feature icon through a global asset folder.
+- Nest sub-features recursively. Each sub-feature repeats the pattern (its own `components/`, `useXxx.ts`, `assets/`, tooltips, etc.).
+- **Promotion rule**: put a file at the *lowest common ancestor* of everything that uses it. Used by one component → beside it. Shared by several sub-features of one feature → a `shared/` folder inside that feature (e.g. `onslaught/shared/`). Genuinely cross-cutting across the whole app → `src/shared/` (uiKit, game domain, query, utils…). Don't skip straight to global.
+
+Canonical example — `src/pages/infographics/pages/onslaught/`:
+
+```
+onslaught/
+├─ Layout.vue
+├─ assets/bg-1.jpg …                    ← images local to the feature
+├─ shared/                              ← shared across onslaught sub-features only
+│  ├─ Loader.vue  useSeasonInterval.ts
+│  └─ settings/nicknameInput/player.svg ← icon sits right by its component
+├─ leaderboard/
+│  ├─ Leaderboard.vue
+│  ├─ assets/triangle-up.svg
+│  └─ components/…/detail/intervalSelector/…   ← nested per sub-feature
+└─ statistics/
+   ├─ Onslaught.vue  types.ts  utils.ts
+   ├─ mainStat/{MainStat.vue, useMainStat.ts, items/…, tooltips/…}
+   ├─ vehicleTable/{VehicleTable.vue, useVehicleTable.ts}
+   └─ secondaryStat/qualification/assets/arrow-right.svg
+```
+
 ## State & data
 
 - **No Pinia/Vuex, no global store.** Shared module state is a plain module-level `ref` or `useLocalStorage(...)` exported from a `store.ts` next to the feature (see `pages/services/bob25/store.ts`, `shared/global/`).
@@ -109,4 +138,5 @@ function select(value: string) {                // handlers are `function`, not 
 - No semicolons, no double quotes.
 - No old-style template refs (`const el = ref(null)` bound by variable name) — use `useTemplateRef('el')`. No `reactive({})` for component-local state (use `ref`).
 - No new global state library — module singleton or URL/localStorage instead.
+- Don't dump feature-specific components/composables/assets into global buckets — colocate next to use, promote only on real reuse.
 - Don't add English UI copy — Russian only.
