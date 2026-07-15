@@ -22,5 +22,6 @@ bun run build    # vue-tsc + vite build — основная проверка к
 - [docs/06-charts.md](docs/06-charts.md) — графики (chart.js + UniversalChart)
 - [docs/07-game-domain.md](docs/07-game-domain.md) — игровой домен, локализация
 - [docs/08-external.md](docs/08-external.md) — поддомены, realtime, интеграции
+- [docs/09-database-schema.md](docs/09-database-schema.md) — справочник схемы БД WOT: таблицы, колонки, типы, категории
 
 При значимых изменениях архитектуры обновляй соответствующий раздел docs.

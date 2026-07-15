@@ -82,13 +82,11 @@ bestMVOrder(target, mvName)                // → колонки этого MV
 
 Если `bestMV` вернул null — фильтры несовместимы с MV, нужно запрашивать сырые таблицы событий.
 
-## Основные таблицы (используемые в запросах по коду)
+## Таблицы БД
 
-- `Event_OnBattleStart` — старт боя (id, playerName, arenaTag, battleMode, battleGameplay, tankTag/Level/Type, режимные поля).
-- `Event_OnBattleResult` — результат боя (result, duration, damage, credits, xp, players...).
-- `Event_OnShot` — выстрелы (баллистика, точки попадания, урон, серверный/клиентский разброс).
-- `VehiclesLocalization`, `ArenasLocalization` — словари имён танков/карт (см. 07).
-- Спец-таблицы ивентов (lootbox, comp7 и т.д.) — смотри запросы в соответствующих страницах.
+Полный каталог таблиц базы `WOT` с колонками, типами и значениями категориальных полей (режимы, типы/роли танков, нации, снаряды, карты и т.п.) вынесен в отдельный справочник — [09-database-schema.md](09-database-schema.md).
+
+Коротко: данные приходят от игрового мода в таблицы `Event_*` (сортировка по игроку, партиции по месяцу) и от микросервиса-cron в справочники (техника/карты/предметы по версиям + опрос игрового API: лидерборды Натиска, MoE, онлайн и пр.). Прочие базы (`MT-36-1`, `BOB25`, `Positions`, `WOTINSPECTOR`) — изолированные легаси, фронтом не используются.
 
 Утилиты дат: `dateToDbIndex(date)` (ms→id-строка ×1e10), `dbIndexToDate`, `dateToDbDate` (YYYY-MM-DD), `semverCompareStartFrom('1.2.3')` — фильтр по `modVersionComparable`.
 

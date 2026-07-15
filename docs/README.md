@@ -15,6 +15,7 @@
 | [06-charts.md](06-charts.md) | Графики: собственный SVG-движок UniversalChart и мини-графики на chart.js |
 | [07-game-domain.md](07-game-domain.md) | Игровая доменная модель: режимы боёв, танки, карты, селекторы фильтров, локализация |
 | [08-external.md](08-external.md) | Внешние сервисы: поддомены wotstat, realtime WebSocket, метрика, установка модов, iframe-виджеты |
+| [09-database-schema.md](09-database-schema.md) | Справочник схемы БД `WOT`: таблицы, колонки, типы, значения категориальных полей — для запросов в ClickHouse напрямую |
 
 ## Ключевые факты (TL;DR)
 
