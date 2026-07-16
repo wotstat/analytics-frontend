@@ -943,6 +943,20 @@
 
 ---
 
+## Дедупликация результатов боёв — `DeduplicatedBattleResults`
+
+Таблица с движком **`Null`** (данные не хранятся). Это **вход пайплайна общей статистики по всем игрокам** — важный узел, от которого зависят агрегирующие materialized views.
+
+Как работает:
+
+- В неё пишутся результаты боёв из `Event_OnBattleResult`, но **дедуплицированные по `arenaId`**: если в один бой попало несколько игроков с модом, у каждого пришёл бы свой `Event_OnBattleResult` с одинаковым `arenaId` — в `DeduplicatedBattleResults` попадает **только один результат на бой**.
+- Движок `Null` саму строку отбрасывает, но **подключённые MV срабатывают на каждую вставку**. Сейчас это `SimpleTestAggByPlayerMV` → пишет в `SimpleTestAggByPlayer`.
+- MV разворачивают массивы **`playersResults.*`** через `ARRAY JOIN` и агрегируют статистику **по всем игрокам боя** (а не только по носителям мода). Дедупликация по `arenaId` не даёт задваивать бой, если модников в нём было несколько.
+
+Итог: так получается **общая статистика по всем игрокам** игры (из `playersResults.*`), собранная без двойного учёта боёв. Схема таблицы — срез `Event_OnBattleResult`: `arenaId`, `battleMode`/`battleGameplay`, `region`, командные показатели и полный набор `playersResults.*`.
+
+---
+
 ## Производные таблицы и легаси
 
 Считаются из `Event_*` под тяжёлые виджеты; выбор оптимального MV — через `bestMV` (`src/db/schema.ts`).
@@ -951,8 +965,8 @@
 | --- | --- |
 | `accuracy_hit_points`, `..._battle_mode`, `..._battle_mode_gameplay`, `..._battle_mode_gameplay_tankTag` | Семейство под аналитику точности/эллипса попаданий с разными наборами колонок-ключей |
 | `ShotsPrepare` / `ShotsPrepare2` | Подготовленные агрегаты выстрелов для позиционных тепловых карт (ср. `Positions.Shots`) |
-| `SimpleTestAggByPlayer` | Экспериментальный агрегат по игроку (масса avg/min/max метрик боя) — задел на будущее |
-| `DeduplicatedBattleResults` | `Null`-движок: приёмник-триггер для MV дедупликации, данные не хранит |
+| `SimpleTestAggByPlayer` | Агрегат по игроку (масса avg/min/max метрик боя); наполняется через `DeduplicatedBattleResults` (см. раздел выше) |
+| `DeduplicatedBattleResults` | `Null`-вход пайплайна дедупликации по `arenaId` → общая статистика по всем игрокам (см. раздел выше) |
 | MV `Event_OnShot_health_damage_mv`, `Event_OnShot_safe_damage_count_by_base_mv`, `player_coverage_*`, `team_results_mv` | Материализованные представления под конкретные виджеты (+ скрытые `.inner.*`) |
 | `PlayerNames`, `PlayerNamesByLength` | Индекс ников (поиск игрока) |
 | `migrations`, `Test`, `named_tuples`, `description` (View), `Requests`, `Reports`, `PositionLicenseOld`, `PositionPromoCodesOld` | Служебные / легаси, не использовать |
