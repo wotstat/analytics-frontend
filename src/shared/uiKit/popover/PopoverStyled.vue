@@ -1,8 +1,12 @@
 <template>
-  <PopoverAnimated :target :display :offset="targetOffset" :viewportOffset :placement :preserveLastPlacement :styles
-    @pointer-down-outside="e => emit('pointerDownOutside', e)" @target-outside-window="emit('targetOutsideWindow')"
-    @pointer-click-outside="e => emit('pointerClickOutside', e)" v-slot="{ arrow, transitionClass }" :duration="200">
-    <div class="popover-card" :class="[{
+  <PopoverAnimated :target :display :offset="targetOffset" :viewportOffset :placement :preserveLastPlacement :styles="{
+    ...styles,
+    '--enter-duration': enterAnimationDuration,
+    '--exit-duration': exitAnimationDuration,
+  }" :teleportTo="teleportTo" @pointer-down-outside="e => emit('pointerDownOutside', e)"
+    @target-outside-window="emit('targetOutsideWindow')" @pointer-click-outside="e => emit('pointerClickOutside', e)"
+    v-slot="{ arrow, transitionClass }" :duration="Math.max(enterDuration, exitDuration)">
+    <div class=" popover-card" :class="[{
       [`arrow-${arrow.direction}`]: arrow.direction,
       'arrow-disabled': arrowSize == 0,
       'arrow-mask': arrowUsingMask,
@@ -23,7 +27,7 @@
 
 
 <script setup lang="ts">
-import { ClassValue, normalizeClass, computed } from 'vue'
+import { ClassValue, computed, RendererElement } from 'vue'
 import { OffsetValue, PlacementParam, roundDpr } from './utils'
 import PopoverAnimated from './PopoverAnimated.vue'
 
@@ -37,7 +41,9 @@ const { target,
   arrowSize,
   arrowUsingMask,
   styles,
-  class: classes
+  class: classes,
+  enterDuration = 200,
+  exitDuration = 100,
 } = defineProps<{
   target: HTMLElement | null
   display: boolean
@@ -48,7 +54,10 @@ const { target,
   preserveLastPlacement?: boolean
   placement?: PlacementParam
   styles?: Record<string, string>
-  class?: ClassValue
+  class?: ClassValue,
+  enterDuration?: number
+  exitDuration?: number
+  teleportTo?: string | RendererElement | null
 }>()
 
 const emit = defineEmits<{
@@ -62,6 +71,9 @@ const targetOffset = computed<OffsetValue>(() => {
   if (arrowSize) return arrowSize + 3
   return 7
 })
+
+const enterAnimationDuration = computed(() => `${enterDuration}ms`)
+const exitAnimationDuration = computed(() => `${exitDuration}ms`)
 
 </script>
 
@@ -185,11 +197,11 @@ $animation-offset: var(--animation-transition-offset, 3px);
 }
 
 .v-enter-active {
-  transition: opacity 0.1s ease, transform 0.1s ease;
+  transition: opacity var(--enter-duration) ease, transform var(--enter-duration) ease;
 }
 
 .v-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity var(--exit-duration) ease, transform var(--exit-duration) ease;
 }
 
 .v-enter-from,

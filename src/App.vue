@@ -14,6 +14,7 @@
 
     <FocusEffectRoot />
     <ContextMenuRoot />
+    <TooltipRoot />
   </div>
 </template>
 
@@ -25,6 +26,8 @@ import HeaderSpacer from './pages/shared/header/HeaderSpacer.vue'
 import { headerHeight } from './pages/shared/header/useAdditionalHeaderHeight'
 import ContextMenuRoot from '@/shared/uiKit/contextMenu/ContextMenuRoot.vue'
 import FocusEffectRoot from './shared/uiKit/focusEffect/FocusEffectRoot.vue'
+import TooltipRoot from './shared/uiKit/tooltip/TooltipRoot.vue'
+
 
 const isWindows = navigator.platform.indexOf('Win') > -1
 const boldWeight = isWindows ? 700 : 800

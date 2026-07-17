@@ -1,14 +1,21 @@
 <template>
-  <Teleport :to="'body'" defer v-if="display">
-    <div class="popup-container" ref="popupContainer" :style="targetStyle">
+  <template v-if="display">
+    <div class="popup-container" ref="popupContainer" :style="targetStyle" v-if="teleportTo === null">
       <slot :arrow="arrowProps"></slot>
     </div>
-  </Teleport>
+
+    <Teleport :to="teleportTo ?? 'body'" defer v-else>
+      <div class="popup-container" ref="popupContainer" :style="targetStyle">
+        <slot :arrow="arrowProps"></slot>
+      </div>
+    </Teleport>
+  </template>
+
 </template>
 
 
 <script setup lang="ts">
-import { computed, onBeforeMount, onUnmounted, ref, shallowRef, triggerRef, watch, useTemplateRef } from 'vue'
+import { computed, onBeforeMount, onUnmounted, ref, shallowRef, triggerRef, watch, useTemplateRef, RendererElement, onMounted } from 'vue'
 import { calculatePopoverPosition, generateOffset, getArrowPosition, getParams, isParamsEqual, OffsetValue, Params, PlacementParam, PlacementWithModifiers } from './utils'
 import { useEventListener } from '@vueuse/core'
 
@@ -22,6 +29,7 @@ const props = defineProps<{
   placement?: PlacementParam
   preserveLastPlacement?: boolean
   styles?: Record<string, string>
+  teleportTo?: string | RendererElement | null
 }>()
 
 const emit = defineEmits<{

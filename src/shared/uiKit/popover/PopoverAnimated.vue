@@ -1,5 +1,5 @@
 <template>
-  <Popover :target :display :offset :viewportOffset :placement :preserveLastPlacement :styles
+  <Popover :target :display :offset :viewportOffset :placement :preserveLastPlacement :styles :teleportTo
     @pointer-down-outside="e => emit('pointerDownOutside', e)" @target-outside-window="emit('targetOutsideWindow')"
     @pointer-click-outside="e => emit('pointerClickOutside', e)" @ready-to-visible="onReadyToVisible"
     v-slot="{ arrow }">
@@ -9,7 +9,7 @@
 
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { nextTick, ref, RendererElement, watch } from 'vue'
 import Popover from './Popover.vue'
 import { OffsetValue, PlacementParam } from './utils'
 
@@ -23,6 +23,7 @@ const props = defineProps<{
   preserveLastPlacement?: boolean
   duration?: number
   styles?: Record<string, string>
+  teleportTo?: string | RendererElement | null
 }>()
 
 const emit = defineEmits<{
@@ -90,11 +91,11 @@ function beginEnter() {
     transitionClass.value.add(enterTo)
   } else {
     transitionClass.value.add(enterFrom)
-    setTimeout(() => {
+    nextTick(() => {
       transitionClass.value.delete(enterFrom)
       transitionClass.value.add(enterActive)
       transitionClass.value.add(enterTo)
-    }, 0)
+    })
   }
 
   endEnterHandle = setTimeout(() => {
@@ -116,11 +117,11 @@ function beginLeave() {
     transitionClass.value.add(leaveTo)
   } else {
     transitionClass.value.add(leaveFrom)
-    setTimeout(() => {
+    nextTick(() => {
       transitionClass.value.delete(leaveFrom)
       transitionClass.value.add(leaveActive)
       transitionClass.value.add(leaveTo)
-    }, 0)
+    })
   }
 
   endLeaveHandle = setTimeout(() => {
