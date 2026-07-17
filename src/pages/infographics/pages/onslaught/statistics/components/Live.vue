@@ -1,30 +1,26 @@
 <template>
   <Transition name="fade">
-    <div class="live" ref="item" v-if="show">LIVE</div>
+    <div class="live" ref="item" v-if="show" v-tooltip-target.instant>LIVE</div>
   </Transition>
 
-  <PopoverAutoClose v-if="show" :target="item" v-model="hover" :placement="['bottom-float']"
-    :viewport-offset="{ top: headerOffset, bottom: 10, left: 10, right: 10 }" :arrow-size="7" :offset="{ top: 7 }"
-    :class="'comp7-tooltip'">
+  <DefineTooltip :offset="{ top: 7 }" :placement="['bottom-float']" :arrow-size="7"
+    :viewport-offset="popoverViewportOffset" :class="'comp7-tooltip'">
     <div class="tooltip">
       Новые бои загружаются автоматически
     </div>
-  </PopoverAutoClose>
+  </DefineTooltip>
 </template>
 
 
 <script setup lang="ts">
-import { headerOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
-import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
-import { useElementHover } from '@vueuse/core'
-import { useTemplateRef } from 'vue'
+import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
+import { defineTooltip } from '@/shared/uiKit/tooltip/tooltip'
 
 const props = defineProps<{
   show: boolean
 }>()
 
-const item = useTemplateRef<HTMLElement>('item')
-const hover = useElementHover(item)
+const { DefineTooltip, vTooltipTarget } = defineTooltip()
 
 </script>
 
@@ -38,6 +34,7 @@ const hover = useElementHover(item)
   font-size: 12px;
   font-weight: bold;
   border-radius: 5px;
+  cursor: help;
 }
 
 .tooltip {

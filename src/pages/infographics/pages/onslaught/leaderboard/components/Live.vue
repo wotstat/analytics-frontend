@@ -1,24 +1,27 @@
 <template>
-  <div class="live" v-if="lastUpdate.data && lastUpdate.status.value == 'OPEN' && liveUpdate" ref="item">{{
-    liveUpdate.text }}</div>
+  <div class="live" v-if="lastUpdate.data && lastUpdate.status.value == 'OPEN' && liveUpdate" v-tooltip-target.instant>
+    {{ liveUpdate.text }}
+  </div>
 
-  <PopoverAutoClose v-if="liveUpdate && liveUpdate.isLive" :target="item" v-model="hover" :placement="['bottom-float']"
-    :viewport-offset="{ top: headerOffset, bottom: 10, left: 10, right: 10 }" :arrow-size="7" :offset="{ top: 7 }"
-    :class="'comp7-tooltip'">
+  <DefineTooltip :offset="{ top: 7 }" :placement="['bottom-float']" :arrow-size="7"
+    :viewport-offset="popoverViewportOffset" :class="'comp7-tooltip'">
     <div class="tooltip">
       Таблица автоматически синхронизируется с сервером
     </div>
-  </PopoverAutoClose>
+  </DefineTooltip>
 
 </template>
 
 
 <script setup lang="ts">
-import { headerOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
+import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import { useAnalyticsRealtime } from '@/shared/external/realtime/useAnalyticsRealtime'
-import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
-import { useElementHover } from '@vueuse/core'
-import { computed, watch, useTemplateRef } from 'vue'
+import { defineTooltip } from '@/shared/uiKit/tooltip/tooltip'
+import { computed, watch } from 'vue'
+
+
+const { DefineTooltip, vTooltipTarget } = defineTooltip()
+
 
 const props = defineProps<{
   region: string
@@ -26,8 +29,6 @@ const props = defineProps<{
   leaderboardDay: { day: string, recalculation: string, lastRank: number } | null
 }>()
 
-const item = useTemplateRef<HTMLElement>('item')
-const hover = useElementHover(item)
 
 const emit = defineEmits<{
   mayUpdate: []
@@ -71,6 +72,7 @@ watch(liveUpdate, (value, old) => {
   font-size: 12px;
   font-weight: bold;
   border-radius: 5px;
+  cursor: help;
 }
 
 .tooltip {

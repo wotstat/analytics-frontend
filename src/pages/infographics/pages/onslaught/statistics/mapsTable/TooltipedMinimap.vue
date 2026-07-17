@@ -1,8 +1,9 @@
 <template>
   <div class="minimap" ref="minimap">
-    <Minimap :tag="tag" :game="game" :gameplay="'comp7'" :showBases="false" v-tooltip-target />
+    <Minimap :tag="tag" :game="game" :gameplay="'comp7'" :showBases="false" v-tooltip-target.instant />
 
-    <DefineTooltip>
+    <DefineTooltip :placement="['top-float', 'right-float', 'bottom-float']" :arrow-size="7"
+      :viewport-offset="popoverViewportOffset">
       <div class="tooltip">
         <Minimap :tag="tag" :game="game" :team="team" :gameplay="'comp7'" />
       </div>
@@ -23,11 +24,7 @@ const props = defineProps<{
   game?: GameVendor;
 }>()
 
-const { DefineTooltip, vTooltipTarget } = defineTooltip({
-  placement: ['top-float', 'right-float', 'bottom-float'],
-  arrowSize: 7,
-  viewportOffset: popoverViewportOffset.value,
-})
+const { DefineTooltip, vTooltipTarget } = defineTooltip()
 </script>
 
 

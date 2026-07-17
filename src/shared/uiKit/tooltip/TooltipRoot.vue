@@ -3,9 +3,10 @@
     <div id="tooltip-root">
       <PopoverStyled v-for="[group, [tooltip, display]] in displayedDelayedTooltips" :target="tooltip.target"
         :display="display" :key="group" :teleportTo="null" :exit-duration="HIDE_ANIMATION_DURATION"
-        :class="{ 'tooltip-non-interactive': !tooltip.options.interactive }" :placement="tooltip.options.placement"
-        :viewport-offset="tooltip.options.viewportOffset || undefined"
-        :arrow-size="tooltip.options.arrowSize || undefined">
+        :class="[{ 'tooltip-non-interactive': !tooltip.options.interactive }, tooltip.props.class]"
+        :placement="tooltip.props.placement" :viewport-offset="tooltip.props.viewportOffset"
+        :arrow-size="tooltip.props.arrowSize" :offset="tooltip.props.offset"
+        @pointer-down-outside="event => onPointerDownOutside(group, event)">
         <component :is="tooltip.component" />
       </PopoverStyled>
     </div>
@@ -17,7 +18,7 @@
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue'
 import PopoverStyled from '../popover/PopoverStyled.vue'
-import { DisplayedTooltip, displayedTooltips } from './tooltip'
+import { closeTooltip, DisplayedTooltip, displayedTooltips } from './tooltip'
 
 const HIDE_ANIMATION_DURATION = 100
 
@@ -25,6 +26,10 @@ const props = defineProps<{}>()
 
 const displayedDelayedTooltips = ref(new Map<string, [DisplayedTooltip, boolean]>())
 const timeoutIds = new Map<string, number>()
+
+function onPointerDownOutside(group: string, event: PointerEvent) {
+  if (event.pointerType === 'touch') closeTooltip(group)
+}
 
 watch(displayedTooltips, groups => {
   for (const [k, v] of displayedDelayedTooltips.value) {
