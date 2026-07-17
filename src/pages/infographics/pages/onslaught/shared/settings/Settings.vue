@@ -21,13 +21,12 @@
       </button>
     </div>
   </div>
-
 </template>
 
 
 <script setup lang="ts">
 import NicknameInput from './nicknameInput/NicknameInput.vue'
-import { computed, shallowRef, watch, watchEffect } from 'vue'
+import { computed, watch, watchEffect } from 'vue'
 import { useI18n } from '@/shared/i18n/useI18n'
 import i18n from '@/shared/game/comp7/i18n.json'
 import { useRoute, useRouter } from 'vue-router'

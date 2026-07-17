@@ -2,7 +2,10 @@
   <Teleport to="body">
     <div id="tooltip-root">
       <PopoverStyled v-for="[group, [tooltip, display]] in displayedDelayedTooltips" :target="tooltip.target"
-        :display="display" :key="group" :teleportTo="null" :exit-duration="HIDE_ANIMATION_DURATION">
+        :display="display" :key="group" :teleportTo="null" :exit-duration="HIDE_ANIMATION_DURATION"
+        :class="{ 'tooltip-non-interactive': !tooltip.options.interactive }" :placement="tooltip.options.placement"
+        :viewport-offset="tooltip.options.viewportOffset || undefined"
+        :arrow-size="tooltip.options.arrowSize || undefined">
         <component :is="tooltip.component" />
       </PopoverStyled>
     </div>
@@ -12,9 +15,9 @@
 
 
 <script setup lang="ts">
-import { nextTick, ref, useTemplateRef, watch, watchEffect } from 'vue'
+import { nextTick, ref, watch } from 'vue'
 import PopoverStyled from '../popover/PopoverStyled.vue'
-import { DisplayedTooltip, displayedTooltips, TooltipDefinition } from './tooltip'
+import { DisplayedTooltip, displayedTooltips } from './tooltip'
 
 const HIDE_ANIMATION_DURATION = 100
 
@@ -49,4 +52,8 @@ watch(displayedTooltips, groups => {
 </script>
 
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+:deep(.tooltip-non-interactive) {
+  pointer-events: none;
+}
+</style>

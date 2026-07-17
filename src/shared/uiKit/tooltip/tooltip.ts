@@ -1,5 +1,5 @@
 import { DefineComponent, defineComponent, Directive, h, markRaw, onBeforeUnmount, onMounted, onScopeDispose, ref, shallowRef, Slot } from 'vue'
-
+import { OffsetValue, PlacementParam } from '../popover/utils'
 
 
 type TooltipOptions = {
@@ -8,6 +8,9 @@ type TooltipOptions = {
   interactive?: boolean
   interactiveDelay?: number
   interactiveHideDelay?: number
+  placement?: PlacementParam
+  arrowSize?: number | null,
+  viewportOffset?: OffsetValue | null
 }
 
 const DEFAULT_TOOLTIP_OPTIONS: Required<TooltipOptions> = {
@@ -16,6 +19,9 @@ const DEFAULT_TOOLTIP_OPTIONS: Required<TooltipOptions> = {
   interactive: false,
   interactiveDelay: 300,
   interactiveHideDelay: 300,
+  placement: 'top-float',
+  arrowSize: null,
+  viewportOffset: null,
 }
 
 export type TooltipDefinition = {
@@ -24,7 +30,7 @@ export type TooltipDefinition = {
 }
 
 const registeredTooltips = new Map<Symbol, TooltipDefinition>()
-export type DisplayedTooltip = { target: HTMLElement, component: DefineComponent }
+export type DisplayedTooltip = { target: HTMLElement, component: DefineComponent, options: Required<TooltipOptions> }
 export const displayedTooltips = ref(new Map<string, DisplayedTooltip>())
 
 
@@ -117,6 +123,7 @@ function createDisplayedTooltip(
 
   displayed = markRaw({
     target,
+    options: options,
     component: defineComponent({
       setup: () => {
         const element = shallowRef<HTMLElement | null>(null)
@@ -235,6 +242,7 @@ type TooltipHandlers = {
 }
 
 const handlers = new WeakMap<HTMLElement, TooltipHandlers>()
+let defaultGroupCounter = 0
 
 export function defineTooltip<T>(options: TooltipOptions) {
 
@@ -262,16 +270,28 @@ export function defineTooltip<T>(options: TooltipOptions) {
     interactive: options.interactive ?? DEFAULT_TOOLTIP_OPTIONS.interactive,
     interactiveDelay: options.interactiveDelay ?? DEFAULT_TOOLTIP_OPTIONS.interactiveDelay,
     interactiveHideDelay: options.interactiveHideDelay ?? DEFAULT_TOOLTIP_OPTIONS.interactiveHideDelay,
+    placement: options.placement ?? DEFAULT_TOOLTIP_OPTIONS.placement,
+    arrowSize: options.arrowSize ?? DEFAULT_TOOLTIP_OPTIONS.arrowSize,
+    viewportOffset: options.viewportOffset ?? DEFAULT_TOOLTIP_OPTIONS.viewportOffset,
   }
 
-  const vUseTooltip: Directive<HTMLElement, T, 'hover'> = {
+  const vTooltipTarget: Directive<HTMLElement, T, 'instant' | 'interactive'> = {
     mounted(el, binding) {
       let pointerInside = false
       let focusInside = false
 
+      const group = binding.arg ?? `default-${defaultGroupCounter++}`
+
+      const overrides = {
+        ...requiredOptions,
+        interactive: binding.modifiers.interactive ?? requiredOptions.interactive,
+        delay: binding.modifiers.instant ? 0 : requiredOptions.delay,
+        hideDelay: binding.modifiers.instant ? 0 : requiredOptions.hideDelay,
+      }
+
       const isActive = () => pointerInside || focusInside
-      const activate = () => onTriggerEnter(el, tooltipId, binding.arg, binding.value, requiredOptions, isActive)
-      const deactivate = () => onTriggerLeave(el, binding.arg, requiredOptions)
+      const activate = () => onTriggerEnter(el, tooltipId, group, binding.value, overrides, isActive)
+      const deactivate = () => onTriggerLeave(el, group, overrides)
 
       const pointerEnter = () => {
         const wasActive = pointerInside || focusInside
@@ -297,7 +317,7 @@ export function defineTooltip<T>(options: TooltipOptions) {
         if (!pointerInside) deactivate()
       }
 
-      const cleanup = () => cleanupTrigger(el, binding.arg)
+      const cleanup = () => cleanupTrigger(el, group)
 
       el.addEventListener('pointerenter', pointerEnter)
       el.addEventListener('pointerleave', pointerLeave)
@@ -319,5 +339,5 @@ export function defineTooltip<T>(options: TooltipOptions) {
     }
   }
 
-  return { DefineTooltip, vUseTooltip }
+  return { DefineTooltip, vTooltipTarget }
 }

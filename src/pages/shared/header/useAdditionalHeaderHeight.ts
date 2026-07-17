@@ -16,3 +16,10 @@ export function useDefaultHeaderHeight(header: Ref<HTMLElement | null>) {
 }
 
 export const headerOffset = computed(() => headerHeight.value + additionalHeaderHeight.value)
+
+export const popoverViewportOffset = computed(() => ({
+  top: headerOffset.value + 10,
+  bottom: 10,
+  left: 10,
+  right: 10,
+}))
