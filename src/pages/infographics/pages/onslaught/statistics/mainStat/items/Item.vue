@@ -1,5 +1,5 @@
 <template>
-  <div class="item mt-font" ref="item">
+  <div class="item mt-font" v-tooltip-target.instant>
     <div class="normal">
       <div class="icon">
         <slot name="icon"></slot>
@@ -27,22 +27,24 @@
       </div>
     </div>
 
-    <PopoverAutoClose :target="item" v-model="hover" :placement="['bottom-float']"
-      :viewport-offset="{ top: headerOffset, bottom: 10, left: 10, right: 10 }" :arrow-size="7"
-      :offset="{ top: tooltipTopOffset }" :class="'comp7-tooltip'" v-if="slots.tooltip">
-      <div class="tooltip">
+    <DefineTooltip :placement="['bottom-float']" :arrow-size="7" :viewport-offset="popoverViewportOffset"
+      :class="'comp7-tooltip'" :offset="{ top: tooltipTopOffset }">
+      <div class="tooltip" v-if="slots.tooltip">
         <slot name="tooltip"></slot>
       </div>
-    </PopoverAutoClose>
+    </DefineTooltip>
 
   </div>
 </template>
 
 <script setup lang="ts">
-import { headerOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
-import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
-import { useElementHover, useElementSize } from '@vueuse/core'
-import { computed, ref, useSlots, useTemplateRef } from 'vue'
+import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
+import { defineTooltip } from '@/shared/uiKit/tooltip/tooltip'
+import { useElementSize } from '@vueuse/core'
+import { computed, useSlots, useTemplateRef } from 'vue'
+
+
+const { DefineTooltip, vTooltipTarget } = defineTooltip()
 
 const props = defineProps<{
 }>()
@@ -53,8 +55,6 @@ const { width } = useElementSize(item)
 const tooltipTopOffset = computed(() => width.value <= 160 ? 7 : 0)
 
 const slots = useSlots()
-const hover = useElementHover(item)
-const t = ref<boolean>(true)
 
 </script>
 
