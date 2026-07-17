@@ -1,26 +1,17 @@
 <template>
   <Transition name="fade">
-    <div class="live" ref="item" v-if="show" v-tooltip-target.instant>LIVE</div>
-  </Transition>
-
-  <DefineTooltip :offset="{ top: 7 }" :placement="['bottom-float']" :arrow-size="7"
-    :viewport-offset="popoverViewportOffset" :class="'comp7-tooltip'">
-    <div class="tooltip">
-      Новые бои загружаются автоматически
+    <div class="live" ref="item" v-if="show" v-tooltip.instant.bottom-float="'Новые бои загружаются автоматически'">LIVE
     </div>
-  </DefineTooltip>
+  </Transition>
 </template>
 
 
 <script setup lang="ts">
-import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
-import { defineTooltip } from '@/shared/uiKit/tooltip/tooltip'
+import { vTooltip } from '@/shared/uiKit/tooltip/textTooltip'
 
 const props = defineProps<{
   show: boolean
 }>()
-
-const { DefineTooltip, vTooltipTarget } = defineTooltip()
 
 </script>
 

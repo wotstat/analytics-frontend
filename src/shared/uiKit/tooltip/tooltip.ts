@@ -1,5 +1,6 @@
 import { DefineComponent, defineComponent, Directive, h, markRaw, onBeforeUnmount, onMounted, onScopeDispose, ref, shallowRef, Slot } from 'vue'
-import { OffsetValue, PlacementParam } from '../popover/utils'
+import { OffsetValue, PlacementParam, PlacementWithModifiers, placementWithModifiersVariants } from '../popover/utils'
+import { objectEntries } from '@vueuse/core'
 
 
 type TooltipOptions = {
@@ -134,6 +135,7 @@ function createDisplayedTooltip(
   group: string,
   bindingValue: any,
   options: Required<TooltipOptions>,
+  propsOverrides: DefineTooltipProps,
   isTargetActive: () => boolean,
 ) {
   let displayed: DisplayedTooltip
@@ -143,71 +145,76 @@ function createDisplayedTooltip(
   const tooltipDefinition = registeredTooltips.get(tooltipId)
   if (!tooltipDefinition) throw new Error('Tooltip definition not found')
 
+  const Component = defineComponent({
+    setup: () => {
+      const element = shallowRef<HTMLElement | null>(null)
+      let mountedElement: HTMLElement | null = null
+
+      const requestHide = () => {
+        if (pointerInside || focusInside || isTargetActive()) return
+        scheduleTooltipHide(group, displayed, options.interactiveHideDelay)
+      }
+
+      const pointerEnter = (event: PointerEvent) => {
+        if (event.pointerType === 'touch') return
+
+        pointerInside = true
+        keepTooltipOpen(group, displayed)
+      }
+
+      const pointerLeave = (event: PointerEvent) => {
+        if (event.pointerType === 'touch') return
+
+        pointerInside = false
+        if (focusInside) return
+
+        scheduleTooltipHide(group, displayed, options.interactiveHideDelay)
+      }
+
+      const focusIn = () => {
+        focusInside = true
+        keepTooltipOpen(group, displayed)
+      }
+
+      const focusOut = (event: FocusEvent) => {
+        if (event.relatedTarget instanceof Node && mountedElement?.contains(event.relatedTarget)) return
+
+        focusInside = false
+        requestHide()
+      }
+
+      onMounted(() => {
+        if (!options.interactive || !element.value) return
+
+        mountedElement = element.value
+        mountedElement.addEventListener('pointerenter', pointerEnter)
+        mountedElement.addEventListener('pointerleave', pointerLeave)
+        mountedElement.addEventListener('focusin', focusIn)
+        mountedElement.addEventListener('focusout', focusOut)
+      })
+
+      onBeforeUnmount(() => {
+        if (!mountedElement) return
+
+        mountedElement.removeEventListener('pointerenter', pointerEnter)
+        mountedElement.removeEventListener('pointerleave', pointerLeave)
+        mountedElement.removeEventListener('focusin', focusIn)
+        mountedElement.removeEventListener('focusout', focusOut)
+        mountedElement = null
+      })
+
+      return () => h('div', { ref: element }, [tooltipDefinition.render(bindingValue)])
+    }
+  }) as DefineComponent & { new(): { $slots: { default(props: any): any } } }
+
   displayed = markRaw({
     target,
     options: options,
-    props: tooltipDefinition.props,
-    component: defineComponent({
-      setup: () => {
-        const element = shallowRef<HTMLElement | null>(null)
-        let mountedElement: HTMLElement | null = null
-
-        const requestHide = () => {
-          if (pointerInside || focusInside || isTargetActive()) return
-          scheduleTooltipHide(group, displayed, options.interactiveHideDelay)
-        }
-
-        const pointerEnter = (event: PointerEvent) => {
-          if (event.pointerType === 'touch') return
-
-          pointerInside = true
-          keepTooltipOpen(group, displayed)
-        }
-
-        const pointerLeave = (event: PointerEvent) => {
-          if (event.pointerType === 'touch') return
-
-          pointerInside = false
-          if (focusInside) return
-
-          scheduleTooltipHide(group, displayed, options.interactiveHideDelay)
-        }
-
-        const focusIn = () => {
-          focusInside = true
-          keepTooltipOpen(group, displayed)
-        }
-
-        const focusOut = (event: FocusEvent) => {
-          if (event.relatedTarget instanceof Node && mountedElement?.contains(event.relatedTarget)) return
-
-          focusInside = false
-          requestHide()
-        }
-
-        onMounted(() => {
-          if (!options.interactive || !element.value) return
-
-          mountedElement = element.value
-          mountedElement.addEventListener('pointerenter', pointerEnter)
-          mountedElement.addEventListener('pointerleave', pointerLeave)
-          mountedElement.addEventListener('focusin', focusIn)
-          mountedElement.addEventListener('focusout', focusOut)
-        })
-
-        onBeforeUnmount(() => {
-          if (!mountedElement) return
-
-          mountedElement.removeEventListener('pointerenter', pointerEnter)
-          mountedElement.removeEventListener('pointerleave', pointerLeave)
-          mountedElement.removeEventListener('focusin', focusIn)
-          mountedElement.removeEventListener('focusout', focusOut)
-          mountedElement = null
-        })
-
-        return () => h('div', { ref: element }, [tooltipDefinition.render(bindingValue)])
-      }
-    }),
+    props: {
+      ...tooltipDefinition.props,
+      ...propsOverrides
+    },
+    component: Component,
   })
 
   tooltipPopupActivity.set(displayed, () => pointerInside || focusInside)
@@ -220,9 +227,10 @@ function onTriggerEnter(
   group: string,
   bindingValue: any,
   options: Required<TooltipOptions>,
+  propsOverrides: DefineTooltipProps,
   isTargetActive: () => boolean,
 ) {
-  const displayed = createDisplayedTooltip(target, tooltipId, group, bindingValue, options, isTargetActive)
+  const displayed = createDisplayedTooltip(target, tooltipId, group, bindingValue, options, propsOverrides, isTargetActive)
 
   cancelAwaitingShowTooltip(target)
   cancelAwaitingHideTooltip(group)
@@ -251,6 +259,7 @@ function toggleTouchTooltip(
   group: string,
   bindingValue: any,
   options: Required<TooltipOptions>,
+  propsOverrides: DefineTooltipProps,
   isTargetActive: () => boolean,
 ) {
   cancelAwaitingShowTooltip(target)
@@ -261,7 +270,7 @@ function toggleTouchTooltip(
     return
   }
 
-  const displayed = createDisplayedTooltip(target, tooltipId, group, bindingValue, options, isTargetActive)
+  const displayed = createDisplayedTooltip(target, tooltipId, group, bindingValue, options, propsOverrides, isTargetActive)
   showTooltip(group, displayed)
 }
 
@@ -327,7 +336,7 @@ export function defineTooltip<T>(options?: TooltipOptions) {
     ...options
   }
 
-  const vTooltipTarget: Directive<HTMLElement, T, 'instant' | 'interactive'> = {
+  const vTooltipTarget: Directive<HTMLElement, T, 'instant' | 'interactive' | PlacementWithModifiers> = {
     mounted(el, binding) {
       let pointerInside = false
       let focusInside = false
@@ -345,8 +354,15 @@ export function defineTooltip<T>(options?: TooltipOptions) {
         hideDelay: binding.modifiers.instant ? 0 : requiredOptions.hideDelay,
       }
 
+      const propsOverrides: DefineTooltipProps = Object.fromEntries(objectEntries({
+        placement: (() => {
+          for (const variant of placementWithModifiersVariants) if (binding.modifiers[variant]) return variant
+          return undefined
+        })()
+      }).filter(([_, value]) => value !== undefined))
+
       const isActive = () => pointerInside || focusInside
-      const activate = () => onTriggerEnter(el, tooltipId, group, binding.value, overrides, isActive)
+      const activate = () => onTriggerEnter(el, tooltipId, group, binding.value, overrides, propsOverrides, isActive)
       const deactivate = () => onTriggerLeave(el, group, overrides)
 
       const pointerEnter = (event: PointerEvent) => {
@@ -394,7 +410,7 @@ export function defineTooltip<T>(options?: TooltipOptions) {
         resetTouch()
 
         if (shouldToggle) {
-          toggleTouchTooltip(el, tooltipId, group, binding.value, overrides, isActive)
+          toggleTouchTooltip(el, tooltipId, group, binding.value, overrides, propsOverrides, isActive)
         }
       }
 

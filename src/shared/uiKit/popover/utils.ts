@@ -1,11 +1,18 @@
 
-export type Placement =
-  'top' | 'top-start' | 'top-end' |
-  'bottom' | 'bottom-start' | 'bottom-end' |
-  'left' | 'left-start' | 'left-end' |
-  'right' | 'right-start' | 'right-end';
+export const placementVariants = [
+  'top', 'top-start', 'top-end',
+  'bottom', 'bottom-start', 'bottom-end',
+  'left', 'left-start', 'left-end',
+  'right', 'right-start', 'right-end'
+] as const
 
-export type PlacementWithModifiers = Placement | `${Placement}-float`;
+export const placementWithModifiersVariants = [
+  ...placementVariants,
+  ...placementVariants.map(p => `${p}-float` as const)
+] as const
+
+export type Placement = typeof placementVariants[number]
+export type PlacementWithModifiers = typeof placementWithModifiersVariants[number];
 
 export type Params = {
   target: { x: number, y: number, width: number, height: number }
