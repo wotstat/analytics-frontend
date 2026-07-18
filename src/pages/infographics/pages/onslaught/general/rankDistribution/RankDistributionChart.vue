@@ -149,7 +149,7 @@ function selectGroup(items: RankDistributionItem[], event: MouseEvent) {
     border: none;
     border-top: 1px solid rgba(255, 255, 255, 0.15);
     background: transparent;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--text-color, var(--top-color));
     font-size: 13px;
     text-align: center;
     white-space: nowrap;
@@ -159,12 +159,10 @@ function selectGroup(items: RankDistributionItem[], event: MouseEvent) {
 
     &:hover {
       background: color-mix(in srgb, var(--top-color) 8%, transparent);
-      color: rgba(255, 255, 255, 0.9);
     }
 
     &.selected {
       background: color-mix(in srgb, var(--top-color) 12%, transparent);
-      color: rgba(255, 255, 255, 0.95);
     }
   }
 }
