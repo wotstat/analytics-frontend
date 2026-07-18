@@ -4,7 +4,7 @@
       <div class="rank-group" v-for="group in groups" :key="group.rank"
         :style="{ flexGrow: group.items.length, flexBasis: group.width, minWidth: group.width }">
         <div class="bars">
-          <Bar v-for="item in group.items" :key="item.name" :item :maxValue :selected="isSelected(item)"
+          <Bar v-for="(item, index) in group.items" :key="index" :item :maxValue :selected="isSelected(item)"
             :group-hovered="hoveredRank === group.rank" @select="selectItem(item, $event)" />
         </div>
         <button type="button" class="rank-name mt-font"

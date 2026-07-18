@@ -33,8 +33,22 @@ const selectedRegion = ref<'RU' | 'EU' | 'NA' | 'ASIA' | 'CN' | 'CT'>('RU')
 const selectedRankDistributionItems = ref<RankDistributionItem[]>([])
 const seasonInterval = useSeasonInterval(seasons, selectedSeason, selectedRegion)
 
+const leaderboardPlaceholders: RankDistributionItem[] = [
+  ...Array.from({ length: 10 }, (_, name) => ({
+    rank: 'fifth' as const,
+    name,
+    label: '',
+    value: 0,
+  })),
+  ...Array.from({ length: 4 }, (_, name) => ({
+    rank: 'sixth' as const,
+    name,
+    label: '',
+    value: 0,
+  })),
+]
 
-const rankDistributionData = shallowRef<RankDistributionItem[]>([])
+const rankDistributionData = shallowRef<RankDistributionItem[]>(leaderboardPlaceholders)
 
 async function load(abortSignal: AbortSignal, soft = false) {
   if (!seasonInterval.value) return
