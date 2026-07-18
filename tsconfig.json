@@ -29,6 +29,9 @@
     "src/**/*.tsx",
     "src/**/*.vue"
   ],
+  "vueCompilerOptions": {
+    "checkUnknownDirectives": true
+  },
   "references": [
     {
       "path": "./tsconfig.node.json"

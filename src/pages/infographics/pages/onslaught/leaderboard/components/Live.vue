@@ -10,7 +10,6 @@
 import { popoverViewportOffset as viewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import { useAnalyticsRealtime } from '@/shared/external/realtime/useAnalyticsRealtime'
 import { computed, watch } from 'vue'
-import { vTooltip } from '@/shared/uiKit/tooltip/textTooltip'
 
 const props = defineProps<{
   region: string

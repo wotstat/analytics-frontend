@@ -1,10 +1,6 @@
 import { defineComponent, h, render } from 'vue'
-import { defineTooltip, DefineTooltipProps } from './tooltip'
-
-
-type TextTooltipValue = string | DefineTooltipProps & {
-  text: string
-}
+import { defineTooltip } from './tooltip'
+import type { TextTooltipValue } from './types'
 
 
 const TextTooltip = defineComponent({

@@ -9,7 +9,6 @@
 
 
 <script setup lang="ts">
-import { vTooltip } from '@/shared/uiKit/tooltip/textTooltip'
 import { popoverViewportOffset as viewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 
 const props = defineProps<{

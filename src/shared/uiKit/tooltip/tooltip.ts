@@ -1,6 +1,7 @@
-import { DefineComponent, defineComponent, Directive, h, markRaw, onBeforeUnmount, onMounted, onScopeDispose, ref, shallowRef, Slot } from 'vue'
-import { OffsetValue, PlacementParam, PlacementWithModifiers, placementWithModifiersVariants } from '../popover/utils'
+import { DefineComponent, defineComponent, h, markRaw, ObjectDirective, onBeforeUnmount, onMounted, onScopeDispose, ref, shallowRef, Slot } from 'vue'
+import { placementWithModifiersVariants } from '../popover/utils'
 import { objectEntries } from '@vueuse/core'
+import type { DefineTooltipProps, TooltipModifier } from './types'
 
 
 type TooltipOptions = {
@@ -12,13 +13,7 @@ type TooltipOptions = {
   touchBehavior?: 'toggle' | 'disabled'
 }
 
-export type DefineTooltipProps = {
-  offset?: OffsetValue
-  placement?: PlacementParam
-  arrowSize?: number,
-  viewportOffset?: OffsetValue
-  class?: string | Record<string, boolean> | (string | Record<string, boolean>)[]
-}
+export type { DefineTooltipProps } from './types'
 
 const DEFAULT_TOOLTIP_OPTIONS: Required<TooltipOptions> = {
   delay: 300,
@@ -339,7 +334,7 @@ export function defineTooltip<T>(
     ...options
   }
 
-  const vTooltipTarget: Directive<HTMLElement, T, 'instant' | 'interactive' | PlacementWithModifiers> = {
+  const vTooltipTarget: ObjectDirective<HTMLElement, T, TooltipModifier, string> = {
     mounted(el, binding) {
       let pointerInside = false
       let focusInside = false
