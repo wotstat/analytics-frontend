@@ -3,7 +3,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import { router } from './routes'
 import { setup as setupYmMetrika } from './shared/external/ym/metrika'
-import { vTooltip } from './shared/uiKit/tooltip/textTooltip'
+import { vTextTooltip } from './shared/ui/tooltip/textTooltip'
 
 import {
   Chart as ChartJS,
@@ -24,7 +24,7 @@ console.log(`WotStat front start in **${import.meta.env.MODE}** mode`)
 
 createApp(App)
   .use(router)
-  .directive('tooltip', vTooltip)
+  .directive('tooltip', vTextTooltip)
   .mount('#app')
 
 setupYmMetrika({

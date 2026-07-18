@@ -1,13 +1,12 @@
 <template>
   <div class="live" v-if="lastUpdate.data && lastUpdate.status.value == 'OPEN' && liveUpdate"
-    v-tooltip.instant.bottom-float="{ class: 'comp7-tooltip', text: 'Таблица автоматически синхронизируется с сервером', viewportOffset }">
+    v-tooltip.instant.bottom-float="{ class: 'comp7-tooltip', text: 'Таблица автоматически синхронизируется с сервером' }">
     {{ liveUpdate.text }}
   </div>
 </template>
 
 
 <script setup lang="ts">
-import { popoverViewportOffset as viewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import { useAnalyticsRealtime } from '@/shared/external/realtime/useAnalyticsRealtime'
 import { computed, watch } from 'vue'
 
