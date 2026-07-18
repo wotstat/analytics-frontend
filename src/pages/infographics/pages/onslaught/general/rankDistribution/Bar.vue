@@ -1,8 +1,7 @@
 <template>
   <button type="button" class="distribution-bar mt-font"
     :class="[`rank-${props.item.rank}`, { selected: props.selected, 'group-hovered': props.groupHovered }]"
-    :aria-label="`${props.item.name}: ${formattedValue} игроков`" :aria-pressed="props.selected"
-    @click="emit('select', $event)">
+    :aria-label="`${label}: ${formattedValue} игроков`" :aria-pressed="props.selected" @click="emit('select', $event)">
     <div class="bar" :style="{ height: `${height}%` }">
       <div class="shadow"></div>
       <Transition name="selection-lines" :duration="{ enter: 300, leave: 200 }">
@@ -14,7 +13,7 @@
         </div>
       </Transition>
     </div>
-    <div class="name">{{ props.item.name }}</div>
+    <div class="name">{{ label }}</div>
   </button>
 </template>
 
@@ -32,6 +31,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   'select': [MouseEvent]
 }>()
+
+const label = computed(() => props.item.label ?? props.item.name)
 
 const height = computed(() => {
   if (props.maxValue <= 0) return 0
