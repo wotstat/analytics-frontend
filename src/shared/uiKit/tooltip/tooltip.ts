@@ -12,7 +12,7 @@ type TooltipOptions = {
   touchBehavior?: 'toggle' | 'disabled'
 }
 
-type DefineTooltipProps = {
+export type DefineTooltipProps = {
   offset?: OffsetValue
   placement?: PlacementParam
   arrowSize?: number,
@@ -302,7 +302,10 @@ const handlers = new WeakMap<HTMLElement, TooltipHandlers>()
 let defaultGroupCounter = 0
 const TOUCH_MOVE_THRESHOLD = 8
 
-export function defineTooltip<T>(options?: TooltipOptions) {
+export function defineTooltip<T>(
+  options?: TooltipOptions,
+  propsFromBindingValue?: (value: T) => DefineTooltipProps
+) {
 
   const tooltipId = Symbol('tooltipId')
 
@@ -354,10 +357,12 @@ export function defineTooltip<T>(options?: TooltipOptions) {
         hideDelay: binding.modifiers.instant ? 0 : requiredOptions.hideDelay,
       }
 
+      const propsFromValue = propsFromBindingValue?.(binding.value) ?? {}
       const propsOverrides: DefineTooltipProps = Object.fromEntries(objectEntries({
+        ...propsFromValue,
         placement: (() => {
           for (const variant of placementWithModifiersVariants) if (binding.modifiers[variant]) return variant
-          return undefined
+          return propsFromValue.placement
         })()
       }).filter(([_, value]) => value !== undefined))
 

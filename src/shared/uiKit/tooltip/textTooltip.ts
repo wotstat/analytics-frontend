@@ -1,5 +1,10 @@
 import { defineComponent, h, render } from 'vue'
-import { defineTooltip } from './tooltip'
+import { defineTooltip, DefineTooltipProps } from './tooltip'
+
+
+type TextTooltipValue = string | DefineTooltipProps & {
+  text: string
+}
 
 
 const TextTooltip = defineComponent({
@@ -25,11 +30,16 @@ const TextTooltip = defineComponent({
   }
 })
 
-const { DefineTooltip, vTooltipTarget } = defineTooltip<string>()
+const { DefineTooltip, vTooltipTarget } = defineTooltip<TextTooltipValue>(
+  undefined,
+  value => typeof value === 'string' ? {} : value
+)
 const definitionContainer = document.createElement('div')
 
 render(h(DefineTooltip, { arrowSize: 7, offset: 7 }, {
-  default: (text: string) => h(TextTooltip, { text })
+  default: (value: TextTooltipValue) => h(TextTooltip, {
+    text: typeof value === 'string' ? value : value.text
+  })
 }), definitionContainer)
 
 export { vTooltipTarget as vTooltip }

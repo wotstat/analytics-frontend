@@ -1,27 +1,16 @@
 <template>
-  <div class="live" v-if="lastUpdate.data && lastUpdate.status.value == 'OPEN' && liveUpdate" v-tooltip-target.instant>
+  <div class="live" v-if="lastUpdate.data && lastUpdate.status.value == 'OPEN' && liveUpdate"
+    v-tooltip.instant.bottom-float="{ class: 'comp7-tooltip', text: 'Таблица автоматически синхронизируется с сервером', viewportOffset }">
     {{ liveUpdate.text }}
   </div>
-
-  <DefineTooltip :offset="{ top: 7 }" :placement="['bottom-float']" :arrow-size="7"
-    :viewport-offset="popoverViewportOffset" :class="'comp7-tooltip'">
-    <div class="tooltip">
-      Таблица автоматически синхронизируется с сервером
-    </div>
-  </DefineTooltip>
-
 </template>
 
 
 <script setup lang="ts">
-import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
+import { popoverViewportOffset as viewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import { useAnalyticsRealtime } from '@/shared/external/realtime/useAnalyticsRealtime'
-import { defineTooltip } from '@/shared/uiKit/tooltip/tooltip'
 import { computed, watch } from 'vue'
-
-
-const { DefineTooltip, vTooltipTarget } = defineTooltip()
-
+import { vTooltip } from '@/shared/uiKit/tooltip/textTooltip'
 
 const props = defineProps<{
   region: string
