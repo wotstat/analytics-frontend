@@ -10,7 +10,8 @@
       </div>
       <hr class="separator">
 
-      <RankDistributionChart class="rank-distribution-chart" :data="rankDistributionData" />
+      <RankDistributionChart class="rank-distribution-chart" :data="rankDistributionData"
+        v-model:selected="selectedRankDistributionItems" />
     </section>
   </div>
 </template>
@@ -24,6 +25,7 @@ import type { RankDistributionItem } from './rankDistribution/types'
 const seasons = ref<{ region: string, season: string, start: string }[]>([])
 const selectedSeason = ref<string | null>(null)
 const selectedRegion = ref<'RU' | 'EU' | 'NA' | 'ASIA' | 'CN' | 'CT'>('RU')
+const selectedRankDistributionItems = ref<RankDistributionItem[]>([])
 
 const randomValue = (min: number, max: number) => Math.round(min + Math.random() * (max - min))
 const divisionLetters = ['E', 'D', 'C', 'B', 'A'] as const
