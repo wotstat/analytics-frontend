@@ -3,6 +3,7 @@
 
     <template #sidebar>
       <div class="sticky-sidebar router-links">
+        <!-- <QueryPreserveRouterLink to="/onslaught/general">Общее</QueryPreserveRouterLink> -->
         <QueryPreserveRouterLink to="/onslaught/personal">Статистика</QueryPreserveRouterLink>
         <QueryPreserveRouterLink to="/onslaught/leaderboard">Таблица лидеров</QueryPreserveRouterLink>
       </div>
@@ -27,6 +28,7 @@ import { setFeatureVisit } from '@/shared/uiKit/newFeatureBadge/newFeatureBadge'
 import { RouterView } from 'vue-router'
 
 const links: SidebarLink[] = [
+  // { to: '/onslaught/general', labels: 'Общее' },
   { to: '/onslaught/personal', labels: 'Персональная' },
   { to: '/onslaught/leaderboard', labels: 'Таблица лидеров' },
 ]

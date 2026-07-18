@@ -49,87 +49,11 @@ const leaderboardPosition = computed(() => {
 
 
 <style lang="scss" scoped>
+@use '../../shared/rankColors.scss' as *;
+
 .bar {
-
-  --top-color: #ffb86c;
-  --background: linear-gradient(-45deg, #ffb86c7e 0%, #ff8c0071 100%);
-  --hover-background: linear-gradient(-45deg, #ffb86c9e 0%, #ff8c0091 100%);
-  --selected-background: linear-gradient(-45deg, #fff0df 0%, #ff8c0091 100%);
-  --shadow-color: linear-gradient(0deg, #ffb86c12 0%, #ffb86c00 100%);
-  --selected-line: #ffd6a4;
-  --selected-line-shadow: #ffac46;
+  @include rank-color-scheme;
   touch-action: manipulation;
-
-  &.rank-qual {
-    --top-color: #7275b1;
-    --text-color: #b2b6ff;
-    --background: linear-gradient(-10deg, #13141f25 0%, #353858 100%);
-    --hover-background: linear-gradient(-10deg, #3f468331 0%, #353858 100%);
-    --selected-background: linear-gradient(-45deg, #d9dcff 0%, #353858 100%);
-    --shadow-color: linear-gradient(0deg, #454b8e16 0%, #35385800 100%);
-    --selected-line: #ffffff;
-    --selected-line-shadow: #454b8e;
-  }
-
-  &.rank-first {
-    --top-color: #b3b3b3;
-    --background: linear-gradient(-10deg, #69696925 0%, #595959 100%);
-    --hover-background: linear-gradient(-10deg, #85858531 0%, #858585 100%);
-    --selected-background: linear-gradient(-45deg, #ffffff 0%, #858585 100%);
-    --shadow-color: linear-gradient(0deg, #85858516 0%, #85858500 100%);
-    --selected-line: #ffffff;
-    --selected-line-shadow: #858585;
-  }
-
-  &.rank-second {
-    --top-color: #ffd5ac;
-    --background: linear-gradient(-10deg, #cd803225 0%, #c4711e 100%);
-    --hover-background: linear-gradient(-10deg, #dc985448 0%, #cd7f32 100%);
-    --selected-background: linear-gradient(-45deg, #fff6ed 0%, #cd7f32 100%);
-    --shadow-color: linear-gradient(0deg, #cd7f3216 0%, #cd7f3200 100%);
-    --selected-line: #ffffff;
-    --selected-line-shadow: #cd7f32;
-  }
-
-  &.rank-third {
-    --top-color: #ffffff;
-    --background: linear-gradient(-10deg, #d2d2d223 0%, #d2d2d2 100%);
-    --hover-background: linear-gradient(-10deg, #a4a4a45d 0%, #d2d2d2 100%);
-    --selected-background: linear-gradient(-45deg, #ffffff 0%, #d2d2d2 100%);
-    --shadow-color: linear-gradient(0deg, #d2d2d216 0%, #d2d2d200 100%);
-    --selected-line: #ffffff;
-    --selected-line-shadow: #d2d2d2;
-  }
-
-  &.rank-fourth {
-    --top-color: #fff2b4;
-    --background: linear-gradient(-10deg, #ffe88a37 0%, #FFD700c7 100%);
-    --hover-background: linear-gradient(-10deg, #fff3b965 0%, #FFD700c7 100%);
-    --selected-background: linear-gradient(-45deg, #ffffff 0%, #ffd738 100%);
-    --shadow-color: linear-gradient(0deg, #ffd70016 0%, #ffd90000 100%);
-    --selected-line: #ffffff;
-    --selected-line-shadow: #ffbc04;
-  }
-
-  &.rank-fifth {
-    --top-color: #dceeff;
-    --background: linear-gradient(-10deg, #419dff37 0%, #63afff 100%);
-    --hover-background: linear-gradient(-10deg, #8bc1ff76 0%, #419dff 100%);
-    --selected-background: linear-gradient(-45deg, #ffffff 0%, #419dff 100%);
-    --shadow-color: linear-gradient(0deg, #419dff23 0%, #419dff00 100%);
-    --selected-line: #dff2ff;
-    --selected-line-shadow: #419dff;
-  }
-
-  &.rank-sixth {
-    --top-color: #f0baff;
-    --background: linear-gradient(-10deg, #b357cd37 0%, #be25e9 100%);
-    --hover-background: linear-gradient(-10deg, #bf6bd676 0%, #be25e9 100%);
-    --selected-background: linear-gradient(-45deg, #ffffff 0%, #cd47f1 100%);
-    --shadow-color: linear-gradient(0deg, #be1dea23 0%, #be25e900 100%);
-    --selected-line: #f5d2ff;
-    --selected-line-shadow: #c50bf9;
-  }
 }
 
 .bar {

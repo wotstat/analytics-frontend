@@ -8,6 +8,7 @@
 - Обёртки: `src/pages/infographics/shared/widgets/charts/MiniBar.vue`, `MiniPie.vue` — принимают `status: Status`, `data`, `color` (имя из палитры), `labels`, `callbacks` (тултипы chart.js).
 - `ShadowBarController.ts`, `ShadowLineController.ts`, `ShadowPieController.ts` — кастомные контроллеры chart.js, рисующие «свечение» (shadow/bloom) под данными; цвета — `pages/infographics/shared/bloomColors.ts`.
 - `src/shared/ui/chart/VueChartRenderManager.ts` — менеджер перерисовки.
+- `pages/infographics/pages/onslaught/general/rankDistribution/` — специализированный flex-график распределения игроков по рангам. Общая с дневным графиком цветовая схема рангов вынесена в `onslaught/shared/rankColors.scss`.
 
 ## UniversalChart (`src/shared/uiKit/chart/universalChart/`)
 

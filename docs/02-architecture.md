@@ -13,7 +13,7 @@
 | --- | --- | --- |
 | `/` | `pages/Main.vue` | Главная-лендинг |
 | `/session` + дети | `pages/infographics/Index.vue` | Личная сессионная статистика (лейаут с сайдбаром и фильтрами). Дети: `''`→Battle, `shots`, `damage`, `results`, `maps`, `players`(Coverage), `chuck-norris-tournament`, `distribution`, `lootbox`, `onslaught`, `onslaught-leaderboard`, `widgets/:widget*` |
-| `/onslaught` + дети | `onslaught/Layout.vue` | Публичная статистика Натиска: `leaderboard`, `personal` |
+| `/onslaught` + дети | `onslaught/Layout.vue` | Публичная статистика Натиска: `general`, `leaderboard`, `personal` |
 | `/replays` + дети | `pages/replays/Index.vue` | Реплеи: поиск (``), локальный анализатор (`analyze`), мои (`my`) |
 | `/bb25` | `services/bob25` | «Битва Блогеров 2025» — ивент-дашборд |
 | `/mt-36-1` | `services/mt36.1` | Сравнение техники патча МТ 36.1 |

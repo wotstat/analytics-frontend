@@ -1,5 +1,11 @@
 {
   "ru": {
+    "rank:first": "Железо",
+    "rank:second": "Бронза",
+    "rank:third": "Серебро",
+    "rank:fourth": "Золото",
+    "rank:fifth": "Чемпион",
+    "rank:sixth": "Легенда",
     "season:ru:comp7_5_2": "Ледяной тигр",
     "season:ru:comp7_5_3": "Грозовой тигр",
     "season:ct:comp7_5_3": "Грозовой тигр",
