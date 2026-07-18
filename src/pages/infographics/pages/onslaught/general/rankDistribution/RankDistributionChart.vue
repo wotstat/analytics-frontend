@@ -108,7 +108,7 @@ function selectGroup(items: RankDistributionItem[], event: MouseEvent) {
 @use '../../shared/rankColors.scss' as *;
 
 .chart {
-  height: 300px;
+  height: 380px;
   overflow-x: auto;
   padding-bottom: 10px;
   position: relative;
@@ -121,7 +121,7 @@ function selectGroup(items: RankDistributionItem[], event: MouseEvent) {
 .groups {
   display: flex;
   align-items: stretch;
-  gap: 12px;
+  gap: 2px;
   height: 100%;
   min-width: 100%;
   width: max-content;
