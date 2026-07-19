@@ -63,7 +63,7 @@ function tryCollapseSixthTail(items: RankDistributionItem[]): RankDistributionIt
       ...items.slice(0, tailStart),
       {
         ...firstTailItem,
-        label: `>${Number(firstTailItem.name) - LEADERBOARD_STEP}`,
+        label: `${Number(firstTailItem.name) - LEADERBOARD_STEP}+`,
         value: tailValue,
         ratingInterval: [
           firstTailItem.ratingInterval?.[0] ?? Number(firstTailItem.name),
