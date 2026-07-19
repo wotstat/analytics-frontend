@@ -292,9 +292,6 @@ type TooltipHandlers = {
   pointerMove: (event: PointerEvent) => void
   pointerUp: (event: PointerEvent) => void
   pointerCancel: (event: PointerEvent) => void
-  keyDown: () => void
-  focusIn: () => void
-  focusOut: (event: FocusEvent) => void
   update: (bindingValue: any) => void
   cleanup: () => void
 }
@@ -343,8 +340,6 @@ export function defineTooltip<T>(
   const vTooltipTarget: ObjectDirective<HTMLElement, T, TooltipModifier, string> = {
     mounted(el, binding) {
       let pointerInside = false
-      let focusInside = false
-      let suppressTouchFocus = false
       let touchPointerId: number | null = null
       let touchStart = { x: 0, y: 0 }
       let touchMoved = false
@@ -378,7 +373,7 @@ export function defineTooltip<T>(
       let bindingValue = binding.value
       let { target, propsOverrides } = resolveBindingProps(bindingValue)
 
-      const isActive = () => pointerInside || focusInside
+      const isActive = () => pointerInside
       const activate = () => onTriggerEnter(el, target ?? el, tooltipId, group, bindingValue, overrides, propsOverrides, isActive)
       const deactivate = () => onTriggerLeave(el, group, overrides)
       const update = (value: T) => {
@@ -393,22 +388,20 @@ export function defineTooltip<T>(
       const pointerEnter = (event: PointerEvent) => {
         if (event.pointerType === 'touch') return
 
-        const wasActive = pointerInside || focusInside
         pointerInside = true
-        if (!wasActive) activate()
+        activate()
       }
 
       const pointerLeave = (event: PointerEvent) => {
         if (event.pointerType === 'touch') return
 
         pointerInside = false
-        if (!focusInside) deactivate()
+        deactivate()
       }
 
       const pointerDown = (event: PointerEvent) => {
         if (event.pointerType !== 'touch') return
 
-        suppressTouchFocus = true
         if (overrides.touchBehavior === 'disabled') return
 
         touchPointerId = event.pointerId
@@ -443,30 +436,6 @@ export function defineTooltip<T>(
         if (event.pointerType === 'touch' && event.pointerId === touchPointerId) resetTouch()
       }
 
-      const keyDown = () => {
-        suppressTouchFocus = false
-      }
-
-      const focusIn = () => {
-        if (suppressTouchFocus) return
-
-        const wasActive = pointerInside || focusInside
-        focusInside = true
-        if (!wasActive) activate()
-      }
-
-      const focusOut = (event: FocusEvent) => {
-        if (suppressTouchFocus) {
-          suppressTouchFocus = false
-          return
-        }
-
-        if (event.relatedTarget instanceof Node && el.contains(event.relatedTarget)) return
-
-        focusInside = false
-        if (!pointerInside) deactivate()
-      }
-
       const cleanup = () => cleanupTrigger(el, group)
 
       el.addEventListener('pointerenter', pointerEnter)
@@ -475,9 +444,6 @@ export function defineTooltip<T>(
       el.addEventListener('pointermove', pointerMove)
       el.addEventListener('pointerup', pointerUp)
       el.addEventListener('pointercancel', pointerCancel)
-      el.addEventListener('keydown', keyDown)
-      el.addEventListener('focusin', focusIn)
-      el.addEventListener('focusout', focusOut)
 
       handlers.set(el, {
         pointerEnter,
@@ -486,9 +452,6 @@ export function defineTooltip<T>(
         pointerMove,
         pointerUp,
         pointerCancel,
-        keyDown,
-        focusIn,
-        focusOut,
         update,
         cleanup,
       })
@@ -505,9 +468,6 @@ export function defineTooltip<T>(
         el.removeEventListener('pointermove', handler.pointerMove)
         el.removeEventListener('pointerup', handler.pointerUp)
         el.removeEventListener('pointercancel', handler.pointerCancel)
-        el.removeEventListener('keydown', handler.keyDown)
-        el.removeEventListener('focusin', handler.focusIn)
-        el.removeEventListener('focusout', handler.focusOut)
         handler.cleanup()
         handlers.delete(el)
       }
