@@ -387,7 +387,7 @@ export function defineTooltip<T>(
         target = resolved.target
         propsOverrides = resolved.propsOverrides
 
-        if (displayedTooltips.value.get(group)?.trigger === el) activate()
+        if (isActive() && displayedTooltips.value.get(group)?.trigger === el) activate()
       }
 
       const pointerEnter = (event: PointerEvent) => {
