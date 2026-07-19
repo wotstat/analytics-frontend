@@ -15,7 +15,11 @@ export type DefineTooltipProps = {
   class?: string | Record<string, boolean> | (string | Record<string, boolean>)[]
 }
 
-export type TextTooltipValue = string | DefineTooltipProps & {
+export type TooltipBindingProps = DefineTooltipProps & {
+  target?: HTMLElement | null
+}
+
+export type TextTooltipValue = string | TooltipBindingProps & {
   text: string
 }
 

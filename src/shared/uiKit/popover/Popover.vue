@@ -190,5 +190,6 @@ const arrowProps = computed(() => {
   top: 0px;
   left: 0px;
   margin: 0px;
+  pointer-events: none;
 }
 </style>

@@ -8,9 +8,9 @@
             :group-hovered="hoveredRank === group.rank" @select="selectItem(item, $event)" />
         </div>
         <button type="button" class="rank-name mt-font"
-          :class="[`rank-${group.rank}`, { selected: isGroupSelected(group.items) }]"
-          :aria-pressed="isGroupSelected(group.items)" @mouseenter="hoveredRank = group.rank"
-          @mouseleave="hoveredRank = null" @click="selectGroup(group.items, $event)">
+          :class="{ selected: isGroupSelected(group.items), [`rank-${group.rank}`]: true }"
+          @mouseenter="hoveredRank = group.rank" @mouseleave="hoveredRank = null"
+          @click="selectGroup(group.items, $event)">
           {{ t(`rank:${group.rank}`) }}
         </button>
       </div>

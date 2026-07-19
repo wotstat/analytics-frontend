@@ -25,5 +25,12 @@ export const vTextTooltip: typeof vTooltip = {
       ...binding,
       value: withDefaultViewportOffset(binding.value)
     }, vnode, prevVNode)
+  },
+
+  updated(el, binding, vnode, prevVNode) {
+    vTooltip.updated?.(el, {
+      ...binding,
+      value: withDefaultViewportOffset(binding.value)
+    }, vnode, prevVNode)
   }
 }

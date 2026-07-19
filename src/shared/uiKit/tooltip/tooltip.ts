@@ -1,7 +1,7 @@
 import { DefineComponent, defineComponent, h, markRaw, ObjectDirective, onBeforeUnmount, onMounted, onScopeDispose, ref, shallowRef, Slot } from 'vue'
 import { placementWithModifiersVariants } from '../popover/utils'
 import { objectEntries } from '@vueuse/core'
-import type { DefineTooltipProps, TooltipModifier } from './types'
+import type { DefineTooltipProps, TooltipBindingProps, TooltipModifier } from './types'
 
 
 type TooltipOptions = {
@@ -32,6 +32,7 @@ export type TooltipDefinition = {
 
 const registeredTooltips = new Map<Symbol, TooltipDefinition>()
 export type DisplayedTooltip = {
+  trigger: HTMLElement,
   target: HTMLElement,
   component: DefineComponent,
   options: Required<TooltipOptions>,
@@ -54,12 +55,12 @@ const awaitingShowTooltips = new Map<HTMLElement, AwaitingShowTooltip>()
 const awaitingHideTooltips = new Map<string, AwaitingHideTooltip>()
 const tooltipPopupActivity = new WeakMap<DisplayedTooltip, () => boolean>()
 
-function cancelAwaitingShowTooltip(target: HTMLElement) {
-  const awaiting = awaitingShowTooltips.get(target)
+function cancelAwaitingShowTooltip(trigger: HTMLElement) {
+  const awaiting = awaitingShowTooltips.get(trigger)
   if (!awaiting) return
 
   clearTimeout(awaiting.timeoutId)
-  awaitingShowTooltips.delete(target)
+  awaitingShowTooltips.delete(trigger)
 }
 
 function cancelAwaitingHideTooltip(group: string, displayed?: DisplayedTooltip) {
@@ -79,23 +80,23 @@ export function closeTooltip(group: string) {
   const displayed = displayedTooltips.value.get(group)
   if (!displayed) return
 
-  cancelAwaitingShowTooltip(displayed.target)
+  cancelAwaitingShowTooltip(displayed.trigger)
   cancelAwaitingHideTooltip(group)
   displayedTooltips.value.delete(group)
 }
 
-function scheduleTooltipShow(target: HTMLElement, group: string, displayed: DisplayedTooltip, delay: number) {
-  cancelAwaitingShowTooltip(target)
+function scheduleTooltipShow(trigger: HTMLElement, group: string, displayed: DisplayedTooltip, delay: number) {
+  cancelAwaitingShowTooltip(trigger)
 
   const timeoutId = setTimeout(() => {
-    const awaiting = awaitingShowTooltips.get(target)
+    const awaiting = awaitingShowTooltips.get(trigger)
     if (!awaiting || awaiting.timeoutId !== timeoutId || awaiting.displayed !== displayed) return
 
-    awaitingShowTooltips.delete(target)
+    awaitingShowTooltips.delete(trigger)
     showTooltip(group, displayed)
   }, delay)
 
-  awaitingShowTooltips.set(target, { timeoutId, displayed })
+  awaitingShowTooltips.set(trigger, { timeoutId, displayed })
 }
 
 function scheduleTooltipHide(group: string, displayed: DisplayedTooltip, delay: number) {
@@ -115,7 +116,7 @@ function scheduleTooltipHide(group: string, displayed: DisplayedTooltip, delay: 
 }
 
 function keepTooltipOpen(group: string, displayed: DisplayedTooltip) {
-  if (!displayed.target.isConnected) return
+  if (!displayed.trigger.isConnected || !displayed.target.isConnected) return
 
   const current = displayedTooltips.value.get(group)
   if (current && current !== displayed) return
@@ -125,13 +126,14 @@ function keepTooltipOpen(group: string, displayed: DisplayedTooltip) {
 }
 
 function createDisplayedTooltip(
+  trigger: HTMLElement,
   target: HTMLElement,
   tooltipId: Symbol,
   group: string,
   bindingValue: any,
   options: Required<TooltipOptions>,
   propsOverrides: DefineTooltipProps,
-  isTargetActive: () => boolean,
+  isTriggerActive: () => boolean,
 ) {
   let displayed: DisplayedTooltip
   let pointerInside = false
@@ -146,7 +148,7 @@ function createDisplayedTooltip(
       let mountedElement: HTMLElement | null = null
 
       const requestHide = () => {
-        if (pointerInside || focusInside || isTargetActive()) return
+        if (pointerInside || focusInside || isTriggerActive()) return
         scheduleTooltipHide(group, displayed, options.interactiveHideDelay)
       }
 
@@ -203,6 +205,7 @@ function createDisplayedTooltip(
   }) as DefineComponent & { new(): { $slots: { default(props: any): any } } }
 
   displayed = markRaw({
+    trigger,
     target,
     options: options,
     props: {
@@ -217,31 +220,32 @@ function createDisplayedTooltip(
 }
 
 function onTriggerEnter(
+  trigger: HTMLElement,
   target: HTMLElement,
   tooltipId: Symbol,
   group: string,
   bindingValue: any,
   options: Required<TooltipOptions>,
   propsOverrides: DefineTooltipProps,
-  isTargetActive: () => boolean,
+  isTriggerActive: () => boolean,
 ) {
-  const displayed = createDisplayedTooltip(target, tooltipId, group, bindingValue, options, propsOverrides, isTargetActive)
+  const displayed = createDisplayedTooltip(trigger, target, tooltipId, group, bindingValue, options, propsOverrides, isTriggerActive)
 
-  cancelAwaitingShowTooltip(target)
+  cancelAwaitingShowTooltip(trigger)
   cancelAwaitingHideTooltip(group)
 
   if (displayedTooltips.value.has(group)) {
     showTooltip(group, displayed)
   } else {
-    scheduleTooltipShow(target, group, displayed, options.delay)
+    scheduleTooltipShow(trigger, group, displayed, options.delay)
   }
 }
 
-function onTriggerLeave(target: HTMLElement, group: string, options: Required<TooltipOptions>) {
-  cancelAwaitingShowTooltip(target)
+function onTriggerLeave(trigger: HTMLElement, group: string, options: Required<TooltipOptions>) {
+  cancelAwaitingShowTooltip(trigger)
 
   const displayed = displayedTooltips.value.get(group)
-  if (displayed?.target !== target) return
+  if (displayed?.trigger !== trigger) return
   if (options.interactive && tooltipPopupActivity.get(displayed)?.()) return
 
   const delay = options.interactive ? options.interactiveDelay : options.hideDelay
@@ -249,31 +253,32 @@ function onTriggerLeave(target: HTMLElement, group: string, options: Required<To
 }
 
 function toggleTouchTooltip(
+  trigger: HTMLElement,
   target: HTMLElement,
   tooltipId: Symbol,
   group: string,
   bindingValue: any,
   options: Required<TooltipOptions>,
   propsOverrides: DefineTooltipProps,
-  isTargetActive: () => boolean,
+  isTriggerActive: () => boolean,
 ) {
-  cancelAwaitingShowTooltip(target)
+  cancelAwaitingShowTooltip(trigger)
 
   const current = displayedTooltips.value.get(group)
-  if (current?.target === target) {
+  if (current?.trigger === trigger) {
     closeTooltip(group)
     return
   }
 
-  const displayed = createDisplayedTooltip(target, tooltipId, group, bindingValue, options, propsOverrides, isTargetActive)
+  const displayed = createDisplayedTooltip(trigger, target, tooltipId, group, bindingValue, options, propsOverrides, isTriggerActive)
   showTooltip(group, displayed)
 }
 
-function cleanupTrigger(target: HTMLElement, group: string) {
-  cancelAwaitingShowTooltip(target)
+function cleanupTrigger(trigger: HTMLElement, group: string) {
+  cancelAwaitingShowTooltip(trigger)
 
   const displayed = displayedTooltips.value.get(group)
-  if (displayed?.target !== target) return
+  if (displayed?.trigger !== trigger) return
 
   cancelAwaitingHideTooltip(group, displayed)
   displayedTooltips.value.delete(group)
@@ -290,6 +295,7 @@ type TooltipHandlers = {
   keyDown: () => void
   focusIn: () => void
   focusOut: (event: FocusEvent) => void
+  update: (bindingValue: any) => void
   cleanup: () => void
 }
 
@@ -299,7 +305,7 @@ const TOUCH_MOVE_THRESHOLD = 8
 
 export function defineTooltip<T>(
   options?: TooltipOptions,
-  propsFromBindingValue?: (value: T) => DefineTooltipProps
+  propsFromBindingValue?: (value: T) => TooltipBindingProps
 ) {
 
   const tooltipId = Symbol('tooltipId')
@@ -352,18 +358,37 @@ export function defineTooltip<T>(
         hideDelay: binding.modifiers.instant ? 0 : requiredOptions.hideDelay,
       }
 
-      const propsFromValue = propsFromBindingValue?.(binding.value) ?? {}
-      const propsOverrides: DefineTooltipProps = Object.fromEntries(objectEntries({
-        ...propsFromValue,
-        placement: (() => {
-          for (const variant of placementWithModifiersVariants) if (binding.modifiers[variant]) return variant
-          return propsFromValue.placement
-        })()
-      }).filter(([_, value]) => value !== undefined))
+      const resolveBindingProps = (value: T) => {
+        const {
+          target,
+          ...propsFromValue
+        } = propsFromBindingValue?.(value) ?? {}
+
+        const propsOverrides: DefineTooltipProps = Object.fromEntries(objectEntries({
+          ...propsFromValue,
+          placement: (() => {
+            for (const variant of placementWithModifiersVariants) if (binding.modifiers[variant]) return variant
+            return propsFromValue.placement
+          })()
+        }).filter(([_, value]) => value !== undefined))
+
+        return { target, propsOverrides }
+      }
+
+      let bindingValue = binding.value
+      let { target, propsOverrides } = resolveBindingProps(bindingValue)
 
       const isActive = () => pointerInside || focusInside
-      const activate = () => onTriggerEnter(el, tooltipId, group, binding.value, overrides, propsOverrides, isActive)
+      const activate = () => onTriggerEnter(el, target ?? el, tooltipId, group, bindingValue, overrides, propsOverrides, isActive)
       const deactivate = () => onTriggerLeave(el, group, overrides)
+      const update = (value: T) => {
+        bindingValue = value
+        const resolved = resolveBindingProps(value)
+        target = resolved.target
+        propsOverrides = resolved.propsOverrides
+
+        if (displayedTooltips.value.get(group)?.trigger === el) activate()
+      }
 
       const pointerEnter = (event: PointerEvent) => {
         if (event.pointerType === 'touch') return
@@ -410,7 +435,7 @@ export function defineTooltip<T>(
         resetTouch()
 
         if (shouldToggle) {
-          toggleTouchTooltip(el, tooltipId, group, binding.value, overrides, propsOverrides, isActive)
+          toggleTouchTooltip(el, target ?? el, tooltipId, group, bindingValue, overrides, propsOverrides, isActive)
         }
       }
 
@@ -464,8 +489,12 @@ export function defineTooltip<T>(
         keyDown,
         focusIn,
         focusOut,
+        update,
         cleanup,
       })
+    },
+    updated(el, binding) {
+      handlers.get(el)?.update(binding.value)
     },
     unmounted(el) {
       const handler = handlers.get(el)

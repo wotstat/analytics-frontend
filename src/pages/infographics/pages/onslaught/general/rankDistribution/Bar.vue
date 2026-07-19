@@ -1,9 +1,10 @@
 <template>
-  <button type="button" class="distribution-bar mt-font"
-    :class="[`rank-${props.item.rank}`, { selected: props.selected, 'group-hovered': props.groupHovered }]"
-    :aria-label="`${label}: ${formattedValue} игроков`" :aria-pressed="props.selected" @click="emit('select', $event)">
-    <div class="bar" :style="{ height: `${height}%` }">
-      <div class="shadow"></div>
+  <button type="button" class="distribution-bar mt-font" @click="emit('select', $event)" :class="{
+    selected: props.selected,
+    [`rank-${props.item.rank}`]: true,
+    'group-hovered': props.groupHovered
+  }" v-tooltip.instant="{ text: `${label}: ${formattedValue} игроков`, class: 'comp7-tooltip', target: bar }">
+    <div class="bar" :style="{ height: `${height}%` }" ref="bar">
       <Transition name="selection-lines" :duration="{ enter: 300, leave: 200 }">
         <div class="selection-box" v-if="props.selected">
           <div class="line left-line vertical"></div>
@@ -18,8 +19,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import type { RankDistributionItem } from './types'
+
+const bar = useTemplateRef('bar')
 
 const props = defineProps<{
   item: RankDistributionItem
@@ -95,16 +98,6 @@ const formattedValue = computed(() => props.item.value.toLocaleString('ru-RU'))
     }
   }
 
-  .shadow {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: -30px;
-    height: 30px;
-    background: var(--shadow-color);
-    pointer-events: none;
-  }
-
   .selection-box {
     position: absolute;
     inset: 0;
@@ -114,6 +107,7 @@ const formattedValue = computed(() => props.item.value.toLocaleString('ru-RU'))
     .line {
       position: absolute;
       background: var(--selected-line);
+      box-shadow: 0 0 5px var(--selected-line-shadow);
     }
 
     .horizontal {

@@ -83,6 +83,10 @@ $background-color: var(--popover-background-color, #2a2a2a);
 $border-color: var(--popover-border-color, #444);
 $animation-offset: var(--animation-transition-offset, 3px);
 
+.popover-card {
+  pointer-events: auto;
+}
+
 .popover-card:not(.arrow-disabled) {
   &::after {
     content: '';
