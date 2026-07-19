@@ -2,7 +2,8 @@
   <button type="button" class="distribution-bar mt-font" @click="emit('select', $event)" :class="{
     selected: props.selected,
     [`rank-${props.item.rank}`]: true,
-    'group-hovered': props.groupHovered
+    'group-hovered': props.groupHovered,
+    'numeric-name': typeof props.item.name === 'number'
   }" v-rank-distribution-tooltip:rank-bar-distribution.instant.top-float="tooltip">
     <div class="bar" :style="{ height: `${height}%` }" ref="bar">
       <div class="shadow"></div>
@@ -15,7 +16,7 @@
         </div>
       </Transition>
     </div>
-    <div class="name">{{ label }}</div>
+    <div class="name mt-font">{{ label }}</div>
   </button>
 </template>
 
@@ -85,7 +86,7 @@ const tooltip = computed<RankDistributionTooltipProps>(() => ({
   height: 100%;
   min-width: 15px;
   max-width: 36px;
-  padding: 0 0 20px;
+  padding: 0 0 22px;
   box-sizing: border-box;
   border: none;
   background: none;
@@ -93,6 +94,7 @@ const tooltip = computed<RankDistributionTooltipProps>(() => ({
   font: inherit;
   cursor: pointer;
   user-select: none;
+  container-type: inline-size;
 
   .bar {
     position: relative;
@@ -209,16 +211,21 @@ const tooltip = computed<RankDistributionTooltipProps>(() => ({
 
   .name {
     position: absolute;
+    bottom: 1px;
     left: 50%;
+    font-size: 12px;
     transform: translateX(-50%);
     white-space: nowrap;
     color: var(--text-color, var(--top-color));
     z-index: 1;
   }
+}
 
-  .name {
-    bottom: 0;
-    font-size: 11px;
+@container (max-width: 30px) {
+
+  // Counting from the end keeps the final "> X" label visible.
+  .distribution-bar.numeric-name:nth-last-child(even) .name {
+    visibility: hidden;
   }
 }
 </style>

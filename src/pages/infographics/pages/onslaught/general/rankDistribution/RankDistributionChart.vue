@@ -50,7 +50,6 @@ const rankOrder: RankDistributionItem['rank'][] = ['first', 'second', 'third', '
 const divisionRanks = new Set<RankDistributionItem['rank']>(['first', 'second', 'third', 'fourth'])
 const divisionOrder = ['E', 'D', 'C', 'B', 'A'] as const
 const barMinWidth = 15
-const barGap = 2
 
 const groups = computed(() => rankOrder.map(rank => {
   const items = divisionRanks.has(rank)
@@ -67,7 +66,7 @@ const groups = computed(() => rankOrder.map(rank => {
     rank,
     items,
     value: items.reduce((sum, item) => sum + item.value, 0),
-    width: `${items.length * barMinWidth + Math.max(0, items.length - 1) * barGap}px`,
+    width: `${items.length * barMinWidth}px`,
   }
 }).filter(group => group.items.length > 0))
 
