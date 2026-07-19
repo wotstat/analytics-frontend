@@ -5,6 +5,7 @@
     'group-hovered': props.groupHovered
   }" v-rank-distribution-tooltip:rank-bar-distribution.instant.top-float="tooltip">
     <div class="bar" :style="{ height: `${height}%` }" ref="bar">
+      <div class="shadow"></div>
       <Transition name="selection-lines" :duration="{ enter: 300, leave: 200 }">
         <div class="selection-box" v-if="props.selected">
           <div class="line left-line vertical"></div>
@@ -122,6 +123,16 @@ const tooltip = computed<RankDistributionTooltipProps>(() => ({
     &::after {
       opacity: 1;
     }
+  }
+
+  .shadow {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -30px;
+    height: 30px;
+    background: var(--shadow-color);
+    pointer-events: none;
   }
 
   .selection-box {
