@@ -109,11 +109,15 @@ type Bbox = {
 
 export function generateBbox(bbox: DOMRect | 'window' | false | null | undefined, offset: Offset): Bbox | null {
   if (bbox === 'window') {
+    const root = document.documentElement
+    const rootRect = root.getBoundingClientRect()
+    const left = rootRect.left + window.scrollX
+
     return {
-      left: 0 + offset.left,
+      left: left + offset.left,
       top: 0 + offset.top,
-      right: document.documentElement.clientWidth - offset.right,
-      bottom: document.documentElement.clientHeight - offset.bottom
+      right: left + root.offsetWidth - offset.right,
+      bottom: root.clientHeight - offset.bottom
     }
   }
 
