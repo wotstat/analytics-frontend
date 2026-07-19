@@ -39,7 +39,12 @@ function aggregateRatings(
     buckets.set(bucket, (buckets.get(bucket) ?? 0) + players)
   }
 
-  return [...buckets].map(([name, value]) => ({ rank, name, value }))
+  return [...buckets].map(([name, value]) => ({
+    rank,
+    name,
+    value,
+    ratingInterval: [name, name + step - 1],
+  }))
 }
 
 function tryCollapseSixthTail(items: RankDistributionItem[]): RankDistributionItem[] | null {
@@ -53,12 +58,17 @@ function tryCollapseSixthTail(items: RankDistributionItem[]): RankDistributionIt
     if (tailStart >= MAX_BARS_PER_RANK || tailValue > precedingItem.value) continue
 
     const firstTailItem = items[tailStart]
+    const lastTailItem = items[items.length - 1]
     return [
       ...items.slice(0, tailStart),
       {
         ...firstTailItem,
         label: `>${Number(firstTailItem.name) - LEADERBOARD_STEP}`,
         value: tailValue,
+        ratingInterval: [
+          firstTailItem.ratingInterval?.[0] ?? Number(firstTailItem.name),
+          lastTailItem.ratingInterval?.[1] ?? Number(lastTailItem.name),
+        ],
       },
     ]
   }

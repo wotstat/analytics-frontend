@@ -11,6 +11,7 @@
       <hr class="separator">
 
       <RankDistributionChart class="rank-distribution-chart" :data="rankDistributionData"
+        :game="regionToGame(selectedRegion)" :season="selectedSeason ?? undefined"
         v-model:selected="selectedRankDistributionItems" />
     </section>
   </div>

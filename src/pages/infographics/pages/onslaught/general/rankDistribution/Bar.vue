@@ -3,7 +3,7 @@
     selected: props.selected,
     [`rank-${props.item.rank}`]: true,
     'group-hovered': props.groupHovered
-  }" v-tooltip:bars.instant="{ text: `${label}: ${formattedValue} игроков`, class: 'comp7-tooltip', target: bar }">
+  }" v-rank-distribution-tooltip:rank-bar-distribution.instant.top-float="tooltip">
     <div class="bar" :style="{ height: `${height}%` }" ref="bar">
       <Transition name="selection-lines" :duration="{ enter: 300, leave: 200 }">
         <div class="selection-box" v-if="props.selected">
@@ -20,13 +20,22 @@
 
 <script setup lang="ts">
 import { computed, useTemplateRef } from 'vue'
-import type { RankDistributionItem } from './types'
+import type { Division, RankImageDefinition } from '@/shared/game/comp7/utils'
+import type { GameVendor } from '@/shared/game/wot'
+import type { RankDistributionItem, RankDistributionTooltipProps } from './types'
+import { vRankDistributionTooltip } from './rankDistributionTooltip/useRankDistributionTooltip'
 
 const bar = useTemplateRef('bar')
 
 const props = defineProps<{
   item: RankDistributionItem
   maxValue: number
+  groupValue: number
+  totalValue: number
+  ratingInterval: [from: number, to: number]
+  rankName: string
+  game?: GameVendor
+  season?: string
   selected?: boolean
   groupHovered?: boolean
 }>()
@@ -42,7 +51,24 @@ const height = computed(() => {
   return Math.max(0, Math.min(100, props.item.value / props.maxValue * 100))
 })
 
-const formattedValue = computed(() => props.item.value.toLocaleString('ru-RU'))
+const rankIcon = computed<RankImageDefinition>(() => {
+  if (typeof props.item.name !== 'string' || props.item.name === '') return props.item.rank
+  return `${props.item.rank}_${props.item.name}` as Division
+})
+
+const tooltip = computed<RankDistributionTooltipProps>(() => ({
+  rank: rankIcon.value,
+  title: typeof props.item.name === 'string' && props.item.name !== ''
+    ? `${props.rankName} ${props.item.name}`
+    : props.rankName,
+  ratingInterval: props.ratingInterval,
+  players: props.item.value,
+  totalPlayers: props.totalValue,
+  groupPlayers: props.groupValue,
+  game: props.game,
+  season: props.season,
+  target: bar.value,
+}))
 </script>
 
 <style lang="scss" scoped>

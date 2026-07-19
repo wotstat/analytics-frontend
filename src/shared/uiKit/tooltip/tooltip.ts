@@ -311,10 +311,10 @@ export function defineTooltip<T>(
     name: 'DefineTooltip',
 
     props: {
-      offset: Object,
+      offset: [Object, Number, Array],
       placement: [String, Array],
       arrowSize: Number,
-      viewportOffset: Object,
+      viewportOffset: [Object, Number, Array],
       class: [String, Object, Array]
     },
 

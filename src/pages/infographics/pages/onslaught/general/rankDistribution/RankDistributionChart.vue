@@ -5,12 +5,15 @@
         :style="{ flexGrow: group.items.length, flexBasis: group.width, minWidth: group.width }">
         <div class="bars">
           <Bar v-for="(item, index) in group.items" :key="index" :item :maxValue :selected="isSelected(item)"
+            :group-value="group.value" :total-value :rating-interval="getItemRatingInterval(item)"
+            :rank-name="t(`rank:${group.rank}`)" :game="props.game" :season="props.season"
             :group-hovered="hoveredRank === group.rank" @select="selectItem(item, $event)" />
         </div>
         <button type="button" class="rank-name mt-font"
           :class="{ selected: isGroupSelected(group.items), [`rank-${group.rank}`]: true }"
           @mouseenter="hoveredRank = group.rank" @mouseleave="hoveredRank = null"
-          @click="selectGroup(group.items, $event)">
+          @click="selectGroup(group.items, $event)"
+          v-rank-distribution-tooltip:rank-distribution.instant.bottom-float="getGroupTooltip(group)">
           {{ t(`rank:${group.rank}`) }}
         </button>
       </div>
@@ -22,13 +25,20 @@
 import { computed, ref } from 'vue'
 import { useI18n } from '@/shared/i18n/useI18n'
 import i18n from '@/shared/game/comp7/i18n.json'
+import { getRatingIntervalForDivision } from '@/shared/game/comp7/utils'
+import type { Division } from '@/shared/game/comp7/utils'
+import type { GameVendor } from '@/shared/game/wot'
 import Bar from './Bar.vue'
-import type { RankDistributionItem } from './types'
+import type { RankDistributionItem, RankDistributionTooltipProps } from './types'
+import { LEADERBOARD_STEP } from './processDistribution'
+import { vRankDistributionTooltip } from './rankDistributionTooltip/useRankDistributionTooltip.ts'
 
 const { t } = useI18n(i18n)
 
 const props = defineProps<{
   data: RankDistributionItem[]
+  game?: GameVendor
+  season?: string
 }>()
 
 const selectedItems = defineModel<RankDistributionItem[]>('selected', { default: () => [] })
@@ -54,11 +64,40 @@ const groups = computed(() => rankOrder.map(rank => {
   return {
     rank,
     items,
+    value: items.reduce((sum, item) => sum + item.value, 0),
     width: `${items.length * barMinWidth + Math.max(0, items.length - 1) * barGap}px`,
   }
 }).filter(group => group.items.length > 0))
 
 const maxValue = computed(() => Math.max(1, ...groups.value.flatMap(group => group.items.map(item => item.value))))
+const totalValue = computed(() => groups.value.reduce((sum, group) => sum + group.value, 0))
+
+function getItemRatingInterval(item: RankDistributionItem): [from: number, to: number] {
+  if (item.ratingInterval) return item.ratingInterval
+
+  if (typeof item.name === 'number') return [item.name, item.name + LEADERBOARD_STEP - 1]
+
+  const division = `${item.rank}_${item.name}` as Division
+  return getRatingIntervalForDivision(division, props.game)
+}
+
+function getGroupTooltip(group: (typeof groups.value)[number]): RankDistributionTooltipProps {
+  const intervals = group.items.map(getItemRatingInterval)
+
+  return {
+    rank: group.rank,
+    title: t(`rank:${group.rank}`),
+    ratingInterval: [
+      Math.min(...intervals.map(([from]) => from)),
+      Math.max(...intervals.map(([, to]) => to)),
+    ],
+    players: group.value,
+    totalPlayers: totalValue.value,
+    groupPlayers: group.value,
+    game: props.game,
+    season: props.season,
+  }
+}
 
 const itemKey = (item: RankDistributionItem) => `${item.rank}:${item.name}`
 const selectedKeys = computed(() => new Set(selectedItems.value.map(itemKey)))
