@@ -1,5 +1,5 @@
 import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
-import { vTooltip } from '@/shared/uiKit/tooltip/textTooltip'
+import { vTooltip } from '@/shared/uiKit/tooltip/textTooltip/textTooltip'
 import type { TextTooltipValue } from '@/shared/uiKit/tooltip/types'
 
 

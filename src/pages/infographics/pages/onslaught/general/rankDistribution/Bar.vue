@@ -3,7 +3,7 @@
     selected: props.selected,
     [`rank-${props.item.rank}`]: true,
     'group-hovered': props.groupHovered
-  }" v-tooltip.instant="{ text: `${label}: ${formattedValue} игроков`, class: 'comp7-tooltip', target: bar }">
+  }" v-tooltip:bars.instant="{ text: `${label}: ${formattedValue} игроков`, class: 'comp7-tooltip', target: bar }">
     <div class="bar" :style="{ height: `${height}%` }" ref="bar">
       <Transition name="selection-lines" :duration="{ enter: 300, leave: 200 }">
         <div class="selection-box" v-if="props.selected">

@@ -4,7 +4,7 @@ import { objectEntries } from '@vueuse/core'
 import type { DefineTooltipProps, TooltipBindingProps, TooltipModifier } from './types'
 
 
-type TooltipOptions = {
+export type TooltipOptions = {
   delay?: number
   hideDelay?: number
   interactive?: boolean
