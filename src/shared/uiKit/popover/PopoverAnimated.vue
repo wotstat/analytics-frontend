@@ -9,7 +9,7 @@
 
 
 <script setup lang="ts">
-import { nextTick, ref, RendererElement, watch } from 'vue'
+import { nextTick, onUnmounted, ref, RendererElement, watch } from 'vue'
 import Popover from './Popover.vue'
 import { OffsetValue, PlacementParam } from './utils'
 
@@ -32,7 +32,7 @@ const emit = defineEmits<{
   (e: 'pointerClickOutside', event: PointerEvent): void,
 }>()
 
-const display = ref(props.display)
+const display = ref(false)
 const transitionClass = ref(new Set<string>())
 
 
@@ -41,6 +41,8 @@ let hideTimeoutHandle: TimeoutHandle = null
 let endEnterHandle: TimeoutHandle = null
 let endLeaveHandle: TimeoutHandle = null
 let awaitingForReady = false
+let enterPending = false
+let nextFrameVersion = 0
 
 watch(() => props.display, (enabled, last) => {
   if (last == undefined && !enabled) return
@@ -54,6 +56,7 @@ watch(() => props.display, (enabled, last) => {
     display.value = true
   }
   else {
+    awaitingForReady = false
     if (hideTimeoutHandle) clearTimeout(hideTimeoutHandle)
     hideTimeoutHandle = setTimeout(() => display.value = false, props.duration ?? 300)
     beginLeave()
@@ -75,9 +78,38 @@ const leaveFrom = 'v-leave-from'
 const leaveTo = 'v-leave-to'
 
 
+function cancelNextFrame() {
+  nextFrameVersion++
+}
+
+function nextFrame(callback: () => void) {
+  const version = ++nextFrameVersion
+
+  nextTick(() => {
+    if (version !== nextFrameVersion) return
+
+    requestAnimationFrame(() => {
+      if (version !== nextFrameVersion) return
+
+      requestAnimationFrame(() => {
+        if (version !== nextFrameVersion) return
+        callback()
+      })
+    })
+  })
+}
+
+function startEnterTimeout() {
+  endEnterHandle = setTimeout(() => {
+    endEnterHandle = null
+    transitionClass.value.delete(enterActive)
+    transitionClass.value.delete(enterTo)
+  }, props.duration ?? 300)
+}
+
 function beginEnter() {
   if (!props.display) return
-  if (endEnterHandle) return
+  if (endEnterHandle || enterPending) return
 
   transitionClass.value.delete(enterPrepare)
 
@@ -89,28 +121,33 @@ function beginEnter() {
     transitionClass.value.delete(leaveTo)
     transitionClass.value.add(enterActive)
     transitionClass.value.add(enterTo)
+    startEnterTimeout()
   } else {
+    enterPending = true
     transitionClass.value.add(enterFrom)
-    nextTick(() => {
+
+    nextFrame(() => {
+      enterPending = false
+      if (!props.display) return
+
       transitionClass.value.delete(enterFrom)
       transitionClass.value.add(enterActive)
       transitionClass.value.add(enterTo)
+      startEnterTimeout()
     })
   }
-
-  endEnterHandle = setTimeout(() => {
-    endEnterHandle = null
-    transitionClass.value.delete(enterActive)
-    transitionClass.value.delete(enterTo)
-  }, props.duration ?? 300)
 }
 
 function beginLeave() {
   if (endLeaveHandle) return
-  if (endEnterHandle) {
-    clearTimeout(endEnterHandle)
+  if (endEnterHandle || enterPending) {
+    cancelNextFrame()
+    enterPending = false
+
+    if (endEnterHandle) clearTimeout(endEnterHandle)
     endEnterHandle = null
 
+    transitionClass.value.delete(enterFrom)
     transitionClass.value.delete(enterActive)
     transitionClass.value.delete(enterTo)
     transitionClass.value.add(leaveActive)
@@ -118,6 +155,8 @@ function beginLeave() {
   } else {
     transitionClass.value.add(leaveFrom)
     nextTick(() => {
+      if (props.display || !endLeaveHandle) return
+
       transitionClass.value.delete(leaveFrom)
       transitionClass.value.add(leaveActive)
       transitionClass.value.add(leaveTo)
@@ -130,6 +169,13 @@ function beginLeave() {
     transitionClass.value.delete(leaveTo)
   }, props.duration ?? 300)
 }
+
+onUnmounted(() => {
+  cancelNextFrame()
+  if (hideTimeoutHandle) clearTimeout(hideTimeoutHandle)
+  if (endEnterHandle) clearTimeout(endEnterHandle)
+  if (endLeaveHandle) clearTimeout(endLeaveHandle)
+})
 
 </script>
 

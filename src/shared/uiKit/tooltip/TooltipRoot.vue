@@ -49,8 +49,7 @@ watch(displayedTooltips, groups => {
       timeoutIds.delete(k)
     }
 
-    displayedDelayedTooltips.value.set(k, [v, false])
-    nextTick(() => displayedDelayedTooltips.value.set(k, [v, true]))
+    displayedDelayedTooltips.value.set(k, [v, true])
   }
 }, { immediate: true, deep: true })
 
