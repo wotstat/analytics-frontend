@@ -55,6 +55,20 @@ const awaitingShowTooltips = new Map<HTMLElement, AwaitingShowTooltip>()
 const awaitingHideTooltips = new Map<string, AwaitingHideTooltip>()
 const tooltipPopupActivity = new WeakMap<DisplayedTooltip, () => boolean>()
 
+function inheritTooltipProps(base: DefineTooltipProps, overrides: DefineTooltipProps): DefineTooltipProps {
+  const get = <Key extends keyof DefineTooltipProps>(key: Key) => Object.hasOwn(overrides, key)
+    ? overrides[key]
+    : base[key]
+
+  return {
+    get offset() { return get('offset') },
+    get placement() { return get('placement') },
+    get arrowSize() { return get('arrowSize') },
+    get viewportOffset() { return get('viewportOffset') },
+    get class() { return get('class') },
+  }
+}
+
 function cancelAwaitingShowTooltip(trigger: HTMLElement) {
   const awaiting = awaitingShowTooltips.get(trigger)
   if (!awaiting) return
@@ -208,10 +222,7 @@ function createDisplayedTooltip(
     trigger,
     target,
     options: options,
-    props: {
-      ...tooltipDefinition.props,
-      ...propsOverrides
-    },
+    props: inheritTooltipProps(tooltipDefinition.props, propsOverrides),
     component: Component,
   })
 

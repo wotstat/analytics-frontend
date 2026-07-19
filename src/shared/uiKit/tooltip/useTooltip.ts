@@ -1,9 +1,10 @@
-import { getCurrentScope, h, onScopeDispose, render } from 'vue'
+import { defineComponent, getCurrentScope, h, onScopeDispose, render, toValue } from 'vue'
 import type {
   AllowedComponentProps,
   Component,
   ComponentCustomProps,
   ComponentInstance,
+  MaybeRefOrGetter,
   VNodeProps
 } from 'vue'
 import { defineTooltip } from './tooltip'
@@ -26,7 +27,11 @@ export type UseTooltipValueAdapter<Value, ContentProps> = (value: Value) => {
   tooltipProps?: TooltipBindingProps
 }
 
-export type UseTooltipOptions<Value = never, ContentProps = never> = TooltipOptions & DefineTooltipProps & {
+type ReactiveDefineTooltipProps = {
+  [Key in keyof DefineTooltipProps]: MaybeRefOrGetter<DefineTooltipProps[Key]>
+}
+
+export type UseTooltipOptions<Value = never, ContentProps = never> = TooltipOptions & ReactiveDefineTooltipProps & {
   valueAdapter?: UseTooltipValueAdapter<Value, ContentProps>
 }
 
@@ -52,15 +57,23 @@ export function useTooltip<
   const { DefineTooltip, vTooltipTarget } = defineTooltip<Value>(tooltipOptions, propsFromBindingValue)
   const definitionContainer = document.createElement('div')
 
-  render(h(DefineTooltip, {
-    offset,
-    placement,
-    arrowSize,
-    viewportOffset,
-    class: className,
-  }, {
-    default: (value: Value) => h(component, valueAdapter ? valueAdapter(value).contentProps : value),
-  }), definitionContainer)
+  const TooltipDefinition = defineComponent({
+    name: 'TooltipDefinition',
+
+    setup() {
+      return () => h(DefineTooltip, {
+        offset: toValue(offset),
+        placement: toValue(placement),
+        arrowSize: toValue(arrowSize),
+        viewportOffset: toValue(viewportOffset),
+        class: toValue(className),
+      }, {
+        default: (value: Value) => h(component, valueAdapter ? valueAdapter(value).contentProps : value),
+      })
+    }
+  })
+
+  render(h(TooltipDefinition), definitionContainer)
 
   if (getCurrentScope()) onScopeDispose(() => render(null, definitionContainer))
 

@@ -6,10 +6,9 @@ export const vRankDistributionTooltip = useTooltip(RankDistributionTooltip, {
   arrowSize: 7,
   offset: 8,
   class: 'comp7-tooltip',
-  viewportOffset: 20,
+  viewportOffset: popoverViewportOffset,
   valueAdapter: value => ({
     contentProps: value,
     tooltipProps: { target: value.target },
   }),
 })
-
