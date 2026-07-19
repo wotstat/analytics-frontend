@@ -97,12 +97,6 @@ watch(seasons, () => {
 
 </script>
 
-<style lang="scss">
-html {
-  scrollbar-gutter: stable;
-}
-</style>
-
 <style lang="scss" scoped>
 .settings {
   display: flex;

@@ -27,6 +27,9 @@ import { dateToDbDate, LONG_CACHE_SETTINGS, query } from '@/db/index.ts'
 import { DivisionLetter, getRatingForDivision, Rank } from '@/shared/game/comp7/utils.ts'
 import { regionToGame } from '@/shared/game/wot.ts'
 import { LEADERBOARD_STEP, processDistribution } from './rankDistribution/processDistribution.ts'
+import { useStableScrollbarGutter } from '@/shared/composition/useStableScrollbarGutter.ts'
+
+useStableScrollbarGutter()
 
 const seasons = ref<{ region: string, season: string, start: string }[]>([])
 const selectedSeason = ref<string | null>(null)

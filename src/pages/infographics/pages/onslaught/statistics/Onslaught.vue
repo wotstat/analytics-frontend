@@ -67,12 +67,14 @@ import { useMeta } from '@/shared/composition/useMeta'
 import { BattleRes, useBattleResultTable } from './battleHistoryTable/useBattleHistory'
 import { ChannelsTypes, useAnalyticsRealtime } from '@/shared/external/realtime/useAnalyticsRealtime'
 import Live from './components/Live.vue'
+import { useStableScrollbarGutter } from '@/shared/composition/useStableScrollbarGutter.ts'
 
 useMeta({
   title: 'Статистика Натиска - WotStat',
   description: 'Персональная статистика по режиму Натиск: динамика рейтинга, эффективность техники, результаты на картах и многое другое.',
   keywords: 'натиск, статистика, рейтинг, техника, карты, WotStat',
 })
+useStableScrollbarGutter()
 
 const ONE_HOUR = 60 * 60 * 1000
 const ONE_DAY = 24 * ONE_HOUR
@@ -568,7 +570,6 @@ const displayedTipSelectDay = computed(() => {
 })
 
 </script>
-
 
 <style lang="scss" scoped>
 h1 {
