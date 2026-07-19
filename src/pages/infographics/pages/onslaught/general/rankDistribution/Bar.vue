@@ -96,6 +96,7 @@ const tooltip = computed<RankDistributionTooltipProps>(() => ({
 
   .bar {
     position: relative;
+    margin: 0 1px;
     width: 100%;
     min-height: 1px;
     border-top: 1px solid var(--top-color);

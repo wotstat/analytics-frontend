@@ -9,13 +9,15 @@
             :rank-name="t(`rank:${group.rank}`)" :game="props.game" :season="props.season"
             :group-hovered="hoveredRank === group.rank" @select="selectItem(item, $event)" />
         </div>
-        <button type="button" class="rank-name mt-font"
-          :class="{ selected: isGroupSelected(group.items), [`rank-${group.rank}`]: true }"
-          @mouseenter="hoveredRank = group.rank" @mouseleave="hoveredRank = null"
-          @click="selectGroup(group.items, $event)"
-          v-rank-distribution-tooltip:rank-distribution.instant.bottom-float="getGroupTooltip(group)">
-          {{ t(`rank:${group.rank}`) }}
-        </button>
+        <div class="rank-name-container">
+          <button type="button" class="rank-name mt-font"
+            :class="{ selected: isGroupSelected(group.items), [`rank-${group.rank}`]: true }"
+            @mouseenter="hoveredRank = group.rank" @mouseleave="hoveredRank = null"
+            @click="selectGroup(group.items, $event)"
+            v-rank-distribution-tooltip:rank-distribution.instant.bottom-float="getGroupTooltip(group)">
+            {{ t(`rank:${group.rank}`) }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -160,7 +162,6 @@ function selectGroup(items: RankDistributionItem[], event: MouseEvent) {
 .groups {
   display: flex;
   align-items: stretch;
-  gap: 2px;
   height: 100%;
   min-width: 100%;
   width: max-content;
@@ -176,33 +177,37 @@ function selectGroup(items: RankDistributionItem[], event: MouseEvent) {
     display: flex;
     flex: 1;
     align-items: stretch;
-    gap: 2px;
     min-height: 0;
   }
 
-  .rank-name {
-    @include rank-color-scheme;
+  .rank-name-container {
+    padding: 0 1px;
 
-    width: 100%;
-    padding: 6px 4px 4px;
-    border: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.15);
-    background: transparent;
-    color: var(--text-color, var(--top-color));
-    font-size: 13px;
-    text-align: center;
-    white-space: nowrap;
-    cursor: pointer;
-    user-select: none;
-    transition: background-color 0.1s ease, color 0.1s ease;
+    .rank-name {
+      @include rank-color-scheme;
 
-    &:hover {
-      background: color-mix(in srgb, var(--top-color) 8%, transparent);
+      width: 100%;
+      padding: 6px 4px 4px;
+      border: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      background: transparent;
+      color: var(--text-color, var(--top-color));
+      font-size: 13px;
+      text-align: center;
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.1s ease, color 0.1s ease;
+
+      &:hover {
+        background: color-mix(in srgb, var(--top-color) 8%, transparent);
+      }
+
+      &.selected {
+        background: color-mix(in srgb, var(--top-color) 12%, transparent);
+      }
     }
 
-    &.selected {
-      background: color-mix(in srgb, var(--top-color) 12%, transparent);
-    }
   }
 }
 </style>

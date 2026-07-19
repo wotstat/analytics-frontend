@@ -43,7 +43,7 @@ import DayChart from './dayChart/DayChart.vue'
 import { dateToDbDate, query, queryComputedFirst } from '@/db'
 import { gameToRegion, regionToGame } from '@/shared/game/wot'
 import Settings from '../shared/settings/Settings.vue'
-import { computedWithControl, controlledComputed, onKeyStroke, refDebounced, useElementBounding } from '@vueuse/core'
+import { computedWithControl, onKeyStroke, refDebounced, useElementBounding } from '@vueuse/core'
 import { DayChartData } from './types'
 import MainStat from './mainStat/MainStat.vue'
 import {
