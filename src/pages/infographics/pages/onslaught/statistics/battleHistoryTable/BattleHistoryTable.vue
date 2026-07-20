@@ -13,7 +13,7 @@
 
       <div class="table-container nice-scrollbar-transparent mt-font">
         <SortableTable :data="data" :cols="8" :limit="displayLimit" :is-orderable="i => i != 1 && i != 2"
-          :default-order-by="0">
+          :default-order-by="0" :column-labels="columnLabels">
 
           <template #head-cell="{ col }">
             <p v-if="col == 0">№</p>
@@ -93,6 +93,17 @@ import TipShiftKeyForShowMore from '../tips/TipShiftKeyForShowMore.vue'
 
 const SHOW_MORE_THRESHOLD = 7
 const START_LIMIT = 20
+
+const columnLabels = [
+  'Номер боя',
+  'Карта',
+  'Танк',
+  'Урон',
+  'Содействие',
+  'Очки престижа',
+  'Уничтожения',
+  'Изменение рейтинга',
+]
 
 const props = defineProps<{
   history: ReturnType<typeof useBattleResultTable>['value'],
