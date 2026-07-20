@@ -1,6 +1,7 @@
 
 import { GameVendor } from '@/shared/game/wot'
 import { STATIC_URL } from '@/shared/external/externalUrl'
+import { getArtefactName } from '@/shared/i18n/i18n'
 
 const ONE_HOUR = 60 * 60 * 1000
 const ONE_DAY = 24 * ONE_HOUR
@@ -302,4 +303,40 @@ export function rankImageUrl(rank: RankImageDefinition,
     case 'medium': return `${STATIC_URL}/${gamePrefix}/latest/comp7/ranks/${season}/medium/${name}.${format}`
     case 'large': return `${STATIC_URL}/${gamePrefix}/latest/comp7/ranks/${season}/large/${name}.${format}`
   }
+}
+
+export const SKILL_TAGS = [
+  'comp7_aggressive_detection',
+  'comp7_ally_support',
+  'comp7_aoe_heal',
+  'comp7_aoe_inspire',
+  'comp7_berserk',
+  'comp7_concentration',
+  'comp7_fast_recharge',
+  'comp7_hunter',
+  'comp7_juggernaut',
+  'comp7_march',
+  'comp7_recon',
+  'comp7_redline',
+  'comp7_risky_attack',
+  'comp7_sniper',
+  'comp7_sure_shot',
+] as const
+
+export type SkillTag = typeof SKILL_TAGS[number]
+
+const technicalSkillNames = Object.fromEntries(SKILL_TAGS.map(tag => [tag, tag])) as Record<string, string>
+
+export function getComp7SkillName(tag: string) {
+
+  return getArtefactName(tag) ?? tag
+}
+
+export function skillImageUrl(tag: SkillTag | (string & {}),
+  game: GameVendor = 'mt',
+  season: 'latest' | (string & {}) = 'latest',
+  format: 'webp' | 'png' = 'webp') {
+
+  const gamePrefix = game === 'mt' ? 'mt' : 'wot'
+  return `${STATIC_URL}/${gamePrefix}/latest/comp7/skills/${season}/${tag}.${format}`
 }

@@ -139,10 +139,6 @@ function formatDuration(value: number) {
   padding-bottom: 5px;
   font-size: 14px;
 
-  :deep(table) {
-    min-width: 1080px;
-  }
-
   :deep(thead th:first-child) {
     width: 24%;
   }

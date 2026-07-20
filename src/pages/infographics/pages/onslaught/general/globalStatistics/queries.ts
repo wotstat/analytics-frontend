@@ -1,5 +1,5 @@
+import { SKILL_TAGS } from '@/shared/game/comp7/utils'
 import type { RankDistributionItem } from '../rankDistribution/types'
-import { COMP7_SKILL_TAGS } from '@/shared/game/comp7/skill/skills'
 
 export const COMP7_BATTLE_PLAYERS = 14
 
@@ -41,11 +41,8 @@ function buildWhere(filters: GlobalStatisticsFilters, rankCondition: string) {
 }
 
 export function buildGlobalVehicleStatisticsQuery(filters: GlobalStatisticsFilters, groupBySkill: boolean) {
-  const validSkillCondition = `comp7SkillTag IN (${stringList(COMP7_SKILL_TAGS)})`
+  const validSkillCondition = `comp7SkillTag IN (${stringList(SKILL_TAGS)})`
   const rankCondition = buildRankCondition(filters.ranks)
-  const skillExpression = groupBySkill
-    ? 'comp7SkillTag'
-    : `topKWeightedIf(1)(comp7SkillTag, battles, ${validSkillCondition})[1]`
   const skillFilter = groupBySkill ? `\n      AND ${validSkillCondition}` : ''
   const skillGroup = groupBySkill ? ', comp7SkillTag' : ''
 
@@ -55,7 +52,7 @@ export function buildGlobalVehicleStatisticsQuery(filters: GlobalStatisticsFilte
         tankTag,
         any(tankType) AS tankType,
         any(tankLevel) AS tankLevel,
-        ${skillExpression} AS skillTag,
+        sumMapIf([comp7SkillTag], [toUInt64(battles)], ${validSkillCondition}) AS skillBattleCounts,
         uniqMerge(players) AS players,
         sum(battles) AS battleCount,
         sum(wins) AS winCount,
@@ -71,7 +68,15 @@ export function buildGlobalVehicleStatisticsQuery(filters: GlobalStatisticsFilte
       tankTag,
       tankType,
       tankLevel,
-      skillTag,
+      arrayReverseSort(
+        skill -> skill.2,
+        arrayZip(
+          skillBattleCounts.1,
+          arrayMap(value -> value / arraySum(skillBattleCounts.2), skillBattleCounts.2)
+        )
+      ) AS skills,
+      skills[1].1 AS skillTag,
+      skills[1].2 AS skillShare,
       players,
       battleCount AS battles,
       if(battleCount = 0, 0, winCount / battleCount) AS winrate,

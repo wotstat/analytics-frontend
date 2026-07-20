@@ -22,12 +22,16 @@ const languageToPostfix = {
 export const selectVehiclesLocalization = `select tag, type, level, role, nation, short${languageToPostfix[LANGUAGE]} as short, name${languageToPostfix[LANGUAGE]} as name from VehiclesLocalization`
 export const selectTagVehiclesLocalization = `select tag, short${languageToPostfix[LANGUAGE]} as short, name${languageToPostfix[LANGUAGE]} as name from VehiclesLocalization`
 export const selectTagArenasLocalization = `select tag, name${languageToPostfix[LANGUAGE]} as name from ArenasLocalization`
+export const selectArtefactsLocalization = `select tag, name${languageToPostfix[LANGUAGE]} as name from ArtefactsLocalization`
 
 const tankNames = queryAsync<{ tag: string, short: string, name: string }>(selectVehiclesLocalization, { settings: LONG_CACHE_SETTINGS })
 const tankNamesMap = computed(() => new Map<string, [string, string]>(tankNames.value.data.map(t => [t.tag, [t.name, t.short]])))
 
 const arenaNames = queryAsync<{ tag: string, name: string }>(selectTagArenasLocalization, { settings: LONG_CACHE_SETTINGS })
 const arenaNamesMap = computed(() => new Map<string, string>(arenaNames.value.data.map(t => [t.tag, t.name])))
+
+const artefactsNames = queryAsync<{ tag: string, name: string }>(selectArtefactsLocalization, { settings: LONG_CACHE_SETTINGS })
+const artefactsNamesMap = computed(() => new Map<string, string>(artefactsNames.value.data.map(t => [t.tag, t.name])))
 
 function getBestTankLocale(tag: string, short: boolean = false) {
   const locales = tankNamesMap.value.get(tag)
@@ -63,6 +67,11 @@ export function getArenaName(tag: string) {
   return tag
 }
 
+export function getArtefactName(tag: string) {
+  const name = artefactsNamesMap.value.get(tag)
+  if (name) return name
+  return tag
+}
 
 export function crewBookName(tag: string) {
   return {

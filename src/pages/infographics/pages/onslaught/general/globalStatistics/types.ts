@@ -1,3 +1,5 @@
+import type { GameVendor } from '@/shared/game/wot'
+
 export type StatisticsLoadState<T> =
   | { status: 'loading', data: T[] }
   | { status: 'success', data: T[] }
@@ -8,7 +10,9 @@ export type GlobalVehicleStatistic = {
   tankTag: string
   tankType: string
   tankLevel: number
+  skills: [tag: string, share: number][]
   skillTag: string
+  skillShare: number
   players: number
   battles: number
   winrate: number
@@ -16,6 +20,12 @@ export type GlobalVehicleStatistic = {
   assist: number
   prestigePoints: number
   kills: number
+}
+
+export type SkillDistributionTooltipProps = {
+  skills: GlobalVehicleStatistic['skills']
+  game: GameVendor
+  season?: string
 }
 
 export type GlobalArenaStatistic = {

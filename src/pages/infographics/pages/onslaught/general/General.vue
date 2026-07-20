@@ -21,7 +21,7 @@
           :region="selectedRegion" caption="Дни" />
       </div>
       <GlobalVehicleTable v-model:group-by-skill="groupBySkill" :state="vehicleState"
-        :game="regionToGame(selectedRegion)" />
+        :game="regionToGame(selectedRegion)" :season="selectedSeason ?? undefined" />
       <GlobalMapsTable :state="arenaState" :game="regionToGame(selectedRegion)" />
     </template>
   </div>
