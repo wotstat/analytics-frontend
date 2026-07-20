@@ -14,11 +14,21 @@
         :game="regionToGame(selectedRegion)" :season="selectedSeason ?? undefined"
         v-model:selected="selectedRankDistributionItems" />
     </section>
+
+    <template v-if="seasonInterval">
+      <div class="day-selector-row">
+        <DaySelector v-model="selectedDays" :season-interval="seasonInterval" selection-mode="arbitrary"
+          :region="selectedRegion" caption="Дни" />
+      </div>
+      <GlobalVehicleTable v-model:group-by-skill="groupBySkill" :state="vehicleState"
+        :game="regionToGame(selectedRegion)" />
+      <GlobalMapsTable :state="arenaState" :game="regionToGame(selectedRegion)" />
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, shallowRef, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 import Settings from '../shared/settings/Settings.vue'
 import RankDistributionChart from './rankDistribution/RankDistributionChart.vue'
 import type { RankDistributionItem } from './rankDistribution/types'
@@ -28,6 +38,19 @@ import { DivisionLetter, getRatingForDivision, Rank } from '@/shared/game/comp7/
 import { regionToGame } from '@/shared/game/wot.ts'
 import { LEADERBOARD_STEP, processDistribution } from './rankDistribution/processDistribution.ts'
 import { useStableScrollbarGutter } from '@/shared/composition/useStableScrollbarGutter.ts'
+import DaySelector from '../shared/daySelector/DaySelector.vue'
+import GlobalVehicleTable from './globalStatistics/GlobalVehicleTable.vue'
+import GlobalMapsTable from './globalStatistics/GlobalMapsTable.vue'
+import {
+  buildGlobalArenaStatisticsQuery,
+  buildGlobalVehicleStatisticsQuery,
+  type GlobalStatisticsFilters,
+} from './globalStatistics/queries.ts'
+import type {
+  GlobalArenaStatistic,
+  GlobalVehicleStatistic,
+  StatisticsLoadState,
+} from './globalStatistics/types.ts'
 
 useStableScrollbarGutter()
 
@@ -35,7 +58,12 @@ const seasons = ref<{ region: string, season: string, start: string }[]>([])
 const selectedSeason = ref<string | null>(null)
 const selectedRegion = ref<'RU' | 'EU' | 'NA' | 'ASIA' | 'CN' | 'CT'>('RU')
 const selectedRankDistributionItems = ref<RankDistributionItem[]>([])
+const selectedDays = ref<string[]>([])
+const groupBySkill = ref(false)
 const seasonInterval = useSeasonInterval(seasons, selectedSeason, selectedRegion)
+
+const vehicleState = shallowRef<StatisticsLoadState<GlobalVehicleStatistic>>({ status: 'loading', data: [] })
+const arenaState = shallowRef<StatisticsLoadState<GlobalArenaStatistic>>({ status: 'loading', data: [] })
 
 const leaderboardPlaceholders: RankDistributionItem[] = [
   ...Array.from({ length: 10 }, (_, name) => ({
@@ -53,6 +81,11 @@ const leaderboardPlaceholders: RankDistributionItem[] = [
 ]
 
 const rankDistributionData = shallowRef<RankDistributionItem[]>(leaderboardPlaceholders)
+
+watch([selectedRegion, selectedSeason], () => {
+  selectedRankDistributionItems.value = []
+  selectedDays.value = []
+}, { flush: 'sync' })
 
 async function load(abortSignal: AbortSignal, soft = false) {
   if (!seasonInterval.value) return
@@ -128,6 +161,134 @@ watch([seasonInterval, selectedRegion], () => {
   load(loadingAbortController.signal)
 })
 
+const statisticsFilters = computed<GlobalStatisticsFilters | null>(() => {
+  if (!seasonInterval.value) return null
+
+  return {
+    region: selectedRegion.value,
+    startDate: dateToDbDate(seasonInterval.value.start),
+    endDate: dateToDbDate(seasonInterval.value.end),
+    days: selectedDays.value,
+    ranks: selectedRankDistributionItems.value,
+  }
+})
+
+const vehicleQuery = computed(() => statisticsFilters.value
+  ? buildGlobalVehicleStatisticsQuery(statisticsFilters.value, groupBySkill.value)
+  : null
+)
+const arenaQuery = computed(() => statisticsFilters.value
+  ? buildGlobalArenaStatisticsQuery(statisticsFilters.value)
+  : null
+)
+
+let commonRequestId = 0
+let vehicleRequestId = 0
+let vehicleAbortController = new AbortController()
+let arenaAbortController = new AbortController()
+let currentVehicleLoad: Promise<void> = Promise.resolve()
+
+function reasonMessage(reason: unknown) {
+  return reason instanceof Error ? reason.message : String(reason)
+}
+
+function reloadVehicle(sql: string) {
+  vehicleAbortController.abort()
+  vehicleAbortController = new AbortController()
+  const signal = vehicleAbortController.signal
+  const requestId = ++vehicleRequestId
+
+  vehicleState.value = { status: 'loading', data: [] }
+
+  const loadPromise = (async () => {
+    try {
+      const response = await query<GlobalVehicleStatistic>(sql, {
+        abortSignal: signal,
+        allowCache: false,
+        settings: LONG_CACHE_SETTINGS,
+      })
+      if (signal.aborted || requestId !== vehicleRequestId) return
+
+      vehicleState.value = {
+        status: response.data.length > 0 ? 'success' : 'empty',
+        data: response.data,
+      }
+    } catch (reason) {
+      if (signal.aborted || requestId !== vehicleRequestId) return
+      console.error(reason)
+      vehicleState.value = { status: 'error', data: [], reason: reasonMessage(reason) }
+    }
+  })()
+
+  currentVehicleLoad = loadPromise
+  return loadPromise
+}
+
+async function reloadArena(sql: string, commonId: number) {
+  arenaAbortController.abort()
+  arenaAbortController = new AbortController()
+  const signal = arenaAbortController.signal
+
+  try {
+    const response = await query<GlobalArenaStatistic>(sql, {
+      abortSignal: signal,
+      allowCache: false,
+      settings: LONG_CACHE_SETTINGS,
+    })
+    if (signal.aborted || commonId !== commonRequestId) return
+
+    arenaState.value = {
+      status: response.data.length > 0 ? 'success' : 'empty',
+      data: response.data,
+    }
+  } catch (reason) {
+    if (signal.aborted || commonId !== commonRequestId) return
+    console.error(reason)
+    arenaState.value = { status: 'error', data: [], reason: reasonMessage(reason) }
+  }
+}
+
+async function reloadCommon(vehicleSql: string, arenaSql: string) {
+  const commonId = ++commonRequestId
+  arenaAbortController.abort()
+  arenaState.value = { status: 'loading', data: [] }
+
+  let awaitedVehicleLoad = reloadVehicle(vehicleSql)
+  await awaitedVehicleLoad
+
+  while (commonId === commonRequestId && awaitedVehicleLoad !== currentVehicleLoad) {
+    awaitedVehicleLoad = currentVehicleLoad
+    await awaitedVehicleLoad
+  }
+
+  if (commonId !== commonRequestId) return
+  await reloadArena(arenaSql, commonId)
+}
+
+watch(arenaQuery, sql => {
+  if (!sql || !vehicleQuery.value) {
+    commonRequestId++
+    vehicleRequestId++
+    vehicleAbortController.abort()
+    arenaAbortController.abort()
+    vehicleState.value = { status: 'loading', data: [] }
+    arenaState.value = { status: 'loading', data: [] }
+    return
+  }
+  reloadCommon(vehicleQuery.value, sql)
+}, { immediate: true })
+
+watch(groupBySkill, () => {
+  if (!vehicleQuery.value) return
+  reloadVehicle(vehicleQuery.value)
+})
+
+onBeforeUnmount(() => {
+  loadingAbortController.abort()
+  vehicleAbortController.abort()
+  arenaAbortController.abort()
+})
+
 </script>
 
 <style lang="scss" scoped>
@@ -165,5 +326,9 @@ h1 {
     margin-right: calc(var(--content-page-margin, 0) * -1);
     margin-left: calc(var(--content-page-margin, 0) * -1);
   }
+}
+
+.day-selector-row {
+  margin-top: 35px;
 }
 </style>
