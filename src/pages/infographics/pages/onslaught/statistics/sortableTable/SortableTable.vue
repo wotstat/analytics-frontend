@@ -2,7 +2,11 @@
   <table :style="{ '--cols': cols }">
     <thead>
       <tr>
-        <th v-for="j in cols" :class="{
+        <th v-for="j in cols" v-tooltip.instant.top-float="{
+          class: 'comp7-tooltip',
+          text: columnLabels[j - 1],
+          disabled: !columnLabels[j - 1],
+        }" :class="{
           'orderable': isOrderable ? isOrderable(j - 1) : true,
           'order-by': orderBy == j - 1,
           'asc': orderDirection == 'asc',
@@ -35,6 +39,7 @@ const props = defineProps<{
   isOrderable?: (index: number) => boolean
   defaultOrderBy?: number
   defaultOrderDirection?: 'asc' | 'desc'
+  columnLabels: string[]
 }>()
 
 const orderBy = ref(props.defaultOrderBy ?? 1)

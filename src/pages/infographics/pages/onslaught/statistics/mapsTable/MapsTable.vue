@@ -12,7 +12,8 @@
       <hr class="separator">
 
       <div class="table-container nice-scrollbar-transparent mt-font">
-        <SortableTable :data="data" :cols="7" :limit="displayLimit" :is-orderable="i => i !== 0" :default-order-by="1">
+        <SortableTable :data="data" :cols="7" :limit="displayLimit" :is-orderable="i => i !== 0" :default-order-by="1"
+          :column-labels="columnLabels">
 
           <template #head-cell="{ col }">
             <Icon :icon="([
@@ -55,6 +56,16 @@ import SortableTable from '../sortableTable/SortableTable.vue'
 
 
 const SHOW_MORE_THRESHOLD = 6
+
+const columnLabels = [
+  '',
+  'Бои',
+  'Винрейт',
+  'Средний урон',
+  'Среднее содействие',
+  'Средние очки престижа',
+  'Средние уничтожения',
+]
 
 const props = defineProps<{
   mapsStats: ReturnType<typeof useMapsTable>['value']
