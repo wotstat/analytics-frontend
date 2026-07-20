@@ -33,14 +33,18 @@
           {{ weekday.label }}
         </button>
 
-        <div v-if="hoveredWeekday !== null" class="group-highlight column-highlight" :style="{
-          gridColumn: hoveredWeekday + 2,
-          gridRow: `2 / span ${weeks.length}`,
-        }"></div>
-        <div v-if="hoveredWeek !== null" class="group-highlight row-highlight" :style="{
-          gridColumn: '2 / span 7',
-          gridRow: hoveredWeek + 2,
-        }"></div>
+        <Transition name="group-highlight">
+          <div v-if="hoveredWeekday !== null" class="group-highlight column-highlight" :style="{
+            gridColumn: hoveredWeekday + 2,
+            gridRow: `2 / span ${weeks.length}`,
+          }"></div>
+        </Transition>
+        <Transition name="group-highlight">
+          <div v-if="hoveredWeek !== null" class="group-highlight row-highlight" :style="{
+            gridColumn: '2 / span 7',
+            gridRow: hoveredWeek + 2,
+          }"></div>
+        </Transition>
 
         <div v-for="week in weeks" :key="week.index" class="week-row">
           <button type="button" class="week-number" :class="{ selected: isGroupSelected(week.days) }"
@@ -57,6 +61,7 @@
               selected: selectedSet.has(week.days[column - 1]!.value),
               today: week.days[column - 1]!.isToday,
               future: week.days[column - 1]!.isFuture,
+              'group-highlighted': hoveredWeek === week.index || hoveredWeekday === column - 1,
             }" @click="selectDay(week.days[column - 1]!)">
               {{ week.days[column - 1]!.seasonDay }}
             </button>
@@ -414,18 +419,20 @@ function selectWholeSeason() {
   }
 
   .group-highlight {
-    z-index: 2;
+    z-index: 0;
     pointer-events: none;
     border-radius: 6px;
-    background: rgba(255, 255, 255, 0.055);
+    background: rgba(255, 255, 255, 0.08);
   }
 
-  .column-highlight {
-    margin: 0 -1px;
+  .group-highlight-enter-active,
+  .group-highlight-leave-active {
+    transition: opacity 0.1s;
   }
 
-  .row-highlight {
-    margin: -1px 0;
+  .group-highlight-enter-from,
+  .group-highlight-leave-to {
+    opacity: 0;
   }
 
   .week-number {
@@ -470,6 +477,10 @@ function selectWholeSeason() {
       background: rgba(255, 255, 255, 0.018);
       color: rgba(255, 255, 255, 0.23);
       cursor: default;
+    }
+
+    &.group-highlighted:not(.selected) {
+      background: transparent;
     }
   }
 }
