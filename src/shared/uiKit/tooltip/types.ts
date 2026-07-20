@@ -17,6 +17,7 @@ export type DefineTooltipProps = {
 
 export type TooltipBindingProps = DefineTooltipProps & {
   target?: HTMLElement | null
+  disabled?: boolean
 }
 
 export type TextTooltipValue = string | TooltipBindingProps & {

@@ -367,6 +367,7 @@ export function defineTooltip<T>(
       const resolveBindingProps = (value: T) => {
         const {
           target,
+          disabled = false,
           ...propsFromValue
         } = propsFromBindingValue?.(value) ?? {}
 
@@ -378,22 +379,30 @@ export function defineTooltip<T>(
           })()
         }).filter(([_, value]) => value !== undefined))
 
-        return { target, propsOverrides }
+        return { target, disabled, propsOverrides }
       }
 
       let bindingValue = binding.value
-      let { target, propsOverrides } = resolveBindingProps(bindingValue)
+      let { target, disabled, propsOverrides } = resolveBindingProps(bindingValue)
 
       const isActive = () => pointerInside
-      const activate = () => onTriggerEnter(el, target ?? el, tooltipId, group, bindingValue, overrides, propsOverrides, isActive)
+      const activate = () => {
+        if (disabled) return
+        onTriggerEnter(el, target ?? el, tooltipId, group, bindingValue, overrides, propsOverrides, isActive)
+      }
       const deactivate = () => onTriggerLeave(el, group, overrides)
       const update = (value: T) => {
         bindingValue = value
         const resolved = resolveBindingProps(value)
         target = resolved.target
+        disabled = resolved.disabled
         propsOverrides = resolved.propsOverrides
 
-        if (isActive() && displayedTooltips.value.get(group)?.trigger === el) activate()
+        if (disabled) {
+          cleanupTrigger(el, group)
+        } else if (isActive()) {
+          activate()
+        }
       }
 
       const pointerEnter = (event: PointerEvent) => {
@@ -438,7 +447,7 @@ export function defineTooltip<T>(
         const shouldToggle = !touchMoved && overrides.touchBehavior === 'toggle'
         resetTouch()
 
-        if (shouldToggle) {
+        if (shouldToggle && !disabled) {
           toggleTouchTooltip(el, target ?? el, tooltipId, group, bindingValue, overrides, propsOverrides, isActive)
         }
       }
