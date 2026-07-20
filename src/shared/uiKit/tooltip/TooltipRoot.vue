@@ -57,6 +57,10 @@ watch(displayedTooltips, groups => {
 
 
 <style lang="scss" scoped>
+#tooltip-root :deep(.popup-container) {
+  z-index: 1100;
+}
+
 :deep(.tooltip-non-interactive) {
   pointer-events: none;
 }
