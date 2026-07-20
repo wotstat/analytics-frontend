@@ -24,7 +24,10 @@
             <TooltipedMinimap :tag="state.data[index].arenaTag" class="image" :game />
             <p>{{ getArenaName(state.data[index].arenaTag) }}</p>
           </th>
-          <td v-else-if="col === 1 || col === 2">{{ logProcessor(Number(value)) }}</td>
+          <td v-else-if="col === 1 || col === 2">
+            <span>{{ logProcessor(Number(value)) }}</span>
+            <span class="column-share">({{ formatColumnShare(Number(value), col === 1 ? 'players' : 'battles') }})</span>
+          </td>
           <td v-else-if="col === 3 || col === 4">{{ percentFormatter.format(Number(value)) }}</td>
           <td v-else-if="col === 5">{{ formatDuration(Number(value)) }}</td>
           <td v-else-if="col === 8">{{ decimalFormatter.format(Number(value)) }}</td>
@@ -86,10 +89,21 @@ const displayLimit = computed(() => props.state.data.length > SHOW_MORE_THRESHOL
   : undefined
 )
 
+const columnTotals = computed(() => props.state.data.reduce((totals, item) => ({
+  players: totals.players + item.players,
+  battles: totals.battles + item.battles,
+}), { players: 0, battles: 0 }))
+
 const integerFormatter = { format: createFixedSpaceProcessor(0) }
 const decimalFormatter = { format: createFixedSpaceProcessor(2) }
 const percentFormatter = { format: createPercentProcessor(2) }
+const sharePercentFormatter = createPercentProcessor(1)
 const logProcessor = createLogProcessor()
+
+function formatColumnShare(value: number, column: 'players' | 'battles') {
+  const total = columnTotals.value[column]
+  return sharePercentFormatter(total > 0 ? value / total : 0)
+}
 
 function formatDuration(value: number) {
   return sec2minsec(Math.max(0, Math.floor(value)))
@@ -181,5 +195,12 @@ function formatDuration(value: number) {
 
 td {
   text-align: center;
+}
+
+.column-share {
+  margin-left: 4px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 12px;
+  white-space: nowrap;
 }
 </style>

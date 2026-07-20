@@ -50,7 +50,7 @@
           </button>
 
           <template v-for="column in 7" :key="column">
-            <button v-if="week.days[column - 1]" v-tooltip.instant.top-float="{
+            <button v-if="week.days[column - 1]" v-tooltip:calendar.instant.top-float="{
               class: 'comp7-tooltip',
               text: week.days[column - 1]!.calendarLabel,
             }" type="button" class="day" :style="{ gridColumn: column + 1, gridRow: week.index + 2 }" :class="{
@@ -329,8 +329,7 @@ function selectWholeSeason() {
     p {
       margin: 3px 0 0;
       color: rgba(255, 255, 255, 0.5);
-      font-family: sans-serif;
-      font-size: 11px;
+      font-size: 12px;
     }
 
     .reset {

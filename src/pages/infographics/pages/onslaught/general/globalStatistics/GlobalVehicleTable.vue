@@ -52,7 +52,8 @@
             </div>
           </td>
           <td v-else-if="headers[col].key === 'players' || headers[col].key === 'battles'">
-            {{ logProcessor(Number(value)) }}
+            <span>{{ logProcessor(Number(value)) }}</span>
+            <span class="column-share">({{ formatColumnShare(Number(value), headers[col].key) }})</span>
           </td>
           <td v-else-if="headers[col].key === 'winrate'">{{ percentFormatter.format(Number(value)) }}</td>
           <td v-else-if="headers[col].key === 'kills'">{{ decimalFormatter.format(Number(value)) }}</td>
@@ -125,11 +126,21 @@ const displayLimit = computed(() => props.state.data.length > SHOW_MORE_THRESHOL
   : undefined
 )
 
+const columnTotals = computed(() => props.state.data.reduce((totals, item) => ({
+  players: totals.players + item.players,
+  battles: totals.battles + item.battles,
+}), { players: 0, battles: 0 }))
+
 const integerFormatter = { format: createFixedSpaceProcessor(0) }
 const decimalFormatter = { format: createFixedSpaceProcessor(2) }
 const percentFormatter = { format: createPercentProcessor(2) }
 const skillPercentFormatter = createPercentProcessor(1)
 const logProcessor = createLogProcessor()
+
+function formatColumnShare(value: number, column: 'players' | 'battles') {
+  const total = columnTotals.value[column]
+  return skillPercentFormatter(total > 0 ? value / total : 0)
+}
 </script>
 
 <style scoped lang="scss">
@@ -279,6 +290,13 @@ const logProcessor = createLogProcessor()
 
 td {
   text-align: center;
+}
+
+.column-share {
+  margin-left: 4px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 @media screen and (max-width: 600px) {
