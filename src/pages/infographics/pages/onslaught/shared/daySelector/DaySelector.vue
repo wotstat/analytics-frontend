@@ -416,6 +416,11 @@ function selectWholeSeason() {
         pointer-events: none;
         opacity: 0;
       }
+
+      svg {
+        display: block;
+        width: 100%;
+      }
     }
   }
 
