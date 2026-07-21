@@ -63,7 +63,7 @@
         <!-- <router-link to="/bb25" class="replays bob25">ББ2025</router-link> -->
         <!-- <router-link to="/mt-36-1" class="replays bob25" v-new-feature-badge="'mt-36-1'">Разворот 1.36.1</router-link> -->
         <!-- <router-link to="/replays" class="replays">Реплеи</router-link> -->
-        <QueryPreserveRouterLink to="/onslaught/personal" class="replays bob25" v-new-feature-badge="'onslaught'">Натиск
+        <QueryPreserveRouterLink to="/onslaught" class="replays bob25" v-new-feature-badge="'onslaught'">Натиск
         </QueryPreserveRouterLink>
 
         <div class="drop-down points-menu">
@@ -76,7 +76,7 @@
             <router-link to="/install" class="install">Скачать</router-link>
             <!-- <router-link to="/bb25" class="replays">ББ2025</router-link> -->
             <!-- <router-link to="/mt-36-1" class="replays">Разворот 1.36.1</router-link> -->
-            <QueryPreserveRouterLink to="/onslaught/personal" class="comp7" v-new-feature-badge="'onslaught'">Натиск
+            <QueryPreserveRouterLink to="/onslaught" class="comp7" v-new-feature-badge="'onslaught'">Натиск
             </QueryPreserveRouterLink>
             <!-- <router-link to="/replays" class="replays">Реплеи</router-link> -->
             <a :href="SQLUrl" target="_blank" rel="noopener noreferrer" class="sql">Доступ к БД </a>

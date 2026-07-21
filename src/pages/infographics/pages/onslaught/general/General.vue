@@ -61,7 +61,13 @@ import type {
 } from './globalStatistics/types.ts'
 import TipSelectDays from './tips/TipSelectDays.vue'
 import { setFeatureVisit } from '@/shared/uiKit/newFeatureBadge/newFeatureBadge.ts'
+import { useMeta } from '@/shared/composition/useMeta.ts'
 
+useMeta({
+  title: 'Статистика Натиска - WotStat',
+  description: 'Статистика Натиска в World of Tanks. Распределение игроков по рангам, статистика по технике и картам, рейтинг игроков.',
+  keywords: 'натиск, статистика, рейтинг, техника, карты, WotStat',
+})
 useStableScrollbarGutter()
 setFeatureVisit('onslaught-general')
 
