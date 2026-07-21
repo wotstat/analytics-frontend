@@ -28,22 +28,38 @@ function aggregateRatings(
   rank: LeaderboardRank,
   entries: RatingEntry[],
   step: number,
+  anchor: number,
 ): RankDistributionItem[] {
   if (entries.length === 0) return []
 
-  const firstRating = entries[0][0]
-  const buckets = new Map<number, number>()
+  const buckets = new Map<number, {
+    value: number
+    from: number
+    to: number
+  }>()
 
   for (const [rating, players] of entries) {
-    const bucket = firstRating + Math.floor((rating - firstRating) / step) * step
-    buckets.set(bucket, (buckets.get(bucket) ?? 0) + players)
+    const bucketStart = anchor + Math.floor((rating - anchor) / step) * step
+    const bucket = buckets.get(bucketStart)
+
+    if (bucket) {
+      bucket.value += players
+      bucket.from = Math.min(bucket.from, rating)
+      bucket.to = Math.max(bucket.to, rating + LEADERBOARD_STEP - 1)
+    } else {
+      buckets.set(bucketStart, {
+        value: players,
+        from: rating,
+        to: rating + LEADERBOARD_STEP - 1,
+      })
+    }
   }
 
-  return [...buckets].map(([name, value]) => ({
+  return [...buckets.values()].map(({ value, from, to }) => ({
     rank,
-    name,
+    name: from,
     value,
-    ratingInterval: [name, name + step - 1],
+    ratingInterval: [from, to],
   }))
 }
 
@@ -77,11 +93,14 @@ function tryCollapseSixthTail(items: RankDistributionItem[]): RankDistributionIt
 }
 
 function processLeaderboardRatings(ratings: LeaderboardRatings): RankDistributionItem[] {
+  const anchor = ratings.sixth[0]?.[0] ?? ratings.fifth[0]?.[0]
+  if (anchor === undefined) return []
+
   let fallbackItems: RankDistributionItem[] = []
 
   for (const step of NICE_STEPS) {
-    const fifthItems = aggregateRatings('fifth', ratings.fifth, step)
-    const sixthBuckets = aggregateRatings('sixth', ratings.sixth, step)
+    const fifthItems = aggregateRatings('fifth', ratings.fifth, step, anchor)
+    const sixthBuckets = aggregateRatings('sixth', ratings.sixth, step, anchor)
     const collapsedSixthItems = tryCollapseSixthTail(sixthBuckets)
 
     fallbackItems = [...fifthItems, ...(collapsedSixthItems ?? sixthBuckets)]

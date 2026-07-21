@@ -8,7 +8,7 @@
           <SkillIcon :skill :game="props.game" :season="props.season" />
         </div>
         <span class="name">{{ getComp7SkillName(skill) }}</span>
-        <strong>{{ formatPercent(share) }}</strong>
+        <strong class="mt-font">{{ formatPercent(share) }}</strong>
       </div>
     </div>
   </div>
@@ -48,14 +48,13 @@ function formatPercent(value: number) {
 
 .skills {
   display: grid;
-  gap: 4px;
 }
 
 .skill {
   display: grid;
   grid-template-columns: 32px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 8px;
+  gap: 3px;
   min-height: 32px;
 
   .icon {
@@ -66,14 +65,14 @@ function formatPercent(value: number) {
   .name {
     overflow: hidden;
     color: rgba(255, 255, 255, 0.72);
-    font-size: 13px;
+    font-size: 14px;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   strong {
     color: rgba(255, 255, 255, 0.92);
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
     white-space: nowrap;
   }
