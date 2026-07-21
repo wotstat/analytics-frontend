@@ -1,9 +1,11 @@
 <template>
   <div class="day-selector">
     <button ref="trigger" type="button" class="trigger" @click="displayPopup = !displayPopup">
-      <span v-if="caption" class="caption">{{ caption }}:</span>
-      <span>{{ selectionLabel }}</span>
-      <span class="arrow" :class="{ open: displayPopup }"></span>
+      <span class="trigger-content">
+        <span v-if="caption" class="caption">{{ caption }}:</span>
+        <span>{{ selectionLabel }}</span>
+        <DropdownArrow :is-open="displayPopup" class="arrow" />
+      </span>
     </button>
   </div>
 
@@ -89,6 +91,7 @@ import { headerHeight, useAdditionalHeaderHeight } from '@/pages/shared/header/u
 import { getRegionDayChangeHourOffset } from '@/shared/game/comp7/utils'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
 import TipSelectDayGroups from './tips/TipSelectDayGroups.vue'
+import DropdownArrow from '../../leaderboard/components/detail/intervalSelector/DropdownArrow.vue'
 
 export type DaySelectionMode = 'arbitrary' | 'interval'
 
@@ -285,9 +288,6 @@ function selectWholeSeason() {
   display: inline-flex;
 
   .trigger {
-    display: flex;
-    align-items: center;
-    gap: 5px;
     padding: 4px 8px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 12px;
@@ -302,23 +302,23 @@ function selectWholeSeason() {
     }
   }
 
+  .trigger-content {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transform: translateY(-1px);
+  }
+
   .caption {
     color: rgba(255, 255, 255, 0.5);
   }
 
   .arrow {
-    width: 7px;
-    height: 7px;
-    margin: -3px 2px 0 3px;
-    border-right: 1.5px solid currentColor;
-    border-bottom: 1.5px solid currentColor;
-    transform: rotate(45deg);
-    transition: margin 0.15s, transform 0.15s;
-
-    &.open {
-      margin-top: 3px;
-      transform: rotate(225deg);
-    }
+    display: block;
+    width: 12px;
+    height: 12px;
+    margin: 2px 0 0 1px;
+    transform: scale(0.85);
   }
 }
 
