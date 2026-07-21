@@ -15,6 +15,12 @@
         v-model:selected="selectedRankDistributionItems" />
     </section>
 
+    <p class="info">
+      * Данные по игрокам среди всех кто попадался в бои к игроку с <a href="/install?preset=analytics"
+        target="_blank">модом</a>. Распределение очков для <span class="fifth mt-font">Чемпиона</span> и <span
+        class="sixth mt-font">Легенды</span> по таблице лидеров.
+    </p>
+
     <template v-if="seasonInterval">
       <div class="day-selector-row">
         <DaySelector v-model="selectedDays" v-model:is-open="isDaySelectorOpen" :season-interval="seasonInterval"
@@ -322,6 +328,30 @@ h1 {
 
 .onslaught-page {
   margin-top: 1em;
+}
+
+.info {
+  margin-top: 1em;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.72);
+
+  a {
+    color: var(--blue-thin-color-hover);
+
+    &:hover {
+      color: var(--blue-thin-color);
+    }
+  }
+
+  .fifth {
+    font-size: 15px;
+    color: #dceeff;
+  }
+
+  .sixth {
+    font-size: 15px;
+    color: #f0baff;
+  }
 }
 
 .rank-distribution {

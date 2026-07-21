@@ -106,8 +106,8 @@ type Column = { key: ColumnKey, title: string, icon?: IconType }
 const allHeaders: Column[] = [
   { key: 'vehicle', title: '', icon: 'tank' },
   { key: 'skill', title: 'Самый популярный навык' },
-  { key: 'players', title: 'Уникальные игроки', icon: 'player' },
   { key: 'battles', title: 'Бои', icon: 'battles' },
+  { key: 'players', title: 'Уникальные игроки', icon: 'player' },
   { key: 'winrate', title: 'Винрейт', icon: 'winrate' },
   { key: 'damage', title: 'Средний урон', icon: 'dmg' },
   { key: 'assist', title: 'Среднее содействие', icon: 'assist' },

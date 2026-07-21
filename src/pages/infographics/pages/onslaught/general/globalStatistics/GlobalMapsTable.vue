@@ -12,7 +12,7 @@
 
     <div v-else class="table-container nice-scrollbar-transparent mt-font">
       <SortableTable v-model:order-by="orderBy" v-model:order-direction="orderDirection" :data :cols="9"
-        :limit="displayLimit" :is-orderable="index => index !== 0" :default-order-by="2"
+        :limit="displayLimit" :is-orderable="index => index !== 0" :default-order-by="1"
         :column-labels="headers.map(header => header.title)">
         <template #head-cell="{ col }">
           <div class="column-title">
@@ -27,7 +27,7 @@
           </th>
           <td v-else-if="col === 1 || col === 2">
             <span>{{ logProcessor(Number(value)) }}</span>
-            <span class="column-share">({{ formatColumnShare(Number(value), col === 1 ? 'players' : 'battles') }})</span>
+            <span class="column-share">({{ formatColumnShare(Number(value), col === 1 ? 'battles' : 'players') }})</span>
           </td>
           <td v-else-if="col === 3 || col === 4">{{ percentFormatter.format(Number(value)) }}</td>
           <td v-else-if="col === 5">{{ formatDuration(Number(value)) }}</td>
@@ -60,7 +60,7 @@ const props = defineProps<{
 }>()
 
 const showMore = ref(false)
-const orderBy = ref(2)
+const orderBy = ref(1)
 const orderDirection = ref<'asc' | 'desc'>('desc')
 const canShowMore = computed(() => props.state.status === 'success'
   && props.state.data.length > SHOW_MORE_THRESHOLD
@@ -68,8 +68,8 @@ const canShowMore = computed(() => props.state.status === 'success'
 
 const headers: { title: string, icon: IconType }[] = [
   { title: '', icon: 'arena' },
-  { title: 'Уникальные игроки', icon: 'player' },
   { title: 'Бои', icon: 'battles' },
+  { title: 'Уникальные игроки', icon: 'player' },
   { title: 'Винрейт обороны', icon: 'winrate' },
   { title: 'Побед захватом базы', icon: 'base-capture' },
   { title: 'Продолжительность боя', icon: 'duration' },
@@ -80,8 +80,8 @@ const headers: { title: string, icon: IconType }[] = [
 
 const data = computed(() => props.state.data.map(item => [
   item.arenaTag,
-  item.players,
   item.battles,
+  item.players,
   item.defenseWinrate,
   item.baseCaptureRate,
   item.duration,
