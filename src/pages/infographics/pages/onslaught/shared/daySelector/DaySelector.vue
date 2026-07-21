@@ -33,8 +33,7 @@
         <span class="week-heading">Нед.</span>
         <button v-for="weekday in weekdays" :key="weekday.column" type="button" class="weekday"
           :class="{ selected: props.selectionMode === 'arbitrary' && isGroupSelected(weekday.days) }"
-          :style="{ gridColumn: weekday.column + 2, gridRow: 1 }"
-          :disabled="props.selectionMode === 'interval'"
+          :style="{ gridColumn: weekday.column + 2, gridRow: 1 }" :disabled="props.selectionMode === 'interval'"
           @click="selectGroup(weekday.days)" @pointerenter="hoveredWeekday = weekday.column"
           @pointerleave="hoveredWeekday = null">
           {{ weekday.label }}
@@ -44,18 +43,18 @@
           <Transition name="group-selection">
             <div v-if="props.selectionMode === 'arbitrary' && isGroupSelected(weekday.days)"
               class="group-selection column-selection" :style="{
-              gridColumn: weekday.column + 2,
-              gridRow: `1 / span ${weekday.rowSpan}`,
-            }"></div>
+                gridColumn: weekday.column + 2,
+                gridRow: `1 / span ${weekday.rowSpan}`,
+              }"></div>
           </Transition>
         </template>
 
         <Transition name="group-highlight">
           <div v-if="props.selectionMode === 'arbitrary' && hoveredWeekday !== null"
             class="group-highlight column-highlight" :style="{
-            gridColumn: hoveredWeekday + 2,
-            gridRow: `1 / span ${weekdays[hoveredWeekday]!.rowSpan}`,
-          }"></div>
+              gridColumn: hoveredWeekday + 2,
+              gridRow: `1 / span ${weekdays[hoveredWeekday]!.rowSpan}`,
+            }"></div>
         </Transition>
         <Transition name="group-highlight">
           <div v-if="hoveredWeek !== null" class="group-highlight row-highlight" :style="{
@@ -455,6 +454,7 @@ function selectWholeSeason() {
     border: none;
     color: rgba(255, 255, 255, 0.68);
     transition: color 0.1s, background-color 0.1s;
+    user-select: none;
   }
 
   .week-heading,
@@ -464,6 +464,7 @@ function selectWholeSeason() {
     font-size: 11px;
     font-weight: 400;
     text-transform: uppercase;
+    user-select: none;
   }
 
   .week-heading {
@@ -651,6 +652,7 @@ function selectWholeSeason() {
   color: rgba(255, 255, 255, 0.72);
   font-size: 13px;
   transition: color 0.1s, background-color 0.1s;
+  user-select: none;
 
   &:hover {
     background: rgba(255, 255, 255, 0.08);
