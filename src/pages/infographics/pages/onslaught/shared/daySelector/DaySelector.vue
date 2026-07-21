@@ -285,7 +285,11 @@ function selectDay(day: CalendarDay) {
   const selectedLastIndex = dayIndex.value.get(selected.at(-1)!)
   const clickedIndex = dayIndex.value.get(day.value)
 
-  if (selectedFirstIndex !== undefined && selectedLastIndex !== undefined && clickedIndex === selectedFirstIndex - 1) {
+  if (selected.length > 1 && clickedIndex === selectedFirstIndex) {
+    selectedDays.value = selected.slice(1)
+  } else if (selected.length > 1 && clickedIndex === selectedLastIndex) {
+    selectedDays.value = selected.slice(0, -1)
+  } else if (selectedFirstIndex !== undefined && selectedLastIndex !== undefined && clickedIndex === selectedFirstIndex - 1) {
     selectedDays.value = rangeBetween(day.value, selected.at(-1)!)
   } else if (selectedFirstIndex !== undefined && selectedLastIndex !== undefined && clickedIndex === selectedLastIndex + 1) {
     selectedDays.value = rangeBetween(selected[0], day.value)
