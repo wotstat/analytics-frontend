@@ -3,7 +3,12 @@
     <TipSelectRankDistribution ref="selectionTip" class="selection-tip" />
     <div class="groups">
       <div class="rank-group" v-for="group in groups" :key="group.rank"
-        :style="{ flexGrow: group.items.length, flexBasis: group.width, minWidth: group.width }">
+        :style="{
+          flexGrow: group.items.length,
+          flexBasis: group.minWidth,
+          minWidth: group.minWidth,
+          maxWidth: group.maxWidth,
+        }">
         <div class="bars">
           <Bar v-for="(item, index) in group.items" :key="index" :item :maxValue :selected="isSelected(item)"
             :group-value="group.value" :total-value :rating-interval="getItemRatingInterval(item)"
@@ -53,6 +58,7 @@ const rankOrder: RankDistributionItem['rank'][] = ['first', 'second', 'third', '
 const divisionRanks = new Set<RankDistributionItem['rank']>(['first', 'second', 'third', 'fourth'])
 const divisionOrder = ['E', 'D', 'C', 'B', 'A'] as const
 const barMinWidth = 15
+const barMaxWidth = 36
 
 const groups = computed(() => rankOrder.map(rank => {
   const items = divisionRanks.has(rank)
@@ -69,7 +75,8 @@ const groups = computed(() => rankOrder.map(rank => {
     rank,
     items,
     value: items.reduce((sum, item) => sum + item.value, 0),
-    width: `${items.length * barMinWidth}px`,
+    minWidth: `${items.length * barMinWidth}px`,
+    maxWidth: `${items.length * barMaxWidth}px`,
   }
 }).filter(group => group.items.length > 0))
 
@@ -171,6 +178,7 @@ function selectGroup(items: RankDistributionItem[], event: MouseEvent) {
 
 .groups {
   display: flex;
+  justify-content: center;
   align-items: stretch;
   height: 100%;
   min-width: 100%;

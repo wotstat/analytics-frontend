@@ -8,13 +8,16 @@ type DistributionRow = {
 }
 
 type LeaderboardRank = Extract<Rank, 'fifth' | 'sixth'>
-type RatingEntry = [rating: number, players: number]
-type LeaderboardRatings = Record<LeaderboardRank, RatingEntry[]>
+type LeaderboardRating = {
+  rating: number
+  players: Record<LeaderboardRank, number>
+}
 
 export const LEADERBOARD_STEP = 10
 const MAX_BARS_PER_RANK = 10
+const MAX_COLLAPSED_TAIL_SHARE = 0.07
 const NICE_STEPS = [
-  LEADERBOARD_STEP, 20, 25, 50,
+  LEADERBOARD_STEP, 20, 50,
   100, 200, 250, 500,
   1000, 2000, 2500, 5000,
   10000, 20000, 25000, 50000,
@@ -25,86 +28,84 @@ function isLeaderboardRank(rank: DistributionRow['rank']): rank is LeaderboardRa
 }
 
 function aggregateRatings(
-  rank: LeaderboardRank,
-  entries: RatingEntry[],
+  entries: LeaderboardRating[],
   step: number,
   anchor: number,
 ): RankDistributionItem[] {
   if (entries.length === 0) return []
 
-  const buckets = new Map<number, {
-    value: number
-    from: number
-    to: number
-  }>()
+  const buckets = new Map<number, Record<LeaderboardRank, number>>()
 
-  for (const [rating, players] of entries) {
+  for (const { rating, players } of entries) {
     const bucketStart = anchor + Math.floor((rating - anchor) / step) * step
-    const bucket = buckets.get(bucketStart)
-
-    if (bucket) {
-      bucket.value += players
-      bucket.from = Math.min(bucket.from, rating)
-      bucket.to = Math.max(bucket.to, rating + LEADERBOARD_STEP - 1)
-    } else {
-      buckets.set(bucketStart, {
-        value: players,
-        from: rating,
-        to: rating + LEADERBOARD_STEP - 1,
-      })
-    }
+    const bucket = buckets.get(bucketStart) ?? { fifth: 0, sixth: 0 }
+    bucket.fifth += players.fifth
+    bucket.sixth += players.sixth
+    buckets.set(bucketStart, bucket)
   }
 
-  return [...buckets.values()].map(({ value, from, to }) => ({
-    rank,
-    name: from,
-    value,
-    ratingInterval: [from, to],
+  return [...buckets].map(([name, players]) => ({
+    rank: players.sixth > players.fifth ? 'sixth' : 'fifth',
+    name,
+    value: players.fifth + players.sixth,
+    ratingInterval: [name, name + step - 1],
   }))
 }
 
-function tryCollapseSixthTail(items: RankDistributionItem[]): RankDistributionItem[] | null {
+function tryCollapseLegendTail(items: RankDistributionItem[]): RankDistributionItem[] | null {
   if (items.length < 2) return items
 
+  const totalValue = items.reduce((sum, item) => sum + item.value, 0)
   let tailValue = 0
+  let shareTailStart: number | null = null
 
   for (let tailStart = items.length - 1; tailStart > 0; tailStart--) {
-    tailValue += items[tailStart].value
-    const precedingItem = items[tailStart - 1]
-    if (tailStart >= MAX_BARS_PER_RANK || tailValue > precedingItem.value) continue
+    const nextTailValue = tailValue + items[tailStart].value
+    if (nextTailValue / totalValue >= MAX_COLLAPSED_TAIL_SHARE) break
 
-    const firstTailItem = items[tailStart]
-    const lastTailItem = items[items.length - 1]
-    return [
-      ...items.slice(0, tailStart),
-      {
-        ...firstTailItem,
-        label: `${Number(firstTailItem.name) - LEADERBOARD_STEP}+`,
-        value: tailValue,
-        ratingInterval: [
-          firstTailItem.ratingInterval?.[0] ?? Number(firstTailItem.name),
-          lastTailItem.ratingInterval?.[1] ?? Number(lastTailItem.name),
-        ],
-      },
-    ]
+    tailValue = nextTailValue
+    shareTailStart = tailStart
   }
 
-  return null
+  const limitTailStart = items.length > MAX_BARS_PER_RANK
+    ? MAX_BARS_PER_RANK - 1
+    : null
+  const tailStart = [shareTailStart, limitTailStart]
+    .filter((value): value is number => value !== null)
+    .reduce<number | null>((min, value) => min === null ? value : Math.min(min, value), null)
+
+  if (tailStart === null) return null
+
+  const firstTailItem = items[tailStart]
+  const lastTailItem = items[items.length - 1]
+  const tailStartRating = firstTailItem.ratingInterval?.[0] ?? Number(firstTailItem.name)
+
+  return [
+    ...items.slice(0, tailStart),
+    {
+      ...firstTailItem,
+      label: `${tailStartRating}+`,
+      value: items.slice(tailStart).reduce((sum, item) => sum + item.value, 0),
+      ratingInterval: [
+        tailStartRating,
+        lastTailItem.ratingInterval?.[1] ?? Number(lastTailItem.name),
+      ],
+    },
+  ]
 }
 
-function processLeaderboardRatings(ratings: LeaderboardRatings): RankDistributionItem[] {
-  const anchor = ratings.sixth[0]?.[0] ?? ratings.fifth[0]?.[0]
-  if (anchor === undefined) return []
-
+function processLeaderboardRatings(ratings: LeaderboardRating[], anchor: number): RankDistributionItem[] {
   let fallbackItems: RankDistributionItem[] = []
 
   for (const step of NICE_STEPS) {
-    const fifthItems = aggregateRatings('fifth', ratings.fifth, step, anchor)
-    const sixthBuckets = aggregateRatings('sixth', ratings.sixth, step, anchor)
-    const collapsedSixthItems = tryCollapseSixthTail(sixthBuckets)
+    const items = aggregateRatings(ratings, step, anchor)
+    const championItems = items.filter(item => item.rank === 'fifth')
+    const legendItems = items.filter(item => item.rank === 'sixth')
+    const collapsedLegendItems = tryCollapseLegendTail(legendItems)
+    const displayedLegendItems = collapsedLegendItems ?? legendItems
 
-    fallbackItems = [...fifthItems, ...(collapsedSixthItems ?? sixthBuckets)]
-    if (fifthItems.length <= MAX_BARS_PER_RANK && collapsedSixthItems) {
+    fallbackItems = [...championItems, ...displayedLegendItems]
+    if (championItems.length <= MAX_BARS_PER_RANK && displayedLegendItems.length <= MAX_BARS_PER_RANK) {
       return fallbackItems
     }
   }
@@ -132,25 +133,15 @@ function splitDistribution(data: DistributionRow[]) {
     byRating.set(item.division, playersByRank)
   }
 
-  const leaderboardRatings: LeaderboardRatings = {
-    fifth: [],
-    sixth: [],
-  }
-
-  for (const [rating, playersByRank] of byRating) {
-    const rank = playersByRank.sixth > playersByRank.fifth ? 'sixth' : 'fifth'
-    leaderboardRatings[rank].push([rating, playersByRank.fifth + playersByRank.sixth])
-  }
-
-  for (const entries of Object.values(leaderboardRatings)) {
-    entries.sort(([ratingA], [ratingB]) => ratingA - ratingB)
-  }
+  const leaderboardRatings = [...byRating]
+    .map(([rating, players]) => ({ rating, players }))
+    .sort((a, b) => a.rating - b.rating)
 
   return { divisionItems, leaderboardRatings }
 }
 
-export function processDistribution(data: DistributionRow[]): RankDistributionItem[] {
+export function processDistribution(data: DistributionRow[], leaderboardStartRating: number): RankDistributionItem[] {
   const { divisionItems, leaderboardRatings } = splitDistribution(data)
 
-  return [...divisionItems, ...processLeaderboardRatings(leaderboardRatings)]
+  return [...divisionItems, ...processLeaderboardRatings(leaderboardRatings, leaderboardStartRating)]
 }

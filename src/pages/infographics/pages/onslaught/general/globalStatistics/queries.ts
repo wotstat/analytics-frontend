@@ -25,7 +25,7 @@ function buildRankCondition(ranks: RankDistributionItem[], prefix = '') {
   return ranks.map(item => {
     if (item.ratingInterval) {
       const [from, to] = item.ratingInterval
-      return `(${prefix}rank = '${item.rank}' AND ${prefix}leaderboardRating BETWEEN ${from} AND ${to})`
+      return `${prefix}leaderboardRating BETWEEN ${from} AND ${to}`
     }
 
     return `(${prefix}rank = '${item.rank}' AND ${prefix}division = '${item.name}')`

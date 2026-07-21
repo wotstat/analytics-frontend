@@ -17,8 +17,8 @@
 
     <template v-if="seasonInterval">
       <div class="day-selector-row">
-        <DaySelector v-model="selectedDays" v-model:is-open="isDaySelectorOpen"
-          :season-interval="seasonInterval" selection-mode="arbitrary" :region="selectedRegion" caption="Дни" />
+        <DaySelector v-model="selectedDays" v-model:is-open="isDaySelectorOpen" :season-interval="seasonInterval"
+          selection-mode="arbitrary" :region="selectedRegion" caption="Дни" />
         <TipSelectDays ref="daySelectorTip" />
       </div>
       <GlobalVehicleTable v-model:group-by-skill="groupBySkill" :state="vehicleState"
@@ -103,8 +103,6 @@ async function load(abortSignal: AbortSignal, soft = false) {
 
   const startFifth = getRatingForDivision('fifth', regionToGame(region))
 
-  console.log('Loading data with params', { startDate, endDate, region })
-
   const rankDistribution = await query<{
     rank: Exclude<Rank, 'qual'>,
     division: DivisionLetter | number,
@@ -156,10 +154,7 @@ async function load(abortSignal: AbortSignal, soft = false) {
 
   if (abortSignal.aborted) return
 
-  rankDistributionData.value = processDistribution(rankDistribution.data)
-
-  console.log(rankDistribution.data)
-
+  rankDistributionData.value = processDistribution(rankDistribution.data, startFifth)
 }
 
 let loadingAbortController = new AbortController()
