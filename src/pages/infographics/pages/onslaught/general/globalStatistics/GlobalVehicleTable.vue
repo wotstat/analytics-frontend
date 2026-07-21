@@ -3,7 +3,7 @@
     <div class="header">
       <h3>Статистика танков</h3>
       <div class="actions">
-        <label class="skill-toggle">
+        <label v-if="props.allowSkillToggle" class="skill-toggle">
           <input v-model="groupBySkill" type="checkbox">
           <span>Учитывать навык</span>
         </label>
@@ -37,8 +37,8 @@
 
             <p>{{ getTankName(state.data[index].tankTag, true) }}</p>
             <div v-if="groupBySkill" class="vehicle-skill"
-              v-tooltip.top-float="{ text: getComp7SkillName(state.data[index].skillTag), class: 'comp7-tooltip' }">
-              <SkillIcon :skill="state.data[index].skillTag" :game :season class="skill-icon" />
+              v-tooltip.top-float="{ text: getComp7SkillName(getVehicleSkill(state.data[index])), class: 'comp7-tooltip' }">
+              <SkillIcon :skill="getVehicleSkill(state.data[index])" :game :season class="skill-icon" />
             </div>
           </th>
           <td v-else-if="headers[col].key === 'skill'">
@@ -74,12 +74,12 @@ import { isVehicleType } from '@/shared/game/vehicles/type/vehicleTypeToImage'
 import VehicleImage from '@/shared/game/vehicles/vehicle/VehicleImage.vue'
 import VehicleLevel from '@/shared/game/vehicles/VehicleLevel.vue'
 import type { GameVendor } from '@/shared/game/wot'
-import { getTankName } from '@/shared/i18n/i18n'
+import { getTankName, getTankRole } from '@/shared/i18n/i18n'
 import { createFixedSpaceProcessor, createLogProcessor, createPercentProcessor } from '@/shared/utils/processors/processors'
 import SortableTable from '../../statistics/sortableTable/SortableTable.vue'
 import TableState from './TableState.vue'
 import type { GlobalVehicleStatistic, StatisticsLoadState } from './types'
-import { getComp7SkillName } from '@/shared/game/comp7/utils.ts'
+import { getComp7SkillByVehicleRole, getComp7SkillName } from '@/shared/game/comp7/utils.ts'
 import { vSkillDistributionTooltip } from './skillDistributionTooltip/useSkillDistributionTooltip'
 
 const SHOW_MORE_THRESHOLD = 7
@@ -88,6 +88,7 @@ const props = defineProps<{
   state: StatisticsLoadState<GlobalVehicleStatistic>
   game: GameVendor
   season?: string
+  allowSkillToggle?: boolean
 }>()
 
 const groupBySkill = defineModel<boolean>('groupBySkill', { default: false })
@@ -140,6 +141,10 @@ const logProcessor = createLogProcessor()
 function formatColumnShare(value: number, column: 'players' | 'battles') {
   const total = columnTotals.value[column]
   return skillPercentFormatter(total > 0 ? value / total : 0)
+}
+
+function getVehicleSkill(vehicle: GlobalVehicleStatistic) {
+  return vehicle.skillTag || getComp7SkillByVehicleRole(getTankRole(vehicle.tankTag)) || ''
 }
 </script>
 

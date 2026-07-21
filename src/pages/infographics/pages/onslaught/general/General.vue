@@ -22,7 +22,8 @@
         <TipSelectDays ref="daySelectorTip" />
       </div>
       <GlobalVehicleTable v-model:group-by-skill="groupBySkill" :state="vehicleState"
-        :game="regionToGame(selectedRegion)" :season="selectedSeason ?? undefined" />
+        :game="regionToGame(selectedRegion)" :season="selectedSeason ?? undefined"
+        :allow-skill-toggle="supportsSkillChange" />
       <GlobalMapsTable :state="arenaState" :game="regionToGame(selectedRegion)" />
     </template>
   </div>
@@ -35,7 +36,7 @@ import RankDistributionChart from './rankDistribution/RankDistributionChart.vue'
 import type { RankDistributionItem } from './rankDistribution/types'
 import { useSeasonInterval } from '../shared/useSeasonInterval.ts'
 import { dateToDbDate, LONG_CACHE_SETTINGS, query } from '@/db/index.ts'
-import { DivisionLetter, getRatingForDivision, Rank } from '@/shared/game/comp7/utils.ts'
+import { DivisionLetter, getRatingForDivision, isComp7SkillChangeSupported, Rank } from '@/shared/game/comp7/utils.ts'
 import { regionToGame } from '@/shared/game/wot.ts'
 import { LEADERBOARD_STEP, processDistribution } from './rankDistribution/processDistribution.ts'
 import { useStableScrollbarGutter } from '@/shared/composition/useStableScrollbarGutter.ts'
@@ -63,6 +64,9 @@ const selectedRankDistributionItems = ref<RankDistributionItem[]>([])
 const selectedDays = ref<string[]>([])
 const isDaySelectorOpen = ref(false)
 const groupBySkill = ref(false)
+const supportsSkillChange = computed(() => selectedSeason.value !== null
+  && isComp7SkillChangeSupported(selectedRegion.value, selectedSeason.value)
+)
 const seasonInterval = useSeasonInterval(seasons, selectedSeason, selectedRegion)
 const daySelectorTip = useTemplateRef<InstanceType<typeof TipSelectDays>>('daySelectorTip')
 
@@ -90,6 +94,10 @@ watch([selectedRegion, selectedSeason], () => {
   selectedRankDistributionItems.value = []
   selectedDays.value = []
 }, { flush: 'sync' })
+
+watch(supportsSkillChange, isSupported => {
+  groupBySkill.value = !isSupported
+}, { immediate: true, flush: 'sync' })
 
 watch(isDaySelectorOpen, isOpen => {
   if (isOpen) daySelectorTip.value?.accept()
@@ -177,7 +185,7 @@ const statisticsFilters = computed<GlobalStatisticsFilters | null>(() => {
 })
 
 const vehicleQuery = computed(() => statisticsFilters.value
-  ? buildGlobalVehicleStatisticsQuery(statisticsFilters.value, groupBySkill.value)
+  ? buildGlobalVehicleStatisticsQuery(statisticsFilters.value, groupBySkill.value && supportsSkillChange.value)
   : null
 )
 const arenaQuery = computed(() => statisticsFilters.value

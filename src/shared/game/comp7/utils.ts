@@ -15,6 +15,14 @@ const SEASON_LENGTHS = {
   'ru:comp7_5_4': 42 * ONE_DAY,
 }
 
+const SEASON_SKILL_CHANGE = {
+  'ru:comp7_5_4': true
+}
+
+export function isComp7SkillChangeSupported(region: string, season: string) {
+  return SEASON_SKILL_CHANGE[`${region.toLowerCase()}:${season}` as keyof typeof SEASON_SKILL_CHANGE] ?? false
+}
+
 /* Сдвиг времени относительно UTC для переключения дня, переключение ближе к НАЧАЛУ следующего дня.
 Используется как toStartOfDay(recalculationTime - interval OFFSET hour)
 
@@ -325,10 +333,28 @@ export const SKILL_TAGS = [
 
 export type SkillTag = typeof SKILL_TAGS[number]
 
-const technicalSkillNames = Object.fromEntries(SKILL_TAGS.map(tag => [tag, tag])) as Record<string, string>
+const DEFAULT_ROLE_SKILLS: Record<string, SkillTag> = {
+  role_LT_universal: 'comp7_recon',
+  role_LT_wheeled: 'comp7_aggressive_detection',
+  role_MT_assault: 'comp7_berserk',
+  role_MT_universal: 'comp7_aoe_inspire',
+  role_MT_sniper: 'comp7_redline',
+  role_MT_support: 'comp7_fast_recharge',
+  role_HT_assault: 'comp7_aoe_heal',
+  role_HT_break: 'comp7_ally_support',
+  role_HT_universal: 'comp7_hunter',
+  role_HT_support: 'comp7_concentration',
+  role_ATSPG_assault: 'comp7_juggernaut',
+  role_ATSPG_universal: 'comp7_sure_shot',
+  role_ATSPG_sniper: 'comp7_sniper',
+  role_ATSPG_support: 'comp7_risky_attack',
+}
+
+export function getComp7SkillByVehicleRole(role: string | null | undefined): SkillTag | null {
+  return role ? DEFAULT_ROLE_SKILLS[role] ?? null : null
+}
 
 export function getComp7SkillName(tag: string) {
-
   return getArtefactName(tag) ?? tag
 }
 
