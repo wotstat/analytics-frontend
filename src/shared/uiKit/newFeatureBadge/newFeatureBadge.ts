@@ -6,7 +6,8 @@ import { Directive } from 'vue'
 const features = [
   'mod-installer',
   'mt-36-1',
-  'onslaught'
+  'onslaught',
+  'onslaught-general'
 ] as const
 
 export type Features = typeof features[number]
@@ -33,6 +34,9 @@ export function featureState(feature: Features): Ref<boolean> {
 export function clearAllFeatureVisits(): void {
   visitedFeatures.value.clear()
 }
+
+if (!window.wotstat) window.wotstat = {}
+window.wotstat.resetFeatureVisits = clearAllFeatureVisits
 
 export const vNewFeatureBadge: Directive<HTMLElement, Features> = {
   mounted(el, binding) {

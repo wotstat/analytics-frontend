@@ -60,8 +60,10 @@ import type {
   StatisticsLoadState,
 } from './globalStatistics/types.ts'
 import TipSelectDays from './tips/TipSelectDays.vue'
+import { setFeatureVisit } from '@/shared/uiKit/newFeatureBadge/newFeatureBadge.ts'
 
 useStableScrollbarGutter()
+setFeatureVisit('onslaught-general')
 
 const seasons = ref<{ region: string, season: string, start: string }[]>([])
 const selectedSeason = ref<string | null>(null)

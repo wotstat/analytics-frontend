@@ -3,7 +3,9 @@
 
     <template #sidebar>
       <div class="sticky-sidebar router-links">
-        <!-- <QueryPreserveRouterLink to="/onslaught/general">Общее</QueryPreserveRouterLink> -->
+        <QueryPreserveRouterLink to="/onslaught/general" v-new-feature-badge="'onslaught-general'">
+          Общее
+        </QueryPreserveRouterLink>
         <QueryPreserveRouterLink to="/onslaught/personal">Статистика</QueryPreserveRouterLink>
         <QueryPreserveRouterLink to="/onslaught/leaderboard">Таблица лидеров</QueryPreserveRouterLink>
       </div>
@@ -24,11 +26,11 @@
 import QueryPreserveRouterLink from '@/pages/shared/sidebarLayout/QueryPreserveRouterLink.vue'
 import SidebarLayout from '@/pages/shared/sidebarLayout/SidebarLayout.vue'
 import { SidebarLink } from '@/pages/shared/sidebarLayout/utils'
-import { setFeatureVisit } from '@/shared/uiKit/newFeatureBadge/newFeatureBadge'
+import { setFeatureVisit, vNewFeatureBadge } from '@/shared/uiKit/newFeatureBadge/newFeatureBadge'
 import { RouterView } from 'vue-router'
 
 const links: SidebarLink[] = [
-  // { to: '/onslaught/general', labels: 'Общее' },
+  { to: '/onslaught/general', labels: 'Общее' },
   { to: '/onslaught/personal', labels: 'Персональная' },
   { to: '/onslaught/leaderboard', labels: 'Таблица лидеров' },
 ]
@@ -49,6 +51,23 @@ setFeatureVisit('onslaught')
 .router-links {
   display: flex;
   flex-direction: column;
+
+  :deep(.new-feature-badge) {
+    position: relative;
+
+    &::before {
+      position: absolute;
+      content: 'NEW';
+      top: -5px;
+      left: -2px;
+      padding: 1px 3px;
+      border-radius: 20px;
+      background-color: #2f80ed;
+      font-size: 10px;
+      font-weight: bold;
+      line-height: 1;
+    }
+  }
 }
 
 .footer {
