@@ -1,7 +1,7 @@
 <template>
   <div class="minimap">
     <MinimapBackground :tag="tag" :gameplay="gameplay" :game="game" :format="'webp'" class="background" />
-    <MinimapBases :tag="tag" :gameplay="gameplay" :team="props.team" v-if="showBases" />
+    <MinimapBases :tag="tag" :gameplay="gameplay" :game="game" :team="props.team" v-if="showBases" />
     <div class="overlay">
       <slot />
     </div>

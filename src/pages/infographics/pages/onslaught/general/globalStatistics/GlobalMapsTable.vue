@@ -43,7 +43,7 @@
 import { computed, ref } from 'vue'
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 import type { IconType } from '@/shared/game/efficiencyIcon/utils'
-import type { GameVendor } from '@/shared/game/wot'
+import type { GameRegion, GameVendor } from '@/shared/game/wot'
 import { getArenaName } from '@/shared/i18n/i18n'
 import { createFixedSpaceProcessor, createLogProcessor, createPercentProcessor } from '@/shared/utils/processors/processors'
 import { sec2minsec } from '@/shared/utils/time'
@@ -57,6 +57,7 @@ const SHOW_MORE_THRESHOLD = 6
 const props = defineProps<{
   state: StatisticsLoadState<GlobalArenaStatistic>
   game: GameVendor
+  region: GameRegion
 }>()
 
 const showMore = ref(false)
@@ -66,17 +67,17 @@ const canShowMore = computed(() => props.state.status === 'success'
   && props.state.data.length > SHOW_MORE_THRESHOLD
 )
 
-const headers: { title: string, icon: IconType }[] = [
+const headers = computed<{ title: string, icon: IconType }[]>(() => [
   { title: '', icon: 'arena' },
   { title: 'Бои', icon: 'battles' },
   { title: 'Уникальные игроки', icon: 'player' },
-  { title: 'Винрейт обороны', icon: 'winrate' },
+  { title: props.region === 'RU' ? 'Винрейт обороны' : 'Винрейт команды 1', icon: 'winrate' },
   { title: 'Побед захватом базы', icon: 'base-capture' },
   { title: 'Продолжительность боя', icon: 'duration' },
   { title: 'Средний урон', icon: 'dmg' },
   { title: 'Среднее содействие', icon: 'assist' },
   { title: 'Средние уничтожения', icon: 'kill' },
-]
+])
 
 const data = computed(() => props.state.data.map(item => [
   item.arenaTag,

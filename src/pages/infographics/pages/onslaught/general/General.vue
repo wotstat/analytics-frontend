@@ -30,7 +30,7 @@
       <GlobalVehicleTable v-model:group-by-skill="groupBySkill" :state="vehicleState"
         :game="regionToGame(selectedRegion)" :season="selectedSeason ?? undefined"
         :allow-skill-toggle="supportsSkillChange" />
-      <GlobalMapsTable :state="arenaState" :game="regionToGame(selectedRegion)" />
+      <GlobalMapsTable :state="arenaState" :game="regionToGame(selectedRegion)" :region="selectedRegion" />
     </template>
   </div>
 </template>
