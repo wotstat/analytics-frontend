@@ -9,6 +9,7 @@ export type GlobalStatisticsFilters = {
   endDate: string
   days: string[]
   ranks: RankDistributionItem[]
+  wholeRanks: RankDistributionItem['rank'][]
 }
 
 function stringList(values: readonly string[]) {
@@ -21,15 +22,19 @@ function buildDayCondition(filters: GlobalStatisticsFilters) {
   return `day >= '${filters.startDate}' AND day < '${filters.endDate}'`
 }
 
-function buildRankCondition(ranks: RankDistributionItem[], prefix = '') {
-  return ranks.map(item => {
+function buildRankCondition(filters: GlobalStatisticsFilters, prefix = '') {
+  const wholeRanks = new Set(filters.wholeRanks)
+  const rankConditions = filters.wholeRanks.map(rank => `${prefix}rank = '${rank}'`)
+  const itemConditions = filters.ranks.filter(item => !wholeRanks.has(item.rank)).map(item => {
     if (item.ratingInterval) {
       const [from, to] = item.ratingInterval
       return `${prefix}leaderboardRating BETWEEN ${from} AND ${to}`
     }
 
     return `(${prefix}rank = '${item.rank}' AND ${prefix}division = '${item.name}')`
-  }).join(' OR ')
+  })
+
+  return [...rankConditions, ...itemConditions].join(' OR ')
 }
 
 function buildWhere(filters: GlobalStatisticsFilters, rankCondition: string) {
@@ -42,7 +47,7 @@ function buildWhere(filters: GlobalStatisticsFilters, rankCondition: string) {
 
 export function buildGlobalVehicleStatisticsQuery(filters: GlobalStatisticsFilters, groupBySkill: boolean) {
   const validSkillCondition = `comp7SkillTag IN (${stringList(SKILL_TAGS)})`
-  const rankCondition = buildRankCondition(filters.ranks)
+  const rankCondition = buildRankCondition(filters)
   const skillFilter = groupBySkill ? `\n      AND ${validSkillCondition}` : ''
   const skillGroup = groupBySkill ? ', comp7SkillTag' : ''
 
@@ -91,7 +96,7 @@ export function buildGlobalVehicleStatisticsQuery(filters: GlobalStatisticsFilte
 }
 
 export function buildGlobalArenaStatisticsQuery(filters: GlobalStatisticsFilters) {
-  const ranks = buildRankCondition(filters.ranks, 'playerRank.')
+  const ranks = buildRankCondition(filters, 'playerRank.')
   const rankCondition = ranks ? `arrayExists(playerRank -> (${ranks}), playersRanks)` : ''
 
   return `

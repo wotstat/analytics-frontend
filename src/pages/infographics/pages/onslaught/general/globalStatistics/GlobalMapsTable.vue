@@ -2,7 +2,7 @@
   <section class="statistics-section">
     <div class="header">
       <h3>Статистика карт</h3>
-      <button v-if="state.data.length > SHOW_MORE_THRESHOLD" class="more" type="button" @click="showMore = !showMore">
+      <button class="more" type="button" :disabled="!canShowMore" @click="showMore = !showMore">
         {{ showMore ? 'Меньше' : 'Больше' }}
       </button>
     </div>
@@ -11,7 +11,8 @@
     <TableState v-if="state.status !== 'success'" :state />
 
     <div v-else class="table-container nice-scrollbar-transparent mt-font">
-      <SortableTable :data :cols="9" :limit="displayLimit" :is-orderable="index => index !== 0" :default-order-by="2"
+      <SortableTable v-model:order-by="orderBy" v-model:order-direction="orderDirection" :data :cols="9"
+        :limit="displayLimit" :is-orderable="index => index !== 0" :default-order-by="2"
         :column-labels="headers.map(header => header.title)">
         <template #head-cell="{ col }">
           <div class="column-title">
@@ -59,6 +60,11 @@ const props = defineProps<{
 }>()
 
 const showMore = ref(false)
+const orderBy = ref(2)
+const orderDirection = ref<'asc' | 'desc'>('desc')
+const canShowMore = computed(() => props.state.status === 'success'
+  && props.state.data.length > SHOW_MORE_THRESHOLD
+)
 
 const headers: { title: string, icon: IconType }[] = [
   { title: '', icon: 'arena' },
@@ -130,15 +136,22 @@ function formatDuration(value: number) {
 }
 
 .more {
+  width: 62px;
   padding: 0;
   border: none;
   background: none;
   color: var(--blue-thin-color, #fff);
   font-size: 14px;
+  text-align: right;
   cursor: pointer;
 
-  &:hover {
+  &:not(:disabled):hover {
     color: var(--blue-thin-color-hover, #fff);
+  }
+
+  &:disabled {
+    color: rgba(255, 255, 255, 0.3);
+    cursor: default;
   }
 }
 

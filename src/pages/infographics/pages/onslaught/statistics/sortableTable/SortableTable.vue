@@ -42,8 +42,25 @@ const props = defineProps<{
   columnLabels: string[]
 }>()
 
-const orderBy = ref(props.defaultOrderBy ?? 1)
-const orderDirection = ref<'asc' | 'desc'>(props.defaultOrderDirection ?? 'desc')
+const orderByModel = defineModel<number>('orderBy')
+const orderDirectionModel = defineModel<'asc' | 'desc'>('orderDirection')
+const internalOrderBy = ref(props.defaultOrderBy ?? 1)
+const internalOrderDirection = ref<'asc' | 'desc'>(props.defaultOrderDirection ?? 'desc')
+
+const orderBy = computed({
+  get: () => orderByModel.value ?? internalOrderBy.value,
+  set: value => {
+    internalOrderBy.value = value
+    orderByModel.value = value
+  },
+})
+const orderDirection = computed({
+  get: () => orderDirectionModel.value ?? internalOrderDirection.value,
+  set: value => {
+    internalOrderDirection.value = value
+    orderDirectionModel.value = value
+  },
+})
 
 const displayedData = computed(() => {
   const dataWithKeys = props.data.map((line, index) => {

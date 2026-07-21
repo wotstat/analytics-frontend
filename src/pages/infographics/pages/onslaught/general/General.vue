@@ -89,6 +89,20 @@ const leaderboardPlaceholders: RankDistributionItem[] = [
 ]
 
 const rankDistributionData = shallowRef<RankDistributionItem[]>(leaderboardPlaceholders)
+const selectedWholeRanks = computed<RankDistributionItem['rank'][]>(() => {
+  const selectedKeys = new Set(selectedRankDistributionItems.value.map(item => `${item.rank}:${item.name}`))
+  const divisionRanks = new Set<RankDistributionItem['rank']>(['first', 'second', 'third', 'fourth'])
+  const divisionNames: DivisionLetter[] = ['E', 'D', 'C', 'B', 'A']
+  const ranks: RankDistributionItem['rank'][] = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth']
+
+  return ranks.filter(rank => {
+    const itemKeys = divisionRanks.has(rank)
+      ? divisionNames.map(name => `${rank}:${name}`)
+      : rankDistributionData.value.filter(item => item.rank === rank).map(item => `${item.rank}:${item.name}`)
+
+    return itemKeys.length > 0 && itemKeys.every(key => selectedKeys.has(key))
+  })
+})
 
 watch([selectedRegion, selectedSeason], () => {
   selectedRankDistributionItems.value = []
@@ -181,6 +195,7 @@ const statisticsFilters = computed<GlobalStatisticsFilters | null>(() => {
     endDate: dateToDbDate(seasonInterval.value.end),
     days: selectedDays.value,
     ranks: selectedRankDistributionItems.value,
+    wholeRanks: selectedWholeRanks.value,
   }
 })
 
@@ -215,7 +230,6 @@ function reloadVehicle(sql: string) {
     try {
       const response = await query<GlobalVehicleStatistic>(sql, {
         abortSignal: signal,
-        allowCache: false,
         settings: LONG_CACHE_SETTINGS,
       })
       if (signal.aborted || requestId !== vehicleRequestId) return
@@ -243,7 +257,6 @@ async function reloadArena(sql: string, commonId: number) {
   try {
     const response = await query<GlobalArenaStatistic>(sql, {
       abortSignal: signal,
-      allowCache: false,
       settings: LONG_CACHE_SETTINGS,
     })
     if (signal.aborted || commonId !== commonRequestId) return

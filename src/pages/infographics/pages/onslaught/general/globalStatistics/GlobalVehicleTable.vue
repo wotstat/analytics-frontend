@@ -3,11 +3,12 @@
     <div class="header">
       <h3>Статистика танков</h3>
       <div class="actions">
-        <label v-if="props.allowSkillToggle" class="skill-toggle">
+        <label v-if="props.allowSkillToggle" class="skill-toggle" :class="{ 'is-checked': groupBySkill }">
           <input v-model="groupBySkill" type="checkbox">
-          <span>Учитывать навык</span>
+          <span class="skill-toggle__box" aria-hidden="true"></span>
+          <span class="skill-toggle__label">Учитывать навык</span>
         </label>
-        <button v-if="state.data.length > SHOW_MORE_THRESHOLD" class="more" type="button" @click="showMore = !showMore">
+        <button class="more" type="button" :disabled="!canShowMore" @click="showMore = !showMore">
           {{ showMore ? 'Меньше' : 'Больше' }}
         </button>
       </div>
@@ -18,9 +19,9 @@
 
     <div v-else class="table-container nice-scrollbar-transparent mt-font"
       :class="{ 'with-skill-column': !groupBySkill }">
-      <SortableTable :key="groupBySkill ? 'grouped-by-skill' : 'with-skill-distribution'" :data :cols="headers.length"
-        :limit="displayLimit" :is-orderable="index => index !== 0" :default-order-by="defaultOrderBy"
-        :column-labels="headers.map(header => header.title)">
+      <SortableTable v-model:order-by="vehicleOrderBy" v-model:order-direction="orderDirection" :data
+        :cols="headers.length" :limit="displayLimit" :is-orderable="index => index !== 0"
+        :default-order-by="defaultOrderBy" :column-labels="headers.map(header => header.title)">
         <template #head-cell="{ col }">
           <div class="column-title">
             <Icon v-if="headers[col].icon" :icon="headers[col].icon!" />
@@ -93,6 +94,11 @@ const props = defineProps<{
 
 const groupBySkill = defineModel<boolean>('groupBySkill', { default: false })
 const showMore = ref(false)
+const selectedOrderKey = ref<ColumnKey>('battles')
+const orderDirection = ref<'asc' | 'desc'>('desc')
+const canShowMore = computed(() => props.state.status === 'success'
+  && props.state.data.length > SHOW_MORE_THRESHOLD
+)
 
 type ColumnKey = 'vehicle' | 'skill' | 'players' | 'battles' | 'winrate' | 'damage' | 'assist' | 'prestigePoints' | 'kills'
 type Column = { key: ColumnKey, title: string, icon?: IconType }
@@ -115,6 +121,16 @@ const headers = computed(() => groupBySkill.value
 )
 
 const defaultOrderBy = computed(() => headers.value.findIndex(header => header.key === 'battles'))
+const vehicleOrderBy = computed({
+  get: () => {
+    const selectedIndex = headers.value.findIndex(header => header.key === selectedOrderKey.value)
+    return selectedIndex === -1 ? defaultOrderBy.value : selectedIndex
+  },
+  set: index => {
+    const header = headers.value[index]
+    if (header) selectedOrderKey.value = header.key
+  },
+})
 
 const data = computed(() => props.state.data.map(item => headers.value.map(header => {
   if (header.key === 'vehicle') return item.tankTag
@@ -171,29 +187,104 @@ function formatColumnShare(value: number, column: 'players' | 'battles') {
 }
 
 .skill-toggle {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
+  min-height: 28px;
+  padding: 4px 0;
   color: rgba(255, 255, 255, 0.72);
   font-size: 13px;
   white-space: nowrap;
   cursor: pointer;
+  user-select: none;
+  transition: color 0.15s ease;
 
   input {
-    accent-color: var(--blue-color);
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+
+    &:focus-visible + .skill-toggle__box {
+      outline: 2px solid rgba(48, 172, 255, 0.45);
+      outline-offset: 2px;
+    }
+  }
+
+  &:hover {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  &.is-checked {
+    color: rgba(255, 255, 255, 0.92);
   }
 }
 
+.skill-toggle__box {
+  position: relative;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.16);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 5px;
+    width: 4px;
+    height: 8px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    filter: blur(1.5px);
+    opacity: 0;
+    transform: rotate(45deg) scale(0.65);
+    transition: filter 0.12s ease, opacity 0.12s ease, transform 0.12s ease;
+  }
+
+  .is-checked & {
+    border-color: var(--blue-thin-color, #09f);
+    background: linear-gradient(145deg, var(--blue-thin-color-hover, #30acff), var(--blue-color, #0a84ff));
+    box-shadow: 0 0 0 1px rgba(10, 132, 255, 0.12), 0 2px 6px rgba(10, 132, 255, 0.28);
+
+    &::after {
+      filter: blur(0);
+      opacity: 1;
+      transform: rotate(45deg) scale(1);
+    }
+  }
+}
+
+.skill-toggle__label {
+  line-height: 1;
+}
+
 .more {
+  width: 62px;
   padding: 0;
   border: none;
   background: none;
   color: var(--blue-thin-color, #fff);
   font-size: 14px;
+  text-align: right;
   cursor: pointer;
 
-  &:hover {
+  &:not(:disabled):hover {
     color: var(--blue-thin-color-hover, #fff);
+  }
+
+  &:disabled {
+    color: rgba(255, 255, 255, 0.3);
+    cursor: default;
   }
 }
 
