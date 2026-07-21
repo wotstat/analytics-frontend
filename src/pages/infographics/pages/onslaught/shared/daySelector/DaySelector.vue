@@ -32,25 +32,41 @@
       <div class="calendar-grid">
         <span class="week-heading">Нед.</span>
         <button v-for="weekday in weekdays" :key="weekday.column" type="button" class="weekday"
-          :class="{ selected: isGroupSelected(weekday.days) }" @click="selectGroup(weekday.days)"
-          @pointerenter="hoveredWeekday = weekday.column" @pointerleave="hoveredWeekday = null">
+          :class="{ selected: isGroupSelected(weekday.days) }" :style="{ gridColumn: weekday.column + 2, gridRow: 1 }"
+          @click="selectGroup(weekday.days)" @pointerenter="hoveredWeekday = weekday.column"
+          @pointerleave="hoveredWeekday = null">
           {{ weekday.label }}
         </button>
+
+        <template v-for="weekday in weekdays" :key="`selected-weekday-${weekday.column}`">
+          <Transition name="group-selection">
+            <div v-if="isGroupSelected(weekday.days)" class="group-selection column-selection" :style="{
+              gridColumn: weekday.column + 2,
+              gridRow: `1 / span ${weekday.rowSpan}`,
+            }"></div>
+          </Transition>
+        </template>
 
         <Transition name="group-highlight">
           <div v-if="hoveredWeekday !== null" class="group-highlight column-highlight" :style="{
             gridColumn: hoveredWeekday + 2,
-            gridRow: `2 / span ${weeks.length}`,
+            gridRow: `1 / span ${weekdays[hoveredWeekday]!.rowSpan}`,
           }"></div>
         </Transition>
         <Transition name="group-highlight">
           <div v-if="hoveredWeek !== null" class="group-highlight row-highlight" :style="{
-            gridColumn: '2 / span 7',
+            gridColumn: `1 / span ${weeks[hoveredWeek]!.columnSpan}`,
             gridRow: hoveredWeek + 2,
           }"></div>
         </Transition>
 
         <div v-for="week in weeks" :key="week.index" class="week-row">
+          <Transition name="group-selection">
+            <div v-if="isGroupSelected(week.days)" class="group-selection row-selection" :style="{
+              gridColumn: `1 / span ${week.columnSpan}`,
+              gridRow: week.index + 2,
+            }"></div>
+          </Transition>
           <button type="button" class="week-number" :class="{ selected: isGroupSelected(week.days) }"
             :style="{ gridColumn: 1, gridRow: week.index + 2 }" @click="selectGroup(week.days)"
             @pointerenter="hoveredWeek = week.index" @pointerleave="hoveredWeek = null">
@@ -62,12 +78,14 @@
               class: 'comp7-tooltip',
               text: week.days[column - 1]!.calendarLabel,
             }" type="button" class="day" :style="{ gridColumn: column + 1, gridRow: week.index + 2 }" :class="{
-              selected: selectedSet.has(week.days[column - 1]!.value),
+              selected: isDaySelected(week.days[column - 1]),
+              'selected-before': isDaySelected(week.days[column - 1]) && isDaySelected(week.days[column - 2]),
+              'selected-after': isDaySelected(week.days[column - 1]) && isDaySelected(week.days[column]),
               today: week.days[column - 1]!.isToday,
               future: week.days[column - 1]!.isFuture,
               'group-highlighted': hoveredWeek === week.index || hoveredWeekday === column - 1,
             }" @click="selectDay(week.days[column - 1]!)">
-              {{ week.days[column - 1]!.seasonDay }}
+              <span class="day-label">{{ week.days[column - 1]!.seasonDay }}</span>
             </button>
             <span v-else class="empty-day" :style="{ gridColumn: column + 1, gridRow: week.index + 2 }"></span>
           </template>
@@ -164,18 +182,27 @@ const days = computed<CalendarDay[]>(() => {
 
 const weeks = computed(() => Array.from(
   { length: Math.ceil(days.value.length / 7) },
-  (_, index) => ({
-    index,
-    days: days.value.slice(index * 7, index * 7 + 7),
-  })
+  (_, index) => {
+    const weekDays = days.value.slice(index * 7, index * 7 + 7)
+    return {
+      index,
+      days: weekDays,
+      columnSpan: weekDays.filter(day => !day.isFuture).length + 1,
+    }
+  }
 ))
 
 const weekdays = computed(() => Array.from({ length: 7 }, (_, column) => {
   const date = new Date(props.seasonInterval.start.getTime() + column * DAY)
+  const columnDays = days.value.filter((_, index) => index % 7 === column)
+  const lastAvailableDay = columnDays.findLast(day => !day.isFuture)
   return {
     column,
     label: weekdayFormatter.format(date).replace('.', ''),
-    days: days.value.filter((_, index) => index % 7 === column),
+    days: columnDays,
+    rowSpan: lastAvailableDay === undefined
+      ? 1
+      : Math.floor((lastAvailableDay.seasonDay - 1) / 7) + 2,
   }
 }))
 
@@ -216,6 +243,10 @@ function availableGroup(group: CalendarDay[]) {
 function isGroupSelected(group: CalendarDay[]) {
   const values = availableGroup(group)
   return values.length > 0 && values.every(value => selectedSet.value.has(value))
+}
+
+function isDaySelected(day: CalendarDay | undefined) {
+  return day !== undefined && selectedSet.value.has(day.value)
 }
 
 function normalizedSelection(values: string[]) {
@@ -323,7 +354,7 @@ function selectWholeSeason() {
 }
 
 .calendar-popup {
-  --day-selector-popup-width: min(340px, calc(100vw - 20px));
+  --day-selector-popup-width: min(266px, calc(100vw - 20px));
 
   position: relative;
   box-sizing: border-box;
@@ -398,12 +429,15 @@ function selectWholeSeason() {
 .calendar-grid {
   position: relative;
   display: grid;
-  grid-template-columns: 32px repeat(7, minmax(28px, 1fr));
-  gap: 3px;
+  grid-template-columns: repeat(8, 30px);
+  grid-auto-rows: 30px;
+  justify-content: center;
+  column-gap: 0;
+  row-gap: 3px;
 
   button {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     border: none;
     color: rgba(255, 255, 255, 0.68);
     transition: color 0.1s, background-color 0.1s;
@@ -411,30 +445,34 @@ function selectWholeSeason() {
 
   .week-heading,
   .weekday {
-    height: 23px;
+    height: 30px;
     color: rgba(255, 255, 255, 0.42);
-    font-size: 10px;
+    font-size: 11px;
+    font-weight: 400;
     text-transform: uppercase;
   }
 
   .week-heading {
     display: flex;
+    grid-row: 1;
+    grid-column: 1;
     align-items: center;
     justify-content: center;
   }
 
   .weekday,
   .week-number {
-    border-radius: 5px;
+    border-radius: 15px;
+    background: transparent;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.08);
+      background: transparent;
       color: rgba(255, 255, 255, 0.9);
     }
 
     &.selected {
-      color: var(--blue-thin-color, #70baff);
-      background: rgba(77, 160, 226, 0.12);
+      color: #fff;
+      background: transparent;
     }
   }
 
@@ -442,27 +480,41 @@ function selectWholeSeason() {
     display: contents;
   }
 
+  .group-highlight,
+  .group-selection {
+    pointer-events: none;
+    border-radius: 15px;
+  }
+
   .group-highlight {
     z-index: 0;
-    pointer-events: none;
-    border-radius: 6px;
     background: rgba(255, 255, 255, 0.08);
   }
 
+  .group-selection {
+    z-index: 1;
+    background: var(--blue-color, rgb(10, 132, 255));
+  }
+
   .group-highlight-enter-active,
-  .group-highlight-leave-active {
+  .group-highlight-leave-active,
+  .group-selection-enter-active,
+  .group-selection-leave-active {
     transition: opacity 0.1s;
   }
 
   .group-highlight-enter-from,
-  .group-highlight-leave-to {
+  .group-highlight-leave-to,
+  .group-selection-enter-from,
+  .group-selection-leave-to {
     opacity: 0;
   }
 
   .week-number {
     height: 30px;
     color: rgba(255, 255, 255, 0.4);
-    font-size: 11px;
+    font-size: 12px;
+    font-weight: 400;
   }
 
   .day,
@@ -472,39 +524,101 @@ function selectWholeSeason() {
 
   .day {
     position: relative;
-    border-radius: 6px;
-    background: rgba(255, 255, 255, 0.035);
-    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: transparent;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
 
-    &:hover {
-      background: rgba(255, 255, 255, 0.09);
-      color: #fff;
-    }
-
-    &.selected {
-      background: var(--blue-color, rgb(10, 132, 255));
-      color: #fff;
-    }
-
-    &.today::after {
+    &::before {
       content: '';
       position: absolute;
-      right: 4px;
-      bottom: 3px;
-      left: 4px;
-      height: 1px;
-      border-radius: 1px;
-      background: rgba(125, 196, 255, 0.8);
+      z-index: 0;
+      top: 0;
+      right: calc(50% - 15px);
+      bottom: 0;
+      left: calc(50% - 15px);
+      border-radius: 15px;
+      background: transparent;
+      transition:
+        right 0.1s ease-out,
+        left 0.1s ease-out,
+        border-radius 0.1s ease-out,
+        background-color 0.1s,
+        filter 0.1s;
+    }
+
+    &:hover::before,
+    &:focus-visible::before {
+      background: rgba(255, 255, 255, 0.09);
+    }
+
+    &.selected::before {
+      background: var(--blue-color, rgb(10, 132, 255));
+    }
+
+    &.selected:hover::before,
+    &.selected:focus-visible::before {
+      filter: brightness(1.12);
+    }
+
+    &.selected-before::before {
+      left: 0;
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+
+    &.selected-after::before {
+      right: 0;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
     }
 
     &.future {
-      background: rgba(255, 255, 255, 0.018);
       color: rgba(255, 255, 255, 0.23);
       cursor: default;
+
+      &::before {
+        background: transparent;
+      }
     }
 
-    &.group-highlighted:not(.selected) {
-      background: transparent;
+    &:focus-visible {
+      outline: none;
+
+      .day-label {
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.75);
+      }
+    }
+
+    .day-label {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+    }
+
+    &.today .day-label::after {
+      content: '';
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--blue-thin-color, #70baff);
+      transform: translateX(-50%);
+    }
+
+    &.today.selected .day-label::after {
+      background: #fff;
     }
   }
 }
