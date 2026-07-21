@@ -1,5 +1,6 @@
 <template>
   <div class="chart nice-scrollbar-transparent">
+    <TipSelectRankDistribution ref="selectionTip" class="selection-tip" />
     <div class="groups">
       <div class="rank-group" v-for="group in groups" :key="group.rank"
         :style="{ flexGrow: group.items.length, flexBasis: group.width, minWidth: group.width }">
@@ -24,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import { useI18n } from '@/shared/i18n/useI18n'
 import i18n from '@/shared/game/comp7/i18n.json'
 import { getRatingIntervalForDivision } from '@/shared/game/comp7/utils'
@@ -34,6 +35,7 @@ import Bar from './Bar.vue'
 import type { RankDistributionItem, RankDistributionTooltipProps } from './types'
 import { LEADERBOARD_STEP } from './processDistribution'
 import { vRankDistributionTooltip } from './rankDistributionTooltip/useRankDistributionTooltip.ts'
+import TipSelectRankDistribution from './tips/TipSelectRankDistribution.vue'
 
 const { t } = useI18n(i18n)
 
@@ -45,6 +47,7 @@ const props = defineProps<{
 
 const selectedItems = defineModel<RankDistributionItem[]>('selected', { default: () => [] })
 const hoveredRank = ref<RankDistributionItem['rank'] | null>(null)
+const selectionTip = useTemplateRef<InstanceType<typeof TipSelectRankDistribution>>('selectionTip')
 
 const rankOrder: RankDistributionItem['rank'][] = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth']
 const divisionRanks = new Set<RankDistributionItem['rank']>(['first', 'second', 'third', 'fourth'])
@@ -115,6 +118,7 @@ function selectItem(item: RankDistributionItem, event: MouseEvent) {
   const key = itemKey(item)
 
   if (event.shiftKey) {
+    selectionTip.value?.accept()
     selectedItems.value = selectedKeys.value.has(key)
       ? selectedItems.value.filter(selected => itemKey(selected) !== key)
       : [...selectedItems.value, item]
@@ -125,6 +129,7 @@ function selectItem(item: RankDistributionItem, event: MouseEvent) {
 }
 
 function selectGroup(items: RankDistributionItem[], event: MouseEvent) {
+  selectionTip.value?.accept()
   const groupKeys = new Set(items.map(itemKey))
   const allSelected = isGroupSelected(items)
 
@@ -156,6 +161,12 @@ function selectGroup(items: RankDistributionItem[], event: MouseEvent) {
   &::-webkit-scrollbar-track {
     margin: 0 var(--content-page-margin, 0);
   }
+}
+
+.selection-tip {
+  position: absolute;
+  top: 5px;
+  left: var(--content-page-margin, 0);
 }
 
 .groups {
