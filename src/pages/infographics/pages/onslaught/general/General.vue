@@ -303,8 +303,8 @@ async function reloadCommon(vehicleSql: string, arenaSql: string) {
   await reloadArena(arenaSql, commonId)
 }
 
-watch(arenaQuery, sql => {
-  if (!sql || !vehicleQuery.value) {
+watch([vehicleQuery, arenaQuery], ([vehicleSql, arenaSql], [oldVehicleSql, oldArenaSql] = [null, null]) => {
+  if (!vehicleSql || !arenaSql) {
     commonRequestId++
     vehicleRequestId++
     vehicleAbortController.abort()
@@ -313,13 +313,13 @@ watch(arenaQuery, sql => {
     arenaState.value = { status: 'loading', data: [] }
     return
   }
-  reloadCommon(vehicleQuery.value, sql)
-}, { immediate: true })
+  if (arenaSql !== oldArenaSql) {
+    reloadCommon(vehicleSql, arenaSql)
+    return
+  }
 
-watch(groupBySkill, () => {
-  if (!vehicleQuery.value) return
-  reloadVehicle(vehicleQuery.value)
-})
+  if (vehicleSql !== oldVehicleSql) reloadVehicle(vehicleSql)
+}, { immediate: true })
 
 onBeforeUnmount(() => {
   loadingAbortController.abort()
