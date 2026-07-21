@@ -3,7 +3,7 @@
     <button ref="trigger" type="button" class="trigger" @click="displayPopup = !displayPopup">
       <span class="trigger-content">
         <span v-if="caption" class="caption">{{ caption }}:</span>
-        <span>{{ selectionLabel }}</span>
+        <span class="selection-label">{{ selectionLabel }}</span>
         <DropdownArrow :is-open="displayPopup" class="arrow" />
       </span>
     </button>
@@ -32,7 +32,9 @@
       <div class="calendar-grid">
         <span class="week-heading">Нед.</span>
         <button v-for="weekday in weekdays" :key="weekday.column" type="button" class="weekday"
-          :class="{ selected: isGroupSelected(weekday.days) }" :style="{ gridColumn: weekday.column + 2, gridRow: 1 }"
+          :class="{ selected: props.selectionMode === 'arbitrary' && isGroupSelected(weekday.days) }"
+          :style="{ gridColumn: weekday.column + 2, gridRow: 1 }"
+          :disabled="props.selectionMode === 'interval'"
           @click="selectGroup(weekday.days)" @pointerenter="hoveredWeekday = weekday.column"
           @pointerleave="hoveredWeekday = null">
           {{ weekday.label }}
@@ -40,7 +42,8 @@
 
         <template v-for="weekday in weekdays" :key="`selected-weekday-${weekday.column}`">
           <Transition name="group-selection">
-            <div v-if="isGroupSelected(weekday.days)" class="group-selection column-selection" :style="{
+            <div v-if="props.selectionMode === 'arbitrary' && isGroupSelected(weekday.days)"
+              class="group-selection column-selection" :style="{
               gridColumn: weekday.column + 2,
               gridRow: `1 / span ${weekday.rowSpan}`,
             }"></div>
@@ -48,7 +51,8 @@
         </template>
 
         <Transition name="group-highlight">
-          <div v-if="hoveredWeekday !== null" class="group-highlight column-highlight" :style="{
+          <div v-if="props.selectionMode === 'arbitrary' && hoveredWeekday !== null"
+            class="group-highlight column-highlight" :style="{
             gridColumn: hoveredWeekday + 2,
             gridRow: `1 / span ${weekdays[hoveredWeekday]!.rowSpan}`,
           }"></div>
@@ -109,7 +113,7 @@ import { headerHeight, useAdditionalHeaderHeight } from '@/pages/shared/header/u
 import { getRegionDayChangeHourOffset } from '@/shared/game/comp7/utils'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
 import TipSelectDayGroups from './tips/TipSelectDayGroups.vue'
-import DropdownArrow from '../../leaderboard/components/detail/intervalSelector/DropdownArrow.vue'
+import DropdownArrow from './DropdownArrow.vue'
 
 export type DaySelectionMode = 'arbitrary' | 'interval'
 
@@ -136,7 +140,6 @@ const displayPopup = defineModel<boolean>('isOpen', { default: false })
 
 const trigger = useTemplateRef<HTMLButtonElement>('trigger')
 const groupSelectionTip = useTemplateRef<InstanceType<typeof TipSelectDayGroups>>('groupSelectionTip')
-const intervalAnchor = ref<string | null>(null)
 const hoveredWeek = ref<number | null>(null)
 const hoveredWeekday = ref<number | null>(null)
 const currentTime = ref(Date.now())
@@ -233,7 +236,6 @@ const selectionDescription = computed(() => selectedDays.value.length === 0
 
 watch(displayPopup, value => {
   if (value) currentTime.value = Date.now()
-  else intervalAnchor.value = null
 })
 
 function availableGroup(group: CalendarDay[]) {
@@ -279,12 +281,17 @@ function selectDay(day: CalendarDay) {
     return
   }
 
-  if (intervalAnchor.value === null) {
-    intervalAnchor.value = day.value
-    selectedDays.value = [day.value]
+  const selected = normalizedSelection(selectedDays.value)
+  const selectedFirstIndex = dayIndex.value.get(selected[0])
+  const selectedLastIndex = dayIndex.value.get(selected.at(-1)!)
+  const clickedIndex = dayIndex.value.get(day.value)
+
+  if (selectedFirstIndex !== undefined && selectedLastIndex !== undefined && clickedIndex === selectedFirstIndex - 1) {
+    selectedDays.value = rangeBetween(day.value, selected.at(-1)!)
+  } else if (selectedFirstIndex !== undefined && selectedLastIndex !== undefined && clickedIndex === selectedLastIndex + 1) {
+    selectedDays.value = rangeBetween(selected[0], day.value)
   } else {
-    selectedDays.value = rangeBetween(intervalAnchor.value, day.value)
-    intervalAnchor.value = null
+    selectedDays.value = [day.value]
   }
 }
 
@@ -292,7 +299,6 @@ function selectGroup(group: CalendarDay[]) {
   const values = availableGroup(group)
   if (values.length === 0) return
   groupSelectionTip.value?.accept()
-  intervalAnchor.value = null
 
   if (props.selectionMode === 'interval') {
     selectedDays.value = rangeBetween(values[0], values.at(-1)!)
@@ -309,7 +315,6 @@ function selectGroup(group: CalendarDay[]) {
 }
 
 function selectWholeSeason() {
-  intervalAnchor.value = null
   selectedDays.value = []
 }
 </script>
@@ -342,6 +347,10 @@ function selectWholeSeason() {
 
   .caption {
     color: rgba(255, 255, 255, 0.5);
+  }
+
+  .selection-label {
+    font-variant-numeric: tabular-nums;
   }
 
   .arrow {
@@ -479,6 +488,11 @@ function selectWholeSeason() {
       color: #fff;
       background: transparent;
     }
+  }
+
+  .weekday:disabled {
+    pointer-events: none;
+    cursor: default;
   }
 
   .week-row {

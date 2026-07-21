@@ -163,7 +163,7 @@ import { useSeasonInterval } from '../shared/useSeasonInterval'
 import Live from './components/Live.vue'
 import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
 import { useMeta } from '@/shared/composition/useMeta'
-import { SelectedInterval } from './components/detail/intervalSelector/IntervalSelector.vue'
+import type { SelectedInterval } from './components/detail/types.ts'
 import { useStableScrollbarGutter } from '@/shared/composition/useStableScrollbarGutter.ts'
 
 useMeta({
@@ -282,23 +282,6 @@ watch([selectedSeason, region], () => {
   leaderboardData.value = []
   selectedInterval.value = null
   page.value = 1
-})
-
-watch(seasonInterval, interval => {
-  if (!interval) return
-  if (selectedInterval.value) return
-
-  const end = interval.end.getTime()
-  const delta = end - interval.start.getTime()
-  const WEEK = 7 * 24 * 60 * 60 * 1000
-  const endCeiled = Math.ceil(delta / WEEK) * WEEK
-
-  const endDate = new Date(interval.start.getTime() + endCeiled)
-  selectedInterval.value = {
-    start: interval.start,
-    end: endDate,
-    name: 'Весь сезон'
-  }
 })
 
 watchWithAbortSignal([region, page, selectedSeason, seasonInterval], signal => load(signal), { immediate: true })

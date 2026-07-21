@@ -9,8 +9,8 @@
         </template>
 
         <template #right>
-          <IntervalSelector :seasonInterval="props.seasonInterval" :modelValue="selectedInterval"
-            @update:modelValue="updateInterval" v-model:isOpen="isFirstSelectOpen" />
+          <DaySelector v-model="selectedDays" v-model:is-open="isFirstSelectOpen"
+            :season-interval="props.seasonInterval" :region="props.region" selection-mode="interval" />
         </template>
 
         <template #tooltip="{ ctx }">
@@ -44,8 +44,8 @@
         </template>
 
         <template #right>
-          <IntervalSelector :seasonInterval="props.seasonInterval" :modelValue="selectedInterval"
-            @update:modelValue="updateInterval" v-model:isOpen="isSecondSelectOpen" />
+          <DaySelector v-model="selectedDays" v-model:is-open="isSecondSelectOpen"
+            :season-interval="props.seasonInterval" :region="props.region" selection-mode="interval" />
         </template>
 
         <template #tooltip="{ ctx }">
@@ -81,7 +81,8 @@ import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/Univers
 import { dateToDbDate, queryComputed, loading as loadingState } from '@/db'
 import { BattlesChart, ScoreChart } from './Charts'
 
-import IntervalSelector, { type SelectedInterval } from './intervalSelector/IntervalSelector.vue'
+import DaySelector from '../../../shared/daySelector/DaySelector.vue'
+import type { SelectedInterval } from './types.ts'
 import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/chartTooltip/ChartTooltip'
 import { HoverSynchronizer } from '@/shared/uiKit/chart/universalChart/hover/composableHover/sync/HoverSynchronizer'
 import { BoundsSynchronizer } from '@/shared/uiKit/chart/universalChart/hover/composableHover/sync/BoundsSynchronizer'
@@ -110,6 +111,11 @@ const props = defineProps<{
   region: string
   seasonInterval: { start: Date, end: Date, length: number }
 }>()
+
+const MINUTE = 1 * 60
+const HOUR = MINUTE * 60
+const DAY = HOUR * 24
+const DAY_MS = DAY * 1000
 
 const data = queryComputed<{ recalculationTime: string, rank: number, rating: number, battlesCount: number }>(() => `
   with
@@ -140,7 +146,55 @@ watchEffect(() => {
 })
 
 const selectedInterval = defineModel<SelectedInterval | null>('selectedInterval', { default: null })
-const isFullSeason = computed(() => selectedInterval.value == null || selectedInterval.value.name == 'Весь сезон')
+const isFullSeason = computed(() => selectedInterval.value == null)
+
+const seasonDays = computed(() => Array.from(
+  { length: Math.ceil(props.seasonInterval.length) },
+  (_, index) => new Date(props.seasonInterval.start.getTime() + index * DAY_MS).toISOString().slice(0, 10)
+))
+const seasonDayIndex = computed(() => new Map(seasonDays.value.map((day, index) => [day, index])))
+
+const selectedDays = computed<string[]>({
+  get() {
+    const interval = selectedInterval.value
+    if (!interval) return []
+
+    const seasonStart = props.seasonInterval.start.getTime()
+    const from = Math.min(seasonDays.value.length, Math.max(
+      0,
+      Math.floor((interval.start.getTime() - seasonStart) / DAY_MS)
+    ))
+    const to = Math.max(0, Math.min(
+      seasonDays.value.length,
+      Math.ceil((interval.end.getTime() - seasonStart) / DAY_MS)
+    ))
+
+    return seasonDays.value.slice(from, Math.max(from + 1, to))
+  },
+  set(days) {
+    if (days.length === 0) {
+      updateInterval(null)
+      return
+    }
+
+    const indexes = [...new Set(days)]
+      .map(day => seasonDayIndex.value.get(day))
+      .filter((index): index is number => index !== undefined)
+      .sort((a, b) => a - b)
+    if (indexes.length === 0) return
+
+    if (indexes[0] === 0 && indexes.at(-1) === seasonDays.value.length - 1) {
+      updateInterval(null)
+      return
+    }
+
+    const seasonStart = props.seasonInterval.start.getTime()
+    updateInterval({
+      start: new Date(seasonStart + indexes[0] * DAY_MS),
+      end: new Date(seasonStart + (indexes.at(-1)! + 1) * DAY_MS),
+    })
+  },
+})
 
 function tooltipDate(ctx: TooltipCtx) {
   const x = ctx.nearestDataPoints[0].xValue
@@ -186,10 +240,6 @@ function pointDelta(ctx: TooltipCtx): number | null {
   return dp.yValue - baseline.y
 }
 
-const MINUTE = 1 * 60
-const HOUR = MINUTE * 60
-const DAY = HOUR * 24
-
 const startTime = props.seasonInterval.start.getTime() + getRegionDayChangeHourOffset(props.region)
 
 const sync = {
@@ -206,9 +256,9 @@ useDisposer()
 updateInterval(selectedInterval.value)
 
 function updateInterval(value: SelectedInterval | null) {
+  selectedInterval.value = value
   scoreChart.setViewInterval(value)
   battleChart.setViewInterval(value)
-  selectedInterval.value = value
 }
 
 scoreChart.onSetRenderBounds.on(bounds => {
@@ -219,9 +269,13 @@ scoreChart.onSetRenderBounds.on(bounds => {
   const fullDelta = props.seasonInterval.length * DAY
 
   if (delta > fullDelta - HOUR) {
-    selectedInterval.value = { start: props.seasonInterval.start, end: props.seasonInterval.end, name: 'Весь сезон' }
+    selectedInterval.value = null
   } else {
-    selectedInterval.value = { start: new Date(startTime + minX * 1000), end: new Date(startTime + maxX * 1000) }
+    const seasonStart = props.seasonInterval.start.getTime()
+    selectedInterval.value = {
+      start: new Date(seasonStart + minX * 1000),
+      end: new Date(seasonStart + maxX * 1000),
+    }
   }
 })
 
