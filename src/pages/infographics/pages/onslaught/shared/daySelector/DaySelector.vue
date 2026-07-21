@@ -12,14 +12,16 @@
     :viewport-offset="{ top: headerHeight + additionalHeaderHeight, right: 10, bottom: 10, left: 10 }" :arrow-size="0"
     class="comp7-tooltip">
     <div class="calendar-popup">
+      <TipSelectDayGroups ref="groupSelectionTip" class="group-selection-tip" :display="displayPopup"
+        :selection-mode="props.selectionMode" />
       <header>
-        <h3>
-          Выбор дней сезона
+        <div class="title-row">
+          <h3>Выбор дней сезона</h3>
           <button type="button" class="reset" :class="{ disabled: selectedDays.length === 0 }"
             @click="selectWholeSeason">
             <Reload />
           </button>
-        </h3>
+        </div>
         <p>{{ selectionDescription }}</p>
       </header>
 
@@ -86,6 +88,7 @@ import Reload from '@/assets/icons/reset.svg'
 import { headerHeight, useAdditionalHeaderHeight } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import { getRegionDayChangeHourOffset } from '@/shared/game/comp7/utils'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
+import TipSelectDayGroups from './tips/TipSelectDayGroups.vue'
 
 export type DaySelectionMode = 'arbitrary' | 'interval'
 
@@ -111,6 +114,7 @@ const selectedDays = defineModel<string[]>({ default: () => [] })
 const displayPopup = defineModel<boolean>('isOpen', { default: false })
 
 const trigger = useTemplateRef<HTMLButtonElement>('trigger')
+const groupSelectionTip = useTemplateRef<InstanceType<typeof TipSelectDayGroups>>('groupSelectionTip')
 const intervalAnchor = ref<string | null>(null)
 const hoveredWeek = ref<number | null>(null)
 const hoveredWeekday = ref<number | null>(null)
@@ -253,6 +257,7 @@ function selectDay(day: CalendarDay) {
 function selectGroup(group: CalendarDay[]) {
   const values = availableGroup(group)
   if (values.length === 0) return
+  groupSelectionTip.value?.accept()
   intervalAnchor.value = null
 
   if (props.selectionMode === 'interval') {
@@ -318,13 +323,33 @@ function selectWholeSeason() {
 }
 
 .calendar-popup {
+  --day-selector-popup-width: min(340px, calc(100vw - 20px));
+
+  position: relative;
   box-sizing: border-box;
-  width: min(340px, calc(100vw - 20px));
+  width: var(--day-selector-popup-width);
   padding: 13px;
 
+  .group-selection-tip {
+    position: absolute;
+    top: 15px;
+    left: 13px;
+  }
+
+  &:has(> .group-selection-tip) header .title-row {
+    padding-left: 25px;
+  }
+
   header {
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding-left: 0;
+      transition: padding-left 0.25s ease;
+    }
+
     h3 {
-      position: relative;
       margin: 0;
       color: rgba(255, 255, 255, 0.9);
       font-size: 16px;
@@ -338,14 +363,13 @@ function selectWholeSeason() {
     }
 
     .reset {
-      position: absolute;
-      top: -2px;
-      right: 0;
       display: flex;
+      flex: 0 0 auto;
       align-items: center;
       justify-content: center;
       width: 23px;
       height: 23px;
+      margin-left: auto;
       padding: 4px;
       border: none;
       border-radius: 20px;

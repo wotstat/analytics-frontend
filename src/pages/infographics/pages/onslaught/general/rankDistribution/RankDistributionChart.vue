@@ -35,7 +35,7 @@ import Bar from './Bar.vue'
 import type { RankDistributionItem, RankDistributionTooltipProps } from './types'
 import { LEADERBOARD_STEP } from './processDistribution'
 import { vRankDistributionTooltip } from './rankDistributionTooltip/useRankDistributionTooltip.ts'
-import TipSelectRankDistribution from './tips/TipSelectRankDistribution.vue'
+import TipSelectRankDistribution from '../tips/TipSelectRankDistribution.vue'
 
 const { t } = useI18n(i18n)
 

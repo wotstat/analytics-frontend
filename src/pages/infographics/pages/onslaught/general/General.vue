@@ -17,8 +17,9 @@
 
     <template v-if="seasonInterval">
       <div class="day-selector-row">
-        <DaySelector v-model="selectedDays" :season-interval="seasonInterval" selection-mode="arbitrary"
-          :region="selectedRegion" caption="Дни" />
+        <DaySelector v-model="selectedDays" v-model:is-open="isDaySelectorOpen"
+          :season-interval="seasonInterval" selection-mode="arbitrary" :region="selectedRegion" caption="Дни" />
+        <TipSelectDays ref="daySelectorTip" />
       </div>
       <GlobalVehicleTable v-model:group-by-skill="groupBySkill" :state="vehicleState"
         :game="regionToGame(selectedRegion)" :season="selectedSeason ?? undefined" />
@@ -28,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, shallowRef, useTemplateRef, watch } from 'vue'
 import Settings from '../shared/settings/Settings.vue'
 import RankDistributionChart from './rankDistribution/RankDistributionChart.vue'
 import type { RankDistributionItem } from './rankDistribution/types'
@@ -51,6 +52,7 @@ import type {
   GlobalVehicleStatistic,
   StatisticsLoadState,
 } from './globalStatistics/types.ts'
+import TipSelectDays from './tips/TipSelectDays.vue'
 
 useStableScrollbarGutter()
 
@@ -59,8 +61,10 @@ const selectedSeason = ref<string | null>(null)
 const selectedRegion = ref<'RU' | 'EU' | 'NA' | 'ASIA' | 'CN' | 'CT'>('RU')
 const selectedRankDistributionItems = ref<RankDistributionItem[]>([])
 const selectedDays = ref<string[]>([])
+const isDaySelectorOpen = ref(false)
 const groupBySkill = ref(false)
 const seasonInterval = useSeasonInterval(seasons, selectedSeason, selectedRegion)
+const daySelectorTip = useTemplateRef<InstanceType<typeof TipSelectDays>>('daySelectorTip')
 
 const vehicleState = shallowRef<StatisticsLoadState<GlobalVehicleStatistic>>({ status: 'loading', data: [] })
 const arenaState = shallowRef<StatisticsLoadState<GlobalArenaStatistic>>({ status: 'loading', data: [] })
@@ -86,6 +90,10 @@ watch([selectedRegion, selectedSeason], () => {
   selectedRankDistributionItems.value = []
   selectedDays.value = []
 }, { flush: 'sync' })
+
+watch(isDaySelectorOpen, isOpen => {
+  if (isOpen) daySelectorTip.value?.accept()
+})
 
 async function load(abortSignal: AbortSignal, soft = false) {
   if (!seasonInterval.value) return
@@ -329,6 +337,9 @@ h1 {
 }
 
 .day-selector-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-top: 35px;
 }
 </style>
