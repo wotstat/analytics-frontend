@@ -31,7 +31,7 @@ export abstract class BaseMarkers<T> extends BasePlotRenderer {
 
   renderImpl(space: ChartSpace, overflow: Overflow, full: Size): void {
 
-    for (let i = this.markers.length; i < this.markerInstances.length; i++) {
+    while (this.markerInstances.length > this.markers.length) {
       this.markerInstances.pop()?.dispose()
     }
 

@@ -38,7 +38,7 @@
 - **`HoverSynchronizer`** (hover-sync): навёл на один график — hover (линия/маркер/тултип) зажигается на всех связанных в той же точке фрейма. Добавляется в каждый `ComposableHover` (`addComponent`) и передаётся консьюмерам (`VerticalLine`/`NearestMarker`/`ChartTooltip`, опция `hoverSync`); локальный hover приоритетнее внешнего.
 - **`BoundsSynchronizer`** (bounds-sync): зазумил/пропанил один — связанные синхронно повторяют окно ведущей оси (направление как у `panDirection`: `new BoundsSynchronizer('horizontal' | 'vertical' | 'all')`), каждый анимируя свою auto-fit ось. Передаётся в `ZoomChartComponent` опцией `boundsSync`. **Идёт через `ZoomChartComponent`**, а не через `chart.setRenderBounds` напрямую (иначе auto-fit ось ведомого снапит — детали в его `readme.md`).
 
-Референс проводки — `detail/Charts.ts` + `detail/Detail.vue` (лидерборд Натиска).
+Референс проводки — `detail/Charts.ts` + `detail/Detail.vue` (лидерборд Натиска). Статичный сезонный вариант без зума с постоянными маркерами точек — `onslaught/general/dailyPlayersChart/`.
 
 ### Пример использования
 

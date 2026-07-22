@@ -144,3 +144,19 @@ export function buildGlobalArenaStatisticsQuery(filters: GlobalStatisticsFilters
     LIMIT 1000
   `
 }
+
+export function buildGlobalDailyPlayersStatisticsQuery(filters: GlobalStatisticsFilters) {
+  const rankCondition = buildRankCondition(filters)
+  const seasonFilters = { ...filters, days: [] }
+
+  return `
+    SELECT
+      day,
+      uniqMerge(players) AS players
+    FROM Comp7VehiclesStatistics
+    WHERE ${buildWhere(seasonFilters, rankCondition)}
+    GROUP BY day
+    ORDER BY day
+    LIMIT 1000
+  `
+}

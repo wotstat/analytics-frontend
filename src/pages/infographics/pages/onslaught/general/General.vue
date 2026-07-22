@@ -21,7 +21,10 @@
         class="sixth mt-font">Легенды</span> по таблице лидеров.
     </p>
 
-    <template v-if="seasonInterval">
+    <template v-if="seasonInterval && statisticsFilters">
+      <DailyPlayersChart :key="`${selectedRegion}:${selectedSeason}`" :filters="statisticsFilters"
+        :region="selectedRegion" :season-interval="seasonInterval" />
+
       <div class="day-selector-row">
         <DaySelector v-model="selectedDays" v-model:is-open="isDaySelectorOpen" :season-interval="seasonInterval"
           selection-mode="arbitrary" :region="selectedRegion" caption="Дни" />
@@ -49,6 +52,7 @@ import { useStableScrollbarGutter } from '@/shared/composition/useStableScrollba
 import DaySelector from '../shared/daySelector/DaySelector.vue'
 import GlobalVehicleTable from './globalStatistics/GlobalVehicleTable.vue'
 import GlobalMapsTable from './globalStatistics/GlobalMapsTable.vue'
+import DailyPlayersChart from './dailyPlayersChart/DailyPlayersChart.vue'
 import {
   buildGlobalArenaStatisticsQuery,
   buildGlobalVehicleStatisticsQuery,

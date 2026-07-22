@@ -39,3 +39,8 @@ export type GlobalArenaStatistic = {
   assist: number
   kills: number
 }
+
+export type GlobalDailyPlayersStatistic = {
+  day: string
+  players: number
+}
