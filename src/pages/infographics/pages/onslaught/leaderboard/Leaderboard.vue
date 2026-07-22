@@ -12,7 +12,7 @@
 
         <template v-if="searchState == 'found' && searchedPlayer && seasonInterval">
           <table>
-            <thead>
+            <thead class="search-toggle-header" @click="toggleSearchResult">
               <tr>
                 <th>№</th>
                 <th>Игрок</th>
@@ -24,24 +24,40 @@
             </thead>
 
             <tbody>
-              <LeaderboardLine :line="searchedPlayer" :region="region" />
-              <tr class="details">
+              <LeaderboardLine :line="searchedPlayer" :region="region" class="search-player-line"
+                @click="toggleSearchResult" />
+              <tr v-if="searchResultContentVisible" class="details search-expandable-row">
                 <td colspan="6">
-                  <Detail :key="`${searchedPlayer.bdid}-${region}-${selectedSeason}`" :bdid="searchedPlayer.bdid"
-                    :region="region" :seasonInterval="seasonInterval" />
+                  <div class="search-expandable" :class="{
+                    'expanded': searchResultExpanded,
+                    'overflow-visible': searchResultExpansionComplete,
+                  }">
+                    <div class="search-expandable-inner">
+                      <Detail :key="`${searchedPlayer.bdid}-${region}-${selectedSeason}`" :bdid="searchedPlayer.bdid"
+                        :region="region" :seasonInterval="seasonInterval" />
+                    </div>
+                  </div>
                 </td>
               </tr>
             </tbody>
           </table>
 
-          <div class="actions">
-            <button @click="goToPlayerInTable">Перейти к месту в таблице</button>
+          <div v-if="searchResultContentVisible" class="search-expandable"
+            :class="{
+              'expanded': searchResultExpanded,
+              'overflow-visible': searchResultExpansionComplete,
+            }">
+            <div class="search-expandable-inner">
+              <div class="actions">
+                <button @click="goToPlayerInTable">Перейти к месту в таблице</button>
+              </div>
+            </div>
           </div>
         </template>
 
         <div class="skeleton" v-else-if="searchState != 'notFound'">
           <table>
-            <thead>
+            <thead class="search-toggle-header" @click="toggleSearchResult">
               <tr>
                 <th>№</th>
                 <th>Игрок</th>
@@ -58,16 +74,23 @@
                   <div class="fake-line"></div>
                 </td>
               </tr>
-              <tr class="details">
+              <tr v-if="searchResultContentVisible" class="details search-expandable-row">
                 <td colspan="6">
-                  <div class="fake-charts">
-                    <div class="fake-chart">
-                      <div class="header"></div>
-                      <div class="canvas"></div>
-                    </div>
-                    <div class="fake-chart">
-                      <div class="header"></div>
-                      <div class="canvas"></div>
+                  <div class="search-expandable" :class="{
+                    'expanded': searchResultExpanded,
+                    'overflow-visible': searchResultExpansionComplete,
+                  }">
+                    <div class="search-expandable-inner">
+                      <div class="fake-charts">
+                        <div class="fake-chart">
+                          <div class="header"></div>
+                          <div class="canvas"></div>
+                        </div>
+                        <div class="fake-chart">
+                          <div class="header"></div>
+                          <div class="canvas"></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </td>
@@ -75,8 +98,16 @@
             </tbody>
           </table>
 
-          <div class="actions">
-            <div class="fake-button"></div>
+          <div v-if="searchResultContentVisible" class="search-expandable"
+            :class="{
+              'expanded': searchResultExpanded,
+              'overflow-visible': searchResultExpansionComplete,
+            }">
+            <div class="search-expandable-inner">
+              <div class="actions">
+                <div class="fake-button"></div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -288,6 +319,36 @@ watchWithAbortSignal([region, page, selectedSeason, seasonInterval], signal => l
 
 const searchedPlayer = ref<LeaderboardData | null>(null)
 const searchResolvedFor = ref<string | null>(null)
+const searchResultExpanded = ref(false)
+const searchResultContentVisible = ref(false)
+const searchResultExpansionComplete = ref(false)
+let searchResultTransitionTimeout: ReturnType<typeof setTimeout> | null = null
+
+async function toggleSearchResult() {
+  if (searchResultTransitionTimeout) {
+    clearTimeout(searchResultTransitionTimeout)
+    searchResultTransitionTimeout = null
+  }
+
+  if (searchResultExpanded.value) {
+    searchResultExpansionComplete.value = false
+    searchResultExpanded.value = false
+    searchResultTransitionTimeout = setTimeout(() => {
+      searchResultContentVisible.value = false
+      searchResultTransitionTimeout = null
+    }, 300)
+    return
+  }
+
+  searchResultContentVisible.value = true
+  await nextTick()
+  void searchResultElement.value?.offsetHeight
+  searchResultExpanded.value = true
+  searchResultTransitionTimeout = setTimeout(() => {
+    searchResultExpansionComplete.value = true
+    searchResultTransitionTimeout = null
+  }, 300)
+}
 
 const searchState = computed<'idle' | 'loading' | 'found' | 'notFound'>(() => {
   const name = nickname.value.trim()
@@ -328,6 +389,12 @@ const searchResultHeight = ref<number | null>(null)
 const animateSearchHeight = ref(false)
 let animateSearchHeightTimeout: ReturnType<typeof setTimeout> | null = null
 
+function animateSearchResultHeight() {
+  animateSearchHeight.value = true
+  if (animateSearchHeightTimeout) clearTimeout(animateSearchHeightTimeout)
+  animateSearchHeightTimeout = setTimeout(() => animateSearchHeight.value = false, 350)
+}
+
 useResizeObserver(searchResultElement, () => {
   const element = searchResultElement.value
   if (element) searchResultHeight.value = element.getBoundingClientRect().height
@@ -339,9 +406,7 @@ watch(searchState, (_, oldState) => {
     return
   }
 
-  animateSearchHeight.value = true
-  if (animateSearchHeightTimeout) clearTimeout(animateSearchHeightTimeout)
-  animateSearchHeightTimeout = setTimeout(() => animateSearchHeight.value = false, 350)
+  animateSearchResultHeight()
 })
 
 let scrollPendingBdid: number | null = null
@@ -465,6 +530,31 @@ h1 {
 .search-result {
   padding-top: 8px;
 
+  .search-expandable {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.3s ease;
+    pointer-events: none;
+
+    &.expanded {
+      grid-template-rows: 1fr;
+      pointer-events: auto;
+    }
+
+    .search-expandable-inner {
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    &.overflow-visible .search-expandable-inner {
+      overflow: visible;
+    }
+  }
+
+  .search-expandable-row>td {
+    padding: 0;
+  }
+
   .skeleton {
 
     .fake-cell {
@@ -538,9 +628,18 @@ h1 {
   }
 
   table {
+    .search-toggle-header {
+      cursor: pointer;
+      user-select: none;
+    }
+
     tbody {
       tr {
         cursor: default;
+
+        &.search-player-line {
+          cursor: pointer;
+        }
 
         &:not(.selected) {
           border-bottom: none;

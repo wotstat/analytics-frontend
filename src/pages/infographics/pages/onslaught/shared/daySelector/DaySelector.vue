@@ -10,7 +10,7 @@
   </div>
 
   <PopoverAutoClose :target="trigger" v-model="displayPopup"
-    :placement="['bottom-start', 'top-start', 'right-start-float', 'left-start-float', 'bottom-float']"
+    :placement="['bottom-start', 'bottom-end', 'right-start-float', 'left-start-float', 'bottom-float']"
     :viewport-offset="{ top: headerHeight + additionalHeaderHeight, right: 10, bottom: 10, left: 10 }" :arrow-size="0"
     class="comp7-tooltip">
     <div class="calendar-popup">
