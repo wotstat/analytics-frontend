@@ -101,6 +101,7 @@ import TriangleUp from '../assets/triangle-up.svg'
 import TipZoomChart from './tips/TipZoomChart.vue'
 import { useDisposer } from '@/shared/ui/disposer/disposer.ts'
 import OnslaughtCheckbox from '../../shared/Checkbox.vue'
+import { useLocalStorage } from '@vueuse/core'
 
 const props = defineProps<{
   region: string
@@ -109,7 +110,7 @@ const props = defineProps<{
 }>()
 
 const loading = ref(true)
-const usePlaceBoundary = ref(false)
+const usePlaceBoundary = useLocalStorage('onslaught:leaderboard:smooth-elite-chart', false)
 const tipZoomChart = useTemplateRef<InstanceType<typeof TipZoomChart>>('tipZoomChart')
 const isFirstSelectOpen = ref(false)
 const isSecondSelectOpen = ref(false)
@@ -563,6 +564,7 @@ watchEffect(() => {
   }
 
   &.full-season {
+
     .fade-enter-active,
     .fade-leave-active {
       transition-delay: 0s;
@@ -589,8 +591,7 @@ watchEffect(() => {
 .noise-notice {
   margin-top: 14px;
   padding: 2px 0 2px 12px;
-  border-left: 2px solid rgba(2, 175, 255, 0.55);
-  color: rgba(255, 255, 255, 0.72);
+  border-left: 2px solid rgba(2, 175, 255, 1);
   font-size: 14px;
   line-height: 1.45;
 
@@ -600,7 +601,7 @@ watchEffect(() => {
 }
 
 .smooth-toggle {
-  margin-top: 8px;
+  font-size: 14px;
 }
 
 .notice-enter-active,
