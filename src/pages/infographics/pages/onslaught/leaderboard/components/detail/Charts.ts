@@ -48,7 +48,8 @@ class BaseChart extends UniversalChart {
     const start = Math.floor(seasonInterval.start.getTime() / 1000)
     const end = Math.floor(seasonInterval.end.getTime() / 1000)
     const delta = end - start
-    this.maxX = Math.ceil(delta / WEEK) * WEEK
+    const roundedToWeeks = Math.ceil(delta / WEEK) * WEEK
+    this.maxX = Math.max(roundedToWeeks, delta + HOUR)
 
     const clipMain = new ChartClip('center', { top: -1, bottom: -1 })
     const clipLeft = new ChartClip('left')
@@ -165,12 +166,11 @@ class BaseChart extends UniversalChart {
     const start = Math.floor(this.seasonInterval.start.getTime() / 1000)
     const end = Math.floor(this.seasonInterval.end.getTime() / 1000)
     const duration = end - start
-    const weakDuration = Math.ceil(duration / WEEK) * WEEK
 
-    if (weakDuration > duration) {
+    if (this.maxX > duration) {
       this.restrictionArea.setPoints(
         { x: Math.max(duration, this.line.getBounds().maxX), y: -Infinity },
-        { x: weakDuration, y: Infinity })
+        { x: this.maxX, y: Infinity })
     }
   }
 
