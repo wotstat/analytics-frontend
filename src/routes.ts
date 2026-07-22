@@ -38,20 +38,6 @@ const routes = [
       { path: 'chuck-norris-tournament', component: asyncPage(() => import('./pages/infographics/pages/chuck/Chuck.vue')) },
       { path: 'distribution', component: Distribution },
       { path: 'lootbox', component: Lootbox, meta: { hideTankList: true } },
-      {
-        path: 'onslaught', component: asyncPage(() => import('./pages/infographics/pages/onslaught/statistics/Onslaught.vue')), meta: {
-          hideTankList: true,
-          customTitle: 'Статистика Натиска',
-          preventRemountOnStatChange: true,
-        }
-      },
-      {
-        path: 'onslaught-leaderboard', component: asyncPage(() => import('./pages/infographics/pages/onslaught/leaderboard/Leaderboard.vue')), meta: {
-          hideTankList: true,
-          customTitle: 'Таблица лидеров Натиска',
-          preventRemountOnStatChange: true,
-        }
-      },
       { path: 'widgets/:widget*', component: asyncPage(() => import('./pages/widgets/Index.vue')), meta: { hideTankList: true, customTitle: 'Виджеты' } },
     ]
   },

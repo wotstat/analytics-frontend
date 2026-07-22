@@ -1,5 +1,5 @@
 <template>
-  <h1>Статистика Натиска</h1>
+  <h1>Персональная статистика Натиска</h1>
 
   <div class="onslaught-page">
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" v-model:region="selectedRegion"
