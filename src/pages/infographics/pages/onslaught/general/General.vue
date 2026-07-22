@@ -165,7 +165,7 @@ async function load(abortSignal: AbortSignal, soft = false) {
           select if(elite, 'sixth', 'fifth') as rank,
                 START_FIFTH + (intDiv(rating - START_FIFTH, LEADERBOARD_STEP) * LEADERBOARD_STEP) as division,
                 count() as players
-          from Comp7LeaderboardByRank
+          from Comp7LeaderboardByRank final
           where
               region = REGION and
               recalculationTime = LAST_COMP7_RECALCULATEION_TIME
