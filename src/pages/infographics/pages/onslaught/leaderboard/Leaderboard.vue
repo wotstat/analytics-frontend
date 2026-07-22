@@ -115,6 +115,9 @@
       </div>
     </div>
 
+    <LeaderboardCharts v-if="seasonInterval" :key="`${region}-${selectedSeason}`" class="leaderboard-charts"
+      :region="region" :seasonInterval="seasonInterval" :refreshKey="chartsRefreshKey" />
+
     <div class="info">
       <PageSelector :start="1" :end="endPage" v-model="page" class="page-selector"
         v-if="leaderboardDay && endPage > 1" />
@@ -196,6 +199,7 @@ import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
 import { useMeta } from '@/shared/composition/useMeta'
 import type { SelectedInterval } from './components/detail/types.ts'
 import { useStableScrollbarGutter } from '@/shared/composition/useStableScrollbarGutter.ts'
+import LeaderboardCharts from './components/LeaderboardCharts.vue'
 
 useMeta({
   title: 'Таблица лидеров Натиска - WotStat',
@@ -217,6 +221,7 @@ const seasonInterval = useSeasonInterval(seasons, selectedSeason, region)
 const leaderboardDay = ref<{ day: string, recalculation: string, lastRank: number, eliteThreshold: number, lastEliteRank: number } | null>(null)
 const leaderboardData = ref<LeaderboardData[]>([])
 const isLoading = ref(false)
+const chartsRefreshKey = ref(0)
 
 const selectedInterval = ref<SelectedInterval | null>(null)
 
@@ -254,6 +259,7 @@ type LeaderboardData = {
 
 function loadLatestData() {
   console.log('Loading latest data', region.value, selectedSeason.value)
+  chartsRefreshKey.value++
   load(new AbortController().signal, true)
 }
 
@@ -495,6 +501,10 @@ h1 {
 .leaderboard-loader {
   margin: 10px 0;
   height: 2px;
+}
+
+.leaderboard-charts {
+  margin-top: 25px;
 }
 
 @keyframes shine {
