@@ -1,5 +1,6 @@
 import type { DivisionLetter, Rank, RankImageDefinition } from '@/shared/game/comp7/utils'
 import type { GameVendor } from '@/shared/game/wot'
+import { OffsetValue, PlacementParam } from '@/shared/uiKit/popover/utils'
 
 export type RankDistributionItem = {
   rank: Exclude<Rank, 'qual'>
@@ -19,4 +20,6 @@ export type RankDistributionTooltipProps = {
   game?: GameVendor
   season?: string
   target?: HTMLElement | null
+  offset?: OffsetValue
+  placement?: PlacementParam
 }

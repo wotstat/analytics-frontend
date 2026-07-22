@@ -238,7 +238,7 @@ export function calculatePopoverPosition(params: Params, preferredPlacement: Pla
     preserveLastPlacement?: boolean
     offset: Offset,
     viewportOffset: Offset
-  }): { x: number, y: number, placement?: PlacementWithModifiers } {
+  }): { x: number, y: number, placement?: PlacementWithModifiers, fitsWithinBbox: boolean } {
 
   const { offset, lastPlacement, preserveLastPlacement, viewportOffset } = options
 
@@ -251,19 +251,21 @@ export function calculatePopoverPosition(params: Params, preferredPlacement: Pla
     const { placement, float: floatModifier } = getPlacement(placementWithModifiers)
     const { x, y } = calculatePosition(placement, offset, params, floatModifier, bbox)
 
-    if (!bbox) return { x, y, placement: placementWithModifiers }
-    if (isInside(x, y, bbox, params)) return { x, y, placement: placementWithModifiers }
+    if (!bbox) return { x, y, placement: placementWithModifiers, fitsWithinBbox: true }
+    if (isInside(x, y, bbox, params)) {
+      return { x, y, placement: placementWithModifiers, fitsWithinBbox: true }
+    }
   }
 
   if (!lastPlacement) {
     const { placement, float: floatModifier } = getPlacement(checkedPlacements[0])
     const { x, y } = calculatePosition(placement, offset, params, floatModifier, bbox)
-    return { x, y, placement }
+    return { x, y, placement, fitsWithinBbox: false }
   }
 
   const { placement, float: floatModifier } = getPlacement(lastPlacement)
   const { x, y } = calculatePosition(placement, offset, params, floatModifier, bbox)
-  return { x, y, placement: lastPlacement }
+  return { x, y, placement: lastPlacement, fitsWithinBbox: false }
 }
 
 export function getArrowPosition(position: ReturnType<typeof calculatePopoverPosition>, params: Params) {

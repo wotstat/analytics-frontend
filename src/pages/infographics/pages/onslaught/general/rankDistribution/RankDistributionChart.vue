@@ -2,13 +2,12 @@
   <div class="chart nice-scrollbar-transparent">
     <TipSelectRankDistribution ref="selectionTip" class="selection-tip" />
     <div class="groups">
-      <div class="rank-group" v-for="group in groups" :key="group.rank"
-        :style="{
-          flexGrow: group.items.length,
-          flexBasis: group.minWidth,
-          minWidth: group.minWidth,
-          maxWidth: group.maxWidth,
-        }">
+      <div class="rank-group" v-for="group in groups" :key="group.rank" :style="{
+        flexGrow: group.items.length,
+        flexBasis: group.minWidth,
+        minWidth: group.minWidth,
+        maxWidth: group.maxWidth,
+      }">
         <div class="bars">
           <Bar v-for="(item, index) in group.items" :key="index" :item :maxValue :selected="isSelected(item)"
             :group-value="group.value" :total-value :rating-interval="getItemRatingInterval(item)"
@@ -20,7 +19,7 @@
             :class="{ selected: isGroupSelected(group.items), [`rank-${group.rank}`]: true }"
             @mouseenter="hoveredRank = group.rank" @mouseleave="hoveredRank = null"
             @click="selectGroup(group.items, $event)"
-            v-rank-distribution-tooltip:rank-distribution.instant.bottom-float="getGroupTooltip(group)">
+            v-rank-distribution-tooltip:rank-distribution.instant="getGroupTooltip(group)">
             {{ t(`rank:${group.rank}`) }}
           </button>
         </div>
@@ -107,6 +106,7 @@ function getGroupTooltip(group: (typeof groups.value)[number]): RankDistribution
     groupPlayers: group.value,
     game: props.game,
     season: props.season,
+    placement: ['bottom-float', 'top-float'],
   }
 }
 

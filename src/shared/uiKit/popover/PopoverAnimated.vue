@@ -1,6 +1,7 @@
 <template>
   <Popover :target :display :offset :viewportOffset :placement :preserveLastPlacement :styles :teleportTo
-    @pointer-down-outside="e => emit('pointerDownOutside', e)" @target-outside-window="emit('targetOutsideWindow')"
+    @pointer-down-outside="e => emit('pointerDownOutside', e)" @pointer-up-outside="e => emit('pointerUpOutside', e)"
+    @target-outside-window="emit('targetOutsideWindow')" @popover-outside-window="emit('popoverOutsideWindow')"
     @pointer-click-outside="e => emit('pointerClickOutside', e)" @ready-to-visible="onReadyToVisible"
     v-slot="{ arrow }">
     <slot :arrow :transition-class="[...transitionClass.values()]" _class="test"></slot>
@@ -28,7 +29,9 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'pointerDownOutside', event: PointerEvent): void,
+  (e: 'pointerUpOutside', event: PointerEvent): void,
   (e: 'targetOutsideWindow'): void,
+  (e: 'popoverOutsideWindow'): void,
   (e: 'pointerClickOutside', event: PointerEvent): void,
 }>()
 

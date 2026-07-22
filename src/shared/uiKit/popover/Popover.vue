@@ -37,6 +37,7 @@ const emit = defineEmits<{
   (e: 'pointerUpOutside', event: PointerEvent): void,
   (e: 'pointerClickOutside', event: PointerEvent): void,
   (e: 'targetOutsideWindow'): void
+  (e: 'popoverOutsideWindow'): void
   (e: 'readyToVisible'): void
 }>()
 
@@ -65,9 +66,9 @@ useEventListener(window, 'click', (event: PointerEvent) => {
 function isElementOutsideViewport(element: { x: number; y: number; width: number; height: number }, viewPort: { width: number; height: number }) {
   const offset = viewportOffset.value
   return (
-    element.x + element.width < 0 + offset.left ||
+    element.x + element.width < offset.left ||
     element.x > viewPort.width + offset.right ||
-    element.y + element.height < 0 + offset.top ||
+    element.y + element.height < offset.top ||
     element.y > viewPort.height + offset.bottom
   )
 }
@@ -145,14 +146,18 @@ const positions = computed(() => {
     x: position.x,
     y: position.y,
     placement: position.placement,
+    fitsWithinBbox: position.fitsWithinBbox,
     arrowX: arrowPosition?.x,
     arrowY: arrowPosition?.y,
     arrowDirection: arrowPosition?.direction
   }
 })
 
-watch(() => isTargetOutsideViewport.value, (outside, old) => {
-  if (outside == old) return
+watch(() => positions.value?.fitsWithinBbox, fitsWithinBbox => {
+  if (fitsWithinBbox === false) emit('popoverOutsideWindow')
+}, { immediate: true })
+
+watch(isTargetOutsideViewport, outside => {
   if (outside) emit('targetOutsideWindow')
 }, { immediate: true })
 

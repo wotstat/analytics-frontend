@@ -4,7 +4,7 @@
     [`rank-${props.item.rank}`]: true,
     'group-hovered': props.groupHovered,
     'numeric-name': typeof props.item.name === 'number'
-  }" v-rank-distribution-tooltip:rank-bar-distribution.instant.top-float="tooltip">
+  }" v-rank-distribution-tooltip:rank-bar-distribution.instant="tooltip">
     <div class="bar" :style="{ height: `${height}%` }" ref="bar">
       <div class="shadow"></div>
       <Transition name="selection-lines" :duration="{ enter: 300, leave: 200 }">
@@ -70,6 +70,7 @@ const tooltip = computed<RankDistributionTooltipProps>(() => ({
   game: props.game,
   season: props.season,
   target: bar.value,
+  offset: { top: 22, bottom: 8 }
 }))
 </script>
 

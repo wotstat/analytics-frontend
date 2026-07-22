@@ -4,7 +4,9 @@
     '--enter-duration': enterAnimationDuration,
     '--exit-duration': exitAnimationDuration,
   }" :teleportTo="teleportTo" @pointer-down-outside="e => emit('pointerDownOutside', e)"
-    @target-outside-window="emit('targetOutsideWindow')" @pointer-click-outside="e => emit('pointerClickOutside', e)"
+    @pointer-up-outside="e => emit('pointerUpOutside', e)" @target-outside-window="emit('targetOutsideWindow')"
+    @popover-outside-window="emit('popoverOutsideWindow')"
+    @pointer-click-outside="e => emit('pointerClickOutside', e)"
     v-slot="{ arrow, transitionClass }" :duration="Math.max(enterDuration, exitDuration)">
     <div class=" popover-card" :class="[{
       [`arrow-${arrow.direction}`]: arrow.direction,
@@ -62,8 +64,10 @@ const { target,
 
 const emit = defineEmits<{
   (e: 'pointerDownOutside', event: PointerEvent): void,
+  (e: 'pointerUpOutside', event: PointerEvent): void,
   (e: 'pointerClickOutside', event: PointerEvent): void,
   (e: 'targetOutsideWindow'): void,
+  (e: 'popoverOutsideWindow'): void,
 }>()
 
 const targetOffset = computed<OffsetValue>(() => {

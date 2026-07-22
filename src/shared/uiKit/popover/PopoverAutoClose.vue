@@ -1,7 +1,7 @@
 <template>
   <PopoverStyled v-bind="targetProps" :display="display" @pointer-click-outside="onClickOutside"
     @pointer-down-outside="onPointerDownOutside" @pointer-up-outside="onPointerUpOutside"
-    @target-outside-window="onTargetOutside" :duration="200">
+    @target-outside-window="onTargetOutside" @popover-outside-window="onPopoverOutside" :duration="200">
     <slot></slot>
   </PopoverStyled>
 </template>
@@ -14,7 +14,7 @@ import { onKeyDown, useMediaQuery } from '@vueuse/core'
 import PopoverStyled from './PopoverStyled.vue'
 
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   target: HTMLElement | null
   offset?: OffsetValue
   viewportOffset?: OffsetValue
@@ -24,7 +24,10 @@ const props = defineProps<{
   placement?: PlacementParam
   styles?: Record<string, string>
   class?: string
-}>()
+  closeOnOutsideWindow?: 'popover' | 'target'
+}>(), {
+  closeOnOutsideWindow: 'popover',
+})
 
 const display = defineModel<boolean>({ default: false })
 
@@ -45,6 +48,7 @@ const emit = defineEmits<{
   (e: 'pointerUpOutside', event: PointerEvent): void,
   (e: 'pointerClickOutside', event: PointerEvent): void,
   (e: 'targetOutsideWindow'): void
+  (e: 'popoverOutsideWindow'): void
 }>()
 
 const isDesktop = useMediaQuery('(hover: hover) and (pointer: fine)')
@@ -80,8 +84,13 @@ function onClickOutside(event: PointerEvent) {
   emit('pointerClickOutside', event)
 }
 
+function onPopoverOutside() {
+  if (props.closeOnOutsideWindow === 'popover') display.value = false
+  emit('popoverOutsideWindow')
+}
+
 function onTargetOutside() {
-  display.value = false
+  if (props.closeOnOutsideWindow === 'target') display.value = false
   emit('targetOutsideWindow')
 }
 
