@@ -591,7 +591,7 @@ watchEffect(() => {
 .noise-notice {
   margin-top: 14px;
   padding: 2px 0 2px 12px;
-  border-left: 2px solid rgba(2, 175, 255, 1);
+  border-left: 2px solid var(--blue-thin-color);
   font-size: 14px;
   line-height: 1.45;
 
