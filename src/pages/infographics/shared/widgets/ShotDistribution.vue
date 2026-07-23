@@ -1,6 +1,6 @@
 <template>
   <ServerStatusWrapper :status v-slot="{ showError, status }">
-    <div class="chart-container" ref="container" v-if="status != 'error'">
+    <div class="chartjs-container" ref="container" v-if="status != 'error'">
       <ShadowLine :data="chartData" :options="options" />
     </div>
 

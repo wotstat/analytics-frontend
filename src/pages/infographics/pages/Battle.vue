@@ -60,8 +60,9 @@
         </div>
 
         <div class="card u2 chart bar">
-          <MiniBar :status="durationResult.status" :data="durationData.l" color="yellow" :labels="durationData.labels"
-            :callbacks="{ title: (t) => `В боях ${Number.parseInt(t[0].label) - 1}-${t[0].label} минут вы жили ${Math.round(t[0].raw as number * 10) / 10} мин `, label: () => `` }" />
+          <MiniBarNew :status="durationResult.status" :labels="durationData.labels" :data="durationData.l" />
+          <!-- <MiniBar :status="durationResult.status" :data="durationData.l" color="yellow" :labels="durationData.labels"
+            :callbacks="{ title: (t) => `В боях ${Number.parseInt(t[0].label) - 1}-${t[0].label} минут вы жили ${Math.round(t[0].raw as number * 10) / 10} мин `, label: () => `` }" /> -->
           <p class="card-main-info description">Время жизни по длине боя</p>
         </div>
       </div>
@@ -73,6 +74,7 @@
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import MiniBar from '@/pages/infographics/shared/widgets/charts/MiniBar.vue'
 import MniiPie from '@/pages/infographics/shared/widgets/charts/MiniPie.vue'
+import MiniBarNew from '@/pages/infographics/shared/widgets/charts/MiniBarNew.vue'
 import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import { queryAsync, queryAsyncFirst } from '@/db'
 import { useElementVisibility } from '@vueuse/core'

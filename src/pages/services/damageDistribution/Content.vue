@@ -55,7 +55,7 @@
   </div>
 
   <div class="card">
-    <div class="chart-container">
+    <div class="chartjs-container">
       <ShadowBar :data="chartData" :options="options" />
     </div>
   </div>
@@ -486,7 +486,7 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
   }
 }
 
-.chart-container {
+.chartjs-container {
   aspect-ratio: 2;
 }
 

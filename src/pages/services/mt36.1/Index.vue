@@ -48,7 +48,7 @@
       <div class="line charts">
         <div class="left">
           <div class="card flex">
-            <div class="chart-container" ref="ballisticDistributionContainer">
+            <div class="chartjs-container" ref="ballisticDistributionContainer">
               <div class="chart-options">
                 <div class="line">
                   <DropDown
@@ -90,14 +90,14 @@
       <h3>Продолжительность боя</h3>
       <div class="cards">
         <div class="card flex">
-          <div class="chart-container flex-1">
+          <div class="chartjs-container flex-1">
             <ShadowBar :data="durationByLevelChartData" :options="durationByLevelOptions" />
           </div>
           <p class="card-main-info description bottom">Среднее время боя по уровню</p>
         </div>
 
         <div class="card flex">
-          <div class="chart-container flex-1">
+          <div class="chartjs-container flex-1">
             <ShadowBar :data="durationDistributionChartData" :options="durationDistributionOptions" />
           </div>
           <div class="card-main-info description bottom">Распределение боёв по продолжительности на
@@ -129,7 +129,7 @@
       <LevelSwitcher v-model="selectedLevels" />
       <div class="cards">
         <div class="card flex" v-for="chart in typeDistributionData">
-          <div class="chart-container flex-1">
+          <div class="chartjs-container flex-1">
             <ShadowBar :data="chart.data" :options="typeDistributionOptions" />
           </div>
           <p class="card-main-info description bottom">{{ chart.chart.label }}</p>
@@ -167,7 +167,7 @@
       </div>
 
       <div class="card flex">
-        <div class="chart-container">
+        <div class="chartjs-container">
           <div class="chart-options">
             <div class="line">
               <p>Шаг урона:</p>
@@ -183,14 +183,14 @@
       <h3>Другое</h3>
       <div class="cards">
         <div class="card flex">
-          <div class="chart-container flex-1">
+          <div class="chartjs-container flex-1">
             <ShadowBar :data="averageSpgDamageChartData" :options="averageChartOptions" />
           </div>
           <p class="card-main-info description bottom">Средний урон САУ</p>
         </div>
 
         <div class="card flex">
-          <div class="chart-container flex-1">
+          <div class="chartjs-container flex-1">
             <ShadowBar :data="averageLtAssistChartData" :options="averageChartOptions" />
           </div>
           <div class="card-main-info description bottom">Средний насвет ЛТ</div>
@@ -1078,7 +1078,7 @@ async function loadNextBatchRight(options: Options) {
       aspect-ratio: 2;
     }
 
-    .chart-container {
+    .chartjs-container {
       flex: 1;
       margin-top: -3px;
 
@@ -1184,7 +1184,7 @@ async function loadNextBatchRight(options: Options) {
 
     }
 
-    .chart-container {
+    .chartjs-container {
       flex: 1;
       margin-top: -3px;
 

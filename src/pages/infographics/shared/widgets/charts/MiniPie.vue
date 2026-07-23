@@ -1,6 +1,6 @@
 <template>
   <ServerStatusWrapper :status="status" v-slot="{ showError, status }">
-    <div class="chart-container" v-if="status != 'error'">
+    <div class="chartjs-container" v-if="status != 'error'">
       <ShadowPie :data="chartData" :options="options" />
     </div>
 

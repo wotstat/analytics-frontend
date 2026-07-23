@@ -1,4 +1,4 @@
-import { Overflow, PlotRenderer, Size } from '../UniversalChart'
+import { Overflow, Size } from '../UniversalChart'
 import { BasePlotRenderer } from '../plot/BasePlotRenderer'
 import { ChartSpace } from '../utils/ChartSpace'
 

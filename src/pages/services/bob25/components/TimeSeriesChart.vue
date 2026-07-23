@@ -1,6 +1,6 @@
 <template>
   <div class="card">
-    <div class="chart-container">
+    <div class="chartjs-container">
       <ShadowLine :data="chartData" :options="options" class="chart" />
       <div class="chart-options">
         <DropDown :variants="periodVariants" v-model="period" />
@@ -414,7 +414,7 @@ const options = computed<ChartProps<'bar'>['options']>(() => ({
 
 
 <style lang="scss" scoped>
-.chart-container {
+.chartjs-container {
   aspect-ratio: 2;
 
   @media screen and (max-width: 900px) {

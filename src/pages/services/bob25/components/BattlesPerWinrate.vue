@@ -4,7 +4,7 @@
     <div class="card">
 
       <div class="charts">
-        <div class="chart-container" v-for="data in chartData">
+        <div class="chartjs-container" v-for="data in chartData">
           <ShadowBar :data="data" :options />
         </div>
       </div>
@@ -97,14 +97,14 @@ h3 {
   display: flex;
   gap: 1rem;
 
-  .chart-container {
+  .chartjs-container {
     aspect-ratio: 1;
   }
 
   @media (max-width: 600px) {
     flex-direction: column;
 
-    .chart-container {
+    .chartjs-container {
       aspect-ratio: 1.8;
     }
   }
