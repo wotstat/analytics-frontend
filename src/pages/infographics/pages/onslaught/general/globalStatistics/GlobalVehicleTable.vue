@@ -39,7 +39,7 @@
             </div>
           </th>
           <td v-else-if="headers[col].key === 'skill'">
-            <div v-if="state.data[index].skillTag" class="skill" v-skill-distribution-tooltip.instant.top-float="{
+            <div v-if="state.data[index].skillTag" class="skill" v-skill-distribution-tooltip.instant="{
               skills: state.data[index].skills,
               game,
               season,

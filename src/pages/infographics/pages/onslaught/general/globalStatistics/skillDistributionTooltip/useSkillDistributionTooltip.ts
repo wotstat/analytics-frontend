@@ -6,5 +6,6 @@ export const vSkillDistributionTooltip = useTooltip(SkillDistributionTooltip, {
   arrowSize: 7,
   offset: 7,
   class: 'comp7-tooltip',
+  placement: ['top-float', 'bottom-float'],
   viewportOffset: popoverViewportOffset,
 })
