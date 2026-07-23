@@ -53,6 +53,9 @@
         </div>
 
         <div class="card chart bar tank-type">
+
+          <!-- <MiniBarNew :status="avgTypeResult.status" :labels="tankLabels" :data="avgChart" :color="'blue'" /> -->
+
           <MiniBar :status="avgTypeResult.status" :data="avgChart" color="blue" :labels="tankLabels" :callbacks="{
             title: (t) => `В среднем в команде было ${t[0].formattedValue} ${t[0].label}`, label: () => ``
           }" />
@@ -60,9 +63,10 @@
         </div>
 
         <div class="card u2 chart bar">
-          <MiniBarNew :status="durationResult.status" :labels="durationData.labels" :data="durationData.l" />
-          <!-- <MiniBar :status="durationResult.status" :data="durationData.l" color="yellow" :labels="durationData.labels"
-            :callbacks="{ title: (t) => `В боях ${Number.parseInt(t[0].label) - 1}-${t[0].label} минут вы жили ${Math.round(t[0].raw as number * 10) / 10} мин `, label: () => `` }" /> -->
+          <!-- <MiniBarNew :status="durationResult.status" :labels="durationData.labels" :data="durationData.l"
+            :color="'yellow'" :blur-radius="2" /> -->
+          <MiniBar :status="durationResult.status" :data="durationData.l" color="yellow" :labels="durationData.labels"
+            :callbacks="{ title: (t) => `В боях ${Number.parseInt(t[0].label) - 1}-${t[0].label} минут вы жили ${Math.round(t[0].raw as number * 10) / 10} мин `, label: () => `` }" />
           <p class="card-main-info description">Время жизни по длине боя</p>
         </div>
       </div>

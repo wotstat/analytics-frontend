@@ -2,6 +2,10 @@
   contain: strict;
 
   .plot {
+    .bar {
+      fill: currentColor;
+    }
+
     .line {
       fill: none;
       stroke: currentColor;
