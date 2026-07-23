@@ -346,9 +346,14 @@ watchEffect(() => {
   padding-top: 0;
   cursor: default;
 
-  :deep(.universal-chart-root) {
-    opacity: 1;
-    transition: opacity 0.2s;
+  :deep(.chart-container) {
+    position: relative;
+    flex: 1;
+
+    .universal-chart-root {
+      opacity: 1;
+      transition: opacity 0.2s;
+    }
   }
 
   &.loading {

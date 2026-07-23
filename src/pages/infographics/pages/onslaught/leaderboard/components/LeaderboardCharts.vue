@@ -350,15 +350,20 @@ watchEffect(() => {
   gap: 30px;
   cursor: default;
 
-  :deep(.universal-chart-root) {
-    opacity: 1;
-    transition: opacity 0.2s;
+  :deep(.chart-container) {
+    position: relative;
+    flex: 1;
+
+    .universal-chart-root {
+      opacity: 1;
+      transition: opacity 0.2s;
+    }
   }
 
   &.loading {
     .chart {
+
       :deep(.chart-container) {
-        position: relative;
 
         .universal-chart-root {
           opacity: 0;
