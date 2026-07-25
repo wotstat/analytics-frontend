@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 import { ClassValue, computed, RendererElement } from 'vue'
-import { OffsetValue, PlacementParam, roundDpr } from './utils'
+import { OffsetValue, PlacementParam, PopoverTarget, roundDpr } from './utils'
 import PopoverAnimated from './PopoverAnimated.vue'
 
 
@@ -47,7 +47,7 @@ const { target,
   enterDuration = 200,
   exitDuration = 100,
 } = defineProps<{
-  target: HTMLElement | null
+  target: PopoverTarget | null
   display: boolean
   offset?: OffsetValue
   viewportOffset?: OffsetValue

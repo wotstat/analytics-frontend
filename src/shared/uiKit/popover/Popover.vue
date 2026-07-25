@@ -16,13 +16,13 @@
 
 <script setup lang="ts">
 import { computed, onBeforeMount, onUnmounted, ref, shallowRef, triggerRef, watch, useTemplateRef, RendererElement, onMounted } from 'vue'
-import { calculatePopoverPosition, generateOffset, getArrowPosition, getParams, isParamsEqual, OffsetValue, Params, PlacementParam, PlacementWithModifiers } from './utils'
+import { calculatePopoverPosition, generateOffset, getArrowPosition, getParams, isParamsEqual, OffsetValue, Params, PlacementParam, PlacementWithModifiers, PopoverTarget } from './utils'
 import { useEventListener } from '@vueuse/core'
 
 const targetParams = shallowRef<Params | null>(null)
 
 const props = defineProps<{
-  target: HTMLElement | null
+  target: PopoverTarget | null
   display: boolean
   offset?: OffsetValue
   viewportOffset?: OffsetValue
@@ -45,22 +45,27 @@ const popupContainer = useTemplateRef<HTMLElement>('popupContainer')
 let animationHandle: number | null = null
 const isTargetOutsideViewport = ref(false)
 
+function isInsideTarget(node: Node) {
+  const target = props.target
+  return target != null && 'contains' in target && target.contains(node)
+}
+
 useEventListener(window, 'pointerdown', (event: PointerEvent) => {
   if (!props.display) return
   if (!popupContainer.value) return
-  if (!popupContainer.value.contains(event.target as Node) && !props.target?.contains(event.target as Node)) emit('pointerDownOutside', event)
+  if (!popupContainer.value.contains(event.target as Node) && !isInsideTarget(event.target as Node)) emit('pointerDownOutside', event)
 })
 
 useEventListener(window, 'pointerup', (event: PointerEvent) => {
   if (!props.display) return
   if (!popupContainer.value) return
-  if (!popupContainer.value.contains(event.target as Node) && !props.target?.contains(event.target as Node)) emit('pointerUpOutside', event)
+  if (!popupContainer.value.contains(event.target as Node) && !isInsideTarget(event.target as Node)) emit('pointerUpOutside', event)
 })
 
 useEventListener(window, 'click', (event: PointerEvent) => {
   if (!props.display) return
   if (!popupContainer.value) return
-  if (!popupContainer.value.contains(event.target as Node) && !props.target?.contains(event.target as Node)) emit('pointerClickOutside', event)
+  if (!popupContainer.value.contains(event.target as Node) && !isInsideTarget(event.target as Node)) emit('pointerClickOutside', event)
 })
 
 function isElementOutsideViewport(element: { x: number; y: number; width: number; height: number }, viewPort: { width: number; height: number }) {

@@ -13,6 +13,14 @@
       </template>
     </HeaderTooltip>
 
+    <!-- ВРЕМЕННО: демонстрация FloatingTooltip -->
+    <FloatingTooltip :ctx="chart.tooltipCtx.value" v-slot="{ ctx }" :anchor="'pivot-x'">
+      <div class="tooltip-container floating">
+        <p class="value">{{ numberFormatter.format(tooltipValue(ctx)) }}</p>
+        <p class="date">{{ tooltipDate(ctx) }}</p>
+      </div>
+    </FloatingTooltip>
+
     <hr class="separator">
 
     <div class="chart-body">
@@ -34,6 +42,7 @@ import { computed, markRaw, watchEffect } from 'vue'
 import { LONG_CACHE_SETTINGS, isErrorStatus, loading, queryComputed, success } from '@/db'
 import { getRegionDayChangeHourOffset } from '@/shared/game/comp7/utils'
 import HeaderTooltip from '@/shared/ui/chart/HeaderTooltip.vue'
+import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import type { TooltipCtx } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/chartTooltip/ChartTooltip'
 import { buildGlobalDailyPlayersStatisticsQuery, type GlobalStatisticsFilters } from '../globalStatistics/queries'
@@ -196,6 +205,13 @@ function tooltipDate(ctx: TooltipCtx) {
 .tooltip-container {
   position: relative;
   top: 3px;
+
+  // ВРЕМЕННО: демонстрация FloatingTooltip
+  &.floating {
+    top: 0;
+    padding: 6px 12px 5px;
+  }
+
   display: flex;
   flex-direction: column;
   align-items: center;

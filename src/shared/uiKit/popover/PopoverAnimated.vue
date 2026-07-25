@@ -12,11 +12,11 @@
 <script setup lang="ts">
 import { nextTick, onUnmounted, ref, RendererElement, watch } from 'vue'
 import Popover from './Popover.vue'
-import { OffsetValue, PlacementParam } from './utils'
+import { OffsetValue, PlacementParam, PopoverTarget } from './utils'
 
 
 const props = defineProps<{
-  target: HTMLElement | null
+  target: PopoverTarget | null
   display: boolean
   offset?: OffsetValue
   viewportOffset?: OffsetValue

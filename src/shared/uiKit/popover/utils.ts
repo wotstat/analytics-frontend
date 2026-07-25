@@ -19,6 +19,12 @@ export type Params = {
   popup: { width: number, height: number }
 }
 
+export type TargetRect = { x: number, y: number, width: number, height: number }
+
+export type VirtualElement = { getBoundingClientRect(): TargetRect }
+
+export type PopoverTarget = HTMLElement | VirtualElement
+
 export function isParamsEqual(left: Params, right: Params) {
   if (!left || !right) return false
   return left.target.x === right.target.x &&
@@ -29,7 +35,7 @@ export function isParamsEqual(left: Params, right: Params) {
     left.popup.height === right.popup.height
 }
 
-export function getParams(target: HTMLElement | null, popup: HTMLElement | null) {
+export function getParams(target: PopoverTarget | null, popup: HTMLElement | null) {
 
   if (!target || !popup) return null
 
