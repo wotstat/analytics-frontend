@@ -196,6 +196,13 @@ function tooltipDate(ctx: TooltipCtx) {
 .tooltip-container {
   position: relative;
   top: 3px;
+
+  // ВРЕМЕННО: демонстрация FloatingTooltip
+  &.floating {
+    top: 0;
+    padding: 6px 12px 5px;
+  }
+
   display: flex;
   flex-direction: column;
   align-items: center;

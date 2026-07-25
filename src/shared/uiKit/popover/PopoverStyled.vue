@@ -12,6 +12,7 @@
       [`arrow-${arrow.direction}`]: arrow.direction,
       'arrow-disabled': arrowSize == 0,
       'arrow-mask': arrowUsingMask,
+      'non-interactive': !interactive,
       ...transitionClass.reduce((acc, cls) => ({ ...acc, [cls]: true }), {}),
     }, classes]" :style="{
       '--arrow-x': `${roundDpr(arrow.x || 0)}px`,
@@ -30,7 +31,7 @@
 
 <script setup lang="ts">
 import { ClassValue, computed, RendererElement } from 'vue'
-import { OffsetValue, PlacementParam, roundDpr } from './utils'
+import { OffsetValue, PlacementParam, PopoverTarget, roundDpr } from './utils'
 import PopoverAnimated from './PopoverAnimated.vue'
 
 
@@ -46,8 +47,9 @@ const { target,
   class: classes,
   enterDuration = 200,
   exitDuration = 100,
+  interactive = true,
 } = defineProps<{
-  target: HTMLElement | null
+  target: PopoverTarget | null
   display: boolean
   offset?: OffsetValue
   viewportOffset?: OffsetValue
@@ -59,6 +61,7 @@ const { target,
   class?: ClassValue,
   enterDuration?: number
   exitDuration?: number
+  interactive?: boolean
   teleportTo?: string | RendererElement | null
 }>()
 
@@ -89,6 +92,10 @@ $animation-offset: var(--animation-transition-offset, 3px);
 
 .popover-card {
   pointer-events: auto;
+
+  &.non-interactive {
+    pointer-events: none;
+  }
 }
 
 .popover-card:not(.arrow-disabled) {

@@ -9,13 +9,13 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { OffsetValue, PlacementParam } from './utils'
+import { OffsetValue, PlacementParam, PopoverTarget } from './utils'
 import { onKeyDown, useMediaQuery } from '@vueuse/core'
 import PopoverStyled from './PopoverStyled.vue'
 
 
 const props = withDefaults(defineProps<{
-  target: HTMLElement | null
+  target: PopoverTarget | null
   offset?: OffsetValue
   viewportOffset?: OffsetValue
   arrowSize?: number

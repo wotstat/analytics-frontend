@@ -14,7 +14,7 @@ import {
 import { applyElasticAxis, elasticVelocityFactor, invertElasticAxis, invertResistedAxisRange, invertResistedPlacement, resistedAxisRange } from './elastic'
 import { decayOffset, decayVelocityAt, remainingDecayOffset, totalDecayTravel } from './inertia'
 import { AxisLimits, NormalizedLimits, clampAxisToLimits, effectiveMaxDelta, isPlacementWithinLimits, isRangeWithinLimits, normalizeLimits, placementBand } from './limits'
-import { CriticalFollower, DEFAULT_FOLLOW_OMEGA } from './follower'
+import { CriticalFollower, DEFAULT_FOLLOW_OMEGA } from '../../../../utils/follower'
 import { ScalarSpring } from './spring'
 import { PinchGesture } from './TouchZoomSolver'
 import { BoundsSyncState, BoundsSynchronizer } from '../../sync/BoundsSynchronizer'

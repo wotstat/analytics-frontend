@@ -33,8 +33,9 @@ new ZoomChartComponent({
 | `limits.ts`             | Нормализация опций лимитов (с console.warn на мусор), проверки и clamp с fp-допуском                   |
 | `inertia.ts`            | Apple-style затухание `v(t) = v0 * d^(1000t)` в замкнутой форме                                        |
 | `spring.ts`             | `ScalarSpring` — критически демпфированная пружина в замкнутой форме + `sample()` с порогами остановки |
-| `follower.ts`           | `CriticalFollower` — критически демпфированный follower к движущейся цели (пошаговый, не замкнутая форма) |
 | `common.ts`             | Тип `Axis`, `AxisBounds`, общие константы, хелперы доступа к осям `Bounds`                             |
+
+`CriticalFollower` (follower к движущейся цели, которым ведётся auto-fit ось) живёт снаружи — это самодостаточная утилита `universalChart/utils/follower.ts`, общая с другими потребителями.
 
 ## Модель
 
