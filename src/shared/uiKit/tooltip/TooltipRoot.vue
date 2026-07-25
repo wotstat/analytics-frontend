@@ -3,7 +3,7 @@
     <div id="tooltip-root">
       <PopoverStyled v-for="[group, [tooltip, display]] in displayedDelayedTooltips" :target="tooltip.target"
         :display="display" :key="group" :teleportTo="null" :exit-duration="HIDE_ANIMATION_DURATION"
-        :class="[{ 'tooltip-non-interactive': !tooltip.options.interactive }, tooltip.props.class]"
+        :interactive="tooltip.options.interactive" :class="tooltip.props.class"
         :placement="tooltip.props.placement" :viewport-offset="tooltip.props.viewportOffset"
         :arrow-size="tooltip.props.arrowSize" :offset="tooltip.props.offset"
         @pointer-down-outside="event => onPointerDownOutside(group, tooltip, event)"
@@ -113,9 +113,5 @@ watch(displayedTooltips, groups => {
 <style lang="scss" scoped>
 #tooltip-root :deep(.popup-container) {
   z-index: 1100;
-}
-
-:deep(.tooltip-non-interactive) {
-  pointer-events: none;
 }
 </style>

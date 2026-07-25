@@ -4,7 +4,7 @@
       <slot :arrow="arrowProps"></slot>
     </div>
 
-    <Teleport :to="teleportTo ?? 'body'" defer v-else>
+    <Teleport :to="teleportTarget" defer v-else>
       <div class="popup-container" ref="popupContainer" :style="targetStyle">
         <slot :arrow="arrowProps"></slot>
       </div>
@@ -18,6 +18,7 @@
 import { computed, onBeforeMount, onUnmounted, ref, shallowRef, triggerRef, watch, useTemplateRef, RendererElement, onMounted } from 'vue'
 import { calculatePopoverPosition, generateOffset, getArrowPosition, getParams, isParamsEqual, OffsetValue, Params, PlacementParam, PlacementWithModifiers, PopoverTarget } from './utils'
 import { useEventListener } from '@vueuse/core'
+import { getPopoverRoot } from './popoverRoot'
 
 const targetParams = shallowRef<Params | null>(null)
 
@@ -42,6 +43,7 @@ const emit = defineEmits<{
 }>()
 
 const popupContainer = useTemplateRef<HTMLElement>('popupContainer')
+const teleportTarget = computed(() => props.teleportTo ?? getPopoverRoot())
 let animationHandle: number | null = null
 const isTargetOutsideViewport = ref(false)
 

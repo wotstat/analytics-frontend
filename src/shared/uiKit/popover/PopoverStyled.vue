@@ -12,6 +12,7 @@
       [`arrow-${arrow.direction}`]: arrow.direction,
       'arrow-disabled': arrowSize == 0,
       'arrow-mask': arrowUsingMask,
+      'non-interactive': !interactive,
       ...transitionClass.reduce((acc, cls) => ({ ...acc, [cls]: true }), {}),
     }, classes]" :style="{
       '--arrow-x': `${roundDpr(arrow.x || 0)}px`,
@@ -46,6 +47,7 @@ const { target,
   class: classes,
   enterDuration = 200,
   exitDuration = 100,
+  interactive = true,
 } = defineProps<{
   target: PopoverTarget | null
   display: boolean
@@ -59,6 +61,7 @@ const { target,
   class?: ClassValue,
   enterDuration?: number
   exitDuration?: number
+  interactive?: boolean
   teleportTo?: string | RendererElement | null
 }>()
 
@@ -89,6 +92,10 @@ $animation-offset: var(--animation-transition-offset, 3px);
 
 .popover-card {
   pointer-events: auto;
+
+  &.non-interactive {
+    pointer-events: none;
+  }
 }
 
 .popover-card:not(.arrow-disabled) {

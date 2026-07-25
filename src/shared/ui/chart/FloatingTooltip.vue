@@ -1,13 +1,9 @@
 <template>
-  <Teleport to="body">
-    <div class="floating-tooltip-root">
-      <PopoverStyled :target="target" :display="props.ctx != null" :teleport-to="null" :placement="placement"
-        :offset="props.offset" :viewport-offset="props.viewportOffset" :arrow-size="props.arrowSize ?? 7"
-        :class="[{ 'tooltip-non-interactive': !props.interactive }, props.class]">
-        <slot v-if="lastCtx" :ctx="lastCtx"></slot>
-      </PopoverStyled>
-    </div>
-  </Teleport>
+  <PopoverStyled :target="target" :display="props.ctx != null" :placement="placement" :offset="props.offset"
+    :viewport-offset="props.viewportOffset" :arrow-size="props.arrowSize ?? 7"
+    :interactive="props.interactive ?? false" :class="props.class">
+    <slot v-if="lastCtx" :ctx="lastCtx"></slot>
+  </PopoverStyled>
 </template>
 
 
@@ -122,10 +118,3 @@ function stepAxis(follower: CriticalFollower, target: number, dt: number) {
 }
 
 </script>
-
-
-<style lang="scss" scoped>
-.floating-tooltip-root :deep(.tooltip-non-interactive) {
-  pointer-events: none;
-}
-</style>
