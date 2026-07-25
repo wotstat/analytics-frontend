@@ -180,6 +180,8 @@ hr {
 
   td {
     text-align: center;
+    white-space: nowrap;
+    padding: 1px 10px;
   }
 }
 

@@ -27,7 +27,8 @@
           </th>
           <td v-else-if="col === 1 || col === 2">
             <span>{{ logProcessor(Number(value)) }}</span>
-            <span class="column-share">({{ formatColumnShare(Number(value), col === 1 ? 'battles' : 'players') }})</span>
+            <span class="column-share">({{ formatColumnShare(Number(value), col === 1 ? 'battles' : 'players')
+            }})</span>
           </td>
           <td v-else-if="col === 3 || col === 4">{{ percentFormatter.format(Number(value)) }}</td>
           <td v-else-if="col === 5">{{ formatDuration(Number(value)) }}</td>
@@ -209,6 +210,8 @@ function formatDuration(value: number) {
 
 td {
   text-align: center;
+  white-space: nowrap;
+  padding: 1px 10px;
 }
 
 .column-share {
