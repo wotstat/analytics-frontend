@@ -1,6 +1,6 @@
 <template>
   <PopoverAutoClose :target="targetElement" v-model="displayPopup" :placement="['bottom-start', 'bottom-float']"
-    :viewport-offset="{ top: headerHeight + additionalHeaderHeight, bottom: 10, left: 10, right: 10 }" :arrow-size="0">
+    :viewport-offset="popoverViewportOffset" :arrow-size="0">
     <VehiclePopup :tank-list="tankList.data" v-model="vehicles" />
   </PopoverAutoClose>
 </template>
@@ -10,7 +10,7 @@
 import { CACHE_SETTINGS, queryAsync } from '@/db'
 import { selectTagVehiclesLocalization } from '@/shared/i18n/i18n'
 import VehiclePopup from './VehiclePopup.vue'
-import { headerHeight, useAdditionalHeaderHeight } from '@/pages/shared/header/useAdditionalHeaderHeight'
+import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
 import { Nation } from '@/shared/game/vehicles/nations/nations'
 
@@ -21,7 +21,6 @@ defineProps<{
 
 const vehicles = defineModel<Set<string>>({ required: true })
 const displayPopup = defineModel<boolean>('displayPopup', { required: true })
-const { additionalHeaderHeight } = useAdditionalHeaderHeight(true)
 
 
 const tankList = queryAsync<{

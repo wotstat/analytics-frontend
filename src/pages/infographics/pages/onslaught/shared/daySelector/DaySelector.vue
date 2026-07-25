@@ -11,7 +11,7 @@
 
   <PopoverAutoClose :target="trigger" v-model="displayPopup"
     :placement="['bottom-start', 'bottom-end', 'right-start-float', 'left-start-float', 'bottom-float']"
-    :viewport-offset="{ top: headerHeight + additionalHeaderHeight, right: 10, bottom: 10, left: 10 }" :arrow-size="0"
+    :viewport-offset="popoverViewportOffset" :arrow-size="0"
     class="comp7-tooltip">
     <div class="calendar-popup">
       <TipSelectDayGroups ref="groupSelectionTip" class="group-selection-tip" :display="displayPopup"
@@ -108,7 +108,7 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef, watch } from 'vue'
 import Reload from '@/assets/icons/reset.svg'
-import { headerHeight, useAdditionalHeaderHeight } from '@/pages/shared/header/useAdditionalHeaderHeight'
+import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import { getRegionDayChangeHourOffset } from '@/shared/game/comp7/utils'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
 import TipSelectDayGroups from './tips/TipSelectDayGroups.vue'
@@ -142,7 +142,6 @@ const groupSelectionTip = useTemplateRef<InstanceType<typeof TipSelectDayGroups>
 const hoveredWeek = ref<number | null>(null)
 const hoveredWeekday = ref<number | null>(null)
 const currentTime = ref(Date.now())
-const { additionalHeaderHeight } = useAdditionalHeaderHeight(true)
 
 const DAY = 24 * 60 * 60 * 1000
 const calendarDateFormatter = new Intl.DateTimeFormat('ru-RU', {

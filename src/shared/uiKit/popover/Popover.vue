@@ -39,6 +39,7 @@ const emit = defineEmits<{
   (e: 'pointerClickOutside', event: PointerEvent): void,
   (e: 'targetOutsideWindow'): void
   (e: 'popoverOutsideWindow'): void
+  (e: 'popoverFullyOutsideWindow'): void
   (e: 'readyToVisible'): void
 }>()
 
@@ -70,17 +71,18 @@ useEventListener(window, 'click', (event: PointerEvent) => {
   if (!popupContainer.value.contains(event.target as Node) && !isInsideTarget(event.target as Node)) emit('pointerClickOutside', event)
 })
 
+// viewportOffset сжимает вьюпорт со всех сторон — так же, как в generateBbox
 function isElementOutsideViewport(element: { x: number; y: number; width: number; height: number }, viewPort: { width: number; height: number }) {
   const offset = viewportOffset.value
   return (
     element.x + element.width < offset.left ||
-    element.x > viewPort.width + offset.right ||
+    element.x > viewPort.width - offset.right ||
     element.y + element.height < offset.top ||
-    element.y > viewPort.height + offset.bottom
+    element.y > viewPort.height - offset.bottom
   )
 }
 
-let lastHtmlSize = { width: 0, height: 0 }
+const htmlSize = ref({ width: 0, height: 0 })
 function onAnimationFrame() {
   animationHandle = null
 
@@ -96,13 +98,13 @@ function onAnimationFrame() {
     targetParams.value = targetNewParams
   }
 
-  const htmlSize = { width: document.documentElement.clientWidth, height: document.documentElement.clientHeight }
-  if (lastHtmlSize.width !== htmlSize.width || lastHtmlSize.height !== htmlSize.height) {
-    lastHtmlSize = htmlSize
+  const newHtmlSize = { width: document.documentElement.clientWidth, height: document.documentElement.clientHeight }
+  if (htmlSize.value.width !== newHtmlSize.width || htmlSize.value.height !== newHtmlSize.height) {
+    htmlSize.value = newHtmlSize
     triggerRef(targetParams)
   }
 
-  isTargetOutsideViewport.value = isElementOutsideViewport(targetNewParams.target, htmlSize)
+  isTargetOutsideViewport.value = isElementOutsideViewport(targetNewParams.target, newHtmlSize)
 }
 
 let lastPlacement: PlacementWithModifiers | undefined = undefined
@@ -160,8 +162,19 @@ const positions = computed(() => {
   }
 })
 
+const isPopoverOutsideViewport = computed(() => {
+  if (!positions.value || !targetParams.value) return false
+
+  const { popup } = targetParams.value
+  return isElementOutsideViewport({ x: positions.value.x, y: positions.value.y, width: popup.width, height: popup.height }, htmlSize.value)
+})
+
 watch(() => positions.value?.fitsWithinBbox, fitsWithinBbox => {
   if (fitsWithinBbox === false) emit('popoverOutsideWindow')
+}, { immediate: true })
+
+watch(isPopoverOutsideViewport, outside => {
+  if (outside) emit('popoverFullyOutsideWindow')
 }, { immediate: true })
 
 watch(isTargetOutsideViewport, outside => {

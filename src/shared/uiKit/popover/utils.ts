@@ -25,6 +25,9 @@ export type VirtualElement = { getBoundingClientRect(): TargetRect }
 
 export type PopoverTarget = HTMLElement | VirtualElement
 
+// условие автозакрытия: поповер не поместился целиком | поповер вышел целиком | цель вышла целиком
+export type CloseOnOutsideWindow = 'popover' | 'popover-full' | 'target'
+
 export function isParamsEqual(left: Params, right: Params) {
   if (!left || !right) return false
   return left.target.x === right.target.x &&

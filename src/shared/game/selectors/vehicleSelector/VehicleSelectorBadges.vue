@@ -1,5 +1,6 @@
 <template>
-  <BadgesLinePopover :tagToText="t => getTankName(t, true)" v-model="vehicles">
+  <BadgesLinePopover :tagToText="t => getTankName(t, true)" v-model="vehicles"
+    :close-on-outside-window="closeOnOutsideWindow">
     <VehiclePopup :tank-list="tankList.data" v-model="vehicles" />
   </BadgesLinePopover>
 </template>
@@ -11,6 +12,11 @@ import BadgesLinePopover from '../components/badges/BadgesLinePopover.vue'
 import { CACHE_SETTINGS, queryAsync } from '@/db'
 import VehiclePopup from './VehiclePopup.vue'
 import { Nation } from '@/shared/game/vehicles/nations/nations'
+import { CloseOnOutsideWindow } from '@/shared/uiKit/popover/utils'
+
+defineProps<{
+  closeOnOutsideWindow?: CloseOnOutsideWindow
+}>()
 
 
 const tankList = queryAsync<{

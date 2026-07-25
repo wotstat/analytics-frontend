@@ -31,6 +31,8 @@
 - `gameVersionSelector/`, `gameSelector/` — версия игры и игра (Lesta/WG).
 - Общие части: `components/badges/` (строка бейджей с поповером переполнения), `components/searchLine/SearchLine.vue`.
 
+`BadgesLinePopover` и надстроенные над ним `VehicleSelectorBadges` / `GameVersionSelectorBadges` пробрасывают в `PopoverAutoClose` проп `closeOnOutsideWindow` (см. 05) — по умолчанию `'popover'`, на `/replays` выставлен `'target'`.
+
 ## Локализация и i18n
 
 Два не связанных механизма:
