@@ -27,7 +27,7 @@ const props = withDefaults(defineProps<{
   class?: string
   closeOnOutsideWindow?: CloseOnOutsideWindow
 }>(), {
-  closeOnOutsideWindow: 'popover',
+  closeOnOutsideWindow: 'target',
 })
 
 const display = defineModel<boolean>({ default: false })

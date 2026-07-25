@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeMount, onUnmounted, ref, shallowRef, triggerRef, watch, useTemplateRef, RendererElement, onMounted } from 'vue'
-import { calculatePopoverPosition, generateOffset, getArrowPosition, getParams, isParamsEqual, OffsetValue, Params, PlacementParam, PlacementWithModifiers, PopoverTarget } from './utils'
+import { Bbox, calculatePopoverPosition, generateOffset, getArrowPosition, getParams, getViewportRect, isParamsEqual, OffsetValue, Params, PlacementParam, PlacementWithModifiers, PopoverTarget, TargetRect } from './utils'
 import { useEventListener } from '@vueuse/core'
 import { getPopoverRoot } from './popoverRoot'
 
@@ -72,17 +72,17 @@ useEventListener(window, 'click', (event: PointerEvent) => {
 })
 
 // viewportOffset сжимает вьюпорт со всех сторон — так же, как в generateBbox
-function isElementOutsideViewport(element: { x: number; y: number; width: number; height: number }, viewPort: { width: number; height: number }) {
+function isElementOutsideViewport(element: TargetRect, viewport: Bbox) {
   const offset = viewportOffset.value
   return (
-    element.x + element.width < offset.left ||
-    element.x > viewPort.width - offset.right ||
-    element.y + element.height < offset.top ||
-    element.y > viewPort.height - offset.bottom
+    element.x + element.width < viewport.left + offset.left ||
+    element.x > viewport.right - offset.right ||
+    element.y + element.height < viewport.top + offset.top ||
+    element.y > viewport.bottom - offset.bottom
   )
 }
 
-const htmlSize = ref({ width: 0, height: 0 })
+const viewport = ref<Bbox>({ left: 0, top: 0, right: 0, bottom: 0 })
 function onAnimationFrame() {
   animationHandle = null
 
@@ -98,13 +98,14 @@ function onAnimationFrame() {
     targetParams.value = targetNewParams
   }
 
-  const newHtmlSize = { width: document.documentElement.clientWidth, height: document.documentElement.clientHeight }
-  if (htmlSize.value.width !== newHtmlSize.width || htmlSize.value.height !== newHtmlSize.height) {
-    htmlSize.value = newHtmlSize
+  const newViewport = getViewportRect()
+  if (viewport.value.left !== newViewport.left || viewport.value.top !== newViewport.top ||
+    viewport.value.right !== newViewport.right || viewport.value.bottom !== newViewport.bottom) {
+    viewport.value = newViewport
     triggerRef(targetParams)
   }
 
-  isTargetOutsideViewport.value = isElementOutsideViewport(targetNewParams.target, newHtmlSize)
+  isTargetOutsideViewport.value = isElementOutsideViewport(targetNewParams.target, newViewport)
 }
 
 let lastPlacement: PlacementWithModifiers | undefined = undefined
@@ -166,7 +167,7 @@ const isPopoverOutsideViewport = computed(() => {
   if (!positions.value || !targetParams.value) return false
 
   const { popup } = targetParams.value
-  return isElementOutsideViewport({ x: positions.value.x, y: positions.value.y, width: popup.width, height: popup.height }, htmlSize.value)
+  return isElementOutsideViewport({ x: positions.value.x, y: positions.value.y, width: popup.width, height: popup.height }, viewport.value)
 })
 
 watch(() => positions.value?.fitsWithinBbox, fitsWithinBbox => {

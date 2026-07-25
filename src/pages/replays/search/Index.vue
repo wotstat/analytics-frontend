@@ -8,7 +8,7 @@
       </div>
       <div class="tank-select badge-selector">
         <p>Танк:</p>
-        <VehicleSelectorBadges v-model="selectedVehicle" close-on-outside-window="target" />
+        <VehicleSelectorBadges v-model="selectedVehicle" />
       </div>
     </div>
     <div class="separator vertical"></div>
@@ -19,7 +19,7 @@
       </div>
       <div class="game-version badge-selector">
         <p>Версия:</p>
-        <GameVersionSelectorBadges v-model="selectedGameVersion" close-on-outside-window="target" />
+        <GameVersionSelectorBadges v-model="selectedGameVersion" />
       </div>
     </div>
   </div>

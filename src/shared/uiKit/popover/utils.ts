@@ -109,24 +109,38 @@ export function generateOffset(value: OffsetValue): Offset {
   return { top: 0, left: 0, right: 0, bottom: 0 }
 }
 
-type Bbox = {
+export type Bbox = {
   left: number;
   top: number;
   right: number;
   bottom: number;
 }
 
+
+export function getViewportRect(): Bbox {
+  const visual = window.visualViewport
+  if (visual) {
+    return {
+      left: visual.offsetLeft,
+      top: visual.offsetTop,
+      right: visual.offsetLeft + visual.width,
+      bottom: visual.offsetTop + visual.height
+    }
+  }
+
+  const root = document.documentElement
+  return { left: 0, top: 0, right: root.clientWidth, bottom: root.clientHeight }
+}
+
 export function generateBbox(bbox: DOMRect | 'window' | false | null | undefined, offset: Offset): Bbox | null {
   if (bbox === 'window') {
-    const root = document.documentElement
-    const rootRect = root.getBoundingClientRect()
-    const left = rootRect.left + window.scrollX
+    const viewport = getViewportRect()
 
     return {
-      left: left + offset.left,
-      top: 0 + offset.top,
-      right: left + root.offsetWidth - offset.right,
-      bottom: root.clientHeight - offset.bottom
+      left: viewport.left + offset.left,
+      top: viewport.top + offset.top,
+      right: viewport.right - offset.right,
+      bottom: viewport.bottom - offset.bottom
     }
   }
 
