@@ -8,6 +8,11 @@ export type Strategy = 'classic-flow' | 'classic' | {
   fit?: boolean
   offset?: [start: number, end: number] | number
   direction?: 'forward' | 'backward'
+} | {
+  type: 'cell',
+  size: number,
+  placement?: 'start' | 'end' | 'middle',
+  flow?: boolean
 }
 
 export type ValueGenerator = (startFrom: number) => {
@@ -46,6 +51,15 @@ function getClipPadding(padding: Options['padding']) {
 function getFlowPadding(padding: Options['padding']) {
   if (typeof padding === 'number') return padding
   return padding?.flow
+}
+
+function getValueOffset(strategy: Strategy) {
+  if (typeof strategy !== 'object' || strategy.type !== 'cell') return 0
+
+  const placement = strategy.placement ?? 'middle'
+  if (placement === 'start') return 0
+  if (placement === 'end') return strategy.size
+  return strategy.size / 2
 }
 
 export class AutoLabels extends BaseLabels {
@@ -118,8 +132,10 @@ export class AutoLabels extends BaseLabels {
       flowPadding = getFlowPadding(current.padding) ?? getFlowPadding(options.padding) ?? DEFAULT_LABEL_PADDING
       strategy = current.strategy ?? options.strategy ?? DEFAULT_STRATEGY
 
+      const valueOffset = getValueOffset(strategy)
+
       const compute = (v: number) => {
-        const p = translate(v)
+        const p = translate(v + valueOffset)
         const label = labelForValue(v, i)
         const size = getSize(label)
         const key = keyForValue(v, label, i)
@@ -156,6 +172,12 @@ export class AutoLabels extends BaseLabels {
         const res = calculateClassic(ctx)
         if (!res) continue
         return prepareResult(res)
+      }
+      else if (strategy.type == 'cell') {
+        const res = calculateClassic(ctx)
+        if (!res) continue
+        if (!strategy.flow) return prepareResult(res)
+        return prepareResult(fit(extend(res, flowPadding), layoutLimits, overflowLimits))
       }
       else if (strategy.type == 'interval') {
         const placement = strategy.placement ?? 'start'
@@ -202,6 +224,7 @@ export class AutoLabels extends BaseLabels {
   getTicksOffset(): number {
     if (this.options.strategy === 'classic-flow' || this.options.strategy === 'classic') return 4
     if (this.options.strategy?.type === 'interval') return Infinity
+    if (this.options.strategy?.type === 'cell') return 4
     return 0
   }
 }

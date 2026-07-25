@@ -38,9 +38,8 @@ const LABELS_OPTIONS: Options = {
     step: 1,
   }),
   strategy: {
-    type: 'interval',
-    placement: 'middle',
-    offset: [0, 0]
+    type: 'cell',
+    size: 1,
   }
 }
 
@@ -87,7 +86,7 @@ watchEffect(() => {
   labelsX.updateOptions({
     ...LABELS_OPTIONS,
     from: 0,
-    to: props.labels.length,
+    to: props.labels.length - 1,
     labelForValue: (value) => `${props.labels[value] ?? ''}`,
   })
 
