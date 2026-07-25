@@ -2,10 +2,10 @@ import { ref } from 'vue'
 import { ChartClip } from '@/shared/uiKit/chart/universalChart/defs/ChartClip'
 import { ChartGradient } from '@/shared/uiKit/chart/universalChart/defs/ChartGradient'
 import { ChartMask } from '@/shared/uiKit/chart/universalChart/defs/ChartMask'
-import { ChartTooltip, type TooltipCtx } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/chartTooltip/ChartTooltip'
-import { VerticalLine } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/lines/VerticalLine'
-import { NearestMarker } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/nearestMarker/NearestMarker'
-import { ComposableHover } from '@/shared/uiKit/chart/universalChart/hover/composableHover/ComposableHover'
+import { ChartTooltip, type TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
+import { VerticalLine } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/lines/VerticalLine'
+import { NearestMarker } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/nearestMarker/NearestMarker'
+import { InteractionController } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController'
 import { AutoLabels, type Options as LabelsOptions } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
 import { steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
@@ -30,7 +30,7 @@ export class DailyPlayersChart extends UniversalChart {
 
   private readonly line: AutoLine
   private readonly markers: AutoMarkers
-  private readonly hover: ComposableHover
+  private readonly interactionController: InteractionController
   private readonly maxX: number
 
   constructor(seasonLength: number) {
@@ -65,7 +65,7 @@ export class DailyPlayersChart extends UniversalChart {
       .maskBy(maskMain)
       .clipBy(clipMain)
 
-    this.hover = new ComposableHover('hover')
+    this.interactionController = new InteractionController('hover')
       .addComponent(new VerticalLine({
         offset: { end: 0.5, start: -5 },
         position: 'data-point-x',
@@ -93,7 +93,7 @@ export class DailyPlayersChart extends UniversalChart {
       .addPlot(this.markers, 'plot')
       .addSlot('bottom', labelsX, 'labels')
       .addSlot('left', labelsY, 'labels')
-      .addPlot(this.hover)
+      .addPlot(this.interactionController)
       .addDefs(gradient, clipMain, clipLeft, clipBottom, maskMain)
 
     this.setRenderBounds({ minX: 0, maxX: this.maxX, minY: 0, maxY: 1 })
@@ -115,7 +115,7 @@ export class DailyPlayersChart extends UniversalChart {
         ? ['daily-marker', 'current-day-marker']
         : ['daily-marker'],
     })))
-    this.hover.setDataSources(linePoints)
+    this.interactionController.setDataSources(linePoints)
     this.setRenderBounds({ maxY: maxY * 1.08 })
 
     return this

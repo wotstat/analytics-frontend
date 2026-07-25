@@ -28,7 +28,7 @@
 
 
 <script setup lang="ts">
-import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/chartTooltip/ChartTooltip'
+import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
 import { useElementBounding, useElementSize } from '@vueuse/core'
 import { computed, watch, useTemplateRef } from 'vue'
 

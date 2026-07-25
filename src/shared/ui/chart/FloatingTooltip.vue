@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import { ClassValue, computed, shallowRef, watch } from 'vue'
-import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/chartTooltip/ChartTooltip'
+import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
 import { CriticalFollower, DEFAULT_FOLLOW_OMEGA } from '@/shared/uiKit/chart/universalChart/utils/follower'
 import PopoverStyled from '@/shared/uiKit/popover/PopoverStyled.vue'
 import { OffsetValue, PlacementParam, PlacementWithModifiers, TargetRect, VirtualElement } from '@/shared/uiKit/popover/utils'

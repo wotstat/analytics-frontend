@@ -26,20 +26,21 @@
     - `{ type: 'interval' }` — подпись внутри отрезка между соседними значениями (`placement: start | middle | end`), схлопывание — по ширине отрезка. Для осей-периодов (недели и т.п.).
     - `{ type: 'cell', size }` — для bar-графиков: подпись позиционируется относительно **базовой** ячейки `[v, v + size]` (по умолчанию по центру), а не относительно текущего шага. Когда шаг схлопывается (1 → 2 → 4), число остаётся по центру своей колонки и может торчать за её пределы; схлопывание решается по пересечению с соседями, как в `classic`. Значения подписей при этом — левые границы ячеек, поэтому `to` задаётся индексом последней колонки (а не правым краем, как у `interval`).
 - **`defs/`** — SVG defs: градиенты, клипы, маски, паттерны.
-- **`hover/`** — интерактивность:
-  - `basePlotHover/` — **конечный автомат** ввода (`StateMachine.ts`, состояния в `states/`: mouse hover/pan, touch hover/pan/zoom, ожидание распознавания жеста).
-  - `composableHover/ComposableHover.ts` — составной ховер из компонентов: `ChartTooltip`, вертикальная/горизонтальная линии, `NearestMarker` (ближайшая точка, поиск через quadtree), `ZoomChartComponent`.
+- **`interaction/`** — интерактивность:
+  - `baseInteractionController/` — базовый контроллер и **конечный автомат** ввода (`StateMachine.ts`, состояния в `states/`: mouse hover/pan, touch hover/pan/zoom, ожидание распознавания жеста).
+  - `BaseDataSourcedInteractionController.ts` — базовый контроллер с поиском ближайших точек в подключённых data sources.
+  - `composable/InteractionController.ts` — составной контроллер интерактивности из `InteractionComponent`: hover-эффектов (`ChartTooltip`, вертикальная/горизонтальная линии, `NearestMarker`) и управления viewport (`ZoomChartComponent`).
 - **`ChartRenderManager.ts`**, `BaseChart.ts` — базовая инфраструктура рендера.
 
 ### ZoomChartComponent — зум/пан/инерция
 
-`hover/composableHover/components/zoomChartComponent/` — пан мышью/тачем, зум колесом и пинчем, инерция, «резиновые» лимиты. **Есть подробный `readme.md` прямо в папке** — обязательно читай его перед изменениями; там же список неочевидных решений с пометкой «не чинить». Компонент завершён, автор просил не закладывать в него архитектуру «на будущее». Единственное место использования: `src/pages/infographics/pages/onslaught/leaderboard/components/detail/Charts.ts`.
+`interaction/composable/components/zoomChartComponent/` — пан мышью/тачем, зум колесом и пинчем, инерция, «резиновые» лимиты. **Есть подробный `readme.md` прямо в папке** — обязательно читай его перед изменениями; там же список неочевидных решений с пометкой «не чинить». Компонент завершён, автор просил не закладывать в него архитектуру «на будущее». Единственное место использования: `src/pages/infographics/pages/onslaught/leaderboard/components/detail/Charts.ts`.
 
 ### Связка графиков (hover / bounds sync)
 
-`hover/composableHover/sync/` — синхронизация нескольких `UniversalChart` по принципу **координатный фрейм ≠ viewport**: примитив синка живёт в chart-space, поэтому не зависит от зума, а каждый график сам проецирует его в свои пиксели и снапит/фитит по **своим** данным. Два независимых хаба (можно включать по отдельности), оба создаются один раз в `Detail.vue` и передаются в компоненты:
+`interaction/composable/sync/` — синхронизация нескольких `UniversalChart` по принципу **координатный фрейм ≠ viewport**: примитив синка живёт в chart-space, поэтому не зависит от зума, а каждый график сам проецирует его в свои пиксели и снапит/фитит по **своим** данным. Два независимых хаба (можно включать по отдельности), оба создаются один раз в `Detail.vue` и передаются в компоненты:
 
-- **`HoverSynchronizer`** (hover-sync): навёл на один график — hover (линия/маркер/тултип) зажигается на всех связанных в той же точке фрейма. Добавляется в каждый `ComposableHover` (`addComponent`) и передаётся консьюмерам (`VerticalLine`/`NearestMarker`/`ChartTooltip`, опция `hoverSync`); локальный hover приоритетнее внешнего.
+- **`HoverSynchronizer`** (hover-sync): навёл на один график — hover (линия/маркер/тултип) зажигается на всех связанных в той же точке фрейма. Добавляется в каждый `InteractionController` (`addComponent`) и передаётся консьюмерам (`VerticalLine`/`NearestMarker`/`ChartTooltip`, опция `hoverSync`); локальный hover приоритетнее внешнего.
 - **`BoundsSynchronizer`** (bounds-sync): зазумил/пропанил один — связанные синхронно повторяют окно ведущей оси (направление как у `panDirection`: `new BoundsSynchronizer('horizontal' | 'vertical' | 'all')`), каждый анимируя свою auto-fit ось. Передаётся в `ZoomChartComponent` опцией `boundsSync`. **Идёт через `ZoomChartComponent`**, а не через `chart.setRenderBounds` напрямую (иначе auto-fit ось ведомого снапит — детали в его `readme.md`).
 
 Референс проводки — `detail/Charts.ts` + `detail/Detail.vue` (лидерборд Натиска). Статичный сезонный вариант без зума с постоянными маркерами точек — `onslaught/general/dailyPlayersChart/`.

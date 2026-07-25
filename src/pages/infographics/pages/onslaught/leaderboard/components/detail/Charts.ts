@@ -3,10 +3,10 @@ import { ChartGradient } from '@/shared/uiKit/chart/universalChart/defs/ChartGra
 import { ChartMask } from '@/shared/uiKit/chart/universalChart/defs/ChartMask'
 import { AutoLabels, Options as LabelsOptions } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
 import { steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator'
-import { ChartTooltip, TooltipCtx } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/chartTooltip/ChartTooltip'
-import { VerticalLine } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/lines/VerticalLine'
-import { NearestMarker } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/nearestMarker/NearestMarker'
-import { ComposableHover } from '@/shared/uiKit/chart/universalChart/hover/composableHover/ComposableHover'
+import { ChartTooltip, TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
+import { VerticalLine } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/lines/VerticalLine'
+import { NearestMarker } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/nearestMarker/NearestMarker'
+import { InteractionController } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
 import { AutoLineArea } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineArea'
 import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
@@ -16,11 +16,11 @@ import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
 import { ref } from 'vue'
 import { RectangleArea } from '@/shared/uiKit/chart/universalChart/plot/area/RectangleArea'
 import { ChartRawPattern } from '@/shared/uiKit/chart/universalChart/defs/ChartRawPattern'
-import { ZoomChartComponent } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/zoomChartComponent/ZoomChartComponent'
+import { ZoomChartComponent } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/zoomChartComponent/ZoomChartComponent'
 import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
-import { HoverSynchronizer } from '@/shared/uiKit/chart/universalChart/hover/composableHover/sync/HoverSynchronizer'
-import { BoundsSynchronizer } from '@/shared/uiKit/chart/universalChart/hover/composableHover/sync/BoundsSynchronizer'
-import { CallbackComponent } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/callback/CallbackComponent'
+import { HoverSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/HoverSynchronizer'
+import { BoundsSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/BoundsSynchronizer'
+import { CallbackComponent } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/callback/CallbackComponent'
 
 
 const MINUTE = 1 * 60
@@ -34,7 +34,7 @@ class BaseChart extends UniversalChart {
 
   private readonly line: AutoLine
   private readonly minMaxArea: AutoLineArea
-  private readonly hover: ComposableHover
+  private readonly interactionController: InteractionController
   private readonly dayTicks: TicksByValues
   private readonly restrictionArea: RectangleArea
   private readonly labelsX: AutoLabels
@@ -77,7 +77,7 @@ class BaseChart extends UniversalChart {
       .maskBy(maskMain)
       .clipBy(clipMain)
 
-    this.hover = new ComposableHover('hover')
+    this.interactionController = new InteractionController('hover')
       .addComponent(new ZoomChartComponent({
         chart: this,
         zoom: true,
@@ -125,7 +125,7 @@ class BaseChart extends UniversalChart {
       .addPlot(plotRoot, 'plot')
       .addSlot('bottom', this.labelsX, 'labels')
       .addSlot('left', labelsY, 'labels')
-      .addPlot(this.hover)
+      .addPlot(this.interactionController)
       .addDefs(gradient, clipMain, clipLeft, clipBottom, maskMain, pattern)
 
     const dayTicks = []
@@ -139,7 +139,7 @@ class BaseChart extends UniversalChart {
 
   setPoints(points: ({ x: number, y: number } | null)[]) {
     this.line.setPoints(points)
-    this.hover.setDataSources(points)
+    this.interactionController.setDataSources(points)
     this.recalculateRestrictionArea()
     return this
   }

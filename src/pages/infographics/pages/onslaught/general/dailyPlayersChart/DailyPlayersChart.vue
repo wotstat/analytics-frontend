@@ -35,7 +35,7 @@ import { LONG_CACHE_SETTINGS, isErrorStatus, loading, queryComputed, success } f
 import { getRegionDayChangeHourOffset } from '@/shared/game/comp7/utils'
 import HeaderTooltip from '@/shared/ui/chart/HeaderTooltip.vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
-import type { TooltipCtx } from '@/shared/uiKit/chart/universalChart/hover/composableHover/components/chartTooltip/ChartTooltip'
+import type { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
 import { buildGlobalDailyPlayersStatisticsQuery, type GlobalStatisticsFilters } from '../globalStatistics/queries'
 import type { GlobalDailyPlayersStatistic } from '../globalStatistics/types'
 import { DailyPlayersChart } from './DailyPlayersChart'
