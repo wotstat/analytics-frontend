@@ -19,7 +19,7 @@
       </label>
 
       <span class="debug-hint">найдено: <span class="debug-value">{{ filtered.length }}</span> из {{ arenaList.length
-      }}</span>
+        }}</span>
     </div>
 
     <div class="debug-grid" style="--debug-grid-min: 160px">
@@ -83,6 +83,8 @@ const filtered = computed(() => arenaList.value.filter(arena => {
 
   .name {
     font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .tag {

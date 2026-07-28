@@ -19,7 +19,7 @@ export type VehicleRow = {
 
 const listQuery = `
 with
-    tanks as (select tag, type, level, nation, region, count from LatestBattleVehicleInfo final),
+    tanks as (select tag, type, level, nation, region, count from LatestBattleVehicleInfo final where updated > now() - interval 1 month),
     locals as (select tag, shortRU as short, nameRU as name, nameEU as nameEu, nameCN as nameCn from VehiclesLocalization)
 select tag, type, level, nation, region, count, short, name, nameEu, nameCn
 from tanks
@@ -27,7 +27,7 @@ left any join locals using tag
 order by count desc
 `
 
-export const vehicleListQuery = queryAsync<VehicleRow>(listQuery, { settings: CACHE_SETTINGS })
+export const vehicleListQuery = queryAsync<VehicleRow>(listQuery)
 
 export type VehicleRowWithGame = VehicleRow & { game: GameVendor }
 
