@@ -5,7 +5,7 @@
     @popover-fully-outside-window="emit('popoverFullyOutsideWindow')"
     @pointer-click-outside="e => emit('pointerClickOutside', e)" @ready-to-visible="onReadyToVisible"
     v-slot="{ arrow }">
-    <slot :arrow :transition-class="[...transitionClass.values()]" _class="test"></slot>
+    <slot :arrow :transition-class="[...transitionClass.values()]"></slot>
   </Popover>
 </template>
 

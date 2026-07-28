@@ -283,7 +283,7 @@ export function calculatePopoverPosition(params: Params, preferredPlacement: Pla
   if (!lastPlacement) {
     const { placement, float: floatModifier } = getPlacement(checkedPlacements[0])
     const { x, y } = calculatePosition(placement, offset, params, floatModifier, bbox)
-    return { x, y, placement, fitsWithinBbox: false }
+    return { x, y, placement: checkedPlacements[0], fitsWithinBbox: false }
   }
 
   const { placement, float: floatModifier } = getPlacement(lastPlacement)
