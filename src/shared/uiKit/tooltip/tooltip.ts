@@ -361,7 +361,7 @@ export function defineTooltip<T>(
         ...requiredOptions,
         interactive: binding.modifiers.interactive ?? requiredOptions.interactive,
         delay: binding.modifiers.instant ? 0 : requiredOptions.delay,
-        hideDelay: binding.modifiers.instant ? 0 : requiredOptions.hideDelay,
+        hideDelay: binding.modifiers.instant ? (binding.arg ? 50 : 0) : requiredOptions.hideDelay,
       }
 
       const resolveBindingProps = (value: T) => {
