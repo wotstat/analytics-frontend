@@ -1,4 +1,5 @@
 import { ChartSpace } from '../../../utils/ChartSpace'
+import { Bounds, BoundsConstraint } from '../../../utils/Bounds'
 import { addClasses, Classes } from '../../../utils/utils'
 import { BaseMarkers, Marker } from '../BaseMarkers'
 
@@ -80,8 +81,9 @@ export class AutoMarkers extends BaseMarkers<MarkerData> {
   constructor(protected options: {
     classes?: Classes
     targetMasks?: Element[] | Element
+    affectsBounds?: boolean
   } & Partial<DefaultOptions>) {
-    super(options.classes ?? [])
+    super(options.classes ?? [], { affectsBounds: options.affectsBounds ?? false })
 
     this.defaultData = {
       variant: this.options.variant ?? DEFAULT_OPTIONS.variant,
@@ -104,5 +106,17 @@ export class AutoMarkers extends BaseMarkers<MarkerData> {
 
   createMarker(data: MarkerData) {
     return new AutoMarker(this.root, this.targetMasks, data)
+  }
+
+  protected calculateBounds(constraint?: BoundsConstraint): Bounds {
+    const { minX = -Infinity, maxX = Infinity, minY = -Infinity, maxY = Infinity } = constraint ?? {}
+    const bounds = new Bounds()
+
+    for (const marker of this.markers) {
+      if (marker.x < minX || marker.x > maxX || marker.y < minY || marker.y > maxY) continue
+      bounds.addPoint(marker)
+    }
+
+    return bounds
   }
 }

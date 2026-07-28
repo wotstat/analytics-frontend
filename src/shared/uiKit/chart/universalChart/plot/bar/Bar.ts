@@ -48,6 +48,7 @@ export type BarDataset = {
 export type Options = {
   classes?: Classes
   strategy: BarStrategy
+  affectsBounds?: boolean
 }
 
 type CornerRadii = {
@@ -80,7 +81,7 @@ export class Bar extends BasePlotRenderer {
   private datasetElements: DatasetElements[] = []
 
   constructor(options: Options) {
-    super(options.classes)
+    super(options.classes, { affectsBounds: options.affectsBounds ?? true })
     this.strategy = options.strategy
     addClasses(this.root, 'bar-plot')
   }
@@ -98,7 +99,7 @@ export class Bar extends BasePlotRenderer {
     return this
   }
 
-  getBounds(constraint?: BoundsConstraint): Bounds {
+  protected calculateBounds(constraint?: BoundsConstraint): Bounds {
     const categoryCount = this.getCategoryCount()
     if (categoryCount === 0) return new Bounds()
 

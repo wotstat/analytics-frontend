@@ -60,6 +60,11 @@
         <span class="debug-label">renderBounds вручную</span>
         <input type="checkbox" v-model="manualBounds">
       </label>
+
+      <label class="debug-control">
+        <span class="debug-label">affectsBounds</span>
+        <input type="checkbox" v-model="affectsBounds">
+      </label>
     </div>
 
     <ChartStage :chart="instance.chart" :height="260" />
@@ -79,9 +84,9 @@
     </p>
 
     <p class="debug-note">
-      <b>Маркеры не участвуют в bounds.</b> getBounds у них нет вообще, поэтому маркеры без линии дают пустые
-      bounds, все координаты превращаются в NaN и график остаётся чистым. Сними «линию» — увидишь пустоту, включи
-      «renderBounds вручную» — маркеры вернутся.
+      <b>Маркеры по умолчанию не участвуют в bounds.</b> Поэтому маркеры без линии дают пустые bounds, все
+      координаты превращаются в NaN и график остаётся чистым. Сними «линию» — увидишь пустоту, затем включи
+      <span class="debug-value">affectsBounds</span> или «renderBounds вручную» — маркеры вернутся.
     </p>
 
     <p class="debug-note">
@@ -125,6 +130,7 @@ const color = ref<typeof colors[number]>('series-a')
 const withLine = ref(true)
 const withMask = ref(true)
 const manualBounds = ref(false)
+const affectsBounds = ref(false)
 
 const points = computed(() => data.series.value.filter((point): point is ChartPoint => point !== null))
 
@@ -145,6 +151,7 @@ function build() {
     size: size.value,
     maskSize: maskSize.value,
     variant: variant.value,
+    affectsBounds: affectsBounds.value,
   })
 
   const group = new PlotGroup()
@@ -163,7 +170,7 @@ function build() {
   return { chart, line, markers }
 }
 
-watch([withLine, withMask, color, variant], () => rebuild())
+watch([withLine, withMask, color, variant, affectsBounds], () => rebuild())
 
 watchEffect(() => {
   const { chart, line, markers } = instance.value

@@ -1,6 +1,6 @@
 <template>
   <DebugSection title="Несколько рендереров и PlotGroup" id="plot-group"
-    description="Пять рендереров в одном графике: порядок отрисовки — это порядок добавления, границы — объединение всех getBounds. Справа настоящее дерево SVG: видно, как аргумент path раскладывает плоты по группам."
+    description="Шесть рендереров в одном графике: порядок отрисовки — это порядок добавления, границы — объединение всех getBounds. Справа настоящее дерево SVG: видно, как аргумент path раскладывает плоты по группам."
     source="src/shared/uiKit/chart/universalChart/utils/PlotGroup.ts">
 
     <div class="debug-row">
@@ -84,8 +84,10 @@
 
     <p class="debug-note">
       <b>Границы — объединение.</b> Включи столбцы: bounds по Y обязательно захватят ноль (Bar всегда добавляет
-      базовую линию), и вся картинка съедет. Выключи — вернётся диапазон только по линиям. У прямоугольной области
-      getBounds нет, поэтому на границы она не влияет никогда.
+      базовую линию), и вся картинка съедет. Выключи — вернётся диапазон линий, полигона и scatter-маркеров.
+      Полигон участвует в bounds по умолчанию, для маркеров это явно включено через
+      <span class="debug-value">affectsBounds: true</span>, а прямоугольная область оставлена с выключенным
+      дефолтом.
     </p>
   </DebugSection>
 </template>
@@ -97,6 +99,7 @@ import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { syntheticBarDatasets, syntheticSeries } from '@/pages/debug/shared/fixtures/syntheticSeries'
 import type { ChartPoint } from '@/pages/debug/shared/fixtures/types'
 import { ChartClip } from '@/shared/uiKit/chart/universalChart/defs/ChartClip'
+import { PolygonArea } from '@/shared/uiKit/chart/universalChart/plot/area/PolygonArea'
 import { RectangleArea } from '@/shared/uiKit/chart/universalChart/plot/area/RectangleArea'
 import { Bar } from '@/shared/uiKit/chart/universalChart/plot/bar/Bar'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
@@ -114,6 +117,7 @@ const layers = [
   { value: 'line', label: 'линия' },
   { value: 'markers', label: 'маркеры' },
   { value: 'area', label: 'область' },
+  { value: 'polygon', label: 'полигон' },
 ] as const
 
 const paths = [
@@ -131,6 +135,7 @@ const enabled = ref<Record<typeof layers[number]['value'], boolean>>({
   line: true,
   markers: true,
   area: true,
+  polygon: true,
 })
 
 const order = ref<'line-last' | 'bars-last'>('line-last')
@@ -176,13 +181,28 @@ function apply() {
     smoothingMethod: 'monotone',
   }).setPoints(series)
 
-  const markers = new AutoMarkers({ classes: ['markers', 'series-a'], size: 3, maskSize: 0 })
+  const markers = new AutoMarkers({
+    classes: ['markers', 'series-a'],
+    size: 3,
+    maskSize: 0,
+    affectsBounds: true,
+  })
     .setMarkers(series)
 
   const area = new RectangleArea(['rect-area', 'series-b'], { layoutLimited: true })
   area.setPoints({ x: 14, y: -Infinity }, { x: 20, y: Infinity })
 
+  const polygon = new PolygonArea(['background-polygon', 'series-c'])
+  polygon.setPoints([
+    { x: 2, y: 260 },
+    { x: 5, y: 430 },
+    { x: 8, y: 310 },
+    { x: 7, y: 170 },
+    { x: 3, y: 150 },
+  ])
+
   const plots: PlotRenderer[] = []
+  if (enabled.value.polygon) plots.push(polygon)
   if (enabled.value.area) plots.push(area)
   if (enabled.value.bars) plots.push(bar)
   if (enabled.value.corridor) plots.push(corridor)
@@ -244,6 +264,13 @@ function walk(element: Element, depth: number, lines: string[]) {
   .rect-area rect {
     fill: currentColor;
     fill-opacity: 0.12;
+  }
+
+  .background-polygon path {
+    fill: currentColor;
+    fill-opacity: 0.16;
+    stroke: currentColor;
+    stroke-width: 1.5;
   }
 
   .markers circle {

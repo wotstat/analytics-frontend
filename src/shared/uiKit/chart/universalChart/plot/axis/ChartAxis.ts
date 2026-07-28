@@ -10,8 +10,8 @@ export class ChartAxis extends BasePlotRenderer {
 
   private line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
 
-  constructor(private axis: Axis, private value: number, classes: Classes = []) {
-    super(joinClasses('chart-axis', classes))
+  constructor(private axis: Axis, private value: number, classes: Classes = [], options: { affectsBounds?: boolean } = {}) {
+    super(joinClasses('chart-axis', classes), options)
   }
 
   protected renderImpl(space: ChartSpace, overflow: Overflow, full: Size): void {

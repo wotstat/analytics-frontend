@@ -34,8 +34,8 @@ export abstract class BaseDataSourcedInteractionController extends BaseInteracti
   protected lastNearestXDataPoints: HoveredDataPoint[] | null = null
   protected lastNearestYDataPoints: HoveredDataPoint[] | null = null
 
-  constructor(classes: Classes = []) {
-    super(classes)
+  constructor(classes: Classes = [], options: { affectsBounds?: boolean } = {}) {
+    super(classes, options)
   }
 
   protected renderImpl(space: ChartSpace, overflow: Overflow, full: Size): void {

@@ -58,8 +58,8 @@ export abstract class BaseInteractionController extends BasePlotRenderer {
 
   get onStateChanged() { return this.stateMachine.onStateChanged }
 
-  constructor(classes: Classes = []) {
-    super(classes)
+  constructor(classes: Classes = [], options: { affectsBounds?: boolean } = {}) {
+    super(classes, options)
 
     this.root.appendChild(this.interactiveZone)
     this.interactiveZone.classList.add('interactive-zone')

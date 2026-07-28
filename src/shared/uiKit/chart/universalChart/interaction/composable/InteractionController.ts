@@ -62,8 +62,8 @@ export class InteractionController extends BaseDataSourcedInteractionController 
 
   private components: InteractionComponent[] = []
 
-  constructor(classes: Classes = []) {
-    super(classes)
+  constructor(classes: Classes = [], options: { affectsBounds?: boolean } = {}) {
+    super(classes, options)
 
     this.componentsRoot.classList.add('hover-components')
     this.root.appendChild(this.componentsRoot)

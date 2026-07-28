@@ -63,8 +63,8 @@ export class PlotAreaBorder extends BasePlotRenderer {
 
   private lines: SVGPathElement[] = []
 
-  constructor(readonly sides: PlotAreaBorderSides) {
-    super('plot-area-border')
+  constructor(readonly sides: PlotAreaBorderSides, options: { affectsBounds?: boolean } = {}) {
+    super('plot-area-border', options)
   }
 
   protected renderImpl(space: ChartSpace, overflow: Overflow, full: Size): void {

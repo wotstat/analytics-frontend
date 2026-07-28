@@ -18,6 +18,7 @@ type Options = {
   precision?: number
   smoothing?: number
   smoothingMethod?: 'monotone' | 'smooth'
+  affectsBounds?: boolean
 }
 
 type Point = { x: number, y: number }
@@ -33,7 +34,7 @@ export class AutoLine extends BasePlotRenderer {
   protected monotonePathSegments: MonotoneXPath[] = []
 
   constructor(readonly options: Options) {
-    super(options.classes)
+    super(options.classes, { affectsBounds: options.affectsBounds ?? true })
   }
 
   protected pointsDidChange() {
@@ -74,7 +75,7 @@ export class AutoLine extends BasePlotRenderer {
     return this
   }
 
-  getBounds(constraint?: BoundsConstraint): Bounds {
+  protected calculateBounds(constraint?: BoundsConstraint): Bounds {
     if (constraint) return this.getConstrainedBounds(constraint)
 
     if (this.bounds && !this.bounds.isEmpty()) return this.bounds
@@ -152,7 +153,7 @@ export class AutoLine extends BasePlotRenderer {
         // точки оставляют заливку под линией незакрашенной. Для area отключаем вертикальную обрезку,
         // расширяя видимый диапазон до всех данных (горизонтальная обрезка — основной выигрыш — остаётся).
         if (this.options.area) {
-          const dataBounds = this.getBounds()
+          const dataBounds = this.calculateBounds()
           if (!dataBounds.isEmpty()) {
             layoutOverflow.minY = Math.min(layoutOverflow.minY, space.chartToLayoutY(dataBounds.maxY) - 1)
             layoutOverflow.maxY = Math.max(layoutOverflow.maxY, space.chartToLayoutY(dataBounds.minY) + 1)

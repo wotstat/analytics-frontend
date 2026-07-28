@@ -15,8 +15,8 @@ export abstract class BaseMarkers<T> extends BasePlotRenderer {
   protected chart: UniversalChart | null = null
   protected markerInstances: Marker<T>[] = []
 
-  constructor(classes: Classes) {
-    super(classes)
+  constructor(classes: Classes, options: { affectsBounds?: boolean } = {}) {
+    super(classes, options)
   }
 
   setMarkers(markers: T[]) {

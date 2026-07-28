@@ -1,6 +1,7 @@
 import { ChartRawPattern } from '../../defs/ChartRawPattern'
 import { Overflow, Size } from '../../UniversalChart'
 import { ChartSpace } from '../../utils/ChartSpace'
+import { Bounds, BoundsConstraint } from '../../utils/Bounds'
 import { Point } from '../../utils/Point'
 import { Classes, NormalizedOffset4Side, Offset4Side, unwrapOffset } from '../../utils/utils'
 import { BasePlotRenderer } from '../BasePlotRenderer'
@@ -12,8 +13,8 @@ export class RectangleArea extends BasePlotRenderer {
   protected cachedSize: { x: number, y: number, width: number, height: number } = { x: 0, y: 0, width: 0, height: 0 }
   protected padding: NormalizedOffset4Side
 
-  constructor(classes: Classes, protected options: { layoutLimited?: boolean, padding?: Offset4Side } = {}) {
-    super(classes)
+  constructor(classes: Classes, protected options: { layoutLimited?: boolean, padding?: Offset4Side, affectsBounds?: boolean } = {}) {
+    super(classes, { affectsBounds: options.affectsBounds ?? false })
     this.root.appendChild(this.rect)
     this.padding = unwrapOffset(options.padding ?? 0)
   }
@@ -52,6 +53,24 @@ export class RectangleArea extends BasePlotRenderer {
   fillByPattern(pattern: ChartRawPattern) {
     pattern.fill(this.rect)
     return this
+  }
+
+  protected calculateBounds(constraint?: BoundsConstraint): Bounds {
+    if (!this.data) return new Bounds()
+
+    const minX = Math.min(this.data.p1.x, this.data.p2.x)
+    const maxX = Math.max(this.data.p1.x, this.data.p2.x)
+    const minY = Math.min(this.data.p1.y, this.data.p2.y)
+    const maxY = Math.max(this.data.p1.y, this.data.p2.y)
+
+    if (constraint && (
+      maxX < (constraint.minX ?? -Infinity) ||
+      minX > (constraint.maxX ?? Infinity) ||
+      maxY < (constraint.minY ?? -Infinity) ||
+      minY > (constraint.maxY ?? Infinity)
+    )) return new Bounds()
+
+    return Bounds.fromMinMax(minX, maxX, minY, maxY)
   }
 
   protected setRect(x: number, y: number, width: number, height: number) {

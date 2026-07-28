@@ -1,6 +1,6 @@
 <template>
   <DebugPage title="Типы графиков"
-    description="Линии и сглаживание, заливки, столбцы grouped и stacked, маркеры, прямоугольные области."
+    description="Линии и сглаживание, заливки, столбцы grouped и stacked, маркеры, прямоугольные и полигональные области."
     source="src/shared/uiKit/chart/universalChart/plot/">
 
     <DebugSection title="Рендереры данных и с чего начать" id="renderers"
@@ -47,6 +47,12 @@
             <td><a href="#rectangle-area">области</a></td>
           </tr>
           <tr>
+            <th>PolygonArea</th>
+            <td>замкнутый полигон, в том числе с отверстиями</td>
+            <td><span class="debug-value">setPoints(points | contours)</span></td>
+            <td><a href="#polygon-area">полигоны</a></td>
+          </tr>
+          <tr>
             <th>PlotGroup</th>
             <td>ничего — держит других под общим клипом или маской</td>
             <td><span class="debug-value">addPlot</span></td>
@@ -91,6 +97,7 @@
     <BarsRadius />
     <Markers />
     <Rectangles />
+    <Polygons />
     <GradientsPatterns />
     <ClipsMasks />
     <PlotGroups />
@@ -109,6 +116,7 @@ import BarsLayout from './sections/BarsLayout.vue'
 import BarsRadius from './sections/barsRadius/BarsRadius.vue'
 import Markers from './sections/Markers.vue'
 import Rectangles from './sections/Rectangles.vue'
+import Polygons from './sections/Polygons.vue'
 import GradientsPatterns from './sections/GradientsPatterns.vue'
 import ClipsMasks from './sections/ClipsMasks.vue'
 import PlotGroups from './sections/PlotGroups.vue'
