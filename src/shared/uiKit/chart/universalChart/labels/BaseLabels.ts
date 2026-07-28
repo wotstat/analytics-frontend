@@ -14,6 +14,7 @@ export type Axis = 'vertical' | 'horizontal'
 export abstract class BaseLabels implements SlotRenderer {
 
   protected root = document.createElementNS('http://www.w3.org/2000/svg', 'g')
+  protected chart: UniversalChart | null = null
   private cachedSizes = new Map<string, number>()
   private cachedMetrics: TextMetrics | null = null
   private ctx = document.createElement('canvas').getContext('2d')
@@ -48,19 +49,32 @@ export abstract class BaseLabels implements SlotRenderer {
       changed = true
     }
 
-    if (changed) this.fontStyleDirty = true
+    if (changed) {
+      this.fontStyleDirty = true
+      this.requestRender()
+    }
+  }
+
+  protected requestRender() {
+    this.chart?.dataDidChange()
   }
 
   getRootElement(): Element {
     return this.root
   }
 
-  attach(root: SVGGElement, chart: UniversalChart): void { }
+  attach(root: SVGGElement, chart: UniversalChart): void {
+    this.chart = chart
+  }
 
   detach(): void {
+    this.chart = null
+    for (const element of this.elementByKey.values()) element.remove()
     this.elementByKey.clear()
     this.cachedSizes.clear()
     this.cachedMetrics = null
+    this.lastRenderedTicks = []
+    this.lastPersistent = 0
   }
 
   didMount() {

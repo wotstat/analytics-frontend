@@ -4,7 +4,7 @@
 
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, useTemplateRef } from 'vue'
+import { onMounted, onUnmounted, useTemplateRef, watch } from 'vue'
 import { UniversalChart } from './UniversalChart'
 
 const container = useTemplateRef<HTMLDivElement>('container')
@@ -12,6 +12,11 @@ const container = useTemplateRef<HTMLDivElement>('container')
 const props = defineProps<{
   chart: UniversalChart
 }>()
+
+watch(() => props.chart, (next, previous) => {
+  previous.dispose()
+  if (container.value) next.attach(container.value)
+})
 
 onMounted(() => {
   if (container.value) props.chart.attach(container.value)

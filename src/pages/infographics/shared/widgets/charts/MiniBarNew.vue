@@ -24,7 +24,7 @@ import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalCha
 import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager.ts'
 import { AutoLabels, Options } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels.ts'
 import { steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator.ts'
-import { Axis } from '@/shared/uiKit/chart/universalChart/axis/Axis.ts'
+import { PlotAreaBorder } from '@/shared/uiKit/chart/universalChart/axis/PlotAreaBorder'
 import { watchEffect } from 'vue'
 import { Bar } from '@/shared/uiKit/chart/universalChart/plot/bar/Bar.ts'
 import { Classes } from '@/shared/uiKit/chart/universalChart/utils/utils.ts'
@@ -59,7 +59,7 @@ const chart = new UniversalChart({ layoutVariant: 'vertical', renderManager: glo
 
 const clipMain = new ChartClip('center')
 
-const axis = new Axis({ bottom: 'full' })
+const border = new PlotAreaBorder({ bottom: 'full' })
 const labelsX = new AutoLabels('horizontal', {
   ...LABELS_OPTIONS,
   from: 0,
@@ -77,7 +77,7 @@ const bar = new Bar({
 
 chart
   .addSlot('bottom', labelsX, 'labels')
-  .addPlot(axis, 'ticks')
+  .addPlot(border, 'ticks')
   .addPlot(bar, 'plot')
   .addDefs(clipMain)
 
@@ -131,7 +131,7 @@ watchEffect(() => {
       }
     }
 
-    .chart-axis path {
+    .plot-area-border path {
       stroke: rgb(255 255 255 / 15%);
     }
 

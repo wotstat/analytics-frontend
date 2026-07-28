@@ -23,6 +23,10 @@ export function addClasses(element: { classList: { add(...classes: string[]): vo
   element.classList.add(...classNames(...classes))
 }
 
+export function removeClasses(element: { classList: { remove(...classes: string[]): void } }, ...classes: (Classes | false | null | undefined)[]) {
+  element.classList.remove(...classNames(...classes))
+}
+
 export type Offset4Side =
   undefined |
   number |

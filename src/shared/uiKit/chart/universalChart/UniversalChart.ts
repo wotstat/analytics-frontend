@@ -3,6 +3,7 @@ import './style.scss'
 import BaseChart from '../BaseChart'
 import { Bounds, BoundsConstraint } from './utils/Bounds'
 import { ChartSpace } from './utils/ChartSpace'
+import { EventEmitter } from './utils/EventEmitter'
 import { Offset4Side, unwrapOffset } from './utils/utils'
 import { ChartRenderManager } from '../ChartRenderManager'
 
@@ -43,27 +44,12 @@ const NAMESPACE = 'http://www.w3.org/2000/svg'
 
 const globalChartRenderManager = new ChartRenderManager(4)
 
-class EventEmitter<T> {
-  private listeners: ((arg: T) => void)[] = []
-
-  on(listener: (arg: T) => void) {
-    this.listeners.push(listener)
-    return () => this.off(listener)
-  }
-
-  off(listener: (arg: T) => void) {
-    const index = this.listeners.indexOf(listener)
-    if (index >= 0) this.listeners.splice(index, 1)
-  }
-
-  emit(arg: T) {
-    for (const listener of this.listeners) listener(arg)
-  }
-}
+export type AfterRenderEvent = { space: ChartSpace, overflow: Overflow, full: Size }
 
 export class UniversalChart extends BaseChart {
 
   readonly onSetRenderBounds = new EventEmitter<{ minX?: number | null, maxX?: number | null, minY?: number | null, maxY?: number | null, immediate?: boolean }>()
+  readonly onAfterRender = new EventEmitter<AfterRenderEvent>()
 
   private userDefinedBounds: { minX: number | null, maxX: number | null, minY: number | null, maxY: number | null } | null = null
   private renderBoundsPadding = { top: 0, right: 0, bottom: 0, left: 0 }
@@ -72,13 +58,13 @@ export class UniversalChart extends BaseChart {
   private chartSpace = new ChartSpace({ x: 0, y: 0, width: 0, height: 0 }, new Bounds())
   private plotBounds = new Bounds()
 
-  private topRenderers: SlotRenderer[] = []
-  private rightRenderers: SlotRenderer[] = []
-  private bottomRenderers: SlotRenderer[] = []
-  private leftRenderers: SlotRenderer[] = []
-  private plotRenderers: PlotRenderer[] = []
-  private allRenderers: BaseRenderer[] = []
-  private defsRenderers: BaseRenderer[] = []
+  private topRenderers = new Set<SlotRenderer>()
+  private rightRenderers = new Set<SlotRenderer>()
+  private bottomRenderers = new Set<SlotRenderer>()
+  private leftRenderers = new Set<SlotRenderer>()
+  private plotRenderers = new Set<PlotRenderer>()
+  private allRenderers = new Set<BaseRenderer>()
+  private defsRenderers = new Set<BaseRenderer>()
   private renderTargets = [
     this.defsRenderers, this.topRenderers, this.rightRenderers, this.bottomRenderers, this.leftRenderers, this.plotRenderers
   ]
@@ -120,19 +106,21 @@ export class UniversalChart extends BaseChart {
 
     switch (position) {
       case 'top':
-        this.topRenderers.push(slot)
+        this.topRenderers.add(slot)
         break
       case 'right':
-        this.rightRenderers.push(slot)
+        this.rightRenderers.add(slot)
         break
       case 'bottom':
-        this.bottomRenderers.push(slot)
+        this.bottomRenderers.add(slot)
         break
       case 'left':
-        this.leftRenderers.push(slot)
+        this.leftRenderers.add(slot)
         break
     }
-    this.allRenderers.push(slot)
+    this.allRenderers.add(slot)
+    this.layoutCacheKey = ''
+    this.dataDidChange()
     return this
   }
 
@@ -143,8 +131,9 @@ export class UniversalChart extends BaseChart {
     if (element) root.appendChild(element)
 
     plot.attach?.(root, this)
-    this.plotRenderers.push(plot)
-    this.allRenderers.push(plot)
+    this.plotRenderers.add(plot)
+    this.allRenderers.add(plot)
+    this.dataDidChange()
     return this
   }
 
@@ -154,11 +143,42 @@ export class UniversalChart extends BaseChart {
       if (element) this.defs.appendChild(element)
 
       def.attach?.(this.defs, this)
-      this.defsRenderers.push(def)
-      this.allRenderers.push(def)
+      this.defsRenderers.add(def)
+      this.allRenderers.add(def)
     }
 
+    this.dataDidChange()
     return this
+  }
+
+  removePlot(plot: PlotRenderer) {
+    if (this.plotRenderers.delete(plot)) this.detachRenderer(plot)
+    return this
+  }
+
+  removeSlot(slot: SlotRenderer) {
+    let removed = false
+    for (const bucket of [this.topRenderers, this.rightRenderers, this.bottomRenderers, this.leftRenderers]) {
+      if (bucket.delete(slot)) removed = true
+    }
+
+    if (removed) this.detachRenderer(slot)
+    return this
+  }
+
+  removeDefs(...defs: DefsRenderer[]) {
+    for (const def of defs) {
+      if (this.defsRenderers.delete(def)) this.detachRenderer(def)
+    }
+    return this
+  }
+
+  private detachRenderer(renderer: BaseRenderer) {
+    this.allRenderers.delete(renderer)
+    renderer.getRootElement?.()?.remove()
+    renderer.detach?.()
+    this.layoutCacheKey = ''
+    this.dataDidChange()
   }
 
   dataDidChange() {
@@ -303,6 +323,8 @@ export class UniversalChart extends BaseChart {
       for (const target of this.renderTargets) {
         for (const renderer of target) renderer.render?.(this.chartSpace, overflow, this.size)
       }
+
+      if (this.onAfterRender.hasListeners) this.onAfterRender.emit({ space: this.chartSpace, overflow, full: this.size })
     }
   }
 
@@ -327,7 +349,7 @@ export class UniversalChart extends BaseChart {
     let layout = new ChartSpace({ x: 0, y: 0, width: w, height: h }, this.chartSpace.bounds)
     let overflow = { top: 0, right: 0, bottom: 0, left: 0 }
 
-    const process = (renderers: SlotRenderer[], dir: keyof typeof overflow, minSize: number) => {
+    const process = (renderers: Set<SlotRenderer>, dir: keyof typeof overflow, minSize: number) => {
       let res = minSize
       const prop = dir === 'top' || dir === 'bottom' ? 'height' : 'width'
       for (const slot of renderers) res = Math.max(res, slot.getSize(layout, overflow, full)[prop] ?? 0)

@@ -16,6 +16,7 @@ export class TicksByValues extends BaseOffsetTicks {
 
   setTicks(ticks: number[]) {
     this.ticks = ticks
+    this.requestRender()
   }
 
 }

@@ -1,7 +1,7 @@
 import { Overflow, Size } from '../../../../UniversalChart'
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
-import { addClasses, Classes } from '../../../../utils/utils'
+import { addClasses, removeClasses, Classes } from '../../../../utils/utils'
 import { HoveredDataPoint, isDataPointEqual } from '../../../BaseDataSourcedInteractionController'
 import { InteractionDirection, Position } from '../../../baseInteractionController/BaseInteractionController'
 import { InteractionController, InteractionComponent } from '../../InteractionController'
@@ -16,11 +16,19 @@ type Options = {
   hoverSync?: HoverResolver
 }
 
+function unwrapLineOffset(offset: Options['offset']) {
+  if (typeof offset === 'number') return { start: offset, end: offset }
+  if (Array.isArray(offset)) return { start: offset[0], end: offset[1] }
+  if (offset) return { start: offset.start ?? 0, end: offset.end ?? 0 }
+  return { start: 0, end: 0 }
+}
+
 export abstract class BaseLine implements InteractionComponent {
 
   protected line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
-  protected offset: { start: number, end: number }
-  protected position: 'cursor' | 'data-point-x' | 'data-point-y' | 'data-point'
+  protected options: Options = {}
+  protected offset = { start: 0, end: 0 }
+  protected position: 'cursor' | 'data-point-x' | 'data-point-y' | 'data-point' = 'cursor'
   protected controller: InteractionController | null = null
 
   protected lastDataPoints: HoveredDataPoint | null = null
@@ -31,19 +39,8 @@ export abstract class BaseLine implements InteractionComponent {
 
   private onSyncChange = () => this.controller?.scheduleRender()
 
-  constructor(protected options: Options = {}) {
-    addClasses(this.line, 'hover-line', 'vertical', options.classes)
-    this.position = options.position ?? 'cursor'
-
-    if (typeof options.offset === 'number') {
-      this.offset = { start: options.offset, end: options.offset }
-    } else if (Array.isArray(options.offset)) {
-      this.offset = { start: options.offset[0], end: options.offset[1] }
-    } else if (options.offset) {
-      this.offset = { start: options.offset.start ?? 0, end: options.offset.end ?? 0 }
-    } else {
-      this.offset = { start: 0, end: 0 }
-    }
+  constructor(options: Options = {}) {
+    this.applyOptions(options)
   }
 
   attach(root: SVGGElement, controller: InteractionController): void {
@@ -54,6 +51,36 @@ export abstract class BaseLine implements InteractionComponent {
 
   detach(): void {
     this.options.hoverSync?.unsubscribeChange(this.onSyncChange)
+    this.line.remove()
+    this.line.classList.remove('visible')
+    this.controller = null
+    this.hovered = false
+    this.lastDataPoints = null
+    this.spaceHash = ''
+  }
+
+  updateOptions(options: Options) {
+    const previousSync = this.options.hoverSync
+    if (previousSync !== options.hoverSync) {
+      previousSync?.unsubscribeChange(this.onSyncChange)
+      if (this.controller) options.hoverSync?.subscribeChange(this.onSyncChange)
+    }
+
+    this.applyOptions(options)
+
+    this.lastDataPoints = null
+    this.spaceHash = ''
+    this.controller?.scheduleRender()
+  }
+
+  private applyOptions(options: Options) {
+    if (this.options) removeClasses(this.line, 'hover-line', this.options.classes)
+
+    this.options = options
+    this.position = options.position ?? 'cursor'
+    this.offset = unwrapLineOffset(options.offset)
+
+    addClasses(this.line, 'hover-line', options.classes)
   }
 
   onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, controller: InteractionController): boolean {

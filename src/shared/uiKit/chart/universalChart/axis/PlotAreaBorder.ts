@@ -2,8 +2,14 @@ import { Overflow, Size } from '../UniversalChart'
 import { BasePlotRenderer } from '../plot/BasePlotRenderer'
 import { ChartSpace } from '../utils/ChartSpace'
 
+export type BorderVariant = 'space' | 'full'
 
-type AxisVariant = 'space' | 'full'
+export type PlotAreaBorderSides = {
+  top?: BorderVariant
+  right?: BorderVariant
+  bottom?: BorderVariant
+  left?: BorderVariant
+}
 
 type Point = { x: number; y: number };
 type Line = [Point, Point];
@@ -53,39 +59,34 @@ function mergeContinuousLines(lines: Line[]): Point[][] {
   return result
 }
 
-export class Axis extends BasePlotRenderer {
+export class PlotAreaBorder extends BasePlotRenderer {
 
   private lines: SVGPathElement[] = []
 
-  constructor(readonly axises: {
-    top?: AxisVariant
-    right?: AxisVariant
-    bottom?: AxisVariant
-    left?: AxisVariant
-  }) {
-    super('chart-axis')
+  constructor(readonly sides: PlotAreaBorderSides) {
+    super('plot-area-border')
   }
 
   protected renderImpl(space: ChartSpace, overflow: Overflow, full: Size): void {
     const lines: [{ x: number, y: number }, { x: number, y: number }][] = []
 
-    if (this.axises.top) {
-      if (this.axises.top === 'full') lines.push([{ x: 0, y: space.layout.y }, { x: full.width, y: space.layout.y }])
+    if (this.sides.top) {
+      if (this.sides.top === 'full') lines.push([{ x: 0, y: space.layout.y }, { x: full.width, y: space.layout.y }])
       else lines.push([{ x: space.layout.x, y: space.layout.y }, { x: space.layout.x + space.layout.width, y: space.layout.y }])
     }
 
-    if (this.axises.right) {
-      if (this.axises.right === 'full') lines.push([{ x: space.layout.x + space.layout.width, y: 0 }, { x: space.layout.x + space.layout.width, y: full.height }])
+    if (this.sides.right) {
+      if (this.sides.right === 'full') lines.push([{ x: space.layout.x + space.layout.width, y: 0 }, { x: space.layout.x + space.layout.width, y: full.height }])
       else lines.push([{ x: space.layout.x + space.layout.width, y: space.layout.y }, { x: space.layout.x + space.layout.width, y: space.layout.y + space.layout.height }])
     }
 
-    if (this.axises.bottom) {
-      if (this.axises.bottom === 'full') lines.push([{ x: 0, y: space.layout.y + space.layout.height }, { x: full.width, y: space.layout.y + space.layout.height }])
+    if (this.sides.bottom) {
+      if (this.sides.bottom === 'full') lines.push([{ x: 0, y: space.layout.y + space.layout.height }, { x: full.width, y: space.layout.y + space.layout.height }])
       else lines.push([{ x: space.layout.x, y: space.layout.y + space.layout.height }, { x: space.layout.x + space.layout.width, y: space.layout.y + space.layout.height }])
     }
 
-    if (this.axises.left) {
-      if (this.axises.left === 'full') lines.push([{ x: space.layout.x, y: 0 }, { x: space.layout.x, y: full.height }])
+    if (this.sides.left) {
+      if (this.sides.left === 'full') lines.push([{ x: space.layout.x, y: 0 }, { x: space.layout.x, y: full.height }])
       else lines.push([{ x: space.layout.x, y: space.layout.y }, { x: space.layout.x, y: space.layout.y + space.layout.height }])
     }
 

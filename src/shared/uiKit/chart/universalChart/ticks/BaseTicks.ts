@@ -11,6 +11,7 @@ export type TickData = {
 export abstract class BaseTicks implements PlotRenderer {
 
   protected root = document.createElementNS('http://www.w3.org/2000/svg', 'g')
+  protected chart: UniversalChart | null = null
 
   private elementsByKey = new Map<number, SVGLineElement>()
   private elementsXYCache = new Map<SVGLineElement, { x1: number, y1: number, x2: number, y2: number }>()
@@ -24,11 +25,19 @@ export abstract class BaseTicks implements PlotRenderer {
     return this.root
   }
 
-  attach(root: SVGGElement, chart: UniversalChart): void { }
+  attach(root: SVGGElement, chart: UniversalChart): void {
+    this.chart = chart
+  }
 
   detach(): void {
+    this.chart = null
+    for (const element of this.elementsByKey.values()) element.remove()
     this.elementsByKey.clear()
     this.elementsXYCache.clear()
+  }
+
+  protected requestRender() {
+    this.chart?.dataDidChange()
   }
 
   render(space: ChartSpace, overflow: Overflow, full: Size): void {

@@ -1,79 +1,84 @@
-.universal-chart-root {
-  contain: strict;
+@layer ui-kit-chart {
+  .universal-chart-root {
+    contain: strict;
 
-  .plot {
-    .bar {
-      fill: currentColor;
-    }
+    .plot {
+      .bar {
+        fill: currentColor;
+      }
 
-    .line {
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 2px;
-    }
-  }
-
-  .labels {
-
-    .label {
-      fill: currentColor;
-      font-size: inherit;
-      text-anchor: middle;
-    }
-
-    .probe-label {
-      display: none;
-    }
-
-    .y-labels {
-      .label {
-        text-anchor: end;
-        alignment-baseline: central;
+      .line {
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2px;
       }
     }
-  }
 
-  .ticks {
-    .chart-axis {
-      path {
+    .labels {
+
+      .label {
+        fill: currentColor;
+        font-size: inherit;
+        text-anchor: middle;
+      }
+
+      .probe-label {
+        display: none;
+      }
+
+      .y-labels {
+        .label {
+          text-anchor: end;
+          alignment-baseline: central;
+        }
+      }
+    }
+
+    .ticks {
+      .plot-area-border path {
         fill: none;
         stroke: currentColor;
         stroke-width: 1px;
       }
-    }
-  }
 
-  .hover {
-    .interactive-zone {
-      fill: transparent;
-      -webkit-user-select: none;
-      user-select: none;
-      -webkit-touch-callout: none;
-      touch-action: manipulation;
-    }
-
-    .hover-components {
-
-      .hover-line {
-        display: none;
-        pointer-events: none;
-
-        fill: none;
-        stroke: rgba(255, 255, 255, 0.3);
+      .chart-axis line {
+        stroke: currentColor;
         stroke-width: 1px;
-
-        &.visible {
-          display: block;
-        }
-      }
-
-      .hover-markers {
-        .hover-marker {
-          pointer-events: none;
-          fill: red;
-        }
       }
     }
 
+    .hover {
+      .interactive-zone {
+        fill: transparent;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        touch-action: manipulation;
+      }
+
+      .hover-components {
+
+        .hover-line {
+          display: none;
+          pointer-events: none;
+
+          fill: none;
+          stroke: rgba(255, 255, 255, 0.3);
+          stroke-width: 1px;
+
+          &.visible {
+            display: block;
+          }
+        }
+
+        .hover-markers {
+          .hover-marker {
+            pointer-events: none;
+            fill: red;
+          }
+        }
+      }
+
+    }
   }
 }

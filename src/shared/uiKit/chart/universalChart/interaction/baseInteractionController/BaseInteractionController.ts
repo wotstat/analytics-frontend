@@ -56,6 +56,8 @@ export abstract class BaseInteractionController extends BasePlotRenderer {
 
   get currentState() { return this.stateMachine.currentState }
 
+  get onStateChanged() { return this.stateMachine.onStateChanged }
+
   constructor(classes: Classes = []) {
     super(classes)
 

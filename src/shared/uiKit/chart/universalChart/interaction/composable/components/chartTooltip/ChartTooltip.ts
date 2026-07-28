@@ -49,6 +49,20 @@ export class ChartTooltip implements InteractionComponent {
   detach(): void {
     this.options.hoverSync?.unsubscribeChange(this.onSyncChange)
     this.clear()
+    this.controller = null
+    this.hovered = false
+  }
+
+  updateOptions(options: Options) {
+    const previousSync = this.options.hoverSync
+    if (previousSync !== options.hoverSync) {
+      previousSync?.unsubscribeChange(this.onSyncChange)
+      if (this.controller) options.hoverSync?.subscribeChange(this.onSyncChange)
+    }
+
+    this.clear()
+    this.options = options
+    this.controller?.scheduleRender()
   }
 
   onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, controller: InteractionController): boolean {

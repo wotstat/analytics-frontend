@@ -17,11 +17,28 @@ type MonotoneXPathWasm = {
   resultLen: () => number
 }
 
-let monotoneXPathWasm: MonotoneXPathWasm | null = null
+export type WasmStatus = 'loading' | 'ready' | 'failed'
 
-wasmInit()
-  .then((instance) => monotoneXPathWasm = instance.exports as unknown as MonotoneXPathWasm)
-  .catch(() => monotoneXPathWasm = null)
+let monotoneXPathWasm: MonotoneXPathWasm | null = null
+let wasmStatus: WasmStatus = 'loading'
+
+const wasmReady = wasmInit()
+  .then((instance) => {
+    monotoneXPathWasm = instance.exports as unknown as MonotoneXPathWasm
+    return wasmStatus = 'ready' as const
+  })
+  .catch(() => {
+    monotoneXPathWasm = null
+    return wasmStatus = 'failed' as const
+  })
+
+export function getMonotoneXPathWasmStatus(): WasmStatus {
+  return wasmStatus
+}
+
+export function monotoneXPathWasmReady(): Promise<WasmStatus> {
+  return wasmReady
+}
 
 const pathDecoder = new TextDecoder()
 

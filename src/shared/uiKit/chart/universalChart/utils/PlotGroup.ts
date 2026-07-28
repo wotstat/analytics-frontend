@@ -10,12 +10,16 @@ export class PlotGroup implements PlotRenderer {
 
   public root: SVGGElement = document.createElementNS(NAMESPACE, 'g')
 
-  protected plots: { plot: PlotRenderer, root: SVGGElement }[] = []
+  protected plots = new Map<PlotRenderer, SVGGElement>()
   protected hierarchyCache = new Map<string, SVGGElement>()
   protected chart: UniversalChart | null = null
 
   constructor(readonly classes: string[] = []) {
     this.root.classList.add('plot-group', ...classes)
+  }
+
+  getRootElement(): Element {
+    return this.root
   }
 
   clipBy(clip: ChartClip) {
@@ -35,13 +39,22 @@ export class PlotGroup implements PlotRenderer {
     if (element) root.appendChild(element)
 
     if (this.chart) plot.attach?.(root, this.chart)
-    this.plots.push({ plot, root })
+    this.plots.set(plot, root)
+    return this
+  }
+
+  removePlot(plot: PlotRenderer) {
+    if (!this.plots.delete(plot)) return this
+
+    plot.getRootElement?.()?.remove()
+    plot.detach?.()
+    this.chart?.dataDidChange()
     return this
   }
 
   getBounds?(constraint?: BoundsConstraint): Bounds {
     const bounds = new Bounds()
-    for (const { plot } of this.plots) {
+    for (const plot of this.plots.keys()) {
       if (plot.getBounds) bounds.extend(plot.getBounds(constraint))
     }
     return bounds
@@ -51,16 +64,17 @@ export class PlotGroup implements PlotRenderer {
     root.appendChild(this.root)
     if (!this.chart) {
       this.chart = chart
-      for (const { plot, root } of this.plots) plot.attach?.(root, chart)
+      for (const [plot, plotRoot] of this.plots) plot.attach?.(plotRoot, chart)
     }
   }
 
   detach(): void {
-    for (const { plot } of this.plots) plot.detach?.()
+    for (const plot of this.plots.keys()) plot.detach?.()
+    this.chart = null
   }
 
   render(space: ChartSpace, overflow: Overflow, full: { width: number, height: number }): void {
-    for (const { plot } of this.plots) plot.render?.(space, overflow, full)
+    for (const plot of this.plots.keys()) plot.render?.(space, overflow, full)
   }
 
   private getRootFor(path: string[]) {
