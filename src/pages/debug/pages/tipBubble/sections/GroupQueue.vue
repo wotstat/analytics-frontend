@@ -63,8 +63,8 @@ import { computed, ref, watch } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import TipBubbleText from '@/shared/ui/tipBubble/TipBubbleText.vue'
 import { debugInfo } from '@/shared/uiKit/tipBubble/useTipBubble'
-import EventLog from '../shared/EventLog.vue'
-import { useEventLog } from '../shared/useEventLog'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 import { resetBubbleKeys } from '../shared/storage'
 
 type BubbleRef = { accept: () => void } | null
@@ -96,7 +96,7 @@ function reset() {
 
 const group = computed(() => debugInfo.value.groups.get('debug-tipbubble-queue'))
 
-const { entries, push, clear } = useEventLog()
+const { entries, push, clear } = useEventLog({ max: 50 })
 watch(() => group.value?.displayedBubble, (value, old) => {
   if (value === old) return
   push(value ? `показан: ${value}` : 'группа опустела')

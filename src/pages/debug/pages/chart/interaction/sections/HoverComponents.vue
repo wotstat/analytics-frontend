@@ -156,10 +156,10 @@ import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { syntheticMultiSeries, syntheticSeries } from '@/pages/debug/shared/fixtures/syntheticSeries'
 import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
 import DemoChartView from '../shared/DemoChartView.vue'
-import EventLog from '../shared/EventLog.vue'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
 import TooltipCard from '../shared/TooltipCard.vue'
 import { DemoChart, type LinePosition, type PointPosition } from '../shared/DemoChart'
-import { useEventLog } from '../shared/useEventLog'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 
 const linePositions = ['cursor', 'data-point-x', 'data-point-y', 'data-point'] as const satisfies readonly LinePosition[]
 const pointPositions = ['data-point-x', 'data-point-y', 'data-point', 'nearest-data-point'] as const satisfies readonly PointPosition[]
@@ -190,7 +190,7 @@ const outOfDistanceVisibility = ref(false)
 const kind = ref<typeof kinds[number]['value']>('smooth')
 const seriesCount = ref(1)
 
-const { entries, push, clear } = useEventLog()
+const { entries, push, clear } = useEventLog({ collapseRepeats: true })
 
 const chart = markRaw(new DemoChart({ seriesCount: 3 }))
 

@@ -114,13 +114,13 @@ import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { closeContextMenu, currentContextMenu, isContextMenuOpen } from '@/shared/uiKit/contextMenu/createContextMenu'
 import { simpleContextMenu, button, header, separator, childs, type SimpleContextMenuItem } from '@/shared/uiKit/contextMenu/simpleContextMenu'
 import EdgeTargets from '../shared/EdgeTargets.vue'
-import EventLog from '../shared/EventLog.vue'
-import { useEventLog } from '../shared/useEventLog'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 
 const alignXVariants = ['left', 'right', 'center'] as const
 const alignYVariants = ['normal', 'bottom'] as const
 
-const log = useEventLog()
+const log = useEventLog({ max: 80 })
 const alignX = ref<typeof alignXVariants[number]>('left')
 const alignY = ref<typeof alignYVariants[number]>('bottom')
 const minWidth = ref(0)

@@ -174,7 +174,7 @@ import { syntheticTableRows } from '@/pages/debug/shared/fixtures/syntheticSerie
 import { RowCell } from '../shared/RowCell'
 import { formatInt, formatMs } from '../shared/format'
 import { useTableDomStats } from '../shared/useTableDomStats'
-import { useFrameStats } from '../shared/useFrameStats'
+import { useFrameStats } from '@/pages/debug/shared/useFrameStats'
 
 const rowCounts = [100, 1_000, 10_000, 100_000, 500_000]
 

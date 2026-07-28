@@ -96,7 +96,7 @@
 import { computed, ref, useTemplateRef } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { PlacementWithModifiers } from '@/shared/uiKit/popover/utils'
-import PlacementSelect from '../../shared/PlacementSelect.vue'
+import PlacementSelect from '@/pages/debug/shared/PlacementSelect.vue'
 import { vAdaptedTooltip, vContentOnlyTooltip, type PlayerValue } from './adaptedTooltip'
 
 const nick = ref('Верблюд_с_пулемётом')

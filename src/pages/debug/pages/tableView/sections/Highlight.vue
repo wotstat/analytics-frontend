@@ -108,8 +108,8 @@ import { isErrorStatus, loading } from '@/db'
 import { dataSources, type DataSource } from '@/pages/debug/shared/fixtures/types'
 import { syntheticTableRows } from '@/pages/debug/shared/fixtures/syntheticSeries'
 import { useRealTableRows } from '@/pages/debug/shared/fixtures/realSeries'
-import EventLog from '../shared/EventLog.vue'
-import { useEventLog } from '../shared/useEventLog'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 
 const ROW_HEIGHT = 35
 

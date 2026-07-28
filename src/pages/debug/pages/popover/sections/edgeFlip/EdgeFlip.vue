@@ -79,9 +79,9 @@ import { computed, ref, useTemplateRef } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { OffsetValue, PlacementWithModifiers } from '@/shared/uiKit/popover/utils'
 import EdgeTarget from './EdgeTarget.vue'
-import PlacementSelect from '../../shared/PlacementSelect.vue'
-import ViewportBox from '../../shared/ViewportBox.vue'
-import { useStageViewportOffset } from '../../shared/useStageViewportOffset'
+import PlacementSelect from '@/pages/debug/shared/PlacementSelect.vue'
+import ViewportBox from '@/pages/debug/shared/ViewportBox.vue'
+import { useStageViewportOffset } from '@/pages/debug/shared/useStageViewportOffset'
 
 const primary = ref<PlacementWithModifiers | null>('top-float')
 const fallback = ref<PlacementWithModifiers | null>('bottom-float')

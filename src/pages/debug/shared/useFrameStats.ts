@@ -1,7 +1,6 @@
 import { useRafFn } from '@vueuse/core'
 import { ref, watch, type Ref } from 'vue'
 
-
 export function useFrameStats(enabled: Ref<boolean>) {
   const average = ref(0)
   const worst = ref(0)
@@ -18,7 +17,7 @@ export function useFrameStats(enabled: Ref<boolean>) {
     last = now
 
     if (delta > 0 && delta < 1000) {
-      frames += 1
+      frames++
       sum += delta
       peak = Math.max(peak, delta)
     }

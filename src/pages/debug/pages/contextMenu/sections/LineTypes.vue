@@ -118,8 +118,8 @@ import { ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { createContextMenu, ContextMenuItemVariant, type ContextMenuItem } from '@/shared/uiKit/contextMenu/createContextMenu'
 import { simpleContextMenu, header, button } from '@/shared/uiKit/contextMenu/simpleContextMenu'
-import EventLog from '../shared/EventLog.vue'
-import { useEventLog } from '../shared/useEventLog'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 import StarIcon from '../shared/assets/star.svg?component'
 import WideIcon from '../shared/assets/wide.svg?component'
 
@@ -131,7 +131,7 @@ const iconVariants = [
   { value: 'wide', label: 'широкая (64×16)' },
 ] as const
 
-const log = useEventLog()
+const log = useEventLog({ max: 80 })
 const icon = ref<typeof iconVariants[number]['value']>('none')
 const withCheckmarks = ref(false)
 const withDisabled = ref(false)

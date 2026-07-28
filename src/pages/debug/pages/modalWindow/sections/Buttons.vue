@@ -108,8 +108,8 @@ import CircleButton from '@/shared/ui/modalWindow/buttons/CircleButton.vue'
 import LabelButton from '@/shared/ui/modalWindow/buttons/LabelButton.vue'
 import CloseButton from '@/shared/ui/modalWindow/buttons/closeButton/CloseButton.vue'
 import XIcon from '@/shared/ui/modalWindow/buttons/closeButton/x.svg'
-import EventLog from '../shared/EventLog.vue'
-import { useEventLog } from '../shared/useEventLog'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 
 const { entries, push, clear } = useEventLog()
 </script>

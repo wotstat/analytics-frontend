@@ -43,8 +43,7 @@
       Пока «Запущено» — каждые {{ retargetInterval }} мс все видимые значения одновременно получают новую случайную
       цель: это N независимых цепочек requestAnimationFrame сразу, каждый SimpleTweenValue создаёт свой собственный
       Tween, общего тикера на всех нет. Средний/максимальный кадр меряет тот же
-      <span class="debug-path">shared/useFrameStats.ts</span>, что уже применяется на странице TableView
-      (<span class="debug-path">pages/debug/pages/tableView/</span>).
+      <span class="debug-path">pages/debug/shared/useFrameStats.ts</span>, что и страница TableView.
     </p>
 
     <p class="debug-note">
@@ -71,7 +70,7 @@ import { computed, ref, watch } from 'vue'
 import { useIntervalFn } from '@vueuse/core'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import SimpleTweenValue from '@/shared/ui/tween/SimpleTweenValue.vue'
-import { useFrameStats } from '../shared/useFrameStats'
+import { useFrameStats } from '@/pages/debug/shared/useFrameStats'
 
 const MAX_COUNT = 400
 const retargetInterval = 500

@@ -97,8 +97,8 @@ import { ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import ModalWindow from '@/shared/ui/modalWindow/ModalWindow.vue'
 import ModalWindowContent from '@/shared/ui/modalWindow/ModalWindowContent.vue'
-import EventLog from '../shared/EventLog.vue'
-import { useEventLog } from '../shared/useEventLog'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 
 const title = ref('Заголовок окна')
 const marginBlockStart = ref('')

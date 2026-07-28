@@ -50,7 +50,8 @@
       {{ EFFECT_LIFETIME_MS }} мс невидимой. Если рамка всё же осталась на экране — это баг.
     </p>
 
-    <EventLog :entries="log.entries.value" @clear="log.clear" />
+    <EventLog :entries="log.entries.value" @clear="log.clear" title="Лог вызовов (время от первой записи)"
+      empty="Вызовов пока не было" />
   </DebugSection>
 </template>
 
@@ -60,15 +61,15 @@ import { ref, useTemplateRef } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { showFocusEffect } from '@/shared/uiKit/focusEffect/focusEffect'
 import { activeEffectsCount, EFFECT_LIFETIME_MS } from '../shared/focusEffectControl'
-import { useEventLog } from '../shared/useEventLog'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 import { useTimeouts } from '../shared/useTimeouts'
-import EventLog from '../shared/EventLog.vue'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
 
 const target = useTemplateRef<HTMLElement>('target')
 const mounted = ref(true)
 const hidden = ref(false)
 const collapsed = ref(false)
-const log = useEventLog()
+const log = useEventLog({ max: 50, time: 'relative' })
 const { after } = useTimeouts()
 
 function fireThen(text: string, action: () => void) {

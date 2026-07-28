@@ -95,7 +95,7 @@
 <script setup lang="ts">
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { vTextTooltip } from '@/shared/ui/tooltip/textTooltip'
-import EventLog from '../shared/EventLog.vue'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
 import OpenTooltips from '../shared/OpenTooltips.vue'
 import { useDisplayedTooltipsLog } from '../shared/useDisplayedTooltipsLog'
 

@@ -148,9 +148,9 @@ import { useElementVisibility, useRafFn } from '@vueuse/core'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import PopoverStyled from '@/shared/uiKit/popover/PopoverStyled.vue'
 import { generateOffset, getViewportRect } from '@/shared/uiKit/popover/utils'
-import EventLog from '../shared/EventLog.vue'
-import ViewportBox from '../shared/ViewportBox.vue'
-import { useEventLog } from '../shared/useEventLog'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
+import ViewportBox from '@/pages/debug/shared/ViewportBox.vue'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 
 const root = useTemplateRef<HTMLElement>('root')
 const target = useTemplateRef<HTMLElement>('target')

@@ -61,8 +61,8 @@
 import { ref, useTemplateRef } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import PopoverStyled from '@/shared/uiKit/popover/PopoverStyled.vue'
-import EventLog from '../shared/EventLog.vue'
-import { useEventLog } from '../shared/useEventLog'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 
 const target = useTemplateRef<HTMLElement>('target')
 

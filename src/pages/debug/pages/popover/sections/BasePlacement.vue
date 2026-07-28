@@ -86,8 +86,8 @@ import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import Popover from '@/shared/uiKit/popover/Popover.vue'
 import { PlacementWithModifiers } from '@/shared/uiKit/popover/utils'
 import DemoCard from '../shared/DemoCard.vue'
-import PlacementSelect from '../shared/PlacementSelect.vue'
-import ViewportBox from '../shared/ViewportBox.vue'
+import PlacementSelect from '@/pages/debug/shared/PlacementSelect.vue'
+import ViewportBox from '@/pages/debug/shared/ViewportBox.vue'
 import { placementSideByArrow } from '../shared/arrowSide'
 
 const target = useTemplateRef<HTMLElement>('target')

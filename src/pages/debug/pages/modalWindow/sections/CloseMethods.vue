@@ -69,8 +69,8 @@
 import { ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import ModalWindow from '@/shared/ui/modalWindow/ModalWindow.vue'
-import EventLog from '../shared/EventLog.vue'
-import { useEventLog } from '../shared/useEventLog'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 
 const display = ref(false)
 const { entries, push, clear } = useEventLog()

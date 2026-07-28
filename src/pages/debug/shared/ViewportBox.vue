@@ -35,8 +35,6 @@ const caption = computed(() => {
 
 
 <style scoped lang="scss">
-// Рамка рисуется через position: fixed, то есть по layout viewport, а тултип считает
-// границы через getViewportRect() (visualViewport) — при пинч-зуме они расходятся.
 .viewport-box {
   position: fixed;
   z-index: 900;

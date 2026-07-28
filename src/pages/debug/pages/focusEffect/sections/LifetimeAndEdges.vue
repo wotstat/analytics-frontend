@@ -27,7 +27,8 @@
         @click="fireEdge(index - 1)">{{ index }}</button>
     </div>
 
-    <EventLog :entries="log.entries.value" @clear="log.clear" />
+    <EventLog :entries="log.entries.value" @clear="log.clear" title="Лог вызовов (время от первой записи)"
+      empty="Вызовов пока не было" />
   </DebugSection>
 </template>
 
@@ -37,12 +38,12 @@ import { useTemplateRef } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { showFocusEffect } from '@/shared/uiKit/focusEffect/focusEffect'
 import { activeEffectsCount, clearFocusEffects, targetLabel } from '../shared/focusEffectControl'
-import { useEventLog } from '../shared/useEventLog'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 import { useTimeouts } from '../shared/useTimeouts'
-import EventLog from '../shared/EventLog.vue'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
 
 const single = useTemplateRef<HTMLElement>('single')
-const log = useEventLog()
+const log = useEventLog({ max: 50, time: 'relative' })
 const { after, cancelAll } = useTimeouts()
 
 const edges: HTMLElement[] = []

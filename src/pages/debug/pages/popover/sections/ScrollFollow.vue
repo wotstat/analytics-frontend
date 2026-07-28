@@ -68,7 +68,7 @@ import { ref, useTemplateRef } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import PopoverStyled from '@/shared/uiKit/popover/PopoverStyled.vue'
 import { PlacementWithModifiers } from '@/shared/uiKit/popover/utils'
-import PlacementSelect from '../shared/PlacementSelect.vue'
+import PlacementSelect from '@/pages/debug/shared/PlacementSelect.vue'
 
 const innerTarget = useTemplateRef<HTMLElement>('innerTarget')
 const pageTarget = useTemplateRef<HTMLElement>('pageTarget')

@@ -115,8 +115,8 @@ import type { ComponentInstance } from '@/shared/utils/types/ComponentInstance'
 import { syntheticTableRows } from '@/pages/debug/shared/fixtures/syntheticSeries'
 import { formatInt } from '../shared/format'
 import { RowCell } from '../shared/RowCell'
-import EventLog from '../shared/EventLog.vue'
-import { useEventLog } from '../shared/useEventLog'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 
 const ROW_HEIGHT = 35
 const HEADER_HEIGHT = 33

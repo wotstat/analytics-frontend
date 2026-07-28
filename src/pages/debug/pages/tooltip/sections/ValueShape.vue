@@ -92,7 +92,7 @@ import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { vTextTooltip } from '@/shared/ui/tooltip/textTooltip'
 import type { TextTooltipValue } from '@/shared/uiKit/tooltip/types'
 import { PlacementWithModifiers } from '@/shared/uiKit/popover/utils'
-import PlacementSelect from '../shared/PlacementSelect.vue'
+import PlacementSelect from '@/pages/debug/shared/PlacementSelect.vue'
 import { cardClasses, type CardClass } from '../shared/cardClasses'
 import { closeByPointer, openByPointer } from '../shared/pointerSimulation'
 

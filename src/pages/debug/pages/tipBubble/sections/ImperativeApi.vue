@@ -66,8 +66,8 @@ import { ref, useTemplateRef, watch } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import TipBubble from '@/shared/ui/tipBubble/TipBubble.vue'
 import { debugInfo } from '@/shared/uiKit/tipBubble/useTipBubble'
-import EventLog from '../shared/EventLog.vue'
-import { useEventLog } from '../shared/useEventLog'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 import { resetBubbleKeys } from '../shared/storage'
 
 const KEY = 'debug-tipbubble-imperative'
@@ -76,7 +76,7 @@ const displayDelay = ref(1200)
 const generation = ref(0)
 const bubble = useTemplateRef<InstanceType<typeof TipBubble>>('bubble')
 
-const { entries, push, clear } = useEventLog()
+const { entries, push, clear } = useEventLog({ max: 50 })
 
 function call(label: string, fn: () => void) {
   push(`вызван: ${label}`)

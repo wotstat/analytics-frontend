@@ -107,10 +107,10 @@ import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { closeContextMenu, currentContextMenu, isContextMenuOpen } from '@/shared/uiKit/contextMenu/createContextMenu'
 import { simpleContextMenu, button, checkboxItem, childs, header, separator, type SimpleContextMenuItem } from '@/shared/uiKit/contextMenu/simpleContextMenu'
 import { useCheckbox } from '@/shared/uiKit/contextMenu/composition'
-import EventLog from '../shared/EventLog.vue'
-import { useEventLog } from '../shared/useEventLog'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 
-const log = useEventLog()
+const log = useEventLog({ max: 80 })
 const flag = useCheckbox(false)
 const closeOnAction = ref(true)
 const actionOnPointerUp = ref(true)

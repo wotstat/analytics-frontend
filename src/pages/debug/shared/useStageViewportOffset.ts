@@ -1,10 +1,10 @@
-import { getViewportRect } from '@/shared/uiKit/popover/utils'
-import { useRafFn } from '@vueuse/core'
 import { ref, watch, type Ref } from 'vue'
+import { useRafFn } from '@vueuse/core'
+import { getViewportRect } from '@/shared/uiKit/popover/utils'
 
 type Offset = { top: number, left: number, right: number, bottom: number }
 
-export function useStageViewportOffset(element: Ref<HTMLElement | null>, enabled: Ref<boolean>) {
+export function useStageViewportOffset(element: Ref<HTMLElement | null>, enabled: Ref<boolean>, extra?: Ref<number>) {
   const offset = ref<Offset>({ top: 0, left: 0, right: 0, bottom: 0 })
 
   const { pause, resume } = useRafFn(update, { immediate: false })
@@ -15,12 +15,13 @@ export function useStageViewportOffset(element: Ref<HTMLElement | null>, enabled
 
     const stage = el.getBoundingClientRect()
     const viewport = getViewportRect()
+    const inset = extra?.value ?? 0
 
     const next: Offset = {
-      top: Math.max(0, stage.top - viewport.top),
-      left: Math.max(0, stage.left - viewport.left),
-      right: Math.max(0, viewport.right - stage.right),
-      bottom: Math.max(0, viewport.bottom - stage.bottom),
+      top: Math.max(0, stage.top - viewport.top) + inset,
+      left: Math.max(0, stage.left - viewport.left) + inset,
+      right: Math.max(0, viewport.right - stage.right) + inset,
+      bottom: Math.max(0, viewport.bottom - stage.bottom) + inset,
     }
 
     const current = offset.value

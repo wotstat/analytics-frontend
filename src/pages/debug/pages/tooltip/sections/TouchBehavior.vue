@@ -96,7 +96,7 @@ import { vTextTooltip } from '@/shared/ui/tooltip/textTooltip'
 import { useTooltip } from '@/shared/uiKit/tooltip/useTooltip'
 import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import DemoTooltip from '../shared/DemoTooltip.vue'
-import EventLog from '../shared/EventLog.vue'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
 import { useDisplayedTooltipsLog } from '../shared/useDisplayedTooltipsLog'
 
 const vNoTouchTooltip = useTooltip(DemoTooltip, {

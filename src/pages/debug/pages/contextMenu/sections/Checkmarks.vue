@@ -95,8 +95,8 @@ import { ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { simpleContextMenu, button, checkboxItem, childOptions, header, options, separator, type SimpleContextMenuItem } from '@/shared/uiKit/contextMenu/simpleContextMenu'
 import { useCheckbox } from '@/shared/uiKit/contextMenu/composition'
-import EventLog from '../shared/EventLog.vue'
-import { useEventLog } from '../shared/useEventLog'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 import DotIcon from '../shared/assets/dot.svg?component'
 
 const modes = [
@@ -107,7 +107,7 @@ const modes = [
 
 type Mode = typeof modes[number]['key']
 
-const log = useEventLog()
+const log = useEventLog({ max: 80 })
 const grid = useCheckbox(true)
 const labels = useCheckbox(false)
 const gridValue = grid.value

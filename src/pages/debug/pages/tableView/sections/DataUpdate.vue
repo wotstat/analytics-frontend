@@ -79,8 +79,8 @@ import type { ComponentInstance } from '@/shared/utils/types/ComponentInstance'
 import type { TableRow } from '@/pages/debug/shared/fixtures/types'
 import { syntheticTableRows } from '@/pages/debug/shared/fixtures/syntheticSeries'
 import { RowCell } from '../shared/RowCell'
-import EventLog from '../shared/EventLog.vue'
-import { useEventLog } from '../shared/useEventLog'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 
 const ROW_HEIGHT = 30
 const START_COUNT = 200

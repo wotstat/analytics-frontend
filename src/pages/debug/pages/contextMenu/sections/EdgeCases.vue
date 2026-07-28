@@ -82,12 +82,12 @@ import { onUnmounted, ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { closeContextMenu, createContextMenu, ContextMenuItemVariant, type ContextMenuItem } from '@/shared/uiKit/contextMenu/createContextMenu'
 import { simpleContextMenu, button, childs, header } from '@/shared/uiKit/contextMenu/simpleContextMenu'
-import EventLog from '../shared/EventLog.vue'
-import { useEventLog } from '../shared/useEventLog'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 
 const WIDE_LABEL = 'Строка с подписью, которая заведомо шире любого экрана: '.repeat(4)
 
-const log = useEventLog()
+const log = useEventLog({ max: 80 })
 const count = ref(120)
 const nestingCloseOnAction = ref(true)
 

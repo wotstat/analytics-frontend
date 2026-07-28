@@ -83,8 +83,8 @@ import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { createContextMenu, ContextMenuItemVariant, type ContextMenuItem } from '@/shared/uiKit/contextMenu/createContextMenu'
 import { simpleContextMenu, button, header, separator, checkboxItem, childs, childOptions, options, type SimpleContextMenuItem } from '@/shared/uiKit/contextMenu/simpleContextMenu'
 import { useCheckbox } from '@/shared/uiKit/contextMenu/composition'
-import EventLog from '../shared/EventLog.vue'
-import { useEventLog } from '../shared/useEventLog'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 import StarIcon from '../shared/assets/star.svg?component'
 
 const modes = [
@@ -95,7 +95,7 @@ const modes = [
 
 type Mode = typeof modes[number]['key']
 
-const log = useEventLog()
+const log = useEventLog({ max: 80 })
 const checkbox = useCheckbox(false)
 const mode = ref<Mode>('day')
 const builderWithChilds = ref(false)

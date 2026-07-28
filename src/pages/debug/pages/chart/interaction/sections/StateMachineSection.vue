@@ -88,10 +88,10 @@ import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { syntheticSeries } from '@/pages/debug/shared/fixtures/syntheticSeries'
 import { InteractionDirection } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/BaseInteractionController'
 import DemoChartView from '../shared/DemoChartView.vue'
-import EventLog from '../shared/EventLog.vue'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
 import { DemoChart } from '../shared/DemoChart'
 import { stateList, stateName, type StateName } from '../shared/states'
-import { useEventLog } from '../shared/useEventLog'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 
 const panDirections = [
   { value: 'horizontal', label: 'horizontal' },
@@ -105,7 +105,7 @@ const zoom = ref(true)
 const hoverEnabled = ref(true)
 
 const current = ref<StateName>('StartState')
-const { entries, push, clear } = useEventLog()
+const { entries, push, clear } = useEventLog({ collapseRepeats: true })
 
 const chart = markRaw(new DemoChart({ hover: { tooltip: false } }))
 chart.setSeries([syntheticSeries('smooth', 3, 90)])

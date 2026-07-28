@@ -82,7 +82,7 @@ import { useMouse } from '@vueuse/core'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import PopoverStyled from '@/shared/uiKit/popover/PopoverStyled.vue'
 import { PlacementWithModifiers, TargetRect, VirtualElement } from '@/shared/uiKit/popover/utils'
-import PlacementSelect from '../shared/PlacementSelect.vue'
+import PlacementSelect from '@/pages/debug/shared/PlacementSelect.vue'
 
 const stage = useTemplateRef<HTMLElement>('stage')
 

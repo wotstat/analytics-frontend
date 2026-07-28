@@ -90,8 +90,8 @@ import {
   popoverViewportOffset,
   useAdditionalHeaderHeight
 } from '@/pages/shared/header/useAdditionalHeaderHeight'
-import PlacementSelect from '../shared/PlacementSelect.vue'
-import ViewportBox from '../shared/ViewportBox.vue'
+import PlacementSelect from '@/pages/debug/shared/PlacementSelect.vue'
+import ViewportBox from '@/pages/debug/shared/ViewportBox.vue'
 
 const placement = ref<PlacementWithModifiers | null>('top')
 const showViewportBox = ref(false)

@@ -1,6 +1,6 @@
 import { watch } from 'vue'
 import { displayedTooltips } from '@/shared/uiKit/tooltip/tooltip'
-import { useEventLog } from './useEventLog'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 
 
 export function useDisplayedTooltipsLog() {

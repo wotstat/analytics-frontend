@@ -82,10 +82,10 @@ import { ref, watch } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { CloseOnOutsideWindow, PlacementWithModifiers } from '@/shared/uiKit/popover/utils'
 import AutoCloseCase from './AutoCloseCase.vue'
-import EventLog from '../../shared/EventLog.vue'
-import PlacementSelect from '../../shared/PlacementSelect.vue'
-import ViewportBox from '../../shared/ViewportBox.vue'
-import { useEventLog } from '../../shared/useEventLog'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
+import PlacementSelect from '@/pages/debug/shared/PlacementSelect.vue'
+import ViewportBox from '@/pages/debug/shared/ViewportBox.vue'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 
 const cases = [
   { mode: 'popover', hint: 'карточка не влезла целиком' },

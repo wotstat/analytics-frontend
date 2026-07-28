@@ -84,12 +84,12 @@ import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { createContextMenu, ContextMenuItemVariant, type ContextMenuItem } from '@/shared/uiKit/contextMenu/createContextMenu'
 import { simpleContextMenu, button, childs, header, separator, type SimpleContextMenuItem } from '@/shared/uiKit/contextMenu/simpleContextMenu'
 import EdgeTargets from '../shared/EdgeTargets.vue'
-import EventLog from '../shared/EventLog.vue'
-import { useEventLog } from '../shared/useEventLog'
+import EventLog from '@/pages/debug/shared/EventLog.vue'
+import { useEventLog } from '@/pages/debug/shared/useEventLog'
 
 const WIDE_SUFFIX = ' — подпись пошире, чтобы панель не влезала в край'
 
-const log = useEventLog()
+const log = useEventLog({ max: 80 })
 const depth = ref(3)
 const rows = ref(3)
 const wide = ref(false)
