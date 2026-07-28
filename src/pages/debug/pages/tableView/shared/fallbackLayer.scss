@@ -1,0 +1,15 @@
+@mixin fallback-layer-visible {
+  :deep(.scroll .content-container) {
+    background-color: transparent;
+  }
+
+  :deep(.fallback-scroll) {
+
+    .tv-cell,
+    .cell-line,
+    .header-line,
+    .footer-line {
+      color: #ff9d5c;
+    }
+  }
+}

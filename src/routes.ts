@@ -12,6 +12,7 @@ import Lootbox from './pages/infographics/pages/lootbox/Index.vue'
 import Install from './pages/install/Index.vue'
 import { AsyncComponentLoader, defineAsyncComponent } from 'vue'
 import PageLoader from './shared/ui/loaders/pageLoader/PageLoader.vue'
+import { debugRoutes } from './pages/debug/routes'
 
 
 function asyncPage(loader: AsyncComponentLoader): any {
@@ -67,6 +68,8 @@ const routes = [
   { path: '/widgets/:widget*', component: asyncPage(() => import('./pages/widgets/Index.vue')) },
 
   { path: '/damage', component: asyncPage(() => import('./pages/services/damageDistribution/Index.vue')) },
+
+  ...debugRoutes,
 ] satisfies RouteRecordRaw[]
 
 export const router = createRouter({

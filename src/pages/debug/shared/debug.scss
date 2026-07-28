@@ -1,0 +1,291 @@
+// Служебные стили дебаг-страниц. Подключается один раз в Debug.vue не-scoped блоком,
+// поэтому всё обязано лежать внутри .debug-root — иначе потечёт на боевые страницы.
+// Поповеры и меню телепортируются в #popover-root наружу .debug-root, до их
+// содержимого эти классы не достают.
+
+@use '@/styles/mixins.scss' as *;
+
+.debug-root {
+  --debug-border: #ffffff20;
+  --debug-border-strong: #ffffff35;
+  --debug-surface: #ffffff0d;
+  --debug-surface-hover: #ffffff1a;
+  --debug-dim: #ffffff8e;
+  --debug-mono: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+
+  // ─── Раскладка ───────────────────────────────────────────────────────────
+
+  // Ряд контролов. Всегда wrap — на мобилке контролы переносятся, а не режутся.
+  .debug-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5em 0.75em;
+  }
+
+  .debug-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+  }
+
+  // Авто-грид карточек-примеров.
+  .debug-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--debug-grid-min, 220px), 1fr));
+    gap: 0.75em;
+  }
+
+  // ─── Контролы ────────────────────────────────────────────────────────────
+
+  // Пара «подпись + инпут».
+  .debug-control {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    font-size: 13px;
+
+    >.debug-label {
+      color: var(--debug-dim);
+      user-select: none;
+      white-space: nowrap;
+    }
+  }
+
+  .debug-label {
+    font-size: 13px;
+  }
+
+  // Моно-вывод текущего значения. tabular-nums, чтобы цифры не дёргали ширину.
+  .debug-value {
+    font-family: var(--debug-mono);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: var(--font-color);
+  }
+
+  // Мелкий поясняющий текст под заголовком секции или рядом с контролом.
+  .debug-hint {
+    font-size: 12px;
+    color: var(--debug-dim);
+    line-height: 1.4;
+  }
+
+  // Путь к файлу-источнику.
+  .debug-path {
+    font-family: var(--debug-mono);
+    font-size: 11px;
+    color: var(--debug-dim);
+    word-break: break-all;
+  }
+
+  // Заметка-врезка: чем подсвечивать тач-специфику и «на что смотреть».
+  .debug-note {
+    border-left: 2px solid var(--debug-border-strong);
+    padding: 0.4em 0 0.4em 0.75em;
+    font-size: 12px;
+    color: var(--debug-dim);
+    line-height: 1.5;
+  }
+
+  input[type='text'],
+  input[type='number'],
+  select {
+    background: var(--debug-surface);
+    border: 1px solid var(--debug-border);
+    border-radius: 4px;
+    color: inherit;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 0.25em 0.4em;
+
+    &:hover {
+      border-color: var(--debug-border-strong);
+    }
+  }
+
+  a {
+    color: #47a3ff;
+
+    &:hover {
+      color: var(--blue-color);
+    }
+  }
+
+  input[type='number'] {
+    width: 5em;
+  }
+
+  input[type='range'] {
+    accent-color: var(--blue-color);
+    width: 9em;
+  }
+
+  input[type='checkbox'],
+  input[type='radio'] {
+    accent-color: var(--blue-color);
+    cursor: pointer;
+    margin: 0;
+  }
+
+  .debug-btn {
+    background: var(--debug-surface);
+    border: 1px solid var(--debug-border);
+    border-radius: 4px;
+    color: inherit;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 0.3em 0.8em;
+
+    &:hover {
+      background: var(--debug-surface-hover);
+      border-color: var(--debug-border-strong);
+    }
+
+    &:active {
+      background: var(--debug-border);
+    }
+
+    &.active {
+      border-color: var(--blue-color);
+      color: var(--blue-thin-color);
+    }
+  }
+
+  // ─── Сцена ───────────────────────────────────────────────────────────────
+
+  // Площадка для примера. Клетчатый фон — чтобы видеть границы, прозрачность и сдвиги.
+  .debug-stage {
+    position: relative;
+    border: 1px dashed var(--debug-border-strong);
+    border-radius: 6px;
+    padding: 1em;
+    background-image:
+      linear-gradient(45deg, #ffffff08 25%, transparent 25%, transparent 75%, #ffffff08 75%),
+      linear-gradient(45deg, #ffffff08 25%, transparent 25%, transparent 75%, #ffffff08 75%);
+    background-position: 0 0, 10px 10px;
+    background-size: 20px 20px;
+
+    // Пример по центру сцены.
+    &.center {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    &.short {
+      min-height: 120px;
+    }
+
+    &.tall {
+      min-height: 400px;
+    }
+
+    // Скроллируемая сцена: проверка, что поповер/тултип едет за целью при скролле.
+    &.scroll {
+      overflow: auto;
+      max-height: 300px;
+    }
+
+    // Сетка 3×3 с целями по углам и краям — проверка флипа placement у границ viewport.
+    &.edges {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 0.5em;
+      place-items: center;
+      min-height: 320px;
+
+      // Цели обязаны прижаться к краям сцены, а не висеть по центру своей ячейки:
+      // иначе у крайних рядов остаётся место и проверять флип нечем.
+      >* {
+        &:nth-child(3n + 1) {
+          justify-self: start;
+        }
+
+        &:nth-child(3n) {
+          justify-self: end;
+        }
+
+        &:nth-child(-n + 3) {
+          align-self: start;
+        }
+
+        &:nth-child(n + 7) {
+          align-self: end;
+        }
+      }
+    }
+  }
+
+  // ─── Лог событий ─────────────────────────────────────────────────────────
+
+  // Лог коллбеков/эмитов: без него не проверить события, которые не видны глазом.
+  .debug-log {
+    font-family: var(--debug-mono);
+    font-size: 11px;
+    line-height: 1.6;
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid var(--debug-border);
+    border-radius: 4px;
+    padding: 0.5em 0.6em;
+    background: #00000030;
+
+    >.debug-log-line {
+      display: flex;
+      gap: 0.6em;
+
+      >.debug-log-time {
+        color: var(--debug-dim);
+        font-variant-numeric: tabular-nums;
+        flex-shrink: 0;
+      }
+    }
+
+    >.debug-log-empty {
+      color: var(--debug-dim);
+    }
+  }
+
+  // ─── Таблица состояний ───────────────────────────────────────────────────
+
+  // Компактная таблица «состояние/значение» для дампов внутреннего состояния.
+  .debug-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+
+    th,
+    td {
+      border: 1px solid var(--debug-border);
+      padding: 0.25em 0.5em;
+      text-align: center;
+    }
+
+    thead {
+      background: var(--debug-surface);
+    }
+
+    tbody {
+      th {
+        text-align: left;
+        font-weight: normal;
+      }
+
+      td {
+        font-family: var(--debug-mono);
+        font-variant-numeric: tabular-nums;
+
+        &.true {
+          background: #00ff5519;
+        }
+
+        &.false {
+          background: #ff000019;
+        }
+      }
+    }
+  }
+}

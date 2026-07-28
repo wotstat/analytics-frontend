@@ -1,0 +1,79 @@
+.debug-root {
+  .tv-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    box-sizing: border-box;
+    padding: 0 8px;
+    font-size: 13px;
+    line-height: 1.2;
+    border-bottom: 1px solid #ffffff12;
+
+    .rank {
+      flex: none;
+      width: 3.6em;
+      text-align: right;
+      color: #ffffff66;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .node {
+      flex: none;
+      font-size: 10px;
+      padding: 1px 4px;
+      border-radius: 3px;
+      background: #ffffff1a;
+      color: #ffffffaa;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .name {
+      flex: 1 1 auto;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .badge {
+      flex: none;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #ffcf6b;
+    }
+
+    .num {
+      flex: none;
+      width: 4.4em;
+      text-align: right;
+      color: #ffffffb0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    &.top {
+      background: #35ff8118;
+    }
+
+    &.selected {
+      background: var(--dark-blue-color);
+    }
+
+    &.no-clip .name {
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+    }
+
+    &.clickable {
+      cursor: pointer;
+      user-select: none;
+
+      @media (hover: hover) and (pointer: fine) {
+        &:hover {
+          background: #ffffff14;
+        }
+      }
+    }
+  }
+}

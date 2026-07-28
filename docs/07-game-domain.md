@@ -24,12 +24,13 @@
 
 ## Селекторы фильтров (`selectors/`)
 
-Комплект UI для выбора фильтров статистики (используется в настройках инфографики):
+Комплект UI для выбора фильтров статистики. Единственный боевой потребитель — `pages/replays/search/Index.vue`; `SearchLine` отдельно переиспользован в `onslaught/shared/settings/nicknameInput/`. В настройках инфографики этих селекторов **нет**.
 
 - `vehicleSelector/` — выбор танков: попап с таблицей (`VehiclePopup`, `VehicleTable`), бейджи выбранного (`VehicleSelectorBadges`).
 - `arena/` — выбор карт (модалка + бейджи).
 - `gameVersionSelector/`, `gameSelector/` — версия игры и игра (Lesta/WG).
-- Общие части: `components/badges/` (строка бейджей с поповером переполнения), `components/searchLine/SearchLine.vue`.
+- Общие части: `components/badges/` — `Badge.vue`, `BadgesLine.vue` (обычный `flex-wrap`, бейджи переносятся и растят фильтр по высоте: свёртки в «+N» нет) и `BadgesLinePopover.vue` (строка бейджей, по клику открывающая попап выбора); `components/searchLine/SearchLine.vue`.
+- Кнопки «Lesta / WG» внутри попапов техники, карт и версий пишут в **глобальный** `preferredGame` (`shared/global/`, localStorage), то есть локальный контрол фильтра меняет предпочтение игры на всём сайте. `GameSelector` к этому предпочтению, наоборот, не подключён.
 
 `BadgesLinePopover` и надстроенные над ним `VehicleSelectorBadges` / `GameVersionSelectorBadges` пробрасывают в `PopoverAutoClose` проп `closeOnOutsideWindow` (см. 05), чтобы условие автозакрытия можно было переопределить на месте использования.
 
