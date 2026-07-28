@@ -61,9 +61,11 @@
     </p>
 
     <p class="debug-note">
-      <b>Форма слота зависит от layoutVariant.</b> При horizontal слоты left/right занимают только высоту области
-      построения, при vertical — всю высоту графика, а top/bottom наоборот. Переключай варианты с clip target = left:
-      прямоугольник клипа заметно меняется, хотя ни данные, ни поля не тронуты.
+      <b>Форма слота зависит от layoutVariant — но square не самостоятельна.</b> При horizontal слоты left/right
+      занимают только высоту области построения, при vertical — всю высоту графика, а top/bottom наоборот. Слот
+      square дословно повторяет horizontal для left/right и vertical для top/bottom, поэтому переключение
+      horizontal ↔ square с clip target = left прямоугольник не меняет. Заметная разница видна между horizontal и
+      vertical.
     </p>
 
     <p class="debug-note">

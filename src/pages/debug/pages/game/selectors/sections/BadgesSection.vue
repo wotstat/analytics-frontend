@@ -87,11 +87,10 @@
       </div>
 
       <p class="debug-note">
-        Переполнения в поповер здесь <b>нет</b> — это расхождение с docs (07 обещает «строку бейджей с поповером
-        переполнения»). Реально <span class="debug-value">BadgesLine</span> — это просто
-        <span class="debug-value">flex-wrap: wrap</span>: бейджи переносятся на новые строки и растят контейнер по
-        высоте. Поставь 40 бейджей и сузь контейнер — увидишь, на сколько строк уезжает фильтр. Поповер в
-        <span class="debug-value">BadgesLinePopover</span> — это попап выбора, а не переполнение.
+        Переполнения в поповер здесь <b>нет</b>: <span class="debug-value">BadgesLine</span> — это просто
+        <span class="debug-value">flex-wrap: wrap</span>, бейджи переносятся на новые строки и растят контейнер по
+        высоте, свёртки в «+N» нет. Поставь 40 бейджей и сузь контейнер — увидишь, на сколько строк уезжает фильтр.
+        Поповер в <span class="debug-value">BadgesLinePopover</span> — это попап выбора, а не переполнение.
       </p>
 
       <p class="debug-note">

@@ -10,8 +10,8 @@
           <option v-for="k in keys" :key="k" :value="k">{{ k }}</option>
         </select>
       </label>
-      <span class="debug-hint">переключение key мгновенно меняет бабл целиком — это независимая запись в localStorage
-        и отдельная строка debugInfo</span>
+      <span class="debug-hint">key применится только к следующему пересозданию бабла кнопкой «Применить» — до этого
+        смонтированный бабл продолжает писать в свой прежний ключ localStorage и строку debugInfo</span>
     </div>
 
     <div class="debug-row">
@@ -128,11 +128,11 @@
 
     <p class="debug-note">
       Режим pagePadding = <span class="debug-value">--content-page-margin</span> на боевых страницах задаёт
-      <span class="debug-path">SidebarLayout.vue</span>, а дебаг-страницы этой обёрткой не пользуются. Чтобы режим
-      var было корректно с чем сравнить, на этой странице переменная выставлена вручную в
-      <span class="debug-path">tipBubble/Index.vue</span> (<span class="debug-value">1rem</span>) — без неё
-      <span class="debug-value">calc()</span> в TipBubbleComponent.vue стал бы невалидным и maxContentWidth перестал
-      бы ограничивать текст.
+      <span class="debug-path">SidebarLayout.vue</span>, а дебаг-страницы этой обёрткой не пользуются — и переменную
+      здесь нигде не выставляют. Из-за этого <span class="debug-value">var(--content-page-margin)</span> без
+      фолбэка невалиден, <span class="debug-value">calc()</span> в TipBubbleComponent.vue схлопывает
+      maxContentWidth, а <span class="debug-value">max-width</span> контента бабла оказывается
+      <span class="debug-value">none</span> — режим var на этой странице ничего не ограничивает.
     </p>
   </DebugSection>
 </template>

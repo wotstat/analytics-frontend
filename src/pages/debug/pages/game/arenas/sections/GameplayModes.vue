@@ -36,8 +36,9 @@
       gameplayTypes из wot.ts знает только про ctf/domination/assault/maps_training/assault2/ctf30x30/epic — значения
       вроде <span class="debug-value">comp7</span>, <span class="debug-value">bob</span>, <span
         class="debug-value">bootcamp</span>, <span class="debug-value">domination3</span>, которые реально есть в
-      ArenasLatest, в этом словаре не расшифрованы. Для минимапы это не мешает — она берёт gameplay как есть, а вот
-      для человекочитаемого названия режима в UI сайта таких строк не хватит.
+      ArenasLatest, в этом словаре не расшифрованы. Для минимапы это не мешает — она берёт gameplay как есть. Сам
+      словарь сейчас нигде не импортируется за пределами своего объявления — вопрос о полноте его строк для
+      человекочитаемых названий встанет, только когда он реально понадобится в UI сайта.
     </p>
 
     <div class="debug-row">

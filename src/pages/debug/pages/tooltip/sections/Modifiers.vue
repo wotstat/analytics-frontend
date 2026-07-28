@@ -78,7 +78,10 @@
     <p class="debug-note">
       Проведи указателем по ряду без arg: группы называются <span class="debug-value">default-N</span>, номер
       выдаётся при монтировании элемента. На стыке двух целей в таблице выше на 100 мс видно <b>два</b> открытых
-      тултипа — это не баг, это <span class="debug-value">hideDelay</span> у уходящего.
+      тултипа — это не баг и не <span class="debug-value">hideDelay</span> (у целей этого ряда он обнулён
+      модификатором <span class="debug-value">.instant</span>), а фиксированная длительность exit-анимации:
+      <span class="debug-value">HIDE_ANIMATION_DURATION</span> = 100 мс в <span class="debug-value">TooltipRoot</span>
+      держит старую карточку в DOM после того, как она уже логически скрыта.
     </p>
 
     <p class="debug-note">

@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Узкий экран" id="narrow-screen"
     description="Мобильная раскладка держится на настоящем @media (max-width: 700px) у .modal-window, а не на ширине контейнера — сжимай окно браузера целиком, а не эту страницу."
-    source="src/shared/ui/modalWindow/ModalWindow.vue">
+    source="src/shared/ui/modalWindow/ModalWindowContent.vue">
 
     <table class="debug-table">
       <thead>

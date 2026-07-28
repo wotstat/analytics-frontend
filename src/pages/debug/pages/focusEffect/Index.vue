@@ -1,5 +1,5 @@
 <template>
-  <DebugPage title="FocusEffect" description="Подсветка элемента поверх затемнённой страницы."
+  <DebugPage title="FocusEffect" description="Анимированные рамки вокруг цели поверх страницы, без затемнения."
     source="src/shared/uiKit/focusEffect/">
 
     <ApiOverview />

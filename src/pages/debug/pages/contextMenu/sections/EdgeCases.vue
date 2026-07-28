@@ -59,12 +59,15 @@
     </p>
 
     <p class="debug-note">
-      <b>Меню из строки меню не выживает.</b> При <span class="debug-value">closeOnAction: true</span> Root ставит
-      закрытие на 150 мс после действия и не проверяет, что меню за это время сменилось: новое меню, открытое прямо из
-      <span class="debug-value">action</span>, закроется само примерно через 240 мс. Проверь с тумблером в двух
-      положениях — с <span class="debug-value">false</span> второе меню остаётся. Обходной путь для боевого кода:
-      открывать вложенное меню в <span class="debug-value">setTimeout</span> длиннее 240 мс либо отключать
-      closeOnAction.
+      <b>Меню из строки меню игнорирует тумблер.</b> <span class="debug-value">closeOnAction</span> долетает только
+      до первого (родительского) меню — второе, которое открывает сам <span class="debug-value">action</span>,
+      всегда создаётся с захардкоженным <span class="debug-value">closeOnAction: false</span>. Кнопка вызывает
+      <span class="debug-value">action()</span> раньше, чем всплывает событие <span class="debug-value">onAction</span>,
+      поэтому к моменту, когда Root проверяет <span class="debug-value">currentContextMenu.value.options.closeOnAction</span>,
+      в этом ref уже лежит второе меню — Root видит его false, а не значение тумблера, и таймер закрытия не
+      ставится ни при <span class="debug-value">true</span>, ни при <span class="debug-value">false</span>.
+      Проверено в обоих положениях: второе меню остаётся на экране и через 300+ мс после действия — тумблер на это
+      не влияет.
     </p>
 
     <p class="debug-note">

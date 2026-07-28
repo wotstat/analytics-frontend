@@ -43,8 +43,10 @@
 
     <p class="debug-note">
       team=0 — не опечатка в контролах, а намеренная поломка: MinimapBases фильтрует базы/спавны условием
-      <span class="debug-value">if (!meta.value || !props.team) return []</span>, а 0 — falsy. При team=0 не
-      рисуется вообще ничего, хотя meta с базами есть. Баг это или нет — team в реальных данных 1/2 и никогда не 0,
+      <span class="debug-value">if (!meta.value || !props.team) return []</span>, а 0 — falsy. При team=0
+      пропадают только базы и спавны — они завязаны на номер команды. Точки интереса и контрольные точки рисуются
+      циклами по <span class="debug-value">meta?.poi</span> / <span class="debug-value">meta?.control</span> без
+      проверки team и остаются на месте. Баг это или нет — team в реальных данных 1/2 и никогда не 0,
       но проп типизирован как обычный <span class="debug-value">number</span>, ничего не мешает передать 0 снаружи.
     </p>
 
@@ -57,12 +59,15 @@
     </div>
 
     <p class="debug-hint">
-      Индексация в шаблоне MinimapBases.vue: если своя база одна — берётся файл <span class="debug-value">_0</span>,
-      если баз несколько — со второй по счёту используется <span class="debug-value">_1</span>, <span
-        class="debug-value">_2</span>… Спавны индексируются с <span class="debug-value">_1</span> всегда, файла
-      <span class="debug-value">_0</span> для спавнов не существует. Файлов на каждую категорию максимум 4 —
-      если у арены окажется 5+ точек одного типа на одну команду, картинка для «лишних» будет не найдена
-      (в текущих данных БД такого не встречается, максимум — 3 спавна на команду у ctf30x30).
+      Индексация в шаблоне MinimapBases.vue: пределы у спавнов и баз разные. Спавны индексируются как
+      <span class="debug-value">i + 1</span> всегда, доступны файлы <span class="debug-value">_1</span>…<span
+        class="debug-value">_4</span> — ломается уже 5-я точка одной команды. Базы устроены иначе: при единственной
+      базе берётся файл <span class="debug-value">_0</span> (индекс <span class="debug-value">i</span>), а при 2+
+      базах — тоже <span class="debug-value">i + 1</span>, то есть <span class="debug-value">_0</span> в этой ветке
+      не используется и из набора <span class="debug-value">_0</span>…<span class="debug-value">_3</span> остаётся
+      только <span class="debug-value">_1</span>…<span class="debug-value">_3</span>. Поэтому у баз предел ниже —
+      ломается уже 4-я база одной команды, а не 5-я. На текущих данных БД это не проявляется: по WOT.ArenasLatest
+      максимум баз на одну команду сейчас 2.
     </p>
   </DebugSection>
 </template>

@@ -63,6 +63,14 @@
     </p>
 
     <p class="debug-note">
+      На тексте «длинный» видно, что ширина контента здесь ничем не ограничена: <span class="debug-value">max-width</span>
+      бабла считается через <span class="debug-value">calc()</span> с <span class="debug-value">--content-page-margin</span>,
+      а её задаёт только <span class="debug-value">SidebarLayout</span>, которым дебаг-страницы не пользуются. Переменной
+      нет — <span class="debug-value">calc()</span> невалиден, <span class="debug-value">max-width</span> становится
+      <span class="debug-value">none</span>, и текст расползается по горизонтали. На боевых страницах ограничение работает.
+    </p>
+
+    <p class="debug-note">
       Пальцем: проверь, что бабл не перекрывает саму цель и не вылезает за край экрана в обеих ориентациях, и что при
       прокрутке страницы он едет вместе с целью.
     </p>
@@ -82,7 +90,7 @@ const display = ref(true)
 const generation = ref(0)
 
 const text = computed(() => {
-  if (textKind.value === 'long') return 'Длинная подсказка, которая обязана переноситься по словам и не растягивать сцену по горизонтали ни при какой ширине экрана'
+  if (textKind.value === 'long') return 'Длинная подсказка на несколько строк — проверяем перенос по словам и ширину контента при разной ширине экрана'
   if (textKind.value === 'word') return 'Совершенно-непереносимое-слово-без-единого-пробела-внутри-себя'
   return 'Подсказка'
 })

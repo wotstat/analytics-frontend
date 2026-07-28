@@ -27,7 +27,7 @@
         <input type="checkbox" v-model="markup">
       </label>
 
-      <span class="debug-hint" v-if="markup">выбор данных выключен: показаны четыре ника с разметкой</span>
+      <span class="debug-hint" v-if="markup">выбор данных игнорируется: показаны четыре ника с разметкой</span>
       <span class="debug-hint" v-else-if="source === 'real'">запрос: <span
           class="debug-value">{{ statusText }}</span></span>
     </div>

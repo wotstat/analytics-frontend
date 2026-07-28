@@ -82,8 +82,10 @@
       <p class="debug-note" v-if="withoutLabel">
         Заголовок дропдауна (не переопределён слотом <span class="debug-value">current</span>) показывает результат
         <span class="debug-value">valueToLabel</span>: без <span class="debug-value">label</span> и без этого пропа
-        функция по умолчанию возвращает сам объект-значение, и он попадает прямо в интерполяцию шаблона —
-        получается «[object Object]». Слот
+        функция по умолчанию возвращает сам объект-значение, и он попадает прямо в интерполяцию шаблона. Это не
+        «[object Object]»: Vue сериализует объект через <span class="debug-value">JSON.stringify(val, null,
+        2)</span>, а браузер схлопывает переносы и отступы в пробелы, так что заголовок показывает однострочный JSON
+        вроде <span class="debug-value">{ "id": 5, "name": "Киви", "color": "#8bc24a" }</span>. Слот
         <span class="debug-value">line</span> список не спасает, только текст в свёрнутом виде.
       </p>
     </div>

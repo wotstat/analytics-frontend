@@ -51,7 +51,10 @@
         Ошибка кешируется по <b>URL</b> в модульном <span class="debug-value">Set</span> (<span
           class="debug-value">errorUrlSet</span>),
         общем для всех <span class="debug-value">FallbackImg</span> на странице. Первый экземпляр реально шлёт запрос
-        и ловит 404 через <span class="debug-value">@error</span>. Каждый следующий, смонтированный уже после этого
+        и реагирует на событие <span class="debug-value">@error</span>, а не на конкретный HTTP-статус — в Chromium
+        кросс-доменный ответ на битый URL блокируется как ORB (<span
+          class="debug-value">net::ERR_BLOCKED_BY_ORB</span>) раньше, чем код увидит статус, хотя сам сервер отдаёт
+        404. Каждый следующий, смонтированный уже после этого
         (кнопка выше), сразу стартует с <span class="debug-value">initSrc = fallback</span> — см.
         <span class="debug-value">isUrlMayValidImage</span> — и лишнего запроса не делает. Статус не реактивный
         (обычный Set, не ref) — обновляется только по кнопке.

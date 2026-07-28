@@ -47,10 +47,13 @@
     <div class="debug-note duplicate">
       <p>
         <b>Ломаем нарочно: два бабла с одинаковым key.</b> Ниже — два независимых компонента с
-        <span class="debug-value">bubbleKey="debug-tipbubble-memory-duplicate"</span> без groupKey. Прими левый —
-        правый не изменится, пока оба не будут пересозданы: у каждого экземпляра свой
-        <span class="debug-value">useLocalStorage</span>, и `storage`-событие в браузере не долетает до вкладки,
-        которая сама же сделала запись.
+        <span class="debug-value">bubbleKey="debug-tipbubble-memory-duplicate"</span> без groupKey. Но прими
+        левый — правый получит класс <span class="debug-value">accepted</span> сразу же, без «Пересоздать оба»:
+        <span class="debug-value">useStorage</span> из @vueuse/core после записи сам диспатчит
+        <span class="debug-value">StorageEvent</span> на <span class="debug-value">window</span> текущего
+        документа, и второй экземпляр его ловит. Нативное браузерное событие
+        <span class="debug-value">storage</span> и правда не долетает до вкладки-источника записи — но именно
+        это ограничение здесь обходит сама библиотека.
       </p>
 
       <div class="debug-row">

@@ -61,6 +61,13 @@
     </p>
 
     <p class="debug-note">
+      <span class="debug-value">overflow: hidden</span> по спецификации блокирует только пользовательские жесты —
+      колесо мыши и тач, а программный скролл не запрещает. <span class="debug-value">window.scrollTo</span>,
+      <span class="debug-value">element.scrollIntoView</span> и переход по <span class="debug-value">location.hash</span>
+      при открытой модалке и активном <span class="debug-value">html.no-scroll</span> всё так же сдвигают страницу.
+    </p>
+
+    <p class="debug-note">
       Класс вешается на <span class="debug-value">document.documentElement</span> (тег
       <span class="debug-value">&lt;html&gt;</span>), а не на <span class="debug-value">&lt;body&gt;</span> — в
       отличие от старого <span class="debug-value">PopupWindow.vue</span> (см. секцию в конце страницы). Счётчик
