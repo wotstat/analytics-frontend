@@ -88,10 +88,14 @@
     </p>
 
     <p class="debug-note">
-      Ползунок <b>start</b> работает только на левом графике. У <span class="debug-value">TicksByLabels</span>
-      <span class="debug-value">getTicks()</span> на каждом кадре перетирает <span class="debug-value">sizes.start</span>
-      значением <span class="debug-value">labels.getTicksOffset()</span>, поэтому опция <span class="debug-value">start</span>
-      конструктора не делает ничего. Это не описано в docs и легко принять за поломку стилей.
+      Ползунок <b>start</b> работает только на левом графике. У <span class="debug-value">TicksByLabels</span> он не
+      настраивается вовсе: <span class="debug-value">getTicks()</span> на каждом кадре кладёт в
+      <span class="debug-value">sizes.start</span> значение <span class="debug-value">labels.getTicksOffset()</span>,
+      затирая заданное. Это не недосмотр — длина штриха привязана к стратегии подписей (у interval она даёт
+      <span class="debug-value">Infinity</span>, отсюда сквозные разделители). А вот то, что конструктор при этом
+      молча принимает <span class="debug-value">start</span>, сбивает с толку: в бою его передают, и он ничего
+      не делает. Сам ползунок — это подкласс на стороне стенда: <span class="debug-value">sizes</span> в движке
+      <span class="debug-value">protected</span>, и открывать его наружу ради одного стенда незачем.
     </p>
 
     <p class="debug-note">

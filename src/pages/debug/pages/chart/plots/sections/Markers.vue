@@ -62,7 +62,7 @@
       </label>
     </div>
 
-    <ChartStage :chart="instance.chart" :version :height="260" />
+    <ChartStage :chart="instance.chart" :height="260" />
 
     <p class="debug-note">
       <b>size и maskSize применяются только при создании маркера.</b> Радиус пишется в атрибут круга один раз, а
@@ -128,7 +128,7 @@ const manualBounds = ref(false)
 
 const points = computed(() => data.series.value.filter((point): point is ChartPoint => point !== null))
 
-const { instance, version, rebuild } = useChartInstance(build)
+const { instance, rebuild } = useChartInstance(build)
 
 function build() {
   const mask = new ChartMask('center', { top: -1, bottom: -1 })

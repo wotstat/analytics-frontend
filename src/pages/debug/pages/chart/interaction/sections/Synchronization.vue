@@ -99,7 +99,6 @@ import { HoverSynchronizer } from '@/shared/uiKit/chart/universalChart/interacti
 import { BoundsSynchronizer, type BoundsSyncDirection } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/BoundsSynchronizer'
 import DemoChartView from '../shared/DemoChartView.vue'
 import { DemoChart } from '../shared/DemoChart'
-import { GatedHoverSync } from '../shared/GatedHoverSync'
 import { seriesExtent } from '../shared/series'
 import { formatBound, useChartBounds } from '../shared/useChartBounds'
 
@@ -126,12 +125,12 @@ watchEffect(() => {
 const real = useRealDailySeries(realEnabled)
 const realStatus = computed(() => real.status.value)
 
-const hoverGate = markRaw(new GatedHoverSync(markRaw(new HoverSynchronizer())))
+const hoverHub = markRaw(new HoverSynchronizer())
 // Направление задаётся в конструкторе, поэтому его смена — это новый хаб для всех.
 const boundsHub = shallowRef(markRaw(new BoundsSynchronizer(direction.value)))
 
 const charts = [0, 1, 2].map(() => markRaw(new DemoChart({
-  hoverSync: hoverGate,
+  hoverSync: hoverHub,
   hover: { tooltip: true, markerSize: 4 },
 })))
 
@@ -154,8 +153,7 @@ const extent = computed(() => seriesExtent([series.value[0] ?? []]))
 watch(direction, value => boundsHub.value = markRaw(new BoundsSynchronizer(value)))
 
 watch(hoverSync, value => {
-  hoverGate.enabled = value
-  for (const chart of charts) chart.scheduleRender()
+  for (const chart of charts) chart.setHover({ sync: value })
 }, { immediate: true })
 
 watchEffect(() => {

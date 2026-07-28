@@ -1,7 +1,7 @@
 <template>
-  <DebugSection title="Оси: стороны и варианты" id="axis-sides"
-    description="Axis рисует линии по границам области данных. Каждая сторона включается отдельно: space — только по ширине/высоте области, full — через весь SVG, включая зоны подписей. Смотри, где линия обрывается на границе слота, а где идёт до края."
-    source="src/shared/uiKit/chart/universalChart/axis/Axis.ts">
+  <DebugSection title="Рамка области и оси по значению" id="axis-sides"
+    description="Это две разные сущности. PlotAreaBorder рисует рамку области построения — отделяет её от слотов с подписями; каждая сторона включается отдельно: space — по границе области, full — через весь SVG. ChartAxis рисует линию по значению данных и живёт только внутри области."
+    source="src/shared/uiKit/chart/universalChart/axis/">
 
     <div class="debug-row">
       <label class="debug-control" v-for="side in sideList" :key="side.value">
@@ -57,15 +57,20 @@
     <ProbeReadout :state="state" axis="both" />
 
     <p class="debug-note">
-      Все четыре стороны в режиме <b>space</b> дают замкнутый прямоугольник: Axis склеивает соприкасающиеся отрезки
-      в один path и закрывает его через <span class="debug-value">Z</span>. Разные варианты у соседних сторон линии
-      уже не склеят — будет два path.
+      Все четыре стороны в режиме <b>space</b> дают замкнутый прямоугольник:
+      <span class="debug-value">PlotAreaBorder</span> склеивает соприкасающиеся отрезки в один path и закрывает его
+      через <span class="debug-value">Z</span>. Разные варианты у соседних сторон линии уже не склеят — будет два path.
     </p>
 
     <p class="debug-note">
-      Ось всегда идёт по границе области данных, <b>по нулю Axis рисовать не умеет</b>. Возьми данные «С отрицательными»:
-      линия снизу останется у нижнего края, а не у y=0. Галочка «линия нуля» показывает обходной путь —
-      <span class="debug-value">TicksByValues('vertical')</span> с единственным тиком 0 на всю ширину области.
+      <b>Рамка и ось — разные вещи, и их легко перепутать.</b> Рамка привязана к геометрии: её стороны идут по краям
+      области построения, а <span class="debug-value">full</span> тянет линию через весь SVG. Ось привязана к данным:
+      <span class="debug-value">new ChartAxis('vertical', 0, 'zero-line')</span> — это галочка «линия нуля».
+      <span class="debug-value">axis</span> называет ось, на которой отложено значение, как у тиков и подписей:
+      <span class="debug-value">'vertical'</span> — значение по Y, линия горизонтальная. Варианта
+      <span class="debug-value">full</span> у неё нет и быть не может — линия по координате осмысленна только внутри
+      области, за её границами не рисуется вовсе. Возьми данные «С отрицательными» и сравни: нижняя сторона рамки
+      останется у края, а нулевая линия встанет на y=0.
     </p>
 
     <p class="debug-note">
@@ -92,7 +97,7 @@ import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { seriesKinds, syntheticSeries, type SeriesKind } from '@/pages/debug/shared/fixtures/syntheticSeries'
 import ChartStage from '../shared/ChartStage.vue'
 import ProbeReadout from '../shared/ProbeReadout.vue'
-import { LabelsChart, type AxisVariant, type LayoutVariant } from '../shared/LabelsChart'
+import { LabelsChart, type BorderVariant, type LayoutVariant } from '../shared/LabelsChart'
 import { useProbe } from '../shared/probe'
 import { defaultXLabels, defaultYLabels } from '../shared/options'
 
@@ -105,7 +110,7 @@ const sideList = [
 
 const kinds = seriesKinds.filter(item => item.value !== 'huge')
 
-const sides = ref<Record<typeof sideList[number]['value'], AxisVariant | ''>>({
+const sides = ref<Record<typeof sideList[number]['value'], BorderVariant | ''>>({
   top: '',
   right: '',
   bottom: 'space',
@@ -123,7 +128,7 @@ const { state, onRender } = useProbe()
 const points = computed(() => syntheticSeries(kind.value, 3, 60))
 
 const axes = computed(() => {
-  const result: Partial<Record<typeof sideList[number]['value'], AxisVariant>> = {}
+  const result: Partial<Record<typeof sideList[number]['value'], BorderVariant>> = {}
   for (const side of sideList) {
     const value = sides.value[side.value]
     if (value) result[side.value] = value
@@ -144,7 +149,7 @@ const chart = computed(() => markRaw(new LabelsChart({
 
 watchEffect(() => chart.value.setPoints(points.value))
 
-function setAll(value: AxisVariant | '') {
+function setAll(value: BorderVariant | '') {
   for (const side of sideList) sides.value[side.value] = value
 }
 </script>

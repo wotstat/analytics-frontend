@@ -38,7 +38,7 @@
     </div>
 
     <div class="debug-grid" style="--debug-grid-min: 320px" ref="host">
-      <ChartStage :chart="instance.chart" :version :height="260" />
+      <ChartStage :chart="chart" :height="260" />
 
       <div class="debug-log">
         <div class="debug-log-line" v-for="(line, index) in tree" :key="index">
@@ -49,9 +49,16 @@
     </div>
 
     <p class="debug-note">
-      <b>Убрать рендерер из графика нечем.</b> В UniversalChart есть addPlot, addSlot и addDefs — и ни одного
-      remove. Поэтому любая галка здесь пересоздаёт график целиком: это не лень страницы, а единственный способ
-      изменить состав.
+      <b>Состав меняется на живом графике.</b> <span class="debug-value">removePlot</span> снимает рендерер: убирает
+      его из списка, вынимает корневой элемент из DOM и зовёт <span class="debug-value">detach</span>. Ни одна галка
+      здесь не пересоздаёт чарт — сам инстанс и его SVG живут всё время, меняется только набор плотов.
+    </p>
+
+    <p class="debug-note">
+      <b>Что remove не убирает — это группы пути.</b> <span class="debug-value">addPlot(plot, 'plot')</span> создаёт
+      <span class="debug-value">&lt;g class="plot"&gt;</span> и кеширует её. Сняли единственный плот из этой группы —
+      сама группа останется пустой. Переключи path туда-обратно и найди в дереве осиротевшие
+      <span class="debug-value">g</span>: на отрисовку они не влияют, но и не подчищаются.
     </p>
 
     <p class="debug-note">
@@ -85,7 +92,7 @@
 
 
 <script setup lang="ts">
-import { onMounted, ref, useTemplateRef, watch, watchEffect } from 'vue'
+import { markRaw, onMounted, ref, useTemplateRef, watch } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { syntheticBarDatasets, syntheticSeries } from '@/pages/debug/shared/fixtures/syntheticSeries'
 import type { ChartPoint } from '@/pages/debug/shared/fixtures/types'
@@ -99,7 +106,6 @@ import { UniversalChart, type PlotRenderer } from '@/shared/uiKit/chart/universa
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
 import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
 import ChartStage from '../shared/ChartStage.vue'
-import { useChartInstance } from '../shared/useChartInstance'
 import { afterRender } from '../shared/afterRender'
 
 const layers = [
@@ -135,10 +141,20 @@ const path = ref<typeof paths[number]['value']>('plot')
 const host = useTemplateRef<HTMLElement>('host')
 const tree = ref<string[]>([])
 
-const { instance, version, rebuild } = useChartInstance(build)
+const clip = new ChartClip('center', { top: -1, bottom: -1 })
 
-function build() {
-  const clip = new ChartClip('center', { top: -1, bottom: -1 })
+const chart = markRaw(new UniversalChart({
+  renderManager: globalChartRenderManagerSteps4,
+  renderBoundsPadding: { vertical: 20 },
+  minLayoutSize: 6,
+}).addDefs(clip))
+
+// То, что сейчас висит на чарте верхним уровнем: либо группа, либо сами плоты.
+let attached: PlotRenderer[] = []
+
+function apply() {
+  for (const plot of attached) chart.removePlot(plot)
+  attached = []
 
   const bar = new Bar({
     strategy: { type: 'stacked', padding: 0.4, radius: 2, innerPadding: 1 },
@@ -178,12 +194,6 @@ function build() {
     plots.push(bar)
   }
 
-  const chart = new UniversalChart({
-    renderManager: globalChartRenderManagerSteps4,
-    renderBoundsPadding: { vertical: 20 },
-    minLayoutSize: 6,
-  })
-
   const target = path.value === 'none' ? [] : path.value === 'plot' ? ['plot'] : ['plot', 'overlay.top']
 
   if (grouped.value) {
@@ -191,24 +201,18 @@ function build() {
     for (const plot of plots) group.addPlot(plot)
     if (clipped.value) group.clipBy(clip)
     chart.addPlot(group, target)
+    attached = [group]
   } else {
     for (const plot of plots) chart.addPlot(plot, target)
+    attached = plots
   }
 
-  chart.addDefs(clip)
-
-  return { chart }
+  afterRender(chart, dumpTree)
 }
 
-watch([enabled, order, grouped, clipped, path], () => rebuild(), { deep: true })
+watch([enabled, order, grouped, clipped, path], () => apply(), { deep: true, immediate: true })
 
-watchEffect(() => {
-  // Дерево пересобирается вместе с инстансом.
-  const chart = instance.value.chart
-  afterRender(chart, dumpTree)
-})
-
-onMounted(() => afterRender(instance.value.chart, dumpTree))
+onMounted(() => afterRender(chart, dumpTree))
 
 function dumpTree() {
   const svg = host.value?.querySelector('svg')

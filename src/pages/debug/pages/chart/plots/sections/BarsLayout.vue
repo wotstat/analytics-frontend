@@ -61,7 +61,7 @@
       </label>
     </div>
 
-    <div class="debug-row" ref="readout">
+    <div class="debug-row">
       <span class="debug-hint">ячейка: <span class="debug-value">{{ cellWidth }}px</span></span>
       <span class="debug-hint">столбец по факту: <span class="debug-value">{{ barWidth }}px</span></span>
       <span class="debug-hint">
@@ -72,7 +72,7 @@
       </span>
     </div>
 
-    <ChartStage :chart="instance.chart" :version :height="260" />
+    <ChartStage :chart="instance.chart" :height="260" />
 
     <p class="debug-note">
       <b>padding и innerPadding живут по правилу «меньше единицы — доля».</b> padding меньше единицы — доля ширины
@@ -104,7 +104,7 @@
 
 
 <script setup lang="ts">
-import { computed, onMounted, ref, useTemplateRef, watchEffect } from 'vue'
+import { computed, onMounted, ref, watchEffect } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { syntheticBarDatasets } from '@/pages/debug/shared/fixtures/syntheticSeries'
 import { Bar, type BarDataset, type BarStrategy } from '@/shared/uiKit/chart/universalChart/plot/bar/Bar'
@@ -133,7 +133,6 @@ const innerPadding = ref(0.15)
 const maxWidth = ref(0)
 const radius = ref(3)
 
-const readout = useTemplateRef<HTMLElement>('readout')
 const barWidth = ref('—')
 
 const datasets = computed<BarDataset[]>(() => {
@@ -156,8 +155,8 @@ const strategy = computed<BarStrategy>(() => {
   return type.value === 'grouped' ? { type: 'grouped', ...base } : { type: 'stacked', ...base }
 })
 
-const { instance, version } = useChartInstance(build)
-const space = useSpaceProbe(() => instance.value.chart, () => readout.value)
+const { instance } = useChartInstance(build)
+const space = useSpaceProbe(() => instance.value.chart)
 
 const cellWidth = computed(() => {
   const { minX, maxX } = space.value.bounds

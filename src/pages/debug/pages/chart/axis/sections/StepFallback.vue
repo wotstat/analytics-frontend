@@ -80,10 +80,12 @@
     <ProbeReadout :state="state" />
 
     <p class="debug-note">
-      <b>Откуда взят номер кандидата.</b> Наружу выбранный шаг движок не отдаёт: ни поля, ни геттера. Единственная
-      зацепка — второй аргумент <span class="debug-value">labelForValue(value, stepIndex)</span>: его зовут на каждом
-      кандидате, и последний вызов за проход всегда принадлежит победившему шагу. Отсюда следствие: если подписей
-      получилось <b>ноль</b>, номер остаётся от предыдущего расчёта — это ограничение зонда, а не движка.
+      <b>Откуда взят номер кандидата.</b> Из второго аргумента
+      <span class="debug-value">labelForValue(value, stepIndex)</span> — движок зовёт форматтер на каждом
+      примеряемом кандидате, и последний вызов за проход принадлежит победившему шагу. Отдельного геттера у
+      <span class="debug-value">AutoLabels</span> нет, и он не нужен: индекс уже приходит в колбэк, который
+      передаём мы сами. Отсюда следствие: если подписей получилось <b>ноль</b>, номер остаётся от предыдущего
+      расчёта — это ограничение зонда, а не движка.
     </p>
 
     <p class="debug-note">
@@ -128,7 +130,7 @@ import { steppedGenerator, steppedOverrides } from '@/shared/uiKit/chart/univers
 import ChartStage from '../shared/ChartStage.vue'
 import ProbeReadout from '../shared/ProbeReadout.vue'
 import { LabelsChart } from '../shared/LabelsChart'
-import { StepProbe, stepValue, useProbe } from '../shared/probe'
+import { StepProbe, useProbe } from '../shared/probe'
 import { defaultYLabels } from '../shared/options'
 import { statusText } from '../shared/status'
 import { formatLabel, labelFormats, type LabelFormat } from '../shared/formats'
@@ -174,7 +176,7 @@ const points = computed(() => source.value === 'real' ? real.battles.value : syn
 const realStatus = computed(() => statusText(real.status.value, real.battles.value.length))
 const chosenIndex = computed(() => state.value?.step ?? -1)
 const chosenLabel = computed(() => chosenIndex.value >= 0 ? `${chosenIndex.value}` : '—')
-const chosenStep = computed(() => candidates.value[chosenIndex.value] ?? stepValue(steps.value, chosenIndex.value))
+const chosenStep = computed(() => candidates.value[chosenIndex.value] ?? null)
 
 const xLabels = computed<LabelsOptions>(() => {
   // Снимок реактивных значений: labelForValue зовётся уже из рендера чарта, и всё,
@@ -183,14 +185,14 @@ const xLabels = computed<LabelsOptions>(() => {
   const dates = real.labels.value
   const currentFormat = format.value
 
-  const wrapped = probe.wrap(value => isReal
+  const labelForValue = probe.wrap(value => isReal
     ? (dates[value] ?? `${value}`)
     : formatLabel(currentFormat, value))
 
   const values = mode.value === 'overrides'
-    ? steppedOverrides({ step: steps.value, labelForValue: wrapped })
+    ? steppedOverrides({ step: steps.value, labelForValue })
     : (mode.value === 'single' ? [steps.value[0]] : steps.value)
-      .map(step => ({ gen: steppedGenerator({ step }), labelForValue: wrapped }))
+      .map(step => ({ gen: steppedGenerator({ step }), labelForValue }))
 
   return {
     values,

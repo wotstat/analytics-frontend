@@ -36,7 +36,7 @@
     <RadiusControl v-model="radius" label="radius" />
     <RadiusControl v-model="innerRadius" label="innerRadius" v-if="type === 'stacked'" />
 
-    <ChartStage :chart="instance.chart" :version :height="260" />
+    <ChartStage :chart="instance.chart" :height="260" />
 
     <p class="debug-note">
       <b>Число — не «все углы».</b> В <span class="debug-value">radius</span> число скругляет только внешнюю пару:
@@ -105,7 +105,7 @@ const strategy = computed<BarStrategy>(() => {
     : { type: 'stacked', innerPadding: 2, innerRadius: innerRadius.value, ...base }
 })
 
-const { instance, version } = useChartInstance(build)
+const { instance } = useChartInstance(build)
 
 function build() {
   const bar = new Bar({ classes: 'bars', strategy: strategy.value })

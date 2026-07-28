@@ -71,7 +71,7 @@
       </label>
     </div>
 
-    <ChartStage :chart="instance.chart" :version :height="260" :class="colorMode === 'css' ? 'scheme-css' : ''" />
+    <ChartStage :chart="instance.chart" :height="260" :class="colorMode === 'css' ? 'scheme-css' : ''" />
 
     <p class="debug-note">
       <b>Градиент и паттерн не требуют перерисовки графика.</b> setSteps, setDirection, setContent и
@@ -118,7 +118,6 @@ import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalCha
 import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
 import ChartStage from '../shared/ChartStage.vue'
 import { useChartInstance } from '../shared/useChartInstance'
-import { RenderCounter } from '../shared/RenderCounter'
 import { afterRender } from '../shared/afterRender'
 
 const fills = [
@@ -167,12 +166,11 @@ const steps = computed(() => {
   return offsets.map((offset, index) => ({ offset, color: inlineColors[index % inlineColors.length] }))
 })
 
-const { instance, version, rebuild } = useChartInstance(build)
+const { instance, rebuild } = useChartInstance(build)
 
 function build() {
   const gradient = new ChartGradient({ classes: 'area-gradient' })
   const pattern = new ChartRawPattern()
-  const counter = new RenderCounter()
 
   const line = new AutoLine({
     classes: ['main-line', 'series-a', ...(fill.value === 'solid' ? ['solid-area'] : [])],
@@ -186,12 +184,13 @@ function build() {
     minLayoutSize: 4,
   })
     .addPlot(line, 'plot')
-    .addPlot(counter)
     .addDefs(gradient, pattern)
+
+  chart.onAfterRender.on(() => renders.value++)
 
   line.setPoints(series)
 
-  return { chart, line, gradient, pattern, counter }
+  return { chart, line, gradient, pattern }
 }
 
 watch(fill, () => rebuild())
@@ -211,8 +210,7 @@ watchEffect(() => {
 onMounted(() => afterRender(instance.value.chart, sample))
 
 function sample() {
-  const { line, pattern, counter } = instance.value
-  renders.value = counter.count
+  const { line, pattern } = instance.value
 
   if (fill.value !== 'pattern') return
 

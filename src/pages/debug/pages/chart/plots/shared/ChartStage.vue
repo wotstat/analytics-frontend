@@ -1,7 +1,7 @@
 <template>
   <div class="chart-stage debug-stage">
     <div class="chart-box" :class="{ resizable }" :style="{ height: `${height}px` }">
-      <UniversalChartComponent :chart="chart" :key="version" />
+      <UniversalChartComponent :chart="chart" />
     </div>
 
     <slot></slot>
@@ -15,10 +15,9 @@ import type { UniversalChart } from '@/shared/uiKit/chart/universalChart/Univers
 
 withDefaults(defineProps<{
   chart: UniversalChart
-  version?: number
   height?: number
   resizable?: boolean
-}>(), { version: 0, height: 240, resizable: false })
+}>(), { height: 240, resizable: false })
 
 </script>
 

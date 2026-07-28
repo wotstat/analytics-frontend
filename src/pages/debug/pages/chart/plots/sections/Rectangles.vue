@@ -54,7 +54,7 @@
       <span class="debug-hint">rect: <span class="debug-value">{{ rectAttributes }}</span></span>
     </div>
 
-    <ChartStage :chart="instance.chart" :version :height="260" />
+    <ChartStage :chart="instance.chart" :height="260" />
 
     <p class="debug-note">
       <b>±Infinity по Y работает только вместе с layoutLimited.</b> Так область растягивается на всю высоту, не зная
@@ -116,7 +116,7 @@ const points = computed(() => ({
   p2: { x: x2.value, y: infiniteY.value ? Infinity : y2.value },
 }))
 
-const { instance, version, rebuild } = useChartInstance(build)
+const { instance, rebuild } = useChartInstance(build)
 
 function build() {
   const pattern = new ChartRawPattern()

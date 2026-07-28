@@ -50,20 +50,28 @@
       </p>
 
       <p class="debug-note">
-        Своих цветов движок не приносит: у <span class="debug-value">.tick</span> в
-        <span class="debug-value">universalChart/style.scss</span> нет ни stroke, ни толщины, а
-        <span class="debug-value">.label</span> получает <span class="debug-value">fill</span> и
-        <span class="debug-value">text-anchor</span> только внутри группы <span class="debug-value">.labels</span>.
-        Если добавить подписи без пути <span class="debug-value">'labels'</span> — они окажутся чёрными и прижатыми
-        влево, а служебная probe-подпись перестанет быть скрытой. Все графики на этой странице собраны с путями
-        <span class="debug-value">'labels'</span> и <span class="debug-value">'ticks'</span>, а цвета заданы в
-        ChartStage.vue.
+        Тиков движок не красит: у <span class="debug-value">.tick</span> в
+        <span class="debug-value">universalChart/style.scss</span> нет ни stroke, ни толщины — без стилей страницы
+        элементы есть в DOM, но не видны. Рамку области и оси по значению он красит через
+        <span class="debug-value">currentColor</span>. Спорить со специфичностью движка не нужно: весь его
+        <span class="debug-value">style.scss</span> лежит в <span class="debug-value">@layer ui-kit-chart</span>, а
+        правило страницы вне слоя перебивает слой независимо от специфичности. Поэтому в ChartStage.vue селекторы
+        самые короткие — <span class="debug-value">.plot-area-border path</span> — и этого достаточно.
+        У <span class="debug-value">.label</span>
+        <span class="debug-value">fill</span> и <span class="debug-value">text-anchor</span> действуют только внутри
+        группы <span class="debug-value">.labels</span>: добавь подписи без пути
+        <span class="debug-value">'labels'</span> — они окажутся чёрными и прижатыми влево, а служебная probe-подпись
+        перестанет быть скрытой. Все графики страницы собраны с путями <span class="debug-value">'labels'</span> и
+        <span class="debug-value">'ticks'</span>, оттенки — в ChartStage.vue.
       </p>
 
       <p class="debug-note">
-        Движок не реактивный: <span class="debug-value">AutoLabels.updateOptions</span> сам перерисовку не заказывает —
-        нужен <span class="debug-value">chart.dataDidChange()</span>. Всё, что задаётся только в конструкторе (стороны
-        осей, тип тиков, слот подписей, клип), меняется пересозданием экземпляра: снять renderer с чарта нельзя.
+        Движок не Vue-реактивный, но перерисовку заказывает сам:
+        <span class="debug-value">AutoLabels.updateOptions</span> и <span class="debug-value">TicksByValues.setTicks</span>
+        зовут <span class="debug-value">dataDidChange</span> внутри. Структурное (стороны осей, тип тиков, слот подписей,
+        клип) по-прежнему задаётся в конструкторе рендерера — но менять состав чарта можно на живую:
+        <span class="debug-value">removePlot</span> / <span class="debug-value">removeSlot</span> /
+        <span class="debug-value">removeDefs</span>.
       </p>
     </DebugSection>
 

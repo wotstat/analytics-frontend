@@ -51,7 +51,7 @@
       </label>
     </div>
 
-    <ChartStage :chart="instance.chart" :version :height="280" />
+    <ChartStage :chart="instance.chart" :height="280" />
 
     <p class="debug-note">
       <b>target — это слот, а не «сторона прямоугольника».</b> center берёт область построения, остальные —
@@ -114,7 +114,7 @@ const maskPadding = ref(0)
 const fillTarget = ref(true)
 const margin = ref(40)
 
-const { instance, version, rebuild } = useChartInstance(build)
+const { instance, rebuild } = useChartInstance(build)
 
 function build() {
   const clip = clipTarget.value === 'none' ? null : new ChartClip(clipTarget.value, clipPadding.value)

@@ -2,8 +2,7 @@ import type { UniversalChart } from '@/shared/uiKit/chart/universalChart/Univers
 
 
 export function afterRender(chart: UniversalChart, callback: () => void) {
-  const lastStep = chart.manager.steps - 1
-  chart.manager.scheduleAnimationFrame(step => { if (step === lastStep) callback() })
+  chart.onAfterRender.once(() => callback())
 }
 
 export function pathInfo(root: Element | null | undefined, selector = 'path.line') {

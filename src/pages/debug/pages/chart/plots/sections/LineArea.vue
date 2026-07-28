@@ -50,7 +50,7 @@
       </span>
     </div>
 
-    <ChartStage :chart="instance.chart" :version :height="260" />
+    <ChartStage :chart="instance.chart" :height="260" />
 
     <p class="debug-note">
       <b>Пары сегментов берутся по индексу.</b> Верх и низ режутся на сегменты независимо, а сшиваются
@@ -115,7 +115,7 @@ const bottom = computed(() => envelope(-1))
 const topSegments = computed(() => countSegments(top.value))
 const bottomSegments = computed(() => countSegments(bottom.value))
 
-const { instance, version, rebuild } = useChartInstance(build)
+const { instance, rebuild } = useChartInstance(build)
 
 function build() {
   const fill = gradient.value

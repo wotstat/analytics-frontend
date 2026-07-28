@@ -25,7 +25,7 @@
       </button>
     </div>
 
-    <div class="debug-row" ref="readout">
+    <div class="debug-row">
       <span class="debug-hint">
         layout: <span class="debug-value">
           {{ formatNumber(space.layout.width) }} × {{ formatNumber(space.layout.height) }}
@@ -41,7 +41,7 @@
       <span class="debug-hint">d: <span class="debug-value">{{ path.length }}</span> симв.</span>
     </div>
 
-    <ChartStage :chart="instance.chart" :version :height="height" resizable />
+    <ChartStage :chart="instance.chart" :height="height" resizable />
 
     <p class="debug-note">
       Тяни правый нижний угол графика: layout и все пути пересчитываются по ResizeObserver. Но при нулевой высоте
@@ -89,7 +89,7 @@
 
 
 <script setup lang="ts">
-import { computed, onMounted, ref, useTemplateRef, watch, watchEffect } from 'vue'
+import { computed, onMounted, ref, watch, watchEffect } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import type { ChartPoint } from '@/pages/debug/shared/fixtures/types'
 import { RectangleArea } from '@/shared/uiKit/chart/universalChart/plot/area/RectangleArea'
@@ -121,13 +121,12 @@ const boundsMode = ref<typeof boundsModes[number]['value']>('auto')
 const withBars = ref(true)
 const height = ref<number>(240)
 
-const readout = useTemplateRef<HTMLElement>('readout')
 const path = ref<PathInfo>({ length: 0, curves: 0, lines: 0, moves: 0 })
 
 const barValues = computed(() => data.series.value.map(point => point ? point.y / 2 : 0))
 
-const { instance, version, rebuild } = useChartInstance(build)
-const space = useSpaceProbe(() => instance.value.chart, () => readout.value)
+const { instance, rebuild } = useChartInstance(build)
+const space = useSpaceProbe(() => instance.value.chart)
 
 function build() {
   const line = new AutoLine({ classes: ['main-line', 'series-a'], smoothingMethod: 'monotone' })

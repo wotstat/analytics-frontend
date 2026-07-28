@@ -1,13 +1,16 @@
 <template>
   <div class="chart-stage debug-stage">
     <p class="stage-caption debug-hint" v-if="caption">{{ caption }}</p>
-    <div class="chart-host" ref="host" :style="hostStyle"></div>
+    <div class="chart-host" :style="hostStyle">
+      <UniversalChartComponent :chart="chart" />
+    </div>
   </div>
 </template>
 
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, useTemplateRef, watch } from 'vue'
+import { computed } from 'vue'
+import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import type { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 
 const props = withDefaults(defineProps<{
@@ -22,26 +25,11 @@ const props = withDefaults(defineProps<{
   resizable: false,
 })
 
-const host = useTemplateRef<HTMLDivElement>('host')
-
 const hostStyle = computed(() => ({
   width: props.width === null ? '100%' : `${props.width}px`,
   height: `${props.height}px`,
   resize: props.resizable ? ('both' as const) : ('none' as const),
 }))
-
-watch(() => props.chart, (next, previous) => {
-  previous.dispose()
-  if (host.value) next.attach(host.value)
-})
-
-onMounted(() => {
-  if (host.value) props.chart.attach(host.value)
-})
-
-onUnmounted(() => {
-  props.chart.dispose()
-})
 </script>
 
 
@@ -61,26 +49,28 @@ onUnmounted(() => {
   overflow: hidden;
   min-width: 40px;
   min-height: 60px;
+
+  :deep(.chart-container) {
+    position: absolute;
+    inset: 0;
+  }
 }
 
-// Движок не приносит своих цветов: у `.tick` в style.scss нет ни stroke, ни ширины,
-// поэтому без этих правил тики просто не видны.
+// Базовый stroke движок кладёт через currentColor, здесь только оттенки под тёмную сцену.
 :deep(.universal-chart-root) {
   color: rgba(255, 255, 255, 0.75);
   font-size: 11px;
 
-  .chart-axis path {
-    fill: none;
+  .plot-area-border path {
     stroke: rgba(255, 255, 255, 0.5);
-    stroke-width: 1px;
   }
 
-  .tick {
+  .x-ticks,
+  .y-ticks {
     stroke: rgba(255, 255, 255, 0.16);
-    stroke-width: 1px;
   }
 
-  .zero-line .tick {
+  .chart-axis.zero-line line {
     stroke: rgba(255, 130, 130, 0.7);
     stroke-dasharray: 4 3;
   }

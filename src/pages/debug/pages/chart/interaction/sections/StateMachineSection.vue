@@ -110,8 +110,8 @@ const { entries, push, clear } = useEventLog({ collapseRepeats: true })
 const chart = markRaw(new DemoChart({ hover: { tooltip: false } }))
 chart.setSeries([syntheticSeries('smooth', 3, 90)])
 
-const stopStateLog = chart.controller.onStateChange(state => {
-  const name = stateName(state)
+const stopStateLog = chart.controller.onStateChanged.on(() => {
+  const name = stateName(chart.controller.currentState)
   current.value = name
   push(name)
 })

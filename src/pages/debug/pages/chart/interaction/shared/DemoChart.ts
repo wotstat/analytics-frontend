@@ -8,18 +8,17 @@ import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine
 import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
 import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
-import { InteractionComponent } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController'
+import { InteractionComponent, InteractionController } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController'
 import { InteractionDirection } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/BaseInteractionController'
 import { ChartTooltip, TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
 import { CallbackComponent } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/callback/CallbackComponent'
 import { ZoomChartComponent } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/zoomChartComponent/ZoomChartComponent'
 import { BoundsSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/BoundsSynchronizer'
+import { HoverSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/HoverSynchronizer'
+import { VerticalLine } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/lines/VerticalLine'
+import { HorizontalLine } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/lines/HorizontalLine'
+import { NearestMarker } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/nearestMarker/NearestMarker'
 import type { ChartSeries } from '@/pages/debug/shared/fixtures/types'
-import { GatedHoverSync } from './GatedHoverSync'
-import { ObservableInteractionController } from './ObservableInteractionController'
-import {
-  RebuildableHorizontalLine, RebuildableNearestMarker, RebuildableVerticalLine
-} from './rebuildableComponents'
 
 // Позиции у компонентов разные: линии умеют 'cursor', маркер и тултип — 'nearest-data-point'.
 export type LinePosition = 'cursor' | 'data-point-x' | 'data-point-y' | 'data-point'
@@ -37,6 +36,8 @@ export type HoverConfig = {
   outOfDistanceVisibility: boolean
   tooltipPivot: 'avg' | 'nearest' | 'cursor'
   markerSize: number
+  // Хаб ховера подключается и отключается тем же updateOptions, что и остальные опции.
+  sync: boolean
 }
 
 export type ZoomConfig = {
@@ -71,6 +72,7 @@ export function defaultHover(): HoverConfig {
     outOfDistanceVisibility: false,
     tooltipPivot: 'avg',
     markerSize: 4,
+    sync: true,
   }
 }
 
@@ -87,7 +89,7 @@ function formatValue(value: number) {
 
 type Init = {
   seriesCount?: number
-  hoverSync?: GatedHoverSync
+  hoverSync?: HoverSynchronizer
   hover?: Partial<HoverConfig>
   zoom?: ZoomConfig
 }
@@ -98,13 +100,21 @@ export class DemoChart extends UniversalChart {
 
   readonly tooltipCtx = ref<TooltipCtx | null>(null)
   readonly callback = new CallbackComponent()
-  readonly controller: ObservableInteractionController
+  readonly controller: InteractionController
   readonly zoomComponent: ZoomChartComponent
 
   private readonly lines: AutoLine[] = []
   private readonly maskMain: ChartMask
-  private readonly hoverSync: GatedHoverSync | null
-  private hoverComponents: InteractionComponent[] = []
+  private readonly hoverSync: HoverSynchronizer | null
+
+  // Компоненты живут столько же, сколько чарт: тумблеры их подключают и отключают,
+  // всё остальное меняется через updateOptions.
+  private readonly verticalLine = new VerticalLine()
+  private readonly horizontalLine = new HorizontalLine()
+  private readonly marker = new NearestMarker()
+  private readonly tooltip = new ChartTooltip()
+  private readonly present = new Set<InteractionComponent>()
+
   private hover: HoverConfig
 
   constructor(init: Init = {}) {
@@ -144,8 +154,12 @@ export class DemoChart extends UniversalChart {
     plotRoot.maskBy(this.maskMain).clipBy(clipMain)
 
     this.zoomComponent = new ZoomChartComponent({ chart: this, ...(init.zoom ?? defaultZoom()) })
-    this.controller = new ObservableInteractionController('hover')
+    this.controller = new InteractionController('hover')
+
+    // Порядок важен один раз и здесь: onBeforeLayout хаба обязан идти после зума.
     this.controller.addComponent(this.zoomComponent)
+    if (this.hoverSync) this.controller.addComponent(this.hoverSync)
+    this.controller.addComponent(this.callback)
 
     this
       .addPlot(new TicksByLabels(labelsY, { start: 0 }), 'ticks')
@@ -184,34 +198,23 @@ export class DemoChart extends UniversalChart {
     return this
   }
 
-  // Опции компонентов задаются в конструкторе, поэтому переключение любого тумблера —
-  // это пересборка набора. Порядок фиксирован: зум уже добавлен, дальше консьюмеры
-  // hover-sync, потом сам хаб (его onBeforeLayout обязан идти после зума), потом коллбеки.
   private applyHover() {
-    for (const component of this.hoverComponents) this.controller.removeComponent(component)
-    this.hoverComponents = []
-
     const hover = this.hover
-    const sync = this.hoverSync ?? undefined
+    const sync = hover.sync ? (this.hoverSync ?? undefined) : undefined
     const activateDistance = hover.activateDistance ?? undefined
 
-    if (hover.verticalLine) this.add(new RebuildableVerticalLine({
+    const lineOptions = {
       position: hover.linePosition,
       offset: { start: hover.lineOffset, end: hover.lineOffset },
       activateDistance,
       outOfDistanceVisibility: hover.outOfDistanceVisibility,
       hoverSync: sync,
-    }))
+    }
 
-    if (hover.horizontalLine) this.add(new RebuildableHorizontalLine({
-      position: hover.linePosition,
-      offset: { start: hover.lineOffset, end: hover.lineOffset },
-      activateDistance,
-      outOfDistanceVisibility: hover.outOfDistanceVisibility,
-      hoverSync: sync,
-    }))
+    this.verticalLine.updateOptions(lineOptions)
+    this.horizontalLine.updateOptions(lineOptions)
 
-    if (hover.marker) this.add(new RebuildableNearestMarker({
+    this.marker.updateOptions({
       classes: 'markers',
       markerClasses: 'hover-marker',
       classesForDataSource: ['m0', 'm1', 'm2'],
@@ -221,26 +224,35 @@ export class DemoChart extends UniversalChart {
       position: hover.pointPosition,
       activateDistance,
       hoverSync: sync,
-    }))
+    })
 
-    if (hover.tooltip) this.add(new ChartTooltip({
+    this.tooltip.updateOptions({
       position: hover.pointPosition,
       tooltipPivot: hover.tooltipPivot,
       activateDistance,
       onHide: () => this.tooltipCtx.value = null,
       onPositionChange: ctx => this.tooltipCtx.value = ctx,
       hoverSync: sync,
-    }))
-    else this.tooltipCtx.value = null
+    })
 
-    if (this.hoverSync) this.add(this.hoverSync.hub)
-    this.add(this.callback)
+    this.toggle(this.verticalLine, hover.verticalLine)
+    this.toggle(this.horizontalLine, hover.horizontalLine)
+    this.toggle(this.marker, hover.marker)
+    this.toggle(this.tooltip, hover.tooltip)
+    if (!hover.tooltip) this.tooltipCtx.value = null
 
     this.scheduleRender()
   }
 
-  private add(component: InteractionComponent) {
-    this.hoverComponents.push(component)
-    this.controller.addComponent(component)
+  private toggle(component: InteractionComponent, enabled: boolean) {
+    if (enabled === this.present.has(component)) return
+
+    if (enabled) {
+      this.controller.addComponent(component)
+      this.present.add(component)
+    } else {
+      this.controller.removeComponent(component)
+      this.present.delete(component)
+    }
   }
 }

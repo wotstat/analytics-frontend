@@ -1,10 +1,10 @@
 // Минимальный чарт-подложка для секций страницы: ось + тики + подписи и самый простой
 // рендерер данных. Всё, что меняется структурно (стороны осей, тип тиков, слот подписей),
-// задаётся в конструкторе — экземпляр пересоздаётся, потому что убрать renderer из чарта
-// движок не умеет.
+// задаётся в конструкторе — экземпляр пересоздаётся.
 
 import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
-import { Axis } from '@/shared/uiKit/chart/universalChart/axis/Axis'
+import { ChartAxis } from '@/shared/uiKit/chart/universalChart/axis/ChartAxis'
+import { PlotAreaBorder, type PlotAreaBorderSides } from '@/shared/uiKit/chart/universalChart/axis/PlotAreaBorder'
 import { ChartClip } from '@/shared/uiKit/chart/universalChart/defs/ChartClip'
 import { AutoLabels, type Options as LabelsOptions } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
 import { Bar, type BarDataset, type BarStrategy } from '@/shared/uiKit/chart/universalChart/plot/bar/Bar'
@@ -15,10 +15,12 @@ import { TicksByValues } from '@/shared/uiKit/chart/universalChart/ticks/TicksBy
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import type { Offset4Side } from '@/shared/uiKit/chart/universalChart/utils/utils'
 import type { ChartSeries } from '@/pages/debug/shared/fixtures/types'
-import { readRenderedLabels, RenderProbe, type ProbeState, type StepProbe } from './probe'
+import { readRenderedLabels, type ProbeState, type StepProbe } from './probe'
+
+export type { BorderVariant, PlotAreaBorderSides } from '@/shared/uiKit/chart/universalChart/axis/PlotAreaBorder'
 
 // start/end у тиков задаются только в конструкторе. Пересоздавать чарт на каждый шаг
-// ползунка не хочется — открываем их наружу подклассом.
+// ползунка не хочется — открываем их наружу подклассом, движку это знать незачем.
 class LiveTicksByValues extends TicksByValues {
   setOffsets(start: number | null, end: number | null) {
     this.sizes.start = start
@@ -33,8 +35,6 @@ class LiveTicksByLabels extends TicksByLabels {
   }
 }
 
-export type AxisVariant = 'space' | 'full'
-export type AxisSides = { top?: AxisVariant, right?: AxisVariant, bottom?: AxisVariant, left?: AxisVariant }
 export type TicksKind = 'none' | 'labels' | 'values'
 export type LayoutVariant = 'horizontal' | 'vertical' | 'square'
 
@@ -45,7 +45,7 @@ export type LabelsChartSetup = {
   // Подписи всегда рисуются снизу и слева; слот меняет только то, где резервируется место.
   xSlot?: 'bottom' | 'top'
   ySlot?: 'left' | 'right'
-  axes?: AxisSides
+  axes?: PlotAreaBorderSides
   ticks?: {
     x?: TicksKind
     y?: TicksKind
@@ -71,7 +71,6 @@ export class LabelsChart extends UniversalChart {
 
   private line: AutoLine | null = null
   private bar: Bar | null = null
-  private zeroTicks: TicksByValues | null = null
 
   constructor(private setup: LabelsChartSetup) {
     super({
@@ -96,16 +95,8 @@ export class LabelsChart extends UniversalChart {
     this.ticksX = this.createTicks('horizontal', setup.ticks?.x ?? 'none', this.labelsX)
     this.ticksY = this.createTicks('vertical', setup.ticks?.y ?? 'none', this.labelsY)
 
-    // Ось по нулю Axis рисовать не умеет — только по границам layout. Обходной путь:
-    // тик по значению 0 на всю ширину области.
-    if (setup.zeroLine) {
-      this.zeroTicks = new TicksByValues('vertical', { classes: 'zero-line' })
-      this.zeroTicks.setTicks([0])
-    }
-
     if (this.ticksY) this.addPlot(this.ticksY, 'ticks')
     if (this.ticksX) this.addPlot(this.ticksX, 'ticks')
-    if (this.zeroTicks) this.addPlot(this.zeroTicks, 'ticks')
 
     if (setup.plot === 'bar') {
       this.bar = new Bar({ classes: 'debug-bars', strategy: setup.barStrategy ?? { type: 'grouped', padding: 0.25 } })
@@ -115,7 +106,8 @@ export class LabelsChart extends UniversalChart {
       this.addPlot(this.line, 'plot')
     }
 
-    if (setup.axes && Object.keys(setup.axes).length > 0) this.addPlot(new Axis(setup.axes), 'ticks')
+    if (setup.axes && Object.keys(setup.axes).length > 0) this.addPlot(new PlotAreaBorder(setup.axes), 'ticks')
+    if (setup.zeroLine) this.addPlot(new ChartAxis('vertical', 0, 'zero-line'), 'ticks')
 
     if (this.labelsX) this.addSlot(setup.xSlot ?? 'bottom', this.labelsX, 'labels')
     if (this.labelsY) this.addSlot(setup.ySlot ?? 'left', this.labelsY, 'labels')
@@ -123,7 +115,7 @@ export class LabelsChart extends UniversalChart {
     const defs = [clipBottom, clipLeft].filter(x => x !== null)
     if (defs.length > 0) this.addDefs(...defs)
 
-    if (setup.onRender) this.addPlot(new RenderProbe((space, overflow, full) => setup.onRender?.({
+    if (setup.onRender) this.onAfterRender.on(({ space, overflow, full }) => setup.onRender?.({
       bounds: { minX: space.bounds.minX, maxX: space.bounds.maxX, minY: space.bounds.minY, maxY: space.bounds.maxY },
       layout: { ...space.layout },
       overflow: { ...overflow },
@@ -133,7 +125,7 @@ export class LabelsChart extends UniversalChart {
       y: readRenderedLabels(this.labelsY, 'vertical'),
       xTicks: this.ticksX?.getTicks(space).map(tick => tick.value) ?? [],
       yTicks: this.ticksY?.getTicks(space).map(tick => tick.value) ?? [],
-    })))
+    }))
 
     this.setMinLayoutSize(setup.minLayoutSize ?? { top: 8, right: 8 })
   }
@@ -169,23 +161,19 @@ export class LabelsChart extends UniversalChart {
     return this
   }
 
-  // updateOptions сам по себе перерисовку не заказывает — нужен dataDidChange.
   setXLabels(options: LabelsOptions) {
     this.labelsX?.updateOptions(options)
-    this.dataDidChange()
     return this
   }
 
   setYLabels(options: LabelsOptions) {
     this.labelsY?.updateOptions(options)
-    this.dataDidChange()
     return this
   }
 
   setTickValues(axis: 'horizontal' | 'vertical', values: number[]) {
     const ticks = axis === 'horizontal' ? this.ticksX : this.ticksY
     if (ticks instanceof TicksByValues) ticks.setTicks(values)
-    this.dataDidChange()
     return this
   }
 }

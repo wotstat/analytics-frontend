@@ -30,8 +30,8 @@
     </div>
 
     <div class="debug-grid" style="--debug-grid-min: 360px">
-      <ChartStage :chart="instance.chart" :version :height="220" />
-      <ChartStage :chart="instance.referenceChart" :version :height="220" />
+      <ChartStage :chart="instance.chart" :height="220" />
+      <ChartStage :chart="instance.referenceChart" :height="220" />
     </div>
 
     <table class="debug-table">
@@ -85,10 +85,11 @@
 
     <p class="debug-note">
       <b>Переключателя реализации нет.</b> Zig→wasm и TS-фоллбек живут в одном файле, выбор молчаливый: модуль
-      грузится один раз при импорте, и если инициализация упала или вызов бросил — путь строит TS. Наружу движок
-      не отдаёт ни флага, ни счётчика, поэтому «wasm» в шапке — это отдельная проверка, что бинарь в этом браузере
-      вообще инициализируется, а не признак того, какая реализация нарисовала линию выше. Обе реализации обязаны
-      давать одинаковый путь; расхождение ищется сравнением d, а не глазами.
+      грузится один раз при импорте, и если инициализация упала — путь строит TS. Состояние загрузки движок отдаёт:
+      «wasm» в шапке — это <span class="debug-value">monotoneXPathWasmReady()</span>, синхронный вариант —
+      <span class="debug-value">getMonotoneXPathWasmStatus()</span>. Счётчика вызовов по реализациям нет: статус
+      говорит, что доступно, а не сколько раз чем воспользовались. Обе реализации обязаны давать одинаковый путь;
+      расхождение ищется сравнением d, а не глазами.
     </p>
   </DebugSection>
 </template>
@@ -100,10 +101,9 @@ import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { syntheticSeries } from '@/pages/debug/shared/fixtures/syntheticSeries'
 import type { ChartPoint } from '@/pages/debug/shared/fixtures/types'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
-import { MonotoneXPath } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/MonotoneXPath'
+import { MonotoneXPath, monotoneXPathWasmReady } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/MonotoneXPath'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
-import wasmInit from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/monotoneXPath/monotoneXPath.wasm?init'
 import ChartStage from '../shared/ChartStage.vue'
 import { useChartInstance } from '../shared/useChartInstance'
 import { afterRender, pathInfo, type PathInfo } from '../shared/afterRender'
@@ -152,7 +152,7 @@ const bounds = computed(() => {
   return { minX: 0, maxX: Math.max(1, full.value.length - 1), minY, maxY }
 })
 
-const { instance, version } = useChartInstance(build)
+const { instance } = useChartInstance(build)
 
 function build() {
   const fullLine = new AutoLine({ classes: ['main-line', 'series-a'], smoothingMethod: 'monotone' })
@@ -174,9 +174,9 @@ function build() {
 watchEffect(() => redraw())
 
 onMounted(() => {
-  wasmInit()
-    .then(() => wasmState.value = 'инициализируется')
-    .catch(() => wasmState.value = 'не загрузился, работает TS-фоллбек')
+  monotoneXPathWasmReady().then(status => wasmState.value = status === 'ready'
+    ? 'загружен, путь строит wasm'
+    : 'не загрузился, работает TS-фоллбек')
 })
 
 function redraw() {

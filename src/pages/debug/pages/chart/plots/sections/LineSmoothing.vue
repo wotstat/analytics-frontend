@@ -53,7 +53,7 @@
       </span>
     </div>
 
-    <ChartStage :chart="instance.chart" :version :class="`stroke-${width}`" :height="260" />
+    <ChartStage :chart="instance.chart" :class="`stroke-${width}`" :height="260" />
 
     <p class="debug-note">
       <b>precision действует ровно на одну ветку — smooth.</b> Monotone печатает координаты с двумя знаками жёстко
@@ -123,7 +123,7 @@ const width = ref<typeof widths[number]>(2)
 
 const path = ref<PathInfo>({ length: 0, curves: 0, lines: 0, moves: 0 })
 
-const { instance, version, rebuild } = useChartInstance(build)
+const { instance, rebuild } = useChartInstance(build)
 
 function build() {
   const line = new AutoLine({

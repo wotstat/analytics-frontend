@@ -57,14 +57,19 @@
       <p class="debug-note">
         Общее для всей страницы: движок не Vue-реактивный. Обёртка создаёт экземпляр класса, дальше всё императивно,
         поэтому каждый тумблер здесь — это вызов метода экземпляра из <span class="debug-value">watchEffect</span>.
-        Опции ховер-компонентов задаются в конструкторе, так что переключение любого из них пересобирает набор;
-        у <span class="debug-value">ZoomChartComponent</span> для этого есть
-        <span class="debug-value">updateOptions</span>, и он единственный переживает смену настроек на лету.
+        Опции переживают смену настроек на лету: <span class="debug-value">updateOptions</span> есть и у
+        <span class="debug-value">ZoomChartComponent</span>, и у линий, маркера и тултипа. Компоненты на этой странице
+        создаются один раз, а тумблеры лишь подключают их и отключают через
+        <span class="debug-value">addComponent</span> / <span class="debug-value">removeComponent</span>.
       </p>
 
       <p class="debug-note">
-        Текущая область (<span class="debug-value">renderBounds</span>) и состояние автомата на страницах читаются
-        опросом по кадрам и подпиской на переходы: наружу движок ни того, ни другого реактивно не отдаёт.
+        Текущая область (<span class="debug-value">renderBounds</span>) и состояние автомата читаются событиями:
+        <span class="debug-value">chart.onAfterRender</span> отдаёт фактические bounds и layout готового кадра, а
+        <span class="debug-value">controller.onStateChanged</span> — каждый переход автомата, включая те, что короче
+        кадра. Само состояние читается из <span class="debug-value">controller.currentState</span>, а какое оно —
+        страница определяет через <span class="debug-value">instanceof</span>: имена классов съедает минификатор, а
+        тащить в движок поле-ярлык ради дебага незачем.
         <span class="debug-value">FloatingTooltip</span> телепортируется в
         <span class="debug-value">#popover-root</span> наружу дебаг-обвязки, поэтому карточки тултипов стилизованы
         локально — классы <span class="debug-value">.debug-*</span> до них не достают.
