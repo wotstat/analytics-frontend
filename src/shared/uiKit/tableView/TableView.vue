@@ -1,5 +1,6 @@
 <template>
-  <div class="reusable-table" ref="reusableTable" :style="{ [`--background-color`]: props.backgroundColor }">
+  <div class="reusable-table reusable-table-root" ref="reusableTable"
+    :style="{ [`--background-color`]: props.backgroundColor }">
   </div>
 </template>
 
@@ -18,7 +19,9 @@ const props = defineProps<{
 let reusableTableController: TableView | null = null
 
 defineExpose({
-  reusableTable: reusableTableController,
+  get reusableTable() {
+    return reusableTableController
+  },
   dataDidUpdate: () => {
     reusableTableController?.dataDidUpdate()
   },

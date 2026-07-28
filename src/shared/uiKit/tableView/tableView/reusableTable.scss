@@ -31,6 +31,7 @@
     overflow-x: hidden;
     overscroll-behavior: contain;
     isolation: isolate;
+    overflow-anchor: none;
 
     .wrapper {
       will-change: transform;
@@ -90,8 +91,12 @@
         flex-direction: column-reverse;
       }
 
+      // Абсолютно, а не в потоке: сдвиг видимого окна задаётся через top, и в потоке он
+      // растягивал область прокрутки на свою величину (см. updateScroll в TableView.ts).
       .content-container {
-        position: relative;
+        position: absolute;
+        left: 0;
+        right: 0;
       }
     }
   }
@@ -148,17 +153,17 @@
 
 .reusable-table-root.grouped-style {
 
+  .fallback-scroll,
+  .scroll {
+    .section .content-container {
+      background-color: var(--section-background-color, #393939);
+    }
+  }
+
   .content-container {
     overflow: hidden;
     border-radius: 6px;
     margin-right: 3px;
-
-    &::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-color: var(--section-background-color, #393939);
-    }
 
     .cell-line {
       position: relative;

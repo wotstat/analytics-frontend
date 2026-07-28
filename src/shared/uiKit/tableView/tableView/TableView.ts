@@ -67,6 +67,7 @@ export class TableView {
 
   private readonly sectionsPendingOffsetUpdate = new Set<number>()
   private readonly reusableStorage = new ReusableStorage()
+  private readonly resizeObserver = new ResizeObserver(() => this.containerDidResize())
 
   private readonly scrollStorage: Storage = {
     cells: new Map(),
@@ -98,6 +99,7 @@ export class TableView {
     this.wrapper = divWithClass('wrapper', this.content)
 
     this.scroll.addEventListener('scroll', this.onScroll.bind(this), { passive: true })
+    this.resizeObserver.observe(this.scroll)
 
     this.delegate.onSetupComplete?.(this)
 
@@ -105,11 +107,14 @@ export class TableView {
   }
 
   scrollTo(path: IndexPath, behavior: ScrollBehavior) {
-    const target = this.sectionTopOffset[path.section] + this.rowsTopOffset[path.row] - this.headersHeight[path.section]
-    if (target !== undefined) {
-      this.scroll.scrollTo({ top: target, behavior })
-      this.scheduleUpdate()
+    const target = this.rowsTopOffset[this.rowIndex(path.section, path.row)] - this.headersHeight[path.section]
+    if (!Number.isFinite(target)) {
+      console.warn(`TableView: cannot scroll to ${path.section}:${path.row} — index out of bounds`)
+      return
     }
+
+    this.scroll.scrollTo({ top: target, behavior })
+    this.scheduleUpdate()
   }
 
   dataDidUpdate() {
@@ -162,9 +167,21 @@ export class TableView {
   }
 
   dispose() {
+    this.resizeObserver.disconnect()
     this.root.removeChild(this.scroll)
+    this.root.removeChild(this.fallbackScroll)
     if (this.updateHandle) cancelAnimationFrame(this.updateHandle)
     if (this.updateVelocityHandle) cancelAnimationFrame(this.updateVelocityHandle)
+  }
+
+  private containerDidResize() {
+    this.updateHasScroll()
+    this.scheduleUpdate()
+  }
+
+  private updateHasScroll() {
+    if (this.totalHeight > this.scroll.clientHeight) this.fallbackScroll.classList.add('has-scroll')
+    else this.fallbackScroll.classList.remove('has-scroll')
   }
 
   private recalculateTotalHeight() {
@@ -216,8 +233,7 @@ export class TableView {
 
     this.totalHeight = totalHeight
     this.content.style.height = `${totalHeight}px`
-    if (totalHeight > this.scroll.clientHeight) this.fallbackScroll.classList.add('has-scroll')
-    else this.fallbackScroll.classList.remove('has-scroll')
+    this.updateHasScroll()
     this.scheduleUpdate()
   }
 
@@ -227,33 +243,30 @@ export class TableView {
   }
 
   private getVisibleSectionsInterval(top: number, bottom: number): Interval {
-    let firstIndexBefore = -1
-    let lastIndexAfter = -1
+    const count = this.sectionCellsHeight.length
+    const sectionBottom = (i: number) => this.sectionTopOffset[i] +
+      this.sectionCellsHeight[i] + this.headersHeight[i] + this.footersHeight[i]
 
-    for (let i = 0; i < this.sectionCellsHeight.length; i++) {
-      const sectionHeight = this.sectionCellsHeight[i] + this.headersHeight[i] + this.footersHeight[i]
-      if (sectionHeight + this.sectionTopOffset[i] > top && firstIndexBefore === -1) firstIndexBefore = i
-      if (sectionHeight + this.sectionTopOffset[i] > bottom && lastIndexAfter === -1) lastIndexAfter = i
-    }
+    const firstIndexBefore = firstIndexWhere(count, i => sectionBottom(i) > top)
+    const lastIndexAfter = firstIndexWhere(count, i => sectionBottom(i) > bottom)
 
     return [
-      firstIndexBefore === -1 ? (this.sectionCellsHeight.length - 1) : firstIndexBefore,
-      lastIndexAfter === -1 ? (this.sectionCellsHeight.length - 1) : lastIndexAfter
+      firstIndexBefore === -1 ? (count - 1) : firstIndexBefore,
+      lastIndexAfter === -1 ? (count - 1) : lastIndexAfter
     ]
   }
 
   private getVisibleRowsInterval(top: number, bottom: number): Interval {
-    let firstIndexBefore = -1
-    let lastIndexAfter = -1
+    const count = this.rowsTopOffset.length
 
-    for (let i = 0; i <= this.rowsTopOffset.length; i++) {
-      if (this.rowsTopOffset[i] + this.cellsHeight[i] > top && firstIndexBefore === -1) firstIndexBefore = i
-      if (this.rowsTopOffset[i] > bottom && lastIndexAfter === -1) lastIndexAfter = i - 1
-    }
+    const firstIndexBefore = firstIndexWhere(count, i => this.rowsTopOffset[i] + this.cellsHeight[i] > top)
+    const firstIndexAfterBottom = firstIndexWhere(count, i => this.rowsTopOffset[i] > bottom)
+
+    if (firstIndexAfterBottom === 0) return [0, -1]
 
     return [
-      firstIndexBefore === -1 ? (this.rowsTopOffset.length - 1) : firstIndexBefore,
-      lastIndexAfter === -1 ? (this.rowsTopOffset.length - 1) : lastIndexAfter
+      firstIndexBefore === -1 ? (count - 1) : firstIndexBefore,
+      firstIndexAfterBottom === -1 ? (count - 1) : firstIndexAfterBottom - 1
     ]
   }
 
@@ -262,12 +275,14 @@ export class TableView {
 
       const section = getSection()
 
+      const isEmpty = this.rowsCountBySection[index] === 0
+
       section.setup(
         index,
         this.headersHeight[index],
         this.footersHeight[index],
-        this.cellsHeight[this.rowIndex(index, 0)],
-        this.cellsHeight[this.rowIndex(index, -1)],
+        isEmpty ? 0 : this.cellsHeight[this.rowIndex(index, 0)],
+        isEmpty ? 0 : this.cellsHeight[this.rowIndex(index, -1)],
         this.sectionCellsHeight[index]
       )
 
@@ -370,8 +385,10 @@ export class TableView {
     const sectionsInterval = this.getVisibleSectionsInterval(scrollTop, scrollBottom)
     const rowsInterval = this.getVisibleRowsInterval(scrollTop, scrollBottom)
 
-    this.wrapper.style.paddingTop = `${this.sectionTopOffset[sectionsInterval[0]]}px`
-    this.fallbackWrapper.style.paddingTop = `${this.sectionTopOffset[sectionsInterval[0]]}px`
+    const paddingTop = this.sectionTopOffset[sectionsInterval[0]] ?? 0
+
+    this.wrapper.style.paddingTop = `${paddingTop}px`
+    this.fallbackWrapper.style.paddingTop = `${paddingTop}px`
     this.fallbackContent.style.marginTop = `${-scrollTop}px`
 
     this.sectionsPendingOffsetUpdate.clear()
@@ -412,8 +429,10 @@ export class TableView {
       const start = this.rowIndex(index, 0)
 
       const targetOffset = start < rowsInterval[0] ? this.rowsTopOffset[rowsInterval[0]] - this.rowsTopOffset[start] : 0
-      this.scrollStorage.sections.get(index)!.contentContainer.style.marginTop = `${targetOffset}px`
-      this.fallbackStorage.sections.get(index)!.contentContainer.style.marginTop = `${targetOffset}px`
+
+      const top = (this.headersHeight[index] ?? 0) + targetOffset
+      this.scrollStorage.sections.get(index)!.contentContainer.style.top = `${top}px`
+      this.fallbackStorage.sections.get(index)!.contentContainer.style.top = `${top}px`
     }
   }
 
@@ -424,6 +443,22 @@ export class TableView {
 
 function intervalEqual(interval1: Interval, interval2: Interval) {
   return interval1[0] === interval2[0] && interval1[1] === interval2[1]
+}
+
+function firstIndexWhere(length: number, predicate: (index: number) => boolean) {
+  let low = 0
+  let high = length - 1
+  let result = -1
+
+  while (low <= high) {
+    const middle = (low + high) >> 1
+    if (predicate(middle)) {
+      result = middle
+      high = middle - 1
+    } else low = middle + 1
+  }
+
+  return result
 }
 
 function cleanupCell(index: number, indexPath: IndexPath, storage: Storage, reusableStorage: ReusableStorage) {
