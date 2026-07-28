@@ -237,6 +237,7 @@ async function hideAnimation(respectExtendedBefore = false) {
   const controller = new AbortController()
   hideAnimationController = controller
 
+  const wasDisplayed = displayed.value
   const extendedBefore = extendingAnimation.value || extended.value || respectExtendedBefore
   canBeExtended.value = false
   canBeAutoExtended.value = false
@@ -254,7 +255,7 @@ async function hideAnimation(respectExtendedBefore = false) {
     if (controller.signal.aborted) return
   }
   displayed.value = false
-  emits('closeAnimationEnd')
+  if (wasDisplayed) emits('closeAnimationEnd')
 }
 </script>
 

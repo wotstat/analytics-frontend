@@ -98,6 +98,7 @@ class Group {
       this.displayedBubble = key
     }
     else {
+      if (this.displayedBubble !== key) return
       this.displayedBubble = null
     }
     this.update()
@@ -238,6 +239,7 @@ export function useTipBubble(options: Options) {
     return false
   })
 
+  const readyToShow = computed(() => mayShowBubble.value && shouldShowBubble.value && !state.value.accepted)
   const showBubble = computed(() => mayShowBubble.value && shouldShowBubble.value && allowGroupedShow.value)
   const autoExtend = computed(() => mayAutoExtend.value)
 
@@ -245,13 +247,12 @@ export function useTipBubble(options: Options) {
   watch(showBubble, (value, old) => { if (value && !old) state.value.showCount += 1 })
   watch(showBubble, (value, old) => { if (!value && old) state.value.lastHideWrong = state.value.visibleWrongCount })
   watch(showBubble, (value) => { if (value) group?.setDisplayed(options.key, true) })
-  watch(() => mayShowBubble.value && shouldShowBubble.value, ready => {
+  watch(readyToShow, ready => {
     if (!group) return
-    if (ready) group?.addToWaitingQueue(options.key, () => allowGroupedShow.value = true)
-    else {
-      group?.removeFromWaitingQueue(options.key)
-      allowGroupedShow.value = false
-    }
+    if (ready) return group.addToWaitingQueue(options.key, () => allowGroupedShow.value = true)
+
+    group.removeFromWaitingQueue(options.key)
+    if (!state.value.accepted) allowGroupedShow.value = false
   }, { immediate: true })
 
   let displayBubbleTimeout: ReturnType<typeof setTimeout> | null = null
