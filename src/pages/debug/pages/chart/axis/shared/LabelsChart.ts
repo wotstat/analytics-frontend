@@ -3,8 +3,8 @@
 // задаётся в конструкторе — экземпляр пересоздаётся.
 
 import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
-import { ChartAxis } from '@/shared/uiKit/chart/universalChart/axis/ChartAxis'
-import { PlotAreaBorder, type PlotAreaBorderSides } from '@/shared/uiKit/chart/universalChart/axis/PlotAreaBorder'
+import { ChartAxis } from '@/shared/uiKit/chart/universalChart/plot/axis/ChartAxis'
+import { PlotAreaBorder, type PlotAreaBorderSides } from '@/shared/uiKit/chart/universalChart/plot/axis/PlotAreaBorder'
 import { ChartClip } from '@/shared/uiKit/chart/universalChart/defs/ChartClip'
 import { AutoLabels, type Options as LabelsOptions } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
 import { Bar, type BarDataset, type BarStrategy } from '@/shared/uiKit/chart/universalChart/plot/bar/Bar'
@@ -17,7 +17,7 @@ import type { Offset4Side } from '@/shared/uiKit/chart/universalChart/utils/util
 import type { ChartSeries } from '@/pages/debug/shared/fixtures/types'
 import { readRenderedLabels, type ProbeState, type StepProbe } from './probe'
 
-export type { BorderVariant, PlotAreaBorderSides } from '@/shared/uiKit/chart/universalChart/axis/PlotAreaBorder'
+export type { BorderVariant, PlotAreaBorderSides } from '@/shared/uiKit/chart/universalChart/plot/axis/PlotAreaBorder'
 
 // start/end у тиков задаются только в конструкторе. Пересоздавать чарт на каждый шаг
 // ползунка не хочется — открываем их наружу подклассом, движку это знать незачем.

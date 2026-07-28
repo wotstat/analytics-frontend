@@ -24,7 +24,7 @@ import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalCha
 import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager.ts'
 import { AutoLabels, Options } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels.ts'
 import { steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator.ts'
-import { PlotAreaBorder } from '@/shared/uiKit/chart/universalChart/axis/PlotAreaBorder'
+import { PlotAreaBorder } from '@/shared/uiKit/chart/universalChart/plot/axis/PlotAreaBorder'
 import { watchEffect } from 'vue'
 import { Bar } from '@/shared/uiKit/chart/universalChart/plot/bar/Bar.ts'
 import { Classes } from '@/shared/uiKit/chart/universalChart/utils/utils.ts'

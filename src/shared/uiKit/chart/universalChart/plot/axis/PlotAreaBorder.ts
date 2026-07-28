@@ -1,6 +1,6 @@
-import { Overflow, Size } from '../UniversalChart'
-import { BasePlotRenderer } from '../plot/BasePlotRenderer'
-import { ChartSpace } from '../utils/ChartSpace'
+import { Overflow, Size } from '../../UniversalChart'
+import { BasePlotRenderer } from '../BasePlotRenderer'
+import { ChartSpace } from '../../utils/ChartSpace'
 
 export type BorderVariant = 'space' | 'full'
 
