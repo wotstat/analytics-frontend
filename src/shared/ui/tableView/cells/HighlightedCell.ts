@@ -31,12 +31,15 @@ export class HighlightedCellLine extends SelectableCellLine {
     this.setHighlightedVisible(ctx.highlightedText.intervals.length > 0)
     if (ctx.highlightedText.intervals.length > 0) {
       const parts = getHighlightedTextParts(ctx.highlightedText.highlightedString)
-      this.highlightedText.innerHTML = parts.map(part => {
-        if (part.highlight) {
-          return `<span class="highlight">${part.text}</span>`
-        }
-        return part.text
-      }).join('')
+
+      this.highlightedText.replaceChildren(...parts.map(part => {
+        if (!part.highlight) return document.createTextNode(part.text)
+
+        const span = document.createElement('span')
+        span.classList.add('highlight')
+        span.textContent = part.text
+        return span
+      }))
     }
   }
 
