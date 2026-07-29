@@ -74,10 +74,10 @@
     </p>
 
     <p class="debug-note">
-      Подписи умеют жить только снизу (горизонтальные) и слева (вертикальные):
-      <span class="debug-value">BaseLabels</span> считает координату от
-      <span class="debug-value">layout.y + layout.height</span> и <span class="debug-value">layout.x</span>. Включи
-      «подписи X в слот top» — место сверху зарезервируется, а текст останется снизу и наложится на нижнюю ось.
+      Сторона слота передаётся в <span class="debug-value">BaseLabels</span> и определяет обе части геометрии:
+      где чарт резервирует место и от какой границы области renderer откладывает
+      <span class="debug-value">labelOffset</span>. Включи «подписи X в слот top» — подписи вместе со своим местом
+      переедут наверх.
     </p>
 
     <p class="debug-note">

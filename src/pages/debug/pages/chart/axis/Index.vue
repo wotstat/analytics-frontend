@@ -35,7 +35,7 @@
             <td>
               <a href="#step-fallback">перебор</a>, <a href="#strategies">стратегии</a>,
               <a href="#interval">interval</a>, <a href="#cell">cell</a>, <a href="#formatting">формат</a>,
-              <a href="#tick-levels">уровни</a>
+              <a href="#label-slots">слоты</a>, <a href="#tick-levels">уровни</a>
             </td>
           </tr>
           <tr>
@@ -80,6 +80,7 @@
     </DebugSection>
 
     <AxisSides />
+    <LabelSlots />
     <TicksVariants />
     <TickLevels />
     <StepFallback />
@@ -97,6 +98,7 @@
 import DebugPage from '@/pages/debug/shared/DebugPage.vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import AxisSides from './sections/AxisSides.vue'
+import LabelSlots from './sections/LabelSlots.vue'
 import TicksVariants from './sections/TicksVariants.vue'
 import TickLevels from './sections/TickLevels.vue'
 import StepFallback from './sections/StepFallback.vue'

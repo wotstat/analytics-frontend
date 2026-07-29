@@ -1,6 +1,6 @@
 import { ChartSpace } from '../../utils/ChartSpace'
 import { Classes, joinClasses } from '../../utils/utils'
-import { Axis, BaseLabels, LabelData, LabelsFrame, LabelTickLevel } from '../BaseLabels'
+import { Axis, BaseLabels, LabelData, LabelsFrame, LabelTickLevel, LabelsSide } from '../BaseLabels'
 import { calculateClassic, calculateInterval, cleanupOutside, extend, fit, intervalFit } from './utils'
 
 export type Strategy = 'classic-flow' | 'classic' | {
@@ -128,8 +128,8 @@ function collectLevelValues(ctx: {
 
 export class AutoLabels extends BaseLabels {
 
-  constructor(axis: Axis, private options: Options) {
-    super(axis, { offset: options.labelOffset, stableWidth: options.stableWidth })
+  constructor(axis: Axis, private options: Options, side?: LabelsSide) {
+    super(axis, { offset: options.labelOffset, stableWidth: options.stableWidth }, side)
   }
 
   private resolveOverridesForStep(step: number): LabelStepOverrides | null {

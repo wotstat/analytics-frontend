@@ -24,6 +24,7 @@ export type LabelsFrame = {
 
 const DEFAULT_LABEL_OFFSET = 15
 export type Axis = 'vertical' | 'horizontal'
+export type LabelsSide = 'top' | 'right' | 'bottom' | 'left'
 
 export abstract class BaseLabels implements SlotRenderer {
 
@@ -44,8 +45,18 @@ export abstract class BaseLabels implements SlotRenderer {
   private fontStyleDirty = false
   private probeLabel: SVGTextElement | null = null
 
-  constructor(readonly axis: Axis, options: { offset?: number, stableWidth?: boolean | number } = {}) {
-    this.root.classList.add(axis == 'horizontal' ? 'x-labels' : 'y-labels')
+  constructor(
+    readonly axis: Axis,
+    options: { offset?: number, stableWidth?: boolean | number } = {},
+    readonly side: LabelsSide = axis === 'horizontal' ? 'bottom' : 'left',
+  ) {
+    const validSide = axis === 'horizontal'
+      ? side === 'top' || side === 'bottom'
+      : side === 'left' || side === 'right'
+
+    if (!validSide) throw new Error(`Labels side "${side}" is incompatible with axis "${axis}"`)
+
+    this.root.classList.add(axis == 'horizontal' ? 'x-labels' : 'y-labels', `${side}-labels`)
     this.offset = options.offset ?? DEFAULT_LABEL_OFFSET
     this.stableWidth = options.stableWidth ?? false
     this.probeLabel = this.createLabel()
@@ -148,7 +159,9 @@ export abstract class BaseLabels implements SlotRenderer {
   }
 
   protected renderHorizontalLabel(space: ChartSpace, labels: LabelData[]) {
-    const y = space.layout.y + space.layout.height + this.getYOffset()
+    const y = this.side === 'top'
+      ? space.layout.y - this.offset - this.getTextMetrics().fontBoundingBoxDescent
+      : space.layout.y + space.layout.height + this.getYOffset()
     const yStr = y.toString()
 
     if (this.lastPersistent !== y) {
@@ -175,7 +188,9 @@ export abstract class BaseLabels implements SlotRenderer {
   }
 
   protected renderVerticalLabel(space: ChartSpace, labels: LabelData[]) {
-    const x = space.layout.x - this.getXOffset(space)
+    const x = this.side === 'right'
+      ? space.layout.x + space.layout.width + this.getXOffset(space)
+      : space.layout.x - this.getXOffset(space)
     const xStr = x.toString()
 
     if (this.lastPersistent !== x) {

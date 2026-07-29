@@ -31,14 +31,17 @@ class LiveTicksByValues extends TicksByValues {
 
 export type TicksKind = 'none' | 'labels' | 'values'
 export type LayoutVariant = 'horizontal' | 'vertical' | 'square'
+export type XLabelsSlot = 'bottom' | 'top'
+export type YLabelsSlot = 'left' | 'right'
 
 export type LabelsChartSetup = {
   layoutVariant?: LayoutVariant
   x?: LabelsOptions | null
   y?: LabelsOptions | null
-  // Подписи всегда рисуются снизу и слева; слот меняет только то, где резервируется место.
-  xSlot?: 'bottom' | 'top'
-  ySlot?: 'left' | 'right'
+  xSlot?: XLabelsSlot
+  ySlot?: YLabelsSlot
+  xSlots?: readonly XLabelsSlot[]
+  ySlots?: readonly YLabelsSlot[]
   axes?: PlotAreaBorderSides
   ticks?: {
     x?: TicksKind
@@ -51,6 +54,7 @@ export type LabelsChartSetup = {
   plot?: 'line' | 'bar' | 'none'
   barStrategy?: BarStrategy
   clipLabels?: boolean
+  clipPlot?: boolean
   zeroLine?: boolean
   minLayoutSize?: Offset4Side
   renderBoundsPadding?: Offset4Side
@@ -60,8 +64,10 @@ export type LabelsChartSetup = {
 
 export class LabelsChart extends UniversalChart {
 
-  readonly labelsX: AutoLabels | null = null
-  readonly labelsY: AutoLabels | null = null
+  readonly labelsXs: readonly AutoLabels[]
+  readonly labelsYs: readonly AutoLabels[]
+  readonly labelsX: AutoLabels | null
+  readonly labelsY: AutoLabels | null
   readonly ticksX: BaseTicks | TicksByLabels | null = null
   readonly ticksY: BaseTicks | TicksByLabels | null = null
 
@@ -75,17 +81,28 @@ export class LabelsChart extends UniversalChart {
       renderBoundsPadding: setup.renderBoundsPadding,
     })
 
-    const clipBottom = setup.clipLabels ? new ChartClip('bottom') : null
-    const clipLeft = setup.clipLabels ? new ChartClip('left') : null
+    const xSlots = [...new Set(setup.xSlots ?? [setup.xSlot ?? 'bottom'])]
+    const ySlots = [...new Set(setup.ySlots ?? [setup.ySlot ?? 'left'])]
+    const clips: ChartClip[] = []
+    const plotClip = setup.clipPlot ? new ChartClip('center') : null
 
-    if (setup.x) {
-      this.labelsX = new AutoLabels('horizontal', setup.x)
-      if (clipBottom) this.labelsX.clipBy(clipBottom)
-    }
+    if (plotClip) clips.push(plotClip)
 
-    if (setup.y) {
-      this.labelsY = new AutoLabels('vertical', setup.y)
-      if (clipLeft) this.labelsY.clipBy(clipLeft)
+    this.labelsXs = setup.x
+      ? xSlots.map(side => new AutoLabels('horizontal', setup.x!, side))
+      : []
+    this.labelsYs = setup.y
+      ? ySlots.map(side => new AutoLabels('vertical', setup.y!, side))
+      : []
+    this.labelsX = this.labelsXs[0] ?? null
+    this.labelsY = this.labelsYs[0] ?? null
+
+    if (setup.clipLabels) {
+      for (const labels of [...this.labelsXs, ...this.labelsYs]) {
+        const clip = new ChartClip(labels.side)
+        labels.clipBy(clip)
+        clips.push(clip)
+      }
     }
 
     this.ticksX = this.createTicks('horizontal', setup.ticks?.x ?? 'none', this.labelsX)
@@ -96,20 +113,21 @@ export class LabelsChart extends UniversalChart {
 
     if (setup.plot === 'bar') {
       this.bar = new Bar({ classes: 'debug-bars', strategy: setup.barStrategy ?? { type: 'grouped', padding: 0.25 } })
+      if (plotClip) this.bar.clipBy(plotClip)
       this.addPlot(this.bar, 'plot')
     } else if (setup.plot !== 'none') {
       this.line = new AutoLine({ classes: 'main-line', smoothingMethod: 'monotone' })
+      if (plotClip) this.line.clipBy(plotClip)
       this.addPlot(this.line, 'plot')
     }
 
     if (setup.axes && Object.keys(setup.axes).length > 0) this.addPlot(new PlotAreaBorder(setup.axes), 'ticks')
     if (setup.zeroLine) this.addPlot(new ChartAxis('vertical', 0, 'zero-line'), 'ticks')
 
-    if (this.labelsX) this.addSlot(setup.xSlot ?? 'bottom', this.labelsX, 'labels')
-    if (this.labelsY) this.addSlot(setup.ySlot ?? 'left', this.labelsY, 'labels')
+    for (const labels of this.labelsXs) this.addSlot(labels.side, labels, 'labels')
+    for (const labels of this.labelsYs) this.addSlot(labels.side, labels, 'labels')
 
-    const defs = [clipBottom, clipLeft].filter(x => x !== null)
-    if (defs.length > 0) this.addDefs(...defs)
+    if (clips.length > 0) this.addDefs(...clips)
 
     if (setup.onRender) this.onAfterRender.on(({ space, overflow, full }) => setup.onRender?.({
       bounds: { minX: space.bounds.minX, maxX: space.bounds.maxX, minY: space.bounds.minY, maxY: space.bounds.maxY },
@@ -182,12 +200,12 @@ export class LabelsChart extends UniversalChart {
   }
 
   setXLabels(options: LabelsOptions) {
-    this.labelsX?.updateOptions(options)
+    for (const labels of this.labelsXs) labels.updateOptions(options)
     return this
   }
 
   setYLabels(options: LabelsOptions) {
-    this.labelsY?.updateOptions(options)
+    for (const labels of this.labelsYs) labels.updateOptions(options)
     return this
   }
 

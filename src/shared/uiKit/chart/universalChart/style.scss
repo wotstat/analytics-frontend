@@ -31,6 +31,10 @@
           text-anchor: end;
           alignment-baseline: central;
         }
+
+        &.right-labels .label {
+          text-anchor: start;
+        }
       }
     }
 
