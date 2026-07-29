@@ -120,8 +120,8 @@
     <p class="debug-note">
       <b>onlyFitted</b> в docs не описан: он выбрасывает подписи, которые не влезли целиком в допустимую область
       (<span class="debug-value">cleanupOutside</span>). Включи его вместе с classic — крайние подписи исчезнут вместо
-      того чтобы торчать. При этом тики остаются: <span class="debug-value">getRequiredTicks</span> отдаёт список
-      <b>до</b> отсечения.
+      того чтобы торчать. При этом тики остаются: в major-уровень итога кадра
+      (<span class="debug-value">getTickLevels()[0]</span>) значения попадают <b>до</b> отсечения.
     </p>
 
     <p class="debug-note">

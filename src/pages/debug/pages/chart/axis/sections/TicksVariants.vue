@@ -16,6 +16,11 @@
 
     <div class="debug-row">
       <label class="debug-control">
+        <span class="debug-label">start: авто</span>
+        <input type="checkbox" v-model="autoStart">
+      </label>
+
+      <label class="debug-control" v-if="!autoStart">
         <span class="debug-label">start</span>
         <input type="range" min="-60" max="120" step="1" v-model.number="start">
         <span class="debug-value">{{ start }}</span>
@@ -88,21 +93,21 @@
     </p>
 
     <p class="debug-note">
-      Ползунок <b>start</b> работает только на левом графике. У <span class="debug-value">TicksByLabels</span> он не
-      настраивается вовсе: <span class="debug-value">getTicks()</span> на каждом кадре кладёт в
-      <span class="debug-value">sizes.start</span> значение <span class="debug-value">labels.getTicksOffset()</span>,
-      затирая заданное. Это не недосмотр — длина штриха привязана к стратегии подписей (у interval она даёт
-      <span class="debug-value">Infinity</span>, отсюда сквозные разделители). А вот то, что конструктор при этом
-      молча принимает <span class="debug-value">start</span>, сбивает с толку: в бою его передают, и он ничего
-      не делает. Сам ползунок — это подкласс на стороне стенда: <span class="debug-value">sizes</span> в движке
-      <span class="debug-value">protected</span>, и открывать его наружу ради одного стенда незачем.
+      Ползунок <b>start</b> работает на обоих графиках, но по-разному. У
+      <span class="debug-value">TicksByValues</span> это единственный источник длины. У
+      <span class="debug-value">TicksByLabels</span> он <b>перебивает</b> подсказку подписей: в итоге кадра у каждого
+      уровня есть <span class="debug-value">suggestedStart</span>, и она берётся только там, где явного
+      <span class="debug-value">start</span> нет. Поставь «авто» — вернётся значение от стратегии. Корневые
+      <span class="debug-value">start/end</span> считаются настройками нулевого уровня; у остальных свои —
+      в <span class="debug-value">levels[i]</span>.
     </p>
 
     <p class="debug-note">
-      Переключи стратегию справа на <b>interval</b>: <span class="debug-value">getTicksOffset()</span> отдаёт
-      <span class="debug-value">Infinity</span>, и штрихи мгновенно вырастают до самого низа SVG — сквозь зону подписей.
-      Так сделаны «недельные» разделители в лидерборде Натиска. У <span class="debug-value">classic</span> и
-      <span class="debug-value">cell</span> смещение всегда 4, у прочего — 0.
+      Переключи стратегию справа на <b>interval</b>: <span class="debug-value">suggestedStart</span> становится
+      <span class="debug-value">Infinity</span>, и штрихи вырастают до самого низа SVG — сквозь зону подписей.
+      Так сделаны «недельные» разделители в лидерборде Натиска. У <span class="debug-value">classic</span>,
+      <span class="debug-value">classic-flow</span> и <span class="debug-value">cell</span> подсказка всегда 4,
+      у прочих уровней — 0.
     </p>
 
     <p class="debug-note">
@@ -130,6 +135,7 @@ import { defaultYLabels } from '../shared/options'
 const rawValues = ref('0, 10, 20, 30, 40, 50')
 const start = ref(4)
 const end = ref(0)
+const autoStart = ref(false)
 const autoEnd = ref(true)
 const strategy = ref<'classic-flow' | 'interval'>('classic-flow')
 
@@ -180,15 +186,16 @@ const chartLabels = markRaw(new LabelsChart({
 }))
 
 watchEffect(() => {
+  const tickStart = autoStart.value ? null : start.value
   const tickEnd = autoEnd.value ? null : end.value
 
   chartValues.setPoints(points)
   chartValues.setXLabels(xLabels.value)
   chartValues.setTickValues('horizontal', tickValues.value)
-  chartValues.setTickOffsets('horizontal', start.value, tickEnd)
+  chartValues.setTickOffsets('horizontal', tickStart, tickEnd)
 
   chartLabels.setPoints(points)
   chartLabels.setXLabels(xLabels.value)
-  chartLabels.setTickOffsets('horizontal', start.value, tickEnd)
+  chartLabels.setTickOffsets('horizontal', tickStart, tickEnd)
 })
 </script>

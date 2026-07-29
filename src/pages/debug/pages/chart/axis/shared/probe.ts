@@ -1,8 +1,19 @@
 import { shallowRef } from 'vue'
 import type { Overflow, Size } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import type { BaseLabels } from '@/shared/uiKit/chart/universalChart/labels/BaseLabels'
+import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
+import type { BaseTicks } from '@/shared/uiKit/chart/universalChart/ticks/BaseTicks'
 
 export type RenderedLabel = { text: string, p: number }
+
+// Уровень composite-тиков: значения — из итога кадра, классы и число линий — из DOM.
+// `values` больше, чем `lines`: расчёт не знает про отсечение по краям области.
+export type TickLevelProbe = {
+  index: number
+  classes: string[]
+  values: number[]
+  lines: number
+}
 
 export type ProbeState = {
   bounds: { minX: number, maxX: number, minY: number, maxY: number }
@@ -14,11 +25,13 @@ export type ProbeState = {
   y: RenderedLabel[]
   xTicks: number[]
   yTicks: number[]
+  xLevels: TickLevelProbe[]
+  yLevels: TickLevelProbe[]
 }
 
 // AutoLabels зовёт labelForValue(value, stepIndex) на каждом кандидате-шаге, и последний
-// вызов за проход принадлежит победившему шагу. Индекс движок отдаёт именно так — вторым
-// аргументом форматтера, который мы же и передаём.
+// вызов за проход принадлежит победившему шагу. Отдельного геттера у движка нет: индекс
+// нужен только стенду, а обвешивать им итог кадра ради дебага незачем.
 export class StepProbe {
   step = -1
 
@@ -45,6 +58,22 @@ export function readRenderedLabels(labels: BaseLabels | null, axis: 'horizontal'
   }
 
   return result.sort((a, b) => a.p - b.p)
+}
+
+export function readTickLevels(labels: BaseLabels | null, ticks: BaseTicks | TicksByLabels | null): TickLevelProbe[] {
+  if (!labels || !(ticks instanceof TicksByLabels)) return []
+
+  const root = ticks.getRootElement()
+
+  return labels.getTickLevels().map((level, index) => {
+    const group = root.querySelector(`g.tick-level-${index}`)
+    return {
+      index,
+      classes: group ? Array.from(group.classList) : [],
+      values: [...level.values],
+      lines: group?.querySelectorAll('line').length ?? 0,
+    }
+  })
 }
 
 export function useProbe() {

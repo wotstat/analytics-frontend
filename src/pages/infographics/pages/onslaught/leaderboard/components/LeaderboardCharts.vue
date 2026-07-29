@@ -453,16 +453,19 @@ watchEffect(() => {
       .ticks {
         opacity: 0.1;
 
-        .y-ticks {
+        .y-ticks,
+        .week-ticks,
+        .day-ticks,
+        .hour-ticks {
           stroke: rgba(255, 255, 255, 1);
         }
 
-        .day-ticks {
-          stroke: rgba(255, 255, 255, 0.1);
+        .tick-level-1 {
+          opacity: 0.1;
         }
 
-        .week-ticks {
-          stroke: rgba(255, 255, 255, 1);
+        .tick-level-2 {
+          opacity: 0.05;
         }
       }
 

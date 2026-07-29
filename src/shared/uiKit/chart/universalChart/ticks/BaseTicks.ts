@@ -81,7 +81,7 @@ export abstract class BaseTicks implements PlotRenderer {
     }
   }
 
-  getTicksValues(): number[] { return [] }
+  getTicksValues(): readonly number[] { return [] }
 
   protected setupElement(element: SVGLineElement, tick: TickData, space: ChartSpace, overflow: Overflow, full: Size) {
     this.setXY(element,

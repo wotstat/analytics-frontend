@@ -247,16 +247,14 @@ function tooltipDate(ctx: TooltipCtx) {
   .ticks {
     opacity: 0.1;
 
-    .y-ticks {
-      stroke: rgba(255, 255, 255, 1);
-    }
-
+    .y-ticks,
+    .week-ticks,
     .day-ticks {
-      stroke: rgba(255, 255, 255, 0.1);
+      stroke: rgba(255, 255, 255, 1);
     }
 
-    .week-ticks {
-      stroke: rgba(255, 255, 255, 1);
+    .tick-level-1 {
+      opacity: 0.1;
     }
   }
 

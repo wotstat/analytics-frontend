@@ -82,10 +82,11 @@
     <p class="debug-note">
       <b>Откуда взят номер кандидата.</b> Из второго аргумента
       <span class="debug-value">labelForValue(value, stepIndex)</span> — движок зовёт форматтер на каждом
-      примеряемом кандидате, и последний вызов за проход принадлежит победившему шагу. Отдельного геттера у
-      <span class="debug-value">AutoLabels</span> нет, и он не нужен: индекс уже приходит в колбэк, который
-      передаём мы сами. Отсюда следствие: если подписей получилось <b>ноль</b>, номер остаётся от предыдущего
-      расчёта — это ограничение зонда, а не движка.
+      примеряемом кандидате, и последний вызов за проход принадлежит победившему шагу. Геттера у
+      <span class="debug-value">AutoLabels</span> нет намеренно: победивший индекс нужен только этому стенду, а
+      итог кадра (<span class="debug-value">getTickLevels()</span>) держит лишь то, что читают тики — уровни, их
+      классы и <span class="debug-value">suggestedStart</span>. Отсюда следствие зонда: если подписей получилось
+      <b>ноль</b>, номер остаётся от предыдущего расчёта.
     </p>
 
     <p class="debug-note">
@@ -104,9 +105,11 @@
     </p>
 
     <p class="debug-note">
-      Режим <b>steppedOverrides</b> дописывает к твоему списку 10 удвоений последнего шага, начиная с ×1 — то есть
-      кандидат № {{ steps.length }} дублирует № {{ steps.length - 1 }} и всегда проваливается вслед за ним. В доках
-      этого нет, а на индексы шага это влияет: серые чипсы справа — как раз дописанный хвост.
+      Режим <b>steppedOverrides</b> дописывает к твоему списку 10 удвоений последнего шага, начиная с <b>×2</b>:
+      кандидат № {{ steps.length }} — это уже вдвое крупнее № {{ steps.length - 1 }}, дубля больше нет. Хвост
+      наследует все настройки последнего явного кандидата — формат, стратегию,
+      <span class="debug-value">ticks</span>, — меняется только
+      шаг. Серые чипсы справа — как раз дописанный хвост.
     </p>
 
     <p class="debug-note">
@@ -169,7 +172,7 @@ const candidates = computed(() => {
   if (mode.value === 'list') return steps.value
 
   const last = steps.value[steps.value.length - 1]
-  return [...steps.value, ...Array.from({ length: 10 }, (_, index) => last * Math.pow(2, index))]
+  return [...steps.value, ...Array.from({ length: 10 }, (_, index) => last * Math.pow(2, index + 1))]
 })
 
 const points = computed(() => source.value === 'real' ? real.battles.value : synthetic)

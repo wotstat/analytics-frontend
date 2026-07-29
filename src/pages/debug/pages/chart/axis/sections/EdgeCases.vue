@@ -52,8 +52,9 @@
 
     <p class="debug-note">
       <b>Пустой ряд.</b> <span class="debug-value">bounds.isEmpty()</span> — и
-      <span class="debug-value">calculateLabelPositions</span> выходит первой же строкой. Ни подписей, ни тиков, но ось
-      и слоты на месте: ширина левого слота схлопывается до одного <span class="debug-value">labelOffset</span>.
+      <span class="debug-value">calculateLabelsFrame</span> выходит первой же строкой, публикуя пустой список уровней: ни
+      подписей, ни тиков, старые линии уходят целиком. Ось и слоты на месте: ширина левого слота схлопывается до
+      одного <span class="debug-value">labelOffset</span>.
       Отдельного «пустого» состояния у движка нет — рисовать заглушку должна обёртка.
     </p>
 

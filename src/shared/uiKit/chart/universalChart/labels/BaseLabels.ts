@@ -1,16 +1,30 @@
 import { ChartClip } from '../defs/ChartClip'
 import { SlotRenderer, UniversalChart, Overflow, Size } from '../UniversalChart'
 import { ChartSpace } from '../utils/ChartSpace'
+import { Classes } from '../utils/utils'
 
-type LabelData = {
+export type LabelData = {
   key: string
   p: number
   label: string
   value: number
 }
 
+export type LabelTickLevel = {
+  values: readonly number[]
+  classes?: Classes
+  suggestedStart: number
+}
+
+export type LabelsFrame = {
+  labels: LabelData[]
+  tickLevels: readonly LabelTickLevel[]
+}
+
+
 const DEFAULT_LABEL_OFFSET = 15
 export type Axis = 'vertical' | 'horizontal'
+
 export abstract class BaseLabels implements SlotRenderer {
 
   protected root = document.createElementNS('http://www.w3.org/2000/svg', 'g')
@@ -22,7 +36,7 @@ export abstract class BaseLabels implements SlotRenderer {
 
   private elementByKey = new Map<string, SVGTextElement>()
   private lastPersistent = 0
-  private lastRenderedTicks: number[] = []
+  private tickLevels: readonly LabelTickLevel[] = []
   private maxLabelWidth = 0
 
   private offset: number
@@ -73,7 +87,7 @@ export abstract class BaseLabels implements SlotRenderer {
     this.elementByKey.clear()
     this.cachedSizes.clear()
     this.cachedMetrics = null
-    this.lastRenderedTicks = []
+    this.tickLevels = []
     this.lastPersistent = 0
   }
 
@@ -92,7 +106,7 @@ export abstract class BaseLabels implements SlotRenderer {
     } else {
       if (typeof this.stableWidth === 'number') return { width: this.stableWidth, height: null }
 
-      const labels = this.calculateLabelPositions(space, { start: overflow.top, end: overflow.bottom })
+      const { labels } = this.calculateLabelsFrame(space, { start: overflow.top, end: overflow.bottom })
       const maxWidth = labels.reduce((max, l) => Math.max(max, this.getTextWidth(l.label)), 0)
       const width = maxWidth + this.offset
 
@@ -109,12 +123,13 @@ export abstract class BaseLabels implements SlotRenderer {
   }
 
   render(space: ChartSpace, overflow: Overflow) {
-    this.lastRenderedTicks = []
     const localOverflow = this.axis === 'horizontal' ? { start: overflow.left, end: overflow.right } : { start: overflow.top, end: overflow.bottom }
 
-    const labels = this.calculateLabelPositions(space, localOverflow)
+    const frame = this.calculateLabelsFrame(space, localOverflow)
+    const labels = frame.labels
+
+    this.tickLevels = frame.tickLevels
     const usedKeys = new Set<string>(labels.map(l => l.key))
-    this.lastRenderedTicks = labels.map(l => l.value)
 
     for (const [key, element] of this.elementByKey) {
       if (!usedKeys.has(key)) {
@@ -186,12 +201,8 @@ export abstract class BaseLabels implements SlotRenderer {
     }
   }
 
-  getRequiredTicks(): number[] {
-    return this.lastRenderedTicks
-  }
-
-  getTicksOffset(): number {
-    return 0
+  getTickLevels(): readonly LabelTickLevel[] {
+    return this.tickLevels
   }
 
   recalculateFont() {
@@ -225,7 +236,7 @@ export abstract class BaseLabels implements SlotRenderer {
     return this.offset
   }
 
-  abstract calculateLabelPositions(space: ChartSpace, overflow: { start: number, end: number }): LabelData[]
+  abstract calculateLabelsFrame(space: ChartSpace, overflow: { start: number, end: number }): LabelsFrame
 
   protected createLabel(textContent = ''): SVGTextElement {
     const label = document.createElementNS('http://www.w3.org/2000/svg', 'text')

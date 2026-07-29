@@ -6,12 +6,11 @@ import { ChartTooltip, type TooltipCtx } from '@/shared/uiKit/chart/universalCha
 import { VerticalLine } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/lines/VerticalLine'
 import { NearestMarker } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/nearestMarker/NearestMarker'
 import { InteractionController } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController'
-import { AutoLabels, type Options as LabelsOptions } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
-import { steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator'
+import { AutoLabels, type Options as LabelsOptions, type TickSource } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
+import { steppedGenerator, steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
 import { AutoMarkers } from '@/shared/uiKit/chart/universalChart/plot/markers/autoMarkers/AutoMarkers'
 import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
-import { TicksByValues } from '@/shared/uiKit/chart/universalChart/ticks/TicksByValues'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
 import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
@@ -45,11 +44,6 @@ export class DailyPlayersChart extends UniversalChart {
 
     const labelsX = new AutoLabels('horizontal', this.getXLabelsOptions()).clipBy(clipBottom)
     const labelsY = new AutoLabels('vertical', this.getYLabelsOptions()).clipBy(clipLeft)
-    const dayTicks = new TicksByValues('horizontal', { start: 0, classes: 'day-ticks' })
-    dayTicks.setTicks(Array.from(
-      { length: Math.ceil(this.maxX / DAY) + 1 },
-      (_, index) => index * DAY,
-    ))
 
     const gradient = new ChartGradient({ classes: 'blue-gradient' })
     this.line = new AutoLine({ classes: 'main-line', area: gradient, smoothingMethod: 'monotone' })
@@ -86,9 +80,8 @@ export class DailyPlayersChart extends UniversalChart {
       }))
 
     this
-      .addPlot(new TicksByLabels(labelsY, { start: 0 }), 'ticks')
-      .addPlot(new TicksByLabels(labelsX, { start: 0, classes: 'week-ticks' }), 'ticks')
-      .addPlot(dayTicks, 'ticks')
+      .addPlot(new TicksByLabels(labelsY), 'ticks')
+      .addPlot(new TicksByLabels(labelsX, { classes: 'time-grid' }), 'ticks')
       .addPlot(plotRoot, 'plot')
       .addPlot(this.markers, 'plot')
       .addSlot('bottom', labelsX, 'labels')
@@ -122,6 +115,8 @@ export class DailyPlayersChart extends UniversalChart {
   }
 
   private getXLabelsOptions(): LabelsOptions {
+    const dayTicks: TickSource = { gen: steppedGenerator({ step: DAY }), minPixelSpacing: 5, classes: 'day-ticks' }
+
     const steps: [number, (value: number) => string][] = [
       [WEEK, value => `${1 + value / WEEK} неделя`],
       [WEEK, value => `${1 + value / WEEK} нед.`],
@@ -136,6 +131,7 @@ export class DailyPlayersChart extends UniversalChart {
       labelOffset: 5,
       values: steppedOverrides({
         step: steps.map(step => ({ step: step[0], labelForValue: step[1] })),
+        ticks: [{ gen: 'labels', classes: 'week-ticks' }, dayTicks],
       }),
       strategy: { type: 'interval', fit: true, offset: 3 },
       from: 0,

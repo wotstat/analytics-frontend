@@ -9,26 +9,20 @@ import { ChartClip } from '@/shared/uiKit/chart/universalChart/defs/ChartClip'
 import { AutoLabels, type Options as LabelsOptions } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
 import { Bar, type BarDataset, type BarStrategy } from '@/shared/uiKit/chart/universalChart/plot/bar/Bar'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
-import type { BaseTicks } from '@/shared/uiKit/chart/universalChart/ticks/BaseTicks'
-import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
+import { BaseTicks } from '@/shared/uiKit/chart/universalChart/ticks/BaseTicks'
+import { TicksByLabels, type TickLayerOptions } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
 import { TicksByValues } from '@/shared/uiKit/chart/universalChart/ticks/TicksByValues'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
-import type { Offset4Side } from '@/shared/uiKit/chart/universalChart/utils/utils'
+import { joinClasses, type Classes, type Offset4Side } from '@/shared/uiKit/chart/universalChart/utils/utils'
 import type { ChartSeries } from '@/pages/debug/shared/fixtures/types'
-import { readRenderedLabels, type ProbeState, type StepProbe } from './probe'
+import { readRenderedLabels, readTickLevels, type ProbeState, type StepProbe } from './probe'
 
 export type { BorderVariant, PlotAreaBorderSides } from '@/shared/uiKit/chart/universalChart/plot/axis/PlotAreaBorder'
 
-// start/end у тиков задаются только в конструкторе. Пересоздавать чарт на каждый шаг
+// У TicksByValues start/end задаются только в конструкторе. Пересоздавать чарт на каждый шаг
 // ползунка не хочется — открываем их наружу подклассом, движку это знать незачем.
+// У TicksByLabels для этого есть updateOptions.
 class LiveTicksByValues extends TicksByValues {
-  setOffsets(start: number | null, end: number | null) {
-    this.sizes.start = start
-    this.sizes.end = end
-  }
-}
-
-class LiveTicksByLabels extends TicksByLabels {
   setOffsets(start: number | null, end: number | null) {
     this.sizes.start = start
     this.sizes.end = end
@@ -51,6 +45,8 @@ export type LabelsChartSetup = {
     y?: TicksKind
     start?: number
     end?: number
+    classes?: Classes
+    levels?: readonly TickLayerOptions[]
   }
   plot?: 'line' | 'bar' | 'none'
   barStrategy?: BarStrategy
@@ -66,8 +62,8 @@ export class LabelsChart extends UniversalChart {
 
   readonly labelsX: AutoLabels | null = null
   readonly labelsY: AutoLabels | null = null
-  readonly ticksX: BaseTicks | null = null
-  readonly ticksY: BaseTicks | null = null
+  readonly ticksX: BaseTicks | TicksByLabels | null = null
+  readonly ticksY: BaseTicks | TicksByLabels | null = null
 
   private line: AutoLine | null = null
   private bar: Bar | null = null
@@ -123,26 +119,50 @@ export class LabelsChart extends UniversalChart {
       step: setup.stepProbe?.step ?? -1,
       x: readRenderedLabels(this.labelsX, 'horizontal'),
       y: readRenderedLabels(this.labelsY, 'vertical'),
-      xTicks: this.ticksX?.getTicks(space).map(tick => tick.value) ?? [],
-      yTicks: this.ticksY?.getTicks(space).map(tick => tick.value) ?? [],
+      xTicks: this.ticksX instanceof BaseTicks ? this.ticksX.getTicks(space).map(tick => tick.value) : [],
+      yTicks: this.ticksY instanceof BaseTicks ? this.ticksY.getTicks(space).map(tick => tick.value) : [],
+      xLevels: readTickLevels(this.labelsX, this.ticksX),
+      yLevels: readTickLevels(this.labelsY, this.ticksY),
     }))
 
     this.setMinLayoutSize(setup.minLayoutSize ?? { top: 8, right: 8 })
   }
 
-  private createTicks(axis: 'horizontal' | 'vertical', kind: TicksKind, labels: AutoLabels | null) {
-    const classes = axis === 'horizontal' ? 'x-grid' : 'y-grid'
-    const options = { start: this.setup.ticks?.start, end: this.setup.ticks?.end, classes }
+  private rootClasses(axis: 'horizontal' | 'vertical') {
+    return joinClasses(axis === 'horizontal' ? 'x-grid' : 'y-grid', this.setup.ticks?.classes)
+  }
 
-    if (kind === 'labels') return labels ? new LiveTicksByLabels(labels, options) : null
+  private createTicks(axis: 'horizontal' | 'vertical', kind: TicksKind, labels: AutoLabels | null) {
+    const options = { start: this.setup.ticks?.start, end: this.setup.ticks?.end, classes: this.rootClasses(axis) }
+
+    if (kind === 'labels') return labels ? new TicksByLabels(labels, { ...options, levels: this.setup.ticks?.levels }) : null
     if (kind === 'values') return new LiveTicksByValues(axis, options)
     return null
   }
 
   setTickOffsets(axis: 'horizontal' | 'vertical', start: number | null, end: number | null) {
     const ticks = axis === 'horizontal' ? this.ticksX : this.ticksY
-    if (ticks instanceof LiveTicksByValues || ticks instanceof LiveTicksByLabels) ticks.setOffsets(start, end)
+    if (ticks instanceof LiveTicksByValues) ticks.setOffsets(start, end)
+    if (ticks instanceof TicksByLabels) ticks.updateOptions({
+      classes: this.rootClasses(axis),
+      start: start ?? undefined,
+      end: end ?? undefined,
+      levels: this.setup.ticks?.levels,
+    })
     this.dataDidChange()
+    return this
+  }
+
+  setTickLevels(axis: 'horizontal' | 'vertical', levels: readonly TickLayerOptions[]) {
+    const ticks = axis === 'horizontal' ? this.ticksX : this.ticksY
+    if (!(ticks instanceof TicksByLabels)) return this
+
+    ticks.updateOptions({
+      classes: this.rootClasses(axis),
+      start: this.setup.ticks?.start,
+      end: this.setup.ticks?.end,
+      levels,
+    })
     return this
   }
 

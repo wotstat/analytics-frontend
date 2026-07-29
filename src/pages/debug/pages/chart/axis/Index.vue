@@ -23,15 +23,19 @@
           </tr>
           <tr>
             <th>TicksByValues / TicksByLabels</th>
-            <td>штрихи и сетка: свой список чисел либо значения от подписей; длина через start/end</td>
-            <td><a href="#ticks">тики</a></td>
+            <td>
+              штрихи и сетка: свой список чисел либо уровни от подписей; TicksByLabels — composite, внутри по группе
+              на уровень
+            </td>
+            <td><a href="#ticks">тики</a>, <a href="#tick-levels">уровни</a></td>
           </tr>
           <tr>
             <th>AutoLabels</th>
-            <td>перебор шагов до первого непересекающегося и позиционирование по strategy</td>
+            <td>перебор шагов до первого непересекающегося, позиционирование по strategy и уровни тиков кадра</td>
             <td>
               <a href="#step-fallback">перебор</a>, <a href="#strategies">стратегии</a>,
-              <a href="#interval">interval</a>, <a href="#cell">cell</a>, <a href="#formatting">формат</a>
+              <a href="#interval">interval</a>, <a href="#cell">cell</a>, <a href="#formatting">формат</a>,
+              <a href="#tick-levels">уровни</a>
             </td>
           </tr>
           <tr>
@@ -77,6 +81,7 @@
 
     <AxisSides />
     <TicksVariants />
+    <TickLevels />
     <StepFallback />
     <Strategies />
     <IntervalStrategy />
@@ -93,6 +98,7 @@ import DebugPage from '@/pages/debug/shared/DebugPage.vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import AxisSides from './sections/AxisSides.vue'
 import TicksVariants from './sections/TicksVariants.vue'
+import TickLevels from './sections/TickLevels.vue'
 import StepFallback from './sections/StepFallback.vue'
 import Strategies from './sections/Strategies.vue'
 import IntervalStrategy from './sections/IntervalStrategy.vue'

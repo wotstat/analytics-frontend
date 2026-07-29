@@ -162,8 +162,8 @@ export class DemoChart extends UniversalChart {
     this.controller.addComponent(this.callback)
 
     this
-      .addPlot(new TicksByLabels(labelsY, { start: 0 }), 'ticks')
-      .addPlot(new TicksByLabels(labelsX, { start: 0 }), 'ticks')
+      .addPlot(new TicksByLabels(labelsY), 'ticks')
+      .addPlot(new TicksByLabels(labelsX), 'ticks')
       .addPlot(plotRoot, 'plot')
       .addSlot('bottom', labelsX, 'labels')
       .addSlot('left', labelsY, 'labels')

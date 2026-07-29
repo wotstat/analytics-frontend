@@ -1,5 +1,6 @@
 import { ChartSpace } from '../../utils/ChartSpace'
-import { Axis, BaseLabels } from '../BaseLabels'
+import { Classes, joinClasses } from '../../utils/utils'
+import { Axis, BaseLabels, LabelData, LabelsFrame, LabelTickLevel } from '../BaseLabels'
 import { calculateClassic, calculateInterval, cleanupOutside, extend, fit, intervalFit } from './utils'
 
 export type Strategy = 'classic-flow' | 'classic' | {
@@ -20,28 +21,47 @@ export type ValueGenerator = (startFrom: number) => {
   backward: Generator<number>
 }
 
-export type Overrides = {
-  gen: ValueGenerator
-} & Omit<Options, 'values'>
+export type TickSource =
+  | 'labels'
+  | ValueGenerator
+  | {
+    gen: ValueGenerator | 'labels'
+    minPixelSpacing?: number
+    from?: number
+    to?: number
+    classes?: Classes
+  }
 
-export type Options = {
-  values: (Overrides | ValueGenerator)[]
-  labelForValue?: (v: number, step: number) => string
-  keyForValue?: (v: number, label: string, step: number) => string
-  labelOffset?: number
-  stableWidth?: boolean | number
-  padding?: number | {
-    clip: number,
-    flow: number
-  },
+export type TicksOption = TickSource | TickSource[]
+
+
+type StepOptions = {
+  labelForValue?: (value: number, step: number) => string
+  keyForValue?: (value: number, label: string, step: number) => string
+  padding?: number | { clip: number, flow: number }
   strategy?: Strategy
   from?: number
   to?: number
   onlyFitted?: boolean
+  ticks?: TicksOption
+}
+
+export type LabelStepOverrides = StepOptions & {
+  gen: ValueGenerator
+}
+
+export type Options = StepOptions & {
+  values: readonly (ValueGenerator | LabelStepOverrides)[]
+  labelOffset?: number
+  stableWidth?: boolean | number
 }
 
 const DEFAULT_LABEL_PADDING = 15
 const DEFAULT_STRATEGY: Strategy = 'classic-flow'
+const CLASSIC_TICKS_START = 4
+const MAX_VALUES_PER_LEVEL = 500
+
+const LABELS_LEVEL_CLASS = 'label-ticks'
 
 function getClipPadding(padding: Options['padding']) {
   if (typeof padding === 'number') return padding
@@ -62,27 +82,74 @@ function getValueOffset(strategy: Strategy) {
   return strategy.size / 2
 }
 
-export class AutoLabels extends BaseLabels {
+function getSuggestedStart(strategy: Strategy) {
+  if (typeof strategy === 'object' && strategy.type === 'interval') return Infinity
+  return CLASSIC_TICKS_START
+}
 
-  private lastIntervalStart: number | null = null
-  private lastRenderedTicksBeforeClip: number[] = []
+function clipLevelValues(values: readonly number[], from: number, to: number, minSpacing: number, toLayout: (value: number) => number) {
+  const result = values.filter(value => value >= from && value <= to)
+  if (minSpacing <= 0 || result.length < 2) return result
+
+  for (let i = 1; i < result.length; i++) {
+    if (Math.abs(toLayout(result[i]) - toLayout(result[i - 1])) < minSpacing) return []
+  }
+
+  return result
+}
+
+function collectLevelValues(ctx: {
+  gen: ValueGenerator,
+  from: number,
+  to: number,
+  minSpacing: number,
+  toLayout: (value: number) => number,
+}) {
+  const { gen, from, to, minSpacing, toLayout } = ctx
+  if (!(from <= to)) return []
+
+  const values: number[] = []
+  let previousLayout = 0
+
+  for (const value of gen(from).forward) {
+    if (value < from) continue
+    if (value > to) break
+
+    const layout = toLayout(value)
+    if (minSpacing > 0 && values.length > 0 && Math.abs(layout - previousLayout) < minSpacing) return []
+    previousLayout = layout
+
+    values.push(value)
+    if (values.length >= MAX_VALUES_PER_LEVEL) break
+  }
+
+  return values
+}
+
+export class AutoLabels extends BaseLabels {
 
   constructor(axis: Axis, private options: Options) {
     super(axis, { offset: options.labelOffset, stableWidth: options.stableWidth })
   }
 
-  private getOverridesForStep(step: number): Overrides | null {
+  private resolveOverridesForStep(step: number): LabelStepOverrides | null {
     const current = this.options.values[step]
-    if (typeof current === 'function') return {
-      gen: current,
-      labelForValue: this.options.labelForValue,
-      keyForValue: this.options.keyForValue,
-      padding: this.options.padding,
-      strategy: this.options.strategy,
-      from: this.options.from,
-      to: this.options.to,
+    if (!current) return null
+
+    const options = this.options
+    const candidate = typeof current === 'function' ? { gen: current } : current
+
+    return {
+      gen: candidate.gen,
+      labelForValue: candidate.labelForValue ?? options.labelForValue,
+      keyForValue: candidate.keyForValue ?? options.keyForValue,
+      padding: candidate.padding ?? options.padding,
+      strategy: candidate.strategy ?? options.strategy,
+      from: candidate.from ?? options.from,
+      to: candidate.to ?? options.to,
+      onlyFitted: candidate.onlyFitted ?? options.onlyFitted,
+      ticks: candidate.ticks ?? options.ticks,
     }
-    return current
   }
 
   updateOptions(options: Options) {
@@ -91,8 +158,9 @@ export class AutoLabels extends BaseLabels {
     this.requestRender()
   }
 
-  calculateLabelPositions(space: ChartSpace, overflow: { start: number, end: number }) {
-    if (space.bounds.isEmpty()) return []
+  calculateLabelsFrame(space: ChartSpace, overflow: { start: number, end: number }): LabelsFrame {
+    const empty: LabelsFrame = { labels: [], tickLevels: [] }
+    if (space.bounds.isEmpty()) return empty
 
     const options = this.options
 
@@ -101,11 +169,8 @@ export class AutoLabels extends BaseLabels {
 
     const translate = this.axis === 'horizontal' ? space.chartToLocalX.bind(space) : space.chartToLocalY.bind(space)
     const inverseTranslate = this.axis === 'horizontal' ? space.localToLayoutX.bind(space) : space.localToLayoutY.bind(space)
+    const toLayout = this.axis === 'horizontal' ? space.chartToLayoutX.bind(space) : space.chartToLayoutY.bind(space)
     const convert = (v: { middle: number, label: string, key: string, value: number }) => ({ p: inverseTranslate(v.middle), label: v.label, key: v.key, value: v.value })
-
-    let clipPadding = 0
-    let flowPadding = 0
-    let strategy = options.strategy ?? DEFAULT_STRATEGY
 
     const spaceBounds = this.axis === 'horizontal' ?
       { start: space.bounds.minX, end: space.bounds.maxX } :
@@ -122,16 +187,16 @@ export class AutoLabels extends BaseLabels {
     const getSize = this.axis === 'horizontal' ? this.getTextWidth.bind(this) : this.getTextHeight.bind(this)
 
     for (let i = 0; i < options.values.length; i++) {
-      const current = this.getOverridesForStep(i)
+      const current = this.resolveOverridesForStep(i)
       if (!current) break
 
-      const labelForValue = current.labelForValue ?? options.labelForValue ?? defaultLabelForValue
-      const keyForValue = current.keyForValue ?? options.keyForValue ?? defaultKeyForValue
-      const from = current.from ?? options.from ?? -Infinity
-      const to = current.to ?? options.to ?? Infinity
-      clipPadding = getClipPadding(current.padding) ?? getClipPadding(options.padding) ?? DEFAULT_LABEL_PADDING
-      flowPadding = getFlowPadding(current.padding) ?? getFlowPadding(options.padding) ?? DEFAULT_LABEL_PADDING
-      strategy = current.strategy ?? options.strategy ?? DEFAULT_STRATEGY
+      const labelForValue = current.labelForValue ?? defaultLabelForValue
+      const keyForValue = current.keyForValue ?? defaultKeyForValue
+      const from = current.from ?? -Infinity
+      const to = current.to ?? Infinity
+      const clipPadding = getClipPadding(current.padding) ?? getClipPadding(options.padding) ?? DEFAULT_LABEL_PADDING
+      const flowPadding = getFlowPadding(current.padding) ?? getFlowPadding(options.padding) ?? DEFAULT_LABEL_PADDING
+      const strategy = current.strategy ?? DEFAULT_STRATEGY
 
       const valueOffset = getValueOffset(strategy)
 
@@ -143,7 +208,7 @@ export class AutoLabels extends BaseLabels {
         return { p, label, size, key, half: size / 2 }
       }
 
-      const onlyFitted = current.onlyFitted ?? options.onlyFitted ?? false
+      const onlyFitted = current.onlyFitted ?? false
       const ctx = {
         padding: clipPadding, compute, generator: current.gen, force: i == options.values.length - 1,
         bounds: spaceBounds,
@@ -152,15 +217,22 @@ export class AutoLabels extends BaseLabels {
         overflowLimits
       }
 
-      const prepareResult = <T extends { middle: number, size: number, label: string, key: string, value: number }>(fitted: T[]) => {
-        if (!onlyFitted) {
-          const res = fitted.map(convert)
-          this.lastRenderedTicksBeforeClip = res.map(f => f.value)
-          return res
-        }
+      const frame = (labels: LabelData[], labelValues: number[]): LabelsFrame => ({
+        labels,
+        tickLevels: this.buildTickLevels(current.ticks, {
+          labelValues: [...labelValues].sort((a, b) => a - b),
+          labelsStart: getSuggestedStart(strategy),
+          bounds: spaceBounds,
+          limits: { start: from, end: to },
+          toLayout,
+        }),
+      })
 
-        this.lastRenderedTicksBeforeClip = fitted.map(convert).map(f => f.value)
-        return cleanupOutside(fitted, overflowLimits).map(convert)
+      const prepareResult = <T extends { middle: number, size: number, label: string, key: string, value: number }>(fitted: T[], majorValues?: number[]) => {
+        const converted = fitted.map(convert)
+        const values = majorValues ?? converted.map(f => f.value)
+        if (!onlyFitted) return frame(converted, values)
+        return frame(cleanupOutside(fitted, overflowLimits).map(convert), values)
       }
 
       if (strategy == 'classic-flow') {
@@ -200,33 +272,50 @@ export class AutoLabels extends BaseLabels {
 
         const fitted = intervalFit(res.filter(t => t.key != ''), layoutLimits, overflowLimits, placement, fit, offset)
 
-        this.lastIntervalStart = res[0].value
-        return prepareResult(fitted)
+        return prepareResult(fitted, res.map(t => t.value))
       }
     }
 
-    return []
+    return empty
   }
 
-  getRequiredTicks(): number[] {
-    const ticks = this.lastRenderedTicksBeforeClip
+  private buildTickLevels(
+    ticks: TicksOption | undefined,
+    ctx: {
+      labelValues: readonly number[],
+      labelsStart: number,
+      bounds: { start: number, end: number },
+      limits: { start: number, end: number },
+      toLayout: (value: number) => number,
+    }): LabelTickLevel[] {
 
-    if (this.options.strategy === 'classic-flow' || this.options.strategy === 'classic') return ticks
+    const sources: TickSource[] = ticks === undefined ? ['labels'] : (Array.isArray(ticks) ? ticks as TickSource[] : [ticks as TickSource])
+    if (sources.length === 0) return []
 
-    if (this.options.strategy?.type === 'interval') {
-      if (this.lastIntervalStart === null) return ticks
+    const used = new Set<number>()
+    const levels: LabelTickLevel[] = []
 
-      return [...ticks, this.lastIntervalStart]
+    for (const source of sources) {
+      const level = typeof source === 'function' || source === 'labels' ? { gen: source } : source
+
+      const from = Math.max(ctx.bounds.start, level.from ?? ctx.limits.start)
+      const to = Math.min(ctx.bounds.end, level.to ?? ctx.limits.end)
+      const minSpacing = level.minPixelSpacing ?? 0
+
+      const values = level.gen === 'labels'
+        ? clipLevelValues(ctx.labelValues, from, to, minSpacing, ctx.toLayout)
+        : collectLevelValues({ gen: level.gen, from, to, minSpacing, toLayout: ctx.toLayout })
+
+      const result = values.filter(value => !used.has(value))
+      for (const value of result) used.add(value)
+
+      levels.push({
+        values: result,
+        classes: level.gen === 'labels' ? joinClasses(LABELS_LEVEL_CLASS, level.classes) : level.classes,
+        suggestedStart: level.gen === 'labels' ? ctx.labelsStart : 0,
+      })
     }
 
-    return ticks
-  }
-
-  getTicksOffset(): number {
-    if (this.options.strategy === 'classic-flow' || this.options.strategy === 'classic') return 4
-    if (this.options.strategy?.type === 'interval') return Infinity
-    if (this.options.strategy?.type === 'cell') return 4
-    return 0
+    return levels
   }
 }
-

@@ -1,8 +1,8 @@
 import { ChartClip } from '@/shared/uiKit/chart/universalChart/defs/ChartClip'
 import { ChartGradient } from '@/shared/uiKit/chart/universalChart/defs/ChartGradient'
 import { ChartMask } from '@/shared/uiKit/chart/universalChart/defs/ChartMask'
-import { AutoLabels, Options as LabelsOptions } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
-import { steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator'
+import { AutoLabels, Options as LabelsOptions, TickSource } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
+import { steppedGenerator, steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator'
 import { ChartTooltip, TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
 import { VerticalLine } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/lines/VerticalLine'
 import { NearestMarker } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/nearestMarker/NearestMarker'
@@ -10,7 +10,6 @@ import { InteractionController } from '@/shared/uiKit/chart/universalChart/inter
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
 import { AutoLineArea } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineArea'
 import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
-import { TicksByValues } from '@/shared/uiKit/chart/universalChart/ticks/TicksByValues'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
 import { ref } from 'vue'
@@ -35,7 +34,6 @@ class BaseChart extends UniversalChart {
   private readonly line: AutoLine
   private readonly minMaxArea: AutoLineArea
   private readonly interactionController: InteractionController
-  private readonly dayTicks: TicksByValues
   private readonly restrictionArea: RectangleArea
   private readonly labelsX: AutoLabels
   private readonly maxX: number
@@ -117,20 +115,14 @@ class BaseChart extends UniversalChart {
       .addComponent(sync.hover)
       .addComponent(this.callback)
 
-    this.dayTicks = new TicksByValues('horizontal', { start: 0, classes: 'day-ticks' })
     this
-      .addPlot(new TicksByLabels(labelsY, { start: 0 }), 'ticks')
-      .addPlot(new TicksByLabels(this.labelsX, { start: 0, classes: 'week-ticks' }), 'ticks')
-      .addPlot(this.dayTicks, 'ticks')
+      .addPlot(new TicksByLabels(labelsY), 'ticks')
+      .addPlot(new TicksByLabels(this.labelsX, { classes: 'time-grid' }), 'ticks')
       .addPlot(plotRoot, 'plot')
       .addSlot('bottom', this.labelsX, 'labels')
       .addSlot('left', labelsY, 'labels')
       .addPlot(this.interactionController)
       .addDefs(gradient, clipMain, clipLeft, clipBottom, maskMain, pattern)
-
-    const dayTicks = []
-    for (let i = 0; i <= end - start; i += DAY) dayTicks.push(i)
-    this.dayTicks.setTicks(dayTicks)
 
     this.recalculateRestrictionArea()
     this.setRenderBounds({ minX: 0, maxX: this.maxX })
@@ -175,22 +167,30 @@ class BaseChart extends UniversalChart {
   }
 
   protected getXLabelsOptions(): LabelsOptions {
+    const duration = Math.floor(this.seasonInterval.end.getTime() / 1000) - Math.floor(this.seasonInterval.start.getTime() / 1000)
 
-    const steps: [number, (v: number) => string][] = [
-      [DAY, v => `${1 + v / DAY} день`],
-      [DAY, v => `${1 + v / DAY}`],
-      [WEEK, v => `${1 + v / WEEK} неделя`],
-      [WEEK, v => `${1 + v / WEEK} нед.`],
-      [WEEK, v => `${1 + v / WEEK} н.`],
-      [2 * WEEK, v => `${1 + v / WEEK} – ${2 + v / WEEK} нед.`],
-      [2 * WEEK, v => `${1 + v / WEEK} – ${2 + v / WEEK}`],
-      [12 * WEEK, v => `${1 + v / WEEK} – ${1 + (v + 4 * WEEK) / WEEK}`],
-    ]
+    const hourTicks: TickSource = { gen: steppedGenerator({ step: HOUR }), minPixelSpacing: 6, classes: 'hour-ticks', to: duration }
+    const dayTicks: TickSource = { gen: steppedGenerator({ step: DAY }), minPixelSpacing: 5, classes: 'day-ticks', to: duration }
+    const dayLabels: TickSource = { gen: 'labels', classes: 'day-ticks' }
+    const weekLabels: TickSource = { gen: 'labels', classes: 'week-ticks' }
+
+    const steps = [
+      [DAY, (v: number) => `${1 + v / DAY} день`, [dayLabels, hourTicks]],
+      [DAY, (v: number) => `${1 + v / DAY}`, [dayLabels, hourTicks]],
+      [WEEK, (v: number) => `${1 + v / WEEK} неделя`, [weekLabels, dayTicks, hourTicks]],
+      [WEEK, (v: number) => `${1 + v / WEEK} нед.`, [weekLabels, dayTicks, hourTicks]],
+      [WEEK, (v: number) => `${1 + v / WEEK} н.`, [weekLabels, dayTicks, hourTicks]],
+      [2 * WEEK, (v: number) => `${1 + v / WEEK} – ${2 + v / WEEK} нед.`, [weekLabels, dayTicks]],
+      [2 * WEEK, (v: number) => `${1 + v / WEEK} – ${2 + v / WEEK}`, [weekLabels, dayTicks]],
+      [12 * WEEK, (v: number) => `${1 + v / WEEK} – ${1 + (v + 4 * WEEK) / WEEK}`, [weekLabels, dayTicks]],
+    ] as [step: number, labelForValue: (v: number) => string, ticks: TickSource[]][]
 
     return {
       padding: 10,
       labelOffset: 5,
-      values: steppedOverrides({ step: steps.map(s => ({ step: s[0], labelForValue: s[1] })) }),
+      values: steppedOverrides({
+        step: steps.map(([step, labelForValue, ticks]) => ({ step, labelForValue, ticks }))
+      }),
       strategy: { type: 'interval', fit: true, offset: 3 },
       from: 0,
       to: this.maxX

@@ -15,7 +15,13 @@
       подписи Y ({{ state?.y.length ?? 0 }}) <span class="debug-value">{{ y }}</span>
     </p>
 
-    <p class="debug-hint" v-if="ticks">
+    <p class="debug-hint" v-for="level in levels" :key="level.index">
+      уровень {{ level.index }} ({{ level.values.length }})
+      <span class="debug-value">.{{ level.classes.join('.') }}</span>
+      <span class="debug-value">{{ join(level.values.map(format)) }}</span>
+    </p>
+
+    <p class="debug-hint" v-if="ticks && levels.length === 0">
       тики X ({{ state?.xTicks.length ?? 0 }}) <span class="debug-value">{{ xTicks }}</span>
     </p>
   </div>
@@ -30,13 +36,18 @@ const props = withDefaults(defineProps<{
   state: ProbeState | null
   axis?: 'horizontal' | 'vertical' | 'both'
   ticks?: boolean
+  format?: (value: number) => string
 }>(), {
   axis: 'horizontal',
   ticks: false,
+  // Значение по умолчанию у defineProps не видит локальных функций — round тут не позвать.
+  format: (value: number) => Number.isFinite(value) ? `${Math.round(value * 100) / 100}` : (value > 0 ? '∞' : '-∞'),
 })
 
 const boundsX = computed(() => props.state ? `${round(props.state.bounds.minX)} … ${round(props.state.bounds.maxX)}` : '—')
 const boundsY = computed(() => props.state ? `${round(props.state.bounds.minY)} … ${round(props.state.bounds.maxY)}` : '—')
+
+const levels = computed(() => props.ticks ? (props.state?.xLevels ?? []) : [])
 
 const layout = computed(() => {
   const value = props.state?.layout
