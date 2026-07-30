@@ -4,15 +4,16 @@ import type { BaseLabels } from '@/shared/uiKit/chart/universalChart/labels/Base
 import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
 import type { BaseTicks } from '@/shared/uiKit/chart/universalChart/ticks/BaseTicks'
 
-export type RenderedLabel = { text: string, p: number }
+export type RenderedLabel = { text: string, p: number, level: number }
 
 // Уровень composite-тиков: значения — из итога кадра, классы и число линий — из DOM.
-// `values` больше, чем `lines`: расчёт не знает про отсечение по краям области.
+// `values` может быть больше, чем `lines`: рендерер ещё дедуплицирует уровни и отсекает края.
 export type TickLevelProbe = {
   index: number
   classes: string[]
   values: number[]
   lines: number
+  suggestedStart: number
 }
 
 export type ProbeState = {
@@ -54,7 +55,10 @@ export function readRenderedLabels(labels: BaseLabels | null, axis: 'horizontal'
     if (node.classList.contains('probe-label')) continue
     const text = node.textContent ?? ''
     if (!text) continue
-    result.push({ text, p: Number(node.getAttribute(axis === 'horizontal' ? 'x' : 'y') ?? 0) })
+    const levelRoot = node.closest('.label-level')
+    const levelClass = levelRoot ? Array.from(levelRoot.classList).find(item => item.startsWith('label-level-')) : null
+    const level = levelClass ? Number(levelClass.slice('label-level-'.length)) : 0
+    result.push({ text, p: Number(node.getAttribute(axis === 'horizontal' ? 'x' : 'y') ?? 0), level })
   }
 
   return result.sort((a, b) => a.p - b.p)
@@ -72,6 +76,7 @@ export function readTickLevels(labels: BaseLabels | null, ticks: BaseTicks | Tic
       classes: group ? Array.from(group.classList) : [],
       values: [...level.values],
       lines: group?.querySelectorAll('line').length ?? 0,
+      suggestedStart: level.suggestedStart,
     }
   })
 }

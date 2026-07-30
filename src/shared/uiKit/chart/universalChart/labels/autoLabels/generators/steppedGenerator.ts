@@ -1,5 +1,6 @@
 import { Prettify } from '@/shared/utils/types/Prettify'
-import { LabelStepOverrides, Strategy, TicksOption, ValueGenerator } from '../AutoLabels'
+import { LabelLevelOptions, LabelStepOverrides, Strategy, TicksOption, ValueGenerator } from '../AutoLabels'
+import { Classes } from '../../../utils/utils'
 
 
 export function steppedGenerator(options: {
@@ -32,6 +33,8 @@ type OverridesStep = {
   padding?: number,
   strategy?: Strategy,
   ticks?: TicksOption,
+  classes?: Classes,
+  secondary?: readonly LabelLevelOptions[],
 }
 
 const FALLBACK_STEPS = 10
@@ -45,6 +48,8 @@ export function steppedOverrides(options: {
   padding?: number,
   strategy?: Strategy,
   ticks?: TicksOption,
+  classes?: Classes,
+  secondary?: readonly LabelLevelOptions[],
 }): LabelStepOverrides[] {
 
   const isOverridesSteps = (x: any[]): x is OverridesStep[] => x.length > 0 && typeof x[0] === 'object' && 'step' in x[0]
@@ -72,6 +77,8 @@ export function steppedOverrides(options: {
     padding: step.padding ?? options.padding,
     strategy: step.strategy ?? options.strategy,
     ticks: step.ticks ?? options.ticks,
+    classes: step.classes ?? options.classes,
+    secondary: step.secondary ?? options.secondary,
   }))
 
   const lastStep = steps[steps.length - 1]

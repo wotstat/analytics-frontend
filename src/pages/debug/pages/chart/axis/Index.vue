@@ -35,7 +35,8 @@
             <td>
               <a href="#step-fallback">перебор</a>, <a href="#strategies">стратегии</a>,
               <a href="#interval">interval</a>, <a href="#cell">cell</a>, <a href="#formatting">формат</a>,
-              <a href="#label-slots">слоты</a>, <a href="#tick-levels">уровни</a>
+              <a href="#label-slots">слоты</a>, <a href="#tick-levels">уровни тиков</a>,
+              <a href="#multi-level-labels">этажи подписей</a>
             </td>
           </tr>
           <tr>
@@ -83,6 +84,7 @@
     <LabelSlots />
     <TicksVariants />
     <TickLevels />
+    <MultiLevelLabels />
     <StepFallback />
     <Strategies />
     <IntervalStrategy />
@@ -101,6 +103,7 @@ import AxisSides from './sections/AxisSides.vue'
 import LabelSlots from './sections/LabelSlots.vue'
 import TicksVariants from './sections/TicksVariants.vue'
 import TickLevels from './sections/TickLevels.vue'
+import MultiLevelLabels from './sections/MultiLevelLabels.vue'
 import StepFallback from './sections/StepFallback.vue'
 import Strategies from './sections/Strategies.vue'
 import IntervalStrategy from './sections/IntervalStrategy.vue'

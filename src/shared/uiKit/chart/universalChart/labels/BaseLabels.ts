@@ -1,7 +1,7 @@
 import { ChartClip } from '../defs/ChartClip'
 import { SlotRenderer, UniversalChart, Overflow, Size } from '../UniversalChart'
 import { ChartSpace } from '../utils/ChartSpace'
-import { Classes } from '../utils/utils'
+import { addClasses, Classes, classNames, removeClasses } from '../utils/utils'
 
 export type LabelData = {
   key: string
@@ -16,15 +16,27 @@ export type LabelTickLevel = {
   suggestedStart: number
 }
 
-export type LabelsFrame = {
+export type LabelLevelData = {
   labels: LabelData[]
+  classes?: Classes
+}
+
+export type LabelsFrame = {
+  levels: readonly LabelLevelData[]
   tickLevels: readonly LabelTickLevel[]
 }
 
 
-const DEFAULT_LABEL_OFFSET = 15
+export const DEFAULT_LABEL_OFFSET = 15
+export const DEFAULT_LEVEL_GAP = 4
 export type Axis = 'vertical' | 'horizontal'
 export type LabelsSide = 'top' | 'right' | 'bottom' | 'left'
+export type SlotSize = 'auto' | 'stable' | 'max-candidate' | number
+
+type LabelLevelRoot = {
+  root: SVGGElement
+  dynamicClasses: string[]
+}
 
 export abstract class BaseLabels implements SlotRenderer {
 
@@ -36,18 +48,25 @@ export abstract class BaseLabels implements SlotRenderer {
 
 
   private elementByKey = new Map<string, SVGTextElement>()
-  private lastPersistent = 0
+  private levelRoots: LabelLevelRoot[] = []
   private tickLevels: readonly LabelTickLevel[] = []
-  private maxLabelWidth = 0
+  private maxObservedSize = 0
 
   private offset: number
-  private stableWidth: boolean | number = false
+  private levelGap: number
+  private slotSize: SlotSize
+  private maxLevelCount: number
   private fontStyleDirty = false
   private probeLabel: SVGTextElement | null = null
 
   constructor(
     readonly axis: Axis,
-    options: { offset?: number, stableWidth?: boolean | number } = {},
+    options: {
+      offset?: number
+      levelGap?: number
+      slotSize?: SlotSize
+      maxLevelCount?: number
+    } = {},
     readonly side: LabelsSide = axis === 'horizontal' ? 'bottom' : 'left',
   ) {
     const validSide = axis === 'horizontal'
@@ -58,30 +77,47 @@ export abstract class BaseLabels implements SlotRenderer {
 
     this.root.classList.add(axis == 'horizontal' ? 'x-labels' : 'y-labels', `${side}-labels`)
     this.offset = options.offset ?? DEFAULT_LABEL_OFFSET
-    this.stableWidth = options.stableWidth ?? false
+    this.levelGap = options.levelGap ?? DEFAULT_LEVEL_GAP
+    this.slotSize = options.slotSize ?? 'auto'
+    this.maxLevelCount = options.maxLevelCount ?? 1
+    this.validateSlotSize()
     this.probeLabel = this.createLabel()
     this.probeLabel.classList.add('probe-label')
   }
 
-  updateOptions(options: { offset?: number, stableWidth?: boolean | number }) {
+  updateOptions(options: {
+    offset?: number
+    levelGap?: number
+    slotSize?: SlotSize
+    maxLevelCount?: number
+  }) {
     let changed = false
     if (options.offset !== undefined && options.offset !== this.offset) {
       this.offset = options.offset
       changed = true
     }
-    if (options.stableWidth !== undefined && options.stableWidth !== this.stableWidth) {
-      this.stableWidth = options.stableWidth
+    if (options.levelGap !== undefined && options.levelGap !== this.levelGap) {
+      this.levelGap = options.levelGap
+      changed = true
+    }
+    if (options.slotSize !== undefined && options.slotSize !== this.slotSize) {
+      this.slotSize = options.slotSize
+      changed = true
+    }
+    if (options.maxLevelCount !== undefined && options.maxLevelCount !== this.maxLevelCount) {
+      this.maxLevelCount = options.maxLevelCount
       changed = true
     }
 
     if (changed) {
+      this.validateSlotSize()
       this.fontStyleDirty = true
-      this.requestRender()
+      this.requestLayout()
     }
   }
 
-  protected requestRender() {
-    this.chart?.dataDidChange()
+  protected requestLayout() {
+    this.chart?.layoutDidChange()
   }
 
   getRootElement(): Element {
@@ -95,11 +131,12 @@ export abstract class BaseLabels implements SlotRenderer {
   detach(): void {
     this.chart = null
     for (const element of this.elementByKey.values()) element.remove()
+    for (const level of this.levelRoots) level.root.remove()
     this.elementByKey.clear()
     this.cachedSizes.clear()
     this.cachedMetrics = null
     this.tickLevels = []
-    this.lastPersistent = 0
+    this.levelRoots = []
   }
 
   didMount() {
@@ -113,17 +150,20 @@ export abstract class BaseLabels implements SlotRenderer {
 
   getSize(space: ChartSpace, overflow: Overflow, full: Size): { width: number | null; height: number | null } {
     if (this.axis === 'horizontal') {
-      return { width: null, height: this.getHeight() }
+      if (typeof this.slotSize === 'number') return { width: null, height: this.slotSize }
+
+      const { levels } = this.calculateLabelsFrame(space, { start: overflow.left, end: overflow.right })
+      const levelCount = Math.max(1, levels.length)
+      const current = this.getLevelsSize(levelCount)
+      const maxCandidate = this.getLevelsSize(Math.max(1, this.maxLevelCount))
+      return { width: null, height: this.resolveSlotSize(current, maxCandidate) }
     } else {
-      if (typeof this.stableWidth === 'number') return { width: this.stableWidth, height: null }
+      if (typeof this.slotSize === 'number') return { width: this.slotSize, height: null }
 
-      const { labels } = this.calculateLabelsFrame(space, { start: overflow.top, end: overflow.bottom })
+      const { levels } = this.calculateLabelsFrame(space, { start: overflow.top, end: overflow.bottom })
+      const labels = levels.flatMap(level => level.labels)
       const maxWidth = labels.reduce((max, l) => Math.max(max, this.getTextWidth(l.label)), 0)
-      const width = maxWidth + this.offset
-
-      this.maxLabelWidth = Math.max(this.maxLabelWidth, width)
-      if (this.stableWidth) return { width: this.maxLabelWidth, height: null }
-      return { width, height: null }
+      return { width: this.resolveSlotSize(maxWidth + this.offset), height: null }
     }
   }
 
@@ -137,20 +177,19 @@ export abstract class BaseLabels implements SlotRenderer {
     const localOverflow = this.axis === 'horizontal' ? { start: overflow.left, end: overflow.right } : { start: overflow.top, end: overflow.bottom }
 
     const frame = this.calculateLabelsFrame(space, localOverflow)
-    const labels = frame.labels
-
     this.tickLevels = frame.tickLevels
-    const usedKeys = new Set<string>(labels.map(l => l.key))
+    this.syncLevelRoots(frame.levels)
+
+    const labels = frame.levels.flatMap((level, levelIndex) =>
+      level.labels.map(label => ({ label, levelIndex, key: `${levelIndex}:${label.key}` }))
+    )
+    const usedKeys = new Set<string>(labels.map(label => label.key))
 
     for (const [key, element] of this.elementByKey) {
       if (!usedKeys.has(key)) {
-        this.root.removeChild(element)
+        element.remove()
         this.elementByKey.delete(key)
       }
-    }
-
-    for (const key of this.cachedSizes.keys()) {
-      if (!usedKeys.has(key)) this.cachedSizes.delete(key)
     }
 
     if (this.axis === 'horizontal') this.renderHorizontalLabel(space, labels)
@@ -158,61 +197,50 @@ export abstract class BaseLabels implements SlotRenderer {
 
   }
 
-  protected renderHorizontalLabel(space: ChartSpace, labels: LabelData[]) {
-    const y = this.side === 'top'
-      ? space.layout.y - this.offset - this.getTextMetrics().fontBoundingBoxDescent
-      : space.layout.y + space.layout.height + this.getYOffset()
-    const yStr = y.toString()
+  protected renderHorizontalLabel(
+    space: ChartSpace,
+    labels: { label: LabelData, levelIndex: number, key: string }[],
+  ) {
+    const step = this.getLevelStep()
 
-    if (this.lastPersistent !== y) {
-      for (const element of this.elementByKey.values()) element.setAttribute('y', yStr)
-      this.lastPersistent = y
-    }
+    for (const current of labels) {
+      const { label, levelIndex, key } = current
+      const y = this.side === 'top'
+        ? space.layout.y - this.offset - this.getTextMetrics().fontBoundingBoxDescent - levelIndex * step
+        : space.layout.y + space.layout.height + this.getYOffset() + levelIndex * step
+      let element = this.elementByKey.get(key)
 
-    for (const label of labels) {
-      if (!this.elementByKey.has(label.key)) {
-        const element = this.createLabel()
-        this.elementByKey.set(label.key, element)
-        element.setAttribute('y', yStr)
+      if (!element) {
+        element = this.createLabel('', this.levelRoots[levelIndex]?.root)
+        this.elementByKey.set(key, element)
       }
-    }
 
-    for (const label of labels) {
-      const element = this.elementByKey.get(label.key)
-      if (!element) continue
+      element.setAttribute('y', y.toString())
       element.setAttribute('x', label.p.toString())
-      if (element.textContent !== label.label) {
-        element.textContent = label.label
-      }
+      if (element.textContent !== label.label) element.textContent = label.label
     }
   }
 
-  protected renderVerticalLabel(space: ChartSpace, labels: LabelData[]) {
+  protected renderVerticalLabel(
+    space: ChartSpace,
+    labels: { label: LabelData, levelIndex: number, key: string }[],
+  ) {
     const x = this.side === 'right'
       ? space.layout.x + space.layout.width + this.getXOffset(space)
       : space.layout.x - this.getXOffset(space)
     const xStr = x.toString()
 
-    if (this.lastPersistent !== x) {
-      for (const element of this.elementByKey.values()) element.setAttribute('x', xStr)
-      this.lastPersistent = x
-    }
-
-    for (const label of labels) {
-      if (!this.elementByKey.has(label.key)) {
-        const element = this.createLabel()
-        this.elementByKey.set(label.key, element)
-        element.setAttribute('x', xStr)
+    for (const current of labels) {
+      const { label, levelIndex, key } = current
+      let element = this.elementByKey.get(key)
+      if (!element) {
+        element = this.createLabel('', this.levelRoots[levelIndex]?.root)
+        this.elementByKey.set(key, element)
       }
-    }
 
-    for (const label of labels) {
-      const element = this.elementByKey.get(label.key)
-      if (!element) continue
+      element.setAttribute('x', xStr)
       element.setAttribute('y', label.p.toString())
-      if (element.textContent !== label.label) {
-        element.textContent = label.label
-      }
+      if (element.textContent !== label.label) element.textContent = label.label
     }
   }
 
@@ -242,6 +270,18 @@ export abstract class BaseLabels implements SlotRenderer {
     return this.getYOffset() + metrics.fontBoundingBoxDescent
   }
 
+  protected getLevelOuterOffset(level: number): number {
+    return this.getHeight() + level * this.getLevelStep()
+  }
+
+  private getLevelsSize(levelCount: number): number {
+    return this.getLevelOuterOffset(Math.max(0, levelCount - 1))
+  }
+
+  private getLevelStep(): number {
+    return this.getTextHeight('M') + this.levelGap
+  }
+
   getYOffset(): number {
     const metrics = this.getTextMetrics()
     return metrics.hangingBaseline + this.offset
@@ -253,12 +293,51 @@ export abstract class BaseLabels implements SlotRenderer {
 
   abstract calculateLabelsFrame(space: ChartSpace, overflow: { start: number, end: number }): LabelsFrame
 
-  protected createLabel(textContent = ''): SVGTextElement {
+  protected createLabel(textContent = '', root: SVGElement = this.root): SVGTextElement {
     const label = document.createElementNS('http://www.w3.org/2000/svg', 'text')
     label.classList.add('label')
     label.textContent = textContent
-    this.root.appendChild(label)
+    root.appendChild(label)
     return label
+  }
+
+  private syncLevelRoots(levels: readonly LabelLevelData[]) {
+    while (this.levelRoots.length > levels.length) {
+      const current = this.levelRoots.pop()
+      current?.root.remove()
+    }
+
+    while (this.levelRoots.length < levels.length) {
+      const index = this.levelRoots.length
+      const root = document.createElementNS('http://www.w3.org/2000/svg', 'g')
+      root.classList.add('label-level', `label-level-${index}`)
+      this.root.appendChild(root)
+      this.levelRoots.push({ root, dynamicClasses: [] })
+    }
+
+    for (let index = 0; index < levels.length; index++) {
+      const target = this.levelRoots[index]
+      const next = classNames(levels[index].classes)
+      if (next.length === target.dynamicClasses.length && next.every((item, i) => item === target.dynamicClasses[i])) continue
+
+      removeClasses(target.root, target.dynamicClasses)
+      addClasses(target.root, next)
+      target.dynamicClasses = next
+    }
+  }
+
+  private resolveSlotSize(current: number, maxCandidate = current) {
+    this.maxObservedSize = Math.max(this.maxObservedSize, current)
+
+    if (this.slotSize === 'stable') return this.maxObservedSize
+    if (this.slotSize === 'max-candidate') return maxCandidate
+    return current
+  }
+
+  private validateSlotSize() {
+    if (this.axis === 'vertical' && this.slotSize === 'max-candidate') {
+      throw new Error('slotSize "max-candidate" is supported only for horizontal labels')
+    }
   }
 
   getTextWidth(text: string): number {

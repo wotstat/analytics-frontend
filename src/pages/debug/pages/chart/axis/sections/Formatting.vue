@@ -43,10 +43,10 @@
       </label>
 
       <label class="debug-control">
-        <span class="debug-label">stableWidth</span>
-        <select v-model="stableWidth">
-          <option value="false">false</option>
-          <option value="true">true</option>
+        <span class="debug-label">slotSize</span>
+        <select v-model="slotSize">
+          <option value="auto">auto</option>
+          <option value="stable">stable</option>
           <option value="60">60px</option>
         </select>
       </label>
@@ -72,19 +72,17 @@
     <ProbeReadout :state="state" axis="both" />
 
     <p class="debug-note">
-      <b>Ширина левого слота пересчитывается не всегда.</b> Поставь формат Y «Длинный текст» — подписи обрежутся по
-      левому краю картинки, потому что место под них осталось прежним. Нажми «толкнуть layout»: ширина изменилась,
-      ключ кэша лейаута протух, слот пересчитался — и всё встало на место. Причина в
-      <span class="debug-value">UniversalChart.layout()</span>: ключ кэша собран из размера и bounds, а смена опций
-      подписей в него не входит, хотя ширина слота считается именно из подписей. Похоже на баг: любой
-      <span class="debug-value">updateOptions</span>, меняющий текст, обязан сбрасывать лейаут.
+      <b>Смена опций сбрасывает layout.</b> Поставь формат Y «Длинный текст»: вызов
+      <span class="debug-value">AutoLabels.updateOptions()</span> сообщает чарту, что размер слота мог измениться,
+      поэтому место под новый текст пересчитывается сразу. Кнопка «толкнуть layout» оставлена только для ручной
+      проверки внешнего изменения размера сцены.
     </p>
 
     <p class="debug-note">
-      <b>stableWidth</b> — про дрожание оси: без него ширина слота скачет вслед за самой длинной подписью (проверь
-      масштабом Y). <span class="debug-value">true</span> запоминает максимум за всё время и <b>никогда не уменьшает</b>
-      его обратно: сходи в «×1 000 000» и вернись в «×1» — слот останется широким до пересоздания графика. Числом
-      задаётся фиксированная ширина, и тогда getSize вообще не считает подписи.
+      <b>slotSize</b> — поперечный размер слота: ширина для Y и высота для X.
+      <span class="debug-value">stable</span> запоминает максимум за всё время и <b>никогда не уменьшает</b>
+      его обратно: сходи в «×1 000 000» и вернись в «×1» — слот останется широким до пересоздания графика.
+      Числом задаётся фиксированный размер, и тогда getSize вообще не считает подписи.
     </p>
 
     <p class="debug-note">
@@ -98,7 +96,7 @@
       Ширина текста меряется <span class="debug-value">canvas.measureText</span> со шрифтом, снятым через
       <span class="debug-value">computedStyleMap()</span> со скрытой probe-подписи, и кэшируется. Пересчёт шрифта
       происходит только на <span class="debug-value">didMount</span> и при смене
-      <span class="debug-value">labelOffset / stableWidth</span> — если шрифт догрузится позже, замеры останутся от
+      <span class="debug-value">labelOffset / slotSize</span> — если шрифт догрузится позже, замеры останутся от
       старого, и подписи начнут пересекаться, хотя движок уверен, что зазор есть.
     </p>
 
@@ -132,7 +130,7 @@ const formatY = ref<LabelFormat>('plain')
 const source = ref<DataSource>('synthetic')
 const scale = ref(1)
 const labelOffset = ref(5)
-const stableWidth = ref<'false' | 'true' | '60'>('false')
+const slotSize = ref<'auto' | 'stable' | '60'>('auto')
 const clipLabels = ref(false)
 const width = ref(620)
 
@@ -154,10 +152,9 @@ const points = computed(() => {
   return series.map(point => point && { x: point.x, y: point.y * scale.value })
 })
 
-const stableWidthValue = computed(() => {
-  if (stableWidth.value === 'true') return true
-  if (stableWidth.value === 'false') return false
-  return Number(stableWidth.value)
+const slotSizeValue = computed(() => {
+  if (slotSize.value === 'auto' || slotSize.value === 'stable') return slotSize.value
+  return Number(slotSize.value)
 })
 
 const xLabels = computed<LabelsOptions>(() => {
@@ -182,7 +179,7 @@ const yLabels = computed<LabelsOptions>(() => {
     labelForValue: value => formatLabel(kind, value),
     padding: { clip: 10, flow: 5 },
     labelOffset: labelOffset.value,
-    stableWidth: stableWidthValue.value,
+    slotSize: slotSizeValue.value,
     onlyFitted: true,
     strategy: 'classic-flow',
   }

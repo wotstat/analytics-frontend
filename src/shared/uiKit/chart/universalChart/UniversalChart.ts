@@ -185,6 +185,11 @@ export class UniversalChart extends BaseChart {
     this.scheduleRender()
   }
 
+  layoutDidChange() {
+    this.layoutCacheKey = ''
+    this.scheduleRender()
+  }
+
   // Per axis-bound: a number pins it, `undefined` leaves it unchanged, `null` releases
   // it back to auto-fit (recomputed from data on every layout). Passing no object at all
   // releases every axis.

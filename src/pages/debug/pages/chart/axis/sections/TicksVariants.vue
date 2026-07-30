@@ -104,10 +104,10 @@
 
     <p class="debug-note">
       Переключи стратегию справа на <b>interval</b>: <span class="debug-value">suggestedStart</span> становится
-      <span class="debug-value">Infinity</span>, и штрихи вырастают до самого низа SVG — сквозь зону подписей.
-      Так сделаны «недельные» разделители в лидерборде Натиска. У <span class="debug-value">classic</span>,
+      расстоянием до внешнего края нужного этажа, и штрих проходит сквозь его подпись. Так сделаны «недельные»
+      разделители в лидерборде Натиска. У <span class="debug-value">classic</span>,
       <span class="debug-value">classic-flow</span> и <span class="debug-value">cell</span> подсказка всегда 4,
-      у прочих уровней — 0.
+      у дополнительных генераторных уровней — 0.
     </p>
 
     <p class="debug-note">

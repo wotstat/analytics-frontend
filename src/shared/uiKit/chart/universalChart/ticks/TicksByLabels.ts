@@ -51,6 +51,26 @@ class TickLevelRenderer extends BaseOffsetTicks {
     addClasses(this.root, next)
     this.dynamicClasses = next
   }
+
+  getStartDistance(space: ChartSpace, full: Size) {
+    const start = this.sizes.start ?? 0
+
+    if (this.axis === 'horizontal') {
+      const zero = space.layout.y + space.layout.height
+      const coordinate = Math.max(
+        0,
+        Math.min(start >= 0 ? zero + start : full.height + start, full.height),
+      )
+      return Math.abs(coordinate - zero)
+    }
+
+    const zero = space.layout.x
+    const coordinate = Math.max(
+      0,
+      Math.min(start >= 0 ? zero - start : -start, full.width),
+    )
+    return Math.abs(coordinate - zero)
+  }
 }
 
 export class TicksByLabels implements PlotRenderer {
@@ -110,7 +130,20 @@ export class TicksByLabels implements PlotRenderer {
         layer?.start ?? (index === 0 ? this.options.start : undefined) ?? level.suggestedStart,
         layer?.end ?? (index === 0 ? this.options.end : undefined) ?? null,
       )
-      renderer.setValues(level.values)
+    }
+
+    const ownerByValue = new Map<number, { index: number, distance: number }>()
+    for (let index = 0; index < levels.length; index++) {
+      const distance = this.levels[index].getStartDistance(space, full)
+      for (const value of levels[index].values) {
+        const current = ownerByValue.get(value)
+        if (!current || distance > current.distance) ownerByValue.set(value, { index, distance })
+      }
+    }
+
+    for (let index = 0; index < levels.length; index++) {
+      const renderer = this.levels[index]
+      renderer.setValues(levels[index].values.filter(value => ownerByValue.get(value)?.index === index))
       renderer.render(space, overflow, full)
     }
   }
