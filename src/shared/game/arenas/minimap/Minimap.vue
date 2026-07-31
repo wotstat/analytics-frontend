@@ -2,17 +2,19 @@
   <div class="minimap">
     <MinimapBackground :tag="tag" :gameplay="gameplay" :game="game" :format="'webp'" class="background" />
     <MinimapBases :tag="tag" :gameplay="gameplay" :game="game" :team="props.team" v-if="showBases" />
-    <div class="overlay">
-      <slot />
+    <div class="overlay" ref="overlay" v-if="slots.default">
+      <slot v-bind="{ width, height }" />
     </div>
   </div>
 </template>
 
 
 <script setup lang="ts">
+import { useSlots, useTemplateRef } from 'vue'
 import { GameVendor } from '../../wot'
 import MinimapBackground from './minimapBackground/MinimapBackground.vue'
 import MinimapBases from './minimapBases/MinimapBases.vue'
+import { useElementSize } from '@vueuse/core'
 
 const props = withDefaults(defineProps<{
   game?: GameVendor;
@@ -26,6 +28,11 @@ const props = withDefaults(defineProps<{
   team: 1,
   showBases: true
 })
+
+const overlay = useTemplateRef('overlay')
+const { width, height } = useElementSize(overlay)
+
+const slots = useSlots()
 
 </script>
 

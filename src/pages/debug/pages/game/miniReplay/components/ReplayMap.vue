@@ -5,13 +5,13 @@
     <div class="map-column">
       <div class="map-shell">
         <Minimap :tag="replay.raw.battle.map.geometry" :gameplay="replay.raw.battle.mode.gameplayName" :team="allyTeam"
-          :show-bases="true">
+          :show-bases="true" v-slot="{ width, height }">
           <ProjectileCanvas :replay :tick />
 
           <div class="tank-marker" v-for="frame in visibleTanks" :key="frame.life.raw.lifeId" :class="[
             frame.life.participant.team === allyTeam ? 'ally' : 'enemy',
             { reporter: frame.life.raw.participantId === replay.raw.battle.reporterParticipantId },
-          ]" :style="markerStyle(frame)"
+          ]" :style="markerStyle(frame, width, height)"
             :title="`${frame.life.participant.name} · ${getTankName(frame.life.info.vehicleTag ?? '', true)} · ${Math.round(frame.health)} HP`">
             <svg class="hp-ring" viewBox="0 0 32 32" aria-hidden="true">
               <circle class="hp-track" cx="16" cy="16" r="14" pathLength="100"></circle>
@@ -102,11 +102,10 @@ const activeShotCount = computed(() => props.replay.shots.filter(shot =>
 const currentTime = computed(() => formatDuration(props.tick * props.replay.raw.battle.tickLength))
 const totalTime = computed(() => formatDuration(props.replay.maxTick * props.replay.raw.battle.tickLength))
 
-function markerStyle(frame: LifeFrame) {
+function markerStyle(frame: LifeFrame, width: number, height: number) {
   const point = worldToRelative(frame, props.replay)
   return {
-    left: `${point.x * 100}%`,
-    top: `${point.y * 100}%`,
+    transform: `translate3d(${point.x * width}px, ${point.y * height}px, 0) translate(-50%, -50%)`,
   }
 }
 
@@ -158,7 +157,9 @@ function markerVehicleType(classTag?: string): VehicleTypeName {
   position: absolute;
   width: 30px;
   height: 30px;
-  transform: translate(-50%, -50%);
+  top: 0;
+  left: 0;
+  // transform: translate(-50%, -50%);
   z-index: 4;
   pointer-events: auto;
 
