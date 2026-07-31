@@ -118,6 +118,13 @@ const entries = [
     component: () => import('./pages/game/arenas/Index.vue'),
   },
   {
+    path: 'game/mini-replay',
+    title: 'Мини-реплей',
+    description: 'Экспериментальный проигрыватель боя: техника, трассеры, таймлайн и результаты игроков.',
+    group: 'game',
+    component: () => import('./pages/game/miniReplay/Index.vue'),
+  },
+  {
     path: 'game/selectors',
     title: 'Селекторы',
     description: 'Выбор техники, карт, игры и версии игры; бейджи выбранного и строка поиска.',
