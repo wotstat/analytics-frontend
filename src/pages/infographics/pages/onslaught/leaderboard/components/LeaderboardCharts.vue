@@ -110,7 +110,7 @@ const props = defineProps<{
 }>()
 
 const loading = ref(true)
-const usePlaceBoundary = useLocalStorage('onslaught:leaderboard:smooth-elite-chart', false)
+const usePlaceBoundary = useLocalStorage('onslaught:leaderboard:smooth-elite-chart', true)
 const tipZoomChart = useTemplateRef<InstanceType<typeof TipZoomChart>>('tipZoomChart')
 const isFirstSelectOpen = ref(false)
 const isSecondSelectOpen = ref(false)
@@ -472,6 +472,18 @@ watchEffect(() => {
       .label {
         font-weight: bold;
         font-size: 11px;
+
+      }
+
+      .y-labels {
+        .label {
+          transition: opacity 0.2s, filter 0.2s;
+
+          &.not-fitted {
+            opacity: 0;
+            filter: blur(2px);
+          }
+        }
       }
 
       .hover {

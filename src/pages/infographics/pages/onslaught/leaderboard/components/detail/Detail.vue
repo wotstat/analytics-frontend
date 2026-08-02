@@ -475,6 +475,17 @@ watchEffect(() => {
         font-size: 11px;
       }
 
+      .y-labels {
+        .label {
+          transition: opacity 0.2s, filter 0.2s;
+
+          &.label-outside-space {
+            opacity: 0;
+            filter: blur(2px);
+          }
+        }
+      }
+
       .hover {
         .interactive-zone {
           cursor: crosshair;

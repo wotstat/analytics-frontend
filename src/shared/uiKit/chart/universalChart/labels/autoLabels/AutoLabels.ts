@@ -51,6 +51,9 @@ export type GeneratorWithOptions = LabelOptions & {
 export type LabelLevel = ValueGenerator | GeneratorWithOptions
 export type LabelCandidate = LabelLevel | readonly LabelLevel[]
 
+export const LABEL_OUTSIDE_SPACE_CLASS = 'label-outside-space'
+export const VALUE_OUTSIDE_BOUNDS_LABEL_CLASS = 'value-outside-bounds'
+
 export type Options = LabelOptions & {
   values: readonly LabelCandidate[]
   labelOffset?: number
@@ -265,11 +268,33 @@ export class AutoLabels extends BaseLabels {
           fitted: T[],
           majorValues?: number[],
         ) => {
-          const converted = fitted.map(convert)
-          const labels = onlyFitted ? cleanupOutside(fitted, overflowLimits).map(convert) : converted
+          const fittedWithinLimits = cleanupOutside(fitted, overflowLimits)
+          const fittedItems = new Set(fittedWithinLimits)
+          const isValueOutsideBounds = (item: T) => {
+            if (typeof strategy !== 'object') {
+              return item.value < spaceBounds.start || item.value > spaceBounds.end
+            }
+
+            if (strategy.type === 'cell') {
+              const cellStart = Math.min(item.value, item.value + strategy.size)
+              const cellEnd = Math.max(item.value, item.value + strategy.size)
+              return cellEnd <= spaceBounds.start || cellStart >= spaceBounds.end
+            }
+
+            if (!('start' in item) || !('end' in item) || typeof item.start !== 'number' || typeof item.end !== 'number') return false
+            return item.end <= layoutLimits.start || item.start >= layoutLimits.end
+          }
+          const visibleItems = onlyFitted ? fittedWithinLimits : fitted
+          const labels = visibleItems.map(item => {
+            const classes = joinClasses(
+              !fittedItems.has(item) && LABEL_OUTSIDE_SPACE_CLASS,
+              isValueOutsideBounds(item) && VALUE_OUTSIDE_BOUNDS_LABEL_CLASS,
+            )
+            return { ...convert(item), classes: classes || undefined }
+          })
           return {
             level: { labels, classes: current.classes },
-            labelValues: majorValues ?? converted.map(item => item.value),
+            labelValues: majorValues ?? fitted.map(item => item.value),
             options: current,
             strategy,
             limits: { start: from, end: to },

@@ -8,6 +8,7 @@ export type LabelData = {
   p: number
   label: string
   value: number
+  classes?: Classes
 }
 
 export type LabelTickLevel = {
@@ -48,6 +49,7 @@ export abstract class BaseLabels implements SlotRenderer {
 
 
   private elementByKey = new Map<string, SVGTextElement>()
+  private dynamicLabelClasses = new Map<string, string[]>()
   private levelRoots: LabelLevelRoot[] = []
   private tickLevels: readonly LabelTickLevel[] = []
   private maxObservedSize = 0
@@ -133,6 +135,7 @@ export abstract class BaseLabels implements SlotRenderer {
     for (const element of this.elementByKey.values()) element.remove()
     for (const level of this.levelRoots) level.root.remove()
     this.elementByKey.clear()
+    this.dynamicLabelClasses.clear()
     this.cachedSizes.clear()
     this.cachedMetrics = null
     this.tickLevels = []
@@ -189,6 +192,7 @@ export abstract class BaseLabels implements SlotRenderer {
       if (!usedKeys.has(key)) {
         element.remove()
         this.elementByKey.delete(key)
+        this.dynamicLabelClasses.delete(key)
       }
     }
 
@@ -217,6 +221,7 @@ export abstract class BaseLabels implements SlotRenderer {
 
       element.setAttribute('y', y.toString())
       element.setAttribute('x', label.p.toString())
+      this.syncLabelClasses(key, element, label.classes)
       if (element.textContent !== label.label) element.textContent = label.label
     }
   }
@@ -240,6 +245,7 @@ export abstract class BaseLabels implements SlotRenderer {
 
       element.setAttribute('x', xStr)
       element.setAttribute('y', label.p.toString())
+      this.syncLabelClasses(key, element, label.classes)
       if (element.textContent !== label.label) element.textContent = label.label
     }
   }
@@ -299,6 +305,17 @@ export abstract class BaseLabels implements SlotRenderer {
     label.textContent = textContent
     root.appendChild(label)
     return label
+  }
+
+  private syncLabelClasses(key: string, element: SVGTextElement, classes?: Classes) {
+    const next = classNames(classes)
+    const current = this.dynamicLabelClasses.get(key) ?? []
+    if (next.length === current.length && next.every((item, index) => item === current[index])) return
+
+    removeClasses(element, current)
+    addClasses(element, next)
+    if (next.length > 0) this.dynamicLabelClasses.set(key, next)
+    else this.dynamicLabelClasses.delete(key)
   }
 
   private syncLevelRoots(levels: readonly LabelLevelData[]) {

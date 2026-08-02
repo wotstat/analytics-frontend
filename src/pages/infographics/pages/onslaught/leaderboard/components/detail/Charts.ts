@@ -211,7 +211,6 @@ class BaseChart extends UniversalChart {
           offset: 0,
         }),
       ],
-      onlyFitted: true,
       strategy: 'classic-flow',
     }
   }
