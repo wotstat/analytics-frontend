@@ -1,16 +1,6 @@
 import { ChartSpace } from '../../utils/ChartSpace'
 import { Classes, joinClasses } from '../../utils/utils'
-import {
-  Axis,
-  BaseLabels,
-  DEFAULT_LABEL_OFFSET,
-  DEFAULT_LEVEL_GAP,
-  LabelLevelData,
-  LabelsFrame,
-  LabelTickLevel,
-  LabelsSide,
-  SlotSize,
-} from '../BaseLabels'
+import { Axis, BaseLabels, DEFAULT_LABEL_OFFSET, DEFAULT_LEVEL_GAP, LabelLevelData, LabelsFrame, LabelTickLevel, LabelsSide, SlotSize } from '../BaseLabels'
 import { calculateClassic, calculateInterval, cleanupOutside, extend, fit, intervalFit } from './utils'
 
 export type Strategy = 'classic-flow' | 'classic' | {
@@ -42,10 +32,7 @@ export type TickSource =
     classes?: Classes
   }
 
-export type TicksOption = TickSource | TickSource[]
-
-
-type StepOptions = {
+type LabelOptions = {
   labelForValue?: (value: number, step: number) => string
   keyForValue?: (value: number, label: string, step: number) => string
   padding?: number | { clip: number, flow: number }
@@ -53,20 +40,19 @@ type StepOptions = {
   from?: number
   to?: number
   onlyFitted?: boolean
-  ticks?: TicksOption
+  ticks?: TickSource | TickSource[]
   classes?: Classes
 }
 
-export type LabelLevelOptions = StepOptions & {
+export type GeneratorWithOptions = LabelOptions & {
   gen: ValueGenerator
 }
 
-export type LabelStepOverrides = LabelLevelOptions & {
-  secondary?: readonly LabelLevelOptions[]
-}
+export type LabelLevel = ValueGenerator | GeneratorWithOptions
+export type LabelCandidate = LabelLevel | readonly LabelLevel[]
 
-export type Options = StepOptions & {
-  values: readonly (ValueGenerator | LabelStepOverrides)[]
+export type Options = LabelOptions & {
+  values: readonly LabelCandidate[]
   labelOffset?: number
   levelGap?: number
   slotSize?: SlotSize
@@ -75,9 +61,13 @@ export type Options = StepOptions & {
 const DEFAULT_LABEL_PADDING = 15
 const DEFAULT_STRATEGY: Strategy = 'classic-flow'
 const CLASSIC_TICKS_START = 4
-const MAX_VALUES_PER_LEVEL = 500
+const MAX_VALUES_PER_LEVEL = 1000
 
 const LABELS_LEVEL_CLASS = 'label-ticks'
+
+function isLabelLevels(candidate: LabelCandidate): candidate is readonly LabelLevel[] {
+  return Array.isArray(candidate)
+}
 
 function getClipPadding(padding: Options['padding']) {
   if (typeof padding === 'number') return padding
@@ -140,7 +130,7 @@ function collectLevelValues(ctx: {
 export class AutoLabels extends BaseLabels {
 
   constructor(axis: Axis, private options: Options, side?: LabelsSide) {
-    AutoLabels.validateLevels(axis, options)
+    AutoLabels.validateOptions(axis, options)
     super(axis, {
       offset: options.labelOffset,
       levelGap: options.levelGap,
@@ -149,46 +139,42 @@ export class AutoLabels extends BaseLabels {
     }, side)
   }
 
-  private resolveOverridesForStep(step: number): LabelStepOverrides[] | null {
+  private resolveLevelsForStep(step: number): GeneratorWithOptions[] | null {
     const current = this.options.values[step]
     if (!current) return null
 
     const options = this.options
-    const candidate: LabelStepOverrides = typeof current === 'function' ? { gen: current } : current
+    const levels = isLabelLevels(current) ? current : [current]
 
-    const resolveLevel = (level: LabelLevelOptions, inheritRootTicks: boolean): LabelStepOverrides => ({
-      gen: level.gen,
-      labelForValue: level.labelForValue ?? options.labelForValue,
-      keyForValue: level.keyForValue ?? options.keyForValue,
-      padding: level.padding ?? options.padding,
-      strategy: level.strategy ?? options.strategy,
-      from: level.from ?? options.from,
-      to: level.to ?? options.to,
-      onlyFitted: level.onlyFitted ?? options.onlyFitted,
-      ticks: level.ticks ?? (inheritRootTicks ? options.ticks : undefined),
-      classes: level.classes ?? options.classes,
+    return levels.map((level, index) => {
+      const overrides: GeneratorWithOptions = typeof level === 'function' ? { gen: level } : level
+      return {
+        gen: overrides.gen,
+        labelForValue: overrides.labelForValue ?? options.labelForValue,
+        keyForValue: overrides.keyForValue ?? options.keyForValue,
+        padding: overrides.padding ?? options.padding,
+        strategy: overrides.strategy ?? options.strategy,
+        from: overrides.from ?? options.from,
+        to: overrides.to ?? options.to,
+        onlyFitted: overrides.onlyFitted ?? options.onlyFitted,
+        ticks: overrides.ticks ?? (index === 0 ? options.ticks : undefined),
+        classes: overrides.classes ?? options.classes,
+      }
     })
-
-    return [
-      resolveLevel(candidate, true),
-      ...(candidate.secondary ?? []).map(level => resolveLevel(level, false)),
-    ]
   }
 
   private static getMaxLevelCount(options: Options) {
-    return options.values.reduce((max, candidate) => {
-      if (typeof candidate === 'function') return Math.max(max, 1)
-      return Math.max(max, 1 + (candidate.secondary?.length ?? 0))
-    }, 1)
+    return options.values.reduce((max, candidate) =>
+      Math.max(max, isLabelLevels(candidate) ? candidate.length : 1), 1)
   }
 
-  private static validateLevels(axis: Axis, options: Options) {
-    if (axis === 'horizontal') return
+  private static validateOptions(axis: Axis, options: Options) {
+    const hasEmptyCandidate = options.values.some(candidate => isLabelLevels(candidate) && candidate.length === 0)
+    if (hasEmptyCandidate) throw new Error('Label candidate must contain at least one level')
 
-    const hasSecondary = options.values.some(candidate =>
-      typeof candidate !== 'function' && (candidate.secondary?.length ?? 0) > 0
-    )
-    if (hasSecondary) throw new Error('Multi-level labels are supported only for the horizontal axis')
+    if (axis === 'horizontal') return
+    const hasMultipleLevels = options.values.some(candidate => isLabelLevels(candidate) && candidate.length > 1)
+    if (hasMultipleLevels) throw new Error('Multi-level labels are supported only for the horizontal axis')
   }
 
   private getSuggestedStart(strategy: Strategy, level: number) {
@@ -206,7 +192,7 @@ export class AutoLabels extends BaseLabels {
   }
 
   updateOptions(options: Options) {
-    AutoLabels.validateLevels(this.axis, options)
+    AutoLabels.validateOptions(this.axis, options)
     this.options = options
     super.updateOptions(this.getSlotOptions(options))
     this.requestLayout()
@@ -241,19 +227,11 @@ export class AutoLabels extends BaseLabels {
     const getSize = this.axis === 'horizontal' ? this.getTextWidth.bind(this) : this.getTextHeight.bind(this)
 
     for (let i = 0; i < options.values.length; i++) {
-      const currentLevels = this.resolveOverridesForStep(i)
+      const currentLevels = this.resolveLevelsForStep(i)
       if (!currentLevels) break
 
       const force = i == options.values.length - 1
-      const calculated: {
-        level: LabelLevelData
-        labelValues: number[]
-        options: LabelStepOverrides
-        strategy: Strategy
-        limits: { start: number, end: number }
-      }[] = []
-
-      const calculateLevel = (current: LabelStepOverrides) => {
+      const calculateLevel = (current: GeneratorWithOptions) => {
         const labelForValue = current.labelForValue ?? defaultLabelForValue
         const keyForValue = current.keyForValue ?? defaultKeyForValue
         const from = current.from ?? -Infinity
@@ -343,16 +321,8 @@ export class AutoLabels extends BaseLabels {
         return prepareResult(fitted, res.map(item => item.value))
       }
 
-      let failed = false
-      for (const level of currentLevels) {
-        const result = calculateLevel(level)
-        if (!result) {
-          failed = true
-          break
-        }
-        calculated.push(result)
-      }
-      if (failed) continue
+      const calculated = everyWithResult(currentLevels, level => calculateLevel(level))
+      if (!calculated) continue
 
       const tickLevels = calculated.flatMap((level, levelIndex) =>
         this.buildTickLevels(level.options.ticks, {
@@ -374,7 +344,7 @@ export class AutoLabels extends BaseLabels {
   }
 
   private buildTickLevels(
-    ticks: TicksOption | undefined,
+    ticks: TickSource | TickSource[] | undefined,
     ctx: {
       labelValues: readonly number[],
       labelsStart: number,
@@ -408,4 +378,14 @@ export class AutoLabels extends BaseLabels {
 
     return levels
   }
+}
+
+function everyWithResult<T, R>(array: T[], predicate: (value: T, index: number, array: T[]) => R | null): R[] | null {
+  const result: R[] = []
+  for (let i = 0; i < array.length; i++) {
+    const res = predicate(array[i], i, array)
+    if (res === null) return null
+    result.push(res)
+  }
+  return result
 }

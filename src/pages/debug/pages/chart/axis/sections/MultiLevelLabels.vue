@@ -122,8 +122,7 @@
 import { computed, markRaw, ref, watchEffect } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import type {
-  LabelLevelOptions,
-  LabelStepOverrides,
+  GeneratorWithOptions,
   Options as LabelsOptions,
   Strategy,
 } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
@@ -160,7 +159,7 @@ const offsetPoints = makePoints(OFFSET_START, OFFSET_END, HOUR)
 
 const goodSlotSize = computed<SlotSize>(() => slotSize.value === '72' ? 72 : slotSize.value)
 
-const monthLevel: LabelLevelOptions = {
+const monthLevel: GeneratorWithOptions = {
   gen: utcMonthGenerator,
   labelForValue: value => MONTH_NAMES[new Date(value * 1000).getUTCMonth()],
   keyForValue: value => `${value}`,
@@ -169,7 +168,7 @@ const monthLevel: LabelLevelOptions = {
   ticks: { gen: 'labels', classes: 'month-ticks' },
 }
 
-const dayLevel: LabelLevelOptions = {
+const dayLevel: GeneratorWithOptions = {
   gen: steppedGenerator({ step: DAY }),
   labelForValue: value => `${new Date(value * 1000).getUTCDate()} день`,
   keyForValue: value => `${value}`,
@@ -183,10 +182,7 @@ const goodXLabels = computed<LabelsOptions>(() => ({
     hourCandidate(3),
     hourCandidate(6),
     hourCandidate(12),
-    {
-      ...dayLevel,
-      secondary: [monthLevel],
-    },
+    [dayLevel, monthLevel],
   ],
   padding: 6,
   labelOffset: 5,
@@ -198,7 +194,7 @@ const goodXLabels = computed<LabelsOptions>(() => ({
 
 const offsetXLabels = computed<LabelsOptions>(() => {
   const offset = dayOffsetHours.value * HOUR
-  const offsetDayLevel: LabelLevelOptions = {
+  const offsetDayLevel: GeneratorWithOptions = {
     gen: steppedGenerator({ step: DAY, offset }),
     labelForValue: value => `день ${String(new Date(value * 1000).getUTCDate()).padStart(2, '0')}`,
     keyForValue: value => `${value}`,
@@ -208,15 +204,17 @@ const offsetXLabels = computed<LabelsOptions>(() => {
   }
 
   return {
-    values: [{
-      gen: steppedGenerator({ step: 3 * HOUR }),
-      labelForValue: formatHour,
-      keyForValue: value => `${value}`,
-      strategy: intervalStrategy,
-      classes: 'hour-labels',
-      ticks: { gen: 'labels', classes: 'hour-ticks' },
-      secondary: [offsetDayLevel],
-    }],
+    values: [[
+      {
+        gen: steppedGenerator({ step: 3 * HOUR }),
+        labelForValue: formatHour,
+        keyForValue: value => `${value}`,
+        strategy: intervalStrategy,
+        classes: 'hour-labels',
+        ticks: { gen: 'labels', classes: 'hour-ticks' },
+      },
+      offsetDayLevel,
+    ]],
     padding: 6,
     labelOffset: 5,
     levelGap: 4,
@@ -278,16 +276,19 @@ const offsetStats = computed(() => {
   }
 })
 
-function hourCandidate(step: number): LabelStepOverrides {
-  return {
-    gen: steppedGenerator({ step: step * HOUR }),
-    labelForValue: formatHour,
-    keyForValue: value => `${value}`,
-    strategy: intervalStrategy,
-    classes: 'hour-labels',
-    ticks: { gen: 'labels', classes: 'hour-ticks' },
-    secondary: [dayLevel, monthLevel],
-  }
+function hourCandidate(step: number): GeneratorWithOptions[] {
+  return [
+    {
+      gen: steppedGenerator({ step: step * HOUR }),
+      labelForValue: formatHour,
+      keyForValue: value => `${value}`,
+      strategy: intervalStrategy,
+      classes: 'hour-labels',
+      ticks: { gen: 'labels', classes: 'hour-ticks' },
+    },
+    dayLevel,
+    monthLevel,
+  ]
 }
 
 function utcMonthGenerator(startFrom: number) {
