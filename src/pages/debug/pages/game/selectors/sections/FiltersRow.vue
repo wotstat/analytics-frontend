@@ -128,6 +128,7 @@ import ArenaSelectorBadges from '@/shared/game/selectors/arena/ArenaSelectorBadg
 import GameVersionSelectorBadges from '@/shared/game/selectors/gameVersionSelector/GameVersionSelectorBadges.vue'
 import GameSelector from '@/shared/game/selectors/gameSelector/GameSelector.vue'
 import type { GameVendor } from '@/shared/game/wot'
+import type { OptionalRegionVersion } from '@/shared/game/selectors/gameVersionSelector/utils.ts'
 import { arenaHashes, take, vehicleTags, versionTags } from '../shared/lists'
 
 const layout = ref<'battle' | 'row'>('battle')
@@ -136,7 +137,7 @@ const width = ref(900)
 
 const vehicles = ref(new Set<string>())
 const arenas = ref(new Set<string>())
-const versions = ref(new Set<string>())
+const versions = ref(new Set<OptionalRegionVersion>())
 const game = ref<GameVendor | 'any'>('mt')
 
 const arenaCell = useTemplateRef<HTMLElement>('arenaCell')
@@ -163,7 +164,7 @@ function bounds(value: ReturnType<typeof useElementBounding>) {
 function fillSome() {
   for (const tag of take(vehicleTags.value, 6)) vehicles.value.add(tag)
   for (const tag of take(arenaHashes.value, 4)) arenas.value.add(tag)
-  for (const tag of take(versionTags.value.versions, 3)) versions.value.add(tag)
+  for (const tag of take(versionTags.value.versions, 3)) versions.value.add({ version: tag })
 }
 
 function clearAll() {

@@ -38,7 +38,7 @@
           <th>Версия</th>
           <td>GameVersionSelectorBadges → BadgesLinePopover</td>
           <td>поповер</td>
-          <td>Set&lt;строка версии&gt;</td>
+          <td>Set&lt;{ version, region? }&gt;</td>
           <td><a href="#version">версия</a></td>
         </tr>
       </tbody>

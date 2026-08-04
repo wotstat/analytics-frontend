@@ -4,6 +4,7 @@ import { HighlightedCellLine } from '@/shared/ui/tableView/cells/HighlightedCell
 
 type LineData = {
   version: string
+  selectionTag: string
   extendedTags: string[]
   highlighted: Highlighted
 }
@@ -24,7 +25,7 @@ export class VersionLine extends HighlightedCellLine {
   }
 
   configureVersion(data: LineData): void {
-    this.currentTag = data.version
+    this.currentTag = data.selectionTag
     this.extendedTags = data.extendedTags
 
     super.configure({ text: data.highlighted.text, highlightedText: data.highlighted })

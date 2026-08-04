@@ -10,9 +10,11 @@
     <div class="debug-log">
       <div class="debug-log-empty" v-if="selected.size === 0">Ничего не выбрано</div>
 
-      <div class="debug-log-line" v-for="tag in visibleTags" :key="tag">
-        <span class="debug-log-time">{{ tag === '' ? '(пустая строка)' : tag }}</span>
-        <span v-if="tagToText">{{ tagToText(tag) }}</span>
+      <div class="debug-log-line" v-for="tag in visibleTags" :key="tagToKey?.(tag) ?? `${tag}`">
+        <span class="debug-log-time">
+          {{ typeof tag === 'string' && tag === '' ? '(пустая строка)' : typeof tag === 'string' ? tag : tagToText?.(tag) ?? `${tag}` }}
+        </span>
+        <span v-if="tagToText && typeof tag === 'string'">{{ tagToText(tag) }}</span>
       </div>
 
       <div class="debug-log-empty" v-if="hiddenCount > 0">…и ещё {{ hiddenCount }}</div>
@@ -21,18 +23,19 @@
 </template>
 
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T">
 import { computed } from 'vue'
 
 const MAX_VISIBLE = 150
 
 defineProps<{
   title?: string
-  tagToText?: (tag: string) => string
+  tagToText?: (tag: T) => string
+  tagToKey?: (tag: T) => string
   total?: number
 }>()
 
-const selected = defineModel<Set<string>>({ required: true })
+const selected = defineModel<Set<T>>({ required: true })
 
 const visibleTags = computed(() => [...selected.value].slice(0, MAX_VISIBLE))
 const hiddenCount = computed(() => Math.max(0, selected.value.size - MAX_VISIBLE))

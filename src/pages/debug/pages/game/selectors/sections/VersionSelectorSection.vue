@@ -1,80 +1,126 @@
 <template>
   <DebugSection title="Селектор версии игры" id="version"
-    description="Три уровня в одном списке: версия, патч, микропатч. Выбор версии «накрывает» вложенные патчи, а регион зависит от глобального preferredGame."
+    description="Три уровня в одном списке: версия, патч, микропатч. Модель хранит объекты версии, а режим withRegion управляет тем, входит ли регион в выбор."
     source="src/shared/game/selectors/gameVersionSelector/">
 
     <div class="debug-row">
-      <button class="debug-btn" @click="addTags(take(versionTags.versions, 2))">+2 версии</button>
-      <button class="debug-btn" @click="addTags(take(versionTags.patches, 5))">+5 патчей</button>
-      <button class="debug-btn" @click="addTags(versionTags.versions)">
-        все версии ({{ versionTags.versions.length }})
+      <button class="debug-btn" @click="addTags(take(currentVersionTags.versions, 2))">+2 версии</button>
+      <button class="debug-btn" @click="addTags(take(currentVersionTags.patches, 5))">+5 патчей</button>
+      <button class="debug-btn" @click="addTags(currentVersionTags.versions)">
+        все версии ({{ currentVersionTags.versions.length }})
       </button>
-      <button class="debug-btn" @click="addTags(versionTags.micro)">
-        все микропатчи ({{ versionTags.micro.length }})
+      <button class="debug-btn" @click="addTags(currentVersionTags.micro)">
+        все микропатчи ({{ currentVersionTags.micro.length }})
       </button>
-      <button class="debug-btn" @click="addTags(brokenVersionTags)">+ мусорные теги</button>
+      <button class="debug-btn" @click="addTags(brokenVersionTags.map(version => ({ version })))">+ мусорные теги</button>
+    </div>
+
+    <div class="debug-row">
+      <label class="debug-control">
+        <span class="debug-label">withRegion</span>
+        <input type="checkbox" v-model="withRegion">
+      </label>
+
+      <label class="debug-control">
+        <span class="debug-label">showVersions</span>
+        <input type="checkbox" v-model="showVersions">
+      </label>
+
+      <label class="debug-control">
+        <span class="debug-label">showPatches</span>
+        <input type="checkbox" v-model="showPatches">
+      </label>
+
+      <label class="debug-control">
+        <span class="debug-label">showMinor</span>
+        <input type="checkbox" v-model="showMinor">
+      </label>
     </div>
 
     <div class="debug-stage">
       <div class="selector-box">
         <p>Версия:</p>
-        <GameVersionSelectorBadges v-model="selected" />
+        <GameVersionSelectorBadges v-model="selected" :with-region="withRegion" :show-versions="showVersions"
+          :show-patches="showPatches" :show-minor="showMinor" />
       </div>
     </div>
 
-    <SelectionReadout v-model="selected" :total="versionTags.micro.length" />
+    <SelectionReadout v-model="selected" :tag-to-key="versionToKey" :tag-to-text="versionToText" />
 
     <p class="debug-note">
-      Формат строки в модели — то, что нарисовал <span class="debug-value">VersionLine</span>:
-      <span class="debug-value">1.44</span> для версии, <span class="debug-value">1.44.0</span> для патча и
-      <span class="debug-value">1.44.0.1 #1580</span> для микропатча. Из БД приходит
-      <span class="debug-value">v.1.44.0.1 #1580</span>, регулярка в
-      <span class="debug-value">GameVersionPopup</span> разбирает её на пять чисел и собирает три уровня заново.
+      Входной список содержит <span class="debug-value">{ region, version }</span>, где версия выглядит как
+      <span class="debug-value">v.1.44.0.1 #1580</span>. Регулярка в
+      <span class="debug-value">GameVersionPopup</span> разбирает её и собирает три уровня:
+      <span class="debug-value">1.44</span>, <span class="debug-value">1.44.0</span> и
+      <span class="debug-value">1.44.0.1 #1580</span>.
     </p>
 
     <p class="debug-note">
-      Логика «накрытия»: выбрал <span class="debug-value">1.44</span> — все его патчи и микропатчи подсвечиваются как
-      <span class="debug-value">.extended</span> (синеватый фон, курсор обычный) и <b>перестают выбираться</b>, а уже
-      выбранные вложенные молча удаляются из модели. Проверь по выводу выбранного: после клика по версии вложенных
-      тегов в наборе быть не должно. Снять «накрытие» можно только сняв саму версию.
+      Логика «накрытия» осталась иерархической: выбранная версия блокирует вложенные патчи и микропатчи, а выбор
+      вложенного уровня удаляет уже выбранные строки, которые он накрывает. Снятие верхнего выбора снова делает
+      вложенные строки доступными.
     </p>
 
     <p class="debug-note">
-      Регион не спрашивается, а выводится: <span class="debug-value">watch(preferredGame)</span> при открытии ставит
-      RU для Lesta и EU для WG, а кнопки региона всегда одиночного выбора (Ctrl/Shift не работают, в отличие от
-      фильтров техники). Список регионов захардкожен:
-      <span class="debug-value">RU, PT_RU</span> против <span class="debug-value">EU, NA, ASIA, CN, CT</span>. У
-      Lesta и WG сейчас разные ветки нумерации (1.44 против 2.3.1) — это не баг данных.
+      При <span class="debug-value">withRegion=false</span> регион не входит в идентичность: попап сразу приводит
+      модель к объектам вида <span class="debug-value">{ version }</span>. При
+      <span class="debug-value">withRegion=true</span> в модель попадают объекты с регионом, а одинаковые версии в
+      разных регионах выбираются независимо. Ключ составляется в <span class="debug-value">utils.ts</span> через
+      нулевой разделитель, поэтому он не смешивается с текстом версии.
     </p>
 
     <p class="debug-note">
-      Копипаста в <span class="debug-value">GameVersionSelectorBadges</span>: подпись бейджа считается как
-      <span class="debug-value">getTankName(tag, true)</span>, то есть строка версии прогоняется через локализацию
-      <b>танков</b>, а модель внутри так и называется <span class="debug-value">vehicles</span>. Сегодня это незаметно
-      (в версии нет двоеточия, и <span class="debug-value">tankTagToReadable</span> возвращает её как есть), но любой
-      танк с тегом-совпадением подменит подпись.
+      Подпись бейджа теперь строится явно: без региона это версия, с регионом —
+      <span class="debug-value">[RU] 1.44</span>. Кнопки Lesta/WG меняют глобальный
+      <span class="debug-value">preferredGame</span> и набор доступных регионов; регион внутри выбранного объекта
+      от этого сам не меняется.
     </p>
 
     <p class="debug-note">
-      «Мусорные теги» — проверка, что несуществующая версия не ломает бейджи: она просто висит в наборе и нигде в
-      списке не подсвечена, снять её можно только крестиком на бейдже.
+      Переключатели <span class="debug-value">showVersions</span>,
+      <span class="debug-value">showPatches</span> и <span class="debug-value">showMinor</span> управляют только
+      секциями попапа. Выключи все три: список данных не пуст, но таблица показывает состояние «Ничего не найдено».
+      «Мусорные теги» остаются в модели и снимаются крестиком на бейдже, даже если соответствующая секция скрыта.
     </p>
   </DebugSection>
 </template>
 
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import GameVersionSelectorBadges from '@/shared/game/selectors/gameVersionSelector/GameVersionSelectorBadges.vue'
+import type { OptionalRegionVersion } from '@/shared/game/selectors/gameVersionSelector/utils.ts'
+import { versionToKey } from '@/shared/game/selectors/gameVersionSelector/utils.ts'
 import SelectionReadout from '../shared/SelectionReadout.vue'
 import { brokenVersionTags } from '../shared/fixtures'
-import { take, versionTags } from '../shared/lists'
+import { take, versionSelections, versionTags } from '../shared/lists'
 
-const selected = ref(new Set<string>())
+const selected = ref(new Set<OptionalRegionVersion>())
+const withRegion = ref(false)
+const showVersions = ref(true)
+const showPatches = ref(true)
+const showMinor = ref(true)
 
-function addTags(tags: readonly string[]) {
-  for (const tag of tags) selected.value.add(tag)
+const currentVersionTags = computed(() => {
+  if (withRegion.value) return versionSelections.value
+
+  return {
+    versions: versionTags.value.versions.map(version => ({ version })),
+    patches: versionTags.value.patches.map(version => ({ version })),
+    micro: versionTags.value.micro.map(version => ({ version })),
+  }
+})
+
+function addTags(tags: readonly OptionalRegionVersion[]) {
+  for (const tag of tags) {
+    if ([...selected.value].some(selectedTag => versionToKey(selectedTag) === versionToKey(tag))) continue
+    selected.value.add(tag)
+  }
+}
+
+function versionToText({ region, version }: OptionalRegionVersion) {
+  return region ? `[${region}] ${version}` : version
 }
 
 </script>

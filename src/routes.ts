@@ -62,6 +62,7 @@ const routes = [
   },
   { path: '/bb25', component: asyncPage(() => import('./pages/services/bob25/Index.vue')) },
   { path: '/mt-36-1', component: asyncPage(() => import('./pages/services/mt36.1/Index.vue')) },
+  { path: '/services/compare-versions', component: asyncPage(() => import('./pages/services/mt36.1/Index.vue')) },
   { path: '/services/fixed-match-detector', component: asyncPage(() => import('./pages/services/fixedMatchDetect/Index.vue')) },
   { path: '/install', component: Install },
 

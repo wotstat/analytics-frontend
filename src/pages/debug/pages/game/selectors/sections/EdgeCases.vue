@@ -147,17 +147,18 @@ import ArenaSelectorBadges from '@/shared/game/selectors/arena/ArenaSelectorBadg
 import GameVersionSelectorBadges from '@/shared/game/selectors/gameVersionSelector/GameVersionSelectorBadges.vue'
 import GameSelector from '@/shared/game/selectors/gameSelector/GameSelector.vue'
 import type { GameVendor } from '@/shared/game/wot'
+import type { OptionalRegionVersion } from '@/shared/game/selectors/gameVersionSelector/utils.ts'
 import { brokenArenaHashes, brokenVehicleTags, brokenVersionTags } from '../shared/fixtures'
 import { arenaHashes, vehicleTags, versionTags } from '../shared/lists'
 
 const vehicles = ref(new Set<string>())
 const arenas = ref(new Set<string>())
-const versions = ref(new Set<string>())
+const versions = ref(new Set<OptionalRegionVersion>())
 const game = ref<GameVendor | 'any'>('mt')
 
 const cornerVehicles = ref(new Set<string>())
-const cornerVersions = ref(new Set<string>())
-const scrollVersions = ref(new Set<string>())
+const cornerVersions = ref(new Set<OptionalRegionVersion>())
+const scrollVersions = ref(new Set<OptionalRegionVersion>())
 
 const width = ref(520)
 
@@ -168,13 +169,17 @@ function fill(target: Set<string>, tags: readonly string[]) {
 function selectAll() {
   fill(vehicles.value, vehicleTags.value)
   fill(arenas.value, arenaHashes.value)
-  fill(versions.value, versionTags.value.versions)
+  fillVersions(versions.value, versionTags.value.versions)
 }
 
 function selectBroken() {
   fill(vehicles.value, brokenVehicleTags)
   fill(arenas.value, brokenArenaHashes)
-  fill(versions.value, brokenVersionTags)
+  fillVersions(versions.value, brokenVersionTags)
+}
+
+function fillVersions(target: Set<OptionalRegionVersion>, tags: readonly string[]) {
+  for (const version of tags) target.add({ version })
 }
 
 function clearAll() {

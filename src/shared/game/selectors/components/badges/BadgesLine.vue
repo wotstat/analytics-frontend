@@ -1,6 +1,7 @@
 <template>
   <div class="badges">
-    <Badge :text="tagToText?.(tag) ?? tag" :key="tag" closable v-for="tag in [...selected]" @close="onRemove(tag)" />
+    <Badge :text="tagToText?.(tag) ?? `${tag}`" :key="tagToKey?.(tag) ?? `${tag}`" closable v-for="tag in [...selected]"
+      @close="onRemove(tag)" />
     <template v-if="showAddButton">
       <button class="select" @click="openSelect" v-if="selected.size == 0">
         <p>выбрать</p>
@@ -13,16 +14,17 @@
 </template>
 
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T">
 import Badge from './Badge.vue'
 import PlusIcon from '@/assets/icons/plus-bold.svg'
 
 const props = defineProps<{
-  tagToText?: (tag: string) => string,
+  tagToText?: (tag: T) => string,
+  tagToKey?: (tag: T) => string,
   showAddButton?: boolean
 }>()
 
-const selected = defineModel<Set<string>>({ default: () => new Set() })
+const selected = defineModel<Set<T>>({ default: () => new Set() })
 const emit = defineEmits<{
   (e: 'openSelectModal'): void
 }>()
@@ -31,7 +33,7 @@ function openSelect() {
   emit('openSelectModal')
 }
 
-function onRemove(tag: string) {
+function onRemove(tag: T) {
   selected.value.delete(tag)
 }
 

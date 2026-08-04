@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Данные списков: загрузка, пусто, битый список" id="data"
     description="Попапы принимают список пропом, поэтому здесь они смонтированы напрямую — без поповера и без запроса. Так видно ветки загрузки, пустого результата и падения на неразобранных данных."
-    source="src/shared/game/selectors/vehicleSelector/VehiclePopup.vue">
+    source="src/shared/game/selectors/">
 
     <p class="debug-note">
       Ни один селектор не смотрит на <span class="debug-value">status</span> из
@@ -57,15 +57,44 @@
 
         <span class="debug-hint">строк: <span class="debug-value">{{ versionList.length }}</span></span>
         <span class="debug-hint">выбрано: <span class="debug-value">{{ versionSelected.size }}</span></span>
+
+        <label class="debug-control">
+          <span class="debug-label">withRegion</span>
+          <input type="checkbox" v-model="versionWithRegion">
+        </label>
+
+        <label class="debug-control">
+          <span class="debug-label">showVersions</span>
+          <input type="checkbox" v-model="showVersions">
+        </label>
+
+        <label class="debug-control">
+          <span class="debug-label">showPatches</span>
+          <input type="checkbox" v-model="showPatches">
+        </label>
+
+        <label class="debug-control">
+          <span class="debug-label">showMinor</span>
+          <input type="checkbox" v-model="showMinor">
+        </label>
       </div>
 
       <div class="debug-stage">
         <RenderGuard :key="versionSource">
           <PopupCard>
-            <GameVersionPopup :version-list="versionList" v-model="versionSelected" />
+            <GameVersionPopup :version-list="versionList" v-model="versionSelected" :with-region="versionWithRegion"
+              :show-versions="showVersions" :show-patches="showPatches" :show-minor="showMinor" />
           </PopupCard>
         </RenderGuard>
       </div>
+
+      <p class="debug-note">
+        Выбор хранится как <span class="debug-value">Set&lt;{ region?: string, version: string }&gt;</span>. При
+        <span class="debug-value">withRegion=false</span> попап убирает регион из уже выбранных объектов; при
+        <span class="debug-value">withRegion=true</span> одинаковые версии разных регионов остаются разными
+        элементами выбора. Переключатели <span class="debug-value">show*</span> скрывают отдельные секции, но не
+        меняют входной список.
+      </p>
 
       <p class="debug-note">
         «Битый список» — не выдумка ради красного текста: <span class="debug-value">parseVersion</span> возвращает
@@ -181,9 +210,13 @@ const arenaVariants = [
 const vehicleSource = ref<Source>('fixture')
 const versionSource = ref<Source>('fixture')
 const arenaSource = ref<Source>('fixture')
+const versionWithRegion = ref(false)
+const showVersions = ref(true)
+const showPatches = ref(true)
+const showMinor = ref(true)
 
 const vehicleSelected = ref(new Set<string>())
-const versionSelected = ref(new Set<string>())
+const versionSelected = ref(new Set<{ region?: string, version: string }>())
 const arenaSelected = ref(new Set<string>())
 
 const arenaGame = ref<GameVendor>('mt')

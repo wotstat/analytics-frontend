@@ -43,6 +43,7 @@ import VehicleSelectorBadges from '@/shared/game/selectors/vehicleSelector/Vehic
 import GameSelector from '@/shared/game/selectors/gameSelector/GameSelector.vue'
 import GameVersionSelectorBadges from '@/shared/game/selectors/gameVersionSelector/GameVersionSelectorBadges.vue'
 import ArenaSelectorBadges from '@/shared/game/selectors/arena/ArenaSelectorBadges.vue'
+import type { OptionalRegionVersion } from '@/shared/game/selectors/gameVersionSelector/utils.ts'
 
 const info = {
   meta: {
@@ -72,7 +73,7 @@ const info = {
 } as const
 
 const selectedVehicle = ref(new Set<string>())
-const selectedGameVersion = ref(new Set<string>())
+const selectedGameVersion = ref(new Set<OptionalRegionVersion>())
 const selectedArena = ref(new Set<string>())
 
 </script>

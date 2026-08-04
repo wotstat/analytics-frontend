@@ -3,6 +3,8 @@ import { CACHE_SETTINGS, LONG_CACHE_SETTINGS, queryAsync, type Status } from '@/
 import { selectTagArenasLocalization, selectTagVehiclesLocalization } from '@/shared/i18n/i18n'
 import { arenaToHash } from '@/shared/game/selectors/arena/utils'
 import type { Nation } from '@/shared/game/vehicles/nations/nations'
+import type { OptionalRegionVersion } from '@/shared/game/selectors/gameVersionSelector/utils.ts'
+import { versionToKey } from '@/shared/game/selectors/gameVersionSelector/utils.ts'
 
 export type VehicleRow = {
   type: 'MT' | 'LT' | 'HT' | 'AT' | 'SPG',
@@ -101,7 +103,39 @@ export const versionTags = computed(() => {
   return { versions: [...result.versions], patches: [...result.patches], micro: [...result.micro] }
 })
 
+export const versionSelections = computed(() => {
+  const result: Record<'versions' | 'patches' | 'micro', OptionalRegionVersion[]> = {
+    versions: [],
+    patches: [],
+    micro: [],
+  }
+  const seen: Record<'versions' | 'patches' | 'micro', Set<string>> = {
+    versions: new Set(),
+    patches: new Set(),
+    micro: new Set(),
+  }
+
+  function add(kind: keyof typeof result, value: OptionalRegionVersion) {
+    const key = versionToKey(value)
+    if (seen[kind].has(key)) return
+
+    seen[kind].add(key)
+    result[kind].push(value)
+  }
+
+  for (const row of versions.value.data) {
+    const parsed = parseGameVersion(row.version)
+    if (!parsed) continue
+
+    add('versions', { region: row.region, version: parsed.version })
+    add('patches', { region: row.region, version: parsed.patch })
+    add('micro', { region: row.region, version: parsed.micro })
+  }
+
+  return result
+})
+
 // Детерминированная выборка: на дебаг-странице нужен повторяемый набор, а не случайный.
-export function take(list: string[], count: number) {
+export function take<T>(list: readonly T[], count: number) {
   return list.slice(0, count)
 }

@@ -50,24 +50,51 @@ import { HeaderLine } from '@/shared/uiKit/tableView/tableView/default/HeaderLin
 import { compareIntervals, Highlighted } from '@/shared/uiKit/highlightString/highlightUtils'
 import { VersionLine } from './VersionLine'
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
+import { keyToVersion, OptionalRegionVersion, Version, versionToKey } from './utils.ts'
 
-const props = defineProps<{
-  versionList: {
-    region: string, version: string
-  }[]
-}>()
 
-const versions = defineModel<Set<string>>({ required: true })
+const props = withDefaults(defineProps<{
+  versionList: Version[]
+  withRegion?: boolean
+  showVersions?: boolean
+  showPatches?: boolean
+  showMinor?: boolean
+}>(), {
+  withRegion: false,
+  showVersions: true,
+  showPatches: true,
+  showMinor: true
+})
+
+
+function getVersionKey(version: OptionalRegionVersion) {
+  return props.withRegion ? versionToKey(version) : versionToKey({ version: version.version })
+}
+
+const versions = defineModel<Set<OptionalRegionVersion>>({ required: true })
 const table = useTemplateRef<InstanceType<typeof TableView>>('table')
 
 const currentSearch = ref('')
 const currentRegions = ref<Set<string>>(new Set())
 
-
 const regionsForGame = {
   'mt': ['RU', 'PT_RU'],
   'wot': ['EU', 'NA', 'ASIA', 'CN', 'CT'],
 }
+
+watch(() => props.withRegion, (withRegion) => {
+  if (withRegion === true) return
+
+  let shouldNormalize = false
+  const normalized = new Set<OptionalRegionVersion>()
+
+  for (const version of versions.value) {
+    if (version.region !== undefined) shouldNormalize = true
+    normalized.add({ version: version.version })
+  }
+
+  if (shouldNormalize) versions.value = normalized
+}, { immediate: true, deep: true })
 
 const possibleRegions = computed(() => {
   return preferredGame.value == 'mt' ? regionsForGame['mt'] : regionsForGame['wot']
@@ -121,6 +148,7 @@ const grouped = computed(() => {
   const versionsResult = [...versions.entries()].flatMap(([region, versionSet]) => [...versionSet.values()].map(v => ({
     region,
     version: v,
+    selectionTag: getVersionKey({ region, version: v }),
     extendedTags: [],
     highlighted: new Highlighted(v)
   })))
@@ -139,7 +167,8 @@ const grouped = computed(() => {
     return {
       region,
       version: v,
-      extendedTags: [`${version}.${major}`],
+      selectionTag: getVersionKey({ region, version: v }),
+      extendedTags: [getVersionKey({ region, version: `${version}.${major}` })],
       highlighted: new Highlighted(v)
     }
   }))
@@ -154,25 +183,36 @@ const grouped = computed(() => {
     return {
       region: v.region,
       version,
-      extendedTags: [patchExtends, versionExtends],
+      selectionTag: getVersionKey({ region: v.region, version }),
+      extendedTags: [
+        getVersionKey({ region: v.region, version: patchExtends }),
+        getVersionKey({ region: v.region, version: versionExtends })
+      ],
       highlighted: new Highlighted(version)
     }
   })
 
-  return [
-    {
-      header: 'Версии',
-      lines: versionsResult
-    },
-    {
-      header: 'Патчи',
-      lines: patchesResult
-    },
-    {
-      header: 'Микропатчи',
-      lines: micropatches
-    }
-  ]
+  const res = []
+
+  if (props.showVersions) res.push({
+    header: 'Версии',
+    lines: versionsResult
+  })
+
+  if (props.showPatches) res.push({
+    header: 'Патчи',
+    lines: patchesResult
+  })
+
+  if (props.showMinor) res.push({
+    header: 'Микропатчи',
+    lines: micropatches
+  })
+
+  console.log('grouped', res);
+
+
+  return res
 })
 
 const displaySections = computed(() => {
@@ -230,16 +270,33 @@ const isFastScroll = computed((old) => {
   return old
 })
 
+function hasSelection(key: string) {
+  return [...versions.value].some(version => versionToKey(version) === key)
+}
+
+function deleteSelection(key: string) {
+  for (const version of versions.value) {
+    if (versionToKey(version) === key) {
+      versions.value.delete(version)
+      return
+    }
+  }
+}
+
+const selectedKeys = computed(() => new Set([...versions.value]
+  .map(v => props.withRegion ? versionToKey(v) : versionToKey({ version: v.version })))
+)
+
 function onClick(tag: string, extendedTags: string[]) {
-  if (versions.value?.has(tag)) versions.value?.delete(tag)
+  if (hasSelection(tag)) deleteSelection(tag)
   else {
-    const isExtended = extendedTags.some(t => versions.value?.has(t))
-    if (!isExtended) versions.value?.add(tag)
+    const isExtended = extendedTags.some(hasSelection)
+    if (!isExtended) versions.value.add(keyToVersion(tag))
 
     for (const section of sections) {
       for (const line of section.lines) {
         if (line.extendedTags.includes(tag)) {
-          versions.value?.delete(line.version)
+          deleteSelection(line.selectionTag)
         }
       }
     }
@@ -250,7 +307,7 @@ const delegate: TableViewDelegate = {
 
   onSetupComplete: (table) => {
     table.registerReusable(HeaderLine.reusableKey, () => new HeaderLine())
-    table.registerReusable(VersionLine.reusableKey, () => new VersionLine(onClick, versions), 50)
+    table.registerReusable(VersionLine.reusableKey, () => new VersionLine(onClick, selectedKeys), 50)
   },
 
   numberOfSections: () => sections.length,

@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
 import CanvasVue from '@/shared/ui/components/Canvas.vue'
-import { computed, ref, shallowRef, useTemplateRef } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import { Quadtree, Circle } from '@timohausmann/quadtree-ts'
 
 import { useDebounceFn, useMouseInElement } from '@vueuse/core'

@@ -4,23 +4,47 @@
       <div class="blue-gradient"></div>
       <div class="green-gradient"></div>
     </div>
-    <h1>Сравнительная аналитика<br />обновления 1.36.1</h1>
+    <h1>Сравнительная аналитика<br />версий игры</h1>
+
     <h2 class="description">
-      В обновление Мира Танков 1.36.1 были внесены существенные изменения в серверную часть игры. <br> На этой странице
-      можно оценить, как эти обновления повлияли на игру.
+      На этой странице вы можете сравнить различные версии игры, чтобы понять, как изменения в серверной части повлияли
+      на игровой процесс.
     </h2>
 
-    <section>
-      <h3>Что изменили</h3>
-      <ul>
-        <li>+- 1-го уровень боёв</li>
-        <li>Не больше 2 САУ, 5 ПТ, 2 ЛТ</li>
-        <li>Пробитие +/- 15%</li>
-        <li>Урон +/- 10%</li>
-        <li>Убрали оглушение у САУ</li>
-        <li>Уменьшили разброс снарядов в прицеле</li>
-      </ul>
+    <details class="collapsible-menu">
+      <summary class="menu-trigger">Что было в Мир Танков 1.36.1</summary>
+      <div class="menu-content">
+        <p>
+          В обновление Мира Танков 1.36.1 были внесены существенные изменения в серверную часть игры:
+        </p>
+        <ul>
+          <li>+- 1-го уровень боёв</li>
+          <li>Не больше 2 САУ, 5 ПТ, 2 ЛТ</li>
+          <li>Пробитие +/- 15%</li>
+          <li>Урон +/- 10%</li>
+          <li>Убрали оглушение у САУ</li>
+          <li>Уменьшили разброс снарядов в прицеле</li>
+        </ul>
+      </div>
+    </details>
+
+    <section class="select-version">
+      <h3>Выбор версий</h3>
+      <div class="selector-vs">
+        <div class="version-select">
+          Группа №1:
+          <GameVersionSelectorBadges v-model="modelLeftVersions" with-region :show-minor="false" :show-versions="false"
+            class="badges" />
+        </div>
+        <div class="vr"></div>
+        <div class="version-select">
+          Группа №2:
+          <GameVersionSelectorBadges v-model="modelRightVersions" with-region :show-minor="false" :show-versions="false"
+            class="badges" />
+        </div>
+      </div>
     </section>
+
 
     <section class="ballistic-distribution">
       <h3>Распределение снарядов</h3>
@@ -64,12 +88,12 @@
         <div class="right">
           <div class="card">
             <ShotsCircle :mask-radius="ballisticCircleMask" :limit-shot="20000" :borderColor="'#4a90e2'"
-              :load-next-batch="loadNextBatchLeft" />
+              :load-next-batch="loadNextBatchLeft" :key="leftVersionString" />
             <p class="card-main-info description bottom">{{ leftVersionString }}</p>
           </div>
           <div class="card">
             <ShotsCircle :mask-radius="ballisticCircleMask" :limit-shot="20000" :borderColor="'#50e3c2'"
-              :load-next-batch="loadNextBatchRight" />
+              :load-next-batch="loadNextBatchRight" :key="rightVersionString" />
             <p class="card-main-info description bottom">{{ rightVersionString }}</p>
           </div>
         </div>
@@ -211,9 +235,9 @@
 import { setFeatureVisit } from '@/shared/uiKit/newFeatureBadge/newFeatureBadge'
 import TeamLevelTable from '@/pages/infographics/shared/widgets/TeamLevelTable.vue'
 import { CACHE_SETTINGS, LONG_CACHE_SETTINGS, query, queryComputed } from '@/db'
-import { computed, ref, watch, watchEffect, useTemplateRef } from 'vue'
+import { computed, onUnmounted, ref, watch, watchEffect, useTemplateRef } from 'vue'
 import LevelSwitcher from './LevelSwitcher.vue'
-import { useDebounce, useElementHover } from '@vueuse/core'
+import { refDebounced, useDebounce, useElementHover } from '@vueuse/core'
 import { ShadowBar } from '@/pages/infographics/shared/widgets/charts/ShadowBarController'
 import { ShadowLine } from '@/pages/infographics/shared/widgets/charts/ShadowLineController'
 import { ChartProps } from 'vue-chartjs'
@@ -224,20 +248,87 @@ import { spaceProcessor } from '@/shared/utils/processors/useSpaceProcessor'
 import { roundProcessor, createPercentProcessor, romanNumberProcessor } from '@/shared/utils/processors/processors'
 import CompareCard from './CompareCard.vue'
 import { sec2minsec } from '@/shared/utils/time'
+import GameVersionSelectorBadges from '@/shared/game/selectors/gameVersionSelector/GameVersionSelectorBadges.vue'
+import { OptionalRegionVersion } from '@/shared/game/selectors/gameVersionSelector/utils.ts'
+import { useRoute, useRouter } from 'vue-router'
 
 setFeatureVisit('mt-36-1')
 
+const route = useRoute()
+const router = useRouter()
 
-const leftVersions = new Set(['ru_1.36.0'])
-const rightVersions = new Set(['ru_1.36.1'])
+function parseVersionQuery(value: unknown): Set<OptionalRegionVersion> | null {
+  const queryValue = Array.isArray(value) ? value[0] : value
+  if (typeof queryValue !== 'string') return null
 
-const selectedLevels = ref(new Set<number>([10]))
-const gameVersionFilter = computed(() => {
-  return [...leftVersions, ...rightVersions].map(v => `'${v}'`).join(', ')
+  const versions = new Set<OptionalRegionVersion>()
+  for (const value of queryValue.split(',')) {
+    const match = value.match(/^([a-z]+)_(\d+(?:-\d+)*)$/i)
+    if (!match) continue
+
+    versions.add({
+      region: match[1].toUpperCase(),
+      version: match[2].replaceAll('-', '.'),
+    })
+  }
+
+  return versions
+}
+
+function serializeVersions(versions: Set<OptionalRegionVersion>): string {
+  return [...versions]
+    .filter(version => version.region)
+    .map(version => `${version.region!.toLowerCase()}_${version.version.replaceAll('.', '-')}`)
+    .join(',')
+}
+
+function updateVersionQuery() {
+  const query = { ...route.query }
+  const leftVersions = serializeVersions(modelLeftVersions.value)
+  const rightVersions = serializeVersions(modelRightVersions.value)
+
+  if (leftVersions) query.a = leftVersions
+  else delete query.a
+
+  if (rightVersions) query.b = rightVersions
+  else delete query.b
+
+  router.push({ query })
+}
+
+const modelLeftVersions = ref(parseVersionQuery(route.query.a) ?? new Set<OptionalRegionVersion>([{ region: 'RU', version: '1.36.0' }]))
+const modelRightVersions = ref(parseVersionQuery(route.query.b) ?? new Set<OptionalRegionVersion>([{ region: 'RU', version: '1.36.1' }]))
+
+watch([modelLeftVersions, modelRightVersions], updateVersionQuery, { deep: true })
+
+onUnmounted(() => {
+  const query = { ...route.query }
+  delete query.a
+  delete query.b
+  router.push({ query })
 })
 
-const leftVersionString = [...leftVersions].map(t => t.split('_')[1]).join(', ')
-const rightVersionString = [...rightVersions].map(t => t.split('_')[1]).join(', ')
+const leftVersions = refDebounced(computed(() => new Set([...modelLeftVersions.value.values()]
+  .filter(v => v.region)
+  .map(v => `${v.region?.toLowerCase()}_${v.version}`))), 400)
+
+const rightVersions = refDebounced(computed(() => new Set([...modelRightVersions.value.values()]
+  .filter(v => v.region)
+  .map(v => `${v.region?.toLowerCase()}_${v.version}`))), 400)
+
+const selectedLevels = ref(new Set<number>([10]))
+const regionFilter = computed(() => {
+  const regions = new Set([...leftVersions.value, ...rightVersions.value].map(v => v.split('_')[0]))
+  return [...regions].map(r => `'${r.toUpperCase()}'`).join(', ')
+})
+const gameVersionFilter = computed(() => {
+  return [...leftVersions.value, ...rightVersions.value].map(v => `'${v}'`).join(', ')
+})
+
+watchEffect(() => console.log(gameVersionFilter.value))
+
+const leftVersionString = computed(() => [...leftVersions.value].map(t => t.split('_')[1]).join(', '))
+const rightVersionString = computed(() => [...rightVersions.value].map(t => t.split('_')[1]).join(', '))
 
 const levelDebounce = useDebounce(selectedLevels)
 const durationSelectedLevel = ref(10)
@@ -249,7 +340,7 @@ select
     avgMerge(directEnemyHits) / avgMerge(shots) as hitPercent,
     avgMerge(piercingEnemyHits) / avgMerge(directEnemyHits) as piercingPercent
 from "MT-36-1".AveragePlayerResults
-where battleMode = 'REGULAR' and region = 'RU' and gameVersion in (${gameVersionFilter.value})
+where battleMode = 'REGULAR' and region in (${regionFilter.value}) and gameVersion in (${gameVersionFilter.value})
 group by gameVersion;
 `, { settings: LONG_CACHE_SETTINGS })
 
@@ -260,7 +351,7 @@ select
     avgMerge(damage) as damage,
     avgMerge(assistRadio) as assistRadio
 from "MT-36-1".AveragePlayerResults
-where battleMode = 'REGULAR' and region = 'RU' and gameVersion in (${gameVersionFilter.value})
+where battleMode = 'REGULAR' and region in (${regionFilter.value}) and gameVersion in (${gameVersionFilter.value})
 group by gameVersion, tankType, tankLevel
 order by gameVersion, tankType, tankLevel;
 `, { settings: LONG_CACHE_SETTINGS })
@@ -268,19 +359,19 @@ order by gameVersion, tankType, tankLevel;
 const averageSpgDamageChartData = computed<ChartProps<'bar'>['data']>(() => {
   const data = averageDamageAndAssist.value.data.filter(item => item.tankType == 'SPG')
   const targetLabels = [...new Set(data.map(item => item.tankLevel)).values()].sort((a, b) => a - b)
-  const left = data.filter(item => leftVersions.has(item.gameVersion))
-  const right = data.filter(item => rightVersions.has(item.gameVersion))
+  const left = data.filter(item => leftVersions.value.has(item.gameVersion))
+  const right = data.filter(item => rightVersions.value.has(item.gameVersion))
 
   return {
     labels: targetLabels.map(t => romanNumberProcessor(t)),
     datasets: [
       {
-        label: leftVersionString,
+        label: leftVersionString.value,
         data: targetLabels.map(label => left.find(t => t.tankLevel == Number(label))?.damage || 0),
         backgroundColor: '#4a90e2',
       },
       {
-        label: rightVersionString,
+        label: rightVersionString.value,
         data: targetLabels.map(label => right.find(t => t.tankLevel == Number(label))?.damage || 0),
         backgroundColor: '#50e3c2',
       }
@@ -291,19 +382,19 @@ const averageSpgDamageChartData = computed<ChartProps<'bar'>['data']>(() => {
 const averageLtAssistChartData = computed<ChartProps<'bar'>['data']>(() => {
   const data = averageDamageAndAssist.value.data.filter(item => item.tankType == 'LT')
   const targetLabels = [...new Set(data.map(item => item.tankLevel)).values()].sort((a, b) => a - b)
-  const left = data.filter(item => leftVersions.has(item.gameVersion))
-  const right = data.filter(item => rightVersions.has(item.gameVersion))
+  const left = data.filter(item => leftVersions.value.has(item.gameVersion))
+  const right = data.filter(item => rightVersions.value.has(item.gameVersion))
 
   return {
     labels: targetLabels.map(t => romanNumberProcessor(t)),
     datasets: [
       {
-        label: leftVersionString,
+        label: leftVersionString.value,
         data: targetLabels.map(label => left.find(t => t.tankLevel == Number(label))?.assistRadio || 0),
         backgroundColor: '#4a90e2',
       },
       {
-        label: rightVersionString,
+        label: rightVersionString.value,
         data: targetLabels.map(label => right.find(t => t.tankLevel == Number(label))?.assistRadio || 0),
         backgroundColor: '#50e3c2',
       }
@@ -346,25 +437,25 @@ select gameVersion,
        round(duration / 60 * 2) / 2 as time,
        count() / sum(count()) over (partition by gameVersion, tankLevel) as p
 from WOT.Event_OnBattleResult
-where gameVersion in (${gameVersionFilter.value}) and battleMode = 'REGULAR' and region = 'RU'
+where gameVersion in (${gameVersionFilter.value}) and battleMode = 'REGULAR' and region in (${regionFilter.value})
 group by gameVersion, time, tankLevel;
 `, { settings: LONG_CACHE_SETTINGS })
 
 const durationDistributionChartData = computed<ChartProps<'bar'>['data']>(() => {
   const data = durationDistributionData.value.data.filter(item => item.tankLevel == durationSelectedLevel.value)
   const targetLabels = new Array(27).fill(0).map((_, i) => 2 + i * 0.5)
-  const left = data.filter(item => leftVersions.has(item.gameVersion))
-  const right = data.filter(item => rightVersions.has(item.gameVersion))
+  const left = data.filter(item => leftVersions.value.has(item.gameVersion))
+  const right = data.filter(item => rightVersions.value.has(item.gameVersion))
   return {
     labels: targetLabels,
     datasets: [
       {
-        label: leftVersionString,
+        label: leftVersionString.value,
         data: targetLabels.map(label => left.find(t => t.time == label)?.p || 0),
         backgroundColor: '#4a90e2',
       },
       {
-        label: rightVersionString,
+        label: rightVersionString.value,
         data: targetLabels.map(label => right.find(t => t.time == label)?.p || 0),
         backgroundColor: '#50e3c2',
       }
@@ -406,25 +497,25 @@ select gameVersion,
        tankLevel,
        avg(duration) as dur
 from WOT.Event_OnBattleResult
-where gameVersion in (${gameVersionFilter.value}) and battleMode = 'REGULAR' and region = 'RU'
+where gameVersion in (${gameVersionFilter.value}) and battleMode = 'REGULAR' and region in (${regionFilter.value})
 group by gameVersion, tankLevel
 `, { settings: LONG_CACHE_SETTINGS })
 
 const durationByLevelChartData = computed<ChartProps<'bar'>['data']>(() => {
   const data = durationByLevelData.value.data
   const targetLabels = [...new Set(data.map(item => item.tankLevel)).values()].sort((a, b) => a - b)
-  const left = data.filter(item => leftVersions.has(item.gameVersion))
-  const right = data.filter(item => rightVersions.has(item.gameVersion))
+  const left = data.filter(item => leftVersions.value.has(item.gameVersion))
+  const right = data.filter(item => rightVersions.value.has(item.gameVersion))
   return {
     labels: targetLabels.map(t => romanNumberProcessor(t)),
     datasets: [
       {
-        label: leftVersionString,
+        label: leftVersionString.value,
         data: targetLabels.map(label => left.find(t => t.tankLevel == Number(label))?.dur || 0),
         backgroundColor: '#4a90e2',
       },
       {
-        label: rightVersionString,
+        label: rightVersionString.value,
         data: targetLabels.map(label => right.find(t => t.tankLevel == Number(label))?.dur || 0),
         backgroundColor: '#50e3c2',
       }
@@ -473,7 +564,7 @@ with levelDistribution as
       gameVersion
     from "MT-36-1".BattleLevelDistribution
     where battleMode = 'REGULAR' 
-      and region = 'RU' 
+      and region in (${regionFilter.value})
       and gameVersion in (${gameVersionFilter.value})
       ${levelDebounce.value.size == 0 ? '' : `and tankLevel in (${[...levelDebounce.value.values()].join(', ')})`} 
     group by visibleLevels, tankLevel, gameVersion
@@ -488,8 +579,8 @@ group by battleType, position, gameVersion
 order by battleType, position, gameVersion;
 `, { settings: LONG_CACHE_SETTINGS })
 
-const leftTeamLevelTableData = computed(() => teamLevelTableData.value.data.filter(item => leftVersions.has(item.gameVersion)))
-const rightTeamLevelTableData = computed(() => teamLevelTableData.value.data.filter(item => rightVersions.has(item.gameVersion)))
+const leftTeamLevelTableData = computed(() => teamLevelTableData.value.data.filter(item => leftVersions.value.has(item.gameVersion)))
+const rightTeamLevelTableData = computed(() => teamLevelTableData.value.data.filter(item => rightVersions.value.has(item.gameVersion)))
 
 const byTankTypeDistributionData = queryComputed<{
   type: 'lt' | 'at' | 'spg',
@@ -501,7 +592,7 @@ const byTankTypeDistributionData = queryComputed<{
       data as (
           select ltCount, atCount, spgCount, gameVersion
           from Event_OnBattleResult
-          where battleMode = 'REGULAR' and region = 'RU' 
+          where battleMode = 'REGULAR' and region in (${regionFilter.value})
           and gameVersion in (${gameVersionFilter.value})
           ${levelDebounce.value.size == 0 ? '' : `and tankLevel in (${[...levelDebounce.value.values()].join(', ')})`} 
       ),
@@ -522,8 +613,8 @@ const typeDistributionData = computed<{ chart: { key: string, label: string }, d
     const data = byTankTypeDistributionData.value.data.filter(t => t.type == chart.key).filter(t => t.battles > 0.0001)
     const targetLabels = [...new Set(data.map(item => item.count)).values()].sort((a, b) => a - b).map(String)
 
-    const left = data.filter(t => leftVersions.has(t.gameVersion))
-    const right = data.filter(t => rightVersions.has(t.gameVersion))
+    const left = data.filter(t => leftVersions.value.has(t.gameVersion))
+    const right = data.filter(t => rightVersions.value.has(t.gameVersion))
 
     return {
       chart,
@@ -531,13 +622,13 @@ const typeDistributionData = computed<{ chart: { key: string, label: string }, d
         labels: targetLabels,
         datasets: [
           {
-            label: leftVersionString,
+            label: leftVersionString.value,
             data: targetLabels.map(label => left.find(t => t.count == Number(label))?.battles || 0),
             backgroundColor: '#4a90e2',
             meta: { label: chart.label }
           },
           {
-            label: rightVersionString,
+            label: rightVersionString.value,
             data: targetLabels.map(label => right.find(t => t.count == Number(label))?.battles || 0),
             backgroundColor: '#50e3c2',
             meta: { label: chart.label }
@@ -647,7 +738,7 @@ const damageDistributionData = queryComputed<{
           count / sum(count) over (partition by gameVersion) as percent,
           gameVersion
     from "MT-36-1".ShotDamageDistribution
-    where region = 'RU' and battleMode = 'REGULAR' and shotDamage > 0 and not isAmmoBayDestroyed and not isKill
+    where region in (${regionFilter.value}) and battleMode = 'REGULAR' and shotDamage > 0 and not isAmmoBayDestroyed and not isKill
       and shellDamage = TARGET and shellTag in TARGET_SHELL and gameVersion in (${gameVersionFilter.value})
       ${!params.limitDamage ? '' : 'and shotDamage >= round(TARGET * (1 - damageRandomization)) and shotDamage <= round(TARGET * (1.00001 + damageRandomization))'}
       ${params.targetTank ? `and tankTag in (${params.targetTank.map(t => `'${t}'`).join(', ')})` : ''}
@@ -731,21 +822,21 @@ const damageDistributionChartData = computed<ChartProps<'line'>['data']>(() => {
     return result
   }
 
-  const leftData = new Map<string, number>(data.filter(item => leftVersions.has(item.gameVersion)).map(item => [String(item.shotDamage), 100 * item.percent]))
-  const rightData = new Map<string, number>(data.filter(item => rightVersions.has(item.gameVersion)).map(item => [String(item.shotDamage), 100 * item.percent]))
+  const leftData = new Map<string, number>(data.filter(item => leftVersions.value.has(item.gameVersion)).map(item => [String(item.shotDamage), 100 * item.percent]))
+  const rightData = new Map<string, number>(data.filter(item => rightVersions.value.has(item.gameVersion)).map(item => [String(item.shotDamage), 100 * item.percent]))
 
   return {
     labels: textLabels,
     datasets: [
       {
-        label: leftVersionString,
+        label: leftVersionString.value,
         data: [...process(leftData).values()],
         backgroundColor: '#4a90e2',
         borderColor: '#4a90e200',
         fill: true,
       },
       {
-        label: rightVersionString,
+        label: rightVersionString.value,
         data: [...process(rightData).values()],
         backgroundColor: '#50e3c2',
         borderColor: '#50e3c200',
@@ -803,7 +894,7 @@ const ballisticDistributionData = queryComputed<{
           countMerge(count) as c,
           c / sum(countMerge(count)) over (partition by gameVersion) as p
     from "MT-36-1".ShotClientBallisticDistribution
-    where region = 'RU' and tankType != 'SPG' and battleMode = 'REGULAR' and gameVersion in ('ru_1.36.0', 'ru_1.36.1') 
+    where region in (${regionFilter.value}) and tankType != 'SPG' and battleMode = 'REGULAR' and gameVersion in (${gameVersionFilter.value})
     ${ballisticDistributionIdeal.value ? 'and isIdealCondition = 1' : ''}  
     group by r, gameVersion
     order by gameVersion, r;
@@ -815,6 +906,9 @@ const ballisticDistributionChartData = computed<ChartProps<'line'>['data']>(() =
 
   const labelsSet = new Set(ballisticDistributionData.value.data.map(item => item.r))
   const labels = [...labelsSet].filter(label => label >= 0 && label <= 1)
+
+  console.log(ballisticDistributionData.value.data);
+
 
   function process(data: Map<string, number | null>) {
     if (distributionVariant.value == 'pdf') return data
@@ -832,8 +926,8 @@ const ballisticDistributionChartData = computed<ChartProps<'line'>['data']>(() =
 
   }
 
-  const leftData = new Map<string, number>(ballisticDistributionData.value.data.filter(item => leftVersions.has(item.gameVersion)).map(item => [String(item.r), 100 * item.p]))
-  const rightData = new Map<string, number>(ballisticDistributionData.value.data.filter(item => rightVersions.has(item.gameVersion)).map(item => [String(item.r), 100 * item.p]))
+  const leftData = new Map<string, number>(ballisticDistributionData.value.data.filter(item => leftVersions.value.has(item.gameVersion)).map(item => [String(item.r), 100 * item.p]))
+  const rightData = new Map<string, number>(ballisticDistributionData.value.data.filter(item => rightVersions.value.has(item.gameVersion)).map(item => [String(item.r), 100 * item.p]))
 
   const leftProcessed = process(leftData)
   const rightProcessed = process(rightData)
@@ -842,14 +936,14 @@ const ballisticDistributionChartData = computed<ChartProps<'line'>['data']>(() =
     labels: labels.map(label => String(label)),
     datasets: [
       {
-        label: leftVersionString,
+        label: leftVersionString.value,
         data: labels.map(label => leftProcessed.get(String(label)) ?? null),
         backgroundColor: '#4a90e2',
         borderColor: '#4a90e200',
         fill: true,
       },
       {
-        label: rightVersionString,
+        label: rightVersionString.value,
         data: labels.map(label => rightProcessed.get(String(label)) ?? null),
         backgroundColor: '#50e3c2',
         borderColor: '#50e3c200',
@@ -924,7 +1018,7 @@ async function loadNextBatch(options: Options, gameVersion: string[]): Promise<{
   const result = await query<{ idS: string, r: number, theta: number, hit: number }>(`
     select toString(id) as idS, r, theta, hit
     from "MT-36-1".ShotHitPoints
-    where region = 'RU' and battleMode = 'REGULAR' and gameVersion in (${gameVersion.map(v => `'${v}'`).join(', ')}) and isIdealCondition = 1
+    where region in (${regionFilter.value}) and battleMode = 'REGULAR' and gameVersion in (${gameVersion.map(v => `'${v}'`).join(', ')}) and isIdealCondition = 1
     ${options.startId ? ` and id < '${options.startId}'` : ''}
     order by id desc
     limit ${options.loadCount}
@@ -935,11 +1029,11 @@ async function loadNextBatch(options: Options, gameVersion: string[]): Promise<{
 }
 
 async function loadNextBatchLeft(options: Options) {
-  return await loadNextBatch(options, [...leftVersions])
+  return await loadNextBatch(options, [...leftVersions.value])
 }
 
 async function loadNextBatchRight(options: Options) {
-  return await loadNextBatch(options, [...rightVersions])
+  return await loadNextBatch(options, [...rightVersions.value])
 }
 
 </script>
@@ -977,6 +1071,44 @@ async function loadNextBatchRight(options: Options) {
 
     @media screen and (max-width: 600px) {
       font-size: 14px;
+    }
+  }
+
+  .collapsible-menu {
+    margin: 0 auto;
+    margin-bottom: 2em;
+
+    .menu-content {
+      padding: 15px;
+      padding-left: 1em;
+      background: rgba(102, 102, 102, 0.15);
+      border-radius: 15px;
+
+      ul {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  .select-version {
+    .selector-vs {
+      display: flex;
+      align-items: stretch;
+      gap: 1em;
+      flex-wrap: wrap;
+
+      .vr {
+        width: 1px;
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .version-select {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5em;
+        flex: 1;
+      }
     }
   }
 
