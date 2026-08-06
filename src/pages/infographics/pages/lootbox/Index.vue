@@ -83,6 +83,8 @@
   </template>
   <TableSection title="Другие контейнеры" v-bind="lootboxesStats" :localizer="lootboxLocalizer" :showOther />
 
+  <TableSection title="Другие валюты" v-bind="currencyStats" :localizer="currenciesLocalizer" :by-number="1" :showOther
+    :left-align="true" :count-getter="t => Number(t.split(':')[1])" />
   <TableSection title="Билеты" v-bind="entitlementsStats" :localizer="entitlementsLocalizer" :by-number="1" :showOther
     :left-align="true" :count-getter="t => Number(t.split(':')[1])" />
   <TableSection title="Мандарины" v-bind="mandarin25Stats" :by-number="1000" :showOther />
@@ -428,6 +430,12 @@ const entitlementsStats = load(() => getQuery(
   'lootbox_entitlements_mv'
 ))
 
+const currencyStats = load(() => getQuery(
+  'concat(tag, \':\', currencies.count) AS title, tag',
+  'array join currencies.tag as tag, currencies.count where true',
+  'lootbox_currencies_mv'
+))
+
 const managementStats = load(() => getQuery(
   'concat(tag, \':\', count) as title, tag',
   `array join arrayConcat(array(slots, berths), equip.count) as count,
@@ -537,6 +545,22 @@ function managementLocalizer(tag: string) {
   return {
     value: localName,
     postfix: count != '1' ? `(x${count})` : undefined
+  }
+}
+
+function currenciesLocalizer(tag: string) {
+  const [name, count] = tag.split(':')
+
+  const localName = {
+    'goldenticket': 'Золотой билет',
+    'nyractiv': 'Расчёска для Енота',
+    'nyrfood': 'Яблоко для Енота',
+    'nyrfun': 'Мячик для Енота'
+  }[name] || name
+
+  return {
+    value: localName,
+    postfix: `(x${count})`
   }
 }
 
