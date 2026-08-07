@@ -14,8 +14,7 @@ const { element } = defineProps<{
   element: HTMLElement;
 }>()
 
-const borderRadius = element.computedStyleMap().get('border-radius')?.toString()
-
+const borderRadius = getComputedStyle(element).borderRadius
 
 const rect = shallowRef<{ top: number; left: number; width: number; height: number } | null>(null)
 

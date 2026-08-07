@@ -258,11 +258,7 @@ export abstract class BaseLabels implements SlotRenderer {
     if (!this.ctx) return
     if (!this.probeLabel) return
 
-    const style = this.probeLabel.computedStyleMap()
-    const fontFamily = style.get('font-family')?.toString()
-    const fontSize = style.get('font-size')?.toString()
-    const fontWeight = style.get('font-weight')?.toString()
-
+    const { fontWeight, fontSize, fontFamily } = getComputedStyle(this.probeLabel)
     const target = `${fontWeight} ${fontSize} ${fontFamily}`
     if (this.ctx.font == target) return
 
