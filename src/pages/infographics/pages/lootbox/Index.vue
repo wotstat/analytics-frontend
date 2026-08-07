@@ -431,8 +431,8 @@ const entitlementsStats = load(() => getQuery(
 ))
 
 const currencyStats = load(() => getQuery(
-  'concat(tag, \':\', currencies.count) AS title, tag',
-  'array join currencies.tag as tag, currencies.count where true',
+  'concat(tag, \':\', currencies.amount) AS title, tag',
+  'array join currencies.tag as tag, currencies.amount where true',
   'lootbox_currencies_mv'
 ))
 
