@@ -1,9 +1,9 @@
 import { ChartSpace } from '../../utils/ChartSpace'
 import { InteractionHit } from './InteractionHit'
-import { InteractionInput, InteractionInputKey } from './InteractionInput'
+import { InteractionInput } from './InteractionInput'
 import { InteractionResolver } from './InteractionResolver'
 
-function mapFor<V>(store: WeakMap<InteractionResolver, Map<InteractionInputKey, V>>, resolver: InteractionResolver): Map<InteractionInputKey, V> {
+function mapFor<V>(store: WeakMap<InteractionResolver, Map<symbol, V>>, resolver: InteractionResolver): Map<symbol, V> {
   let byInput = store.get(resolver)
   if (!byInput) {
     byInput = new Map()
@@ -14,8 +14,8 @@ function mapFor<V>(store: WeakMap<InteractionResolver, Map<InteractionInputKey, 
 
 export class InteractionFrame {
 
-  private readonly cache = new WeakMap<InteractionResolver, Map<InteractionInputKey, readonly InteractionHit[]>>()
-  private readonly effectiveInput = new WeakMap<InteractionResolver, Map<InteractionInputKey, InteractionInput>>()
+  private readonly cache = new WeakMap<InteractionResolver, Map<symbol, readonly InteractionHit[]>>()
+  private readonly effectiveInput = new WeakMap<InteractionResolver, Map<symbol, InteractionInput>>()
 
   constructor(
     readonly space: ChartSpace,

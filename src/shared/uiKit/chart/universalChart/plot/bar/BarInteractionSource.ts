@@ -1,5 +1,5 @@
 import { geometryFromRanges, InteractionBounds, InteractionGeometry } from '../../interaction/core/InteractionGeometry'
-import { InteractionHit, InteractionSource } from '../../interaction/core/InteractionHit'
+import { InteractionHit } from '../../interaction/core/InteractionHit'
 import { InteractionResolveContext, InteractionResolver } from '../../interaction/core/InteractionResolver'
 import { Selection } from '../../interaction/core/Selection'
 import { ChartSpace } from '../../utils/ChartSpace'
@@ -39,7 +39,9 @@ function barItemKey(datasetIndex: number, categoryIndex: number): string {
   return `${datasetIndex}:${categoryIndex}`
 }
 
-export class BarInteractionSource implements InteractionSource {
+export class BarInteractionSource {
+
+  readonly id = Symbol('BarInteractionSource')
 
   constructor(private readonly plot: BarPlotAccess) { }
 
@@ -104,12 +106,12 @@ export class BarInteractionSource implements InteractionSource {
   createHit(item: BarLayoutItem, pointer: Point): BarItemHit {
     return {
       kind: 'bar-item',
-      source: this,
+      sourceId: this.id,
       datum: item.value,
-      identity: { source: this, kind: 'item', key: barItemKey(item.datasetIndex, item.categoryIndex) },
+      identity: { sourceId: this.id, kind: 'item', key: barItemKey(item.datasetIndex, item.categoryIndex) },
       memberships: [
-        { source: this, kind: 'dataset', key: item.datasetIndex },
-        { source: this, kind: 'group', key: item.categoryIndex },
+        { sourceId: this.id, kind: 'dataset', key: item.datasetIndex },
+        { sourceId: this.id, kind: 'group', key: item.categoryIndex },
       ],
       geometry: itemGeometry(item),
       geometryFor: scope => scope === 'group' ? groupGeometry(item) : null,
@@ -132,9 +134,9 @@ export class BarInteractionSource implements InteractionSource {
 
     return {
       kind: 'bar-group',
-      source: this,
+      sourceId: this.id,
       datum: this.plot.datasets().map(dataset => dataset.values[categoryIndex]),
-      identity: { source: this, kind: 'group', key: categoryIndex },
+      identity: { sourceId: this.id, kind: 'group', key: categoryIndex },
       memberships: [],
       geometry: geometryFromRanges(anchor, [groupRect.minX, groupRect.maxX], yRange),
       geometryFor: () => null,

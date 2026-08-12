@@ -140,11 +140,11 @@ export class HighlightChart extends UniversalChart {
 
   // Идентичность source для UI-таблицы стенда: показать, какой из двух lines дал точку
   get lineASource() {
-    return this.lineA.interaction
+    return this.lineA.interaction.id
   }
 
   get lineBSource() {
-    return this.lineB.interaction
+    return this.lineB.interaction.id
   }
 
   setConfig(config: Partial<HighlightConfig>) {
@@ -192,7 +192,7 @@ export class HighlightChart extends UniversalChart {
     return {
       ...baseMarkerOptions(this.maskRoot),
       selection: this.linePointsByX,
-      classesForHit: hit => hit.source === this.lineA.interaction ? 's0' : 's1',
+      classesForHit: hit => hit.sourceId === this.lineA.interaction.id ? 's0' : 's1',
     }
   }
 

@@ -4,7 +4,7 @@ import { Point } from '../../utils/Point'
 import { Classes } from '../../utils/utils'
 import { BaseInteractionController, InteractionDirection, Position, TouchZoomPoint } from '../baseInteractionController/BaseInteractionController'
 import { InteractionFrame } from '../core/InteractionFrame'
-import { InteractionInput, InteractionInputKey, InteractionPointer } from '../core/InteractionInput'
+import { InteractionInput, InteractionPointer } from '../core/InteractionInput'
 
 export interface InteractionComponent {
   attach?(root: SVGGElement, controller: InteractionController): void
@@ -69,7 +69,7 @@ export class InteractionController extends BaseInteractionController {
 
   private components: InteractionComponent[] = []
 
-  private readonly localInputKey: InteractionInputKey = {}
+  private readonly localInputKey: symbol = Symbol('localInput')
   private localPointer: InteractionPointer | null = null
 
   constructor(classes: Classes = [], options: { affectsBounds?: boolean } = {}) {

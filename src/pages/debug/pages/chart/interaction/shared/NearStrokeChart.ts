@@ -108,11 +108,11 @@ export class NearStrokeChart extends UniversalChart {
 
   // Идентичность source для UI-таблицы стенда: показать, какой из двух lines дал stroke hit
   get seriesASource() {
-    return this.lineA.interaction
+    return this.lineA.interaction.id
   }
 
   get seriesBSource() {
-    return this.lineB.interaction
+    return this.lineB.interaction.id
   }
 
   setConfig(config: Partial<StrokeConfig>) {
@@ -131,7 +131,7 @@ export class NearStrokeChart extends UniversalChart {
   measureHoverCost(steps = 400): HoverCostMeasurement {
     const space = this.space
     const y = space.layout.y + space.layout.height / 2
-    const key = {}
+    const key = Symbol('measureHoverCost')
 
     const coldStart = performance.now()
     new InteractionFrame(space, { key, pointer: { point: { x: space.layout.x, y }, isTouch: false } }).resolve(this.selection)
@@ -151,7 +151,7 @@ export class NearStrokeChart extends UniversalChart {
     return {
       ...baseMarkerOptions(this.maskRoot),
       selection: this.selection,
-      classesForHit: hit => [hit.source === this.lineA.interaction ? 's0' : 's1', hit.contains ? 'contains' : 'reach-only'],
+      classesForHit: hit => [hit.sourceId === this.lineA.interaction.id ? 's0' : 's1', hit.contains ? 'contains' : 'reach-only'],
     }
   }
 

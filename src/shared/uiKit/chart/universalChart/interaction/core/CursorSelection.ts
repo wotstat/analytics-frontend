@@ -1,11 +1,11 @@
 import { geometryFromPoint } from './InteractionGeometry'
-import { InteractionHit, InteractionSource } from './InteractionHit'
+import { InteractionHit } from './InteractionHit'
 import { InteractionResolveContext } from './InteractionResolver'
 import { Selection } from './Selection'
 
 export type CursorHit = InteractionHit<null, 'cursor'>
 
-const cursorSource: InteractionSource = {}
+const cursorSource = Symbol('CursorSelection')
 
 class CursorSelection extends Selection<CursorHit> {
 
@@ -15,9 +15,9 @@ class CursorSelection extends Selection<CursorHit> {
 
     return [{
       kind: 'cursor',
-      source: cursorSource,
+      sourceId: cursorSource,
       datum: null,
-      identity: { source: cursorSource, kind: 'item', key: ctx.input.key },
+      identity: { sourceId: cursorSource, kind: 'item', key: ctx.input.key },
       memberships: [],
       geometry: geometryFromPoint(pointer.point),
       geometryFor: () => null,

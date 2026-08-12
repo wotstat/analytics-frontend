@@ -1,5 +1,5 @@
 import { geometryFromPoint } from '../../../interaction/core/InteractionGeometry'
-import { InteractionHit, InteractionSource } from '../../../interaction/core/InteractionHit'
+import { InteractionHit } from '../../../interaction/core/InteractionHit'
 import { InteractionResolveContext } from '../../../interaction/core/InteractionResolver'
 import { Selection } from '../../../interaction/core/Selection'
 import { ChartSpace } from '../../../utils/ChartSpace'
@@ -60,9 +60,10 @@ class AutoLineSourceUnion<T extends Point> extends AutoLineInteractionQuery<T> {
   }
 }
 
-export class AutoLineInteractionSource<T extends Point = Point> extends AutoLineInteractionQuery<T> implements InteractionSource {
+export class AutoLineInteractionSource<T extends Point = Point> extends AutoLineInteractionQuery<T> {
 
   readonly sources: readonly AutoLineInteractionSource<T>[] = [this]
+  readonly id = Symbol('AutoLineInteractionSource')
 
   constructor(
     private readonly getPoints: () => readonly (T | null)[],
@@ -88,9 +89,9 @@ export class AutoLineInteractionSource<T extends Point = Point> extends AutoLine
 
     return {
       kind: 'line-stroke',
-      source: this,
+      sourceId: this.id,
       datum: { points: this.points },
-      identity: { source: this, kind: 'series', key: SERIES_KEY },
+      identity: { sourceId: this.id, kind: 'series', key: SERIES_KEY },
       memberships: [],
       geometry: geometryFromPoint(projection.anchor),
       geometryFor: () => null,
@@ -98,6 +99,25 @@ export class AutoLineInteractionSource<T extends Point = Point> extends AutoLine
       contains,
       targets: [target],
       meta: { subpathIndex: projection.subpathIndex }
+    }
+  }
+
+  createPointHit(point: T, index: number, space: ChartSpace, pointer: Point): LinePointHit<T> | null {
+    const anchor = space.chartToLayout(point)
+    if (!Number.isFinite(anchor.x) || !Number.isFinite(anchor.y)) return null
+
+    return {
+      kind: 'line-point',
+      sourceId: this.id,
+      datum: point,
+      identity: { sourceId: this.id, kind: 'item', key: index },
+      memberships: [{ sourceId: this.id, kind: 'series', key: SERIES_KEY }],
+      geometry: geometryFromPoint(anchor),
+      geometryFor: () => null,
+      distance: Math.hypot(anchor.x - pointer.x, anchor.y - pointer.y),
+      contains: false,
+      targets: [],
+      pointIndex: index
     }
   }
 }
@@ -158,37 +178,12 @@ class NearestByAxisSelection<T extends Point> extends Selection<LinePointHit<T>>
         if (!isEligible(point, space)) continue
         if ((this.axis === 'x' ? point.x : point.y) !== bestValue) continue
 
-        const hit = createHit(source, point, i, space, pointer.point)
+        const hit = source.createPointHit(point, i, space, pointer.point)
         if (hit) hits.push(hit)
       }
     }
 
     return hits
-  }
-}
-
-function createHit<T extends Point>(
-  source: AutoLineInteractionSource<T>,
-  point: T,
-  index: number,
-  space: ChartSpace,
-  pointer: Point
-): LinePointHit<T> | null {
-  const anchor = space.chartToLayout(point)
-  if (!Number.isFinite(anchor.x) || !Number.isFinite(anchor.y)) return null
-
-  return {
-    kind: 'line-point',
-    source,
-    datum: point,
-    identity: { source, kind: 'item', key: index },
-    memberships: [{ source, kind: 'series', key: SERIES_KEY }],
-    geometry: geometryFromPoint(anchor),
-    geometryFor: () => null,
-    distance: Math.hypot(anchor.x - pointer.x, anchor.y - pointer.y),
-    contains: false,
-    targets: [],
-    pointIndex: index
   }
 }
 

@@ -6,10 +6,6 @@ export type BoundsSyncWindow = { x?: AxisWindow, y?: AxisWindow }
 export type BoundsSyncPhase = 'active' | 'end'
 export type BoundsSyncState = { window: BoundsSyncWindow, phase: BoundsSyncPhase }
 
-// Identity-only token: each ZoomChartComponent passes `this`.
-export type BoundsSyncSource = object
-
-
 // Shared driven-axis window for a group of linked charts. Mirrors HoverSynchronizer, but the
 // participants are ZoomChartComponents rather than hover components: the chart the user last
 // gestured on is the source and publishes its driven-axis window (in chart-space) every frame;
@@ -24,7 +20,7 @@ export class BoundsSynchronizer {
 
   readonly axes: readonly SyncAxis[]
 
-  private source: BoundsSyncSource | null = null
+  private source: symbol | null = null
   private state: BoundsSyncState | null = null
   private listeners = new Set<() => void>()
 
@@ -33,7 +29,7 @@ export class BoundsSynchronizer {
   }
 
   // The gesturing chart becomes the source; a fresh gesture voids the previous synced window.
-  claim(source: BoundsSyncSource): void {
+  claim(source: symbol): void {
     if (this.source === source) return
     this.source = source
     this.state = null
@@ -42,7 +38,7 @@ export class BoundsSynchronizer {
 
   // Only the current source publishes. `end` marks the drive settled and demotes the source, but
   // the window persists so a follower still mid-animation (or relayouting later) lands on it.
-  publish(source: BoundsSyncSource, window: BoundsSyncWindow, phase: BoundsSyncPhase): void {
+  publish(source: symbol, window: BoundsSyncWindow, phase: BoundsSyncPhase): void {
     if (this.source !== source) return
     this.state = { window, phase }
     if (phase === 'end') this.source = null
@@ -50,7 +46,7 @@ export class BoundsSynchronizer {
   }
 
   // A participant leaving (unmount) gives up the source role.
-  resign(source: BoundsSyncSource): void {
+  resign(source: symbol): void {
     if (this.source !== source) return
     this.source = null
     this.state = null
@@ -64,12 +60,12 @@ export class BoundsSynchronizer {
     this.notify()
   }
 
-  isSource(source: BoundsSyncSource): boolean {
+  isSource(source: symbol): boolean {
     return this.source === source
   }
 
   // The window to follow, or null when we are the source (self-echo) or nothing is published.
-  consume(source: BoundsSyncSource): BoundsSyncState | null {
+  consume(source: symbol): BoundsSyncState | null {
     if (this.source === source) return null
     return this.state
   }

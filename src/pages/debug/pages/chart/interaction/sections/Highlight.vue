@@ -198,7 +198,7 @@ onUnmounted(() => {
 })
 
 function seriesLabel(hit: HighlightPointHit) {
-  return hit.source === chart.value.lineASource ? 'A' : 'B'
+  return hit.sourceId === chart.value.lineASource ? 'A' : 'B'
 }
 
 function isHighlighted(hit: HighlightPointHit) {

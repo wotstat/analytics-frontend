@@ -2,8 +2,6 @@ import { ChartSpace } from '../../utils/ChartSpace'
 import { Point } from '../../utils/Point'
 import type { Position } from '../baseInteractionController/BaseInteractionController'
 
-export type InteractionInputKey = object
-
 export type InteractionPointer = {
   readonly point: Point
   readonly cursor?: Position
@@ -11,7 +9,7 @@ export type InteractionPointer = {
 }
 
 export type InteractionInput = {
-  readonly key: InteractionInputKey
+  readonly key: symbol
   readonly pointer: InteractionPointer | null
 }
 

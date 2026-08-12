@@ -180,7 +180,7 @@ export class MixedChart extends UniversalChart {
       .addComponent(new MarkerOverlay({
         ...baseMarkerOptions(maskRoot),
         selection: linePointsByX,
-        classesForHit: hit => hit.source === this.lineA.interaction ? 's0' : 's1',
+        classesForHit: hit => hit.sourceId === this.lineA.interaction.id ? 's0' : 's1',
       }))
 
       .addComponent(new VerticalArea({ selection: barItem, geometry: 'group', classes: 'bar-group-area' }))

@@ -142,7 +142,7 @@ watchEffect(() => chart.setConfig({
 onUnmounted(stopSnapshot)
 
 function seriesLabel(hit: StrokeChartHit) {
-  return hit.source === chart.seriesASource ? 'A' : 'B'
+  return hit.sourceId === chart.seriesASource ? 'A' : 'B'
 }
 
 function choiceLabel(hit: StrokeChartHit) {

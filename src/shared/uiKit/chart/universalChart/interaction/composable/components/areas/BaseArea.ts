@@ -2,9 +2,16 @@ import { ChartSpace } from '../../../../utils/ChartSpace'
 import { addClasses, Classes, removeClasses } from '../../../../utils/utils'
 import { InteractionFrame } from '../../../core/InteractionFrame'
 import { InteractionGeometry } from '../../../core/InteractionGeometry'
-import { geometryForScope, GeometryScopeOf, InteractionHit } from '../../../core/InteractionHit'
+import { InteractionHit } from '../../../core/InteractionHit'
 import { InteractionResolver } from '../../../core/InteractionResolver'
 import { InteractionComponent, InteractionController } from '../../InteractionController'
+
+type GeometryScopeOf<THit extends InteractionHit> = Parameters<THit['geometryFor']>[0]
+
+function geometryForScope<THit extends InteractionHit>(hit: THit, scope: GeometryScopeOf<THit> | undefined): InteractionGeometry | null {
+  if (scope === undefined) return hit.geometry
+  return hit.geometryFor(scope)
+}
 
 export type AreaOptions<THit extends InteractionHit = InteractionHit> = {
   selection: InteractionResolver<THit>

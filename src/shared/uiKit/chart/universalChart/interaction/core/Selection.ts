@@ -1,5 +1,5 @@
 import { InteractionHit, isSameIdentity } from './InteractionHit'
-import { HoverResolver, InteractionInput, InteractionInputKey } from './InteractionInput'
+import { HoverResolver, InteractionInput } from './InteractionInput'
 import { InteractionResolveContext, InteractionResolver } from './InteractionResolver'
 
 export type WithinOptions = {
@@ -124,7 +124,7 @@ class TopmostSelection<THit extends InteractionHit> extends Selection<THit> {
 
 class WithInputSelection<THit extends InteractionHit> extends Selection<THit> {
 
-  private readonly syncedKey: InteractionInputKey = {}
+  private readonly syncedKey: symbol = Symbol('syncedInput')
 
   constructor(
     private readonly parent: InteractionResolver<THit>,

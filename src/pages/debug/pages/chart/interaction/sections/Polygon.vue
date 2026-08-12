@@ -241,7 +241,7 @@ onUnmounted(() => {
 })
 
 function polygonLabel(hit: PolygonHit) {
-  return hit.source === overlapChart.interactionA ? 'A' : 'B'
+  return hit.sourceId === overlapChart.interactionA ? 'A' : 'B'
 }
 
 </script>

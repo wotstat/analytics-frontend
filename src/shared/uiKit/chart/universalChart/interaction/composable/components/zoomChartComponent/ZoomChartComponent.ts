@@ -148,6 +148,8 @@ export class ZoomChartComponent implements InteractionComponent {
   // Cross-chart bounds sync (optional). This component is both publisher (while driven locally)
   // and consumer (while another chart drives). `controller` doubles as the attached flag.
   private boundsSync?: BoundsSynchronizer
+  // This component's own identity token for BoundsSynchronizer, stable for the component's lifetime.
+  private readonly boundsSyncParticipant = Symbol('ZoomChartComponent')
   private controller: InteractionController | null = null
   private readonly onSyncChange = () => this.onExternalPublish()
 
@@ -184,7 +186,7 @@ export class ZoomChartComponent implements InteractionComponent {
     const attached = this.controller !== null
     if (attached) this.boundsSync?.unsubscribeChange(this.onSyncChange)
     if (attached) this.chart.onSetRenderBounds.off(this.onChartBoundsSet)
-    this.boundsSync?.resign(this)
+    this.boundsSync?.resign(this.boundsSyncParticipant)
     this.applyOptions(options)
     if (attached) this.boundsSync?.subscribeChange(this.onSyncChange)
     if (attached) this.chart.onSetRenderBounds.on(this.onChartBoundsSet)
@@ -209,7 +211,7 @@ export class ZoomChartComponent implements InteractionComponent {
 
   detach(controller: InteractionController): void {
     this.boundsSync?.unsubscribeChange(this.onSyncChange)
-    this.boundsSync?.resign(this)
+    this.boundsSync?.resign(this.boundsSyncParticipant)
     this.chart.onSetRenderBounds.off(this.onChartBoundsSet)
     this.controller = null
   }
@@ -221,7 +223,7 @@ export class ZoomChartComponent implements InteractionComponent {
   }
 
   onPanBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, controller: InteractionController): boolean {
-    this.boundsSync?.claim(this) // this chart is the drive source now
+    this.boundsSync?.claim(this.boundsSyncParticipant) // this chart is the drive source now
     const afterPinch = isTouch && (this.pinch?.ended ?? false)
     this.stopMotionsForPan(isTouch)
     this.lastCursor = null
@@ -289,7 +291,7 @@ export class ZoomChartComponent implements InteractionComponent {
   onTouchZoomBegin(first: TouchZoomPoint, second: TouchZoomPoint, space: ChartSpace, controller: InteractionController): boolean {
     if (!this.isZoomEnabled()) return false
 
-    this.boundsSync?.claim(this) // this chart is the drive source now
+    this.boundsSync?.claim(this.boundsSyncParticipant) // this chart is the drive source now
     this.stopAllMotions()
 
     const raw = this.resetRawFrom(space, axis =>
@@ -349,7 +351,7 @@ export class ZoomChartComponent implements InteractionComponent {
     if (!this.isZoomEnabled()) return false
     if (this.pinch && !this.pinch.ended) return false // touch zoom has priority over wheel
 
-    this.boundsSync?.claim(this) // this chart is the drive source now
+    this.boundsSync?.claim(this.boundsSyncParticipant) // this chart is the drive source now
     this.stopMotionsForWheel()
 
     if (!this.wheel) this.wheel = { pending: [], lastEventTime: 0, anchor: null }
@@ -368,7 +370,7 @@ export class ZoomChartComponent implements InteractionComponent {
 
     // Another linked chart is driving: follow its window (unless we are being gestured directly,
     // in which case the local drive wins and we fall through to the normal pipeline as its source).
-    const external = this.boundsSync?.consume(this) ?? null
+    const external = this.boundsSync?.consume(this.boundsSyncParticipant) ?? null
     if (external && !this.hasActiveInput()) {
       // An active drive is applied synchronously in onExternalPublish — in the *source's* frame,
       // before this chart's hover renders — so bounds and hover stay in lockstep (no 1-frame lag,
@@ -420,7 +422,7 @@ export class ZoomChartComponent implements InteractionComponent {
   // hover reads them, so the marker/tooltip stays glued to a fixed data point instead of lagging a
   // frame and jittering. The 'end' settle tail is left to onBeforeLayout (no lockstep needed).
   private onExternalPublish(): void {
-    const external = this.boundsSync?.consume(this) ?? null
+    const external = this.boundsSync?.consume(this.boundsSyncParticipant) ?? null
     if (external && external.phase === 'active' && !this.hasActiveInput()) {
       this.followExternalBounds(this.chart.space, this.now(), external)
     }
@@ -469,7 +471,7 @@ export class ZoomChartComponent implements InteractionComponent {
   // when there is no hub or we are not the source.
   private publishBounds(space: ChartSpace, patch: BoundsPatch, phase: BoundsSyncState['phase']): void {
     const sync = this.boundsSync
-    if (!sync || !sync.isSource(this)) return
+    if (!sync || !sync.isSource(this.boundsSyncParticipant)) return
 
     const window: BoundsSyncState['window'] = {}
     for (const axis of sync.axes) {
@@ -478,7 +480,7 @@ export class ZoomChartComponent implements InteractionComponent {
       if (Number.isFinite(min) && Number.isFinite(max) && min < max) window[axis] = { min, max }
     }
 
-    sync.publish(this, window, phase)
+    sync.publish(this.boundsSyncParticipant, window, phase)
   }
 
   private processPinch(raw: Bounds, layout: LayoutValue, now: number): boolean {

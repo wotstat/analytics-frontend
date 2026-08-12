@@ -1,5 +1,5 @@
 import { geometryFromPoint } from '../../../interaction/core/InteractionGeometry'
-import { InteractionHit, InteractionSource } from '../../../interaction/core/InteractionHit'
+import { InteractionHit } from '../../../interaction/core/InteractionHit'
 import { InteractionResolveContext } from '../../../interaction/core/InteractionResolver'
 import { Selection } from '../../../interaction/core/Selection'
 import { ChartSpace } from '../../../utils/ChartSpace'
@@ -25,7 +25,9 @@ export type AutoMarkersPlotAccess<T extends Point> = {
   target(index: number): SVGElement | null
 }
 
-export class AutoMarkersInteractionSource<T extends Point = Point> implements InteractionSource {
+export class AutoMarkersInteractionSource<T extends Point = Point> {
+
+  readonly id = Symbol('AutoMarkersInteractionSource')
 
   constructor(private readonly plot: AutoMarkersPlotAccess<T>) { }
 
@@ -58,9 +60,9 @@ export class AutoMarkersInteractionSource<T extends Point = Point> implements In
 
     return {
       kind: 'scatter-point',
-      source: this,
+      sourceId: this.id,
       datum,
-      identity: { source: this, kind: 'item', key: index },
+      identity: { sourceId: this.id, kind: 'item', key: index },
       memberships: [],
       geometry: geometryFromPoint(anchor),
       geometryFor: () => null,

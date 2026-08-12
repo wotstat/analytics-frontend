@@ -2,7 +2,7 @@ import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRender
 import { InteractionController } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController'
 import { Highlight } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/highlight/Highlight'
 import { PolygonArea } from '@/shared/uiKit/chart/universalChart/plot/area/PolygonArea'
-import { PolygonAreaInteractionSource, PolygonHit } from '@/shared/uiKit/chart/universalChart/plot/area/PolygonAreaInteractionSource'
+import { PolygonHit } from '@/shared/uiKit/chart/universalChart/plot/area/PolygonAreaInteractionSource'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import { EventEmitter } from '@/shared/uiKit/chart/universalChart/utils/EventEmitter'
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
@@ -89,12 +89,12 @@ export class PolygonOverlapChart extends UniversalChart {
     this.applyConfig()
   }
 
-  get interactionA(): PolygonAreaInteractionSource {
-    return this.polygonA.interaction
+  get interactionA(): symbol {
+    return this.polygonA.interaction.id
   }
 
-  get interactionB(): PolygonAreaInteractionSource {
-    return this.polygonB.interaction
+  get interactionB(): symbol {
+    return this.polygonB.interaction.id
   }
 
   setConfig(config: Partial<PolygonOverlapConfig>) {

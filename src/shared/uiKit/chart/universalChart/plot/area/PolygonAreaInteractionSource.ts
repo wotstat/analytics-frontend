@@ -1,5 +1,5 @@
 import { geometryFromRanges, InteractionBounds } from '../../interaction/core/InteractionGeometry'
-import { InteractionHit, InteractionSource } from '../../interaction/core/InteractionHit'
+import { InteractionHit } from '../../interaction/core/InteractionHit'
 import { InteractionResolveContext } from '../../interaction/core/InteractionResolver'
 import { Selection } from '../../interaction/core/Selection'
 import { ChartSpace } from '../../utils/ChartSpace'
@@ -15,7 +15,9 @@ export type PolygonPlotAccess = {
   bounds(space: ChartSpace): InteractionBounds | null
 }
 
-export class PolygonAreaInteractionSource implements InteractionSource {
+export class PolygonAreaInteractionSource {
+
+  readonly id = Symbol('PolygonAreaInteractionSource')
 
   constructor(private readonly plot: PolygonPlotAccess) { }
 
@@ -36,9 +38,9 @@ export class PolygonAreaInteractionSource implements InteractionSource {
 
     return {
       kind: 'polygon',
-      source: this,
+      sourceId: this.id,
       datum: this.plot.contours(),
-      identity: { source: this, kind: 'item', key: ITEM_KEY },
+      identity: { sourceId: this.id, kind: 'item', key: ITEM_KEY },
       memberships: [],
       geometry: geometryFromRanges(anchor, [bounds.minX, bounds.maxX], [bounds.minY, bounds.maxY]),
       geometryFor: () => null,
