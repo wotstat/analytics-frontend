@@ -1,20 +1,17 @@
 import { ChartSpace } from '../../../../utils/ChartSpace'
-import { Point } from '../../../../utils/Point'
-import { Position, InteractionDirection } from '../../../baseInteractionController/BaseInteractionController'
-import { InteractionController } from '../../InteractionController'
+import { InteractionGeometry } from '../../../core/InteractionGeometry'
 import { BaseLine } from './BaseLine'
 
 export class HorizontalLine extends BaseLine {
 
-  setLinePosition(point: Point, space: ChartSpace): void {
-    this.line.setAttribute('x1', (space.layout.x + this.offset.start).toString())
-    this.line.setAttribute('y1', point.y.toString())
-    this.line.setAttribute('x2', (space.layout.x + space.layout.width - this.offset.end).toString())
-    this.line.setAttribute('y2', point.y.toString())
+  protected coordinate(geometry: InteractionGeometry): number {
+    return geometry.anchor.y
   }
 
-  mayHover(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, controller: InteractionController): InteractionDirection {
-    return 'vertical'
+  protected place(line: SVGLineElement, y: number, space: ChartSpace): void {
+    line.setAttribute('x1', (space.layout.x + this.offset.start).toString())
+    line.setAttribute('y1', y.toString())
+    line.setAttribute('x2', (space.layout.x + space.layout.width - this.offset.end).toString())
+    line.setAttribute('y2', y.toString())
   }
-
 }

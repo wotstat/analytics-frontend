@@ -1,0 +1,30 @@
+// Общий набор классов таблиц/строк стенда: пустая selection, текущее значение, да/нет.
+// @use из scoped <style> каждой секции — Sass инлайнит эти правила до того, как Vue навесит data-v-хеш,
+// поэтому скоуп на компонент сохраняется, а источник правды остаётся один.
+.empty {
+  color: #ffffff60;
+}
+
+.current {
+  align-items: baseline;
+
+  .count {
+    font-size: 15px;
+    font-weight: bold;
+    color: var(--blue-thin-color);
+  }
+}
+
+.ok {
+  color: #57ff6e;
+  font-weight: bold;
+}
+
+.bad {
+  color: #ff5757;
+  font-weight: bold;
+}
+
+.muted {
+  color: #ffffff60;
+}

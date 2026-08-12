@@ -38,7 +38,7 @@ import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/Univers
 import type { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
 import { buildGlobalDailyPlayersStatisticsQuery, type GlobalStatisticsFilters } from '../globalStatistics/queries'
 import type { GlobalDailyPlayersStatistic } from '../globalStatistics/types'
-import { DailyPlayersChart } from './DailyPlayersChart'
+import { DailyPlayersChart, type DailyPlayersHit } from './DailyPlayersChart'
 
 const DAY_SECONDS = 24 * 60 * 60
 const DAY_MS = DAY_SECONDS * 1000
@@ -93,12 +93,12 @@ watchEffect(() => {
   chart.setPoints(points)
 })
 
-function tooltipValue(ctx: TooltipCtx) {
-  return ctx.nearestDataPoints[0]?.yValue ?? 0
+function tooltipValue(ctx: TooltipCtx<DailyPlayersHit>) {
+  return ctx.hits[0]?.datum.y ?? 0
 }
 
-function tooltipDate(ctx: TooltipCtx) {
-  const x = ctx.nearestDataPoints[0]?.xValue ?? 0
+function tooltipDate(ctx: TooltipCtx<DailyPlayersHit>) {
+  const x = ctx.hits[0]?.datum.x ?? 0
   const dayIndex = Math.max(0, Math.floor(x / DAY_SECONDS))
   const date = dateFormatter.format(new Date(props.seasonInterval.start.getTime() + dayIndex * DAY_MS))
   return `${date} · день ${dayIndex + 1}`

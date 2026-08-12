@@ -1,8 +1,12 @@
 import { ChartSpace } from '../../../utils/ChartSpace'
 import { Bounds, BoundsConstraint } from '../../../utils/Bounds'
+import { Point } from '../../../utils/Point'
 import { addClasses, Classes } from '../../../utils/utils'
 import { BaseMarkers, Marker } from '../BaseMarkers'
+import { AutoMarkersInteractionSource } from './AutoMarkersInteractionSource'
 
+
+const NAMESPACE = 'http://www.w3.org/2000/svg'
 
 type Variant = 'circle' | 'square' | 'diamond'
 
@@ -14,12 +18,8 @@ type DefaultOptions = {
   markerClasses: Classes
 }
 
-type MarkerData = {
-  x: number
-  y: number
-} & DefaultOptions
-
-type OptionalMarkerData = { x: number, y: number } & Partial<DefaultOptions>
+export type AutoMarkerDatum = Point & Partial<DefaultOptions>
+type MarkerRenderData = Point & DefaultOptions
 
 const DEFAULT_OPTIONS: DefaultOptions = {
   variant: 'circle',
@@ -28,55 +28,88 @@ const DEFAULT_OPTIONS: DefaultOptions = {
   markerClasses: []
 }
 
-export class AutoMarker implements Marker<MarkerData> {
+function resolveMarkerData<T extends AutoMarkerDatum>(datum: T, defaults: DefaultOptions): MarkerRenderData {
+  return {
+    x: datum.x,
+    y: datum.y,
+    variant: datum.variant ?? defaults.variant,
+    size: datum.size ?? defaults.size,
+    maskSize: datum.maskSize ?? defaults.maskSize,
+    markerClasses: datum.markerClasses ?? defaults.markerClasses,
+  }
+}
 
-  private elements: SVGCircleElement[] = []
+export class AutoMarker<T extends AutoMarkerDatum = AutoMarkerDatum> implements Marker<T> {
+
+  private readonly circle: SVGCircleElement
+  private readonly maskCircles: SVGCircleElement[] = []
 
   constructor(
     readonly root: Element,
     readonly targetMasks: Element[],
-    readonly data: DefaultOptions) {
+    private readonly defaultData: DefaultOptions,
+    initialStyle: DefaultOptions) {
 
-    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
-    circle.setAttribute('r', data.size.toString())
-    root.appendChild(circle)
-    addClasses(circle, data.markerClasses)
-    this.elements.push(circle)
+    this.circle = document.createElementNS(NAMESPACE, 'circle')
+    root.appendChild(this.circle)
+    addClasses(this.circle, initialStyle.markerClasses)
 
-    if (data.maskSize > data.size) {
-      for (const mask of this.targetMasks) {
-        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
-        circle.setAttribute('r', data.maskSize.toString())
-        circle.setAttribute('fill', 'black')
-        mask.appendChild(circle)
-        addClasses(circle, data.markerClasses)
-        this.elements.push(circle)
-      }
+    for (const mask of targetMasks) {
+      const circle = document.createElementNS(NAMESPACE, 'circle')
+      circle.setAttribute('fill', 'black')
+      mask.appendChild(circle)
+      addClasses(circle, initialStyle.markerClasses)
+      this.maskCircles.push(circle)
+    }
+
+    this.applyRadius(initialStyle.size, initialStyle.maskSize)
+  }
+
+  get target(): SVGCircleElement {
+    return this.circle
+  }
+
+  render(data: T, space: ChartSpace): void {
+    const resolved = resolveMarkerData(data, this.defaultData)
+    const point = space.chartToLayout(resolved)
+
+    if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) {
+      this.applyRadius(0, 0)
+      return
+    }
+
+    this.applyRadius(resolved.size, resolved.maskSize)
+    this.renderLayout(point)
+  }
+
+  renderLayout(point: Point): void {
+    if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) return
+
+    this.circle.setAttribute('cx', point.x.toString())
+    this.circle.setAttribute('cy', point.y.toString())
+    for (const mask of this.maskCircles) {
+      mask.setAttribute('cx', point.x.toString())
+      mask.setAttribute('cy', point.y.toString())
     }
   }
 
-  render(data: { x: number, y: number }, space: ChartSpace): void {
-    const { x, y } = data
-    const layoutX = space.chartToLayoutX(x)
-    const layoutY = space.chartToLayoutY(y)
-
-    for (const element of this.elements) {
-      element.setAttribute('cx', layoutX.toString())
-      element.setAttribute('cy', layoutY.toString())
-    }
+  private applyRadius(size: number, maskSize: number): void {
+    this.circle.setAttribute('r', size.toString())
+    const cutout = maskSize > size ? maskSize : 0
+    for (const mask of this.maskCircles) mask.setAttribute('r', cutout.toString())
   }
 
   dispose(): void {
-    for (const element of this.elements) {
-      element.remove()
-    }
+    this.circle.remove()
+    for (const mask of this.maskCircles) mask.remove()
   }
 }
 
-export class AutoMarkers extends BaseMarkers<MarkerData> {
+export class AutoMarkers<T extends AutoMarkerDatum = AutoMarkerDatum> extends BaseMarkers<T> {
 
   readonly targetMasks: Element[]
   readonly defaultData: DefaultOptions
+  readonly interaction: AutoMarkersInteractionSource<T>
 
   constructor(protected options: {
     classes?: Classes
@@ -95,17 +128,19 @@ export class AutoMarkers extends BaseMarkers<MarkerData> {
     if (Array.isArray(options.targetMasks)) this.targetMasks = options.targetMasks
     else if (options.targetMasks) this.targetMasks = [options.targetMasks]
     else this.targetMasks = []
+
+    this.interaction = new AutoMarkersInteractionSource<T>({
+      markers: () => this.markers,
+      renderMeta: index => {
+        const datum = this.markers[index]
+        return datum ? resolveMarkerData(datum, this.defaultData) : null
+      },
+      target: index => (this.markerInstances[index] as AutoMarker<T> | undefined)?.target ?? null,
+    })
   }
 
-  setMarkers(markers: OptionalMarkerData[]) {
-    const fullData = markers.map(marker => ({ ...this.defaultData, ...marker }))
-    super.setMarkers(fullData)
-
-    return this
-  }
-
-  createMarker(data: MarkerData) {
-    return new AutoMarker(this.root, this.targetMasks, data)
+  createMarker(data: T) {
+    return new AutoMarker(this.root, this.targetMasks, this.defaultData, resolveMarkerData(data, this.defaultData))
   }
 
   protected calculateBounds(constraint?: BoundsConstraint): Bounds {

@@ -63,23 +63,21 @@
       .hover-components {
 
         .hover-line {
-          display: none;
           pointer-events: none;
 
           fill: none;
           stroke: rgba(255, 255, 255, 0.3);
           stroke-width: 1px;
-
-          &.visible {
-            display: block;
-          }
         }
 
-        .hover-markers {
-          .hover-marker {
-            pointer-events: none;
-            fill: red;
-          }
+        .hover-markers .hover-marker {
+          pointer-events: none;
+          fill: currentColor;
+        }
+
+        .hover-area {
+          pointer-events: none;
+          fill: rgba(255, 255, 255, 0.08);
         }
       }
 

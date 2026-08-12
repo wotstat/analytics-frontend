@@ -1,236 +1,184 @@
-import { Overflow, Size } from '../../../../UniversalChart'
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
-import { HoveredDataPoint } from '../../../BaseDataSourcedInteractionController'
-import { InteractionDirection, Position } from '../../../baseInteractionController/BaseInteractionController'
-import { InteractionController, InteractionComponent } from '../../InteractionController'
-import { HoverResolver } from '../../sync/HoverSynchronizer'
+import { Position } from '../../../baseInteractionController/BaseInteractionController'
+import { InteractionFrame } from '../../../core/InteractionFrame'
+import { InteractionHit } from '../../../core/InteractionHit'
+import { isSameIdentity } from '../../../core/InteractionIdentity'
+import { InteractionResolver } from '../../../core/InteractionResolver'
+import { InteractionComponent, InteractionController } from '../../InteractionController'
+import { Highlight, HighlightRef, HighlightSnapshot } from '../highlight/Highlight'
 
-export type TooltipCtx = {
-  pivot: Point,
-  absolutePivot: Point,
-  cursor: Position,
-  absoluteCursor: Point,
-  nearestDataPoints: HoveredDataPoint[]
-  chartBox: { top: number, right: number, bottom: number, left: number }
-  absoluteChartBox: { top: number, right: number, bottom: number, left: number }
-  isTouch: boolean
+export type TooltipBox = {
+  readonly top: number
+  readonly right: number
+  readonly bottom: number
+  readonly left: number
 }
 
-type Options = {
-  position?: 'data-point-x' | 'data-point-y' | 'data-point' | 'nearest-data-point'
-  tooltipPivot?: 'avg' | 'nearest' | 'cursor'
-  activateDistance?: number
-  onShow?: (ctx: TooltipCtx) => void
-  onPositionChange?: (ctx: TooltipCtx) => void
+export type TooltipCtx<THit extends InteractionHit = InteractionHit> = {
+  readonly hits: readonly THit[]
+  readonly highlights: readonly HighlightSnapshot[]
+  isHighlighted(hit: InteractionHit, highlight: HighlightRef): boolean
+
+  readonly pivot: Point
+  readonly absolutePivot: Point
+  readonly cursor: Position
+  readonly absoluteCursor: Point
+  readonly chartBox: TooltipBox
+  readonly absoluteChartBox: TooltipBox
+  readonly isTouch: boolean
+}
+
+export type ChartTooltipOptions<THit extends InteractionHit = InteractionHit> = {
+  selection: InteractionResolver<THit>
+  exposeHighlights?: readonly Highlight[]
+  tooltipPivot?: 'cursor' | 'nearest' | 'avg'
+  onShow?: (ctx: TooltipCtx<THit>) => void
+  onPositionChange?: (ctx: TooltipCtx<THit>) => void
   onHide?: () => void
-  hoverSync?: HoverResolver
 }
 
-export class ChartTooltip implements InteractionComponent {
-  private lastNearestDataPoints: HoveredDataPoint[] | null = null
-  private windowScroll = { x: 0, y: 0 }
+type TooltipPointer = {
+  readonly point: Point
+  readonly cursor: Position
+  readonly isTouch: boolean
+}
+
+export class ChartTooltip<THit extends InteractionHit = InteractionHit> implements InteractionComponent {
+
+  private options: ChartTooltipOptions<THit>
   private controller: InteractionController | null = null
-  private lastPoint: Point | null = null
-  private lastCursor: Position | null = null
-  private lastIsTouch = false
-  private hovered = false
 
-  private onSyncChange = () => this.controller?.scheduleRender()
+  private hits: readonly THit[] = []
+  private active = false
+  private windowScroll = { x: 0, y: 0 }
 
-  constructor(protected options: Options = {}) {
+  constructor(options: ChartTooltipOptions<THit>) {
+    this.options = options
   }
 
   attach(root: SVGGElement, controller: InteractionController): void {
     this.controller = controller
-    this.options.hoverSync?.subscribeChange(this.onSyncChange)
   }
 
   detach(): void {
-    this.options.hoverSync?.unsubscribeChange(this.onSyncChange)
-    this.clear()
+    this.hide()
     this.controller = null
-    this.hovered = false
   }
 
-  updateOptions(options: Options) {
-    const previousSync = this.options.hoverSync
-    if (previousSync !== options.hoverSync) {
-      previousSync?.unsubscribeChange(this.onSyncChange)
-      if (this.controller) options.hoverSync?.subscribeChange(this.onSyncChange)
-    }
-
-    this.clear()
+  updateOptions(options: ChartTooltipOptions<THit>) {
+    this.hide()
     this.options = options
     this.controller?.scheduleRender()
   }
 
-  onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, controller: InteractionController): boolean {
-    this.hovered = true
-    this.lastPoint = point
-    this.lastCursor = cursor
-    this.lastIsTouch = isTouch
-    return true
-  }
-
-  onHoverEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, controller: InteractionController): boolean {
-    if (this.lastNearestDataPoints && this.lastNearestDataPoints.length > 0) {
-      this.options.onHide?.()
-      this.lastNearestDataPoints = null
-    }
-
-    this.hovered = false
-    return false
-  }
-
-  onBeforeLayout(space: ChartSpace, full: Size): void {
+  onBeforeLayout(): void {
     this.windowScroll = { x: window.scrollX, y: window.scrollY }
   }
 
-  onHoverUpdate(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, controller: InteractionController): boolean {
-    this.lastPoint = point
-    this.lastCursor = cursor
-    this.lastIsTouch = isTouch
-    return this.hovered
+  prepareInteraction(frame: InteractionFrame): void {
+    this.hits = frame.resolve(this.options.selection)
   }
 
-  mayHover(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, controller: InteractionController): InteractionDirection {
-    const direction = {
-      'data-point-x': 'horizontal',
-      'data-point-y': 'vertical',
-      'data-point': 'all',
-      'nearest-data-point': 'all'
-    } as const
-
-    return direction[this.options.position ?? 'data-point-x']
-  }
-
-  render(space: ChartSpace, overflow: Overflow, full: Size): void {
+  renderInteraction(frame: InteractionFrame): void {
     const controller = this.controller
-    const point = this.hovered ? this.lastPoint : (this.options.hoverSync?.resolve(space) ?? null)
-    if (!controller || !point) {
-      this.clear()
+    const hits = this.hits
+
+    if (!controller || hits.length === 0) {
+      this.hide()
       return
     }
 
-    let cursor = this.hovered && this.lastCursor
-      ? this.lastCursor
-      : this.syntheticCursor(controller, point)
-    const isTouch = this.hovered ? this.lastIsTouch : (this.options.hoverSync?.isTouch ?? false)
+    const pointer = this.pointerFor(controller, frame, hits)
+    const ctx = this.buildContext(controller, frame.space, pointer, hits)
 
-    let nearestDataPoints: HoveredDataPoint[]
+    const wasActive = this.active
+    this.active = true
 
-    if (this.options.position === 'data-point-x') {
-      const dp = controller.findNearestByAxis(point, space, 'x', true)
-      nearestDataPoints = dp.length ? dp.filter(p => p.xValue === dp[0].xValue) : []
-    } else if (this.options.position === 'data-point-y') {
-      const dp = controller.findNearestByAxis(point, space, 'y', true)
-      nearestDataPoints = dp.length ? dp.filter(p => p.yValue === dp[0].yValue) : []
-    } else {
-      nearestDataPoints = controller.findNearest(point, space, true)
-      if (this.options.position === 'nearest-data-point' && nearestDataPoints.length > 1) nearestDataPoints = [nearestDataPoints[0]]
-    }
-
-    nearestDataPoints = nearestDataPoints.filter(p => p.distance <= (this.options.activateDistance ?? Infinity))
-
-    if (this.lastNearestDataPoints && this.lastNearestDataPoints.length > 0 && nearestDataPoints.length == 0) {
-      this.options.onHide?.()
-      this.lastNearestDataPoints = null
-      return
-    }
-
-    if (nearestDataPoints.length === 0) {
-      this.lastNearestDataPoints = null
-      return
-    }
-
-    let pivot = { x: cursor.clientX, y: cursor.clientY }
-
-    if (this.options.tooltipPivot === 'nearest') {
-      let nearest = nearestDataPoints[0]
-
-      if (this.options.position !== 'data-point') {
-        let minDistance = Infinity
-        for (const dp of nearestDataPoints) {
-          const dpLayout = space.chartToLayout({ x: dp.xValue, y: dp.yValue })
-
-          const distance = Math.pow(dpLayout.x - point.x, 2) + Math.pow(dpLayout.y - point.y, 2)
-          if (distance < minDistance) {
-            minDistance = distance
-            nearest = dp
-          }
-        }
-      }
-
-      pivot = controller.chartToPage({
-        x: space.chartToLayoutX(nearest.xValue),
-        y: space.chartToLayoutY(nearest.yValue)
-      })
-
-    } else if (this.options.tooltipPivot === 'avg') {
-      const avg = nearestDataPoints.reduce((acc, p) => {
-        acc.x += p.xValue
-        acc.y += p.yValue
-        return acc
-      }, { x: 0, y: 0 })
-
-      avg.x /= nearestDataPoints.length
-      avg.y /= nearestDataPoints.length
-
-      pivot = controller.chartToPage({
-        x: space.chartToLayoutX(avg.x),
-        y: space.chartToLayoutY(avg.y)
-      })
-    }
-
-    // If the hover is not active, we use the pivot point as the cursor position
-    if (!this.hovered) cursor = { clientX: pivot.x, clientY: pivot.y, offsetX: 0, offsetY: 0 }
-
-    const layoutTopLeft = controller.chartToPage({ x: space.layout.x, y: space.layout.y })
-    const layoutBottomRight = controller.chartToPage({ x: space.layout.x + space.layout.width, y: space.layout.y + space.layout.height })
-    const layoutBox = {
-      top: layoutTopLeft.y,
-      right: layoutBottomRight.x,
-      bottom: layoutBottomRight.y,
-      left: layoutTopLeft.x
-    }
-
-    const ctx = {
-      pivot: pivot,
-      absolutePivot: {
-        x: pivot.x + this.windowScroll.x,
-        y: pivot.y + this.windowScroll.y
-      },
-      cursor: cursor,
-      absoluteCursor: {
-        x: cursor.clientX + this.windowScroll.x,
-        y: cursor.clientY + this.windowScroll.y
-      },
-      nearestDataPoints,
-      isTouch,
-      chartBox: layoutBox,
-      absoluteChartBox: {
-        top: layoutBox.top + this.windowScroll.y,
-        right: layoutBox.right + this.windowScroll.x,
-        bottom: layoutBox.bottom + this.windowScroll.y,
-        left: layoutBox.left + this.windowScroll.x
-      }
-    }
-
-    if (!this.lastNearestDataPoints && nearestDataPoints.length > 0) this.options.onShow?.(ctx)
+    if (!wasActive) this.options.onShow?.(ctx)
     this.options.onPositionChange?.(ctx)
-
-
-    this.lastNearestDataPoints = nearestDataPoints
   }
 
-  private clear(): void {
-    if (this.lastNearestDataPoints && this.lastNearestDataPoints.length > 0) this.options.onHide?.()
-    this.lastNearestDataPoints = null
+  private hide() {
+    this.hits = []
+    if (!this.active) return
+
+    this.active = false
+    this.options.onHide?.()
   }
 
-  private syntheticCursor(controller: InteractionController, point: Point): Position {
+  private pointerFor(controller: InteractionController, frame: InteractionFrame, hits: readonly THit[]): TooltipPointer {
+    const local = frame.input.pointer
+    if (local && local.cursor) return { point: local.point, cursor: local.cursor, isTouch: local.isTouch }
+
+    const effective = frame.effectiveInputFor(this.options.selection)?.pointer
+    if (effective) return this.toPointer(controller, effective.point, effective.isTouch)
+
+    return this.toPointer(controller, this.nearestAnchor(hits), false)
+  }
+
+  private toPointer(controller: InteractionController, point: Point, isTouch: boolean): TooltipPointer {
     const page = controller.chartToPage(point)
-    return { clientX: page.x, clientY: page.y, offsetX: 0, offsetY: 0 }
+    return {
+      point,
+      isTouch,
+      cursor: { offsetX: point.x, offsetY: point.y, clientX: page.x, clientY: page.y }
+    }
+  }
+
+  private nearestAnchor(hits: readonly THit[]): Point {
+    let nearest = hits[0]
+    for (let i = 1; i < hits.length; i++) if (hits[i].distance <= nearest.distance) nearest = hits[i]
+    return nearest.geometry.anchor
+  }
+
+  private buildContext(controller: InteractionController, space: ChartSpace, pointer: TooltipPointer, hits: readonly THit[]): TooltipCtx<THit> {
+    const pivot = this.pivotFor(controller, hits, pointer)
+
+    const topLeft = controller.chartToPage({ x: space.layout.x, y: space.layout.y })
+    const bottomRight = controller.chartToPage({ x: space.layout.x + space.layout.width, y: space.layout.y + space.layout.height })
+    const chartBox = { top: topLeft.y, right: bottomRight.x, bottom: bottomRight.y, left: topLeft.x }
+    const highlights = (this.options.exposeHighlights ?? []).map(highlight => highlight.snapshot)
+
+    function isAmongSelected(hit: InteractionHit, selected: readonly InteractionHit[]): boolean {
+      const identities = [hit.identity, ...hit.memberships]
+      return selected.some(candidate => identities.some(identity => isSameIdentity(identity, candidate.identity)))
+    }
+
+    return {
+      hits,
+      highlights,
+      isHighlighted: (hit, highlight) => {
+        const found = highlights.find(snapshot => snapshot.highlight === highlight)
+        return found ? isAmongSelected(hit, found.hits) : false
+      },
+      pivot,
+      absolutePivot: { x: pivot.x + this.windowScroll.x, y: pivot.y + this.windowScroll.y },
+      cursor: pointer.cursor,
+      absoluteCursor: { x: pointer.cursor.clientX + this.windowScroll.x, y: pointer.cursor.clientY + this.windowScroll.y },
+      chartBox,
+      absoluteChartBox: {
+        top: chartBox.top + this.windowScroll.y,
+        right: chartBox.right + this.windowScroll.x,
+        bottom: chartBox.bottom + this.windowScroll.y,
+        left: chartBox.left + this.windowScroll.x
+      },
+      isTouch: pointer.isTouch
+    }
+  }
+
+  private pivotFor(controller: InteractionController, hits: readonly THit[], pointer: TooltipPointer): Point {
+    const mode = this.options.tooltipPivot ?? 'cursor'
+    if (mode === 'cursor') return { x: pointer.cursor.clientX, y: pointer.cursor.clientY }
+    if (mode === 'nearest') return controller.chartToPage(this.nearestAnchor(hits))
+
+    let x = 0
+    let y = 0
+    for (const hit of hits) {
+      x += hit.geometry.anchor.x
+      y += hit.geometry.anchor.y
+    }
+
+    return controller.chartToPage({ x: x / hits.length, y: y / hits.length })
   }
 }

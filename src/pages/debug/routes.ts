@@ -99,7 +99,7 @@ const entries = [
   {
     path: 'chart/interaction',
     title: 'Интерактив графиков',
-    description: 'Ховер с линиями и маркером, оба вида тултипов, зум и пан с инерцией и лимитами, синхронизация графиков.',
+    description: 'Автомат ввода, курсорные линии на selections, поиск точек линии и маркеры, кадр интерактива в две фазы, зум и пан рядом.',
     group: 'chart',
     component: () => import('./pages/chart/interaction/Index.vue'),
   },

@@ -40,6 +40,7 @@ export class PlotGroup implements PlotRenderer {
 
     if (this.chart) plot.attach?.(root, this.chart)
     this.plots.set(plot, root)
+    this.chart?.dataDidChange()
     return this
   }
 

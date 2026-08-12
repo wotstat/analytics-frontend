@@ -2,8 +2,11 @@ import { ChartGradient } from '../../../defs/ChartGradient'
 import { Overflow } from '../../../UniversalChart'
 import { Bounds, BoundsConstraint } from '../../../utils/Bounds'
 import { ChartSpace } from '../../../utils/ChartSpace'
+import { isFinitePoint, Point } from '../../../utils/Point'
 import { addClasses, Classes } from '../../../utils/utils'
 import { BasePlotRenderer } from '../../BasePlotRenderer'
+import { AutoLineInteractionSource, StrokeGeometry } from './AutoLineInteractionSource'
+import { sampleStrokeSubpaths, StrokeSubpath } from './LineStrokeSampler'
 import { MonotoneXPath } from './MonotoneXPath'
 import { smoothPath } from './utils'
 
@@ -21,17 +24,20 @@ type Options = {
   affectsBounds?: boolean
 }
 
-type Point = { x: number, y: number }
-
-export class AutoLine extends BasePlotRenderer {
+export class AutoLine<T extends Point = Point> extends BasePlotRenderer {
   protected bounds: Bounds | null = null
   protected constrainedBounds: { key: string, bounds: Bounds } | null = null
   protected line: SVGPathElement | null = null
   protected area: SVGPathElement | null = null
 
-  protected points: (Point | null)[] = []
+  protected points: (T | null)[] = []
   protected segments: Point[][] = []
   protected monotonePathSegments: MonotoneXPath[] = []
+
+  private strokeSampleD: string | null = null
+  private strokeSampleSubpaths: readonly StrokeSubpath[] = []
+
+  readonly interaction: AutoLineInteractionSource<T> = new AutoLineInteractionSource<T>(() => this.points, () => this.getStrokeGeometry())
 
   constructor(readonly options: Options) {
     super(options.classes, { affectsBounds: options.affectsBounds ?? true })
@@ -44,11 +50,25 @@ export class AutoLine extends BasePlotRenderer {
   }
 
   detach() {
+    super.detach()
     this.line?.remove()
+    this.line = null
     this.area?.remove()
+    this.area = null
   }
 
-  setPoints(points: (Point | null)[]) {
+  private getStrokeGeometry(): StrokeGeometry {
+    const d = this.line?.getAttribute('d') ?? ''
+
+    if (d !== this.strokeSampleD) {
+      this.strokeSampleD = d
+      this.strokeSampleSubpaths = d ? sampleStrokeSubpaths(d) : []
+    }
+
+    return { subpaths: this.strokeSampleSubpaths, target: this.line }
+  }
+
+  setPoints(points: (T | null)[]) {
     this.points = points
     this.pointsDidChange()
 
@@ -105,7 +125,11 @@ export class AutoLine extends BasePlotRenderer {
   }
 
   renderImpl(space: ChartSpace, overflow: Overflow) {
-    if (space.bounds.isEmpty()) this.line?.setAttribute('d', '')
+    if (space.bounds.isEmpty()) {
+      this.line?.setAttribute('d', '')
+      this.area?.setAttribute('d', '')
+      return
+    }
 
     const paths: { area?: string, line: string }[] = []
     for (let i = 0; i < this.segments.length; i++) {
@@ -148,10 +172,6 @@ export class AutoLine extends BasePlotRenderer {
           maxY: layout.maxY + overflow.bottom
         }
 
-        // Оптимизация в monotoneXPath отсекает точки за пределами видимой области. По вертикали
-        // это ломает area-полигон: когда линия уходит выше/ниже bounds (в т.ч. целиком), выпавшие
-        // точки оставляют заливку под линией незакрашенной. Для area отключаем вертикальную обрезку,
-        // расширяя видимый диапазон до всех данных (горизонтальная обрезка — основной выигрыш — остаётся).
         if (this.options.area) {
           const dataBounds = this.calculateBounds()
           if (!dataBounds.isEmpty()) {
@@ -171,6 +191,7 @@ export class AutoLine extends BasePlotRenderer {
       const d: string[] = []
       for (let i = 0; i < points.length; i++) {
         const p = space.chartToLayout(points[i])
+        if (!isFinitePoint(p)) return ''
         d.push(`${i === 0 ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`)
       }
       return d.join(' ')

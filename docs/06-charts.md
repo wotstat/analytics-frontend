@@ -20,7 +20,7 @@
 - **События чарта** (`utils/EventEmitter.ts`, есть `on`/`once`/`off`): `onSetRenderBounds` — запрошенные пользователем границы; `onAfterRender` — фактические `space`/`overflow`/`full` готового кадра. Второе и есть способ узнать реальные bounds и layout после авто-фита: опрашивать `chart.space` по rAF не нужно.
 - **`style.scss` целиком лежит в `@layer ui-kit-chart`.** Любое правило страницы вне слоя перебивает движок независимо от специфичности, поэтому переопределять цвета и размеры можно самыми короткими селекторами, без `!important` и без гонки вложенности. Единственная оговорка каскада: для `!important` порядок обратный — важное внутри слоя победило бы важное снаружи, поэтому `!important` в движке не место. Движок задаёт только то, без чего рендер неверен (`contain`, `fill: none` у линий, `pointer-events`, скрытие probe-подписи) плюс цвета через `currentColor`; тики не красит вовсе.
 - **`utils/`** — базовые сущности: `Bounds` (прямоугольник в дата-координатах), `Point`, `ChartSpace` (преобразование данные↔пиксели), `PlotGroup`, `follower.ts` (`CriticalFollower` — критически демпфированный follower к цели, которая может двигаться каждый кадр; ведёт auto-fit ось в `ZoomChartComponent` и тултип между точками в `FloatingTooltip`).
-- **`plot/`** — рендереры данных: `BasePlotRenderer`, `line/autoLine/AutoLine.ts` (линия, monotone-сплайн `MonotoneXPath`), `line/autoLine/AutoLineArea.ts` (заливка между двумя линиями, опционально с самими линиями; нижняя линия хранится в обратном порядке и служит обратным краем полигона), `bar/Bar.ts` (столбцы grouped/stacked с layout-padding и независимыми радиусами внешних/внутренних углов; `padding < 1` задаёт долю ширины координатной ячейки, а `grouped.innerPadding < 1` — долю промежутка в паре bar+промежуток), `area/RectangleArea`, `area/PolygonArea`, `markers/autoMarkers/AutoMarkers` (точки). `BasePlotRenderer.getBounds()` централизованно учитывает опцию `affectsBounds`, а наследники реализуют только `calculateBounds()`: линии, коридор, столбцы и полигон включены по умолчанию, маркеры и прямоугольная область выключены. При ограничении одной из осей фигура целиком за её пределами возвращает пустые bounds и не влияет на auto-fit второй оси. `PolygonArea.setPoints(Point[] | Point[][])` строит один замкнутый SVG path с несколькими subpath для отверстий. Рендерер всегда делает bbox-culling: не обрезает геометрию, а целиком очищает path, когда общий bbox контуров перестал пересекать область построения.
+- **`plot/`** — рендереры данных: `BasePlotRenderer`, `line/autoLine/AutoLine.ts` (линия, monotone-сплайн `MonotoneXPath`), `line/autoLine/AutoLineArea.ts` (заливка между двумя линиями, опционально с самими линиями; нижняя линия хранится в обратном порядке и служит обратным краем полигона), `bar/Bar.ts` (столбцы grouped/stacked с layout-padding и независимыми радиусами внешних/внутренних углов; `padding < 1` задаёт долю ширины координатной ячейки, а `grouped.innerPadding < 1` — долю промежутка в паре bar+промежуток), `area/RectangleArea`, `area/PolygonArea`, `markers/autoMarkers/AutoMarkers` (точки). `BasePlotRenderer.getBounds()` централизованно учитывает опцию `affectsBounds`, а наследники реализуют только `calculateBounds()`: линии, коридор, столбцы и полигон включены по умолчанию, маркеры и прямоугольная область выключены. При ограничении одной из осей фигура целиком за её пределами возвращает пустые bounds и не влияет на auto-fit второй оси. `PolygonArea.setPoints(Point[] | Point[][])` строит один замкнутый SVG path с несколькими subpath для отверстий. Рендерер всегда делает bbox-culling: не обрезает геометрию, а целиком очищает path, когда общий bbox контуров перестал пересекать область построения. Bar, AutoLine, AutoMarkers и PolygonArea дополнительно владеют собственным `interaction`-источником для hit-testing — см. «Интерактив» ниже.
   - `MonotoneXPath` строит SVG path двумя эквивалентными реализациями: Zig→wasm (`monotoneXPath/monotoneXPath.zig`, сборка `build.sh`, требуется zig) и TS-фоллбек в том же файле. Загрузился ли бинарь, видно снаружи: `monotoneXPathWasmReady()` (промис) и `getMonotoneXPathWasmStatus()` (`'loading' | 'ready' | 'failed'`). Обе включают клиппинг по видимой области и децимацию точек в пиксельных координатах: M4-схлопывание точек внутри одного пиксельного столбца (вход/выход/мин/макс + соседи для сохранения касательных) и «коридорное» схлопывание почти коллинеарных участков (ε=0.05px). При изменении алгоритма правь обе реализации синхронно и пересобирай wasm.
 - **`axis/`**, **`ticks/`** (`TicksByLabels` — composite по уровням, `TicksByValues`, `BaseOffsetTicks`), **`labels/autoLabels/`** (автогенерация подписей: `steppedGenerator`, `arrayGenerator`).
   - В `axis/` две разные сущности, не путать. **`PlotAreaBorder`** — рамка области построения, отделяющая её от слотов: привязана к геометрии, сторона задаётся строкой `'space'` (по границе области) или `'full'` (через весь SVG). **`ChartAxis`** — ось по значению данных: `new ChartAxis('vertical', 0)` даёт нулевую линию. `axis` называет ось, на которой отложено значение (как у тиков и подписей): `'vertical'` — значение по Y, линия горизонтальная. Варианта `full` у неё нет — линия по координате живёт только внутри области построения и за её границами не рисуется.
@@ -36,10 +36,11 @@
     - DOM каждого этажа — `.label-level.label-level-N` плюс его семантические `classes`. Ключи элементов изолированы номером этажа, но повторяющийся текст внутри одного этажа всё ещё требует `keyForValue`. Размер текста измеряется общей probe-подписью, поэтому этажные классы рассчитаны на цвет и другие стили без изменения метрик шрифта.
     - `levelGap` задаёт вертикальный промежуток этажей. `slotSize: 'auto'` следует за текущим победителем, `'stable'` только увеличивает однажды увиденную высоту/ширину, `'max-candidate'` по X сразу резервирует высоту под максимальное число этажей среди кандидатов, число фиксирует размер в пикселях.
 - **`defs/`** — SVG defs: градиенты, клипы, маски, паттерны.
-- **`interaction/`** — интерактивность:
+- **`interaction/`** — интерактивность (устройство и композиция — в отдельном разделе «Интерактив» ниже):
   - `baseInteractionController/` — базовый контроллер и **конечный автомат** ввода (`StateMachine.ts`, состояния в `states/`: mouse hover/pan, touch hover/pan/zoom, ожидание распознавания жеста). Переходы отдаёт `controller.onStateChanged` — опрос по кадрам их пропускает, переход бывает короче кадра. Событие без полезной нагрузки: новое состояние читается из `controller.currentState` (типизировать событие по параметру машины нельзя — поле `EventEmitter<S>` сделало бы `StateMachine` инвариантной по `S`). Опознавать состояние — через `instanceof`: `constructor.name` не переживает минификацию.
-  - `BaseDataSourcedInteractionController.ts` — базовый контроллер с поиском ближайших точек в подключённых data sources.
-  - `composable/InteractionController.ts` — составной контроллер интерактивности из `InteractionComponent`: hover-эффектов (`ChartTooltip`, вертикальная/горизонтальная линии, `NearestMarker`), управления viewport (`ZoomChartComponent`) и `CallbackComponent` — единственного способа подписаться на жесты снаружи. `updateOptions` есть у всех перечисленных, так что опции меняются на лету, без пересборки набора. `addComponent`/`removeComponent` работают и посреди активного ховера: снятый компонент убирает свой DOM в `detach`, добавленный сразу получает текущий ховер.
+  - `core/` — resolver-граф selections: identity/geometry/hit/кадр с memo-кешем, immutable-операции (`union`, `nearest`, `topmost`, `within`, `orElse`, `withInput`).
+  - `composable/InteractionController.ts` — составной контроллер из `InteractionComponent`: hover-эффектов (`Highlight`, `VerticalLine`/`HorizontalLine`, `VerticalArea`/`HorizontalArea`, `MarkerOverlay`, `ChartTooltip`), управления viewport (`ZoomChartComponent`) и `CallbackComponent` — единственного способа подписаться на жесты снаружи. `updateOptions` есть у всех перечисленных, так что опции меняются на лету, без пересборки набора. `addComponent`/`removeComponent` работают и посреди активного ховера: снятый компонент убирает свой DOM в `detach`, добавленный сразу получает текущий ховер.
+  - `BarInteractionSource.ts`, `AutoLineInteractionSource.ts`, `AutoMarkersInteractionSource.ts`, `PolygonAreaInteractionSource.ts` — источники запросов, каждый привязан к своему плоту: `bar.interaction`, `line.interaction`, `scatter.interaction`, `polygon.interaction`.
 - **`ChartRenderManager.ts`**, `BaseChart.ts` — базовая инфраструктура рендера.
 
 ### Уровни тиков кадра и адаптивная временная иерархия
@@ -93,22 +94,166 @@ new TicksByLabels(labelsX, { classes: 'time-grid', levels: [{ classes: 'primary-
 
 Корневые `start`/`end` у `TicksByLabels` считаются настройками нулевого уровня; у прочих уровней свои — в `levels[i]`. `TicksByValues` остаётся для независимых статических значений (свой список чисел, не связанный с подписями), но для адаптивной временной иерархии он больше не нужен — раньше им вручную рисовали дни в лидерборде Натиска и на дневном графике. Стенд со всеми переходами — `/debug/chart/axis`, секция «Уровни тиков».
 
+### Интерактив: контроллер, selections и эффекты
+
+Никакого централизованного хит-теста нет: каждый плот сам знает свою геометрию и отдаёт **source** — точку входа для типизированных запросов. `InteractionController` (`interaction/composable/InteractionController.ts`) данные не хранит и ближайшие точки не ищет — он только прогоняет список `InteractionComponent` через два прохода кадра и владеет controller-owned local input (курсор/тач конкретно этого графика). Полный живой стенд со всеми случаями ниже — `/debug/chart/interaction`.
+
+#### Controller добавляется последним
+
+`InteractionController` — обычный плот с точки зрения `UniversalChart.addPlot()`, и место в композиции значимо: он должен идти **после** всех data-плотов.
+
+```ts
+chart
+  .addPlot(plotRoot, 'plot')       // Bar/AutoLine/AutoMarkers/PolygonArea уже отрисовались в этом кадре
+  .addPlot(interactionController)  // на его render() SVG и layout-кеши плотов соответствуют текущему кадру
+```
+
+Если контроллер окажется раньше, source в его кадре увидит геометрию **прошлого** кадра — устаревшие layout-прямоугольники Bar, вчерашний путь линии и т.д. Инвариант не проверяется рантаймом, его держит порядок вызовов `addPlot`; и `detail/Charts.ts` (боевой), и весь debug-стенд (`interaction/shared/chartScaffold.ts`) следуют ему явно и с комментарием на месте.
+
+`InteractionController` **не** наследует space-hash short-circuit `BasePlotRenderer.render()` и выполняет свои interaction-фазы в каждом кадре, даже если сам `ChartSpace` не менялся: `setPoints`/`setDatasets`/`setMarkers` планируют кадр чарта, но не помечают контроллер грязным. Иначе смена данных при неподвижном курсоре оставляла бы Highlight-классы и тултип от прошлого набора.
+
+#### Два прохода кадра
+
+`InteractionController.onRender()` строит `InteractionFrame` (`core/InteractionFrame.ts`) и прогоняет снимок списка компонентов дважды:
+
+```ts
+for (const component of components) component.prepareInteraction?.(frame)
+for (const component of components) component.renderInteraction?.(frame)
+```
+
+`prepareInteraction` разрешает selections в immutable hits и не трогает DOM; `renderInteraction` делает class diff, обновляет SVG и вызывает внешние callbacks. Барьер между фазами снимает зависимость от порядка `addComponent()`: `ChartTooltip`, добавленный раньше `Highlight`, всё равно видит его `snapshot` того же кадра — снимок читается только в чужой `renderInteraction`, когда prepare уже отработал у всех.
+
+`InteractionFrame.resolve(resolver, input)` мемоизирует результат по паре `(resolver instance, input)`, а не по одному resolver: иначе `withInput()` (разбор — ниже, в «Интерактив → Hover sync через input-bound selections»), резолвящий того же родителя под другим input, отравил бы local-ветку synced-результатом — один и тот же resolver в одном кадре может законно вернуть разные hits под разными input. Кеш живёт один кадр и не хранится в контроллере между кадрами.
+
+#### Source → selection → effect
+
+Каждый поддержанный плот выставляет `readonly interaction`: `bar.interaction`, `line.interaction`, `scatter.interaction`, `polygon.interaction`. Source знает только осмысленные для этого плота запросы и возвращает не готовые хиты, а **selection** — immutable resolver-узел; сам запрос выполняется только внутри кадра, в момент `frame.resolve()`.
+
+```ts
+const barItem = bar.interaction.contains({ gaps: 'miss' })   // BarItemSelection, 0..1 хит
+const barGroup = barItem.related('group')                    // все item той же категории
+const barDataset = barItem.related('dataset')                // все item того же датасета
+
+const lines = lineA.interaction.union(lineB.interaction)     // source union — только между совместимым query API
+const linePointsByX = lines.nearestByAxis('x')
+const lineNearStroke = lines.nearStroke({ maxDistance: 6 }).nearest()
+
+const scatterPoint = scatter.interaction.nearestPoint({ maxDistance: 8 })
+const hoveredPolygon = polygon.interaction.contains().topmost()
+```
+
+Общие операции (`core/Selection.ts`) работают с любым `InteractionResolver`: `union()` — сохраняет порядок, при дубликате identity содержимое побеждает у правой стороны, а позиция остаётся от первого вхождения (это держит порядок строк тултипа стабильным при добавлении ещё одного `union()`); `nearest()` — минимальная `distance`, при точном равенстве побеждает более поздний по selection order; `topmost()` — последний hit selection order, а не DOM paint order; `within({ maxDistance })` — фильтр по правилу `contains || distance <= maxDistance`; `orElse()` — fallback, не union: обе стороны никогда не показываются одновременно; `withInput()` — переключение input для hover sync (разбор — ниже, в «Интерактив → Hover sync через input-bound selections»). `related()` — plot-specific и типизирован: `BarItemSelection.related()` принимает только `'group' | 'dataset'`, произвольная строка — ошибка сборки, а не пустой результат в рантайме.
+
+`bar.interaction.contains({ gaps?, hitArea? })` и `bar.interaction.containsGroup({ hitArea? })` принимают `hitArea: 'geometry' | 'vertical'` (по умолчанию `'geometry'` — прежнее поведение). `'vertical'` растягивает зону попадания на всю высоту layout: наводить можно выше и ниже бара, X-диапазон не меняется. У grouped это работает на обоих уровнях — сам `contains()` расширяется по вертикали не хуже `containsGroup()`; у stacked сегменты одной категории делят общий X-диапазон, поэтому `contains()` у stacked `hitArea: 'vertical'` не отличается от `'geometry'` — сегменты остаются item'ами только по реальной геометрии, а вертикаль работает исключительно через `containsGroup()`. `containsGroup()` — новый `0..1` group-level запрос: identity `kind: 'group'` с ключом-категорией, `datum` — сырые значения категории по всем датасетам (не значение одного бара, группа не притворяется item'ом), `targets` — все bar path категории, geometry — `groupRect` (в `'vertical'` — с Y-диапазоном на весь layout).
+
+Один и тот же selection можно скормить нескольким эффектам сразу — они читают его через общий frame cache, повторного запроса не происходит:
+
+```ts
+new VerticalLine({ selection: linePointsByX })
+new MarkerOverlay({ selection: linePointsByX, classesForHit: hit => hit.source === lineA.interaction ? 's0' : 's1' })
+new ChartTooltip({ selection: linePointsByX.union(barGroup).union(scatterPoint).union(hoveredPolygon) })
+```
+
+Пример — сборный акцептанс-график стенда, `src/pages/debug/pages/chart/interaction/shared/MixedChart.ts`: там же `barItem` разом идёт в `Highlight` и в `VerticalArea({ geometry: 'group' })`, а `scatterPoint` — в `Highlight`, `VerticalLine`, `HorizontalLine` и в heterogeneous union тултипа.
+
+Результат резолва — типизированный `InteractionHit<TDatum, TKind, TGeometryScope>` (`core/InteractionHit.ts`): `datum` — точное исходное значение пользователя, не нормализованная копия рендерера; `identity`/`memberships` — для дедупликации в `union()` и для highlight-сопоставления; `geometry`/`geometryFor(scope)` — layout-пиксели текущего кадра; `distance`/`contains` — общая метрика для `.nearest()`/`.within()`; `targets` — реальные SVG-элементы для class diff. `kind` — discriminant (`'line-point'`, `'line-stroke'`, `'bar-item'`, `'bar-group'`, `'scatter-point'`, `'polygon'`, `'cursor'`). Конкретный тип `datum` сохраняется через всю цепочку query → `union()` → `ChartTooltip`.
+
+Эффекты (`composable/components/`) реализуют `prepareInteraction`/`renderInteraction`, принимают `selection` в опциях и сами ничего не запрашивают:
+
+- **`Highlight`** — один универсальный класс без `BarHighlight`/`LineHighlight`-подклассов: `prepare` строит снимок текущих `hit.targets`, `render` делает diff с предыдущим набором и адресно навешивает/снимает CSS-класс. Конфликт двух `Highlight` на одном классе и таргете — ответственность вызывающего, арбитража в движке нет.
+- **`VerticalLine`/`HorizontalLine`** (`components/lines/`) — set semantics: одна линия на уникальную координату (`geometry.anchor.x`/`.y`), разные координаты дают несколько линий.
+- **`VerticalArea`/`HorizontalArea`** (`components/areas/`) — то же на `xRange`/`yRange`; опция `geometry` выбирает именованный scope хита (например `'group'` у Bar), сама область не считает bar layout и не строит polygon bounds — это делает плот.
+- **`MarkerOverlay`** (`components/markerOverlay/`) — один SVG-маркер на уникальный anchor selection, `classesForHit(hit)` задаёт стилизацию вызывающий, классы исходного плота не копируются автоматически.
+- **`ChartTooltip`** (`components/chartTooltip/`) — публикует `TooltipCtx`, сам ничего не рисует (см. «TooltipCtx и highlights» ниже).
+
+#### Минимальный пример: hover и тултип на одном графике
+
+Без sync между графиками сборка короче — источник, selection и три эффекта на общем `InteractionController`. Первый аргумент конструктора — `classes` (та же сигнатура, что у любого `BasePlotRenderer`): CSS-класс на корневой SVG-группе контроллера, стилевой хук, а не режим работы.
+
+```ts
+const line = new AutoLine({ classes: 'main-line' })
+const plotRoot = new PlotGroup().addPlot(line)
+
+const points = line.interaction.nearestByAxis('x')
+
+const controller = new InteractionController('hover')
+  .addComponent(new VerticalLine({ selection: points }))
+  .addComponent(new MarkerOverlay({ selection: points, classes: 'markers' }))
+  .addComponent(new ChartTooltip({
+    selection: points,
+    onPositionChange: ctx => tooltipCtx.value = ctx,
+    onHide: () => tooltipCtx.value = null,
+  }))
+
+chart
+  .addPlot(plotRoot, 'plot')
+  .addPlot(controller)  // после data-плотов, см. «Controller добавляется последним» выше
+```
+
+`tooltipCtx` дальше идёт во `HeaderTooltip.vue`/`FloatingTooltip.vue` через проп `:ctx` (см. «Вывод тултипов» ниже). Реальные варианты этой сборки без sync — `FrameChart.ts` и `LinePointsChart.ts` (`src/pages/debug/pages/chart/interaction/shared/`); композиция с `withInput()` для hover sync между графиками — следующий подраздел.
+
+#### Hover sync через input-bound selections
+
+`HoverSynchronizer` (`composable/sync/HoverSynchronizer.ts`) публикует не координату, а две роли раздельно и по-разному: значение вдоль **оси данных** (`dataAxisValue`) и долю вдоль **свободной оси** (`freeAxisFraction`, 0..1 от `space.layout` источника; конвертация — `ChartSpace.layoutToFractionY`/`fractionToLayoutY`), плюс `isTouch`. Не хиты и не selection. Ось данных синхронизируется значением, потому что у связанных графиков она обычно общая или сопоставимая по смыслу — то же значение означает ту же точку у любого фолловера. Со свободной осью так нельзя: у двух графиков она легко имеет разные шкалы (сотни против тысяч), и значение источника, прочитанное шкалой фолловера, может спроецироваться далеко за пределы его области построения. Доля от layout ни от чьих данных не зависит, поэтому у фолловера курсор всегда остаётся внутри его собственной области.
+
+Какая ось данных, а какая свободная — решение движка, а не факт хаба: сейчас это всегда X/Y (горизонтальных графиков нет, `nearestByAxis('y')` нигде не используется), и соглашение целиком лежит в паре `project()`/`unproject()` внутри `HoverSynchronizer` — единственном месте, которое его знает. У вертикального графика датапоинт лежит по данным на Y, а свободная ось — X, поэтому ось данных должна стать свойством самого графика (участвует в layout, hit-геометрии, `related`), а не настройкой хаба: одна и та же пара «источник/фолловер» может синхронизировать разные оси, и подмена входит в силу только когда `project()` берёт ось из `ChartSpace` источника, а `unproject()` — из `ChartSpace` фолловера.
+
+Синхронизируется точка, а не результат запроса: каждый график резолвит её против собственных данных, поэтому gap на одном графике при datum в той же точке на другом — ожидаемый результат, а не рассинхрон.
+
+```ts
+const localPoints = line.interaction.nearestByAxis('x')
+const syncedPoints = localPoints.withInput(sync.hover)   // тот же resolver, другой input
+
+new VerticalLine({ selection: syncedPoints })    // линия синхронная — видна на всех связанных графиках
+new MarkerOverlay({ selection: localPoints })    // маркер — только по локальному ховеру этого графика
+```
+
+`withInput(hoverSync)` (`core/Selection.ts`, `WithInputSelection`) на каждый resolve выбирает: если у контроллера, которому принадлежит текущий кадр, есть local pointer — резолвит родителя им (**local hover приоритетнее**); иначе резолвит родителя под synced input, чью точку уже в пикселях этого графика отдаёт `hoverSync.resolve(space)` — ось данных ищется по значению в этом `ChartSpace`, свободная восстанавливается из доли layout источника, обе проекции происходят внутри самого `resolve()`, `WithInputSelection` берёт результат как есть. `cursorSelection()` (`core/cursorSelection.ts`) даёт ту же модель для «курсорной линии без данных»: один `'cursor'` hit с `distance: Infinity`, чтобы не побеждать ни в одном `.nearest()`/`tooltipPivot: 'nearest'`; типичный fallback-паттерн — `linePointsByX.within({ maxDistance: 20 }).orElse(cursorSelection())`.
+
+Боевой пример — `detail/Charts.ts`:
+
+```ts
+const syncedPoints = this.line.interaction.nearestByAxis('x').withInput(sync.hover)
+
+this.interactionController = new InteractionController('hover')
+  .addComponent(new VerticalLine({ selection: syncedPoints, offset: { end: 0.5, start: -5 } }))
+  .addComponent(new MarkerOverlay({ selection: syncedPoints, /* ... */ }))
+  .addComponent(new ChartTooltip({ selection: syncedPoints, tooltipPivot: 'avg', /* ... */ }))
+  .addComponent(sync.hover)
+```
+
+Здесь синхронизированы все три эффекта, но выборочность — вопрос композиции: не оборачивая selection конкретного эффекта в `withInput()`, легко оставить его local-only (ровно так `MixedChart.ts` и debug-секция «Selective hover sync» демонстрируют разные комбинации). Сам `HoverSynchronizer` также добавляется в `InteractionController` как обычный `InteractionComponent` (`addComponent(sync.hover)`) — так он получает `onHoverBegin/Update/End` этого графика и публикует координату остальным.
+
+#### TooltipCtx и highlights
+
+`ChartTooltip` не создаёт HTML — публикует typed `TooltipCtx<THit>` через `onShow`/`onPositionChange`/`onHide`. `ctx.hits` идёт ровно в порядке `selection` (тултип ничего не сортирует), `ctx.pivot` зависит от `tooltipPivot` (`'cursor' | 'nearest' | 'avg'`, по умолчанию `'cursor'`) и влияет только на позиционирование, не на состав hits.
+
+`exposeHighlights: Highlight[]` — список инстансов, чей snapshot тултип публикует в `ctx.highlights`, в порядке этого массива опций. Снимок гарантированно того же кадра независимо от того, что раньше стоит в `addComponent()` — `Highlight` или `ChartTooltip`: `renderInteraction` тултипа читает `highlight.snapshot`, который к этому моменту уже посчитан в чужой `prepareInteraction` (двухфазный барьер выше).
+
+```ts
+const isLineHighlighted = ctx.isHighlighted(hit, chart.lineHighlight)
+```
+
+`ctx.isHighlighted(hit, highlight)` сопоставляет направленно: hit подсвечен, если его `identity` или любой из `memberships` совпадает с identity одного из hits в snapshot этого `Highlight` — не пересечением DOM-таргетов. Поэтому точка линии оказывается highlighted, когда подсвечена её серия (через membership point → series), а подсветка одной точки не делает highlighted всю серию. `Highlight`, не попавший в `exposeHighlights`, даёт `false`, а не исключение.
+
+`TooltipCtx` **переживает кадр**: `FloatingTooltip.vue` держит последний непустой `ctx` во время анимации скрытия, поэтому `hits`/`highlights`/`isHighlighted()` — самодостаточный immutable снимок без ссылок на `InteractionFrame` или его memo-кеш. Правило «hits живут один кадр» — про запрет пере-resolve вне кадра, а не про то, что готовый опубликованный снимок нельзя удерживать дольше самого кадра.
+
 ### ZoomChartComponent — зум/пан/инерция
 
-`interaction/composable/components/zoomChartComponent/` — пан мышью/тачем, зум колесом и пинчем, инерция, «резиновые» лимиты. **Есть подробный `readme.md` прямо в папке** — обязательно читай его перед изменениями; там же список неочевидных решений с пометкой «не чинить». Компонент завершён, автор просил не закладывать в него архитектуру «на будущее». Боевое место использования одно: `src/pages/infographics/pages/onslaught/leaderboard/components/detail/Charts.ts`; плюс стенд со всеми настройками — `/debug/chart/interaction` (см. 02).
+`interaction/composable/components/zoomChartComponent/` — пан мышью/тачем, зум колесом и пинчем, инерция, «резиновые» лимиты. **Есть подробный `readme.md` прямо в папке** — обязательно читай его перед изменениями; там же список неочевидных решений с пометкой «не чинить». Компонент завершён, автор просил не закладывать в него архитектуру «на будущее». Боевое место использования одно: `src/pages/infographics/pages/onslaught/leaderboard/components/detail/Charts.ts`; плюс стенд со всеми настройками — `/debug/chart/interaction` (см. выше).
 
 ### Связка графиков (hover / bounds sync)
 
-`interaction/composable/sync/` — синхронизация нескольких `UniversalChart` по принципу **координатный фрейм ≠ viewport**: примитив синка живёт в chart-space, поэтому не зависит от зума, а каждый график сам проецирует его в свои пиксели и снапит/фитит по **своим** данным. Два независимых хаба (можно включать по отдельности), оба создаются один раз в `Detail.vue` и передаются в компоненты:
+`interaction/composable/sync/` — синхронизация нескольких `UniversalChart` по принципу **координатный фрейм ≠ viewport**: примитив синка не зависит от зума, а каждый график сам проецирует его в свои пиксели и снапит/фитит по **своим** данным. Для `HoverSynchronizer` это устроено по-разному для двух ролей — ось данных живёт в chart-space (значение), свободная ось — в доле layout источника (подробности, включая текущее соглашение «ось данных — это X», — выше, «Hover sync через input-bound selections»), — но обе одинаково не зависят от чужого зума. Два независимых хаба (можно включать по отдельности), оба создаются один раз в `Detail.vue` и передаются в компоненты:
 
-- **`HoverSynchronizer`** (hover-sync): навёл на один график — hover (линия/маркер/тултип) зажигается на всех связанных в той же точке фрейма. Добавляется в каждый `InteractionController` (`addComponent`) и передаётся консьюмерам (`VerticalLine`/`NearestMarker`/`ChartTooltip`, опция `hoverSync`); локальный hover приоритетнее внешнего.
+- **`HoverSynchronizer`** (hover-sync): навёл на один график — hover зажигается на всех связанных в той же точке фрейма. Добавляется в каждый `InteractionController` как `InteractionComponent` (`addComponent`), а как источник точки (`HoverResolver`) подключается к конкретным selections через `.withInput(sync.hover)` — синхронизируются обе роли осей и `isTouch`, не хиты; локальный hover приоритетнее внешнего. Композиция и пример разобраны выше, в «Интерактив → Hover sync через input-bound selections».
 - **`BoundsSynchronizer`** (bounds-sync): зазумил/пропанил один — связанные синхронно повторяют окно ведущей оси (направление как у `panDirection`: `new BoundsSynchronizer('horizontal' | 'vertical' | 'all')`), каждый анимируя свою auto-fit ось. Передаётся в `ZoomChartComponent` опцией `boundsSync`. **Идёт через `ZoomChartComponent`**, а не через `chart.setRenderBounds` напрямую (иначе auto-fit ось ведомого снапит — детали в его `readme.md`).
 
 Референс проводки — `detail/Charts.ts` + `detail/Detail.vue` (лидерборд Натиска). Статичный сезонный вариант без зума с постоянными маркерами точек — `onslaught/general/dailyPlayersChart/`.
 
 ### Вывод тултипов (`src/shared/ui/chart/`)
 
-`ChartTooltip` отдаёт наружу только `TooltipCtx` (координаты точки/курсора в клиентских и абсолютных координатах, бокс графика, ближайшие точки данных). Как это показать — дело Vue-обёрток; их две, обе принимают `:ctx="chart.tooltipCtx.value"`:
+`ChartTooltip` ничего не рисует — публикует наружу `TooltipCtx` (hits в порядке selection, snapshot заказанных `exposeHighlights` с `isHighlighted()`, координаты pivot/курсора в клиентских и абсолютных координатах, бокс графика — контракт разобран выше, в «Интерактив → TooltipCtx и highlights»). Как это показать — дело Vue-обёрток; их две, обе принимают `:ctx="chart.tooltipCtx.value"`:
 
 - **`HeaderTooltip.vue`** — тултип в шапке графика: слоты `left`/`center`/`right` (заголовок, селекторы) и `tooltip`, который едет по горизонтали за точкой и прячет пересекающиеся элементы шапки.
 - **`FloatingTooltip.vue`** — плавающий тултип поверх страницы. Своей разметки нет: это `PopoverStyled` (`shared/uiKit/popover`), у которого `interactive` по умолчанию `false` (но его можно включить), поэтому бесплатно достаются общий контейнер поповеров, флип у краёв экрана, стрелка, карточка и анимация. Целью выступает `VirtualElement` — прямоугольник считается из абсолютных координат `ctx` минус текущий скролл, без промежуточного элемента в DOM, поэтому тултип остаётся приклеенным к точке и при скролле страницы без перерисовки графика. Проп `anchor`: `pivot` (точка, по умолчанию), `cursor`, `pivot-x` / `pivot-y` (якорь-линия во всю высоту/ширину графика — тултип встаёт сбоку). Дальше пробрасываются `placement`, `offset`, `viewportOffset`, `arrowSize`, `class`; по умолчанию тултип не перехватывает указатель (`interactive`). Во время анимации скрытия контент остаётся от последнего непустого `ctx`, поэтому слот всегда получает непустой `ctx`.
@@ -117,7 +262,7 @@ new TicksByLabels(labelsX, { classes: 'time-grid', levels: [{ classes: 'primary-
 
 ### Пример использования
 
-Смотри `detail/Charts.ts` (лидерборд Натиска) — там собран полный граф: чарт + оси + линии + ховер с тултипом + зум с лимитами. Это лучший референс при создании нового графика на UniversalChart.
+Смотри `detail/Charts.ts` (лидерборд Натиска) — там собран полный граф: чарт + оси + линии + ховер с тултипом + зум с лимитами + hover/bounds sync. Это лучший референс при создании нового графика на UniversalChart. Для полной матрицы механизмов интерактива (bar/scatter/polygon sources, Highlight, areas, композиция selections, кадр и инвалидация) — `/debug/chart/interaction`, там же лежит сборный acceptance-график со всеми плотами и эффектами разом (`shared/MixedChart.ts`).
 
 ## Когда что использовать
 

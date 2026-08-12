@@ -27,8 +27,9 @@
 </template>
 
 
-<script setup lang="ts">
+<script setup lang="ts" generic="THit extends InteractionHit = InteractionHit">
 import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
+import { InteractionHit } from '@/shared/uiKit/chart/universalChart/interaction/core/InteractionHit'
 import { useElementBounding, useElementSize } from '@vueuse/core'
 import { computed, watch, useTemplateRef } from 'vue'
 
@@ -40,7 +41,7 @@ const centerHeaderItem = useTemplateRef<HTMLDivElement>('centerHeaderItem')
 const rightHeaderItem = useTemplateRef<HTMLDivElement>('rightHeaderItem')
 
 const props = defineProps<{
-  ctx: TooltipCtx | null
+  ctx: TooltipCtx<THit> | null
   hide?: 'intersect' | 'always'
   hideLeft?: 'intersect' | 'always'
   hideCenter?: 'intersect' | 'always'

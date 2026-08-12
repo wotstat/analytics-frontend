@@ -1,4 +1,4 @@
-import { Prettify } from '@/shared/utils/types/Prettify'
+import { Prettify } from '../../../utils/Prettify'
 import { GeneratorWithOptions, Strategy, TickSource, ValueGenerator } from '../AutoLabels'
 import { Classes } from '../../../utils/utils'
 

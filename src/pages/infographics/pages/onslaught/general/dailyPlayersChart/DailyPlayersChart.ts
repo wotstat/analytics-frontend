@@ -4,11 +4,12 @@ import { ChartGradient } from '@/shared/uiKit/chart/universalChart/defs/ChartGra
 import { ChartMask } from '@/shared/uiKit/chart/universalChart/defs/ChartMask'
 import { ChartTooltip, type TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
 import { VerticalLine } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/lines/VerticalLine'
-import { NearestMarker } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/nearestMarker/NearestMarker'
+import { MarkerOverlay } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/markerOverlay/MarkerOverlay'
 import { InteractionController } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController'
 import { AutoLabels, type Options as LabelsOptions, type TickSource } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
 import { steppedGenerator, steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
+import { type LinePointHit } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineInteractionSource'
 import { AutoMarkers } from '@/shared/uiKit/chart/universalChart/plot/markers/autoMarkers/AutoMarkers'
 import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
@@ -24,10 +25,12 @@ export type DailyPlayersChartPoint = {
   isCurrentDay: boolean
 }
 
-export class DailyPlayersChart extends UniversalChart {
-  readonly tooltipCtx = ref<TooltipCtx | null>(null)
+export type DailyPlayersHit = LinePointHit<DailyPlayersChartPoint>
 
-  private readonly line: AutoLine
+export class DailyPlayersChart extends UniversalChart {
+  readonly tooltipCtx = ref<TooltipCtx<DailyPlayersHit> | null>(null)
+
+  private readonly line: AutoLine<DailyPlayersChartPoint>
   private readonly markers: AutoMarkers
   private readonly interactionController: InteractionController
   private readonly maxX: number
@@ -46,7 +49,7 @@ export class DailyPlayersChart extends UniversalChart {
     const labelsY = new AutoLabels('vertical', this.getYLabelsOptions()).clipBy(clipLeft)
 
     const gradient = new ChartGradient({ classes: 'blue-gradient' })
-    this.line = new AutoLine({ classes: 'main-line', area: gradient, smoothingMethod: 'monotone' })
+    this.line = new AutoLine<DailyPlayersChartPoint>({ classes: 'main-line', area: gradient, smoothingMethod: 'monotone' })
     this.markers = new AutoMarkers({
       classes: 'daily-markers',
       targetMasks: [maskMain.root],
@@ -59,21 +62,23 @@ export class DailyPlayersChart extends UniversalChart {
       .maskBy(maskMain)
       .clipBy(clipMain)
 
+    const linePoints = this.line.interaction.nearestByAxis('x')
+
     this.interactionController = new InteractionController('hover')
       .addComponent(new VerticalLine({
         offset: { end: 0.5, start: -5 },
-        position: 'data-point-x',
+        selection: linePoints,
       }))
-      .addComponent(new NearestMarker({
+      .addComponent(new MarkerOverlay({
         classes: 'markers',
         markerClasses: 'hover-marker',
         size: 5,
         maskSize: 7,
         targetMasks: [maskMain.root],
-        position: 'data-point-x',
+        selection: linePoints,
       }))
       .addComponent(new ChartTooltip({
-        position: 'data-point-x',
+        selection: linePoints,
         tooltipPivot: 'avg',
         onHide: () => this.tooltipCtx.value = null,
         onPositionChange: ctx => this.tooltipCtx.value = ctx,
@@ -94,11 +99,10 @@ export class DailyPlayersChart extends UniversalChart {
   }
 
   setPoints(points: (DailyPlayersChartPoint | null)[]) {
-    const linePoints = points.map(point => point ? { x: point.x, y: point.y } : null)
     const visiblePoints = points.filter((point): point is DailyPlayersChartPoint => point !== null)
     const maxY = Math.max(1, ...visiblePoints.map(point => point.y))
 
-    this.line.setPoints(linePoints)
+    this.line.setPoints(points)
     this.markers.setMarkers(visiblePoints.map(point => ({
       x: point.x,
       y: point.y,
@@ -108,7 +112,6 @@ export class DailyPlayersChart extends UniversalChart {
         ? ['daily-marker', 'current-day-marker']
         : ['daily-marker'],
     })))
-    this.interactionController.setDataSources(linePoints)
     this.setRenderBounds({ maxY: maxY * 1.08 })
 
     return this

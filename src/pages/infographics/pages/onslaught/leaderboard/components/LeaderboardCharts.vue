@@ -17,16 +17,16 @@
             <div class="tooltip-container">
               <div class="value-row">
                 <Transition name="fade">
-                  <span v-if="pointDelta(ctx)" class="delta spacer"
-                    :class="{ up: pointDelta(ctx)! > 0, down: pointDelta(ctx)! < 0 }">
-                    <TriangleUp class="triangle" /> {{ Math.abs(pointDelta(ctx)!) }}
+                  <span v-if="pointDelta(ctx, thresholdChart.points)" class="delta spacer"
+                    :class="{ up: pointDelta(ctx, thresholdChart.points)! > 0, down: pointDelta(ctx, thresholdChart.points)! < 0 }">
+                    <TriangleUp class="triangle" /> {{ Math.abs(pointDelta(ctx, thresholdChart.points)!) }}
                   </span>
                 </Transition>
-                <p class="value">{{ ctx.nearestDataPoints[0].yValue }}</p>
+                <p class="value">{{ ctx.hits[0].datum.y }}</p>
                 <Transition name="fade">
-                  <span v-if="pointDelta(ctx)" class="delta"
-                    :class="{ up: pointDelta(ctx)! > 0, down: pointDelta(ctx)! < 0 }">
-                    <TriangleUp class="triangle" /> {{ Math.abs(pointDelta(ctx)!) }}
+                  <span v-if="pointDelta(ctx, thresholdChart.points)" class="delta"
+                    :class="{ up: pointDelta(ctx, thresholdChart.points)! > 0, down: pointDelta(ctx, thresholdChart.points)! < 0 }">
+                    <TriangleUp class="triangle" /> {{ Math.abs(pointDelta(ctx, thresholdChart.points)!) }}
                   </span>
                 </Transition>
               </div>
@@ -52,16 +52,16 @@
             <div class="tooltip-container">
               <div class="value-row">
                 <Transition name="fade">
-                  <span v-if="pointDelta(ctx)" class="delta spacer"
-                    :class="{ up: pointDelta(ctx)! > 0, down: pointDelta(ctx)! < 0 }">
-                    <TriangleUp class="triangle" /> {{ Math.abs(pointDelta(ctx)!) }}
+                  <span v-if="pointDelta(ctx, playersChart.points)" class="delta spacer"
+                    :class="{ up: pointDelta(ctx, playersChart.points)! > 0, down: pointDelta(ctx, playersChart.points)! < 0 }">
+                    <TriangleUp class="triangle" /> {{ Math.abs(pointDelta(ctx, playersChart.points)!) }}
                   </span>
                 </Transition>
-                <p class="value">{{ ctx.nearestDataPoints[0].yValue }}</p>
+                <p class="value">{{ ctx.hits[0].datum.y }}</p>
                 <Transition name="fade">
-                  <span v-if="pointDelta(ctx)" class="delta"
-                    :class="{ up: pointDelta(ctx)! > 0, down: pointDelta(ctx)! < 0 }">
-                    <TriangleUp class="triangle" /> {{ Math.abs(pointDelta(ctx)!) }}
+                  <span v-if="pointDelta(ctx, playersChart.points)" class="delta"
+                    :class="{ up: pointDelta(ctx, playersChart.points)! > 0, down: pointDelta(ctx, playersChart.points)! < 0 }">
+                    <TriangleUp class="triangle" /> {{ Math.abs(pointDelta(ctx, playersChart.points)!) }}
                   </span>
                 </Transition>
               </div>
@@ -89,10 +89,11 @@
 import { computed, markRaw, ref, watchEffect, useTemplateRef } from 'vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import { dateToDbDate, queryComputed, loading as loadingState } from '@/db'
-import { BattlesChart, ScoreChart } from './detail/Charts'
+import { BattlesChart, ScoreChart, type OnslaughtChartHit } from './detail/Charts'
 import DaySelector from '../../shared/daySelector/DaySelector.vue'
 import type { SelectedInterval } from './detail/types.ts'
 import type { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
+import type { Point } from '@/shared/uiKit/chart/universalChart/utils/Point'
 import { HoverSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/HoverSynchronizer'
 import { BoundsSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/BoundsSynchronizer'
 import { getRegionDayChangeHourOffset } from '@/shared/game/comp7/utils'
@@ -200,8 +201,8 @@ const selectedDays = computed<string[]>({
   },
 })
 
-function tooltipDate(ctx: TooltipCtx) {
-  const x = ctx.nearestDataPoints[0].xValue
+function tooltipDate(ctx: TooltipCtx<OnslaughtChartHit>) {
+  const x = ctx.hits[0].datum.x
 
   if (isFullSeason.value) return new Date(startTime + (x - DAY) * 1000).toLocaleDateString(undefined, {
     day: '2-digit',
@@ -218,30 +219,30 @@ function tooltipDate(ctx: TooltipCtx) {
   }).replace(',', '')
 }
 
-function pointDelta(ctx: TooltipCtx): number | null {
-  const dp = ctx.nearestDataPoints[0]
+function pointDelta(ctx: TooltipCtx<OnslaughtChartHit>, points: readonly (Point | null)[]): number | null {
+  const dp = ctx.hits[0]
   if (!dp) return null
 
   if (isFullSeason.value) {
     for (let i = dp.pointIndex - 1; i >= 0; i--) {
-      const prev = dp.dataSource[i]
-      if (prev) return dp.yValue - prev.y
+      const prev = points[i]
+      if (prev) return dp.datum.y - prev.y
     }
 
     return null
   }
 
-  const dayStart = Math.floor((dp.xValue - 20 * MINUTE) / DAY) * DAY + 20 * MINUTE
+  const dayStart = Math.floor((dp.datum.x - 20 * MINUTE) / DAY) * DAY + 20 * MINUTE
   let baseline: { x: number, y: number } | null = null
   for (let i = dp.pointIndex; i >= 0; i--) {
-    const point = dp.dataSource[i]
+    const point = points[i]
     if (!point) continue
     if (point.x < dayStart) break
     baseline = point
   }
 
   if (!baseline) return null
-  return dp.yValue - baseline.y
+  return dp.datum.y - baseline.y
 }
 
 const startTime = props.seasonInterval.start.getTime() + getRegionDayChangeHourOffset(props.region)

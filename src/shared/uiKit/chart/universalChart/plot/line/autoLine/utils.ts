@@ -1,8 +1,8 @@
-
-type Point = { x: number, y: number }
+import { isFinitePoint, Point } from '../../../utils/Point'
 
 export function smoothPath(points: Point[], smoothing = 1, precision = 2): string {
   if (points.length === 0) return ''
+  if (!points.every(isFinitePoint)) return ''
   if (points.length === 1) return `M ${points[0].x.toFixed(precision)} ${points[0].y.toFixed(precision)}`
   if (points.length === 2) return `M ${points[0].x.toFixed(precision)} ${points[0].y.toFixed(precision)} L ${points[1].x.toFixed(precision)} ${points[1].y.toFixed(precision)}`
 

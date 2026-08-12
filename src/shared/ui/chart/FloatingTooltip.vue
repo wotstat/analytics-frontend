@@ -7,9 +7,10 @@
 </template>
 
 
-<script setup lang="ts">
+<script setup lang="ts" generic="THit extends InteractionHit = InteractionHit">
 import { ClassValue, computed, shallowRef, watch } from 'vue'
 import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
+import { InteractionHit } from '@/shared/uiKit/chart/universalChart/interaction/core/InteractionHit'
 import { CriticalFollower, DEFAULT_FOLLOW_OMEGA } from '@/shared/uiKit/chart/universalChart/utils/follower'
 import PopoverStyled from '@/shared/uiKit/popover/PopoverStyled.vue'
 import { OffsetValue, PlacementParam, PlacementWithModifiers, TargetRect, VirtualElement } from '@/shared/uiKit/popover/utils'
@@ -20,7 +21,7 @@ type Anchor = 'pivot' | 'cursor' | 'pivot-x' | 'pivot-y'
 const MAX_STEP_SECONDS = 0.05
 
 const props = defineProps<{
-  ctx: TooltipCtx | null
+  ctx: TooltipCtx<THit> | null
   anchor?: Anchor
   placement?: PlacementParam
   offset?: OffsetValue
@@ -44,7 +45,7 @@ const placement = computed(() => props.placement ?? defaultPlacement[props.ancho
 
 let followers: { x: CriticalFollower, y: CriticalFollower, time: number } | null = null
 
-const lastCtx = shallowRef<TooltipCtx | null>(null)
+const lastCtx = shallowRef<TooltipCtx<THit> | null>(null)
 watch(() => props.ctx, (ctx, previous) => {
   if (ctx) lastCtx.value = ctx
   if (ctx && !previous) followers = null

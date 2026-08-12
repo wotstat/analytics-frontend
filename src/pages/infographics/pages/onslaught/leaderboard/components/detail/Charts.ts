@@ -5,12 +5,14 @@ import { AutoLabels, Options as LabelsOptions, TickSource } from '@/shared/uiKit
 import { steppedGenerator, steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator'
 import { ChartTooltip, TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
 import { VerticalLine } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/lines/VerticalLine'
-import { NearestMarker } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/nearestMarker/NearestMarker'
+import { MarkerOverlay } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/markerOverlay/MarkerOverlay'
 import { InteractionController } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
 import { AutoLineArea } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineArea'
+import { LinePointHit } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineInteractionSource'
 import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
+import { Point } from '@/shared/uiKit/chart/universalChart/utils/Point'
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
 import { ref } from 'vue'
 import { RectangleArea } from '@/shared/uiKit/chart/universalChart/plot/area/RectangleArea'
@@ -27,9 +29,10 @@ const HOUR = MINUTE * 60
 const DAY = HOUR * 24
 const WEEK = DAY * 7
 
+export type OnslaughtChartHit = LinePointHit<Point>
 
 class BaseChart extends UniversalChart {
-  tooltipCtx = ref<TooltipCtx | null>(null)
+  tooltipCtx = ref<TooltipCtx<OnslaughtChartHit> | null>(null)
 
   private readonly line: AutoLine
   private readonly minMaxArea: AutoLineArea
@@ -75,6 +78,8 @@ class BaseChart extends UniversalChart {
       .maskBy(maskMain)
       .clipBy(clipMain)
 
+    const syncedPoints = this.line.interaction.nearestByAxis('x').withInput(sync.hover)
+
     this.interactionController = new InteractionController('hover')
       .addComponent(new ZoomChartComponent({
         chart: this,
@@ -92,25 +97,21 @@ class BaseChart extends UniversalChart {
       }))
       .addComponent(new VerticalLine({
         offset: { end: 0.5, start: -5 },
-        position: 'data-point-x',
-        hoverSync: sync.hover,
+        selection: syncedPoints,
       }))
-      .addComponent(new NearestMarker({
+      .addComponent(new MarkerOverlay({
         classes: 'markers',
         markerClasses: 'hover-marker',
         size: 4,
         maskSize: 6,
-        classesForDataSource: ['m1', 'm2'],
         targetMasks: [maskMain.root],
-        position: 'data-point-x',
-        hoverSync: sync.hover,
+        selection: syncedPoints,
       }))
       .addComponent(new ChartTooltip({
-        position: 'data-point-x',
+        selection: syncedPoints,
         tooltipPivot: 'avg',
         onHide: () => this.tooltipCtx.value = null,
         onPositionChange: ctx => this.tooltipCtx.value = ctx,
-        hoverSync: sync.hover,
       }))
       .addComponent(sync.hover)
       .addComponent(this.callback)
@@ -129,14 +130,17 @@ class BaseChart extends UniversalChart {
     this.setMinLayoutSize({ right: 5, top: 5 })
   }
 
-  setPoints(points: ({ x: number, y: number } | null)[]) {
+  setPoints(points: (Point | null)[]) {
     this.line.setPoints(points)
-    this.interactionController.setDataSources(points)
     this.recalculateRestrictionArea()
     return this
   }
 
-  setMinMaxPoints(max: ({ x: number, y: number } | null)[], min: ({ x: number, y: number } | null)[]) {
+  get points(): readonly (Point | null)[] {
+    return this.line.interaction.points
+  }
+
+  setMinMaxPoints(max: (Point | null)[], min: (Point | null)[]) {
     this.minMaxArea.setPoints(max, min)
     return this
   }

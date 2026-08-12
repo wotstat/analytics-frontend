@@ -127,6 +127,26 @@ export class ChartSpace {
     return maxY - (y - layoutY) / layoutHeight * (maxY - minY)
   }
 
+  layoutToFractionY(y: number): number {
+    const { y: layoutY, height: layoutHeight } = this.layout
+    return (y - layoutY) / layoutHeight
+  }
+
+  fractionToLayoutY(fraction: number): number {
+    const { y: layoutY, height: layoutHeight } = this.layout
+    return layoutY + fraction * layoutHeight
+  }
+
+  layoutToFractionX(x: number): number {
+    const { x: layoutX, width: layoutWidth } = this.layout
+    return (x - layoutX) / layoutWidth
+  }
+
+  fractionToLayoutX(fraction: number): number {
+    const { x: layoutX, width: layoutWidth } = this.layout
+    return layoutX + fraction * layoutWidth
+  }
+
   getHash(): string {
     const { minX, maxX, minY, maxY } = this.bounds
     const { x, y, width, height } = this.layout

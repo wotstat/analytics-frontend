@@ -21,6 +21,7 @@ export class BasePlotRenderer implements PlotRenderer {
 
   attach(root: SVGGElement, chart: UniversalChart): void {
     this.chart = chart
+    this.isDirty = true
   }
 
   detach(): void {

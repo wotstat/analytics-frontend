@@ -2,8 +2,9 @@ import { Overflow, Size } from '../../UniversalChart'
 import { ChartSpace } from '../../utils/ChartSpace'
 import { Point } from '../../utils/Point'
 import { Classes } from '../../utils/utils'
-import { BaseDataSourcedInteractionController } from '../BaseDataSourcedInteractionController'
-import { InteractionDirection, Position, TouchZoomPoint } from '../baseInteractionController/BaseInteractionController'
+import { BaseInteractionController, InteractionDirection, Position, TouchZoomPoint } from '../baseInteractionController/BaseInteractionController'
+import { InteractionFrame } from '../core/InteractionFrame'
+import { InteractionInput, InteractionInputKey, InteractionPointer } from '../core/InteractionInput'
 
 export interface InteractionComponent {
   attach?(root: SVGGElement, controller: InteractionController): void
@@ -11,6 +12,9 @@ export interface InteractionComponent {
   onBeforeLayout?(space: ChartSpace, full: Size): void
   render?(space: ChartSpace, overflow: Overflow, full: Size): void
   didLayout?(space: ChartSpace, full: Size): void
+
+  prepareInteraction?(frame: InteractionFrame): void
+  renderInteraction?(frame: InteractionFrame): void
 
   mayHover?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, controller: InteractionController): InteractionDirection
   onHoverBegin?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, controller: InteractionController): boolean
@@ -30,9 +34,12 @@ export interface InteractionComponent {
   onWheelZoom?(cursor: Position, point: Point, space: ChartSpace, deltaY: number, deltaX: number, controller: InteractionController): boolean
 }
 
-function processInteractionDirection(components: InteractionComponent[], getter: (c: InteractionComponent) => InteractionDirection | undefined): InteractionDirection {
-  let vertical = false
-  let horizontal = false
+// `own` — вклад самого контроллера, объединяется с компонентами по тем же правилам
+function processInteractionDirection(components: InteractionComponent[], getter: (c: InteractionComponent) => InteractionDirection | undefined, own: InteractionDirection = false): InteractionDirection {
+  if (own === 'all') return 'all'
+
+  let vertical = own === 'vertical'
+  let horizontal = own === 'horizontal'
 
   for (const component of components) {
     const dir = getter(component)
@@ -46,8 +53,8 @@ function processInteractionDirection(components: InteractionComponent[], getter:
   return horizontal ? (vertical ? 'all' : 'horizontal') : (vertical ? 'vertical' : false)
 }
 
-function processInteractionBoolean(components: InteractionComponent[], getter: (c: InteractionComponent) => boolean | undefined): boolean {
-  let shouldRender = false
+function processInteractionBoolean(components: InteractionComponent[], getter: (c: InteractionComponent) => boolean | undefined, own: boolean = false): boolean {
+  let shouldRender = own
   for (const component of components) {
     const result = getter(component)
     shouldRender ||= result ?? false
@@ -56,11 +63,14 @@ function processInteractionBoolean(components: InteractionComponent[], getter: (
   return shouldRender
 }
 
-export class InteractionController extends BaseDataSourcedInteractionController {
+export class InteractionController extends BaseInteractionController {
 
   private readonly componentsRoot = document.createElementNS('http://www.w3.org/2000/svg', 'g')
 
   private components: InteractionComponent[] = []
+
+  private readonly localInputKey: InteractionInputKey = {}
+  private localPointer: InteractionPointer | null = null
 
   constructor(classes: Classes = [], options: { affectsBounds?: boolean } = {}) {
     super(classes, options)
@@ -69,15 +79,21 @@ export class InteractionController extends BaseDataSourcedInteractionController 
     this.root.appendChild(this.componentsRoot)
   }
 
+  get localInput(): InteractionInput {
+    return { key: this.localInputKey, pointer: this.localPointer }
+  }
+
   detach(): void {
     super.detach()
     for (const component of this.components) component.detach?.(this)
     this.components = []
+    this.localPointer = null
   }
 
   addComponent(component: InteractionComponent) {
     this.components.push(component)
     component.attach?.(this.componentsRoot, this)
+    this.requestRender()
 
     return this
   }
@@ -85,11 +101,20 @@ export class InteractionController extends BaseDataSourcedInteractionController 
   removeComponent(component: InteractionComponent) {
     this.components = this.components.filter(c => c !== component)
     component.detach?.(this)
+    this.requestRender()
     return this
   }
 
   scheduleRender() {
     this.requestRender()
+  }
+
+  private get hasInteractionComponents(): boolean {
+    return this.components.some(c => c.prepareInteraction || c.renderInteraction)
+  }
+
+  render(space: ChartSpace, overflow: Overflow, full: Size): void {
+    this.renderImpl(space, overflow, full)
   }
 
   protected onBeforeLayout(space: ChartSpace, full: Size): void {
@@ -99,7 +124,14 @@ export class InteractionController extends BaseDataSourcedInteractionController 
 
   protected onRender(space: ChartSpace, overflow: Overflow, full: Size): void {
     super.onRender(space, overflow, full)
-    for (const component of this.components) component.render?.(space, overflow, full)
+
+    const components = [...this.components]
+
+    for (const component of components) component.render?.(space, overflow, full)
+
+    const frame = new InteractionFrame(space, this.localInput)
+    for (const component of components) component.prepareInteraction?.(frame)
+    for (const component of components) component.renderInteraction?.(frame)
   }
 
   didLayout(space: ChartSpace, full: Size): void {
@@ -110,25 +142,25 @@ export class InteractionController extends BaseDataSourcedInteractionController 
   //#region Hover
 
   protected mayHover(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): InteractionDirection {
-    return processInteractionDirection(this.components, c => c.mayHover?.(cursor, point, space, isTouch, this))
+    return processInteractionDirection(this.components, c => c.mayHover?.(cursor, point, space, isTouch, this), this.hasInteractionComponents ? 'all' : false)
   }
 
   protected onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): boolean {
-    super.onHoverBegin(cursor, point, space, isTouch)
-    return processInteractionBoolean(this.components, c => c.onHoverBegin?.(cursor, point, space, isTouch, this))
+    this.localPointer = { point, cursor, isTouch }
+    return processInteractionBoolean(this.components, c => c.onHoverBegin?.(cursor, point, space, isTouch, this), this.hasInteractionComponents)
   }
 
   protected onHoverUpdate(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): boolean {
-    super.onHoverUpdate(cursor, point, space, isTouch)
-    return processInteractionBoolean(this.components, c => c.onHoverUpdate?.(cursor, point, space, isTouch, this))
+    this.localPointer = { point, cursor, isTouch }
+    return processInteractionBoolean(this.components, c => c.onHoverUpdate?.(cursor, point, space, isTouch, this), this.hasInteractionComponents)
   }
 
   protected onHoverEnd(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): boolean {
-    super.onHoverEnd(cursor, point, space, isTouch)
-    return processInteractionBoolean(this.components, c => c.onHoverEnd?.(cursor, point, space, isTouch, this))
+    this.localPointer = null
+    return processInteractionBoolean(this.components, c => c.onHoverEnd?.(cursor, point, space, isTouch, this), this.hasInteractionComponents)
   }
 
-  //#endregion 
+  //#endregion
 
   //#region Pan
 
@@ -166,12 +198,7 @@ export class InteractionController extends BaseDataSourcedInteractionController 
 
   protected onTouchZoomUpdate(first: TouchZoomPoint, second: TouchZoomPoint, space: ChartSpace): boolean {
     super.onTouchZoomUpdate(first, second, space)
-    let shouldRender = false
-    for (const component of this.components) {
-      const componentShouldRender = component.onTouchZoomUpdate?.(first, second, space, this)
-      shouldRender ||= componentShouldRender ?? false
-    }
-    return shouldRender
+    return processInteractionBoolean(this.components, component => component.onTouchZoomUpdate?.(first, second, space, this))
   }
 
   protected onTouchZoomEnd(first: TouchZoomPoint, second: TouchZoomPoint, space: ChartSpace): boolean {

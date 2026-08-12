@@ -2,6 +2,7 @@ import { ChartGradient } from '../../../defs/ChartGradient'
 import { Overflow } from '../../../UniversalChart'
 import { Bounds, BoundsConstraint } from '../../../utils/Bounds'
 import { ChartSpace } from '../../../utils/ChartSpace'
+import { isFinitePoint } from '../../../utils/Point'
 import { addClasses, Classes } from '../../../utils/utils'
 import { BasePlotRenderer } from '../../BasePlotRenderer'
 import { MonotoneXPath } from './MonotoneXPath'
@@ -49,9 +50,13 @@ export class AutoLineArea extends BasePlotRenderer {
   }
 
   detach() {
+    super.detach()
     this.topLine?.remove()
+    this.topLine = null
     this.bottomLine?.remove()
+    this.bottomLine = null
     this.area?.remove()
+    this.area = null
   }
 
   setPoints(top: (Point | null)[], bottom: (Point | null)[]) {
@@ -184,6 +189,7 @@ export class AutoLineArea extends BasePlotRenderer {
     const d: string[] = []
     for (let i = 0; i < points.length; i++) {
       const p = space.chartToLayout(points[i])
+      if (!isFinitePoint(p)) return '' // не даём NaN/Infinity просочиться в d — см. isFinitePoint()
       d.push(`${i === 0 ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`)
     }
     return d.join(' ')

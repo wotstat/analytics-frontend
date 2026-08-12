@@ -17,12 +17,12 @@
       </label>
 
       <label class="debug-control">
-        <span class="debug-label">ховер-компоненты</span>
+        <span class="debug-label">курсорные линии</span>
         <input type="checkbox" v-model="hoverEnabled">
       </label>
 
       <span class="debug-hint">
-        Без ховер-компонентов ни один mayHover не отвечает true.
+        Без курсорных линий у контроллера нет ни одного interaction-компонента, и mayHover отвечает false.
       </span>
     </div>
 
@@ -89,16 +89,10 @@ import { syntheticSeries } from '@/pages/debug/shared/fixtures/syntheticSeries'
 import { InteractionDirection } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/BaseInteractionController'
 import DemoChartView from '../shared/DemoChartView.vue'
 import EventLog from '@/pages/debug/shared/EventLog.vue'
-import { DemoChart } from '../shared/DemoChart'
+import { CursorChart } from '../shared/CursorChart'
+import { panDirections } from '../shared/panDirections'
 import { stateList, stateName, type StateName } from '../shared/states'
 import { useEventLog } from '@/pages/debug/shared/useEventLog'
-
-const panDirections = [
-  { value: 'horizontal', label: 'horizontal' },
-  { value: 'vertical', label: 'vertical' },
-  { value: 'all', label: 'all' },
-  { value: false, label: 'false (пан выключен)' },
-] as const satisfies readonly { value: InteractionDirection, label: string }[]
 
 const panDirection = ref<InteractionDirection>('horizontal')
 const zoom = ref(true)
@@ -107,7 +101,7 @@ const hoverEnabled = ref(true)
 const current = ref<StateName>('StartState')
 const { entries, push, clear } = useEventLog({ collapseRepeats: true })
 
-const chart = markRaw(new DemoChart({ hover: { tooltip: false } }))
+const chart = markRaw(new CursorChart())
 chart.setSeries([syntheticSeries('smooth', 3, 90)])
 
 const stopStateLog = chart.controller.onStateChanged.on(() => {
@@ -122,9 +116,9 @@ watchEffect(() => chart.setZoom({
   autoFitFollow: true,
 }))
 
-watchEffect(() => chart.setHover({
+watchEffect(() => chart.setCursor({
   verticalLine: hoverEnabled.value,
-  marker: hoverEnabled.value,
+  horizontalLine: hoverEnabled.value,
 }))
 
 onUnmounted(() => stopStateLog())

@@ -164,6 +164,11 @@ function fmt2(value: number) {
   return Math.round(value * 100) / 100
 }
 
+function allFinite(...values: number[]) {
+  for (const value of values) if (!Number.isFinite(value)) return false
+  return true
+}
+
 function monotoneXPathFallback(options: {
   x: Float64Array,
   y: Float64Array,
@@ -174,6 +179,13 @@ function monotoneXPathFallback(options: {
 }): string {
 
   const { smoothing, bounds, layout, visibleBounds } = options
+
+  if (!allFinite(
+    smoothing,
+    bounds.minX, bounds.maxX, bounds.minY, bounds.maxY,
+    layout.minX, layout.maxX, layout.minY, layout.maxY,
+    visibleBounds.minX, visibleBounds.maxX, visibleBounds.minY, visibleBounds.maxY
+  )) return ''
 
   const w = bounds.maxX - bounds.minX
   const h = bounds.maxY - bounds.minY
@@ -195,6 +207,8 @@ function monotoneXPathFallback(options: {
     const sourceIndex = visibleRange.start + i
     x[i] = transformX(options.x[sourceIndex])
     y[i] = transformY(options.y[sourceIndex])
+
+    if (!Number.isFinite(x[i]) || !Number.isFinite(y[i])) return ''
   }
 
   n = simplifyPointsInPlace(x, y, n)
@@ -211,6 +225,8 @@ function monotoneXPathFallback(options: {
     dx[i] = x[i + 1] - x[i]
     const dy = y[i + 1] - y[i]
     slope[i] = dy / (dx[i] || 1)
+
+    if (!Number.isFinite(slope[i])) return ''
   }
 
   tangent[0] = slope[0]
@@ -270,11 +286,6 @@ const PIXEL_COLUMN_WIDTH = 1
 const COLLINEAR_EPS = 0.05
 const MIN_CORRIDOR_DX = 1e-6
 
-// Убирает точки, не влияющие на видимую форму кривой (координаты уже в пикселях layout):
-// 1) подряд идущие точки внутри одного пиксельного столбца сводятся к входу/выходу/минимуму/максимуму
-// 2) почти коллинеарные последовательности схлопываются до концов отрезка
-// В обоих случаях дополнительно сохраняются соседние с границами точки, чтобы касательные
-// монотонного сплайна в оставшихся узлах не менялись и кривая визуально не отличалась.
 function simplifyPointsInPlace(x: number[], y: number[], n: number): number {
   if (n < 3) return n
 
@@ -322,8 +333,6 @@ function decimatePixelColumns(x: number[], y: number[], n: number): number[] {
   return idx
 }
 
-// «Коридорный» алгоритм: точка принимается в текущий отрезок, пока прямая от якоря до неё
-// проходит в пределах COLLINEAR_EPS от всех промежуточных точек. Сжимает idx на месте.
 function collapseCollinear(x: number[], y: number[], idx: number[]): number {
   const m = idx.length
   if (m < 5) return m

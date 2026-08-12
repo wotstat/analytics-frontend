@@ -1,7 +1,9 @@
+import { InteractionBounds } from '../../interaction/core/InteractionGeometry'
 import { Bounds, BoundsConstraint } from '../../utils/Bounds'
 import { ChartSpace } from '../../utils/ChartSpace'
 import { addClasses, classNames, Classes } from '../../utils/utils'
 import { BasePlotRenderer } from '../BasePlotRenderer'
+import { BarInteractionSource } from './BarInteractionSource'
 
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
@@ -58,13 +60,28 @@ type CornerRadii = {
   bottomLeft: number
 }
 
+export type BarLayoutItem = {
+  readonly datasetIndex: number
+  readonly categoryIndex: number
+  readonly value: number
+  readonly rect: InteractionBounds
+  readonly slotRect: InteractionBounds
+  readonly groupRect: InteractionBounds
+  readonly target: SVGPathElement
+  readonly radii: CornerRadii
+}
+
+type BarLayoutDraft = Omit<BarLayoutItem, 'groupRect'>
+
 type DatasetElements = {
   root: SVGGElement
   bars: SVGPathElement[]
+  classes: string[]
 }
 
 type StackSegment = {
   datasetIndex: number
+  value: number
   start: number
   end: number
 }
@@ -74,11 +91,26 @@ type Gap = {
   end: number
 }
 
+type GroupLayout = {
+  left: number
+  width: number
+}
+
 export class Bar extends BasePlotRenderer {
   protected datasets: BarDataset[] = []
   protected strategy: BarStrategy
 
   private datasetElements: DatasetElements[] = []
+
+  private layoutCacheKey: string | null = null
+  private readonly layoutCache = new Map<number, readonly BarLayoutItem[]>()
+
+  readonly interaction: BarInteractionSource = new BarInteractionSource({
+    datasets: () => this.datasets,
+    categoryCount: () => this.getCategoryCount(),
+    categoryLayout: (categoryIndex, space) => this.getCategoryLayout(categoryIndex, space),
+    strategyType: () => this.strategy.type,
+  })
 
   constructor(options: Options) {
     super(options.classes, { affectsBounds: options.affectsBounds ?? true })
@@ -88,6 +120,7 @@ export class Bar extends BasePlotRenderer {
 
   setDatasets(datasets: BarDataset[]) {
     this.datasets = datasets
+    this.invalidateLayout()
     this.syncElements()
     this.requestRender()
     return this
@@ -95,8 +128,24 @@ export class Bar extends BasePlotRenderer {
 
   setStrategy(strategy: BarStrategy) {
     this.strategy = strategy
+    this.invalidateLayout()
     this.requestRender()
     return this
+  }
+
+  getCategoryLayout(categoryIndex: number, space: ChartSpace): readonly BarLayoutItem[] {
+    const key = space.getHash()
+    if (key !== this.layoutCacheKey) {
+      this.layoutCacheKey = key
+      this.layoutCache.clear()
+    }
+
+    const cached = this.layoutCache.get(categoryIndex)
+    if (cached) return cached
+
+    const layout = this.calculateCategoryLayout(categoryIndex, space)
+    this.layoutCache.set(categoryIndex, layout)
+    return layout
   }
 
   protected calculateBounds(constraint?: BoundsConstraint): Bounds {
@@ -119,13 +168,29 @@ export class Bar extends BasePlotRenderer {
 
   protected renderImpl(space: ChartSpace): void {
     const paths = this.datasets.map(dataset => dataset.values.map(() => ''))
-    const categoryCount = this.getCategoryCount()
 
-    if (categoryCount > 0 && this.datasets.length > 0) {
-      if (this.strategy.type === 'grouped') this.renderGrouped(paths, space, categoryCount)
-      else this.renderStacked(paths, space, categoryCount)
+    if (isDegenerateSpace(space)) {
+      this.applyPaths(paths)
+      return
     }
 
+    const categoryCount = this.getCategoryCount()
+    for (let index = 0; index < categoryCount; index++) {
+      if (!this.isCategoryVisible(index, space)) continue
+
+      for (const item of this.getCategoryLayout(index, space)) {
+        const width = item.rect.maxX - item.rect.minX
+        const height = item.rect.maxY - item.rect.minY
+        if (width <= 0 || height <= 0) continue
+
+        paths[item.datasetIndex][item.categoryIndex] = createBarPath(item.rect.minX, item.rect.minY, width, height, item.radii)
+      }
+    }
+
+    this.applyPaths(paths)
+  }
+
+  private applyPaths(paths: string[][]) {
     for (let datasetIndex = 0; datasetIndex < this.datasetElements.length; datasetIndex++) {
       const elements = this.datasetElements[datasetIndex]
       const datasetPaths = paths[datasetIndex] ?? []
@@ -137,67 +202,101 @@ export class Bar extends BasePlotRenderer {
     }
   }
 
-  private renderGrouped(paths: string[][], space: ChartSpace, categoryCount: number) {
+  private calculateCategoryLayout(categoryIndex: number, space: ChartSpace): readonly BarLayoutItem[] {
+    if (isDegenerateSpace(space) || this.datasets.length === 0) return []
+
+    const group = this.getGroupLayout(categoryIndex, space)
+    const axisY = space.chartToLayoutY(0)
+    if (!Number.isFinite(group.left) || !Number.isFinite(group.width) || !Number.isFinite(axisY)) return []
+
+    const drafts = this.strategy.type === 'grouped'
+      ? this.groupedLayout(categoryIndex, space, group, axisY)
+      : this.stackedLayout(categoryIndex, space, group, axisY, this.strategy)
+
+    let minY = axisY
+    let maxY = axisY
+    for (const draft of drafts) {
+      minY = Math.min(minY, draft.slotRect.minY)
+      maxY = Math.max(maxY, draft.slotRect.maxY)
+    }
+
+    const groupRect: InteractionBounds = { minX: group.left, maxX: group.left + group.width, minY, maxY }
+    return drafts.map(draft => ({ ...draft, groupRect }))
+  }
+
+  private groupedLayout(categoryIndex: number, space: ChartSpace, group: GroupLayout, axisY: number): BarLayoutDraft[] {
     const datasetCount = this.datasets.length
-    if (datasetCount === 0) return
+    const { barWidth, innerPadding } = groupedBarMetrics(group.width, datasetCount, this.strategy.innerPadding ?? 0)
+    const radius = this.strategy.radius ?? 0
+    const groupRight = group.left + group.width
 
-    for (let index = 0; index < categoryCount; index++) {
-      if (!this.isCategoryVisible(index, space)) continue
+    const drafts: BarLayoutDraft[] = []
+    for (let datasetIndex = 0; datasetIndex < datasetCount; datasetIndex++) {
+      const value = this.datasets[datasetIndex].values[categoryIndex]
+      const target = this.datasetElements[datasetIndex]?.bars[categoryIndex]
+      if (!Number.isFinite(value) || !target) continue
 
-      const group = this.getGroupLayout(index, space)
-      const paddingOption = Math.max(0, this.strategy.innerPadding ?? 0)
-      const relativePadding = paddingOption < 1 ? paddingOption / (1 - paddingOption) : null
-      const barWidth = relativePadding === null
-        ? Math.max(0, (group.width - paddingOption * (datasetCount - 1)) / datasetCount)
-        : group.width / (datasetCount + relativePadding * (datasetCount - 1))
-      const innerPadding = relativePadding === null ? paddingOption : barWidth * relativePadding
-      if (barWidth === 0) continue
-
-      for (let datasetIndex = 0; datasetIndex < datasetCount; datasetIndex++) {
-        const value = this.datasets[datasetIndex].values[index]
-        if (!Number.isFinite(value) || value === 0) continue
-
-        const left = group.left + datasetIndex * (barWidth + innerPadding)
-        const y0 = space.chartToLayoutY(0)
-        const yValue = space.chartToLayoutY(value)
-        const top = Math.min(y0, yValue)
-        const height = Math.abs(yValue - y0)
-        if (height === 0) continue
-
-        const radii = normalizeRadii(
-          resolveRadius(this.strategy.radius ?? 0, value > 0 ? 'positive' : 'negative', 'outer'),
-          barWidth,
-          height,
-        )
-        paths[datasetIndex][index] = createBarPath(left, top, barWidth, height, radii)
+      const left = group.left + datasetIndex * (barWidth + innerPadding)
+      const yValue = space.chartToLayoutY(value)
+      const rect: InteractionBounds = {
+        minX: left,
+        maxX: left + barWidth,
+        minY: Math.min(axisY, yValue),
+        maxY: Math.max(axisY, yValue),
       }
+
+      const slotRect: InteractionBounds = {
+        minX: Math.max(group.left, left - innerPadding / 2),
+        maxX: Math.min(groupRight, left + barWidth + innerPadding / 2),
+        minY: rect.minY,
+        maxY: rect.maxY,
+      }
+
+      if (!isFiniteRect(rect) || !isFiniteRect(slotRect)) continue
+
+      drafts.push({
+        datasetIndex,
+        categoryIndex,
+        value,
+        rect,
+        slotRect,
+        target,
+        radii: normalizeRadii(resolveRadius(radius, value > 0 ? 'positive' : 'negative', 'outer'), barWidth, rect.maxY - rect.minY),
+      })
     }
+
+    return drafts
   }
 
-  private renderStacked(paths: string[][], space: ChartSpace, categoryCount: number) {
-    if (this.strategy.type !== 'stacked') return
-    const strategy = this.strategy
+  private stackedLayout(categoryIndex: number, space: ChartSpace, group: GroupLayout, axisY: number, strategy: StackedBarStrategy): BarLayoutDraft[] {
+    const byDataset = new Array<BarLayoutDraft | null>(this.datasets.length).fill(null)
 
-    for (let index = 0; index < categoryCount; index++) {
-      if (!this.isCategoryVisible(index, space)) continue
+    this.fillStackSign(byDataset, categoryIndex, space, group, axisY, strategy, 'positive')
+    this.fillStackSign(byDataset, categoryIndex, space, group, axisY, strategy, 'negative')
 
-      const group = this.getGroupLayout(index, space)
-      if (group.width === 0) continue
+    for (let datasetIndex = 0; datasetIndex < this.datasets.length; datasetIndex++) {
+      if (byDataset[datasetIndex]) continue
 
-      this.renderStackSign(paths, space, index, group, strategy, 'positive')
-      this.renderStackSign(paths, space, index, group, strategy, 'negative')
+      const value = this.datasets[datasetIndex].values[categoryIndex]
+      const target = this.datasetElements[datasetIndex]?.bars[categoryIndex]
+      if (value !== 0 || !target) continue
+
+      const rect: InteractionBounds = { minX: group.left, maxX: group.left + group.width, minY: axisY, maxY: axisY }
+      byDataset[datasetIndex] = { datasetIndex, categoryIndex, value, rect, slotRect: rect, target, radii: emptyRadii() }
     }
+
+    return byDataset.filter((draft): draft is BarLayoutDraft => draft !== null)
   }
 
-  private renderStackSign(
-    paths: string[][],
-    space: ChartSpace,
+  private fillStackSign(
+    byDataset: (BarLayoutDraft | null)[],
     categoryIndex: number,
-    group: { left: number, width: number },
+    space: ChartSpace,
+    group: GroupLayout,
+    axisY: number,
     strategy: StackedBarStrategy,
     sign: 'positive' | 'negative',
   ) {
-    const axisY = space.chartToLayoutY(0)
     const segments: StackSegment[] = []
     let sum = 0
 
@@ -209,83 +308,43 @@ export class Bar extends BasePlotRenderer {
       const start = Math.abs(space.chartToLayoutY(sum) - axisY)
       sum += value
       const end = Math.abs(space.chartToLayoutY(sum) - axisY)
-      segments.push({ datasetIndex, start, end })
+      segments.push({ datasetIndex, value, start, end })
     }
 
     if (segments.length === 0) return
 
-    const gaps = this.getStackGaps(segments, strategy.innerPadding ?? 0)
+    const gaps = getStackGaps(segments, strategy.innerPadding ?? 0)
     const innerRadius = resolveRadius(strategy.innerRadius ?? 0, sign, 'all')
     const outerRadius = resolveRadius(strategy.radius ?? 0, sign, 'outer')
     const direction = sign === 'positive' ? -1 : 1
 
     for (let index = 0; index < segments.length; index++) {
       const segment = segments[index]
+      const target = this.datasetElements[segment.datasetIndex]?.bars[categoryIndex]
+      if (!target) continue
+
       const visibleStart = Math.max(segment.start, gaps[index - 1]?.end ?? segment.start)
-      const visibleEnd = Math.min(segment.end, gaps[index]?.start ?? segment.end)
-      if (visibleEnd <= visibleStart) continue
+      const visibleEnd = Math.max(visibleStart, Math.min(segment.end, gaps[index]?.start ?? segment.end))
 
-      const p1 = axisY + direction * visibleStart
-      const p2 = axisY + direction * visibleEnd
-      const top = Math.min(p1, p2)
-      const height = Math.abs(p2 - p1)
-      const radii = emptyRadii()
+      const rect = stackRect(group, axisY, direction, visibleStart, visibleEnd)
+      const slotRect = stackRect(group, axisY, direction, segment.start, segment.end)
+      if (!isFiniteRect(rect) || !isFiniteRect(slotRect)) continue
 
-      if (sign === 'positive') {
-        if (index > 0) {
-          radii.bottomLeft = innerRadius.bottomLeft
-          radii.bottomRight = innerRadius.bottomRight
-        }
-        if (index < segments.length - 1) {
-          radii.topLeft = innerRadius.topLeft
-          radii.topRight = innerRadius.topRight
-        } else {
-          radii.topLeft = outerRadius.topLeft
-          radii.topRight = outerRadius.topRight
-        }
-      } else {
-        if (index > 0) {
-          radii.topLeft = innerRadius.topLeft
-          radii.topRight = innerRadius.topRight
-        }
-        if (index < segments.length - 1) {
-          radii.bottomLeft = innerRadius.bottomLeft
-          radii.bottomRight = innerRadius.bottomRight
-        } else {
-          radii.bottomLeft = outerRadius.bottomLeft
-          radii.bottomRight = outerRadius.bottomRight
-        }
+      const radii = stackSegmentRadii(sign, index, segments.length, innerRadius, outerRadius)
+
+      byDataset[segment.datasetIndex] = {
+        datasetIndex: segment.datasetIndex,
+        categoryIndex,
+        value: segment.value,
+        rect,
+        slotRect,
+        target,
+        radii: normalizeRadii(radii, group.width, rect.maxY - rect.minY),
       }
-
-      paths[segment.datasetIndex][categoryIndex] = createBarPath(
-        group.left,
-        top,
-        group.width,
-        height,
-        normalizeRadii(radii, group.width, height),
-      )
     }
   }
 
-  private getStackGaps(segments: StackSegment[], innerPadding: number): Gap[] {
-    const requestedPadding = Math.max(0, innerPadding)
-    const gaps: Gap[] = []
-
-    for (let index = 0; index < segments.length - 1; index++) {
-      const current = segments[index]
-      const next = segments[index + 1]
-      const available = next.end - current.start
-      const padding = Math.min(requestedPadding, available)
-      const minStart = current.start
-      const maxStart = next.end - padding
-      const start = Math.min(Math.max(current.end - padding / 2, minStart), maxStart)
-      gaps.push({ start, end: start + padding })
-    }
-
-    return gaps
-  }
-
-  private getGroupLayout(index: number, space: ChartSpace) {
+  private getGroupLayout(index: number, space: ChartSpace): GroupLayout {
     const x1 = space.chartToLayoutX(index)
     const x2 = space.chartToLayoutX(index + 1)
     const cellLeft = Math.min(x1, x2)
@@ -303,12 +362,17 @@ export class Bar extends BasePlotRenderer {
     }
   }
 
+  private invalidateLayout() {
+    this.layoutCacheKey = null
+    this.layoutCache.clear()
+  }
+
   private syncElements() {
     while (this.datasetElements.length < this.datasets.length) {
       const root = document.createElementNS(NAMESPACE, 'g')
       addClasses(root, 'dataset')
       this.root.appendChild(root)
-      this.datasetElements.push({ root, bars: [] })
+      this.datasetElements.push({ root, bars: [], classes: [] })
     }
 
     while (this.datasetElements.length > this.datasets.length)
@@ -328,13 +392,18 @@ export class Bar extends BasePlotRenderer {
       while (elements.bars.length > dataset.values.length)
         elements.bars.pop()?.remove()
 
-      const classes = ['bar', ...classNames(dataset.classes)].join(' ')
+      const classes = ['bar', ...classNames(dataset.classes)]
+      const removed = elements.classes.filter(name => !classes.includes(name))
+
       for (let index = 0; index < elements.bars.length; index++) {
         const bar = elements.bars[index]
-        bar.setAttribute('class', classes)
+        if (removed.length > 0) bar.classList.remove(...removed)
+        bar.classList.add(...classes)
         bar.dataset.datasetIndex = datasetIndex.toString()
         bar.dataset.index = index.toString()
       }
+
+      elements.classes = classes
     }
   }
 
@@ -383,6 +452,86 @@ export class Bar extends BasePlotRenderer {
 
   private isCategoryVisible(index: number, space: ChartSpace) {
     return index + 1 > space.bounds.minX && index < space.bounds.maxX
+  }
+}
+
+function isDegenerateSpace(space: ChartSpace) {
+  const { minX, maxX, minY, maxY } = space.bounds
+  if (space.bounds.isEmpty()) return true
+  return minX === maxX || minY === maxY || !Number.isFinite(maxX - minX) || !Number.isFinite(maxY - minY)
+}
+
+function isFiniteRect(rect: InteractionBounds) {
+  return Number.isFinite(rect.minX) && Number.isFinite(rect.maxX) && Number.isFinite(rect.minY) && Number.isFinite(rect.maxY)
+}
+
+function groupedBarMetrics(groupWidth: number, datasetCount: number, innerPadding: number) {
+  const paddingOption = Math.max(0, innerPadding)
+  const relativePadding = paddingOption < 1 ? paddingOption / (1 - paddingOption) : null
+  const barWidth = relativePadding === null
+    ? Math.max(0, (groupWidth - paddingOption * (datasetCount - 1)) / datasetCount)
+    : groupWidth / (datasetCount + relativePadding * (datasetCount - 1))
+
+  return {
+    barWidth,
+    innerPadding: relativePadding === null ? paddingOption : barWidth * relativePadding,
+  }
+}
+
+function stackSegmentRadii(
+  sign: 'positive' | 'negative',
+  index: number,
+  segmentsLength: number,
+  innerRadius: CornerRadii,
+  outerRadius: CornerRadii,
+): CornerRadii {
+  const isFirst = index === 0
+  const isLast = index === segmentsLength - 1
+  const outward = isLast ? outerRadius : innerRadius
+  const inward = isFirst ? emptyRadii() : innerRadius
+
+  return sign === 'positive'
+    ? {
+      topLeft: outward.topLeft,
+      topRight: outward.topRight,
+      bottomRight: inward.bottomRight,
+      bottomLeft: inward.bottomLeft,
+    }
+    : {
+      topLeft: inward.topLeft,
+      topRight: inward.topRight,
+      bottomRight: outward.bottomRight,
+      bottomLeft: outward.bottomLeft,
+    }
+}
+
+function getStackGaps(segments: StackSegment[], innerPadding: number): Gap[] {
+  const requestedPadding = Math.max(0, innerPadding)
+  const gaps: Gap[] = []
+
+  for (let index = 0; index < segments.length - 1; index++) {
+    const current = segments[index]
+    const next = segments[index + 1]
+    const available = next.end - current.start
+    const padding = Math.min(requestedPadding, available)
+    const minStart = current.start
+    const maxStart = next.end - padding
+    const start = Math.min(Math.max(current.end - padding / 2, minStart), maxStart)
+    gaps.push({ start, end: start + padding })
+  }
+
+  return gaps
+}
+
+function stackRect(group: GroupLayout, axisY: number, direction: number, start: number, end: number): InteractionBounds {
+  const p1 = axisY + direction * start
+  const p2 = axisY + direction * end
+
+  return {
+    minX: group.left,
+    maxX: group.left + group.width,
+    minY: Math.min(p1, p2),
+    maxY: Math.max(p1, p2),
   }
 }
 

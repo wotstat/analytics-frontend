@@ -1,10 +1,16 @@
 import { ChartRawPattern } from '../../defs/ChartRawPattern'
-import { Overflow, Size } from '../../UniversalChart'
+import { InteractionBounds } from '../../interaction/core/InteractionGeometry'
 import { ChartSpace } from '../../utils/ChartSpace'
 import { Bounds, BoundsConstraint } from '../../utils/Bounds'
-import { Point } from '../../utils/Point'
+import { isFinitePoint, Point } from '../../utils/Point'
 import { Classes } from '../../utils/utils'
 import { BasePlotRenderer } from '../BasePlotRenderer'
+import { PolygonAreaInteractionSource } from './PolygonAreaInteractionSource'
+
+type ProjectedContours = {
+  readonly contours: readonly Point[][]
+  readonly bounds: InteractionBounds | null
+}
 
 export class PolygonArea extends BasePlotRenderer {
 
@@ -12,35 +18,34 @@ export class PolygonArea extends BasePlotRenderer {
   protected data: Point[][] = []
   protected cachedPath = ''
 
+  readonly interaction: PolygonAreaInteractionSource = new PolygonAreaInteractionSource({
+    contours: () => this.data,
+    target: () => this.path,
+    bounds: space => this.getProjectedContours(space).bounds,
+  })
+
+  private projectedCacheKey: string | null = null
+  private projectedCache: ProjectedContours | null = null
+
   constructor(classes: Classes, options: { affectsBounds?: boolean } = {}) {
     super(classes, { affectsBounds: options.affectsBounds ?? true })
     this.root.appendChild(this.path)
   }
 
-  protected renderImpl(space: ChartSpace, overflow: Overflow, full: Size): void {
-    const contours = this.data.map(contour => contour.map(point => space.chartToLayout(point)))
-    const points = contours.flat()
+  protected renderImpl(space: ChartSpace): void {
+    const { contours, bounds } = this.getProjectedContours(space)
 
-    if (points.length > 0) {
-      let minX = Infinity
-      let maxX = -Infinity
-      let minY = Infinity
-      let maxY = -Infinity
+    if (!bounds) {
+      this.setPath('')
+      return
+    }
 
-      for (const point of points) {
-        minX = Math.min(minX, point.x)
-        maxX = Math.max(maxX, point.x)
-        minY = Math.min(minY, point.y)
-        maxY = Math.max(maxY, point.y)
-      }
+    const layoutMaxX = space.layout.x + space.layout.width
+    const layoutMaxY = space.layout.y + space.layout.height
 
-      const layoutMaxX = space.layout.x + space.layout.width
-      const layoutMaxY = space.layout.y + space.layout.height
-
-      if (maxX < space.layout.x || minX > layoutMaxX || maxY < space.layout.y || minY > layoutMaxY) {
-        this.setPath('')
-        return
-      }
+    if (bounds.maxX < space.layout.x || bounds.minX > layoutMaxX || bounds.maxY < space.layout.y || bounds.minY > layoutMaxY) {
+      this.setPath('')
+      return
     }
 
     this.setPath(contours
@@ -55,6 +60,9 @@ export class PolygonArea extends BasePlotRenderer {
     this.data = points.length > 0 && Array.isArray(points[0])
       ? points as Point[][]
       : [points as Point[]]
+
+    this.projectedCacheKey = null
+    this.projectedCache = null
     this.requestRender()
   }
 
@@ -85,4 +93,38 @@ export class PolygonArea extends BasePlotRenderer {
     this.cachedPath = path
     this.path.setAttribute('d', path)
   }
+
+  private getProjectedContours(space: ChartSpace): ProjectedContours {
+    const key = space.getHash()
+    if (this.projectedCacheKey === key && this.projectedCache) return this.projectedCache
+
+    const contours = this.data.map(contour => contour.map(point => space.chartToLayout(point)))
+    const bounds = boundsOfContours(contours)
+
+    this.projectedCacheKey = key
+    this.projectedCache = { contours, bounds }
+    return this.projectedCache
+  }
+}
+
+function boundsOfContours(contours: readonly Point[][]): InteractionBounds | null {
+  let minX = Infinity
+  let maxX = -Infinity
+  let minY = Infinity
+  let maxY = -Infinity
+  let hasPoint = false
+
+  for (const contour of contours) {
+    for (const point of contour) {
+      if (!isFinitePoint(point)) return null
+
+      hasPoint = true
+      minX = Math.min(minX, point.x)
+      maxX = Math.max(maxX, point.x)
+      minY = Math.min(minY, point.y)
+      maxY = Math.max(maxY, point.y)
+    }
+  }
+
+  return hasPoint ? { minX, maxX, minY, maxY } : null
 }
