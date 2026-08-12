@@ -34,6 +34,7 @@ export abstract class BaseLine implements InteractionComponent {
   }
 
   attach(root: SVGGElement, controller: InteractionController): void {
+    if (this.controller && this.controller !== controller) throw new Error('Line interaction is already attached to another controller')
     root.appendChild(this.root)
     this.controller = controller
   }

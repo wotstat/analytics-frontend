@@ -1,6 +1,6 @@
 import { UniversalChart } from '../../../UniversalChart'
 import { Point } from '../../../utils/Point'
-import { Position } from '../BaseInteractionController'
+import { Position, TouchZoomPoint } from '../BaseInteractionController'
 import { Delegate } from '../BaseInteractionController'
 import { State, StateMachine } from '../StateMachine'
 
@@ -78,6 +78,11 @@ export class BaseState implements State<Context> {
 
   event2Position(event: { offsetX: number, offsetY: number, clientX: number, clientY: number }): Position {
     return event2Position(event)
+  }
+
+  event2TouchZoomPoint(event: PointerEvent): TouchZoomPoint {
+    const cursor = this.event2Position(event)
+    return { cursor, point: this.offsetToChart(cursor) }
   }
 
   requestRender() {

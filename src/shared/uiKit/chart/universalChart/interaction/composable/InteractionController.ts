@@ -1,4 +1,4 @@
-import { Overflow, Size } from '../../UniversalChart'
+import { Overflow, Size, UniversalChart } from '../../UniversalChart'
 import { ChartSpace } from '../../utils/ChartSpace'
 import { Point } from '../../utils/Point'
 import { Classes } from '../../utils/utils'
@@ -31,7 +31,7 @@ export interface InteractionComponent {
   onTouchZoomUpdate?(first: TouchZoomPoint, second: TouchZoomPoint, space: ChartSpace, controller: InteractionController): boolean
   onTouchZoomEnd?(first: TouchZoomPoint, second: TouchZoomPoint, space: ChartSpace, controller: InteractionController): boolean
 
-  onWheelZoom?(cursor: Position, point: Point, space: ChartSpace, deltaY: number, deltaX: number, controller: InteractionController): boolean
+  onWheelZoom?(cursor: Position, point: Point, space: ChartSpace, deltaY: number, deltaX: number, deltaMode: number, controller: InteractionController): boolean
 }
 
 // `own` — вклад самого контроллера, объединяется с компонентами по тем же правилам
@@ -68,6 +68,7 @@ export class InteractionController extends BaseInteractionController {
   private readonly componentsRoot = document.createElementNS('http://www.w3.org/2000/svg', 'g')
 
   private components: InteractionComponent[] = []
+  private componentsAttached = false
 
   private readonly localInputKey: symbol = Symbol('localInput')
   private localPointer: InteractionPointer | null = null
@@ -83,16 +84,29 @@ export class InteractionController extends BaseInteractionController {
     return { key: this.localInputKey, pointer: this.localPointer }
   }
 
+  get attachedChart(): UniversalChart | null {
+    return this.chart
+  }
+
+  attach(root: SVGGElement, chart: UniversalChart): void {
+    super.attach(root, chart)
+    for (const component of this.components) component.attach?.(this.componentsRoot, this)
+    this.componentsAttached = true
+  }
+
   detach(): void {
-    super.detach()
-    for (const component of this.components) component.detach?.(this)
-    this.components = []
+    if (this.componentsAttached) {
+      for (const component of this.components) component.detach?.(this)
+      this.componentsAttached = false
+    }
     this.localPointer = null
+    super.detach()
   }
 
   addComponent(component: InteractionComponent) {
+    if (this.components.includes(component)) return this
     this.components.push(component)
-    component.attach?.(this.componentsRoot, this)
+    if (this.componentsAttached) component.attach?.(this.componentsRoot, this)
     this.requestRender()
 
     return this
@@ -100,7 +114,7 @@ export class InteractionController extends BaseInteractionController {
 
   removeComponent(component: InteractionComponent) {
     this.components = this.components.filter(c => c !== component)
-    component.detach?.(this)
+    if (this.componentsAttached) component.detach?.(this)
     this.requestRender()
     return this
   }
@@ -210,9 +224,9 @@ export class InteractionController extends BaseInteractionController {
 
   //#region Wheel Zoom
 
-  protected onWheelZoom(cursor: Position, point: Point, space: ChartSpace, deltaY: number, deltaX: number): boolean {
-    super.onWheelZoom(cursor, point, space, deltaY, deltaX)
-    return processInteractionBoolean(this.components, component => component.onWheelZoom?.(cursor, point, space, deltaY, deltaX, this))
+  protected onWheelZoom(cursor: Position, point: Point, space: ChartSpace, deltaY: number, deltaX: number, deltaMode: number): boolean {
+    super.onWheelZoom(cursor, point, space, deltaY, deltaX, deltaMode)
+    return processInteractionBoolean(this.components, component => component.onWheelZoom?.(cursor, point, space, deltaY, deltaX, deltaMode, this))
   }
 
   //#endregion

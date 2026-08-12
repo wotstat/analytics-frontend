@@ -1,4 +1,5 @@
 import { Point } from '../../../../utils/Point'
+import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Position } from '../../BaseInteractionController'
 import { BaseState } from '../BaseState'
 import { BaseSingleTouchEvent } from './BaseSingleTouchEvent'
@@ -16,15 +17,15 @@ export class TouchPanState extends BaseSingleTouchEvent {
     return new TouchZoomState(firstEvent, secondEvent)
   }
 
-  beginEvent(pos: Position, point: Point, space: any): void {
+  beginEvent(pos: Position, point: Point, space: ChartSpace): void {
     this.delegate.onPanBegin(pos, point, space, true)
   }
 
-  updateEvent(pos: Position, point: Point, space: any): void {
+  updateEvent(pos: Position, point: Point, space: ChartSpace): void {
     this.delegate.onPanUpdate(pos, point, space, true)
   }
 
-  endEvent(pos: Position, point: Point, space: any): void {
+  endEvent(pos: Position, point: Point, space: ChartSpace): void {
     this.delegate.onPanEnd(pos, point, space, true)
   }
 }

@@ -57,6 +57,7 @@ export class ChartTooltip<THit extends InteractionHit = InteractionHit> implemen
   }
 
   attach(root: SVGGElement, controller: InteractionController): void {
+    if (this.controller && this.controller !== controller) throw new Error('ChartTooltip is already attached to another controller')
     this.controller = controller
   }
 

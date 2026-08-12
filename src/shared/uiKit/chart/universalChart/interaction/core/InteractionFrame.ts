@@ -40,4 +40,17 @@ export class InteractionFrame {
   effectiveInputFor(resolver: InteractionResolver, callerInput: InteractionInput = this.input): InteractionInput | null {
     return this.effectiveInput.get(resolver)?.get(callerInput.key) ?? null
   }
+
+  inheritEffectiveInput(resolver: InteractionResolver, parent: InteractionResolver, callerInput: InteractionInput): void {
+    const effective = this.effectiveInputFor(parent, callerInput)
+    if (effective) this.recordEffectiveInput(resolver, callerInput, effective)
+  }
+
+  inheritCompatibleEffectiveInput(resolver: InteractionResolver, parents: readonly InteractionResolver[], callerInput: InteractionInput): void {
+    const candidates = parents
+      .map(parent => this.effectiveInputFor(parent, callerInput))
+      .filter((input): input is InteractionInput => input !== null)
+    if (candidates.length === 0 || candidates.some(input => input.key !== candidates[0].key)) return
+    this.recordEffectiveInput(resolver, callerInput, candidates[0])
+  }
 }

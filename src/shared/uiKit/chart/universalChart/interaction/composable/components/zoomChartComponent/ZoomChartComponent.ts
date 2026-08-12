@@ -182,6 +182,9 @@ export class ZoomChartComponent implements InteractionComponent {
   // no longer apply (a motion left on a now-disabled axis would never be stepped and
   // would keep scheduling renders forever).
   updateOptions(options: Options): void {
+    if (this.controller && this.controller.attachedChart !== options.chart) {
+      throw new Error('ZoomChartComponent chart does not match its controller chart')
+    }
     this.releaseAutoFit(false) // hand the old auto-fit axis back before the config (and axis) changes
     const attached = this.controller !== null
     if (attached) this.boundsSync?.unsubscribeChange(this.onSyncChange)
@@ -190,30 +193,26 @@ export class ZoomChartComponent implements InteractionComponent {
     this.applyOptions(options)
     if (attached) this.boundsSync?.subscribeChange(this.onSyncChange)
     if (attached) this.chart.onSetRenderBounds.on(this.onChartBoundsSet)
-    this.pan = null
-    this.lastCursor = null
-    this.pinch = null
-    this.wheel = null
-    this.motions = {
-      x: { center: null, logRange: null },
-      y: { center: null, logRange: null },
-    }
-    this.raw = null
+    this.resetInteractionState()
   }
 
   // Renders nothing itself; attach/detach only wire the bounds-sync subscription so a peer's
   // published window wakes this chart's layout, and hand back the source role on unmount.
   attach(root: SVGGElement, controller: InteractionController): void {
+    if (this.controller && this.controller !== controller) throw new Error('ZoomChartComponent is already attached to another controller')
+    if (controller.attachedChart !== this.chart) throw new Error('ZoomChartComponent chart does not match its controller chart')
     this.controller = controller
     this.boundsSync?.subscribeChange(this.onSyncChange)
     this.chart.onSetRenderBounds.on(this.onChartBoundsSet)
   }
 
   detach(controller: InteractionController): void {
+    this.releaseAutoFit(false)
     this.boundsSync?.unsubscribeChange(this.onSyncChange)
     this.boundsSync?.resign(this.boundsSyncParticipant)
     this.chart.onSetRenderBounds.off(this.onChartBoundsSet)
     this.controller = null
+    this.resetInteractionState()
   }
 
   //#region Pan
@@ -347,7 +346,7 @@ export class ZoomChartComponent implements InteractionComponent {
 
   //#region Wheel Zoom
 
-  onWheelZoom(cursor: Position, point: Point, space: ChartSpace, deltaY: number, deltaX: number, controller: InteractionController): boolean {
+  onWheelZoom(cursor: Position, point: Point, space: ChartSpace, deltaY: number, deltaX: number, deltaMode: number, controller: InteractionController): boolean {
     if (!this.isZoomEnabled()) return false
     if (this.pinch && !this.pinch.ended) return false // touch zoom has priority over wheel
 
@@ -355,7 +354,11 @@ export class ZoomChartComponent implements InteractionComponent {
     this.stopMotionsForWheel()
 
     if (!this.wheel) this.wheel = { pending: [], lastEventTime: 0, anchor: null }
-    this.wheel.pending.push({ deltaY, point: { ...point }, layout: { ...space.layout } })
+    this.wheel.pending.push({
+      deltaY: normalizeWheelDelta(deltaY, deltaMode, space.layout.height),
+      point: { ...point },
+      layout: { ...space.layout }
+    })
     this.wheel.lastEventTime = this.now()
 
     return true
@@ -559,8 +562,7 @@ export class ZoomChartComponent implements InteractionComponent {
     let changed = false
 
     for (const zoom of wheel.pending) {
-      const zoomFactor = 1 + zoom.deltaY * 0.001
-      if (!Number.isFinite(zoomFactor) || zoomFactor <= 0) continue
+      const zoomFactor = Math.exp(clamp(zoom.deltaY * 0.001, -0.5, 0.5))
 
       // while the batch drives the display, its projection anchor follows the cursor
       if (!this.pan) {
@@ -1173,6 +1175,19 @@ export class ZoomChartComponent implements InteractionComponent {
 
   //#region Utils
 
+  private resetInteractionState(): void {
+    this.pan = null
+    this.lastCursor = null
+    this.pinch = null
+    this.wheel = null
+    this.motions = {
+      x: { center: null, logRange: null },
+      y: { center: null, logRange: null },
+    }
+    this.raw = null
+    this.autoFollow = null
+  }
+
   // null when the configured deceleration disables inertia for this input kind
   private inertiaSpec(source: InertiaKind): InertiaSpec | null {
     const deceleration = this.options.deceleration?.[source] ??
@@ -1230,6 +1245,12 @@ export class ZoomChartComponent implements InteractionComponent {
 function isAcceptableSampleDt(dt: number, averageDt: number | null): boolean {
   if (dt < MIN_VELOCITY_SAMPLE_DT) return false
   return averageDt === null || dt >= averageDt * VELOCITY_SAMPLE_OUTLIER_RATIO
+}
+
+function normalizeWheelDelta(delta: number, deltaMode: number, pageSize: number): number {
+  if (deltaMode === 1) return delta * 16
+  if (deltaMode === 2) return delta * pageSize
+  return delta
 }
 
 function zoomAxisAboutAnchor(bounds: AxisBounds, anchorT: number, zoomFactor: number): AxisBounds | null {

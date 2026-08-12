@@ -1,14 +1,19 @@
 import { InteractionGeometry } from './InteractionGeometry'
 
+type KeyType = string | number | symbol
 export type InteractionIdentity = {
   readonly sourceId: symbol
   readonly kind: string
-  readonly key: unknown
+  readonly key: KeyType
 }
 
 export function isSameIdentity(a: InteractionIdentity, b: InteractionIdentity): boolean {
   if (a === b) return true
-  return a.sourceId === b.sourceId && a.kind === b.kind && a.key === b.key
+  return a.sourceId === b.sourceId && a.kind === b.kind && sameKey(a.key, b.key)
+}
+
+function sameKey(a: KeyType, b: KeyType): boolean {
+  return a === b || (typeof a === 'number' && typeof b === 'number' && Number.isNaN(a) && Number.isNaN(b))
 }
 
 export interface InteractionHit<

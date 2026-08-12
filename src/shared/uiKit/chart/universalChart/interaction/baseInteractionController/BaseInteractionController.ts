@@ -28,7 +28,7 @@ export type Delegate = {
   onTouchZoomUpdate(first: TouchZoomPoint, second: TouchZoomPoint, space: ChartSpace): boolean
   onTouchZoomEnd(first: TouchZoomPoint, second: TouchZoomPoint, space: ChartSpace): boolean
 
-  onWheelZoom(cursor: Position, point: Point, space: ChartSpace, deltaY: number, deltaX: number): boolean
+  onWheelZoom(cursor: Position, point: Point, space: ChartSpace, deltaY: number, deltaX: number, deltaMode: number): boolean
 }
 
 export abstract class BaseInteractionController extends BasePlotRenderer {
@@ -42,12 +42,20 @@ export abstract class BaseInteractionController extends BasePlotRenderer {
   private listenersAbortController = new AbortController()
   get listenerAbortSignal() { return this.listenersAbortController.signal }
 
+  private readonly capturedPointers = new Set<number>()
+
   protected readonly stateMachine = new StateMachine<Context, BaseState>(new StartState(), {
     delegate: this.createDelegate(),
 
     toggleClass: this.toggleClass.bind(this),
-    capturePointer: (pointerId: number) => this.interactiveZone.setPointerCapture(pointerId),
-    releasePointer: (pointerId: number) => this.interactiveZone.releasePointerCapture(pointerId),
+    capturePointer: (pointerId: number) => {
+      this.interactiveZone.setPointerCapture(pointerId)
+      this.capturedPointers.add(pointerId)
+    },
+    releasePointer: (pointerId: number) => {
+      if (this.interactiveZone.hasPointerCapture(pointerId)) this.interactiveZone.releasePointerCapture(pointerId)
+      this.capturedPointers.delete(pointerId)
+    },
     offsetToChart: (event: { offsetX: number, offsetY: number }) => this.offsetToChart(event),
     chartToPage: (point: Point) => this.chartToPage(point),
     requestRender: () => this.requestRender(),
@@ -84,6 +92,13 @@ export abstract class BaseInteractionController extends BasePlotRenderer {
   }
 
   detach(): void {
+    if (!(this.currentState instanceof StartState)) this.stateMachine.changeState(new StartState())
+    this.root.classList.remove('hover-active', 'pan-active', 'zoom-active')
+    for (const pointerId of this.capturedPointers) {
+      if (this.interactiveZone.hasPointerCapture(pointerId)) this.interactiveZone.releasePointerCapture(pointerId)
+    }
+    this.capturedPointers.clear()
+
     super.detach()
     this.listenersAbortController.abort()
   }
@@ -154,9 +169,7 @@ export abstract class BaseInteractionController extends BasePlotRenderer {
     this.root.classList.toggle(className, enabled)
   }
 
-  protected createDelegate(): Delegate {
-    const t = this
-
+  private createDelegate(): Delegate {
     return {
       mayHover: this.mayHover.bind(this),
       onHoverBegin: (cursor, point, space, isTouch) => {
@@ -209,8 +222,8 @@ export abstract class BaseInteractionController extends BasePlotRenderer {
         return used
       },
 
-      onWheelZoom: (cursor, point, space, deltaY, deltaX) => {
-        const used = this.onWheelZoom(cursor, point, space, deltaY, deltaX)
+      onWheelZoom: (cursor, point, space, deltaY, deltaX, deltaMode) => {
+        const used = this.onWheelZoom(cursor, point, space, deltaY, deltaX, deltaMode)
         if (used) this.requestRender()
         return used
       },
@@ -235,7 +248,7 @@ export abstract class BaseInteractionController extends BasePlotRenderer {
   protected onTouchZoomUpdate(first: TouchZoomPoint, second: TouchZoomPoint, space: ChartSpace): boolean { return false }
   protected onTouchZoomEnd(first: TouchZoomPoint, second: TouchZoomPoint, space: ChartSpace): boolean { return false }
 
-  protected onWheelZoom(cursor: Position, point: Point, space: ChartSpace, deltaY: number, deltaX: number): boolean { return false }
+  protected onWheelZoom(cursor: Position, point: Point, space: ChartSpace, deltaY: number, deltaX: number, deltaMode: number): boolean { return false }
 
 
   offsetToChart(event: { offsetX: number, offsetY: number }): Point {

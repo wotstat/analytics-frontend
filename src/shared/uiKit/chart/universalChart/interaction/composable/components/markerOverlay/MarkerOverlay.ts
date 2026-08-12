@@ -38,6 +38,7 @@ export class MarkerOverlay<THit extends InteractionHit = InteractionHit> impleme
   }
 
   attach(root: SVGGElement, controller: InteractionController): void {
+    if (this.controller && this.controller !== controller) throw new Error('MarkerOverlay is already attached to another controller')
     root.appendChild(this.root)
     this.controller = controller
   }

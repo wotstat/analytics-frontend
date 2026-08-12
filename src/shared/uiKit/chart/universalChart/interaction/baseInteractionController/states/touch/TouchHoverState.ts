@@ -1,4 +1,5 @@
 import { Point } from '../../../../utils/Point'
+import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Position } from '../../BaseInteractionController'
 import { BaseState } from '../BaseState'
 import { BaseSingleTouchEvent } from './BaseSingleTouchEvent'
@@ -16,15 +17,15 @@ export class TouchHoverState extends BaseSingleTouchEvent {
     return new TouchZoomState(firstEvent, secondEvent)
   }
 
-  beginEvent(pos: Position, point: Point, space: any): void {
+  beginEvent(pos: Position, point: Point, space: ChartSpace): void {
     this.delegate.onHoverBegin(pos, point, space, true)
   }
 
-  updateEvent(pos: Position, point: Point, space: any): void {
+  updateEvent(pos: Position, point: Point, space: ChartSpace): void {
     this.delegate.onHoverUpdate(pos, point, space, true)
   }
 
-  endEvent(pos: Position, point: Point, space: any): void {
+  endEvent(pos: Position, point: Point, space: ChartSpace): void {
     this.delegate.onHoverEnd(pos, point, space, true)
   }
 }

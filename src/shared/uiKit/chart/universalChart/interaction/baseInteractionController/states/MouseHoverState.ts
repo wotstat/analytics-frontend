@@ -18,7 +18,7 @@ export class MouseHoverState extends BaseState {
   private activePointer: PointerEvent
   private awaitingPenPan: {
     direction: InteractionDirection
-    pointerId: number
+    initialEvent: PointerEvent
   } | null = null
 
   constructor(initialEvent: PointerEvent) {
@@ -42,30 +42,24 @@ export class MouseHoverState extends BaseState {
     if (!mayPan) return
 
     if (event.pointerType == 'pen') {
-      this.awaitingPenPan = { direction: mayPan, pointerId: event.pointerId }
+      this.awaitingPenPan = { direction: mayPan, initialEvent: event }
     } else {
       this.changeState(new MousePanState(event, this))
     }
   }
 
   onPointerUp(event: PointerEvent): void {
-    if (this.awaitingPenPan?.pointerId == event.pointerId) this.awaitingPenPan = null
+    if (this.awaitingPenPan?.initialEvent.pointerId == event.pointerId) this.awaitingPenPan = null
   }
 
   onPointerMove(event: PointerEvent): void {
-    if (this.activePointer.pointerId == event.pointerId) {
-      const pos = this.event2Position(event)
-      this.activePointer = event
-      this.delegate.onHoverUpdate(pos, this.offsetToChart(pos), this.chart.space, false)
-      return
-    }
-
-    if (this.awaitingPenPan && this.awaitingPenPan.pointerId == event.pointerId) {
-      const dx = event.clientX - this.activePointer.clientX
-      const dy = event.clientY - this.activePointer.clientY
+    if (this.awaitingPenPan?.initialEvent.pointerId == event.pointerId) {
+      const dx = event.clientX - this.awaitingPenPan.initialEvent.clientX
+      const dy = event.clientY - this.awaitingPenPan.initialEvent.clientY
       const distance = Math.sqrt(dx * dx + dy * dy)
 
       const pos = this.event2Position(event)
+      this.activePointer = event
       this.delegate.onHoverUpdate(pos, this.offsetToChart(pos), this.chart.space, false)
 
       if (distance > PAN_BEGIN_DISTANCE) {
@@ -76,6 +70,13 @@ export class MouseHoverState extends BaseState {
           this.awaitingPenPan = null
         }
       }
+      return
+    }
+
+    if (this.activePointer.pointerId == event.pointerId) {
+      const pos = this.event2Position(event)
+      this.activePointer = event
+      this.delegate.onHoverUpdate(pos, this.offsetToChart(pos), this.chart.space, false)
     }
   }
 
@@ -92,7 +93,7 @@ export class MouseHoverState extends BaseState {
 
   onWheel(event: WheelEvent): void {
     const pos = this.event2Position(event)
-    const used = this.delegate.onWheelZoom(pos, this.offsetToChart(pos), this.chart.space, event.deltaY, event.deltaX)
+    const used = this.delegate.onWheelZoom(pos, this.offsetToChart(pos), this.chart.space, event.deltaY, event.deltaX, event.deltaMode)
     if (used) {
       event.stopPropagation()
       event.preventDefault()

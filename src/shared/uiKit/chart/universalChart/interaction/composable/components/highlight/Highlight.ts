@@ -35,6 +35,7 @@ export class Highlight<THit extends InteractionHit = InteractionHit> implements 
   }
 
   attach(root: SVGGElement, controller: InteractionController): void {
+    if (this.controller && this.controller !== controller) throw new Error('Highlight is already attached to another controller')
     this.controller = controller
   }
 

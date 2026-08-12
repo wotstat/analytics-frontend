@@ -21,10 +21,16 @@ export class AwaitingTouchPanOrHover extends BaseState {
   private hoverBeginTimeoutId: number
   private readonly initialEvent: PointerEvent
 
-  constructor(private activeEvent: PointerEvent, private readonly mayPan: InteractionDirection) {
+  constructor(
+    private activeEvent: PointerEvent,
+    private readonly mayPan: InteractionDirection,
+    mayHover: InteractionDirection
+  ) {
     super()
     this.initialEvent = activeEvent
-    this.hoverBeginTimeoutId = setTimeout(() => this.hoverBeginTimeout(), mayPan ? PAN_BEGIN_TIMEOUT : HOVER_BEGIN_TIMEOUT)
+    this.hoverBeginTimeoutId = mayHover
+      ? setTimeout(() => this.hoverBeginTimeout(), mayPan ? PAN_BEGIN_TIMEOUT : HOVER_BEGIN_TIMEOUT)
+      : 0
   }
 
   hoverBeginTimeout() {
@@ -45,6 +51,11 @@ export class AwaitingTouchPanOrHover extends BaseState {
 
   onPointerDown(event: PointerEvent): void {
     if (event.pointerId == this.activeEvent.pointerId) return
+
+    const first = this.event2TouchZoomPoint(this.activeEvent)
+    const second = this.event2TouchZoomPoint(event)
+    if (!this.delegate.mayTouchZoom(first, second, this.chart.space)) return
+
     this.changeState(new TouchZoomState(this.activeEvent, event))
   }
 

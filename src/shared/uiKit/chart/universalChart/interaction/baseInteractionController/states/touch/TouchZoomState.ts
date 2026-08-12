@@ -1,5 +1,7 @@
 import { TouchZoomPoint } from '../../BaseInteractionController'
 import { BaseState } from '../BaseState'
+import { StartState } from '../StartState'
+import { TouchHoverState } from './TouchHoverState'
 import { TouchPanState } from './TouchPanState'
 
 const CLASS_NAME = 'zoom-active'
@@ -85,7 +87,28 @@ export class TouchZoomState extends BaseState {
     }
 
     this.toggleClass(CLASS_NAME, false)
-    this.changeState(new TouchPanState(this.capturedEvents.values().next().value!))
+    const remainingEvent = this.capturedEvents.values().next().value
+    if (!remainingEvent) {
+      this.changeState(new StartState())
+      return
+    }
+
+    const cursor = this.event2Position(remainingEvent)
+    const point = this.offsetToChart(cursor)
+    const mayPan = this.delegate.mayPan(cursor, point, this.chart.space, true)
+    if (mayPan) {
+      this.changeState(new TouchPanState(remainingEvent))
+      return
+    }
+
+    const mayHover = this.delegate.mayHover(cursor, point, this.chart.space, true)
+    if (mayHover) {
+      this.changeState(new TouchHoverState(remainingEvent))
+      return
+    }
+
+    this.releasePointerEvent(remainingEvent)
+    this.changeState(new StartState())
   }
 
   onPointerCancel(event: PointerEvent): void {
@@ -100,9 +123,7 @@ export class TouchZoomState extends BaseState {
   }
 
   private eventToZoomPoint(event: PointerEvent): TouchZoomPoint {
-    const cursor = this.event2Position(event)
-    const point = this.offsetToChart(cursor)
-    return { cursor, point }
+    return this.event2TouchZoomPoint(event)
   }
 
   private capturePointerEvent(event: PointerEvent): void {

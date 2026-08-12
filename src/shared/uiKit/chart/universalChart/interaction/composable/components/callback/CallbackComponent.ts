@@ -3,7 +3,7 @@ import { Point } from '../../../../utils/Point'
 import { Position, TouchZoomPoint } from '../../../baseInteractionController/BaseInteractionController'
 import { InteractionComponent } from '../../InteractionController'
 
-export type PointerEvent = {
+export type PointerInteractionEvent = {
   cursor: Position
   point: Point
   space: ChartSpace
@@ -22,16 +22,17 @@ export type WheelZoomEvent = {
   space: ChartSpace
   deltaY: number
   deltaX: number
+  deltaMode: number
 }
 
 export type CallbackComponentEvents = {
-  hoverBegin: PointerEvent
-  hoverUpdate: PointerEvent
-  hoverEnd: PointerEvent
+  hoverBegin: PointerInteractionEvent
+  hoverUpdate: PointerInteractionEvent
+  hoverEnd: PointerInteractionEvent
 
-  panBegin: PointerEvent
-  panUpdate: PointerEvent
-  panEnd: PointerEvent
+  panBegin: PointerInteractionEvent
+  panUpdate: PointerInteractionEvent
+  panEnd: PointerInteractionEvent
 
   touchZoomBegin: TouchZoomEvent
   touchZoomUpdate: TouchZoomEvent
@@ -110,8 +111,8 @@ export class CallbackComponent implements InteractionComponent {
     return false
   }
 
-  onWheelZoom(cursor: Position, point: Point, space: ChartSpace, deltaY: number, deltaX: number): boolean {
-    this.emit('wheelZoom', { cursor, point, space, deltaY, deltaX })
+  onWheelZoom(cursor: Position, point: Point, space: ChartSpace, deltaY: number, deltaX: number, deltaMode: number): boolean {
+    this.emit('wheelZoom', { cursor, point, space, deltaY, deltaX, deltaMode })
     return false
   }
 

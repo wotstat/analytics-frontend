@@ -1,4 +1,5 @@
 import { Point } from '../../../../utils/Point'
+import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Position } from '../../BaseInteractionController'
 import { BaseState } from '../BaseState'
 import { StartState } from '../StartState'
@@ -9,9 +10,9 @@ export abstract class BaseSingleTouchEvent extends BaseState {
     super()
   }
 
-  abstract beginEvent(pos: Position, point: Point, space: any): void
-  abstract updateEvent(pos: Position, point: Point, space: any): void
-  abstract endEvent(pos: Position, point: Point, space: any): void
+  abstract beginEvent(pos: Position, point: Point, space: ChartSpace): void
+  abstract updateEvent(pos: Position, point: Point, space: ChartSpace): void
+  abstract endEvent(pos: Position, point: Point, space: ChartSpace): void
   abstract getZoomEvent(firstEvent: PointerEvent, secondEvent: PointerEvent): BaseState
 
   created(): void {
@@ -33,6 +34,10 @@ export abstract class BaseSingleTouchEvent extends BaseState {
 
   onPointerDown(event: PointerEvent): void {
     if (event.pointerId == this.activeEvent.pointerId) return
+
+    const first = this.event2TouchZoomPoint(this.activeEvent)
+    const second = this.event2TouchZoomPoint(event)
+    if (!this.delegate.mayTouchZoom(first, second, this.chart.space)) return
 
     const pos = this.event2Position(this.activeEvent)
     const point = this.offsetToChart(pos)

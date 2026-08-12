@@ -54,7 +54,7 @@ export class MousePanState extends BaseState {
 
   onWheel(event: WheelEvent): void {
     const pos = this.event2Position(event)
-    const used = this.delegate.onWheelZoom(pos, this.offsetToChart(pos), this.chart.space, event.deltaY, event.deltaX)
+    const used = this.delegate.onWheelZoom(pos, this.offsetToChart(pos), this.chart.space, event.deltaY, event.deltaX, event.deltaMode)
     if (used) {
       event.stopPropagation()
       event.preventDefault()

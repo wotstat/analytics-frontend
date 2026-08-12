@@ -11,7 +11,7 @@ export class StartState extends BaseState {
       const mayPan = this.delegate.mayPan(pos, point, this.chart.space, true)
       const mayHover = this.delegate.mayHover(pos, point, this.chart.space, true)
       if (mayPan || mayHover)
-        this.changeState(new AwaitingTouchPanOrHover(event, mayPan))
+        this.changeState(new AwaitingTouchPanOrHover(event, mayPan, mayHover))
     }
     else {
       this.changeState(new MouseHoverState(event))

@@ -47,10 +47,10 @@ class UnionSelection<THit extends InteractionHit> extends Selection<THit> {
   resolve(ctx: InteractionResolveContext): readonly THit[] {
     const left = ctx.frame.resolve(this.left, ctx.input)
     const right = ctx.frame.resolve(this.right, ctx.input)
+    ctx.frame.inheritCompatibleEffectiveInput(this, [this.left, this.right], ctx.input)
 
     const result: THit[] = []
-    // вложенная Map (sourceId → kind → key) заменяет O(n·m)-скан через findIndex; SameValueZero даёт то же сравнение ключей, что и прежний ===
-    const positions = new Map<symbol, Map<string, Map<unknown, number>>>()
+    const positions = new Map<symbol, Map<string, Map<string | number | symbol, number>>>()
 
     const place = (hit: THit) => {
       const { sourceId, kind, key } = hit.identity
@@ -88,9 +88,14 @@ class OrElseSelection<THit extends InteractionHit> extends Selection<THit> {
 
   resolve(ctx: InteractionResolveContext): readonly THit[] {
     const left = ctx.frame.resolve(this.left, ctx.input)
-    if (left.length > 0) return left
+    if (left.length > 0) {
+      ctx.frame.inheritEffectiveInput(this, this.left, ctx.input)
+      return left
+    }
 
-    return ctx.frame.resolve(this.right, ctx.input)
+    const right = ctx.frame.resolve(this.right, ctx.input)
+    ctx.frame.inheritEffectiveInput(this, this.right, ctx.input)
+    return right
   }
 }
 
@@ -105,6 +110,7 @@ class WithinSelection<THit extends InteractionHit> extends Selection<THit> {
 
   resolve(ctx: InteractionResolveContext): readonly THit[] {
     const hits = ctx.frame.resolve(this.parent, ctx.input)
+    ctx.frame.inheritEffectiveInput(this, this.parent, ctx.input)
     return hits.filter(hit => hit.contains || hit.distance <= this.options.maxDistance)
   }
 }
@@ -117,6 +123,7 @@ class NearestSelection<THit extends InteractionHit> extends Selection<THit> {
 
   resolve(ctx: InteractionResolveContext): readonly THit[] {
     const hits = ctx.frame.resolve(this.parent, ctx.input)
+    ctx.frame.inheritEffectiveInput(this, this.parent, ctx.input)
     if (hits.length === 0) return hits
 
     let best = hits[0]
@@ -134,6 +141,7 @@ class TopmostSelection<THit extends InteractionHit> extends Selection<THit> {
 
   resolve(ctx: InteractionResolveContext): readonly THit[] {
     const hits = ctx.frame.resolve(this.parent, ctx.input)
+    ctx.frame.inheritEffectiveInput(this, this.parent, ctx.input)
     if (hits.length === 0) return hits
 
     return [hits[hits.length - 1]]
