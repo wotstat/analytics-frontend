@@ -1,5 +1,4 @@
-import { InteractionHit } from './InteractionHit'
-import { isSameIdentity } from './InteractionIdentity'
+import { InteractionHit, isSameIdentity } from './InteractionHit'
 import { HoverResolver, InteractionInput, InteractionInputKey } from './InteractionInput'
 import { InteractionResolveContext, InteractionResolver } from './InteractionResolver'
 

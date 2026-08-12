@@ -1,5 +1,17 @@
 import { InteractionGeometry } from './InteractionGeometry'
-import { InteractionIdentity, InteractionSource } from './InteractionIdentity'
+
+export type InteractionSource = object
+
+export type InteractionIdentity = {
+  readonly source: InteractionSource
+  readonly kind: string
+  readonly key: unknown
+}
+
+export function isSameIdentity(a: InteractionIdentity, b: InteractionIdentity): boolean {
+  if (a === b) return true
+  return a.source === b.source && a.kind === b.kind && a.key === b.key
+}
 
 export interface InteractionHit<
   TDatum = unknown,

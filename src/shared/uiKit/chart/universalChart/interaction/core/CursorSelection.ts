@@ -1,6 +1,5 @@
 import { geometryFromPoint } from './InteractionGeometry'
-import { InteractionHit } from './InteractionHit'
-import { InteractionSource } from './InteractionIdentity'
+import { InteractionHit, InteractionSource } from './InteractionHit'
 import { InteractionResolveContext } from './InteractionResolver'
 import { Selection } from './Selection'
 

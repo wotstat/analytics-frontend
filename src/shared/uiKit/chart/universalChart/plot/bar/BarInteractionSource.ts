@@ -1,6 +1,5 @@
 import { geometryFromRanges, InteractionBounds, InteractionGeometry } from '../../interaction/core/InteractionGeometry'
-import { InteractionHit } from '../../interaction/core/InteractionHit'
-import { InteractionSource } from '../../interaction/core/InteractionIdentity'
+import { InteractionHit, InteractionSource } from '../../interaction/core/InteractionHit'
 import { InteractionResolveContext, InteractionResolver } from '../../interaction/core/InteractionResolver'
 import { Selection } from '../../interaction/core/Selection'
 import { ChartSpace } from '../../utils/ChartSpace'
@@ -36,18 +35,13 @@ export type BarPlotAccess = {
   strategyType(): 'grouped' | 'stacked'
 }
 
+function barItemKey(datasetIndex: number, categoryIndex: number): string {
+  return `${datasetIndex}:${categoryIndex}`
+}
+
 export class BarInteractionSource implements InteractionSource {
 
   constructor(private readonly plot: BarPlotAccess) { }
-
-  identityKeyEquals(a: unknown, b: unknown): boolean {
-    if (Array.isArray(a) || Array.isArray(b)) {
-      if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false
-      return a.every((value, index) => value === b[index])
-    }
-
-    return a === b
-  }
 
   contains(options: BarContainsOptions = {}): BarItemSelection {
     return new BarContainsSelection(this, options.gaps ?? 'miss', options.hitArea ?? 'geometry')
@@ -112,7 +106,7 @@ export class BarInteractionSource implements InteractionSource {
       kind: 'bar-item',
       source: this,
       datum: item.value,
-      identity: { source: this, kind: 'item', key: [item.datasetIndex, item.categoryIndex] },
+      identity: { source: this, kind: 'item', key: barItemKey(item.datasetIndex, item.categoryIndex) },
       memberships: [
         { source: this, kind: 'dataset', key: item.datasetIndex },
         { source: this, kind: 'group', key: item.categoryIndex },

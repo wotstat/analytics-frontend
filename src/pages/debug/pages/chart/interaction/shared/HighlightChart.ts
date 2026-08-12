@@ -4,7 +4,7 @@ import { ChartTooltip, ChartTooltipOptions, TooltipCtx } from '@/shared/uiKit/ch
 import { Highlight } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/highlight/Highlight'
 import { MarkerOverlay, MarkerOverlayOptions } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/markerOverlay/MarkerOverlay'
 import { ZoomChartComponent } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/zoomChartComponent/ZoomChartComponent'
-import { isSameIdentity } from '@/shared/uiKit/chart/universalChart/interaction/core/InteractionIdentity'
+import { isSameIdentity } from '@/shared/uiKit/chart/universalChart/interaction/core/InteractionHit'
 import { Selection } from '@/shared/uiKit/chart/universalChart/interaction/core/Selection'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
 import { AutoLineInteractionQuery, LinePointHit, LineStrokeHit } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineInteractionSource'

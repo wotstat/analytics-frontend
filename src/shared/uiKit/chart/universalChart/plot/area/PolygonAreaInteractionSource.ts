@@ -1,6 +1,5 @@
 import { geometryFromRanges, InteractionBounds } from '../../interaction/core/InteractionGeometry'
-import { InteractionHit } from '../../interaction/core/InteractionHit'
-import { InteractionSource } from '../../interaction/core/InteractionIdentity'
+import { InteractionHit, InteractionSource } from '../../interaction/core/InteractionHit'
 import { InteractionResolveContext } from '../../interaction/core/InteractionResolver'
 import { Selection } from '../../interaction/core/Selection'
 import { ChartSpace } from '../../utils/ChartSpace'

@@ -1,7 +1,6 @@
 import { InteractionComponent } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController'
 import { InteractionFrame } from '@/shared/uiKit/chart/universalChart/interaction/core/InteractionFrame'
-import { InteractionHit } from '@/shared/uiKit/chart/universalChart/interaction/core/InteractionHit'
-import { isSameIdentity } from '@/shared/uiKit/chart/universalChart/interaction/core/InteractionIdentity'
+import { InteractionHit, isSameIdentity } from '@/shared/uiKit/chart/universalChart/interaction/core/InteractionHit'
 import { InteractionResolver } from '@/shared/uiKit/chart/universalChart/interaction/core/InteractionResolver'
 
 // Текстовый снимок selection для стендов с табличным выводом, вместо HTML-тултипа ChartTooltip.
