@@ -480,7 +480,7 @@ watchEffect(() => {
         .label {
           transition: opacity 0.2s, filter 0.2s;
 
-          &.not-fitted {
+          &.label-outside-space {
             opacity: 0;
             filter: blur(2px);
           }
