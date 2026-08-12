@@ -58,10 +58,15 @@ export class MarkerOverlay<THit extends InteractionHit = InteractionHit> impleme
 
   prepareInteraction(frame: InteractionFrame): void {
     const planned: PlannedMarker[] = []
+    const seen = new Map<number, Set<number>>()
 
     for (const hit of frame.resolve(this.options.selection)) {
       const anchor = hit.geometry.anchor
-      if (planned.some(p => p.anchor.x === anchor.x && p.anchor.y === anchor.y)) continue
+      let ys = seen.get(anchor.x)
+      if (!ys) { ys = new Set(); seen.set(anchor.x, ys) }
+      if (ys.has(anchor.y)) continue
+      ys.add(anchor.y)
+
       planned.push({ anchor, classes: classNames('hover-marker', this.options.markerClasses, this.options.classesForHit?.(hit)).join(' ') })
     }
 

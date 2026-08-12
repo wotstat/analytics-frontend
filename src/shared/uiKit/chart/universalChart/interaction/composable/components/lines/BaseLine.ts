@@ -57,10 +57,13 @@ export abstract class BaseLine implements InteractionComponent {
 
   prepareInteraction(frame: InteractionFrame): void {
     const coordinates: number[] = []
+    const seen = new Set<number>()
 
     for (const hit of frame.resolve(this.options.selection)) {
       const coordinate = this.coordinate(hit.geometry)
-      if (!coordinates.includes(coordinate)) coordinates.push(coordinate)
+      if (seen.has(coordinate)) continue
+      seen.add(coordinate)
+      coordinates.push(coordinate)
     }
 
     this.coordinates = coordinates

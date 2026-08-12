@@ -1,4 +1,4 @@
-import { InteractionHit, isSameIdentity } from './InteractionHit'
+import { InteractionHit } from './InteractionHit'
 import { HoverResolver, InteractionInput } from './InteractionInput'
 import { InteractionResolveContext, InteractionResolver } from './InteractionResolver'
 
@@ -49,11 +49,29 @@ class UnionSelection<THit extends InteractionHit> extends Selection<THit> {
     const right = ctx.frame.resolve(this.right, ctx.input)
 
     const result: THit[] = []
-    for (const hit of [...left, ...right]) {
-      const index = result.findIndex(existing => isSameIdentity(existing.identity, hit.identity))
-      if (index === -1) result.push(hit)
-      else result[index] = hit
+    // вложенная Map (sourceId → kind → key) заменяет O(n·m)-скан через findIndex; SameValueZero даёт то же сравнение ключей, что и прежний ===
+    const positions = new Map<symbol, Map<string, Map<unknown, number>>>()
+
+    const place = (hit: THit) => {
+      const { sourceId, kind, key } = hit.identity
+
+      let byKind = positions.get(sourceId)
+      if (!byKind) { byKind = new Map(); positions.set(sourceId, byKind) }
+
+      let byKey = byKind.get(kind)
+      if (!byKey) { byKey = new Map(); byKind.set(kind, byKey) }
+
+      const existingIndex = byKey.get(key)
+      if (existingIndex === undefined) {
+        byKey.set(key, result.length)
+        result.push(hit)
+      } else {
+        result[existingIndex] = hit
+      }
     }
+
+    for (const hit of left) place(hit)
+    for (const hit of right) place(hit)
 
     return result
   }

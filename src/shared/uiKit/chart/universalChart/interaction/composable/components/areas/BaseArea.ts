@@ -55,13 +55,19 @@ export abstract class BaseArea<THit extends InteractionHit = InteractionHit> imp
 
   prepareInteraction(frame: InteractionFrame): void {
     const ranges: (readonly [number, number])[] = []
+    const seen = new Map<number, Set<number>>()
 
     for (const hit of frame.resolve(this.options.selection)) {
       const geometry = geometryForScope(hit, this.options.geometry)
       if (!geometry) continue
 
       const range = this.range(geometry)
-      if (!ranges.some(existing => existing[0] === range[0] && existing[1] === range[1])) ranges.push(range)
+      let ends = seen.get(range[0])
+      if (!ends) { ends = new Set(); seen.set(range[0], ends) }
+      if (ends.has(range[1])) continue
+      ends.add(range[1])
+
+      ranges.push(range)
     }
 
     this.ranges = ranges
