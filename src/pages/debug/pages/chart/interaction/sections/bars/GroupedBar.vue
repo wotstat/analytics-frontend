@@ -15,11 +15,12 @@
     </p>
 
     <p class="debug-note">
-      <b>Внешний padding остаётся пустым в обоих режимах.</b> Слоты тайлят visual group и наружу неё не выходят:
+      <b>Внешний padding управляется отдельно.</b> Слоты тайлят visual group и наружу неё не выходят:
       сравни «ячейка категории по X» с «visual group» — разница и есть padding, где
-      <span class="debug-value">contains()</span> ничего не находит. Увеличь
+      <span class="debug-value">contains()</span> по умолчанию ничего не находит. Увеличь
       <span class="debug-value">padding группы</span> и води курсором у краёв ячейки: строка selection пустеет.
-      Режим <span class="debug-value">nearest</span> не превращает всю ячейку в hit zone.
+      Галочка «nearest между группами» превращает всю ячейку в hit zone ближайшей группы независимо от
+      внутренней настройки <span class="debug-value">gaps</span>.
     </p>
 
     <p class="debug-note">

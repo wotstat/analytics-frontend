@@ -22,6 +22,7 @@ export type BarPresetName = 'mixed' | 'edges' | 'positive' | 'negative'
 export type BarChartConfig = {
   preset: BarPresetName
   gaps: BarGapPolicy
+  groupGaps: BarGapPolicy
   hitArea: BarHitArea
   padding: number
   innerPadding: number
@@ -135,6 +136,7 @@ export function defaultBarConfig(strategy: BarStrategyKind): BarChartConfig {
   return {
     preset: strategy === 'grouped' ? 'mixed' : 'positive',
     gaps: 'miss',
+    groupGaps: 'miss',
     hitArea: 'geometry',
     padding: 0.3,
     innerPadding: strategy === 'grouped' ? 6 : 4,
@@ -237,8 +239,8 @@ export class BarChart extends UniversalChart {
     this.bar = new Bar({ strategy: this.barStrategy() })
     const plotRoot = new PlotGroup().addPlot(this.bar)
 
-    this.itemSelection = this.bar.interaction.contains({ gaps: this.config.gaps, hitArea: this.config.hitArea })
-    this.groupContainsSelection = this.bar.interaction.containsGroup({ hitArea: this.config.hitArea })
+    this.itemSelection = this.bar.interaction.contains({ gaps: this.config.gaps, groupGaps: this.config.groupGaps, hitArea: this.config.hitArea })
+    this.groupContainsSelection = this.bar.interaction.containsGroup({ groupGaps: this.config.groupGaps, hitArea: this.config.hitArea })
 
     this.itemHighlight = new Highlight({ selection: this.itemSelection, class: 'bar-item-highlighted' })
     this.groupHighlight = new Highlight({ selection: this.itemSelection.related('group'), class: 'bar-group-highlighted' })
@@ -360,10 +362,10 @@ export class BarChart extends UniversalChart {
   }
 
   private applyConfig() {
-    const { preset, gaps, hitArea, padding, innerPadding, radius, innerRadius, cropped } = this.config
+    const { preset, gaps, groupGaps, hitArea, padding, innerPadding, radius, innerRadius, cropped } = this.config
     const strategyKey = `${padding}:${innerPadding}:${radius}:${innerRadius}`
     const boundsKey = String(cropped)
-    const selectionKey = `${gaps}:${hitArea}`
+    const selectionKey = `${gaps}:${groupGaps}:${hitArea}`
 
     if (strategyKey !== this.appliedKeys.strategy) {
       this.appliedKeys.strategy = strategyKey
@@ -379,8 +381,8 @@ export class BarChart extends UniversalChart {
       this.appliedKeys.selection = selectionKey
 
       // Новая gap policy/hitArea — новый узел графа: selections immutable
-      this.itemSelection = this.bar.interaction.contains({ gaps, hitArea })
-      this.groupContainsSelection = this.bar.interaction.containsGroup({ hitArea })
+      this.itemSelection = this.bar.interaction.contains({ gaps, groupGaps, hitArea })
+      this.groupContainsSelection = this.bar.interaction.containsGroup({ groupGaps, hitArea })
       const group = this.itemSelection.related('group')
       const dataset = this.itemSelection.related('dataset')
 

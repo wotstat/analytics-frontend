@@ -16,6 +16,14 @@
     </label>
 
     <label class="debug-control">
+      <span class="debug-label">groupGaps</span>
+      <select v-model="groupGaps">
+        <option value="miss">miss</option>
+        <option value="nearest">nearest</option>
+      </select>
+    </label>
+
+    <label class="debug-control">
       <span class="debug-label">hitArea</span>
       <select v-model="hitArea">
         <option value="geometry">geometry</option>
@@ -294,6 +302,7 @@ const presets = barPresets(props.strategy)
 
 const preset = ref(defaults.preset)
 const gaps = ref(defaults.gaps)
+const groupGaps = ref(defaults.groupGaps)
 const hitArea = ref(defaults.hitArea)
 const padding = ref(defaults.padding)
 const innerPadding = ref(defaults.innerPadding)
@@ -336,6 +345,7 @@ const stops = [
 watchEffect(() => chart.setConfig({
   preset: preset.value,
   gaps: gaps.value,
+  groupGaps: groupGaps.value,
   hitArea: hitArea.value,
   padding: padding.value,
   innerPadding: innerPadding.value,

@@ -11,10 +11,11 @@ export type BarHitArea = 'geometry' | 'vertical'
 
 export type BarContainsOptions = {
   gaps?: BarGapPolicy
+  groupGaps?: BarGapPolicy
   hitArea?: BarHitArea
 }
 
-export type BarContainsGroupOptions = Pick<BarContainsOptions, 'hitArea'>
+export type BarContainsGroupOptions = Pick<BarContainsOptions, 'groupGaps' | 'hitArea'>
 export type BarGeometryScope = 'group'
 export type BarRelation = 'group' | 'dataset'
 
@@ -46,31 +47,33 @@ export class BarInteractionSource {
   constructor(private readonly plot: BarPlotAccess) { }
 
   contains(options: BarContainsOptions = {}): BarItemSelection {
-    return new BarContainsSelection(this, options.gaps ?? 'miss', options.hitArea ?? 'geometry')
+    return new BarContainsSelection(this, options.gaps ?? 'nearest', options.groupGaps ?? 'miss', options.hitArea ?? 'geometry')
   }
 
   containsGroup(options: BarContainsGroupOptions = {}): Selection<BarGroupHit> {
-    return new BarContainsGroupSelection(this, options.hitArea ?? 'geometry')
+    return new BarContainsGroupSelection(this, options.groupGaps ?? 'miss', options.hitArea ?? 'geometry')
   }
 
-  hitAt(pointer: Point, gaps: BarGapPolicy, hitArea: BarHitArea, space: ChartSpace): BarItemHit | null {
+  hitAt(pointer: Point, gaps: BarGapPolicy, groupGaps: BarGapPolicy, hitArea: BarHitArea, space: ChartSpace): BarItemHit | null {
     const categoryIndex = this.resolveCategory(pointer, space)
     if (categoryIndex === null) return null
 
     const effectiveHitArea: BarHitArea = hitArea === 'vertical' && this.plot.strategyType() === 'stacked' ? 'geometry' : hitArea
+    const items = this.plot.categoryLayout(categoryIndex, space)
+    const hitPointer = groupGaps === 'nearest' && items.length > 0 ? clampX(pointer, items[0].groupRect) : pointer
 
     let found: BarLayoutItem | null = null
-    for (const item of this.plot.categoryLayout(categoryIndex, space)) {
+    for (const item of items) {
       if (item.value === 0) continue
 
       const rect = gaps === 'nearest' ? item.slotRect : item.rect
-      if (hitAreaContains(rect, pointer, effectiveHitArea)) found = item
+      if (hitAreaContains(rect, hitPointer, effectiveHitArea)) found = item
     }
 
     return found ? this.createHit(found, pointer) : null
   }
 
-  hitGroupAt(pointer: Point, hitArea: BarHitArea, space: ChartSpace): BarGroupHit | null {
+  hitGroupAt(pointer: Point, groupGaps: BarGapPolicy, hitArea: BarHitArea, space: ChartSpace): BarGroupHit | null {
     const categoryIndex = this.resolveCategory(pointer, space)
     if (categoryIndex === null) return null
 
@@ -78,7 +81,8 @@ export class BarInteractionSource {
     if (items.length === 0) return null
 
     const groupRect = items[0].groupRect
-    if (!hitAreaContains(groupRect, pointer, hitArea)) return null
+    const hitRect = groupGaps === 'nearest' ? categoryRect(categoryIndex, groupRect, space) : groupRect
+    if (!hitAreaContains(hitRect, pointer, hitArea)) return null
 
     return this.createGroupHit(categoryIndex, items, hitArea, pointer, space)
   }
@@ -161,7 +165,7 @@ export abstract class BarItemSelection extends Selection<BarItemHit> {
 
 class BarContainsSelection extends BarItemSelection {
 
-  constructor(source: BarInteractionSource, private readonly gaps: BarGapPolicy, private readonly hitArea: BarHitArea) {
+  constructor(source: BarInteractionSource, private readonly gaps: BarGapPolicy, private readonly groupGaps: BarGapPolicy, private readonly hitArea: BarHitArea) {
     super(source)
   }
 
@@ -169,14 +173,14 @@ class BarContainsSelection extends BarItemSelection {
     const pointer = ctx.input.pointer
     if (!pointer) return []
 
-    const hit = this.source.hitAt(pointer.point, this.gaps, this.hitArea, ctx.space)
+    const hit = this.source.hitAt(pointer.point, this.gaps, this.groupGaps, this.hitArea, ctx.space)
     return hit ? [hit] : []
   }
 }
 
 class BarContainsGroupSelection extends Selection<BarGroupHit> {
 
-  constructor(private readonly source: BarInteractionSource, private readonly hitArea: BarHitArea) {
+  constructor(private readonly source: BarInteractionSource, private readonly groupGaps: BarGapPolicy, private readonly hitArea: BarHitArea) {
     super()
   }
 
@@ -184,7 +188,7 @@ class BarContainsGroupSelection extends Selection<BarGroupHit> {
     const pointer = ctx.input.pointer
     if (!pointer) return []
 
-    const hit = this.source.hitGroupAt(pointer.point, this.hitArea, ctx.space)
+    const hit = this.source.hitGroupAt(pointer.point, this.groupGaps, this.hitArea, ctx.space)
     return hit ? [hit] : []
   }
 }
@@ -224,6 +228,14 @@ function categoryAt(x: number, space: ChartSpace, count: number): number | null 
   if (index < 0 || index >= count) return null
 
   return index
+}
+
+function categoryRect(categoryIndex: number, groupRect: InteractionBounds, space: ChartSpace): InteractionBounds {
+  return { ...groupRect, minX: space.chartToLayoutX(categoryIndex), maxX: space.chartToLayoutX(categoryIndex + 1) }
+}
+
+function clampX(point: Point, rect: InteractionBounds): Point {
+  return { ...point, x: Math.max(rect.minX, Math.min(point.x, rect.maxX)) }
 }
 
 function rectContains(rect: InteractionBounds, point: Point): boolean {

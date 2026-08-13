@@ -73,7 +73,7 @@ export class InteractionController extends BaseInteractionController {
   private readonly localInputKey: symbol = Symbol('localInput')
   private localPointer: InteractionPointer | null = null
 
-  constructor(classes: Classes = [], options: { affectsBounds?: boolean } = {}) {
+  constructor(classes: Classes = ['interaction'], options: { affectsBounds?: boolean } = {}) {
     super(classes, options)
 
     this.componentsRoot.classList.add('interaction-components')
