@@ -1,14 +1,14 @@
 <template>
-  <PopoverStyled :target="target" :display="props.ctx != null" :placement="placement" :offset="props.offset"
-    :viewport-offset="props.viewportOffset" :arrow-size="props.arrowSize ?? 7"
-    :interactive="props.interactive ?? false" :class="props.class">
+  <PopoverStyled :target="target" :display="display" :placement="placement" :offset="props.offset"
+    :viewport-offset="props.viewportOffset" :arrow-size="props.arrowSize ?? 7" :interactive="props.interactive ?? false"
+    :class="props.class">
     <slot v-if="lastCtx" :ctx="lastCtx"></slot>
   </PopoverStyled>
 </template>
 
 
 <script setup lang="ts" generic="THit extends InteractionHit = InteractionHit">
-import { ClassValue, computed, shallowRef, watch } from 'vue'
+import { ClassValue, computed, onUnmounted, shallowRef, watch } from 'vue'
 import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
 import { InteractionHit } from '@/shared/uiKit/chart/universalChart/interaction/core/InteractionHit'
 import { CriticalFollower, DEFAULT_FOLLOW_OMEGA } from '@/shared/uiKit/chart/universalChart/utils/follower'
@@ -28,6 +28,7 @@ const props = defineProps<{
   viewportOffset?: OffsetValue
   arrowSize?: number
   interactive?: boolean
+  hideDelay?: number
   animated?: boolean
   animationOmega?: number
   class?: ClassValue
@@ -46,10 +47,23 @@ const placement = computed(() => props.placement ?? defaultPlacement[props.ancho
 let followers: { x: CriticalFollower, y: CriticalFollower, time: number } | null = null
 
 const lastCtx = shallowRef<TooltipCtx<THit> | null>(null)
+const display = shallowRef(false)
+let hideTimeout: ReturnType<typeof setTimeout> | null = null
+
 watch(() => props.ctx, (ctx, previous) => {
   if (ctx) lastCtx.value = ctx
-  if (ctx && !previous) followers = null
+  if (ctx && !previous && !display.value) followers = null
+
+  if (hideTimeout) clearTimeout(hideTimeout)
+  hideTimeout = null
+
+  if (ctx) display.value = true
+  else if (display.value) hideTimeout = setTimeout(() => display.value = false, props.hideDelay ?? 0)
 }, { immediate: true })
+
+onUnmounted(() => {
+  if (hideTimeout) clearTimeout(hideTimeout)
+})
 
 watch(() => props.animated, () => followers = null)
 

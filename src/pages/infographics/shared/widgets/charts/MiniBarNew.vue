@@ -7,6 +7,9 @@
       ['--bar-blur-radius']: props.blurRadius ? `${props.blurRadius}px` : undefined,
     }">
       <!-- <ShadowBar :data="chartData" :options="options" /> -->
+      <FloatingTooltip :ctx="tooltipCtx" :animated="true" :animation-omega="80" :hideDelay="50" v-slot="{ ctx }">
+        tooltip: {{ ctx.hits?.[0]?.datum }}
+      </FloatingTooltip>
       <UniversalChartComponent :chart="chart" />
     </div>
     <div class="flex flex-1 center pointer" v-else @click="showError">
@@ -25,11 +28,18 @@ import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRender
 import { AutoLabels, Options } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels.ts'
 import { steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator.ts'
 import { PlotAreaBorder } from '@/shared/uiKit/chart/universalChart/plot/axis/PlotAreaBorder'
-import { watchEffect } from 'vue'
+import { ref, watchEffect } from 'vue'
 import { Bar } from '@/shared/uiKit/chart/universalChart/plot/bar/Bar.ts'
 import { Classes } from '@/shared/uiKit/chart/universalChart/utils/utils.ts'
 import { BloomColorVariant, getColor } from '../../bloomColors.ts'
 import { ChartClip } from '@/shared/uiKit/chart/universalChart/defs/ChartClip.ts'
+import { InteractionController } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController.ts'
+import { ZoomChartComponent } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/zoomChartComponent/ZoomChartComponent.ts'
+import { VerticalLine } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/lines/VerticalLine.ts'
+import { ChartTooltip, TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip.ts'
+import { BarItemHit } from '@/shared/uiKit/chart/universalChart/plot/bar/BarInteractionSource.ts'
+import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
+
 
 const LABELS_OPTIONS: Options = {
   labelOffset: 10,
@@ -53,9 +63,9 @@ const props = defineProps<{
   blurRadius?: number,
 }>()
 
+const tooltipCtx = ref<TooltipCtx<BarItemHit> | null>(null)
 
 const chart = new UniversalChart({ layoutVariant: 'vertical', renderManager: globalChartRenderManagerSteps4 })
-
 
 const clipMain = new ChartClip('center')
 
@@ -69,17 +79,42 @@ const labelsX = new AutoLabels('horizontal', {
 const bar = new Bar({
   classes: props.classes,
   strategy: {
-    type: 'stacked',
+    type: 'grouped',
     padding: 0.3,
     maxWidth: 30,
   }
 }).clipBy(clipMain)
+
+const selectedBarItem = bar.interaction.contains({ hitArea: 'vertical' })
+
+const interactionController = new InteractionController()
+  .addComponent(new ZoomChartComponent({
+    chart,
+    zoom: true,
+    panDirection: 'horizontal',
+    autoFitFollow: true,
+    limits: {
+      elastic: true
+    },
+  }))
+  .addComponent(new VerticalLine({
+    offset: { end: 0.5, start: -5 },
+    selection: selectedBarItem,
+  }))
+  .addComponent(new ChartTooltip({
+    selection: selectedBarItem,
+    tooltipPivot: 'avg',
+    onHide: () => tooltipCtx.value = null,
+    onPositionChange: ctx => tooltipCtx.value = ctx,
+  }))
+
 
 chart
   .addSlot('bottom', labelsX, 'labels')
   .addPlot(border, 'ticks')
   .addPlot(bar, 'plot')
   .addDefs(clipMain)
+  .addPlot(interactionController)
 
 
 watchEffect(() => {
