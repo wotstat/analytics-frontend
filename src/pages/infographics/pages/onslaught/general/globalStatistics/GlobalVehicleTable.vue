@@ -10,14 +10,16 @@
       </div>
     </div>
     <hr class="separator">
+    <Loader :is-loading="state.status === 'loading'" class="loading-bar" />
 
-    <TableState v-if="state.status !== 'success'" :state />
+    <TableState v-if="state.status === 'empty' || state.status === 'error'" :state />
 
     <div v-else class="table-container nice-scrollbar-transparent mt-font"
       :class="{ 'with-skill-column': !groupBySkill }">
       <SortableTable v-model:order-by="vehicleOrderBy" v-model:order-direction="orderDirection" :data
-        :cols="headers.length" :limit="displayLimit" :is-orderable="index => index !== 0"
-        :default-order-by="defaultOrderBy" :column-labels="headers.map(header => header.title)">
+        :cols="headers.length" :limit="displayLimit" :loading="state.status === 'loading'" :skeleton-rows="skeletonRows"
+        :is-orderable="index => index !== 0" :default-order-by="defaultOrderBy"
+        :column-labels="headers.map(header => header.title)">
         <template #head-cell="{ col }">
           <div class="column-title">
             <Icon v-if="headers[col].icon" :icon="headers[col].icon!" />
@@ -74,7 +76,8 @@ import type { GameVendor } from '@/shared/game/wot'
 import { getTankName } from '@/shared/i18n/i18n'
 import { createFixedSpaceProcessor, createLogProcessor, createPercentProcessor } from '@/shared/utils/processors/processors'
 import OnslaughtCheckbox from '../../shared/Checkbox.vue'
-import SortableTable from '../../statistics/sortableTable/SortableTable.vue'
+import Loader from '../../shared/Loader.vue'
+import SortableTable from '../../shared/SortableTable.vue'
 import TableState from './TableState.vue'
 import type { GlobalVehicleStatistic, StatisticsLoadState } from './types'
 import { getComp7SkillName } from '@/shared/game/comp7/utils.ts'
@@ -138,6 +141,9 @@ const data = computed(() => props.state.data.map(item => headers.value.map(heade
 const displayLimit = computed(() => props.state.data.length > SHOW_MORE_THRESHOLD && !showMore.value
   ? SHOW_MORE_THRESHOLD - 2
   : undefined
+)
+const skeletonRows = computed(() => Math.min(props.state.data.length, displayLimit.value ?? Infinity)
+  || SHOW_MORE_THRESHOLD - 2
 )
 
 const columnTotals = computed(() => props.state.data.reduce((totals, item) => ({
@@ -207,6 +213,11 @@ function formatColumnShare(value: number, column: 'players' | 'battles') {
   margin: 5px 0;
   border: none;
   border-bottom: 1px solid var(--color-separator, #54545899);
+}
+
+.loading-bar {
+  width: 100%;
+  height: 2px;
 }
 
 .table-container {

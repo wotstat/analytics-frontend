@@ -7,13 +7,14 @@
       </button>
     </div>
     <hr class="separator">
+    <Loader :is-loading="state.status === 'loading'" class="loading-bar" />
 
-    <TableState v-if="state.status !== 'success'" :state />
+    <TableState v-if="state.status === 'empty' || state.status === 'error'" :state />
 
     <div v-else class="table-container nice-scrollbar-transparent mt-font">
       <SortableTable v-model:order-by="orderBy" v-model:order-direction="orderDirection" :data :cols="9"
-        :limit="displayLimit" :is-orderable="index => index !== 0" :default-order-by="1"
-        :column-labels="headers.map(header => header.title)">
+        :limit="displayLimit" :loading="state.status === 'loading'" :skeleton-rows="skeletonRows"
+        :is-orderable="index => index !== 0" :default-order-by="1" :column-labels="headers.map(header => header.title)">
         <template #head-cell="{ col }">
           <div class="column-title">
             <Icon :icon="headers[col].icon" />
@@ -28,7 +29,7 @@
           <td v-else-if="col === 1 || col === 2">
             <span>{{ logProcessor(Number(value)) }}</span>
             <span class="column-share">({{ formatColumnShare(Number(value), col === 1 ? 'battles' : 'players')
-            }})</span>
+              }})</span>
           </td>
           <td v-else-if="col === 3 || col === 4">{{ percentFormatter.format(Number(value)) }}</td>
           <td v-else-if="col === 5">{{ formatDuration(Number(value)) }}</td>
@@ -49,7 +50,8 @@ import { getArenaName } from '@/shared/i18n/i18n'
 import { createFixedSpaceProcessor, createLogProcessor, createPercentProcessor } from '@/shared/utils/processors/processors'
 import { sec2minsec } from '@/shared/utils/time'
 import TooltipedMinimap from '../../statistics/mapsTable/TooltipedMinimap.vue'
-import SortableTable from '../../statistics/sortableTable/SortableTable.vue'
+import Loader from '../../shared/Loader.vue'
+import SortableTable from '../../shared/SortableTable.vue'
 import TableState from './TableState.vue'
 import type { GlobalArenaStatistic, StatisticsLoadState } from './types'
 
@@ -95,6 +97,9 @@ const data = computed(() => props.state.data.map(item => [
 const displayLimit = computed(() => props.state.data.length > SHOW_MORE_THRESHOLD && !showMore.value
   ? SHOW_MORE_THRESHOLD - 2
   : undefined
+)
+const skeletonRows = computed(() => Math.min(props.state.data.length, displayLimit.value ?? Infinity)
+  || SHOW_MORE_THRESHOLD - 2
 )
 
 const columnTotals = computed(() => props.state.data.reduce((totals, item) => ({
@@ -161,6 +166,11 @@ function formatDuration(value: number) {
   margin: 5px 0;
   border: none;
   border-bottom: 1px solid var(--color-separator, #54545899);
+}
+
+.loading-bar {
+  width: 100%;
+  height: 2px;
 }
 
 .table-container {

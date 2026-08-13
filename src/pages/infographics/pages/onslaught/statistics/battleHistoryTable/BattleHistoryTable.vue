@@ -87,7 +87,7 @@ import { getArenaName, getTankName } from '@/shared/i18n/i18n'
 import { roundProcessor } from '@/shared/utils/processors/processors'
 import { computed, ref, watch, useTemplateRef } from 'vue'
 import { GameVendor } from '@/shared/game/wot'
-import SortableTable from '../sortableTable/SortableTable.vue'
+import SortableTable from '../../shared/SortableTable.vue'
 import TooltipedMinimap from '../mapsTable/TooltipedMinimap.vue'
 import TipShiftKeyForShowMore from '../tips/TipShiftKeyForShowMore.vue'
 

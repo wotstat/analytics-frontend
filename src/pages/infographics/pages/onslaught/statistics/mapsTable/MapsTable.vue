@@ -52,7 +52,7 @@ import { roundProcessor } from '@/shared/utils/processors/processors'
 import { computed, ref } from 'vue'
 import TooltipedMinimap from './TooltipedMinimap.vue'
 import { GameVendor } from '@/shared/game/wot'
-import SortableTable from '../sortableTable/SortableTable.vue'
+import SortableTable from '../../shared/SortableTable.vue'
 
 
 const SHOW_MORE_THRESHOLD = 6

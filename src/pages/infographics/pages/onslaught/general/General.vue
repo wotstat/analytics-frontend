@@ -242,7 +242,7 @@ function reloadVehicle(sql: string) {
   const signal = vehicleAbortController.signal
   const requestId = ++vehicleRequestId
 
-  vehicleState.value = { status: 'loading', data: [] }
+  vehicleState.value = { status: 'loading', data: vehicleState.value.data }
 
   const loadPromise = (async () => {
     try {
@@ -293,7 +293,7 @@ async function reloadArena(sql: string, commonId: number) {
 async function reloadCommon(vehicleSql: string, arenaSql: string) {
   const commonId = ++commonRequestId
   arenaAbortController.abort()
-  arenaState.value = { status: 'loading', data: [] }
+  arenaState.value = { status: 'loading', data: arenaState.value.data }
 
   let awaitedVehicleLoad = reloadVehicle(vehicleSql)
   await awaitedVehicleLoad
@@ -313,8 +313,8 @@ watch([vehicleQuery, arenaQuery], ([vehicleSql, arenaSql], [oldVehicleSql, oldAr
     vehicleRequestId++
     vehicleAbortController.abort()
     arenaAbortController.abort()
-    vehicleState.value = { status: 'loading', data: [] }
-    arenaState.value = { status: 'loading', data: [] }
+    vehicleState.value = { status: 'loading', data: vehicleState.value.data }
+    arenaState.value = { status: 'loading', data: arenaState.value.data }
     return
   }
   if (arenaSql !== oldArenaSql) {

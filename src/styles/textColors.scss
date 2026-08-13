@@ -101,7 +101,7 @@
 }
 
 @mixin text-skeleton($color, $highlight-color) {
-  background: linear-gradient(90deg, $color 8%, $highlight-color 18%, $color 33%);
+  background: linear-gradient(90deg, var(--skeleton-from-color, $color) 8%, var(--skeleton-highlight-color, $highlight-color) 18%, var(--skeleton-from-color, $color) 33%);
   background-size: 200% 100%;
   animation: shine 1.8s infinite linear;
   background-position: 100% 0;

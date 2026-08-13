@@ -19,7 +19,13 @@
       </tr>
     </thead>
 
-    <tbody>
+    <tbody v-if="loading">
+      <tr v-for="i in skeletonRowCount" :key="i" class="skeleton">
+        <td :colspan="cols"></td>
+      </tr>
+    </tbody>
+
+    <tbody v-else>
       <tr v-for="line, i in displayedData" :key="line.index">
         <slot v-for="value, j in line.data" v-bind="{ value, index: line.index, row: i, col: j }" name="data-cell">
         </slot>
@@ -36,6 +42,8 @@ const props = defineProps<{
   cols: number
   data: T[][]
   limit?: number
+  loading?: boolean
+  skeletonRows?: number
   isOrderable?: (index: number) => boolean
   defaultOrderBy?: number
   defaultOrderDirection?: 'asc' | 'desc'
@@ -61,6 +69,8 @@ const orderDirection = computed({
     orderDirectionModel.value = value
   },
 })
+
+const skeletonRowCount = computed(() => props.skeletonRows ?? 5)
 
 const displayedData = computed(() => {
   const dataWithKeys = props.data.map((line, index) => {
@@ -112,6 +122,8 @@ function click(col: number) {
 
 
 <style lang="scss" scoped>
+@use '/src/styles/table.scss' as *;
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -201,6 +213,24 @@ table {
   }
 
   tbody {
+    tr.skeleton {
+
+      --skeleton-from-color: rgba(255, 255, 255, 0);
+      height: 52px;
+
+      td {
+        height: 100%;
+        padding: 0;
+        opacity: 0.5;
+
+        &::after {
+          height: 52px !important;
+          border-radius: 0 !important;
+        }
+
+      }
+    }
+
     tr {
       &:nth-child(2n+1) {
         background-color: rgba(248, 252, 255, 0.025);
