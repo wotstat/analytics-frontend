@@ -76,7 +76,7 @@ export class InteractionController extends BaseInteractionController {
   constructor(classes: Classes = [], options: { affectsBounds?: boolean } = {}) {
     super(classes, options)
 
-    this.componentsRoot.classList.add('hover-components')
+    this.componentsRoot.classList.add('interaction-components')
     this.root.appendChild(this.componentsRoot)
   }
 

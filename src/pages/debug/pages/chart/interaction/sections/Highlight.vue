@@ -77,7 +77,8 @@
       <span class="debug-value">lineHighlight</span>, второй — <i>после</i>. Строка выше сравнивает их
       <span class="debug-value">TooltipCtx</span> покадрово по составу hits и результату
       <span class="debug-value">isHighlighted()</span> и обязана показывать «да» всегда, пока тултип активен: к моменту
-      <span class="debug-value">renderInteraction</span> любого компонента <span class="debug-value">prepareInteraction</span>
+      <span class="debug-value">renderInteraction</span> любого компонента <span
+        class="debug-value">prepareInteraction</span>
       уже отработал у всех — это и есть барьер между фазами prepare и render, а не свойство конкретного тултипа.
     </p>
 
@@ -99,11 +100,14 @@
     </p>
 
     <p class="debug-note">
-      <b>Два Highlight, разные классы, один target.</b> Включи «другой класс»: <span class="debug-value">secondDiffClass</span>
-      читает тот же <span class="debug-value">strokeNearest</span>, что и <span class="debug-value">lineHighlight</span>,
+      <b>Два Highlight, разные классы, один target.</b> Включи «другой класс»: <span
+        class="debug-value">secondDiffClass</span>
+      читает тот же <span class="debug-value">strokeNearest</span>, что и <span
+        class="debug-value">lineHighlight</span>,
       и вешает свой класс <span class="debug-value">flagged-highlighted</span> на тот же path одновременно с
       <span class="debug-value">line-highlighted</span>. Оба diff работают независимо и не мешают друг другу — это
-      нормальный случай, ради которого <span class="debug-value">Highlight</span> не завязан на конкретный class extension.
+      нормальный случай, ради которого <span class="debug-value">Highlight</span> не завязан на конкретный class
+      extension.
     </p>
 
     <p class="debug-note">
@@ -174,7 +178,7 @@ watchEffect(() => chart.value.setConfig({
   secondDiffClass: secondDiffClass.value,
 }))
 
-// subtree: класс меняется на существующих path линий, а не внутри .hover-components
+// subtree: класс меняется на существующих path линий, а не внутри .interaction-components
 useMutationObserver(stage, mutations => {
   classMutations.value += mutations.filter(m => m.type === 'attributes' && m.attributeName === 'class').length
 }, { attributes: true, attributeFilter: ['class'], subtree: true })

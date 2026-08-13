@@ -265,12 +265,12 @@ function tooltipDate(ctx: TooltipCtx<DailyPlayersHit>) {
     font-weight: bold;
   }
 
-  .hover {
+  .interaction {
     .interactive-zone {
       cursor: crosshair;
     }
 
-    .hover-components .hover-markers {
+    .interaction-components .hover-markers {
       .hover-marker {
         fill: rgba(2, 175, 255, 1);
       }

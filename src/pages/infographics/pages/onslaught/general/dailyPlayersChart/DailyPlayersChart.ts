@@ -64,7 +64,7 @@ export class DailyPlayersChart extends UniversalChart {
 
     const linePoints = this.line.interaction.nearestByAxis('x')
 
-    this.interactionController = new InteractionController('hover')
+    this.interactionController = new InteractionController('interaction')
       .addComponent(new VerticalLine({
         offset: { end: 0.5, start: -5 },
         selection: linePoints,

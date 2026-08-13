@@ -51,7 +51,7 @@
       }
     }
 
-    .hover {
+    .interaction {
       .interactive-zone {
         fill: transparent;
         -webkit-user-select: none;
@@ -60,7 +60,7 @@
         touch-action: manipulation;
       }
 
-      .hover-components {
+      .interaction-components {
 
         .hover-line {
           pointer-events: none;

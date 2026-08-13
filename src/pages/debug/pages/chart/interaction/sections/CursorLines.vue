@@ -109,7 +109,7 @@ const stopEnd = chart.callback.on('hoverEnd', () => push('hoverEnd'))
 
 // Счётчик читается из DOM намеренно: set semantics — это ровно про число элементов, а не про состояние компонента
 const stopRender = chart.onAfterRender.on(() => {
-  const count = stage.value?.querySelectorAll('.hover-components line').length ?? 0
+  const count = stage.value?.querySelectorAll('.interaction-components line').length ?? 0
   if (count !== lineCount.value) lineCount.value = count
 })
 

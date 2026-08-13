@@ -487,7 +487,7 @@ watchEffect(() => {
         }
       }
 
-      .hover {
+      .interaction {
         .interactive-zone {
           cursor: crosshair;
         }
