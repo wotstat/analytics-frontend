@@ -77,6 +77,8 @@ function dayAt(index: number) {
 }
 
 watchEffect(() => {
+  if (data.value.status === loading) return
+
   const playersByDay = new Map(data.value.data.map(item => [item.day, item.players]))
   const points = Array.from({ length: Math.ceil(props.seasonInterval.length) }, (_, index) => {
     const day = dayAt(index)
