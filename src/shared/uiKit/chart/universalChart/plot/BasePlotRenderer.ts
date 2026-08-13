@@ -1,6 +1,7 @@
 import { UniversalChart, Overflow, PlotRenderer, Size } from '../UniversalChart'
 import { ChartClip } from '../defs/ChartClip'
 import { ChartMask } from '../defs/ChartMask'
+import { ChartShadowFilter } from '../defs/ChartShadowFilter'
 import { Bounds, BoundsConstraint } from '../utils/Bounds'
 import { ChartSpace } from '../utils/ChartSpace'
 import { addClasses, Classes } from '../utils/utils'
@@ -44,6 +45,11 @@ export class BasePlotRenderer implements PlotRenderer {
 
   maskBy(mask: ChartMask) {
     mask.mask(this.root)
+    return this
+  }
+
+  filterBy(filter: ChartShadowFilter) {
+    filter.apply(this.root)
     return this
   }
 

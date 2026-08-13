@@ -6,7 +6,9 @@ import { InteractionComponent, InteractionController } from '../../InteractionCo
 
 export type HighlightOptions<THit extends InteractionHit = InteractionHit> = {
   selection: InteractionResolver<THit>
-  class: Classes
+  class?: Classes
+  onHighlight?: (target: SVGElement) => void
+  onDehighlight?: (target: SVGElement) => void
 }
 
 const highlightBrand = Symbol('highlightBrand')
@@ -66,14 +68,26 @@ export class Highlight<THit extends InteractionHit = InteractionHit> implements 
   renderInteraction(): void {
     if (!this.controller) return
 
-    for (const target of this.appliedTargets) if (!this.pendingTargets.has(target)) removeClasses(target, this.options.class)
-    for (const target of this.pendingTargets) if (!this.appliedTargets.has(target)) addClasses(target, this.options.class)
+    for (const target of this.appliedTargets) {
+      if (this.pendingTargets.has(target)) continue
+      removeClasses(target, this.options.class)
+      this.options.onDehighlight?.(target)
+    }
+
+    for (const target of this.pendingTargets) {
+      if (this.appliedTargets.has(target)) continue
+      addClasses(target, this.options.class)
+      this.options.onHighlight?.(target)
+    }
 
     this.appliedTargets = this.pendingTargets
   }
 
   private clear() {
-    for (const target of this.appliedTargets) removeClasses(target, this.options.class)
+    for (const target of this.appliedTargets) {
+      removeClasses(target, this.options.class)
+      this.options.onDehighlight?.(target)
+    }
     this.appliedTargets = new Set()
     this.pendingTargets = new Set()
     this.hits = []

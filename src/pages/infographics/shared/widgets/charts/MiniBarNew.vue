@@ -3,9 +3,7 @@
   <ServerStatusWrapper :status="status" v-slot="{ showError, status }">
     <div class="chart-container" v-if="status != 'error'" :style="{
       ['--bar-color']: getColor(props.color).main,
-      ['--bar-bloom-color']: getColor(props.color).bloom,
-      ['--bar-dark-color']: getColor(props.color).darken,
-      ['--bar-blur-radius']: props.blurRadius ? `${props.blurRadius}px` : undefined,
+      ['--bar-color-highlighted']: getColor(props.color).highlight,
     }">
       <!-- <ShadowBar :data="chartData" :options="options" /> -->
       <FloatingTooltip :ctx="tooltipCtx" :animated="true" :animation-omega="20" :hideDelay="0" v-slot="{ ctx }"
@@ -47,6 +45,7 @@ import { ChartTooltip, TooltipCtx } from '@/shared/uiKit/chart/universalChart/in
 import { BarItemHit } from '@/shared/uiKit/chart/universalChart/plot/bar/BarInteractionSource.ts'
 import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
 import { Highlight } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/highlight/Highlight.ts'
+import { ChartShadowFilter } from '@/shared/uiKit/chart/universalChart/defs/ChartShadowFilter.ts'
 
 
 const LABELS_OPTIONS: Options = {
@@ -80,6 +79,8 @@ const tooltipCtx = ref<TooltipCtx<BarItemHit> | null>(null)
 const chart = new UniversalChart({ layoutVariant: 'vertical', renderManager: globalChartRenderManagerSteps4 })
 
 const clipMain = new ChartClip('center')
+const shadow = new ChartShadowFilter({ color: getColor(props.color).bloom })
+const highlightedShadow = new ChartShadowFilter({ color: getColor(props.color).bloom, strength: 0.8 })
 
 const border = new PlotAreaBorder({ bottom: 'full' })
 const labelsX = new AutoLabels('horizontal', {
@@ -95,7 +96,9 @@ const bar = new Bar({
     padding: 0.3,
     maxWidth: 30,
   }
-}).clipBy(clipMain)
+})
+  .filterBy(shadow)
+  .clipBy(clipMain)
 
 const selectedBarItem = bar.interaction.contains({
   hitArea: 'vertical',
@@ -113,6 +116,8 @@ const interactionController = new InteractionController()
   .addComponent(new Highlight({
     selection: selectedBarItem,
     class: 'highlighted',
+    onHighlight: target => highlightedShadow.apply(target),
+    onDehighlight: target => highlightedShadow.remove(target),
   }))
 
 
@@ -120,11 +125,18 @@ chart
   .addSlot('bottom', labelsX, 'labels')
   .addPlot(border, 'ticks')
   .addPlot(bar, 'plot')
-  .addDefs(clipMain)
+  .addDefs(clipMain, shadow, highlightedShadow)
   .addPlot(interactionController)
 
 
 watchEffect(() => {
+  const shadowOptions = {
+    color: getColor(props.color).bloom,
+    blurRadius: props.blurRadius ?? 5,
+  }
+  shadow.updateOptions(shadowOptions)
+  highlightedShadow.updateOptions(shadowOptions)
+
   labelsX.updateOptions({
     ...LABELS_OPTIONS,
     from: 0,
@@ -213,11 +225,10 @@ watchEffect(() => {
 
     .bar {
       fill: var(--bar-color);
-      filter: drop-shadow(0px 0px var(--bar-blur-radius, 5px) var(--bar-bloom-color)) contrast(1);
-      transition: filter 0.2s;
+      transition: fill 0.2s ease;
 
       &.highlighted {
-        filter: drop-shadow(0px 0px var(--bar-blur-radius, 5px) var(--bar-bloom-color)) contrast(1.8)
+        fill: var(--bar-color-highlighted);
       }
     }
   }

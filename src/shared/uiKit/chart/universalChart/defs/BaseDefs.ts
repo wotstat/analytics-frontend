@@ -9,7 +9,7 @@ export class BaseDefs<T extends Element = Element> implements DefsRenderer {
 
   constructor(root: T, prefix = 'def') {
     this.root = root
-    this.id = `pattern-${Math.random().toString(16).slice(2)}`
+    this.id = `${prefix}-${Math.random().toString(16).slice(2)}`
     this.root.setAttribute('id', this.id)
   }
 
