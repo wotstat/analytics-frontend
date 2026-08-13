@@ -80,7 +80,7 @@ class BaseChart extends UniversalChart {
 
     const syncedPoints = this.line.interaction.nearestByAxis('x').withInput(sync.hover)
 
-    this.interactionController = new InteractionController('interaction')
+    this.interactionController = new InteractionController()
       .addComponent(new ZoomChartComponent({
         chart: this,
         zoom: true,

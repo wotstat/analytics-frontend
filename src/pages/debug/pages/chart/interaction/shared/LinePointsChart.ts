@@ -75,7 +75,7 @@ export class LinePointsChart extends UniversalChart {
     this.probe = new HitProbe(this.selection, hits => this.onHits.emit(hits))
 
     this.zoomComponent = new ZoomChartComponent({ chart: this, zoom: init.zoom ?? false, panDirection: init.zoom ? 'horizontal' : false })
-    this.controller = new InteractionController('hover')
+    this.controller = new InteractionController()
     this.toggles = new ComponentToggle(this.controller)
     if (init.zoom) this.controller.addComponent(this.zoomComponent)
     this.controller.addComponent(this.probe)

@@ -168,7 +168,7 @@ export class MixedChart extends UniversalChart {
       onHide: () => this.onTooltip.emit(null),
     })
 
-    this.controller = new InteractionController('hover')
+    this.controller = new InteractionController()
     this.controller
       .addComponent(this.lineHighlight)
       .addComponent(this.barDatasetHighlight)

@@ -110,7 +110,7 @@ export class ScatterChart extends UniversalChart {
     })
     this.probe = new HitProbe(this.selection, hits => this.onHit.emit(hits))
 
-    this.controller = new InteractionController('hover')
+    this.controller = new InteractionController()
     this.toggles = new ComponentToggle(this.controller)
     if (init.zoom) this.controller.addComponent(new ZoomChartComponent({ chart: this, zoom: true, panDirection: 'horizontal' }))
     this.controller.addComponent(this.probe)

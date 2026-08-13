@@ -61,7 +61,7 @@ export class FrameChart extends UniversalChart {
     this.marker = new MarkerOverlay({ ...baseMarkerOptions(maskRoot), selection: points })
     this.tooltip = new ChartTooltip(this.tooltipOptions(points))
 
-    this.controller = new InteractionController('hover')
+    this.controller = new InteractionController()
     this.controller.addComponent(this.highlight)
     this.controller.addComponent(this.tooltip)
     this.controller.addComponent(this.marker)

@@ -168,7 +168,7 @@ new ChartTooltip({ selection: linePointsByX.union(barGroup).union(scatterPoint).
 
 #### Минимальный пример: hover и тултип на одном графике
 
-Без sync между графиками сборка короче — источник, selection и три эффекта на общем `InteractionController`. Первый аргумент конструктора — `classes` (та же сигнатура, что у любого `BasePlotRenderer`): CSS-класс на корневой SVG-группе контроллера, стилевой хук, а не режим работы.
+Без sync между графиками сборка короче — источник, selection и три эффекта на общем `InteractionController`. Корень контроллера по умолчанию получает класс `interaction`; первый аргумент `classes` (та же сигнатура, что у любого `BasePlotRenderer`) нужен только для дополнительных или альтернативных классов и остаётся стилевым хуком, а не режимом работы.
 
 ```ts
 const line = new AutoLine({ classes: 'main-line' })
@@ -176,7 +176,7 @@ const plotRoot = new PlotGroup().addPlot(line)
 
 const points = line.interaction.nearestByAxis('x')
 
-const controller = new InteractionController('hover')
+const controller = new InteractionController()
   .addComponent(new VerticalLine({ selection: points }))
   .addComponent(new MarkerOverlay({ selection: points, classes: 'markers' }))
   .addComponent(new ChartTooltip({
@@ -215,7 +215,7 @@ new MarkerOverlay({ selection: localPoints })    // маркер — тольк�
 ```ts
 const syncedPoints = this.line.interaction.nearestByAxis('x').withInput(sync.hover)
 
-this.interactionController = new InteractionController('hover')
+this.interactionController = new InteractionController()
   .addComponent(new VerticalLine({ selection: syncedPoints, offset: { end: 0.5, start: -5 } }))
   .addComponent(new MarkerOverlay({ selection: syncedPoints, /* ... */ }))
   .addComponent(new ChartTooltip({ selection: syncedPoints, tooltipPivot: 'avg', /* ... */ }))

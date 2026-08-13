@@ -78,7 +78,7 @@ export class CursorChart extends UniversalChart {
     }
 
     this.zoomComponent = new ZoomChartComponent({ chart: this, ...(init.zoom ?? { zoom: true, panDirection: 'horizontal', autoFitFollow: true }) })
-    this.controller = new InteractionController('hover')
+    this.controller = new InteractionController()
     this.toggles = new ComponentToggle(this.controller)
 
     this.controller.addComponent(this.zoomComponent)

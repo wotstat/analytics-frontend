@@ -79,7 +79,7 @@ export class PolygonOverlapChart extends UniversalChart {
     this.probe = new CompositionProbe<PolygonHit>(snapshot => this.onSnapshot.emit(snapshot))
     this.probe.setSelections(composed, bContains)
 
-    this.controller = new InteractionController('hover')
+    this.controller = new InteractionController()
     this.toggles = new ComponentToggle(this.controller)
     this.controller.addComponent(this.probe)
 

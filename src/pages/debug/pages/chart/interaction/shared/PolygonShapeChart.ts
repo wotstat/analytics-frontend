@@ -96,7 +96,7 @@ export class PolygonShapeChart extends UniversalChart {
     this.horizontalArea = new HorizontalArea({ selection: this.selection, classes: 'polygon-area' })
     this.probe = new HitProbe(this.selection, hits => this.onHit.emit(hits))
 
-    this.controller = new InteractionController('hover')
+    this.controller = new InteractionController()
     this.toggles = new ComponentToggle(this.controller)
     this.controller.addComponent(this.probe)
 

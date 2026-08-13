@@ -125,7 +125,7 @@ export class HighlightChart extends UniversalChart {
     this.tooltipBefore = new ChartTooltip(this.tooltipOptionsFor('before'))
     this.tooltipAfter = new ChartTooltip(this.tooltipOptionsFor('after'))
 
-    this.controller = new InteractionController('hover')
+    this.controller = new InteractionController()
     this.toggles = new ComponentToggle(this.controller)
     if (init.zoom) this.controller.addComponent(new ZoomChartComponent({ chart: this, zoom: true, panDirection: 'horizontal' }))
     this.controller.addComponent(this.tooltipBefore)

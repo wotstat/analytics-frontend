@@ -86,7 +86,7 @@ export class SyncChart extends UniversalChart {
     // Порядок фиксирован здесь и не меняется тумблерами: zoom всегда виден onBeforeLayout раньше hub'а,
     // а "выключенный" зум переключается через updateOptions, а не add/removeComponent
     this.zoomComponent = new ZoomChartComponent({ chart: this, zoom: false, panDirection: false, autoFitFollow: true })
-    this.controller = new InteractionController('hover')
+    this.controller = new InteractionController()
       .addComponent(this.zoomComponent)
       .addComponent(this.verticalLine)
       .addComponent(this.marker)

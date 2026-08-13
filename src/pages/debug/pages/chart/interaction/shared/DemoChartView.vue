@@ -182,7 +182,7 @@ defineProps<{
       fill: #ffffff80;
     }
 
-    .hover {
+    .interaction {
       .interactive-zone {
         cursor: crosshair;
       }

@@ -263,7 +263,7 @@ export class BarChart extends UniversalChart {
     this.datasetProbe = new HitProbe(this.itemSelection.related('dataset'), hits => this.onDataset.emit(hits))
     this.groupContainsProbe = new HitProbe(this.groupContainsSelection, hits => this.onGroupContains.emit(hits))
 
-    this.controller = new InteractionController('hover')
+    this.controller = new InteractionController()
     this.toggles = new ComponentToggle(this.controller)
     this.controller.addComponent(new ZoomChartComponent({ chart: this, zoom: true, panDirection: 'horizontal' }))
     this.controller.addComponent(this.itemProbe)

@@ -96,7 +96,7 @@ export class NearStrokeChart extends UniversalChart {
     this.marker = new MarkerOverlay(this.markerOptions())
     this.probe = new CompositionProbe<StrokeChartHit>(snapshot => this.onSnapshot.emit(snapshot))
 
-    this.controller = new InteractionController('hover')
+    this.controller = new InteractionController()
     if (init.zoom) this.controller.addComponent(new ZoomChartComponent({ chart: this, zoom: true, panDirection: 'horizontal' }))
     this.controller.addComponent(this.marker)
     this.controller.addComponent(this.probe)

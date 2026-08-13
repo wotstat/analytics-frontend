@@ -102,7 +102,7 @@ export class MultiLineChart extends UniversalChart {
     this.tooltip = new ChartTooltip(this.tooltipOptions(initial.composed))
     this.probe = new CompositionProbe<ComposedHit>(snapshot => this.onSnapshot.emit(snapshot))
 
-    this.controller = new InteractionController('hover')
+    this.controller = new InteractionController()
     this.toggles = new ComponentToggle(this.controller)
     if (init.zoom) this.controller.addComponent(new ZoomChartComponent({ chart: this, zoom: true, panDirection: 'horizontal' }))
     this.controller.addComponent(this.probe)

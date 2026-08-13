@@ -303,7 +303,7 @@ function tooltipDate(ctx: TooltipCtx<DailyPlayersHit>) {
     }
 
     .plot .daily-markers .current-day-marker,
-    .hover .hover-marker {
+    .interaction .hover-marker {
       r: 4px;
     }
 
