@@ -47,26 +47,27 @@
 
 
         <div class="card u1 chart bar">
-          <MiniBar :status="durationResult.status" :data="durationData.p" color="green" :labels="durationData.labels"
-            :callbacks="{ title: (t) => `Было ${Math.round((t[0].raw as number) * 100)}% боёв ${Number.parseInt(t[0].label) - 1}-${t[0].label} минут`, label: () => `` }" />
+          <MiniBarNew :status="durationResult.status" :labels="durationData.labels" :data="durationData.p"
+            :color="'green'" :blur-radius="4" :tooltip="{
+              title: (t) => `Было ${Math.round(t.hits[0].datum * 100)}% боёв ${t.hits[0].categoryIndex}-${t.hits[0].categoryIndex + 1} минут`,
+            }" />
           <p class="card-main-info description">Продолжительность боя</p>
         </div>
 
         <div class="card chart bar tank-type">
 
-          <!-- <MiniBarNew :status="avgTypeResult.status" :labels="tankLabels" :data="avgChart" :color="'blue'" /> -->
-
-          <MiniBar :status="avgTypeResult.status" :data="avgChart" color="blue" :labels="tankLabels" :callbacks="{
-            title: (t) => `В среднем в команде было ${t[0].formattedValue} ${t[0].label}`, label: () => ``
-          }" />
+          <MiniBarNew :status="avgTypeResult.status" :labels="tankLabels" :data="avgChart" :color="'blue'"
+            :blur-radius="8" :tooltip="{
+              title: (t) => `В среднем в команде было ${t.hits[0].datum} ${tankLabels[t.hits[0].categoryIndex]}`,
+            }" />
           <p class="card-main-info description">Классов танков в командах</p>
         </div>
 
         <div class="card u2 chart bar">
-          <!-- <MiniBarNew :status="durationResult.status" :labels="durationData.labels" :data="durationData.l"
-            :color="'yellow'" :blur-radius="2" /> -->
-          <MiniBar :status="durationResult.status" :data="durationData.l" color="yellow" :labels="durationData.labels"
-            :callbacks="{ title: (t) => `В боях ${Number.parseInt(t[0].label) - 1}-${t[0].label} минут вы жили ${Math.round(t[0].raw as number * 10) / 10} мин `, label: () => `` }" />
+          <MiniBarNew :status="durationResult.status" :labels="durationData.labels" :data="durationData.l"
+            :color="'yellow'" :blur-radius="4" :tooltip="{
+              title: (t) => `В боях ${t.hits[0].categoryIndex}-${t.hits[0].categoryIndex + 1} минут вы жили ${Math.round(t.hits[0].datum * 10) / 10} мин `,
+            }" />
           <p class="card-main-info description">Время жизни по длине боя</p>
         </div>
       </div>
@@ -82,7 +83,7 @@ import MiniBarNew from '@/pages/infographics/shared/widgets/charts/MiniBarNew.vu
 import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import { queryAsync, queryAsyncFirst } from '@/db'
 import { useElementVisibility } from '@vueuse/core'
-import { computed, useTemplateRef } from 'vue'
+import { computed, useTemplateRef, watchEffect } from 'vue'
 
 import { ms2sec, sec2minsec, ms2secLabel } from '@/shared/utils/time'
 import { createFixedSpaceProcessor } from '@/shared/utils/processors/processors'
@@ -173,7 +174,7 @@ const durationData = computed(() => {
     return prev
   }, {} as any)
 
-  for (let i = 1; i < 15; i++) {
+  for (let i = 1; i <= 16; i++) {
     if (!(i in keyed)) {
       keyed[i] = { p: 0, l: 0 }
     }

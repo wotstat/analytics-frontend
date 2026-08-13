@@ -4,11 +4,20 @@
     <div class="chart-container" v-if="status != 'error'" :style="{
       ['--bar-color']: getColor(props.color).main,
       ['--bar-bloom-color']: getColor(props.color).bloom,
+      ['--bar-dark-color']: getColor(props.color).darken,
       ['--bar-blur-radius']: props.blurRadius ? `${props.blurRadius}px` : undefined,
     }">
       <!-- <ShadowBar :data="chartData" :options="options" /> -->
-      <FloatingTooltip :ctx="tooltipCtx" :animated="true" :animation-omega="80" :hideDelay="50" v-slot="{ ctx }">
-        tooltip: {{ ctx.hits?.[0]?.datum }}
+      <FloatingTooltip :ctx="tooltipCtx" :animated="true" :animation-omega="20" :hideDelay="0" v-slot="{ ctx }"
+        :class="'mini-bar-tooltip'">
+        <div class="tooltip" :class="{
+          ['has-label']: props.tooltip?.label,
+          ['has-title']: props.tooltip?.title,
+        }">
+          <h4 v-if="props.tooltip?.title">{{ props.tooltip.title(ctx) }} </h4>
+          <p v-if="props.tooltip?.label">{{ props.tooltip.label(ctx) }}</p>
+          <p v-if="!props.tooltip?.title && !props.tooltip?.label">{{ ctx.hits?.[0]?.datum }}</p>
+        </div>
       </FloatingTooltip>
       <UniversalChartComponent :chart="chart" />
     </div>
@@ -34,11 +43,10 @@ import { Classes } from '@/shared/uiKit/chart/universalChart/utils/utils.ts'
 import { BloomColorVariant, getColor } from '../../bloomColors.ts'
 import { ChartClip } from '@/shared/uiKit/chart/universalChart/defs/ChartClip.ts'
 import { InteractionController } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController.ts'
-import { ZoomChartComponent } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/zoomChartComponent/ZoomChartComponent.ts'
-import { VerticalLine } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/lines/VerticalLine.ts'
 import { ChartTooltip, TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip.ts'
 import { BarItemHit } from '@/shared/uiKit/chart/universalChart/plot/bar/BarInteractionSource.ts'
 import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
+import { Highlight } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/highlight/Highlight.ts'
 
 
 const LABELS_OPTIONS: Options = {
@@ -61,6 +69,10 @@ const props = defineProps<{
   classes?: Classes,
   data: number[] | number[][] | { values: number[], classes: Classes }[],
   blurRadius?: number,
+  tooltip?: {
+    title?: (ctx: TooltipCtx<BarItemHit>) => string,
+    label?: (ctx: TooltipCtx<BarItemHit>) => string,
+  }
 }>()
 
 const tooltipCtx = ref<TooltipCtx<BarItemHit> | null>(null)
@@ -85,27 +97,22 @@ const bar = new Bar({
   }
 }).clipBy(clipMain)
 
-const selectedBarItem = bar.interaction.contains({ hitArea: 'vertical' })
+const selectedBarItem = bar.interaction.contains({
+  hitArea: 'vertical',
+  gaps: 'nearest',
+  groupGaps: 'nearest'
+})
 
 const interactionController = new InteractionController()
-  .addComponent(new ZoomChartComponent({
-    chart,
-    zoom: true,
-    panDirection: 'horizontal',
-    autoFitFollow: true,
-    limits: {
-      elastic: true
-    },
-  }))
-  .addComponent(new VerticalLine({
-    offset: { end: 0.5, start: -5 },
-    selection: selectedBarItem,
-  }))
   .addComponent(new ChartTooltip({
     selection: selectedBarItem,
     tooltipPivot: 'avg',
     onHide: () => tooltipCtx.value = null,
     onPositionChange: ctx => tooltipCtx.value = ctx,
+  }))
+  .addComponent(new Highlight({
+    selection: selectedBarItem,
+    class: 'highlighted',
   }))
 
 
@@ -140,13 +147,47 @@ watchEffect(() => {
     maxX: props.labels.length,
     maxY: size.maxY * 1.1,
   })
-  console.log('MiniBarNew props changed', props.labels, props.data)
 })
 
 </script>
 
+<style lang="scss">
+.mini-bar-tooltip {
+  --popover-background-color: rgba(0, 0, 0, 0.8);
+  --popover-border-color: rgba(255, 255, 255, 0.1);
+
+  .popover-background {
+    border-radius: 5px;
+  }
+}
+</style>
 
 <style lang="scss" scoped>
+.tooltip {
+  padding: 5px 5px;
+
+  &.has-label {
+    h4 {
+      margin-bottom: 4px;
+    }
+  }
+
+  h4 {
+    margin: 0;
+    font-size: 12px;
+    font-weight: bold;
+    color: rgba(255, 255, 255);
+    line-height: 1;
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1;
+  }
+}
+
 .chart-container {
   flex: 1;
   position: relative;
@@ -172,7 +213,12 @@ watchEffect(() => {
 
     .bar {
       fill: var(--bar-color);
-      filter: drop-shadow(0px 0px var(--bar-blur-radius, 5px) var(--bar-bloom-color));
+      filter: drop-shadow(0px 0px var(--bar-blur-radius, 5px) var(--bar-bloom-color)) contrast(1);
+      transition: filter 0.2s;
+
+      &.highlighted {
+        filter: drop-shadow(0px 0px var(--bar-blur-radius, 5px) var(--bar-bloom-color)) contrast(1.8)
+      }
     }
   }
 }
