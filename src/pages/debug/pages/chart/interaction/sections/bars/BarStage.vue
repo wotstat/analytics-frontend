@@ -142,7 +142,7 @@
       <tr>
         <th>selection</th>
         <th>dataset</th>
-        <th>category</th>
+        <th>category index / datum</th>
         <th>datum</th>
         <th>contains</th>
         <th>distance, px</th>
@@ -155,7 +155,7 @@
       <tr v-for="row in hitRows" :key="row.key" :class="row.kind">
         <td>{{ row.label }}</td>
         <td>{{ row.hit.datasetIndex }}</td>
-        <td>{{ row.hit.categoryIndex }}</td>
+        <td>{{ row.hit.categoryIndex }} / {{ row.hit.category }}</td>
         <td>{{ row.hit.datum }}</td>
         <td>{{ row.hit.contains ? 'да' : 'нет' }}</td>
         <td>{{ fmt(row.hit.distance) }}</td>
@@ -183,7 +183,7 @@
     <thead>
       <tr>
         <th>selection</th>
-        <th>category</th>
+        <th>category index / datum</th>
         <th>datum по датасетам</th>
         <th>contains</th>
         <th>distance, px</th>
@@ -194,7 +194,7 @@
     <tbody>
       <tr v-for="hit in groupContains" :key="`gc${hit.categoryIndex}`">
         <td>containsGroup()</td>
-        <td>{{ hit.categoryIndex }}</td>
+        <td>{{ hit.categoryIndex }} / {{ hit.category }}</td>
         <td>{{ datumText(hit) }}</td>
         <td>{{ hit.contains ? 'да' : 'нет' }}</td>
         <td>{{ fmt(hit.distance) }}</td>

@@ -49,7 +49,7 @@
         <div class="card u1 chart bar">
           <MiniBarNew :status="durationResult.status" :labels="durationData.labels" :data="durationData.p"
             :color="'green'" :blur-radius="4" :tooltip="{
-              title: (t) => `Было ${Math.round(t.hits[0].datum * 100)}% боёв ${t.hits[0].categoryIndex}-${t.hits[0].categoryIndex + 1} минут`,
+              title: (t) => `Было ${Math.round(t.hit.datum * 100)}% боёв ${t.hit.categoryIndex}-${t.hit.categoryIndex + 1} минут`,
             }" />
           <p class="card-main-info description">Продолжительность боя</p>
         </div>
@@ -58,7 +58,7 @@
 
           <MiniBarNew :status="avgTypeResult.status" :labels="tankLabels" :data="avgChart" :color="'blue'"
             :blur-radius="8" :tooltip="{
-              title: (t) => `В среднем в команде было ${t.hits[0].datum} ${tankLabels[t.hits[0].categoryIndex]}`,
+              title: (t) => `В среднем в команде было ${t.hit.datum} ${t.hit.category}`,
             }" />
           <p class="card-main-info description">Классов танков в командах</p>
         </div>
@@ -66,7 +66,7 @@
         <div class="card u2 chart bar">
           <MiniBarNew :status="durationResult.status" :labels="durationData.labels" :data="durationData.l"
             :color="'yellow'" :blur-radius="4" :tooltip="{
-              title: (t) => `В боях ${t.hits[0].categoryIndex}-${t.hits[0].categoryIndex + 1} минут вы жили ${Math.round(t.hits[0].datum * 10) / 10} мин `,
+              title: (t) => `В боях ${t.hit.categoryIndex}-${t.hit.categoryIndex + 1} минут вы жили ${Math.round(t.hit.datum * 10) / 10} мин `,
             }" />
           <p class="card-main-info description">Время жизни по длине боя</p>
         </div>
@@ -77,7 +77,6 @@
 
 <script setup lang="ts">
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
-import MiniBar from '@/pages/infographics/shared/widgets/charts/MiniBar.vue'
 import MniiPie from '@/pages/infographics/shared/widgets/charts/MiniPie.vue'
 import MiniBarNew from '@/pages/infographics/shared/widgets/charts/MiniBarNew.vue'
 import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'

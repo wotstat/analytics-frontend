@@ -14,7 +14,7 @@
         }">
           <h4 v-if="props.tooltip?.title">{{ props.tooltip.title(ctx) }} </h4>
           <p v-if="props.tooltip?.label">{{ props.tooltip.label(ctx) }}</p>
-          <p v-if="!props.tooltip?.title && !props.tooltip?.label">{{ ctx.hits?.[0]?.datum }}</p>
+          <p v-if="!props.tooltip?.title && !props.tooltip?.label">{{ ctx.hit.datum }}</p>
         </div>
       </FloatingTooltip>
       <UniversalChartComponent :chart="chart" />
@@ -36,7 +36,7 @@ import { AutoLabels, Options } from '@/shared/uiKit/chart/universalChart/labels/
 import { steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator.ts'
 import { PlotAreaBorder } from '@/shared/uiKit/chart/universalChart/plot/axis/PlotAreaBorder'
 import { ref, watchEffect } from 'vue'
-import { Bar } from '@/shared/uiKit/chart/universalChart/plot/bar/Bar.ts'
+import { Bar, BarDataset } from '@/shared/uiKit/chart/universalChart/plot/bar/Bar.ts'
 import { Classes } from '@/shared/uiKit/chart/universalChart/utils/utils.ts'
 import { BloomColorVariant, getColor } from '../../bloomColors.ts'
 import { ChartClip } from '@/shared/uiKit/chart/universalChart/defs/ChartClip.ts'
@@ -69,12 +69,12 @@ const props = defineProps<{
   data: number[] | number[][] | { values: number[], classes: Classes }[],
   blurRadius?: number,
   tooltip?: {
-    title?: (ctx: TooltipCtx<BarItemHit>) => string,
-    label?: (ctx: TooltipCtx<BarItemHit>) => string,
+    title?: (ctx: TooltipCtx<BarItemHit<string | number>>) => string,
+    label?: (ctx: TooltipCtx<BarItemHit<string | number>>) => string,
   }
 }>()
 
-const tooltipCtx = ref<TooltipCtx<BarItemHit> | null>(null)
+const tooltipCtx = ref<TooltipCtx<BarItemHit<string | number>> | null>(null)
 
 const chart = new UniversalChart({ layoutVariant: 'vertical', renderManager: globalChartRenderManagerSteps4 })
 
@@ -89,7 +89,7 @@ const labelsX = new AutoLabels('horizontal', {
   to: -1,
 })
 
-const bar = new Bar({
+const bar = new Bar<string | number>({
   classes: props.classes,
   strategy: {
     type: 'grouped',
@@ -144,13 +144,15 @@ watchEffect(() => {
     labelForValue: (value) => `${props.labels[value] ?? ''}`,
   })
 
-  if (Array.isArray(props.data[0])) {
-    bar.setDatasets((props.data as number[][]).map((values, i) => ({ values })))
-  } else if (typeof props.data[0] === 'object') {
-    bar.setDatasets((props.data as { values: number[], classes: Classes }[]).map((d) => ({ values: d.values, classes: d.classes })))
-  } else {
-    bar.setDatasets([{ values: props.data as number[] }])
-  }
+  let datasets: BarDataset[]
+  if (Array.isArray(props.data[0]))
+    datasets = (props.data as number[][]).map(values => ({ values }))
+  else if (typeof props.data[0] === 'object')
+    datasets = (props.data as { values: number[], classes: Classes }[]).map(d => ({ values: d.values, classes: d.classes }))
+  else
+    datasets = [{ values: props.data as number[] }]
+
+  bar.setData({ categories: props.labels, datasets })
 
   const size = bar.getBounds()
 

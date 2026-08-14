@@ -4,7 +4,7 @@ import { InteractionResolveContext, InteractionResolver } from '../../interactio
 import { Selection } from '../../interaction/core/Selection'
 import { ChartSpace } from '../../utils/ChartSpace'
 import { Point } from '../../utils/Point'
-import type { BarDataset, BarLayoutItem } from './Bar'
+import type { BarDataset, BarDatum, BarLayoutItem } from './Bar'
 
 export type BarGapPolicy = 'miss' | 'nearest'
 export type BarHitArea = 'geometry' | 'vertical'
@@ -19,20 +19,24 @@ export type BarContainsGroupOptions = Pick<BarContainsOptions, 'groupGaps' | 'hi
 export type BarGeometryScope = 'group'
 export type BarRelation = 'group' | 'dataset'
 
-export type BarItemHit = InteractionHit<number, 'bar-item', BarGeometryScope> & {
+export type BarItemHit<TCategory = number, TBarDatum extends BarDatum = number> = InteractionHit<TBarDatum, 'bar-item', BarGeometryScope> & {
+  readonly value: number
   readonly datasetIndex: number
   readonly categoryIndex: number
-  readonly dataset: BarDataset
+  readonly category: TCategory
+  readonly dataset: BarDataset<TBarDatum>
 }
 
-export type BarGroupHit = InteractionHit<readonly (number | undefined)[], 'bar-group'> & {
+export type BarGroupHit<TCategory = number, TBarDatum extends BarDatum = number> = InteractionHit<readonly (TBarDatum | undefined)[], 'bar-group'> & {
   readonly categoryIndex: number
+  readonly category: TCategory
 }
 
-export type BarPlotAccess = {
-  datasets(): readonly BarDataset[]
+export type BarPlotAccess<TCategory = number, TBarDatum extends BarDatum = number> = {
+  categories(): readonly TCategory[]
+  datasets(): readonly BarDataset<TBarDatum>[]
   categoryCount(): number
-  categoryLayout(categoryIndex: number, space: ChartSpace): readonly BarLayoutItem[]
+  categoryLayout(categoryIndex: number, space: ChartSpace): readonly BarLayoutItem<TBarDatum>[]
   strategyType(): 'grouped' | 'stacked'
 }
 
@@ -40,21 +44,21 @@ function barItemKey(datasetIndex: number, categoryIndex: number): string {
   return `${datasetIndex}:${categoryIndex}`
 }
 
-export class BarInteractionSource {
+export class BarInteractionSource<TCategory = number, TBarDatum extends BarDatum = number> {
 
   readonly id = Symbol('BarInteractionSource')
 
-  constructor(private readonly plot: BarPlotAccess) { }
+  constructor(private readonly plot: BarPlotAccess<TCategory, TBarDatum>) { }
 
-  contains(options: BarContainsOptions = {}): BarItemSelection {
+  contains(options: BarContainsOptions = {}): BarItemSelection<TCategory, TBarDatum> {
     return new BarContainsSelection(this, options.gaps ?? 'nearest', options.groupGaps ?? 'miss', options.hitArea ?? 'geometry')
   }
 
-  containsGroup(options: BarContainsGroupOptions = {}): Selection<BarGroupHit> {
+  containsGroup(options: BarContainsGroupOptions = {}): Selection<BarGroupHit<TCategory, TBarDatum>> {
     return new BarContainsGroupSelection(this, options.groupGaps ?? 'miss', options.hitArea ?? 'geometry')
   }
 
-  hitAt(pointer: Point, gaps: BarGapPolicy, groupGaps: BarGapPolicy, hitArea: BarHitArea, space: ChartSpace): BarItemHit | null {
+  hitAt(pointer: Point, gaps: BarGapPolicy, groupGaps: BarGapPolicy, hitArea: BarHitArea, space: ChartSpace): BarItemHit<TCategory, TBarDatum> | null {
     const categoryIndex = this.resolveCategory(pointer, space)
     if (categoryIndex === null) return null
 
@@ -62,7 +66,7 @@ export class BarInteractionSource {
     const items = this.plot.categoryLayout(categoryIndex, space)
     const hitPointer = groupGaps === 'nearest' && items.length > 0 ? clampX(pointer, items[0].groupRect) : pointer
 
-    let found: BarLayoutItem | null = null
+    let found: BarLayoutItem<TBarDatum> | null = null
     for (const item of items) {
       if (item.value === 0) continue
 
@@ -73,7 +77,7 @@ export class BarInteractionSource {
     return found ? this.createHit(found, pointer) : null
   }
 
-  hitGroupAt(pointer: Point, groupGaps: BarGapPolicy, hitArea: BarHitArea, space: ChartSpace): BarGroupHit | null {
+  hitGroupAt(pointer: Point, groupGaps: BarGapPolicy, hitArea: BarHitArea, space: ChartSpace): BarGroupHit<TCategory, TBarDatum> | null {
     const categoryIndex = this.resolveCategory(pointer, space)
     if (categoryIndex === null) return null
 
@@ -91,12 +95,12 @@ export class BarInteractionSource {
     return categoryAt(pointer.x, space, this.plot.categoryCount())
   }
 
-  groupItems(categoryIndex: number, space: ChartSpace): readonly BarLayoutItem[] {
+  groupItems(categoryIndex: number, space: ChartSpace): readonly BarLayoutItem<TBarDatum>[] {
     return this.plot.categoryLayout(categoryIndex, space)
   }
 
-  datasetItems(datasetIndex: number, space: ChartSpace): readonly BarLayoutItem[] {
-    const items: BarLayoutItem[] = []
+  datasetItems(datasetIndex: number, space: ChartSpace): readonly BarLayoutItem<TBarDatum>[] {
+    const items: BarLayoutItem<TBarDatum>[] = []
     const count = this.plot.categoryCount()
 
     for (let categoryIndex = 0; categoryIndex < count; categoryIndex++) {
@@ -107,11 +111,11 @@ export class BarInteractionSource {
     return items
   }
 
-  createHit(item: BarLayoutItem, pointer: Point): BarItemHit {
+  createHit(item: BarLayoutItem<TBarDatum>, pointer: Point): BarItemHit<TCategory, TBarDatum> {
     return {
       kind: 'bar-item',
       sourceId: this.id,
-      datum: item.value,
+      datum: item.datum,
       identity: { sourceId: this.id, kind: 'item', key: barItemKey(item.datasetIndex, item.categoryIndex) },
       memberships: [
         { sourceId: this.id, kind: 'dataset', key: item.datasetIndex },
@@ -122,13 +126,15 @@ export class BarInteractionSource {
       distance: distanceToRect(item.rect, pointer),
       contains: rectContains(item.rect, pointer),
       targets: [item.target],
+      value: item.value,
       datasetIndex: item.datasetIndex,
       categoryIndex: item.categoryIndex,
+      category: this.plot.categories()[item.categoryIndex],
       dataset: this.plot.datasets()[item.datasetIndex],
     }
   }
 
-  private createGroupHit(categoryIndex: number, items: readonly BarLayoutItem[], hitArea: BarHitArea, pointer: Point, space: ChartSpace): BarGroupHit {
+  private createGroupHit(categoryIndex: number, items: readonly BarLayoutItem<TBarDatum>[], hitArea: BarHitArea, pointer: Point, space: ChartSpace): BarGroupHit<TCategory, TBarDatum> {
     const groupRect = items[0].groupRect
     const yRange: readonly [number, number] = hitArea === 'vertical'
       ? [space.layout.y, space.layout.y + space.layout.height]
@@ -148,28 +154,29 @@ export class BarInteractionSource {
       contains: rectContains(groupRect, pointer),
       targets: items.map(item => item.target),
       categoryIndex,
+      category: this.plot.categories()[categoryIndex],
     }
   }
 }
 
-export abstract class BarItemSelection extends Selection<BarItemHit> {
+export abstract class BarItemSelection<TCategory = number, TBarDatum extends BarDatum = number> extends Selection<BarItemHit<TCategory, TBarDatum>> {
 
-  constructor(protected readonly source: BarInteractionSource) {
+  constructor(protected readonly source: BarInteractionSource<TCategory, TBarDatum>) {
     super()
   }
 
-  related(relation: BarRelation): Selection<BarItemHit> {
+  related(relation: BarRelation): Selection<BarItemHit<TCategory, TBarDatum>> {
     return new BarRelatedSelection(this, this.source, relation)
   }
 }
 
-class BarContainsSelection extends BarItemSelection {
+class BarContainsSelection<TCategory, TBarDatum extends BarDatum> extends BarItemSelection<TCategory, TBarDatum> {
 
-  constructor(source: BarInteractionSource, private readonly gaps: BarGapPolicy, private readonly groupGaps: BarGapPolicy, private readonly hitArea: BarHitArea) {
+  constructor(source: BarInteractionSource<TCategory, TBarDatum>, private readonly gaps: BarGapPolicy, private readonly groupGaps: BarGapPolicy, private readonly hitArea: BarHitArea) {
     super(source)
   }
 
-  resolve(ctx: InteractionResolveContext): readonly BarItemHit[] {
+  resolve(ctx: InteractionResolveContext): readonly BarItemHit<TCategory, TBarDatum>[] {
     const pointer = ctx.input.pointer
     if (!pointer) return []
 
@@ -178,13 +185,13 @@ class BarContainsSelection extends BarItemSelection {
   }
 }
 
-class BarContainsGroupSelection extends Selection<BarGroupHit> {
+class BarContainsGroupSelection<TCategory, TBarDatum extends BarDatum> extends Selection<BarGroupHit<TCategory, TBarDatum>> {
 
-  constructor(private readonly source: BarInteractionSource, private readonly groupGaps: BarGapPolicy, private readonly hitArea: BarHitArea) {
+  constructor(private readonly source: BarInteractionSource<TCategory, TBarDatum>, private readonly groupGaps: BarGapPolicy, private readonly hitArea: BarHitArea) {
     super()
   }
 
-  resolve(ctx: InteractionResolveContext): readonly BarGroupHit[] {
+  resolve(ctx: InteractionResolveContext): readonly BarGroupHit<TCategory, TBarDatum>[] {
     const pointer = ctx.input.pointer
     if (!pointer) return []
 
@@ -193,21 +200,21 @@ class BarContainsGroupSelection extends Selection<BarGroupHit> {
   }
 }
 
-class BarRelatedSelection extends Selection<BarItemHit> {
+class BarRelatedSelection<TCategory, TBarDatum extends BarDatum> extends Selection<BarItemHit<TCategory, TBarDatum>> {
 
   constructor(
-    private readonly parent: InteractionResolver<BarItemHit>,
-    private readonly source: BarInteractionSource,
+    private readonly parent: InteractionResolver<BarItemHit<TCategory, TBarDatum>>,
+    private readonly source: BarInteractionSource<TCategory, TBarDatum>,
     private readonly relation: BarRelation
   ) {
     super()
   }
 
-  resolve(ctx: InteractionResolveContext): readonly BarItemHit[] {
+  resolve(ctx: InteractionResolveContext): readonly BarItemHit<TCategory, TBarDatum>[] {
     const pointer = ctx.input.pointer
     if (!pointer) return []
 
-    const hits: BarItemHit[] = []
+    const hits: BarItemHit<TCategory, TBarDatum>[] = []
     for (const hit of ctx.frame.resolve(this.parent, ctx.input)) {
       const items = this.relation === 'group'
         ? this.source.groupItems(hit.categoryIndex, ctx.space)
@@ -256,7 +263,7 @@ function distanceToRect(rect: InteractionBounds, point: Point): number {
   return Math.hypot(dx, dy)
 }
 
-function itemGeometry(item: BarLayoutItem): InteractionGeometry {
+function itemGeometry<TBarDatum extends BarDatum>(item: BarLayoutItem<TBarDatum>): InteractionGeometry {
   const anchor = {
     x: (item.rect.minX + item.rect.maxX) / 2,
     y: item.value < 0 ? item.rect.maxY : item.rect.minY,
@@ -265,7 +272,7 @@ function itemGeometry(item: BarLayoutItem): InteractionGeometry {
   return geometryFromRanges(anchor, [item.rect.minX, item.rect.maxX], [item.rect.minY, item.rect.maxY])
 }
 
-function groupGeometry(item: BarLayoutItem): InteractionGeometry {
+function groupGeometry<TBarDatum extends BarDatum>(item: BarLayoutItem<TBarDatum>): InteractionGeometry {
   const anchor = {
     x: (item.groupRect.minX + item.groupRect.maxX) / 2,
     y: (item.groupRect.minY + item.groupRect.maxY) / 2,

@@ -14,8 +14,11 @@ export type TooltipBox = {
   readonly left: number
 }
 
+type NonEmptyArray<T> = readonly [T, ...T[]]
+
 export type TooltipCtx<THit extends InteractionHit = InteractionHit> = {
-  readonly hits: readonly THit[]
+  readonly hit: THit
+  readonly hits: NonEmptyArray<THit>
   readonly highlights: readonly HighlightSnapshot[]
   isHighlighted(hit: InteractionHit, highlight: HighlightRef): boolean
 
@@ -41,6 +44,10 @@ type TooltipPointer = {
   readonly point: Point
   readonly cursor: Position
   readonly isTouch: boolean
+}
+
+function isNonEmpty<T>(items: readonly T[]): items is NonEmptyArray<T> {
+  return items.length > 0
 }
 
 export class ChartTooltip<THit extends InteractionHit = InteractionHit> implements InteractionComponent {
@@ -84,7 +91,7 @@ export class ChartTooltip<THit extends InteractionHit = InteractionHit> implemen
     const controller = this.controller
     const hits = this.hits
 
-    if (!controller || hits.length === 0) {
+    if (!controller || !isNonEmpty(hits)) {
       this.hide()
       return
     }
@@ -107,7 +114,7 @@ export class ChartTooltip<THit extends InteractionHit = InteractionHit> implemen
     this.options.onHide?.()
   }
 
-  private pointerFor(controller: InteractionController, frame: InteractionFrame, hits: readonly THit[]): TooltipPointer {
+  private pointerFor(controller: InteractionController, frame: InteractionFrame, hits: NonEmptyArray<THit>): TooltipPointer {
     const local = frame.input.pointer
     if (local && local.cursor) return { point: local.point, cursor: local.cursor, isTouch: local.isTouch }
 
@@ -126,13 +133,13 @@ export class ChartTooltip<THit extends InteractionHit = InteractionHit> implemen
     }
   }
 
-  private nearestAnchor(hits: readonly THit[]): Point {
+  private nearestAnchor(hits: NonEmptyArray<THit>): Point {
     let nearest = hits[0]
     for (let i = 1; i < hits.length; i++) if (hits[i].distance <= nearest.distance) nearest = hits[i]
     return nearest.geometry.anchor
   }
 
-  private buildContext(controller: InteractionController, space: ChartSpace, pointer: TooltipPointer, hits: readonly THit[]): TooltipCtx<THit> {
+  private buildContext(controller: InteractionController, space: ChartSpace, pointer: TooltipPointer, hits: NonEmptyArray<THit>): TooltipCtx<THit> {
     const pivot = this.pivotFor(controller, hits, pointer)
 
     const topLeft = controller.chartToPage({ x: space.layout.x, y: space.layout.y })
@@ -146,6 +153,7 @@ export class ChartTooltip<THit extends InteractionHit = InteractionHit> implemen
     }
 
     return {
+      hit: hits[0],
       hits,
       highlights,
       isHighlighted: (hit, highlight) => {
@@ -167,7 +175,7 @@ export class ChartTooltip<THit extends InteractionHit = InteractionHit> implemen
     }
   }
 
-  private pivotFor(controller: InteractionController, hits: readonly THit[], pointer: TooltipPointer): Point {
+  private pivotFor(controller: InteractionController, hits: NonEmptyArray<THit>, pointer: TooltipPointer): Point {
     const mode = this.options.tooltipPivot ?? 'cursor'
     if (mode === 'cursor') return { x: pointer.cursor.clientX, y: pointer.cursor.clientY }
     if (mode === 'nearest') return controller.chartToPage(this.nearestAnchor(hits))

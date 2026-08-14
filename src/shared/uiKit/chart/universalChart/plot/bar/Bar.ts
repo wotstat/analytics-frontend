@@ -42,9 +42,16 @@ export type StackedBarStrategy = BaseBarStrategy & {
 
 export type BarStrategy = GroupedBarStrategy | StackedBarStrategy
 
-export type BarDataset = {
-  values: number[]
+export type BarDatum = number | { value: number }
+
+export type BarDataset<TBarDatum extends BarDatum = number> = {
+  values: readonly TBarDatum[]
   classes?: Classes
+}
+
+export type BarData<TCategory = number, TBarDatum extends BarDatum = number> = {
+  categories: readonly TCategory[]
+  datasets: readonly BarDataset<TBarDatum>[]
 }
 
 export type Options = {
@@ -60,9 +67,10 @@ type CornerRadii = {
   bottomLeft: number
 }
 
-export type BarLayoutItem = {
+export type BarLayoutItem<TBarDatum extends BarDatum = number> = {
   readonly datasetIndex: number
   readonly categoryIndex: number
+  readonly datum: TBarDatum
   readonly value: number
   readonly rect: InteractionBounds
   readonly slotRect: InteractionBounds
@@ -71,7 +79,7 @@ export type BarLayoutItem = {
   readonly radii: CornerRadii
 }
 
-type BarLayoutDraft = Omit<BarLayoutItem, 'groupRect'>
+type BarLayoutDraft<TBarDatum extends BarDatum> = Omit<BarLayoutItem<TBarDatum>, 'groupRect'>
 
 type DatasetElements = {
   root: SVGGElement
@@ -79,8 +87,9 @@ type DatasetElements = {
   classes: string[]
 }
 
-type StackSegment = {
+type StackSegment<TBarDatum extends BarDatum> = {
   datasetIndex: number
+  datum: TBarDatum
   value: number
   start: number
   end: number
@@ -96,16 +105,23 @@ type GroupLayout = {
   width: number
 }
 
-export class Bar extends BasePlotRenderer {
-  protected datasets: BarDataset[] = []
+function valueFromDatum(datum: BarDatum | undefined): number | undefined {
+  if (datum === undefined) return undefined
+  return typeof datum === 'number' ? datum : datum.value
+}
+
+export class Bar<TCategory = number, TBarDatum extends BarDatum = number> extends BasePlotRenderer {
+  protected categories: readonly TCategory[] = []
+  protected datasets: readonly BarDataset<TBarDatum>[] = []
   protected strategy: BarStrategy
 
   private datasetElements: DatasetElements[] = []
 
   private layoutCacheKey: string | null = null
-  private readonly layoutCache = new Map<number, readonly BarLayoutItem[]>()
+  private readonly layoutCache = new Map<number, readonly BarLayoutItem<TBarDatum>[]>()
 
-  readonly interaction: BarInteractionSource = new BarInteractionSource({
+  readonly interaction: BarInteractionSource<TCategory, TBarDatum> = new BarInteractionSource({
+    categories: () => this.categories,
     datasets: () => this.datasets,
     categoryCount: () => this.getCategoryCount(),
     categoryLayout: (categoryIndex, space) => this.getCategoryLayout(categoryIndex, space),
@@ -118,12 +134,24 @@ export class Bar extends BasePlotRenderer {
     addClasses(this.root, 'bar-plot')
   }
 
-  setDatasets(datasets: BarDataset[]) {
-    this.datasets = datasets
+  setData(data: BarData<TCategory, TBarDatum>) {
+    if (data.datasets.some(dataset => dataset.values.length > data.categories.length))
+      throw new Error('Bar dataset cannot contain more values than categories')
+
+    this.categories = data.categories
+    this.datasets = data.datasets
     this.invalidateLayout()
     this.syncElements()
     this.requestRender()
     return this
+  }
+
+  setDatasets(this: Bar<number, TBarDatum>, datasets: readonly BarDataset<TBarDatum>[]) {
+    const categoryCount = datasets.reduce((max, dataset) => Math.max(max, dataset.values.length), 0)
+    return this.setData({
+      categories: Array.from({ length: categoryCount }, (_, index) => index),
+      datasets,
+    })
   }
 
   setStrategy(strategy: BarStrategy) {
@@ -133,7 +161,7 @@ export class Bar extends BasePlotRenderer {
     return this
   }
 
-  getCategoryLayout(categoryIndex: number, space: ChartSpace): readonly BarLayoutItem[] {
+  getCategoryLayout(categoryIndex: number, space: ChartSpace): readonly BarLayoutItem<TBarDatum>[] {
     const key = space.getHash()
     if (key !== this.layoutCacheKey) {
       this.layoutCacheKey = key
@@ -202,7 +230,7 @@ export class Bar extends BasePlotRenderer {
     }
   }
 
-  private calculateCategoryLayout(categoryIndex: number, space: ChartSpace): readonly BarLayoutItem[] {
+  private calculateCategoryLayout(categoryIndex: number, space: ChartSpace): readonly BarLayoutItem<TBarDatum>[] {
     if (isDegenerateSpace(space) || this.datasets.length === 0) return []
 
     const group = this.getGroupLayout(categoryIndex, space)
@@ -224,17 +252,18 @@ export class Bar extends BasePlotRenderer {
     return drafts.map(draft => ({ ...draft, groupRect }))
   }
 
-  private groupedLayout(categoryIndex: number, space: ChartSpace, group: GroupLayout, axisY: number): BarLayoutDraft[] {
+  private groupedLayout(categoryIndex: number, space: ChartSpace, group: GroupLayout, axisY: number): BarLayoutDraft<TBarDatum>[] {
     const datasetCount = this.datasets.length
     const { barWidth, innerPadding } = groupedBarMetrics(group.width, datasetCount, this.strategy.innerPadding ?? 0)
     const radius = this.strategy.radius ?? 0
     const groupRight = group.left + group.width
 
-    const drafts: BarLayoutDraft[] = []
+    const drafts: BarLayoutDraft<TBarDatum>[] = []
     for (let datasetIndex = 0; datasetIndex < datasetCount; datasetIndex++) {
-      const value = this.datasets[datasetIndex].values[categoryIndex]
+      const datum = this.datasets[datasetIndex].values[categoryIndex]
+      const value = valueFromDatum(datum)
       const target = this.datasetElements[datasetIndex]?.bars[categoryIndex]
-      if (!Number.isFinite(value) || !target) continue
+      if (value === undefined || !Number.isFinite(value) || !target) continue
 
       const left = group.left + datasetIndex * (barWidth + innerPadding)
       const yValue = space.chartToLayoutY(value)
@@ -257,6 +286,7 @@ export class Bar extends BasePlotRenderer {
       drafts.push({
         datasetIndex,
         categoryIndex,
+        datum,
         value,
         rect,
         slotRect,
@@ -268,8 +298,8 @@ export class Bar extends BasePlotRenderer {
     return drafts
   }
 
-  private stackedLayout(categoryIndex: number, space: ChartSpace, group: GroupLayout, axisY: number, strategy: StackedBarStrategy): BarLayoutDraft[] {
-    const byDataset = new Array<BarLayoutDraft | null>(this.datasets.length).fill(null)
+  private stackedLayout(categoryIndex: number, space: ChartSpace, group: GroupLayout, axisY: number, strategy: StackedBarStrategy): BarLayoutDraft<TBarDatum>[] {
+    const byDataset = new Array<BarLayoutDraft<TBarDatum> | null>(this.datasets.length).fill(null)
 
     this.fillStackSign(byDataset, categoryIndex, space, group, axisY, strategy, 'positive')
     this.fillStackSign(byDataset, categoryIndex, space, group, axisY, strategy, 'negative')
@@ -277,19 +307,20 @@ export class Bar extends BasePlotRenderer {
     for (let datasetIndex = 0; datasetIndex < this.datasets.length; datasetIndex++) {
       if (byDataset[datasetIndex]) continue
 
-      const value = this.datasets[datasetIndex].values[categoryIndex]
+      const datum = this.datasets[datasetIndex].values[categoryIndex]
+      const value = valueFromDatum(datum)
       const target = this.datasetElements[datasetIndex]?.bars[categoryIndex]
       if (value !== 0 || !target) continue
 
       const rect: InteractionBounds = { minX: group.left, maxX: group.left + group.width, minY: axisY, maxY: axisY }
-      byDataset[datasetIndex] = { datasetIndex, categoryIndex, value, rect, slotRect: rect, target, radii: emptyRadii() }
+      byDataset[datasetIndex] = { datasetIndex, categoryIndex, datum, value, rect, slotRect: rect, target, radii: emptyRadii() }
     }
 
-    return byDataset.filter((draft): draft is BarLayoutDraft => draft !== null)
+    return byDataset.filter((draft): draft is BarLayoutDraft<TBarDatum> => draft !== null)
   }
 
   private fillStackSign(
-    byDataset: (BarLayoutDraft | null)[],
+    byDataset: (BarLayoutDraft<TBarDatum> | null)[],
     categoryIndex: number,
     space: ChartSpace,
     group: GroupLayout,
@@ -297,18 +328,19 @@ export class Bar extends BasePlotRenderer {
     strategy: StackedBarStrategy,
     sign: 'positive' | 'negative',
   ) {
-    const segments: StackSegment[] = []
+    const segments: StackSegment<TBarDatum>[] = []
     let sum = 0
 
     for (let datasetIndex = 0; datasetIndex < this.datasets.length; datasetIndex++) {
-      const value = this.datasets[datasetIndex].values[categoryIndex]
-      if (!Number.isFinite(value) || value === 0) continue
+      const datum = this.datasets[datasetIndex].values[categoryIndex]
+      const value = valueFromDatum(datum)
+      if (value === undefined || !Number.isFinite(value) || value === 0) continue
       if (sign === 'positive' ? value < 0 : value > 0) continue
 
       const start = Math.abs(space.chartToLayoutY(sum) - axisY)
       sum += value
       const end = Math.abs(space.chartToLayoutY(sum) - axisY)
-      segments.push({ datasetIndex, value, start, end })
+      segments.push({ datasetIndex, datum, value, start, end })
     }
 
     if (segments.length === 0) return
@@ -335,6 +367,7 @@ export class Bar extends BasePlotRenderer {
       byDataset[segment.datasetIndex] = {
         datasetIndex: segment.datasetIndex,
         categoryIndex,
+        datum: segment.datum,
         value: segment.value,
         rect,
         slotRect,
@@ -408,9 +441,7 @@ export class Bar extends BasePlotRenderer {
   }
 
   private getCategoryCount() {
-    let count = 0
-    for (const dataset of this.datasets) count = Math.max(count, dataset.values.length)
-    return count
+    return this.categories.length
   }
 
   private getCategoryRange(index: number) {
@@ -419,15 +450,15 @@ export class Bar extends BasePlotRenderer {
 
     if (this.strategy.type === 'grouped') {
       for (const dataset of this.datasets) {
-        const value = dataset.values[index]
-        if (!Number.isFinite(value)) continue
+        const value = valueFromDatum(dataset.values[index])
+        if (value === undefined || !Number.isFinite(value)) continue
         min = Math.min(min, value)
         max = Math.max(max, value)
       }
     } else {
       for (const dataset of this.datasets) {
-        const value = dataset.values[index]
-        if (!Number.isFinite(value)) continue
+        const value = valueFromDatum(dataset.values[index])
+        if (value === undefined || !Number.isFinite(value)) continue
         if (value > 0) max += value
         else if (value < 0) min += value
       }
@@ -505,7 +536,7 @@ function stackSegmentRadii(
     }
 }
 
-function getStackGaps(segments: StackSegment[], innerPadding: number): Gap[] {
+function getStackGaps<TBarDatum extends BarDatum>(segments: readonly StackSegment<TBarDatum>[], innerPadding: number): Gap[] {
   const requestedPadding = Math.max(0, innerPadding)
   const gaps: Gap[] = []
 
