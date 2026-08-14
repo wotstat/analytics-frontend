@@ -68,7 +68,7 @@ export class BarInteractionSource<TCategory = number, TBarDatum extends BarDatum
 
     let found: BarLayoutItem<TBarDatum> | null = null
     for (const item of items) {
-      if (item.value === 0) continue
+      if (item.value === 0 && effectiveHitArea === 'geometry') continue
 
       const rect = gaps === 'nearest' ? item.slotRect : item.rect
       if (hitAreaContains(rect, hitPointer, effectiveHitArea)) found = item
