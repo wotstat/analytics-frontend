@@ -5,9 +5,8 @@
       ['--bar-color']: getColor(props.color).main,
       ['--bar-color-highlighted']: getColor(props.color).highlight,
     }">
-      <!-- <ShadowBar :data="chartData" :options="options" /> -->
       <FloatingTooltip :ctx="tooltipCtx" :animated="true" :animation-omega="20" :hideDelay="0" v-slot="{ ctx }"
-        :class="'mini-bar-tooltip'">
+        :class="'mini-bar-tooltip'" v-if="props.tooltip !== false">
         <div class="tooltip" :class="{
           ['has-label']: props.tooltip?.label,
           ['has-title']: props.tooltip?.title,
@@ -35,7 +34,7 @@ import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRender
 import { AutoLabels, Options } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels.ts'
 import { steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator.ts'
 import { PlotAreaBorder } from '@/shared/uiKit/chart/universalChart/plot/axis/PlotAreaBorder'
-import { ref, watchEffect } from 'vue'
+import { ref, watch, watchEffect } from 'vue'
 import { Bar, BarDataset } from '@/shared/uiKit/chart/universalChart/plot/bar/Bar.ts'
 import { Classes } from '@/shared/uiKit/chart/universalChart/utils/utils.ts'
 import { BloomColorVariant, getColor } from '../../bloomColors.ts'
@@ -63,15 +62,16 @@ const LABELS_OPTIONS: Options = {
 
 const props = defineProps<{
   status?: Status,
-  labels: (string | number)[],
+  labels?: (string | number)[],
   color: BloomColorVariant,
   classes?: Classes,
   data: number[] | number[][] | { values: number[], classes: Classes }[],
   blurRadius?: number,
+  centerLine?: boolean,
   tooltip?: {
     title?: (ctx: TooltipCtx<BarItemHit<string | number>>) => string,
     label?: (ctx: TooltipCtx<BarItemHit<string | number>>) => string,
-  }
+  } | false
 }>()
 
 const tooltipCtx = ref<TooltipCtx<BarItemHit<string | number>> | null>(null)
@@ -100,6 +100,8 @@ const bar = new Bar<string | number>({
   .filterBy(shadow)
   .clipBy(clipMain)
 
+// const verticalLine = new
+
 const selectedBarItem = bar.interaction.contains({
   hitArea: 'vertical',
   gaps: 'nearest',
@@ -122,11 +124,15 @@ const interactionController = new InteractionController()
 
 
 chart
-  .addSlot('bottom', labelsX, 'labels')
   .addPlot(border, 'ticks')
   .addPlot(bar, 'plot')
   .addDefs(clipMain, shadow, highlightedShadow)
   .addPlot(interactionController)
+
+watch(() => props.labels, (labels, old) => {
+  if (!old && labels) chart.addSlot('bottom', labelsX, 'labels')
+  if (!labels && old) chart.removeSlot(labelsX)
+}, { immediate: true })
 
 
 watchEffect(() => {
@@ -137,12 +143,16 @@ watchEffect(() => {
   shadow.updateOptions(shadowOptions)
   highlightedShadow.updateOptions(shadowOptions)
 
-  labelsX.updateOptions({
-    ...LABELS_OPTIONS,
-    from: 0,
-    to: props.labels.length - 1,
-    labelForValue: (value) => `${props.labels[value] ?? ''}`,
-  })
+  const labels = props.labels
+  if (labels) {
+    labelsX.updateOptions({
+      ...LABELS_OPTIONS,
+      from: 0,
+      to: labels.length - 1,
+      labelForValue: value => `${labels[value] ?? ''}`,
+    })
+  }
+
 
   let datasets: BarDataset[]
   if (Array.isArray(props.data[0]))
@@ -152,13 +162,14 @@ watchEffect(() => {
   else
     datasets = [{ values: props.data as number[] }]
 
-  bar.setData({ categories: props.labels, datasets })
+  bar.setData({ categories: labels, datasets })
 
   const size = bar.getBounds()
+  const categoryCount = datasets.reduce((max, dataset) => Math.max(max, dataset.values.length), 0)
 
   chart.setRenderBounds({
     minX: 0,
-    maxX: props.labels.length,
+    maxX: categoryCount,
     maxY: size.maxY * 1.1,
   })
 })

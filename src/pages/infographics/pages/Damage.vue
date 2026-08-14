@@ -11,11 +11,10 @@
     <div class="flex ver">
       <div class="grid">
         <div class="card chart bar height2 full-width-less-small">
-          <MiniBar :status="byShellResult.status" :data="byShellData.damage" color="yellow" :labels="shellLabels"
-            :callbacks="{
-              title: (t) => `${toPercent(t[0].raw as number)} выстрелов ${t[0].label} нанесли урон`,
-              label: () => ``,
-              beforeBody: () => `Среди попавших`
+          <MiniBarNew :status="byShellResult.status" :data="byShellData.damage" color="yellow" :labels="shellLabels"
+            :tooltip="{
+              title: (t) => `${toPercent(t.hit.datum)} выстрелов ${t.hit.category} нанесли урон`,
+              label: () => `Среди попавших`,
             }" />
           <p class="card-main-info description">Нанесли урон</p>
         </div>
@@ -30,12 +29,10 @@
         </div>
 
         <div class="card chart bar height2 full-width-less-small right-column">
-          <MiniBar :status="smallDamageResult.status" :data="smallDamageData" color="blue"
-            :labels="['1ХП', '2ХП', '3ХП', '4ХП', '5ХП']" :callbacks="{
-              title: (t) => `${toPercent(t[0].raw as number)} танков осталось с ${t[0].label}`,
-              label: () => ``,
-              beforeBody: () => `Среди группы до 5 ХП`
-
+          <MiniBarNew :status="smallDamageResult.status" :data="smallDamageData" color="blue"
+            :labels="['1ХП', '2ХП', '3ХП', '4ХП', '5ХП']" :tooltip="{
+              title: (t) => `${toPercent(t.hit.datum)} танков осталось с ${t.hit.category}`,
+              label: () => `Среди группы до 5 ХП`
             }" />
           <p class="card-main-info description">Осталось ХП после урона</p>
         </div>
@@ -63,9 +60,16 @@
 
 
         <div class="card chart bar big damage-distribution">
-          <MiniBar :status="damageDistributionResult.status" :data="damageDistributionData" :center-line="true"
+          <!-- <MiniBar :status="damageDistributionResult.status" :data="damageDistributionData" :center-line="true"
             color="green" :labels="damageLabels"
-            :callbacks="{ title: (t) => `${toPercent(t[0].raw as number)} выстрелов отклонились на ${t[0].label} от базового урона`, label: () => `` }" />
+            :callbacks="{ title: (t) => `${toPercent(t[0].raw as number)} выстрелов отклонились на ${t[0].label} от базового урона`, label: () => `` }" /> -->
+
+
+          <MiniBarNew :status="damageDistributionResult.status" :data="damageDistributionData" :center-line="true"
+            color="green" :labels="damageLabels" :tooltip="{
+              title: (t) => `${toPercent(t.hit.datum)} выстрелов отклонились на ${t.hit.category} от базового урона`
+            }" />
+
           <div class="absolute">
             <p class="card-main-info description">Распределение урона +- 25
             </p>
@@ -103,7 +107,6 @@ import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import { queryAsync, queryAsyncFirst } from '@/db'
 import { computed, watchEffect, useTemplateRef } from 'vue'
 import { useElementVisibility } from '@vueuse/core'
-import MiniBar from '@/pages/infographics/shared/widgets/charts/MiniBar.vue'
 import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import { normalizeArray } from '@/shared/utils/math'
 import { createFixedSpaceProcessor, createPercentProcessor } from '@/shared/utils/processors/processors'
@@ -111,6 +114,7 @@ import { shellNames } from '@/shared/game/wot'
 import QueryPreserveRouterLink from '@/pages/shared/sidebarLayout/QueryPreserveRouterLink.vue'
 import { bestMV } from '@/db/schema'
 import { useMeta } from '@/shared/composition/useMeta'
+import MiniBarNew from '../shared/widgets/charts/MiniBarNew.vue'
 
 const toPercent = createPercentProcessor(0)
 

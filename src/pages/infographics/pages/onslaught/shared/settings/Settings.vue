@@ -79,7 +79,7 @@ const seasonsData = queryAsync<{ region: string, season: string, start: string }
   select region, season,
         min(toStartOfDay(dateTime + interval ${getRegionIsoHourOffset(selectedRegion.value ?? 'RU')} hour)) as start
   from Event_OnComp7Info
-  where region in ('RU', 'EU', 'NA', 'ASIA', 'CN', 'CT')
+  where region in ('RU', 'EU', 'NA', 'ASIA', 'CN', 'CT', 'RPT')
   group by region, season
   order by start desc
 `, { settings: LONG_CACHE_SETTINGS })

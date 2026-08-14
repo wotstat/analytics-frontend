@@ -13,23 +13,29 @@
 
     <div class="flex hor-ver-small">
       <div class="card chart bar flex-1 flex ver gap-0">
-        <MiniBar :status="playerDamageDistribution.status" :data="playerDamageDistribution.data" color="orange"
-          :labels="places"
-          :callbacks="{ title: t => `В ${percentProcessor(t[0].raw as number)} боёв вы были топ-${t[0].label} по урону`, label: () => ``, afterBody: positionChartAfterBody(playerDamageDistribution) }" />
+        <MiniBarNew :status="playerDamageDistribution.status" :data="playerDamageDistribution.data" color="orange"
+          :labels="places" :tooltip="{
+            title: (t) => `В ${percentProcessor(t.hit.datum as number)} боёв вы были топ-${t.hit.category} по урону`,
+            label: t => battlesCount(playerDamageDistribution.absolute[t.hit.categoryIndex]),
+          }" />
         <p class="card-main-info description">Место по урону</p>
       </div>
 
       <div class="card chart bar flex-1 flex ver gap-0">
-        <MiniBar :status="playerAssistedDistribution.status" :data="playerAssistedDistribution.data" color="orange"
-          :labels="places"
-          :callbacks="{ title: (t) => `В ${percentProcessor(t[0].raw as number)} боёв вы были топ-${t[0].label} по насвету`, label: () => ``, afterBody: positionChartAfterBody(playerAssistedDistribution) }" />
+        <MiniBarNew :status="playerAssistedDistribution.status" :data="playerAssistedDistribution.data" color="orange"
+          :labels="places" :tooltip="{
+            title: (t) => `В ${percentProcessor(t.hit.datum as number)} боёв вы были топ-${t.hit.category} по насвету`,
+            label: t => battlesCount(playerAssistedDistribution.absolute[t.hit.categoryIndex]),
+          }" />
         <p class="card-main-info description">Место по насвету</p>
       </div>
 
       <div class="card chart bar flex-1 flex ver gap-0">
-        <MiniBar :status="playerKillDistribution.status" :data="playerKillDistribution.data" color="orange"
-          :labels="places"
-          :callbacks="{ title: (t) => `В ${percentProcessor(t[0].raw as number)} боёв вы были топ-${t[0].label} по фрагам`, label: () => ``, afterBody: positionChartAfterBody(playerKillDistribution) }" />
+        <MiniBarNew :status="playerKillDistribution.status" :data="playerKillDistribution.data" color="orange"
+          :labels="places" :tooltip="{
+            title: (t) => `В ${percentProcessor(t.hit.datum as number)} боёв вы были топ-${t.hit.category} по фрагам`,
+            label: t => battlesCount(playerKillDistribution.absolute[t.hit.categoryIndex]),
+          }" />
         <p class="card-main-info description">Место по фрагам</p>
       </div>
     </div>
@@ -160,12 +166,11 @@
 
 <script setup lang="ts">
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
-import MiniBar from '@/pages/infographics/shared/widgets/charts/MiniBar.vue'
 import { LONG_CACHE_SETTINGS, Status, mergeStatuses, queryAsync, queryAsyncFirst, queryComputed } from '@/db'
 import { useElementVisibility, useLocalStorage } from '@vueuse/core'
 import { computed, useTemplateRef } from 'vue'
 import PlayerResultTable from '@/pages/infographics/shared/widgets/PlayerResultTable.vue'
-import { createPercentProcessor, createFixedProcessor, createFixedSpaceProcessor } from '@/shared/utils/processors/processors'
+import { createPercentProcessor, createFixedProcessor, createFixedSpaceProcessor, createLogProcessor } from '@/shared/utils/processors/processors'
 import { getQueryStatParamsCache, useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import TeamLevelTable from '@/pages/infographics/shared/widgets/TeamLevelTable.vue'
 import { countLocalize } from '@/shared/i18n/i18n'
@@ -173,6 +178,9 @@ import { TooltipItem } from 'chart.js'
 import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
 import { useMeta } from '@/shared/composition/useMeta'
 import { normalizeArray } from '@/shared/utils/math'
+import MiniBarNew from '../shared/widgets/charts/MiniBarNew.vue'
+
+
 
 useMeta({
   title: 'Статистика результатов',
@@ -197,6 +205,9 @@ const places = new Array(15).fill(0).map((_, i) => i + 1)
 
 const infoVariant = useLocalStorage<'avg' | 'med' | 'max' | 'q3' | 'q7'>('infoResultsVariant', 'avg')
 const positionChartAfterBody = (distribution: any) => (t: TooltipItem<'bar'>[]) => `${distribution.absolute[t[0].dataIndex]} ${countLocalize(distribution.absolute[t[0].dataIndex], 'бой', 'боя', 'боёв')}`
+
+const logProcessor = createLogProcessor(0)
+const battlesCount = (value: number) => `${logProcessor(value)} ${countLocalize(value, 'бой', 'боя', 'боёв')}`
 
 const resultsList = [
   ['personal.damageDealt', 'damage'],

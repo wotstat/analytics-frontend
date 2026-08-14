@@ -141,8 +141,7 @@
           </div>
           <div class="image">
             <div class="card damage chart bar big flex ver gap-0">
-              <MiniBar tooltipDisabled ticksXDisabled :data="damageDistributionData" color="orange"
-                :labels="damageLabels" />
+              <MiniBarNew :data="damageDistributionData" color="orange" :tooltip="false" />
               <p class="card-main-info description">Распределение урона +- 25</p>
             </div>
           </div>
@@ -361,7 +360,6 @@
 <script setup lang="ts">
 import GenericInfoQuery from '@/pages/infographics/shared/widgets/GenericInfoQuery.vue'
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
-import MiniBar from '@/pages/infographics/shared/widgets/charts/MiniBar.vue'
 import ShotsCircle from '@/pages/infographics/shared/widgets/ShotsCircle.vue'
 import { LONG_CACHE_SETTINGS, queryAsync, queryAsyncFirst } from '@/db'
 import { computed } from 'vue'
@@ -374,6 +372,7 @@ import { useRouter } from 'vue-router'
 import { ms2sec, sec2minsec, ms2secLabel } from '@/shared/utils/time'
 import { useTweenComputed } from '@/shared/ui/tween/useTweenRef'
 import { normalizeArray } from '@/shared/utils/math'
+import MiniBarNew from './infographics/shared/widgets/charts/MiniBarNew.vue'
 
 useMeta({
   title: 'WOTSTAT - Сессионная аналитика для игр «Мир танков» и «World of Tanks»',
