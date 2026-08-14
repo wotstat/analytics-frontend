@@ -14,6 +14,13 @@ export class ChartAxis extends BasePlotRenderer {
     super(joinClasses('chart-axis', classes), options)
   }
 
+  setValue(value: number) {
+    if (value === this.value) return this
+    this.value = value
+    this.requestRender()
+    return this
+  }
+
   protected renderImpl(space: ChartSpace, overflow: Overflow, full: Size): void {
     const vertical = this.axis === 'vertical'
 

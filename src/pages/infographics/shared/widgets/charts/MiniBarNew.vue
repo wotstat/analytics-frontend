@@ -45,6 +45,7 @@ import { BarItemHit } from '@/shared/uiKit/chart/universalChart/plot/bar/BarInte
 import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
 import { Highlight } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/highlight/Highlight.ts'
 import { ChartShadowFilter } from '@/shared/uiKit/chart/universalChart/defs/ChartShadowFilter.ts'
+import { ChartAxis } from '@/shared/uiKit/chart/universalChart/plot/axis/ChartAxis.ts'
 
 
 const LABELS_OPTIONS: Options = {
@@ -83,6 +84,7 @@ const shadow = new ChartShadowFilter({ color: getColor(props.color).bloom })
 const highlightedShadow = new ChartShadowFilter({ color: getColor(props.color).bloom, strength: 0.8 })
 
 const border = new PlotAreaBorder({ bottom: 'full' })
+const centerLine = new ChartAxis('horizontal', 0, 'center-line')
 const labelsX = new AutoLabels('horizontal', {
   ...LABELS_OPTIONS,
   from: 0,
@@ -99,8 +101,6 @@ const bar = new Bar<string | number>({
 })
   .filterBy(shadow)
   .clipBy(clipMain)
-
-// const verticalLine = new
 
 const selectedBarItem = bar.interaction.contains({
   hitArea: 'vertical',
@@ -128,6 +128,11 @@ chart
   .addPlot(bar, 'plot')
   .addDefs(clipMain, shadow, highlightedShadow)
   .addPlot(interactionController)
+
+watch(() => props.centerLine, enabled => {
+  if (enabled) chart.addPlot(centerLine, 'ticks')
+  else chart.removePlot(centerLine)
+}, { immediate: true })
 
 watch(() => props.labels, (labels, old) => {
   if (!old && labels) chart.addSlot('bottom', labelsX, 'labels')
@@ -166,6 +171,7 @@ watchEffect(() => {
 
   const size = bar.getBounds()
   const categoryCount = datasets.reduce((max, dataset) => Math.max(max, dataset.values.length), 0)
+  centerLine.setValue(categoryCount / 2)
 
   chart.setRenderBounds({
     minX: 0,
@@ -234,6 +240,11 @@ watchEffect(() => {
 
     .plot-area-border path {
       stroke: rgb(255 255 255 / 15%);
+    }
+
+    .center-line line {
+      stroke: #5d5d5d;
+      stroke-dasharray: 5 5;
     }
 
     .bar {
