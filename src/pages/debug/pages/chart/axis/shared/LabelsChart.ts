@@ -189,8 +189,8 @@ export class LabelsChart extends UniversalChart {
     return this
   }
 
-  setDatasets(datasets: BarDataset[]) {
-    this.bar?.setDatasets(datasets)
+  setBarData(datasets: BarDataset[]) {
+    this.bar?.setData({ datasets })
     return this
   }
 

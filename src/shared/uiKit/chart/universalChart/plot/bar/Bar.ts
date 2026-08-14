@@ -50,7 +50,7 @@ export type BarDataset<TBarDatum extends BarDatum = number> = {
 }
 
 export type BarData<TCategory = number, TBarDatum extends BarDatum = number> = {
-  categories: readonly TCategory[]
+  categories?: readonly TCategory[]
   datasets: readonly BarDataset<TBarDatum>[]
 }
 
@@ -135,23 +135,12 @@ export class Bar<TCategory = number, TBarDatum extends BarDatum = number> extend
   }
 
   setData(data: BarData<TCategory, TBarDatum>) {
-    if (data.datasets.some(dataset => dataset.values.length > data.categories.length))
-      throw new Error('Bar dataset cannot contain more values than categories')
-
-    this.categories = data.categories
+    this.categories = data.categories ?? []
     this.datasets = data.datasets
     this.invalidateLayout()
     this.syncElements()
     this.requestRender()
     return this
-  }
-
-  setDatasets(this: Bar<number, TBarDatum>, datasets: readonly BarDataset<TBarDatum>[]) {
-    const categoryCount = datasets.reduce((max, dataset) => Math.max(max, dataset.values.length), 0)
-    return this.setData({
-      categories: Array.from({ length: categoryCount }, (_, index) => index),
-      datasets,
-    })
   }
 
   setStrategy(strategy: BarStrategy) {
@@ -441,7 +430,7 @@ export class Bar<TCategory = number, TBarDatum extends BarDatum = number> extend
   }
 
   private getCategoryCount() {
-    return this.categories.length
+    return this.datasets.reduce((max, dataset) => Math.max(max, dataset.values.length), 0)
   }
 
   private getCategoryRange(index: number) {

@@ -71,7 +71,7 @@
     </p>
 
     <p class="debug-note">
-      <b>setDatasets поверх ховера.</b> Кнопка «setDatasets заново» переустанавливает те же данные, не уводя курсор.
+      <b>setData поверх ховера.</b> Кнопка «setData заново» переустанавливает те же данные, не уводя курсор.
       Классы <span class="debug-value">bar</span> и классы датасета выставляются через
       <span class="debug-value">classList</span> адресно, поэтому классы, наложенные
       <span class="debug-value">Highlight</span>, остаются на месте: строка «классы на hovered bar» не теряет

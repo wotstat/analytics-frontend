@@ -86,7 +86,7 @@
     </label>
 
     <button class="debug-btn" @click="chart.resetView()">Сбросить область</button>
-    <button class="debug-btn" @click="chart.refreshDatasets()">setDatasets заново</button>
+    <button class="debug-btn" @click="chart.refreshDatasets()">setData заново</button>
   </div>
 
   <div class="debug-row">

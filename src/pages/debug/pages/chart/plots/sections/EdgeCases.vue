@@ -161,7 +161,7 @@ watchEffect(() => {
 
   line.setPoints(points)
   markers.setMarkers(points.filter((point): point is ChartPoint => point !== null))
-  bar.setDatasets([{ classes: 'series-b', values: barValues.value }])
+  bar.setData({ datasets: [{ classes: 'series-b', values: barValues.value }] })
 
   applyBounds(chart)
   afterRender(chart, sample)

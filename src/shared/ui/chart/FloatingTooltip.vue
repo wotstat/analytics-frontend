@@ -1,7 +1,7 @@
 <template>
   <PopoverStyled :target="target" :display="display" :placement="placement" :offset="props.offset"
     :viewport-offset="props.viewportOffset" :arrow-size="props.arrowSize ?? 7" :interactive="props.interactive ?? false"
-    :class="props.class">
+    :class="props.class" :snap-to-pixels="false">
     <slot v-if="lastCtx" :ctx="lastCtx"></slot>
   </PopoverStyled>
 </template>

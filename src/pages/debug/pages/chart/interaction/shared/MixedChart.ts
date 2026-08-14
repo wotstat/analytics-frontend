@@ -128,7 +128,7 @@ export class MixedChart extends UniversalChart {
       .addPlot(this.lineB)
       .addPlot(this.scatter)
 
-    this.bar.setDatasets(barDatasets(this.barVariant))
+    this.bar.setData({ datasets: barDatasets(this.barVariant) })
     const [pointsA, pointsB] = linePoints(this.lineVariant)
     this.lineA.setPoints(pointsA)
     this.lineB.setPoints(pointsB)
@@ -204,7 +204,7 @@ export class MixedChart extends UniversalChart {
   // Данные меняются без единого updateOptions(): selections читают plot state заново на каждом кадре
   changeBarData() {
     this.barVariant = this.barVariant === 'a' ? 'b' : 'a'
-    this.bar.setDatasets(barDatasets(this.barVariant))
+    this.bar.setData({ datasets: barDatasets(this.barVariant) })
   }
 
   changeLineData() {

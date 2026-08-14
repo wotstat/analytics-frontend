@@ -31,7 +31,7 @@
           <tr>
             <th>Bar</th>
             <td>столбцы, grouped или stacked</td>
-            <td><span class="debug-value">setDatasets</span>, <span class="debug-value">setStrategy</span></td>
+            <td><span class="debug-value">setData</span>, <span class="debug-value">setStrategy</span></td>
             <td><a href="#bar-layout">раскладка</a>, <a href="#bar-radius">радиусы</a></td>
           </tr>
           <tr>

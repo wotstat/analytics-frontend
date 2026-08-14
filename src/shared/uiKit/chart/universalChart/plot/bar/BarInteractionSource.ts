@@ -23,13 +23,13 @@ export type BarItemHit<TCategory = number, TBarDatum extends BarDatum = number> 
   readonly value: number
   readonly datasetIndex: number
   readonly categoryIndex: number
-  readonly category: TCategory
+  readonly category: TCategory | undefined
   readonly dataset: BarDataset<TBarDatum>
 }
 
 export type BarGroupHit<TCategory = number, TBarDatum extends BarDatum = number> = InteractionHit<readonly (TBarDatum | undefined)[], 'bar-group'> & {
   readonly categoryIndex: number
-  readonly category: TCategory
+  readonly category: TCategory | undefined
 }
 
 export type BarPlotAccess<TCategory = number, TBarDatum extends BarDatum = number> = {

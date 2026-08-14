@@ -178,7 +178,7 @@ function build() {
 watchEffect(() => {
   const { chart, bar } = instance.value
   bar.setStrategy(strategy.value)
-  bar.setDatasets(datasets.value)
+  bar.setData({ datasets: datasets.value })
   afterRender(chart, sample)
 })
 

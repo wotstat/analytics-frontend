@@ -163,10 +163,12 @@ function apply() {
 
   const bar = new Bar({
     strategy: { type: 'stacked', padding: 0.4, radius: 2, innerPadding: 1 },
-  }).setDatasets(bars.map((dataset, index) => ({
-    classes: index === 0 ? 'series-d' : 'series-e',
-    values: dataset.values.map(value => value * 4),
-  })))
+  }).setData({
+    datasets: bars.map((dataset, index) => ({
+      classes: index === 0 ? 'series-d' : 'series-e',
+      values: dataset.values.map(value => value * 4),
+    })),
+  })
 
   const corridor = new AutoLineArea({
     classes: ['corridor', 'series-c', 'solid-area'],

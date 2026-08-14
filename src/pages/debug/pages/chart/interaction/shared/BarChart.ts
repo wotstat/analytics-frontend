@@ -225,7 +225,7 @@ export class BarChart extends UniversalChart {
   private zonesSignature = ''
 
   // Данные, стратегия и selections пересобираются только при реальном изменении своих ключей: иначе
-  // каждый чекбокс дёргал бы setDatasets и updateOptions, сбрасывая applied-классы подсветок
+  // каждый чекбокс дёргал бы setData и updateOptions, сбрасывая applied-классы подсветок
   private appliedKeys = { data: '', strategy: '', selection: '', bounds: '' }
 
   constructor(init: Init) {
@@ -287,11 +287,11 @@ export class BarChart extends UniversalChart {
     return resetChartView(this)
   }
 
-  // Повторный setDatasets поверх активного ховера: с прежним setAttribute('class') он стирал бы классы
+  // Повторный setData поверх активного ховера: с прежним setAttribute('class') он стирал бы классы
   // Highlight, и diff подсветки разъехался бы с DOM
   refreshDatasets() {
     this.datasets = presetDatasets(this.strategy, this.config.preset)
-    this.bar.setDatasets(this.datasets)
+    this.bar.setData({ datasets: this.datasets })
     return this
   }
 

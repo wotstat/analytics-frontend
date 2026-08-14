@@ -168,7 +168,7 @@ const chart = markRaw(new LabelsChart({
 }))
 
 watchEffect(() => {
-  chart.setDatasets(barDatasets.value)
+  chart.setBarData(barDatasets.value)
   chart.setTickValues('horizontal', boundaries.value)
   chart.setXLabels(xLabels.value)
 })
