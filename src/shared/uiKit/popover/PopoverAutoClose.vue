@@ -17,6 +17,7 @@ import PopoverStyled from './PopoverStyled.vue'
 
 const props = withDefaults(defineProps<{
   target: PopoverTarget | null
+  snapToPixels?: boolean
   offset?: OffsetValue
   viewportOffset?: OffsetValue
   arrowSize?: number
@@ -27,6 +28,7 @@ const props = withDefaults(defineProps<{
   class?: string
   closeOnOutsideWindow?: CloseOnOutsideWindow
 }>(), {
+  snapToPixels: true,
   closeOnOutsideWindow: 'target',
 })
 
@@ -34,6 +36,7 @@ const display = defineModel<boolean>({ default: false })
 
 const targetProps = computed(() => ({
   target: props.target,
+  snapToPixels: props.snapToPixels,
   offset: props.offset,
   viewportOffset: props.viewportOffset,
   arrowSize: props.arrowSize,

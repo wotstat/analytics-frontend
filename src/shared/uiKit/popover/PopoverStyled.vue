@@ -1,5 +1,5 @@
 <template>
-  <PopoverAnimated :target :display :offset="targetOffset" :viewportOffset :placement :preserveLastPlacement :styles="{
+  <PopoverAnimated :target :display :snapToPixels :offset="targetOffset" :viewportOffset :placement :preserveLastPlacement :styles="{
     ...styles,
     '--enter-duration': enterAnimationDuration,
     '--exit-duration': exitAnimationDuration,
@@ -38,6 +38,7 @@ import PopoverAnimated from './PopoverAnimated.vue'
 
 const { target,
   display,
+  snapToPixels = true,
   offset,
   viewportOffset = 10,
   placement,
@@ -52,6 +53,7 @@ const { target,
 } = defineProps<{
   target: PopoverTarget | null
   display: boolean
+  snapToPixels?: boolean
   offset?: OffsetValue
   viewportOffset?: OffsetValue
   arrowSize?: number

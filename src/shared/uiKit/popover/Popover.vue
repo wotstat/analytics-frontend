@@ -16,14 +16,15 @@
 
 <script setup lang="ts">
 import { computed, onBeforeMount, onUnmounted, ref, shallowRef, triggerRef, watch, useTemplateRef, RendererElement, onMounted } from 'vue'
-import { Bbox, calculatePopoverPosition, generateOffset, getArrowPosition, getParams, getViewportRect, isParamsEqual, OffsetValue, Params, PlacementParam, PlacementWithModifiers, PopoverTarget, TargetRect } from './utils'
+import { Bbox, calculatePopoverPosition, generateOffset, getArrowPosition, getParams, getViewportRect, isParamsEqual, OffsetValue, Params, PlacementParam, PlacementWithModifiers, PopoverTarget, roundDpr, TargetRect } from './utils'
 import { useEventListener } from '@vueuse/core'
 import { getPopoverRoot } from './popoverRoot'
 
 const targetParams = shallowRef<Params | null>(null)
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   target: PopoverTarget | null
+  snapToPixels?: boolean
   display: boolean
   offset?: OffsetValue
   viewportOffset?: OffsetValue
@@ -31,7 +32,9 @@ const props = defineProps<{
   preserveLastPlacement?: boolean
   styles?: Record<string, string>
   teleportTo?: string | RendererElement | null
-}>()
+}>(), {
+  snapToPixels: true,
+})
 
 const emit = defineEmits<{
   (e: 'pointerDownOutside', event: PointerEvent): void,
@@ -189,8 +192,12 @@ watch(() => positions.value?.arrowDirection, (direction, old) => {
 const targetStyle = computed(() => {
   if (!positions.value) return {}
 
+  const transform = props.snapToPixels ?
+    `translate3d(${roundDpr(positions.value.x + window.scrollX)}px, ${roundDpr(positions.value.y + window.scrollY)}px, 0px)` :
+    `translate3d(${positions.value.x + window.scrollX}px, ${positions.value.y + window.scrollY}px, 0px)`
+
   return {
-    transform: `translate3d(${Math.round(positions.value.x + window.scrollX)}px, ${Math.round(positions.value.y + window.scrollY)}px, 0px)`,
+    transform,
     ...props.styles
   }
 })
