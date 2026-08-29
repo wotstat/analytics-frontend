@@ -5,7 +5,7 @@
     <div class="map-column">
       <div class="map-shell">
         <Minimap :tag="replay.raw.battle.map.geometry" :gameplay="replay.raw.battle.mode.gameplayName" :team="allyTeam"
-          :show-bases="true" v-slot="{ width, height }">
+          size="medium" :show-bases="true" v-slot="{ width, height }">
           <ProjectileCanvas :replay :tick />
 
           <div class="tank-marker" v-for="frame in visibleTanks" :key="frame.life.raw.lifeId" :class="[

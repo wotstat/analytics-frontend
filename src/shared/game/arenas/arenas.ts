@@ -10,20 +10,23 @@ export function tagToImageName(tag: string): string {
 export function minimapUrl(tag: string,
   game: GameVendor = 'mt',
   gameplay: null | 'comp7' | (string & {}) = null,
-  format: 'webp' | 'png' = 'webp'): string {
+  format: 'webp' | 'png' = 'webp',
+  size: 'small' | 'medium' = 'small'): string {
 
   if (tag.startsWith('spaces/')) tag = tag.replace('spaces/', '')
 
   const gamePrefix = game === 'mt' ? 'mt' : 'wot'
-  const defaultUrl = `${STATIC_URL}/${gamePrefix}/latest/arenas/minimap/${tag}.${format}`
-  if (!gameplay) return defaultUrl
+  const hasComp7Minimap = gameplay
+    ? getArenaMeta(game, tag, gameplay)?.minimap.includes('_comp7') ?? false
+    : false
 
-  const meta = getArenaMeta(game, tag, gameplay || 'ctf')
-  if (!meta) return defaultUrl
+  if (size === 'medium') {
+    const fileName = hasComp7Minimap ? 'mmap_comp7' : 'mmap'
+    return `${STATIC_URL}/${gamePrefix}/latest/arenas/minimap-medium/${tag}/${fileName}.${format}`
+  }
 
-  if (meta.minimap.includes('_comp7')) return `${STATIC_URL}/${gamePrefix}/latest/arenas/minimap/comp7/${tag}.${format}`
-
-  return defaultUrl
+  const directory = hasComp7Minimap ? 'minimap/comp7' : 'minimap'
+  return `${STATIC_URL}/${gamePrefix}/latest/arenas/${directory}/${tag}.${format}`
 }
 
 type Arena = {

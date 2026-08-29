@@ -1,6 +1,6 @@
 <template>
   <div class="minimap">
-    <MinimapBackground :tag="tag" :gameplay="gameplay" :game="game" :format="'webp'" class="background" />
+    <MinimapBackground :tag="tag" :size="size" :gameplay="gameplay" :game="game" :format="'webp'" class="background" />
     <MinimapBases :tag="tag" :gameplay="gameplay" :game="game" :team="props.team" v-if="showBases" />
     <div class="overlay" ref="overlay" v-if="slots.default">
       <slot v-bind="{ width, height }" />
@@ -19,6 +19,7 @@ import { useElementSize } from '@vueuse/core'
 const props = withDefaults(defineProps<{
   game?: GameVendor;
   gameplay?: string;
+  size?: 'small' | 'medium';
   tag: string;
   team?: number;
   showBases?: boolean;

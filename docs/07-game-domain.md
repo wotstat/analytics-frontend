@@ -20,7 +20,7 @@
 ## Арены (`arenas/`)
 
 - `arenas.ts` — данные арен; тег арены — `spaces/xxx` (в локализации без префикса).
-- `minimap/Minimap.vue` — миникарта с фоном (`minimapBackground/`) и базами (`minimapBases/`); фоны — со статик-сервера.
+- `minimap/Minimap.vue` — миникарта с фоном (`minimapBackground/`) и базами (`minimapBases/`); фоны — со статик-сервера. Проп `size` (`'small' | 'medium'`, по умолчанию `'small'`) выбирает разрешение ресурса, но не CSS-размер компонента. `minimapUrl(tag, game, gameplay, format, size)` сохраняет прежние первые четыре аргумента: small-фоны лежат в `arenas/minimap/{tag}` (вариант Натиска — `minimap/comp7/{tag}`), medium — в `arenas/minimap-medium/{tag}/mmap` (вариант Натиска — `mmap_comp7`). Comp7-вариант выбирается только когда `getArenaMeta(...)?.minimap` содержит `_comp7`; при отсутствии меты возвращается обычный фон выбранного размера.
 
 ## Селекторы фильтров (`selectors/`)
 

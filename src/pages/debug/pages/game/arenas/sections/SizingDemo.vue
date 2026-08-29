@@ -15,6 +15,13 @@
       <select v-model="gameplay">
         <option v-for="g in gameplays" :key="g" :value="g">{{ g }}</option>
       </select>
+      <label class="debug-control">
+        <span class="debug-label">ресурс</span>
+        <select v-model="size">
+          <option value="small">small</option>
+          <option value="medium">medium</option>
+        </select>
+      </label>
     </div>
 
     <div class="debug-row sizes">
@@ -22,7 +29,7 @@
         <span class="debug-label">крошечный, 40×40</span>
         <div class="debug-stage center">
           <div class="box tiny">
-            <Minimap :tag="tag" :game="game" :gameplay="gameplay" />
+            <Minimap :tag="tag" :game="game" :gameplay="gameplay" :size="size" />
           </div>
         </div>
       </div>
@@ -31,7 +38,7 @@
         <span class="debug-label">огромный, 480×480</span>
         <div class="debug-stage center">
           <div class="box huge">
-            <Minimap :tag="tag" :game="game" :gameplay="gameplay" />
+            <Minimap :tag="tag" :game="game" :gameplay="gameplay" :size="size" />
           </div>
         </div>
       </div>
@@ -40,7 +47,7 @@
         <span class="debug-label">широкий неквадратный, 420×140</span>
         <div class="debug-stage center">
           <div class="box wide">
-            <Minimap :tag="tag" :game="game" :gameplay="gameplay" />
+            <Minimap :tag="tag" :game="game" :gameplay="gameplay" :size="size" />
           </div>
         </div>
       </div>
@@ -49,7 +56,7 @@
         <span class="debug-label">узкий неквадратный, 140×420</span>
         <div class="debug-stage center">
           <div class="box tall">
-            <Minimap :tag="tag" :game="game" :gameplay="gameplay" />
+            <Minimap :tag="tag" :game="game" :gameplay="gameplay" :size="size" />
           </div>
         </div>
       </div>
@@ -75,6 +82,7 @@
 
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import Minimap from '@/shared/game/arenas/minimap/Minimap.vue'
 import { useArenaOptions } from '../shared/useArenaOptions'
@@ -82,6 +90,7 @@ import { usePickedArena } from '../shared/usePickedArena'
 
 const { arenaList } = useArenaOptions()
 const { selectedKey, game, tag, gameplays, gameplay } = usePickedArena(arenaList)
+const size = ref<'small' | 'medium'>('small')
 </script>
 
 

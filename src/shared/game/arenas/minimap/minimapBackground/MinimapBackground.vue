@@ -17,10 +17,11 @@ const props = defineProps<{
   game?: GameVendor
   gameplay?: null | 'comp7' | (string & {})
   format?: 'webp' | 'png'
+  size?: 'small' | 'medium'
   fallback?: string
 }>()
 
-const targetUrl = computed(() => minimapUrl(props.tag, props.game, props.gameplay, props.format))
+const targetUrl = computed(() => minimapUrl(props.tag, props.game, props.gameplay, props.format, props.size))
 </script>
 
 
