@@ -56,7 +56,7 @@ import { useQueryStatParams, whereClause } from '@/shared/query/useQueryStatPara
 import { queryComputed } from '@/db'
 import { computed, ref, watch } from 'vue'
 import { createFixedSpaceProcessor } from '@/shared/utils/processors/processors'
-import { getBestLocalization } from '@/shared/i18n/i18n'
+import { getBestLocalization, selectLootboxesLocalization, type LocalizedName } from '@/shared/i18n/i18n'
 import { objectEntries, pausableWatch } from '@vueuse/core'
 import FallbackImg from '@/shared/uiKit/fallbackImg/FallbackImg.vue'
 import HorizontalScrollItems from '@/pages/shared/HorizontalScrollItems.vue'
@@ -136,7 +136,7 @@ function isOpenedToday(date: string) {
 }
 
 const containersTag = queryComputed<{
-  locale: [name: string, region: string][],
+  locale: LocalizedName,
   tag: string,
   count: number,
   start: string,
@@ -156,25 +156,18 @@ with containers as (
     order by start desc, end desc
     ),
     locales as (
-        select tag,
-               arrayZip(groupArray(name), groupArray(region)) as locale
-        from (
-            select tag, region, argMax(name, gameVersion) as name
-            from Lootboxes
-            group by tag, region
-            order by region
-        )
-        group by tag
+        select tag, name as locale
+        from (${selectLootboxesLocalization})
     )
 select * from containers
-left join locales using tag
+left any join locales using tag
 `)
 
 const containersVariants = computed(() => containersTag.value.data
   .map((x) => ({
     tag: x.tag,
     key: x.tag,
-    name: getBestLocalization(x.locale) ?? x.tag,
+    name: getBestLocalization(x.locale) || x.tag,
     count: x.count,
     start: x.start,
     end: x.end

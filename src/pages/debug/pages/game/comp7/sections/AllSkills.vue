@@ -1,6 +1,6 @@
 <template>
   <DebugSection title="Все навыки" id="skills"
-    description="Полный набор SKILL_TAGS. Подпись приходит из ClickHouse (ArtefactsLocalization) через getComp7SkillName, а не из локального i18n.json — до загрузки данных или для неизвестного тега вернётся сырой tag."
+    description="Полный набор SKILL_TAGS. Подпись приходит из ClickHouse (ArtefactsLocalizationDictionary) через getComp7SkillName, а не из локального i18n.json — до загрузки данных или для неизвестного тега вернётся сырой tag."
     source="src/shared/game/comp7/skill/SkillIcon.vue">
 
     <div class="debug-row">

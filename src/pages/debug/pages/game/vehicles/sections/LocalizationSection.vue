@@ -21,35 +21,35 @@
         </tbody>
       </table>
       <p class="debug-hint">
-        Значения из общего <span class="debug-value">i18n.ts</span> (кеш на весь сайт) совпадают с колонками
-        <span class="debug-value">shortRU/nameRU</span>, полученными прямым запросом на этой странице — сверка,
-        что оба пути читают одни и те же данные.
+        Оба пути используют <span class="debug-value">selectTagVehiclesLocalization</span> из общего
+        <span class="debug-value">i18n.ts</span>: dictionary фильтруется по locale, затем выбирается регион по
+        приоритету. Глобальный кеш и debug-запрос должны возвращать одинаковые значения.
       </p>
     </div>
 
     <div class="debug-col" v-if="multiRegionTank">
-      <p class="debug-label">одно имя, разные регионы (сырые колонки VehiclesLocalization)</p>
+      <p class="debug-label">один tag, разные ключи region/locale в VehiclesLocalizationDictionary</p>
       <table class="debug-table">
         <thead>
           <tr>
             <th>tag</th>
-            <th>nameRU</th>
-            <th>nameEU</th>
-            <th>nameCN</th>
+            <th>RU / RU</th>
+            <th>EU / EN</th>
+            <th>CN / ZH_CN</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <th>{{ multiRegionTank.tag }}</th>
-            <td>{{ multiRegionTank.name }}</td>
-            <td>{{ multiRegionTank.nameEu }}</td>
-            <td>{{ multiRegionTank.nameCn }}</td>
+            <td>{{ multiRegionTank.nameRu }}</td>
+            <td>{{ multiRegionTank.nameEn }}</td>
+            <td>{{ multiRegionTank.nameZhCn }}</td>
           </tr>
         </tbody>
       </table>
       <p class="debug-hint">
-        Сайт всегда использует фиксированный <span class="debug-value">LANGUAGE = 'RU'</span> — переключателя языка
-        нет, это просто разные сырые колонки одной таблицы.
+        Сайт пока использует фиксированный <span class="debug-value">LOCALE = 'RU'</span>. Таблица показывает не
+        старые языковые колонки, а три явных составных ключа словаря.
       </p>
     </div>
 
@@ -70,7 +70,7 @@
         <thead>
           <tr>
             <th>tag</th>
-            <th>nameRU в БД</th>
+            <th>выбранное name</th>
             <th>getTankName(tag)</th>
           </tr>
         </thead>

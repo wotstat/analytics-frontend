@@ -1,11 +1,15 @@
 import { LONG_CACHE_SETTINGS, queryAsync } from '@/db'
 import { computed } from 'vue'
 
-const LANGUAGE = 'RU'
-const languageRegionPriority = {
+const LOCALE = 'RU'
+const localeRegionPriority = {
   'RU': ['RU', 'PT_RU', 'EU', 'NA'],
   'EN': ['EU', 'NA', 'RU'],
 } as const
+
+const localizationRegionPriority = [...localeRegionPriority[LOCALE], 'CN', 'ASIA'] as const
+const localizationRegionsSql = localizationRegionPriority.map(region => `'${region}'`).join(', ')
+const localizationRegionPrioritySql = `indexOf([${[...localizationRegionPriority].reverse().map(region => `'${region}'`).join(', ')}], region)`
 
 export function countLocalize(count: number, one: string, two: string, five: string = two) {
   if (count % 10 == 1 && count % 100 != 11) return one
@@ -13,16 +17,52 @@ export function countLocalize(count: number, one: string, two: string, five: str
   return five
 }
 
-const languageToPostfix = {
-  'RU': 'RU',
-  'EN': 'EU',
-  'CN': 'CN',
-}
+export const selectVehiclesLocalization = `
+  select
+    tag,
+    argMax(shortName, ${localizationRegionPrioritySql}) as short,
+    argMax(name, ${localizationRegionPrioritySql}) as name
+  from VehiclesLocalizationDictionary
+  where region in (${localizationRegionsSql}) and locale = '${LOCALE}'
+  group by tag
+`
+export const selectTagVehiclesLocalization = selectVehiclesLocalization
 
-export const selectVehiclesLocalization = `select tag, type, level, role, nation, short${languageToPostfix[LANGUAGE]} as short, name${languageToPostfix[LANGUAGE]} as name from VehiclesLocalization`
-export const selectTagVehiclesLocalization = `select tag, short${languageToPostfix[LANGUAGE]} as short, name${languageToPostfix[LANGUAGE]} as name from VehiclesLocalization`
-export const selectTagArenasLocalization = `select tag, name${languageToPostfix[LANGUAGE]} as name from ArenasLocalization`
-export const selectArtefactsLocalization = `select tag, name${languageToPostfix[LANGUAGE]} as name from ArtefactsLocalization`
+export const selectTagArenasLocalization = `
+  select
+    tag,
+    argMax(name, ${localizationRegionPrioritySql}) as name
+  from ArenasLocalizationDictionary
+  where region in (${localizationRegionsSql}) and locale = '${LOCALE}'
+  group by tag
+`
+
+export const selectArtefactsLocalization = `
+  select
+    tag,
+    argMax(name, ${localizationRegionPrioritySql}) as name
+  from ArtefactsLocalizationDictionary
+  where region in (${localizationRegionsSql}) and locale = '${LOCALE}'
+  group by tag
+`
+
+export const selectLootboxesLocalization = `
+  select
+    tag,
+    argMax(name, ${localizationRegionPrioritySql}) as name
+  from LootboxesLocalizationDictionary
+  where region in (${localizationRegionsSql}) and locale = '${LOCALE}'
+  group by tag
+`
+
+export const selectCustomizationsLocalization = `
+  select
+    tag,
+    argMax(name, ${localizationRegionPrioritySql}) as name
+  from CustomizationsLocalizationDictionary
+  where region in (${localizationRegionsSql}) and locale = '${LOCALE}'
+  group by tag
+`
 
 const tankNames = queryAsync<{ tag: string, short: string, name: string }>(selectVehiclesLocalization, { settings: LONG_CACHE_SETTINGS })
 const tankNamesMap = computed(() => new Map<string, [string, string]>(tankNames.value.data.map(t => [t.tag, [t.name, t.short]])))
@@ -103,7 +143,7 @@ export function getBestLocalization(data: LocalizedName) {
     return acc
   }, {} as Record<string, string>)
 
-  for (const region of languageRegionPriority[LANGUAGE])
+  for (const region of localeRegionPriority[LOCALE])
     if (dict[region]) return dict[region]
 
   for (const region of ['EU', 'NA', 'RU', 'CN', 'ASIA'])

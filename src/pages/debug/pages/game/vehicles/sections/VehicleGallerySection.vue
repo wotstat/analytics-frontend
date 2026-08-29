@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Иконки техники (реальные данные)" id="gallery"
     source="src/shared/game/vehicles/vehicle/VehicleImage.vue"
-    description="Список техники — LatestBattleVehicleInfo + VehiclesLocalization, картинки — со STATIC_URL. Проверь обе игры и все размеры.">
+    description="Список техники — LatestBattleVehicleInfo + VehiclesLocalizationDictionary, картинки — со STATIC_URL. Проверь обе игры и все размеры.">
 
     <div class="debug-row">
       <label class="debug-control">

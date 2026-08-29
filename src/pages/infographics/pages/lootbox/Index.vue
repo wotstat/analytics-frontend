@@ -116,7 +116,17 @@ import { computed, ref } from 'vue'
 import TableSection from './TableSection.vue'
 import OpenByTable from './OpenByTable.vue'
 import RerollTable from './RerollTable.vue'
-import { countLocalize, crewBookName, entitlementsName, getBestLocalization, getTankName, LocalizedName } from '@/shared/i18n/i18n'
+import {
+  countLocalize,
+  crewBookName,
+  entitlementsName,
+  getBestLocalization,
+  getTankName,
+  selectArtefactsLocalization,
+  selectCustomizationsLocalization,
+  selectLootboxesLocalization,
+  type LocalizedName
+} from '@/shared/i18n/i18n'
 import LootboxList from './lootboxList/Index.vue'
 import { useRoute } from 'vue-router'
 import { useMeta } from '@/shared/composition/useMeta'
@@ -133,8 +143,15 @@ const params = useQueryStatParams()
 const settings = useQueryStatParamsCache(params)
 const showTestData = useLocalStorage('lootbox-show-test-data', false)
 
-function localeFor(table: 'Lootboxes' | 'Customizations' | 'Artefacts') {
-  return `select tag, arrayZip(groupArray(name), groupArray(region)) as locale from (select tag, region, argMax(name, gameVersion) as name from ${table} group by tag, region order by region) group by tag`
+const localizationQueries = {
+  Lootboxes: `select tag, name as locale from (${selectLootboxesLocalization})`,
+  Customizations: `select tag, name as locale from (${selectCustomizationsLocalization})`,
+  Artefacts: `select tag, name as locale from (${selectArtefactsLocalization})`,
+  Toys: 'select tag, arrayZip(groupArray(name), groupArray(region)) as locale from Toys group by tag',
+} as const
+
+function localeFor(table: keyof typeof localizationQueries) {
+  return localizationQueries[table]
 }
 
 const route = useRoute()
@@ -198,7 +215,7 @@ const openWithStats = queryComputed<{ tag: string, locale: LocalizedName, count:
         ) as P2
         using tag
     ) as M
-    left join locales using tag
+    left any join locales using tag
   ` : `
     with locales as (${localeFor('Lootboxes')})
     select tag, locale, count, successCount
@@ -208,7 +225,7 @@ const openWithStats = queryComputed<{ tag: string, locale: LocalizedName, count:
         where ${whereClause()} and openByTag != Event_OnLootboxOpen.containerTag
         group by openByTag
     ) as M
-    left join locales using tag
+    left any join locales using tag
 `}, { settings: settings.value })
 
 const rerollStats = queryComputed<{ tag: string, locale: LocalizedName, count: number, rerollCount: number, totalCount?: number, totalReroll?: number }>(() => {
@@ -234,7 +251,7 @@ const rerollStats = queryComputed<{ tag: string, locale: LocalizedName, count: n
         ) as P2
         using tag
     ) as M
-    left join lacale using tag
+    left any join lacale using tag
     having rerollCount > 0 and totalReroll > 0
   ` : `
     with locales as (${localeFor('Lootboxes')})
@@ -246,7 +263,7 @@ const rerollStats = queryComputed<{ tag: string, locale: LocalizedName, count: n
         group by containerTag
         having rerollCount > 0
     ) as M
-    left join locales using tag
+    left any join locales using tag
   `
 }, { settings: settings.value })
 
@@ -273,7 +290,7 @@ type Stats = {
 
 const showOther = computed(() => whereClause(['tag', 'date', 'region']) !== 'true')
 
-function getQuery(select: string, arrayJoin: string, materialized: string, tagProcessor?: string, localizeTable?: string) {
+function getQuery(select: string, arrayJoin: string, materialized: string, tagProcessor?: string, localizeTable?: keyof typeof localizationQueries) {
   let where: string | null = whereClause(['tag'])
   if (where === 'true') where = null
 
@@ -287,9 +304,8 @@ function getQuery(select: string, arrayJoin: string, materialized: string, tagPr
 
   const prefix = localizeTable ? 'select title, count, percent, total, other, locale as titleName from (' : ''
   const simplePrefix = localizeTable ? 'select title, count, percent, locale as titleName from (' : ''
-  const postfix = localizeTable ? `) as M left join
-(select tag, arrayZip(groupArray(name), groupArray(region)) as locale from ${localizeTable} group by tag)
-  as L using tag` : ''
+  const postfix = localizeTable ? `) as M left any join
+(${localeFor(localizeTable)}) as L using tag` : ''
 
   return where ? `
 with

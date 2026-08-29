@@ -141,7 +141,8 @@
 `_att` (штурмовой вариант), `_def` (оборона), `_fp`/`_ny`/`_lunar_26` (зимние/новогодние/сезонные),
 `_wt` (White Tiger), `_mb`/`_nb` (Mapbox/варианты), `_ls25`/`_ls26` (Last Stand),
 `_hw24` (Halloween), `_sm24`/`_sm25`/`_scc` (события) и т.д. Локализованные имена — в
-`ArenasLocalization` (`nameRU/nameEU/nameNA/nameAS/nameCN`); часть имён — плейсхолдеры (`#...` или `tag/name`).
+`ArenasLocalizationDictionary` с ключом `(region, locale, tag)` и атрибутом `name`. При отсутствии перевода UI
+использует исходный `tag`; технические плейсхолдеры (`#...` или `tag/name`) в словарь не попадают.
 
 ---
 
@@ -852,6 +853,26 @@
 `Xxx` — история по версиям (`ReplacingMergeTree`, ключ `region + gameVersionFull + tag`);
 `XxxLatest` — актуальный срез последней версии. Ниже — только **отличительные** колонки каждой таблицы.
 
+### Словари локализации
+
+Актуальная локализация хранится в `Map(locale, translation)` в исходных таблицах и их `Latest`-срезах. Для чтения
+используются ClickHouse dictionaries с единым составным ключом `(region, locale, tag)`; `locale` — явный код языка
+в верхнем регистре (`RU`, `EN`, `ZH_CN` и т.д.).
+
+| Dictionary | Источник | Атрибуты |
+| --- | --- | --- |
+| `VehiclesLocalizationDictionary` | `VehiclesLatest` | `name`, `shortName` |
+| `ArenasLocalizationDictionary` | `ArenasLatest` | `name` |
+| `ArtefactsLocalizationDictionary` | `ArtefactsLatest` | `name` |
+| `LootboxesLocalizationDictionary` | `LootboxesLatest` | `name` |
+| `CustomizationsLocalizationDictionary` | `CustomizationsLatest` | `name` |
+| `EquipmentsLocalizationDictionary` | `EquipmentsLatest` | `name`, `description`, `shortDescription`, `longDescription` |
+| `OptionalDevicesLocalizationDictionary` | `OptionalDevicesLatest` | `name`, `shortDescription`, `longDescription` |
+
+Исторические строки, созданные до появления `Map`, содержат fallback из старого строкового имени на языке своего
+региона. Старые таблицы `*Localization` пока сохранены для обратной совместимости, но новый frontend должен читать
+словари. `Toys` остаётся отдельным справочником без нового localization dictionary.
+
 ### Техника
 
 **`Vehicles` / `VehiclesLatest`** — техника с ТТХ (десятки числовых полей: броня, ДПМ, обзор,
@@ -864,8 +885,8 @@
 **`TankList`** (`MergeTree`, глобальный, без версии) — плоский быстрый справочник:
 `tag`, `type`, `level`, `nation`, `iconUrl`, `nameRU`, `shortNameRU`.
 
-**`VehiclesLocalization`** — имена техники на 5 языках: `tag`, `nation`, `type`, `role`, `level`,
-`nameRU/EU/NA/AS/CN` и короткие `shortRU/EU/NA/AS/CN`.
+**`VehiclesLocalizationDictionary`** — имена техники; ключ `(region, locale, tag)`, атрибуты `name` и
+`shortName`. Тип, роль, уровень и нация остаются в `VehiclesLatest` и не дублируются в словаре локализации.
 
 **`LatestBattleVehicleInfo`** (`ReplacingMergeTree`) — по каждой технике агрегат «сколько боёв реально
 замечено»: `region`, `tag`, `role`, `type`, `nation`, `level`, `count` (`UInt64`), `updated`.
@@ -874,7 +895,7 @@
 ### Карты
 
 **`Arenas` / `ArenasLatest`** — карты и режимы геймплея (ключ включает `gameplay`).
-**`ArenasLocalization`** — имена карт: `tag`, `nameRU`, `nameEU`, `nameNA`, `nameAS`, `nameCN`.
+**`ArenasLocalizationDictionary`** — имена карт по ключу `(region, locale, tag)`.
 
 ### Предметы
 
@@ -885,9 +906,9 @@
 **`OptionalDevices` / `OptionalDevicesLatest`** — дополнительное оборудование. Как `Equipments`
 плюс `groupName`, `archetype`.
 
-**`Artefacts`** — обобщённый справочник артефактов (`tag` → `name`).
-**`Customizations`** — кастомизация (камуфляжи/эмблемы/надписи), `tag` → `name`.
-**`Lootboxes`** / **`LootboxesLocalization`** — описания коробок (`tag` → `name`).
+**`Artefacts` / `ArtefactsLatest`** — обобщённый справочник артефактов (`tag` → `name`).
+**`Customizations` / `CustomizationsLatest`** — кастомизация (камуфляжи/эмблемы/надписи), `tag` → `name`.
+**`Lootboxes` / `LootboxesLatest`** — описания коробок (`tag` → `name`).
 **`Toys`** — декор/«игрушки» событий (`tag` → `name`).
 
 ### Версии игры
