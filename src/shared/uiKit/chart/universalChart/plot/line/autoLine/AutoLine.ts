@@ -85,7 +85,11 @@ export class AutoLine<T extends Point = Point> extends BasePlotRenderer {
         }
       }
     }
-    if (currentSegment.length > 0) this.segments.push(currentSegment)
+    if (currentSegment.length > 0) {
+      // A zero-length segment lets stroke-linecap render an isolated point.
+      if (currentSegment.length === 1) currentSegment.push(currentSegment[0])
+      this.segments.push(currentSegment)
+    }
 
     for (const path of this.monotonePathSegments) path.dispose()
     if (this.options.smoothingMethod === 'monotone')
