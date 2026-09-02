@@ -13,10 +13,16 @@ const SEASON_LENGTHS = {
   'na:comp7_5_3': 41 * ONE_DAY, // в NA сезон 41 день
   'asia:comp7_5_3': 42 * ONE_DAY, // в ASIA сезон 42 день
   'ru:comp7_5_4': 42 * ONE_DAY,
+
+  'ru:comp7_6_1': ['2026-01-02', '2026-02-21'], // https://tanki.su/ru/news/game-events/natisk-ognennyj-sokol/
+  'eu:comp7_6_1': ['2026-01-02', '2026-02-11'], // https://worldoftanks.eu/en/news/general-news/onslaught-season-of-the-phoenix-1/
+  'na:comp7_6_1': ['2026-01-02', '2026-02-11'], // https://worldoftanks.com/en/news/general-news/onslaught-season-of-the-phoenix-1/
+  'asia:comp7_6_1': ['2026-01-02', '2026-02-11'], // https://worldoftanks.com/en/news/general-news/onslaught-season-of-the-phoenix-1/
 }
 
 const SEASON_SKILL_CHANGE = {
-  'ru:comp7_5_4': true
+  'ru:comp7_5_4': true,
+  'ru:comp7_6_1': true
 }
 
 export function isComp7SkillChangeSupported(region: string, season: string) {
@@ -57,6 +63,15 @@ const REGION_TIME_DAY_CHANGE_OFFSETS: Record<string, number> = {
 
 export function getSeasonDuration(season: string, region: string) {
   const overrideLength = SEASON_LENGTHS[`${region.toLowerCase()}:${season}` as keyof typeof SEASON_LENGTHS]
+
+  if (Array.isArray(overrideLength)) {
+    const [start, end] = overrideLength
+    const startDate = new Date(start)
+    const endDate = new Date(end)
+    const duration = endDate.getTime() - startDate.getTime()
+    return Math.round(duration / ONE_DAY) * ONE_DAY
+  }
+
   const seasonLength = overrideLength ?? (region == 'RU' ? LESTA_SEASON_LENGTH : WG_SEASON_LENGTH)
   return seasonLength
 }

@@ -10,6 +10,12 @@
     "season:ru:comp7_5_3": "Грозовой тигр",
     "season:ct:comp7_5_3": "Грозовой тигр",
     "season:ru:comp7_5_4": "Специальный выпуск",
-    "season:ct:comp7_5_4": "Специальный выпуск"
+    "season:ct:comp7_5_4": "Специальный выпуск",
+    "season:ru:comp7_6_1": "Огненный сокол",
+    "season:ct:comp7_6_1": "Огненный сокол",
+    "season:na:comp7_6_1": "Azure Phoenix",
+    "season:asia:comp7_6_1": "Azure Phoenix",
+    "season:cn:comp7_6_1": "Azure Phoenix",
+    "season:eu:comp7_6_1": "Azure Phoenix"
   }
 }
