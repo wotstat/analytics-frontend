@@ -14,7 +14,7 @@
 
     <div class="season-select">
       <div class="space flex-1"></div>
-      <button class="variant mt-font selectable" v-for="season in currentSeasons.splice(0, 3)"
+      <button class="variant mt-font selectable" v-for="season in currentSeasons.slice(0, 3)"
         :key="`${season.region}-${season.season}`" @click="selectedSeason = season.season"
         :class="{ 'active': season.season === selectedSeason }">
         {{ t(`season:${season.region.toLowerCase()}:${season.season}`) }}
