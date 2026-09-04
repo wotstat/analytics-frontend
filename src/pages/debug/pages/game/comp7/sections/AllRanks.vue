@@ -55,7 +55,7 @@ const season = ref('latest')
 const size = ref<'small' | 'medium' | 'large'>('medium')
 
 const TIERS: Rank[] = ['qual', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth']
-const allDivisions = computed<Division[]>(() => TIERS.flatMap(getDivisionsByRank))
+const allDivisions = computed<Division[]>(() => TIERS.flatMap(rank => getDivisionsByRank(rank, game.value, season.value)))
 
 function rankLabel(division: Division) {
   if (division === 'fifth' || division === 'sixth' || division === 'qual') return t(`rank:${division}`)

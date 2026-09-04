@@ -142,7 +142,20 @@ export function getRatingInactiveDecreasePerDay(rank: Rank, game: GameVendor = '
 
 export type Rank = 'qual' | 'first' | 'second' | 'third' | 'fourth' | 'fifth' | 'sixth'
 export type DivisionLetter = 'E' | 'D' | 'C' | 'B' | 'A' | ''
-export type Division = `${Exclude<Rank, 'qual' | 'sixth' | 'fifth'>}_${Exclude<DivisionLetter, ''>}` | 'qual' | 'fifth' | 'sixth'
+export type EliteDivisionLetter = 'C' | 'B' | 'A'
+export type Division = `${Exclude<Rank, 'qual' | 'sixth' | 'fifth'>}_${Exclude<DivisionLetter, ''>}`
+  | `${'fifth' | 'sixth'}_${EliteDivisionLetter}` | 'qual' | 'fifth' | 'sixth'
+
+export type EliteRating = number | Record<EliteDivisionLetter, number>
+
+const RANK_ORDER: Rank[] = ['qual', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth']
+
+export function hasEliteDivisions(game: GameVendor = 'mt', season: string = 'latest'): boolean {
+  if (game !== 'mt') return false
+  if (season === 'latest') return true
+  const match = /^comp7_(\d+)_(\d+)$/.exec(season)
+  return !!match && (Number(match[1]) > 6 || (Number(match[1]) === 6 && Number(match[2]) >= 1))
+}
 
 export const ranksLestaMap: Record<number, Division> = {
   1: 'first_E',
@@ -192,100 +205,106 @@ export const rankWgMap: Record<number, Division> = {
   2000: 'fifth'
 }
 
-const reversedRankWgMap = Object.fromEntries(Object.entries(rankWgMap).map(([key, value]) => [value, parseInt(key)]))
-const reversedRanksLestaMap = Object.fromEntries(Object.entries(ranksLestaMap).map(([key, value]) => [value, parseInt(key)]))
-
-export function compareRanks(rank1: Rank, rank2: Rank): number {
-  const rankOrder: Rank[] = ['qual', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth']
-  return rankOrder.indexOf(rank1) - rankOrder.indexOf(rank2)
+// https://tanki.su/ru/content/guide/game-events-rules/onslaught_guide/
+const ranksLestaDivisionsMap: Record<number, Division> = {
+  ...ranksLestaMap,
+  2650: 'fifth_C',
+  3050: 'fifth_B',
+  3450: 'fifth_A'
 }
 
-export function getDivisionByRating(rating: number, game: GameVendor = 'mt', eliteRating: number | null = null) {
+function getRatingMap(game: GameVendor, season: string) {
+  if (game === 'wot') return rankWgMap
+  return hasEliteDivisions(game, season) ? ranksLestaDivisionsMap : ranksLestaMap
+}
+
+function getEliteThreshold(eliteRating: EliteRating | null): number {
+  const threshold = typeof eliteRating === 'number' ? eliteRating : eliteRating?.C
+  return threshold && threshold > 0 ? threshold : Infinity
+}
+
+export function compareRanks(rank1: Rank, rank2: Rank): number {
+  return RANK_ORDER.indexOf(rank1) - RANK_ORDER.indexOf(rank2)
+}
+
+export function getDivisionByRating(rating: number, game: GameVendor = 'mt', eliteRating: EliteRating | null = null,
+  season: string = 'latest'): Division {
   if (rating == 0) return 'qual'
-  if (eliteRating !== null && eliteRating !== 0 && rating >= eliteRating) return 'sixth'
-  const targetMap = game == 'wot' ? rankWgMap : ranksLestaMap
+  if (rating >= getEliteThreshold(eliteRating)) {
+    if (hasEliteDivisions(game, season) && eliteRating !== null && typeof eliteRating === 'object'
+      && Number.isFinite(eliteRating.A) && eliteRating.A >= eliteRating.B && eliteRating.B >= eliteRating.C) {
+      if (rating >= eliteRating.A) return 'sixth_A'
+      if (rating >= eliteRating.B) return 'sixth_B'
+      return 'sixth_C'
+    }
+    return 'sixth'
+  }
+  const targetMap = getRatingMap(game, season)
   const key = Object.keys(targetMap).reverse().find(key => rating >= parseInt(key))
   return key ? targetMap[parseInt(key) as keyof typeof targetMap] : 'first_E'
 }
 
-export function getRankByRating(rating: number, game: GameVendor = 'mt', eliteRating: number | null = null): Rank {
-  if (eliteRating !== null && eliteRating !== 0 && rating >= eliteRating) return 'sixth'
-
-  const division = getDivisionByRating(rating, game)
-  if (division == 'qual') return 'qual'
-
-  return division.split('_')[0] as 'first' | 'second' | 'third' | 'fourth' | 'fifth'
+export function getRankByRating(rating: number, game: GameVendor = 'mt', eliteRating: EliteRating | null = null, season: string = 'latest'): Rank {
+  return getDivisionByRating(rating, game, eliteRating, season).split('_')[0] as Rank
 }
 
-export function getNextDivision(currentDivision: Division): Division | null {
-  if (currentDivision == 'qual') return 'first_E'
+export function getNextDivision(currentDivision: Division, game: GameVendor = 'mt', season: string = 'latest'): Division | null {
   if (currentDivision == 'fifth') return 'sixth'
   if (currentDivision == 'sixth') return null
-
-  const [rank, letter] = currentDivision.split('_') as [Exclude<Rank, 'qual' | 'sixth' | 'fifth'>, DivisionLetter]
-  if (letter == 'A') {
-    switch (rank) {
-      case 'first': return 'second_E'
-      case 'second': return 'third_E'
-      case 'third': return 'fourth_E'
-      case 'fourth': return 'fifth'
-    }
-  } else {
-    const letters = ['E', 'D', 'C', 'B', 'A'] as DivisionLetter[]
-    const nextLetter = letters[letters.indexOf(letter) + 1]
-    return `${rank}_${nextLetter}` as Division
-  }
+  const divisions = RANK_ORDER.flatMap(rank => getDivisionsByRank(rank, game, season))
+  const index = divisions.indexOf(currentDivision)
+  return index < 0 ? null : divisions[index + 1] ?? null
 }
 
-export function getPrevDivision(currentDivision: Division): Division | null {
-  if (currentDivision == 'qual') return null
+export function getPrevDivision(currentDivision: Division, game: GameVendor = 'mt', season: string = 'latest'): Division | null {
   if (currentDivision == 'fifth') return 'fourth_A'
-  if (currentDivision == 'sixth') return 'fifth'
-
-  const [rank, letter] = currentDivision.split('_') as [Exclude<Rank, 'qual' | 'sixth' | 'fifth'>, DivisionLetter]
-  if (letter == 'E') {
-    switch (rank) {
-      case 'first': return 'qual'
-      case 'second': return 'first_A'
-      case 'third': return 'second_A'
-      case 'fourth': return 'third_A'
-    }
-  } else {
-    const letters = ['E', 'D', 'C', 'B', 'A'] as DivisionLetter[]
-    const prevLetter = letters[letters.indexOf(letter) - 1]
-    return `${rank}_${prevLetter}` as Division
-  }
+  if (currentDivision == 'sixth') return hasEliteDivisions(game, season) ? 'fifth_A' : 'fifth'
+  const divisions = RANK_ORDER.flatMap(rank => getDivisionsByRank(rank, game, season))
+  return divisions[divisions.indexOf(currentDivision) - 1] ?? null
 }
 
-export function getDivisionsByRank(rank: Rank): Division[] {
-  if (rank == 'qual' || rank == 'sixth' || rank == 'fifth') return [rank]
-
+export function getDivisionsByRank(rank: Rank, game: GameVendor = 'mt', season: string = 'latest'): Division[] {
+  if (rank == 'qual') return [rank]
+  if (rank == 'sixth' || rank == 'fifth') {
+    return hasEliteDivisions(game, season) ? [`${rank}_C`, `${rank}_B`, `${rank}_A`] : [rank]
+  }
   const letters: DivisionLetter[] = ['E', 'D', 'C', 'B', 'A']
   return letters.map(letter => `${rank}_${letter}` as Division)
 }
 
-export function getRatingForDivision(division: Division, game: GameVendor = 'mt'): number {
+export function getRatingForDivision(division: Division, game: GameVendor = 'mt', season: string = 'latest',
+  eliteRating: EliteRating | null = null): number {
   if (division == 'qual') return 0
   if (division == 'first_E') return 0
-  const targetMap = game == 'wot' ? reversedRankWgMap : reversedRanksLestaMap
-  return targetMap[division as keyof typeof targetMap]
+  if (division == 'fifth') return game === 'mt' ? 2650 : 2000
+  if (division == 'sixth' || division == 'sixth_C') return getEliteThreshold(eliteRating)
+  if (division == 'sixth_B' || division == 'sixth_A') {
+    const threshold = typeof eliteRating === 'object' && eliteRating !== null
+      ? eliteRating[division.split('_')[1] as EliteDivisionLetter] : null
+    return threshold && threshold > 0 ? threshold : Infinity
+  }
+  const entry = Object.entries(getRatingMap(game, season)).find(([, value]) => value === division)
+  return entry ? Number(entry[0]) : Infinity
 }
 
-export function getRatingIntervalForDivision(division: Division, game: GameVendor = 'mt'): [number, number] {
+export function getRatingIntervalForDivision(division: Division, game: GameVendor = 'mt', season: string = 'latest',
+  eliteRating: EliteRating | null = null): [number, number] {
   if (division == 'qual') return [0, 0]
 
-  const startRating = getRatingForDivision(division, game)
+  const startRating = getRatingForDivision(division, game, season, eliteRating)
 
-  const nextDivision = getNextDivision(division)
+  const nextDivision = getNextDivision(division, game, season)
   if (!nextDivision) return [startRating, Infinity]
 
-  const nextRating = getRatingForDivision(nextDivision, game)
-  return [startRating, nextRating - 1]
+  const nextRating = getRatingForDivision(nextDivision, game, season, eliteRating)
+  const endRating = division.startsWith('fifth') ? Math.min(nextRating, getEliteThreshold(eliteRating)) : nextRating
+  return [startRating, endRating - 1]
 }
 
 const possibleLetters = new Set(['E', 'D', 'C', 'B', 'A'])
-export function getDivisionLetterByRating(rating: number, game: GameVendor = 'mt'): DivisionLetter | '?' {
-  const division = getDivisionByRating(rating, game)
+export function getDivisionLetterByRating(rating: number, game: GameVendor = 'mt', season: string = 'latest',
+  eliteRating: EliteRating | null = null): DivisionLetter | '?' {
+  const division = getDivisionByRating(rating, game, eliteRating, season)
   if (division == 'qual') return '?'
 
   const letter = division.split('_')[1]
@@ -293,15 +312,23 @@ export function getDivisionLetterByRating(rating: number, game: GameVendor = 'mt
   return ''
 }
 
-export type RankImageDefinition = number | { value: number, eliteRating: number } | Rank | Division | [rating: number, eliteRating: number]
+export type RankImageDefinition = number | { value: number, eliteRating: EliteRating } | Rank | Division | [rating: number, eliteRating: EliteRating]
 
-function getRankImageName(rank: RankImageDefinition, game: GameVendor = 'mt'): string {
-  let division: Division
-  if (typeof rank === 'number') division = getDivisionByRating(rank, game)
-  else if (typeof rank === 'object' && 'value' in rank) division = getDivisionByRating(rank.value, game, rank.eliteRating)
-  else if (Array.isArray(rank)) division = getDivisionByRating(rank[0], game, rank[1])
-  else if (rank === 'qual' || rank === 'fifth' || rank === 'sixth') division = rank
-  else division = rank as Division
+function resolveRankImage(rank: RankImageDefinition, game: GameVendor, season: string): Rank | Division {
+  let division: Rank | Division
+  if (typeof rank === 'number') division = getDivisionByRating(rank, game, null, season)
+  else if (Array.isArray(rank)) division = getDivisionByRating(rank[0], game, rank[1], season)
+  else if (typeof rank === 'object') division = getDivisionByRating(rank.value, game, rank.eliteRating, season)
+  else division = rank
+
+  if (!hasEliteDivisions(game, season) && /^(fifth|sixth)_[CBA]$/.test(division)) {
+    return division.split('_')[0] as Rank
+  }
+  return division
+}
+
+function getRankImageName(rank: RankImageDefinition, game: GameVendor, season: string): string {
+  const division = resolveRankImage(rank, game, season)
 
   if (division == 'qual') return 'qualification'
   if (division == 'sixth' && game == 'mt') return 'sixth_logo'
@@ -315,7 +342,7 @@ export function rankImageUrl(rank: RankImageDefinition,
   season: 'latest' | (string & {}) = 'latest',
   format: 'webp' | 'png' = 'webp') {
   const gamePrefix = game === 'mt' ? 'mt' : 'wot'
-  let name = getRankImageName(rank, game)
+  let name = getRankImageName(rank, game, season)
 
   if (size == 'small') {
     name = name.split('_')[0] // для маленького размера убираем букву дивизиона, т.к. в иконках для маленького размера она не отображается
@@ -326,6 +353,14 @@ export function rankImageUrl(rank: RankImageDefinition,
     case 'medium': return `${STATIC_URL}/${gamePrefix}/latest/comp7/ranks/${season}/medium/${name}.${format}`
     case 'large': return `${STATIC_URL}/${gamePrefix}/latest/comp7/ranks/${season}/large/${name}.${format}`
   }
+}
+
+export function rankImageFallbackUrl(rank: RankImageDefinition,
+  size: 'small' | 'medium' | 'large' = 'medium',
+  game: GameVendor = 'mt',
+  season: string = 'latest',
+  format: 'webp' | 'png' = 'webp') {
+  return rankImageUrl(resolveRankImage(rank, game, season), size, game, 'latest', format)
 }
 
 export const SKILL_TAGS = [

@@ -141,7 +141,7 @@ async function load(abortSignal: AbortSignal, soft = false) {
   const endDate = dateToDbDate(seasonInterval.value.end)
   const region = selectedRegion.value
 
-  const startFifth = getRatingForDivision('fifth', regionToGame(region))
+  const startFifth = getRatingForDivision('fifth', regionToGame(region), selectedSeason.value ?? 'latest')
 
   const rankDistribution = await query<{
     rank: Exclude<Rank, 'qual'>,

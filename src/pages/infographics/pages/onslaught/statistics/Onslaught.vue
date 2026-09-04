@@ -477,8 +477,8 @@ const days = computed(() => {
     if (stat?.lastEliteRating) eliteRating = stat.lastEliteRating
     if (stat?.maxQualBattleIndex != undefined && stat.qualificationBattles) lastQualBattleIndex = Math.max(lastQualBattleIndex, stat.maxQualBattleIndex)
 
-    const rankBeforeBattle = getRankByRating(stat?.firstRating[0] ?? lastRating, game, stat?.firstRating[1] || undefined)
-    const rankAfterBattle = getRankByRating(stat?.maxRating[0] ?? lastRating, game, stat?.maxRating[1] || undefined)
+    const rankBeforeBattle = getRankByRating(stat?.firstRating[0] ?? lastRating, game, stat?.firstRating[1] || undefined, selectedSeason.value ?? 'latest')
+    const rankAfterBattle = getRankByRating(stat?.maxRating[0] ?? lastRating, game, stat?.maxRating[1] || undefined, selectedSeason.value ?? 'latest')
 
     const energyDelta = getEnergyPerBattle(maxRank, rankBeforeBattle, rankAfterBattle, game) * (stat?.totalBattles ?? 0)
     maxRank = compareRanks(maxRank, rankAfterBattle) > 0 ? maxRank : rankAfterBattle
@@ -486,7 +486,7 @@ const days = computed(() => {
 
     if (stat?.totalBattles === 0) {
       if (energy > 0) energy -= 1
-      else lastRating -= getRatingInactiveDecreasePerDay(getRankByRating(lastRating, game, eliteRating > 0 ? eliteRating : undefined), game)
+      else lastRating -= getRatingInactiveDecreasePerDay(getRankByRating(lastRating, game, eliteRating > 0 ? eliteRating : undefined, selectedSeason.value ?? 'latest'), game)
     }
 
     const isFuture = seasonInterval.value.start.getTime() + i * ONE_DAY > Date.now() + isoHourOffset * ONE_HOUR
@@ -521,8 +521,8 @@ const days = computed(() => {
 const barsData = computed<DayChartData[]>(() => days.value.map(d => ({
   relativeRating: d.ratingPercent,
   timeline: d.timeline,
-  rank: getRankByRating(d.rating, game.value, d.eliteRating > 0 ? d.eliteRating : undefined),
-  divisionLetter: getDivisionLetterByRating(d.rating, game.value),
+  rank: getRankByRating(d.rating, game.value, d.eliteRating > 0 ? d.eliteRating : undefined, selectedSeason.value ?? 'latest'),
+  divisionLetter: getDivisionLetterByRating(d.rating, game.value, selectedSeason.value ?? 'latest', d.eliteRating > 0 ? d.eliteRating : undefined),
   leaderboardPosition: d.stat?.lastPlayerRank || d.stat?.lastLeaderboardPosition || null,
   dayIndex: d.dayIndex,
 })))

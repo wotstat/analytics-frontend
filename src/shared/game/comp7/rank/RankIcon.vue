@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import FallbackImg from '@/shared/uiKit/fallbackImg/FallbackImg.vue'
 import { GameVendor } from '../../wot'
-import { RankImageDefinition, rankImageUrl } from '../utils'
+import { RankImageDefinition, rankImageUrl, rankImageFallbackUrl } from '../utils'
 import { computed } from 'vue'
 
 const props = defineProps<{
@@ -19,7 +19,7 @@ const props = defineProps<{
 }>()
 
 const targetUrl = computed(() => rankImageUrl(props.rank, props.size, props.game, props.season))
-const fallbackUrl = computed(() => rankImageUrl(props.rank, props.size, props.game, 'latest'))
+const fallbackUrl = computed(() => rankImageFallbackUrl(props.rank, props.size, props.game, props.season))
 </script>
 
 

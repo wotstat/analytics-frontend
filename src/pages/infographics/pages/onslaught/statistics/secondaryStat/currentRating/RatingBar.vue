@@ -7,7 +7,8 @@
 
     <div class="progress-bar mt-font">
       <div class="divisions">
-        <div class="division" v-for="letter in (divisionLetters.length ? divisionLetters : [''])" :key="letter"
+        <div class="division" v-for="(letter, index) in (divisionLetters.length ? divisionLetters : [''])" :key="letter"
+          :style="{ flexGrow: divisionLetters.length > 1 ? (ratingValuesWithWidths[index]?.[1] ?? 1) : 1 }"
           :class="{ 'current': letter === currentDivisionLetter }">
           <div class="letter">{{ letter }}</div>
         </div>
@@ -49,11 +50,17 @@ const props = defineProps<{
   season: string
 }>()
 
-const rank = computed(() => getRankByRating(props.rating ?? 0, props.game, props.eliteRating))
-const divisions = computed(() => getDivisionsByRank(rank.value))
+const rank = computed(() => getRankByRating(props.rating ?? 0, props.game, props.eliteRating, props.season))
+const divisions = computed(() => {
+  // Источник данных пока содержит только общий порог Легенды, без порогов B/A.
+  if (rank.value === 'sixth') return ['sixth'] as const
+  const result = getDivisionsByRank(rank.value, props.game, props.season)
+  if (rank.value !== 'fifth' || props.eliteRating <= 0) return result
+  return result.filter(division => getRatingForDivision(division, props.game, props.season) < props.eliteRating)
+})
 const currentDivisionLetter = computed(() => {
   if (!divisions.value.length) return null
-  const currentDivision = getDivisionByRating(props.rating ?? 0, props.game, props.eliteRating)
+  const currentDivision = getDivisionByRating(props.rating ?? 0, props.game, props.eliteRating, props.season)
   if (currentDivision.includes('_')) return currentDivision.split('_')[1]
   return '-'
 })
@@ -78,17 +85,19 @@ const ratingValues = computed(() => {
     }
   }
 
-  const ratings = divisions.value.map(division => getRatingForDivision(division, props.game))
+  if (rank.value === 'fifth' && props.eliteRating <= 0) return []
+  const ratings = divisions.value.map(division => getRatingForDivision(division, props.game, props.season))
 
   const currentDivision = divisions.value[divisions.value.length - 1]
   if (currentDivision == 'sixth') return [props.eliteRating, props.top100, props.top10, props.top1]
 
-  const nextDivision = getNextDivision(currentDivision)
+  const nextDivision = getNextDivision(currentDivision, props.game, props.season)
   if (!nextDivision) return ratings
 
-  if (nextDivision == 'sixth') return [...ratings, props.eliteRating]
+  if (nextDivision == 'sixth' || nextDivision == 'sixth_C') return [...ratings, props.eliteRating]
 
-  return [...ratings, getRatingForDivision(nextDivision, props.game)]
+  const nextRating = getRatingForDivision(nextDivision, props.game, props.season)
+  return [...ratings, rank.value === 'fifth' ? Math.min(nextRating, props.eliteRating) : nextRating]
 })
 
 const ratingValuesWithWidths = computed(() => {

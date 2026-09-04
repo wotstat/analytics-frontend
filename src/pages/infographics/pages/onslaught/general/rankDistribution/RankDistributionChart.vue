@@ -88,7 +88,7 @@ function getItemRatingInterval(item: RankDistributionItem): [from: number, to: n
   if (typeof item.name === 'number') return [item.name, item.name + LEADERBOARD_STEP - 1]
 
   const division = `${item.rank}_${item.name}` as Division
-  return getRatingIntervalForDivision(division, props.game)
+  return getRatingIntervalForDivision(division, props.game, props.season)
 }
 
 function getGroupTooltip(group: (typeof groups.value)[number]): RankDistributionTooltipProps {

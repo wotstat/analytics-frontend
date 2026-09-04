@@ -14,7 +14,7 @@ defineProps<{
 }>()
 
 // SEASON_LENGTHS/SEASON_SKILL_CHANGE в utils.ts не экспортированы — список id собран вручную по их ключам.
-const SEASONS = ['latest', 'comp7_5_2', 'comp7_5_3', 'comp7_5_4']
+const SEASONS = ['latest', 'comp7_5_2', 'comp7_5_3', 'comp7_5_4', 'comp7_6_1']
 
 const season = defineModel<string>({ required: true })
 </script>

@@ -5,6 +5,7 @@
 
     <div class="debug-row">
       <GameSelect v-model="game" />
+      <SeasonSelect v-model="season" />
 
       <label class="debug-control">
         <span class="debug-label">rating</span>
@@ -20,6 +21,23 @@
         <span class="debug-label">eliteRating</span>
         <input type="number" v-model.number="eliteRating" step="50">
       </label>
+
+      <template v-if="hasEliteRating && hasEliteDivisions(game, season)">
+        <label class="debug-control">
+          <span class="debug-label">пороги дивизионов Легенды</span>
+          <input type="checkbox" v-model="hasEliteDivisionRatings">
+        </label>
+        <template v-if="hasEliteDivisionRatings">
+          <label class="debug-control">
+            <span class="debug-label">eliteRating B</span>
+            <input type="number" v-model.number="eliteRatingB" step="50">
+          </label>
+          <label class="debug-control">
+            <span class="debug-label">eliteRating A</span>
+            <input type="number" v-model.number="eliteRatingA" step="50">
+          </label>
+        </template>
+      </template>
     </div>
 
     <div class="debug-row">
@@ -29,7 +47,7 @@
 
     <div class="debug-row">
       <div class="debug-stage center">
-        <RankIcon :rank="{ value: rating, eliteRating: eliteRatingValue ?? 0 }" size="large" :game class="icon" />
+        <RankIcon :rank="{ value: rating, eliteRating: eliteRatingValue ?? 0 }" size="large" :game :season class="icon" />
       </div>
 
       <table class="debug-table calc">
@@ -59,8 +77,8 @@
     </div>
 
     <p class="debug-hint">
-      Пресет «eliteRating = 0» показывает, что ноль трактуется как «не задан»: в коде проверка
-      <span class="debug-value">eliteRating !== null && eliteRating !== 0</span>.
+      Нулевой или отрицательный eliteRating означает «порог неизвестен». Один порог определяет только ранг Легенды;
+      для буквы дивизиона нового сезона нужны пороги C (eliteRating), B и A.
     </p>
 
     <div class="debug-col">
@@ -68,18 +86,14 @@
       <div class="debug-grid" style="--debug-grid-min: 90px">
         <div class="card" v-for="r in RANKS" :key="r">
           <div class="debug-stage center">
-            <RankIcon :rank="r" size="medium" :game class="icon" />
+            <RankIcon :rank="r" size="medium" :game :season class="icon" />
           </div>
           <span class="debug-value">{{ r }}</span>
         </div>
       </div>
       <p class="debug-note">
-        RankImageDefinition допускает тип Rank целиком, а getRankImageName особо обрабатывает только qual/fifth/sixth,
-        поэтому first/second/third/fourth без буквы уходят в <span class="debug-value">division = rank as Division</span>
-        и дают адрес вида «first.webp». Такие файлы на CDN **существуют** — это иконка ранга без дивизиона, картинки
-        выше грузятся. То есть перед тобой, скорее всего, осознанный кейс «ранг целиком», а не поломка; при
-        <span class="debug-value">size="small"</span> буква дивизиона и так срезается через
-        <span class="debug-value">split('_')[0]</span>, так что там разницы нет вообще.
+        Rank без буквы всегда показывает ранг целиком. В МТ для fifth/sixth используются файлы с суффиксом
+        _logo, в WoT — без него. В размере small буква дивизиона не отображается.
       </p>
     </div>
 
@@ -88,7 +102,7 @@
       <div class="debug-grid" style="--debug-grid-min: 90px">
         <div class="card" v-for="d in invalidDivisions" :key="d">
           <div class="debug-stage center">
-            <RankIcon :rank="d" size="medium" :game class="icon" />
+            <RankIcon :rank="d" size="medium" :game :season class="icon" />
           </div>
           <span class="debug-value">{{ d }}</span>
         </div>
@@ -106,29 +120,42 @@ import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
 import {
   Rank, Division,
   getDivisionByRating, getRankByRating, getDivisionLetterByRating,
-  getNextDivision, getPrevDivision, getRatingIntervalForDivision
+  getNextDivision, getPrevDivision, getRatingIntervalForDivision, hasEliteDivisions
 } from '@/shared/game/comp7/utils'
 import { GameVendor } from '@/shared/game/wot'
 import GameSelect from '../shared/GameSelect.vue'
+import SeasonSelect from '../shared/SeasonSelect.vue'
 
 const game = ref<GameVendor>('mt')
+const season = ref('latest')
 const rating = ref(0)
 const hasEliteRating = ref(false)
 const eliteRating = ref(2000)
+const hasEliteDivisionRatings = ref(false)
+const eliteRatingB = ref(4200)
+const eliteRatingA = ref(4600)
 
-const eliteRatingValue = computed(() => hasEliteRating.value ? eliteRating.value : null)
+const eliteRatingValue = computed(() => {
+  if (!hasEliteRating.value) return null
+  if (hasEliteDivisionRatings.value && hasEliteDivisions(game.value, season.value)) {
+    return { C: eliteRating.value, B: eliteRatingB.value, A: eliteRatingA.value }
+  }
+  return eliteRating.value
+})
 
-const division = computed(() => getDivisionByRating(rating.value, game.value, eliteRatingValue.value))
-const rank = computed(() => getRankByRating(rating.value, game.value, eliteRatingValue.value))
-const letter = computed(() => getDivisionLetterByRating(rating.value, game.value))
-const nextDivision = computed(() => getNextDivision(division.value))
-const prevDivision = computed(() => getPrevDivision(division.value))
-const interval = computed(() => getRatingIntervalForDivision(division.value, game.value))
+const division = computed(() => getDivisionByRating(rating.value, game.value, eliteRatingValue.value, season.value))
+const rank = computed(() => getRankByRating(rating.value, game.value, eliteRatingValue.value, season.value))
+const letter = computed(() => getDivisionLetterByRating(rating.value, game.value, season.value, eliteRatingValue.value))
+const nextDivision = computed(() => getNextDivision(division.value, game.value, season.value))
+const prevDivision = computed(() => getPrevDivision(division.value, game.value, season.value))
+const interval = computed(() => getRatingIntervalForDivision(division.value, game.value, season.value, eliteRatingValue.value))
 
 const presets: { title: string, rating: number, hasEliteRating: boolean, eliteRating?: number }[] = [
   { title: '0 — квалификация', rating: 0, hasEliteRating: false },
   { title: '-500 — отрицательный', rating: -500, hasEliteRating: false },
   { title: '2650 — верх без eliteRating', rating: 2650, hasEliteRating: false },
+  { title: '3050 — Чемпион B в новом МТ', rating: 3050, hasEliteRating: false },
+  { title: '3450 — Чемпион A в новом МТ', rating: 3450, hasEliteRating: false },
   { title: '999999 — далеко за пределами', rating: 999999, hasEliteRating: false },
   { title: '2500 при eliteRating=2000 — шестой', rating: 2500, hasEliteRating: true, eliteRating: 2000 },
   { title: 'eliteRating=0 — «не задан»', rating: 2650, hasEliteRating: true, eliteRating: 0 },

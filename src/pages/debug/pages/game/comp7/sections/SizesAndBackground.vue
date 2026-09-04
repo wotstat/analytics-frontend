@@ -46,7 +46,7 @@ const game = ref<GameVendor>('mt')
 const season = ref('latest')
 
 const TIERS: Rank[] = ['qual', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth']
-const allDivisions = computed<Division[]>(() => TIERS.flatMap(getDivisionsByRank))
+const allDivisions = computed<Division[]>(() => TIERS.flatMap(rank => getDivisionsByRank(rank, game.value, season.value)))
 </script>
 
 
