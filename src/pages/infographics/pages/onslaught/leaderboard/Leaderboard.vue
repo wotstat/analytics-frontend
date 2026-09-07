@@ -42,11 +42,10 @@
             </tbody>
           </table>
 
-          <div v-if="searchResultContentVisible" class="search-expandable"
-            :class="{
-              'expanded': searchResultExpanded,
-              'overflow-visible': searchResultExpansionComplete,
-            }">
+          <div v-if="searchResultContentVisible" class="search-expandable" :class="{
+            'expanded': searchResultExpanded,
+            'overflow-visible': searchResultExpansionComplete,
+          }">
             <div class="search-expandable-inner">
               <div class="actions">
                 <button @click="goToPlayerInTable">Перейти к месту в таблице</button>
@@ -98,11 +97,10 @@
             </tbody>
           </table>
 
-          <div v-if="searchResultContentVisible" class="search-expandable"
-            :class="{
-              'expanded': searchResultExpanded,
-              'overflow-visible': searchResultExpansionComplete,
-            }">
+          <div v-if="searchResultContentVisible" class="search-expandable" :class="{
+            'expanded': searchResultExpanded,
+            'overflow-visible': searchResultExpansionComplete,
+          }">
             <div class="search-expandable-inner">
               <div class="actions">
                 <div class="fake-button"></div>
@@ -275,7 +273,9 @@ async function load(abortSignal: AbortSignal, latest = false) {
       (
         select max(recalculationTime)
         from Comp7Leaderboard
-        where region = '${region.value}' and 
+        where 
+          not startsWith(name, 'MT_COMP_QA_') and 
+          region = '${region.value}' and
         recalculationTime between START_DATE and END_DATE + interval 5 day
       ) as LAST_RECALCULATION
     select max(day) as day,
@@ -283,7 +283,9 @@ async function load(abortSignal: AbortSignal, latest = false) {
       max(rank) as lastRank,
       maxIf(rank, elite) as lastEliteRank,
       maxIf(rank, elite) as eliteThreshold
-    from Comp7Leaderboard where region = '${region.value}' and
+    from Comp7Leaderboard where
+      not startsWith(name, 'MT_COMP_QA_') and
+      region = '${region.value}' and
       recalculationTime between START_DATE and END_DATE + interval 5 day and
       recalculationTime = LAST_RECALCULATION
   `, { allowCache: false })
@@ -300,7 +302,7 @@ async function load(abortSignal: AbortSignal, latest = false) {
   const data = await query<LeaderboardData>(`
     select day, name, bdid, clan, clanColor, lastRank, lastDayRank, lastBattlesCount, lastDayBattlesCount, lastRating, lastDayRating
     from Comp7LeaderboardDailyByRank final
-    where region = '${region.value}' and 
+    where not startsWith(name, 'MT_COMP_QA_') and region = '${region.value}' and
       day = '${leaderboardDay.value.day}' and 
       lastRank between ${(page.value - 1) * 100 + 1} and ${page.value * 100} and
       lastRecalculationTime = '${leaderboardDay.value.recalculation}'
@@ -375,7 +377,7 @@ async function searchPlayer(abortSignal: AbortSignal) {
   const data = await query<LeaderboardData>(`
     select day, name, bdid, clan, clanColor, lastRank, lastDayRank, lastBattlesCount, lastDayBattlesCount, lastRating, lastDayRating
     from Comp7LeaderboardDailyByRank final
-    where region = '${region.value}' and
+    where not startsWith(name, 'MT_COMP_QA_') and region = '${region.value}' and
       day = '${leaderboardDay.value.day}' and
       lastRecalculationTime = '${leaderboardDay.value.recalculation}' and
       lower(name) = lower('${escapedName}')

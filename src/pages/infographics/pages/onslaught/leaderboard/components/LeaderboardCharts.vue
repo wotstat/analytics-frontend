@@ -139,7 +139,9 @@ const data = queryComputed<{
     quantileExactHigh(${1 - legendShare.value})(rating) as placeEliteThreshold,
     greatest(1, toUInt32(floor(max(rank) * ${legendShare.value}))) as placeElitePlayers
   from Comp7LeaderboardByRank
-  where region = '${props.region}' and
+  where 
+    not startsWith(name, 'MT_COMP_QA_') and 
+    region = '${props.region}' and
     recalculationTime between START_DATE and END_DATE + interval 5 day
   group by recalculationTime
   order by recalculationTime

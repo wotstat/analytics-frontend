@@ -125,16 +125,21 @@ const data = queryComputed<{ recalculationTime: string, rank: number, rating: nu
     recalculation as (
         select recalculationTime
         from Comp7Leaderboard
-        where recalculationTime between START_DATE and END_DATE + interval 5 day and region = '${props.region}'
+        where 
+          not startsWith(name, 'MT_COMP_QA_') and
+          recalculationTime between START_DATE and END_DATE + interval 5 day and
+          region = '${props.region}'
         group by recalculationTime
         order by recalculationTime
     ),
     player as (
         select recalculationTime, rank, rating, battlesCount
         from Comp7Leaderboard
-        where region = '${props.region}' and
-            bdid = ${props.bdid} and
-            recalculationTime between START_DATE and END_DATE + interval 5 day
+        where 
+          not startsWith(name, 'MT_COMP_QA_') and 
+          region = '${props.region}' and
+          bdid = ${props.bdid} and
+          recalculationTime between START_DATE and END_DATE + interval 5 day
         order by recalculationTime
     )
   select *

@@ -167,6 +167,7 @@ async function load(abortSignal: AbortSignal, soft = false) {
                 count() as players
           from Comp7LeaderboardByRank final
           where
+              not startsWith(name, 'MT_COMP_QA_') and 
               region = REGION and
               recalculationTime = LAST_COMP7_RECALCULATEION_TIME
           group by division, rank
