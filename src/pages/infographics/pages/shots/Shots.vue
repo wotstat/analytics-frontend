@@ -85,6 +85,7 @@ import PopupWindow from '@/shared/ui/components/PopupWindow.vue'
 import ShotInfo from './shotInfo/Index.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMeta } from '@/shared/composition/useMeta'
+// import ShotDistribution from './shotDistribution/ShotDistribution.vue'
 
 useMeta({
   title: 'Статистика стрельбы',

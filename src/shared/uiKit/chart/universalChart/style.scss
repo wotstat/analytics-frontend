@@ -1,6 +1,9 @@
 @layer ui-kit-chart {
   .universal-chart-root {
     contain: strict;
+    position: absolute;
+    top: 0;
+    left: 0;
 
     .plot {
       .bar {
@@ -38,16 +41,20 @@
       }
     }
 
-    .ticks {
-      .plot-area-border path {
-        fill: none;
-        stroke: currentColor;
-        stroke-width: 1px;
-      }
+    .chart-axis line {
+      stroke: currentColor;
+      stroke-width: 1px;
+    }
 
-      .chart-axis line {
-        stroke: currentColor;
-        stroke-width: 1px;
+    .plot-area-border path {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1px;
+    }
+
+    .ticks {
+      .tick {
+        stroke: rgba(255, 255, 255, 0.1);
       }
     }
 

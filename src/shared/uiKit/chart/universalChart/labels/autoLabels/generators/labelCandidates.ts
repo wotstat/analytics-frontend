@@ -23,8 +23,17 @@ export type ArrayLabelContext = LabelContext & {
   valueIndex: number
 }
 
-export type ArrayLabelCandidatesOptions = CandidateOptions & {
+type ArrayCandidateOverride = CandidateOptions & {
   values: readonly number[]
+  labelForValue?: (value: number, context: ArrayLabelContext) => string
+  keyForValue?: (value: number, label: string, context: ArrayLabelContext) => string
+}
+
+export type ArrayLabelCandidatesOptions = CandidateOptions & {
+  values:
+    | readonly number[]
+    | readonly (readonly number[])[]
+    | readonly ArrayCandidateOverride[]
   step?: never
   offset?: never
   labelForValue?: (value: number, context: ArrayLabelContext) => string
@@ -57,6 +66,25 @@ function normalizeSteps(options: SteppedLabelCandidatesOptions): NormalizedStep[
   }
 
   return source.map(step => ({ step }))
+}
+
+function isFlatValues(
+  values: ArrayLabelCandidatesOptions['values'],
+): values is readonly number[] {
+  return values.length === 0 || typeof values[0] === 'number'
+}
+
+function isNestedValues(
+  values: ArrayLabelCandidatesOptions['values'],
+): values is readonly (readonly number[])[] {
+  return values.length > 0 && Array.isArray(values[0])
+}
+
+function normalizeArrayCandidates(options: ArrayLabelCandidatesOptions): ArrayCandidateOverride[] {
+  const values = options.values
+  if (isFlatValues(values)) return [{ values }]
+  if (isNestedValues(values)) return values.map(candidateValues => ({ values: candidateValues }))
+  return [...values]
 }
 
 function steppedCandidates(options: SteppedLabelCandidatesOptions): LabelLevelOptions[] {
@@ -94,29 +122,41 @@ function steppedCandidates(options: SteppedLabelCandidatesOptions): LabelLevelOp
 }
 
 function arrayCandidates(options: ArrayLabelCandidatesOptions): LabelLevelOptions[] {
-  const { values, labelForValue, keyForValue, ...candidateOptions } = options
-  const sourceValues = [...values]
-  const indexByValue = new Map<number, number>()
+  const { values: _, labelForValue, keyForValue, ...candidateOptions } = options
 
-  sourceValues.forEach((value, index) => {
-    if (!indexByValue.has(value)) indexByValue.set(value, index)
+  return normalizeArrayCandidates(options).map(item => {
+    const sourceValues = [...item.values]
+    const indexByValue = new Map<number, number>()
+    const currentLabelForValue = item.labelForValue ?? labelForValue
+    const currentKeyForValue = item.keyForValue ?? keyForValue
+
+    sourceValues.forEach((value, index) => {
+      if (!indexByValue.has(value)) indexByValue.set(value, index)
+    })
+
+    const contextFor = (value: number, context: LabelContext): ArrayLabelContext => ({
+      ...context,
+      valueIndex: indexByValue.get(value) ?? -1,
+    })
+
+    return {
+      ...candidateOptions,
+      source: { values: sourceValues },
+      labelForValue: currentLabelForValue
+        ? (value, context) => currentLabelForValue(value, contextFor(value, context))
+        : undefined,
+      keyForValue: currentKeyForValue
+        ? (value, label, context) => currentKeyForValue(value, label, contextFor(value, context))
+        : value => value.toString(),
+      padding: item.padding ?? candidateOptions.padding,
+      strategy: item.strategy ?? candidateOptions.strategy,
+      from: item.from ?? candidateOptions.from,
+      to: item.to ?? candidateOptions.to,
+      onlyFitted: item.onlyFitted ?? candidateOptions.onlyFitted,
+      ticks: item.ticks ?? candidateOptions.ticks,
+      classes: item.classes ?? candidateOptions.classes,
+    }
   })
-
-  const contextFor = (value: number, context: LabelContext): ArrayLabelContext => ({
-    ...context,
-    valueIndex: indexByValue.get(value) ?? -1,
-  })
-
-  return [{
-    ...candidateOptions,
-    source: { values: sourceValues },
-    labelForValue: labelForValue
-      ? (value, context) => labelForValue(value, contextFor(value, context))
-      : undefined,
-    keyForValue: keyForValue
-      ? (value, label, context) => keyForValue(value, label, contextFor(value, context))
-      : value => value.toString(),
-  }]
 }
 
 export function labelCandidates(options: SteppedLabelCandidatesOptions): LabelLevelOptions[]

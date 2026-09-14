@@ -78,9 +78,11 @@
       <b>labelCandidates</b> — сборщик всего массива кандидатов: ветка <span class="debug-value">step</span>
       принимает число, список чисел или список объектов <span class="debug-value">{ step, labelForValue, padding,
         strategy }</span> и дописывает в хвост 10 удвоений последнего шага. Ветка
-      <span class="debug-value">values</span> создаёт один кандидат из явного массива и добавляет форматтерам
-      <span class="debug-value">valueIndex</span>. В сам <span class="debug-value">AutoLabels</span> эта удобная
-      обёртка не встроена: он знает только общий контракт источника.
+      <span class="debug-value">values</span> создаёт один кандидат из плоского массива или несколько из массива
+      массивов/объектов и добавляет форматтерам <span class="debug-value">valueIndex</span>. Вместе с
+      <span class="debug-value">candidateIndex</span> этого достаточно для разных подписей одинаковых значений.
+      В сам <span class="debug-value">AutoLabels</span> эта удобная обёртка не встроена: он знает только общий
+      контракт источника.
     </p>
   </DebugSection>
 </template>

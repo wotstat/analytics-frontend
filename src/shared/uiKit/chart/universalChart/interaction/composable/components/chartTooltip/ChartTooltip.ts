@@ -16,6 +16,18 @@ export type TooltipBox = {
 
 type NonEmptyArray<T> = readonly [T, ...T[]]
 
+export type TooltipPivot<THit extends InteractionHit = InteractionHit> =
+  | 'cursor'
+  | 'nearest'
+  | 'avg'
+  | 'max-x'
+  | 'min-x'
+  | 'max-y'
+  | 'min-y'
+  | 'max'
+  | 'min'
+  | ((hits: NonEmptyArray<THit>) => Point)
+
 export type TooltipCtx<THit extends InteractionHit = InteractionHit> = {
   readonly hit: THit
   readonly hits: NonEmptyArray<THit>
@@ -34,7 +46,7 @@ export type TooltipCtx<THit extends InteractionHit = InteractionHit> = {
 export type ChartTooltipOptions<THit extends InteractionHit = InteractionHit> = {
   selection: InteractionResolver<THit>
   exposeHighlights?: readonly Highlight[]
-  tooltipPivot?: 'cursor' | 'nearest' | 'avg'
+  tooltipPivot?: TooltipPivot<THit>
   onShow?: (ctx: TooltipCtx<THit>) => void
   onPositionChange?: (ctx: TooltipCtx<THit>) => void
   onHide?: () => void
@@ -177,16 +189,39 @@ export class ChartTooltip<THit extends InteractionHit = InteractionHit> implemen
 
   private pivotFor(controller: InteractionController, hits: NonEmptyArray<THit>, pointer: TooltipPointer): Point {
     const mode = this.options.tooltipPivot ?? 'cursor'
+    if (typeof mode === 'function') return controller.chartToPage(mode(hits))
     if (mode === 'cursor') return { x: pointer.cursor.clientX, y: pointer.cursor.clientY }
     if (mode === 'nearest') return controller.chartToPage(this.nearestAnchor(hits))
 
-    let x = 0
-    let y = 0
+    let sumX = 0
+    let sumY = 0
+    let minX = hits[0].geometry.anchor.x
+    let maxX = minX
+    let minY = hits[0].geometry.anchor.y
+    let maxY = minY
+
     for (const hit of hits) {
-      x += hit.geometry.anchor.x
-      y += hit.geometry.anchor.y
+      const { x, y } = hit.geometry.anchor
+      sumX += x
+      sumY += y
+      minX = Math.min(minX, x)
+      maxX = Math.max(maxX, x)
+      minY = Math.min(minY, y)
+      maxY = Math.max(maxY, y)
     }
 
-    return controller.chartToPage({ x: x / hits.length, y: y / hits.length })
+    const avgX = sumX / hits.length
+    const avgY = sumY / hits.length
+
+    if (mode === 'max-x') return controller.chartToPage({ x: maxX, y: avgY })
+    if (mode === 'min-x') return controller.chartToPage({ x: minX, y: avgY })
+
+    // Geometry anchors use layout coordinates, where Y grows downwards.
+    if (mode === 'max-y') return controller.chartToPage({ x: avgX, y: minY })
+    if (mode === 'min-y') return controller.chartToPage({ x: avgX, y: maxY })
+    if (mode === 'max') return controller.chartToPage({ x: maxX, y: minY })
+    if (mode === 'min') return controller.chartToPage({ x: minX, y: maxY })
+
+    return controller.chartToPage({ x: avgX, y: avgY })
   }
 }

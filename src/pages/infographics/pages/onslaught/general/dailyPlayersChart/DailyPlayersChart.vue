@@ -249,9 +249,8 @@ function tooltipDate(ctx: TooltipCtx<DailyPlayersHit>) {
   .ticks {
     opacity: 0.1;
 
-    .y-ticks,
-    .week-ticks,
-    .day-ticks {
+
+    .tick {
       stroke: rgba(255, 255, 255, 1);
     }
 
