@@ -32,13 +32,34 @@
 
 - `tooltip/textTooltip.ts` — `vTextTooltip`: базовая директива плюс `popoverViewportOffset` из шапки сайта.
 - `tipBubble/` — `TipBubble.vue`, `TipBubbleText.vue`: обёртки над `uiKit/tipBubble` с проектными дефолтами.
-- `chart/` — Vue-обёртки тултипов графиков (`HeaderTooltip.vue`, `FloatingTooltip.vue`) и `VueChartRenderManager.ts`, см. [06-charts.md](06-charts.md).
+- `chart/` — Vue-обёртки графиков: тултипы (`HeaderTooltip.vue`, `FloatingTooltip.vue`), легенда (`Legend.vue` + `useLegend.ts`) и `VueChartRenderManager.ts`, см. [06-charts.md](06-charts.md).
 - `modalWindow/` — модальные окна (`ModalWindow.vue`, `ModalWindowContent.vue`, кнопки).
 - `components/Tooltip.vue`; `PopupWindow.vue` — самостоятельный попап, не часть `modalWindow`; `Canvas.vue` — обёртка canvas с ресайзом; `SnowCardWrapper.vue` — сезонное украшение.
 - `loaders/` — `Loader.vue` (спиннер), `pageLoader/PageLoader.vue` (для asyncPage).
 - `tween/` — анимация чисел: `TweenValue.vue`, `SimpleTweenValue.vue`, `useTweenRef.ts`, `easing.ts`, `processed.ts`. Единственная рабочая реализация — здесь; старый вариант `src/composition/tween/useTweenRef.ts` удалён. `options` (duration/easing/minStep) читаются один раз при setup и не реактивны.
 - `tableView/cells/HighlightedCell.ts` — ячейка `TableView` с подсветкой поиска.
 - `noScroll/noScroll.ts` — блокировка скролла: класс вешается на `<html>` (не на body), и это **счётчик**, а не переключатель — `requestNoScroll`/`releaseNoScroll`/`useNoScroll`, стили в `noScroll/styles.scss` по `html.no-scroll`. `PopupWindow.vue` и пара страниц вешают `no-scroll` на `body` мимо этого механизма — так делать не надо.
+
+### Легенда графика
+
+`useLegend(items, { highlightSync? })` хранит enabled-состояние по устойчивому `item.tag` и подключает легенду к семантическому `HighlightSynchronizer`. Если синхронизатор не передан, composable создаёт свой и возвращает его как `legend.highlightSync`; этот экземпляр передаётся в `Highlight.syncWith()`. Для нескольких графиков и легенд всем моделям передаётся один общий синхронизатор.
+
+```ts
+const series = [
+  { name: 'Серверный', color: '#fbd080', tag: 'server' },
+  { name: 'Клиентский', color: '#caffb7', tag: 'client' },
+] as const
+
+const legend = useLegend(series)
+const highlight = new Highlight({ selection: linesNearStroke, class: 'highlighted' })
+  .syncWith(legend.highlightSync)
+```
+
+```vue
+<Legend :legend="legend" layout="horizontal" toggleable highlightable />
+```
+
+Модель отдаёт `items`, `enabled`, `enabledTags`, `highlighted`, проверки и действия `toggle` / `highlight` / `clearHighlight`, поэтому кастомную разметку можно написать без `Legend.vue`. `layout`, `toggleable`, `highlightable` относятся только к стандартному renderer. Disabled item остаётся кликабельным при `toggleable`, но не публикует и не анимирует highlight.
 
 ## Форматирование значений — процессоры (`src/shared/utils/processors/`)
 

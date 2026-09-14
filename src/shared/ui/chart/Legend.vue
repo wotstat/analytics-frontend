@@ -1,12 +1,12 @@
 <template>
   <div class="legend" :class="`legend-${props.layout}`">
-    <button v-for="item in props.series" :key="item.key ?? item.name" class="item" type="button" :class="{
-      interactive: props.toggleable || props.highlightable,
-      disabled: !isEnabled(item),
-      highlighted: isHighlighted(item)
+    <button v-for="item in items" :key="item.tag" class="item" type="button" :class="{
+      interactive: isInteractive(item),
+      disabled: !props.legend.isEnabled(item),
+      highlighted: props.highlightable && props.legend.isHighlighted(item)
     }" :aria-disabled="!props.toggleable" :aria-pressed="props.toggleable ? isEnabled(item) : undefined"
       :tabindex="props.toggleable ? 0 : -1" @click="toggle(item)" @mouseenter="highlight(item)"
-      @mouseleave="clearHighlight(item)">
+      @mouseleave="clearHighlight">
       <span class="marker" :style="{ backgroundColor: item.color }"></span>
       <span>{{ item.name }}</span>
     </button>
@@ -14,58 +14,52 @@
 </template>
 
 
-<script setup lang="ts">
-import { watch } from 'vue'
+<script setup lang="ts" generic="TItem extends LegendItem">
+import { computed, onBeforeUnmount, watch } from 'vue'
+import type { LegendItem, LegendModel } from './useLegend'
 
-type Series = {
-  color: string
-  name: string
-  key?: string
-}
-
-type Props = {
-  series: Series[]
+type Props<TItem extends LegendItem> = {
+  legend: LegendModel<TItem>
   layout?: 'horizontal' | 'vertical'
   toggleable?: boolean
   highlightable?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props<TItem>>(), {
   layout: 'horizontal',
   toggleable: false,
   highlightable: false,
 })
 
-const enabled = defineModel<Series[]>('enabled')
-const highlighted = defineModel<Series | null>('highlighted', { default: null })
+const items = computed(() => props.legend.items.value)
 
-watch([() => props.series, () => props.toggleable], ([series, toggleable]) => {
-  if (!toggleable || enabled.value === undefined) enabled.value = [...series]
-}, { immediate: true })
+watch(() => props.highlightable, highlightable => {
+  if (!highlightable) props.legend.clearHighlight()
+})
 
-function isEnabled(item: Series) {
-  return enabled.value?.includes(item) ?? true
+watch(() => props.legend, (_, previousLegend) => previousLegend.clearHighlight())
+
+onBeforeUnmount(() => props.legend.clearHighlight())
+
+function isEnabled(item: TItem) {
+  return props.legend.isEnabled(item)
 }
 
-function isHighlighted(item: Series) {
-  return highlighted.value === item
+function isInteractive(item: TItem) {
+  return props.toggleable || (props.highlightable && isEnabled(item))
 }
 
-function toggle(item: Series) {
+function toggle(item: TItem) {
   if (!props.toggleable) return
-
-  const current = enabled.value ?? props.series
-  enabled.value = current.includes(item)
-    ? current.filter(series => series !== item)
-    : [...current, item]
+  props.legend.toggle(item)
 }
 
-function highlight(item: Series) {
-  if (props.highlightable) highlighted.value = item
+function highlight(item: TItem) {
+  if (props.highlightable && isEnabled(item)) props.legend.highlight(item)
 }
 
-function clearHighlight(item: Series) {
-  if (props.highlightable && highlighted.value === item) highlighted.value = null
+function clearHighlight() {
+  if (props.highlightable) props.legend.clearHighlight()
 }
 </script>
 
@@ -103,6 +97,11 @@ function clearHighlight(item: Series) {
 
   &.disabled {
     opacity: 0.35;
+
+    .marker {
+      transform: none;
+      transition: none;
+    }
   }
 
   &.highlighted .marker {

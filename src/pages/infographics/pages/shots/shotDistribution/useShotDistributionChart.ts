@@ -4,12 +4,13 @@ import { labelCandidates } from '@/shared/uiKit/chart/universalChart/labels/auto
 import { InteractionController } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController'
 import { ChartTooltip, TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
 import { Highlight } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/highlight/Highlight'
+import { HighlightSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/HighlightSynchronizer'
 import { PlotAreaBorder } from '@/shared/uiKit/chart/universalChart/plot/axis/PlotAreaBorder'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
 import { LinePointHit } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineInteractionSource'
 import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
-import { MaybeRefOrGetter, Ref, shallowRef, toValue, watch } from 'vue'
+import { MaybeRefOrGetter, shallowRef, toValue, watch } from 'vue'
 
 type LineData = readonly (number | null)[]
 export type ShotDistributionSeries = 'server' | 'client' | 'shared'
@@ -27,7 +28,7 @@ type Params = {
   clientMarker: MaybeRefOrGetter<LineData>
   sharedClient: MaybeRefOrGetter<LineData>
   enabledSeries: MaybeRefOrGetter<readonly ShotDistributionSeries[]>
-  highlightedSeries: Ref<ShotDistributionSeries | null>
+  highlightSync: HighlightSynchronizer
 }
 
 function toPoints(data: LineData, series: ShotDistributionSeries) {
@@ -91,6 +92,7 @@ export function useShotDistributionChart(params: Params) {
   const selectedPoints = lineInteractions.nearestByAxis('x')
   const hoveredLine = lineInteractions.nearStroke({ maxDistance: 8 }).nearest()
   const lineHighlight = new Highlight({ selection: hoveredLine, class: 'highlighted' })
+    .syncWith(params.highlightSync)
 
   const tooltipCtx = shallowRef<TooltipCtx<ShotDistributionHit> | null>(null)
 
@@ -100,15 +102,8 @@ export function useShotDistributionChart(params: Params) {
       selection: selectedPoints,
       tooltipPivot: 'max-y',
       exposeHighlights: [lineHighlight],
-      onHide: () => {
-        tooltipCtx.value = null
-        params.highlightedSeries.value = null
-      },
-      onPositionChange: ctx => {
-        tooltipCtx.value = ctx
-        params.highlightedSeries.value = ctx.hits
-          .find(hit => ctx.isHighlighted(hit, lineHighlight))?.datum.series ?? null
-      },
+      onHide: () => tooltipCtx.value = null,
+      onPositionChange: ctx => tooltipCtx.value = ctx,
     }))
 
   chart
@@ -134,11 +129,5 @@ export function useShotDistributionChart(params: Params) {
   bindLine('client', params.clientMarker)
   bindLine('shared', params.sharedClient)
 
-  watch(() => params.highlightedSeries.value, highlighted => {
-    for (const series of Object.keys(lines) as ShotDistributionSeries[]) {
-      lines[series].getRootElement().classList.toggle('highlighted', highlighted === series)
-    }
-  }, { immediate: true })
-
-  return { chart, tooltipCtx }
+  return { chart, tooltipCtx, lineHighlight }
 }

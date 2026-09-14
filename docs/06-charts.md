@@ -263,7 +263,7 @@ const isLineHighlighted = ctx.isHighlighted(hit, chart.lineHighlight)
 `interaction/composable/sync/` — три независимых канала синхронизации нескольких `UniversalChart`. Координатный hover, семантический Highlight и viewport не подменяют друг друга: каждый график потребляет общий payload через собственный effect и интерпретирует его в своих данных и DOM.
 
 - **`HoverSynchronizer`** (hover-sync): навёл на один график — hover зажигается на всех связанных в той же точке фрейма. Добавляется в каждый `InteractionController` как `InteractionComponent` (`addComponent`), а как источник точки (`HoverResolver`) подключается к конкретным selections через `.withInput(sync.hover)` — синхронизируются обе роли осей и `isTouch`, не хиты; локальный hover приоритетнее внешнего. Композиция и пример разобраны выше, в «Интерактив → Hover sync через input-bound selections».
-- **`HighlightSynchronizer`** (semantic-sync): Highlight с локальным курсором публикует дедуплицированный `readonly InteractionTag[]` с set-семантикой (порядок незначим), остальные Highlights находят свои sources с теми же tags. Координаты, hits, `sourceId` и DOM не передаются. `.syncWith(sync.highlight)` скрывает connection lifecycle; публичный `connect()` остаётся общим seam для будущих внешних источников вроде Legend. Последний publisher владеет состоянием, stale `release()` прошлого владельца новое состояние не очищает, а follower никогда не публикует потреблённые tags обратно. Пока у Highlight есть local pointer, sync-уведомления не планируют ему новые кадры — ownership меняется только вслед за реальным локальным вводом. Follower повторно собирает targets после полного рендера chart, поэтому активная подсветка переживает замену DOM у динамических Bar/AutoMarkers.
+- **`HighlightSynchronizer`** (semantic-sync): Highlight с локальным курсором или внешний источник вроде Legend публикует дедуплицированный `readonly InteractionTag[]` с set-семантикой (порядок незначим), остальные участники сопоставляют свои sources/items с теми же tags. Координаты, hits, `sourceId` и DOM не передаются. `.syncWith(sync.highlight)` скрывает connection lifecycle графика; внешний источник использует `connect()`. Последний publisher владеет состоянием, stale `release()` прошлого владельца новое состояние не очищает, а follower никогда не публикует потреблённые tags обратно. Пока у Highlight есть local pointer, sync-уведомления не планируют ему новые кадры — ownership меняется только вслед за реальным локальным вводом. Follower повторно собирает targets после полного рендера chart, поэтому активная подсветка переживает замену DOM у динамических Bar/AutoMarkers.
 - **`BoundsSynchronizer`** (bounds-sync): зазумил/пропанил один — связанные синхронно повторяют окно ведущей оси (направление как у `panDirection`: `new BoundsSynchronizer('horizontal' | 'vertical' | 'all')`), каждый анимируя свою auto-fit ось. Передаётся в `ZoomChartComponent` опцией `boundsSync`. **Идёт через `ZoomChartComponent`**, а не через `chart.setRenderBounds` напрямую (иначе auto-fit ось ведомого снапит — детали в его `readme.md`).
 
 ```ts
@@ -277,6 +277,21 @@ const highlight = new Highlight({
 ```
 
 Corresponding lines другого графика получают тот же `interactionTag` и тот же экземпляр `HighlightSynchronizer`; отдельный объект `{ server: serverLine.interaction, ... }` не нужен. Если локальный pointer есть, Highlight публикует даже пустой список tags — наведение на gap явно гасит follower. После ухода pointer connection освобождает владение и общее состояние исчезает.
+
+Внешние источники и observers используют тот же framework-neutral connection:
+
+```ts
+const connection = highlightSync.connect()
+const stop = connection.subscribe(state => console.log(state?.tags ?? []))
+
+connection.publish(['server'])
+connection.release()
+
+stop()
+connection.dispose()
+```
+
+`subscribe()` сразу отдаёт глобальный state и видит в том числе публикацию своей connection. `consume()` предназначен для `Highlight` и подавляет только собственную публикацию, чтобы она не вернулась как внешний highlight. Vue-адаптер этого API — `shared/ui/chart/useLegend.ts`: `Legend A → HighlightSynchronizer → Highlight A/B + Legend B`. `ChartTooltip.exposeHighlights` в этой связке не участвует; snapshot нужен только для отображения состояния Highlight внутри уже открытого тултипа.
 
 Референс hover/bounds-проводки — `detail/Charts.ts` + `detail/Detail.vue` (лидерборд Натиска). Семантический Highlight показан парой графиков в `/debug/chart/interaction#synchronization`: обе линии имеют tag `sync-series`, но разные данные и Y-масштабы.
 

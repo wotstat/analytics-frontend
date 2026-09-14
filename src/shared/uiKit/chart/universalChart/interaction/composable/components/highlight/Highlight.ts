@@ -189,7 +189,7 @@ export class Highlight<THit extends InteractionHit = InteractionHit> implements 
     if (!this.controller || !this.synchronizer || this.syncConnection) return
 
     this.syncConnection = this.synchronizer.connect()
-    this.stopSync = this.syncConnection.subscribeChange(() => {
+    this.stopSync = this.syncConnection.subscribe(() => {
       const controller = this.controller
       if (!controller?.localInput.pointer) controller?.scheduleRender()
     })

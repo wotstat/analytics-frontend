@@ -8,7 +8,7 @@ export interface HighlightSyncConnection {
   publish(tags: readonly InteractionTag[]): void
   release(): void
   consume(): HighlightSyncState | null
-  subscribeChange(callback: () => void): () => void
+  subscribe(listener: (state: HighlightSyncState | null) => void): () => void
   dispose(): void
 }
 
@@ -26,7 +26,7 @@ export class HighlightSynchronizer {
 
   private owner: symbol | null = null
   private state: HighlightSyncState | null = null
-  private readonly listeners = new Set<() => void>()
+  private readonly listeners = new Set<(state: HighlightSyncState | null) => void>()
 
   connect(): HighlightSyncConnection {
     const owner = Symbol('HighlightSyncConnection')
@@ -46,11 +46,12 @@ export class HighlightSynchronizer {
         if (!disposed) this.release(owner)
       },
       consume: () => disposed ? null : this.consume(owner),
-      subscribeChange: callback => {
+      subscribe: listener => {
         if (disposed) return () => { }
 
-        const stop = this.subscribeChange(callback)
+        const stop = this.subscribe(listener)
         subscriptions.add(stop)
+        listener(this.state)
         return () => unsubscribe(stop)
       },
       dispose: () => {
@@ -84,12 +85,12 @@ export class HighlightSynchronizer {
     return this.state
   }
 
-  private subscribeChange(callback: () => void): () => void {
-    this.listeners.add(callback)
-    return () => this.listeners.delete(callback)
+  private subscribe(listener: (state: HighlightSyncState | null) => void): () => void {
+    this.listeners.add(listener)
+    return () => this.listeners.delete(listener)
   }
 
   private notify(): void {
-    for (const listener of this.listeners) listener()
+    for (const listener of this.listeners) listener(this.state)
   }
 }

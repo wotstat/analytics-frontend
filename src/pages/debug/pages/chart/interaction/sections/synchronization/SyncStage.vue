@@ -2,6 +2,8 @@
   <div class="sync-stage">
     <h3>{{ title }}</h3>
 
+    <Legend :legend="legend" :highlightable="highlightSynced" toggleable />
+
     <DemoChartView :chart="chart" :height="220" />
 
     <div class="debug-row readout">
@@ -26,6 +28,8 @@
 
 <script setup lang="ts">
 import { onUnmounted, shallowRef } from 'vue'
+import Legend from '@/shared/ui/chart/Legend.vue'
+import { LegendModel } from '@/shared/ui/chart/useLegend'
 import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
 import DemoChartView from '../../shared/DemoChartView.vue'
 import TooltipCard from '../../shared/TooltipCard.vue'
@@ -33,6 +37,8 @@ import type { SyncChart, SyncHit } from '../../shared/SyncChart'
 
 const props = defineProps<{
   chart: SyncChart
+  legend: LegendModel
+  highlightSynced: boolean
   title: string
 }>()
 

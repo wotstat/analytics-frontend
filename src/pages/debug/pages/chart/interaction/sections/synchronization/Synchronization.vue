@@ -40,17 +40,21 @@
     </div>
 
     <div class="stages">
-      <SyncStage :chart="chartA" title="График A — разрыв в X 8…14, Y ~500" />
-      <SyncStage :chart="chartB" title="График B — разрыв в X 2…7, Y ~6000 (другой масштаб)" />
+      <SyncStage :chart="chartA" :legend="legendA" :highlight-synced="highlightSynced"
+        title="График A — разрыв в X 8…14, Y ~500" />
+      <SyncStage :chart="chartB" :legend="legendB" :highlight-synced="highlightSynced"
+        title="График B — разрыв в X 2…7, Y ~6000 (другой масштаб)" />
     </div>
 
     <p class="debug-note">
       <b>Highlight по данным, а не по курсору.</b> Подведи курсор к stroke любого графика: обе синие линии становятся
       толще, потому что локальный Highlight публикует tag <span class="debug-value">sync-series</span>, а второй
       находит у себя interaction с тем же tag. Убери курсор со stroke — обе линии возвращаются в обычное состояние.
+      Наведение на легенду любого графика публикует тот же tag: обе линии и обе легенды подсвечиваются через общую
+      шину без прямой связи Legend с графиком.
       Этот канал не использует <span class="debug-value">withInput(hoverSync)</span> и не передаёт чужой hit.
-      Выключи <span class="debug-value">Highlight synced</span>, чтобы оставить подсветку только на графике под
-      курсором.
+      Выключи <span class="debug-value">Highlight synced</span>, чтобы отключить внешний highlight и оставить
+      подсветку только на графике под курсором.
       Если включить <span class="debug-value">ChartTooltip synced</span>, строка
       <span class="debug-value">tooltip sees Highlight</span> покажет «да» и на follower: его snapshot сопоставляет
       локальный point hit с полученным tag, хотя stroke hit источника туда не передавался.
@@ -112,6 +116,7 @@
 <script setup lang="ts">
 import { markRaw, ref, watchEffect } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
+import { LegendItem, useLegend } from '@/shared/ui/chart/useLegend'
 import { HoverSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/HoverSynchronizer'
 import { HighlightSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/HighlightSynchronizer'
 import { SyncChart, type SyncConfig } from '../../shared/SyncChart'
@@ -129,6 +134,11 @@ const zoom = ref(false)
 
 const hoverSync = new HoverSynchronizer()
 const highlightSync = new HighlightSynchronizer()
+const legendItems: readonly LegendItem[] = [
+  { name: 'Синхронизируемая линия', color: '#02afff', tag: 'sync-series' },
+]
+const legendA = useLegend(legendItems, { highlightSync })
+const legendB = useLegend(legendItems, { highlightSync })
 
 const chartA = markRaw(new SyncChart({ points: syncSeriesA(), hoverSync, highlightSync }))
 const chartB = markRaw(new SyncChart({ points: syncSeriesB(), hoverSync, highlightSync }))

@@ -9,15 +9,14 @@
 
           <div class="tooltip-series" v-for="item in enabledTooltipSeries" :key="item.series">
             <span class="series-marker"
-              :class="[`${item.series}-marker`, { highlighted: highlightedSeriesKey === item.series }]"></span>
+              :class="[`${item.series}-marker`, { highlighted: isTooltipSeriesHighlighted(ctx, item.series) }]"></span>
             <span>{{ item.label }}</span>
             <b>{{ tooltipValue(ctx, item.series) }}</b>
           </div>
         </div>
       </FloatingTooltip>
 
-      <Legend v-model:enabled="enabledSeries" v-model:highlighted="highlightedSeries" :series="series" class="legend"
-        toggleable highlightable />
+      <Legend :legend="legend" class="legend" toggleable highlightable />
 
       <UniversalChartComponent :chart="chart" />
     </div>
@@ -34,14 +33,15 @@ import { loading, mergeStatuses, queryAsync } from '@/db'
 import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
 import { getQueryStatParamsCache, StatParams, whereClause } from '@/shared/query/useQueryStatParams'
 import { useElementVisibility } from '@vueuse/core'
-import { computed, ref, shallowRef, useTemplateRef, watch } from 'vue'
+import { computed, useTemplateRef, watch } from 'vue'
 
 
 import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
+import Legend from '@/shared/ui/chart/Legend.vue'
+import { useLegend } from '@/shared/ui/chart/useLegend'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
 import { ShotDistributionHit, ShotDistributionSeries, useShotDistributionChart } from './useShotDistributionChart'
-import Legend from '@/shared/ui/chart/Legend.vue'
 
 const container = useTemplateRef<HTMLElement>('container')
 const visible = useElementVisibility(container)
@@ -49,22 +49,16 @@ const visible = useElementVisibility(container)
 type LegendSeries = {
   name: string
   color: string
-  key: ShotDistributionSeries
+  tag: ShotDistributionSeries
 }
 
 const series: LegendSeries[] = [
-  { name: 'Серверный', color: '#fbd080', key: 'server' },
-  { name: 'Клиентский', color: '#caffb7', key: 'client' },
-  { name: 'Общий', color: '#d3deff', key: 'shared' },
+  { name: 'Серверный', color: '#fbd080', tag: 'server' },
+  { name: 'Клиентский', color: '#caffb7', tag: 'client' },
+  { name: 'Общий', color: '#d3deff', tag: 'shared' },
 ]
 
-const enabledSeries = shallowRef<LegendSeries[]>([...series])
-const highlightedSeriesKey = ref<ShotDistributionSeries | null>(null)
-const highlightedSeries = computed<LegendSeries | null>({
-  get: () => series.find(item => item.key === highlightedSeriesKey.value) ?? null,
-  set: item => highlightedSeriesKey.value = item?.key ?? null,
-})
-const enabledSeriesKeys = computed(() => enabledSeries.value.map(item => item.key))
+const legend = useLegend(series)
 
 const { params } = defineProps<{
   params: StatParams
@@ -132,12 +126,12 @@ const serverMarker = computed(() => calc(serverMarkerResult.value.data))
 const sharedClient = computed(() => calc(sharedClientResult.value.data))
 
 const status = computed(() => mergeStatuses(clientMarkerResult.value.status, serverMarkerResult.value.status, sharedClientResult.value.status))
-const { chart, tooltipCtx } = useShotDistributionChart({
+const { chart, tooltipCtx, lineHighlight } = useShotDistributionChart({
   serverMarker,
   clientMarker,
   sharedClient,
-  enabledSeries: enabledSeriesKeys,
-  highlightedSeries: highlightedSeriesKey,
+  enabledSeries: legend.enabledTags,
+  highlightSync: legend.highlightSync,
 })
 
 const tooltipSeries = [
@@ -147,11 +141,16 @@ const tooltipSeries = [
 ] as const
 
 type TooltipSeries = typeof tooltipSeries[number]['series']
-const enabledTooltipSeries = computed(() => tooltipSeries.filter(item => enabledSeriesKeys.value.includes(item.series)))
+const enabledTooltipSeries = computed(() => tooltipSeries.filter(item => legend.enabledTags.value.includes(item.series)))
 
 function tooltipValue(ctx: TooltipCtx<ShotDistributionHit>, series: TooltipSeries) {
   const hit = ctx.hits.find(hit => hit.datum.series === series)
   return hit ? `${Math.round(hit.datum.y)}%` : '-'
+}
+
+function isTooltipSeriesHighlighted(ctx: TooltipCtx<ShotDistributionHit>, series: TooltipSeries) {
+  const hit = ctx.hits.find(hit => hit.datum.series === series)
+  return hit ? ctx.isHighlighted(hit, lineHighlight) : false
 }
 
 watch(tooltipCtx, ctx => {
