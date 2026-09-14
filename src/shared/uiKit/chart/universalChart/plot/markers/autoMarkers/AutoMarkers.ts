@@ -2,6 +2,7 @@ import { ChartSpace } from '../../../utils/ChartSpace'
 import { Bounds, BoundsConstraint } from '../../../utils/Bounds'
 import { Point } from '../../../utils/Point'
 import { addClasses, Classes } from '../../../utils/utils'
+import { InteractionTag } from '../../../interaction/core/InteractionSource'
 import { BaseMarkers, Marker } from '../BaseMarkers'
 import { AutoMarkersInteractionSource } from './AutoMarkersInteractionSource'
 
@@ -113,6 +114,7 @@ export class AutoMarkers<T extends AutoMarkerDatum = AutoMarkerDatum> extends Ba
 
   constructor(protected options: {
     classes?: Classes
+    interactionTag?: InteractionTag
     targetMasks?: Element[] | Element
     affectsBounds?: boolean
   } & Partial<DefaultOptions>) {
@@ -136,7 +138,7 @@ export class AutoMarkers<T extends AutoMarkerDatum = AutoMarkerDatum> extends Ba
         return datum ? resolveMarkerData(datum, this.defaultData) : null
       },
       target: index => (this.markerInstances[index] as AutoMarker<T> | undefined)?.target ?? null,
-    })
+    }, options.interactionTag)
   }
 
   createMarker(data: T) {

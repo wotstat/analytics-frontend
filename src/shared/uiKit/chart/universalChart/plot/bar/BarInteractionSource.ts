@@ -2,6 +2,7 @@ import { geometryFromRanges, InteractionBounds, InteractionGeometry } from '../.
 import { InteractionHit } from '../../interaction/core/InteractionHit'
 import { InteractionResolveContext, InteractionResolver } from '../../interaction/core/InteractionResolver'
 import { Selection } from '../../interaction/core/Selection'
+import { InteractionSource, InteractionTag } from '../../interaction/core/InteractionSource'
 import { ChartSpace } from '../../utils/ChartSpace'
 import { Point } from '../../utils/Point'
 import type { BarDataset, BarDatum, BarLayoutItem } from './Bar'
@@ -38,17 +39,25 @@ export type BarPlotAccess<TCategory = number, TBarDatum extends BarDatum = numbe
   categoryCount(): number
   categoryLayout(categoryIndex: number, space: ChartSpace): readonly BarLayoutItem<TBarDatum>[]
   strategyType(): 'grouped' | 'stacked'
+  targets(): readonly SVGElement[]
 }
 
 function barItemKey(datasetIndex: number, categoryIndex: number): string {
   return `${datasetIndex}:${categoryIndex}`
 }
 
-export class BarInteractionSource<TCategory = number, TBarDatum extends BarDatum = number> {
+export class BarInteractionSource<TCategory = number, TBarDatum extends BarDatum = number> implements InteractionSource {
 
   readonly id = Symbol('BarInteractionSource')
 
-  constructor(private readonly plot: BarPlotAccess<TCategory, TBarDatum>) { }
+  constructor(
+    private readonly plot: BarPlotAccess<TCategory, TBarDatum>,
+    readonly tag?: InteractionTag
+  ) { }
+
+  getTargets(): readonly SVGElement[] {
+    return this.plot.targets()
+  }
 
   contains(options: BarContainsOptions = {}): BarItemSelection<TCategory, TBarDatum> {
     return new BarContainsSelection(this, options.gaps ?? 'nearest', options.groupGaps ?? 'miss', options.hitArea ?? 'geometry')
@@ -115,6 +124,7 @@ export class BarInteractionSource<TCategory = number, TBarDatum extends BarDatum
     return {
       kind: 'bar-item',
       sourceId: this.id,
+      interactionTag: this.tag,
       datum: item.datum,
       identity: { sourceId: this.id, kind: 'item', key: barItemKey(item.datasetIndex, item.categoryIndex) },
       memberships: [
@@ -145,6 +155,7 @@ export class BarInteractionSource<TCategory = number, TBarDatum extends BarDatum
     return {
       kind: 'bar-group',
       sourceId: this.id,
+      interactionTag: this.tag,
       datum: this.plot.datasets().map(dataset => dataset.values[categoryIndex]),
       identity: { sourceId: this.id, kind: 'group', key: categoryIndex },
       memberships: [],
@@ -162,7 +173,7 @@ export class BarInteractionSource<TCategory = number, TBarDatum extends BarDatum
 export abstract class BarItemSelection<TCategory = number, TBarDatum extends BarDatum = number> extends Selection<BarItemHit<TCategory, TBarDatum>> {
 
   constructor(protected readonly source: BarInteractionSource<TCategory, TBarDatum>) {
-    super()
+    super([source])
   }
 
   related(relation: BarRelation): Selection<BarItemHit<TCategory, TBarDatum>> {
@@ -188,7 +199,7 @@ class BarContainsSelection<TCategory, TBarDatum extends BarDatum> extends BarIte
 class BarContainsGroupSelection<TCategory, TBarDatum extends BarDatum> extends Selection<BarGroupHit<TCategory, TBarDatum>> {
 
   constructor(private readonly source: BarInteractionSource<TCategory, TBarDatum>, private readonly groupGaps: BarGapPolicy, private readonly hitArea: BarHitArea) {
-    super()
+    super([source])
   }
 
   resolve(ctx: InteractionResolveContext): readonly BarGroupHit<TCategory, TBarDatum>[] {
@@ -207,7 +218,7 @@ class BarRelatedSelection<TCategory, TBarDatum extends BarDatum> extends Selecti
     private readonly source: BarInteractionSource<TCategory, TBarDatum>,
     private readonly relation: BarRelation
   ) {
-    super()
+    super([source])
   }
 
   resolve(ctx: InteractionResolveContext): readonly BarItemHit<TCategory, TBarDatum>[] {

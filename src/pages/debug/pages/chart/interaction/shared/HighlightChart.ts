@@ -105,8 +105,8 @@ export class HighlightChart extends UniversalChart {
     const { clip: clipMain, mask: maskMain, maskRoot } = clipAndMask()
     this.maskRoot = maskRoot
 
-    this.lineA = new AutoLine<LinePoint>({ classes: ['main-line', 's0'], smoothingMethod: 'monotone' })
-    this.lineB = new AutoLine<LinePoint>({ classes: ['main-line', 's1'], smoothingMethod: 'monotone' })
+    this.lineA = new AutoLine<LinePoint>({ interactionTag: 'line-a', classes: ['main-line', 's0'], smoothingMethod: 'monotone' })
+    this.lineB = new AutoLine<LinePoint>({ interactionTag: 'line-b', classes: ['main-line', 's1'], smoothingMethod: 'monotone' })
     const plotRoot = new PlotGroup().addPlot(this.lineA).addPlot(this.lineB)
 
     this.query = this.lineA.interaction.union(this.lineB.interaction)

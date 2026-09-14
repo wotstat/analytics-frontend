@@ -1,10 +1,12 @@
 import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
 import { InteractionController } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController'
 import { ChartTooltip, ChartTooltipOptions, TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
+import { Highlight } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/highlight/Highlight'
 import { VerticalLine } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/lines/VerticalLine'
 import { MarkerOverlay, MarkerOverlayOptions } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/markerOverlay/MarkerOverlay'
 import { ZoomChartComponent } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/zoomChartComponent/ZoomChartComponent'
 import { HoverSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/HoverSynchronizer'
+import { HighlightSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/HighlightSynchronizer'
 import { Selection } from '@/shared/uiKit/chart/universalChart/interaction/core/Selection'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
 import { LinePointHit } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineInteractionSource'
@@ -19,6 +21,7 @@ export type SyncHit = LinePointHit<LinePoint>
 
 export type SyncConfig = {
   verticalLineSynced: boolean
+  highlightSynced: boolean
   markerSynced: boolean
   tooltipSynced: boolean
   tooltipPivot: 'cursor' | 'nearest' | 'avg'
@@ -26,12 +29,13 @@ export type SyncConfig = {
 }
 
 export function defaultSyncConfig(): SyncConfig {
-  return { verticalLineSynced: true, markerSynced: false, tooltipSynced: false, tooltipPivot: 'cursor', zoom: false }
+  return { verticalLineSynced: true, highlightSynced: true, markerSynced: false, tooltipSynced: false, tooltipPivot: 'cursor', zoom: false }
 }
 
 type Init = {
   points: (LinePoint | null)[]
   hoverSync: HoverSynchronizer
+  highlightSync: HighlightSynchronizer
   config?: Partial<SyncConfig>
 }
 
@@ -42,6 +46,7 @@ export class SyncChart extends UniversalChart {
 
   readonly controller: InteractionController
   readonly zoomComponent: ZoomChartComponent
+  readonly highlight: Highlight
   readonly onTooltip = new EventEmitter<TooltipCtx<SyncHit> | null>()
   // Один и тот же resolver под двумя input в одном кадре: local — то, что видно только
   // при локальном ховере этого графика; synced — то, что приходит от текущего источника хаба
@@ -54,6 +59,7 @@ export class SyncChart extends UniversalChart {
   private readonly syncedSelection: Selection<SyncHit>
 
   private readonly verticalLine: VerticalLine
+  private readonly highlightSync: HighlightSynchronizer
   private readonly marker: MarkerOverlay<SyncHit>
   private readonly tooltip: ChartTooltip<SyncHit>
   private readonly localProbe: HitProbe<SyncHit>
@@ -65,11 +71,12 @@ export class SyncChart extends UniversalChart {
     super({ layoutVariant: 'vertical', renderManager: globalChartRenderManagerSteps4 })
 
     this.config = { ...defaultSyncConfig(), ...init.config }
+    this.highlightSync = init.highlightSync
 
     const { clip: clipMain, mask: maskMain, maskRoot } = clipAndMask()
     this.maskRoot = maskRoot
 
-    this.line = new AutoLine<LinePoint>({ classes: ['main-line', 's0'], smoothingMethod: 'monotone' })
+    this.line = new AutoLine<LinePoint>({ interactionTag: 'sync-series', classes: ['main-line', 's0'], smoothingMethod: 'monotone' })
     const plotRoot = new PlotGroup().addPlot(this.line)
 
     // maxAxisDistance обязателен: без него nearestByAxis всегда находит ближайшую точку вне зависимости
@@ -78,6 +85,10 @@ export class SyncChart extends UniversalChart {
     this.syncedSelection = this.localSelection.withInput(init.hoverSync)
 
     this.verticalLine = new VerticalLine({ selection: this.selectionFor('verticalLineSynced') })
+    this.highlight = new Highlight({
+      selection: this.line.interaction.nearStroke({ maxDistance: 8 }).nearest(),
+      class: 'line-highlighted',
+    }).syncWith(this.config.highlightSynced ? this.highlightSync : null)
     this.marker = new MarkerOverlay(this.markerOptions())
     this.tooltip = new ChartTooltip(this.tooltipOptions())
     this.localProbe = new HitProbe(this.localSelection, hits => this.onLocalHits.emit(hits))
@@ -89,6 +100,7 @@ export class SyncChart extends UniversalChart {
     this.controller = new InteractionController()
       .addComponent(this.zoomComponent)
       .addComponent(this.verticalLine)
+      .addComponent(this.highlight)
       .addComponent(this.marker)
       .addComponent(this.tooltip)
       .addComponent(this.localProbe)
@@ -125,6 +137,7 @@ export class SyncChart extends UniversalChart {
   private tooltipOptions(): ChartTooltipOptions<SyncHit> {
     return {
       selection: this.selectionFor('tooltipSynced'),
+      exposeHighlights: [this.highlight],
       tooltipPivot: this.config.tooltipPivot,
       onPositionChange: ctx => this.onTooltip.emit(ctx),
       onHide: () => this.onTooltip.emit(null),
@@ -133,6 +146,7 @@ export class SyncChart extends UniversalChart {
 
   private applyConfig() {
     this.verticalLine.updateOptions({ selection: this.selectionFor('verticalLineSynced') })
+    this.highlight.syncWith(this.config.highlightSynced ? this.highlightSync : null)
     this.marker.updateOptions(this.markerOptions())
     this.tooltip.updateOptions(this.tooltipOptions())
     this.zoomComponent.updateOptions({

@@ -1,46 +1,36 @@
 <template>
-  <DebugSection title="Два варианта useTweenRef" id="tween-ref-variants"
-    description="Прямой вопрос: shared/ui/tween/useTweenRef.ts и src/composition/tween/useTweenRef.ts — это два идентичных дубля или нет? Сравнивать их рядом на одинаковых входных данных не вышло — читай почему."
-    source="src/shared/ui/tween/useTweenRef.ts, src/composition/tween/useTweenRef.ts">
+  <DebugSection title="Реализация useTweenRef" id="tween-ref-variants"
+    description="В проекте осталась одна реализация useTweenRef. Здесь показаны её публичный API и неочевидное поведение options."
+    source="src/shared/ui/tween/useTweenRef.ts">
 
     <table class="debug-table">
       <thead>
         <tr>
           <th></th>
-          <th>shared/ui/tween/useTweenRef.ts</th>
-          <th>src/composition/tween/useTweenRef.ts</th>
+          <th>src/shared/ui/tween/useTweenRef.ts</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <th>размер исходника</th>
-          <td class="true">{{ sharedSize }} байт</td>
-          <td class="false">{{ compositionSize }} байт</td>
+          <th>статус</th>
+          <td class="true">единственная рабочая реализация</td>
         </tr>
         <tr>
           <th>экспорты</th>
           <td class="true">Tween, TweenOptions, useTweenRef, useTweenComputed</td>
-          <td class="false">ни одного — файл пуст</td>
         </tr>
         <tr>
           <th>используется в проекте</th>
           <td class="true">да — TweenValue, SimpleTweenValue, processed.ts, useRoundTweenProcessor и т.д.</td>
-          <td class="false">нигде</td>
         </tr>
       </tbody>
     </table>
 
     <p class="debug-note">
-      <b>Ответ на прямой вопрос:</b> варианты не идентичны — сравнивать буквально нечего.
-      <span class="debug-path">src/composition/tween/useTweenRef.ts</span> физически пуст (0 байт, длина импортированного
-      через Vite <span class="debug-value">?raw</span> исходника в таблице выше — не переписано руками, это то, что
-      реально лежит на диске). Git показывает, что файл создан пустым коммитом «update» (2 сентября 2025) и с тех пор
-      ни разу не менялся; по всему проекту его никто не импортирует. Единственная рабочая реализация —
-      <span class="debug-value">shared/ui/tween/useTweenRef.ts</span>, её и используют TweenValue, SimpleTweenValue и
-      processed.ts. В <span class="debug-path">docs/05-ui-kit.md</span> это уже описано верно — файл назван «пустым
-      файлом на 0 байт», который «никем не импортируется и подлежит удалению», так что расхождения с реальностью
-      нет. Судя по всему, второй вариант когда-то задумывался и не был дописан, либо остался забытым черновиком
-      после рефакторинга.
+      Раньше в <span class="debug-path">src/composition/tween/useTweenRef.ts</span> лежал второй вариант реализации,
+      затем файл опустошили и удалили. Сейчас единственная рабочая реализация —
+      <span class="debug-value">src/shared/ui/tween/useTweenRef.ts</span>; её используют TweenValue, SimpleTweenValue,
+      processed.ts и useRoundTweenProcessor.
     </p>
 
     <p class="debug-hint">
@@ -104,11 +94,6 @@
 import { ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import TweenValue from '@/shared/ui/tween/TweenValue.vue'
-import sharedSource from '@/shared/ui/tween/useTweenRef.ts?raw'
-import compositionSource from '@/composition/tween/useTweenRef.ts?raw'
-
-const sharedSize = sharedSource.length
-const compositionSize = compositionSource.length
 
 const reactivityTarget = ref(0)
 const reactivityDuration = ref(800)

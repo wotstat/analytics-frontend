@@ -1,4 +1,5 @@
 import { InteractionBounds } from '../../interaction/core/InteractionGeometry'
+import { InteractionTag } from '../../interaction/core/InteractionSource'
 import { Bounds, BoundsConstraint } from '../../utils/Bounds'
 import { ChartSpace } from '../../utils/ChartSpace'
 import { addClasses, classNames, Classes } from '../../utils/utils'
@@ -56,6 +57,7 @@ export type BarData<TCategory = number, TBarDatum extends BarDatum = number> = {
 
 export type Options = {
   classes?: Classes
+  interactionTag?: InteractionTag
   strategy: BarStrategy
   affectsBounds?: boolean
 }
@@ -120,17 +122,19 @@ export class Bar<TCategory = number, TBarDatum extends BarDatum = number> extend
   private layoutCacheKey: string | null = null
   private readonly layoutCache = new Map<number, readonly BarLayoutItem<TBarDatum>[]>()
 
-  readonly interaction: BarInteractionSource<TCategory, TBarDatum> = new BarInteractionSource({
-    categories: () => this.categories,
-    datasets: () => this.datasets,
-    categoryCount: () => this.getCategoryCount(),
-    categoryLayout: (categoryIndex, space) => this.getCategoryLayout(categoryIndex, space),
-    strategyType: () => this.strategy.type,
-  })
+  readonly interaction: BarInteractionSource<TCategory, TBarDatum>
 
   constructor(options: Options) {
     super(options.classes, { affectsBounds: options.affectsBounds ?? true })
     this.strategy = options.strategy
+    this.interaction = new BarInteractionSource({
+      categories: () => this.categories,
+      datasets: () => this.datasets,
+      categoryCount: () => this.getCategoryCount(),
+      categoryLayout: (categoryIndex, space) => this.getCategoryLayout(categoryIndex, space),
+      strategyType: () => this.strategy.type,
+      targets: () => this.datasetElements.flatMap(dataset => dataset.bars),
+    }, options.interactionTag)
     addClasses(this.root, 'bar-plot')
   }
 

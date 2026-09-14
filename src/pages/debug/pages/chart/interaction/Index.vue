@@ -66,10 +66,10 @@
           </tr>
           <tr>
             <th>Highlight</th>
-            <td>единый класс модифицирует существующие SVG-elements через diff previous/current target set;
-              ChartTooltip.exposeHighlights публикует его snapshot того же кадра, а isHighlighted() сопоставляет
-              identity направленно, не пересечением DOM-targets</td>
-            <td><a href="#highlight">Highlight и exposeHighlights</a></td>
+            <td>единый класс работает только с tagged interactions и модифицирует существующие SVG-elements через
+              diff previous/current target set; локально isHighlighted() сопоставляет identity направленно, а между
+              графиками HighlightSynchronizer связывает sources по одинаковому tag без передачи hits и DOM</td>
+            <td><a href="#highlight">Highlight и exposeHighlights</a>, <a href="#synchronization">синхронизация</a></td>
           </tr>
           <tr>
             <th>VerticalArea/HorizontalArea</th>

@@ -36,7 +36,7 @@
 - `modalWindow/` — модальные окна (`ModalWindow.vue`, `ModalWindowContent.vue`, кнопки).
 - `components/Tooltip.vue`; `PopupWindow.vue` — самостоятельный попап, не часть `modalWindow`; `Canvas.vue` — обёртка canvas с ресайзом; `SnowCardWrapper.vue` — сезонное украшение.
 - `loaders/` — `Loader.vue` (спиннер), `pageLoader/PageLoader.vue` (для asyncPage).
-- `tween/` — анимация чисел: `TweenValue.vue`, `SimpleTweenValue.vue`, `useTweenRef.ts`, `easing.ts`, `processed.ts`. Единственная рабочая реализация — здесь; `src/composition/tween/useTweenRef.ts` **пустой файл на 0 байт**, никем не импортируется и подлежит удалению. `options` (duration/easing/minStep) читаются один раз при setup и не реактивны.
+- `tween/` — анимация чисел: `TweenValue.vue`, `SimpleTweenValue.vue`, `useTweenRef.ts`, `easing.ts`, `processed.ts`. Единственная рабочая реализация — здесь; старый вариант `src/composition/tween/useTweenRef.ts` удалён. `options` (duration/easing/minStep) читаются один раз при setup и не реактивны.
 - `tableView/cells/HighlightedCell.ts` — ячейка `TableView` с подсветкой поиска.
 - `noScroll/noScroll.ts` — блокировка скролла: класс вешается на `<html>` (не на body), и это **счётчик**, а не переключатель — `requestNoScroll`/`releaseNoScroll`/`useNoScroll`, стили в `noScroll/styles.scss` по `html.no-scroll`. `PopupWindow.vue` и пара страниц вешают `no-scroll` на `body` мимо этого механизма — так делать не надо.
 

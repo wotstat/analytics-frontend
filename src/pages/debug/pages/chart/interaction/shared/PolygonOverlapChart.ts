@@ -60,8 +60,8 @@ export class PolygonOverlapChart extends UniversalChart {
 
     const { clip } = clipAndMask()
 
-    this.polygonA = new PolygonArea(['polygon-overlap', 'overlap-a'])
-    this.polygonB = new PolygonArea(['polygon-overlap', 'overlap-b'])
+    this.polygonA = new PolygonArea(['polygon-overlap', 'overlap-a'], { interactionTag: 'polygon-a' })
+    this.polygonB = new PolygonArea(['polygon-overlap', 'overlap-b'], { interactionTag: 'polygon-b' })
     this.polygonA.setPoints(overlapA)
     this.polygonB.setPoints(overlapB)
 

@@ -1,12 +1,17 @@
 <template>
-  <DebugSection title="Выборочная синхронизация ховера" id="synchronization"
-    description="withInput(hoverSync): (1) активный local hover на этом контроллере побеждает; (2) иначе берётся synced chart-frame координата хаба и проецируется в локальный ChartSpace; (3) local plot query выполняется заново против локальных данных графика. Хиты между графиками не передаются — синхронизируется только координата."
-    source="src/shared/uiKit/chart/universalChart/interaction/core/Selection.ts">
+  <DebugSection title="Синхронизация ховера и Highlight" id="synchronization"
+    description="HoverSynchronizer передаёт координату и повторно выполняет local query на каждом графике. HighlightSynchronizer независимо передаёт только семантические interaction tags: одинаковый tag на разных plot-инстансах связывает их без координат, hits и DOM-ссылок."
+    source="src/shared/uiKit/chart/universalChart/interaction/composable/sync/">
 
     <div class="debug-row">
       <label class="debug-control">
         <span class="debug-label">VerticalLine synced</span>
         <input type="checkbox" v-model="verticalLineSynced">
+      </label>
+
+      <label class="debug-control">
+        <span class="debug-label">Highlight synced</span>
+        <input type="checkbox" v-model="highlightSynced">
       </label>
 
       <label class="debug-control">
@@ -38,6 +43,18 @@
       <SyncStage :chart="chartA" title="График A — разрыв в X 8…14, Y ~500" />
       <SyncStage :chart="chartB" title="График B — разрыв в X 2…7, Y ~6000 (другой масштаб)" />
     </div>
+
+    <p class="debug-note">
+      <b>Highlight по данным, а не по курсору.</b> Подведи курсор к stroke любого графика: обе синие линии становятся
+      толще, потому что локальный Highlight публикует tag <span class="debug-value">sync-series</span>, а второй
+      находит у себя interaction с тем же tag. Убери курсор со stroke — обе линии возвращаются в обычное состояние.
+      Этот канал не использует <span class="debug-value">withInput(hoverSync)</span> и не передаёт чужой hit.
+      Выключи <span class="debug-value">Highlight synced</span>, чтобы оставить подсветку только на графике под
+      курсором.
+      Если включить <span class="debug-value">ChartTooltip synced</span>, строка
+      <span class="debug-value">tooltip sees Highlight</span> покажет «да» и на follower: его snapshot сопоставляет
+      локальный point hit с полученным tag, хотя stroke hit источника туда не передавался.
+    </p>
 
     <p class="debug-note">
       Наведи курсор на <b>график A</b>: если <span class="debug-value">VerticalLine synced</span> включён, на графике
@@ -96,6 +113,7 @@
 import { markRaw, ref, watchEffect } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { HoverSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/HoverSynchronizer'
+import { HighlightSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/HighlightSynchronizer'
 import { SyncChart, type SyncConfig } from '../../shared/SyncChart'
 import { syncSeriesA, syncSeriesB } from '../../shared/syncSeries'
 import SyncStage from './SyncStage.vue'
@@ -103,19 +121,22 @@ import SyncStage from './SyncStage.vue'
 const pivots = ['cursor', 'nearest', 'avg'] as const satisfies readonly SyncConfig['tooltipPivot'][]
 
 const verticalLineSynced = ref(true)
+const highlightSynced = ref(true)
 const markerSynced = ref(false)
 const tooltipSynced = ref(false)
 const tooltipPivot = ref<SyncConfig['tooltipPivot']>('cursor')
 const zoom = ref(false)
 
 const hoverSync = new HoverSynchronizer()
+const highlightSync = new HighlightSynchronizer()
 
-const chartA = markRaw(new SyncChart({ points: syncSeriesA(), hoverSync }))
-const chartB = markRaw(new SyncChart({ points: syncSeriesB(), hoverSync }))
+const chartA = markRaw(new SyncChart({ points: syncSeriesA(), hoverSync, highlightSync }))
+const chartB = markRaw(new SyncChart({ points: syncSeriesB(), hoverSync, highlightSync }))
 
 watchEffect(() => {
   const config = {
     verticalLineSynced: verticalLineSynced.value,
+    highlightSynced: highlightSynced.value,
     markerSynced: markerSynced.value,
     tooltipSynced: tooltipSynced.value,
     tooltipPivot: tooltipPivot.value,

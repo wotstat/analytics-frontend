@@ -14,6 +14,11 @@
       <span class="debug-value">{{ hitsLabel(syncedHits) }}</span>
     </div>
 
+    <div class="debug-row readout">
+      <span class="debug-label">tooltip sees Highlight</span>
+      <span class="debug-value">{{ tooltipCtx ? (tooltipCtx.isHighlighted(tooltipCtx.hit, chart.highlight) ? 'да' : 'нет') : '—' }}</span>
+    </div>
+
     <TooltipCard :ctx="tooltipCtx" v-if="tooltipCtx" />
   </div>
 </template>

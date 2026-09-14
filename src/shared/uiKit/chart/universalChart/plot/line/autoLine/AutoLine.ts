@@ -4,6 +4,7 @@ import { Bounds, BoundsConstraint } from '../../../utils/Bounds'
 import { ChartSpace } from '../../../utils/ChartSpace'
 import { isFinitePoint, Point } from '../../../utils/Point'
 import { addClasses, Classes } from '../../../utils/utils'
+import { InteractionTag } from '../../../interaction/core/InteractionSource'
 import { BasePlotRenderer } from '../../BasePlotRenderer'
 import { AutoLineInteractionSource, StrokeGeometry } from './AutoLineInteractionSource'
 import { sampleStrokeSubpaths, StrokeSubpath } from './LineStrokeSampler'
@@ -17,6 +18,7 @@ const DEFAULT_SMOOTHING = 1
 
 type Options = {
   classes?: Classes
+  interactionTag?: InteractionTag
   area?: boolean | ChartGradient
   precision?: number
   smoothing?: number
@@ -37,10 +39,16 @@ export class AutoLine<T extends Point = Point> extends BasePlotRenderer {
   private strokeSampleD: string | null = null
   private strokeSampleSubpaths: readonly StrokeSubpath[] = []
 
-  readonly interaction: AutoLineInteractionSource<T> = new AutoLineInteractionSource<T>(() => this.points, () => this.getStrokeGeometry())
+  readonly interaction: AutoLineInteractionSource<T>
 
   constructor(readonly options: Options) {
     super(options.classes, { affectsBounds: options.affectsBounds ?? true })
+    this.interaction = new AutoLineInteractionSource<T>(
+      () => this.points,
+      () => this.getStrokeGeometry(),
+      () => this.line ? [this.line] : [],
+      options.interactionTag
+    )
   }
 
   protected pointsDidChange() {

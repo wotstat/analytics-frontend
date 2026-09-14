@@ -75,7 +75,6 @@
 <script setup lang="ts">
 import ShotsCircle from '@/pages/infographics/shared/widgets/ShotsCircle.vue'
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
-import ShotDistribution from '@/pages/infographics/shared/widgets/ShotDistribution.vue'
 import { createFixedSpaceProcessor, createPercentProcessor } from '@/shared/utils/processors/processors'
 import { SHORT_CACHE_SETTINGS, queryAsyncFirst } from '@/db'
 import { computed, ref, useTemplateRef } from 'vue'
@@ -85,7 +84,7 @@ import PopupWindow from '@/shared/ui/components/PopupWindow.vue'
 import ShotInfo from './shotInfo/Index.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMeta } from '@/shared/composition/useMeta'
-// import ShotDistribution from './shotDistribution/ShotDistribution.vue'
+import ShotDistribution from './shotDistribution/ShotDistribution.vue'
 
 useMeta({
   title: 'Статистика стрельбы',
@@ -107,17 +106,14 @@ const { isOutside: isOutside50 } = useMouseInElement(percent50)
 const percent30 = useTemplateRef<HTMLElement>('percent30')
 const { isOutside: isOutside30 } = useMouseInElement(percent30)
 
-const shotDistribution = useTemplateRef<HTMLElement>('shotDistribution')
-const { isOutside } = useMouseInElement(shotDistribution)
-
-const chartHoverProgress = ref(1)
-const hoverProgress = (progress: number) => {
+const chartHoverProgress = ref<number | null>(1)
+const hoverProgress = (progress: number | null) => {
   chartHoverProgress.value = progress
 }
 
 const maskRadius = computed(() => {
   if (selectedShot.value) return 1
-  if (!isOutside.value) return chartHoverProgress.value
+  if (chartHoverProgress.value != null) return chartHoverProgress.value
   if (!isOutside50.value) return 0.5
   if (!isOutside30.value) return 0.3333
   return 1

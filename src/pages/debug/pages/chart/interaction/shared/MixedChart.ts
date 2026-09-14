@@ -115,11 +115,11 @@ export class MixedChart extends UniversalChart {
 
     const { clip, mask, maskRoot } = clipAndMask()
 
-    this.bar = new Bar({ strategy: { type: 'grouped', padding: 0.35, radius: 3, innerPadding: 3 } })
-    this.polygon = new PolygonArea(['polygon-demo'])
-    this.lineA = new AutoLine<MixedLinePoint>({ classes: ['main-line', 's0'], smoothingMethod: 'monotone' })
-    this.lineB = new AutoLine<MixedLinePoint>({ classes: ['main-line', 's1'], smoothingMethod: 'monotone' })
-    this.scatter = new AutoMarkers<MixedScatterPoint>({ classes: 'scatter-markers', targetMasks: [maskRoot] })
+    this.bar = new Bar({ interactionTag: 'bar', strategy: { type: 'grouped', padding: 0.35, radius: 3, innerPadding: 3 } })
+    this.polygon = new PolygonArea(['polygon-demo'], { interactionTag: 'polygon' })
+    this.lineA = new AutoLine<MixedLinePoint>({ interactionTag: 'line-a', classes: ['main-line', 's0'], smoothingMethod: 'monotone' })
+    this.lineB = new AutoLine<MixedLinePoint>({ interactionTag: 'line-b', classes: ['main-line', 's1'], smoothingMethod: 'monotone' })
+    this.scatter = new AutoMarkers<MixedScatterPoint>({ interactionTag: 'scatter', classes: 'scatter-markers', targetMasks: [maskRoot] })
 
     const plotRoot = new PlotGroup()
       .addPlot(this.bar)

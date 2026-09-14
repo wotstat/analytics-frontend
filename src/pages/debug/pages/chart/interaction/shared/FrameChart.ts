@@ -49,7 +49,7 @@ export class FrameChart extends UniversalChart {
     const { clip, mask, maskRoot } = clipAndMask()
     this.maskRoot = maskRoot
 
-    this.line = new AutoLine<LinePoint>({ classes: ['main-line', 's0'], smoothingMethod: 'monotone' })
+    this.line = new AutoLine<LinePoint>({ interactionTag: 'frame-line', classes: ['main-line', 's0'], smoothingMethod: 'monotone' })
     this.plotRoot = new PlotGroup().addPlot(this.line)
 
     const points = this.line.interaction.nearestByAxis('x')

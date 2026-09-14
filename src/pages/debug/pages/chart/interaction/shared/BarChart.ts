@@ -236,7 +236,7 @@ export class BarChart extends UniversalChart {
 
     const { clip } = clipAndMask()
 
-    this.bar = new Bar({ strategy: this.barStrategy() })
+    this.bar = new Bar({ interactionTag: 'bar', strategy: this.barStrategy() })
     const plotRoot = new PlotGroup().addPlot(this.bar)
 
     this.itemSelection = this.bar.interaction.contains({ gaps: this.config.gaps, groupGaps: this.config.groupGaps, hitArea: this.config.hitArea })

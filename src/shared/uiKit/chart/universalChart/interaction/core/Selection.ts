@@ -1,12 +1,34 @@
 import { InteractionHit } from './InteractionHit'
 import { HoverResolver, InteractionInput } from './InteractionInput'
 import { InteractionResolveContext, InteractionResolver } from './InteractionResolver'
+import { InteractionSource } from './InteractionSource'
 
 export type WithinOptions = {
   maxDistance: number
 }
 
+function sourcesOf(resolver: InteractionResolver): readonly InteractionSource[] {
+  return resolver.interactionSources ?? []
+}
+
+function mergeSources(resolvers: readonly InteractionResolver[]): readonly InteractionSource[] {
+  const result: InteractionSource[] = []
+  const seen = new Set<symbol>()
+
+  for (const resolver of resolvers) {
+    for (const source of sourcesOf(resolver)) {
+      if (seen.has(source.id)) continue
+      seen.add(source.id)
+      result.push(source)
+    }
+  }
+
+  return result
+}
+
 export abstract class Selection<THit extends InteractionHit = InteractionHit> implements InteractionResolver<THit> {
+
+  constructor(readonly interactionSources: readonly InteractionSource[] = []) { }
 
   abstract resolve(ctx: InteractionResolveContext): readonly THit[]
 
@@ -41,7 +63,7 @@ class UnionSelection<THit extends InteractionHit> extends Selection<THit> {
     private readonly left: InteractionResolver<THit>,
     private readonly right: InteractionResolver<THit>
   ) {
-    super()
+    super(mergeSources([left, right]))
   }
 
   resolve(ctx: InteractionResolveContext): readonly THit[] {
@@ -83,7 +105,7 @@ class OrElseSelection<THit extends InteractionHit> extends Selection<THit> {
     private readonly left: InteractionResolver<THit>,
     private readonly right: InteractionResolver<THit>
   ) {
-    super()
+    super(mergeSources([left, right]))
   }
 
   resolve(ctx: InteractionResolveContext): readonly THit[] {
@@ -105,7 +127,7 @@ class WithinSelection<THit extends InteractionHit> extends Selection<THit> {
     private readonly parent: InteractionResolver<THit>,
     private readonly options: WithinOptions
   ) {
-    super()
+    super(sourcesOf(parent))
   }
 
   resolve(ctx: InteractionResolveContext): readonly THit[] {
@@ -118,7 +140,7 @@ class WithinSelection<THit extends InteractionHit> extends Selection<THit> {
 class NearestSelection<THit extends InteractionHit> extends Selection<THit> {
 
   constructor(private readonly parent: InteractionResolver<THit>) {
-    super()
+    super(sourcesOf(parent))
   }
 
   resolve(ctx: InteractionResolveContext): readonly THit[] {
@@ -136,7 +158,7 @@ class NearestSelection<THit extends InteractionHit> extends Selection<THit> {
 class TopmostSelection<THit extends InteractionHit> extends Selection<THit> {
 
   constructor(private readonly parent: InteractionResolver<THit>) {
-    super()
+    super(sourcesOf(parent))
   }
 
   resolve(ctx: InteractionResolveContext): readonly THit[] {
@@ -156,7 +178,7 @@ class WithInputSelection<THit extends InteractionHit> extends Selection<THit> {
     private readonly parent: InteractionResolver<THit>,
     private readonly hoverSync: HoverResolver
   ) {
-    super()
+    super(sourcesOf(parent))
   }
 
   resolve(ctx: InteractionResolveContext): readonly THit[] {

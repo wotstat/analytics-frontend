@@ -2,6 +2,7 @@ import { geometryFromPoint } from '../../../interaction/core/InteractionGeometry
 import { InteractionHit } from '../../../interaction/core/InteractionHit'
 import { InteractionResolveContext } from '../../../interaction/core/InteractionResolver'
 import { Selection } from '../../../interaction/core/Selection'
+import { InteractionSource, InteractionTag } from '../../../interaction/core/InteractionSource'
 import { ChartSpace } from '../../../utils/ChartSpace'
 import { Point } from '../../../utils/Point'
 
@@ -25,11 +26,23 @@ export type AutoMarkersPlotAccess<T extends Point> = {
   target(index: number): SVGElement | null
 }
 
-export class AutoMarkersInteractionSource<T extends Point = Point> {
+export class AutoMarkersInteractionSource<T extends Point = Point> implements InteractionSource {
 
   readonly id = Symbol('AutoMarkersInteractionSource')
 
-  constructor(private readonly plot: AutoMarkersPlotAccess<T>) { }
+  constructor(
+    private readonly plot: AutoMarkersPlotAccess<T>,
+    readonly tag?: InteractionTag
+  ) { }
+
+  getTargets(): readonly SVGElement[] {
+    const targets: SVGElement[] = []
+    for (let index = 0; index < this.plot.markers().length; index++) {
+      const target = this.plot.target(index)
+      if (target) targets.push(target)
+    }
+    return targets
+  }
 
   nearestPoint(options: NearestPointOptions): Selection<AutoMarkerHit<T>> {
     return new AllMarkersSelection(this).within(options).nearest()
@@ -61,6 +74,7 @@ export class AutoMarkersInteractionSource<T extends Point = Point> {
     return {
       kind: 'scatter-point',
       sourceId: this.id,
+      interactionTag: this.tag,
       datum,
       identity: { sourceId: this.id, kind: 'item', key: index },
       memberships: [],
@@ -78,7 +92,7 @@ export class AutoMarkersInteractionSource<T extends Point = Point> {
 class AllMarkersSelection<T extends Point> extends Selection<AutoMarkerHit<T>> {
 
   constructor(private readonly source: AutoMarkersInteractionSource<T>) {
-    super()
+    super([source])
   }
 
   resolve(ctx: InteractionResolveContext): readonly AutoMarkerHit<T>[] {

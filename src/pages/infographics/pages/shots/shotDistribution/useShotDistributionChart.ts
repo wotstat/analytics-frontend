@@ -3,20 +3,21 @@ import { AutoLabels } from '@/shared/uiKit/chart/universalChart/labels/autoLabel
 import { labelCandidates } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/labelCandidates'
 import { InteractionController } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController'
 import { ChartTooltip, TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
+import { Highlight } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/highlight/Highlight'
 import { PlotAreaBorder } from '@/shared/uiKit/chart/universalChart/plot/axis/PlotAreaBorder'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
 import { LinePointHit } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineInteractionSource'
 import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
-import { MaybeRefOrGetter, shallowRef, toValue, watch } from 'vue'
+import { MaybeRefOrGetter, Ref, shallowRef, toValue, watch } from 'vue'
 
 type LineData = readonly (number | null)[]
-type Series = 'server' | 'client' | 'shared'
+export type ShotDistributionSeries = 'server' | 'client' | 'shared'
 
 type ShotDistributionPoint = {
   x: number
   y: number
-  series: Series
+  series: ShotDistributionSeries
 }
 
 export type ShotDistributionHit = LinePointHit<ShotDistributionPoint>
@@ -25,9 +26,11 @@ type Params = {
   serverMarker: MaybeRefOrGetter<LineData>
   clientMarker: MaybeRefOrGetter<LineData>
   sharedClient: MaybeRefOrGetter<LineData>
+  enabledSeries: MaybeRefOrGetter<readonly ShotDistributionSeries[]>
+  highlightedSeries: Ref<ShotDistributionSeries | null>
 }
 
-function toPoints(data: LineData, series: Series) {
+function toPoints(data: LineData, series: ShotDistributionSeries) {
   return data.map((y, x) => y === null ? null : { x, y, series })
 }
 
@@ -35,7 +38,7 @@ export function useShotDistributionChart(params: Params) {
   const chart = new UniversalChart({
     layoutVariant: 'vertical',
     renderManager: globalChartRenderManagerSteps4,
-    minLayoutSize: { top: 20 }
+    minLayoutSize: { top: 10, right: 2 }
   })
 
   const labelsY = new AutoLabels('vertical', {
@@ -65,26 +68,51 @@ export function useShotDistributionChart(params: Params) {
 
   const ticksY = new TicksByLabels(labelsY, {})
   const ticksX = new TicksByLabels(labelsX, {})
-  const serverLine = new AutoLine<ShotDistributionPoint>({ classes: ['distribution-line', 'server-line'], smoothingMethod: 'monotone', affectsBounds: false })
-  const clientLine = new AutoLine<ShotDistributionPoint>({ classes: ['distribution-line', 'client-line'], smoothingMethod: 'monotone', affectsBounds: false })
-  const sharedLine = new AutoLine<ShotDistributionPoint>({ classes: ['distribution-line', 'shared-line'], smoothingMethod: 'monotone', affectsBounds: false })
+  const serverLine = new AutoLine<ShotDistributionPoint>({
+    interactionTag: 'server', classes: ['distribution-line', 'server-line'], smoothingMethod: 'monotone', affectsBounds: false
+  })
+  const clientLine = new AutoLine<ShotDistributionPoint>({
+    interactionTag: 'client', classes: ['distribution-line', 'client-line'], smoothingMethod: 'monotone', affectsBounds: false
+  })
+  const sharedLine = new AutoLine<ShotDistributionPoint>({
+    interactionTag: 'shared', classes: ['distribution-line', 'shared-line'], smoothingMethod: 'monotone', affectsBounds: false
+  })
 
-  const selectedPoints = serverLine.interaction
+  const lines = {
+    server: serverLine,
+    client: clientLine,
+    shared: sharedLine,
+  }
+
+  const lineInteractions = serverLine.interaction
     .union(clientLine.interaction)
     .union(sharedLine.interaction)
-    .nearestByAxis('x')
+
+  const selectedPoints = lineInteractions.nearestByAxis('x')
+  const hoveredLine = lineInteractions.nearStroke({ maxDistance: 8 }).nearest()
+  const lineHighlight = new Highlight({ selection: hoveredLine, class: 'highlighted' })
 
   const tooltipCtx = shallowRef<TooltipCtx<ShotDistributionHit> | null>(null)
+
   const interactionController = new InteractionController()
+    .addComponent(lineHighlight)
     .addComponent(new ChartTooltip({
       selection: selectedPoints,
       tooltipPivot: 'max-y',
-      onHide: () => tooltipCtx.value = null,
-      onPositionChange: ctx => tooltipCtx.value = ctx,
+      exposeHighlights: [lineHighlight],
+      onHide: () => {
+        tooltipCtx.value = null
+        params.highlightedSeries.value = null
+      },
+      onPositionChange: ctx => {
+        tooltipCtx.value = ctx
+        params.highlightedSeries.value = ctx.hits
+          .find(hit => ctx.isHighlighted(hit, lineHighlight))?.datum.series ?? null
+      },
     }))
 
   chart
-    .addPlot(new PlotAreaBorder({ bottom: 'space', left: 'space' }), 'ticks')
+    .addPlot(new PlotAreaBorder({ left: 'space', right: 'space' }), 'ticks')
     .addSlot('left', labelsY, 'labels')
     .addSlot('bottom', labelsX, 'labels')
     .addPlot(ticksY, 'ticks')
@@ -96,9 +124,21 @@ export function useShotDistributionChart(params: Params) {
 
   chart.setRenderBounds({ minX: 0, maxX: 100, minY: 0, maxY: 100 })
 
-  watch(() => toValue(params.serverMarker), data => serverLine.setPoints(toPoints(data, 'server')), { immediate: true })
-  watch(() => toValue(params.clientMarker), data => clientLine.setPoints(toPoints(data, 'client')), { immediate: true })
-  watch(() => toValue(params.sharedClient), data => sharedLine.setPoints(toPoints(data, 'shared')), { immediate: true })
+  function bindLine(series: ShotDistributionSeries, data: MaybeRefOrGetter<LineData>) {
+    watch([() => toValue(data), () => toValue(params.enabledSeries)], ([data, enabled]) => {
+      lines[series].setPoints(enabled.includes(series) ? toPoints(data, series) : [])
+    }, { immediate: true })
+  }
+
+  bindLine('server', params.serverMarker)
+  bindLine('client', params.clientMarker)
+  bindLine('shared', params.sharedClient)
+
+  watch(() => params.highlightedSeries.value, highlighted => {
+    for (const series of Object.keys(lines) as ShotDistributionSeries[]) {
+      lines[series].getRootElement().classList.toggle('highlighted', highlighted === series)
+    }
+  }, { immediate: true })
 
   return { chart, tooltipCtx }
 }

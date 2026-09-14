@@ -94,7 +94,7 @@ export class ScatterChart extends UniversalChart {
     const { clip, mask, maskRoot } = clipAndMask()
     this.maskRoot = maskRoot
 
-    this.scatter = new AutoMarkers<ScatterPoint>({ classes: 'scatter-markers', targetMasks: [maskRoot] })
+    this.scatter = new AutoMarkers<ScatterPoint>({ interactionTag: 'scatter', classes: 'scatter-markers', targetMasks: [maskRoot] })
     const plotRoot = new PlotGroup().addPlot(this.scatter)
 
     this.selection = this.scatter.interaction.nearestPoint({ maxDistance: this.config.maxDistance })

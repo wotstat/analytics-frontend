@@ -84,7 +84,7 @@ export class PolygonShapeChart extends UniversalChart {
 
     const { clip } = clipAndMask()
 
-    this.polygon = new PolygonArea(['polygon-demo'])
+    this.polygon = new PolygonArea(['polygon-demo'], { interactionTag: 'polygon' })
     this.probeMarkers = new AutoMarkers({ classes: 'probe-marker', size: 3, affectsBounds: false })
 
     const plotRoot = new PlotGroup().addPlot(this.polygon).addPlot(this.probeMarkers)

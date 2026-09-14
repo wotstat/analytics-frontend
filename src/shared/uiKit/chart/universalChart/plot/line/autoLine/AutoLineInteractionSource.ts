@@ -2,6 +2,7 @@ import { geometryFromPoint } from '../../../interaction/core/InteractionGeometry
 import { InteractionHit } from '../../../interaction/core/InteractionHit'
 import { InteractionResolveContext } from '../../../interaction/core/InteractionResolver'
 import { Selection } from '../../../interaction/core/Selection'
+import { InteractionSource, InteractionTag } from '../../../interaction/core/InteractionSource'
 import { ChartSpace } from '../../../utils/ChartSpace'
 import { Point } from '../../../utils/Point'
 import { nearestPointOnSubpaths, StrokeSubpath } from './LineStrokeSampler'
@@ -60,20 +61,26 @@ class AutoLineSourceUnion<T extends Point> extends AutoLineInteractionQuery<T> {
   }
 }
 
-export class AutoLineInteractionSource<T extends Point = Point> extends AutoLineInteractionQuery<T> {
+export class AutoLineInteractionSource<T extends Point = Point> extends AutoLineInteractionQuery<T> implements InteractionSource {
 
   readonly sources: readonly AutoLineInteractionSource<T>[] = [this]
   readonly id = Symbol('AutoLineInteractionSource')
 
   constructor(
     private readonly getPoints: () => readonly (T | null)[],
-    private readonly getStroke: () => StrokeGeometry
+    private readonly getStroke: () => StrokeGeometry,
+    private readonly targets: () => readonly SVGElement[],
+    readonly tag?: InteractionTag
   ) {
     super()
   }
 
   get points(): readonly (T | null)[] {
     return this.getPoints()
+  }
+
+  getTargets(): readonly SVGElement[] {
+    return this.targets()
   }
 
   nearStrokeHit(point: Point, maxDistance: number): LineStrokeHit<T> | null {
@@ -90,6 +97,7 @@ export class AutoLineInteractionSource<T extends Point = Point> extends AutoLine
     return {
       kind: 'line-stroke',
       sourceId: this.id,
+      interactionTag: this.tag,
       datum: { points: this.points },
       identity: { sourceId: this.id, kind: 'series', key: SERIES_KEY },
       memberships: [],
@@ -109,6 +117,7 @@ export class AutoLineInteractionSource<T extends Point = Point> extends AutoLine
     return {
       kind: 'line-point',
       sourceId: this.id,
+      interactionTag: this.tag,
       datum: point,
       identity: { sourceId: this.id, kind: 'item', key: index },
       memberships: [{ sourceId: this.id, kind: 'series', key: SERIES_KEY }],
@@ -138,7 +147,7 @@ class NearestByAxisSelection<T extends Point> extends Selection<LinePointHit<T>>
     private readonly axis: 'x' | 'y',
     private readonly options: NearestByAxisOptions
   ) {
-    super()
+    super(sources)
   }
 
   resolve(ctx: InteractionResolveContext): readonly LinePointHit<T>[] {
@@ -193,7 +202,7 @@ class NearStrokeSelection<T extends Point> extends Selection<LineStrokeHit<T>> {
     private readonly sources: readonly AutoLineInteractionSource<T>[],
     private readonly options: NearStrokeOptions
   ) {
-    super()
+    super(sources)
   }
 
   resolve(ctx: InteractionResolveContext): readonly LineStrokeHit<T>[] {

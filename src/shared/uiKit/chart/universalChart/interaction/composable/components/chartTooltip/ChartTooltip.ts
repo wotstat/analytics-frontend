@@ -2,7 +2,7 @@ import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
 import { Position } from '../../../baseInteractionController/BaseInteractionController'
 import { InteractionFrame } from '../../../core/InteractionFrame'
-import { InteractionHit, isSameIdentity } from '../../../core/InteractionHit'
+import { InteractionHit } from '../../../core/InteractionHit'
 import { InteractionResolver } from '../../../core/InteractionResolver'
 import { InteractionComponent, InteractionController } from '../../InteractionController'
 import { Highlight, HighlightRef, HighlightSnapshot } from '../highlight/Highlight'
@@ -159,18 +159,13 @@ export class ChartTooltip<THit extends InteractionHit = InteractionHit> implemen
     const chartBox = { top: topLeft.y, right: bottomRight.x, bottom: bottomRight.y, left: topLeft.x }
     const highlights = (this.options.exposeHighlights ?? []).map(highlight => highlight.snapshot)
 
-    function isAmongSelected(hit: InteractionHit, selected: readonly InteractionHit[]): boolean {
-      const identities = [hit.identity, ...hit.memberships]
-      return selected.some(candidate => identities.some(identity => isSameIdentity(identity, candidate.identity)))
-    }
-
     return {
       hit: hits[0],
       hits,
       highlights,
       isHighlighted: (hit, highlight) => {
         const found = highlights.find(snapshot => snapshot.highlight === highlight)
-        return found ? isAmongSelected(hit, found.hits) : false
+        return found?.isHighlighted(hit) ?? false
       },
       pivot,
       absolutePivot: { x: pivot.x + this.windowScroll.x, y: pivot.y + this.windowScroll.y },

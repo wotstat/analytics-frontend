@@ -59,7 +59,6 @@ src/
 │  ├─ i18n/       — локализация имён танков/карт из БД + мини-хелпер useI18n
 │  ├─ external/   — URL поддоменов, realtime WS, метрика, wotInspector
 │  ├─ composition/, utils/, global/ — хелперы
-├─ composition/   — useTweenRef (дубль-вариант tween)
 ├─ styles/        — глобальный SCSS (variables, mixins, table, markdown...)
 └─ assets/        — иконки, изображения
 ```

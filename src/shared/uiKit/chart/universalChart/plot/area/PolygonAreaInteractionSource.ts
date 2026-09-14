@@ -2,6 +2,7 @@ import { geometryFromRanges, InteractionBounds } from '../../interaction/core/In
 import { InteractionHit } from '../../interaction/core/InteractionHit'
 import { InteractionResolveContext } from '../../interaction/core/InteractionResolver'
 import { Selection } from '../../interaction/core/Selection'
+import { InteractionSource, InteractionTag } from '../../interaction/core/InteractionSource'
 import { ChartSpace } from '../../utils/ChartSpace'
 import { Point } from '../../utils/Point'
 
@@ -15,11 +16,18 @@ export type PolygonPlotAccess = {
   bounds(space: ChartSpace): InteractionBounds | null
 }
 
-export class PolygonAreaInteractionSource {
+export class PolygonAreaInteractionSource implements InteractionSource {
 
   readonly id = Symbol('PolygonAreaInteractionSource')
 
-  constructor(private readonly plot: PolygonPlotAccess) { }
+  constructor(
+    private readonly plot: PolygonPlotAccess,
+    readonly tag?: InteractionTag
+  ) { }
+
+  getTargets(): readonly SVGElement[] {
+    return [this.plot.target()]
+  }
 
   contains(): Selection<PolygonHit> {
     return new PolygonContainsSelection(this)
@@ -39,6 +47,7 @@ export class PolygonAreaInteractionSource {
     return {
       kind: 'polygon',
       sourceId: this.id,
+      interactionTag: this.tag,
       datum: this.plot.contours(),
       identity: { sourceId: this.id, kind: 'item', key: ITEM_KEY },
       memberships: [],
@@ -54,7 +63,7 @@ export class PolygonAreaInteractionSource {
 class PolygonContainsSelection extends Selection<PolygonHit> {
 
   constructor(private readonly source: PolygonAreaInteractionSource) {
-    super()
+    super([source])
   }
 
   resolve(ctx: InteractionResolveContext): readonly PolygonHit[] {

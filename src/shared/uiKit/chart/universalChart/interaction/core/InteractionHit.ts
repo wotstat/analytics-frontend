@@ -1,4 +1,5 @@
 import { InteractionGeometry } from './InteractionGeometry'
+import { InteractionTag } from './InteractionSource'
 
 type KeyType = string | number | symbol
 export type InteractionIdentity = {
@@ -23,6 +24,7 @@ export interface InteractionHit<
 > {
   readonly kind: TKind
   readonly sourceId: symbol
+  readonly interactionTag?: InteractionTag
   readonly datum: TDatum
   readonly identity: InteractionIdentity
   readonly memberships: readonly InteractionIdentity[]

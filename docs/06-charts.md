@@ -38,7 +38,7 @@
 - **`defs/`** — SVG defs: градиенты, клипы, маски, паттерны и кроссбраузерный `ChartShadowFilter`. Фильтр строит тень из базовых SVG-примитивов, применяется к плоту через `.filterBy(filter)` или к отдельному SVG-элементу через `.apply(element)` и снимается парным `.remove(element)`. `updateOptions` принимает частичный апдейт: неуказанные `opacity`, `strength`, смещение и остальные настройки сохраняются.
 - **`interaction/`** — интерактивность (устройство и композиция — в отдельном разделе «Интерактив» ниже):
   - `baseInteractionController/` — базовый контроллер и **конечный автомат** ввода (`StateMachine.ts`, состояния в `states/`: mouse hover/pan, touch hover/pan/zoom, ожидание распознавания жеста). Переходы отдаёт `controller.onStateChanged` — опрос по кадрам их пропускает, переход бывает короче кадра. Событие без полезной нагрузки: новое состояние читается из `controller.currentState` (типизировать событие по параметру машины нельзя — поле `EventEmitter<S>` сделало бы `StateMachine` инвариантной по `S`). Опознавать состояние — через `instanceof`: `constructor.name` не переживает минификацию.
-  - `core/` — resolver-граф selections: identity/geometry/hit/кадр с memo-кешем, immutable-операции (`union`, `nearest`, `topmost`, `within`, `orElse`, `withInput`).
+  - `core/` — resolver-граф selections: локальная identity, опциональный семантический interaction tag, geometry/hit/кадр с memo-кешем, provenance источников и immutable-операции (`union`, `nearest`, `topmost`, `within`, `orElse`, `withInput`).
   - `composable/InteractionController.ts` — составной контроллер из `InteractionComponent`: hover-эффектов (`Highlight`, `VerticalLine`/`HorizontalLine`, `VerticalArea`/`HorizontalArea`, `MarkerOverlay`, `ChartTooltip`), управления viewport (`ZoomChartComponent`) и `CallbackComponent` — единственного способа подписаться на жесты снаружи. `updateOptions` есть у всех перечисленных, так что опции меняются на лету, без пересборки набора. `addComponent`/`removeComponent` работают и посреди активного ховера: снятый компонент убирает свой DOM в `detach`, добавленный сразу получает текущий ховер. `detach()` самого контроллера не уничтожает его состав: при повторном `attach()` компоненты подключаются снова. Визуальные эффекты и `ZoomChartComponent` принадлежат одному контроллеру за раз; `HoverSynchronizer` намеренно допускает несколько.
   - `BarInteractionSource.ts`, `AutoLineInteractionSource.ts`, `AutoMarkersInteractionSource.ts`, `PolygonAreaInteractionSource.ts` — источники запросов, каждый привязан к своему плоту: `bar.interaction`, `line.interaction`, `scatter.interaction`, `polygon.interaction`.
 - **`ChartRenderManager.ts`**, `BaseChart.ts` — базовая инфраструктура рендера.
@@ -134,6 +134,17 @@ for (const component of components) component.renderInteraction?.(frame)
 
 Каждый поддержанный плот выставляет `readonly interaction`: `bar.interaction`, `line.interaction`, `scatter.interaction`, `polygon.interaction`. Source знает только осмысленные для этого плота запросы и возвращает не готовые хиты, а **selection** — immutable resolver-узел; сам запрос выполняется только внутри кадра, в момент `frame.resolve()`.
 
+У source две разные идентичности. `interaction.id: symbol` уникален для конкретного экземпляра и участвует в локальной identity хитов. `interaction.tag?: InteractionTag` — опциональная семантическая метка, которую намеренно повторяют у соответствующих source разных графиков. Все plot-конструкторы прокидывают её одинаковой опцией `interactionTag`; одинаковый tag может принадлежать нескольким source даже внутри одного графика.
+
+```ts
+const serverLine = new AutoLine({
+  interactionTag: 'server',
+  classes: ['main-line', 'server-line'],
+})
+```
+
+Selections сохраняют provenance своих sources через всю композицию: unary-операторы наследуют источники родителя, `union`/`orElse` объединяют их по локальному `id`. Это не влияет на resolve, но позволяет эффекту по семантическому tag найти собственные SVG-targets без ручной таблицы соответствий.
+
 ```ts
 const barItem = bar.interaction.contains({ gaps: 'miss', groupGaps: 'nearest' }) // BarItemSelection, 0..1 хит
 const barGroup = barItem.related('group')                    // все item той же категории
@@ -161,11 +172,11 @@ new ChartTooltip({ selection: linePointsByX.union(barGroup).union(scatterPoint).
 
 Пример — сборный акцептанс-график стенда, `src/pages/debug/pages/chart/interaction/shared/MixedChart.ts`: там же `barItem` разом идёт в `Highlight` и в `VerticalArea({ geometry: 'group' })`, а `scatterPoint` — в `Highlight`, `VerticalLine`, `HorizontalLine` и в heterogeneous union тултипа.
 
-Результат резолва — типизированный `InteractionHit<TDatum, TKind, TGeometryScope>` (`core/InteractionHit.ts`): `datum` — точное исходное значение пользователя, не нормализованная копия рендерера; `identity`/`memberships` — для дедупликации в `union()` и для highlight-сопоставления; `geometry`/`geometryFor(scope)` — layout-пиксели текущего кадра; `distance`/`contains` — общая метрика для `.nearest()`/`.within()`; `targets` — реальные SVG-элементы для class diff. Identity сравнивается как тройка `(sourceId, kind, key)`; `key` — только `string | number | symbol` и должен детерминированно повторяться при повторном создании той же логической identity. `kind` хита — discriminant (`'line-point'`, `'line-stroke'`, `'bar-item'`, `'bar-group'`, `'scatter-point'`, `'polygon'`, `'cursor'`). Конкретный тип `datum` сохраняется через всю цепочку query → `union()` → `ChartTooltip`.
+Результат резолва — типизированный `InteractionHit<TDatum, TKind, TGeometryScope>` (`core/InteractionHit.ts`): `datum` — точное исходное значение пользователя, не нормализованная копия рендерера; `identity`/`memberships` — для дедупликации в `union()` и локального highlight-сопоставления; `interactionTag` — семантический tag source для внешней адресации; `geometry`/`geometryFor(scope)` — layout-пиксели текущего кадра; `distance`/`contains` — общая метрика для `.nearest()`/`.within()`; `targets` — реальные SVG-элементы для class diff. Identity сравнивается как тройка `(sourceId, kind, key)`; её `key` — локальная часть identity и не заменяет `interactionTag`. `kind` хита — discriminant (`'line-point'`, `'line-stroke'`, `'bar-item'`, `'bar-group'`, `'scatter-point'`, `'polygon'`, `'cursor'`). Конкретный тип `datum` сохраняется через всю цепочку query → `union()` → `ChartTooltip`.
 
 Эффекты (`composable/components/`) реализуют `prepareInteraction`/`renderInteraction`, принимают `selection` в опциях и сами ничего не запрашивают:
 
-- **`Highlight`** — один универсальный класс без `BarHighlight`/`LineHighlight`-подклассов: `prepare` строит снимок текущих `hit.targets`, `render` делает diff с предыдущим набором и адресно навешивает/снимает опциональный CSS-класс. `onHighlight(target)` / `onDehighlight(target)` вызываются на тех же переходах и позволяют применить к SVG-таргету эффекты вроде усиленного `ChartShadowFilter`; `onDehighlight` также вызывается при `updateOptions` и `detach`. Конфликт двух `Highlight` на одном классе, атрибуте или таргете — ответственность вызывающего, арбитража в движке нет.
+- **`Highlight`** — один универсальный класс без `BarHighlight`/`LineHighlight`-подклассов и со строгим opt-in: hits source без `interactionTag` он игнорирует. Для локального ховера `prepare` берёт точные `hit.targets`; follower синхронизации находит все sources своего selection с полученным tag и берёт их `getTargets()`. `render` делает diff с предыдущим набором и адресно навешивает/снимает опциональный CSS-класс. `onHighlight(target)` / `onDehighlight(target)` вызываются на тех же переходах и позволяют применить к SVG-таргету эффекты вроде усиленного `ChartShadowFilter`; `onDehighlight` также вызывается при `updateOptions` и `detach`. Конфликт двух `Highlight` на одном классе, атрибуте или таргете — ответственность вызывающего, арбитража в движке нет.
 - **`VerticalLine`/`HorizontalLine`** (`components/lines/`) — set semantics: одна линия на уникальную координату (`geometry.anchor.x`/`.y`), разные координаты дают несколько линий.
 - **`VerticalArea`/`HorizontalArea`** (`components/areas/`) — то же на `xRange`/`yRange`; опция `geometry` выбирает именованный scope хита (например `'group'` у Bar), сама область не считает bar layout и не строит polygon bounds — это делает плот.
 - **`MarkerOverlay`** (`components/markerOverlay/`) — один SVG-маркер на уникальный anchor selection, `classesForHit(hit)` задаёт стилизацию вызывающий, классы исходного плота не копируются автоматически.
@@ -239,7 +250,7 @@ this.interactionController = new InteractionController()
 const isLineHighlighted = ctx.isHighlighted(hit, chart.lineHighlight)
 ```
 
-`ctx.isHighlighted(hit, highlight)` сопоставляет направленно: hit подсвечен, если его `identity` или любой из `memberships` совпадает с identity одного из hits в snapshot этого `Highlight` — не пересечением DOM-таргетов. Поэтому точка линии оказывается highlighted, когда подсвечена её серия (через membership point → series), а подсветка одной точки не делает highlighted всю серию. `Highlight`, не попавший в `exposeHighlights`, даёт `false`, а не исключение.
+`ctx.isHighlighted(hit, highlight)` делегирует immutable snapshot самого Highlight. У локального Highlight сопоставление остаётся направленным: hit подсвечен, если его `identity` или любой из `memberships` совпадает с identity одного из выбранных hits — не пересечением DOM-targets. Поэтому точка линии оказывается highlighted, когда локально подсвечена её серия (через membership point → series), а подсветка одной точки не делает highlighted всю серию. У синхронизированного follower snapshot сопоставляет `interactionTag`, потому что чужие hits и DOM-элементы между графиками не передаются. `Highlight`, не попавший в `exposeHighlights`, даёт `false`, а не исключение.
 
 `TooltipCtx` **переживает кадр**: `FloatingTooltip.vue` держит последний непустой `ctx` во время анимации скрытия, поэтому `hits`/`highlights`/`isHighlighted()` — самодостаточный immutable снимок без ссылок на `InteractionFrame` или его memo-кеш. Правило «hits живут один кадр» — про запрет пере-resolve вне кадра, а не про то, что готовый опубликованный снимок нельзя удерживать дольше самого кадра.
 
@@ -247,14 +258,27 @@ const isLineHighlighted = ctx.isHighlighted(hit, chart.lineHighlight)
 
 `interaction/composable/components/zoomChartComponent/` — пан мышью/тачем, зум колесом и пинчем, инерция, «резиновые» лимиты. **Есть подробный `readme.md` прямо в папке** — обязательно читай его перед изменениями; там же список неочевидных решений с пометкой «не чинить». Компонент завершён, автор просил не закладывать в него архитектуру «на будущее». Боевое место использования одно: `src/pages/infographics/pages/onslaught/leaderboard/components/detail/Charts.ts`; плюс стенд со всеми настройками — `/debug/chart/interaction` (см. выше).
 
-### Связка графиков (hover / bounds sync)
+### Связка графиков (hover / highlight / bounds sync)
 
-`interaction/composable/sync/` — синхронизация нескольких `UniversalChart` по принципу **координатный фрейм ≠ viewport**: примитив синка не зависит от зума, а каждый график сам проецирует его в свои пиксели и снапит/фитит по **своим** данным. Для `HoverSynchronizer` это устроено по-разному для двух ролей — ось данных живёт в chart-space (значение), свободная ось — в доле layout источника (подробности, включая текущее соглашение «ось данных — это X», — выше, «Hover sync через input-bound selections»), — но обе одинаково не зависят от чужого зума. Два независимых хаба (можно включать по отдельности), оба создаются один раз в `Detail.vue` и передаются в компоненты:
+`interaction/composable/sync/` — три независимых канала синхронизации нескольких `UniversalChart`. Координатный hover, семантический Highlight и viewport не подменяют друг друга: каждый график потребляет общий payload через собственный effect и интерпретирует его в своих данных и DOM.
 
 - **`HoverSynchronizer`** (hover-sync): навёл на один график — hover зажигается на всех связанных в той же точке фрейма. Добавляется в каждый `InteractionController` как `InteractionComponent` (`addComponent`), а как источник точки (`HoverResolver`) подключается к конкретным selections через `.withInput(sync.hover)` — синхронизируются обе роли осей и `isTouch`, не хиты; локальный hover приоритетнее внешнего. Композиция и пример разобраны выше, в «Интерактив → Hover sync через input-bound selections».
+- **`HighlightSynchronizer`** (semantic-sync): Highlight с локальным курсором публикует дедуплицированный `readonly InteractionTag[]` с set-семантикой (порядок незначим), остальные Highlights находят свои sources с теми же tags. Координаты, hits, `sourceId` и DOM не передаются. `.syncWith(sync.highlight)` скрывает connection lifecycle; публичный `connect()` остаётся общим seam для будущих внешних источников вроде Legend. Последний publisher владеет состоянием, stale `release()` прошлого владельца новое состояние не очищает, а follower никогда не публикует потреблённые tags обратно. Пока у Highlight есть local pointer, sync-уведомления не планируют ему новые кадры — ownership меняется только вслед за реальным локальным вводом. Follower повторно собирает targets после полного рендера chart, поэтому активная подсветка переживает замену DOM у динамических Bar/AutoMarkers.
 - **`BoundsSynchronizer`** (bounds-sync): зазумил/пропанил один — связанные синхронно повторяют окно ведущей оси (направление как у `panDirection`: `new BoundsSynchronizer('horizontal' | 'vertical' | 'all')`), каждый анимируя свою auto-fit ось. Передаётся в `ZoomChartComponent` опцией `boundsSync`. **Идёт через `ZoomChartComponent`**, а не через `chart.setRenderBounds` напрямую (иначе auto-fit ось ведомого снапит — детали в его `readme.md`).
 
-Референс проводки — `detail/Charts.ts` + `detail/Detail.vue` (лидерборд Натиска). Статичный сезонный вариант без зума с постоянными маркерами точек — `onslaught/general/dailyPlayersChart/`.
+```ts
+const highlightSync = new HighlightSynchronizer()
+const serverLine = new AutoLine({ interactionTag: 'server', classes: 'server-line' })
+
+const highlight = new Highlight({
+  selection: serverLine.interaction.nearStroke({ maxDistance: 8 }).nearest(),
+  class: 'highlighted',
+}).syncWith(highlightSync)
+```
+
+Corresponding lines другого графика получают тот же `interactionTag` и тот же экземпляр `HighlightSynchronizer`; отдельный объект `{ server: serverLine.interaction, ... }` не нужен. Если локальный pointer есть, Highlight публикует даже пустой список tags — наведение на gap явно гасит follower. После ухода pointer connection освобождает владение и общее состояние исчезает.
+
+Референс hover/bounds-проводки — `detail/Charts.ts` + `detail/Detail.vue` (лидерборд Натиска). Семантический Highlight показан парой графиков в `/debug/chart/interaction#synchronization`: обе линии имеют tag `sync-series`, но разные данные и Y-масштабы.
 
 ### Вывод тултипов (`src/shared/ui/chart/`)
 

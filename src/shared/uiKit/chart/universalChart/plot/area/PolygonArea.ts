@@ -1,5 +1,6 @@
 import { ChartRawPattern } from '../../defs/ChartRawPattern'
 import { InteractionBounds } from '../../interaction/core/InteractionGeometry'
+import { InteractionTag } from '../../interaction/core/InteractionSource'
 import { ChartSpace } from '../../utils/ChartSpace'
 import { Bounds, BoundsConstraint } from '../../utils/Bounds'
 import { isFinitePoint, Point } from '../../utils/Point'
@@ -18,17 +19,18 @@ export class PolygonArea extends BasePlotRenderer {
   protected data: Point[][] = []
   protected cachedPath = ''
 
-  readonly interaction: PolygonAreaInteractionSource = new PolygonAreaInteractionSource({
-    contours: () => this.data,
-    target: () => this.path,
-    bounds: space => this.getProjectedContours(space).bounds,
-  })
+  readonly interaction: PolygonAreaInteractionSource
 
   private projectedCacheKey: string | null = null
   private projectedCache: ProjectedContours | null = null
 
-  constructor(classes: Classes, options: { affectsBounds?: boolean } = {}) {
+  constructor(classes: Classes, options: { affectsBounds?: boolean, interactionTag?: InteractionTag } = {}) {
     super(classes, { affectsBounds: options.affectsBounds ?? true })
+    this.interaction = new PolygonAreaInteractionSource({
+      contours: () => this.data,
+      target: () => this.path,
+      bounds: space => this.getProjectedContours(space).bounds,
+    }, options.interactionTag)
     this.root.appendChild(this.path)
   }
 

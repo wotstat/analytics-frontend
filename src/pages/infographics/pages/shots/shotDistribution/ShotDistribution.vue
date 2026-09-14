@@ -7,13 +7,17 @@
           <h4><span class="mono-num">{{ ctx.hit.datum.x.toFixed(0) }}</span>% сведения</h4>
           <p class="tooltip-description">Снарядов попало:</p>
 
-          <div class="tooltip-series" v-for="item in tooltipSeries" :key="item.series">
-            <span class="series-marker" :class="`${item.series}-marker`"></span>
+          <div class="tooltip-series" v-for="item in enabledTooltipSeries" :key="item.series">
+            <span class="series-marker"
+              :class="[`${item.series}-marker`, { highlighted: highlightedSeriesKey === item.series }]"></span>
             <span>{{ item.label }}</span>
             <b>{{ tooltipValue(ctx, item.series) }}</b>
           </div>
         </div>
       </FloatingTooltip>
+
+      <Legend v-model:enabled="enabledSeries" v-model:highlighted="highlightedSeries" :series="series" class="legend"
+        toggleable highlightable />
 
       <UniversalChartComponent :chart="chart" />
     </div>
@@ -30,22 +34,44 @@ import { loading, mergeStatuses, queryAsync } from '@/db'
 import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
 import { getQueryStatParamsCache, StatParams, whereClause } from '@/shared/query/useQueryStatParams'
 import { useElementVisibility } from '@vueuse/core'
-import { computed, useTemplateRef, watch } from 'vue'
+import { computed, ref, shallowRef, useTemplateRef, watch } from 'vue'
+
 
 import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
-import { ShotDistributionHit, useShotDistributionChart } from './useShotDistributionChart'
+import { ShotDistributionHit, ShotDistributionSeries, useShotDistributionChart } from './useShotDistributionChart'
+import Legend from '@/shared/ui/chart/Legend.vue'
 
 const container = useTemplateRef<HTMLElement>('container')
 const visible = useElementVisibility(container)
+
+type LegendSeries = {
+  name: string
+  color: string
+  key: ShotDistributionSeries
+}
+
+const series: LegendSeries[] = [
+  { name: 'Серверный', color: '#fbd080', key: 'server' },
+  { name: 'Клиентский', color: '#caffb7', key: 'client' },
+  { name: 'Общий', color: '#d3deff', key: 'shared' },
+]
+
+const enabledSeries = shallowRef<LegendSeries[]>([...series])
+const highlightedSeriesKey = ref<ShotDistributionSeries | null>(null)
+const highlightedSeries = computed<LegendSeries | null>({
+  get: () => series.find(item => item.key === highlightedSeriesKey.value) ?? null,
+  set: item => highlightedSeriesKey.value = item?.key ?? null,
+})
+const enabledSeriesKeys = computed(() => enabledSeries.value.map(item => item.key))
 
 const { params } = defineProps<{
   params: StatParams
 }>()
 
 const emit = defineEmits<{
-  'hover:progress': [number]
+  'hover:progress': [number | null]
 }>()
 
 function getQuery(isServer: boolean) {
@@ -106,7 +132,13 @@ const serverMarker = computed(() => calc(serverMarkerResult.value.data))
 const sharedClient = computed(() => calc(sharedClientResult.value.data))
 
 const status = computed(() => mergeStatuses(clientMarkerResult.value.status, serverMarkerResult.value.status, sharedClientResult.value.status))
-const { chart, tooltipCtx } = useShotDistributionChart({ serverMarker, clientMarker, sharedClient })
+const { chart, tooltipCtx } = useShotDistributionChart({
+  serverMarker,
+  clientMarker,
+  sharedClient,
+  enabledSeries: enabledSeriesKeys,
+  highlightedSeries: highlightedSeriesKey,
+})
 
 const tooltipSeries = [
   { series: 'server', label: 'Серверный' },
@@ -115,6 +147,7 @@ const tooltipSeries = [
 ] as const
 
 type TooltipSeries = typeof tooltipSeries[number]['series']
+const enabledTooltipSeries = computed(() => tooltipSeries.filter(item => enabledSeriesKeys.value.includes(item.series)))
 
 function tooltipValue(ctx: TooltipCtx<ShotDistributionHit>, series: TooltipSeries) {
   const hit = ctx.hits.find(hit => hit.datum.series === series)
@@ -123,6 +156,7 @@ function tooltipValue(ctx: TooltipCtx<ShotDistributionHit>, series: TooltipSerie
 
 watch(tooltipCtx, ctx => {
   if (ctx) emit('hover:progress', ctx.hit.datum.x / 100)
+  else emit('hover:progress', null)
 })
 
 </script>
@@ -177,6 +211,11 @@ watch(tooltipCtx, ctx => {
     width: 7px;
     height: 7px;
     border-radius: 50%;
+    transition: transform 0.15s;
+
+    &.highlighted {
+      transform: scale(1.4);
+    }
 
     &.server-marker {
       background: #fbd080;
@@ -197,6 +236,13 @@ watch(tooltipCtx, ctx => {
   min-height: 0;
   position: relative;
   display: flex;
+  flex-direction: column;
+  padding-top: 5px;
+
+  .legend {
+    font-size: 14px;
+    justify-content: center;
+  }
 
   :deep(.chart-container) {
     flex: 1;
@@ -236,6 +282,12 @@ watch(tooltipCtx, ctx => {
       stroke-linecap: round;
       stroke-linejoin: round;
       fill: none;
+      transition: stroke-width 0.15s;
+    }
+
+    .distribution-line.line.highlighted,
+    .distribution-line.highlighted>.line {
+      stroke-width: 3px;
     }
 
     .server-line {

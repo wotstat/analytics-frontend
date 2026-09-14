@@ -93,6 +93,7 @@ const labelsX = new AutoLabels('horizontal', {
 
 const bar = new Bar<string | number>({
   classes: props.classes,
+  interactionTag: 'mini-bar',
   strategy: {
     type: 'grouped',
     padding: 0.3,
