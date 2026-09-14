@@ -1,6 +1,7 @@
 import { shallowRef } from 'vue'
 import type { Overflow, Size } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import type { BaseLabels } from '@/shared/uiKit/chart/universalChart/labels/BaseLabels'
+import type { LabelContext } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
 import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
 import type { BaseTicks } from '@/shared/uiKit/chart/universalChart/ticks/BaseTicks'
 
@@ -30,16 +31,16 @@ export type ProbeState = {
   yLevels: TickLevelProbe[]
 }
 
-// AutoLabels зовёт labelForValue(value, stepIndex) на каждом кандидате-шаге, и последний
+// AutoLabels зовёт labelForValue(value, context) на каждом кандидате-шаге, и последний
 // вызов за проход принадлежит победившему шагу. Отдельного геттера у движка нет: индекс
 // нужен только стенду, а обвешивать им итог кадра ради дебага незачем.
 export class StepProbe {
   step = -1
 
-  wrap(format: (value: number, step: number) => string) {
-    return (value: number, step: number) => {
-      this.step = step
-      return format(value, step)
+  wrap(format: (value: number, context: LabelContext) => string) {
+    return (value: number, context: LabelContext) => {
+      this.step = context.candidateIndex
+      return format(value, context)
     }
   }
 }

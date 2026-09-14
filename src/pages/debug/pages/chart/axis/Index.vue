@@ -40,8 +40,8 @@
             </td>
           </tr>
           <tr>
-            <th>steppedGenerator / arrayGenerator</th>
-            <td>какие числа вообще претендуют на подпись</td>
+            <th>ValueSource: step / values</th>
+            <td>какие числа вообще претендуют на подпись; labelCandidates собирает адаптивные варианты</td>
             <td><a href="#generators">генераторы</a></td>
           </tr>
         </tbody>

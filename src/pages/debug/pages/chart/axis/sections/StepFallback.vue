@@ -35,7 +35,7 @@
         <span class="debug-label">values</span>
         <select v-model="mode">
           <option value="list">список шагов</option>
-          <option value="overrides">steppedOverrides (+10 удвоений)</option>
+          <option value="overrides">labelCandidates (+10 удвоений)</option>
           <option value="single">один шаг (force)</option>
         </select>
       </label>
@@ -105,7 +105,7 @@
     </p>
 
     <p class="debug-note">
-      Режим <b>steppedOverrides</b> дописывает к твоему списку 10 удвоений последнего шага, начиная с <b>×2</b>:
+      Режим <b>labelCandidates</b> дописывает к твоему списку 10 удвоений последнего шага, начиная с <b>×2</b>:
       кандидат № {{ steps.length }} — это уже вдвое крупнее № {{ steps.length - 1 }}, дубля больше нет. Хвост
       наследует все настройки последнего явного кандидата — формат, стратегию,
       <span class="debug-value">ticks</span>, — меняется только
@@ -129,7 +129,7 @@ import { syntheticSeries } from '@/pages/debug/shared/fixtures/syntheticSeries'
 import { useRealDailySeries } from '@/pages/debug/shared/fixtures/realSeries'
 import { dataSources, type DataSource } from '@/pages/debug/shared/fixtures/types'
 import type { Options as LabelsOptions } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
-import { steppedGenerator, steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator'
+import { labelCandidates } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/labelCandidates'
 import ChartStage from '../shared/ChartStage.vue'
 import ProbeReadout from '../shared/ProbeReadout.vue'
 import { LabelsChart } from '../shared/LabelsChart'
@@ -193,9 +193,9 @@ const xLabels = computed<LabelsOptions>(() => {
     : formatLabel(currentFormat, value))
 
   const values = mode.value === 'overrides'
-    ? steppedOverrides({ step: steps.value, labelForValue })
+    ? labelCandidates({ step: steps.value, labelForValue })
     : (mode.value === 'single' ? [steps.value[0]] : steps.value)
-      .map(step => ({ gen: steppedGenerator({ step }), labelForValue }))
+      .map(step => ({ source: { step }, labelForValue }))
 
   return {
     values,

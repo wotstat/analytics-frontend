@@ -40,7 +40,7 @@
 
     <div class="debug-row">
       <label class="debug-control">
-        <span class="debug-label">дни через arrayGenerator</span>
+        <span class="debug-label">дни через values</span>
         <input type="checkbox" v-model="irregular">
       </label>
 
@@ -125,7 +125,7 @@
     </p>
 
     <p class="debug-note">
-      <b>Нерегулярный источник.</b> Включи «дни через arrayGenerator»: значения заданы списком
+      <b>Нерегулярный источник.</b> Включи «дни через values»: значения заданы списком
       <span class="debug-value">{{ irregularLabel }}</span> (в днях), и там есть пара, стоящая вплотную. Плотный
       участок гасит <b>весь</b> уровень — автоматического прореживания семантического набора нет и не будет:
       выбрасывать часть календарных дат движок не вправе, это решение страницы.
@@ -172,8 +172,7 @@ import { computed, markRaw, ref, watchEffect } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { syntheticSeries } from '@/pages/debug/shared/fixtures/syntheticSeries'
 import type { Options as LabelsOptions, TickSource } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
-import { arrayGenerator } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/arrayGenerator'
-import { steppedGenerator, steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator'
+import { labelCandidates } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/labelCandidates'
 import ChartStage from '../shared/ChartStage.vue'
 import ProbeReadout from '../shared/ProbeReadout.vue'
 import { LabelsChart } from '../shared/LabelsChart'
@@ -218,20 +217,20 @@ const levels = computed(() => (state.value?.xLevels ?? []).map(level => ({
 
 const xLabels = computed<LabelsOptions>(() => {
   const hourTicks: TickSource = {
-    gen: steppedGenerator({ step: HOUR }),
+    source: { step: HOUR },
     minPixelSpacing: hourSpacing.value,
     classes: 'hour-ticks',
   }
 
   const dayTicks: TickSource = {
-    gen: irregular.value ? arrayGenerator(IRREGULAR_DAYS.map(day => day * DAY)) : steppedGenerator({ step: DAY }),
+    source: irregular.value ? { values: IRREGULAR_DAYS.map(day => day * DAY) } : { step: DAY },
     minPixelSpacing: daySpacing.value,
     classes: 'day-ticks',
   }
 
-  const hourLabels: TickSource = { gen: 'labels', classes: 'hour-ticks' }
-  const dayLabels: TickSource = { gen: 'labels', classes: 'day-ticks' }
-  const weekLabels: TickSource = { gen: 'labels', classes: 'week-ticks' }
+  const hourLabels: TickSource = { source: 'labels', classes: 'hour-ticks' }
+  const dayLabels: TickSource = { source: 'labels', classes: 'day-ticks' }
+  const weekLabels: TickSource = { source: 'labels', classes: 'week-ticks' }
 
   return {
     padding: 10,
@@ -239,7 +238,7 @@ const xLabels = computed<LabelsOptions>(() => {
     // Часы повторяются каждый день, а ключ по умолчанию — текст подписи: без своего
     // keyForValue вторые сутки остались бы с тиками, но без подписей.
     keyForValue: value => `${value}`,
-    values: steppedOverrides({
+    values: labelCandidates({
       step: [
         { step: 6 * HOUR, labelForValue: probe.wrap(value => `${(value % DAY) / HOUR}:00`), ticks: [hourLabels, hourTicks] },
         { step: DAY, labelForValue: probe.wrap(value => `${1 + value / DAY} день`), ticks: [dayLabels, hourTicks] },

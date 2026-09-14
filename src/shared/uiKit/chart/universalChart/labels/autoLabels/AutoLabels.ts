@@ -2,6 +2,9 @@ import { ChartSpace } from '../../utils/ChartSpace'
 import { Classes, joinClasses } from '../../utils/utils'
 import { Axis, BaseLabels, DEFAULT_LABEL_OFFSET, DEFAULT_LEVEL_GAP, LabelLevelData, LabelsFrame, LabelTickLevel, LabelsSide, SlotSize } from '../BaseLabels'
 import { calculateClassic, calculateInterval, cleanupOutside, extend, fit, intervalFit } from './utils'
+import { resolveValueSource, type ValueGenerator, type ValueSource } from './generators/valueSource'
+
+export type { ValueGenerator, ValueSource } from './generators/valueSource'
 
 export type Strategy = 'classic-flow' | 'classic' | {
   type: 'interval',
@@ -16,25 +19,24 @@ export type Strategy = 'classic-flow' | 'classic' | {
   flow?: boolean
 }
 
-export type ValueGenerator = (startFrom: number) => {
-  forward: Generator<number>,
-  backward: Generator<number>
+export type LabelContext = {
+  candidateIndex: number
 }
 
 export type TickSource =
   | 'labels'
-  | ValueGenerator
+  | ValueSource
   | {
-    gen: ValueGenerator | 'labels'
+    source: ValueSource | 'labels'
     minPixelSpacing?: number
     from?: number
     to?: number
     classes?: Classes
   }
 
-type LabelOptions = {
-  labelForValue?: (value: number, step: number) => string
-  keyForValue?: (value: number, label: string, step: number) => string
+export type LabelOptions = {
+  labelForValue?: (value: number, context: LabelContext) => string
+  keyForValue?: (value: number, label: string, context: LabelContext) => string
   padding?: number | { clip: number, flow: number }
   strategy?: Strategy
   from?: number
@@ -44,11 +46,11 @@ type LabelOptions = {
   classes?: Classes
 }
 
-export type GeneratorWithOptions = LabelOptions & {
-  gen: ValueGenerator
+export type LabelLevelOptions = LabelOptions & {
+  source: ValueSource
 }
 
-export type LabelLevel = ValueGenerator | GeneratorWithOptions
+export type LabelLevel = ValueSource | LabelLevelOptions
 export type LabelCandidate = LabelLevel | readonly LabelLevel[]
 
 export const LABEL_OUTSIDE_SPACE_CLASS = 'label-outside-space'
@@ -70,6 +72,10 @@ const LABELS_LEVEL_CLASS = 'label-ticks'
 
 function isLabelLevels(candidate: LabelCandidate): candidate is readonly LabelLevel[] {
   return Array.isArray(candidate)
+}
+
+function isLabelLevelOptions(level: LabelLevel): level is LabelLevelOptions {
+  return typeof level === 'object' && 'source' in level
 }
 
 function getClipPadding(padding: Options['padding']) {
@@ -103,19 +109,19 @@ function clipLevelValues(values: readonly number[], from: number, to: number, mi
 }
 
 function collectLevelValues(ctx: {
-  gen: ValueGenerator,
+  generator: ValueGenerator,
   from: number,
   to: number,
   minSpacing: number,
   toLayout: (value: number) => number,
 }) {
-  const { gen, from, to, minSpacing, toLayout } = ctx
+  const { generator, from, to, minSpacing, toLayout } = ctx
   if (!(from <= to)) return []
 
   const values: number[] = []
   let previousLayout = 0
 
-  for (const value of gen(from).forward) {
+  for (const value of generator(from).forward) {
     if (value < from) continue
     if (value > to) break
 
@@ -142,7 +148,7 @@ export class AutoLabels extends BaseLabels {
     }, side)
   }
 
-  private resolveLevelsForStep(step: number): GeneratorWithOptions[] | null {
+  private resolveLevelsForStep(step: number): LabelLevelOptions[] | null {
     const current = this.options.values[step]
     if (!current) return null
 
@@ -150,9 +156,9 @@ export class AutoLabels extends BaseLabels {
     const levels = isLabelLevels(current) ? current : [current]
 
     return levels.map((level, index) => {
-      const overrides: GeneratorWithOptions = typeof level === 'function' ? { gen: level } : level
+      const overrides: LabelLevelOptions = isLabelLevelOptions(level) ? level : { source: level }
       return {
-        gen: overrides.gen,
+        source: overrides.source,
         labelForValue: overrides.labelForValue ?? options.labelForValue,
         keyForValue: overrides.keyForValue ?? options.keyForValue,
         padding: overrides.padding ?? options.padding,
@@ -207,8 +213,8 @@ export class AutoLabels extends BaseLabels {
 
     const options = this.options
 
-    const defaultLabelForValue = (v: number, step: number) => v.toString()
-    const defaultKeyForValue = (v: number, label: string, step: number) => label
+    const defaultLabelForValue: NonNullable<LabelOptions['labelForValue']> = value => value.toString()
+    const defaultKeyForValue: NonNullable<LabelOptions['keyForValue']> = (_, label) => label
 
     const translate = this.axis === 'horizontal' ? space.chartToLocalX.bind(space) : space.chartToLocalY.bind(space)
     const inverseTranslate = this.axis === 'horizontal' ? space.localToLayoutX.bind(space) : space.localToLayoutY.bind(space)
@@ -234,7 +240,8 @@ export class AutoLabels extends BaseLabels {
       if (!currentLevels) break
 
       const force = i == options.values.length - 1
-      const calculateLevel = (current: GeneratorWithOptions) => {
+      const labelContext: LabelContext = { candidateIndex: i }
+      const calculateLevel = (current: LabelLevelOptions) => {
         const labelForValue = current.labelForValue ?? defaultLabelForValue
         const keyForValue = current.keyForValue ?? defaultKeyForValue
         const from = current.from ?? -Infinity
@@ -246,9 +253,9 @@ export class AutoLabels extends BaseLabels {
 
         const compute = (v: number) => {
           const p = translate(v + valueOffset)
-          const label = labelForValue(v, i)
+          const label = labelForValue(v, labelContext)
           const size = getSize(label)
-          const key = keyForValue(v, label, i)
+          const key = keyForValue(v, label, labelContext)
           return { p, label, size, key, half: size / 2 }
         }
 
@@ -256,7 +263,7 @@ export class AutoLabels extends BaseLabels {
         const ctx = {
           padding: clipPadding,
           compute,
-          generator: current.gen,
+          generator: resolveValueSource(current.source),
           force,
           bounds: spaceBounds,
           limits: { start: from, end: to },
@@ -384,20 +391,20 @@ export class AutoLabels extends BaseLabels {
     const levels: LabelTickLevel[] = []
 
     for (const source of sources) {
-      const level = typeof source === 'function' || source === 'labels' ? { gen: source } : source
+      const level = typeof source === 'object' && 'source' in source ? source : { source }
 
       const from = Math.max(ctx.bounds.start, level.from ?? ctx.limits.start)
       const to = Math.min(ctx.bounds.end, level.to ?? ctx.limits.end)
       const minSpacing = level.minPixelSpacing ?? 0
 
-      const values = level.gen === 'labels'
+      const values = level.source === 'labels'
         ? clipLevelValues(ctx.labelValues, from, to, minSpacing, ctx.toLayout)
-        : collectLevelValues({ gen: level.gen, from, to, minSpacing, toLayout: ctx.toLayout })
+        : collectLevelValues({ generator: resolveValueSource(level.source), from, to, minSpacing, toLayout: ctx.toLayout })
 
       levels.push({
         values,
-        classes: level.gen === 'labels' ? joinClasses(LABELS_LEVEL_CLASS, level.classes) : level.classes,
-        suggestedStart: level.gen === 'labels' ? ctx.labelsStart : 0,
+        classes: level.source === 'labels' ? joinClasses(LABELS_LEVEL_CLASS, level.classes) : level.classes,
+        suggestedStart: level.source === 'labels' ? ctx.labelsStart : 0,
       })
     }
 

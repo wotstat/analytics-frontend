@@ -66,7 +66,7 @@
 
     <p class="debug-note">
       <b>Масштаб ×10⁹.</b> Список шагов кончился: даже с хвостом удвоений
-      (<span class="debug-value">steppedOverrides</span> добирает всего ×512 к последнему шагу) до миллиардов не
+      (<span class="debug-value">labelCandidates</span> добирает всего ×512 к последнему шагу) до миллиардов не
       дотянуться. Последний кандидат принудительный, поэтому подписи не схлопываются, а прореживаются — и на оси
       появляются некруглые числа вроде 46 080 000 000. Лечится только добавлением крупных шагов в
       <span class="debug-value">values</span>.
@@ -108,7 +108,7 @@ import { computed, markRaw, ref, watchEffect } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { seriesKinds, syntheticSeries, type SeriesKind } from '@/pages/debug/shared/fixtures/syntheticSeries'
 import type { Options as LabelsOptions } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
-import { steppedGenerator, steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator'
+import { labelCandidates } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/labelCandidates'
 import ChartStage from '../shared/ChartStage.vue'
 import ProbeReadout from '../shared/ProbeReadout.vue'
 import { LabelsChart } from '../shared/LabelsChart'
@@ -144,7 +144,7 @@ const points = computed(() => {
 
 const xLabels = computed<LabelsOptions>(() => {
   const base: LabelsOptions = {
-    values: steppedOverrides({ step: [1, 2, 5, 10, 25] }),
+    values: labelCandidates({ step: [1, 2, 5, 10, 25] }),
     labelForValue: value => `${value}`,
     padding: 10,
     labelOffset: 5,
@@ -153,16 +153,16 @@ const xLabels = computed<LabelsOptions>(() => {
 
   switch (breaker.value) {
     case 'from-gt-to': return { ...base, from: 40, to: 10 }
-    case 'zero-step': return { ...base, values: [steppedGenerator({ step: 0 })] }
-    case 'negative-step': return { ...base, values: [steppedGenerator({ step: -5 })] }
-    case 'tiny-step': return { ...base, values: [steppedGenerator({ step: 0.001 })] }
+    case 'zero-step': return { ...base, values: [{ step: 0 }] }
+    case 'negative-step': return { ...base, values: [{ step: -5 }] }
+    case 'tiny-step': return { ...base, values: [{ step: 0.001 }] }
     case 'huge-padding': return { ...base, padding: 200 }
     default: return base
   }
 })
 
 const yLabels = computed<LabelsOptions>(() => ({
-  values: steppedOverrides({ step: Y_STEPS, offset: 0 }),
+  values: labelCandidates({ step: Y_STEPS, offset: 0 }),
   labelForValue: value => `${value}`,
   padding: { clip: 10, flow: 5 },
   labelOffset: 5,

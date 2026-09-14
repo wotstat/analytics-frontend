@@ -7,7 +7,7 @@ import { VerticalLine } from '@/shared/uiKit/chart/universalChart/interaction/co
 import { MarkerOverlay } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/markerOverlay/MarkerOverlay'
 import { InteractionController } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController'
 import { AutoLabels, type Options as LabelsOptions, type TickSource } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
-import { steppedGenerator, steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator'
+import { labelCandidates } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/labelCandidates'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
 import { type LinePointHit } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineInteractionSource'
 import { AutoMarkers } from '@/shared/uiKit/chart/universalChart/plot/markers/autoMarkers/AutoMarkers'
@@ -118,7 +118,7 @@ export class DailyPlayersChart extends UniversalChart {
   }
 
   private getXLabelsOptions(): LabelsOptions {
-    const dayTicks: TickSource = { gen: steppedGenerator({ step: DAY }), minPixelSpacing: 5, classes: 'day-ticks' }
+    const dayTicks: TickSource = { source: { step: DAY }, minPixelSpacing: 5, classes: 'day-ticks' }
 
     const steps: [number, (value: number) => string][] = [
       [WEEK, value => `${1 + value / WEEK} неделя`],
@@ -132,9 +132,9 @@ export class DailyPlayersChart extends UniversalChart {
     return {
       padding: 10,
       labelOffset: 5,
-      values: steppedOverrides({
+      values: labelCandidates({
         step: steps.map(step => ({ step: step[0], labelForValue: step[1] })),
-        ticks: [{ gen: 'labels', classes: 'week-ticks' }, dayTicks],
+        ticks: [{ source: 'labels', classes: 'week-ticks' }, dayTicks],
       }),
       strategy: { type: 'interval', fit: true, offset: 3 },
       from: 0,
@@ -154,7 +154,7 @@ export class DailyPlayersChart extends UniversalChart {
         flow: 5,
       },
       labelOffset: 5,
-      values: steppedOverrides({
+      values: labelCandidates({
         step: [
           1, 2, 5, 10, 20, 50,
           100, 200, 500,

@@ -109,7 +109,7 @@ import { computed, markRaw, ref, watchEffect } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { syntheticSeries } from '@/pages/debug/shared/fixtures/syntheticSeries'
 import type { Options as LabelsOptions } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
-import { steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator'
+import { labelCandidates } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/labelCandidates'
 import ChartStage from '../shared/ChartStage.vue'
 import ProbeReadout from '../shared/ProbeReadout.vue'
 import { LabelsChart } from '../shared/LabelsChart'
@@ -143,7 +143,7 @@ const xLabels = computed<LabelsOptions>(() => {
   }
 
   return {
-    values: steppedOverrides({
+    values: labelCandidates({
       step: [
         { step: WEEK, labelForValue: value => weekLabel(value, ' неделя') },
         { step: WEEK, labelForValue: value => weekLabel(value, ' нед.') },

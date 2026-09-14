@@ -25,7 +25,7 @@
           </label>
         </div>
 
-        <ChartStage :chart="steppedChart" :height="170" caption="steppedGenerator({ step, offset })" />
+        <ChartStage :chart="steppedChart" :height="170" caption="{ step, offset }" />
         <ProbeReadout :state="steppedState" />
       </div>
 
@@ -42,13 +42,13 @@
           <button class="debug-btn" @click="rawArray = '55, 31, 30, 7, 5, 0'">наоборот</button>
         </div>
 
-        <ChartStage :chart="arrayChart" :height="170" caption="arrayGenerator([…])" />
+        <ChartStage :chart="arrayChart" :height="170" caption="{ values: […] }" />
         <ProbeReadout :state="arrayState" />
       </div>
     </div>
 
     <p class="debug-note">
-      <b>steppedGenerator</b> — арифметическая прогрессия, выровненная по
+      <b>Источник step</b> — арифметическая прогрессия, выровненная по
       <span class="debug-value">offset</span>: первое значение считается как
       <span class="debug-value">ceil((startFrom − offset) / step) * step + offset</span>. Крути offset при step = 10 —
       сетка целиком уезжает, а не добавляет значения. Обратный генератор — та же формула с отрицательным шагом,
@@ -61,12 +61,12 @@
         i++)</span>).
       Включи «диапазон 0…5000» при step = 1: подписи кончатся на 1000 и правые четыре пятых оси останутся пустыми,
       без единой ошибки в консоли. В боевом коде это не всплывает только потому, что
-      <span class="debug-value">steppedOverrides</span> добирает крупные шаги — но если задать
+        <span class="debug-value">labelCandidates</span> добирает крупные шаги — но если задать
       <span class="debug-value">values</span> руками одним генератором, ловушка открыта.
     </p>
 
     <p class="debug-note">
-      <b>arrayGenerator</b> отдаёт значения строго в том порядке, в каком они лежат в массиве:
+      <b>Источник values</b> отдаёт значения строго в том порядке, в каком они лежат в массиве:
       <span class="debug-value">forward</span> пропускает те, что меньше startFrom, <span
         class="debug-value">backward</span>
       идёт с конца. <b>Массив обязан быть отсортирован по возрастанию</b> — нажми «наоборот»: первое значение съест
@@ -75,11 +75,12 @@
     </p>
 
     <p class="debug-note">
-      <b>steppedOverrides</b> — не генератор, а сборщик всего массива <span class="debug-value">values</span>: принимает
-      число, список чисел или список объектов <span class="debug-value">{ step, labelForValue, padding, strategy
-        }</span>
-      и дописывает в хвост 10 удвоений последнего шага. Ему же передают варианты одного шага с разным текстом —
-      см. секцию про interval.
+      <b>labelCandidates</b> — сборщик всего массива кандидатов: ветка <span class="debug-value">step</span>
+      принимает число, список чисел или список объектов <span class="debug-value">{ step, labelForValue, padding,
+        strategy }</span> и дописывает в хвост 10 удвоений последнего шага. Ветка
+      <span class="debug-value">values</span> создаёт один кандидат из явного массива и добавляет форматтерам
+      <span class="debug-value">valueIndex</span>. В сам <span class="debug-value">AutoLabels</span> эта удобная
+      обёртка не встроена: он знает только общий контракт источника.
     </p>
   </DebugSection>
 </template>
@@ -90,8 +91,6 @@ import { computed, markRaw, ref, watchEffect } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { syntheticSeries } from '@/pages/debug/shared/fixtures/syntheticSeries'
 import type { Options as LabelsOptions } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
-import { arrayGenerator } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/arrayGenerator'
-import { steppedGenerator } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator'
 import ChartStage from '../shared/ChartStage.vue'
 import ProbeReadout from '../shared/ProbeReadout.vue'
 import { LabelsChart } from '../shared/LabelsChart'
@@ -115,7 +114,7 @@ const arrayValues = computed(() => rawArray.value
   .filter(item => Number.isFinite(item)))
 
 const steppedLabels = computed<LabelsOptions>(() => ({
-  values: [steppedGenerator({ step: step.value || 1, offset: offset.value })],
+  values: [{ step: step.value || 1, offset: offset.value }],
   labelForValue: value => `${value}`,
   padding: 8,
   labelOffset: 5,
@@ -123,7 +122,7 @@ const steppedLabels = computed<LabelsOptions>(() => ({
 }))
 
 const arrayLabels = computed<LabelsOptions>(() => ({
-  values: [arrayGenerator(arrayValues.value)],
+  values: [{ values: arrayValues.value }],
   labelForValue: value => `${value}`,
   padding: 8,
   labelOffset: 5,

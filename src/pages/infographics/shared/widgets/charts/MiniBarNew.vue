@@ -32,7 +32,7 @@ import { Status } from '@/db'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart.ts'
 import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager.ts'
 import { AutoLabels, Options } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels.ts'
-import { steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator.ts'
+import { labelCandidates } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/labelCandidates.ts'
 import { PlotAreaBorder } from '@/shared/uiKit/chart/universalChart/plot/axis/PlotAreaBorder'
 import { ref, watch, watchEffect } from 'vue'
 import { Bar, BarDataset } from '@/shared/uiKit/chart/universalChart/plot/bar/Bar.ts'
@@ -51,7 +51,7 @@ import { ChartAxis } from '@/shared/uiKit/chart/universalChart/plot/axis/ChartAx
 const LABELS_OPTIONS: Options = {
   labelOffset: 10,
   padding: 5,
-  values: steppedOverrides({
+  values: labelCandidates({
     step: 1,
   }),
   strategy: {

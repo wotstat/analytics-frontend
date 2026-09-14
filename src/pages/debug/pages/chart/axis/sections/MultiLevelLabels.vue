@@ -122,11 +122,10 @@
 import { computed, markRaw, ref, watchEffect } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import type {
-  GeneratorWithOptions,
+  LabelLevelOptions,
   Options as LabelsOptions,
   Strategy,
 } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
-import { steppedGenerator } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator'
 import type { SlotSize } from '@/shared/uiKit/chart/universalChart/labels/BaseLabels'
 import ChartStage from '../shared/ChartStage.vue'
 import ProbeReadout from '../shared/ProbeReadout.vue'
@@ -159,22 +158,22 @@ const offsetPoints = makePoints(OFFSET_START, OFFSET_END, HOUR)
 
 const goodSlotSize = computed<SlotSize>(() => slotSize.value === '72' ? 72 : slotSize.value)
 
-const monthLevel: GeneratorWithOptions = {
-  gen: utcMonthGenerator,
+const monthLevel: LabelLevelOptions = {
+  source: utcMonthGenerator,
   labelForValue: value => MONTH_NAMES[new Date(value * 1000).getUTCMonth()],
   keyForValue: value => `${value}`,
   strategy: intervalStrategy,
   classes: 'month-labels',
-  ticks: { gen: 'labels', classes: 'month-ticks' },
+  ticks: { source: 'labels', classes: 'month-ticks' },
 }
 
-const dayLevel: GeneratorWithOptions = {
-  gen: steppedGenerator({ step: DAY }),
+const dayLevel: LabelLevelOptions = {
+  source: { step: DAY },
   labelForValue: value => `${new Date(value * 1000).getUTCDate()} день`,
   keyForValue: value => `${value}`,
   strategy: intervalStrategy,
   classes: 'day-labels',
-  ticks: { gen: 'labels', classes: 'day-ticks' },
+  ticks: { source: 'labels', classes: 'day-ticks' },
 }
 
 const goodXLabels = computed<LabelsOptions>(() => ({
@@ -194,24 +193,24 @@ const goodXLabels = computed<LabelsOptions>(() => ({
 
 const offsetXLabels = computed<LabelsOptions>(() => {
   const offset = dayOffsetHours.value * HOUR
-  const offsetDayLevel: GeneratorWithOptions = {
-    gen: steppedGenerator({ step: DAY, offset }),
+  const offsetDayLevel: LabelLevelOptions = {
+    source: { step: DAY, offset },
     labelForValue: value => `день ${String(new Date(value * 1000).getUTCDate()).padStart(2, '0')}`,
     keyForValue: value => `${value}`,
     strategy: intervalStrategy,
     classes: 'day-labels',
-    ticks: { gen: 'labels', classes: 'day-ticks' },
+    ticks: { source: 'labels', classes: 'day-ticks' },
   }
 
   return {
     values: [[
       {
-        gen: steppedGenerator({ step: 3 * HOUR }),
+        source: { step: 3 * HOUR },
         labelForValue: formatHour,
         keyForValue: value => `${value}`,
         strategy: intervalStrategy,
         classes: 'hour-labels',
-        ticks: { gen: 'labels', classes: 'hour-ticks' },
+        ticks: { source: 'labels', classes: 'hour-ticks' },
       },
       offsetDayLevel,
     ]],
@@ -276,15 +275,15 @@ const offsetStats = computed(() => {
   }
 })
 
-function hourCandidate(step: number): GeneratorWithOptions[] {
+function hourCandidate(step: number): LabelLevelOptions[] {
   return [
     {
-      gen: steppedGenerator({ step: step * HOUR }),
+      source: { step: step * HOUR },
       labelForValue: formatHour,
       keyForValue: value => `${value}`,
       strategy: intervalStrategy,
       classes: 'hour-labels',
-      ticks: { gen: 'labels', classes: 'hour-ticks' },
+      ticks: { source: 'labels', classes: 'hour-ticks' },
     },
     dayLevel,
     monthLevel,

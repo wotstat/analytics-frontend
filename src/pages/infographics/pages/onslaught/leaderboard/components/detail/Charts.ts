@@ -2,7 +2,7 @@ import { ChartClip } from '@/shared/uiKit/chart/universalChart/defs/ChartClip'
 import { ChartGradient } from '@/shared/uiKit/chart/universalChart/defs/ChartGradient'
 import { ChartMask } from '@/shared/uiKit/chart/universalChart/defs/ChartMask'
 import { AutoLabels, Options as LabelsOptions, TickSource } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
-import { steppedGenerator, steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator'
+import { labelCandidates } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/labelCandidates'
 import { ChartTooltip, TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
 import { VerticalLine } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/lines/VerticalLine'
 import { MarkerOverlay } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/markerOverlay/MarkerOverlay'
@@ -173,10 +173,10 @@ class BaseChart extends UniversalChart {
   protected getXLabelsOptions(): LabelsOptions {
     const duration = Math.floor(this.seasonInterval.end.getTime() / 1000) - Math.floor(this.seasonInterval.start.getTime() / 1000)
 
-    const hourTicks: TickSource = { gen: steppedGenerator({ step: HOUR }), minPixelSpacing: 6, classes: 'hour-ticks', to: duration }
-    const dayTicks: TickSource = { gen: steppedGenerator({ step: DAY }), minPixelSpacing: 5, classes: 'day-ticks', to: duration }
-    const dayLabels: TickSource = { gen: 'labels', classes: 'day-ticks' }
-    const weekLabels: TickSource = { gen: 'labels', classes: 'week-ticks' }
+    const hourTicks: TickSource = { source: { step: HOUR }, minPixelSpacing: 6, classes: 'hour-ticks', to: duration }
+    const dayTicks: TickSource = { source: { step: DAY }, minPixelSpacing: 5, classes: 'day-ticks', to: duration }
+    const dayLabels: TickSource = { source: 'labels', classes: 'day-ticks' }
+    const weekLabels: TickSource = { source: 'labels', classes: 'week-ticks' }
 
     const steps = [
       [DAY, (v: number) => `${1 + v / DAY} день`, [dayLabels, hourTicks]],
@@ -192,7 +192,7 @@ class BaseChart extends UniversalChart {
     return {
       padding: 10,
       labelOffset: 5,
-      values: steppedOverrides({
+      values: labelCandidates({
         step: steps.map(([step, labelForValue, ticks]) => ({ step, labelForValue, ticks }))
       }),
       strategy: { type: 'interval', fit: true, offset: 3 },
@@ -203,14 +203,14 @@ class BaseChart extends UniversalChart {
 
   protected getYLabelsOptions(): LabelsOptions {
     return {
-      labelForValue: (v, step) => `${v}`,
+      labelForValue: v => `${v}`,
       padding: {
         clip: 10,
         flow: 5,
       },
       labelOffset: 5,
       values: [
-        ...steppedOverrides({
+        ...labelCandidates({
           step: [1, 2, 5, 10, 25, 50, 100, 200, 250, 500],
           offset: 0,
         }),

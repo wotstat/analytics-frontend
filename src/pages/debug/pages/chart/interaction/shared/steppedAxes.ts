@@ -1,6 +1,6 @@
 import { ChartClip } from '@/shared/uiKit/chart/universalChart/defs/ChartClip'
 import { AutoLabels } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
-import { steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator'
+import { labelCandidates } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/labelCandidates'
 import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
 
 const STEPS = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000, 25000, 50000, 100000]
@@ -17,7 +17,7 @@ export function steppedAxes() {
   const clipBottom = new ChartClip('bottom')
 
   const labelsX = new AutoLabels('horizontal', {
-    values: steppedOverrides({ step: STEPS }),
+    values: labelCandidates({ step: STEPS }),
     labelForValue: formatValue,
     padding: 10,
     labelOffset: 5,
@@ -25,7 +25,7 @@ export function steppedAxes() {
   }).clipBy(clipBottom)
 
   const labelsY = new AutoLabels('vertical', {
-    values: steppedOverrides({ step: STEPS }),
+    values: labelCandidates({ step: STEPS }),
     labelForValue: formatValue,
     padding: { clip: 10, flow: 5 },
     labelOffset: 5,

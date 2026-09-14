@@ -1,4 +1,4 @@
-import { ValueGenerator } from './AutoLabels'
+import type { ValueGenerator } from './generators/valueSource'
 
 type Extendable = { middle: number, size: number }
 export function extend<T extends Extendable>(intervals: T[], padding: number) {

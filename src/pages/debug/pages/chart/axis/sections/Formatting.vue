@@ -116,7 +116,7 @@ import { syntheticSeries } from '@/pages/debug/shared/fixtures/syntheticSeries'
 import { useRealDailySeries } from '@/pages/debug/shared/fixtures/realSeries'
 import { dataSources, type DataSource } from '@/pages/debug/shared/fixtures/types'
 import type { Options as LabelsOptions } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
-import { steppedOverrides } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/steppedGenerator'
+import { labelCandidates } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/labelCandidates'
 import ChartStage from '../shared/ChartStage.vue'
 import ProbeReadout from '../shared/ProbeReadout.vue'
 import { LabelsChart } from '../shared/LabelsChart'
@@ -163,7 +163,7 @@ const xLabels = computed<LabelsOptions>(() => {
   const kind = formatX.value
 
   return {
-    values: steppedOverrides({ step: [1, 2, 5, 10, 25] }),
+    values: labelCandidates({ step: [1, 2, 5, 10, 25] }),
     labelForValue: value => isReal ? (dates[value] ?? `${value}`) : formatLabel(kind, value),
     padding: 10,
     labelOffset: labelOffset.value,
@@ -175,7 +175,7 @@ const yLabels = computed<LabelsOptions>(() => {
   const kind = formatY.value
 
   return {
-    values: steppedOverrides({ step: Y_STEPS.map(step => step * scale.value), offset: 0 }),
+    values: labelCandidates({ step: Y_STEPS.map(step => step * scale.value), offset: 0 }),
     labelForValue: value => formatLabel(kind, value),
     padding: { clip: 10, flow: 5 },
     labelOffset: labelOffset.value,
