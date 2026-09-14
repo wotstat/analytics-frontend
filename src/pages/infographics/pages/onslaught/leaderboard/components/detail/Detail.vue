@@ -460,10 +460,7 @@ watchEffect(() => {
       .ticks {
         opacity: 0.1;
 
-        .y-ticks,
-        .week-ticks,
-        .day-ticks,
-        .hour-ticks {
+        .tick {
           stroke: rgba(255, 255, 255, 1);
         }
 
