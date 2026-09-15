@@ -19,7 +19,7 @@
   - `chuck/Chuck.vue` — турнир «Чак Норрис» (ивент), `ChuckTable`.
   - `lootbox/` — статистика открытия лутбоксов: таблицы дропа, реролов; свой набор таблиц (`Table.vue`, `OpenByTable.vue`, `RerollTable.vue`, список контейнеров `lootboxList/`). Названия контейнеров, расходников и кастомизаций берутся соответственно из `LootboxesLocalizationDictionary`, `ArtefactsLocalizationDictionary` и `CustomizationsLocalizationDictionary`.
   - `onslaught/` — см. ниже.
-- `shared/widgets/` — переиспользуемые карточки-виджеты страниц: `GenericInfo.vue` (большое число + подпись + цвет, принимает `status`, `value`, `processor`), `GenericInfoQuery.vue` (то же с запросом внутри), таблицы, `charts/MiniBar.vue`, `charts/MiniPie.vue` и Shadow*-контроллеры chart.js (см. 06).
+- `shared/widgets/` — переиспользуемые карточки-виджеты страниц: `GenericInfo.vue` (большое число + подпись + цвет, принимает `status`, `value`, `processor`), `GenericInfoQuery.vue` (то же с запросом внутри), таблицы, `charts/MiniBar.vue` и Shadow*-контроллеры chart.js (см. 06). Donut винрейта в `Battle.vue` нарисован локальным SVG без библиотеки графиков.
 - `shared/ServerStatusWrapper.vue` — обёртка «сервер недоступен», `Timecodes.vue`, `bloomColors.ts` — палитра свечения карточек.
 
 ## Натиск (Onslaught / COMP7) — `pages/infographics/pages/onslaught/`

@@ -18,10 +18,31 @@
         </div>
 
         <div class="card winrate pie chart">
-          <MniiPie :status="winrateResult.status" :data="winrateData" :color="['green', 'red', 'orange']"
-            :labels="['Победы', 'Поражения', 'Ничьи']" :callbacks="{ label: (t) => `${t.formattedValue}%` }" />
-          <p class="card-main-info description">Винрейт</p>
+          <ServerStatusWrapper :status="winrateResult.status" v-slot="{ showError, status }">
+            <div v-if="status != 'error'" class="winrate-pie-container" :class="status">
+              <svg class="winrate-pie" viewBox="0 0 180 130" role="img" :aria-label="winrateAriaLabel">
+                <circle class="winrate-pie-track" cx="90" cy="55" r="42" />
+                <circle v-for="segment in winrateRenderSegments" v-show="segment.value > 0" :key="segment.result"
+                  class="winrate-pie-segment" cx="90" cy="55"
+                  r="42" pathLength="100" :stroke-dasharray="`${segment.value} ${100 - segment.value}`"
+                  :stroke-dashoffset="-segment.displayOffset" :style="segment.style" />
 
+                <g v-for="segment in winrateSegments" v-show="segment.value > 0" :key="`callout-${segment.result}`"
+                  class="winrate-pie-callout" :data-result="segment.result" :style="segment.style" aria-hidden="true">
+                  <polyline class="winrate-pie-callout-line" :points="segment.callout.points" />
+                  <text class="winrate-pie-callout-value" :x="segment.callout.x" :y="segment.callout.y"
+                    :text-anchor="segment.callout.textAnchor">{{ segment.valueLabel }}</text>
+                </g>
+
+                <text class="winrate-pie-value" x="90" y="55">{{ winrateLabel }}</text>
+              </svg>
+            </div>
+
+            <div v-else class="flex flex-1 center pointer" @click="showError">
+              <p class="card-main-info error">!</p>
+            </div>
+          </ServerStatusWrapper>
+          <p class="card-main-info description">Винрейт</p>
         </div>
 
         <div class="card avg-prebattle">
@@ -77,8 +98,9 @@
 
 <script setup lang="ts">
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
-import MniiPie from '@/pages/infographics/shared/widgets/charts/MiniPie.vue'
 import MiniBarNew from '@/pages/infographics/shared/widgets/charts/MiniBarNew.vue'
+import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
+import { getColor } from '@/pages/infographics/shared/bloomColors'
 import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import { queryAsync, queryAsyncFirst } from '@/db'
 import { useElementVisibility } from '@vueuse/core'
@@ -101,6 +123,15 @@ const params = useQueryStatParams()
 const settings = useQueryStatParamsCache(params)
 
 const tankLabels = ['СТ', 'ТТ', 'ПТ', 'ЛТ', 'САУ']
+const percentageFormatter = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 })
+const winrateSegmentDefinitions = [
+  { result: 'win', label: 'Победы', color: 'green' },
+  { result: 'lose', label: 'Поражения', color: 'red' },
+  { result: 'tie', label: 'Ничьи', color: 'orange' },
+] as const
+
+type BattleResult = typeof winrateSegmentDefinitions[number]['result']
+const winrateSegmentPaintOrder: Record<BattleResult, number> = { lose: 0, tie: 1, win: 2 }
 
 const dataStart = queryAsyncFirst(`
 select sum(inQueueWaitTime + loadTime + preBattleWaitTime) / 1000 / 60 / 60 as waitTime,
@@ -139,12 +170,13 @@ from Event_OnBattleResult
 ${whereClause(params)};
 `, { LT: 0, HT: 0, MT: 0, AT: 0, SPG: 0 }, { enabled: visible, settings: settings.value })
 
-const winrateResult = queryAsync<{
-  count: number, result: 'win' | 'tie' | 'lose'
-}>(`select count(*) as count, result from Event_OnBattleResult ${whereClause(params)} group by result`, { enabled: visible, settings: settings.value })
+const winrateResult = queryAsync<{ count: number, result: BattleResult }>(
+  `select count(*) as count, result from Event_OnBattleResult ${whereClause(params)} group by result`,
+  { enabled: visible, settings: settings.value }
+)
 
-const winrateData = computed(() => {
-  const res = {
+const winrateSegments = computed(() => {
+  const counts: Record<BattleResult, number> = {
     win: 0,
     tie: 0,
     lose: 0,
@@ -152,13 +184,72 @@ const winrateData = computed(() => {
 
   const { data } = winrateResult.value
 
-  for (const iterator of data) {
-    res[iterator.result] = iterator.count
-  }
+  for (const item of data) counts[item.result] = item.count
 
-  const total = res.win + res.tie + res.lose
-  return [res.win / total, res.lose / total, res.tie / total].map(t => Math.round(t * 10000) / 100)
+  const total = counts.win + counts.tie + counts.lose
+  let offset = 0
+
+  const segments = winrateSegmentDefinitions.map(definition => {
+    const value = total === 0 ? 0 : counts[definition.result] / total * 100
+    const colors = getColor(definition.color)
+    const segment = {
+      ...definition,
+      value,
+      offset,
+      valueLabel: `${formatPercentage(value)}%`,
+      style: {
+        '--segment-color': colors.darken,
+        '--segment-hover-color': colors.main,
+        '--segment-bloom-color': colors.bloom,
+      }
+    }
+
+    offset += value
+    return segment
+  })
+
+  const tieSegment = segments.find(segment => segment.result === 'tie')
+  const rotation = tieSegment?.value
+    ? 50 - tieSegment.offset - tieSegment.value / 2
+    : 0
+
+  return segments.map(segment => {
+    const displayOffset = segment.offset + rotation
+    const midpoint = (displayOffset + segment.value / 2) / 100 * Math.PI * 2 - Math.PI / 2
+    const directionX = Math.cos(midpoint)
+    const directionY = Math.sin(midpoint)
+    const anchorX = 90 + directionX * 50
+    const anchorY = 55 + directionY * 50
+    const bendX = 90 + directionX * 56
+    const bendY = 55 + directionY * 56
+    const isRight = directionX >= 0
+    const calloutY = Math.min(100, Math.max(12, bendY))
+
+    return {
+      ...segment,
+      displayOffset,
+      callout: segment.result === 'tie'
+        ? { points: '90,105 90,113', x: 90, y: 122, textAnchor: 'middle' as const }
+        : {
+          points: `${anchorX},${anchorY} ${bendX},${bendY} ${isRight ? 154 : 26},${calloutY}`,
+          x: isRight ? 158 : 22,
+          y: calloutY,
+          textAnchor: isRight ? 'start' as const : 'end' as const,
+        }
+    }
+  })
 })
+
+const winrateLabel = computed(() => `${formatPercentage(winrateSegments.value[0]?.value ?? 0)}%`)
+const winrateRenderSegments = computed(() => [...winrateSegments.value]
+  .sort((left, right) => winrateSegmentPaintOrder[left.result] - winrateSegmentPaintOrder[right.result]))
+const winrateAriaLabel = computed(() => `Винрейт: ${winrateSegments.value
+  .map(segment => `${segment.label.toLowerCase()} ${segment.valueLabel}`)
+  .join(', ')}`)
+
+function formatPercentage(value: number) {
+  return percentageFormatter.format(value)
+}
 
 const avgChart = computed(() => {
   const { data: r } = avgTypeResult.value
@@ -326,5 +417,82 @@ function hourDayExp(hour: number) {
     }
 
   }
+}
+
+.winrate-pie-container {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+
+  &.loading {
+    opacity: 0.55;
+  }
+}
+
+.winrate-pie {
+  position: absolute;
+  inset: 0;
+  width: calc(100% - 24px);
+  height: calc(100% - 24px);
+  max-width: 280px;
+  max-height: 220px;
+  margin: auto;
+  overflow: visible;
+}
+
+.winrate-pie-track,
+.winrate-pie-segment {
+  fill: none;
+  stroke-width: 16;
+  transform: rotate(-90deg);
+  transform-origin: 90px 55px;
+}
+
+.winrate-pie-track {
+  stroke: rgb(255 255 255 / 8%);
+}
+
+.winrate-pie-segment {
+  stroke: var(--segment-color);
+  filter: drop-shadow(0 0 5px var(--segment-bloom-color));
+  transition: stroke 0.2s ease, stroke-width 0.2s ease, filter 0.2s ease;
+
+  &:hover {
+    stroke: var(--segment-hover-color);
+    stroke-width: 18;
+    filter: drop-shadow(0 0 8px var(--segment-bloom-color));
+  }
+}
+
+.winrate-pie-callout {
+  pointer-events: none;
+}
+
+.winrate-pie-callout-line {
+  fill: none;
+  stroke: var(--segment-color);
+  stroke-width: 1.25;
+  opacity: 0.8;
+  vector-effect: non-scaling-stroke;
+}
+
+.winrate-pie-callout-value {
+  fill: var(--segment-hover-color);
+  font-size: 8px;
+  font-weight: var(--bold-weight);
+  font-variant-numeric: tabular-nums;
+  dominant-baseline: central;
+  filter: drop-shadow(0 0 3px var(--segment-bloom-color));
+}
+
+.winrate-pie-value {
+  fill: v-bind("getColor('green').main");
+  font-size: 14px;
+  font-weight: var(--bold-weight);
+  font-variant-numeric: tabular-nums;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+  filter: drop-shadow(0 0 5px v-bind("getColor('green').bloom"));
 }
 </style>

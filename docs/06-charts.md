@@ -1,12 +1,12 @@
 # Графики
 
-В проекте два механизма графиков: **chart.js** (простые мини-графики в карточках) и собственный SVG-движок **UniversalChart** (сложные интерактивные графики, например деталка лидерборда Натиска).
+В проекте два основных механизма графиков: **chart.js** (часть простых мини-графиков в карточках) и собственный SVG-движок **UniversalChart** (сложные интерактивные графики, например деталка лидерборда Натиска). Единичные простые визуализации могут быть локальным SVG без движка: так устроен donut винрейта в `Battle.vue`.
 
 ## chart.js (мини-графики карточек)
 
 - Регистрация компонентов и глобальные дефолты — в `src/main.ts` (белый текст, Inter, borderColor полупрозрачный, анимация 400мс).
-- Обёртки: `src/pages/infographics/shared/widgets/charts/MiniBar.vue`, `MiniPie.vue` — принимают `status: Status`, `data`, `color` (имя из палитры), `labels`, `callbacks` (тултипы chart.js).
-- `ShadowBarController.ts`, `ShadowLineController.ts`, `ShadowPieController.ts` — кастомные контроллеры chart.js, рисующие «свечение» (shadow/bloom) под данными; цвета — `pages/infographics/shared/bloomColors.ts`.
+- Обёртка `src/pages/infographics/shared/widgets/charts/MiniBar.vue` принимает `status: Status`, `data`, `color` (имя из палитры), `labels`, `callbacks` (тултипы chart.js).
+- `ShadowBarController.ts`, `ShadowLineController.ts` — кастомные контроллеры chart.js, рисующие «свечение» (shadow/bloom) под данными; цвета — `pages/infographics/shared/bloomColors.ts`.
 - `src/shared/ui/chart/VueChartRenderManager.ts` — менеджер перерисовки.
 - `pages/infographics/pages/onslaught/general/rankDistribution/` — специализированный flex-график распределения игроков по рангам. Общая с дневным графиком цветовая схема рангов вынесена в `onslaught/shared/rankColors.scss`.
 
@@ -310,6 +310,6 @@ connection.dispose()
 
 ## Когда что использовать
 
-- Карточка со статичным распределением/долями → `MiniBar`/`MiniPie` (chart.js).
+- Карточка со статичным распределением → `MiniBar` или `MiniBarNew`; простой единичный donut → локальный SVG, как в `Battle.vue`.
 - Интерактивный таймсерийный график с зумом/тултипами → UniversalChart.
 - Новую библиотеку графиков не добавлять.

@@ -82,4 +82,4 @@ const result = queryComputed<T>(() => `select ... from Event_OnBattleResult ${wh
 // result.value = { status: loading|success|{status: error, reason}, data: T[] }
 ```
 
-Отображение — карточки `GenericInfo` / `MiniBar` / `MiniPie` со статусом загрузки (см. 04 и 06).
+Отображение — карточки `GenericInfo`, `MiniBar` и специфичные для страниц SVG-виджеты со статусом загрузки (см. 04 и 06).
