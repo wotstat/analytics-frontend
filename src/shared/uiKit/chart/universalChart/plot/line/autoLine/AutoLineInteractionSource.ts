@@ -79,8 +79,8 @@ export class AutoLineInteractionSource<T extends Point = Point> extends AutoLine
     return this.getPoints()
   }
 
-  getTargets(): readonly SVGElement[] {
-    return this.targets()
+  getTargets(tag: InteractionTag): readonly SVGElement[] {
+    return this.tag === tag ? this.targets() : []
   }
 
   nearStrokeHit(point: Point, maxDistance: number): LineStrokeHit<T> | null {

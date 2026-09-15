@@ -116,15 +116,18 @@
       <h3>Продолжительность боя</h3>
       <div class="cards">
         <div class="card flex">
-          <div class="chartjs-container flex-1">
-            <ShadowBar :data="durationByLevelChartData" :options="durationByLevelOptions" />
+          <div class="comparison-chart-container flex-1">
+            <ComparisonBarChart :data="durationByLevelChartData" :left-label="leftVersionString"
+              :right-label="rightVersionString" :tooltip-title="levelTooltipTitle" :value-formatter="sec2minsec"
+              :y-label-formatter="sec2minsec" :y-steps="[60]" :min-y="4 * 60" show-y-labels />
           </div>
           <p class="card-main-info description bottom">Среднее время боя по уровню</p>
         </div>
 
         <div class="card flex">
-          <div class="chartjs-container flex-1">
-            <ShadowBar :data="durationDistributionChartData" :options="durationDistributionOptions" />
+          <div class="comparison-chart-container flex-1">
+            <ComparisonBarChart :data="durationDistributionChartData" :left-label="leftVersionString"
+              :right-label="rightVersionString" :tooltip-title="durationTooltipTitle" :value-formatter="percent" />
           </div>
           <div class="card-main-info description bottom">Распределение боёв по продолжительности на
             <DropDown class="dropdown-container mt-font" v-model="durationSelectedLevel"
@@ -154,9 +157,11 @@
       <h3>Распределение типов танков по боям</h3>
       <LevelSwitcher v-model="selectedLevels" />
       <div class="cards">
-        <div class="card flex" v-for="chart in typeDistributionData">
-          <div class="chartjs-container flex-1">
-            <ShadowBar :data="chart.data" :options="typeDistributionOptions" />
+        <div class="card flex" v-for="chart in typeDistributionData" :key="chart.chart.key">
+          <div class="comparison-chart-container flex-1">
+            <ComparisonBarChart :data="chart.data" :left-label="leftVersionString" :right-label="rightVersionString"
+              :tooltip-title="label => typeDistributionTooltipTitle(label, chart.chart.label)"
+              :value-formatter="distributionPercent" />
           </div>
           <p class="card-main-info description bottom">{{ chart.chart.label }}</p>
         </div>
@@ -193,14 +198,15 @@
       </div>
 
       <div class="card flex">
-        <div class="chartjs-container">
+        <div class="damage-chart-container">
           <div class="chart-options">
             <div class="line">
               <p>Шаг урона:</p>
               <DropDown :variants="stepVariants" v-model="damageStep" />
             </div>
           </div>
-          <ShadowLine :data="damageDistributionChartData" :options="damageDistributionOptions" />
+          <DamageDistributionChart :data="damageDistributionChartData" :left-label="leftVersionString"
+            :right-label="rightVersionString" :damage-step="damageStep" />
         </div>
       </div>
     </section>
@@ -209,15 +215,19 @@
       <h3>Другое</h3>
       <div class="cards">
         <div class="card flex">
-          <div class="chartjs-container flex-1">
-            <ShadowBar :data="averageSpgDamageChartData" :options="averageChartOptions" />
+          <div class="comparison-chart-container flex-1">
+            <ComparisonBarChart :data="averageSpgDamageChartData" :left-label="leftVersionString"
+              :right-label="rightVersionString" :tooltip-title="levelTooltipTitle" :value-formatter="roundedSpace"
+              :y-label-formatter="spaceProcessor" show-y-labels show-delta />
           </div>
           <p class="card-main-info description bottom">Средний урон САУ</p>
         </div>
 
         <div class="card flex">
-          <div class="chartjs-container flex-1">
-            <ShadowBar :data="averageLtAssistChartData" :options="averageChartOptions" />
+          <div class="comparison-chart-container flex-1">
+            <ComparisonBarChart :data="averageLtAssistChartData" :left-label="leftVersionString"
+              :right-label="rightVersionString" :tooltip-title="levelTooltipTitle" :value-formatter="roundedSpace"
+              :y-label-formatter="spaceProcessor" show-y-labels show-delta />
           </div>
           <div class="card-main-info description bottom">Средний насвет ЛТ</div>
         </div>
@@ -240,9 +250,6 @@ import { CACHE_SETTINGS, LONG_CACHE_SETTINGS, query, queryComputed } from '@/db'
 import { computed, onUnmounted, ref, watch, watchEffect } from 'vue'
 import LevelSwitcher from './LevelSwitcher.vue'
 import { refDebounced, useDebounce } from '@vueuse/core'
-import { ShadowBar } from '@/pages/infographics/shared/widgets/charts/ShadowBarController'
-import { ShadowLine } from '@/pages/infographics/shared/widgets/charts/ShadowLineController'
-import { ChartProps } from 'vue-chartjs'
 
 import DropDown from '@/shared/uiKit/dropdown/DropDown.vue'
 import ShotsCircle from '@/pages/infographics/shared/widgets/ShotsCircle.vue'
@@ -253,7 +260,11 @@ import { sec2minsec } from '@/shared/utils/time'
 import GameVersionSelectorBadges from '@/shared/game/selectors/gameVersionSelector/GameVersionSelectorBadges.vue'
 import { OptionalRegionVersion } from '@/shared/game/selectors/gameVersionSelector/utils.ts'
 import { useRoute, useRouter } from 'vue-router'
-import BallisticDistributionChart from './BallisticDistributionChart.vue'
+import BallisticDistributionChart from './charts/BallisticDistributionChart.vue'
+import ComparisonBarChart from './charts/ComparisonBarChart.vue'
+import type { ComparisonBarChartData } from './charts/useComparisonBarChart'
+import DamageDistributionChart from './charts/DamageDistributionChart.vue'
+import type { DamageDistributionChartData } from './charts/useDamageDistributionChart'
 
 setFeatureVisit('mt-36-1')
 
@@ -332,6 +343,13 @@ watchEffect(() => console.log(gameVersionFilter.value))
 
 const leftVersionString = computed(() => [...leftVersions.value].map(t => t.split('_')[1]).join(', '))
 const rightVersionString = computed(() => [...rightVersions.value].map(t => t.split('_')[1]).join(', '))
+const percent = createPercentProcessor(2)
+
+const roundedSpace = (value: number) => spaceProcessor(roundProcessor(value))
+const distributionPercent = (value: number) => `${(Math.round(value * 1000) / 10).toFixed(1)}%`
+const levelTooltipTitle = (label: string | number) => `Уровень ${label}`
+const durationTooltipTitle = (label: string | number) => `Продолжительность ${sec2minsec(Number(label) * 60)}`
+const typeDistributionTooltipTitle = (label: string | number, type: string) => `Боёв с ${label} ${type} на команду`
 
 const levelDebounce = useDebounce(selectedLevels)
 const durationSelectedLevel = ref(10)
@@ -359,7 +377,7 @@ group by gameVersion, tankType, tankLevel
 order by gameVersion, tankType, tankLevel;
 `, { settings: LONG_CACHE_SETTINGS })
 
-const averageSpgDamageChartData = computed<ChartProps<'bar'>['data']>(() => {
+const averageSpgDamageChartData = computed<ComparisonBarChartData>(() => {
   const data = averageDamageAndAssist.value.data.filter(item => item.tankType == 'SPG')
   const targetLabels = [...new Set(data.map(item => item.tankLevel)).values()].sort((a, b) => a - b)
   const left = data.filter(item => leftVersions.value.has(item.gameVersion))
@@ -367,22 +385,12 @@ const averageSpgDamageChartData = computed<ChartProps<'bar'>['data']>(() => {
 
   return {
     labels: targetLabels.map(t => romanNumberProcessor(t)),
-    datasets: [
-      {
-        label: leftVersionString.value,
-        data: targetLabels.map(label => left.find(t => t.tankLevel == Number(label))?.damage || 0),
-        backgroundColor: '#4a90e2',
-      },
-      {
-        label: rightVersionString.value,
-        data: targetLabels.map(label => right.find(t => t.tankLevel == Number(label))?.damage || 0),
-        backgroundColor: '#50e3c2',
-      }
-    ]
+    left: targetLabels.map(label => left.find(t => t.tankLevel == label)?.damage || 0),
+    right: targetLabels.map(label => right.find(t => t.tankLevel == label)?.damage || 0),
   }
 })
 
-const averageLtAssistChartData = computed<ChartProps<'bar'>['data']>(() => {
+const averageLtAssistChartData = computed<ComparisonBarChartData>(() => {
   const data = averageDamageAndAssist.value.data.filter(item => item.tankType == 'LT')
   const targetLabels = [...new Set(data.map(item => item.tankLevel)).values()].sort((a, b) => a - b)
   const left = data.filter(item => leftVersions.value.has(item.gameVersion))
@@ -390,48 +398,10 @@ const averageLtAssistChartData = computed<ChartProps<'bar'>['data']>(() => {
 
   return {
     labels: targetLabels.map(t => romanNumberProcessor(t)),
-    datasets: [
-      {
-        label: leftVersionString.value,
-        data: targetLabels.map(label => left.find(t => t.tankLevel == Number(label))?.assistRadio || 0),
-        backgroundColor: '#4a90e2',
-      },
-      {
-        label: rightVersionString.value,
-        data: targetLabels.map(label => right.find(t => t.tankLevel == Number(label))?.assistRadio || 0),
-        backgroundColor: '#50e3c2',
-      }
-    ]
+    left: targetLabels.map(label => left.find(t => t.tankLevel == label)?.assistRadio || 0),
+    right: targetLabels.map(label => right.find(t => t.tankLevel == label)?.assistRadio || 0),
   }
 })
-
-const averageChartOptions = computed<ChartProps<'bar'>['options']>(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    y: {
-      grid: { display: true },
-      ticks: { callback: (value) => spaceProcessor(value) }
-    },
-    x: { grid: { display: false } }
-  },
-  interaction: { mode: 'index' },
-  plugins: {
-    tooltip: {
-      callbacks: {
-        title: ctx => `Уровень ${ctx[0].label}`,
-        label: ctx => {
-
-          const values = ctx.chart.data.datasets.map(t => t.data[ctx.dataIndex]) as number[]
-          const minValue = Math.min(...values)
-          const delta = (ctx.raw as number) - minValue
-
-          return `${ctx.dataset.label}: ${spaceProcessor(roundProcessor(ctx.raw as number))}` + (delta > 0 ? ` | +${spaceProcessor(roundProcessor(delta))}` : '')
-        }
-      }
-    }
-  }
-}))
 
 
 const durationDistributionData = queryComputed<{ gameVersion: string, tankLevel: number, time: number, p: number }>(() => `
@@ -444,55 +414,17 @@ where gameVersion in (${gameVersionFilter.value}) and battleMode = 'REGULAR' and
 group by gameVersion, time, tankLevel;
 `, { settings: LONG_CACHE_SETTINGS })
 
-const durationDistributionChartData = computed<ChartProps<'bar'>['data']>(() => {
+const durationDistributionChartData = computed<ComparisonBarChartData>(() => {
   const data = durationDistributionData.value.data.filter(item => item.tankLevel == durationSelectedLevel.value)
   const targetLabels = new Array(27).fill(0).map((_, i) => 2 + i * 0.5)
   const left = data.filter(item => leftVersions.value.has(item.gameVersion))
   const right = data.filter(item => rightVersions.value.has(item.gameVersion))
   return {
     labels: targetLabels,
-    datasets: [
-      {
-        label: leftVersionString.value,
-        data: targetLabels.map(label => left.find(t => t.time == label)?.p || 0),
-        backgroundColor: '#4a90e2',
-      },
-      {
-        label: rightVersionString.value,
-        data: targetLabels.map(label => right.find(t => t.time == label)?.p || 0),
-        backgroundColor: '#50e3c2',
-      }
-    ]
+    left: targetLabels.map(label => left.find(t => t.time == label)?.p || 0),
+    right: targetLabels.map(label => right.find(t => t.time == label)?.p || 0),
   }
 })
-
-const percent = createPercentProcessor(2)
-const durationDistributionOptions = computed<ChartProps<'bar'>['options']>(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    y: { display: false, min: 0 },
-    x: {
-      grid: { display: false },
-      ticks: {
-        maxRotation: 0,
-      }
-    }
-  },
-  interaction: { mode: 'index' },
-  plugins: {
-    tooltip: {
-      callbacks: {
-        title: function (context) {
-          return `Продолжительность ${sec2minsec(Number.parseFloat(context[0].label) * 60)}`
-        },
-        label: function (context) {
-          return `${context.dataset.label}: ${percent(context.raw as number)}`
-        }
-      }
-    }
-  }
-}))
 
 
 const durationByLevelData = queryComputed<{ gameVersion: string, tankLevel: number, dur: number }>(() => `
@@ -504,52 +436,17 @@ where gameVersion in (${gameVersionFilter.value}) and battleMode = 'REGULAR' and
 group by gameVersion, tankLevel
 `, { settings: LONG_CACHE_SETTINGS })
 
-const durationByLevelChartData = computed<ChartProps<'bar'>['data']>(() => {
+const durationByLevelChartData = computed<ComparisonBarChartData>(() => {
   const data = durationByLevelData.value.data
   const targetLabels = [...new Set(data.map(item => item.tankLevel)).values()].sort((a, b) => a - b)
   const left = data.filter(item => leftVersions.value.has(item.gameVersion))
   const right = data.filter(item => rightVersions.value.has(item.gameVersion))
   return {
     labels: targetLabels.map(t => romanNumberProcessor(t)),
-    datasets: [
-      {
-        label: leftVersionString.value,
-        data: targetLabels.map(label => left.find(t => t.tankLevel == Number(label))?.dur || 0),
-        backgroundColor: '#4a90e2',
-      },
-      {
-        label: rightVersionString.value,
-        data: targetLabels.map(label => right.find(t => t.tankLevel == Number(label))?.dur || 0),
-        backgroundColor: '#50e3c2',
-      }
-    ]
+    left: targetLabels.map(label => left.find(t => t.tankLevel == label)?.dur || 0),
+    right: targetLabels.map(label => right.find(t => t.tankLevel == label)?.dur || 0),
   }
 })
-
-const durationByLevelOptions = computed<ChartProps<'bar'>['options']>(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    y: {
-      grid: { display: true },
-      min: 4 * 60,
-      ticks: {
-        stepSize: 60,
-        callback: (value) => sec2minsec(value as number)
-      }
-    },
-    x: { grid: { display: false } }
-  },
-  interaction: { mode: 'index' },
-  plugins: {
-    tooltip: {
-      callbacks: {
-        title: ctx => `Уровень ${ctx[0].label}`,
-        label: ctx => `${ctx.dataset.label}: ${sec2minsec(ctx.raw as number)}`
-      }
-    }
-  }
-}))
 
 const teamLevelTableData = queryComputed<{
   battleType: 1 | 2 | 3,
@@ -607,7 +504,7 @@ const byTankTypeDistributionData = queryComputed<{
   union all select * from spg;
 `, { settings: LONG_CACHE_SETTINGS })
 
-const typeDistributionData = computed<{ chart: { key: string, label: string }, data: ChartProps<'bar'>['data'] }[]>(() => {
+const typeDistributionData = computed<{ chart: { key: string, label: string }, data: ComparisonBarChartData }[]>(() => {
   return [
     { key: 'spg', label: 'САУ' },
     { key: 'at', label: 'ПТ' },
@@ -623,43 +520,13 @@ const typeDistributionData = computed<{ chart: { key: string, label: string }, d
       chart,
       data: {
         labels: targetLabels,
-        datasets: [
-          {
-            label: leftVersionString.value,
-            data: targetLabels.map(label => left.find(t => t.count == Number(label))?.battles || 0),
-            backgroundColor: '#4a90e2',
-            meta: { label: chart.label }
-          },
-          {
-            label: rightVersionString.value,
-            data: targetLabels.map(label => right.find(t => t.count == Number(label))?.battles || 0),
-            backgroundColor: '#50e3c2',
-            meta: { label: chart.label }
-          },
-        ]
+        left: targetLabels.map(label => left.find(t => t.count == Number(label))?.battles || 0),
+        right: targetLabels.map(label => right.find(t => t.count == Number(label))?.battles || 0),
       }
     }
   })
 
 })
-
-const typeDistributionOptions = computed<ChartProps<'bar'>['options']>(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    y: { display: false, min: 0 },
-    x: { grid: { display: false }, min: 0 }
-  },
-  interaction: { mode: 'index' },
-  plugins: {
-    tooltip: {
-      callbacks: {
-        title: ctx => `Боёв с ${ctx[0].label} ${(ctx[0].chart.data.datasets[0] as any).meta.label} на команду`,
-        label: ctx => `${ctx.dataset.label}: ${(Math.round(ctx.raw as number * 1000) / 10).toFixed(1)}%`
-      }
-    }
-  }
-}))
 
 
 const possibleTargets = [
@@ -775,6 +642,7 @@ const steppedLabels = computed(() => {
   const data = damageDistributionData.value.data
 
   const labels = new Set(data.map(item => item.shotDamage))
+  if (labels.size === 0) return { steps: [], textLabels: [] }
 
   const min = Math.min(...labels)
   const max = Math.max(...labels) + 1
@@ -800,7 +668,7 @@ const steppedLabels = computed(() => {
   return { steps: steppedLabels, textLabels }
 })
 
-const damageDistributionChartData = computed<ChartProps<'line'>['data']>(() => {
+const damageDistributionChartData = computed<DamageDistributionChartData>(() => {
 
   const data = damageDistributionData.value.data
 
@@ -830,59 +698,11 @@ const damageDistributionChartData = computed<ChartProps<'line'>['data']>(() => {
 
   return {
     labels: textLabels,
-    datasets: [
-      {
-        label: leftVersionString.value,
-        data: [...process(leftData).values()],
-        backgroundColor: '#4a90e2',
-        borderColor: '#4a90e200',
-        fill: true,
-      },
-      {
-        label: rightVersionString.value,
-        data: [...process(rightData).values()],
-        backgroundColor: '#50e3c2',
-        borderColor: '#50e3c200',
-        fill: true,
-      }
-    ]
+    left: [...process(leftData).values()],
+    right: [...process(rightData).values()],
+    targetIndex: textLabels.indexOf(String(damageDistributionDataSettings.value.targetDamage)),
   }
 })
-
-const damageDistributionOptions = computed<ChartProps<'line'>['options']>(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  animation: false,
-  scales: {
-    y: {
-      display: false,
-      min: 0,
-    },
-    x: {
-      grid: { display: false }
-    }
-  },
-  interaction: {
-    intersect: false,
-    mode: 'index',
-  },
-  plugins: {
-    tooltip: {
-      callbacks: {
-        title: function (context) {
-          if (damageStep.value == 1) return `Нанесено ${context[0].label} урона`
-          const half = Math.floor(damageStep.value / 2)
-          return `Нанесено ${context[0].label}+-${half} урона`
-        },
-        label: function (context) {
-          return `${context.dataset.label}: ${(Math.round(context.raw as number * 100) / 100).toFixed(2)}%`
-        }
-      }
-    },
-    // @ts-ignore
-    centerLine: steppedLabels.value.textLabels.indexOf(String(damageDistributionDataSettings.value.targetDamage))
-  }
-}))
 
 
 const ballisticDistributionIdeal = ref<boolean>(true)
@@ -1082,6 +902,14 @@ async function loadNextBatchRight(options: Options) {
     }
   }
 
+  .comparison-chart-container,
+  .damage-chart-container {
+    position: relative;
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+
   .levels {
     margin-bottom: 1em;
   }
@@ -1113,14 +941,14 @@ async function loadNextBatchRight(options: Options) {
       aspect-ratio: 2;
     }
 
-    .chartjs-container {
-      flex: 1;
+    .damage-chart-container {
       margin-top: -3px;
 
       .chart-options {
         position: absolute;
         top: 3px;
         left: 0;
+        z-index: 1;
 
         .line {
           display: flex;

@@ -34,7 +34,7 @@ import {
   BallisticDistributionRow,
   BallisticDistributionVariant,
   buildBallisticDistributionSeries,
-} from './ballisticDistribution'
+} from '../ballisticDistribution'
 import {
   BallisticDistributionGroup,
   BallisticDistributionHit,

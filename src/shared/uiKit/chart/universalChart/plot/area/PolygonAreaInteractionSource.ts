@@ -25,8 +25,8 @@ export class PolygonAreaInteractionSource implements InteractionSource {
     readonly tag?: InteractionTag
   ) { }
 
-  getTargets(): readonly SVGElement[] {
-    return [this.plot.target()]
+  getTargets(tag: InteractionTag): readonly SVGElement[] {
+    return this.tag === tag ? [this.plot.target()] : []
   }
 
   contains(): Selection<PolygonHit> {

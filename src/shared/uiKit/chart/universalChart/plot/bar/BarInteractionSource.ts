@@ -40,6 +40,7 @@ export type BarPlotAccess<TCategory = number, TBarDatum extends BarDatum = numbe
   categoryLayout(categoryIndex: number, space: ChartSpace): readonly BarLayoutItem<TBarDatum>[]
   strategyType(): 'grouped' | 'stacked'
   targets(): readonly SVGElement[]
+  targetsForTag(tag: InteractionTag): readonly SVGElement[]
 }
 
 function barItemKey(datasetIndex: number, categoryIndex: number): string {
@@ -55,8 +56,8 @@ export class BarInteractionSource<TCategory = number, TBarDatum extends BarDatum
     readonly tag?: InteractionTag
   ) { }
 
-  getTargets(): readonly SVGElement[] {
-    return this.plot.targets()
+  getTargets(tag: InteractionTag): readonly SVGElement[] {
+    return this.tag === tag ? this.plot.targets() : this.plot.targetsForTag(tag)
   }
 
   contains(options: BarContainsOptions = {}): BarItemSelection<TCategory, TBarDatum> {
@@ -121,10 +122,12 @@ export class BarInteractionSource<TCategory = number, TBarDatum extends BarDatum
   }
 
   createHit(item: BarLayoutItem<TBarDatum>, pointer: Point): BarItemHit<TCategory, TBarDatum> {
+    const dataset = this.plot.datasets()[item.datasetIndex]
+
     return {
       kind: 'bar-item',
       sourceId: this.id,
-      interactionTag: this.tag,
+      interactionTag: dataset.interactionTag ?? this.tag,
       datum: item.datum,
       identity: { sourceId: this.id, kind: 'item', key: barItemKey(item.datasetIndex, item.categoryIndex) },
       memberships: [
@@ -140,7 +143,7 @@ export class BarInteractionSource<TCategory = number, TBarDatum extends BarDatum
       datasetIndex: item.datasetIndex,
       categoryIndex: item.categoryIndex,
       category: this.plot.categories()[item.categoryIndex],
-      dataset: this.plot.datasets()[item.datasetIndex],
+      dataset,
     }
   }
 

@@ -35,7 +35,9 @@ export class AutoMarkersInteractionSource<T extends Point = Point> implements In
     readonly tag?: InteractionTag
   ) { }
 
-  getTargets(): readonly SVGElement[] {
+  getTargets(tag: InteractionTag): readonly SVGElement[] {
+    if (this.tag !== tag) return []
+
     const targets: SVGElement[] = []
     for (let index = 0; index < this.plot.markers().length; index++) {
       const target = this.plot.target(index)

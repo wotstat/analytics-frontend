@@ -5,61 +5,59 @@ import { InteractionController } from '@/shared/uiKit/chart/universalChart/inter
 import { ChartTooltip, TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
 import { Highlight } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/highlight/Highlight'
 import { HighlightSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/HighlightSynchronizer'
+import { ChartAxis } from '@/shared/uiKit/chart/universalChart/plot/axis/ChartAxis'
 import { PlotAreaBorder } from '@/shared/uiKit/chart/universalChart/plot/axis/PlotAreaBorder'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
 import { LinePointHit } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineInteractionSource'
-import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import { MaybeRefOrGetter, shallowRef, toValue, watchEffect } from 'vue'
-import { BallisticDistributionData } from './ballisticDistribution'
+import { ComparisonSeries } from './useComparisonBarChart'
 
-export type BallisticDistributionGroup = 'left' | 'right'
-
-type BallisticDistributionPoint = {
-  x: number
-  y: number
-  series: BallisticDistributionGroup
+export type DamageDistributionChartData = {
+  labels: readonly string[]
+  left: readonly (number | null)[]
+  right: readonly (number | null)[]
+  targetIndex: number
 }
 
-export type BallisticDistributionHit = LinePointHit<BallisticDistributionPoint>
+type DamageDistributionPoint = {
+  x: number
+  y: number
+  label: string
+  series: ComparisonSeries
+}
+
+export type DamageDistributionHit = LinePointHit<DamageDistributionPoint>
 
 type Params = {
-  data: MaybeRefOrGetter<BallisticDistributionData>
-  enabledSeries: MaybeRefOrGetter<readonly BallisticDistributionGroup[]>
+  data: MaybeRefOrGetter<DamageDistributionChartData>
+  enabledSeries: MaybeRefOrGetter<readonly ComparisonSeries[]>
   highlightSync: HighlightSynchronizer
 }
 
-export function useBallisticDistributionChart(params: Params) {
+export function useDamageDistributionChart(params: Params) {
   const chart = new UniversalChart({
     layoutVariant: 'vertical',
     renderManager: globalChartRenderManagerSteps4,
-    minLayoutSize: { right: 2 },
-    renderBoundsPadding: { top: 0.005 }
+    minLayoutSize: { top: 4, right: 2 },
   })
 
-  const xValues = [0.33, 0.5, 0.66]
   const labelsX = new AutoLabels('horizontal', {
     from: 0,
     to: 1,
-    values: labelCandidates({
-      values: [xValues, xValues],
-      labelForValue: (_, { candidateIndex, valueIndex }) =>
-        [['Треть', 'Половина', 'Две трети'], ['1/3', '1/2', '2/3']][candidateIndex]?.[valueIndex] ?? '',
-    }),
+    values: labelCandidates({ step: 1 }),
     strategy: 'classic-flow',
     padding: 5,
     labelOffset: 8,
   })
-
-  const leftLine = new AutoLine<BallisticDistributionPoint>({
+  const centerLine = new ChartAxis('horizontal', -1, 'center-line')
+  const leftLine = new AutoLine<DamageDistributionPoint>({
     interactionTag: 'left',
     classes: ['distribution-line', 'left-line'],
-    smoothingMethod: 'monotone',
   })
-  const rightLine = new AutoLine<BallisticDistributionPoint>({
+  const rightLine = new AutoLine<DamageDistributionPoint>({
     interactionTag: 'right',
     classes: ['distribution-line', 'right-line'],
-    smoothingMethod: 'monotone',
   })
 
   const lineInteractions = leftLine.interaction.union(rightLine.interaction)
@@ -67,8 +65,7 @@ export function useBallisticDistributionChart(params: Params) {
   const hoveredLine = lineInteractions.nearStroke({ maxDistance: 8 }).nearest()
   const lineHighlight = new Highlight({ selection: hoveredLine, class: 'highlighted' })
     .syncWith(params.highlightSync)
-
-  const tooltipCtx = shallowRef<TooltipCtx<BallisticDistributionHit> | null>(null)
+  const tooltipCtx = shallowRef<TooltipCtx<DamageDistributionHit> | null>(null)
   const interactionController = new InteractionController()
     .addComponent(lineHighlight)
     .addComponent(new ChartTooltip({
@@ -81,8 +78,8 @@ export function useBallisticDistributionChart(params: Params) {
 
   chart
     .addPlot(new PlotAreaBorder({ bottom: 'space' }), 'ticks')
+    .addPlot(centerLine, 'ticks')
     .addSlot('bottom', labelsX, 'labels')
-    .addPlot(new TicksByLabels(labelsX), 'ticks')
     .addPlot(leftLine, 'lines')
     .addPlot(rightLine, 'lines')
     .addPlot(interactionController)
@@ -91,19 +88,48 @@ export function useBallisticDistributionChart(params: Params) {
     const data = toValue(params.data)
     const enabled = toValue(params.enabledSeries)
 
+    labelsX.updateOptions({
+      from: 0,
+      to: Math.max(1, data.labels.length - 1),
+      values: labelCandidates({
+        step: [1, 2, 5, 10, 20, 50, 100],
+        labelForValue: value => data.labels[value] ?? '',
+      }),
+      strategy: 'classic-flow',
+      padding: 5,
+      labelOffset: 8,
+    })
     leftLine.setPoints(enabled.includes('left')
-      ? data.left.map((y, index) => y === null ? null : { x: data.labels[index], y, series: 'left' })
+      ? data.left.map((y, index) => y === null ? null : {
+        x: index,
+        y,
+        label: data.labels[index] ?? '',
+        series: 'left',
+      })
       : [])
-
     rightLine.setPoints(enabled.includes('right')
-      ? data.right.map((y, index) => y === null ? null : { x: data.labels[index], y, series: 'right' })
+      ? data.right.map((y, index) => y === null ? null : {
+        x: index,
+        y,
+        label: data.labels[index] ?? '',
+        series: 'right',
+      })
       : [])
 
-    if (leftLine.getBounds().isEmpty() && rightLine.getBounds().isEmpty()) {
-      chart.setRenderBounds({ minX: 0, maxX: 1, minY: 0, maxY: 1 })
-    } else {
-      chart.setRenderBounds({ minX: 0, maxX: 1, minY: 0, maxY: null })
-    }
+    centerLine.setValue(data.targetIndex)
+
+    const values = [
+      ...(enabled.includes('left') ? data.left : []),
+      ...(enabled.includes('right') ? data.right : []),
+    ].filter(value => value !== null)
+    const maxValue = values.length === 0 ? 1 : Math.max(...values)
+
+    chart.setRenderBounds({
+      minX: 0,
+      maxX: Math.max(1, data.labels.length - 1),
+      minY: 0,
+      maxY: Math.max(1, maxValue * 1.08),
+    })
   })
 
   return { chart, tooltipCtx, lineHighlight }

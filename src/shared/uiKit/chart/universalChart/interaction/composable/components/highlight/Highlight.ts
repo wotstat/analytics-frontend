@@ -138,10 +138,9 @@ export class Highlight<THit extends InteractionHit = InteractionHit> implements 
     const tagSet = new Set(tags)
     const targets = new Set<SVGElement>()
 
-    for (const source of this.options.selection.interactionSources ?? []) {
-      if (source.tag === undefined || !tagSet.has(source.tag)) continue
-      for (const target of source.getTargets()) targets.add(target)
-    }
+    for (const source of this.options.selection.interactionSources ?? [])
+      for (const tag of tagSet)
+        for (const target of source.getTargets(tag)) targets.add(target)
 
     this.hits = []
     this.tags = tags

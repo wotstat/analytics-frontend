@@ -48,6 +48,7 @@ export type BarDatum = number | { value: number }
 export type BarDataset<TBarDatum extends BarDatum = number> = {
   values: readonly TBarDatum[]
   classes?: Classes
+  interactionTag?: InteractionTag
 }
 
 export type BarData<TCategory = number, TBarDatum extends BarDatum = number> = {
@@ -134,6 +135,8 @@ export class Bar<TCategory = number, TBarDatum extends BarDatum = number> extend
       categoryLayout: (categoryIndex, space) => this.getCategoryLayout(categoryIndex, space),
       strategyType: () => this.strategy.type,
       targets: () => this.datasetElements.flatMap(dataset => dataset.bars),
+      targetsForTag: tag => this.datasetElements.flatMap((dataset, index) =>
+        this.datasets[index]?.interactionTag === tag ? dataset.bars : []),
     }, options.interactionTag)
     addClasses(this.root, 'bar-plot')
   }
