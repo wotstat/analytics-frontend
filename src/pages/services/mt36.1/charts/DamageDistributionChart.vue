@@ -28,13 +28,13 @@ import Legend from '@/shared/ui/chart/Legend.vue'
 import { useLegend } from '@/shared/ui/chart/useLegend'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
-import { computed } from 'vue'
-import { ComparisonSeries } from './useComparisonBarChart'
+import { computed, markRaw, watchEffect } from 'vue'
+import { ComparisonSeries } from './ComparisonBarChart'
 import {
+  DamageDistributionChart,
   DamageDistributionChartData,
   DamageDistributionHit,
-  useDamageDistributionChart,
-} from './useDamageDistributionChart'
+} from './DamageDistributionChart'
 
 const props = defineProps<{
   data: DamageDistributionChartData
@@ -48,12 +48,17 @@ const series = computed(() => [
   { name: props.rightLabel || 'Группа №2', color: '#50e3c2', tag: 'right' as const },
 ])
 const legend = useLegend(series)
-const { chart, tooltipCtx, lineHighlight } = useDamageDistributionChart({
-  data: () => props.data,
-  enabledSeries: legend.enabledTags,
+const chart = markRaw(new DamageDistributionChart({
   highlightSync: legend.highlightSync,
-})
+}))
+const tooltipCtx = chart.tooltipCtx
+const lineHighlight = chart.highlight
 const enabledTooltipSeries = computed(() => series.value.filter(item => legend.enabledTags.value.includes(item.tag)))
+
+watchEffect(() => chart.update({
+  data: props.data,
+  enabledSeries: legend.enabledTags.value,
+}))
 
 function tooltipTitle(ctx: TooltipCtx<DamageDistributionHit>) {
   const label = ctx.hit.datum.label

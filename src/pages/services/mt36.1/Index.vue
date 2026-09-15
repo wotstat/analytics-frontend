@@ -262,9 +262,9 @@ import { OptionalRegionVersion } from '@/shared/game/selectors/gameVersionSelect
 import { useRoute, useRouter } from 'vue-router'
 import BallisticDistributionChart from './charts/BallisticDistributionChart.vue'
 import ComparisonBarChart from './charts/ComparisonBarChart.vue'
-import type { ComparisonBarChartData } from './charts/useComparisonBarChart'
+import type { ComparisonBarChartData } from './charts/ComparisonBarChart'
 import DamageDistributionChart from './charts/DamageDistributionChart.vue'
-import type { DamageDistributionChartData } from './charts/useDamageDistributionChart'
+import type { DamageDistributionChartData } from './charts/DamageDistributionChart'
 
 setFeatureVisit('mt-36-1')
 

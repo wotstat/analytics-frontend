@@ -33,7 +33,7 @@ import { loading, mergeStatuses, queryAsync } from '@/db'
 import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
 import { getQueryStatParamsCache, StatParams, whereClause } from '@/shared/query/useQueryStatParams'
 import { useElementVisibility } from '@vueuse/core'
-import { computed, useTemplateRef, watch } from 'vue'
+import { computed, markRaw, useTemplateRef, watch, watchEffect } from 'vue'
 
 
 import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
@@ -41,7 +41,11 @@ import Legend from '@/shared/ui/chart/Legend.vue'
 import { useLegend } from '@/shared/ui/chart/useLegend'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
-import { ShotDistributionHit, ShotDistributionSeries, useShotDistributionChart } from './useShotDistributionChart'
+import {
+  ShotDistributionChart,
+  ShotDistributionHit,
+  ShotDistributionSeries,
+} from './ShotDistributionChart'
 
 const container = useTemplateRef<HTMLElement>('container')
 const visible = useElementVisibility(container)
@@ -126,13 +130,18 @@ const serverMarker = computed(() => calc(serverMarkerResult.value.data))
 const sharedClient = computed(() => calc(sharedClientResult.value.data))
 
 const status = computed(() => mergeStatuses(clientMarkerResult.value.status, serverMarkerResult.value.status, sharedClientResult.value.status))
-const { chart, tooltipCtx, lineHighlight } = useShotDistributionChart({
-  serverMarker,
-  clientMarker,
-  sharedClient,
-  enabledSeries: legend.enabledTags,
+const chart = markRaw(new ShotDistributionChart({
   highlightSync: legend.highlightSync,
-})
+}))
+const tooltipCtx = chart.tooltipCtx
+const lineHighlight = chart.highlight
+
+watchEffect(() => chart.update({
+  serverMarker: serverMarker.value,
+  clientMarker: clientMarker.value,
+  sharedClient: sharedClient.value,
+  enabledSeries: legend.enabledTags.value,
+}))
 
 const tooltipSeries = [
   { series: 'server', label: 'Серверный' },

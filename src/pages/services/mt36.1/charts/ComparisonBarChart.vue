@@ -28,13 +28,13 @@ import Legend from '@/shared/ui/chart/Legend.vue'
 import { useLegend } from '@/shared/ui/chart/useLegend'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
-import { computed } from 'vue'
+import { computed, markRaw, watchEffect } from 'vue'
 import {
+  ComparisonBarChart,
   ComparisonBarChartData,
   ComparisonBarHit,
   ComparisonSeries,
-  useComparisonBarChart,
-} from './useComparisonBarChart'
+} from './ComparisonBarChart'
 
 const props = withDefaults(defineProps<{
   data: ComparisonBarChartData
@@ -58,15 +58,20 @@ const series = computed(() => [
   { name: props.rightLabel || 'Группа №2', color: '#50e3c2', tag: 'right' as const },
 ])
 const legend = useLegend(series)
-const { chart, tooltipCtx, barHighlight } = useComparisonBarChart({
-  data: () => props.data,
-  enabledSeries: legend.enabledTags,
+const chart = markRaw(new ComparisonBarChart({
   highlightSync: legend.highlightSync,
-  showYLabels: () => props.showYLabels,
-  minY: () => props.minY,
+}))
+const tooltipCtx = chart.tooltipCtx
+const barHighlight = chart.highlight
+
+watchEffect(() => chart.update({
+  data: props.data,
+  enabledSeries: legend.enabledTags.value,
+  showYLabels: props.showYLabels,
+  minY: props.minY,
   ySteps: props.ySteps,
   yLabelFormatter: props.yLabelFormatter,
-})
+}))
 
 function labelForSeries(series: ComparisonSeries) {
   return series === 'left' ? seriesLabel(props.leftLabel, 'Группа №1') : seriesLabel(props.rightLabel, 'Группа №2')

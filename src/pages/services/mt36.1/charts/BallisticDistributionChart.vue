@@ -29,17 +29,17 @@ import Legend from '@/shared/ui/chart/Legend.vue'
 import { useLegend } from '@/shared/ui/chart/useLegend'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
-import { computed, watch } from 'vue'
+import { computed, markRaw, watch, watchEffect } from 'vue'
 import {
   BallisticDistributionRow,
   BallisticDistributionVariant,
   buildBallisticDistributionSeries,
 } from '../ballisticDistribution'
 import {
+  BallisticDistributionChart,
   BallisticDistributionGroup,
   BallisticDistributionHit,
-  useBallisticDistributionChart,
-} from './useBallisticDistributionChart'
+} from './BallisticDistributionChart'
 
 const props = defineProps<{
   rows: readonly BallisticDistributionRow[]
@@ -66,13 +66,18 @@ const data = computed(() => buildBallisticDistributionSeries(
   props.variant,
 ))
 
-const { chart, tooltipCtx, lineHighlight } = useBallisticDistributionChart({
-  data,
-  enabledSeries: legend.enabledTags,
+const chart = markRaw(new BallisticDistributionChart({
   highlightSync: legend.highlightSync,
-})
+}))
+const tooltipCtx = chart.tooltipCtx
+const lineHighlight = chart.highlight
 
 const enabledTooltipSeries = computed(() => series.value.filter(item => legend.enabledTags.value.includes(item.tag)))
+
+watchEffect(() => chart.update({
+  data: data.value,
+  enabledSeries: legend.enabledTags.value,
+}))
 
 function tooltipValue(ctx: TooltipCtx<BallisticDistributionHit>, series: BallisticDistributionGroup) {
   const hit = ctx.hits.find(hit => hit.datum.series === series)
