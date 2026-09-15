@@ -72,7 +72,7 @@
       <div class="line charts">
         <div class="left">
           <div class="card flex">
-            <div class="chartjs-container" ref="ballisticDistributionContainer">
+            <div class="ballistic-chart-container">
               <div class="chart-options">
                 <div class="line">
                   <DropDown
@@ -80,7 +80,9 @@
                     v-model="distributionVariant" />
                 </div>
               </div>
-              <ShadowLine :data="ballisticDistributionChartData" :options="ballisticDistributionOptions" />
+              <BallisticDistributionChart :rows="ballisticDistributionData.data" :left-versions="leftVersions"
+                :right-versions="rightVersions" :left-label="leftVersionString" :right-label="rightVersionString"
+                :variant="distributionVariant" @hover:progress="lastHover = $event" />
             </div>
           </div>
         </div>
@@ -235,9 +237,9 @@
 import { setFeatureVisit } from '@/shared/uiKit/newFeatureBadge/newFeatureBadge'
 import TeamLevelTable from '@/pages/infographics/shared/widgets/TeamLevelTable.vue'
 import { CACHE_SETTINGS, LONG_CACHE_SETTINGS, query, queryComputed } from '@/db'
-import { computed, onUnmounted, ref, watch, watchEffect, useTemplateRef } from 'vue'
+import { computed, onUnmounted, ref, watch, watchEffect } from 'vue'
 import LevelSwitcher from './LevelSwitcher.vue'
-import { refDebounced, useDebounce, useElementHover } from '@vueuse/core'
+import { refDebounced, useDebounce } from '@vueuse/core'
 import { ShadowBar } from '@/pages/infographics/shared/widgets/charts/ShadowBarController'
 import { ShadowLine } from '@/pages/infographics/shared/widgets/charts/ShadowLineController'
 import { ChartProps } from 'vue-chartjs'
@@ -251,6 +253,7 @@ import { sec2minsec } from '@/shared/utils/time'
 import GameVersionSelectorBadges from '@/shared/game/selectors/gameVersionSelector/GameVersionSelectorBadges.vue'
 import { OptionalRegionVersion } from '@/shared/game/selectors/gameVersionSelector/utils.ts'
 import { useRoute, useRouter } from 'vue-router'
+import BallisticDistributionChart from './BallisticDistributionChart.vue'
 
 setFeatureVisit('mt-36-1')
 
@@ -902,114 +905,14 @@ const ballisticDistributionData = queryComputed<{
 
 
 const distributionVariant = ref<'cdf' | 'pdf'>('pdf')
-const ballisticDistributionChartData = computed<ChartProps<'line'>['data']>(() => {
-
-  const labelsSet = new Set(ballisticDistributionData.value.data.map(item => item.r))
-  const labels = [...labelsSet].filter(label => label >= 0 && label <= 1)
-
-  console.log(ballisticDistributionData.value.data);
-
-
-  function process(data: Map<string, number | null>) {
-    if (distributionVariant.value == 'pdf') return data
-
-    const result = new Map<string, number | null>()
-    const entries = [...data.entries()].sort((a, b) => Number(a[0]) - Number(b[0]))
-    let sum = 0
-    for (let i = 0; i < entries.length; i++) {
-      const [key, value] = entries[i]
-      sum += value ?? 0
-      result.set(key, sum)
-    }
-
-    return result
-
-  }
-
-  const leftData = new Map<string, number>(ballisticDistributionData.value.data.filter(item => leftVersions.value.has(item.gameVersion)).map(item => [String(item.r), 100 * item.p]))
-  const rightData = new Map<string, number>(ballisticDistributionData.value.data.filter(item => rightVersions.value.has(item.gameVersion)).map(item => [String(item.r), 100 * item.p]))
-
-  const leftProcessed = process(leftData)
-  const rightProcessed = process(rightData)
-
-  return {
-    labels: labels.map(label => String(label)),
-    datasets: [
-      {
-        label: leftVersionString.value,
-        data: labels.map(label => leftProcessed.get(String(label)) ?? null),
-        backgroundColor: '#4a90e2',
-        borderColor: '#4a90e200',
-        fill: true,
-      },
-      {
-        label: rightVersionString.value,
-        data: labels.map(label => rightProcessed.get(String(label)) ?? null),
-        backgroundColor: '#50e3c2',
-        borderColor: '#50e3c200',
-        fill: true,
-      }
-    ]
-  }
-})
-
-
-const ballisticDistributionContainer = useTemplateRef<HTMLDivElement>('ballisticDistributionContainer')
-const ballisticDistributionContainerHover = useElementHover(ballisticDistributionContainer)
-
 const ballisticCircleMask = computed(() => {
-  if (!lastHover.value || !ballisticDistributionContainerHover.value) return undefined
+  if (lastHover.value === null) return undefined
 
   if (distributionVariant.value == 'pdf') return [Math.max(0, lastHover.value - 0.05), Math.min(1, lastHover.value + 0.05)] as [number, number]
   return lastHover.value
 })
 
-const POINTS_COUNT = 500
 const lastHover = ref<number | null>(null)
-const ballisticDistributionOptions = computed<ChartProps<'line'>['options']>(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  animation: false,
-  onHover: (e, a) => {
-    const indexes = a.map(t => t.index)
-    if (indexes.length === 0) return lastHover.value = null
-    lastHover.value = indexes[0] / POINTS_COUNT
-  },
-  scales: {
-    y: {
-      min: 0,
-      display: false,
-      grid: { display: false },
-    },
-    x: {
-      min: 0,
-      ticks: {
-        maxRotation: 0,
-        callback: (v, i, t) => {
-          if (typeof v !== 'number') return null
-
-          if (v === 0.33 * POINTS_COUNT) return 'Треть'
-          if (v === 0.5 * POINTS_COUNT) return 'Половина'
-          if (v === 0.66 * POINTS_COUNT) return 'Две трети'
-
-          return null
-        },
-      },
-    }
-  },
-  interaction: {
-    intersect: false,
-    mode: 'index',
-  },
-  plugins: {
-    tooltip: {
-      callbacks: {
-        title: (t) => `Часть снарядов попала в ${Math.round(100 * Number(t[0].label))}% сведения`,
-        label: (t) => `${t.dataset.label}: ${(Math.round((t.raw as number) * 10) / 10).toFixed(1)}%`
-      }
-    }
-  }
-}))
 
 type Options = { loadCount: number, offset: number, startId: string | null }
 
@@ -1316,7 +1219,9 @@ async function loadNextBatchRight(options: Options) {
 
     }
 
-    .chartjs-container {
+    .ballistic-chart-container {
+      position: relative;
+      display: flex;
       flex: 1;
       margin-top: -3px;
 

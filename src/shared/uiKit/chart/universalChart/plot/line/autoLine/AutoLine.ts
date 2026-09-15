@@ -76,6 +76,10 @@ export class AutoLine<T extends Point = Point> extends BasePlotRenderer {
     return { subpaths: this.strokeSampleSubpaths, target: this.line }
   }
 
+  getPoints(): readonly (T | null)[] {
+    return this.points
+  }
+
   setPoints(points: (T | null)[]) {
     this.points = points
     this.pointsDidChange()
