@@ -291,17 +291,14 @@ watch(tooltipCtx, ctx => {
 
     .server-line {
       stroke: #ffe3ae;
-      filter: drop-shadow(0px 0px 2px #f78008b9);
     }
 
     .client-line {
       stroke: #f1ffec;
-      filter: drop-shadow(0px 0px 2px #639e31b9);
     }
 
     .shared-line {
       stroke: #eff3ff;
-      filter: drop-shadow(0px 0px 2px #5149c6b9);
     }
 
     .interactive-zone {

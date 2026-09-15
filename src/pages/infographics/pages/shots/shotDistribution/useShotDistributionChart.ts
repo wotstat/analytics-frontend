@@ -1,4 +1,5 @@
 import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
+import { ChartShadowFilter } from '@/shared/uiKit/chart/universalChart/defs/ChartShadowFilter'
 import { AutoLabels } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
 import { labelCandidates } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/labelCandidates'
 import { InteractionController } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController'
@@ -69,15 +70,18 @@ export function useShotDistributionChart(params: Params) {
 
   const ticksY = new TicksByLabels(labelsY, {})
   const ticksX = new TicksByLabels(labelsX, {})
+  const serverShadow = new ChartShadowFilter({ color: '#f78008', blurRadius: 2, opacity: 0.8 })
+  const clientShadow = new ChartShadowFilter({ color: '#639e31', blurRadius: 2, opacity: 0.8 })
+  const sharedShadow = new ChartShadowFilter({ color: '#5149c6', blurRadius: 2, opacity: 0.8 })
   const serverLine = new AutoLine<ShotDistributionPoint>({
     interactionTag: 'server', classes: ['distribution-line', 'server-line'], smoothingMethod: 'monotone', affectsBounds: false
-  })
+  }).filterBy(serverShadow)
   const clientLine = new AutoLine<ShotDistributionPoint>({
     interactionTag: 'client', classes: ['distribution-line', 'client-line'], smoothingMethod: 'monotone', affectsBounds: false
-  })
+  }).filterBy(clientShadow)
   const sharedLine = new AutoLine<ShotDistributionPoint>({
     interactionTag: 'shared', classes: ['distribution-line', 'shared-line'], smoothingMethod: 'monotone', affectsBounds: false
-  })
+  }).filterBy(sharedShadow)
 
   const lines = {
     server: serverLine,
@@ -110,6 +114,7 @@ export function useShotDistributionChart(params: Params) {
     .addPlot(new PlotAreaBorder({ left: 'space', right: 'space' }), 'ticks')
     .addSlot('left', labelsY, 'labels')
     .addSlot('bottom', labelsX, 'labels')
+    .addDefs(serverShadow, clientShadow, sharedShadow)
     .addPlot(ticksY, 'ticks')
     .addPlot(ticksX, 'ticks')
     .addPlot(sharedLine, 'lines')
