@@ -150,13 +150,19 @@ const barItem = bar.interaction.contains({ gaps: 'miss', groupGaps: 'nearest' })
 const barGroup = barItem.related('group')                    // все item той же категории
 const barDataset = barItem.related('dataset')                // все item того же датасета
 
-const lines = lineA.interaction.union(lineB.interaction)     // source union — только между совместимым query API
+const lines = AutoLineInteraction.union(                     // source union — только между совместимыми line interactions
+  lineA.interaction,
+  lineB.interaction,
+  lineC.interaction
+)
 const linePointsByX = lines.nearestByAxis('x')
 const lineNearStroke = lines.nearStroke({ maxDistance: 6 }).nearest()
 
 const scatterPoint = scatter.interaction.nearestPoint({ maxDistance: 8 })
 const hoveredPolygon = polygon.interaction.contains().topmost()
 ```
+
+У line source union два равнозначных интерфейса с общей реализацией: бинарный `lineA.interaction.union(lineB.interaction)` удобен для пары, variadic `AutoLineInteraction.union(...)` — для длинного списка без цепочки вызовов. Порядок аргументов сохраняется как selection order. Разные line datum-типы складываются в union результата. Для уже выполненных запросов остаётся отдельный selection-level `.union()` ниже.
 
 Общие операции (`core/Selection.ts`) работают с любым `InteractionResolver`: `union()` — сохраняет порядок, при дубликате identity содержимое побеждает у правой стороны, а позиция остаётся от первого вхождения (это держит порядок строк тултипа стабильным при добавлении ещё одного `union()`); `nearest()` — минимальная `distance`, при точном равенстве побеждает более поздний по selection order; `topmost()` — последний hit selection order, а не DOM paint order; `within({ maxDistance })` — фильтр по правилу `contains || distance <= maxDistance`; `orElse()` — fallback, не union: обе стороны никогда не показываются одновременно; `withInput()` — переключение input для hover sync (разбор — ниже, в «Интерактив → Hover sync через input-bound selections»). `related()` — plot-specific и типизирован: `BarItemSelection.related()` принимает только `'group' | 'dataset'`, произвольная строка — ошибка сборки, а не пустой результат в рантайме.
 
@@ -172,7 +178,7 @@ new ChartTooltip({ selection: linePointsByX.union(barGroup).union(scatterPoint).
 
 Пример — сборный акцептанс-график стенда, `src/pages/debug/pages/chart/interaction/shared/MixedChart.ts`: там же `barItem` разом идёт в `Highlight` и в `VerticalArea({ geometry: 'group' })`, а `scatterPoint` — в `Highlight`, `VerticalLine`, `HorizontalLine` и в heterogeneous union тултипа.
 
-Результат резолва — типизированный `InteractionHit<TDatum, TKind, TGeometryScope>` (`core/InteractionHit.ts`): `datum` — точное исходное значение пользователя, не нормализованная копия рендерера; `identity`/`memberships` — для дедупликации в `union()` и локального highlight-сопоставления; `interactionTag` — семантический tag source для внешней адресации; `geometry`/`geometryFor(scope)` — layout-пиксели текущего кадра; `distance`/`contains` — общая метрика для `.nearest()`/`.within()`; `targets` — реальные SVG-элементы для class diff. Identity сравнивается как тройка `(sourceId, kind, key)`; её `key` — локальная часть identity и не заменяет `interactionTag`. `kind` хита — discriminant (`'line-point'`, `'line-stroke'`, `'bar-item'`, `'bar-group'`, `'scatter-point'`, `'polygon'`, `'cursor'`). Конкретный тип `datum` сохраняется через всю цепочку query → `union()` → `ChartTooltip`.
+Результат резолва — типизированный `InteractionHit<TDatum, TKind, TGeometryScope>` (`core/InteractionHit.ts`): `datum` — точное исходное значение пользователя, не нормализованная копия рендерера; `identity`/`memberships` — для дедупликации в `union()` и локального highlight-сопоставления; `interactionTag` — семантический tag source для внешней адресации; `geometry`/`geometryFor(scope)` — layout-пиксели текущего кадра; `distance`/`contains` — общая метрика для `.nearest()`/`.within()`; `targets` — реальные SVG-элементы для class diff. Identity сравнивается как тройка `(sourceId, kind, key)`; её `key` — локальная часть identity и не заменяет `interactionTag`. `kind` хита — discriminant (`'line-point'`, `'line-stroke'`, `'bar-item'`, `'bar-group'`, `'scatter-point'`, `'polygon'`, `'cursor'`). Конкретный тип `datum` сохраняется через всю цепочку interaction → selection → `union()` → `ChartTooltip`.
 
 Эффекты (`composable/components/`) реализуют `prepareInteraction`/`renderInteraction`, принимают `selection` в опциях и сами ничего не запрашивают:
 

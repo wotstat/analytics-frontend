@@ -7,7 +7,7 @@ import { ZoomChartComponent } from '@/shared/uiKit/chart/universalChart/interact
 import { isSameIdentity } from '@/shared/uiKit/chart/universalChart/interaction/core/InteractionHit'
 import { Selection } from '@/shared/uiKit/chart/universalChart/interaction/core/Selection'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
-import { AutoLineInteractionQuery, LinePointHit, LineStrokeHit } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineInteractionSource'
+import { AutoLineInteraction, LinePointHit, LineStrokeHit } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineInteractionSource'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import { EventEmitter } from '@/shared/uiKit/chart/universalChart/utils/EventEmitter'
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
@@ -77,7 +77,7 @@ export class HighlightChart extends UniversalChart {
 
   private readonly lineA: AutoLine<LinePoint>
   private readonly lineB: AutoLine<LinePoint>
-  private readonly query: AutoLineInteractionQuery<LinePoint>
+  private readonly lineInteraction: AutoLineInteraction<LinePoint>
   private readonly maskRoot: Element
 
   private readonly marker: MarkerOverlay<HighlightPointHit>
@@ -109,9 +109,9 @@ export class HighlightChart extends UniversalChart {
     this.lineB = new AutoLine<LinePoint>({ interactionTag: 'line-b', classes: ['main-line', 's1'], smoothingMethod: 'monotone' })
     const plotRoot = new PlotGroup().addPlot(this.lineA).addPlot(this.lineB)
 
-    this.query = this.lineA.interaction.union(this.lineB.interaction)
-    this.strokeNearest = this.query.nearStroke({ maxDistance: this.config.maxDistance }).nearest()
-    this.linePointsByX = this.query.nearestByAxis('x')
+    this.lineInteraction = this.lineA.interaction.union(this.lineB.interaction)
+    this.strokeNearest = this.lineInteraction.nearStroke({ maxDistance: this.config.maxDistance }).nearest()
+    this.linePointsByX = this.lineInteraction.nearestByAxis('x')
 
     // Все три Highlight читают один и тот же strokeNearest — умышленно: демонстрирует одновременно
     // «разные классы на одном target» (lineHighlight + secondDiffClass) и «два Highlight одного класса,
@@ -207,8 +207,8 @@ export class HighlightChart extends UniversalChart {
       this.lineB.setPoints(pointsB)
 
       // Новый maxDistance — новый узел графа: selections immutable
-      this.strokeNearest = this.query.nearStroke({ maxDistance: this.config.maxDistance }).nearest()
-      this.linePointsByX = this.query.nearestByAxis('x')
+      this.strokeNearest = this.lineInteraction.nearStroke({ maxDistance: this.config.maxDistance }).nearest()
+      this.linePointsByX = this.lineInteraction.nearestByAxis('x')
 
       this.lineHighlight.updateOptions({ selection: this.strokeNearest, class: 'line-highlighted' })
       this.secondSameClass.updateOptions({ selection: this.strokeNearest, class: 'line-highlighted' })

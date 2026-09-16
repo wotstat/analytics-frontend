@@ -7,7 +7,7 @@ import { ZoomChartComponent } from '@/shared/uiKit/chart/universalChart/interact
 import { CursorHit, cursorSelection } from '@/shared/uiKit/chart/universalChart/interaction/core/CursorSelection'
 import { Selection } from '@/shared/uiKit/chart/universalChart/interaction/core/Selection'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
-import { AutoLineInteractionQuery, LinePointHit } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineInteractionSource'
+import { AutoLineInteraction, LinePointHit } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineInteractionSource'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import { EventEmitter } from '@/shared/uiKit/chart/universalChart/utils/EventEmitter'
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
@@ -56,7 +56,7 @@ type Init = {
 
 const LINE_COUNT = 3
 
-// Три совместимые линии объединяются до запроса через lineA.interaction.union(lineB.interaction),
+// Три совместимые линии объединяются до запроса через AutoLineInteraction.union(),
 // и все overlay считают по одной композиции selections
 export class MultiLineChart extends UniversalChart {
 
@@ -66,7 +66,7 @@ export class MultiLineChart extends UniversalChart {
   readonly onSnapshot = new EventEmitter<CompositionSnapshot<ComposedHit>>()
 
   private readonly lines: AutoLine<LinePoint>[] = []
-  private readonly query: AutoLineInteractionQuery<LinePoint>
+  private readonly interaction: AutoLineInteraction<LinePoint>
   private readonly cursor = cursorSelection()
   private readonly maskRoot: Element
 
@@ -94,7 +94,11 @@ export class MultiLineChart extends UniversalChart {
       plotRoot.addPlot(line)
     }
 
-    this.query = this.lines[0].interaction.union(this.lines[1].interaction).union(this.lines[2].interaction)
+    this.interaction = AutoLineInteraction.union(
+      this.lines[0].interaction,
+      this.lines[1].interaction,
+      this.lines[2].interaction
+    )
 
     const initial = this.buildSelections()
     this.verticalLine = new VerticalLine({ selection: initial.composed })
@@ -125,7 +129,7 @@ export class MultiLineChart extends UniversalChart {
   private buildSelections() {
     const options = { maxAxisDistance: this.config.maxAxisDistance ?? undefined }
 
-    let points: Selection<MultiLineHit> = this.query.nearestByAxis('x', options)
+    let points: Selection<MultiLineHit> = this.interaction.nearestByAxis('x', options)
 
     // Тот же bucket второй раз: дубликаты обязаны сохранить позицию из левой и содержимое из правой
     const right = this.config.duplicateUnion ? this.lines[1].interaction.nearestByAxis('x', options) : null

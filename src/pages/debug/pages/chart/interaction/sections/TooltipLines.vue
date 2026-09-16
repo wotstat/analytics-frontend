@@ -1,6 +1,6 @@
 <template>
   <DebugSection title="Тултип и несколько линий" id="tooltip-lines"
-    description="Три совместимые линии объединяются до запроса: lineA.interaction.union(lineB.interaction).union(lineC.interaction), дальше один nearestByAxis('x') с global-axis-bucket. Вертикальная линия, маркеры и ChartTooltip читают одну и ту же композицию, поэтому обязаны стоять на одном X."
+    description="Три совместимые линии объединяются до запроса: AutoLineInteraction.union(lineA.interaction, lineB.interaction, lineC.interaction), дальше один nearestByAxis('x') с global-axis-bucket. Вертикальная линия, маркеры и ChartTooltip читают одну и ту же композицию, поэтому обязаны стоять на одном X."
     source="src/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip.ts">
 
     <div class="debug-row">

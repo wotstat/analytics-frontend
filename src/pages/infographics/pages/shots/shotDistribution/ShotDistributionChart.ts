@@ -8,7 +8,7 @@ import { Highlight } from '@/shared/uiKit/chart/universalChart/interaction/compo
 import { HighlightSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/HighlightSynchronizer'
 import { PlotAreaBorder } from '@/shared/uiKit/chart/universalChart/plot/axis/PlotAreaBorder'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
-import { LinePointHit, LineStrokeHit } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineInteractionSource'
+import { AutoLineInteraction, LinePointHit, LineStrokeHit } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineInteractionSource'
 import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import { shallowRef } from 'vue'
@@ -105,9 +105,11 @@ export class ShotDistributionChart extends UniversalChart {
       shared: sharedLine,
     }
 
-    const lineInteractions = serverLine.interaction
-      .union(clientLine.interaction)
-      .union(sharedLine.interaction)
+    const lineInteractions = AutoLineInteraction.union(
+      serverLine.interaction,
+      clientLine.interaction,
+      sharedLine.interaction
+    )
 
     const selectedPoints = lineInteractions.nearestByAxis('x')
     const hoveredLine = lineInteractions.nearStroke({ maxDistance: 8 }).nearest()

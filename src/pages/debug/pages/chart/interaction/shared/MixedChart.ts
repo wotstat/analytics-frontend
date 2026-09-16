@@ -148,7 +148,7 @@ export class MixedChart extends UniversalChart {
 
     const hoveredPolygon = this.polygon.interaction.contains().topmost()
 
-    // Heterogeneous union — после query, не source union
+    // Heterogeneous union — после создания selections, не source union
     const tooltipSelection = linePointsByX
       .union(barGroup)
       .union(scatterPoint)

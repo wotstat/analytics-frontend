@@ -90,7 +90,7 @@ export class NearStrokeChart extends UniversalChart {
     this.lineB = new AutoLine<LinePoint>({ classes: ['main-line', 's1'] })
     const plotRoot = new PlotGroup().addPlot(this.lineA).addPlot(this.lineB)
 
-    // Пустая lineB естественно не даёт stroke hit: не нужна ветка «один/два источника» в query
+    // Пустая lineB естественно не даёт stroke hit: не нужна ветка «один/два источника» в interaction
     this.selection = this.lineA.interaction.union(this.lineB.interaction).nearStroke({ maxDistance: this.config.maxDistance })
 
     this.marker = new MarkerOverlay(this.markerOptions())

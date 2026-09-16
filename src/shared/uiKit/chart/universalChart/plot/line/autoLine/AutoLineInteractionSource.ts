@@ -38,12 +38,21 @@ export type LineStrokeHit<T extends Point = Point> = InteractionHit<LineStrokeDa
 
 const SERIES_KEY = 'series'
 
-export abstract class AutoLineInteractionQuery<T extends Point = Point> {
+export abstract class AutoLineInteraction<T extends Point = Point> {
 
   abstract readonly sources: readonly AutoLineInteractionSource<T>[]
 
-  union<U extends Point>(other: AutoLineInteractionQuery<U>): AutoLineInteractionQuery<T | U> {
-    return new AutoLineSourceUnion<T | U>([...this.sources, ...other.sources])
+  static union<const TInteractions extends AutoLineInteractionTuple>(
+    ...interactions: TInteractions
+  ): AutoLineInteraction<PointOf<TInteractions[number]>> {
+    type TPoint = PointOf<TInteractions[number]>
+    // Каждый source по-прежнему создаёт hit из собственного T; union расширяет только datum-тип композиции
+    const sources = interactions.flatMap(interaction => interaction.sources) as AutoLineInteractionSource<TPoint>[]
+    return new AutoLineInteractionUnion(sources)
+  }
+
+  union<U extends Point>(other: AutoLineInteraction<U>): AutoLineInteraction<T | U> {
+    return AutoLineInteraction.union(this, other)
   }
 
   nearestByAxis(axis: 'x' | 'y', options: NearestByAxisOptions = {}): Selection<LinePointHit<T>> {
@@ -55,13 +64,20 @@ export abstract class AutoLineInteractionQuery<T extends Point = Point> {
   }
 }
 
-class AutoLineSourceUnion<T extends Point> extends AutoLineInteractionQuery<T> {
+class AutoLineInteractionUnion<T extends Point> extends AutoLineInteraction<T> {
   constructor(readonly sources: readonly AutoLineInteractionSource<T>[]) {
     super()
   }
 }
 
-export class AutoLineInteractionSource<T extends Point = Point> extends AutoLineInteractionQuery<T> implements InteractionSource {
+type AutoLineInteractionTuple = readonly [
+  AutoLineInteraction<Point>,
+  ...AutoLineInteraction<Point>[],
+]
+
+type PointOf<TInteraction> = TInteraction extends AutoLineInteraction<infer TPoint> ? TPoint : never
+
+export class AutoLineInteractionSource<T extends Point = Point> extends AutoLineInteraction<T> implements InteractionSource {
 
   readonly sources: readonly AutoLineInteractionSource<T>[] = [this]
   readonly id = Symbol('AutoLineInteractionSource')

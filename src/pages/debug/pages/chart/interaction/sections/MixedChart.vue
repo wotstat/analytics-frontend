@@ -149,7 +149,7 @@
 
     <p class="debug-note">
       Композиция: <span class="debug-value">linePointsByX.union(barGroup).
-        union(scatterPoint).union(hoveredPolygon)</span> — union только после query, между уже разными типами hits,
+        union(scatterPoint).union(hoveredPolygon)</span> — union только после создания selections, между уже разными типами hits,
       то есть это selection union, а не source union. Line source union (<span class="debug-value">lineA.interaction.
         union(lineB.interaction)</span>) — единственный source union здесь, и он между двумя совместимыми line
       sources, не между разнородными плотами.

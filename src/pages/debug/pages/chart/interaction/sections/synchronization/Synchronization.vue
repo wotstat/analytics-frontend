@@ -1,6 +1,6 @@
 <template>
   <DebugSection title="Синхронизация ховера и Highlight" id="synchronization"
-    description="HoverSynchronizer передаёт координату и повторно выполняет local query на каждом графике. HighlightSynchronizer независимо передаёт только семантические interaction tags: одинаковый tag на разных plot-инстансах связывает их без координат, hits и DOM-ссылок."
+    description="HoverSynchronizer передаёт координату и повторно разрешает local selection на каждом графике. HighlightSynchronizer независимо передаёт только семантические interaction tags: одинаковый tag на разных plot-инстансах связывает их без координат, hits и DOM-ссылок."
     source="src/shared/uiKit/chart/universalChart/interaction/composable/sync/">
 
     <div class="debug-row">
