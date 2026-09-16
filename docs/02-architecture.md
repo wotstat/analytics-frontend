@@ -12,7 +12,7 @@
 | Путь | Компонент | Что это |
 | --- | --- | --- |
 | `/` | `pages/Main.vue` | Главная-лендинг |
-| `/session` + дети | `pages/infographics/Index.vue` | Личная сессионная статистика (лейаут с сайдбаром и фильтрами). Дети: `''`→Battle, `shots`, `damage`, `results`, `maps`, `players`(Coverage), `chuck-norris-tournament`, `distribution`, `lootbox`, `onslaught`, `onslaught-leaderboard`, `widgets/:widget*` |
+| `/session` + дети | `pages/infographics/Index.vue` | Личная сессионная статистика (лейаут с сайдбаром и фильтрами). Дети: `''`→Battle, `shots`, `damage`, `results`, `maps`, `players`(Coverage), `chuck-norris-tournament`, `lootbox`, `onslaught`, `onslaught-leaderboard`, `widgets/:widget*` |
 | `/onslaught` + дети | `onslaught/Layout.vue` | Публичная статистика Натиска: `general`, `leaderboard`, `personal` |
 | `/replays` + дети | `pages/replays/Index.vue` | Реплеи: поиск (``), локальный анализатор (`analyze`), мои (`my`) |
 | `/bb25` | `services/bob25` | «Битва Блогеров 2025» — ивент-дашборд |
@@ -20,7 +20,6 @@
 | `/services/fixed-match-detector` | `services/fixedMatchDetect` | Детектор договорных боёв |
 | `/install` | `pages/install/Index.vue` | Установщик модов (File System Access API) |
 | `/widgets/:widget*` | `pages/widgets/Index.vue` | Каталог/просмотр OBS-виджетов (iframe на widgets.wotstat.info) |
-| `/damage` | `services/damageDistribution/Index.vue` | Публичная страница распределения урона |
 | `/debug` + дети | `pages/debug/Debug.vue` | Песочница технических фичей — см. ниже |
 
 Route meta, используемые лейаутом `/session`: `hideTankList`, `customTitle`, `preventRemountOnStatChange`, глобальные `clearPage`, `hideHeader`.
@@ -48,7 +47,7 @@ src/
 │  ├─ infographics/  — /session: лейаут, настройки, страницы, виджеты-карточки
 │  ├─ install/       — установщик модов
 │  ├─ replays/       — реплеи
-│  ├─ services/      — отдельные сервисы (bob25, damageDistribution, mt36.1, fixedMatchDetect)
+│  ├─ services/      — отдельные сервисы (bob25, mt36.1, fixedMatchDetect)
 │  ├─ widgets/       — каталог OBS-виджетов
 │  └─ shared/        — общие для страниц: header, sidebarLayout, problems (банеры инцидентов)
 ├─ shared/        — переиспользуемый код

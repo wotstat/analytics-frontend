@@ -60,11 +60,6 @@
 
 
         <div class="card chart bar big damage-distribution">
-          <!-- <MiniBar :status="damageDistributionResult.status" :data="damageDistributionData" :center-line="true"
-            color="green" :labels="damageLabels"
-            :callbacks="{ title: (t) => `${toPercent(t[0].raw as number)} выстрелов отклонились на ${t[0].label} от базового урона`, label: () => `` }" /> -->
-
-
           <MiniBarNew :status="damageDistributionResult.status" :data="damageDistributionData" :center-line="true"
             color="green" :labels="damageLabels" :tooltip="{
               title: (t) => `${toPercent(t.hit.datum)} выстрелов отклонились на ${t.hit.category} от базового урона`
@@ -73,8 +68,6 @@
           <div class="absolute">
             <p class="card-main-info description">Распределение урона +- 25
             </p>
-
-            <QueryPreserveRouterLink class="pointer" to="/session/distribution">Расширенный</QueryPreserveRouterLink>
           </div>
         </div>
 
@@ -111,7 +104,6 @@ import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shar
 import { normalizeArray } from '@/shared/utils/math'
 import { createFixedSpaceProcessor, createPercentProcessor } from '@/shared/utils/processors/processors'
 import { shellNames } from '@/shared/game/wot'
-import QueryPreserveRouterLink from '@/pages/shared/sidebarLayout/QueryPreserveRouterLink.vue'
 import { bestMV } from '@/db/schema'
 import { useMeta } from '@/shared/composition/useMeta'
 import MiniBarNew from '../shared/widgets/charts/MiniBarNew.vue'

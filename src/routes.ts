@@ -7,7 +7,6 @@ import Damage from './pages/infographics/pages/Damage.vue'
 import Results from './pages/infographics/pages/Results.vue'
 import Maps from './pages/infographics/pages/Maps.vue'
 import Coverage from './pages/infographics/pages/Coverage.vue'
-import Distribution from './pages/services/damageDistribution/Content.vue'
 import Lootbox from './pages/infographics/pages/lootbox/Index.vue'
 import Install from './pages/install/Index.vue'
 import { AsyncComponentLoader, defineAsyncComponent } from 'vue'
@@ -37,7 +36,6 @@ const routes = [
       { path: 'maps', component: Maps },
       { path: 'players', component: Coverage },
       { path: 'chuck-norris-tournament', component: asyncPage(() => import('./pages/infographics/pages/chuck/Chuck.vue')) },
-      { path: 'distribution', component: Distribution },
       { path: 'lootbox', component: Lootbox, meta: { hideTankList: true } },
       { path: 'widgets/:widget*', component: asyncPage(() => import('./pages/widgets/Index.vue')), meta: { hideTankList: true, customTitle: 'Виджеты' } },
     ]
@@ -67,8 +65,6 @@ const routes = [
   { path: '/install', component: Install },
 
   { path: '/widgets/:widget*', component: asyncPage(() => import('./pages/widgets/Index.vue')) },
-
-  { path: '/damage', component: asyncPage(() => import('./pages/services/damageDistribution/Index.vue')) },
 
   ...debugRoutes,
 ] satisfies RouteRecordRaw[]

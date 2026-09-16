@@ -49,12 +49,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://wotstat.info/session/distribution</loc>
-    <lastmod>2025-02-09</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://wotstat.info/session/lootbox</loc>
     <lastmod>2025-02-09</lastmod>
     <changefreq>daily</changefreq>

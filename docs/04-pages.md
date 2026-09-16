@@ -40,7 +40,6 @@
 
 ## Сервисы — `pages/services/`
 - `bob25/` — дашборд ивента «Битва Блогеров 2025»: командные тоталы (`store.ts` — модульный стор с запросами, `queryLoader.ts`), кросс-таблица встреч, топы по урону/танкам, таймсерии (`TimeSeriesChart.vue`), навыки блогеров, реклама/установка мода. Много компонентов, всё завязано на таблицы ивента BOB.
-- `damageDistribution/` — расчёт распределения разового урона орудия: `Content.vue` (используется и в `/session/distribution`), веб-воркер `calcWorker.ts` (симуляция), `errorCalculation.ts`, описание в `description.md`.
 - `mt36.1/` — сравнение изменений техники в патче 36.1 (`CompareCard.vue`, `LevelSwitcher.vue`).
 - `fixedMatchDetect/` — детектор договорных боёв.
 
