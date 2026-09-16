@@ -1,12 +1,11 @@
 # Графики
 
-В проекте два основных механизма графиков: **chart.js** (часть простых мини-графиков в карточках) и собственный SVG-движок **UniversalChart** (сложные интерактивные графики, например деталка лидерборда Натиска). Единичные простые визуализации могут быть локальным SVG без движка: так устроен donut винрейта в `Battle.vue`.
+Все библиотечные графики проекта построены на собственном SVG-движке **UniversalChart**. Единичные простые визуализации могут быть локальным SVG без движка: так устроен donut винрейта в `Battle.vue`.
 
-## chart.js (мини-графики карточек)
+## Боевые Vue-обёртки
 
-- Регистрация компонентов и глобальные дефолты — в `src/main.ts` (белый текст, Inter, borderColor полупрозрачный, анимация 400мс).
-- Обёртка `src/pages/infographics/shared/widgets/charts/MiniBar.vue` принимает `status: Status`, `data`, `color` (имя из палитры), `labels`, `callbacks` (тултипы chart.js).
-- `ShadowBarController.ts`, `ShadowLineController.ts` — кастомные контроллеры chart.js, рисующие «свечение» (shadow/bloom) под данными; цвета — `pages/infographics/shared/bloomColors.ts`.
+- `src/pages/infographics/shared/widgets/charts/MiniBarNew.vue` — мини-графики карточек с bloom, подписями и тултипами.
+- `pages/services/bob25/components/TimeSeriesChart.*` и `BattlesPerWinrateChart.*` — четыре таймсерии команд и распределения по винрейту; сохраняют фильтры, сглаживание, легенду и bloom страницы ББ-2025.
 - `src/shared/ui/chart/VueChartRenderManager.ts` — менеджер перерисовки.
 - `pages/infographics/pages/onslaught/general/rankDistribution/` — специализированный flex-график распределения игроков по рангам. Общая с дневным графиком цветовая схема рангов вынесена в `onslaught/shared/rankColors.scss`.
 
@@ -316,6 +315,6 @@ connection.dispose()
 
 ## Когда что использовать
 
-- Карточка со статичным распределением → `MiniBar` или `MiniBarNew`; простой единичный donut → локальный SVG, как в `Battle.vue`.
+- Карточка со статичным распределением → `MiniBarNew`; простой единичный donut → локальный SVG, как в `Battle.vue`.
 - Интерактивный таймсерийный график с зумом/тултипами → UniversalChart.
 - Новую библиотеку графиков не добавлять.

@@ -2,7 +2,7 @@
 
 ## Точка входа
 
-- `index.html` → `src/main.ts`: импорт глобальных стилей `styles/index.scss`, регистрация chart.js-компонентов и глобальных дефолтов (белый текст, шрифт Inter, анимация 400мс), создание приложения, роутер, Яндекс.Метрика (`shared/external/ym/metrika.ts`).
+- `index.html` → `src/main.ts`: импорт глобальных стилей `styles/index.scss`, создание приложения, роутер, Яндекс.Метрика (`shared/external/ym/metrika.ts`).
 - `src/App.vue`: каркас — `Header` + `HeaderSpacer` + `RouterView`, плюс корневые слои `FocusEffectRoot` и `ContextMenuRoot`. Через route meta `clearPage` страница может рендериться без каркаса, `hideHeader` — без шапки. CSS-переменные `--bold-weight` подстраиваются под Windows (700 вместо 800).
 
 ## Роутинг (`src/routes.ts`)

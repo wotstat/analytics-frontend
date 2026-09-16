@@ -5,7 +5,7 @@ import type { OffsetValue, PlacementParam, PlacementWithModifiers } from '../pop
  * Эти типы намеренно вынесены в модуль без зависимостей от Vue, потому что
  * global-directives.d.ts импортирует их для строгой проверки шаблонов. Импорт
  * tooltip.ts или textTooltip.ts оттуда протягивает дженерики ObjectDirective/VNode
- * во все SFC и ломает вывод типов для generic-компонентов, например vue-chartjs.
+ * во все SFC и ломает вывод типов для generic-компонентов UI-kit.
  */
 export type DefineTooltipProps = {
   offset?: OffsetValue

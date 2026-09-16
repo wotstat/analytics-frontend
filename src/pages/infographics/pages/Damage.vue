@@ -85,11 +85,6 @@
 
         </div>
 
-        <!-- <div class="long card chart bar medium-h flex-1">
-          <StillSurviveDistribution :params="params" />
-          <p class="card-main-info description">Распределение возможности добить от прошедшего урона</p>
-        </div> -->
-
       </div>
     </div>
   </div>

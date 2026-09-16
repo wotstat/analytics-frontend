@@ -12,7 +12,7 @@
 - **TypeScript** (строгий), **Vite 8**, **Bun** как пакетный менеджер (`bun.lock`).
 - **vue-router 5** — SPA с `createWebHistory`.
 - **@clickhouse/client-web** — запросы напрямую в ClickHouse из браузера.
-- **chart.js 4 + vue-chartjs** — мини-графики; свой SVG-движок графиков в `src/shared/uiKit/chart/universalChart/`.
+- **UniversalChart** — собственный SVG-движок графиков в `src/shared/uiKit/chart/universalChart/`.
 - **VueUse** (`@vueuse/core`) — активно используется повсюду (`useLocalStorage`, `useWebSocket`, `useElementVisibility`, ...).
 - Прочее: `jszip` (архивы модов), `idb-keyval` (IndexedDB), `canvas-confetti`, `motion`, `colorjs.io`, `typescript-cubic-spline`, `@timohausmann/quadtree-ts` (хит-тесты на графиках).
 - Markdown как Vue-компоненты через `vite-plugin-markdown` (Mode.VUE) + плагины `@mdit/*` (alert, attrs, align, embed). SVG как компоненты через `vite-svg-loader`.

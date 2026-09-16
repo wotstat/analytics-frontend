@@ -174,7 +174,6 @@ import { createPercentProcessor, createFixedProcessor, createFixedSpaceProcessor
 import { getQueryStatParamsCache, useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import TeamLevelTable from '@/pages/infographics/shared/widgets/TeamLevelTable.vue'
 import { countLocalize } from '@/shared/i18n/i18n'
-import { TooltipItem } from 'chart.js'
 import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
 import { useMeta } from '@/shared/composition/useMeta'
 import { normalizeArray } from '@/shared/utils/math'
@@ -204,7 +203,6 @@ const settings = useQueryStatParamsCache(params)
 const places = new Array(15).fill(0).map((_, i) => i + 1)
 
 const infoVariant = useLocalStorage<'avg' | 'med' | 'max' | 'q3' | 'q7'>('infoResultsVariant', 'avg')
-const positionChartAfterBody = (distribution: any) => (t: TooltipItem<'bar'>[]) => `${distribution.absolute[t[0].dataIndex]} ${countLocalize(distribution.absolute[t[0].dataIndex], 'бой', 'боя', 'боёв')}`
 
 const logProcessor = createLogProcessor(0)
 const battlesCount = (value: number) => `${logProcessor(value)} ${countLocalize(value, 'бой', 'боя', 'боёв')}`

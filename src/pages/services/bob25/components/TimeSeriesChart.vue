@@ -1,16 +1,36 @@
 <template>
   <div class="card">
-    <div class="chartjs-container">
-      <ShadowLine :data="chartData" :options="options" class="chart" />
+    <div class="time-series-chart">
       <div class="chart-options">
         <DropDown :variants="periodVariants" v-model="period" />
         <DropDown :variants="filtererStepVariants" v-model="step" />
       </div>
 
+      <Legend :legend="legend" class="chart-legend" toggleable highlightable />
+
       <div class="chart-options right">
         <DropDown v-if="showDisplayVariant" :variants="displayVariants" v-model="displayVariant" />
       </div>
+
+      <FloatingTooltip :ctx="tooltipCtx" :animated="true" :animation-omega="20" class="blogger-chart-tooltip"
+        v-slot="{ ctx }">
+        <div class="tooltip-content">
+          <h4>{{ formatDateFull(ctx.hit.datum.x) }}</h4>
+
+          <div class="tooltip-series" v-for="hit in ctx.hits" :key="hit.datum.series">
+            <span class="series-marker" :style="{ backgroundColor: bloggerColors[hit.datum.seriesIndex] }"
+              :class="{ highlighted: ctx.isHighlighted(hit, lineHighlight) }"></span>
+            <span>{{ hit.datum.series }}</span>
+            <b>{{ tooltipValue(hit.datum.y) }}</b>
+          </div>
+        </div>
+      </FloatingTooltip>
+
+      <div class="chart-surface">
+        <UniversalChartComponent :chart="chart" />
+      </div>
     </div>
+
     <div class="flex slider" v-if="smoothIsNeeded">
       <Tooltip text="Скользящее среднее">
         <p>Сглаживание</p>
@@ -22,18 +42,19 @@
 
 
 <script setup lang="ts">
-
-import { ShadowLine } from '@/pages/infographics/shared/widgets/charts/ShadowLineController'
-import { computed, watch } from 'vue'
-import { ChartProps } from 'vue-chartjs'
-import { bloggerNamesArray } from './bloggerNames'
-import DropDown from '@/shared/uiKit/dropdown/DropDown.vue'
-import { useLocalStorage, useMediaQuery } from '@vueuse/core'
-import { stepVariants, periodVariants, period, step } from './queryLoader'
-import { displayVariant, displayVariants, preferredLogProcessor } from '../store'
-import { createLogProcessor } from '@/shared/utils/processors/processors'
+import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
+import Legend from '@/shared/ui/chart/Legend.vue'
+import { useLegend } from '@/shared/ui/chart/useLegend'
 import Tooltip from '@/shared/ui/components/Tooltip.vue'
-
+import DropDown from '@/shared/uiKit/dropdown/DropDown.vue'
+import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
+import { useLocalStorage, useMediaQuery } from '@vueuse/core'
+import { computed, markRaw, watch, watchEffect } from 'vue'
+import { createFixedSpaceProcessor, createLogProcessor } from '@/shared/utils/processors/processors'
+import { displayVariant, displayVariants, preferredLogProcessor } from '../store'
+import { bloggerNamesArray } from './bloggerNames'
+import { periodVariants, period, step, stepVariants } from './queryLoader'
+import { BloggerTimeSeriesChart, formatDateFull } from './TimeSeriesChart'
 
 const periodToStep = {
   'all': ['min1', 'min3', 'min10', 'min30', 'hour1', 'day'],
@@ -71,388 +92,369 @@ const defaultValues = {
   'day10': 'min1',
 } as const
 
+const bloggerColors = ['#f931a3', '#fffb35', '#ff2a2a', '#1679ff']
 
-const pad = (num: number) => num.toString().padStart(2, '0')
+const props = defineProps<{
+  data: (number | null)[][]
+  labels: number[]
+  showDisplayVariant?: boolean
+  processor?: (value: number) => string
+  min?: number
+  max?: number
+  yValues?: number[]
+  yIsPercent?: boolean
+  hightFilter?: boolean
+  shouldSteppedInterpolation?: boolean
+  smoothIfNeed?: boolean
+}>()
+
 const enabledBloggers = useLocalStorage('bob25-enabled-blogers', bloggerNamesArray.map(() => true))
 const smooth = useLocalStorage('bob25-chart-smooth', 0)
 const smoothIsNeeded = computed(() => props.smoothIfNeed && props.labels.length > 300)
-
-function formatDateFull(dt: number) {
-  const date = new Date(dt * 1000)
-  const day = pad(date.getDate())
-  const month = pad(date.getMonth() + 1) // Months are 0-based
-  const year = date.getFullYear().toString().slice(-2)
-  const hours = pad(date.getHours())
-  const minutes = pad(date.getMinutes())
-  const seconds = pad(date.getSeconds())
-
-  return `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`
-}
-
-function formatDateHHMM(dt: number) {
-  const date = new Date(dt * 1000)
-  const hours = pad(date.getHours())
-  const minutes = pad(date.getMinutes())
-
-  return `${hours}:${minutes}`
-}
-
-function formatDateDay(dt: number) {
-  const date = new Date(dt * 1000)
-  const day = pad(date.getDate())
-  const month = pad(date.getMonth() + 1) // Months are 0-based
-
-  return `${day}.${month}`
-}
-
-const filtererStepVariants = computed(() => {
-  return stepVariants.filter(v => periodToStep[period.value].includes(v.value))
-})
-
-
+const smallScreen = useMediaQuery('(max-width: 700px)')
+const filtererStepVariants = computed(() => stepVariants.filter(variant => periodToStep[period.value].includes(variant.value)))
 
 watch(period, () => {
-  if (!periodToStep[period.value].includes(step.value))
-    step.value = defaultValues[period.value]
+  if (!periodToStep[period.value].includes(step.value)) step.value = defaultValues[period.value]
 })
 
-const bloggerColors = [
-  ['#f931a3', '#EB1E9100'],
-  ['#fffb35', '#fffb1c00'],
-  ['#ff2a2a', '#f7101000'],
-  ['#1679ff', '#0040ff00'],
-]
+const series = bloggerNamesArray.map((name, index) => ({
+  name,
+  color: bloggerColors[index],
+  tag: name,
+}))
+const legend = useLegend(series)
 
-const props = defineProps<{
-  data: (number | null)[][],
-  labels: number[],
-  showDisplayVariant?: boolean,
-  processor?: (v: number) => string,
-  min?: number,
-  max?: number,
-  yValues?: number[],
-  yIsPercent?: boolean,
-  hightFilter?: boolean,
-  shouldSteppedInterpolation?: boolean,
-  smoothIfNeed?: boolean,
-}>()
+watch(enabledBloggers, enabled => {
+  for (let index = 0; index < series.length; index++) {
+    const shouldBeEnabled = enabled[index] !== false
+    if (legend.isEnabled(series[index]) !== shouldBeEnabled) legend.toggle(series[index])
+  }
+}, { deep: true, immediate: true })
+
+watch(legend.enabledTags, tags => {
+  const enabled = new Set(tags)
+  const next = series.map(item => enabled.has(item.tag))
+  if (next.some((value, index) => value !== enabledBloggers.value[index])) enabledBloggers.value = next
+})
+
+const chart = markRaw(new BloggerTimeSeriesChart({
+  series: bloggerNamesArray,
+  highlightSync: legend.highlightSync,
+}))
+const tooltipCtx = chart.tooltipCtx
+const lineHighlight = chart.highlight
+
+const processedData = computed(() => props.data.map(data => {
+  let lastNonZero = 0
+  let processed: (number | null)[] = [...data]
+
+  if (props.showDisplayVariant && displayVariant.value === 'delta') {
+    processed = data
+      .map((value, index) => index === 0 || !value || !data[index - 1] ? null : value - data[index - 1]!)
+      .map(value => {
+        if (lastNonZero === value) return lastNonZero
+        if (value) lastNonZero = value
+        return value == null ? value : lastNonZero
+      })
+  }
+
+  if (props.hightFilter) filterHighValues(processed)
+
+  if (props.shouldSteppedInterpolation) {
+    return interpolateSteppedData(processed).map(value => value ? Math.round(value) : null)
+  }
+  if (!smoothIsNeeded.value || smooth.value === 0) return processed
+
+  return movingAvg(
+    interpolateNullValues(processed, Math.round(processed.length * 0.01)),
+    Math.round(smooth.value),
+  )
+}))
+
+watchEffect(() => chart.update({
+  labels: props.labels,
+  data: processedData.value,
+  enabledSeries: legend.enabledTags.value,
+  min: props.min,
+  max: props.max,
+  yValues: props.yValues,
+  yIsPercent: props.yIsPercent,
+  smallScreen: smallScreen.value,
+}))
+
+const logProcessor = createLogProcessor(2)
+const spaceProcessor = createFixedSpaceProcessor(0)
+
+function tooltipValue(value: number) {
+  if (props.processor) return props.processor(value)
+  if (preferredLogProcessor.value) return logProcessor(value)
+  return spaceProcessor(value)
+}
 
 function interpolateSteppedData(data: (number | null)[]): (number | null)[] {
-  // First, extract the key points (ignoring consecutive duplicates and nulls)
-  interface KeyPoint { index: number; value: number; }
-  const keyPoints: KeyPoint[] = []
-  data.forEach((d, i) => {
-    if (d === null) return
-    // Only push if this is the first number or it differs from the previous key point.
-    if (keyPoints.length === 0 || keyPoints[keyPoints.length - 1].value !== d || i - keyPoints[keyPoints.length - 1].index > 3) {
-      keyPoints.push({ index: i, value: d })
+  const keyPoints: { index: number, value: number }[] = []
+  data.forEach((value, index) => {
+    if (value === null) return
+    if (keyPoints.length === 0 || keyPoints[keyPoints.length - 1].value !== value || index - keyPoints[keyPoints.length - 1].index > 3) {
+      keyPoints.push({ index, value })
     }
   })
 
-  // If there are no key points (or all values were null) return a copy.
-  if (keyPoints.length === 0) {
-    return data.slice()
-  }
+  if (keyPoints.length === 0) return data.slice()
 
-  // Create a result array (we will fill it in)
-  const result: (number | null)[] = data.slice()
-
-  // Fill in from the beginning to the first key point with the first key value.
+  const result = data.slice()
   const firstKey = keyPoints[0]
-  for (let i = 0; i < firstKey.index; i++) {
-    result[i] = firstKey.value
-  }
+  for (let index = 0; index < firstKey.index; index++) result[index] = firstKey.value
 
-  // Now go through each interval between consecutive key points and interpolate.
-  for (let k = 0; k < keyPoints.length - 1; k++) {
-    const start = keyPoints[k]
-    const end = keyPoints[k + 1]
+  for (let keyIndex = 0; keyIndex < keyPoints.length - 1; keyIndex++) {
+    const start = keyPoints[keyIndex]
+    const end = keyPoints[keyIndex + 1]
     const deltaIndex = end.index - start.index
     const deltaValue = end.value - start.value
-    for (let i = start.index; i <= end.index; i++) {
-      const t = (i - start.index) / deltaIndex // t goes from 0 to 1
-      result[i] = start.value + deltaValue * t
+    for (let index = start.index; index <= end.index; index++) {
+      const progress = (index - start.index) / deltaIndex
+      result[index] = start.value + deltaValue * progress
     }
   }
 
-  // Fill in from the last key point to the end of the array.
   const lastKey = keyPoints[keyPoints.length - 1]
-  for (let i = lastKey.index + 1; i < data.length; i++) {
-    result[i] = lastKey.value
-  }
-
-  // Finally, ensure that any positions that were originally null remain null.
-  for (let i = 0; i < data.length; i++) {
-    if (data[i] === null) {
-      result[i] = null
-    }
-  }
+  for (let index = lastKey.index + 1; index < data.length; index++) result[index] = lastKey.value
+  for (let index = 0; index < data.length; index++) if (data[index] === null) result[index] = null
 
   return result
 }
 
-function interpolateNullValues(values: (number | null)[], maxStep: number = 0): (number | null)[] {
-  const result = []
-  for (let i = 0; i < values.length; i++) {
-    if (values[i] == null) {
-      let j = i
-      while (values[j] == null && j < values.length && (j - i) < maxStep) j++
-      const start = values[i - 1]
-      const end = values[j]
-
-      if (start == null || end == null) {
-        for (let k = i; k <= j; k++) {
-          result[k] = null
-        }
-      } else {
-        const delta = end - start
-        const isInt = Number.isInteger(start) && Number.isInteger(end)
-        for (let k = i; k <= j; k++) {
-          result[k] = start + delta * (k - i) / (j - i)
-          if (isInt) result[k] = Math.round(result[k]!)
-        }
-      }
-
-      i = j
-    } else {
-      result[i] = values[i]!
+function interpolateNullValues(values: (number | null)[], maxStep = 0): (number | null)[] {
+  const result: (number | null)[] = []
+  for (let index = 0; index < values.length; index++) {
+    if (values[index] != null) {
+      result[index] = values[index]
+      continue
     }
+
+    let endIndex = index
+    while (values[endIndex] == null && endIndex < values.length && endIndex - index < maxStep) endIndex++
+    const start = values[index - 1]
+    const end = values[endIndex]
+
+    if (start == null || end == null) {
+      for (let fillIndex = index; fillIndex <= endIndex; fillIndex++) result[fillIndex] = null
+    } else {
+      const delta = end - start
+      const isInt = Number.isInteger(start) && Number.isInteger(end)
+      for (let fillIndex = index; fillIndex <= endIndex; fillIndex++) {
+        result[fillIndex] = start + delta * (fillIndex - index) / (endIndex - index)
+        if (isInt) result[fillIndex] = Math.round(result[fillIndex]!)
+      }
+    }
+
+    index = endIndex
   }
   return result
 }
 
 function movingAvg(values: (number | null)[], window: number) {
-  const result = []
-  for (let i = 0; i < values.length; i++) {
-    if (values[i] === null) {
-      result.push(null)
-      continue
-    }
+  return values.map((value, index) => {
+    if (value === null) return null
 
     let sum = 0
     let count = 0
-    for (let j = i - window; j <= i + window; j++) {
-      if (j < 0 || j >= values.length) continue
-      if (values[j] === null) continue
-      sum += values[j]!
+    for (let offset = index - window; offset <= index + window; offset++) {
+      if (offset < 0 || offset >= values.length || values[offset] === null) continue
+      sum += values[offset]!
       count++
     }
 
-    const isInt = Number.isInteger(sum)
-    result.push(isInt ? Math.round(sum / count) : sum / count)
-  }
-
-  return result
+    return Number.isInteger(sum) ? Math.round(sum / count) : sum / count
+  })
 }
 
-const chartData = computed<ChartProps<'bar' | 'line'>['data']>(() => {
-  const datasets: ChartProps<'bar' | 'line'>['data']['datasets'] =
-    props.data.map((data, i) => {
+function filterHighValues(values: (number | null)[]) {
+  let lastNonHigh = 0
+  const last10 = values.filter((value): value is number => !!value).slice(0, 10)
+  let last10Sum = last10.reduce((sum, value) => sum + value, 0)
+  if (last10.length === 0) return
 
-      let lastNonZero = 0
+  for (let index = 0; index < values.length; index++) {
+    const value = values[index]
+    if (!value) continue
 
-      let processed: (number | null)[] = []
-      processed = data
-      if (!props.showDisplayVariant || displayVariant.value != 'delta') {
-        processed = data
-      } else {
-        processed = data
-          .map((v, i) => i == 0 || !v || !data[i] || !data[i - 1] ? null : data[i] - data[i - 1]!)
-          .map(t => {
-            if (lastNonZero == t) return lastNonZero
-            if (t) lastNonZero = t
-            return t == null ? t : lastNonZero
-          })
-      }
+    const average = last10Sum / last10.length
+    if (value > average * 2 || value < average / 2) values[index] = lastNonHigh
+    else lastNonHigh = value
 
-      if (props.hightFilter) {
-        let lastNonHigh = 0
-        let last10: number[] = []
-        let last10Sum = 0
-        for (let i = 0, added = 0; i < processed.length && added < 10; i++) {
-          if (!processed[i]) continue
-          last10.push(processed[i]!)
-          last10Sum += processed[i]!
-          added++
-        }
-
-        for (let i = 0; i < processed.length; i++) {
-          const element = processed[i]
-          if (!element) continue
-
-          if (element > last10Sum / 10 * 2 || element < last10Sum / 10 / 2) {
-            processed[i] = lastNonHigh
-          } else {
-            lastNonHigh = element
-          }
-
-          last10Sum -= last10.shift()!
-          last10.push(element)
-          last10Sum += element
-        }
-      }
-
-      return {
-        data: props.shouldSteppedInterpolation ?
-          interpolateSteppedData(processed).map(t => t ? Math.round(t) : null) :
-          !smoothIsNeeded.value || smooth.value == 0 ? processed : movingAvg(interpolateNullValues(processed, Math.round(processed.length * 0.01)), Math.round(smooth.value)),
-        label: bloggerNamesArray[i],
-        backgroundColor: bloggerColors[i][0],
-        borderColor: bloggerColors[i][1],
-        hidden: !enabledBloggers.value[i],
-      }
-    })
-
-  return {
-    labels: props.labels,
-    datasets: datasets
+    last10Sum -= last10.shift() ?? 0
+    last10.push(value)
+    last10Sum += value
   }
-})
-
-const minDate = computed(() => props.labels[0])
-const maxDate = computed(() => props.labels[props.labels.length - 1])
-
-const targetSkip = computed(() => {
-  const delta = maxDate.value - minDate.value
-  const MIN = 60
-  const HOUR = MIN * 60
-
-
-  if (delta < MIN) return 5
-  if (delta < HOUR * 2) return MIN * 5
-
-  if (delta < HOUR * 6) return MIN * 30
-  if (delta < HOUR * 24 * 2) return HOUR
-
-  if (delta < HOUR * 24 * 5) return HOUR * 12
-
-  return HOUR * 24
-})
-
-const smallScreen = useMediaQuery('(max-width: 700px)')
-
-
-const logProc = createLogProcessor(2)
-
-const options = computed<ChartProps<'bar'>['options']>(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  animation: false,
-  scales: {
-    y: {
-      display: !!props.yValues,
-      min: props.min,
-      max: props.max,
-      ticks: props.yValues ? {
-        stepSize: 0.05,
-        callback: function (value, index, values) {
-          if (props.yValues?.includes(value as any)) return props.yIsPercent ? `${(value as number) * 100}%` : value
-          return null
-        }
-      } : undefined
-    },
-    x: {
-      grid: {
-        display: true,
-        drawTicks: false,
-        color: (context) => context.tick && context.tick.label ? 'rgba(255,255,255,0.05)' : 'transparent'
-      },
-      min: 0,
-      ticks: {
-        autoSkip: false,
-        maxRotation: 0,
-        callback: function (value, index, ctx) {
-          const offset = smallScreen.value ? 0.03 : 0.01
-          if (index <= ctx.length * offset || index >= ctx.length * (1 - offset)) return ''
-
-          const t = this.getLabelForValue(value as any) as any as number
-          if (t % (smallScreen.value ? targetSkip.value * 2 : targetSkip.value) != 0) return ''
-
-          return targetSkip.value < 60 * 60 * 24 ? formatDateHHMM(t) : formatDateDay(t)
-        }
-      }
-    },
-  },
-  interaction: {
-    intersect: false,
-    mode: 'index'
-  },
-  labels: {
-    enabled: true,
-  },
-  elements: {
-    point: {
-      pointStyle: false
-    },
-  },
-  plugins: {
-    legend: {
-      display: true,
-      onClick: (e, legendItem, legend) => {
-        const datasetIndex = legendItem.datasetIndex
-        if (datasetIndex == undefined) return
-        enabledBloggers.value[datasetIndex] = !enabledBloggers.value[datasetIndex]
-      }
-    },
-    tooltip: {
-      position: 'nearest',
-      callbacks: {
-        title: t => {
-          return `${formatDateFull(t[0].label as any)}`
-        },
-        label: props.processor ?
-          t => `${bloggerNamesArray[t.datasetIndex]}: ${props.processor!(t.parsed.y ?? 0)}` :
-          preferredLogProcessor.value ? t => `${bloggerNamesArray[t.datasetIndex]}: ${logProc(t.parsed.y ?? 0)}` : undefined,
-      },
-
-    },
-  },
-}))
-
-
+}
 </script>
 
 
-<style lang="scss" scoped>
-.chartjs-container {
-  aspect-ratio: 2;
+<style lang="scss">
+.blogger-chart-tooltip {
+  --popover-background-color: rgba(0, 0, 0, 0.85);
+  --popover-border-color: rgba(255, 255, 255, 0.1);
 
-  @media screen and (max-width: 900px) {
-    aspect-ratio: 1.5;
+  .popover-background {
+    border-radius: 5px;
+  }
+}
+</style>
+
+<style lang="scss" scoped>
+.tooltip-content {
+  min-width: 145px;
+  padding: 7px 8px;
+
+  h4 {
+    margin: 0 0 6px;
+    color: white;
+    font-size: 13px;
+    line-height: 1;
   }
 
-  .chart-options {
-    position: absolute;
-    top: 0;
-    left: 0;
-    display: flex;
-    gap: 5px;
-    align-items: flex-start;
-    z-index: 3;
+  .tooltip-series {
+    display: grid;
+    grid-template-columns: 8px 1fr auto;
+    gap: 6px;
+    align-items: center;
+    margin-top: 4px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 12px;
+    line-height: 1;
 
-    &.right {
-      left: unset;
-      right: 0;
+    b {
+      color: white;
+      font-variant-numeric: tabular-nums;
     }
   }
 
-  .chart {
-    margin-top: -4px;
+  .series-marker {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    transition: transform 0.15s;
 
-    @media screen and (max-width: 900px) {
-      margin-top: 25px;
+    &.highlighted {
+      transform: scale(1.4);
+    }
+  }
+}
+
+.time-series-chart {
+  position: relative;
+  aspect-ratio: 2;
+
+  .chart-options {
+    position: absolute;
+    z-index: 3;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+
+    &.right {
+      right: 0;
+      left: unset;
+    }
+  }
+
+  .chart-legend {
+    position: absolute;
+    z-index: 2;
+    top: 5px;
+    right: 90px;
+    left: 90px;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.87);
+    font-size: 12px;
+  }
+
+  .chart-surface {
+    position: absolute;
+    inset: 28px 0 0;
+  }
+
+  :deep(.chart-container) {
+    position: absolute;
+    inset: 0;
+
+    .x-labels,
+    .y-labels {
+      color: rgba(255, 255, 255, 0.87);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .time-grid .tick,
+    .value-grid .tick {
+      stroke: rgba(255, 255, 255, 0.05);
+    }
+
+    .plot-area-border path {
+      stroke: rgba(255, 255, 255, 0.1);
+    }
+
+    .blogger-line.line {
+      stroke-width: 3px;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: filter 0.15s, stroke-width 0.15s;
+
+      &.highlighted {
+        stroke-width: 4px;
+        filter: brightness(1.2);
+      }
+    }
+
+    .blogger-line-0 {
+      stroke: #f931a3;
+    }
+
+    .blogger-line-1 {
+      stroke: #fffb35;
+    }
+
+    .blogger-line-2 {
+      stroke: #ff2a2a;
+    }
+
+    .blogger-line-3 {
+      stroke: #1679ff;
+    }
+
+    .interactive-zone {
+      cursor: crosshair;
     }
   }
 }
 
 .slider {
-  margin-top: 10px;
   align-items: center;
   gap: 10px;
+  margin-top: 10px;
 
   input {
-    margin: 0;
-    margin-bottom: -2px;
+    margin: 0 0 -2px;
+  }
+}
+
+@media screen and (max-width: 900px) {
+  .time-series-chart {
+    aspect-ratio: 1.5;
+
+    .chart-legend {
+      top: 35px;
+      right: 0;
+      left: 0;
+    }
+
+    .chart-surface {
+      inset: 58px 0 0;
+    }
   }
 }
 </style>

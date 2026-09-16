@@ -85,7 +85,7 @@
         v-model:show-chart="showWinrateChart" />
 
       <template v-if="showWinrateChart">
-        <TimeSeriesChart :labels="winrateChart.labels" :data="winrateChart.data"
+        <TimeSeriesChart :labels="winrateChart.labels" :data="winrateChart.data" :min="0"
           :processor="t => `${(t * 100).toFixed(2)}%`" :y-values="[0.35, 0.5, 0.65]" y-is-percent smooth-if-need />
         <p class="footnote">*Рекомендуется шаг не менее 10 минут, иначе график шумный</p>
       </template>

@@ -19,7 +19,7 @@
   - `chuck/Chuck.vue` — турнир «Чак Норрис» (ивент), `ChuckTable`.
   - `lootbox/` — статистика открытия лутбоксов: таблицы дропа, реролов; свой набор таблиц (`Table.vue`, `OpenByTable.vue`, `RerollTable.vue`, список контейнеров `lootboxList/`). Названия контейнеров, расходников и кастомизаций берутся соответственно из `LootboxesLocalizationDictionary`, `ArtefactsLocalizationDictionary` и `CustomizationsLocalizationDictionary`.
   - `onslaught/` — см. ниже.
-- `shared/widgets/` — переиспользуемые карточки-виджеты страниц: `GenericInfo.vue` (большое число + подпись + цвет, принимает `status`, `value`, `processor`), `GenericInfoQuery.vue` (то же с запросом внутри), таблицы, `charts/MiniBar.vue` и Shadow*-контроллеры chart.js (см. 06). Donut винрейта в `Battle.vue` нарисован локальным SVG без библиотеки графиков.
+- `shared/widgets/` — переиспользуемые карточки-виджеты страниц: `GenericInfo.vue` (большое число + подпись + цвет, принимает `status`, `value`, `processor`), `GenericInfoQuery.vue` (то же с запросом внутри), таблицы и `charts/MiniBarNew.vue` на UniversalChart (см. 06). Donut винрейта в `Battle.vue` нарисован локальным SVG без движка графиков.
 - `shared/ServerStatusWrapper.vue` — обёртка «сервер недоступен», `Timecodes.vue`, `bloomColors.ts` — палитра свечения карточек.
 
 ## Натиск (Onslaught / COMP7) — `pages/infographics/pages/onslaught/`
@@ -39,7 +39,7 @@
 - `shared/Battle.vue`, `BattleStatValue.vue` — карточка боя.
 
 ## Сервисы — `pages/services/`
-- `bob25/` — дашборд ивента «Битва Блогеров 2025»: командные тоталы (`store.ts` — модульный стор с запросами, `queryLoader.ts`), кросс-таблица встреч, топы по урону/танкам, таймсерии (`TimeSeriesChart.vue`), навыки блогеров, реклама/установка мода. Много компонентов, всё завязано на таблицы ивента BOB.
+- `bob25/` — дашборд ивента «Битва Блогеров 2025»: командные тоталы (`store.ts` — модульный стор с запросами, `queryLoader.ts`), кросс-таблица встреч, топы по урону/танкам, таймсерии и распределения винрейта на UniversalChart, навыки блогеров, реклама/установка мода. Много компонентов, всё завязано на таблицы ивента BOB.
 - `mt36.1/` — сравнение изменений техники в патче 36.1 (`CompareCard.vue`, `LevelSwitcher.vue`).
 - `fixedMatchDetect/` — детектор договорных боёв.
 

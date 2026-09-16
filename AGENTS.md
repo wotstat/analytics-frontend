@@ -19,7 +19,7 @@ bun run build    # vue-tsc + vite build — основная проверка к
 - [docs/03-data-clickhouse.md](docs/03-data-clickhouse.md) — запросы, кеши, StatParams/whereClause
 - [docs/04-pages.md](docs/04-pages.md) — разделы сайта
 - [docs/05-ui-kit.md](docs/05-ui-kit.md) — UI-компоненты и стили
-- [docs/06-charts.md](docs/06-charts.md) — графики (chart.js + UniversalChart)
+- [docs/06-charts.md](docs/06-charts.md) — графики на UniversalChart
 - [docs/07-game-domain.md](docs/07-game-domain.md) — игровой домен, локализация
 - [docs/08-external.md](docs/08-external.md) — поддомены, realtime, интеграции
 - [docs/09-database-schema.md](docs/09-database-schema.md) — справочник схемы БД WOT: таблицы, колонки, типы, категории
