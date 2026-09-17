@@ -1,12 +1,17 @@
 <template>
-  <section class="vehicle-time-series" :aria-label="`${name}: ${availableSlots[slot].label} по дням`"
-    :aria-busy="history.status === loading">
+  <section class="vehicle-time-series">
+
     <div class="chart-toolbar">
-      <span>По завершённым дням</span>
+      <div class="title">
+        <Icon name="chart-line" class="icon" :icon="availableSlots[props.slot].icon" />
+        <span>{{ availableSlots[slot].label }}</span>
+      </div>
       <button v-if="hasValues" @click="chart.showAllHistory()">Вся история</button>
     </div>
+
     <div class="chart-body">
       <UniversalChartComponent v-show="hasValues" :chart />
+
       <div v-if="history.status === loading" class="chart-state" role="status">
         <Loader class="loader" />
         <span>Загружаем историю…</span>
@@ -17,6 +22,7 @@
       </div>
       <div v-else-if="!hasValues" class="chart-state" role="status">По выбранным фильтрам пока нет данных</div>
     </div>
+
     <FloatingTooltip :ctx="chart.tooltipCtx.value" :offset="12">
       <template #default="{ ctx }">
         <div v-if="ctx.hits[0]" class="history-tooltip">
@@ -46,6 +52,7 @@ import type { VehicleFilters } from '../filters/types'
 import { availableSlots, formatSlotValue, formatStatisticsDay, type Slot } from '../vehicleListTable/helpers'
 import { vehicleHistoryQuery } from '../vehicleStatisticsQuery'
 import { VehicleHistoryChart, type VehicleHistoryDay } from './VehicleHistoryChart'
+import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 
 const props = defineProps<{
   tankTag: string
@@ -56,8 +63,7 @@ const props = defineProps<{
 }>()
 const name = computed(() => getTankName(props.tankTag, true))
 const now = useNow({ interval: 60_000 })
-// VehiclesStatistics.day и today() в БД используют UTC. Явная дата в SQL
-// обновляет ключ обоих кешей в полночь, в том числе в открытом графике.
+
 const beforeDay = computed(() => now.value.toISOString().slice(0, 10))
 const retry = ref(0)
 const history = queryComputed<VehicleHistoryDay>(() =>
@@ -65,11 +71,15 @@ const history = queryComputed<VehicleHistoryDay>(() =>
   { settings: { use_query_cache: 1, query_cache_ttl: 24 * 60 * 60 } })
 
 const chart = markRaw(new VehicleHistoryChart())
-// Сохраняем даты исключённых дней, чтобы пороги не меняли диапазон истории
-// и оставались разрывы вместо соединения точек через шумные значения.
-const visibleHistory = computed(() => history.value.data.map(row =>
-  (row.battles ?? 0) > props.minBattles && (row.playerCount ?? 0) > props.minPlayers
-    ? row : { ...row, [props.slot]: null }))
+
+const visibleHistory = computed(() => {
+  if (!history.value.data) return []
+  return history.value.data.map(row => {
+    if ((row.battles ?? 0) > props.minBattles && (row.playerCount ?? 0) > props.minPlayers) return row
+    return { ...row, [props.slot]: null }
+  })
+})
+
 const hasValues = computed(() => history.value.status === success &&
   visibleHistory.value.some(row => row[props.slot] !== null && Number.isFinite(row[props.slot])))
 
@@ -90,8 +100,23 @@ watch([visibleHistory, () => props.slot, beforeDay], () => {
   justify-content: space-between;
   gap: 12px;
   min-height: 24px;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.4);
+
+  .title {
+    display: flex;
+    align-items: center;
+    color: white;
+    margin-left: -7px;
+
+    span {
+      font-size: 16px;
+    }
+
+    .icon {
+      height: 32px;
+    }
+  }
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 button {
@@ -182,8 +207,6 @@ button {
     }
   }
 
-  // Цвет сплошной: пересечения X и Y не суммируют прозрачность.
-  // .label-ticks появляется у единицы, когда её подписи становятся видимыми.
   .time-grid .tick-level:not(.label-ticks) .tick {
     stroke: #3a3a3a;
   }

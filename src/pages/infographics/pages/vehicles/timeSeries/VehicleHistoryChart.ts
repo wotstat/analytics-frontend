@@ -60,7 +60,6 @@ export class VehicleHistoryChart extends UniversalChart {
       .addPlot(new PlotGroup().addPlot(this.line).clipBy(clip), 'plot')
       .addSlot('bottom', labelsX, 'labels')
       .addSlot('left', this.labelsY, 'labels')
-      // Источник интерактива должен видеть геометрию уже отрисованной линии.
       .addPlot(interaction)
       .addDefs(clip, clipLeft, clipBottom)
   }

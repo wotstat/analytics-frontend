@@ -28,15 +28,6 @@
       </div>
     </div>
     <div v-if="expanded" :id="panelId" class="chart-panel">
-      <div class="chart-title">
-        <div class="title">
-          <Icon name="chart-line" class="icon" :icon="availableSlots[activeSlot].icon" />
-          <span>{{ availableSlots[activeSlot].label }}</span>
-        </div>
-        <span class="chart-value">{{ formatSlotValue(activeSlot, vehicle[activeSlot]) }}
-          <span class="date">за {{ formatStatisticsDay(vehicle.day) }}</span>
-        </span>
-      </div>
       <VehicleTimeSeries :tank-tag="vehicle.tankTag" :slot="activeSlot" :filters :min-battles :min-players />
     </div>
   </div>
@@ -219,27 +210,6 @@ function selectSlot(slot: Slot) {
 .chart-panel {
   padding: 18px;
   padding-top: 10px;
-}
-
-.chart-title {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 14px;
-
-  .title {
-    display: flex;
-    align-items: center;
-    margin-left: -8px;
-
-    .icon {
-      width: 30px;
-      height: 30px;
-      fill: currentColor;
-    }
-  }
 }
 
 .chart-value {

@@ -1,6 +1,5 @@
 <template>
-  <section class="vehicle-table" ref="table" :style="tableStyle" :aria-busy="status === loading"
-    aria-label="Статистика техники">
+  <section class="vehicle-table" ref="table" :style="tableStyle">
     <div class="toolbar">
       <SearchLine v-model="search" class="search" placeholder="Найти танк" />
       <VehicleListFilters v-model="localFilters" />
@@ -8,38 +7,39 @@
     </div>
 
     <div class="head line mt-font">
-      <span aria-hidden="true"></span>
+      <span></span>
+
       <button class="heading"
         :class="{ 'order-by': sortPosition('tankLevel'), 'secondary-sort': sortPosition('tankLevel') > 1, asc: sortAscending('tankLevel') }"
-        @click="sort($event, 'tankLevel')" :aria-label="sortLabel('tankLevel', 'Уровень')"
-        v-tooltip.instant.top-float="'Уровень'">
+        @click="sort($event, 'tankLevel')" v-tooltip.instant.top-float="'Уровень'">
         <span class="level-heading">Ур.</span>
-        <span class="sort-arrow" v-if="sortPosition('tankLevel')" aria-hidden="true"><span
-            v-if="sortPosition('tankLevel') > 1" class="sort-number">{{ sortPosition('tankLevel') }}</span></span>
+        <span class="sort-arrow" v-if="sortPosition('tankLevel')"><span v-if="sortPosition('tankLevel') > 1"
+            class="sort-number">{{ sortPosition('tankLevel') }}</span></span>
       </button>
+
       <button class="heading"
         :class="{ 'order-by': sortPosition('tankType'), 'secondary-sort': sortPosition('tankType') > 1, asc: sortAscending('tankType') }"
-        @click="sort($event, 'tankType')" :aria-label="sortLabel('tankType', 'Тип техники')"
-        v-tooltip.instant.top-float="'Тип техники'">
+        @click="sort($event, 'tankType')" v-tooltip.instant.top-float="'Тип техники'">
         <VehicleType type="any" class="type-heading" />
-        <span class="sort-arrow" v-if="sortPosition('tankType')" aria-hidden="true"><span
-            v-if="sortPosition('tankType') > 1" class="sort-number">{{ sortPosition('tankType') }}</span></span>
+        <span class="sort-arrow" v-if="sortPosition('tankType')"><span v-if="sortPosition('tankType') > 1"
+            class="sort-number">{{ sortPosition('tankType') }}</span></span>
       </button>
+
       <button class="heading"
         :class="{ 'order-by': sortPosition('name'), 'secondary-sort': sortPosition('name') > 1, asc: sortAscending('name') }"
-        @click="sort($event, 'name')" :aria-label="sortLabel('name', 'Танк')">
+        @click="sort($event, 'name')">
         <Icon icon="tank" class="icon" />
-        <span class="sort-arrow" v-if="sortPosition('name')" aria-hidden="true"><span v-if="sortPosition('name') > 1"
+        <span class="sort-arrow" v-if="sortPosition('name')"><span v-if="sortPosition('name') > 1"
             class="sort-number">{{ sortPosition('name') }}</span></span>
       </button>
+
       <div class="values">
         <button v-for="slot in visibleSlots" :key="slot" class="heading"
           :class="{ 'order-by': sortPosition(slot), 'secondary-sort': sortPosition(slot) > 1, asc: sortAscending(slot) }"
-          :aria-label="sortLabel(slot, availableSlots[slot].label)"
           v-tooltip.instant.top-float="availableSlots[slot].label" @click="sort($event, slot)">
           <Icon :icon="availableSlots[slot].icon" class="icon" />
-          <span class="sort-arrow" v-if="sortPosition(slot)" aria-hidden="true"><span v-if="sortPosition(slot) > 1"
-              class="sort-number">{{ sortPosition(slot) }}</span></span>
+          <span class="sort-arrow" v-if="sortPosition(slot)"><span v-if="sortPosition(slot) > 1" class="sort-number">{{
+            sortPosition(slot) }}</span></span>
         </button>
       </div>
     </div>
@@ -60,9 +60,11 @@
       <VehicleListRow v-for="vehicle in displayedVehicles" :key="vehicle.tankTag" :vehicle :latest-day="latestDay"
         v-model:active-slot="activeSlot" :slots="visibleSlots" :filters :min-battles="localFilters.minBattles"
         :min-players="localFilters.minPlayers" />
+
       <button v-if="displayedVehicles.length < filteredVehicles.length" class="show-more text-button"
-        @click="displayLimit += PAGE_SIZE">Показать ещё {{ Math.min(PAGE_SIZE, filteredVehicles.length - displayLimit)
-        }}</button>
+        @click="displayLimit += PAGE_SIZE">
+        Показать ещё {{ Math.min(PAGE_SIZE, filteredVehicles.length - displayLimit) }}
+      </button>
     </div>
   </section>
 </template>
