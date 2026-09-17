@@ -20,8 +20,7 @@
         </span>
       </button>
       <div class="values">
-        <button v-for="slot in slots" :key="slot" class="value"
-          :class="{ active: expanded && activeSlot === slot }"
+        <button v-for="slot in slots" :key="slot" class="value" :class="{ active: expanded && activeSlot === slot }"
           :aria-label="`${availableSlots[slot].label}: ${formatSlotValue(slot, vehicle[slot])}`"
           v-tooltip="availableSlots[slot].label" @click="selectSlot(slot)">
           {{ formatSlotValue(slot, vehicle[slot]) }}
@@ -30,16 +29,15 @@
     </div>
     <div v-if="expanded" :id="panelId" class="chart-panel">
       <div class="chart-title">
-        <span>{{ availableSlots[activeSlot].label }}</span>
+        <div class="title">
+          <Icon name="chart-line" class="icon" :icon="availableSlots[activeSlot].icon" />
+          <span>{{ availableSlots[activeSlot].label }}</span>
+        </div>
         <span class="chart-value">{{ formatSlotValue(activeSlot, vehicle[activeSlot]) }}
           <span class="date">за {{ formatStatisticsDay(vehicle.day) }}</span>
         </span>
       </div>
-      <div class="chart-placeholder">
-        <Icon :icon="availableSlots[activeSlot].icon" class="placeholder-icon" />
-        <span>Здесь будет график по дням</span>
-        <span class="placeholder-caption">{{ name }} · {{ availableSlots[activeSlot].label }}</span>
-      </div>
+      <VehicleTimeSeries :tank-tag="vehicle.tankTag" :slot="activeSlot" :filters :min-battles />
     </div>
   </div>
 </template>
@@ -47,7 +45,6 @@
 <script setup lang="ts">
 import { computed, ref, useId, watch } from 'vue'
 import ArrowDown from '@/assets/icons/arrow-down.svg'
-import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 import VehicleImage from '@/shared/game/vehicles/vehicle/VehicleImage.vue'
 import VehicleType from '@/shared/game/vehicles/type/VehicleType.vue'
 import { isVehicleType } from '@/shared/game/vehicles/type/vehicleTypeToImage'
@@ -55,8 +52,11 @@ import { regionToGame } from '@/shared/game/wot'
 import { getTankName } from '@/shared/i18n/i18n'
 import { romanNumberProcessor } from '@/shared/utils/processors/processors'
 import { availableSlots, formatSlotValue, formatStatisticsDay, type Slot, type VehicleStatistics } from './helpers'
+import type { VehicleFilters } from '../filters/types'
+import VehicleTimeSeries from '../timeSeries/VehicleTimeSeries.vue'
+import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 
-const props = defineProps<{ vehicle: VehicleStatistics, slots: Slot[] }>()
+const props = defineProps<{ vehicle: VehicleStatistics, slots: Slot[], filters: VehicleFilters, minBattles: number }>()
 const name = computed(() => getTankName(props.vehicle.tankTag, true))
 const expanded = ref(false)
 const activeSlot = ref<Slot>(props.slots[0] ?? 'battles')
@@ -197,7 +197,6 @@ watch(() => props.slots, slots => {
 
   &.active {
     color: white;
-    background: var(--chart-panel-background);
 
     &::before {
       content: '';
@@ -212,22 +211,30 @@ watch(() => props.slots, slots => {
   }
 }
 
-.vehicle-row {
-  --chart-panel-background: #353535;
-}
-
 .chart-panel {
-  background: var(--chart-panel-background);
   padding: 18px;
+  padding-top: 10px;
 }
 
 .chart-title {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
   font-size: 14px;
+
+  .title {
+    display: flex;
+    align-items: center;
+    margin-left: -8px;
+
+    .icon {
+      width: 30px;
+      height: 30px;
+      fill: currentColor;
+    }
+  }
 }
 
 .chart-value {
@@ -236,31 +243,6 @@ watch(() => props.slots, slots => {
   .date {
     margin-left: 6px;
   }
-}
-
-.chart-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 190px;
-  margin-top: 16px;
-  border: 1px dashed rgba(255, 255, 255, 0.12);
-  border-radius: 6px;
-  color: rgba(255, 255, 255, 0.5);
-  text-align: center;
-}
-
-.placeholder-icon {
-  width: 40px;
-  height: 40px;
-  opacity: 0.5;
-}
-
-.placeholder-caption {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.3);
 }
 
 button:focus-visible,

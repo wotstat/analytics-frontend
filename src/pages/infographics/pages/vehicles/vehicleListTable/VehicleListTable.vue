@@ -57,7 +57,8 @@
       <span class="muted" v-if="!hasLocalFilters">История статистики ещё заполняется</span>
     </div>
     <div v-else class="body">
-      <VehicleListRow v-for="vehicle in displayedVehicles" :key="vehicle.tankTag" :vehicle :slots="visibleSlots" />
+      <VehicleListRow v-for="vehicle in displayedVehicles" :key="vehicle.tankTag" :vehicle :slots="visibleSlots" :filters
+        :min-battles="localFilters.minBattles" />
       <button v-if="displayedVehicles.length < filteredVehicles.length" class="show-more text-button"
         @click="displayLimit += PAGE_SIZE">Показать ещё {{ Math.min(PAGE_SIZE, filteredVehicles.length - displayLimit)
         }}</button>
@@ -81,11 +82,13 @@ import { createLocalVehicleFilters } from './localFilters'
 import VehicleColumnSelector from './VehicleColumnSelector.vue'
 import VehicleListFilters from './VehicleListFilters.vue'
 import VehicleListRow from './VehicleListRow.vue'
+import type { VehicleFilters } from '../filters/types'
 
 const props = defineProps<{
   slots: Slot[]
   vehicles: VehicleStatistics[]
   status: Status
+  filters: VehicleFilters
 }>()
 
 defineEmits<{ retry: [] }>()

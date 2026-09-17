@@ -1,6 +1,6 @@
 <template>
   <VehicleFilters v-model="filters" />
-  <VehicleListTable :slots="defaultSlots" :vehicles="statistics.data" :status="statistics.status" @retry="retry++" />
+  <VehicleListTable :slots="defaultSlots" :vehicles="statistics.data" :status="statistics.status" :filters @retry="retry++" />
 </template>
 
 
@@ -12,7 +12,7 @@ import VehicleListTable from './vehicleListTable/VehicleListTable.vue'
 import { defaultSlots, type VehicleStatistics } from './vehicleListTable/helpers'
 import VehicleFilters from './filters/VehicleFilters.vue'
 import { createVehicleFilters } from './filters/types'
-import { CACHE_SETTINGS, LONG_CACHE_SETTINGS, queryComputed } from '@/db'
+import { LONG_CACHE_SETTINGS, queryComputed } from '@/db'
 import { vehicleStatisticsQuery } from './vehicleStatisticsQuery'
 
 useMeta({

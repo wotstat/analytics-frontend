@@ -6,8 +6,8 @@ function quote(value: string) {
   return `'${value.replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`
 }
 
-export function vehicleStatisticsWhere(filters: VehicleFilters) {
-  const conditions: string[] = ['stats.day < today()']
+export function vehicleStatisticsWhere(filters: VehicleFilters, beforeDay?: string) {
+  const conditions: string[] = [`stats.day < ${beforeDay ? `toDate(${quote(beforeDay)})` : 'today()'}`]
 
   if (filters.regions.length) {
     conditions.push(`stats.region in (${[...filters.regions].sort().map(quote).join(', ')})`)
@@ -46,6 +46,19 @@ export function vehicleStatisticsWhere(filters: VehicleFilters) {
   if (filters.battleLevel !== 'any') conditions.push(`(${levels[filters.battleLevel]})`)
 
   return conditions.length ? conditions.join('\n      and ') : '1'
+}
+
+export function vehicleHistoryQuery(filters: VehicleFilters, tankTag: string, beforeDay: string) {
+  return `
+    select
+      stats.day as day,
+      ${Object.entries(availableSlots).map(([key, slot]) => `${slot.sql} as ${key}`).join(',\n      ')}
+    from VehiclesStatistics as stats
+    where ${vehicleStatisticsWhere(filters, beforeDay)}
+      and stats.tankTag = ${quote(tankTag)}
+    group by stats.day
+    order by stats.day
+  `
 }
 
 export function vehicleStatisticsQuery(filters: VehicleFilters) {
