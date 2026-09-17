@@ -15,7 +15,7 @@
             class="vehicle-image" aria-hidden="true" />
           <span class="vehicle-info">
             <span class="vehicle-name" :title="getTankName(vehicle.tankTag)">{{ name }}</span>
-            <span class="date">{{ formatStatisticsDay(vehicle.day) }}</span>
+            <span v-if="vehicle.day !== latestDay" class="date">{{ formatStatisticsDay(vehicle.day) }}</span>
           </span>
         </span>
       </button>
@@ -56,7 +56,7 @@ import type { VehicleFilters } from '../filters/types'
 import VehicleTimeSeries from '../timeSeries/VehicleTimeSeries.vue'
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 
-const props = defineProps<{ vehicle: VehicleStatistics, slots: Slot[], filters: VehicleFilters, minBattles: number }>()
+const props = defineProps<{ vehicle: VehicleStatistics, latestDay: string, slots: Slot[], filters: VehicleFilters, minBattles: number }>()
 const name = computed(() => getTankName(props.vehicle.tankTag, true))
 const expanded = ref(false)
 const activeSlot = ref<Slot>(props.slots[0] ?? 'battles')
@@ -128,7 +128,7 @@ watch(() => props.slots, slots => {
   display: flex;
   align-items: center;
   min-width: 0;
-  padding: 1px 10px;
+  padding: 1px 10px 1px 0;
 }
 
 .vehicle-image {
