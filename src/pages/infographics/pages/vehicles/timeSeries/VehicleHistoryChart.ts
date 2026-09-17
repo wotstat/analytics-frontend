@@ -112,7 +112,7 @@ export class VehicleHistoryChart extends UniversalChart {
         minX, maxX,
         minDeltaX: Math.min(minimumHistoryWindow(step), maxX - minX),
         maxDeltaX: maxX - minX,
-        elastic: step === 'day',
+        elastic: true
       },
     })
     this.showAllHistory()
