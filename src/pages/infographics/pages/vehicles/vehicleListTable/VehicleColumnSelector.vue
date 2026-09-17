@@ -125,6 +125,7 @@ const props = defineProps<{ maxSlots: number }>()
 }
 
 .tile {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -153,8 +154,18 @@ const props = defineProps<{ maxSlots: number }>()
   }
 
   &.selected {
-    border-color: var(--blue-thin-color);
     background: rgba(255, 255, 255, 0.1);
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 7px;
+      bottom: 7px;
+      left: 0;
+      width: 3px;
+      border-radius: 3px;
+      background: var(--blue-thin-color);
+    }
   }
 
   &:disabled:not(.selected) {
@@ -163,8 +174,8 @@ const props = defineProps<{ maxSlots: number }>()
 }
 
 .tile-icon {
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   flex: none;
 }
 </style>
