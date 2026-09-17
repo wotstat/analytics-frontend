@@ -99,7 +99,7 @@ export class VehicleHistoryChart extends UniversalChart {
     this.line.setPoints(points)
 
     if (!history.length) return
-    const minX = historyDayStart(history[0].periodStart)
+    const minX = Math.min(historyDayStart(history[0].periodStart), historyDayStart('2024-01-01'))
     const maxX = todayStart
     if (this.interval?.minX === minX && this.interval.maxX === maxX && this.interval.step === step) return
 
@@ -128,14 +128,16 @@ export class VehicleHistoryChart extends UniversalChart {
 
     const steps = [
       ...(fractional ? [0.01, 0.02, 0.05, 0.1, 0.2, 0.5] : []),
-      1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 50000, 100000,
+      1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000,
     ]
+    const candidates = labelCandidates({ step: steps })
+    const candidateSteps = candidates.map(candidate => (candidate.source as { step: number }).step)
 
     return {
-      values: labelCandidates({ step: steps }),
-      labelForValue: (value, ctx) => formatSlotValue(slot, value, steps[ctx.candidateIndex]),
+      values: candidates,
+      labelForValue: (value, ctx) => formatSlotValue(slot, value, candidateSteps[ctx.candidateIndex]),
       keyForValue: value => `${value}`,
-      padding: { clip: 8, flow: 8 },
+      padding: { clip: 20, flow: 8 },
       labelOffset: 8,
       strategy: 'classic-flow',
       from: 0,
