@@ -6,7 +6,7 @@
       <div class="header-line">
         <div class="search-container">
           <SearchLine v-model="searchText" autofocus class="search-line" />
-          <div class="game-select">
+          <div class="game-select" v-if="!props.game">
             <div class="vr"></div>
             <button class="variant mt-font selectable" @click="preferredGame = 'mt'"
               :class="{ 'active': preferredGame === 'mt' }">
@@ -52,7 +52,7 @@
           </div>
         </div>
 
-        <div class="game-select">
+        <div class="game-select" v-if="!props.game">
           <button class="variant mt-font selectable" @click="preferredGame = 'mt'"
             :class="{ 'active': preferredGame === 'mt' }">
             Lesta
@@ -66,7 +66,7 @@
     </template>
 
     <template #default>
-      <ArenaSelectorModal :arenas="arenas" v-model="selected" :game="preferredGame == 'mt' ? 'mt' : 'wot'"
+      <ArenaSelectorModal :arenas="arenas" v-model="selected" :game="props.game ?? (preferredGame == 'mt' ? 'mt' : 'wot')"
         :search="searchText" :season :onlyActual @reset="reset" />
     </template>
 
@@ -89,10 +89,12 @@ import { preferredGame } from '@/shared/global/globalPreferred'
 import { computed, ref } from 'vue'
 import { hashToArena } from '../utils'
 import BadgesLine from '../../components/badges/BadgesLine.vue'
+import type { GameVendor } from '@/shared/game/wot'
 
 const props = defineProps<{
   arenas: { region: string, battleMode: string, battleGameplay: string, tag: string, name: string, gameVersion: string, season: string }[],
   visibleModal: boolean
+  game?: GameVendor
 }>()
 
 const searchText = ref('')

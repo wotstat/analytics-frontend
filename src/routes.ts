@@ -6,6 +6,7 @@ import Shots from './pages/infographics/pages/shots/Shots.vue'
 import Damage from './pages/infographics/pages/Damage.vue'
 import Results from './pages/infographics/pages/Results.vue'
 import Maps from './pages/infographics/pages/Maps.vue'
+import Vehicles from './pages/infographics/pages/vehicles/Vehicles.vue'
 import Coverage from './pages/infographics/pages/Coverage.vue'
 import Lootbox from './pages/infographics/pages/lootbox/Index.vue'
 import Install from './pages/install/Index.vue'
@@ -34,6 +35,7 @@ const routes = [
       { path: 'damage', component: Damage },
       { path: 'results', component: Results },
       { path: 'maps', component: Maps },
+      { path: 'vehicles', component: Vehicles, meta: { hideTankList: true, customTitle: 'Статистика техники' } },
       { path: 'players', component: Coverage },
       { path: 'chuck-norris-tournament', component: asyncPage(() => import('./pages/infographics/pages/chuck/Chuck.vue')) },
       { path: 'lootbox', component: Lootbox, meta: { hideTankList: true } },

@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 
-import XIcon from '@/assets/icons/x-bold.svg'
+import XIcon from '@/assets/icons/x.svg'
 
 const props = defineProps<{
   text: string
@@ -28,41 +28,71 @@ function handleClose() {
 
 <style scoped lang="scss">
 .badge {
-  padding: 2px 6px;
-  height: 20px;
+  position: relative;
+  overflow: hidden;
+  padding: 3px 5px;
+  min-width: 24px;
+  height: 24px;
   box-sizing: border-box;
-  border-radius: 10px;
+  border-radius: 5px;
 
-  color: white;
-  background-color: #2d8af4;
+  color: rgba(255, 255, 255, 0.95);
+  background-color: rgba(255, 255, 255, 0.1);
   line-height: 1;
   font-size: 14px;
-  font-weight: bold;
   display: flex;
   align-items: center;
 
   .close {
-    padding: 0;
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 0 5px 0 15px;
     border: none;
-    margin-right: -6px;
-    padding-right: 4px;
-    padding-left: 3px;
-    margin-left: 2px;
-    height: 20px;
-    border-radius: 0 10px 10px 0;
+    width: 32px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0 3px 3px 0;
 
-    background-color: transparent;
-    transition: background-color 0.2s;
+    background: linear-gradient(to right, transparent, rgba(49, 49, 49, 0.95) 65%);
+    color: rgba(255, 255, 255, 0.85);
+    opacity: 0;
+    transform: translateX(100%);
+    pointer-events: none;
+    transition: transform 0.18s ease, opacity 0.18s ease, color 0.15s;
     cursor: pointer;
 
     &:hover {
-      background-color: rgb(255, 59, 48);
+      color: white;
     }
 
     .x-icon {
-      stroke: white;
-      height: 0.9em;
+      fill: currentColor;
+      width: 12px;
+      height: 12px;
       display: block;
+      flex-shrink: 0;
+    }
+  }
+
+  &:hover .close,
+  &:focus-within .close {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+
+  @media (hover: none) {
+    &:has(.close) {
+      padding-right: 28px;
+    }
+
+    .close {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
     }
   }
 

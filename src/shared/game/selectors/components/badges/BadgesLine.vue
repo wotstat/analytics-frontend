@@ -44,33 +44,34 @@ function onRemove(tag: T) {
 .badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.2em;
+  gap: 4px;
 
 
   .select,
   .add {
-    height: 20px;
+    height: 24px;
+    box-sizing: border-box;
+    border-radius: 5px;
+    color: rgba(255, 255, 255, 0.95);
     background-color: rgba(255, 255, 255, 0.1);
-    border: none;
-    transition: background-color 0.2s;
-    border-radius: 1em;
+    transition: color 0.15s, background-color 0.15s;
 
     &:hover {
       background-color: rgba(255, 255, 255, 0.2);
+      color: white;
     }
   }
 
   .select {
-    padding: 2px 8px;
+    padding: 0 9px;
     line-height: 1;
     font-size: 14px;
-    font-weight: bold;
     display: flex;
     align-items: center;
   }
 
   .add {
-    width: 20px;
+    width: 24px;
     padding: 0;
     display: flex;
     align-items: center;
@@ -78,7 +79,7 @@ function onRemove(tag: T) {
 
     .plus-icon {
       display: block;
-      height: 11px;
+      height: 12px;
       fill: currentColor;
     }
   }

@@ -1,7 +1,7 @@
 <template>
   <BadgesLine :tagToText="tagToText" v-model="selected" show-add-button @openSelectModal="openSelect" />
   <ArenaSelectorPopup :arenas="arenas.data" :visible-modal="visibleModal" @close="visibleModal = false"
-    v-model="selected" />
+    v-model="selected" :game="props.game" />
 </template>
 
 
@@ -13,6 +13,11 @@ import BadgesLine from '../components/badges/BadgesLine.vue'
 import { selectTagArenasLocalization } from '@/shared/i18n/i18n'
 import ArenaSelectorPopup from './arenaSelectorModal/ArenaSelectorPopup.vue'
 import { hashToArena } from './utils'
+import type { GameVendor } from '@/shared/game/wot'
+
+const props = defineProps<{
+  game?: GameVendor
+}>()
 
 const visibleModal = ref(false)
 
