@@ -37,7 +37,7 @@
           <span class="date">за {{ formatStatisticsDay(vehicle.day) }}</span>
         </span>
       </div>
-      <VehicleTimeSeries :tank-tag="vehicle.tankTag" :slot="activeSlot" :filters :min-battles />
+      <VehicleTimeSeries :tank-tag="vehicle.tankTag" :slot="activeSlot" :filters :min-battles :min-players />
     </div>
   </div>
 </template>
@@ -56,7 +56,14 @@ import type { VehicleFilters } from '../filters/types'
 import VehicleTimeSeries from '../timeSeries/VehicleTimeSeries.vue'
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 
-const props = defineProps<{ vehicle: VehicleStatistics, latestDay: string, slots: Slot[], filters: VehicleFilters, minBattles: number }>()
+const props = defineProps<{
+  vehicle: VehicleStatistics
+  latestDay: string
+  slots: Slot[]
+  filters: VehicleFilters
+  minBattles: number
+  minPlayers: number
+}>()
 const name = computed(() => getTankName(props.vehicle.tankTag, true))
 const expanded = ref(false)
 const activeSlot = ref<Slot>(props.slots[0] ?? 'battles')

@@ -58,7 +58,7 @@
     </div>
     <div v-else class="body">
       <VehicleListRow v-for="vehicle in displayedVehicles" :key="vehicle.tankTag" :vehicle :latest-day="latestDay"
-        :slots="visibleSlots" :filters :min-battles="localFilters.minBattles" />
+        :slots="visibleSlots" :filters :min-battles="localFilters.minBattles" :min-players="localFilters.minPlayers" />
       <button v-if="displayedVehicles.length < filteredVehicles.length" class="show-more text-button"
         @click="displayLimit += PAGE_SIZE">Показать ещё {{ Math.min(PAGE_SIZE, filteredVehicles.length - displayLimit)
         }}</button>
@@ -78,7 +78,7 @@ import SearchLine from '@/shared/game/selectors/components/searchLine/SearchLine
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
 import { getTankName } from '@/shared/i18n/i18n'
 import { availableSlots, orderSlots, type Slot, type VehicleStatistics } from './helpers'
-import { createLocalVehicleFilters } from './localFilters'
+import { createLocalVehicleFilters, DEFAULT_MIN_BATTLES, DEFAULT_MIN_PLAYERS } from './localFilters'
 import VehicleColumnSelector from './VehicleColumnSelector.vue'
 import VehicleListFilters from './VehicleListFilters.vue'
 import VehicleListRow from './VehicleListRow.vue'
@@ -130,7 +130,8 @@ const latestDay = computed(() => props.vehicles.reduce((latest, vehicle) =>
   vehicle.day > latest ? vehicle.day : latest, ''))
 const hasLocalFilters = computed(() => search.value.trim().length > 0 || localFilters.value.levels.length > 0 ||
   localFilters.value.types.length > 0 || localFilters.value.nations.length > 0 ||
-  localFilters.value.onlyActual || localFilters.value.minBattles > 0)
+  localFilters.value.onlyActual || localFilters.value.minBattles !== DEFAULT_MIN_BATTLES ||
+  localFilters.value.minPlayers !== DEFAULT_MIN_PLAYERS)
 
 const filteredVehicles = computed(() => {
   const matchVehicle = createVehicleNameFilter(search.value)
@@ -141,7 +142,8 @@ const filteredVehicles = computed(() => {
     (!filters.types.length || filters.types.some(type => type === vehicle.tankType)) &&
     (!filters.nations.length || filters.nations.some(nation => nation === vehicle.tankTag.split(':')[0])) &&
     (!filters.onlyActual || vehicle.day === latestDay.value) &&
-    (vehicle.battles ?? 0) > filters.minBattles
+    (vehicle.battles ?? 0) > filters.minBattles &&
+    (vehicle.playerCount ?? 0) > filters.minPlayers
   )
     .sort((a, b) => {
       for (const { key, ascending } of sortOrders.value) {

@@ -47,7 +47,13 @@ import { availableSlots, formatSlotValue, formatStatisticsDay, type Slot } from 
 import { vehicleHistoryQuery } from '../vehicleStatisticsQuery'
 import { VehicleHistoryChart, type VehicleHistoryDay } from './VehicleHistoryChart'
 
-const props = defineProps<{ tankTag: string, slot: Slot, filters: VehicleFilters, minBattles: number }>()
+const props = defineProps<{
+  tankTag: string
+  slot: Slot
+  filters: VehicleFilters
+  minBattles: number
+  minPlayers: number
+}>()
 const name = computed(() => getTankName(props.tankTag, true))
 const now = useNow({ interval: 60_000 })
 // VehiclesStatistics.day и today() в БД используют UTC. Явная дата в SQL
@@ -59,10 +65,11 @@ const history = queryComputed<VehicleHistoryDay>(() =>
   { settings: { use_query_cache: 1, query_cache_ttl: 24 * 60 * 60 } })
 
 const chart = markRaw(new VehicleHistoryChart())
-// Сохраняем даты исключённых дней, чтобы порог не менял диапазон истории
-// и оставлял разрывы вместо соединения точек через шумные значения.
+// Сохраняем даты исключённых дней, чтобы пороги не меняли диапазон истории
+// и оставались разрывы вместо соединения точек через шумные значения.
 const visibleHistory = computed(() => history.value.data.map(row =>
-  (row.battles ?? 0) > props.minBattles ? row : { ...row, [props.slot]: null }))
+  (row.battles ?? 0) > props.minBattles && (row.playerCount ?? 0) > props.minPlayers
+    ? row : { ...row, [props.slot]: null }))
 const hasValues = computed(() => history.value.status === success &&
   visibleHistory.value.some(row => row[props.slot] !== null && Number.isFinite(row[props.slot])))
 
