@@ -172,11 +172,11 @@ button {
   }
 
   .tick-level-1 {
-    opacity: 0.5;
+    opacity: 0.2;
   }
 
   .tick-level-2 {
-    opacity: 0.2;
+    opacity: 1;
   }
 
   .time-grid .day-ticks .tick {
@@ -189,7 +189,8 @@ button {
 
   .label {
     font-size: 11px;
-    fill: rgba(255, 255, 255, 0.55);
+    font-weight: bold;
+    fill: rgba(255, 255, 255, 0.9);
   }
 
   .label.value-outside-bounds {
