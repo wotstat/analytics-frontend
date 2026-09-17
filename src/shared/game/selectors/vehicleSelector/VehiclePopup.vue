@@ -56,7 +56,8 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
 import { tankTagToReadable } from '@/shared/i18n/i18n'
-import { Highlighted, compareIntervals } from '@/shared/uiKit/highlightString/highlightUtils'
+import { createVehicleNameFilter } from '@/shared/game/vehicles/vehicleSearch'
+import { compareIntervals } from '@/shared/uiKit/highlightString/highlightUtils'
 import { useLocalStorage } from '@vueuse/core'
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
 
@@ -102,9 +103,6 @@ const preparedTankList = computed(() => {
       type: tank.type,
       shortName,
       name,
-      highlightedShort: new Highlighted(shortName),
-      highlightedName: new Highlighted(name),
-      highlighted: new Highlighted(name)
     }
   })
 })
@@ -199,7 +197,8 @@ const tankToDisplay = computed(() => {
   const currentLevelsCached = new Set(currentLevels.value)
   const currentTypesCached = new Set(currentTypes.value)
   const currentNationsCached = new Set(currentNations.value)
-  const currentSearchCached = currentSearch.value
+  const currentSearchCached = currentSearch.value.trim()
+  const matchVehicle = createVehicleNameFilter(currentSearchCached)
 
   const hasLevels = currentLevelsCached.size > 0
   const hasTypes = currentTypesCached.size > 0
@@ -218,12 +217,10 @@ const tankToDisplay = computed(() => {
         (!hasNations || currentNationsCached.has(t.nation))
       )
 
-    for (const tank of prefiltered) {
-      tank.highlighted = nameVariant.value == 'full' ? tank.highlightedName : tank.highlightedShort
-      tank.highlighted.setSubstring(currentSearchCached)
-    }
-
-    const filtered = prefiltered.filter(tank => !currentSearchCached || tank.highlighted.intervals.length > 0)
+    const filtered = prefiltered.flatMap(tank => {
+      const highlighted = matchVehicle(nameVariant.value == 'full' ? tank.name : tank.shortName)
+      return highlighted ? [{ ...tank, highlighted }] : []
+    })
 
     function compare(a: typeof filtered[number], b: typeof filtered[number]) {
       if (a.level !== b.level) return b.level - a.level

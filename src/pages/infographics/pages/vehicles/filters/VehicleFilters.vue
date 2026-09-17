@@ -30,7 +30,7 @@
       <div class="advanced-row">
         <span class="label" title="Для карт без отдельно выбранного респа">Респ</span>
         <div class="variants">
-          <button v-for="option in teamOptions" :key="option.value" class="variant mt-font"
+          <button v-for="option in teamOptions" :key="option.value" class="variant "
             :class="{ active: team === option.value, neutral: option.value === 'any' }" @click="team = option.value">{{
               option.label }}</button>
         </div>
@@ -38,7 +38,7 @@
       <div class="advanced-row">
         <span class="label">Взвод</span>
         <div class="variants">
-          <button v-for="option in platoonOptions" :key="option.value" class="variant mt-font"
+          <button v-for="option in platoonOptions" :key="option.value" class="variant "
             :class="{ active: platoon === option.value, neutral: option.value === 'any' }"
             @click="platoon = option.value">{{ option.label }}</button>
         </div>
@@ -46,7 +46,7 @@
       <div class="advanced-row">
         <span class="label">Результат</span>
         <div class="variants">
-          <button v-for="option in resultOptions" :key="option.value" class="variant mt-font"
+          <button v-for="option in resultOptions" :key="option.value" class="variant "
             :class="{ active: result === option.value, neutral: option.value === 'any' }"
             @click="result = option.value">{{ option.label }}</button>
         </div>
@@ -54,7 +54,7 @@
       <div class="advanced-row">
         <span class="label">Уровни боя</span>
         <div class="variants">
-          <button v-for="option in battleLevelOptions" :key="option.value" class="variant mt-font"
+          <button v-for="option in battleLevelOptions" :key="option.value" class="variant "
             :class="{ active: battleLevel === option.value, neutral: option.value === 'any' }"
             v-tooltip:battleLevel.bottom-float="battleLevelDescriptions[option.value]"
             @click="battleLevel = option.value">{{ option.label

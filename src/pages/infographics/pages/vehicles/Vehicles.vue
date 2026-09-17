@@ -1,8 +1,6 @@
 <template>
   <VehicleFilters v-model="filters" />
-  <div class="table">
-    <VehicleListTable :slots />
-  </div>
+  <VehicleListTable :slots="defaultSlots" :vehicles="statistics.data" :status="statistics.status" @retry="retry++" />
 </template>
 
 
@@ -11,27 +9,24 @@
 import { ref } from 'vue'
 import { useMeta } from '@/shared/composition/useMeta'
 import VehicleListTable from './vehicleListTable/VehicleListTable.vue'
-import { Slot } from './vehicleListTable/helpers.ts'
+import { defaultSlots, type VehicleStatistics } from './vehicleListTable/helpers'
 import VehicleFilters from './filters/VehicleFilters.vue'
 import { createVehicleFilters } from './filters/types'
+import { CACHE_SETTINGS, LONG_CACHE_SETTINGS, queryComputed } from '@/db'
+import { vehicleStatisticsQuery } from './vehicleStatisticsQuery'
 
 useMeta({
-  title: 'Статистика танов',
+  title: 'Статистика танков',
   description: 'Статистика всех танков игры',
-  keywords: 'статистика танов, статистика танов в боях, статистика танов в игре, статистика танов в world of tanks'
+  keywords: 'статистика танков, статистика танков в боях, статистика танков в игре, статистика танков в world of tanks'
 })
 
 const filters = ref(createVehicleFilters())
 
-const slots = ref<Slot[]>([
-  { icon: 'battles' },
-  { icon: 'player' },
-  { icon: 'dmg' },
-  { icon: 'assist' },
-  { icon: 'tank' },
-  { icon: 'xp' },
-  { icon: 'lifetime' },
-])
+const retry = ref(0)
+const statistics = queryComputed<VehicleStatistics>(() =>
+  `${vehicleStatisticsQuery(filters.value)}\n-- retry ${retry.value}`,
+  { settings: { ...LONG_CACHE_SETTINGS, query_cache_nondeterministic_function_handling: 'save' }, allowCache: false })
 
 
 </script>

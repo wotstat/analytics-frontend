@@ -36,9 +36,10 @@
 
     <p class="debug-note">
       Переключатель <b>полн./сокр.</b> в шапке таблицы пишет в localStorage
-      (<span class="debug-value">preferred-vehicle-name-variant</span>) и заодно меняет, по какому имени идёт поиск: в
-      режиме «сокр.» запрос «Объект 268 Вариант 4» не найдёт ничего, потому что искать он будет по
-      «Об. 268/4». В бейджах при этом всегда короткое имя — <span class="debug-value">getTankName(tag, true)</span>.
+      (<span class="debug-value">preferred-vehicle-name-variant</span>) и меняет отображение и подсветку.
+      Поиск проверяет только отображаемое название: в режиме «сокр.» запрос «ис7» не находит «Драгуна».
+      Проверь «kpz», «ис7» и «ис-7». Технический тег в поиске не участвует. В бейджах всегда короткое имя —
+      <span class="debug-value">getTankName(tag, true)</span>.
     </p>
 
     <p class="debug-note">
