@@ -73,8 +73,8 @@ const visibleHistory = computed(() => history.value.data.map(row =>
 const hasValues = computed(() => history.value.status === success &&
   visibleHistory.value.some(row => row[props.slot] !== null && Number.isFinite(row[props.slot])))
 
-watch([visibleHistory, () => props.slot], () => {
-  chart.setHistory(visibleHistory.value, props.slot)
+watch([visibleHistory, () => props.slot, beforeDay], () => {
+  chart.setHistory(visibleHistory.value, props.slot, beforeDay.value)
 }, { immediate: true })
 </script>
 
@@ -174,24 +174,30 @@ button {
     stroke-width: 2px;
   }
 
-  .grid .tick {
-    stroke: rgba(255, 255, 255, 0.07);
+  .grid {
+    opacity: 0.15;
+
+    .tick {
+      stroke: #999;
+    }
   }
 
-  .tick-level-1 {
-    opacity: 0.2;
+  // Цвет сплошной: пересечения X и Y не суммируют прозрачность.
+  // .label-ticks появляется у единицы, когда её подписи становятся видимыми.
+  .time-grid .tick-level:not(.label-ticks) .tick {
+    stroke: #3a3a3a;
   }
 
-  .tick-level-2 {
-    opacity: 1;
+  .time-grid .label-ticks.day-ticks .tick {
+    stroke: #555;
   }
 
-  .time-grid .day-ticks .tick {
-    stroke: rgba(255, 255, 255, 0.04);
+  .time-grid .label-ticks.month-ticks .tick {
+    stroke: #999;
   }
 
-  .time-grid .year-ticks .tick {
-    stroke: rgba(255, 255, 255, 0.16);
+  .time-grid .label-ticks.year-ticks .tick {
+    stroke: #fff;
   }
 
   .label {

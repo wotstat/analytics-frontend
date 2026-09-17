@@ -65,7 +65,7 @@ export class VehicleHistoryChart extends UniversalChart {
       .addDefs(clip, clipLeft, clipBottom)
   }
 
-  setHistory(history: VehicleHistoryDay[], slot: Slot) {
+  setHistory(history: VehicleHistoryDay[], slot: Slot, today: string) {
     this.tooltipCtx.value = null
     this.labelsY.updateOptions(this.yLabels(slot))
 
@@ -88,7 +88,7 @@ export class VehicleHistoryChart extends UniversalChart {
 
     if (!history.length) return
     const minX = Date.parse(`${history[0].day}T00:00:00Z`) / 1000
-    const maxX = Date.parse(`${history[history.length - 1].day}T00:00:00Z`) / 1000 + DAY
+    const maxX = Date.parse(`${today}T00:00:00Z`) / 1000
     if (this.interval?.minX === minX && this.interval.maxX === maxX) return
 
     this.interval = { minX, maxX }
