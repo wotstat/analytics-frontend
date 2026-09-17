@@ -5,25 +5,27 @@
 
   <PopoverAutoClose v-model="open" :target="trigger" :placement="['bottom-end', 'bottom-float']"
     :viewport-offset="popoverViewportOffset" :arrow-size="0">
-    <div class="column-popover deep-nice-scrollbar">
-      <div class="popover-heading">
-        <span>Столбцы</span>
+    <div class="column-popover">
+      <header class="popover-heading">
+        <h2>Выбор столбцов</h2>
         <span class="selected-count">Выбрано {{ selected.length }} из {{ maxSlots }}</span>
-      </div>
+      </header>
 
-      <section v-for="category in slotCategories" :key="category.title" class="category">
-        <h3>{{ category.title }}</h3>
-        <div class="tiles">
-          <button v-for="slot in category.slots" :key="slot" type="button" class="tile"
-            :class="{ selected: selected.includes(slot) }"
-            :aria-pressed="selected.includes(slot)" :title="slotDescription(slot)"
-            :disabled="selected.includes(slot) ? selected.length === 1 : selected.length >= maxSlots"
-            @click="toggle(slot)">
-            <Icon :icon="availableSlots[slot].icon" class="tile-icon" />
-            <span>{{ availableSlots[slot].label }}</span>
-          </button>
-        </div>
-      </section>
+      <div class="column-list nice-scrollbar">
+        <section v-for="category in slotCategories" :key="category.title" class="category">
+          <h3>{{ category.title }}</h3>
+          <div class="tiles">
+            <button v-for="slot in category.slots" :key="slot" type="button" class="tile"
+              :class="{ selected: selected.includes(slot) }"
+              :aria-pressed="selected.includes(slot)" :title="slotDescription(slot)"
+              :disabled="selected.includes(slot) ? selected.length === 1 : selected.length >= maxSlots"
+              @click="toggle(slot)">
+              <Icon :icon="availableSlots[slot].icon" class="tile-icon" />
+              <span>{{ availableSlots[slot].label }}</span>
+            </button>
+          </div>
+        </section>
+      </div>
     </div>
   </PopoverAutoClose>
 </template>
@@ -59,41 +61,59 @@ const props = defineProps<{ maxSlots: number }>()
   color: inherit;
   font-size: 14px;
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.1);
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
   }
 }
 
 .column-popover {
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
   width: min(900px, calc(100vw - 20px));
   max-height: min(700px, 70dvh);
-  overflow-y: auto;
-  padding: 16px;
 }
 
 .popover-heading {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  font-size: 15px;
-  font-weight: 600;
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+  h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
 }
 
 .selected-count {
   color: rgba(255, 255, 255, 0.55);
   font-size: 12px;
-  font-weight: normal;
+  white-space: nowrap;
+}
+
+.column-list {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 16px 16px;
 }
 
 .category {
   margin-top: 16px;
 
+  & + .category {
+    margin-top: 20px;
+  }
+
   h3 {
     margin: 0 0 8px;
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 12px;
+    color: #fff;
+    font-size: 14px;
     font-weight: 500;
   }
 }
@@ -116,7 +136,7 @@ const props = defineProps<{ maxSlots: number }>()
   background: rgba(255, 255, 255, 0.05);
   color: inherit;
   text-align: left;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.2;
 
   span {
@@ -126,8 +146,10 @@ const props = defineProps<{ maxSlots: number }>()
     white-space: nowrap;
   }
 
-  &:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.12);
+  @media (hover: hover) and (pointer: fine) {
+    &:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.12);
+    }
   }
 
   &.selected {
@@ -141,8 +163,8 @@ const props = defineProps<{ maxSlots: number }>()
 }
 
 .tile-icon {
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
   flex: none;
 }
 </style>
