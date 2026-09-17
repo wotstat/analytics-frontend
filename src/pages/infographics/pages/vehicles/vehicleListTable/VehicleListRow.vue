@@ -43,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, useId, watch } from 'vue'
+import { computed, ref, useId } from 'vue'
 import ArrowDown from '@/assets/icons/arrow-down.svg'
 import VehicleImage from '@/shared/game/vehicles/vehicle/VehicleImage.vue'
 import VehicleType from '@/shared/game/vehicles/type/VehicleType.vue'
@@ -66,7 +66,7 @@ const props = defineProps<{
 }>()
 const name = computed(() => getTankName(props.vehicle.tankTag, true))
 const expanded = ref(false)
-const activeSlot = ref<Slot>(props.slots[0] ?? 'battles')
+const activeSlot = defineModel<Slot>('activeSlot', { required: true })
 const id = useId()
 const panelId = `${id}-chart`
 
@@ -78,10 +78,6 @@ function selectSlot(slot: Slot) {
   activeSlot.value = slot
   expanded.value = true
 }
-
-watch(() => props.slots, slots => {
-  if (!slots.includes(activeSlot.value)) activeSlot.value = slots[0] ?? 'battles'
-})
 </script>
 
 <style scoped lang="scss">
@@ -100,6 +96,12 @@ watch(() => props.slots, slots => {
   display: grid;
   grid-template-columns: var(--vehicle-columns);
   min-height: 52px;
+
+  @media (hover: hover) and (pointer: fine) {
+    &:has(> .name:hover) {
+      background: rgba(255, 255, 255, 0.04);
+    }
+  }
 }
 
 .name {
@@ -110,10 +112,6 @@ watch(() => props.slots, slots => {
   min-width: 0;
   text-align: left;
   color: inherit;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.04);
-  }
 }
 
 .arrow {
@@ -208,7 +206,7 @@ watch(() => props.slots, slots => {
     &::before {
       content: '';
       position: absolute;
-      top: 0;
+      bottom: 3px;
       left: 10px;
       right: 10px;
       height: 2px;

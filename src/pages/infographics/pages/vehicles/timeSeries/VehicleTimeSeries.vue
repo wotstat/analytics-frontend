@@ -210,10 +210,6 @@ button {
     visibility: hidden;
   }
 
-  .year-labels .label {
-    fill: rgba(255, 255, 255, 0.8);
-  }
-
   .interactive-zone {
     cursor: crosshair;
   }

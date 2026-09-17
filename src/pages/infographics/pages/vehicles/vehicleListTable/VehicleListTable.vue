@@ -58,7 +58,8 @@
     </div>
     <div v-else class="body">
       <VehicleListRow v-for="vehicle in displayedVehicles" :key="vehicle.tankTag" :vehicle :latest-day="latestDay"
-        :slots="visibleSlots" :filters :min-battles="localFilters.minBattles" :min-players="localFilters.minPlayers" />
+        v-model:active-slot="activeSlot" :slots="visibleSlots" :filters :min-battles="localFilters.minBattles"
+        :min-players="localFilters.minPlayers" />
       <button v-if="displayedVehicles.length < filteredVehicles.length" class="show-more text-button"
         @click="displayLimit += PAGE_SIZE">Показать ещё {{ Math.min(PAGE_SIZE, filteredVehicles.length - displayLimit)
         }}</button>
@@ -111,6 +112,7 @@ function compareDescending(left: number | null, right: number | null) {
 const search = ref('')
 const localFilters = ref(createLocalVehicleFilters())
 const selectedSlots = ref<Slot[]>(orderSlots(props.slots))
+const activeSlot = ref<Slot>(selectedSlots.value[0] ?? 'battles')
 const displayLimit = ref(PAGE_SIZE)
 const sortOrders = ref<SortOrder[]>([{ key: 'battles', ascending: false }])
 const { width } = useElementSize(useTemplateRef('table'))
@@ -208,6 +210,7 @@ watch(maxSelectableSlots, limit => {
 }, { immediate: true })
 watch(visibleSlots, slots => {
   sortOrders.value = sortOrders.value.filter(({ key }) => key === 'name' || key === 'tankLevel' || key === 'tankType' || slots.includes(key))
+  if (!slots.includes(activeSlot.value)) activeSlot.value = slots[0] ?? 'battles'
 })
 </script>
 
