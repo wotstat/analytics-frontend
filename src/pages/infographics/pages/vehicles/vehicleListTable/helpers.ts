@@ -78,7 +78,7 @@ export const defaultSlots: Slot[] = ['battles', 'playerCount', 'winrate', 'damag
 const integer = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 })
 const decimal = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-export function formatSlotValue(slot: Slot, value: number | null) {
+export function formatSlotValue(slot: Slot, value: number | null, step: number | null = null) {
   if (value === null || !Number.isFinite(value)) return '—'
 
   const definition: SlotDefinition = availableSlots[slot]

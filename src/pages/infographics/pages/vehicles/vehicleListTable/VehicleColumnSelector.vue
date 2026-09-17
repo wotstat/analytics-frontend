@@ -1,5 +1,5 @@
 <template>
-  <button ref="trigger" class="column-trigger" type="button" :aria-expanded="open" @click="open = !open">
+  <button ref="trigger" class="column-trigger" type="button" @click="open = !open">
     Столбцы · {{ selected.length }}/{{ maxSlots }}
   </button>
 
@@ -15,9 +15,8 @@
         <section v-for="category in slotCategories" :key="category.title" class="category">
           <h3>{{ category.title }}</h3>
           <div class="tiles">
-            <button v-for="slot in category.slots" :key="slot" type="button" class="tile"
+            <button v-for="slot in category.slots" :key="slot" class="tile"
               :class="{ selected: selected.includes(slot) }"
-              :aria-pressed="selected.includes(slot)" :title="slotDescription(slot)"
               :disabled="selected.includes(slot) ? selected.length === 1 : selected.length >= maxSlots"
               @click="toggle(slot)">
               <Icon :icon="availableSlots[slot].icon" class="tile-icon" />
@@ -106,7 +105,7 @@ const props = defineProps<{ maxSlots: number }>()
 .category {
   margin-top: 16px;
 
-  & + .category {
+  &+.category {
     margin-top: 20px;
   }
 
@@ -130,9 +129,7 @@ const props = defineProps<{ maxSlots: number }>()
   align-items: center;
   gap: 8px;
   min-width: 0;
-  min-height: 48px;
-  padding: 8px;
-  border: 1px solid transparent;
+  padding: 2px 6px;
   border-radius: 5px;
   background: rgba(255, 255, 255, 0.05);
   color: inherit;
@@ -176,6 +173,6 @@ const props = defineProps<{ maxSlots: number }>()
 .tile-icon {
   width: 34px;
   height: 34px;
-  flex: none;
+  margin: -2px;
 }
 </style>

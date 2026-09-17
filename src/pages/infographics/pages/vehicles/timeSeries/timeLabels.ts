@@ -1,6 +1,10 @@
 import type { LabelLevelOptions, Options, TickSource, ValueGenerator } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
+import type { HistoryStep } from './historyStep'
 
 export const DAY = 24 * 60 * 60
+const WEEK = 7 * DAY
+// Unix epoch is Thursday; this offset places weekly ticks on Monday in UTC.
+const MONDAY_OFFSET = -3 * DAY
 
 const months = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
   'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь']
@@ -21,8 +25,18 @@ function calendarMonths(step: number): ValueGenerator {
   }
 }
 
-export function timeLabels(): Options {
+export function isoWeekNumber(monday: number): number {
+  const isoYear = new Date((monday + 3 * DAY) * 1000).getUTCFullYear()
+  const januaryFourth = Date.UTC(isoYear, 0, 4) / 1000
+  const dayOfWeek = (new Date(januaryFourth * 1000).getUTCDay() + 6) % 7
+  const firstMonday = januaryFourth - dayOfWeek * DAY
+  return Math.floor((monday - firstMonday) / WEEK) + 1
+}
+
+export function timeLabels(step: HistoryStep): Options {
   const dayTicks: TickSource = { source: { step: DAY }, minPixelSpacing: 6, classes: 'day-ticks' }
+  const weekSource = { step: WEEK, offset: MONDAY_OFFSET }
+  const weekTicks: TickSource = { source: weekSource, minPixelSpacing: 8, classes: 'week-ticks' }
   const monthTicks: TickSource = { source: calendarMonths(1), minPixelSpacing: 10, classes: 'month-ticks' }
   const yearTicks: TickSource = { source: calendarMonths(12), minPixelSpacing: 16, classes: 'year-ticks' }
   const year: LabelLevelOptions = {
@@ -31,12 +45,14 @@ export function timeLabels(): Options {
     classes: 'year-labels',
     ticks: { source: 'labels', classes: 'year-ticks' },
   }
+
   const month: LabelLevelOptions = {
     source: calendarMonths(1),
     labelForValue: value => months[new Date(value * 1000).getUTCMonth()],
     classes: 'month-labels',
     ticks: { source: 'labels', classes: 'month-ticks' },
   }
+
   const day: LabelLevelOptions = {
     source: { step: DAY },
     labelForValue: value => `${new Date(value * 1000).getUTCDate()}`,
@@ -44,27 +60,46 @@ export function timeLabels(): Options {
     classes: 'day-labels',
     ticks: { source: 'labels', classes: 'day-ticks' },
   }
-  const monthWithSubticks: LabelLevelOptions = {
-    ...month,
-    ticks: [{ source: 'labels', classes: 'month-ticks' }, dayTicks],
-  }
-  const yearWithSubticks: LabelLevelOptions = {
-    ...year,
-    ticks: [{ source: 'labels', classes: 'year-ticks' }, monthTicks, dayTicks],
+
+  const week: LabelLevelOptions = {
+    source: weekSource,
+    labelForValue: value => `нед. ${isoWeekNumber(value)}`,
+    strategy: { type: 'interval', placement: 'start', fit: true, offset: 4 },
+    classes: 'week-labels',
+    ticks: { source: 'labels', classes: 'week-ticks' },
   }
 
+  const smallerTicks = step === 'day' ? dayTicks : step === 'week' ? weekTicks : null
+
+  const monthWithSubticks: LabelLevelOptions = {
+    ...month,
+    ticks: smallerTicks ? [{ source: 'labels', classes: 'month-ticks' }, smallerTicks] : { source: 'labels', classes: 'month-ticks' },
+  }
+
+  const yearWithSubticks: LabelLevelOptions = {
+    ...year,
+    ticks: smallerTicks ? [{ source: 'labels', classes: 'year-ticks' }, monthTicks, smallerTicks] : [{ source: 'labels', classes: 'year-ticks' }, monthTicks],
+  }
+
+  const abbreviatedMonth: LabelLevelOptions = {
+    ...monthWithSubticks,
+    labelForValue: value => months[new Date(value * 1000).getUTCMonth()].slice(0, 3),
+  }
+
+  const denseCandidates: Options['values'] = step === 'month'
+    ? [[month, year], [abbreviatedMonth, year]]
+    : [[step === 'day' ? day : week, month, year], [monthWithSubticks, year], [abbreviatedMonth, year]]
+
   return {
-    // Этажи идут от ближайшего к оси к дальнему. Движок выбирает первый
-    // массив, в котором помещаются все подписи, при каждом изменении зума.
     values: [
-      [day, month, year],
-      [monthWithSubticks, year],
-      [{ ...monthWithSubticks, labelForValue: value => months[new Date(value * 1000).getUTCMonth()].slice(0, 3) }, year],
+      ...denseCandidates,
       [yearWithSubticks],
-      ...[2, 5, 10].map(step => [{
+      ...[2, 5, 10].map(yearStep => [{
         ...year,
-        source: calendarMonths(12 * step),
-        ticks: [{ source: 'labels', classes: 'year-ticks' }, yearTicks, monthTicks, dayTicks],
+        source: calendarMonths(12 * yearStep),
+        ticks: smallerTicks
+          ? [{ source: 'labels', classes: 'year-ticks' }, yearTicks, monthTicks, smallerTicks]
+          : [{ source: 'labels', classes: 'year-ticks' }, yearTicks, monthTicks],
       } satisfies LabelLevelOptions]),
     ],
     keyForValue: value => `${value}`,

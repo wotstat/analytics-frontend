@@ -28,7 +28,8 @@
       </div>
     </div>
     <div v-if="expanded" :id="panelId" class="chart-panel">
-      <VehicleTimeSeries :tank-tag="vehicle.tankTag" :slot="activeSlot" :filters :min-battles :min-players />
+      <VehicleTimeSeries v-model:step="historyStep" :tank-tag="vehicle.tankTag" :slot="activeSlot" :filters :min-battles
+        :min-players />
     </div>
   </div>
 </template>
@@ -45,7 +46,7 @@ import { romanNumberProcessor } from '@/shared/utils/processors/processors'
 import { availableSlots, formatSlotValue, formatStatisticsDay, type Slot, type VehicleStatistics } from './helpers'
 import type { VehicleFilters } from '../filters/types'
 import VehicleTimeSeries from '../timeSeries/VehicleTimeSeries.vue'
-import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
+import type { HistoryStep } from '../timeSeries/historyStep'
 
 const props = defineProps<{
   vehicle: VehicleStatistics
@@ -58,6 +59,7 @@ const props = defineProps<{
 const name = computed(() => getTankName(props.vehicle.tankTag, true))
 const expanded = ref(false)
 const activeSlot = defineModel<Slot>('activeSlot', { required: true })
+const historyStep = defineModel<HistoryStep>('historyStep', { required: true })
 const id = useId()
 const panelId = `${id}-chart`
 

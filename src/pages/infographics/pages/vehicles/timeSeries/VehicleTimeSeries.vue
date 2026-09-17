@@ -6,7 +6,10 @@
         <Icon name="chart-line" class="icon" :icon="availableSlots[props.slot].icon" />
         <span>{{ availableSlots[slot].label }}</span>
       </div>
-      <button v-if="hasValues" @click="chart.showAllHistory()">Вся история</button>
+      <div class="step-selector" role="group">
+        <a v-for="option in steps" :key="option.value" :class="{ active: step === option.value }"
+          @click="step = option.value">{{ option.label }}</a>
+      </div>
     </div>
 
     <div class="chart-body">
@@ -26,7 +29,8 @@
     <FloatingTooltip :ctx="chart.tooltipCtx.value" :offset="12">
       <template #default="{ ctx }">
         <div v-if="ctx.hits[0]" class="history-tooltip">
-          <span class="tooltip-date">{{ formatStatisticsDay(ctx.hits[0].datum.day) }} · {{ name }}</span>
+          <span class="tooltip-date">{{ formatPeriod(ctx.hits[0].datum.periodStart, ctx.hits[0].datum.periodEnd) }} · {{
+            name }}</span>
           <div class="tooltip-value">
             <span>{{ availableSlots[ctx.hits[0].datum.slot].label }}</span>
             <b>{{ formatSlotValue(ctx.hits[0].datum.slot, ctx.hits[0].datum.y) }}</b>
@@ -51,7 +55,8 @@ import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/Univers
 import type { VehicleFilters } from '../filters/types'
 import { availableSlots, formatSlotValue, formatStatisticsDay, type Slot } from '../vehicleListTable/helpers'
 import { vehicleHistoryQuery } from '../vehicleStatisticsQuery'
-import { VehicleHistoryChart, type VehicleHistoryDay } from './VehicleHistoryChart'
+import { VehicleHistoryChart, type VehicleHistoryPeriod } from './VehicleHistoryChart'
+import type { HistoryStep } from './historyStep'
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 
 const props = defineProps<{
@@ -61,13 +66,19 @@ const props = defineProps<{
   minBattles: number
   minPlayers: number
 }>()
+const step = defineModel<HistoryStep>('step', { required: true })
 const name = computed(() => getTankName(props.tankTag, true))
 const now = useNow({ interval: 60_000 })
 
 const beforeDay = computed(() => now.value.toISOString().slice(0, 10))
 const retry = ref(0)
-const history = queryComputed<VehicleHistoryDay>(() =>
-  `${vehicleHistoryQuery(props.filters, props.tankTag, beforeDay.value)}\n-- retry ${retry.value}`,
+const steps = [
+  { value: 'day', label: 'День' },
+  { value: 'week', label: 'Неделя' },
+  { value: 'month', label: 'Месяц' },
+] as const satisfies readonly { value: HistoryStep, label: string }[]
+const history = queryComputed<VehicleHistoryPeriod>(() =>
+  `${vehicleHistoryQuery(props.filters, props.tankTag, beforeDay.value, step.value)}\n-- retry ${retry.value}`,
   { settings: { use_query_cache: 1, query_cache_ttl: 24 * 60 * 60 } })
 
 const chart = markRaw(new VehicleHistoryChart())
@@ -83,9 +94,14 @@ const visibleHistory = computed(() => {
 const hasValues = computed(() => history.value.status === success &&
   visibleHistory.value.some(row => row[props.slot] !== null && Number.isFinite(row[props.slot])))
 
-watch([visibleHistory, () => props.slot, beforeDay], () => {
-  chart.setHistory(visibleHistory.value, props.slot, beforeDay.value)
+watch([visibleHistory, () => props.slot, beforeDay, step], () => {
+  chart.setHistory(visibleHistory.value, props.slot, beforeDay.value, step.value)
 }, { immediate: true })
+
+function formatPeriod(start: string, end: string) {
+  const from = formatStatisticsDay(start)
+  return start === end ? from : `${from} — ${formatStatisticsDay(end)}`
+}
 </script>
 
 <style lang="scss" scoped>
@@ -98,12 +114,15 @@ watch([visibleHistory, () => props.slot, beforeDay], () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
   min-height: 24px;
+  padding-bottom: 3px;
 
   .title {
     display: flex;
     align-items: center;
+    min-width: 0;
     color: white;
     margin-left: -7px;
 
@@ -119,15 +138,38 @@ watch([visibleHistory, () => props.slot, beforeDay], () => {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.step-selector {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  gap: 8px;
+
+  a {
+    color: rgba(197, 197, 197, 0.6);
+    font-size: 12px;
+    white-space: nowrap;
+    cursor: pointer;
+    font-weight: bold;
+
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        color: rgba(255, 255, 255, 0.8);
+      }
+    }
+
+    &.active {
+      color: white;
+    }
+  }
+}
+
 button {
   color: var(--blue-thin-color);
 
-  &:hover {
-    color: white;
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--blue-thin-color);
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      color: white;
+    }
   }
 }
 
@@ -191,12 +233,16 @@ button {
     stroke-linecap: round;
   }
 
-  .history-hover-marker {
-    fill: var(--blue-thin-color);
-  }
+  .interaction {
 
-  .history-hover-marker {
-    stroke-width: 2px;
+    .history-hover-marker {
+      fill: var(--blue-thin-color);
+    }
+
+    .history-hover-marker {
+      stroke-width: 2px;
+    }
+
   }
 
   .grid {
@@ -212,6 +258,10 @@ button {
   }
 
   .time-grid .label-ticks.day-ticks .tick {
+    stroke: #555;
+  }
+
+  .time-grid .label-ticks.week-ticks .tick {
     stroke: #555;
   }
 

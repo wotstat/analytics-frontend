@@ -15,18 +15,22 @@ import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalCha
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
 import { availableSlots, formatSlotValue, type Slot } from '../vehicleListTable/helpers'
 import { DAY, timeLabels } from './timeLabels'
+import { historyDayStart, historyDayString, historyPeriodWindow, minimumHistoryWindow, nextHistoryPeriod, type HistoryStep } from './historyStep'
+import { ChartMask } from '@/shared/uiKit/chart/universalChart/defs/ChartMask'
 
-export type VehicleHistoryDay = { day: string } & Record<Slot, number | null>
-type HistoryPoint = { x: number, y: number, day: string, battles: number | null, slot: Slot }
+export type VehicleHistoryPeriod = { periodStart: string } & Record<Slot, number | null>
+type HistoryPoint = { x: number, y: number, periodStart: string, periodEnd: string, battles: number | null, slot: Slot }
 export type VehicleHistoryHit = LinePointHit<HistoryPoint>
 
 export class VehicleHistoryChart extends UniversalChart {
   readonly tooltipCtx = shallowRef<TooltipCtx<VehicleHistoryHit> | null>(null)
 
   private readonly line = new AutoLine<HistoryPoint>({ classes: 'history-line', smoothingMethod: 'monotone' })
+  private readonly labelsX: AutoLabels
   private readonly labelsY: AutoLabels
   private readonly zoom: ZoomChartComponent
-  private interval: { minX: number, maxX: number } | null = null
+  private labelStep: HistoryStep = 'day'
+  private interval: { minX: number, maxX: number, step: HistoryStep } | null = null
 
   constructor() {
     super({
@@ -37,9 +41,10 @@ export class VehicleHistoryChart extends UniversalChart {
     })
 
     const clip = new ChartClip('center', { top: -4, bottom: -4 })
+    const mask = new ChartMask('center', { top: -4, bottom: -4 })
     const clipLeft = new ChartClip('left')
     const clipBottom = new ChartClip('bottom')
-    const labelsX = new AutoLabels('horizontal', timeLabels()).clipBy(clipBottom)
+    this.labelsX = new AutoLabels('horizontal', timeLabels('day')).clipBy(clipBottom)
     this.labelsY = new AutoLabels('vertical', this.yLabels('battles')).clipBy(clipLeft)
 
     this.zoom = new ZoomChartComponent({ chart: this, zoom: true, panDirection: 'horizontal' })
@@ -47,50 +52,68 @@ export class VehicleHistoryChart extends UniversalChart {
     const interaction = new InteractionController()
       .addComponent(this.zoom)
       .addComponent(new VerticalLine({ selection, offset: { start: -4, end: 0 } }))
-      .addComponent(new MarkerOverlay({ selection, size: 5, markerClasses: 'history-hover-marker' }))
+      .addComponent(new MarkerOverlay({ selection, size: 4, maskSize: 6, markerClasses: 'history-hover-marker', targetMasks: [mask.root] }))
       .addComponent(new ChartTooltip({
         selection,
         onHide: () => this.tooltipCtx.value = null,
         onPositionChange: ctx => this.tooltipCtx.value = ctx,
       }))
 
+    const plot = new PlotGroup()
+      .addPlot(this.line)
+      .clipBy(clip)
+      .maskBy(mask)
+
     this
       .addPlot(new TicksByLabels(this.labelsY), 'grid')
-      .addPlot(new TicksByLabels(labelsX, { classes: 'time-grid' }), 'grid')
-      .addPlot(new PlotGroup().addPlot(this.line).clipBy(clip), 'plot')
-      .addSlot('bottom', labelsX, 'labels')
+      .addPlot(new TicksByLabels(this.labelsX, { classes: 'time-grid' }), 'grid')
+      .addPlot(plot, 'plot')
+      .addSlot('bottom', this.labelsX, 'labels')
       .addSlot('left', this.labelsY, 'labels')
       .addPlot(interaction)
-      .addDefs(clip, clipLeft, clipBottom)
+      .addDefs(clip, clipLeft, clipBottom, mask)
   }
 
-  setHistory(history: VehicleHistoryDay[], slot: Slot, today: string) {
+  setHistory(history: VehicleHistoryPeriod[], slot: Slot, today: string, step: HistoryStep) {
     this.tooltipCtx.value = null
+    if (this.labelStep !== step) {
+      this.labelsX.updateOptions(timeLabels(step))
+      this.labelStep = step
+    }
     this.labelsY.updateOptions(this.yLabels(slot))
 
     const points: (HistoryPoint | null)[] = []
-    let previousX: number | null = null
+    let previousStart: number | null = null
+    const todayStart = historyDayStart(today)
     for (const row of history) {
-      const x = Date.parse(`${row.day}T00:00:00Z`) / 1000 + DAY / 2
+      const { start, end } = historyPeriodWindow(row.periodStart, step, todayStart)
+      const x = (start + end) / 2
       const value = row[slot]
-      // Пропущенные дни и NULL остаются разрывами, а не превращаются в нули.
-      if (previousX !== null && x - previousX > DAY) points.push(null)
-      points.push(value !== null && Number.isFinite(value) ? { x, y: value, day: row.day, battles: row.battles, slot } : null)
-      previousX = x
+      // Пропущенные периоды и NULL остаются разрывами, а не превращаются в нули.
+      if (previousStart !== null && start > nextHistoryPeriod(previousStart, step)) points.push(null)
+      points.push(value !== null && Number.isFinite(value) ? {
+        x, y: value, periodStart: row.periodStart, periodEnd: historyDayString(end - DAY), battles: row.battles, slot
+      } : null)
+      previousStart = start
     }
     this.line.setPoints(points)
 
     if (!history.length) return
-    const minX = Date.parse(`${history[0].day}T00:00:00Z`) / 1000
-    const maxX = Date.parse(`${today}T00:00:00Z`) / 1000
-    if (this.interval?.minX === minX && this.interval.maxX === maxX) return
+    const minX = historyDayStart(history[0].periodStart)
+    const maxX = todayStart
+    if (this.interval?.minX === minX && this.interval.maxX === maxX && this.interval.step === step) return
 
-    this.interval = { minX, maxX }
+    this.interval = { minX, maxX, step }
     this.zoom.updateOptions({
       chart: this,
       zoom: true,
       panDirection: 'horizontal',
-      limits: { minX, maxX, minDeltaX: Math.min(3 * DAY, maxX - minX), maxDeltaX: maxX - minX, elastic: true },
+      limits: {
+        minX, maxX,
+        minDeltaX: Math.min(minimumHistoryWindow(step), maxX - minX),
+        maxDeltaX: maxX - minX,
+        elastic: step === 'day',
+      },
     })
     this.showAllHistory()
   }
@@ -102,14 +125,15 @@ export class VehicleHistoryChart extends UniversalChart {
   private yLabels(slot: Slot): LabelsOptions {
     const definition = availableSlots[slot]
     const fractional = 'format' in definition && (definition.format === 'decimal' || definition.format === 'percent')
+
+    const steps = [
+      ...(fractional ? [0.01, 0.02, 0.05, 0.1, 0.2, 0.5] : []),
+      1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 50000, 100000,
+    ]
+
     return {
-      values: labelCandidates({
-        step: [
-          ...(fractional ? [0.01, 0.02, 0.05, 0.1, 0.2, 0.5] : []),
-          1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 50000, 100000,
-        ]
-      }),
-      labelForValue: value => formatSlotValue(slot, value),
+      values: labelCandidates({ step: steps }),
+      labelForValue: (value, ctx) => formatSlotValue(slot, value, steps[ctx.candidateIndex]),
       keyForValue: value => `${value}`,
       padding: { clip: 8, flow: 8 },
       labelOffset: 8,

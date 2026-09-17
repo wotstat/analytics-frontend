@@ -1,6 +1,7 @@
 import { customBattleModes } from '@/shared/game/wot'
 import type { VehicleFilters } from './filters/types'
 import { availableSlots } from './vehicleListTable/helpers'
+import type { HistoryStep } from './timeSeries/historyStep'
 
 function quote(value: string) {
   return `'${value.replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`
@@ -48,16 +49,24 @@ export function vehicleStatisticsWhere(filters: VehicleFilters, beforeDay?: stri
   return conditions.length ? conditions.join('\n      and ') : '1'
 }
 
-export function vehicleHistoryQuery(filters: VehicleFilters, tankTag: string, beforeDay: string) {
+export function vehicleHistoryQuery(filters: VehicleFilters, tankTag: string, beforeDay: string, step: HistoryStep) {
+  // Reaggregate source rows per period so averages keep their denominators and
+  // player states are merged across days instead of adding daily results.
+  const period = {
+    day: 'stats.day',
+    week: 'toMonday(stats.day)',
+    month: 'toStartOfMonth(stats.day)',
+  }[step]
+
   return `
     select
-      stats.day as day,
+      ${period} as periodStart,
       ${Object.entries(availableSlots).map(([key, slot]) => `${slot.sql} as ${key}`).join(',\n      ')}
     from VehiclesStatistics as stats
     where ${vehicleStatisticsWhere(filters, beforeDay)}
       and stats.tankTag = ${quote(tankTag)}
-    group by stats.day
-    order by stats.day
+    group by periodStart
+    order by periodStart
   `
 }
 

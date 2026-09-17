@@ -58,7 +58,7 @@
     </div>
     <div v-else class="body">
       <VehicleListRow v-for="vehicle in displayedVehicles" :key="vehicle.tankTag" :vehicle :latest-day="latestDay"
-        v-model:active-slot="activeSlot" :slots="visibleSlots" :filters :min-battles="localFilters.minBattles"
+        v-model:active-slot="activeSlot" v-model:history-step="historyStep" :slots="visibleSlots" :filters :min-battles="localFilters.minBattles"
         :min-players="localFilters.minPlayers" />
 
       <button v-if="displayedVehicles.length < filteredVehicles.length" class="show-more text-button"
@@ -86,6 +86,7 @@ import VehicleColumnSelector from './VehicleColumnSelector.vue'
 import VehicleListFilters from './VehicleListFilters.vue'
 import VehicleListRow from './VehicleListRow.vue'
 import type { VehicleFilters } from '../filters/types'
+import type { HistoryStep } from '../timeSeries/historyStep'
 
 const props = defineProps<{
   slots: Slot[]
@@ -115,6 +116,7 @@ const search = ref('')
 const localFilters = ref(createLocalVehicleFilters())
 const selectedSlots = ref<Slot[]>(orderSlots(props.slots))
 const activeSlot = ref<Slot>(selectedSlots.value[0] ?? 'battles')
+const historyStep = ref<HistoryStep>('day')
 const displayLimit = ref(PAGE_SIZE)
 const sortOrders = ref<SortOrder[]>([{ key: 'battles', ascending: false }])
 const { width } = useElementSize(useTemplateRef('table'))
