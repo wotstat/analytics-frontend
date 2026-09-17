@@ -150,7 +150,7 @@ const clip = new ChartClip('center', { top: -1, bottom: -1 })
 
 const chart = markRaw(new UniversalChart({
   renderManager: globalChartRenderManagerSteps4,
-  renderBoundsPadding: { vertical: 20 },
+  renderBoundsDataPadding: { vertical: 20 },
   minLayoutSize: 6,
 }).addDefs(clip))
 

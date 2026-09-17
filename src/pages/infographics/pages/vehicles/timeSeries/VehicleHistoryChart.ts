@@ -32,7 +32,7 @@ export class VehicleHistoryChart extends UniversalChart {
     super({
       layoutVariant: 'vertical',
       renderManager: globalChartRenderManagerSteps4,
-      renderBoundsPadding: { top: 0.1, bottom: 0.1 },
+      renderBoundsPxPadding: { top: 12, bottom: 12 },
       minLayoutSize: { top: 8, right: 8 },
     })
 
@@ -80,11 +80,6 @@ export class VehicleHistoryChart extends UniversalChart {
       previousX = x
     }
     this.line.setPoints(points)
-    const values = points.filter((point): point is HistoryPoint => point !== null)
-    const minY = Math.min(...values.map(point => point.y))
-    const maxY = Math.max(...values.map(point => point.y))
-    const padding = values.length ? Math.max((maxY - minY) * 0.08, Math.abs(maxY) * 0.01, 0.01) : 1
-    this.setRenderBoundsPadding({ top: padding, bottom: padding })
 
     if (!history.length) return
     const minX = Date.parse(`${history[0].day}T00:00:00Z`) / 1000

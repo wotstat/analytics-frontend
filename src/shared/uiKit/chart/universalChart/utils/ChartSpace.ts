@@ -1,5 +1,20 @@
-import { Bounds } from './Bounds'
+import { Bounds, type BoundsConstraint } from './Bounds'
 import { Point } from './Point'
+import type { NormalizedOffset4Side } from './utils'
+
+function padAxis(min: number, max: number, size: number, lowPx: number, highPx: number,
+  fixedMin: number | undefined, fixedMax: number | undefined) {
+  if (fixedMin !== undefined && fixedMax !== undefined) return [fixedMin, fixedMax] as const
+  if (!(max > min) || !(size > lowPx + highPx)) return [fixedMin ?? min, fixedMax ?? max] as const
+
+  if (fixedMin !== undefined) return [fixedMin, fixedMin + (max - fixedMin) * size / (size - highPx)] as const
+  if (fixedMax !== undefined) return [fixedMax - (fixedMax - min) * size / (size - lowPx), fixedMax] as const
+
+  // The new bounds change the scale. Reserve the requested pixels in the final
+  // layout, so the original data span occupies size - lowPx - highPx pixels.
+  const unitsPerPixel = (max - min) / (size - lowPx - highPx)
+  return [min - lowPx * unitsPerPixel, max + highPx * unitsPerPixel] as const
+}
 
 
 export class ChartSpace {
@@ -12,6 +27,14 @@ export class ChartSpace {
     },
     public bounds: Bounds
   ) { }
+
+  withPixelPadding(padding: NormalizedOffset4Side, fixed: BoundsConstraint = {}): Bounds {
+    const [minX, maxX] = padAxis(this.bounds.minX, this.bounds.maxX, this.layout.width,
+      padding.left, padding.right, fixed.minX, fixed.maxX)
+    const [minY, maxY] = padAxis(this.bounds.minY, this.bounds.maxY, this.layout.height,
+      padding.bottom, padding.top, fixed.minY, fixed.maxY)
+    return Bounds.fromMinMax(minX, maxX, minY, maxY)
+  }
 
   chartToLayout(p: Point): Point {
     const { x, y } = p

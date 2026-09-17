@@ -57,7 +57,7 @@ export type LabelsChartSetup = {
   clipPlot?: boolean
   zeroLine?: boolean
   minLayoutSize?: Offset4Side
-  renderBoundsPadding?: Offset4Side
+  renderBoundsDataPadding?: Offset4Side
   stepProbe?: StepProbe
   onRender?: (state: ProbeState) => void
 }
@@ -78,7 +78,7 @@ export class LabelsChart extends UniversalChart {
     super({
       layoutVariant: setup.layoutVariant ?? 'vertical',
       renderManager: globalChartRenderManagerSteps4,
-      renderBoundsPadding: setup.renderBoundsPadding,
+      renderBoundsDataPadding: setup.renderBoundsDataPadding,
     })
 
     const xSlots = [...new Set(setup.xSlots ?? [setup.xSlot ?? 'bottom'])]

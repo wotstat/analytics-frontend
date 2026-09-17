@@ -131,7 +131,7 @@ function build() {
 
   const chart = new UniversalChart({
     renderManager: globalChartRenderManagerSteps4,
-    renderBoundsPadding: { vertical: 20 },
+    renderBoundsDataPadding: { vertical: 20 },
     minLayoutSize: 4,
   }).addPlot(area, 'plot')
 

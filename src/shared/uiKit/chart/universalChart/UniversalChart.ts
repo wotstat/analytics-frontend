@@ -9,7 +9,9 @@ import { ChartRenderManager } from '../ChartRenderManager'
 
 type Options = {
   renderBounds?: { minX?: number, maxX?: number, minY?: number, maxY?: number },
-  renderBoundsPadding?: Offset4Side,
+  renderBoundsDataPadding?: Offset4Side,
+  renderBoundsPxPadding?: Offset4Side,
+  renderBoundsDomain?: BoundsConstraint,
   minLayoutSize?: Offset4Side,
   layoutVariant?: 'horizontal' | 'vertical' | 'square',
   root?: HTMLElement
@@ -52,7 +54,8 @@ export class UniversalChart extends BaseChart {
   readonly onAfterRender = new EventEmitter<AfterRenderEvent>()
 
   private userDefinedBounds: { minX: number | null, maxX: number | null, minY: number | null, maxY: number | null } | null = null
-  private renderBoundsPadding = { top: 0, right: 0, bottom: 0, left: 0 }
+  private renderBoundsDataPadding = { top: 0, right: 0, bottom: 0, left: 0 }
+  private renderBoundsPxPadding = { top: 0, right: 0, bottom: 0, left: 0 }
   private minLayoutSize = { top: 0, right: 0, bottom: 0, left: 0 }
 
   private chartSpace = new ChartSpace({ x: 0, y: 0, width: 0, height: 0 }, new Bounds())
@@ -85,7 +88,8 @@ export class UniversalChart extends BaseChart {
     this.svg.appendChild(this.defs)
 
     this.setRenderBounds(options.renderBounds)
-    this.setRenderBoundsPadding(options.renderBoundsPadding ?? { horizontal: 0, vertical: 0 })
+    this.setRenderBoundsDataPadding(options.renderBoundsDataPadding ?? 0)
+    this.setRenderBoundsPxPadding(options.renderBoundsPxPadding ?? 0)
     this.setMinLayoutSize(options.minLayoutSize ?? { horizontal: 0, vertical: 0 })
 
     if (this.options.root) this.attach(this.options.root)
@@ -239,8 +243,13 @@ export class UniversalChart extends BaseChart {
     this.dataDidChange()
   }
 
-  setRenderBoundsPadding(padding: Offset4Side) {
-    this.renderBoundsPadding = unwrapOffset(padding)
+  setRenderBoundsDataPadding(padding: Offset4Side) {
+    this.renderBoundsDataPadding = unwrapOffset(padding)
+    this.dataDidChange()
+  }
+
+  setRenderBoundsPxPadding(padding: Offset4Side) {
+    this.renderBoundsPxPadding = unwrapOffset(padding)
     this.dataDidChange()
   }
 
@@ -342,18 +351,27 @@ export class UniversalChart extends BaseChart {
   }
 
   private layout() {
-
-    const key = `${this.size.width}x${this.size.height}-${this.chartSpace.bounds.getHash()}-${this.userDefinedBounds ? `${this.userDefinedBounds.minX ?? 'n'}-${this.userDefinedBounds.maxX ?? 'n'}-${this.userDefinedBounds.minY ?? 'n'}-${this.userDefinedBounds.maxY ?? 'n'}` : 'd'}`
+    const userKey = this.userDefinedBounds
+      ? `${this.userDefinedBounds.minX ?? 'n'}-${this.userDefinedBounds.maxX ?? 'n'}-${this.userDefinedBounds.minY ?? 'n'}-${this.userDefinedBounds.maxY ?? 'n'}`
+      : 'd'
+    const key = `${this.size.width}x${this.size.height}-${this.chartSpace.bounds.getHash()}-${userKey}`
     if (key === this.layoutCacheKey) return false
     this.layoutCacheKey = key
 
+    const layout = this.measureLayout(this.chartSpace.bounds)
+    if (layoutEquals(this.chartSpace.layout, layout)) return false
+
+    this.chartSpace.layout = layout
+    return true
+  }
+
+  private measureLayout(bounds: Bounds): ChartSpace['layout'] {
     const full = this.size
     const w = this.size.width
     const h = this.size.height
 
-    let layout = new ChartSpace({ x: 0, y: 0, width: w, height: h }, this.chartSpace.bounds)
+    const layout = new ChartSpace({ x: 0, y: 0, width: w, height: h }, bounds)
     let overflow = { top: 0, right: 0, bottom: 0, left: 0 }
-
     const process = (renderers: Set<SlotRenderer>, dir: keyof typeof overflow, minSize: number) => {
       let res = minSize
       const prop = dir === 'top' || dir === 'bottom' ? 'height' : 'width'
@@ -374,11 +392,7 @@ export class UniversalChart extends BaseChart {
       layout.layout.height = h - layout.layout.y - process(this.bottomRenderers, 'bottom', this.minLayoutSize.bottom)
     }
 
-    if (layoutEquals(this.chartSpace.layout, layout.layout)) return false
-
-    this.chartSpace.layout = layout.layout
-
-    return true
+    return layout.layout
   }
 
   private calculateRenderBounds() {
@@ -395,10 +409,8 @@ export class UniversalChart extends BaseChart {
     })
   }
 
-  // The bounds the auto-fit layout path produces for a given axis constraint: axes left
-  // unset are fitted to the data lying inside the set ones, with render padding applied.
-  // Exposed so an interactive controller can read the target an auto-fitted axis is about
-  // to snap to and animate toward it instead (see ZoomChartComponent).
+  // Fit the data inside the supplied visible range. Interactive controllers use this
+  // as the target for an automatically fitted axis while another axis is driven.
   autoFitBounds(constraint: BoundsConstraint): Bounds {
     const hasConstraint = constraint.minX !== undefined || constraint.maxX !== undefined ||
       constraint.minY !== undefined || constraint.maxY !== undefined
@@ -406,12 +418,52 @@ export class UniversalChart extends BaseChart {
 
     if (bounds.isEmpty()) bounds = this.plotBounds.clone()
 
-    return Bounds.fromMinMax(
-      constraint.minX ?? (bounds.minX - this.renderBoundsPadding.left),
-      constraint.maxX ?? (bounds.maxX + this.renderBoundsPadding.right),
-      constraint.minY ?? (bounds.minY - this.renderBoundsPadding.bottom),
-      constraint.maxY ?? (bounds.maxY + this.renderBoundsPadding.top),
+    const desired = Bounds.fromMinMax(
+      constraint.minX ?? (bounds.minX - this.renderBoundsDataPadding.left),
+      constraint.maxX ?? (bounds.maxX + this.renderBoundsDataPadding.right),
+      constraint.minY ?? (bounds.minY - this.renderBoundsDataPadding.bottom),
+      constraint.maxY ?? (bounds.maxY + this.renderBoundsDataPadding.top),
     )
+
+    this.constrainToDomain(desired, constraint)
+    if (bounds.isEmpty() || this.size.width <= 0 || this.size.height <= 0) return desired
+
+    const padding = this.renderBoundsPxPadding
+    if (!padding.top && !padding.right && !padding.bottom && !padding.left) return desired
+
+    // Measure from this frame's desired bounds. Pixel padding is a single conversion
+    // through that ChartSpace; slot sizes that depend on the padded bounds should use
+    // data padding instead to avoid feeding the result back into its own scale.
+    const space = new ChartSpace(this.measureLayout(desired), desired)
+    const fitted = space.withPixelPadding(padding, constraint)
+    const domain = this.options.renderBoundsDomain
+    if (domain) {
+      const fixed: BoundsConstraint = { ...constraint }
+      if (fixed.minX === undefined && domain.minX !== undefined && fitted.minX < domain.minX && fitted.maxX > domain.minX) fixed.minX = domain.minX
+      if (fixed.maxX === undefined && domain.maxX !== undefined && fitted.maxX > domain.maxX && fitted.minX < domain.maxX) fixed.maxX = domain.maxX
+      if (fixed.minY === undefined && domain.minY !== undefined && fitted.minY < domain.minY && fitted.maxY > domain.minY) fixed.minY = domain.minY
+      if (fixed.maxY === undefined && domain.maxY !== undefined && fitted.maxY > domain.maxY && fitted.minY < domain.maxY) fixed.maxY = domain.maxY
+      if (fixed.minX !== constraint.minX || fixed.maxX !== constraint.maxX ||
+        fixed.minY !== constraint.minY || fixed.maxY !== constraint.maxY) {
+        const limited = space.withPixelPadding(padding, fixed)
+        this.constrainToDomain(limited, constraint)
+        return limited
+      }
+    }
+
+    return fitted
+  }
+
+  private constrainToDomain(bounds: Bounds, fixed: BoundsConstraint) {
+    const domain = this.options.renderBoundsDomain
+    if (!domain) return
+
+    const minX = fixed.minX === undefined ? Math.max(bounds.minX, domain.minX ?? -Infinity) : bounds.minX
+    const maxX = fixed.maxX === undefined ? Math.min(bounds.maxX, domain.maxX ?? Infinity) : bounds.maxX
+    const minY = fixed.minY === undefined ? Math.max(bounds.minY, domain.minY ?? -Infinity) : bounds.minY
+    const maxY = fixed.maxY === undefined ? Math.min(bounds.maxY, domain.maxY ?? Infinity) : bounds.maxY
+    if (minX < maxX) bounds.patch({ minX, maxX })
+    if (minY < maxY) bounds.patch({ minY, maxY })
   }
 
   private calculateActualDataBounds(constraint?: BoundsConstraint) {

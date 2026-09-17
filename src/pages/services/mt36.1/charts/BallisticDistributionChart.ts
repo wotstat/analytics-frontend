@@ -45,7 +45,7 @@ export class BallisticDistributionChart extends UniversalChart {
       layoutVariant: 'vertical',
       renderManager: globalChartRenderManagerSteps4,
       minLayoutSize: { right: 2 },
-      renderBoundsPadding: { top: 0.005 },
+      renderBoundsPxPadding: { top: 10 },
     })
 
     const xValues = [0.33, 0.5, 0.66]
