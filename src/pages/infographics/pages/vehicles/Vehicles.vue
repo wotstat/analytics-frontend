@@ -17,6 +17,10 @@ import { LONG_CACHE_SETTINGS, queryComputed } from '@/db'
 import { vehicleStatisticsQuery } from './vehicleStatisticsQuery'
 import { createLocalVehicleFilters } from './vehicleListTable/localFilters'
 import type { VehicleGrouping } from './vehicleGrouping'
+import { useBackground } from '@/shared/uiKit/pageBackground/useBackground'
+import VehiclesBackground from './VehiclesBackground.vue'
+
+useBackground(VehiclesBackground)
 
 useMeta({
   title: 'Статистика танков',
