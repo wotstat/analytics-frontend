@@ -265,37 +265,45 @@ button {
   }
 
   .grid {
-    opacity: 0.15;
+    opacity: 0.2;
+
+
+    .y-ticks .tick {
+      stroke: rgb(255, 255, 255, 0.5);
+    }
 
     .tick {
-      stroke: #999;
+      stroke: rgb(255, 255, 255, 0.04);
     }
-  }
 
-  .time-grid .tick-level:not(.label-ticks) .tick {
-    stroke: #3a3a3a;
-  }
+    .label-ticks {
+      &.day-ticks .tick {
+        stroke: rgb(255, 255, 255, 0.15);
+      }
 
-  .time-grid .label-ticks.day-ticks .tick {
-    stroke: #555;
-  }
+      &.week-ticks .tick {
+        stroke: rgb(255, 255, 255, 0.15);
+      }
 
-  .time-grid .label-ticks.week-ticks .tick {
-    stroke: #555;
-  }
+      &.month-ticks .tick {
+        stroke: rgb(255, 255, 255, 0.4);
+      }
 
-  .time-grid .label-ticks.month-ticks .tick {
-    stroke: #999;
-  }
-
-  .time-grid .label-ticks.year-ticks .tick {
-    stroke: #fff;
+      &.year-ticks .tick {
+        stroke: rgb(255, 255, 255, 1);
+      }
+    }
   }
 
   .label {
     font-size: 11px;
     font-weight: bold;
     fill: rgba(255, 255, 255, 0.9);
+  }
+
+
+  .day-labels .label {
+    font-weight: normal;
   }
 
   .label.value-outside-bounds {
