@@ -25,7 +25,10 @@ export type VehicleHistoryHit = LinePointHit<HistoryPoint>
 export class VehicleHistoryChart extends UniversalChart {
   readonly tooltipCtx = shallowRef<TooltipCtx<VehicleHistoryHit> | null>(null)
 
-  private readonly line = new AutoLine<HistoryPoint>({ classes: 'history-line', smoothingMethod: 'monotone' })
+  private readonly line = new AutoLine<HistoryPoint>({
+    classes: 'history-line',
+    // smoothingMethod: 'monoton'
+  })
   private readonly labelsX: AutoLabels
   private readonly labelsY: AutoLabels
   private readonly zoom: ZoomChartComponent

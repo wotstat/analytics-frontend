@@ -12,8 +12,8 @@
           <VehicleType :type="isVehicleType(vehicle.tankType) ? vehicle.tankType : 'any'" class="type" />
         </span>
         <span v-if="vehicle.tankTag !== null" class="vehicle-cell">
-          <VehicleImage :tag="vehicle.tankTag" :game="regionToGame(vehicle.region)"
-            size="preview" loading="lazy" class="vehicle-image" aria-hidden="true" />
+          <VehicleImage :tag="vehicle.tankTag" :game="regionToGame(vehicle.region)" size="preview" loading="lazy"
+            class="vehicle-image" aria-hidden="true" />
           <span class="vehicle-info">
             <span class="vehicle-name" :title="vehicleName(vehicle, false)">{{ name }}</span>
             <span v-if="vehicle.day !== latestDay" class="postfix">{{ formatStatisticsDay(vehicle.day) }}</span>

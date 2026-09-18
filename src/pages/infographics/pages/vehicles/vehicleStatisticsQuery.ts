@@ -8,6 +8,26 @@ function quote(value: string) {
   return `'${value.replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`
 }
 
+function statisticsSource(filters: VehicleFilters) {
+  const needsDetails = filters.arenas.length > 0
+    || filters.team !== 'any'
+    || filters.platoon !== 'any'
+    || filters.result !== 'any'
+    || filters.battleLevel !== 'any'
+
+  return needsDetails ? 'VehiclesStatistics' : 'VehiclesStatisticsByBattleMode'
+}
+
+function statisticsMetrics(source: ReturnType<typeof statisticsSource>) {
+  const winrate = source === 'VehiclesStatisticsByBattleMode'
+    ? 'sum(winCount) / nullIf(sum(participations), 0) * 100'
+    : availableSlots.winrate.sql
+
+  return Object.entries(availableSlots)
+    .map(([key, slot]) => `${key === 'winrate' ? winrate : slot.sql} as ${key}`)
+    .join(',\n      ')
+}
+
 export function vehicleStatisticsWhere(filters: VehicleFilters, beforeDay?: string) {
   const conditions: string[] = [`stats.day < ${beforeDay ? `toDate(${quote(beforeDay)})` : 'today()'}`]
 
@@ -61,6 +81,7 @@ function selectionWhere(selection?: VehicleSelection) {
 }
 
 export function vehicleHistoryQuery(filters: VehicleFilters, selection: VehicleSelection, beforeDay: string, step: HistoryStep) {
+  const source = statisticsSource(filters)
   // Reaggregate source rows per period so averages keep their denominators and
   // player states are merged across days instead of adding daily results.
   const period = {
@@ -72,8 +93,8 @@ export function vehicleHistoryQuery(filters: VehicleFilters, selection: VehicleS
   return `
     select
       ${period} as periodStart,
-      ${Object.entries(availableSlots).map(([key, slot]) => `${slot.sql} as ${key}`).join(',\n      ')}
-    from VehiclesStatistics as stats
+      ${statisticsMetrics(source)}
+    from ${source} as stats
     where ${vehicleStatisticsWhere(filters, beforeDay)}${selectionWhere(selection)}
     group by periodStart
     order by periodStart
@@ -81,6 +102,7 @@ export function vehicleHistoryQuery(filters: VehicleFilters, selection: VehicleS
 }
 
 export function vehicleStatisticsQuery(filters: VehicleFilters, grouping: VehicleGrouping = 'tanks', selection?: VehicleSelection) {
+  const source = statisticsSource(filters)
   const isTank = grouping === 'tanks'
   const withLevel = grouping === 'levels' || grouping === 'classesByLevel'
   const withType = grouping === 'classes' || grouping === 'classesByLevel'
@@ -103,12 +125,12 @@ export function vehicleStatisticsQuery(filters: VehicleFilters, grouping: Vehicl
       ${isTank || withType ? 'any(stats.tankType)' : 'NULL'} as tankType,
       min(stats.region) as region,
       max(stats.day) as day,
-      ${Object.entries(availableSlots).map(([key, slot]) => `${slot.sql} as ${key}`).join(',\n      ')}
-    from VehiclesStatistics as stats
+      ${statisticsMetrics(source)}
+    from ${source} as stats
     where ${where}
       and (${groupBy}, stats.day) in (
         select ${groupBy}, max(stats.day)
-        from VehiclesStatistics as stats
+        from ${source} as stats
         where ${where}
         group by ${groupBy}
       )
