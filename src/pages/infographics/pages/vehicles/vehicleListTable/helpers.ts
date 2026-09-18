@@ -66,9 +66,10 @@ export function orderSlots(slots: readonly Slot[]): Slot[] {
 }
 
 export type VehicleStatistics = {
-  tankTag: string
-  tankLevel: number
-  tankType: string
+  rowKey: string
+  tankTag: string | null
+  tankLevel: number | null
+  tankType: string | null
   region: string
   day: string
 } & Record<Slot, number | null>

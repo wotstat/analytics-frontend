@@ -10,12 +10,12 @@
       <div class="title">
         <span>Фильтр таблицы</span>
         <button v-if="activeCount" type="button" class="reset" aria-label="Сбросить фильтры"
-          title="Сбросить фильтры" @click="filters = createLocalVehicleFilters()">
+          title="Сбросить фильтры" @click="resetFilters">
           <Reload />
         </button>
       </div>
 
-      <section class="group">
+      <section v-if="showVehicleFilters" class="group">
         <h3 class="group-label">Техника</h3>
         <div class="vehicle-options">
           <div class="types" role="group" aria-label="Тип техники">
@@ -84,16 +84,24 @@ import { createLocalVehicleFilters, DEFAULT_MIN_BATTLES, DEFAULT_MIN_PLAYERS,
   type BattleThreshold, type LocalVehicleFilters, type PlayerThreshold } from './localFilters'
 
 const filters = defineModel<LocalVehicleFilters>({ required: true })
+const { showVehicleFilters } = defineProps<{ showVehicleFilters: boolean }>()
 const open = ref(false)
 const trigger = useTemplateRef<HTMLButtonElement>('trigger')
 const levels = Array.from({ length: 11 }, (_, index) => index + 1)
 const battleThresholds: BattleThreshold[] = [0, 20, 50, 100, 500]
 const playerThresholds: PlayerThreshold[] = [0, 10, 30, 50, 100]
 
-const activeCount = computed(() => filters.value.levels.length + filters.value.nations.length +
-  filters.value.types.length + Number(filters.value.onlyActual) +
+const activeCount = computed(() => (showVehicleFilters ? filters.value.levels.length + filters.value.nations.length +
+  filters.value.types.length + Number(filters.value.onlyActual) : 0) +
   Number(filters.value.minBattles !== DEFAULT_MIN_BATTLES) +
   Number(filters.value.minPlayers !== DEFAULT_MIN_PLAYERS))
+
+function resetFilters() {
+  const defaults = createLocalVehicleFilters()
+  filters.value = showVehicleFilters ? defaults : {
+    ...filters.value, minBattles: defaults.minBattles, minPlayers: defaults.minPlayers
+  }
+}
 
 function selectOption<T>(selected: readonly T[], option: T, options: readonly T[], event: MouseEvent): T[] {
   if (selected.includes(option)) return selected.filter(item => item !== option)

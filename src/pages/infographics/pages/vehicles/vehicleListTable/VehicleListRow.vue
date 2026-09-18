@@ -2,20 +2,21 @@
   <div class="vehicle-row" :class="{ expanded }">
     <div class="line mt-font">
       <button class="name" :aria-expanded="expanded" :aria-controls="panelId"
-        :aria-label="`${expanded ? 'Свернуть' : 'Развернуть'} ${name}`" @click="expanded = !expanded">
+        :aria-label="`${expanded ? 'Свернуть' : 'Развернуть'} ${name}`"
+        :title="vehicle.tankTag === null ? name : undefined" @click="expanded = !expanded">
         <ArrowDown class="arrow" :class="{ expanded }" />
-        <span class="metadata-cell">
+        <span v-if="vehicle.tankLevel !== null" class="metadata-cell">
           <span class="level">{{ romanNumberProcessor(vehicle.tankLevel) }}</span>
         </span>
-        <span class="metadata-cell">
+        <span v-if="vehicle.tankType !== null" class="metadata-cell">
           <VehicleType :type="isVehicleType(vehicle.tankType) ? vehicle.tankType : 'any'" class="type" />
         </span>
-        <span class="vehicle-cell">
-          <VehicleImage :tag="vehicle.tankTag" :game="regionToGame(vehicle.region)" size="preview" loading="lazy"
-            class="vehicle-image" aria-hidden="true" />
+        <span v-if="vehicle.tankTag !== null" class="vehicle-cell">
+          <VehicleImage :tag="vehicle.tankTag" :game="regionToGame(vehicle.region)"
+            size="preview" loading="lazy" class="vehicle-image" aria-hidden="true" />
           <span class="vehicle-info">
-            <span class="vehicle-name" :title="getTankName(vehicle.tankTag)">{{ name }}</span>
-            <span v-if="vehicle.day !== latestDay" class="date">{{ formatStatisticsDay(vehicle.day) }}</span>
+            <span class="vehicle-name" :title="vehicleName(vehicle, false)">{{ name }}</span>
+            <span v-if="vehicle.day !== latestDay" class="postfix">{{ formatStatisticsDay(vehicle.day) }}</span>
           </span>
         </span>
       </button>
@@ -28,8 +29,8 @@
       </div>
     </div>
     <div v-if="expanded" :id="panelId" class="chart-panel">
-      <VehicleTimeSeries v-model:step="historyStep" :tank-tag="vehicle.tankTag" :slot="activeSlot" :filters :min-battles
-        :min-players />
+      <VehicleTimeSeries v-model:step="historyStep" :selection="historySelection" :name :slot="activeSlot" :filters
+        :min-battles :min-players />
     </div>
   </div>
 </template>
@@ -41,22 +42,33 @@ import VehicleImage from '@/shared/game/vehicles/vehicle/VehicleImage.vue'
 import VehicleType from '@/shared/game/vehicles/type/VehicleType.vue'
 import { isVehicleType } from '@/shared/game/vehicles/type/vehicleTypeToImage'
 import { regionToGame } from '@/shared/game/wot'
-import { getTankName } from '@/shared/i18n/i18n'
 import { romanNumberProcessor } from '@/shared/utils/processors/processors'
 import { availableSlots, formatSlotValue, formatStatisticsDay, type Slot, type VehicleStatistics } from './helpers'
 import type { VehicleFilters } from '../filters/types'
 import VehicleTimeSeries from '../timeSeries/VehicleTimeSeries.vue'
 import type { HistoryStep } from '../timeSeries/historyStep'
+import type { VehicleSelection } from '../vehicleGrouping'
+import { vehicleName } from './vehicleName'
 
 const props = defineProps<{
   vehicle: VehicleStatistics
   latestDay: string
   slots: Slot[]
   filters: VehicleFilters
+  selection: VehicleSelection
   minBattles: number
   minPlayers: number
 }>()
-const name = computed(() => getTankName(props.vehicle.tankTag, true))
+const name = computed(() => vehicleName(props.vehicle))
+const historySelection = computed<VehicleSelection>(() => {
+  const { tankTag, tankLevel, tankType } = props.vehicle
+  if (tankTag !== null) return { tankTag, levels: [], types: [], nations: [] }
+  return {
+    levels: tankLevel === null ? props.selection.levels : [tankLevel],
+    types: tankType === null ? props.selection.types : [tankType],
+    nations: props.selection.nations,
+  }
+})
 const expanded = ref(false)
 const activeSlot = defineModel<Slot>('activeSlot', { required: true })
 const historyStep = defineModel<HistoryStep>('historyStep', { required: true })
@@ -75,6 +87,8 @@ function selectSlot(slot: Slot) {
 
 <style scoped lang="scss">
 .vehicle-row {
+  transition: margin 0.15s ease;
+
   &:nth-child(2n+1) {
     background-color: rgba(248, 252, 255, 0.025);
   }
@@ -99,8 +113,8 @@ function selectSlot(slot: Slot) {
 
 .name {
   display: grid;
-  grid-column: 1 / 5;
-  grid-template-columns: var(--expand-width) repeat(2, var(--metadata-width)) minmax(0, 1fr);
+  grid-column: 1 / var(--name-column-end);
+  grid-template-columns: var(--vehicle-name-columns);
   align-items: stretch;
   min-width: 0;
   text-align: left;
@@ -139,9 +153,16 @@ function selectSlot(slot: Slot) {
 
 .vehicle-info {
   display: flex;
-  flex-direction: column;
+  align-items: baseline;
   gap: 3px;
-  min-width: 0;
+  width: 100%;
+
+  .postfix {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 12px;
+    font-weight: normal;
+    margin-left: auto
+  }
 }
 
 .metadata-cell {

@@ -2,6 +2,7 @@ import { customBattleModes } from '@/shared/game/wot'
 import type { VehicleFilters } from './filters/types'
 import { availableSlots } from './vehicleListTable/helpers'
 import type { HistoryStep } from './timeSeries/historyStep'
+import type { VehicleGrouping, VehicleSelection } from './vehicleGrouping'
 
 function quote(value: string) {
   return `'${value.replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`
@@ -49,7 +50,17 @@ export function vehicleStatisticsWhere(filters: VehicleFilters, beforeDay?: stri
   return conditions.length ? conditions.join('\n      and ') : '1'
 }
 
-export function vehicleHistoryQuery(filters: VehicleFilters, tankTag: string, beforeDay: string, step: HistoryStep) {
+function selectionWhere(selection?: VehicleSelection) {
+  if (!selection) return ''
+  const conditions: string[] = []
+  if (selection.tankTag) conditions.push(`stats.tankTag = ${quote(selection.tankTag)}`)
+  if (selection.levels.length) conditions.push(`stats.tankLevel in (${[...selection.levels].sort((a, b) => a - b).join(', ')})`)
+  if (selection.types.length) conditions.push(`stats.tankType in (${[...selection.types].sort().map(quote).join(', ')})`)
+  if (selection.nations.length) conditions.push(`splitByChar(':', stats.tankTag)[1] in (${[...selection.nations].sort().map(quote).join(', ')})`)
+  return conditions.map(condition => `\n      and ${condition}`).join('')
+}
+
+export function vehicleHistoryQuery(filters: VehicleFilters, selection: VehicleSelection, beforeDay: string, step: HistoryStep) {
   // Reaggregate source rows per period so averages keep their denominators and
   // player states are merged across days instead of adding daily results.
   const period = {
@@ -63,35 +74,45 @@ export function vehicleHistoryQuery(filters: VehicleFilters, tankTag: string, be
       ${period} as periodStart,
       ${Object.entries(availableSlots).map(([key, slot]) => `${slot.sql} as ${key}`).join(',\n      ')}
     from VehiclesStatistics as stats
-    where ${vehicleStatisticsWhere(filters, beforeDay)}
-      and stats.tankTag = ${quote(tankTag)}
+    where ${vehicleStatisticsWhere(filters, beforeDay)}${selectionWhere(selection)}
     group by periodStart
     order by periodStart
   `
 }
 
-export function vehicleStatisticsQuery(filters: VehicleFilters) {
-  const where = vehicleStatisticsWhere(filters)
+export function vehicleStatisticsQuery(filters: VehicleFilters, grouping: VehicleGrouping = 'tanks', selection?: VehicleSelection) {
+  const isTank = grouping === 'tanks'
+  const withLevel = grouping === 'levels' || grouping === 'classesByLevel'
+  const withType = grouping === 'classes' || grouping === 'classesByLevel'
+  const dimensions = isTank ? ['stats.tankTag'] : [
+    ...(withLevel ? ['stats.tankLevel'] : []),
+    ...(withType ? ['stats.tankType'] : []),
+  ]
+  const groupBy = dimensions.join(', ')
+  const where = vehicleStatisticsWhere(filters) + selectionWhere(isTank ? undefined : selection)
+  const rowKey = isTank ? 'stats.tankTag' : `concat(${quote(`${grouping}:`)}, ${dimensions.map(column => `toString(${column})`).join(", ':', ")})`
 
-  // Последний завершённый день ищем после фильтрации и отдельно для каждого танка.
-  // IN по (tankTag, day) позволяет читать тяжёлые состояния только за нужные дни.
+  // У каждой строки один последний завершённый день после фильтрации.
+  // Категории объединяем из исходных состояний за этот день, не из средних танков
+  // с разными датами. В подзапросе читаются только измерения и дата.
   return `
     select
-      tankTag,
-      any(stats.tankLevel) as tankLevel,
-      any(stats.tankType) as tankType,
+      ${rowKey} as rowKey,
+      ${isTank ? 'stats.tankTag' : 'NULL'} as tankTag,
+      ${isTank || withLevel ? 'any(stats.tankLevel)' : 'NULL'} as tankLevel,
+      ${isTank || withType ? 'any(stats.tankType)' : 'NULL'} as tankType,
       min(stats.region) as region,
       max(stats.day) as day,
       ${Object.entries(availableSlots).map(([key, slot]) => `${slot.sql} as ${key}`).join(',\n      ')}
     from VehiclesStatistics as stats
     where ${where}
-      and (stats.tankTag, stats.day) in (
-        select tankTag, max(stats.day)
+      and (${groupBy}, stats.day) in (
+        select ${groupBy}, max(stats.day)
         from VehiclesStatistics as stats
         where ${where}
-        group by tankTag
+        group by ${groupBy}
       )
-    group by tankTag
-    order by battles desc, tankTag
+    group by ${groupBy}
+    order by battles desc, rowKey
   `
 }

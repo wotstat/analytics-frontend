@@ -48,7 +48,6 @@
 import { computed, markRaw, ref, watch } from 'vue'
 import { useNow } from '@vueuse/core'
 import { isErrorStatus, loading, queryComputed, success } from '@/db'
-import { getTankName } from '@/shared/i18n/i18n'
 import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
@@ -58,16 +57,17 @@ import { vehicleHistoryQuery } from '../vehicleStatisticsQuery'
 import { VehicleHistoryChart, type VehicleHistoryPeriod } from './VehicleHistoryChart'
 import type { HistoryStep } from './historyStep'
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
+import type { VehicleSelection } from '../vehicleGrouping'
 
 const props = defineProps<{
-  tankTag: string
+  selection: VehicleSelection
+  name: string
   slot: Slot
   filters: VehicleFilters
   minBattles: number
   minPlayers: number
 }>()
 const step = defineModel<HistoryStep>('step', { required: true })
-const name = computed(() => getTankName(props.tankTag, true))
 const now = useNow({ interval: 60_000 })
 
 const beforeDay = computed(() => now.value.toISOString().slice(0, 10))
@@ -78,7 +78,7 @@ const steps = [
   { value: 'month', label: 'Месяц' },
 ] as const satisfies readonly { value: HistoryStep, label: string }[]
 const history = queryComputed<VehicleHistoryPeriod>(() =>
-  `${vehicleHistoryQuery(props.filters, props.tankTag, beforeDay.value, step.value)}\n-- retry ${retry.value}`,
+  `${vehicleHistoryQuery(props.filters, props.selection, beforeDay.value, step.value)}\n-- retry ${retry.value}`,
   { settings: { use_query_cache: 1, query_cache_ttl: 24 * 60 * 60 } })
 
 const chart = markRaw(new VehicleHistoryChart())
