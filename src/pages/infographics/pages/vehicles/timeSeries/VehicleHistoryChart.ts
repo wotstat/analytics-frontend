@@ -15,7 +15,7 @@ import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalCha
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
 import { availableSlots, formatSlotValue, type Slot } from '../vehicleListTable/helpers'
 import { DAY, timeLabels } from './timeLabels'
-import { historyDayStart, historyDayString, historyPeriodWindow, minimumHistoryWindow, nextHistoryPeriod, type HistoryStep } from './historyStep'
+import { historyDayStart, historyDayString, historyPeriodWindow, minimumHistoryWindow, nextHistoryPeriod, type HistoryAverageWindow, type HistoryStep } from './historyStep'
 import { ChartMask } from '@/shared/uiKit/chart/universalChart/defs/ChartMask'
 
 export type VehicleHistoryPeriod = { periodStart: string } & Record<Slot, number | null>
@@ -77,7 +77,7 @@ export class VehicleHistoryChart extends UniversalChart {
       .addDefs(clip, clipLeft, clipBottom, mask)
   }
 
-  setHistory(history: VehicleHistoryPeriod[], slot: Slot, today: string, step: HistoryStep) {
+  setHistory(history: VehicleHistoryPeriod[], slot: Slot, today: string, step: HistoryStep, averageWindow: HistoryAverageWindow = null) {
     this.tooltipCtx.value = null
     if (this.labelStep !== step) {
       this.labelsX.updateOptions(timeLabels(step))
@@ -99,7 +99,7 @@ export class VehicleHistoryChart extends UniversalChart {
       } : null)
       previousStart = start
     }
-    this.line.setPoints(points)
+    this.line.setPoints(averageWindow === null ? points : this.averagePoints(points, averageWindow))
 
     if (!history.length) return
     const minX = Math.min(historyDayStart(history[0].periodStart), historyDayStart('2024-01-01'))
@@ -123,6 +123,34 @@ export class VehicleHistoryChart extends UniversalChart {
 
   showAllHistory() {
     if (this.interval) this.setRenderBounds({ ...this.interval, minY: null, maxY: null })
+  }
+
+  private averagePoints(points: (HistoryPoint | null)[], window: NonNullable<HistoryAverageWindow>): (HistoryPoint | null)[] {
+    const averaged = [...points]
+    const radius = Math.floor(window / 2)
+    let segmentStart = 0
+
+    while (segmentStart < points.length) {
+      if (points[segmentStart] === null) {
+        segmentStart++
+        continue
+      }
+
+      let segmentEnd = segmentStart
+      while (segmentEnd < points.length && points[segmentEnd] !== null) segmentEnd++
+
+      for (let index = segmentStart; index < segmentEnd; index++) {
+        const from = Math.max(segmentStart, index - radius)
+        const to = Math.min(segmentEnd, index + radius + 1)
+        let sum = 0
+        for (let neighbor = from; neighbor < to; neighbor++) sum += points[neighbor]!.y
+        averaged[index] = { ...points[index]!, y: sum / (to - from) }
+      }
+
+      segmentStart = segmentEnd
+    }
+
+    return averaged
   }
 
   private yLabels(slot: Slot): LabelsOptions {

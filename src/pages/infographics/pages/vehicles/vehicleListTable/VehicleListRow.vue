@@ -29,7 +29,8 @@
       </div>
     </div>
     <div v-if="expanded" :id="panelId" class="chart-panel">
-      <VehicleTimeSeries v-model:step="historyStep" :selection="historySelection" :name :slot="activeSlot" :filters
+      <VehicleTimeSeries v-model:step="historyStep" v-model:average-window="averageWindow"
+        :selection="historySelection" :name :slot="activeSlot" :filters
         :min-battles :min-players />
     </div>
   </div>
@@ -46,7 +47,7 @@ import { romanNumberProcessor } from '@/shared/utils/processors/processors'
 import { availableSlots, formatSlotValue, formatStatisticsDay, type Slot, type VehicleStatistics } from './helpers'
 import type { VehicleFilters } from '../filters/types'
 import VehicleTimeSeries from '../timeSeries/VehicleTimeSeries.vue'
-import type { HistoryStep } from '../timeSeries/historyStep'
+import type { HistoryAverageWindow, HistoryStep } from '../timeSeries/historyStep'
 import type { VehicleSelection } from '../vehicleGrouping'
 import { vehicleName } from './vehicleName'
 
@@ -72,6 +73,7 @@ const historySelection = computed<VehicleSelection>(() => {
 const expanded = ref(false)
 const activeSlot = defineModel<Slot>('activeSlot', { required: true })
 const historyStep = defineModel<HistoryStep>('historyStep', { required: true })
+const averageWindow = defineModel<HistoryAverageWindow>('averageWindow', { required: true })
 const id = useId()
 const panelId = `${id}-chart`
 

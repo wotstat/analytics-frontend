@@ -9,6 +9,11 @@
       <div class="step-selector" role="group">
         <a v-for="option in steps" :key="option.value" :class="{ active: step === option.value }"
           @click="step = option.value">{{ option.label }}</a>
+        <span class="selector-divider" aria-hidden="true"></span>
+        <button v-for="window in averageWindows" :key="window" type="button"
+          :class="{ active: averageWindow === window }" :aria-pressed="averageWindow === window"
+          v-tooltip:vehicleHistoryAverage.top-float="`Скользящее среднее по ${window} соседним точкам. Повторное нажатие выключает сглаживание`"
+          @click="toggleAverage(window)">avg{{ window }}</button>
       </div>
     </div>
 
@@ -55,7 +60,7 @@ import type { VehicleFilters } from '../filters/types'
 import { availableSlots, formatSlotValue, formatStatisticsDay, type Slot } from '../vehicleListTable/helpers'
 import { vehicleHistoryQuery } from '../vehicleStatisticsQuery'
 import { VehicleHistoryChart, type VehicleHistoryPeriod } from './VehicleHistoryChart'
-import type { HistoryStep } from './historyStep'
+import type { HistoryAverageWindow, HistoryStep } from './historyStep'
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 import type { VehicleSelection } from '../vehicleGrouping'
 
@@ -68,6 +73,7 @@ const props = defineProps<{
   minPlayers: number
 }>()
 const step = defineModel<HistoryStep>('step', { required: true })
+const averageWindow = defineModel<HistoryAverageWindow>('averageWindow', { required: true })
 const now = useNow({ interval: 60_000 })
 
 const beforeDay = computed(() => now.value.toISOString().slice(0, 10))
@@ -77,6 +83,7 @@ const steps = [
   { value: 'week', label: 'Неделя' },
   { value: 'month', label: 'Месяц' },
 ] as const satisfies readonly { value: HistoryStep, label: string }[]
+const averageWindows = [3, 5, 7] as const
 const history = queryComputed<VehicleHistoryPeriod>(() =>
   `${vehicleHistoryQuery(props.filters, props.selection, beforeDay.value, step.value)}\n-- retry ${retry.value}`,
   { settings: { use_query_cache: 1, query_cache_ttl: 24 * 60 * 60 } })
@@ -94,9 +101,13 @@ const visibleHistory = computed(() => {
 const hasValues = computed(() => history.value.status === success &&
   visibleHistory.value.some(row => row[props.slot] !== null && Number.isFinite(row[props.slot])))
 
-watch([visibleHistory, () => props.slot, beforeDay, step], () => {
-  chart.setHistory(visibleHistory.value, props.slot, beforeDay.value, step.value)
+watch([visibleHistory, () => props.slot, beforeDay, step, averageWindow], () => {
+  chart.setHistory(visibleHistory.value, props.slot, beforeDay.value, step.value, averageWindow.value)
 }, { immediate: true })
+
+function toggleAverage(window: NonNullable<HistoryAverageWindow>) {
+  averageWindow.value = averageWindow.value === window ? null : window
+}
 
 function formatPeriod(start: string, end: string) {
   const from = formatStatisticsDay(start)
@@ -144,12 +155,14 @@ function formatPeriod(start: string, end: string) {
   margin-left: auto;
   gap: 8px;
 
-  a {
+  a,
+  button {
     color: rgba(197, 197, 197, 0.6);
     font-size: 12px;
     white-space: nowrap;
     cursor: pointer;
     font-weight: bold;
+    padding: 0;
 
     @media (hover: hover) and (pointer: fine) {
       &:hover {
@@ -160,6 +173,12 @@ function formatPeriod(start: string, end: string) {
     &.active {
       color: white;
     }
+  }
+
+  .selector-divider {
+    height: 14px;
+    border-left: 1px solid rgba(255, 255, 255, 0.25);
+    margin: 0 2px;
   }
 }
 

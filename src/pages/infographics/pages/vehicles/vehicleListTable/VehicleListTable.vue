@@ -67,7 +67,8 @@
     </div>
     <div v-else class="body">
       <VehicleListRow v-for="vehicle in displayedVehicles" :key="vehicle.rowKey" :vehicle :latest-day="latestDay"
-        v-model:active-slot="activeSlot" v-model:history-step="historyStep" :slots="visibleSlots" :filters
+        v-model:active-slot="activeSlot" v-model:history-step="historyStep" v-model:average-window="averageWindow"
+        :slots="visibleSlots" :filters
         :selection="effectiveSelection" :min-battles="localFilters.minBattles" :min-players="localFilters.minPlayers" />
 
       <button v-if="displayedVehicles.length < filteredVehicles.length" class="show-more text-button"
@@ -96,7 +97,7 @@ import VehicleColumnSelector from './VehicleColumnSelector.vue'
 import VehicleListFilters from './VehicleListFilters.vue'
 import VehicleListRow from './VehicleListRow.vue'
 import type { VehicleFilters } from '../filters/types'
-import type { HistoryStep } from '../timeSeries/historyStep'
+import type { HistoryAverageWindow, HistoryStep } from '../timeSeries/historyStep'
 import type { VehicleSelection } from '../vehicleGrouping'
 
 const props = defineProps<{
@@ -130,6 +131,7 @@ const grouping = defineModel<VehicleGrouping>('grouping', { required: true })
 const selectedSlots = ref<Slot[]>(orderSlots(props.slots))
 const activeSlot = ref<Slot>(selectedSlots.value[0] ?? 'battles')
 const historyStep = ref<HistoryStep>('day')
+const averageWindow = ref<HistoryAverageWindow>(null)
 const displayLimit = ref(PAGE_SIZE)
 const sortOrders = ref<SortOrder[]>([{ key: 'battles', ascending: false }])
 const { width } = useElementSize(useTemplateRef('table'))

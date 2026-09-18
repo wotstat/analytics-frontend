@@ -1,6 +1,7 @@
 import { DAY } from './timeLabels'
 
 export type HistoryStep = 'day' | 'week' | 'month'
+export type HistoryAverageWindow = 3 | 5 | 7 | null
 
 export function minimumHistoryWindow(step: HistoryStep): number {
   const periodDays = step === 'day' ? 1 : step === 'week' ? 7 : 31
