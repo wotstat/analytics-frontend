@@ -1,6 +1,6 @@
 <template>
   <div class="bob-center-container">
-    <img :src="Background" class="background" alt="background" />
+    <DefineBackground :component="Bob25Background" />
     <h1>Результаты<br />Битвы Блогеров 2025</h1>
 
     <Ads />
@@ -170,7 +170,8 @@
 
 
 <script setup lang="ts">
-import Background from './assets/background.webp'
+import DefineBackground from '@/shared/uiKit/pageBackground/DefineBackground.vue'
+import Bob25Background from './Bob25Background.vue'
 import Blogger from './components/blogger/Blogger.vue'
 import BloggersLine from './components/BloggersLine.vue'
 import { useElementBounding, useLocalStorage } from '@vueuse/core'
@@ -383,23 +384,6 @@ h1 {
   opacity: 0.8;
 }
 
-
-.background {
-  position: fixed;
-  transform: translate3d(0, 0, 0);
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 900px;
-  object-fit: cover;
-  z-index: -1;
-
-  filter: brightness(0.8) blur(30px);
-  opacity: 0.3;
-  mask-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.4) 45%, rgba(0, 0, 0, 0) 100%);
-  pointer-events: none;
-  user-select: none;
-}
 
 .bloggers {
   display: flex;

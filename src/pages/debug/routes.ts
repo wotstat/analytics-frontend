@@ -20,6 +20,13 @@ type Entry = {
 
 const entries = [
   {
+    path: 'page-background',
+    title: 'BackgroundRoot',
+    description: 'Переходы между фонами и отдельная анимация изображения танка.',
+    group: 'uiKit',
+    component: () => import('./pages/pageBackground/Index.vue'),
+  },
+  {
     path: 'popover',
     title: 'Popover',
     description: 'Позиционирование и флип у краёв viewport, виртуальная цель, автозакрытие, стилизованная карточка.',

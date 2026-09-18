@@ -1,15 +1,20 @@
 <template>
   <div class="app" :style="{ '--header-height': headerHeight + 'px' }">
+    <BackgroundRoot :controller="backgroundController" />
     <template v-if="!route.meta.clearPage">
       <Header v-if="!route.meta.hideHeader" />
       <div class="content">
         <HeaderSpacer />
-        <RouterView />
+        <RouterView v-slot="{ Component }">
+          <component :is="Component" @vue:mounted="backgroundController.finishHandoff()" />
+        </RouterView>
       </div>
     </template>
 
     <template v-else>
-      <RouterView />
+      <RouterView v-slot="{ Component }">
+        <component :is="Component" @vue:mounted="backgroundController.finishHandoff()" />
+      </RouterView>
     </template>
 
     <FocusEffectRoot />
@@ -20,6 +25,7 @@
 
 
 <script setup lang="ts">
+import { nextTick, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import Header from './pages/shared/header/Header.vue'
 import HeaderSpacer from './pages/shared/header/HeaderSpacer.vue'
@@ -27,6 +33,8 @@ import { headerHeight } from './pages/shared/header/useAdditionalHeaderHeight'
 import ContextMenuRoot from '@/shared/uiKit/contextMenu/ContextMenuRoot.vue'
 import FocusEffectRoot from './shared/uiKit/focusEffect/FocusEffectRoot.vue'
 import TooltipRoot from './shared/uiKit/tooltip/TooltipRoot.vue'
+import BackgroundRoot from './shared/uiKit/pageBackground/BackgroundRoot.vue'
+import { provideBackgroundController } from './shared/uiKit/pageBackground/useBackground'
 
 
 const isWindows = navigator.platform.indexOf('Win') > -1
@@ -34,12 +42,21 @@ const boldWeight = isWindows ? 700 : 800
 const mediumBoldWeight = isWindows ? 500 : 600
 
 const route = useRoute()
+const backgroundController = provideBackgroundController()
+watch(() => route.matched[0], (current, previous) => {
+  if (current === previous) return
+  backgroundController.beginHandoff()
+  if (!current) nextTick(backgroundController.finishHandoff)
+}, { flush: 'sync' })
 
 </script>
 
 
 <style lang="scss">
 .app {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
   --bold-weight: v-bind(boldWeight);
   --medium-bold-weight: v-bind(mediumBoldWeight);
 }

@@ -1,9 +1,5 @@
 <template>
   <div class="mt26-1-center-container">
-    <div class="background">
-      <div class="blue-gradient"></div>
-      <div class="green-gradient"></div>
-    </div>
     <h1>Сравнительная аналитика<br />версий игры</h1>
 
     <h2 class="description">
@@ -265,8 +261,11 @@ import ComparisonBarChart from './charts/ComparisonBarChart.vue'
 import type { ComparisonBarChartData } from './charts/ComparisonBarChart'
 import DamageDistributionChart from './charts/DamageDistributionChart.vue'
 import type { DamageDistributionChartData } from './charts/DamageDistributionChart'
+import { useBackground } from '@/shared/uiKit/pageBackground/useBackground'
+import CompareVersionsBackground from './CompareVersionsBackground.vue'
 
 setFeatureVisit('mt-36-1')
+useBackground(CompareVersionsBackground, { placement: 'page' })
 
 const route = useRoute()
 const router = useRouter()
@@ -839,40 +838,6 @@ async function loadNextBatchRight(options: Options) {
     font-size: 1em;
     font-weight: 500;
     padding: .6em 1.2em;
-  }
-
-  .background {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 250%;
-    z-index: -1;
-    overflow: hidden;
-
-    .blue-gradient {
-      position: absolute;
-      top: -100vw;
-      right: -100vw;
-      width: 200vw;
-      height: 200vw;
-      opacity: 0.05;
-      background: radial-gradient(closest-side,
-          rgba(0, 115, 255, 1) 0%,
-          rgba(0, 115, 255, 0) 100%);
-    }
-
-    .green-gradient {
-      position: absolute;
-      top: 50vw;
-      left: -130vw;
-      width: 200vw;
-      height: 200vw;
-      opacity: 0.02;
-      background: radial-gradient(closest-side,
-          rgb(0, 255, 132) 0%,
-          rgba(0, 255, 132, 0) 100%);
-    }
   }
 
   .cards {
