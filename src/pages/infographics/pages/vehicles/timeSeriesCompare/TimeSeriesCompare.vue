@@ -1,21 +1,28 @@
 <template>
-  <section class="vehicle-comparison" aria-label="Сравнение техники">
+  <section class="vehicle-comparison">
     <ComparisonHistory v-for="source in sources" :key="source.tag" :selection="source.selection" :filters
       :before-day="beforeDay" :step :retry="retries[source.tag] ?? 0" @update="states.set(source.tag, $event)" />
 
     <div class="toolbar">
       <h2>Сравнение <span :class="{ empty: !sources.length }">{{ sources.length }}</span></h2>
-      <select v-model="slot" aria-label="Показатель для сравнения">
-        <optgroup v-for="category in slotCategories" :key="category.title" :label="category.title">
-          <option v-for="key in category.slots" :key="key" :value="key">{{ availableSlots[key].label }}</option>
-        </optgroup>
-      </select>
-      <div class="steps" role="group" aria-label="Период статистики">
+
+      <button ref="metricTrigger" class="metric-trigger" @click="metricSelectorOpen = !metricSelectorOpen">
+        <Icon :icon="availableSlots[slot].icon" class="metric-icon" />
+        <span class="metric-label">{{ availableSlots[slot].label }}</span>
+        <ArrowDown class="metric-arrow" />
+      </button>
+
+      <PopoverAutoClose v-model="metricSelectorOpen" :target="metricTrigger"
+        :placement="['bottom-start', 'bottom-float']" :viewport-offset="popoverViewportOffset" :arrow-size="0">
+        <VehicleSlotOptions title="Выбор метрики" :selected="[slot]" @select="selectMetric" />
+      </PopoverAutoClose>
+
+      <div class="steps" role="group">
         <button v-for="option in steps" :key="option.value" :class="{ active: step === option.value }"
-          :aria-pressed="step === option.value" @click="step = option.value">{{ option.label }}</button>
+          @click="step = option.value">{{ option.label }}</button>
         <span class="divider"></span>
         <button v-for="window in averageWindows" :key="window" :class="{ active: averageWindow === window }"
-          :aria-pressed="averageWindow === window" :title="`Скользящее среднее по ${window} точкам`"
+          :title="`Скользящее среднее по ${window} точкам`"
           @click="averageWindow = averageWindow === window ? null : window">avg{{ window }}</button>
       </div>
     </div>
@@ -60,15 +67,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, markRaw, reactive, ref, watch } from 'vue'
+import { computed, markRaw, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useNow } from '@vueuse/core'
 import { isErrorStatus, loading, success, type Status } from '@/db'
+import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
+import ArrowDown from '@/assets/icons/arrow-down.svg'
 import Legend from '@/shared/ui/chart/Legend.vue'
 import { useLegend, type LegendItem } from '@/shared/ui/chart/useLegend'
 import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
+import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
+import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
+import VehicleSlotOptions from '../VehicleSlotOptions.vue'
 import type { VehicleFilters } from '../filters/types'
-import { availableSlots, slotCategories, type Slot } from '../vehicleListTable/helpers'
+import { availableSlots, type Slot } from '../vehicleListTable/helpers'
 import { VehicleHistoryChart, type VehicleHistoryPeriod } from '../timeSeries/VehicleHistoryChart'
 import type { HistoryAverageWindow, HistoryStep } from '../timeSeries/historyStep'
 import type { ComparisonSource } from './types'
@@ -78,6 +90,8 @@ import ComparisonTooltip from './ComparisonTooltip.vue'
 const props = defineProps<{ filters: VehicleFilters, minBattles: number, minPlayers: number }>()
 const sources = defineModel<ComparisonSource[]>({ required: true })
 const slot = ref<Slot>('damage')
+const metricSelectorOpen = ref(false)
+const metricTrigger = useTemplateRef<HTMLButtonElement>('metricTrigger')
 const step = ref<HistoryStep>('day')
 const averageWindow = ref<HistoryAverageWindow>(null)
 const averageWindows = [3, 5, 7] as const
@@ -123,6 +137,12 @@ watch(() => sources.value.map(source => source.tag), tags => {
   }
 })
 
+function selectMetric(value: Slot) {
+  slot.value = value
+  metricSelectorOpen.value = false
+  metricTrigger.value?.focus()
+}
+
 function setColor(source: LegendItem, color: string) {
   sources.value = sources.value.map(item => item.tag === source.tag ? { ...item, color } : item)
 }
@@ -146,7 +166,6 @@ function remove(source: LegendItem) {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
 }
 
 h2 {
@@ -168,16 +187,45 @@ h2 span.empty {
   visibility: hidden;
 }
 
-select {
+.metric-trigger {
+  display: inline-flex;
+  align-items: center;
   min-width: 0;
   max-width: 100%;
-  padding: 6px 8px;
-  border: 0;
+  height: 30px;
+  padding: 0 8px 0 1px;
   border-radius: 5px;
-  color: white;
-  color-scheme: dark;
-  background: rgba(255, 255, 255, 0.08);
-  font: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  font-size: 14px;
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+  }
+}
+
+.metric-icon {
+  flex: none;
+  width: 30px;
+  height: 30px;
+}
+
+.metric-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metric-arrow {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-left: 5px;
+  fill: currentColor;
+  opacity: 0.6;
 }
 
 .steps {

@@ -5,36 +5,16 @@
 
   <PopoverAutoClose v-model="open" :target="trigger" :placement="['bottom-end', 'bottom-float']"
     :viewport-offset="popoverViewportOffset" :arrow-size="0">
-    <div class="column-popover">
-      <header class="popover-heading">
-        <h2>Выбор столбцов</h2>
-        <span class="selected-count">Выбрано {{ selected.length }} из {{ maxSlots }}</span>
-      </header>
-
-      <div class="column-list nice-scrollbar">
-        <section v-for="category in slotCategories" :key="category.title" class="category">
-          <h3>{{ category.title }}</h3>
-          <div class="tiles">
-            <button v-for="slot in category.slots" :key="slot" class="tile"
-              :class="{ selected: selected.includes(slot) }"
-              :disabled="selected.includes(slot) ? selected.length === 1 : selected.length >= maxSlots"
-              @click="toggle(slot)">
-              <Icon :icon="availableSlots[slot].icon" class="tile-icon" />
-              <span>{{ availableSlots[slot].label }}</span>
-            </button>
-          </div>
-        </section>
-      </div>
-    </div>
+    <VehicleSlotOptions title="Выбор столбцов" :selected :max-slots="maxSlots" @select="toggle" />
   </PopoverAutoClose>
 </template>
 
 <script setup lang="ts">
 import { ref, useTemplateRef } from 'vue'
-import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
+import VehicleSlotOptions from '../VehicleSlotOptions.vue'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
 import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
-import { availableSlots, orderSlots, slotCategories, slotDescription, type Slot } from './helpers'
+import { orderSlots, type Slot } from './helpers'
 
 const selected = defineModel<Slot[]>({ required: true })
 const open = ref(false)
@@ -65,114 +45,5 @@ const props = defineProps<{ maxSlots: number }>()
       background: rgba(255, 255, 255, 0.1);
     }
   }
-}
-
-.column-popover {
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  width: min(900px, calc(100vw - 20px));
-  max-height: min(700px, 70dvh);
-}
-
-.popover-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-
-  h2 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-  }
-}
-
-.selected-count {
-  color: rgba(255, 255, 255, 0.55);
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.column-list {
-  min-height: 0;
-  overflow-y: auto;
-  padding: 0 16px 16px;
-}
-
-.category {
-  margin-top: 16px;
-
-  &+.category {
-    margin-top: 20px;
-  }
-
-  h3 {
-    margin: 0 0 8px;
-    color: #fff;
-    font-size: 14px;
-    font-weight: 500;
-  }
-}
-
-.tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr));
-  gap: 6px;
-}
-
-.tile {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  padding: 2px 6px;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.05);
-  color: inherit;
-  text-align: left;
-  font-size: 14px;
-  line-height: 1.2;
-
-  span {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  @media (hover: hover) and (pointer: fine) {
-    &:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.12);
-    }
-  }
-
-  &.selected {
-    background: rgba(255, 255, 255, 0.1);
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: 7px;
-      bottom: 7px;
-      left: 0;
-      width: 3px;
-      border-radius: 3px;
-      background: var(--blue-thin-color);
-    }
-  }
-
-  &:disabled:not(.selected) {
-    opacity: 0.45;
-  }
-}
-
-.tile-icon {
-  width: 34px;
-  height: 34px;
-  margin: -2px;
 }
 </style>
