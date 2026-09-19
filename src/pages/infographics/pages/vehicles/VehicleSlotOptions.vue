@@ -10,8 +10,7 @@
         <h3>{{ category.title }}</h3>
         <div class="tiles">
           <button v-for="slot in category.slots" :key="slot" class="tile" type="button"
-            :class="{ selected: selected.includes(slot) }"
-            :aria-pressed="selected.includes(slot)"
+            :class="{ selected: selected.includes(slot) }" :aria-pressed="selected.includes(slot)"
             :disabled="maxSlots !== undefined && (selected.includes(slot) ? selected.length === 1 : selected.length >= maxSlots)"
             @click="emit('select', slot)">
             <Icon :icon="availableSlots[slot].icon" class="tile-icon" />
@@ -69,7 +68,13 @@ const emit = defineEmits<{ select: [slot: Slot] }>()
 .column-list {
   min-height: 0;
   overflow-y: auto;
-  padding: 0 16px 16px;
+  margin-right: 3px;
+  padding: 0 13px 16px 16px;
+
+  &::-webkit-scrollbar-track {
+    margin-block-end: 10px;
+    margin-block-start: 45px;
+  }
 }
 
 .category {
