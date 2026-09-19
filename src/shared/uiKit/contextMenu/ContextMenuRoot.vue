@@ -109,6 +109,13 @@ useEventListener(document, 'pointerdown', (event: PointerEvent) => {
   if (!contextMenuRoot.value?.contains(event.target as Node)) closeWithAnim()
 }, { passive: true, capture: true })
 
+useEventListener(document, 'scroll', event => {
+  if (!currentContextMenu.value?.options.closeOnScroll) return
+  if (contextMenuRoot.value?.contains(event.target as Node)) return
+
+  closeWithAnim()
+}, { passive: true, capture: true })
+
 useEventListener(document, 'keydown', (e) => {
   if (e.key === 'Escape' && currentContextMenu.value) {
     closeWithAnim()

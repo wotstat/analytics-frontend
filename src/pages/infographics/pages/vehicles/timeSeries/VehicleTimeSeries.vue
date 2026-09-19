@@ -175,6 +175,7 @@ function openSplitMenu(event: MouseEvent) {
     alignX: 'right',
     alignY: 'bottom',
     minWidth: 245,
+    closeOnScroll: true,
   }, [
     header('Разбиение графика'),
     checkboxItem('Без разбиения', {

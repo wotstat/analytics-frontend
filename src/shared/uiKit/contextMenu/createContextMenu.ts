@@ -46,6 +46,7 @@ export type ContextMenuOptions = {
     y: number,
   } | DOMRect
   closeOnAction?: boolean,
+  closeOnScroll?: boolean,
   actionOnPointerUp?: boolean,
   minWidth?: number,
   alignX?: 'left' | 'right' | 'center',
@@ -60,6 +61,7 @@ export type ContextMenu = {
 
 const defaultOptions: Partial<ContextMenuOptions> = {
   closeOnAction: true,
+  closeOnScroll: false,
   actionOnPointerUp: true,
   alignX: 'left',
   alignY: 'normal',
