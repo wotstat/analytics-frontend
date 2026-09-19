@@ -45,26 +45,15 @@
           <span>{{ source.name }}: не удалось загрузить историю.</span>
           <button @click="retries[source.tag] = (retries[source.tag] ?? 0) + 1">Повторить</button>
         </div>
-        <div v-if="emptySources.length" class="caption">Нет данных: {{emptySources.map(source => source.name).join(', ')}}
+        <div v-if="emptySources.length" class="caption">
+          Нет данных: {{emptySources.map(source => source.name).join(', ')}}
         </div>
       </div>
     </div>
 
-    <FloatingTooltip :ctx="chart.tooltipCtx.value" :offset="12">
+    <FloatingTooltip :ctx="chart.tooltipCtx.value" :offset="12" animated :animation-omega="40">
       <template #default="{ ctx }">
-        <div class="comparison-tooltip">
-          <b>{{ availableSlots[slot].label }}</b>
-          <div v-for="hit in ctx.hits" :key="hit.datum.series" class="tooltip-row">
-            <span class="dot" :style="{ backgroundColor: hit.datum.color }"></span>
-            <div class="tooltip-source">
-              <span>{{ hit.datum.name }}</span>
-              <small>{{ formatStatisticsDay(hit.datum.periodStart) }}<template
-                  v-if="hit.datum.periodEnd !== hit.datum.periodStart"> — {{ formatStatisticsDay(hit.datum.periodEnd)
-                  }}</template></small>
-            </div>
-            <b>{{ formatSlotValue(slot, hit.datum.y) }}</b>
-          </div>
-        </div>
+        <ComparisonTooltip :ctx :sources="legend.enabled.value" />
       </template>
     </FloatingTooltip>
   </section>
@@ -79,11 +68,12 @@ import { useLegend, type LegendItem } from '@/shared/ui/chart/useLegend'
 import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import type { VehicleFilters } from '../filters/types'
-import { availableSlots, formatSlotValue, formatStatisticsDay, slotCategories, type Slot } from '../vehicleListTable/helpers'
+import { availableSlots, slotCategories, type Slot } from '../vehicleListTable/helpers'
 import { VehicleHistoryChart, type VehicleHistoryPeriod } from '../timeSeries/VehicleHistoryChart'
 import type { HistoryAverageWindow, HistoryStep } from '../timeSeries/historyStep'
 import type { ComparisonSource } from './types'
 import ComparisonHistory from './ComparisonHistory.vue'
+import ComparisonTooltip from './ComparisonTooltip.vue'
 
 const props = defineProps<{ filters: VehicleFilters, minBattles: number, minPlayers: number }>()
 const sources = defineModel<ComparisonSource[]>({ required: true })
@@ -280,45 +270,6 @@ select {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-}
-
-.comparison-tooltip {
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  font-size: 12px;
-  max-height: 50vh;
-  overflow-y: auto;
-}
-
-.tooltip-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.tooltip-row>b {
-  margin-left: auto;
-  padding-left: 16px;
-  font-variant-numeric: tabular-nums;
-}
-
-.tooltip-source {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.tooltip-source small {
-  color: rgba(255, 255, 255, 0.45);
-}
-
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
 }
 
 :deep(.universal-chart-root) {

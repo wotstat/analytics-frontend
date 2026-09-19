@@ -1,21 +1,34 @@
 <template>
   <section class="vehicle-time-series">
 
-    <div class="chart-toolbar">
-      <div class="title">
-        <Icon name="chart-line" class="icon" :icon="availableSlots[props.slot].icon" />
-        <span>{{ availableSlots[slot].label }}</span>
-      </div>
-      <div class="step-selector" role="group">
-        <a v-for="option in steps" :key="option.value" :class="{ active: step === option.value }"
-          @click="step = option.value">{{ option.label }}</a>
-        <span class="selector-divider" aria-hidden="true"></span>
-        <button v-for="window in averageWindows" :key="window" type="button"
-          :class="{ active: averageWindow === window }" :aria-pressed="averageWindow === window"
-          v-tooltip:vehicleHistoryAverage.top-float="`Скользящее среднее по ${window} соседним точкам. Повторное нажатие выключает сглаживание`"
-          @click="toggleAverage(window)">avg{{ window }}</button>
-      </div>
-    </div>
+    <HeaderTooltip :ctx="chart.tooltipCtx.value" class="chart-toolbar">
+      <template #left>
+        <div class="title">
+          <Icon name="chart-line" class="icon" :icon="availableSlots[props.slot].icon" />
+          <span>{{ availableSlots[slot].label }}</span>
+        </div>
+      </template>
+      <template #right>
+        <div class="step-selector" role="group">
+          <a v-for="option in steps" :key="option.value" :class="{ active: step === option.value }"
+            @click="step = option.value">{{ option.label }}</a>
+          <span class="selector-divider" aria-hidden="true"></span>
+          <button v-for="window in averageWindows" :key="window" type="button"
+            :class="{ active: averageWindow === window }" :aria-pressed="averageWindow === window"
+            v-tooltip:vehicleHistoryAverage.top-float="`Скользящее среднее по ${window} соседним точкам. Повторное нажатие выключает сглаживание`"
+            @click="toggleAverage(window)">avg{{ window }}</button>
+        </div>
+      </template>
+      <template #tooltip="{ ctx }">
+        <div class="history-tooltip">
+          <div class="tooltip-value">
+            <b>{{ formatSlotValue(ctx.hit.datum.slot, ctx.hit.datum.y) }}</b>
+          </div>
+          <div class="tooltip-date">{{ formatHistoryPeriod(ctx.hit.datum.periodStart, ctx.hit.datum.periodEnd,
+            ctx.hit.datum.step) }}</div>
+        </div>
+      </template>
+    </HeaderTooltip>
 
     <div class="chart-body">
       <UniversalChartComponent v-show="hasValues" :chart />
@@ -31,21 +44,6 @@
       <div v-else-if="!hasValues" class="chart-state" role="status">По выбранным фильтрам пока нет данных</div>
     </div>
 
-    <FloatingTooltip :ctx="chart.tooltipCtx.value" :offset="12">
-      <template #default="{ ctx }">
-        <div v-if="ctx.hits[0]" class="history-tooltip">
-          <span class="tooltip-date">{{ formatPeriod(ctx.hits[0].datum.periodStart, ctx.hits[0].datum.periodEnd) }} · {{
-            name }}</span>
-          <div class="tooltip-value">
-            <span>{{ availableSlots[ctx.hits[0].datum.slot].label }}</span>
-            <b>{{ formatSlotValue(ctx.hits[0].datum.slot, ctx.hits[0].datum.y) }}</b>
-          </div>
-          <span v-if="ctx.hits[0].datum.slot !== 'battles'" class="tooltip-caption">
-            Боёв: {{ formatSlotValue('battles', ctx.hits[0].datum.battles) }}
-          </span>
-        </div>
-      </template>
-    </FloatingTooltip>
   </section>
 </template>
 
@@ -53,11 +51,12 @@
 import { computed, markRaw, ref, watch } from 'vue'
 import { useNow } from '@vueuse/core'
 import { isErrorStatus, loading, queryComputed, success } from '@/db'
-import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
+import HeaderTooltip from '@/shared/ui/chart/HeaderTooltip.vue'
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import type { VehicleFilters } from '../filters/types'
-import { availableSlots, formatSlotValue, formatStatisticsDay, type Slot } from '../vehicleListTable/helpers'
+import { availableSlots, formatSlotValue, type Slot } from '../vehicleListTable/helpers'
+import { formatHistoryPeriod } from './formatHistoryPeriod'
 import { vehicleHistoryQuery } from '../vehicleStatisticsQuery'
 import { VehicleHistoryChart, type VehicleHistoryPeriod } from './VehicleHistoryChart'
 import type { HistoryAverageWindow, HistoryStep } from './historyStep'
@@ -109,10 +108,6 @@ function toggleAverage(window: NonNullable<HistoryAverageWindow>) {
   averageWindow.value = averageWindow.value === window ? null : window
 }
 
-function formatPeriod(start: string, end: string) {
-  const from = formatStatisticsDay(start)
-  return start === end ? from : `${from} — ${formatStatisticsDay(end)}`
-}
 </script>
 
 <style lang="scss" scoped>
@@ -122,13 +117,18 @@ function formatPeriod(start: string, end: string) {
 }
 
 .chart-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  min-height: 24px;
   padding-bottom: 3px;
+
+  :deep(.items) {
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 38px;
+  }
+
+  :deep(.right) {
+    margin-left: auto;
+  }
 
   .title {
     display: flex;
@@ -147,6 +147,34 @@ function formatPeriod(start: string, end: string) {
   }
 
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.history-tooltip {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  padding-bottom: 3px;
+}
+
+.tooltip-value {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+
+  b {
+    color: white;
+    font-size: 20px;
+    line-height: 20px;
+  }
+}
+
+.tooltip-date {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  line-height: 1;
+  margin-top: 3px;
 }
 
 .step-selector {
@@ -216,31 +244,6 @@ button {
   .loader {
     font-size: 3px;
     margin-bottom: 16px;
-  }
-}
-
-.history-tooltip {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px;
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-}
-
-.tooltip-date,
-.tooltip-caption {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.tooltip-value {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 20px;
-
-  b {
-    color: white;
   }
 }
 

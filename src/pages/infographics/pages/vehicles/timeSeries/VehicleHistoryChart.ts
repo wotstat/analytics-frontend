@@ -22,7 +22,7 @@ import { ChartMask } from '@/shared/uiKit/chart/universalChart/defs/ChartMask'
 
 export type VehicleHistoryPeriod = { periodStart: string } & Record<Slot, number | null>
 export type VehicleHistorySeries = { tag: string, name: string, color: string, history: VehicleHistoryPeriod[], enabled?: boolean }
-type HistoryPoint = { series: string, name: string, color: string, x: number, y: number, periodStart: string, periodEnd: string, battles: number | null, slot: Slot }
+type HistoryPoint = { series: string, name: string, color: string, x: number, y: number, periodStart: string, periodEnd: string, step: HistoryStep, battles: number | null, slot: Slot }
 export type VehicleHistoryHit = LinePointHit<HistoryPoint>
 
 export class VehicleHistoryChart extends UniversalChart {
@@ -132,7 +132,18 @@ export class VehicleHistoryChart extends UniversalChart {
     if (!lines.length) return
     const interactions = lines.slice(1).reduce<AutoLineInteraction<HistoryPoint>>((source, line) => source.union(line.interaction), lines[0].interaction)
     const selection = interactions.nearestByAxis('x')
-    const highlight = new Highlight({ selection: interactions.nearStroke({ maxDistance: Infinity }).nearest(), class: 'highlighted' })
+    // У точек выбранной даты одинаковый X, поэтому nearest выбирает ближайшую по Y.
+    const nearest = selection.nearest()
+    const highlight = new Highlight({
+      selection: {
+        interactionSources: selection.interactionSources,
+        resolve: ctx => ctx.frame.resolve(nearest).map(hit => ({
+          ...hit,
+          targets: interactions.sources.flatMap(source => source.getTargets(hit.datum.series)),
+        })),
+      },
+      class: 'highlighted',
+    })
     if (this.highlightSync) highlight.syncWith(this.highlightSync)
     this.interactionComponents = [
       highlight,
@@ -160,7 +171,7 @@ export class VehicleHistoryChart extends UniversalChart {
       // Пропущенные периоды и NULL остаются разрывами, а не превращаются в нули.
       if (previousStart !== null && start > nextHistoryPeriod(previousStart, step)) points.push(null)
       points.push(value !== null && Number.isFinite(value) ? {
-        series: series.tag, name: series.name, color: series.color, x, y: value, periodStart: row.periodStart, periodEnd: historyDayString(end - DAY), battles: row.battles, slot
+        series: series.tag, name: series.name, color: series.color, x, y: value, periodStart: row.periodStart, periodEnd: historyDayString(end - DAY), step, battles: row.battles, slot
       } : null)
       previousStart = start
     }
