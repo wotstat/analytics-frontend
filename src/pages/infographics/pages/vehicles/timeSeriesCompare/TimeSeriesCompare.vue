@@ -4,7 +4,7 @@
       :before-day="beforeDay" :step :retry="retries[source.tag] ?? 0" @update="states.set(source.tag, $event)" />
 
     <div class="toolbar">
-      <h2>Сравнение <span :class="{ empty: !sources.length }">{{ sources.length }}</span></h2>
+      <h2>Сравнение <span v-if="sources.length">{{ sources.length }}</span></h2>
 
       <button ref="metricTrigger" class="metric-trigger" @click="metricSelectorOpen = !metricSelectorOpen">
         <Icon :icon="availableSlots[slot].icon" class="metric-icon" />
@@ -177,7 +177,6 @@ h2 {
 
 h2 span {
   display: inline-block;
-  min-width: 2ch;
   font-variant-numeric: tabular-nums;
   margin-left: 5px;
   color: rgba(255, 255, 255, 0.4);
@@ -199,6 +198,7 @@ h2 span.empty {
   background: rgba(255, 255, 255, 0.05);
   color: inherit;
   font-size: 14px;
+  margin-left: 10px;
 
   @media (hover: hover) and (pointer: fine) {
     &:hover {
