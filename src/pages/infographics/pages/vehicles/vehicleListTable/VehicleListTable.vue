@@ -14,6 +14,7 @@
 
     <div class="head line mt-font">
       <span></span>
+      <span></span>
 
       <button v-if="showLevel" class="heading"
         :class="{ 'order-by': sortPosition('tankLevel'), 'secondary-sort': sortPosition('tankLevel') > 1, asc: sortAscending('tankLevel') }"
@@ -68,7 +69,8 @@
     <div v-else class="body">
       <VehicleListRow v-for="vehicle in displayedVehicles" :key="vehicle.rowKey" :vehicle :latest-day="latestDay"
         v-model:active-slot="activeSlot" v-model:history-step="historyStep" v-model:average-window="averageWindow"
-        :slots="visibleSlots" :filters
+        :slots="visibleSlots" :filters :compared="comparedKeys.includes(vehicle.rowKey)"
+        @compare="selection => $emit('compare', vehicle, selection)"
         :selection="effectiveSelection" :min-battles="localFilters.minBattles" :min-players="localFilters.minPlayers" />
 
       <button v-if="displayedVehicles.length < filteredVehicles.length" class="show-more text-button"
@@ -105,9 +107,10 @@ const props = defineProps<{
   vehicles: VehicleStatistics[]
   status: Status
   filters: VehicleFilters
+  comparedKeys: string[]
 }>()
 
-defineEmits<{ retry: [] }>()
+defineEmits<{ retry: [], compare: [vehicle: VehicleStatistics, selection: VehicleSelection] }>()
 
 const PAGE_SIZE = 50
 const MAX_TANK_SLOTS = 7
@@ -115,6 +118,7 @@ const MAX_CATEGORY_SLOTS = 12
 const MIN_SLOT_WIDTH = 86
 const METADATA_COLUMN_WIDTH = 40
 const EXPAND_COLUMN_WIDTH = 20
+const COMPARE_COLUMN_WIDTH = 30
 type SortKey = Slot | 'name' | 'tankLevel' | 'tankType'
 type SortOrder = { key: SortKey, ascending: boolean }
 const typeOrder = new Map<string, number>(vehicleTypes.map((type, index) => [type, vehicleTypes.length - index]))
@@ -144,17 +148,18 @@ const effectiveSelection = computed<VehicleSelection>(() => showName.value ? loc
 const metadataColumnCount = computed(() => Number(showLevel.value) + Number(showType.value))
 const nameWidth = computed(() => Math.max(140, width.value * 0.25))
 const maxSelectableSlots = computed(() => Math.min(showName.value ? MAX_TANK_SLOTS : MAX_CATEGORY_SLOTS,
-  Math.max(1, Math.floor((width.value - (showName.value ? nameWidth.value : 0) - METADATA_COLUMN_WIDTH * metadataColumnCount.value - EXPAND_COLUMN_WIDTH) / MIN_SLOT_WIDTH))))
+  Math.max(1, Math.floor((width.value - (showName.value ? nameWidth.value : 0) - METADATA_COLUMN_WIDTH * metadataColumnCount.value - EXPAND_COLUMN_WIDTH - COMPARE_COLUMN_WIDTH) / MIN_SLOT_WIDTH))))
 const visibleSlots = computed(() => selectedSlots.value)
 const tableStyle = computed(() => ({
   '--name-width': `${nameWidth.value}px`,
   '--metadata-width': `${METADATA_COLUMN_WIDTH}px`,
   '--metadata-columns': `repeat(${metadataColumnCount.value}, var(--metadata-width))`,
-  '--name-column-end': metadataColumnCount.value + (showName.value ? 3 : 2),
+  '--name-column-end': metadataColumnCount.value + (showName.value ? 4 : 3),
+  '--compare-width': `${COMPARE_COLUMN_WIDTH}px`,
   '--expand-width': `${EXPAND_COLUMN_WIDTH}px`,
   '--vehicle-columns': showName.value
-    ? 'var(--expand-width) var(--metadata-columns) var(--name-width) minmax(0, 1fr)'
-    : 'var(--expand-width) var(--metadata-columns) minmax(0, 1fr)',
+    ? 'var(--compare-width) var(--expand-width) var(--metadata-columns) var(--name-width) minmax(0, 1fr)'
+    : 'var(--compare-width) var(--expand-width) var(--metadata-columns) minmax(0, 1fr)',
   '--vehicle-name-columns': showName.value
     ? 'var(--expand-width) var(--metadata-columns) minmax(0, 1fr)'
     : 'var(--expand-width) var(--metadata-columns)',

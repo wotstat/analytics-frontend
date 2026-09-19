@@ -66,6 +66,12 @@ const highlight = new Highlight({ selection: linesNearStroke, class: 'highlighte
 
 Модель отдаёт `items`, `enabled`, `enabledTags`, `highlighted`, проверки и действия `toggle` / `highlight` / `clearHighlight`, поэтому кастомную разметку можно написать без `Legend.vue`. `layout`, `toggleable`, `highlightable` относятся только к стандартному renderer. Disabled item остаётся кликабельным при `toggleable`, но не публикует и не анимирует highlight.
 
+`Legend.vue` переносит горизонтальные элементы и ограничивает высоту списка прокруткой для большого
+числа источников. Опциональный `colorEditable` открывает нативный `input type="color"` по нажатию
+на кружок и отправляет `colorChange(item, color)`. Опциональный `removable` добавляет крестик
+с событием `remove(item)`. Эти действия отделены от кнопки переключения линии; изменение массива
+источников и его цветов остаётся ответственностью родителя. По умолчанию обе опции выключены.
+
 ## Форматирование значений — процессоры (`src/shared/utils/processors/`)
 
 Виджеты (`GenericInfo`, tween-значения) принимают `processor` — функцию `number → string`. Готовые: `useRoundProcessor` (округление), `useSpaceProcessor` (разряды через пробел), `useRoundSpaceProcessor`, `useRoundTweenProcessor`, `usePlayerNameProcessor`; фабрики в `processors.ts` (например `createFixedSpaceProcessor`).

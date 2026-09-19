@@ -1,12 +1,17 @@
 <template>
   <VehicleFilters v-model="filters" />
+  <TimeSeriesCompare v-model="comparisonSources" :filters :min-battles="localFilters.minBattles" :min-players="localFilters.minPlayers" />
   <VehicleListTable v-model:grouping="grouping" v-model:local-filters="localFilters" :slots="defaultSlots"
-    :vehicles="statistics.data" :status="statistics.status" :filters @retry="retry++" />
+    :vehicles="statistics.data" :status="statistics.status" :filters :compared-keys="comparisonSources.map(source => source.tag)" @compare="addComparison" @retry="retry++" />
 </template>
 
 
 
 <script setup lang="ts">
+import TimeSeriesCompare from './timeSeriesCompare/TimeSeriesCompare.vue'
+import { nextComparisonColor, type ComparisonSource } from './timeSeriesCompare/types'
+import { vehicleName } from './vehicleListTable/vehicleName'
+import type { VehicleSelection } from './vehicleGrouping'
 import { ref } from 'vue'
 import { useMeta } from '@/shared/composition/useMeta'
 import VehicleListTable from './vehicleListTable/VehicleListTable.vue'
@@ -31,6 +36,18 @@ useMeta({
 const filters = ref(createVehicleFilters())
 const localFilters = ref(createLocalVehicleFilters())
 const grouping = ref<VehicleGrouping>('tanks')
+
+const comparisonSources = ref<ComparisonSource[]>([])
+
+function addComparison(vehicle: VehicleStatistics, selection: VehicleSelection) {
+  if (comparisonSources.value.some(source => source.tag === vehicle.rowKey)) return
+  comparisonSources.value.push({
+    tag: vehicle.rowKey,
+    name: vehicle.tankTag === null ? `Среднее · ${vehicleName(vehicle)}` : vehicleName(vehicle),
+    color: nextComparisonColor(comparisonSources.value),
+    selection,
+  })
+}
 
 const retry = ref(0)
 const statistics = queryComputed<VehicleStatistics>(() =>

@@ -1,6 +1,10 @@
 <template>
   <div class="vehicle-row" :class="{ expanded }">
     <div class="line mt-font">
+      <button class="compare" type="button" :disabled="compared" :class="{ added: compared }"
+        :aria-label="compared ? `${name} уже в сравнении` : `Добавить в сравнение: ${name}`"
+        :title="compared ? 'Уже в сравнении' : 'Добавить в сравнение'"
+        @click="$emit('compare', historySelection)">{{ compared ? '✓' : '+' }}</button>
       <button class="name" :aria-expanded="expanded" :aria-controls="panelId"
         :aria-label="`${expanded ? 'Свернуть' : 'Развернуть'} ${name}`"
         :title="vehicle.tankTag === null ? name : undefined" @click="expanded = !expanded">
@@ -59,7 +63,9 @@ const props = defineProps<{
   selection: VehicleSelection
   minBattles: number
   minPlayers: number
+  compared: boolean
 }>()
+defineEmits<{ compare: [selection: VehicleSelection] }>()
 const name = computed(() => vehicleName(props.vehicle))
 const historySelection = computed<VehicleSelection>(() => {
   const { tankTag, tankLevel, tankType } = props.vehicle
@@ -113,9 +119,22 @@ function selectSlot(slot: Slot) {
   }
 }
 
+.compare {
+  align-self: center;
+  width: 28px;
+  height: 30px;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 22px;
+  border-radius: 5px;
+
+  &:hover { color: white; background: rgba(255, 255, 255, 0.08); }
+  &.added { color: #30d158; font-size: 16px; cursor: default; }
+}
+
 .name {
   display: grid;
-  grid-column: 1 / var(--name-column-end);
+  grid-column: 2 / var(--name-column-end);
   grid-template-columns: var(--vehicle-name-columns);
   align-items: stretch;
   min-width: 0;

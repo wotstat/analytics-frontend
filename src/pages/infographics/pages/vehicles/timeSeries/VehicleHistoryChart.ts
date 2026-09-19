@@ -5,11 +5,13 @@ import { ChartTooltip, type TooltipCtx } from '@/shared/uiKit/chart/universalCha
 import { VerticalLine } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/lines/VerticalLine'
 import { MarkerOverlay } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/markerOverlay/MarkerOverlay'
 import { ZoomChartComponent } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/zoomChartComponent/ZoomChartComponent'
-import { InteractionController } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController'
+import { Highlight } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/highlight/Highlight'
+import type { HighlightSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/HighlightSynchronizer'
+import { InteractionController, type InteractionComponent } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController'
 import { AutoLabels, type Options as LabelsOptions } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
 import { labelCandidates } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/labelCandidates'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
-import type { LinePointHit } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineInteractionSource'
+import type { AutoLineInteraction, LinePointHit } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineInteractionSource'
 import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
@@ -19,23 +21,25 @@ import { historyDayStart, historyDayString, historyPeriodWindow, minimumHistoryW
 import { ChartMask } from '@/shared/uiKit/chart/universalChart/defs/ChartMask'
 
 export type VehicleHistoryPeriod = { periodStart: string } & Record<Slot, number | null>
-type HistoryPoint = { x: number, y: number, periodStart: string, periodEnd: string, battles: number | null, slot: Slot }
+export type VehicleHistorySeries = { tag: string, name: string, color: string, history: VehicleHistoryPeriod[], enabled?: boolean }
+type HistoryPoint = { series: string, name: string, color: string, x: number, y: number, periodStart: string, periodEnd: string, battles: number | null, slot: Slot }
 export type VehicleHistoryHit = LinePointHit<HistoryPoint>
 
 export class VehicleHistoryChart extends UniversalChart {
   readonly tooltipCtx = shallowRef<TooltipCtx<VehicleHistoryHit> | null>(null)
 
-  private readonly line = new AutoLine<HistoryPoint>({
-    classes: 'history-line',
-    // smoothingMethod: 'monoton'
-  })
+  private readonly lines = new Map<string, AutoLine<HistoryPoint>>()
+  private readonly plot = new PlotGroup()
+  private readonly interaction = new InteractionController()
+  private interactionComponents: InteractionComponent[] = []
+  private readonly mask = new ChartMask('center', { top: -4, bottom: -4 })
   private readonly labelsX: AutoLabels
   private readonly labelsY: AutoLabels
   private readonly zoom: ZoomChartComponent
   private labelStep: HistoryStep = 'day'
   private interval: { minX: number, maxX: number, step: HistoryStep } | null = null
 
-  constructor() {
+  constructor(private readonly highlightSync?: HighlightSynchronizer) {
     super({
       layoutVariant: 'vertical',
       renderManager: globalChartRenderManagerSteps4,
@@ -44,66 +48,66 @@ export class VehicleHistoryChart extends UniversalChart {
     })
 
     const clip = new ChartClip('center', { top: -4, bottom: -4 })
-    const mask = new ChartMask('center', { top: -4, bottom: -4 })
+    const mask = this.mask
     const clipLeft = new ChartClip('left')
     const clipBottom = new ChartClip('bottom')
     this.labelsX = new AutoLabels('horizontal', timeLabels('day')).clipBy(clipBottom)
     this.labelsY = new AutoLabels('vertical', this.yLabels('battles')).clipBy(clipLeft)
 
     this.zoom = new ZoomChartComponent({ chart: this, zoom: true, panDirection: 'horizontal' })
-    const selection = this.line.interaction.nearestByAxis('x')
-    const interaction = new InteractionController()
-      .addComponent(this.zoom)
-      .addComponent(new VerticalLine({ selection, offset: { start: -4, end: 0 } }))
-      .addComponent(new MarkerOverlay({ selection, size: 4, maskSize: 6, markerClasses: 'history-hover-marker', targetMasks: [mask.root] }))
-      .addComponent(new ChartTooltip({
-        selection,
-        onHide: () => this.tooltipCtx.value = null,
-        onPositionChange: ctx => this.tooltipCtx.value = ctx,
-      }))
-
-    const plot = new PlotGroup()
-      .addPlot(this.line)
-      .clipBy(clip)
-      .maskBy(mask)
+    this.interaction.addComponent(this.zoom)
+    this.plot.clipBy(clip).maskBy(mask)
 
     this
       .addPlot(new TicksByLabels(this.labelsY), 'grid')
       .addPlot(new TicksByLabels(this.labelsX, { classes: 'time-grid' }), 'grid')
-      .addPlot(plot, 'plot')
+      .addPlot(this.plot, 'plot')
       .addSlot('bottom', this.labelsX, 'labels')
       .addSlot('left', this.labelsY, 'labels')
-      .addPlot(interaction)
+      .addPlot(this.interaction)
       .addDefs(clip, clipLeft, clipBottom, mask)
   }
 
   setHistory(history: VehicleHistoryPeriod[], slot: Slot, today: string, step: HistoryStep, averageWindow: HistoryAverageWindow = null) {
+    this.setHistories([{ tag: 'vehicle', name: '', color: 'var(--blue-thin-color)', history }], slot, today, step, averageWindow)
+  }
+
+  setHistories(series: VehicleHistorySeries[], slot: Slot, today: string, step: HistoryStep, averageWindow: HistoryAverageWindow = null) {
     this.tooltipCtx.value = null
     if (this.labelStep !== step) {
       this.labelsX.updateOptions(timeLabels(step))
       this.labelStep = step
     }
     this.labelsY.updateOptions(this.yLabels(slot))
-
-    const points: (HistoryPoint | null)[] = []
-    let previousStart: number | null = null
-    const todayStart = historyDayStart(today)
-    for (const row of history) {
-      const { start, end } = historyPeriodWindow(row.periodStart, step, todayStart)
-      const x = (start + end) / 2
-      const value = row[slot]
-      // Пропущенные периоды и NULL остаются разрывами, а не превращаются в нули.
-      if (previousStart !== null && start > nextHistoryPeriod(previousStart, step)) points.push(null)
-      points.push(value !== null && Number.isFinite(value) ? {
-        x, y: value, periodStart: row.periodStart, periodEnd: historyDayString(end - DAY), battles: row.battles, slot
-      } : null)
-      previousStart = start
+    const tags = new Set(series.map(item => item.tag))
+    let changed = false
+    for (const [tag, line] of this.lines) {
+      if (tags.has(tag)) continue
+      this.plot.removePlot(line)
+      this.lines.delete(tag)
+      changed = true
     }
-    this.line.setPoints(averageWindow === null ? points : this.averagePoints(points, averageWindow))
+    for (const item of series) {
+      let line = this.lines.get(item.tag)
+      if (!line) {
+        line = new AutoLine<HistoryPoint>({ classes: 'history-line', interactionTag: item.tag })
+        this.lines.set(item.tag, line)
+        this.plot.addPlot(line)
+        changed = true
+      }
+      line.getRootElement().setAttribute('style', `color: ${item.color}; stroke: ${item.color}`)
+      const points = item.enabled === false ? [] : this.historyPoints(item, slot, today, step)
+      line.setPoints(averageWindow === null ? points : this.averagePoints(points, averageWindow))
+    }
+    if (changed) this.updateInteractions()
 
-    if (!history.length) return
-    const minX = Math.min(historyDayStart(history[0].periodStart), historyDayStart('2024-01-01'))
-    const maxX = todayStart
+    const starts = series.flatMap(item => item.history.length ? [historyDayStart(item.history[0].periodStart)] : [])
+    if (!starts.length) {
+      if (!series.length) this.interval = null
+      return
+    }
+    const minX = Math.min(...starts, historyDayStart('2024-01-01'))
+    const maxX = historyDayStart(today)
     if (this.interval?.minX === minX && this.interval.maxX === maxX && this.interval.step === step) return
 
     this.interval = { minX, maxX, step }
@@ -119,6 +123,48 @@ export class VehicleHistoryChart extends UniversalChart {
       },
     })
     this.showAllHistory()
+  }
+
+  private updateInteractions() {
+    for (const component of this.interactionComponents) this.interaction.removeComponent(component)
+    this.interactionComponents = []
+    const lines = [...this.lines.values()]
+    if (!lines.length) return
+    const interactions = lines.slice(1).reduce<AutoLineInteraction<HistoryPoint>>((source, line) => source.union(line.interaction), lines[0].interaction)
+    const selection = interactions.nearestByAxis('x')
+    const highlight = new Highlight({ selection: interactions.nearStroke({ maxDistance: Infinity }).nearest(), class: 'highlighted' })
+    if (this.highlightSync) highlight.syncWith(this.highlightSync)
+    this.interactionComponents = [
+      highlight,
+      new VerticalLine({ selection, offset: { start: -4, end: 0 } }),
+      new MarkerOverlay({ selection, size: 4, maskSize: 6, markerClasses: 'history-hover-marker', targetMasks: [this.mask.root] }),
+      new ChartTooltip({
+        selection,
+        tooltipPivot: 'nearest',
+        exposeHighlights: [highlight],
+        onHide: () => this.tooltipCtx.value = null,
+        onPositionChange: ctx => this.tooltipCtx.value = ctx,
+      }),
+    ]
+    for (const component of this.interactionComponents) this.interaction.addComponent(component)
+  }
+
+  private historyPoints(series: VehicleHistorySeries, slot: Slot, today: string, step: HistoryStep) {
+    const points: (HistoryPoint | null)[] = []
+    let previousStart: number | null = null
+    const todayStart = historyDayStart(today)
+    for (const row of series.history) {
+      const { start, end } = historyPeriodWindow(row.periodStart, step, todayStart)
+      const x = (start + end) / 2
+      const value = row[slot]
+      // Пропущенные периоды и NULL остаются разрывами, а не превращаются в нули.
+      if (previousStart !== null && start > nextHistoryPeriod(previousStart, step)) points.push(null)
+      points.push(value !== null && Number.isFinite(value) ? {
+        series: series.tag, name: series.name, color: series.color, x, y: value, periodStart: row.periodStart, periodEnd: historyDayString(end - DAY), battles: row.battles, slot
+      } : null)
+      previousStart = start
+    }
+    return points
   }
 
   showAllHistory() {
