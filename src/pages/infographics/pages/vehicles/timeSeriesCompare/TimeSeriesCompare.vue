@@ -4,7 +4,7 @@
       :before-day="beforeDay" :step :retry="retries[source.tag] ?? 0" @update="states.set(source.tag, $event)" />
 
     <div class="toolbar">
-      <h2>Сравнение <span v-if="sources.length">{{ sources.length }}</span></h2>
+      <h2>Сравнение <span :class="{ empty: !sources.length }">{{ sources.length }}</span></h2>
       <select v-model="slot" aria-label="Показатель для сравнения">
         <optgroup v-for="category in slotCategories" :key="category.title" :label="category.title">
           <option v-for="key in category.slots" :key="key" :value="key">{{ availableSlots[key].label }}</option>
@@ -20,31 +20,34 @@
       </div>
     </div>
 
-    <div class="chart-body">
-      <UniversalChartComponent v-show="hasValues" :chart />
-      <div v-if="!sources.length" class="chart-state">
-        <b>Сравните танки на одном графике</b>
-        <span>Нажмите «+» в таблице ниже. Чтобы добавить среднее по уровню или классу, выберите нужный режим
-          таблицы.</span>
+    <div class="comparison-content">
+      <div class="chart-body">
+        <UniversalChartComponent v-show="hasValues" :chart />
+        <div v-if="!sources.length" class="chart-state">
+          <b>Сравните танки на одном графике</b>
+          <span>Нажмите «+» в таблице ниже. Чтобы добавить среднее по уровню или классу, выберите нужный режим
+            таблицы.</span>
+        </div>
+        <div v-else-if="!hasValues" class="chart-state" role="status">
+          {{
+            pending ? 'Загружаем историю…' : !legend.enabled.value.length ?
+              'Включите источники в легенде' :
+              'По выбранным фильтрам нет данных для отображения'
+          }}
+        </div>
       </div>
-      <div v-else-if="!hasValues" class="chart-state" role="status">
-        {{
-          pending ? 'Загружаем историю…' : !legend.enabled.value.length ?
-            'Включите источники в легенде' :
-            'По выбранным фильтрам нет данных для отображения'
-        }}
+
+      <div class="comparison-details">
+        <Legend v-if="sources.length" :legend toggleable highlightable color-editable removable @color-change="setColor"
+          @remove="remove" class="legend" />
+
+        <div v-for="source in failedSources" :key="source.tag" class="source-error" role="alert">
+          <span>{{ source.name }}: не удалось загрузить историю.</span>
+          <button @click="retries[source.tag] = (retries[source.tag] ?? 0) + 1">Повторить</button>
+        </div>
+        <div v-if="emptySources.length" class="caption">Нет данных: {{emptySources.map(source => source.name).join(', ')}}
+        </div>
       </div>
-    </div>
-
-    <Legend v-if="sources.length" :legend toggleable highlightable color-editable removable @color-change="setColor"
-      @remove="remove" class="legend" />
-
-    <div v-if="pending && hasValues" class="caption" role="status">Загружаем остальные источники…</div>
-    <div v-for="source in failedSources" :key="source.tag" class="source-error" role="alert">
-      <span>{{ source.name }}: не удалось загрузить историю.</span>
-      <button @click="retries[source.tag] = (retries[source.tag] ?? 0) + 1">Повторить</button>
-    </div>
-    <div v-if="emptySources.length" class="caption">Нет данных: {{emptySources.map(source => source.name).join(', ')}}
     </div>
 
     <FloatingTooltip :ctx="chart.tooltipCtx.value" :offset="12">
@@ -93,9 +96,13 @@ const now = useNow({ interval: 60_000 })
 const beforeDay = computed(() => now.value.toISOString().slice(0, 10))
 const states = reactive(new Map<string, { status: Status, data: VehicleHistoryPeriod[] }>())
 const retries = reactive<Record<string, number>>({})
-const legend = useLegend(sources)
+const legendItems = computed(() => sources.value.map(source => ({
+  ...source,
+  loading: !states.has(source.tag) || states.get(source.tag)?.status === loading,
+})))
+const legend = useLegend(legendItems)
 const chart = markRaw(new VehicleHistoryChart(legend.highlightSync))
-const series = computed(() => sources.value.map(source => ({
+const series = computed(() => legendItems.value.map(source => ({
   ...source,
   enabled: legend.isEnabled(source),
   history: (states.get(source.tag)?.data ?? []).map(row =>
@@ -104,7 +111,7 @@ const series = computed(() => sources.value.map(source => ({
 })))
 const hasValues = computed(() => series.value.some(source => source.enabled &&
   source.history.some(row => row[slot.value] !== null && Number.isFinite(row[slot.value]))))
-const pending = computed(() => sources.value.some(source => !states.has(source.tag) || states.get(source.tag)?.status === loading))
+const pending = computed(() => legendItems.value.some(source => source.loading))
 const failedSources = computed(() => sources.value.filter(source => {
   const state = states.get(source.tag)
   return state && isErrorStatus(state.status)
@@ -151,9 +158,16 @@ h2 {
 }
 
 h2 span {
+  display: inline-block;
+  min-width: 2ch;
+  font-variant-numeric: tabular-nums;
   margin-left: 5px;
   color: rgba(255, 255, 255, 0.4);
   font-size: 14px;
+}
+
+h2 span.empty {
+  visibility: hidden;
 }
 
 select {
@@ -199,10 +213,24 @@ select {
   color: var(--blue-thin-color);
 }
 
+.comparison-content {
+  --legend-row-height: 21px;
+  --legend-gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--legend-gap);
+  margin: 12px 0;
+}
+
 .chart-body {
   position: relative;
-  height: clamp(260px, 30vw, 400px);
-  margin: 12px 0;
+  flex-shrink: 0;
+  height: calc(clamp(260px, 30vw, 400px) - var(--legend-row-height) - var(--legend-gap));
+}
+
+.comparison-details {
+  min-height: var(--legend-row-height);
+  overflow-wrap: anywhere;
 }
 
 .chart-container {

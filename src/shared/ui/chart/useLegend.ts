@@ -7,6 +7,7 @@ export type LegendItem = {
   readonly name: string
   readonly color: string
   readonly tag: InteractionTag
+  readonly loading?: boolean
 }
 
 export type LegendModel<TItem extends LegendItem = LegendItem> = {

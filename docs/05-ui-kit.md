@@ -40,7 +40,7 @@
 - `chart/` — Vue-обёртки графиков: тултипы (`HeaderTooltip.vue`, `FloatingTooltip.vue`), легенда (`Legend.vue` + `useLegend.ts`) и `VueChartRenderManager.ts`, см. [06-charts.md](06-charts.md).
 - `modalWindow/` — модальные окна (`ModalWindow.vue`, `ModalWindowContent.vue`, кнопки).
 - `components/Tooltip.vue`; `PopupWindow.vue` — самостоятельный попап, не часть `modalWindow`; `Canvas.vue` — обёртка canvas с ресайзом; `SnowCardWrapper.vue` — сезонное украшение.
-- `loaders/` — `Loader.vue` (спиннер), `pageLoader/PageLoader.vue` (для asyncPage).
+- `loaders/` — `Loader.vue` (спиннер), `pageLoader/PageLoader.vue` (для asyncPage). Опция `compact` у `Loader` включает вариант для маленьких размеров: шесть крупных SVG-точек с пульсацией прозрачности, по умолчанию 16 px. Цвет задаётся через `color`, размер — через `font-size`. Этот вариант используется в легенде; стандартный спиннер сохраняет прежний вид.
 - `tween/` — анимация чисел: `TweenValue.vue`, `SimpleTweenValue.vue`, `useTweenRef.ts`, `easing.ts`, `processed.ts`. Единственная рабочая реализация — здесь; старый вариант `src/composition/tween/useTweenRef.ts` удалён. `options` (duration/easing/minStep) читаются один раз при setup и не реактивны.
 - `tableView/cells/HighlightedCell.ts` — ячейка `TableView` с подсветкой поиска.
 - `noScroll/noScroll.ts` — блокировка скролла: класс вешается на `<html>` (не на body), и это **счётчик**, а не переключатель — `requestNoScroll`/`releaseNoScroll`/`useNoScroll`, стили в `noScroll/styles.scss` по `html.no-scroll`. `PopupWindow.vue` и пара страниц вешают `no-scroll` на `body` мимо этого механизма — так делать не надо.
@@ -66,11 +66,15 @@ const highlight = new Highlight({ selection: linesNearStroke, class: 'highlighte
 
 Модель отдаёт `items`, `enabled`, `enabledTags`, `highlighted`, проверки и действия `toggle` / `highlight` / `clearHighlight`, поэтому кастомную разметку можно написать без `Legend.vue`. `layout`, `toggleable`, `highlightable` относятся только к стандартному renderer. Disabled item остаётся кликабельным при `toggleable`, но не публикует и не анимирует highlight.
 
-`Legend.vue` переносит горизонтальные элементы и ограничивает высоту списка прокруткой для большого
-числа источников. Опциональный `colorEditable` открывает нативный `input type="color"` по нажатию
+`Legend.vue` переносит горизонтальные элементы; высоту и прокрутку списка ограничивает родитель.
+Опциональный `colorEditable` открывает `LegendColorPicker` с общим `ColorPickerPopup` по нажатию
 на кружок и отправляет `colorChange(item, color)`. Опциональный `removable` добавляет крестик
 с событием `remove(item)`. Эти действия отделены от кнопки переключения линии; изменение массива
 источников и его цветов остаётся ответственностью родителя. По умолчанию обе опции выключены.
+
+У `LegendItem` есть опциональный `loading`: во время загрузки `Legend.vue` заменяет маркер
+цветным `Loader` того же размера и сообщает состояние через `aria-busy`. Имя, переключение
+видимости и удаление остаются доступны; пикер цвета возвращается после загрузки.
 
 ## Форматирование значений — процессоры (`src/shared/utils/processors/`)
 
