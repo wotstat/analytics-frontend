@@ -129,6 +129,12 @@ function selectSlot(slot: Slot) {
   }
 }
 
+.compare-icon,
+.arrow {
+  width: 12px;
+  height: 12px;
+}
+
 .compare {
   align-self: center;
   display: grid;
@@ -151,9 +157,6 @@ function selectSlot(slot: Slot) {
 
   .compare-icon {
     grid-area: 1 / 1;
-    width: 12px;
-    height: 12px;
-    fill: currentColor;
     pointer-events: none;
 
     &.compare-icon-enter-active,
@@ -181,11 +184,8 @@ function selectSlot(slot: Slot) {
 }
 
 .arrow {
-  width: 11px;
-  height: 11px;
   align-self: center;
   justify-self: center;
-  fill: currentColor;
   transform: rotate(-90deg);
   color: rgba(255, 255, 255, 0.55);
   transition: transform 0.15s;
