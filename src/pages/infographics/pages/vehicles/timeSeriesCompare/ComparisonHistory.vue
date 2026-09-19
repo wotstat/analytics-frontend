@@ -4,10 +4,10 @@
 import { watch } from 'vue'
 import { queryComputed, type Status } from '@/db'
 import type { VehicleFilters } from '../filters/types'
-import type { VehicleSelection } from '../vehicleGrouping'
-import type { VehicleHistoryPeriod } from '../timeSeries/VehicleHistoryChart'
+import type { VehicleSelection } from '../shared/vehicleGrouping'
+import type { VehicleHistoryPeriod } from '../shared/types'
 import type { HistoryStep } from '../timeSeries/historyStep'
-import { vehicleHistoryQuery } from '../vehicleStatisticsQuery'
+import { vehicleHistoryQuery } from '../shared/vehicleStatisticsQuery'
 
 const props = defineProps<{
   selection: VehicleSelection

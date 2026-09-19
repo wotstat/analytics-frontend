@@ -184,7 +184,6 @@ function tada2Effect() {
 .main {
   width: 500px;
   height: 150px;
-  margin: -2 0px;
   position: relative;
 }
 

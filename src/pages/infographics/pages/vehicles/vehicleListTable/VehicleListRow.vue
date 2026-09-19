@@ -54,12 +54,15 @@ import VehicleType from '@/shared/game/vehicles/type/VehicleType.vue'
 import { isVehicleType } from '@/shared/game/vehicles/type/vehicleTypeToImage'
 import { regionToGame } from '@/shared/game/wot'
 import { romanNumberProcessor } from '@/shared/utils/processors/processors'
-import { availableSlots, formatSlotValue, formatStatisticsDay, type Slot, type VehicleStatistics } from './helpers'
+import { availableSlots, type Slot } from '../shared/vehicleMetrics'
+import { formatSlotValue } from '../shared/formatMetricValue'
+import { formatStatisticsDay } from '../shared/formatStatisticsDay'
+import type { VehicleStatistics } from '../shared/types'
 import type { VehicleFilters } from '../filters/types'
 import VehicleTimeSeries from '../timeSeries/VehicleTimeSeries.vue'
 import type { HistoryAverageWindow, HistoryStep } from '../timeSeries/historyStep'
-import type { VehicleSelection } from '../vehicleGrouping'
-import { vehicleName } from './vehicleName'
+import type { VehicleSelection } from '../shared/vehicleGrouping'
+import { vehicleName } from '../shared/vehicleName'
 
 const props = defineProps<{
   vehicle: VehicleStatistics

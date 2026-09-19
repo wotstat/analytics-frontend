@@ -17,14 +17,7 @@
         <VehicleSlotOptions title="Выбор метрики" :selected="[slot]" @select="selectMetric" />
       </PopoverAutoClose>
 
-      <div class="steps">
-        <button v-for="option in steps" :key="option.value" :class="{ active: step === option.value }"
-          @click="step = option.value">{{ option.label }}</button>
-        <span class="divider"></span>
-        <button v-for="window in averageWindows" :key="window" :class="{ active: averageWindow === window }"
-          :title="`Скользящее среднее по ${window} точкам`"
-          @click="averageWindow = averageWindow === window ? null : window">avg{{ window }}</button>
-      </div>
+      <HistoryControls v-model:step="step" v-model:average-window="averageWindow" class="steps" />
     </div>
 
     <div class="comparison-content">
@@ -42,10 +35,11 @@
 
       <div class="comparison-details">
         <div v-if="sources.length" class="legend-row">
-          <Legend :legend toggleable highlightable color-editable removable @color-change="setColor"
-            @remove="remove" class="legend" />
+          <Legend :legend toggleable highlightable color-editable removable
+            @color-change="(source, color) => emit('colorChange', source.tag, color)"
+            @remove="source => emit('remove', source.tag)" class="legend" />
           <button class="reset" title="Сбросить сравнение"
-            @click="sources = []">
+            @click="emit('clear')">
             <ResetIcon />
           </button>
         </div>
@@ -77,24 +71,34 @@ import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 import ArrowDown from '@/assets/icons/arrow-down.svg'
 import ResetIcon from '@/assets/icons/reset.svg'
 import Legend from '@/shared/ui/chart/Legend.vue'
-import { useLegend, type LegendItem } from '@/shared/ui/chart/useLegend'
+import { useLegend } from '@/shared/ui/chart/useLegend'
 import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
 import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import VehicleSlotOptions from '../VehicleSlotOptions.vue'
 import type { VehicleFilters } from '../filters/types'
-import { availableSlots, type Slot } from '../vehicleListTable/helpers'
-import { VehicleHistoryChart, type VehicleHistoryPeriod } from '../timeSeries/VehicleHistoryChart'
+import { availableSlots, type Slot } from '../shared/vehicleMetrics'
+import { VehicleHistoryChart } from '../timeSeries/VehicleHistoryChart'
+import type { VehicleHistoryPeriod, VehicleThresholds } from '../shared/types'
 import type { HistoryAverageWindow, HistoryStep } from '../timeSeries/historyStep'
+import HistoryControls from '../timeSeries/HistoryControls.vue'
+import { applyHistoryThresholds, hasHistoryValues } from '../timeSeries/historyValues'
 import { snapshotComparisonFilters, type ComparisonSource } from './types'
 import { comparisonName } from './comparisonName'
-import type { LocalVehicleFilters } from '../vehicleListTable/localFilters'
 import ComparisonHistory from './ComparisonHistory.vue'
 import ComparisonTooltip from './ComparisonTooltip.vue'
 
-const props = defineProps<{ filters: VehicleFilters } & Pick<LocalVehicleFilters, 'minBattles' | 'minPlayers'>>()
-const sources = defineModel<ComparisonSource[]>({ required: true })
+const props = defineProps<{
+  filters: VehicleFilters
+  sources: readonly ComparisonSource[]
+} & VehicleThresholds>()
+
+const emit = defineEmits<{
+  remove: [tag: string]
+  colorChange: [tag: string, color: string]
+  clear: []
+}>()
 
 const slot = ref<Slot>('damage')
 const metricSelectorOpen = ref(false)
@@ -102,12 +106,6 @@ const metricTrigger = useTemplateRef<HTMLButtonElement>('metricTrigger')
 
 const step = ref<HistoryStep>('day')
 const averageWindow = ref<HistoryAverageWindow>(null)
-const averageWindows = [3, 5, 7] as const
-const steps = [
-  { value: 'day', label: 'День' },
-  { value: 'week', label: 'Неделя' },
-  { value: 'month', label: 'Месяц' },
-] as const
 
 const now = useNow({ interval: 60_000 })
 const beforeDay = computed(() => now.value.toISOString().slice(0, 10))
@@ -116,7 +114,7 @@ const states = reactive(new Map<string, { status: Status, data: VehicleHistoryPe
 const retries = reactive<Record<string, number>>({})
 
 const currentFilters = computed(() => snapshotComparisonFilters(props.filters))
-const legendItems = computed(() => sources.value.map(source => ({
+const legendItems = computed(() => props.sources.map(source => ({
   ...source,
   name: comparisonName(source, currentFilters.value),
   loading: !states.has(source.tag) || states.get(source.tag)?.status === loading,
@@ -125,21 +123,14 @@ const legendItems = computed(() => sources.value.map(source => ({
 const legend = useLegend(legendItems)
 const chart = markRaw(new VehicleHistoryChart(legend.highlightSync))
 
-function applyThresholds(rows: VehicleHistoryPeriod[]) {
-  return rows.map(row => {
-    if ((row.battles ?? 0) > props.minBattles && (row.playerCount ?? 0) > props.minPlayers) return row
-    return { ...row, [slot.value]: null }
-  })
-}
-
 const series = computed(() => legendItems.value.map(source => ({
   ...source,
   enabled: legend.isEnabled(source),
-  history: applyThresholds(states.get(source.tag)?.data ?? []),
+  history: applyHistoryThresholds(states.get(source.tag)?.data ?? [], slot.value, props),
 })))
 
 const hasValues = computed(() => series.value.some(source => source.enabled &&
-  source.history.some(row => row[slot.value] !== null && Number.isFinite(row[slot.value]))))
+  hasHistoryValues(source.history, slot.value)))
 const pending = computed(() => legendItems.value.some(source => source.loading))
 
 const emptyMessage = computed(() => {
@@ -154,13 +145,13 @@ const failedSources = computed(() => legendItems.value.filter(source => {
 }))
 
 const emptySources = computed(() => series.value.filter(source => states.get(source.tag)?.status === success &&
-  !source.history.some(row => row[slot.value] !== null && Number.isFinite(row[slot.value]))))
+  !hasHistoryValues(source.history, slot.value)))
 
 watch([series, slot, beforeDay, step, averageWindow], () => {
   chart.setHistories(series.value, slot.value, beforeDay.value, step.value, averageWindow.value)
 }, { immediate: true })
 
-watch(() => sources.value.map(source => source.tag), tags => {
+watch(() => props.sources.map(source => source.tag), tags => {
   const selected = new Set(tags)
 
   for (const tag of states.keys()) {
@@ -176,17 +167,11 @@ function selectMetric(value: Slot) {
   slot.value = value
   metricSelectorOpen.value = false
 }
-
-function setColor(source: LegendItem, color: string) {
-  sources.value = sources.value.map(item => item.tag === source.tag ? { ...item, color } : item)
-}
-
-function remove(source: LegendItem) {
-  sources.value = sources.value.filter(item => item.tag !== source.tag)
-}
 </script>
 
 <style scoped lang="scss">
+@use '../timeSeries/historyChart.scss' as *;
+
 .vehicle-comparison {
   min-width: 0;
   margin-bottom: 28px;
@@ -261,37 +246,10 @@ function remove(source: LegendItem) {
     }
 
     .steps {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
       margin-left: auto;
 
       @media (max-width: 600px) {
         margin-left: 0;
-      }
-
-      button {
-        padding: 3px 0;
-        color: rgba(255, 255, 255, 0.45);
-        font-size: 12px;
-        font-weight: bold;
-
-        @media (hover: hover) and (pointer: fine) {
-          &:hover {
-            color: rgba(255, 255, 255, 0.8);
-          }
-        }
-
-        &.active {
-          color: white;
-        }
-      }
-
-      .divider {
-        height: 14px;
-        border-left: 1px solid rgba(255, 255, 255, 0.2);
-        margin: 0 3px;
       }
     }
   }
@@ -393,70 +351,7 @@ function remove(source: LegendItem) {
   }
 
   :deep(.universal-chart-root) {
-    .history-line {
-      stroke-width: 2px;
-      stroke-linejoin: round;
-      stroke-linecap: round;
-      transition: stroke-width 0.18s ease;
-
-      &.highlighted {
-        stroke-width: 3px;
-      }
-    }
-
-    .interaction {
-      .history-hover-marker {
-        fill: currentColor;
-      }
-    }
-
-    .grid {
-      opacity: 0.2;
-
-      .y-ticks .tick {
-        stroke: rgb(255, 255, 255, 0.5);
-      }
-
-      .tick {
-        stroke: rgb(255, 255, 255, 0.04);
-      }
-
-      .label-ticks {
-        &.day-ticks .tick {
-          stroke: rgb(255, 255, 255, 0.15);
-        }
-
-        &.week-ticks .tick {
-          stroke: rgb(255, 255, 255, 0.15);
-        }
-
-        &.month-ticks .tick {
-          stroke: rgb(255, 255, 255, 0.4);
-        }
-
-        &.year-ticks .tick {
-          stroke: rgb(255, 255, 255, 1);
-        }
-      }
-    }
-
-    .label {
-      font-size: 11px;
-      font-weight: bold;
-      fill: rgba(255, 255, 255, 0.9);
-
-      &.value-outside-bounds {
-        visibility: hidden;
-      }
-    }
-
-    .day-labels .label {
-      font-weight: normal;
-    }
-
-    .interactive-zone {
-      cursor: crosshair;
-    }
+    @include history-chart;
   }
 }
 </style>

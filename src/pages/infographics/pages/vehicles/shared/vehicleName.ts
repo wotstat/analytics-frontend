@@ -1,6 +1,6 @@
 import { getTankName } from '@/shared/i18n/i18n'
 import { romanNumberProcessor } from '@/shared/utils/processors/processors'
-import type { VehicleStatistics } from './helpers'
+import type { VehicleStatistics } from './types'
 
 const classNames: Record<string, string> = {
   HT: 'ТТ', MT: 'СТ', LT: 'ЛТ', AT: 'ПТ-САУ', SPG: 'САУ'

@@ -24,7 +24,7 @@
 
 <script setup lang="ts">
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
-import { availableSlots, slotCategories, type Slot } from './vehicleListTable/helpers'
+import { availableSlots, slotCategories, type Slot } from './shared/vehicleMetrics'
 
 const props = defineProps<{
   title: string

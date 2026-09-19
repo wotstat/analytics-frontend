@@ -20,7 +20,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
-import { availableSlots, formatSlotValue } from '../vehicleListTable/helpers'
+import { availableSlots } from '../shared/vehicleMetrics'
+import { formatSlotValue } from '../shared/formatMetricValue'
 import { formatHistoryPeriod } from '../timeSeries/formatHistoryPeriod'
 import type { VehicleHistoryHit } from '../timeSeries/VehicleHistoryChart'
 

@@ -1,8 +1,8 @@
 import { customBattleModes } from '@/shared/game/wot'
-import type { VehicleFilters } from './filters/types'
-import { availableSlots } from './vehicleListTable/helpers'
-import type { HistoryStep } from './timeSeries/historyStep'
-import type { VehicleHistorySplit } from './timeSeries/historySplit'
+import type { VehicleFilters } from '../filters/types'
+import { availableSlots } from './vehicleMetrics'
+import type { HistoryStep } from '../timeSeries/historyStep'
+import type { VehicleHistorySplit } from '../timeSeries/historySplit'
 import type { VehicleGrouping, VehicleSelection } from './vehicleGrouping'
 
 function quote(value: string) {

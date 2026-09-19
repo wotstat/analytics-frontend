@@ -8,20 +8,12 @@
         </div>
       </template>
       <template #right>
-        <div class="step-selector">
-          <a v-for="option in steps" :key="option.value" :class="{ active: step === option.value }"
-            @click="step = option.value">{{ option.label }}</a>
-          <span class="selector-divider"></span>
-          <button v-for="window in averageWindows" :key="window"
-            :class="{ active: averageWindow === window }"
-            v-tooltip:vehicleHistoryAverage.top-float="`Скользящее среднее по ${window} соседним точкам. Повторное нажатие выключает сглаживание`"
-            @click="toggleAverage(window)">avg{{ window }}</button>
-          <span class="selector-divider"></span>
+        <HistoryControls v-model:step="step" v-model:average-window="averageWindow" compact class="step-selector">
           <button class="split-trigger" :class="{ active: split !== null }"
             title="Разбить график" @click="openSplitMenu">
             <span class="dots"></span>
           </button>
-        </div>
+        </HistoryControls>
       </template>
       <template #tooltip="{ ctx }">
         <div class="history-tooltip">
@@ -72,15 +64,19 @@ import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/Univers
 import { closeContextMenu, isContextMenuOpen } from '@/shared/uiKit/contextMenu/createContextMenu'
 import { checkboxItem, header, separator, simpleContextMenu } from '@/shared/uiKit/contextMenu/simpleContextMenu'
 import type { VehicleFilters } from '../filters/types'
-import { availableSlots, formatSlotValue, type Slot } from '../vehicleListTable/helpers'
+import { availableSlots, type Slot } from '../shared/vehicleMetrics'
+import { formatSlotValue } from '../shared/formatMetricValue'
 import { formatHistoryPeriod } from './formatHistoryPeriod'
-import { vehicleHistoryQuery } from '../vehicleStatisticsQuery'
-import { VehicleHistoryChart, type VehicleHistoryPeriod, type VehicleHistorySeries } from './VehicleHistoryChart'
+import { vehicleHistoryQuery } from '../shared/vehicleStatisticsQuery'
+import { VehicleHistoryChart } from './VehicleHistoryChart'
+import type { VehicleHistoryPeriod, VehicleHistorySeries } from '../shared/types'
 import type { HistoryAverageWindow, HistoryStep } from './historyStep'
+import HistoryControls from './HistoryControls.vue'
+import { applyHistoryThresholds, hasHistoryValues } from './historyValues'
 import { historySplitName, historySplitOptions, orderHistorySplitKeys, type VehicleHistorySplit } from './historySplit'
 import { historySplitSeriesColor } from './seriesColors'
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
-import type { VehicleSelection } from '../vehicleGrouping'
+import type { VehicleSelection } from '../shared/vehicleGrouping'
 import ComparisonTooltip from '../timeSeriesCompare/ComparisonTooltip.vue'
 
 const props = defineProps<{
@@ -101,26 +97,12 @@ const now = useNow({ interval: 60_000 })
 const beforeDay = computed(() => now.value.toISOString().slice(0, 10))
 const retry = ref(0)
 
-const steps = [
-  { value: 'day', label: 'День' },
-  { value: 'week', label: 'Неделя' },
-  { value: 'month', label: 'Месяц' },
-] as const satisfies readonly { value: HistoryStep, label: string }[]
-const averageWindows = [3, 5, 7] as const
-
 type SplitHistoryPeriod = VehicleHistoryPeriod & { splitKey?: string }
 type SplitSource = { tag: string, name: string, color: string }
 
 const history = queryComputed<SplitHistoryPeriod>(() =>
   `${vehicleHistoryQuery(props.filters, props.selection, beforeDay.value, step.value, split.value)}\n-- retry ${retry.value}`,
   { settings: { use_query_cache: 1, query_cache_ttl: 24 * 60 * 60 } })
-
-function applyThresholds(rows: SplitHistoryPeriod[]): VehicleHistoryPeriod[] {
-  return rows.map(row => {
-    if ((row.battles ?? 0) > props.minBattles && (row.playerCount ?? 0) > props.minPlayers) return row
-    return { ...row, [props.slot]: null }
-  })
-}
 
 const splitSources = computed<SplitSource[]>(() => {
   const activeSplit = split.value
@@ -141,27 +123,23 @@ const chart = markRaw(new VehicleHistoryChart(legend.highlightSync))
 
 const series = computed<VehicleHistorySeries[]>(() => {
   if (split.value === null) {
-    return [{ tag: 'vehicle', name: '', color: 'var(--blue-thin-color)', history: applyThresholds(history.value.data) }]
+    return [{ tag: 'vehicle', name: '', color: 'var(--blue-thin-color)', history: applyHistoryThresholds(history.value.data, props.slot, props) }]
   }
 
   return splitSources.value.map(source => ({
     ...source,
     enabled: legend.isEnabled(source),
-    history: applyThresholds(history.value.data.filter(row => row.splitKey === source.tag)),
+    history: applyHistoryThresholds(history.value.data.filter(row => row.splitKey === source.tag), props.slot, props),
   }))
 })
 
 const hasValues = computed(() => history.value.status === success &&
   series.value.some(source => source.enabled !== false &&
-    source.history.some(row => row[props.slot] !== null && Number.isFinite(row[props.slot]))))
+    hasHistoryValues(source.history, props.slot)))
 
 watch([series, () => props.slot, beforeDay, step, averageWindow], () => {
   chart.setHistories(series.value, props.slot, beforeDay.value, step.value, averageWindow.value)
 }, { immediate: true })
-
-function toggleAverage(window: NonNullable<HistoryAverageWindow>) {
-  averageWindow.value = averageWindow.value === window ? null : window
-}
 
 let splitMenuId = -1
 
@@ -202,6 +180,8 @@ onBeforeUnmount(() => closeContextMenu(splitMenuId))
 </script>
 
 <style lang="scss" scoped>
+@use './historyChart.scss' as *;
+
 .vehicle-time-series {
   margin-top: 12px;
   min-width: 0;
@@ -238,36 +218,7 @@ onBeforeUnmount(() => closeContextMenu(splitMenuId))
     }
 
     .step-selector {
-      display: flex;
-      align-items: center;
       margin-left: auto;
-      gap: 8px;
-
-      a,
-      button {
-        color: rgba(197, 197, 197, 0.6);
-        font-size: 12px;
-        white-space: nowrap;
-        cursor: pointer;
-        font-weight: bold;
-        padding: 0;
-
-        @media (hover: hover) and (pointer: fine) {
-          &:hover {
-            color: rgba(255, 255, 255, 0.8);
-          }
-        }
-
-        &.active {
-          color: white;
-        }
-      }
-
-      .selector-divider {
-        height: 14px;
-        border-left: 1px solid rgba(255, 255, 255, 0.25);
-        margin: 0 2px;
-      }
 
       .split-trigger {
         display: grid;
@@ -276,8 +227,11 @@ onBeforeUnmount(() => closeContextMenu(splitMenuId))
         height: 24px;
         margin-left: -2px;
         border-radius: 5px;
+        padding: 0;
+        color: rgba(197, 197, 197, 0.6);
 
         &:hover {
+          color: rgba(255, 255, 255, 0.8);
           background: rgba(255, 255, 255, 0.08);
         }
 
@@ -387,70 +341,10 @@ onBeforeUnmount(() => closeContextMenu(splitMenuId))
   }
 
   :deep(.universal-chart-root) {
+    @include history-chart;
+
     .history-line {
       stroke: currentColor;
-      stroke-width: 2px;
-      stroke-linejoin: round;
-      stroke-linecap: round;
-      transition: stroke-width 0.18s ease;
-
-      &.highlighted {
-        stroke-width: 3px;
-      }
-    }
-
-    .interaction {
-      .history-hover-marker {
-        fill: currentColor;
-      }
-    }
-
-    .grid {
-      opacity: 0.2;
-
-      .y-ticks .tick {
-        stroke: rgb(255, 255, 255, 0.5);
-      }
-
-      .tick {
-        stroke: rgb(255, 255, 255, 0.04);
-      }
-
-      .label-ticks {
-        &.day-ticks .tick {
-          stroke: rgb(255, 255, 255, 0.15);
-        }
-
-        &.week-ticks .tick {
-          stroke: rgb(255, 255, 255, 0.15);
-        }
-
-        &.month-ticks .tick {
-          stroke: rgb(255, 255, 255, 0.4);
-        }
-
-        &.year-ticks .tick {
-          stroke: rgb(255, 255, 255, 1);
-        }
-      }
-    }
-
-    .label {
-      font-size: 11px;
-      font-weight: bold;
-      fill: rgba(255, 255, 255, 0.9);
-
-      &.value-outside-bounds {
-        visibility: hidden;
-      }
-    }
-
-    .day-labels .label {
-      font-weight: normal;
-    }
-
-    .interactive-zone {
-      cursor: crosshair;
     }
   }
 }

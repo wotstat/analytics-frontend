@@ -1,25 +1,26 @@
 <template>
   <VehicleFilters v-model="filters" />
-  <TimeSeriesCompare v-model="comparisonSources" :filters :min-battles="localFilters.minBattles"
-    :min-players="localFilters.minPlayers" />
+  <TimeSeriesCompare :sources="comparison.sources.value" :filters :min-battles="localFilters.minBattles"
+    :min-players="localFilters.minPlayers" @remove="comparison.remove" @color-change="comparison.setColor"
+    @clear="comparison.clear" />
   <VehicleListTable v-model:grouping="grouping" v-model:local-filters="localFilters" :slots="defaultSlots"
-    :vehicles="statistics.data" :status="statistics.status" :filters :compared-keys="comparedKeys"
-    @compare="toggleComparison" @retry="retry++" />
+    :vehicles="statistics.data" :status="statistics.status" :filters :compared-keys="comparison.comparedKeys.value"
+    @compare="comparison.toggle" @retry="retry++" />
 </template>
 
 <script setup lang="ts">
 import TimeSeriesCompare from './timeSeriesCompare/TimeSeriesCompare.vue'
-import { comparisonFiltersKey, nextComparisonColor, snapshotComparisonFilters, type ComparisonSource } from './timeSeriesCompare/types'
-import { vehicleName } from './vehicleListTable/vehicleName'
-import type { VehicleGrouping, VehicleSelection } from './vehicleGrouping'
-import { computed, ref } from 'vue'
+import { useVehicleComparison } from './timeSeriesCompare/useVehicleComparison'
+import type { VehicleGrouping } from './shared/vehicleGrouping'
+import { ref } from 'vue'
 import { useMeta } from '@/shared/composition/useMeta'
 import VehicleListTable from './vehicleListTable/VehicleListTable.vue'
-import { defaultSlots, type VehicleStatistics } from './vehicleListTable/helpers'
+import { defaultSlots } from './shared/vehicleMetrics'
+import type { VehicleStatistics } from './shared/types'
 import VehicleFilters from './filters/VehicleFilters.vue'
 import { createVehicleFilters } from './filters/types'
 import { LONG_CACHE_SETTINGS, queryComputed } from '@/db'
-import { vehicleStatisticsQuery } from './vehicleStatisticsQuery'
+import { vehicleStatisticsQuery } from './shared/vehicleStatisticsQuery'
 import { createLocalVehicleFilters } from './vehicleListTable/localFilters'
 import { useBackground } from '@/shared/uiKit/pageBackground/useBackground'
 import VehiclesBackground from './VehiclesBackground.vue'
@@ -36,41 +37,7 @@ const filters = ref(createVehicleFilters())
 const localFilters = ref(createLocalVehicleFilters())
 const grouping = ref<VehicleGrouping>('tanks')
 
-const comparisonSources = ref<ComparisonSource[]>([])
-const currentComparisonFilters = computed(() => snapshotComparisonFilters(filters.value))
-const currentComparisonKey = computed(() => comparisonFiltersKey(currentComparisonFilters.value))
-const comparedKeys = computed(() => comparisonSources.value
-  .filter(source => comparisonFiltersKey(source.filters) === currentComparisonKey.value)
-  .map(source => source.rowKey))
-
-const sampleNumbers = new Map<string, number>()
-
-function toggleComparison(vehicle: VehicleStatistics, selection: VehicleSelection) {
-  const filtersKey = currentComparisonKey.value
-  const tag = JSON.stringify([vehicle.rowKey, filtersKey])
-
-  if (comparisonSources.value.some(source => source.tag === tag)) {
-    comparisonSources.value = comparisonSources.value.filter(source => source.tag !== tag)
-    return
-  }
-
-  if (!sampleNumbers.has(filtersKey)) sampleNumbers.set(filtersKey, sampleNumbers.size + 1)
-
-  comparisonSources.value.push({
-    tag,
-    rowKey: vehicle.rowKey,
-    name: vehicle.tankTag === null ? `Среднее · ${vehicleName(vehicle)}` : vehicleName(vehicle),
-    color: nextComparisonColor(comparisonSources.value),
-    selection: {
-      ...selection,
-      levels: [...selection.levels],
-      types: [...selection.types],
-      nations: [...selection.nations],
-    },
-    filters: snapshotComparisonFilters(filters.value),
-    sampleNumber: sampleNumbers.get(filtersKey)!,
-  })
-}
+const comparison = useVehicleComparison(filters)
 
 const retry = ref(0)
 const statistics = queryComputed<VehicleStatistics>(() =>

@@ -1,4 +1,5 @@
 import { shallowRef } from 'vue'
+import type { VehicleHistoryPeriod, VehicleHistorySeries } from '../shared/types'
 import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
 import { ChartClip } from '@/shared/uiKit/chart/universalChart/defs/ChartClip'
 import { ChartTooltip, type TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
@@ -15,23 +16,14 @@ import type { AutoLineInteraction, LinePointHit } from '@/shared/uiKit/chart/uni
 import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
-import { availableSlots, formatSlotValue, type Slot } from '../vehicleListTable/helpers'
+import { availableSlots, type Slot } from '../shared/vehicleMetrics'
+import { formatSlotValue } from '../shared/formatMetricValue'
 import { DAY, timeLabels } from './timeLabels'
 import {
   historyDayStart, historyDayString, historyPeriodWindow, minimumHistoryWindow, nextHistoryPeriod,
   type HistoryAverageWindow, type HistoryStep
 } from './historyStep'
 import { ChartMask } from '@/shared/uiKit/chart/universalChart/defs/ChartMask'
-
-export type VehicleHistoryPeriod = { periodStart: string } & Record<Slot, number | null>
-
-export type VehicleHistorySeries = {
-  tag: string
-  name: string
-  color: string
-  history: VehicleHistoryPeriod[]
-  enabled?: boolean
-}
 
 type HistoryPoint = {
   series: string

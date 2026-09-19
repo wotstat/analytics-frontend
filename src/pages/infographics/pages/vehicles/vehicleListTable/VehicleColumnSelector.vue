@@ -14,7 +14,7 @@ import { ref, useTemplateRef } from 'vue'
 import VehicleSlotOptions from '../VehicleSlotOptions.vue'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
 import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
-import { orderSlots, type Slot } from './helpers'
+import { orderSlots, type Slot } from '../shared/vehicleMetrics'
 
 const props = defineProps<{ maxSlots: number }>()
 const selected = defineModel<Slot[]>({ required: true })

@@ -1,4 +1,4 @@
-import { formatStatisticsDay } from '../vehicleListTable/helpers'
+import { formatStatisticsDay } from '../shared/formatStatisticsDay'
 import type { HistoryStep } from './historyStep'
 
 const monthFormatter = new Intl.DateTimeFormat('ru-RU', { month: 'long', timeZone: 'UTC' })

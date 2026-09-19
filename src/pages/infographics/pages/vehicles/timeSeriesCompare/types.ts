@@ -1,6 +1,5 @@
-import type { VehicleSelection } from '../vehicleGrouping'
+import type { VehicleSelection } from '../shared/vehicleGrouping'
 import type { VehicleFilters } from '../filters/types'
-import { historySeriesColor, historySeriesColors } from '../timeSeries/seriesColors'
 
 export type ComparisonFilters = VehicleFilters
 
@@ -41,8 +40,4 @@ export function snapshotComparisonFilters(filters: VehicleFilters): ComparisonFi
     result: filters.result,
     battleLevel: filters.battleLevel,
   }
-}
-
-export function nextComparisonColor(sources: ComparisonSource[]) {
-  return historySeriesColors.find(color => !sources.some(source => source.color === color)) ?? historySeriesColor(sources.length)
 }
