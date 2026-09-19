@@ -38,10 +38,6 @@ export function comparisonName(source: ComparisonSource, current: ComparisonFilt
           : 'Все режимы')
         break
 
-      case 'team':
-        labels.push(filters.team === 'any' ? 'Любой респ' : `Респ ${filters.team}`)
-        break
-
       case 'platoon':
         labels.push({
           any: 'Любой взвод',

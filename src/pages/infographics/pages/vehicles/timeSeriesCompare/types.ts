@@ -35,7 +35,6 @@ export function snapshotComparisonFilters(filters: VehicleFilters): ComparisonFi
     regions: [...filters.regions],
     battleModes: [...filters.battleModes],
     arenas: [...filters.arenas],
-    team: filters.team,
     platoon: filters.platoon,
     result: filters.result,
     battleLevel: filters.battleLevel,

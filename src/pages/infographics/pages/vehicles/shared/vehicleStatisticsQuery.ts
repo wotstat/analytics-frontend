@@ -11,7 +11,6 @@ function quote(value: string) {
 
 function statisticsSource(filters: VehicleFilters) {
   const needsDetails = filters.arenas.length > 0
-    || filters.team !== 'any'
     || filters.platoon !== 'any'
     || filters.result !== 'any'
     || filters.battleLevel !== 'any'
@@ -48,12 +47,10 @@ export function vehicleStatisticsWhere(filters: VehicleFilters, beforeDay?: stri
   if (filters.arenas.length) {
     conditions.push(`(${[...filters.arenas].sort().map(arena => {
       const [tag, respawn] = arena.split(':')
-      const team = respawn === '1' || respawn === '2' ? Number(respawn) : filters.team
+      const teamCondition = respawn === '1' || respawn === '2' ? ` and stats.team = ${respawn}` : ''
       const arenaTag = tag.startsWith('spaces/') ? tag : `spaces/${tag}`
-      return `(stats.arenaTag = ${quote(arenaTag)}${team === 'any' ? '' : ` and stats.team = ${team}`})`
+      return `(stats.arenaTag = ${quote(arenaTag)}${teamCondition})`
     }).join(' or ')})`)
-  } else if (filters.team !== 'any') {
-    conditions.push(`stats.team = ${filters.team}`)
   }
 
   const platoons = { solo: '= 0', duo: '= 1', trio: '= 2', large: '>= 3' } as const

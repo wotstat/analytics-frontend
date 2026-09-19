@@ -9,7 +9,6 @@ export type VehicleFilters = {
   battleModes: VehicleBattleMode[]
   // Формат общего селектора карт: tag:team, например 05_prohorovka:any.
   arenas: string[]
-  team: 'any' | 1 | 2
   platoon: 'any' | 'solo' | 'duo' | 'trio' | 'large'
   result: 'any' | 'win' | 'loss' | 'draw'
   battleLevel: 'any' | 'same' | 'top' | 'middle' | 'bottom'
@@ -20,7 +19,6 @@ export function createVehicleFilters(): VehicleFilters {
     regions: ['RU'],
     battleModes: ['normalAny'],
     arenas: [],
-    team: 'any',
     platoon: 'any',
     result: 'any',
     battleLevel: 'any',

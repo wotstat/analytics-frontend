@@ -29,16 +29,6 @@
 
     <div v-show="expanded" class="advanced-filters">
       <div class="advanced-row">
-        <span class="label" title="Для карт без отдельно выбранного респа">Респ</span>
-        <div class="variants">
-          <button v-for="option in teamOptions" :key="option.value" class="variant"
-            :class="{ active: team === option.value, neutral: option.value === 'any' }" @click="team = option.value">
-            {{ option.label }}
-          </button>
-        </div>
-      </div>
-
-      <div class="advanced-row">
         <span class="label">Взвод</span>
         <div class="variants">
           <button v-for="option in platoonOptions" :key="option.value" class="variant"
@@ -118,12 +108,6 @@ const modeGroups = modeCategoryTitles.map(title => ({
     .map(value => ({ value, label: customBattleModes[value].title })),
 }))
 
-const teamOptions = [
-  { value: 'any', label: 'Любой' },
-  { value: 1, label: '1' },
-  { value: 2, label: '2' },
-] as const
-
 const platoonOptions = [
   { value: 'any', label: 'Любой' },
   { value: 'solo', label: 'Без взвода' },
@@ -165,7 +149,6 @@ function field<K extends keyof VehicleFilters>(key: K) {
 const regions = field('regions')
 const modes = useBadgeSelection(field('battleModes'))
 const arenas = useBadgeSelection(field('arenas'))
-const team = field('team')
 const platoon = field('platoon')
 const result = field('result')
 const battleLevel = field('battleLevel')
@@ -185,7 +168,7 @@ const arenaGame = computed(() => {
   return games.size === 1 ? [...games][0] : undefined
 })
 
-const advancedCount = computed(() => [team.value, platoon.value, result.value, battleLevel.value]
+const advancedCount = computed(() => [platoon.value, result.value, battleLevel.value]
   .filter(value => value !== 'any').length)
 
 const canReset = computed(() => {
