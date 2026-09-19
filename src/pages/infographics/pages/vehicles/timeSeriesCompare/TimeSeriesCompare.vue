@@ -316,7 +316,7 @@ function selectMetric(value: Slot) {
           align-items: center;
           justify-content: center;
           width: 24px;
-          height: 24px;
+          height: var(--legend-row-height);
           color: rgba(255, 255, 255, 0.65);
           transition: color 0.15s;
 
