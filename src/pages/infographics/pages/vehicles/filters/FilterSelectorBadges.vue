@@ -7,16 +7,15 @@
       </header>
 
       <div class="options nice-scrollbar">
-        <button class="option all" type="button" :class="{ selected: model.size === 0 }"
-          :aria-pressed="model.size === 0" @click="model = new Set()">
+        <button class="option all" :class="{ selected: model.size === 0 }" @click="model = new Set()">
           {{ allLabel }}
         </button>
 
         <section v-for="group in groups" :key="group.title" class="category">
           <h3>{{ group.title }}</h3>
           <div class="tiles">
-            <button v-for="option in group.options" :key="option.value" class="option" type="button"
-              :class="{ selected: model.has(option.value) }" :aria-pressed="model.has(option.value)"
+            <button v-for="option in group.options" :key="option.value" class="option"
+              :class="{ selected: model.has(option.value) }"
               @click="toggle(option.value)">
               {{ option.label }}
             </button>
@@ -44,8 +43,10 @@ function labelFor(value: T) {
 
 function toggle(value: T) {
   const next = new Set(model.value)
+
   if (next.has(value)) next.delete(value)
   else next.add(value)
+
   model.value = next
 }
 </script>
@@ -61,101 +62,96 @@ function toggle(value: T) {
   @media (max-width: 550px) {
     max-height: 50dvh;
   }
-}
 
-.popover-heading {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 12px;
-  padding: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  .popover-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+    padding: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 
-  h2 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-  }
-}
+    h2 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
 
-.selected-count {
-  color: rgba(255, 255, 255, 0.55);
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.options {
-  min-height: 0;
-  overflow-y: auto;
-  margin-right: 3px;
-  padding: 16px 13px 16px 16px;
-
-  &::-webkit-scrollbar-track {
-    margin-block: 10px;
-  }
-}
-
-.category {
-  margin-top: 16px;
-
-  &+.category {
-    margin-top: 20px;
-  }
-
-  h3 {
-    margin: 0 0 8px;
-    font-size: 14px;
-    font-weight: 500;
-  }
-}
-
-.tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
-  gap: 6px;
-}
-
-.option {
-  position: relative;
-  min-width: 0;
-  min-height: 34px;
-  padding: 8px 12px;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.05);
-  color: inherit;
-  text-align: left;
-  font-size: 14px;
-  line-height: 1.2;
-
-  @media (hover: hover) and (pointer: fine) {
-    &:hover {
-      background: rgba(255, 255, 255, 0.12);
+    .selected-count {
+      color: rgba(255, 255, 255, 0.55);
+      font-size: 12px;
+      white-space: nowrap;
     }
   }
 
-  &:focus-visible {
-    outline: 2px solid var(--blue-thin-color);
-    outline-offset: 2px;
-  }
+  .options {
+    min-height: 0;
+    overflow-y: auto;
+    margin-right: 3px;
+    padding: 16px 13px 16px 16px;
 
-  &.selected {
-    background: rgba(255, 255, 255, 0.1);
+    &::-webkit-scrollbar-track {
+      margin-block: 10px;
+    }
 
-    &::before {
-      content: '';
-      position: absolute;
-      top: 7px;
-      bottom: 7px;
-      left: 0;
-      width: 3px;
-      border-radius: 3px;
-      background: var(--blue-thin-color);
+    .option {
+      position: relative;
+      min-width: 0;
+      min-height: 34px;
+      padding: 8px 12px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.05);
+      color: inherit;
+      text-align: left;
+      font-size: 14px;
+      line-height: 1.2;
+
+      @media (hover: hover) and (pointer: fine) {
+        &:hover {
+          background: rgba(255, 255, 255, 0.12);
+        }
+      }
+
+      &.selected {
+        background: rgba(255, 255, 255, 0.1);
+
+        &::before {
+          content: '';
+          position: absolute;
+          top: 7px;
+          bottom: 7px;
+          left: 0;
+          width: 3px;
+          border-radius: 3px;
+          background: var(--blue-thin-color);
+        }
+      }
+
+      &.all {
+        width: 100%;
+      }
+    }
+
+    .category {
+      margin-top: 16px;
+
+      &+.category {
+        margin-top: 20px;
+      }
+
+      h3 {
+        margin: 0 0 8px;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .tiles {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
+        gap: 6px;
+      }
     }
   }
-}
-
-.all {
-  width: 100%;
 }
 </style>

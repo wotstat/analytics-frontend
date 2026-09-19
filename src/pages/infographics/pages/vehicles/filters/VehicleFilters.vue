@@ -10,6 +10,7 @@
         <span class="label">Режим</span>
         <FilterSelectorBadges v-model="modes" title="Выбор режимов боя" all-label="Все режимы" :groups="modeGroups" />
       </div>
+
       <div class="primary-filter">
         <span class="label">Карта</span>
         <ArenaSelectorBadges v-model="arenas" :game="arenaGame" />
@@ -30,35 +31,40 @@
       <div class="advanced-row">
         <span class="label" title="Для карт без отдельно выбранного респа">Респ</span>
         <div class="variants">
-          <button v-for="option in teamOptions" :key="option.value" class="variant "
-            :class="{ active: team === option.value, neutral: option.value === 'any' }" @click="team = option.value">{{
-              option.label }}</button>
+          <button v-for="option in teamOptions" :key="option.value" class="variant"
+            :class="{ active: team === option.value, neutral: option.value === 'any' }" @click="team = option.value">
+            {{ option.label }}
+          </button>
         </div>
       </div>
+
       <div class="advanced-row">
         <span class="label">Взвод</span>
         <div class="variants">
-          <button v-for="option in platoonOptions" :key="option.value" class="variant "
+          <button v-for="option in platoonOptions" :key="option.value" class="variant"
             :class="{ active: platoon === option.value, neutral: option.value === 'any' }"
             @click="platoon = option.value">{{ option.label }}</button>
         </div>
       </div>
+
       <div class="advanced-row">
         <span class="label">Результат</span>
         <div class="variants">
-          <button v-for="option in resultOptions" :key="option.value" class="variant "
+          <button v-for="option in resultOptions" :key="option.value" class="variant"
             :class="{ active: result === option.value, neutral: option.value === 'any' }"
             @click="result = option.value">{{ option.label }}</button>
         </div>
       </div>
+
       <div class="advanced-row">
         <span class="label">Уровни боя</span>
         <div class="variants">
-          <button v-for="option in battleLevelOptions" :key="option.value" class="variant "
+          <button v-for="option in battleLevelOptions" :key="option.value" class="variant"
             :class="{ active: battleLevel === option.value, neutral: option.value === 'any' }"
             v-tooltip:battleLevel.bottom-float="battleLevelDescriptions[option.value]"
-            @click="battleLevel = option.value">{{ option.label
-            }}</button>
+            @click="battleLevel = option.value">
+            {{ option.label }}
+          </button>
         </div>
       </div>
     </div>
@@ -77,8 +83,11 @@ import { useBadgeSelection } from './useBadgeSelection'
 
 const filters = defineModel<VehicleFilters>({ required: true })
 const expanded = ref(false)
+
 const regionOptions = ['RU', 'EU', 'NA', 'ASIA', 'CN'] as const
+
 const modeCategoryTitles = ['Случайные бои', 'Соревновательные', 'Клановые', 'События', 'Обучение'] as const
+
 const modeCategories: Record<VehicleBattleMode, typeof modeCategoryTitles[number]> = {
   normalAny: 'Случайные бои',
   normalCft: 'Случайные бои',
@@ -101,17 +110,20 @@ const modeCategories: Record<VehicleBattleMode, typeof modeCategoryTitles[number
   mapsTraining: 'Обучение',
   training: 'Обучение',
 }
+
 const modeGroups = modeCategoryTitles.map(title => ({
   title,
   options: customBattleModesKeys
     .filter(value => modeCategories[value] === title)
     .map(value => ({ value, label: customBattleModes[value].title })),
 }))
+
 const teamOptions = [
   { value: 'any', label: 'Любой' },
   { value: 1, label: '1' },
   { value: 2, label: '2' },
 ] as const
+
 const platoonOptions = [
   { value: 'any', label: 'Любой' },
   { value: 'solo', label: 'Без взвода' },
@@ -119,12 +131,14 @@ const platoonOptions = [
   { value: 'trio', label: '3 игрока' },
   { value: 'large', label: '4 и более' },
 ] as const
+
 const resultOptions = [
   { value: 'any', label: 'Любой' },
   { value: 'win', label: 'Победа' },
   { value: 'loss', label: 'Поражение' },
   { value: 'draw', label: 'Ничья' },
 ] as const
+
 const battleLevelOptions = [
   { value: 'any', label: 'Любые' },
   { value: 'same', label: 'Одноуровневый' },
@@ -132,6 +146,7 @@ const battleLevelOptions = [
   { value: 'middle', label: 'В середине' },
   { value: 'bottom', label: 'Внизу списка' },
 ] as const
+
 const battleLevelDescriptions: Record<VehicleFilters['battleLevel'], string> = {
   any: 'Без ограничения по уровням участников боя',
   same: 'Все участники боя на технике того же уровня',
@@ -188,166 +203,166 @@ function reset() {
 .vehicle-filters {
   margin: 12px 0 24px;
   font-size: 15px;
-}
 
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 12px 20px;
-}
-
-.region-select,
-.variants {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  min-height: 24px;
-  gap: 5px;
-}
-
-.region-select {
-  flex-shrink: 0;
-}
-
-.primary-filter {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  min-width: 0;
-  max-width: 100%;
-
-  > :deep(div) {
-    min-width: 0;
-  }
-}
-
-.label {
-  display: flex;
-  align-items: center;
-  min-height: 24px;
-  flex-shrink: 0;
-  color: rgba(255, 255, 255, 0.6);
-  white-space: nowrap;
-}
-
-.variant {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 22px;
-  padding: 0 10px;
-  border: none;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.08);
-  line-height: 1;
-  font-size: 14px;
-  white-space: nowrap;
-  user-select: none;
-  transition: background-color 0.07s;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.2);
+  .label {
+    display: flex;
+    align-items: center;
+    min-height: 24px;
+    flex-shrink: 0;
+    color: rgba(255, 255, 255, 0.6);
+    white-space: nowrap;
   }
 
-  &.active {
-    background: var(--blue-color);
-
-    &.neutral {
-      background: rgba(255, 255, 255, 0.2);
-    }
+  .region-select,
+  .variants {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    min-height: 24px;
+    gap: 5px;
   }
-}
 
-.actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-left: auto;
-
-  button {
+  .variant {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 24px;
-    color: rgba(255, 255, 255, 0.65);
-    font-size: inherit;
+    height: 22px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.08);
+    line-height: 1;
+    font-size: 14px;
     white-space: nowrap;
-    transition: color 0.15s;
+    user-select: none;
+    transition: background-color 0.07s;
 
-    &:hover:not(:disabled) {
-      color: white;
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
     }
 
-    &.enabled {
-      color: var(--blue-thin-color);
+    &.active {
+      background: var(--blue-color);
+
+      &.neutral {
+        background: rgba(255, 255, 255, 0.2);
+      }
     }
   }
 
-  .reset {
-    width: 24px;
-
-    svg {
-      width: 16px;
-      height: 16px;
-    }
-
-    &:disabled {
-      opacity: 0.25;
-      cursor: default;
-    }
-  }
-}
-
-.arrow {
-  margin-left: 5px;
-  width: 12px;
-  height: 12px;
-  fill: currentColor;
-  transition: transform 0.15s;
-
-  &.expanded {
-    transform: rotate(180deg);
-  }
-}
-
-.advanced-filters {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.advanced-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-
-  .label {
-    flex-basis: 88px;
-  }
-}
-
-@media (max-width: 550px) {
   .toolbar {
-    gap: 12px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px 20px;
+
+    @media (max-width: 550px) {
+      gap: 12px 16px;
+    }
+
+    .region-select {
+      flex-shrink: 0;
+
+      @media (max-width: 550px) {
+        flex-basis: 100%;
+      }
+    }
+
+    .primary-filter {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      min-width: 0;
+      max-width: 100%;
+
+      > :deep(div) {
+        min-width: 0;
+      }
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: auto;
+
+      button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 24px;
+        color: rgba(255, 255, 255, 0.65);
+        font-size: inherit;
+        white-space: nowrap;
+        transition: color 0.15s;
+
+        &:hover:not(:disabled) {
+          color: white;
+        }
+
+        &.enabled {
+          color: var(--blue-thin-color);
+        }
+      }
+
+      .reset {
+        width: 24px;
+
+        svg {
+          width: 16px;
+          height: 16px;
+        }
+
+        &:disabled {
+          opacity: 0.25;
+          cursor: default;
+        }
+      }
+
+      @media (max-width: 550px) {
+        margin-left: 0;
+      }
+
+      .expand {
+        .arrow {
+          margin-left: 5px;
+          width: 12px;
+          height: 12px;
+          fill: currentColor;
+          transition: transform 0.15s;
+
+          &.expanded {
+            transform: rotate(180deg);
+          }
+        }
+      }
+    }
   }
 
-  .region-select {
-    flex-basis: 100%;
-  }
-
-  .actions {
-    margin-left: 0;
-  }
-
-  .advanced-row {
+  .advanced-filters {
+    display: flex;
+    flex-direction: column;
     gap: 8px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
 
-    .label {
-      flex-basis: 78px;
+    .advanced-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+
+      .label {
+        flex-basis: 88px;
+      }
+
+      @media (max-width: 550px) {
+        gap: 8px;
+
+        .label {
+          flex-basis: 78px;
+        }
+      }
     }
   }
 }

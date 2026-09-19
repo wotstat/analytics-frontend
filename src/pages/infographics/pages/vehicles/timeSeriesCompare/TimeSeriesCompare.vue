@@ -17,7 +17,7 @@
         <VehicleSlotOptions title="Выбор метрики" :selected="[slot]" @select="selectMetric" />
       </PopoverAutoClose>
 
-      <div class="steps" role="group">
+      <div class="steps">
         <button v-for="option in steps" :key="option.value" :class="{ active: step === option.value }"
           @click="step = option.value">{{ option.label }}</button>
         <span class="divider"></span>
@@ -35,12 +35,8 @@
           <span>Нажмите «+» в таблице ниже. Чтобы добавить среднее по уровню или классу, выберите нужный режим
             таблицы.</span>
         </div>
-        <div v-else-if="!hasValues" class="chart-state" role="status">
-          {{
-            pending ? 'Загружаем историю…' : !legend.enabled.value.length ?
-              'Включите источники в легенде' :
-              'По выбранным фильтрам нет данных для отображения'
-          }}
+        <div v-else-if="!hasValues" class="chart-state">
+          {{ emptyMessage }}
         </div>
       </div>
 
@@ -48,18 +44,18 @@
         <div v-if="sources.length" class="legend-row">
           <Legend :legend toggleable highlightable color-editable removable @color-change="setColor"
             @remove="remove" class="legend" />
-          <button type="button" class="reset" aria-label="Сбросить сравнение" title="Сбросить сравнение"
+          <button class="reset" title="Сбросить сравнение"
             @click="sources = []">
             <ResetIcon />
           </button>
         </div>
 
-        <div v-for="source in failedSources" :key="source.tag" class="source-error" role="alert">
+        <div v-for="source in failedSources" :key="source.tag" class="source-error">
           <span>{{ source.name }}: не удалось загрузить историю.</span>
           <button @click="retries[source.tag] = (retries[source.tag] ?? 0) + 1">Повторить</button>
         </div>
         <div v-if="emptySources.length" class="caption">
-          Нет данных: {{emptySources.map(source => source.name).join(', ')}}
+          Нет данных: {{ emptySources.map(source => source.name).join(', ') }}
         </div>
       </div>
     </div>
@@ -99,39 +95,64 @@ import ComparisonTooltip from './ComparisonTooltip.vue'
 
 const props = defineProps<{ filters: VehicleFilters } & Pick<LocalVehicleFilters, 'minBattles' | 'minPlayers'>>()
 const sources = defineModel<ComparisonSource[]>({ required: true })
+
 const slot = ref<Slot>('damage')
 const metricSelectorOpen = ref(false)
 const metricTrigger = useTemplateRef<HTMLButtonElement>('metricTrigger')
+
 const step = ref<HistoryStep>('day')
 const averageWindow = ref<HistoryAverageWindow>(null)
 const averageWindows = [3, 5, 7] as const
-const steps = [{ value: 'day', label: 'День' }, { value: 'week', label: 'Неделя' }, { value: 'month', label: 'Месяц' }] as const
+const steps = [
+  { value: 'day', label: 'День' },
+  { value: 'week', label: 'Неделя' },
+  { value: 'month', label: 'Месяц' },
+] as const
+
 const now = useNow({ interval: 60_000 })
 const beforeDay = computed(() => now.value.toISOString().slice(0, 10))
+
 const states = reactive(new Map<string, { status: Status, data: VehicleHistoryPeriod[] }>())
 const retries = reactive<Record<string, number>>({})
+
 const currentFilters = computed(() => snapshotComparisonFilters(props.filters))
 const legendItems = computed(() => sources.value.map(source => ({
   ...source,
   name: comparisonName(source, currentFilters.value),
   loading: !states.has(source.tag) || states.get(source.tag)?.status === loading,
 })))
+
 const legend = useLegend(legendItems)
 const chart = markRaw(new VehicleHistoryChart(legend.highlightSync))
+
+function applyThresholds(rows: VehicleHistoryPeriod[]) {
+  return rows.map(row => {
+    if ((row.battles ?? 0) > props.minBattles && (row.playerCount ?? 0) > props.minPlayers) return row
+    return { ...row, [slot.value]: null }
+  })
+}
+
 const series = computed(() => legendItems.value.map(source => ({
   ...source,
   enabled: legend.isEnabled(source),
-  history: (states.get(source.tag)?.data ?? []).map(row =>
-    (row.battles ?? 0) > props.minBattles && (row.playerCount ?? 0) > props.minPlayers
-      ? row : { ...row, [slot.value]: null }),
+  history: applyThresholds(states.get(source.tag)?.data ?? []),
 })))
+
 const hasValues = computed(() => series.value.some(source => source.enabled &&
   source.history.some(row => row[slot.value] !== null && Number.isFinite(row[slot.value]))))
 const pending = computed(() => legendItems.value.some(source => source.loading))
+
+const emptyMessage = computed(() => {
+  if (pending.value) return 'Загружаем историю…'
+  if (!legend.enabled.value.length) return 'Включите источники в легенде'
+  return 'По выбранным фильтрам нет данных для отображения'
+})
+
 const failedSources = computed(() => legendItems.value.filter(source => {
   const state = states.get(source.tag)
   return state && isErrorStatus(state.status)
 }))
+
 const emptySources = computed(() => series.value.filter(source => states.get(source.tag)?.status === success &&
   !source.history.some(row => row[slot.value] !== null && Number.isFinite(row[slot.value]))))
 
@@ -141,9 +162,11 @@ watch([series, slot, beforeDay, step, averageWindow], () => {
 
 watch(() => sources.value.map(source => source.tag), tags => {
   const selected = new Set(tags)
+
   for (const tag of states.keys()) {
     if (!selected.has(tag)) states.delete(tag)
   }
+
   for (const tag of Object.keys(retries)) {
     if (!selected.has(tag)) delete retries[tag]
   }
@@ -152,7 +175,6 @@ watch(() => sources.value.map(source => source.tag), tags => {
 function selectMetric(value: Slot) {
   slot.value = value
   metricSelectorOpen.value = false
-  metricTrigger.value?.focus()
 }
 
 function setColor(source: LegendItem, color: string) {
@@ -172,273 +194,269 @@ function remove(source: LegendItem) {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.025);
-}
 
-.toolbar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-h2 {
-  margin: 0;
-  font-size: 18px;
-  color: white;
-}
-
-h2 span {
-  display: inline-block;
-  font-variant-numeric: tabular-nums;
-  margin-left: 5px;
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 14px;
-}
-
-h2 span.empty {
-  visibility: hidden;
-}
-
-.metric-trigger {
-  display: inline-flex;
-  align-items: center;
-  min-width: 0;
-  max-width: 100%;
-  height: 30px;
-  padding: 0 8px 0 1px;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.05);
-  color: inherit;
-  font-size: 14px;
-  margin-left: 10px;
-
-  @media (hover: hover) and (pointer: fine) {
-    &:hover {
-      background: rgba(255, 255, 255, 0.1);
-    }
-  }
-}
-
-.metric-icon {
-  flex: none;
-  width: 30px;
-  height: 30px;
-}
-
-.metric-label {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.metric-arrow {
-  flex: none;
-  width: 10px;
-  height: 10px;
-  margin-left: 5px;
-  fill: currentColor;
-  opacity: 0.6;
-}
-
-.steps {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.steps button {
-  padding: 3px 0;
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 12px;
-  font-weight: bold;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .steps button:hover {
-    color: rgba(255, 255, 255, 0.8);
-  }
-}
-
-.steps button.active {
-  color: white;
-}
-
-.divider {
-  height: 14px;
-  border-left: 1px solid rgba(255, 255, 255, 0.2);
-  margin: 0 3px;
-}
-
-.source-error button {
-  color: var(--blue-thin-color);
-}
-
-.legend-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-}
-
-.legend {
-  flex: 1;
-  min-width: 0;
-}
-
-.reset {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  color: rgba(255, 255, 255, 0.65);
-  transition: color 0.15s;
-
-  &:hover {
-    color: white;
-  }
-
-  svg {
-    width: 16px;
-    height: 16px;
-  }
-}
-
-.comparison-content {
-  --legend-row-height: 21px;
-  --legend-gap: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--legend-gap);
-  margin-top: 12px;
-}
-
-.chart-body {
-  position: relative;
-  flex-shrink: 0;
-  height: calc(clamp(260px, 30vw, 400px) - var(--legend-row-height) - var(--legend-gap));
-}
-
-.comparison-details {
-  min-height: var(--legend-row-height);
-  overflow-wrap: anywhere;
-}
-
-.chart-container {
-  width: 100%;
-  height: 100%;
-}
-
-.chart-state {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  text-align: center;
-  color: rgba(255, 255, 255, 0.45);
-  padding: 20px;
-
-  b {
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 18px;
-  }
-
-  span {
-    max-width: 520px;
-    line-height: 1.5;
-  }
-}
-
-.caption,
-.source-error {
-  margin-top: 12px;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.source-error {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-:deep(.universal-chart-root) {
-  .history-line {
-    stroke-width: 2px;
-    stroke-linejoin: round;
-    stroke-linecap: round;
-    transition: stroke-width 0.18s ease;
-  }
-
-  .history-line.highlighted {
-    stroke-width: 3px;
-  }
-
-  .interaction .history-hover-marker {
-    fill: currentColor;
-  }
-
-  .grid {
-    opacity: 0.2;
-
-    .y-ticks .tick {
-      stroke: rgb(255, 255, 255, 0.5);
-    }
-
-    .tick {
-      stroke: rgb(255, 255, 255, 0.04);
-    }
-
-    .label-ticks {
-      &.day-ticks .tick {
-        stroke: rgb(255, 255, 255, 0.15);
-      }
-
-      &.week-ticks .tick {
-        stroke: rgb(255, 255, 255, 0.15);
-      }
-
-      &.month-ticks .tick {
-        stroke: rgb(255, 255, 255, 0.4);
-      }
-
-      &.year-ticks .tick {
-        stroke: rgb(255, 255, 255, 1);
-      }
-    }
-  }
-
-  .label {
-    font-size: 11px;
-    font-weight: bold;
-    fill: rgba(255, 255, 255, 0.9);
-  }
-
-  .day-labels .label {
-    font-weight: normal;
-  }
-
-  .label.value-outside-bounds {
-    visibility: hidden;
-  }
-
-  .interactive-zone {
-    cursor: crosshair;
-  }
-}
-
-@media (max-width: 600px) {
-  .vehicle-comparison {
+  @media (max-width: 600px) {
     padding: 12px;
   }
 
-  .steps {
-    margin-left: 0;
+  .toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+
+    h2 {
+      margin: 0;
+      font-size: 18px;
+      color: white;
+
+      span {
+        display: inline-block;
+        font-variant-numeric: tabular-nums;
+        margin-left: 5px;
+        color: rgba(255, 255, 255, 0.4);
+        font-size: 14px;
+      }
+    }
+
+    .metric-trigger {
+      display: inline-flex;
+      align-items: center;
+      min-width: 0;
+      max-width: 100%;
+      height: 30px;
+      padding: 0 8px 0 1px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.05);
+      color: inherit;
+      font-size: 14px;
+      margin-left: 10px;
+
+      @media (hover: hover) and (pointer: fine) {
+        &:hover {
+          background: rgba(255, 255, 255, 0.1);
+        }
+      }
+
+      .metric-icon {
+        flex: none;
+        width: 30px;
+        height: 30px;
+      }
+
+      .metric-label {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .metric-arrow {
+        flex: none;
+        width: 10px;
+        height: 10px;
+        margin-left: 5px;
+        fill: currentColor;
+        opacity: 0.6;
+      }
+    }
+
+    .steps {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-left: auto;
+
+      @media (max-width: 600px) {
+        margin-left: 0;
+      }
+
+      button {
+        padding: 3px 0;
+        color: rgba(255, 255, 255, 0.45);
+        font-size: 12px;
+        font-weight: bold;
+
+        @media (hover: hover) and (pointer: fine) {
+          &:hover {
+            color: rgba(255, 255, 255, 0.8);
+          }
+        }
+
+        &.active {
+          color: white;
+        }
+      }
+
+      .divider {
+        height: 14px;
+        border-left: 1px solid rgba(255, 255, 255, 0.2);
+        margin: 0 3px;
+      }
+    }
+  }
+
+  .comparison-content {
+    --legend-row-height: 21px;
+    --legend-gap: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--legend-gap);
+    margin-top: 12px;
+
+    .chart-body {
+      position: relative;
+      flex-shrink: 0;
+      height: calc(clamp(260px, 30vw, 400px) - var(--legend-row-height) - var(--legend-gap));
+
+      .chart-container {
+        width: 100%;
+        height: 100%;
+      }
+
+      .chart-state {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.45);
+        padding: 20px;
+
+        b {
+          color: rgba(255, 255, 255, 0.8);
+          font-size: 18px;
+        }
+
+        span {
+          max-width: 520px;
+          line-height: 1.5;
+        }
+      }
+    }
+
+    .comparison-details {
+      min-height: var(--legend-row-height);
+      overflow-wrap: anywhere;
+
+      .legend-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+
+        .legend {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .reset {
+          display: flex;
+          flex: none;
+          align-items: center;
+          justify-content: center;
+          width: 24px;
+          height: 24px;
+          color: rgba(255, 255, 255, 0.65);
+          transition: color 0.15s;
+
+          &:hover {
+            color: white;
+          }
+
+          svg {
+            width: 16px;
+            height: 16px;
+          }
+        }
+      }
+
+      .caption,
+      .source-error {
+        margin-top: 12px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.5);
+      }
+
+      .source-error {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+
+        button {
+          color: var(--blue-thin-color);
+        }
+      }
+    }
+  }
+
+  :deep(.universal-chart-root) {
+    .history-line {
+      stroke-width: 2px;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+      transition: stroke-width 0.18s ease;
+
+      &.highlighted {
+        stroke-width: 3px;
+      }
+    }
+
+    .interaction {
+      .history-hover-marker {
+        fill: currentColor;
+      }
+    }
+
+    .grid {
+      opacity: 0.2;
+
+      .y-ticks .tick {
+        stroke: rgb(255, 255, 255, 0.5);
+      }
+
+      .tick {
+        stroke: rgb(255, 255, 255, 0.04);
+      }
+
+      .label-ticks {
+        &.day-ticks .tick {
+          stroke: rgb(255, 255, 255, 0.15);
+        }
+
+        &.week-ticks .tick {
+          stroke: rgb(255, 255, 255, 0.15);
+        }
+
+        &.month-ticks .tick {
+          stroke: rgb(255, 255, 255, 0.4);
+        }
+
+        &.year-ticks .tick {
+          stroke: rgb(255, 255, 255, 1);
+        }
+      }
+    }
+
+    .label {
+      font-size: 11px;
+      font-weight: bold;
+      fill: rgba(255, 255, 255, 0.9);
+
+      &.value-outside-bounds {
+        visibility: hidden;
+      }
+    }
+
+    .day-labels .label {
+      font-weight: normal;
+    }
+
+    .interactive-zone {
+      cursor: crosshair;
+    }
   }
 }
 </style>

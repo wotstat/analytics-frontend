@@ -8,7 +8,11 @@ const classNames: Record<string, string> = {
 
 export function vehicleName(vehicle: VehicleStatistics, short = true) {
   if (vehicle.tankTag !== null) return getTankName(vehicle.tankTag, short)
+
   const level = vehicle.tankLevel === null ? '' : romanNumberProcessor(vehicle.tankLevel)
   const type = vehicle.tankType === null ? '' : classNames[vehicle.tankType] ?? vehicle.tankType
-  return type ? `${type}${level ? ` · ${level}` : ''}` : `${level} уровень`
+
+  if (!type) return `${level} уровень`
+  if (!level) return type
+  return `${type} · ${level}`
 }

@@ -17,12 +17,35 @@ import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalCha
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
 import { availableSlots, formatSlotValue, type Slot } from '../vehicleListTable/helpers'
 import { DAY, timeLabels } from './timeLabels'
-import { historyDayStart, historyDayString, historyPeriodWindow, minimumHistoryWindow, nextHistoryPeriod, type HistoryAverageWindow, type HistoryStep } from './historyStep'
+import {
+  historyDayStart, historyDayString, historyPeriodWindow, minimumHistoryWindow, nextHistoryPeriod,
+  type HistoryAverageWindow, type HistoryStep
+} from './historyStep'
 import { ChartMask } from '@/shared/uiKit/chart/universalChart/defs/ChartMask'
 
 export type VehicleHistoryPeriod = { periodStart: string } & Record<Slot, number | null>
-export type VehicleHistorySeries = { tag: string, name: string, color: string, history: VehicleHistoryPeriod[], enabled?: boolean }
-type HistoryPoint = { series: string, name: string, color: string, x: number, y: number, periodStart: string, periodEnd: string, step: HistoryStep, battles: number | null, slot: Slot }
+
+export type VehicleHistorySeries = {
+  tag: string
+  name: string
+  color: string
+  history: VehicleHistoryPeriod[]
+  enabled?: boolean
+}
+
+type HistoryPoint = {
+  series: string
+  name: string
+  color: string
+  x: number
+  y: number
+  periodStart: string
+  periodEnd: string
+  step: HistoryStep
+  battles: number | null
+  slot: Slot
+}
+
 export type VehicleHistoryHit = LinePointHit<HistoryPoint>
 
 let nextChartStyleScope = 0
@@ -32,12 +55,15 @@ export class VehicleHistoryChart extends UniversalChart {
 
   private readonly lines = new Map<string, AutoLine<HistoryPoint>>()
   private readonly plot = new PlotGroup()
+
   private readonly interaction = new InteractionController()
   private interactionComponents: InteractionComponent[] = []
+
   private readonly mask = new ChartMask('center', { top: -4, bottom: -4 })
   private readonly seriesStyle = document.createElementNS('http://www.w3.org/2000/svg', 'style')
   private readonly styleScopeClass = `vehicle-history-chart-${nextChartStyleScope++}`
   private seriesClassByTag = new Map<string, string>()
+
   private readonly labelsX: AutoLabels
   private readonly labelsY: AutoLabels
   private readonly zoom: ZoomChartComponent
@@ -56,8 +82,10 @@ export class VehicleHistoryChart extends UniversalChart {
     const mask = this.mask
     const clipLeft = new ChartClip('left')
     const clipBottom = new ChartClip('bottom')
+
     this.labelsX = new AutoLabels('horizontal', timeLabels('day')).clipBy(clipBottom)
     this.labelsY = new AutoLabels('vertical', this.yLabels('battles')).clipBy(clipLeft)
+
     this.svg.classList.add(this.styleScopeClass)
     this.svg.appendChild(this.seriesStyle)
 
@@ -81,40 +109,52 @@ export class VehicleHistoryChart extends UniversalChart {
 
   setHistories(series: VehicleHistorySeries[], slot: Slot, today: string, step: HistoryStep, averageWindow: HistoryAverageWindow = null) {
     this.tooltipCtx.value = null
+
     if (this.labelStep !== step) {
       this.labelsX.updateOptions(timeLabels(step))
       this.labelStep = step
     }
+
     this.labelsY.updateOptions(this.yLabels(slot))
+
     const tags = new Set(series.map(item => item.tag))
     const nextSeriesClassByTag = new Map<string, string>()
     const colorRules: string[] = []
     let changed = false
+
     for (const [tag, line] of this.lines) {
       if (tags.has(tag)) continue
+
       this.plot.removePlot(line)
       this.lines.delete(tag)
       changed = true
     }
+
     for (const [index, item] of series.entries()) {
       let line = this.lines.get(item.tag)
+
       if (!line) {
         line = new AutoLine<HistoryPoint>({ classes: 'history-line', interactionTag: item.tag })
         this.lines.set(item.tag, line)
         this.plot.addPlot(line)
         changed = true
       }
+
       const previousClass = this.seriesClassByTag.get(item.tag)
       const seriesClass = `history-series-${index}`
+
       if (previousClass && previousClass !== seriesClass) line.getRootElement().classList.remove(previousClass)
       line.getRootElement().classList.add(seriesClass)
       nextSeriesClassByTag.set(item.tag, seriesClass)
       colorRules.push(`.${this.styleScopeClass} .${seriesClass} { color: ${item.color}; }`)
+
       const points = item.enabled === false ? [] : this.historyPoints(item, slot, today, step)
       line.setPoints(averageWindow === null ? points : this.averagePoints(points, averageWindow))
     }
+
     this.seriesClassByTag = nextSeriesClassByTag
     this.seriesStyle.textContent = colorRules.join('\n')
+
     if (changed) this.updateInteractions()
 
     const starts = series.flatMap(item => item.history.length ? [historyDayStart(item.history[0].periodStart)] : [])
@@ -122,6 +162,7 @@ export class VehicleHistoryChart extends UniversalChart {
       if (!series.length) this.interval = null
       return
     }
+
     const minX = Math.min(...starts, historyDayStart('2024-01-01'))
     const maxX = historyDayStart(today)
     if (this.interval?.minX === minX && this.interval.maxX === maxX && this.interval.step === step) return
@@ -144,14 +185,20 @@ export class VehicleHistoryChart extends UniversalChart {
   private updateInteractions() {
     for (const component of this.interactionComponents) this.interaction.removeComponent(component)
     this.interactionComponents = []
+
     const lines = [...this.lines.values()]
     if (!lines.length) return
-    const interactions = lines.slice(1).reduce<AutoLineInteraction<HistoryPoint>>((source, line) => source.union(line.interaction), lines[0].interaction)
+
+    const interactions = lines.slice(1).reduce<AutoLineInteraction<HistoryPoint>>(
+      (source, line) => source.union(line.interaction), lines[0].interaction)
     const selection = interactions.nearestByAxis('x')
+
     // У точек выбранной даты одинаковый X, поэтому nearest выбирает ближайшую по Y.
     const nearest = selection.nearest()
-    const highlight = lines.length > 1
-      ? new Highlight({
+    let highlight: Highlight | null = null
+
+    if (lines.length > 1) {
+      highlight = new Highlight({
         selection: {
           interactionSources: selection.interactionSources,
           resolve: ctx => ctx.frame.resolve(nearest).map(hit => ({
@@ -161,8 +208,10 @@ export class VehicleHistoryChart extends UniversalChart {
         },
         class: 'highlighted',
       })
-      : null
-    if (highlight && this.highlightSync) highlight.syncWith(this.highlightSync)
+
+      if (this.highlightSync) highlight.syncWith(this.highlightSync)
+    }
+
     this.interactionComponents = [
       ...(highlight ? [highlight] : []),
       new VerticalLine({ selection, offset: { start: -4, end: 0 } }),
@@ -182,6 +231,7 @@ export class VehicleHistoryChart extends UniversalChart {
         onPositionChange: ctx => this.tooltipCtx.value = ctx,
       }),
     ]
+
     for (const component of this.interactionComponents) this.interaction.addComponent(component)
   }
 
@@ -189,17 +239,33 @@ export class VehicleHistoryChart extends UniversalChart {
     const points: (HistoryPoint | null)[] = []
     let previousStart: number | null = null
     const todayStart = historyDayStart(today)
+
     for (const row of series.history) {
       const { start, end } = historyPeriodWindow(row.periodStart, step, todayStart)
       const x = (start + end) / 2
       const value = row[slot]
+
       // Пропущенные периоды и NULL остаются разрывами, а не превращаются в нули.
       if (previousStart !== null && start > nextHistoryPeriod(previousStart, step)) points.push(null)
-      points.push(value !== null && Number.isFinite(value) ? {
-        series: series.tag, name: series.name, color: series.color, x, y: value, periodStart: row.periodStart, periodEnd: historyDayString(end - DAY), step, battles: row.battles, slot
-      } : null)
+
+      if (value !== null && Number.isFinite(value)) {
+        points.push({
+          series: series.tag,
+          name: series.name,
+          color: series.color,
+          x,
+          y: value,
+          periodStart: row.periodStart,
+          periodEnd: historyDayString(end - DAY),
+          step,
+          battles: row.battles,
+          slot,
+        })
+      } else points.push(null)
+
       previousStart = start
     }
+
     return points
   }
 
@@ -224,6 +290,7 @@ export class VehicleHistoryChart extends UniversalChart {
       for (let index = segmentStart; index < segmentEnd; index++) {
         const from = Math.max(segmentStart, index - radius)
         const to = Math.min(segmentEnd, index + radius + 1)
+
         let sum = 0
         for (let neighbor = from; neighbor < to; neighbor++) sum += points[neighbor]!.y
         averaged[index] = { ...points[index]!, y: sum / (to - from) }

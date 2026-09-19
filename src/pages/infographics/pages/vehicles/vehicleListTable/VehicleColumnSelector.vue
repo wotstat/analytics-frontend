@@ -1,5 +1,5 @@
 <template>
-  <button ref="trigger" class="column-trigger" type="button" @click="open = !open">
+  <button ref="trigger" class="column-trigger" @click="open = !open">
     Столбцы · {{ selected.length }}/{{ maxSlots }}
   </button>
 
@@ -16,17 +16,20 @@ import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
 import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import { orderSlots, type Slot } from './helpers'
 
+const props = defineProps<{ maxSlots: number }>()
 const selected = defineModel<Slot[]>({ required: true })
+
 const open = ref(false)
 const trigger = useTemplateRef<HTMLButtonElement>('trigger')
 
 function toggle(slot: Slot) {
   if (selected.value.includes(slot)) {
     if (selected.value.length > 1) selected.value = selected.value.filter(item => item !== slot)
-  } else if (selected.value.length < props.maxSlots) selected.value = orderSlots([...selected.value, slot])
-}
+    return
+  }
 
-const props = defineProps<{ maxSlots: number }>()
+  if (selected.value.length < props.maxSlots) selected.value = orderSlots([...selected.value, slot])
+}
 </script>
 
 <style scoped lang="scss">

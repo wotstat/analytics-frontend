@@ -4,8 +4,9 @@ export type HistoryStep = 'day' | 'week' | 'month'
 export type HistoryAverageWindow = 3 | 5 | 7 | null
 
 export function minimumHistoryWindow(step: HistoryStep): number {
-  const periodDays = step === 'day' ? 1 : step === 'week' ? 7 : 31
-  return 3 * periodDays * DAY
+  if (step === 'day') return 3 * DAY
+  if (step === 'week') return 3 * 7 * DAY
+  return 3 * 31 * DAY
 }
 
 export function historyDayStart(day: string): number {

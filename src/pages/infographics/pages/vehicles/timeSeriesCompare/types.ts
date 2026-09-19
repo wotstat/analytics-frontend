@@ -19,8 +19,11 @@ function filterKey(value: ComparisonFilters[keyof ComparisonFilters]) {
 }
 
 export function comparisonFiltersKey(filters: ComparisonFilters) {
-  return JSON.stringify(Object.entries(filters).sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => [key, filterKey(value)]))
+  const entries = Object.entries(filters)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => [key, filterKey(value)])
+
+  return JSON.stringify(entries)
 }
 
 export function differentComparisonFilters(saved: ComparisonFilters, current: ComparisonFilters) {

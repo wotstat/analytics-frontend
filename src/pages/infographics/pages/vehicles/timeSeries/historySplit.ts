@@ -49,10 +49,12 @@ export function orderHistorySplitKeys(split: VehicleHistorySplit, keys: readonly
   return [...keys].sort((left, right) => {
     const leftIndex = order.indexOf(left)
     const rightIndex = order.indexOf(right)
+
     if (leftIndex === -1 || rightIndex === -1) {
       if (leftIndex === rightIndex) return left.localeCompare(right)
       return leftIndex === -1 ? 1 : -1
     }
+
     return leftIndex - rightIndex
   })
 }
