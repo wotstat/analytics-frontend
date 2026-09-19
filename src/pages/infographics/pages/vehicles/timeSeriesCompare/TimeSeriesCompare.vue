@@ -45,8 +45,14 @@
       </div>
 
       <div class="comparison-details">
-        <Legend v-if="sources.length" :legend toggleable highlightable color-editable removable @color-change="setColor"
-          @remove="remove" class="legend" />
+        <div v-if="sources.length" class="legend-row">
+          <Legend :legend toggleable highlightable color-editable removable @color-change="setColor"
+            @remove="remove" class="legend" />
+          <button type="button" class="reset" aria-label="Сбросить сравнение" title="Сбросить сравнение"
+            @click="sources = []">
+            <ResetIcon />
+          </button>
+        </div>
 
         <div v-for="source in failedSources" :key="source.tag" class="source-error" role="alert">
           <span>{{ source.name }}: не удалось загрузить историю.</span>
@@ -73,6 +79,7 @@ import { useNow } from '@vueuse/core'
 import { isErrorStatus, loading, success, type Status } from '@/db'
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 import ArrowDown from '@/assets/icons/arrow-down.svg'
+import ResetIcon from '@/assets/icons/reset.svg'
 import Legend from '@/shared/ui/chart/Legend.vue'
 import { useLegend, type LegendItem } from '@/shared/ui/chart/useLegend'
 import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
@@ -264,9 +271,39 @@ h2 span.empty {
   margin: 0 3px;
 }
 
-.reset,
 .source-error button {
   color: var(--blue-thin-color);
+}
+
+.legend-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.legend {
+  flex: 1;
+  min-width: 0;
+}
+
+.reset {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: rgba(255, 255, 255, 0.65);
+  transition: color 0.15s;
+
+  &:hover {
+    color: white;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 .comparison-content {
