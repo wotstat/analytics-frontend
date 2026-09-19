@@ -18,14 +18,5 @@
     inset: 0;
     background: linear-gradient(125deg, transparent 30%, #0b0f1440 51%, transparent 72%);
   }
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: url('./graphite-grain.svg') repeat;
-    filter: brightness(0);
-    opacity: 0.25;
-  }
 }
 </style>
