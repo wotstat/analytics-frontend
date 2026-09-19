@@ -1,6 +1,6 @@
 <template>
   <section class="vehicle-comparison">
-    <ComparisonHistory v-for="source in sources" :key="source.tag" :selection="source.selection" :filters
+    <ComparisonHistory v-for="source in sources" :key="source.tag" :selection="source.selection" :filters="source.filters"
       :before-day="beforeDay" :step :retry="retries[source.tag] ?? 0" @update="states.set(source.tag, $event)" />
 
     <div class="toolbar">
@@ -84,11 +84,13 @@ import type { VehicleFilters } from '../filters/types'
 import { availableSlots, type Slot } from '../vehicleListTable/helpers'
 import { VehicleHistoryChart, type VehicleHistoryPeriod } from '../timeSeries/VehicleHistoryChart'
 import type { HistoryAverageWindow, HistoryStep } from '../timeSeries/historyStep'
-import type { ComparisonSource } from './types'
+import { snapshotComparisonFilters, type ComparisonSource } from './types'
+import { comparisonName } from './comparisonName'
+import type { LocalVehicleFilters } from '../vehicleListTable/localFilters'
 import ComparisonHistory from './ComparisonHistory.vue'
 import ComparisonTooltip from './ComparisonTooltip.vue'
 
-const props = defineProps<{ filters: VehicleFilters, minBattles: number, minPlayers: number }>()
+const props = defineProps<{ filters: VehicleFilters } & Pick<LocalVehicleFilters, 'minBattles' | 'minPlayers'>>()
 const sources = defineModel<ComparisonSource[]>({ required: true })
 const slot = ref<Slot>('damage')
 const metricSelectorOpen = ref(false)
@@ -101,8 +103,10 @@ const now = useNow({ interval: 60_000 })
 const beforeDay = computed(() => now.value.toISOString().slice(0, 10))
 const states = reactive(new Map<string, { status: Status, data: VehicleHistoryPeriod[] }>())
 const retries = reactive<Record<string, number>>({})
+const currentFilters = computed(() => snapshotComparisonFilters(props.filters, props))
 const legendItems = computed(() => sources.value.map(source => ({
   ...source,
+  name: comparisonName(source, currentFilters.value),
   loading: !states.has(source.tag) || states.get(source.tag)?.status === loading,
 })))
 const legend = useLegend(legendItems)
@@ -111,13 +115,13 @@ const series = computed(() => legendItems.value.map(source => ({
   ...source,
   enabled: legend.isEnabled(source),
   history: (states.get(source.tag)?.data ?? []).map(row =>
-    (row.battles ?? 0) > props.minBattles && (row.playerCount ?? 0) > props.minPlayers
+    (row.battles ?? 0) > source.filters.minBattles && (row.playerCount ?? 0) > source.filters.minPlayers
       ? row : { ...row, [slot.value]: null }),
 })))
 const hasValues = computed(() => series.value.some(source => source.enabled &&
   source.history.some(row => row[slot.value] !== null && Number.isFinite(row[slot.value]))))
 const pending = computed(() => legendItems.value.some(source => source.loading))
-const failedSources = computed(() => sources.value.filter(source => {
+const failedSources = computed(() => legendItems.value.filter(source => {
   const state = states.get(source.tag)
   return state && isErrorStatus(state.status)
 }))
