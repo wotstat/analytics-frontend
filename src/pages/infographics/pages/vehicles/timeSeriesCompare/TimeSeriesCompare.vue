@@ -325,14 +325,15 @@ h2 span.empty {
     stroke-width: 2px;
     stroke-linejoin: round;
     stroke-linecap: round;
+    transition: stroke-width 0.18s ease;
   }
 
   .history-line.highlighted {
-    stroke-width: 3.5px;
+    stroke-width: 3px;
   }
 
-  .history-hover-marker {
-    fill: white;
+  .interaction .history-hover-marker {
+    fill: currentColor;
   }
 
   .grid {

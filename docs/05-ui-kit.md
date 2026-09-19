@@ -64,7 +64,7 @@ const highlight = new Highlight({ selection: linesNearStroke, class: 'highlighte
 <Legend :legend="legend" layout="horizontal" toggleable highlightable />
 ```
 
-Модель отдаёт `items`, `enabled`, `enabledTags`, `highlighted`, проверки и действия `toggle` / `highlight` / `clearHighlight`, поэтому кастомную разметку можно написать без `Legend.vue`. `layout`, `toggleable`, `highlightable` относятся только к стандартному renderer. Disabled item остаётся кликабельным при `toggleable`, но не публикует и не анимирует highlight.
+Модель отдаёт `items`, `enabled`, `enabledTags`, `highlighted`, проверки и действия `toggle` / `toggleFromClick` / `highlight` / `clearHighlight`, поэтому кастомную разметку можно написать без `Legend.vue`. `layout`, `toggleable`, `highlightable` относятся только к стандартному renderer. Disabled item остаётся кликабельным при `toggleable`, но не публикует и не анимирует highlight. Обычный клик в стандартной легенде переключает один элемент и запоминает его как начало диапазона; Shift + клик применяет то же включённое или выключенное состояние ко всему интервалу до текущего элемента включительно. Программный `toggle` не меняет пользовательскую точку отсчёта.
 
 `Legend.vue` переносит горизонтальные элементы; высоту и прокрутку списка ограничивает родитель.
 Опциональный `colorEditable` открывает `LegendColorPicker` с общим `ColorPickerPopup` по нажатию

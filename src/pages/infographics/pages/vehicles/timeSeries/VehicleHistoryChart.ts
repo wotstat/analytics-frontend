@@ -25,6 +25,8 @@ export type VehicleHistorySeries = { tag: string, name: string, color: string, h
 type HistoryPoint = { series: string, name: string, color: string, x: number, y: number, periodStart: string, periodEnd: string, step: HistoryStep, battles: number | null, slot: Slot }
 export type VehicleHistoryHit = LinePointHit<HistoryPoint>
 
+let nextChartStyleScope = 0
+
 export class VehicleHistoryChart extends UniversalChart {
   readonly tooltipCtx = shallowRef<TooltipCtx<VehicleHistoryHit> | null>(null)
 
@@ -33,6 +35,9 @@ export class VehicleHistoryChart extends UniversalChart {
   private readonly interaction = new InteractionController()
   private interactionComponents: InteractionComponent[] = []
   private readonly mask = new ChartMask('center', { top: -4, bottom: -4 })
+  private readonly seriesStyle = document.createElementNS('http://www.w3.org/2000/svg', 'style')
+  private readonly styleScopeClass = `vehicle-history-chart-${nextChartStyleScope++}`
+  private seriesClassByTag = new Map<string, string>()
   private readonly labelsX: AutoLabels
   private readonly labelsY: AutoLabels
   private readonly zoom: ZoomChartComponent
@@ -53,6 +58,8 @@ export class VehicleHistoryChart extends UniversalChart {
     const clipBottom = new ChartClip('bottom')
     this.labelsX = new AutoLabels('horizontal', timeLabels('day')).clipBy(clipBottom)
     this.labelsY = new AutoLabels('vertical', this.yLabels('battles')).clipBy(clipLeft)
+    this.svg.classList.add(this.styleScopeClass)
+    this.svg.appendChild(this.seriesStyle)
 
     this.zoom = new ZoomChartComponent({ chart: this, zoom: true, panDirection: 'horizontal' })
     this.interaction.addComponent(this.zoom)
@@ -80,6 +87,8 @@ export class VehicleHistoryChart extends UniversalChart {
     }
     this.labelsY.updateOptions(this.yLabels(slot))
     const tags = new Set(series.map(item => item.tag))
+    const nextSeriesClassByTag = new Map<string, string>()
+    const colorRules: string[] = []
     let changed = false
     for (const [tag, line] of this.lines) {
       if (tags.has(tag)) continue
@@ -87,7 +96,7 @@ export class VehicleHistoryChart extends UniversalChart {
       this.lines.delete(tag)
       changed = true
     }
-    for (const item of series) {
+    for (const [index, item] of series.entries()) {
       let line = this.lines.get(item.tag)
       if (!line) {
         line = new AutoLine<HistoryPoint>({ classes: 'history-line', interactionTag: item.tag })
@@ -95,10 +104,17 @@ export class VehicleHistoryChart extends UniversalChart {
         this.plot.addPlot(line)
         changed = true
       }
-      line.getRootElement().setAttribute('style', `color: ${item.color}; stroke: ${item.color}`)
+      const previousClass = this.seriesClassByTag.get(item.tag)
+      const seriesClass = `history-series-${index}`
+      if (previousClass && previousClass !== seriesClass) line.getRootElement().classList.remove(previousClass)
+      line.getRootElement().classList.add(seriesClass)
+      nextSeriesClassByTag.set(item.tag, seriesClass)
+      colorRules.push(`.${this.styleScopeClass} .${seriesClass} { color: ${item.color}; }`)
       const points = item.enabled === false ? [] : this.historyPoints(item, slot, today, step)
       line.setPoints(averageWindow === null ? points : this.averagePoints(points, averageWindow))
     }
+    this.seriesClassByTag = nextSeriesClassByTag
+    this.seriesStyle.textContent = colorRules.join('\n')
     if (changed) this.updateInteractions()
 
     const starts = series.flatMap(item => item.history.length ? [historyDayStart(item.history[0].periodStart)] : [])
@@ -134,25 +150,34 @@ export class VehicleHistoryChart extends UniversalChart {
     const selection = interactions.nearestByAxis('x')
     // У точек выбранной даты одинаковый X, поэтому nearest выбирает ближайшую по Y.
     const nearest = selection.nearest()
-    const highlight = new Highlight({
-      selection: {
-        interactionSources: selection.interactionSources,
-        resolve: ctx => ctx.frame.resolve(nearest).map(hit => ({
-          ...hit,
-          targets: interactions.sources.flatMap(source => source.getTargets(hit.datum.series)),
-        })),
-      },
-      class: 'highlighted',
-    })
-    if (this.highlightSync) highlight.syncWith(this.highlightSync)
+    const highlight = lines.length > 1
+      ? new Highlight({
+        selection: {
+          interactionSources: selection.interactionSources,
+          resolve: ctx => ctx.frame.resolve(nearest).map(hit => ({
+            ...hit,
+            targets: interactions.sources.flatMap(source => source.getTargets(hit.datum.series)),
+          })),
+        },
+        class: 'highlighted',
+      })
+      : null
+    if (highlight && this.highlightSync) highlight.syncWith(this.highlightSync)
     this.interactionComponents = [
-      highlight,
+      ...(highlight ? [highlight] : []),
       new VerticalLine({ selection, offset: { start: -4, end: 0 } }),
-      new MarkerOverlay({ selection, size: 4, maskSize: 6, markerClasses: 'history-hover-marker', targetMasks: [this.mask.root] }),
+      new MarkerOverlay({
+        selection,
+        size: 4,
+        maskSize: 6,
+        markerClasses: 'history-hover-marker',
+        classesForHit: hit => this.seriesClassByTag.get(hit.datum.series) ?? [],
+        targetMasks: [this.mask.root],
+      }),
       new ChartTooltip({
         selection,
         tooltipPivot: 'nearest',
-        exposeHighlights: [highlight],
+        exposeHighlights: highlight ? [highlight] : [],
         onHide: () => this.tooltipCtx.value = null,
         onPositionChange: ctx => this.tooltipCtx.value = ctx,
       }),

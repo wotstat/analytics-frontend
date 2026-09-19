@@ -19,6 +19,7 @@ export type LegendModel<TItem extends LegendItem = LegendItem> = {
   isEnabled(item: TItem): boolean
   isHighlighted(item: TItem): boolean
   toggle(item: TItem): void
+  toggleFromClick(item: TItem, extend: boolean): void
   highlight(item: TItem): void
   clearHighlight(): void
 }
@@ -34,6 +35,7 @@ export function useLegend<TItem extends LegendItem>(
   const highlightSync = options.highlightSync ?? new HighlightSynchronizer()
   const connection = highlightSync.connect()
   let publishedTag: InteractionTag | undefined
+  let toggleAnchor: { tag: InteractionTag, enabled: boolean } | undefined
 
   const enabled = computed(() => items.value.filter(item => !disabledTags.value.has(item.tag)))
   const enabledTags = computed(() => [...new Set(enabled.value.map(item => item.tag))])
@@ -51,6 +53,7 @@ export function useLegend<TItem extends LegendItem>(
     disabledTags.value = new Set([...disabledTags.value].filter(tag => currentTags.has(tag)))
 
     if (publishedTag !== undefined && !currentTags.has(publishedTag)) clearHighlight()
+    if (toggleAnchor && !currentTags.has(toggleAnchor.tag)) toggleAnchor = undefined
   })
 
   function isEnabled(item: TItem): boolean {
@@ -62,12 +65,38 @@ export function useLegend<TItem extends LegendItem>(
   }
 
   function toggle(item: TItem): void {
+    setEnabled([item], !isEnabled(item))
+  }
+
+  function toggleFromClick(item: TItem, extend: boolean): void {
+    const anchor = toggleAnchor
+    const anchorIndex = anchor
+      ? items.value.findIndex(candidate => candidate.tag === anchor.tag)
+      : -1
+    const itemIndex = items.value.findIndex(candidate => candidate.tag === item.tag)
+
+    if (extend && anchor && anchorIndex !== -1 && itemIndex !== -1) {
+      const start = Math.min(anchorIndex, itemIndex)
+      const end = Math.max(anchorIndex, itemIndex)
+      setEnabled(items.value.slice(start, end + 1), anchor.enabled)
+      toggleAnchor = { tag: item.tag, enabled: anchor.enabled }
+      return
+    }
+
+    const enabled = !isEnabled(item)
+    setEnabled([item], enabled)
+    toggleAnchor = { tag: item.tag, enabled }
+  }
+
+  function setEnabled(targets: readonly TItem[], enabled: boolean): void {
     const next = new Set(disabledTags.value)
-    if (next.has(item.tag)) next.delete(item.tag)
-    else next.add(item.tag)
+    for (const target of targets) {
+      if (enabled) next.delete(target.tag)
+      else next.add(target.tag)
+    }
     disabledTags.value = next
 
-    if (!isEnabled(item) && publishedTag === item.tag) clearHighlight()
+    if (publishedTag !== undefined && next.has(publishedTag)) clearHighlight()
   }
 
   function highlight(item: TItem): void {
@@ -95,6 +124,7 @@ export function useLegend<TItem extends LegendItem>(
     isEnabled,
     isHighlighted,
     toggle,
+    toggleFromClick,
     highlight,
     clearHighlight,
   }

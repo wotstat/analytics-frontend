@@ -1,8 +1,8 @@
 <template>
   <div class="legend" :class="`legend-${props.layout}`">
     <button v-for="item, i in items" :key="item.tag" class="item" :style="{ ['--item-color']: item.color }"
-      @mouseenter="highlight(item)" @mouseleave="clearHighlight" @click="toggle(item)" @auxclick="emit('remove', item)"
-      :class="classForItem(item)" :aria-busy="item.loading || undefined">
+      @mouseenter="highlight(item)" @mouseleave="clearHighlight" @click="toggle(item, $event)"
+      @auxclick="emit('remove', item)" :class="classForItem(item)" :aria-busy="item.loading || undefined">
 
       <div class="marker-slot">
         <Transition name="legend-marker">
@@ -80,9 +80,9 @@ function isInteractive(item: TItem) {
   return props.toggleable || (props.highlightable && isEnabled(item))
 }
 
-function toggle(item: TItem) {
+function toggle(item: TItem, event: MouseEvent) {
   if (!props.toggleable) return
-  props.legend.toggle(item)
+  props.legend.toggleFromClick(item, event.shiftKey)
 }
 
 function highlight(item: TItem) {
@@ -127,6 +127,8 @@ function clearHighlight() {
     }
 
     &.highlighted {
+      color: white;
+
       .marker {
         &::before {
           transform: scale(1.3);

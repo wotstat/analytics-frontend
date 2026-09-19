@@ -2,6 +2,7 @@ import { customBattleModes } from '@/shared/game/wot'
 import type { VehicleFilters } from './filters/types'
 import { availableSlots } from './vehicleListTable/helpers'
 import type { HistoryStep } from './timeSeries/historyStep'
+import type { VehicleHistorySplit } from './timeSeries/historySplit'
 import type { VehicleGrouping, VehicleSelection } from './vehicleGrouping'
 
 function quote(value: string) {
@@ -80,8 +81,10 @@ function selectionWhere(selection?: VehicleSelection) {
   return conditions.map(condition => `\n      and ${condition}`).join('')
 }
 
-export function vehicleHistoryQuery(filters: VehicleFilters, selection: VehicleSelection, beforeDay: string, step: HistoryStep) {
-  const source = statisticsSource(filters)
+export function vehicleHistoryQuery(filters: VehicleFilters, selection: VehicleSelection, beforeDay: string, step: HistoryStep,
+  split: VehicleHistorySplit | null = null) {
+  // Измерения разбиения есть только в подробной агрегации.
+  const source = split === null ? statisticsSource(filters) : 'VehiclesStatistics'
   // Reaggregate source rows per period so averages keep their denominators and
   // player states are merged across days instead of adding daily results.
   const period = {
@@ -89,15 +92,27 @@ export function vehicleHistoryQuery(filters: VehicleFilters, selection: VehicleS
     week: 'toMonday(stats.day)',
     month: 'toStartOfMonth(stats.day)',
   }[step]
+  const splitExpression: Record<VehicleHistorySplit, string> = {
+    arena: 'stats.arenaTag',
+    platoon: "multiIf(stats.squadmatesCount = 0, 'solo', stats.squadmatesCount = 1, 'duo', stats.squadmatesCount = 2, 'trio', 'large')",
+    result: 'toString(stats.result)',
+    battleLevel: `multiIf(
+        stats.minBattleTankLevel = stats.tankLevel and stats.maxBattleTankLevel = stats.tankLevel, 'same',
+        stats.minBattleTankLevel < stats.tankLevel and stats.maxBattleTankLevel = stats.tankLevel, 'top',
+        stats.minBattleTankLevel < stats.tankLevel and stats.maxBattleTankLevel > stats.tankLevel, 'middle',
+        'bottom')`,
+  }
+  const splitSelect = split === null ? '' : `,\n      ${splitExpression[split]} as splitKey`
+  const splitGroup = split === null ? '' : ', splitKey'
 
   return `
     select
-      ${period} as periodStart,
+      ${period} as periodStart${splitSelect},
       ${statisticsMetrics(source)}
     from ${source} as stats
     where ${vehicleStatisticsWhere(filters, beforeDay)}${selectionWhere(selection)}
-    group by periodStart
-    order by periodStart
+    group by periodStart${splitGroup}
+    order by periodStart${splitGroup}
   `
 }
 

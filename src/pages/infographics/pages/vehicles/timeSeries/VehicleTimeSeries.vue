@@ -1,7 +1,7 @@
 <template>
-  <section class="vehicle-time-series">
+  <section class="vehicle-time-series" :class="{ split: split !== null }">
 
-    <HeaderTooltip :ctx="chart.tooltipCtx.value" class="chart-toolbar">
+    <HeaderTooltip :ctx="split === null ? chart.tooltipCtx.value : null" class="chart-toolbar">
       <template #left>
         <div class="title">
           <Icon name="chart-line" class="icon" :icon="availableSlots[props.slot].icon" />
@@ -17,6 +17,11 @@
             :class="{ active: averageWindow === window }" :aria-pressed="averageWindow === window"
             v-tooltip:vehicleHistoryAverage.top-float="`Скользящее среднее по ${window} соседним точкам. Повторное нажатие выключает сглаживание`"
             @click="toggleAverage(window)">avg{{ window }}</button>
+          <span class="selector-divider" aria-hidden="true"></span>
+          <button type="button" class="split-trigger" :class="{ active: split !== null }" aria-label="Разбить график"
+            title="Разбить график" @click="openSplitMenu">
+            <span class="dots" aria-hidden="true"></span>
+          </button>
         </div>
       </template>
       <template #tooltip="{ ctx }">
@@ -44,24 +49,40 @@
       <div v-else-if="!hasValues" class="chart-state" role="status">По выбранным фильтрам пока нет данных</div>
     </div>
 
+    <Legend v-if="split !== null && splitSources.length" :legend toggleable highlightable class="legend" />
+
+    <FloatingTooltip v-if="split !== null" :ctx="chart.tooltipCtx.value" :offset="12" animated :animation-omega="40">
+      <template #default="{ ctx }">
+        <ComparisonTooltip :ctx :sources="legend.enabled.value" />
+      </template>
+    </FloatingTooltip>
+
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, markRaw, ref, watch } from 'vue'
+import { computed, markRaw, onBeforeUnmount, ref, watch } from 'vue'
 import { useNow } from '@vueuse/core'
 import { isErrorStatus, loading, queryComputed, success } from '@/db'
 import HeaderTooltip from '@/shared/ui/chart/HeaderTooltip.vue'
+import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
+import Legend from '@/shared/ui/chart/Legend.vue'
+import { useLegend } from '@/shared/ui/chart/useLegend'
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
+import { closeContextMenu, isContextMenuOpen } from '@/shared/uiKit/contextMenu/createContextMenu'
+import { checkboxItem, header, separator, simpleContextMenu } from '@/shared/uiKit/contextMenu/simpleContextMenu'
 import type { VehicleFilters } from '../filters/types'
 import { availableSlots, formatSlotValue, type Slot } from '../vehicleListTable/helpers'
 import { formatHistoryPeriod } from './formatHistoryPeriod'
 import { vehicleHistoryQuery } from '../vehicleStatisticsQuery'
-import { VehicleHistoryChart, type VehicleHistoryPeriod } from './VehicleHistoryChart'
+import { VehicleHistoryChart, type VehicleHistoryPeriod, type VehicleHistorySeries } from './VehicleHistoryChart'
 import type { HistoryAverageWindow, HistoryStep } from './historyStep'
+import { historySplitName, historySplitOptions, orderHistorySplitKeys, type VehicleHistorySplit } from './historySplit'
+import { historySplitSeriesColor } from './seriesColors'
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 import type { VehicleSelection } from '../vehicleGrouping'
+import ComparisonTooltip from '../timeSeriesCompare/ComparisonTooltip.vue'
 
 const props = defineProps<{
   selection: VehicleSelection
@@ -73,6 +94,7 @@ const props = defineProps<{
 }>()
 const step = defineModel<HistoryStep>('step', { required: true })
 const averageWindow = defineModel<HistoryAverageWindow>('averageWindow', { required: true })
+const split = ref<VehicleHistorySplit | null>(null)
 const now = useNow({ interval: 60_000 })
 
 const beforeDay = computed(() => now.value.toISOString().slice(0, 10))
@@ -83,30 +105,91 @@ const steps = [
   { value: 'month', label: 'Месяц' },
 ] as const satisfies readonly { value: HistoryStep, label: string }[]
 const averageWindows = [3, 5, 7] as const
-const history = queryComputed<VehicleHistoryPeriod>(() =>
-  `${vehicleHistoryQuery(props.filters, props.selection, beforeDay.value, step.value)}\n-- retry ${retry.value}`,
+type SplitHistoryPeriod = VehicleHistoryPeriod & { splitKey?: string }
+type SplitSource = { tag: string, name: string, color: string }
+
+const history = queryComputed<SplitHistoryPeriod>(() =>
+  `${vehicleHistoryQuery(props.filters, props.selection, beforeDay.value, step.value, split.value)}\n-- retry ${retry.value}`,
   { settings: { use_query_cache: 1, query_cache_ttl: 24 * 60 * 60 } })
 
-const chart = markRaw(new VehicleHistoryChart())
-
-const visibleHistory = computed(() => {
-  if (!history.value.data) return []
-  return history.value.data.map(row => {
+function applyThresholds(rows: SplitHistoryPeriod[]): VehicleHistoryPeriod[] {
+  return rows.map(row => {
     if ((row.battles ?? 0) > props.minBattles && (row.playerCount ?? 0) > props.minPlayers) return row
     return { ...row, [props.slot]: null }
   })
+}
+
+const splitSources = computed<SplitSource[]>(() => {
+  const activeSplit = split.value
+  if (activeSplit === null) return []
+  const keys = orderHistorySplitKeys(activeSplit,
+    [...new Set(history.value.data.flatMap(row => row.splitKey ? [row.splitKey] : []))])
+  return keys.map((key, index) => ({
+    tag: key,
+    name: historySplitName(activeSplit, key),
+    color: historySplitSeriesColor(activeSplit, key, index),
+  }))
+})
+const legend = useLegend(splitSources)
+const chart = markRaw(new VehicleHistoryChart(legend.highlightSync))
+const series = computed<VehicleHistorySeries[]>(() => {
+  if (split.value === null) {
+    return [{ tag: 'vehicle', name: '', color: 'var(--blue-thin-color)', history: applyThresholds(history.value.data) }]
+  }
+
+  return splitSources.value.map(source => ({
+    ...source,
+    enabled: legend.isEnabled(source),
+    history: applyThresholds(history.value.data.filter(row => row.splitKey === source.tag)),
+  }))
 })
 
 const hasValues = computed(() => history.value.status === success &&
-  visibleHistory.value.some(row => row[props.slot] !== null && Number.isFinite(row[props.slot])))
+  series.value.some(source => source.enabled !== false &&
+    source.history.some(row => row[props.slot] !== null && Number.isFinite(row[props.slot]))))
 
-watch([visibleHistory, () => props.slot, beforeDay, step, averageWindow], () => {
-  chart.setHistory(visibleHistory.value, props.slot, beforeDay.value, step.value, averageWindow.value)
+watch([series, () => props.slot, beforeDay, step, averageWindow], () => {
+  chart.setHistories(series.value, props.slot, beforeDay.value, step.value, averageWindow.value)
 }, { immediate: true })
 
 function toggleAverage(window: NonNullable<HistoryAverageWindow>) {
   averageWindow.value = averageWindow.value === window ? null : window
 }
+
+let splitMenuId = -1
+
+function selectSplit(value: VehicleHistorySplit | null) {
+  split.value = value
+}
+
+function openSplitMenu(event: MouseEvent) {
+  if (isContextMenuOpen(splitMenuId)) {
+    closeContextMenu(splitMenuId)
+    return
+  }
+
+  const target = event.currentTarget as HTMLElement
+  const { id } = simpleContextMenu({
+    position: target.getBoundingClientRect(),
+    alignX: 'right',
+    alignY: 'bottom',
+    minWidth: 245,
+  }, [
+    header('Разбиение графика'),
+    checkboxItem('Без разбиения', {
+      value: computed(() => split.value === null),
+      toggle: () => selectSplit(null),
+    }),
+    separator,
+    ...historySplitOptions.map(option => checkboxItem(option.label, {
+      value: computed(() => split.value === option.value),
+      toggle: () => selectSplit(option.value),
+    })),
+  ])
+  splitMenuId = id
+}
+
+onBeforeUnmount(() => closeContextMenu(splitMenuId))
 
 </script>
 
@@ -208,6 +291,52 @@ function toggleAverage(window: NonNullable<HistoryAverageWindow>) {
     border-left: 1px solid rgba(255, 255, 255, 0.25);
     margin: 0 2px;
   }
+
+  .split-trigger {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    margin-left: -2px;
+    border-radius: 5px;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    &.active {
+      color: var(--blue-thin-color);
+      background: rgba(10, 132, 255, 0.12);
+    }
+  }
+
+  .dots,
+  .dots::before,
+  .dots::after {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .dots {
+    position: relative;
+
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+    }
+
+    &::before {
+      right: 6px;
+    }
+
+    &::after {
+      left: 6px;
+    }
+  }
 }
 
 button {
@@ -247,24 +376,25 @@ button {
   }
 }
 
+.legend {
+  margin-top: 10px;
+}
+
 :deep(.universal-chart-root) {
   .history-line {
-    stroke: var(--blue-thin-color);
+    stroke: currentColor;
     stroke-width: 2px;
     stroke-linejoin: round;
     stroke-linecap: round;
+    transition: stroke-width 0.18s ease;
   }
 
-  .interaction {
+  .history-line.highlighted {
+    stroke-width: 3px;
+  }
 
-    .history-hover-marker {
-      fill: var(--blue-thin-color);
-    }
-
-    .history-hover-marker {
-      stroke-width: 2px;
-    }
-
+  .interaction .history-hover-marker {
+    fill: currentColor;
   }
 
   .grid {
