@@ -38,7 +38,7 @@ const localFilters = ref(createLocalVehicleFilters())
 const grouping = ref<VehicleGrouping>('tanks')
 
 const comparisonSources = ref<ComparisonSource[]>([])
-const currentComparisonFilters = computed(() => snapshotComparisonFilters(filters.value, localFilters.value))
+const currentComparisonFilters = computed(() => snapshotComparisonFilters(filters.value))
 const currentComparisonKey = computed(() => comparisonFiltersKey(currentComparisonFilters.value))
 const comparedKeys = computed(() => comparisonSources.value
   .filter(source => comparisonFiltersKey(source.filters) === currentComparisonKey.value)
@@ -59,7 +59,7 @@ function toggleComparison(vehicle: VehicleStatistics, selection: VehicleSelectio
     name: vehicle.tankTag === null ? `Среднее · ${vehicleName(vehicle)}` : vehicleName(vehicle),
     color: nextComparisonColor(comparisonSources.value),
     selection: { ...selection, levels: [...selection.levels], types: [...selection.types], nations: [...selection.nations] },
-    filters: snapshotComparisonFilters(filters.value, localFilters.value),
+    filters: snapshotComparisonFilters(filters.value),
     sampleNumber: sampleNumbers.get(filtersKey)!,
   })
 }

@@ -74,7 +74,7 @@ export type VehicleStatistics = {
   day: string
 } & Record<Slot, number | null>
 
-export const defaultSlots: Slot[] = ['battles', 'playerCount', 'winrate', 'damage', 'assist', 'xp', 'lifeTime']
+export const defaultSlots: Slot[] = ['battles', 'playerCount', 'winrate', 'damage', 'assist', 'kills', 'duration']
 
 const integer = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 })
 const decimal = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })

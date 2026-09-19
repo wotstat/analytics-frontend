@@ -1,9 +1,8 @@
 import type { VehicleSelection } from '../vehicleGrouping'
 import type { VehicleFilters } from '../filters/types'
-import type { LocalVehicleFilters } from '../vehicleListTable/localFilters'
 import { historySeriesColor, historySeriesColors } from '../timeSeries/seriesColors'
 
-export type ComparisonFilters = VehicleFilters & Pick<LocalVehicleFilters, 'minBattles' | 'minPlayers'>
+export type ComparisonFilters = VehicleFilters
 
 export type ComparisonSource = {
   tag: string
@@ -29,14 +28,15 @@ export function differentComparisonFilters(saved: ComparisonFilters, current: Co
     .filter(key => filterKey(saved[key]) !== filterKey(current[key]))
 }
 
-export function snapshotComparisonFilters(filters: VehicleFilters, thresholds: Pick<LocalVehicleFilters, 'minBattles' | 'minPlayers'>): ComparisonFilters {
+export function snapshotComparisonFilters(filters: VehicleFilters): ComparisonFilters {
   return {
-    ...filters,
     regions: [...filters.regions],
     battleModes: [...filters.battleModes],
     arenas: [...filters.arenas],
-    minBattles: thresholds.minBattles,
-    minPlayers: thresholds.minPlayers,
+    team: filters.team,
+    platoon: filters.platoon,
+    result: filters.result,
+    battleLevel: filters.battleLevel,
   }
 }
 

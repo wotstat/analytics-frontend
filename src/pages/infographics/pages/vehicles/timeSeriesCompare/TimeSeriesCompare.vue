@@ -110,7 +110,7 @@ const now = useNow({ interval: 60_000 })
 const beforeDay = computed(() => now.value.toISOString().slice(0, 10))
 const states = reactive(new Map<string, { status: Status, data: VehicleHistoryPeriod[] }>())
 const retries = reactive<Record<string, number>>({})
-const currentFilters = computed(() => snapshotComparisonFilters(props.filters, props))
+const currentFilters = computed(() => snapshotComparisonFilters(props.filters))
 const legendItems = computed(() => sources.value.map(source => ({
   ...source,
   name: comparisonName(source, currentFilters.value),
@@ -122,7 +122,7 @@ const series = computed(() => legendItems.value.map(source => ({
   ...source,
   enabled: legend.isEnabled(source),
   history: (states.get(source.tag)?.data ?? []).map(row =>
-    (row.battles ?? 0) > source.filters.minBattles && (row.playerCount ?? 0) > source.filters.minPlayers
+    (row.battles ?? 0) > props.minBattles && (row.playerCount ?? 0) > props.minPlayers
       ? row : { ...row, [slot.value]: null }),
 })))
 const hasValues = computed(() => series.value.some(source => source.enabled &&

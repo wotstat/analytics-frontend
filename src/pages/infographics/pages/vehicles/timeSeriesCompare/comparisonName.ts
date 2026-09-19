@@ -42,12 +42,6 @@ export function comparisonName(source: ComparisonSource, current: ComparisonFilt
       case 'battleLevel':
         labels.push({ any: 'Любые уровни боя', same: 'Одноуровневый бой', top: 'В топе', middle: 'В середине', bottom: 'Внизу списка' }[filters.battleLevel])
         break
-      case 'minBattles':
-        labels.push(`Боёв > ${filters.minBattles}`)
-        break
-      case 'minPlayers':
-        labels.push(`Игроков > ${filters.minPlayers}`)
-        break
     }
   }
 
