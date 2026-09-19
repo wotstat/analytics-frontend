@@ -68,7 +68,8 @@ const columns = computed(() => {
   font-variant-numeric: tabular-nums;
 
   &.columns-1 {
-    width: min(220px, calc(100vw - 40px));
+    width: max-content;
+    max-width: calc(100vw - 40px);
   }
 
   &.columns-2 {
@@ -138,7 +139,7 @@ const columns = computed(() => {
 .value-row {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: 16px;
 
   b {

@@ -248,8 +248,13 @@ h2 span.empty {
   font-weight: bold;
 }
 
-.steps button.active,
-.steps button:hover {
+@media (hover: hover) and (pointer: fine) {
+  .steps button:hover {
+    color: rgba(255, 255, 255, 0.8);
+  }
+}
+
+.steps button.active {
   color: white;
 }
 
