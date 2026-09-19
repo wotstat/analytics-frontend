@@ -8,7 +8,7 @@
 
       <div class="primary-filter">
         <span class="label">Режим</span>
-        <FilterSelectorBadges v-model="modes" all-label="Все режимы" :options="modeOptions" />
+        <FilterSelectorBadges v-model="modes" title="Выбор режимов боя" all-label="Все режимы" :groups="modeGroups" />
       </div>
       <div class="primary-filter">
         <span class="label">Карта</span>
@@ -72,13 +72,41 @@ import ResetIcon from '@/assets/icons/reset.svg'
 import ArenaSelectorBadges from '@/shared/game/selectors/arena/ArenaSelectorBadges.vue'
 import { customBattleModes, customBattleModesKeys, regionToGame } from '@/shared/game/wot'
 import FilterSelectorBadges from './FilterSelectorBadges.vue'
-import { createVehicleFilters, type VehicleFilters, type VehicleRegion } from './types'
+import { createVehicleFilters, type VehicleBattleMode, type VehicleFilters, type VehicleRegion } from './types'
 import { useBadgeSelection } from './useBadgeSelection'
 
 const filters = defineModel<VehicleFilters>({ required: true })
 const expanded = ref(false)
 const regionOptions = ['RU', 'EU', 'NA', 'ASIA', 'CN'] as const
-const modeOptions = customBattleModesKeys.map(value => ({ value, label: customBattleModes[value].title }))
+const modeCategoryTitles = ['Случайные бои', 'Соревновательные', 'Клановые', 'События', 'Обучение'] as const
+const modeCategories: Record<VehicleBattleMode, typeof modeCategoryTitles[number]> = {
+  normalAny: 'Случайные бои',
+  normalCft: 'Случайные бои',
+  normalDomination: 'Случайные бои',
+  normalAssault: 'Случайные бои',
+  epicRandom: 'Случайные бои',
+  comp7: 'Соревновательные',
+  ranked: 'Соревновательные',
+  'tournament-regular': 'Соревновательные',
+  globalMap: 'Клановые',
+  sortie: 'Клановые',
+  fortBattle: 'Клановые',
+  bob: 'События',
+  epicBattle: 'События',
+  historical: 'События',
+  battleRoyaleSolo: 'События',
+  battleRoyaleSquad: 'События',
+  cosmic: 'События',
+  funRandom: 'События',
+  mapsTraining: 'Обучение',
+  training: 'Обучение',
+}
+const modeGroups = modeCategoryTitles.map(title => ({
+  title,
+  options: customBattleModesKeys
+    .filter(value => modeCategories[value] === title)
+    .map(value => ({ value, label: customBattleModes[value].title })),
+}))
 const teamOptions = [
   { value: 'any', label: 'Любой' },
   { value: 1, label: '1' },
