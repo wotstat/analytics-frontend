@@ -1,48 +1,55 @@
 <template>
   <div class="vehicle-row" :class="{ expanded }">
     <div class="line mt-font">
-      <button class="compare" type="button" :disabled="compared" :class="{ added: compared }"
-        :aria-label="compared ? `${name} уже в сравнении` : `Добавить в сравнение: ${name}`"
-        :title="compared ? 'Уже в сравнении' : 'Добавить в сравнение'"
-        @click="$emit('compare', historySelection)">{{ compared ? '✓' : '+' }}</button>
-      <button class="name" :aria-expanded="expanded" :aria-controls="panelId"
-        :aria-label="`${expanded ? 'Свернуть' : 'Развернуть'} ${name}`"
-        :title="vehicle.tankTag === null ? name : undefined" @click="expanded = !expanded">
+
+      <button class="compare" type="button" :class="{ added: compared }" @click="$emit('compare', historySelection)">
+        <Transition name="compare-icon">
+          <Checkmark v-if="compared" key="checkmark" class="compare-icon" />
+          <PlusIcon v-else key="plus" class="compare-icon" />
+        </Transition>
+      </button>
+
+      <button class="name" :title="vehicle.tankTag === null ? name : undefined" @click="expanded = !expanded">
         <ArrowDown class="arrow" :class="{ expanded }" />
+
         <span v-if="vehicle.tankLevel !== null" class="metadata-cell">
           <span class="level">{{ romanNumberProcessor(vehicle.tankLevel) }}</span>
         </span>
+
         <span v-if="vehicle.tankType !== null" class="metadata-cell">
           <VehicleType :type="isVehicleType(vehicle.tankType) ? vehicle.tankType : 'any'" class="type" />
         </span>
+
         <span v-if="vehicle.tankTag !== null" class="vehicle-cell">
           <VehicleImage :tag="vehicle.tankTag" :game="regionToGame(vehicle.region)" size="preview" loading="lazy"
-            class="vehicle-image" aria-hidden="true" />
+            class="vehicle-image" />
           <span class="vehicle-info">
             <span class="vehicle-name" :title="vehicleName(vehicle, false)">{{ name }}</span>
             <span v-if="vehicle.day !== latestDay" class="postfix">{{ formatStatisticsDay(vehicle.day) }}</span>
           </span>
         </span>
       </button>
+
       <div class="values">
         <button v-for="slot in slots" :key="slot" class="value" :class="{ active: expanded && activeSlot === slot }"
-          :aria-label="`${availableSlots[slot].label}: ${formatSlotValue(slot, vehicle[slot])}`"
           v-tooltip="availableSlots[slot].label" @click="selectSlot(slot)">
           {{ formatSlotValue(slot, vehicle[slot]) }}
         </button>
       </div>
     </div>
+
     <div v-if="expanded" :id="panelId" class="chart-panel">
-      <VehicleTimeSeries v-model:step="historyStep" v-model:average-window="averageWindow"
-        :selection="historySelection" :name :slot="activeSlot" :filters
-        :min-battles :min-players />
+      <VehicleTimeSeries v-model:step="historyStep" v-model:average-window="averageWindow" :selection="historySelection"
+        :name :slot="activeSlot" :filters :min-battles :min-players />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, useId } from 'vue'
-import ArrowDown from '@/assets/icons/arrow-down.svg'
+import PlusIcon from './assets/plus-bold.svg'
+import Checkmark from './assets/checkmark-bold.svg'
+import ArrowDown from './assets/arrow-down.svg'
 import VehicleImage from '@/shared/game/vehicles/vehicle/VehicleImage.vue'
 import VehicleType from '@/shared/game/vehicles/type/VehicleType.vue'
 import { isVehicleType } from '@/shared/game/vehicles/type/vehicleTypeToImage'
@@ -65,7 +72,9 @@ const props = defineProps<{
   minPlayers: number
   compared: boolean
 }>()
+
 defineEmits<{ compare: [selection: VehicleSelection] }>()
+
 const name = computed(() => vehicleName(props.vehicle))
 const historySelection = computed<VehicleSelection>(() => {
   const { tankTag, tankLevel, tankType } = props.vehicle
@@ -76,6 +85,7 @@ const historySelection = computed<VehicleSelection>(() => {
     nations: props.selection.nations,
   }
 })
+
 const expanded = ref(false)
 const activeSlot = defineModel<Slot>('activeSlot', { required: true })
 const historyStep = defineModel<HistoryStep>('historyStep', { required: true })
@@ -121,15 +131,43 @@ function selectSlot(slot: Slot) {
 
 .compare {
   align-self: center;
+  display: grid;
+  place-items: center;
+  margin-left: 6px;
   width: 28px;
   height: 30px;
   padding: 0;
   color: rgba(255, 255, 255, 0.55);
-  font-size: 22px;
   border-radius: 5px;
 
-  &:hover { color: white; background: rgba(255, 255, 255, 0.08); }
-  &.added { color: #30d158; font-size: 16px; cursor: default; }
+  &:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  &.added {
+    color: #30d158;
+  }
+
+  .compare-icon {
+    grid-area: 1 / 1;
+    width: 12px;
+    height: 12px;
+    fill: currentColor;
+    pointer-events: none;
+
+    &.compare-icon-enter-active,
+    &.compare-icon-leave-active {
+      transition: opacity 0.18s ease, filter 0.18s ease, transform 0.18s ease;
+    }
+
+    &.compare-icon-enter-from,
+    &.compare-icon-leave-to {
+      opacity: 0;
+      filter: blur(3px);
+      transform: scale(0.65);
+    }
+  }
 }
 
 .name {
@@ -148,8 +186,8 @@ function selectSlot(slot: Slot) {
   align-self: center;
   justify-self: center;
   fill: currentColor;
-  opacity: 0.45;
   transform: rotate(-90deg);
+  color: rgba(255, 255, 255, 0.55);
   transition: transform 0.15s;
 
   &.expanded {

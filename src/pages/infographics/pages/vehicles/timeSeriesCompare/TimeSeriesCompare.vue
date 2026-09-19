@@ -123,14 +123,22 @@ watch([series, slot, beforeDay, step, averageWindow], () => {
   chart.setHistories(series.value, slot.value, beforeDay.value, step.value, averageWindow.value)
 }, { immediate: true })
 
+watch(() => sources.value.map(source => source.tag), tags => {
+  const selected = new Set(tags)
+  for (const tag of states.keys()) {
+    if (!selected.has(tag)) states.delete(tag)
+  }
+  for (const tag of Object.keys(retries)) {
+    if (!selected.has(tag)) delete retries[tag]
+  }
+})
+
 function setColor(source: LegendItem, color: string) {
   sources.value = sources.value.map(item => item.tag === source.tag ? { ...item, color } : item)
 }
 
 function remove(source: LegendItem) {
   sources.value = sources.value.filter(item => item.tag !== source.tag)
-  states.delete(String(source.tag))
-  delete retries[String(source.tag)]
 }
 </script>
 

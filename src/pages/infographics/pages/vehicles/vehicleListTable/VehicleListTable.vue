@@ -118,7 +118,7 @@ const MAX_CATEGORY_SLOTS = 12
 const MIN_SLOT_WIDTH = 86
 const METADATA_COLUMN_WIDTH = 40
 const EXPAND_COLUMN_WIDTH = 20
-const COMPARE_COLUMN_WIDTH = 30
+const COMPARE_COLUMN_WIDTH = 36
 type SortKey = Slot | 'name' | 'tankLevel' | 'tankType'
 type SortOrder = { key: SortKey, ascending: boolean }
 const typeOrder = new Map<string, number>(vehicleTypes.map((type, index) => [type, vehicleTypes.length - index]))

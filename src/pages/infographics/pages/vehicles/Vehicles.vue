@@ -2,7 +2,7 @@
   <VehicleFilters v-model="filters" />
   <TimeSeriesCompare v-model="comparisonSources" :filters :min-battles="localFilters.minBattles" :min-players="localFilters.minPlayers" />
   <VehicleListTable v-model:grouping="grouping" v-model:local-filters="localFilters" :slots="defaultSlots"
-    :vehicles="statistics.data" :status="statistics.status" :filters :compared-keys="comparisonSources.map(source => source.tag)" @compare="addComparison" @retry="retry++" />
+    :vehicles="statistics.data" :status="statistics.status" :filters :compared-keys="comparisonSources.map(source => source.tag)" @compare="toggleComparison" @retry="retry++" />
 </template>
 
 
@@ -39,8 +39,11 @@ const grouping = ref<VehicleGrouping>('tanks')
 
 const comparisonSources = ref<ComparisonSource[]>([])
 
-function addComparison(vehicle: VehicleStatistics, selection: VehicleSelection) {
-  if (comparisonSources.value.some(source => source.tag === vehicle.rowKey)) return
+function toggleComparison(vehicle: VehicleStatistics, selection: VehicleSelection) {
+  if (comparisonSources.value.some(source => source.tag === vehicle.rowKey)) {
+    comparisonSources.value = comparisonSources.value.filter(source => source.tag !== vehicle.rowKey)
+    return
+  }
   comparisonSources.value.push({
     tag: vehicle.rowKey,
     name: vehicle.tankTag === null ? `Среднее · ${vehicleName(vehicle)}` : vehicleName(vehicle),
