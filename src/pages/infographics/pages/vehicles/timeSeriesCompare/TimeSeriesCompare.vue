@@ -58,7 +58,8 @@
       </div>
     </div>
 
-    <FloatingTooltip :ctx="chart.tooltipCtx.value" :offset="12" animated :animation-omega="40">
+    <FloatingTooltip :ctx="chart.tooltipCtx.value" anchor="pivot-x" :placement="['top-float', 'bottom-float']"
+      :offset="12">
       <template #default="{ ctx }">
         <ComparisonTooltip :ctx :sources="legend.enabled.value" />
       </template>
@@ -265,7 +266,7 @@ h2 span.empty {
   display: flex;
   flex-direction: column;
   gap: var(--legend-gap);
-  margin: 12px 0;
+  margin-top: 12px;
 }
 
 .chart-body {
