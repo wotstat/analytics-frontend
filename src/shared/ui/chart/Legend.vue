@@ -16,7 +16,7 @@
       </div>
 
       <div class="name">{{ item.name }}</div>
-      <button v-if="removable" class="remove" @click="emit('remove', item)">
+      <button v-if="removable" class="remove" @click.stop="emit('remove', item)">
         <XIcon class="icon" />
       </button>
     </button>
@@ -196,9 +196,24 @@ function clearHighlight() {
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 1.5px;
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.08);
+        opacity: 0;
+        transition: opacity 0.15s;
+      }
 
       &:hover {
         opacity: 1;
+
+        &::before {
+          opacity: 1;
+        }
 
         .icon {
           opacity: 1;
