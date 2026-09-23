@@ -144,7 +144,7 @@ const containersTag = queryComputed<{
 }>(() => `
 with containers as (
     select containerTag as tag,
-      count() as count,
+      sum(recordBoxCount) as count,
       toStartOfDay(min(dateTime)) as start,
       toStartOfDay(max(dateTime)) as end
       from Event_OnLootboxOpen

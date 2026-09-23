@@ -18,6 +18,7 @@
   - `Coverage.vue` — «покрытие»: сколько игроков встречено (`PlayerCoverageTable`, MV `player_coverage_*`).
   - `chuck/Chuck.vue` — турнир «Чак Норрис» (ивент), `ChuckTable`.
   - `lootbox/` — статистика открытия лутбоксов: таблицы дропа, реролов; свой набор таблиц (`Table.vue`, `OpenByTable.vue`, `RerollTable.vue`, список контейнеров `lootboxList/`). Названия контейнеров, расходников и кастомизаций берутся соответственно из `LootboxesLocalizationDictionary`, `ArtefactsLocalizationDictionary` и `CustomizationsLocalizationDictionary`.
+    Счётчики открытых коробок и знаменатели процентов суммируют `recordBoxCount`. `lootbox_*_mv` считают появления записей о награде через `countState()`; при открытии пачкой награды объединены в одной записи, поэтому восстановить распределение по отдельным коробкам из этих MV нельзя.
   - `onslaught/` — см. ниже.
 - `shared/widgets/` — переиспользуемые карточки-виджеты страниц: `GenericInfo.vue` (большое число + подпись + цвет, принимает `status`, `value`, `processor`), `GenericInfoQuery.vue` (то же с запросом внутри), таблицы и `charts/MiniBarNew.vue` на UniversalChart (см. 06). Donut винрейта в `Battle.vue` нарисован локальным SVG без движка графиков.
 - `shared/ServerStatusWrapper.vue` — обёртка «сервер недоступен», `Timecodes.vue`, `bloomColors.ts` — палитра свечения карточек.

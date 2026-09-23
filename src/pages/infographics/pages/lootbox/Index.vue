@@ -80,6 +80,7 @@
       ресурсов, а не самого факта выпадения пакета. Позволяет рассчитать сколько коробок нужно открыть для получения
       <b>X</b> ресурсов.
     </p>
+    <p>При открытии пачкой награды записываются общей суммой. Вероятность конкретной награды для одной коробки из такой записи определить нельзя.</p>
   </template>
   <TableSection title="Другие контейнеры" v-bind="lootboxesStats" :localizer="lootboxLocalizer" :showOther />
 
@@ -187,7 +188,7 @@ function whereClause(ignore: ('player' | 'tag' | 'date' | 'region')[] = []) {
 }
 
 const total = queryComputedFirst(() => `
-select count() as count
+select sum(recordBoxCount) as count
 from Event_OnLootboxOpen
 where ${whereClause()} and isOpenSuccess
 `, { count: 0 })
@@ -202,13 +203,13 @@ const openWithStats = queryComputed<{ tag: string, locale: LocalizedName, count:
     from (
         select tag, count, successCount, P2.count as totalCount, P2.successCount as totalSuccess
         from (
-            select openByTag as tag, count() as count, countIf(isOpenSuccess) as successCount
+            select openByTag as tag, sum(recordBoxCount) as count, sumIf(recordBoxCount, isOpenSuccess) as successCount
             from Event_OnLootboxOpen
             where ${whereClause()} and openByTag != Event_OnLootboxOpen.containerTag
             group by tag
         ) as P
         join (
-            select openByTag as tag, count() as count, countIf(isOpenSuccess) as successCount
+            select openByTag as tag, sum(recordBoxCount) as count, sumIf(recordBoxCount, isOpenSuccess) as successCount
             from Event_OnLootboxOpen
             where openByTag != Event_OnLootboxOpen.containerTag and ${whereClause(['date', 'player'])}
             group by tag
@@ -220,7 +221,7 @@ const openWithStats = queryComputed<{ tag: string, locale: LocalizedName, count:
     with locales as (${localeFor('Lootboxes')})
     select tag, locale, count, successCount
     from (
-        select openByTag as tag, count() as count, countIf(isOpenSuccess) as successCount
+        select openByTag as tag, sum(recordBoxCount) as count, sumIf(recordBoxCount, isOpenSuccess) as successCount
         from Event_OnLootboxOpen
         where ${whereClause()} and openByTag != Event_OnLootboxOpen.containerTag
         group by openByTag
@@ -238,13 +239,13 @@ const rerollStats = queryComputed<{ tag: string, locale: LocalizedName, count: n
     from (
         select tag, count, rerollCount, P2.count as totalCount, P2.rerollCount as totalReroll
         from (
-            select openByTag as tag, count() as count, countIf(not claimed) as rerollCount
+            select openByTag as tag, sum(recordBoxCount) as count, sumIf(recordBoxCount, not claimed) as rerollCount
             from Event_OnLootboxOpen
             where ${whereClause()}
             group by tag
         ) as P
         join (
-            select openByTag as tag, count() as count, countIf(not claimed) as rerollCount
+            select openByTag as tag, sum(recordBoxCount) as count, sumIf(recordBoxCount, not claimed) as rerollCount
             from Event_OnLootboxOpen
             where ${whereClause(['date', 'player'])}
             group by tag
@@ -257,7 +258,7 @@ const rerollStats = queryComputed<{ tag: string, locale: LocalizedName, count: n
     with locales as (${localeFor('Lootboxes')})
     select tag, locale, count, rerollCount
     from (
-        select containerTag as tag, count() as count, countIf(not claimed) as rerollCount
+        select containerTag as tag, sum(recordBoxCount) as count, sumIf(recordBoxCount, not claimed) as rerollCount
         from Event_OnLootboxOpen
         where ${whereClause()}
         group by containerTag
@@ -291,6 +292,7 @@ type Stats = {
 const showOther = computed(() => whereClause(['tag', 'date', 'region']) !== 'true')
 
 function getQuery(select: string, arrayJoin: string, materialized: string, tagProcessor?: string, localizeTable?: keyof typeof localizationQueries) {
+  // MV counts reward records; bulk rewards are aggregated, so only box denominators use recordBoxCount.
   let where: string | null = whereClause(['tag'])
   if (where === 'true') where = null
 
@@ -309,8 +311,8 @@ function getQuery(select: string, arrayJoin: string, materialized: string, tagPr
 
   return where ? `
 with
-  (select count() from Event_OnLootboxOpen where ${where} ${andWhereTag}) as personalLootboxesCount,
-  (select count() from Event_OnLootboxOpen ${whereWhereTag}) as lootboxesCount
+  (select sum(recordBoxCount) from Event_OnLootboxOpen where ${where} ${andWhereTag}) as personalLootboxesCount,
+  (select sum(recordBoxCount) from Event_OnLootboxOpen ${whereWhereTag}) as lootboxesCount
     ${prefix}
     select title,
   ${tagProcessor ? tagProcessor + ' as tag' : 'tag'},
@@ -340,7 +342,7 @@ using title
     ${postfix}
 ` : `
 with
-(select count() from Event_OnLootboxOpen ${whereWhereTag}) as lootboxesCount
+(select sum(recordBoxCount) from Event_OnLootboxOpen ${whereWhereTag}) as lootboxesCount
     ${simplePrefix}
     select title,
   ${tagProcessor ? tagProcessor + ' as tag' : 'tag'},
