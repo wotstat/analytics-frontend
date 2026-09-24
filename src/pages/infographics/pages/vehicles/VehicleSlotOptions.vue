@@ -9,10 +9,8 @@
       <section v-for="category in slotCategories" :key="category.title" class="category">
         <h3>{{ category.title }}</h3>
         <div class="tiles">
-          <button v-for="slot in category.slots" :key="slot" class="tile"
-            :class="{ selected: selected.includes(slot) }"
-            :disabled="isDisabled(slot)"
-            @click="emit('select', slot)">
+          <button v-for="slot in category.slots" :key="slot" class="tile" :class="{ selected: selected.includes(slot) }"
+            :disabled="isDisabled(slot)" @click="emit('select', slot)">
             <Icon :icon="availableSlots[slot].icon" class="tile-icon" />
             <span>{{ availableSlots[slot].label }}</span>
           </button>
@@ -54,7 +52,7 @@ function isDisabled(slot: Slot) {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 16px;
+    padding: 14px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 
     h2 {
@@ -66,6 +64,7 @@ function isDisabled(slot: Slot) {
     .selected-count {
       color: rgba(255, 255, 255, 0.55);
       font-size: 12px;
+      line-height: 1.2;
       white-space: nowrap;
     }
   }
@@ -74,7 +73,8 @@ function isDisabled(slot: Slot) {
     min-height: 0;
     overflow-y: auto;
     margin-right: 3px;
-    padding: 0 13px 16px 16px;
+    padding: 0 14px;
+    padding-bottom: 14px;
 
     &::-webkit-scrollbar-track {
       margin-block-end: 10px;

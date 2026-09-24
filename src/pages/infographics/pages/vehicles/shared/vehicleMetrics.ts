@@ -12,8 +12,8 @@ const average = (column: string) => `sum(${column}) / nullIf(sum(participations)
 
 // Все базовые показатели загружаются вместе, независимо от выбранных столбцов.
 export const availableSlots = {
-  battles: { icon: 'battles', label: 'Бои', sql: 'sum(participations)', description: 'Число участий на танке за день, не уникальных арен' },
-  playerCount: { icon: 'player', label: 'Игроки', sql: 'uniqIfMerge(players)', description: 'Оценка числа уникальных игроков за день, без неизвестных аккаунтов' },
+  battles: { icon: 'battles', label: 'Бои', sql: 'sum(participations)', description: 'Число участий на танке за выбранный период, не уникальных арен' },
+  playerCount: { icon: 'player', label: 'Игроки', sql: 'uniqIfMerge(players)', description: 'Оценка числа уникальных игроков за выбранный период, без неизвестных аккаунтов' },
   winrate: { icon: 'winrate', label: 'Победы', sql: "sumIf(participations, result = 'win') / nullIf(sum(participations), 0) * 100", format: 'percent' },
   survival: { icon: 'hp', label: 'Выживаемость', sql: `${average('aliveCount')} * 100`, format: 'percent' },
 
@@ -81,4 +81,3 @@ export function slotDescription(slot: Slot) {
   const definition: SlotDefinition = availableSlots[slot]
   return definition.description ?? definition.label
 }
-

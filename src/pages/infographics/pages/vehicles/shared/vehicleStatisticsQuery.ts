@@ -4,6 +4,7 @@ import { availableSlots } from './vehicleMetrics'
 import type { HistoryStep } from '../timeSeries/historyStep'
 import type { VehicleHistorySplit } from '../timeSeries/historySplit'
 import type { VehicleGrouping, VehicleSelection } from './vehicleGrouping'
+import type { VehicleStatisticsPeriod } from './vehicleStatisticsPeriod'
 
 function quote(value: string) {
   return `'${value.replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`
@@ -113,7 +114,8 @@ export function vehicleHistoryQuery(filters: VehicleFilters, selection: VehicleS
   `
 }
 
-export function vehicleStatisticsQuery(filters: VehicleFilters, grouping: VehicleGrouping = 'tanks', selection?: VehicleSelection) {
+export function vehicleStatisticsQuery(filters: VehicleFilters, grouping: VehicleGrouping = 'tanks',
+  days: VehicleStatisticsPeriod = 30, selection?: VehicleSelection) {
   const source = statisticsSource(filters)
   const isTank = grouping === 'tanks'
   const withLevel = grouping === 'levels' || grouping === 'classesByLevel'
@@ -123,12 +125,30 @@ export function vehicleStatisticsQuery(filters: VehicleFilters, grouping: Vehicl
     ...(withType ? ['stats.tankType'] : []),
   ]
   const groupBy = dimensions.join(', ')
+  const joinKeys = isTank ? ['tankTag'] : [
+    ...(withLevel ? ['tankLevel'] : []),
+    ...(withType ? ['tankType'] : []),
+  ]
   const where = vehicleStatisticsWhere(filters) + selectionWhere(isTank ? undefined : selection)
   const rowKey = isTank ? 'stats.tankTag' : `concat(${quote(`${grouping}:`)}, ${dimensions.map(column => `toString(${column})`).join(", ':', ")})`
+  const latestRows = days === 1
+    ? `and (${groupBy}, stats.day) in (
+        select ${groupBy}, max(stats.day)
+        from ${source} as stats
+        where ${where}
+        group by ${groupBy}
+      )`
+    : `and stats.day >= latest.latestDay - toIntervalDay(${days - 1})
+      and stats.day <= latest.latestDay`
+  const latestJoin = days === 1 ? '' : `inner join (
+      select ${groupBy}, max(stats.day) as latestDay
+      from ${source} as stats
+      where ${where}
+      group by ${groupBy}
+    ) as latest on ${joinKeys.map(key => `stats.${key} = latest.${key}`).join(' and ')}`
 
-  // У каждой строки один последний завершённый день после фильтрации.
-  // Категории объединяем из исходных состояний за этот день, не из средних танков
-  // с разными датами. В подзапросе читаются только измерения и дата.
+  // У каждой строки свой последний завершённый день после фильтрации.
+  // Для недели и месяца агрегируем исходные состояния за 7 или 30 дней до него.
   return `
     select
       ${rowKey} as rowKey,
@@ -139,13 +159,9 @@ export function vehicleStatisticsQuery(filters: VehicleFilters, grouping: Vehicl
       max(stats.day) as day,
       ${statisticsMetrics(source)}
     from ${source} as stats
+    ${latestJoin}
     where ${where}
-      and (${groupBy}, stats.day) in (
-        select ${groupBy}, max(stats.day)
-        from ${source} as stats
-        where ${where}
-        group by ${groupBy}
-      )
+      ${latestRows}
     group by ${groupBy}
     order by battles desc, rowKey
   `

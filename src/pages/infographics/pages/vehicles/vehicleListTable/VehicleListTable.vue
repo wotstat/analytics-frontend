@@ -12,6 +12,7 @@
       <SearchLine v-if="showName" v-model="search" class="search" placeholder="Найти танк" />
       <VehicleListFilters v-model="localFilters" :show-vehicle-filters="showName" />
       <VehicleColumnSelector v-model="selectedSlots" :max-slots="maxSelectableSlots" />
+      <VehicleTableSettings v-model="period" />
     </div>
 
     <div class="head mt-font">
@@ -82,16 +83,18 @@ import SearchLine from '@/shared/game/selectors/components/searchLine/SearchLine
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
 import { availableSlots, orderSlots, type Slot } from '../shared/vehicleMetrics'
 import type { VehicleStatistics } from '../shared/types'
-import { DEFAULT_MIN_BATTLES, DEFAULT_MIN_PLAYERS, type LocalVehicleFilters } from './localFilters'
+import { DEFAULT_MIN_BATTLES, DEFAULT_MIN_PLAYERS, DEFAULT_ONLY_ACTUAL, type LocalVehicleFilters } from './localFilters'
 import { vehicleGroupings, type VehicleGrouping, type VehicleSelection } from '../shared/vehicleGrouping'
 import { vehicleName } from '../shared/vehicleName'
 import VehicleColumnSelector from './VehicleColumnSelector.vue'
+import VehicleTableSettings from './VehicleTableSettings.vue'
 import VehicleListFilters from './VehicleListFilters.vue'
 import VehicleListRow from './VehicleListRow.vue'
 import SortableHeading from './SortableHeading.vue'
 import { useVehicleSorting } from './useVehicleSorting'
 import type { VehicleFilters } from '../filters/types'
 import type { HistoryAverageWindow, HistoryStep } from '../timeSeries/historyStep'
+import type { VehicleStatisticsPeriod } from '../shared/vehicleStatisticsPeriod'
 
 const props = defineProps<{
   slots: Slot[]
@@ -114,6 +117,7 @@ const COMPARE_COLUMN_WIDTH = 36
 const search = ref('')
 const localFilters = defineModel<LocalVehicleFilters>('localFilters', { required: true })
 const grouping = defineModel<VehicleGrouping>('grouping', { required: true })
+const period = defineModel<VehicleStatisticsPeriod>('period', { required: true })
 
 const selectedSlots = ref<Slot[]>(orderSlots(props.slots))
 const activeSlot = ref<Slot>(selectedSlots.value[0] ?? 'battles')
@@ -171,7 +175,7 @@ const hasLocalFilters = computed(() => {
   if (minBattles !== DEFAULT_MIN_BATTLES || minPlayers !== DEFAULT_MIN_PLAYERS) return true
   if (!showName.value) return false
 
-  return search.value.trim().length > 0 || levels.length > 0 || types.length > 0 || nations.length > 0 || onlyActual
+  return search.value.trim().length > 0 || levels.length > 0 || types.length > 0 || nations.length > 0 || onlyActual !== DEFAULT_ONLY_ACTUAL
 })
 
 const emptyMessage = computed(() => {
