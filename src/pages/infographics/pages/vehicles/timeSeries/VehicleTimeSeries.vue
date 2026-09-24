@@ -9,10 +9,7 @@
       </template>
       <template #right>
         <HistoryControls v-model:step="step" v-model:average-window="averageWindow" compact class="step-selector">
-          <button class="split-trigger" :class="{ active: split !== null }"
-            title="Разбить график" @click="openSplitMenu">
-            <span class="dots"></span>
-          </button>
+          <HistoryMenuTrigger :active="split !== null" @click="openChartMenu" />
         </HistoryControls>
       </template>
       <template #tooltip="{ ctx }">
@@ -62,7 +59,7 @@ import { useLegend } from '@/shared/ui/chart/useLegend'
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import { closeContextMenu, isContextMenuOpen } from '@/shared/uiKit/contextMenu/createContextMenu'
-import { checkboxItem, header, separator, simpleContextMenu } from '@/shared/uiKit/contextMenu/simpleContextMenu'
+import { checkboxItem, childs, separator, simpleContextMenu } from '@/shared/uiKit/contextMenu/simpleContextMenu'
 import type { VehicleFilters } from '../filters/types'
 import { availableSlots, type Slot } from '../shared/vehicleMetrics'
 import { formatSlotValue } from '../shared/formatMetricValue'
@@ -72,6 +69,8 @@ import { VehicleHistoryChart } from './VehicleHistoryChart'
 import type { VehicleHistoryPeriod, VehicleHistorySeries } from '../shared/types'
 import type { HistoryAverageWindow, HistoryStep } from './historyStep'
 import HistoryControls from './HistoryControls.vue'
+import HistoryMenuTrigger from './HistoryMenuTrigger.vue'
+import { useHistoryAnnotationMenu } from './useHistoryAnnotationMenu'
 import { applyHistoryThresholds, hasHistoryValues } from './historyValues'
 import { historySplitName, historySplitOptions, orderHistorySplitKeys, type VehicleHistorySplit } from './historySplit'
 import { historySplitSeriesColor } from './seriesColors'
@@ -91,6 +90,7 @@ const props = defineProps<{
 const step = defineModel<HistoryStep>('step', { required: true })
 const averageWindow = defineModel<HistoryAverageWindow>('averageWindow', { required: true })
 const split = ref<VehicleHistorySplit | null>(null)
+const annotationMenu = useHistoryAnnotationMenu()
 
 const now = useNow({ interval: 60_000 })
 
@@ -141,15 +141,16 @@ watch([series, () => props.slot, beforeDay, step, averageWindow], () => {
   chart.setHistories(series.value, props.slot, beforeDay.value, step.value, averageWindow.value)
 }, { immediate: true })
 
-let splitMenuId = -1
+let chartMenuId = -1
 
 function selectSplit(value: VehicleHistorySplit | null) {
   split.value = value
+  closeContextMenu(chartMenuId)
 }
 
-function openSplitMenu(event: MouseEvent) {
-  if (isContextMenuOpen(splitMenuId)) {
-    closeContextMenu(splitMenuId)
+function openChartMenu(event: MouseEvent) {
+  if (isContextMenuOpen(chartMenuId)) {
+    closeContextMenu(chartMenuId)
     return
   }
 
@@ -158,25 +159,27 @@ function openSplitMenu(event: MouseEvent) {
     position: target.getBoundingClientRect(),
     alignX: 'right',
     alignY: 'bottom',
-    minWidth: 245,
     closeOnScroll: true,
+    closeOnAction: false,
   }, [
-    header('Разбиение графика'),
-    checkboxItem('Без разбиения', {
-      value: computed(() => split.value === null),
-      toggle: () => selectSplit(null),
-    }),
-    separator,
-    ...historySplitOptions.map(option => checkboxItem(option.label, {
-      value: computed(() => split.value === option.value),
-      toggle: () => selectSplit(option.value),
-    })),
+    childs('Разбиение', [
+      checkboxItem('Без разбиения', {
+        value: computed(() => split.value === null),
+        toggle: () => selectSplit(null),
+      }),
+      separator,
+      ...historySplitOptions.map(option => checkboxItem(option.label, {
+        value: computed(() => split.value === option.value),
+        toggle: () => selectSplit(option.value),
+      })),
+    ]),
+    childs('Аннотации', annotationMenu),
   ])
 
-  splitMenuId = id
+  chartMenuId = id
 }
 
-onBeforeUnmount(() => closeContextMenu(splitMenuId))
+onBeforeUnmount(() => closeContextMenu(chartMenuId))
 </script>
 
 <style lang="scss" scoped>
@@ -219,55 +222,6 @@ onBeforeUnmount(() => closeContextMenu(splitMenuId))
 
     .step-selector {
       margin-left: auto;
-
-      .split-trigger {
-        display: grid;
-        place-items: center;
-        width: 24px;
-        height: 24px;
-        margin-left: -2px;
-        border-radius: 5px;
-        padding: 0;
-        color: rgba(197, 197, 197, 0.6);
-
-        &:hover {
-          color: rgba(255, 255, 255, 0.8);
-          background: rgba(255, 255, 255, 0.08);
-        }
-
-        &.active {
-          color: var(--blue-thin-color);
-          background: rgba(10, 132, 255, 0.12);
-        }
-      }
-
-      .dots {
-        position: relative;
-
-        &,
-        &::before,
-        &::after {
-          width: 3px;
-          height: 3px;
-          border-radius: 50%;
-          background: currentColor;
-        }
-
-        &::before,
-        &::after {
-          content: '';
-          position: absolute;
-          top: 0;
-        }
-
-        &::before {
-          right: 6px;
-        }
-
-        &::after {
-          left: 6px;
-        }
-      }
     }
 
     .history-tooltip {
