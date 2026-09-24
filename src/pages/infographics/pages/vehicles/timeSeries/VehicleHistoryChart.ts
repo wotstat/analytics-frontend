@@ -24,6 +24,8 @@ import {
   type HistoryAverageWindow, type HistoryStep
 } from './historyStep'
 import { ChartMask } from '@/shared/uiKit/chart/universalChart/defs/ChartMask'
+import type { HistoryAnnotation } from './gameVersionAnnotations'
+import { annotationLabelOptions } from './annotationLabelOptions'
 
 type HistoryPoint = {
   series: string
@@ -58,6 +60,7 @@ export class VehicleHistoryChart extends UniversalChart {
 
   private readonly labelsX: AutoLabels
   private readonly labelsY: AutoLabels
+  private readonly labelsAnnotations: AutoLabels
   private readonly zoom: ZoomChartComponent
   private labelStep: HistoryStep = 'day'
   private interval: { minX: number, maxX: number, step: HistoryStep } | null = null
@@ -74,9 +77,11 @@ export class VehicleHistoryChart extends UniversalChart {
     const mask = this.mask
     const clipLeft = new ChartClip('left')
     const clipBottom = new ChartClip('bottom')
+    const clipTop = new ChartClip('top')
 
     this.labelsX = new AutoLabels('horizontal', timeLabels('day')).clipBy(clipBottom)
     this.labelsY = new AutoLabels('vertical', this.yLabels('battles')).clipBy(clipLeft)
+    this.labelsAnnotations = new AutoLabels('horizontal', { ...annotationLabelOptions([]), classes: 'history-annotations' }, 'top').clipBy(clipTop)
 
     this.svg.classList.add(this.styleScopeClass)
     this.svg.appendChild(this.seriesStyle)
@@ -89,10 +94,16 @@ export class VehicleHistoryChart extends UniversalChart {
       .addPlot(new TicksByLabels(this.labelsY), 'grid')
       .addPlot(new TicksByLabels(this.labelsX, { classes: 'time-grid' }), 'grid')
       .addPlot(this.plot, 'plot')
+      .addPlot(new TicksByLabels(this.labelsAnnotations, { classes: 'history-annotation-ticks', start: 0 }), 'annotations')
       .addSlot('bottom', this.labelsX, 'labels')
       .addSlot('left', this.labelsY, 'labels')
+      .addSlot('top', this.labelsAnnotations, 'annotations')
       .addPlot(this.interaction)
-      .addDefs(clip, clipLeft, clipBottom, mask)
+      .addDefs(clip, clipLeft, clipBottom, clipTop, mask)
+  }
+
+  setAnnotations(annotations: readonly HistoryAnnotation[]) {
+    this.labelsAnnotations.updateOptions(annotationLabelOptions(annotations))
   }
 
   setHistory(history: VehicleHistoryPeriod[], slot: Slot, today: string, step: HistoryStep, averageWindow: HistoryAverageWindow = null) {

@@ -71,6 +71,7 @@ import type { HistoryAverageWindow, HistoryStep } from './historyStep'
 import HistoryControls from './HistoryControls.vue'
 import HistoryMenuTrigger from './HistoryMenuTrigger.vue'
 import { useHistoryAnnotationMenu } from './useHistoryAnnotationMenu'
+import { useGameVersionAnnotations } from './gameVersionAnnotations'
 import { applyHistoryThresholds, hasHistoryValues } from './historyValues'
 import { historySplitName, historySplitOptions, orderHistorySplitKeys, type VehicleHistorySplit } from './historySplit'
 import { historySplitSeriesColor } from './seriesColors'
@@ -90,7 +91,8 @@ const props = defineProps<{
 const step = defineModel<HistoryStep>('step', { required: true })
 const averageWindow = defineModel<HistoryAverageWindow>('averageWindow', { required: true })
 const split = ref<VehicleHistorySplit | null>(null)
-const annotationMenu = useHistoryAnnotationMenu()
+const annotationOptions = useHistoryAnnotationMenu()
+const versionAnnotations = useGameVersionAnnotations(annotationOptions.versions, computed(() => props.filters.regions))
 
 const now = useNow({ interval: 60_000 })
 
@@ -141,6 +143,8 @@ watch([series, () => props.slot, beforeDay, step, averageWindow], () => {
   chart.setHistories(series.value, props.slot, beforeDay.value, step.value, averageWindow.value)
 }, { immediate: true })
 
+watch(versionAnnotations, annotations => chart.setAnnotations(annotations), { immediate: true })
+
 let chartMenuId = -1
 
 function selectSplit(value: VehicleHistorySplit | null) {
@@ -173,7 +177,7 @@ function openChartMenu(event: MouseEvent) {
         toggle: () => selectSplit(option.value),
       })),
     ]),
-    childs('Аннотации', annotationMenu),
+    childs('Аннотации', annotationOptions.menu),
   ])
 
   chartMenuId = id

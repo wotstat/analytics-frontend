@@ -89,6 +89,7 @@ import type { HistoryAverageWindow, HistoryStep } from '../timeSeries/historySte
 import HistoryControls from '../timeSeries/HistoryControls.vue'
 import HistoryMenuTrigger from '../timeSeries/HistoryMenuTrigger.vue'
 import { useHistoryAnnotationMenu } from '../timeSeries/useHistoryAnnotationMenu'
+import { useGameVersionAnnotations } from '../timeSeries/gameVersionAnnotations'
 import { applyHistoryThresholds, hasHistoryValues } from '../timeSeries/historyValues'
 import { snapshotComparisonFilters, type ComparisonSource } from './types'
 import { comparisonName } from './comparisonName'
@@ -112,7 +113,8 @@ const metricTrigger = useTemplateRef<HTMLButtonElement>('metricTrigger')
 
 const step = ref<HistoryStep>('day')
 const averageWindow = ref<HistoryAverageWindow>(null)
-const annotationMenu = useHistoryAnnotationMenu()
+const annotationOptions = useHistoryAnnotationMenu()
+const versionAnnotations = useGameVersionAnnotations(annotationOptions.versions, computed(() => props.filters.regions))
 
 const now = useNow({ interval: 60_000 })
 const beforeDay = computed(() => now.value.toISOString().slice(0, 10))
@@ -158,6 +160,8 @@ watch([series, slot, beforeDay, step, averageWindow], () => {
   chart.setHistories(series.value, slot.value, beforeDay.value, step.value, averageWindow.value)
 }, { immediate: true })
 
+watch(versionAnnotations, annotations => chart.setAnnotations(annotations), { immediate: true })
+
 watch(() => props.sources.map(source => source.tag), tags => {
   const selected = new Set(tags)
 
@@ -190,7 +194,7 @@ function openAnnotationMenu(event: MouseEvent) {
     alignY: 'bottom',
     closeOnScroll: true,
     closeOnAction: false,
-  }, annotationMenu)
+  }, annotationOptions.menu)
 
   annotationMenuId = id
 }

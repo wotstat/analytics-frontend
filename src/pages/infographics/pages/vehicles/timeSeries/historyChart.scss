@@ -1,4 +1,46 @@
 @mixin history-chart {
+  .history-annotations {
+    .label {
+      fill: rgba(255, 255, 255, 0.5);
+      font-size: 11px;
+      font-weight: 600;
+      text-anchor: middle;
+    }
+
+    .label.version {
+      fill: #f1c578;
+    }
+
+    .label.patch {
+      fill: #b6cde6;
+    }
+
+    .label.value-outside-bounds {
+      visibility: visible;
+    }
+  }
+
+  .history-annotation-ticks {
+    .tick {
+      stroke: currentColor;
+      stroke-width: 1;
+      stroke-opacity: 0.35;
+      pointer-events: none;
+    }
+
+    .tick-level.version {
+      color: #f1c578;
+    }
+
+    .tick-level.patch {
+      color: #b6cde6;
+    }
+
+    .tick-level.micropatch {
+      color: rgba(255, 255, 255, 0.5);
+    }
+  }
+
   .history-line {
     stroke-width: 2px;
     stroke-linejoin: round;

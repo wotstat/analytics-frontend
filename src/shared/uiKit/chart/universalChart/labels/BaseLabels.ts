@@ -68,6 +68,7 @@ export abstract class BaseLabels implements SlotRenderer {
       levelGap?: number
       slotSize?: SlotSize
       maxLevelCount?: number
+      classes?: Classes
     } = {},
     readonly side: LabelsSide = axis === 'horizontal' ? 'bottom' : 'left',
   ) {
@@ -85,6 +86,7 @@ export abstract class BaseLabels implements SlotRenderer {
     this.validateSlotSize()
     this.probeLabel = this.createLabel()
     this.probeLabel.classList.add('probe-label')
+    addClasses(this.root, options.classes)
   }
 
   updateOptions(options: {

@@ -37,6 +37,7 @@ export type TickSource =
 export type LabelOptions = {
   labelForValue?: (value: number, context: LabelContext) => string
   keyForValue?: (value: number, label: string, context: LabelContext) => string
+  classesForValue?: (value: number, context: LabelContext) => Classes
   padding?: number | { clip: number, flow: number }
   strategy?: Strategy
   from?: number
@@ -61,6 +62,7 @@ export type Options = LabelOptions & {
   labelOffset?: number
   levelGap?: number
   slotSize?: SlotSize
+  classes?: Classes
 }
 
 const DEFAULT_LABEL_PADDING = 15
@@ -144,6 +146,7 @@ export class AutoLabels extends BaseLabels {
       offset: options.labelOffset,
       levelGap: options.levelGap,
       slotSize: options.slotSize,
+      classes: options.classes,
       maxLevelCount: AutoLabels.getMaxLevelCount(options),
     }, side)
   }
@@ -161,6 +164,7 @@ export class AutoLabels extends BaseLabels {
         source: overrides.source,
         labelForValue: overrides.labelForValue ?? options.labelForValue,
         keyForValue: overrides.keyForValue ?? options.keyForValue,
+        classesForValue: overrides.classesForValue ?? options.classesForValue,
         padding: overrides.padding ?? options.padding,
         strategy: overrides.strategy ?? options.strategy,
         from: overrides.from ?? options.from,
@@ -294,6 +298,7 @@ export class AutoLabels extends BaseLabels {
           const visibleItems = onlyFitted ? fittedWithinLimits : fitted
           const labels = visibleItems.map(item => {
             const classes = joinClasses(
+              current.classesForValue?.(item.value, labelContext),
               !fittedItems.has(item) && LABEL_OUTSIDE_SPACE_CLASS,
               isValueOutsideBounds(item) && VALUE_OUTSIDE_BOUNDS_LABEL_CLASS,
             )
