@@ -9,7 +9,11 @@
       </template>
       <template #right>
         <HistoryControls v-model:step="step" v-model:average-window="averageWindow" compact class="step-selector">
-          <HistoryMenuTrigger :active="split !== null" @click="openChartMenu" />
+          <button class="split-menu-trigger" :class="{ active: split !== null }" type="button"
+            title="Разбиение графика" @click="openSplitMenu">
+            <LineChartIcon />
+          </button>
+          <HistoryMenuTrigger @click="openAnnotationMenu" />
         </HistoryControls>
       </template>
       <template #tooltip="{ ctx }">
@@ -40,8 +44,7 @@
     <Legend v-if="split !== null && splitSources.length" :legend toggleable highlightable class="legend" />
 
     <FloatingTooltip v-if="split !== null" :ctx="chart.tooltipCtx.value" anchor="pivot-x"
-      :placement="['top-float', 'bottom-float']"
-      :offset="{ top: 28, bottom: versionAnnotations.length ? 40 : 12 }">
+      :placement="['top-float', 'bottom-float']" :offset="{ top: 28, bottom: versionAnnotations.length ? 40 : 12 }">
       <template #default="{ ctx }">
         <ComparisonTooltip :ctx :sources="legend.enabled.value" />
       </template>
@@ -60,7 +63,7 @@ import { useLegend } from '@/shared/ui/chart/useLegend'
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import { closeContextMenu, isContextMenuOpen } from '@/shared/uiKit/contextMenu/createContextMenu'
-import { checkboxItem, childs, separator, simpleContextMenu } from '@/shared/uiKit/contextMenu/simpleContextMenu'
+import { checkboxItem, separator, simpleContextMenu } from '@/shared/uiKit/contextMenu/simpleContextMenu'
 import type { VehicleFilters } from '../filters/types'
 import { availableSlots, type Slot } from '../shared/vehicleMetrics'
 import { formatSlotValue } from '../shared/formatMetricValue'
@@ -71,6 +74,7 @@ import type { VehicleHistoryPeriod, VehicleHistorySeries } from '../shared/types
 import type { HistoryAverageWindow, HistoryStep } from './historyStep'
 import HistoryControls from './HistoryControls.vue'
 import HistoryMenuTrigger from './HistoryMenuTrigger.vue'
+import LineChartIcon from '../vehicleListTable/assets/line-chart.svg'
 import { useHistoryAnnotationMenu } from './useHistoryAnnotationMenu'
 import { useGameVersionAnnotations } from './gameVersionAnnotations'
 import { applyHistoryThresholds, hasHistoryValues } from './historyValues'
@@ -147,16 +151,17 @@ watch([series, () => props.slot, beforeDay, step, averageWindow], () => {
 
 watch(versionAnnotations, annotations => chart.setAnnotations(annotations), { immediate: true })
 
-let chartMenuId = -1
+let splitMenuId = -1
+let annotationMenuId = -1
 
 function selectSplit(value: VehicleHistorySplit | null) {
   split.value = value
-  closeContextMenu(chartMenuId)
+  closeContextMenu(splitMenuId)
 }
 
-function openChartMenu(event: MouseEvent) {
-  if (isContextMenuOpen(chartMenuId)) {
-    closeContextMenu(chartMenuId)
+function openSplitMenu(event: MouseEvent) {
+  if (isContextMenuOpen(splitMenuId)) {
+    closeContextMenu(splitMenuId)
     return
   }
 
@@ -168,24 +173,42 @@ function openChartMenu(event: MouseEvent) {
     closeOnScroll: true,
     closeOnAction: false,
   }, [
-    childs('Разбиение', [
-      checkboxItem('Без разбиения', {
-        value: computed(() => split.value === null),
-        toggle: () => selectSplit(null),
-      }),
-      separator,
-      ...historySplitOptions.map(option => checkboxItem(option.label, {
-        value: computed(() => split.value === option.value),
-        toggle: () => selectSplit(option.value),
-      })),
-    ]),
-    childs('Аннотации', annotationOptions.menu),
+    checkboxItem('Без разбиения', {
+      value: computed(() => split.value === null),
+      toggle: () => selectSplit(null),
+    }),
+    separator,
+    ...historySplitOptions.map(option => checkboxItem(option.label, {
+      value: computed(() => split.value === option.value),
+      toggle: () => selectSplit(option.value),
+    })),
   ])
 
-  chartMenuId = id
+  splitMenuId = id
 }
 
-onBeforeUnmount(() => closeContextMenu(chartMenuId))
+function openAnnotationMenu(event: MouseEvent) {
+  if (isContextMenuOpen(annotationMenuId)) {
+    closeContextMenu(annotationMenuId)
+    return
+  }
+
+  const target = event.currentTarget as HTMLElement
+  const { id } = simpleContextMenu({
+    position: target.getBoundingClientRect(),
+    alignX: 'right',
+    alignY: 'bottom',
+    closeOnScroll: true,
+    closeOnAction: false,
+  }, annotationOptions.menu)
+
+  annotationMenuId = id
+}
+
+onBeforeUnmount(() => {
+  closeContextMenu(splitMenuId)
+  closeContextMenu(annotationMenuId)
+})
 </script>
 
 <style lang="scss" scoped>
@@ -228,6 +251,31 @@ onBeforeUnmount(() => closeContextMenu(chartMenuId))
 
     .step-selector {
       margin-left: auto;
+    }
+
+    .split-menu-trigger {
+      display: grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      border-radius: 5px;
+      color: rgba(197, 197, 197, 0.6);
+
+      svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      &:hover {
+        color: rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      &.active {
+        color: var(--blue-thin-color);
+        background: rgba(10, 132, 255, 0.12);
+      }
     }
 
     .history-tooltip {

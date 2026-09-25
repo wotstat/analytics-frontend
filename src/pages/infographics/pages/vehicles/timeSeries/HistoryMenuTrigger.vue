@@ -1,12 +1,8 @@
 <template>
-  <button class="history-menu-trigger" :class="{ active }" type="button" title="Настройки графика">
+  <button class="history-menu-trigger" type="button" title="Настройки аннотаций">
     <span class="dots"></span>
   </button>
 </template>
-
-<script setup lang="ts">
-defineProps<{ active?: boolean }>()
-</script>
 
 <style scoped lang="scss">
 .history-menu-trigger {
@@ -22,11 +18,6 @@ defineProps<{ active?: boolean }>()
   &:hover {
     color: rgba(255, 255, 255, 0.8);
     background: rgba(255, 255, 255, 0.08);
-  }
-
-  &.active {
-    color: var(--blue-thin-color);
-    background: rgba(10, 132, 255, 0.12);
   }
 
   .dots {
