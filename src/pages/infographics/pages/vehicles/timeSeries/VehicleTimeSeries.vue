@@ -13,7 +13,7 @@
             title="Разбиение графика" @click="openSplitMenu">
             <LineChartIcon />
           </button>
-          <HistoryMenuTrigger @click="openAnnotationMenu" />
+          <HistoryAnnotationSettings :settings="annotationOptions" />
         </HistoryControls>
       </template>
       <template #tooltip="{ ctx }">
@@ -73,9 +73,9 @@ import { VehicleHistoryChart } from './VehicleHistoryChart'
 import type { VehicleHistoryPeriod, VehicleHistorySeries } from '../shared/types'
 import type { HistoryAverageWindow, HistoryStep } from './historyStep'
 import HistoryControls from './HistoryControls.vue'
-import HistoryMenuTrigger from './HistoryMenuTrigger.vue'
+import HistoryAnnotationSettings from './HistoryAnnotationSettings.vue'
 import LineChartIcon from '../vehicleListTable/assets/line-chart.svg'
-import { useHistoryAnnotationMenu } from './useHistoryAnnotationMenu'
+import { useHistoryAnnotationSettings } from './useHistoryAnnotationSettings'
 import { useGameVersionAnnotations } from './gameVersionAnnotations'
 import { applyHistoryThresholds, hasHistoryValues } from './historyValues'
 import { historySplitName, historySplitOptions, orderHistorySplitKeys, type VehicleHistorySplit } from './historySplit'
@@ -96,7 +96,7 @@ const props = defineProps<{
 const step = defineModel<HistoryStep>('step', { required: true })
 const averageWindow = defineModel<HistoryAverageWindow>('averageWindow', { required: true })
 const split = ref<VehicleHistorySplit | null>(null)
-const annotationOptions = useHistoryAnnotationMenu()
+const annotationOptions = useHistoryAnnotationSettings()
 const { annotations: versionAnnotations } = useGameVersionAnnotations(
   annotationOptions.versions, computed(() => props.filters.regions))
 
@@ -152,7 +152,6 @@ watch([series, () => props.slot, beforeDay, step, averageWindow], () => {
 watch(versionAnnotations, annotations => chart.setAnnotations(annotations), { immediate: true })
 
 let splitMenuId = -1
-let annotationMenuId = -1
 
 function selectSplit(value: VehicleHistorySplit | null) {
   split.value = value
@@ -187,28 +186,7 @@ function openSplitMenu(event: MouseEvent) {
   splitMenuId = id
 }
 
-function openAnnotationMenu(event: MouseEvent) {
-  if (isContextMenuOpen(annotationMenuId)) {
-    closeContextMenu(annotationMenuId)
-    return
-  }
-
-  const target = event.currentTarget as HTMLElement
-  const { id } = simpleContextMenu({
-    position: target.getBoundingClientRect(),
-    alignX: 'right',
-    alignY: 'bottom',
-    closeOnScroll: true,
-    closeOnAction: false,
-  }, annotationOptions.menu)
-
-  annotationMenuId = id
-}
-
-onBeforeUnmount(() => {
-  closeContextMenu(splitMenuId)
-  closeContextMenu(annotationMenuId)
-})
+onBeforeUnmount(() => closeContextMenu(splitMenuId))
 </script>
 
 <style lang="scss" scoped>

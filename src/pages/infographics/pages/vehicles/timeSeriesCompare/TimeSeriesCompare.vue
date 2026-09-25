@@ -18,7 +18,7 @@
       </PopoverAutoClose>
 
       <HistoryControls v-model:step="step" v-model:average-window="averageWindow" class="steps">
-        <HistoryMenuTrigger @click="openAnnotationMenu" />
+        <HistoryAnnotationSettings :settings="annotationOptions" />
       </HistoryControls>
     </div>
 
@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, markRaw, onBeforeUnmount, reactive, ref, useTemplateRef, watch } from 'vue'
+import { computed, markRaw, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useNow } from '@vueuse/core'
 import { isErrorStatus, loading, success, type Status } from '@/db'
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
@@ -77,8 +77,6 @@ import { useLegend } from '@/shared/ui/chart/useLegend'
 import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
-import { closeContextMenu, isContextMenuOpen } from '@/shared/uiKit/contextMenu/createContextMenu'
-import { simpleContextMenu } from '@/shared/uiKit/contextMenu/simpleContextMenu'
 import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import VehicleSlotOptions from '../VehicleSlotOptions.vue'
 import type { VehicleFilters } from '../filters/types'
@@ -87,8 +85,8 @@ import { VehicleHistoryChart } from '../timeSeries/VehicleHistoryChart'
 import type { VehicleHistoryPeriod, VehicleThresholds } from '../shared/types'
 import type { HistoryAverageWindow, HistoryStep } from '../timeSeries/historyStep'
 import HistoryControls from '../timeSeries/HistoryControls.vue'
-import HistoryMenuTrigger from '../timeSeries/HistoryMenuTrigger.vue'
-import { useHistoryAnnotationMenu } from '../timeSeries/useHistoryAnnotationMenu'
+import HistoryAnnotationSettings from '../timeSeries/HistoryAnnotationSettings.vue'
+import { useHistoryAnnotationSettings } from '../timeSeries/useHistoryAnnotationSettings'
 import { useGameVersionAnnotations } from '../timeSeries/gameVersionAnnotations'
 import { applyHistoryThresholds, hasHistoryValues } from '../timeSeries/historyValues'
 import { snapshotComparisonFilters, type ComparisonSource } from './types'
@@ -113,7 +111,7 @@ const metricTrigger = useTemplateRef<HTMLButtonElement>('metricTrigger')
 
 const step = ref<HistoryStep>('day')
 const averageWindow = ref<HistoryAverageWindow>(null)
-const annotationOptions = useHistoryAnnotationMenu()
+const annotationOptions = useHistoryAnnotationSettings()
 const { annotations: versionAnnotations, versionForPeriod } = useGameVersionAnnotations(
   annotationOptions.versions, computed(() => props.filters.regions), { includeTooltipVersion: true })
 
@@ -180,27 +178,6 @@ function selectMetric(value: Slot) {
   metricSelectorOpen.value = false
 }
 
-let annotationMenuId = -1
-
-function openAnnotationMenu(event: MouseEvent) {
-  if (isContextMenuOpen(annotationMenuId)) {
-    closeContextMenu(annotationMenuId)
-    return
-  }
-
-  const target = event.currentTarget as HTMLElement
-  const { id } = simpleContextMenu({
-    position: target.getBoundingClientRect(),
-    alignX: 'right',
-    alignY: 'bottom',
-    closeOnScroll: true,
-    closeOnAction: false,
-  }, annotationOptions.menu)
-
-  annotationMenuId = id
-}
-
-onBeforeUnmount(() => closeContextMenu(annotationMenuId))
 </script>
 
 <style scoped lang="scss">

@@ -3,7 +3,7 @@ import { LONG_CACHE_SETTINGS, queryComputed } from '@/db'
 import type { VehicleRegion } from '../filters/types'
 import { DAY } from './timeLabels'
 import { historyDayStart } from './historyStep'
-import type { VersionAnnotationVisibility } from './useHistoryAnnotationMenu'
+import type { VersionAnnotationVisibility } from './useHistoryAnnotationSettings'
 
 export type HistoryAnnotation = {
   timestamp: number
