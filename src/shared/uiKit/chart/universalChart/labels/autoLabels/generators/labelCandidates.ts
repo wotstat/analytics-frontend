@@ -1,6 +1,6 @@
-import type { LabelLevelOptions, LabelContext, LabelOptions } from '../AutoLabels'
+import type { LabelLevel, LabelContext, LabelOptions, Strategy } from '../AutoLabels'
 
-type CandidateOptions = Omit<LabelOptions, 'labelForValue' | 'keyForValue'>
+type CandidateOptions = Omit<LabelOptions, 'labelForValue' | 'keyForValue'> & { strategy?: Strategy }
 
 type StepOverride = CandidateOptions & {
   step: number | readonly number[]
@@ -31,9 +31,9 @@ type ArrayCandidateOverride = CandidateOptions & {
 
 export type ArrayLabelCandidatesOptions = CandidateOptions & {
   values:
-    | readonly number[]
-    | readonly (readonly number[])[]
-    | readonly ArrayCandidateOverride[]
+  | readonly number[]
+  | readonly (readonly number[])[]
+  | readonly ArrayCandidateOverride[]
   step?: never
   offset?: never
   labelForValue?: (value: number, context: ArrayLabelContext) => string
@@ -87,12 +87,12 @@ function normalizeArrayCandidates(options: ArrayLabelCandidatesOptions): ArrayCa
   return [...values]
 }
 
-function steppedCandidates(options: SteppedLabelCandidatesOptions): LabelLevelOptions[] {
+function steppedCandidates(options: SteppedLabelCandidatesOptions) {
   const { step: _, offset, labelForValue, keyForValue, ...candidateOptions } = options
   const steps = normalizeSteps(options)
   if (steps.length === 0) return []
 
-  const explicit: LabelLevelOptions[] = steps.map(item => ({
+  const explicit = steps.map(item => ({
     ...candidateOptions,
     source: { step: item.step, offset: item.offset ?? offset },
     labelForValue: item.labelForValue ?? labelForValue,
@@ -104,7 +104,7 @@ function steppedCandidates(options: SteppedLabelCandidatesOptions): LabelLevelOp
     onlyFitted: item.onlyFitted ?? candidateOptions.onlyFitted,
     ticks: item.ticks ?? candidateOptions.ticks,
     classes: item.classes ?? candidateOptions.classes,
-  }))
+  } satisfies LabelLevel))
 
   const lastStep = steps[steps.length - 1]
   const lastCandidate = explicit[explicit.length - 1]
@@ -121,7 +121,7 @@ function steppedCandidates(options: SteppedLabelCandidatesOptions): LabelLevelOp
   ]
 }
 
-function arrayCandidates(options: ArrayLabelCandidatesOptions): LabelLevelOptions[] {
+function arrayCandidates(options: ArrayLabelCandidatesOptions) {
   const { values: _, labelForValue, keyForValue, ...candidateOptions } = options
 
   return normalizeArrayCandidates(options).map(item => {
@@ -155,12 +155,12 @@ function arrayCandidates(options: ArrayLabelCandidatesOptions): LabelLevelOption
       onlyFitted: item.onlyFitted ?? candidateOptions.onlyFitted,
       ticks: item.ticks ?? candidateOptions.ticks,
       classes: item.classes ?? candidateOptions.classes,
-    }
+    } satisfies LabelLevel
   })
 }
 
-export function labelCandidates(options: SteppedLabelCandidatesOptions): LabelLevelOptions[]
-export function labelCandidates(options: ArrayLabelCandidatesOptions): LabelLevelOptions[]
-export function labelCandidates(options: LabelCandidatesOptions): LabelLevelOptions[] {
+export function labelCandidates(options: SteppedLabelCandidatesOptions): ReturnType<typeof steppedCandidates>
+export function labelCandidates(options: ArrayLabelCandidatesOptions): ReturnType<typeof arrayCandidates>
+export function labelCandidates(options: LabelCandidatesOptions) {
   return isArrayOptions(options) ? arrayCandidates(options) : steppedCandidates(options)
 }

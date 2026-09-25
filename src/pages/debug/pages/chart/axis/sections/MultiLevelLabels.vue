@@ -122,7 +122,7 @@
 import { computed, markRaw, ref, watchEffect } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import type {
-  LabelLevelOptions,
+  LabelLevel,
   Options as LabelsOptions,
   Strategy,
 } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
@@ -158,7 +158,7 @@ const offsetPoints = makePoints(OFFSET_START, OFFSET_END, HOUR)
 
 const goodSlotSize = computed<SlotSize>(() => slotSize.value === '72' ? 72 : slotSize.value)
 
-const monthLevel: LabelLevelOptions = {
+const monthLevel: LabelLevel = {
   source: utcMonthGenerator,
   labelForValue: value => MONTH_NAMES[new Date(value * 1000).getUTCMonth()],
   keyForValue: value => `${value}`,
@@ -167,7 +167,7 @@ const monthLevel: LabelLevelOptions = {
   ticks: { source: 'labels', classes: 'month-ticks' },
 }
 
-const dayLevel: LabelLevelOptions = {
+const dayLevel: LabelLevel = {
   source: { step: DAY },
   labelForValue: value => `${new Date(value * 1000).getUTCDate()} день`,
   keyForValue: value => `${value}`,
@@ -193,7 +193,7 @@ const goodXLabels = computed<LabelsOptions>(() => ({
 
 const offsetXLabels = computed<LabelsOptions>(() => {
   const offset = dayOffsetHours.value * HOUR
-  const offsetDayLevel: LabelLevelOptions = {
+  const offsetDayLevel: LabelLevel = {
     source: { step: DAY, offset },
     labelForValue: value => `день ${String(new Date(value * 1000).getUTCDate()).padStart(2, '0')}`,
     keyForValue: value => `${value}`,
@@ -275,7 +275,7 @@ const offsetStats = computed(() => {
   }
 })
 
-function hourCandidate(step: number): LabelLevelOptions[] {
+function hourCandidate(step: number): LabelLevel[] {
   return [
     {
       source: { step: step * HOUR },

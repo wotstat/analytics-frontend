@@ -1,7 +1,7 @@
 import type { ValueGenerator } from './generators/valueSource'
 
 type Extendable = { middle: number, size: number }
-export function extend<T extends Extendable>(intervals: T[], padding: number) {
+export function extend<T extends Extendable>(intervals: T[], padding: number | ((previous: T, next: T) => number)) {
 
   const result: (T & { start: number, end: number })[] = []
 
@@ -9,9 +9,11 @@ export function extend<T extends Extendable>(intervals: T[], padding: number) {
   for (let i = 0; i < intervals.length; i++) {
     const nextStart = i < intervals.length - 1 ? intervals[i + 1].middle - intervals[i + 1].size / 2 : Infinity
     const interval = intervals[i]
+    const paddingBefore = typeof padding === 'number' ? padding : i > 0 ? padding(intervals[i - 1], interval) : 0
+    const paddingAfter = typeof padding === 'number' ? padding : i < intervals.length - 1 ? padding(interval, intervals[i + 1]) : 0
 
-    const start = Math.max(lastEnd + padding, interval.middle - interval.size)
-    const end = Math.min(nextStart - padding, interval.middle + interval.size)
+    const start = Math.max(lastEnd + paddingBefore, interval.middle - interval.size)
+    const end = Math.min(nextStart - paddingAfter, interval.middle + interval.size)
     result.push({ ...interval, start, end })
     lastEnd = interval.middle + interval.size / 2
   }

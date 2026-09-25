@@ -1,4 +1,4 @@
-import type { Options, TickSource } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
+import type { Options } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
 import type { HistoryAnnotation } from './gameVersionAnnotations'
 
 const kindPriority = { version: 3, patch: 2, micropatch: 1 }
@@ -14,16 +14,15 @@ export function annotationLabelOptions(annotations: readonly HistoryAnnotation[]
   }
 
   const values = [...byTimestamp.keys()].sort((a, b) => a - b)
-  const ticks: TickSource[] = (['version', 'patch', 'micropatch'] as const).map(kind => ({
-    source: { values: values.filter(value => byTimestamp.get(value)?.kind === kind) },
-    classes: kind,
-  }))
+  const priorities = (['version', 'patch', 'micropatch'] as const).map(kind => {
+    const source = { values: values.filter(value => byTimestamp.get(value)?.kind === kind) }
+    return { source, classes: kind, ticks: { source, classes: kind } }
+  })
 
   return {
-    values: values.length ? [{ source: { values }, ticks }] : [],
+    values: values.length ? [{ priorities, maxLabelSize: 240 }] : [],
     labelForValue: value => byTimestamp.get(value)?.label ?? '',
     keyForValue: value => `${value}`,
-    classesForValue: value => byTimestamp.get(value)?.kind ?? '',
     strategy: 'classic-flow',
     onlyFitted: false,
     padding: 8,

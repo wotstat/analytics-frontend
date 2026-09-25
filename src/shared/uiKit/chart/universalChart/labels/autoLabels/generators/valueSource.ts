@@ -17,7 +17,7 @@ export type ArrayValueSource = {
 
 export type ValueSource = ValueGenerator | SteppedValueSource | ArrayValueSource
 
-export function resolveValueSource(source: ValueSource): ValueGenerator {
+export function resolveValueSource(source: ValueSource, maxValues = 1000): ValueGenerator {
   if (typeof source === 'function') return source
 
   if ('values' in source && source.values !== undefined) {
@@ -41,7 +41,7 @@ export function resolveValueSource(source: ValueSource): ValueGenerator {
   return (startFrom: number) => {
     const generate = function* (step: number, offset: number) {
       let current = Math.ceil((startFrom - offset) / step) * step + offset
-      for (let index = 0; index < 1e3; index++) {
+      for (let index = 0; index < maxValues; index++) {
         yield current
         current += step
       }

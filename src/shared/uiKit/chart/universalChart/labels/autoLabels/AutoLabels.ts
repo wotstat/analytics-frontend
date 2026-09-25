@@ -1,8 +1,9 @@
 import { ChartSpace } from '../../utils/ChartSpace'
 import { Classes, joinClasses } from '../../utils/utils'
-import { Axis, BaseLabels, DEFAULT_LABEL_OFFSET, DEFAULT_LEVEL_GAP, LabelLevelData, LabelsFrame, LabelTickLevel, LabelsSide, SlotSize } from '../BaseLabels'
+import { Axis, BaseLabels, DEFAULT_LABEL_OFFSET, DEFAULT_LEVEL_GAP, LabelsFrame, LabelTickLevel, LabelsSide, SlotSize } from '../BaseLabels'
 import { calculateClassic, calculateInterval, cleanupOutside, extend, fit, intervalFit } from './utils'
 import { resolveValueSource, type ValueGenerator, type ValueSource } from './generators/valueSource'
+import { calculatePriorities } from './priorityLabels'
 
 export type { ValueGenerator, ValueSource } from './generators/valueSource'
 
@@ -38,31 +39,31 @@ export type LabelOptions = {
   labelForValue?: (value: number, context: LabelContext) => string
   keyForValue?: (value: number, label: string, context: LabelContext) => string
   classesForValue?: (value: number, context: LabelContext) => Classes
-  padding?: number | { clip: number, flow: number }
-  strategy?: Strategy
   from?: number
   to?: number
+  classes?: Classes
+  padding?: number | { clip: number, flow: number }
   onlyFitted?: boolean
   ticks?: TickSource | TickSource[]
-  classes?: Classes
 }
 
-export type LabelLevelOptions = LabelOptions & {
-  source: ValueSource
-}
+type SimpleLabelSource = ValueSource | (LabelOptions & { source: ValueSource })
+type PriorityLabelSource = LabelOptions & { priorities: readonly SimpleLabelSource[], maxLabelSize: number }
 
-export type LabelLevel = ValueSource | LabelLevelOptions
+export type LabelLevel =
+  | (SimpleLabelSource & { strategy?: Strategy })
+  | (PriorityLabelSource & { strategy?: 'classic' | 'classic-flow' })
 export type LabelCandidate = LabelLevel | readonly LabelLevel[]
 
 export const LABEL_OUTSIDE_SPACE_CLASS = 'label-outside-space'
 export const VALUE_OUTSIDE_BOUNDS_LABEL_CLASS = 'value-outside-bounds'
 
 export type Options = LabelOptions & {
+  strategy?: Strategy
   values: readonly LabelCandidate[]
   labelOffset?: number
   levelGap?: number
   slotSize?: SlotSize
-  classes?: Classes
 }
 
 const DEFAULT_LABEL_PADDING = 15
@@ -74,10 +75,6 @@ const LABELS_LEVEL_CLASS = 'label-ticks'
 
 function isLabelLevels(candidate: LabelCandidate): candidate is readonly LabelLevel[] {
   return Array.isArray(candidate)
-}
-
-function isLabelLevelOptions(level: LabelLevel): level is LabelLevelOptions {
-  return typeof level === 'object' && 'source' in level
 }
 
 function getClipPadding(padding: Options['padding']) {
@@ -151,7 +148,7 @@ export class AutoLabels extends BaseLabels {
     }, side)
   }
 
-  private resolveLevelsForStep(step: number): LabelLevelOptions[] | null {
+  private resolveLevelsForStep(step: number) {
     const current = this.options.values[step]
     if (!current) return null
 
@@ -159,14 +156,14 @@ export class AutoLabels extends BaseLabels {
     const levels = isLabelLevels(current) ? current : [current]
 
     return levels.map((level, index) => {
-      const overrides: LabelLevelOptions = isLabelLevelOptions(level) ? level : { source: level }
+      const overrides = typeof level === 'object' && ('source' in level || 'priorities' in level) ? level : { source: level }
       return {
-        source: overrides.source,
+        ...overrides,
         labelForValue: overrides.labelForValue ?? options.labelForValue,
         keyForValue: overrides.keyForValue ?? options.keyForValue,
         classesForValue: overrides.classesForValue ?? options.classesForValue,
         padding: overrides.padding ?? options.padding,
-        strategy: overrides.strategy ?? options.strategy,
+        strategy: level.strategy ?? options.strategy,
         from: overrides.from ?? options.from,
         to: overrides.to ?? options.to,
         onlyFitted: overrides.onlyFitted ?? options.onlyFitted,
@@ -184,6 +181,19 @@ export class AutoLabels extends BaseLabels {
   private static validateOptions(axis: Axis, options: Options) {
     const hasEmptyCandidate = options.values.some(candidate => isLabelLevels(candidate) && candidate.length === 0)
     if (hasEmptyCandidate) throw new Error('Label candidate must contain at least one level')
+
+    for (const candidate of options.values) {
+      for (const level of isLabelLevels(candidate) ? candidate : [candidate]) {
+        if (typeof level !== 'object' || !('priorities' in level)) continue
+        if (level.priorities.length === 0) throw new Error('Priority labels must contain at least one priority')
+        if (!Number.isFinite(level.maxLabelSize) || level.maxLabelSize <= 0) throw new Error('Priority labels require a positive finite maxLabelSize')
+        const strategy = level.strategy ?? options.strategy ?? DEFAULT_STRATEGY
+        if (strategy !== 'classic' && strategy !== 'classic-flow') throw new Error('Priority labels support only classic and classic-flow placement')
+        for (const priority of level.priorities) {
+          if ('strategy' in priority) throw new Error('Set strategy on the label level, not on a priority source')
+        }
+      }
+    }
 
     if (axis === 'horizontal') return
     const hasMultipleLevels = options.values.some(candidate => isLabelLevels(candidate) && candidate.length > 1)
@@ -245,7 +255,7 @@ export class AutoLabels extends BaseLabels {
 
       const force = i == options.values.length - 1
       const labelContext: LabelContext = { candidateIndex: i }
-      const calculateLevel = (current: LabelLevelOptions) => {
+      const calculateLevel = (current: typeof currentLevels[number]) => {
         const labelForValue = current.labelForValue ?? defaultLabelForValue
         const keyForValue = current.keyForValue ?? defaultKeyForValue
         const from = current.from ?? -Infinity
@@ -264,18 +274,7 @@ export class AutoLabels extends BaseLabels {
         }
 
         const onlyFitted = current.onlyFitted ?? false
-        const ctx = {
-          padding: clipPadding,
-          compute,
-          generator: resolveValueSource(current.source),
-          force,
-          bounds: spaceBounds,
-          limits: { start: from, end: to },
-          layoutLimits,
-          overflowLimits,
-        }
-
-        const prepareResult = <T extends { middle: number, size: number, label: string, key: string, value: number }>(
+        const prepareResult = <T extends { middle: number, size: number, label: string, key: string, value: number, classes?: Classes, onlyFitted?: boolean }>(
           fitted: T[],
           majorValues?: number[],
         ) => {
@@ -295,10 +294,10 @@ export class AutoLabels extends BaseLabels {
             if (!('start' in item) || !('end' in item) || typeof item.start !== 'number' || typeof item.end !== 'number') return false
             return item.end <= layoutLimits.start || item.start >= layoutLimits.end
           }
-          const visibleItems = onlyFitted ? fittedWithinLimits : fitted
+          const visibleItems = fitted.filter(item => !(item.onlyFitted ?? onlyFitted) || fittedItems.has(item))
           const labels = visibleItems.map(item => {
             const classes = joinClasses(
-              current.classesForValue?.(item.value, labelContext),
+              item.classes ?? current.classesForValue?.(item.value, labelContext),
               !fittedItems.has(item) && LABEL_OUTSIDE_SPACE_CLASS,
               isValueOutsideBounds(item) && VALUE_OUTSIDE_BOUNDS_LABEL_CLASS,
             )
@@ -306,11 +305,61 @@ export class AutoLabels extends BaseLabels {
           })
           return {
             level: { labels, classes: current.classes },
-            labelValues: majorValues ?? fitted.map(item => item.value),
-            options: current,
             strategy,
-            limits: { start: from, end: to },
+            tickGroups: [{
+              ticks: current.ticks,
+              labelValues: majorValues ?? fitted.map(item => item.value),
+              limits: { start: from, end: to },
+            }],
           }
+        }
+
+        if ('priorities' in current) {
+          const priorities = current.priorities.map(priority => {
+            const source = typeof priority === 'object' && 'source' in priority ? priority : { source: priority }
+            const format = source.labelForValue ?? labelForValue
+            const key = source.keyForValue ?? current.keyForValue ?? ((value: number) => value.toString())
+            const classes = source.classesForValue ?? current.classesForValue
+            return {
+              generator: resolveValueSource(source.source, Infinity),
+              limits: { start: source.from ?? from, end: source.to ?? to },
+              padding: {
+                clip: getClipPadding(source.padding) ?? clipPadding,
+                flow: getFlowPadding(source.padding) ?? flowPadding,
+              },
+              ticks: source.ticks ?? current.ticks,
+              compute: (value: number) => {
+                const label = format(value, labelContext)
+                return {
+                  p: translate(value), label, key: key(value, label, labelContext), size: getSize(label),
+                  classes: joinClasses(source.classes, classes?.(value, labelContext)),
+                  onlyFitted: source.onlyFitted ?? onlyFitted,
+                }
+              },
+            }
+          })
+          const res = calculatePriorities({
+            priorities,
+            maxLabelSize: current.maxLabelSize,
+            bounds: spaceBounds, layoutLimits, overflowLimits,
+          })
+          const fitted = strategy === 'classic-flow'
+            ? fit(extend(res, (a, b) => Math.max(a.padding.flow, b.padding.flow)), layoutLimits, overflowLimits)
+            : res
+          return {
+            ...prepareResult(fitted),
+            tickGroups: priorities.map((priority, priorityIndex) => ({
+              ticks: priority.ticks,
+              labelValues: fitted.filter(item => item.priorityIndex === priorityIndex).map(item => item.value),
+              limits: priority.limits,
+            })),
+          }
+        }
+
+        const ctx = {
+          padding: clipPadding, compute,
+          generator: resolveValueSource(current.source),
+          force, bounds: spaceBounds, limits: { start: from, end: to }, layoutLimits, overflowLimits,
         }
 
         if (strategy == 'classic-flow') {
@@ -361,15 +410,15 @@ export class AutoLabels extends BaseLabels {
       const calculated = everyWithResult(currentLevels, level => calculateLevel(level))
       if (!calculated) continue
 
-      const tickLevels = calculated.flatMap((level, levelIndex) =>
-        this.buildTickLevels(level.options.ticks, {
-          labelValues: [...level.labelValues].sort((a, b) => a - b),
+      const tickLevels = calculated.flatMap((level, levelIndex) => level.tickGroups.flatMap(group =>
+        this.buildTickLevels(group.ticks, {
+          labelValues: [...group.labelValues].sort((a, b) => a - b),
           labelsStart: this.getSuggestedStart(level.strategy, levelIndex),
           bounds: spaceBounds,
-          limits: level.limits,
+          limits: group.limits,
           toLayout,
         })
-      )
+      ))
 
       return {
         levels: calculated.map(level => level.level),

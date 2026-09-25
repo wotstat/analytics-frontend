@@ -1,4 +1,4 @@
-import type { LabelLevelOptions, Options, TickSource, ValueGenerator } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
+import type { LabelLevel, Options, TickSource, ValueGenerator } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
 import type { HistoryStep } from './historyStep'
 
 export const DAY = 24 * 60 * 60
@@ -44,21 +44,21 @@ export function timeLabels(step: HistoryStep): Options {
   const monthTicks: TickSource = { source: calendarMonths(1), minPixelSpacing: 10, classes: 'month-ticks' }
   const yearTicks: TickSource = { source: calendarMonths(12), minPixelSpacing: 16, classes: 'year-ticks' }
 
-  const year: LabelLevelOptions = {
+  const year: LabelLevel = {
     source: calendarMonths(12),
     labelForValue: value => `${new Date(value * 1000).getUTCFullYear()}`,
     classes: 'year-labels',
     ticks: { source: 'labels', classes: 'year-ticks' },
   }
 
-  const month: LabelLevelOptions = {
+  const month: LabelLevel = {
     source: calendarMonths(1),
     labelForValue: value => months[new Date(value * 1000).getUTCMonth()],
     classes: 'month-labels',
     ticks: { source: 'labels', classes: 'month-ticks' },
   }
 
-  const day: LabelLevelOptions = {
+  const day: LabelLevel = {
     source: { step: DAY },
     labelForValue: value => `${new Date(value * 1000).getUTCDate()}`,
     strategy: { type: 'interval', placement: 'start', fit: true, offset: 4 },
@@ -66,7 +66,7 @@ export function timeLabels(step: HistoryStep): Options {
     ticks: { source: 'labels', classes: 'day-ticks' },
   }
 
-  const week: LabelLevelOptions = {
+  const week: LabelLevel = {
     source: weekSource,
     labelForValue: value => `нед. ${isoWeekNumber(value)}`,
     strategy: { type: 'interval', placement: 'start', fit: true, offset: 4 },
@@ -78,22 +78,22 @@ export function timeLabels(step: HistoryStep): Options {
   if (step === 'day') smallerTicks.push(dayTicks)
   else if (step === 'week') smallerTicks.push(weekTicks)
 
-  const monthWithSubticks: LabelLevelOptions = {
+  const monthWithSubticks: LabelLevel = {
     ...month,
     ticks: [{ source: 'labels', classes: 'month-ticks' }, ...smallerTicks],
   }
 
-  const yearWithSubticks: LabelLevelOptions = {
+  const yearWithSubticks: LabelLevel = {
     ...year,
     ticks: [{ source: 'labels', classes: 'year-ticks' }, monthTicks, ...smallerTicks],
   }
 
-  const abbreviatedMonth: LabelLevelOptions = {
+  const abbreviatedMonth: LabelLevel = {
     ...monthWithSubticks,
     labelForValue: value => months[new Date(value * 1000).getUTCMonth()].slice(0, 3),
   }
 
-  const denseCandidates: LabelLevelOptions[][] = []
+  const denseCandidates: LabelLevel[][] = []
   if (step === 'month') {
     denseCandidates.push([month, year])
   } else {
@@ -106,7 +106,7 @@ export function timeLabels(step: HistoryStep): Options {
     ...year,
     source: calendarMonths(12 * yearStep),
     ticks: [{ source: 'labels', classes: 'year-ticks' }, yearTicks, monthTicks, ...smallerTicks],
-  } satisfies LabelLevelOptions])
+  } satisfies LabelLevel])
 
   return {
     values: [
