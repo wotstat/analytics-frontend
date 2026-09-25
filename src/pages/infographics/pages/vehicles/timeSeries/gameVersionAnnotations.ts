@@ -84,7 +84,6 @@ export function useGameVersionAnnotations(
 
     for (const row of versions.value.data) {
       if (!selected.has(row.region) || row.timestamp >= endExclusive) continue
-      if (!/^v\.\d+\.\d+\.\d+\.\d+\s+#\d+$/.test(row.gameVersionFull)) continue
 
       const previous = latest.get(row.region)
       if (!previous || row.timestamp >= previous.timestamp) latest.set(row.region, row)
