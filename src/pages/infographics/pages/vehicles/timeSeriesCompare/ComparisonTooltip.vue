@@ -1,14 +1,20 @@
 <template>
-  <div class="history-tooltip" :class="`columns-${columns.length}`">
+  <div class="history-tooltip" :class="[`columns-${columns.length}`, { horizontal: columns.length >= 2 }]">
     <div class="header">
       <b class="heading">{{ availableSlots[point.slot].label }}</b>
       <div class="metadata">
-        <span v-if="gameVersion" class="game-version">{{ gameVersion }}</span>
-        <span v-if="columns.length === 2 && gameVersion" class="separator" aria-hidden="true">·</span>
-        <span v-if="fixedWeekday" class="weekday">{{ formatHistoryWeekday(point.periodStart) }}</span>
-        <span v-if="fixedWeekday" class="separator" aria-hidden="true">·</span>
-        <span class="date">{{ fixedWeekday ? formatStatisticsDay(point.periodStart)
-          : formatHistoryPeriod(point.periodStart, point.periodEnd, point.step) }}</span>
+        <template v-if="columns.length >= 2">
+          <span v-if="gameVersion" class="game-version">{{ gameVersion }}</span>
+          <span v-if="gameVersion" class="separator" aria-hidden="true">·</span>
+          <span v-if="fixedWeekday" class="weekday">{{ formatHistoryWeekday(point.periodStart) }}</span>
+          <span v-if="fixedWeekday" class="separator" aria-hidden="true">·</span>
+          <span class="date">{{ fixedWeekday ? formatStatisticsDay(point.periodStart)
+            : formatHistoryPeriod(point.periodStart, point.periodEnd, point.step) }}</span>
+        </template>
+        <template v-else>
+          <span class="date">{{ formatHistoryPeriod(point.periodStart, point.periodEnd, point.step) }}</span>
+          <span v-if="gameVersion" class="game-version">{{ gameVersion }}</span>
+        </template>
       </div>
     </div>
     <div class="value-columns">
@@ -75,7 +81,7 @@ const columns = computed(() => {
   })
 })
 
-const fixedWeekday = computed(() => columns.value.length === 2 && point.value.step === 'day')
+const fixedWeekday = computed(() => columns.value.length >= 2 && point.value.step === 'day')
 </script>
 
 <style scoped lang="scss">
@@ -134,7 +140,7 @@ const fixedWeekday = computed(() => columns.value.length === 2 && point.value.st
     text-align: left;
   }
 
-  &.columns-2 {
+  &.horizontal {
     .header {
       display: flex;
       align-items: baseline;
