@@ -53,6 +53,10 @@
   }
 
   .interaction {
+    &.pan-active .interactive-zone {
+      cursor: grabbing;
+    }
+
     .history-hover-marker {
       fill: currentColor;
     }
