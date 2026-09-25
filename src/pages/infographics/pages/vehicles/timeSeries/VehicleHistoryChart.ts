@@ -104,6 +104,7 @@ export class VehicleHistoryChart extends UniversalChart {
 
   setAnnotations(annotations: readonly HistoryAnnotation[]) {
     this.labelsAnnotations.updateOptions(annotationLabelOptions(annotations))
+    this.svg.classList.toggle('with-annotations', annotations.length > 0)
   }
 
   setHistory(history: VehicleHistoryPeriod[], slot: Slot, today: string, step: HistoryStep, averageWindow: HistoryAverageWindow = null) {
