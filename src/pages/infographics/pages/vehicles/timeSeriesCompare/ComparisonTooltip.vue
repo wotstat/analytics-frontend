@@ -1,7 +1,16 @@
 <template>
   <div class="history-tooltip" :class="`columns-${columns.length}`">
-    <b class="heading">{{ availableSlots[point.slot].label }}</b>
-    <div class="date">{{ formatHistoryPeriod(point.periodStart, point.periodEnd, point.step) }}</div>
+    <div class="header">
+      <b class="heading">{{ availableSlots[point.slot].label }}</b>
+      <div class="metadata">
+        <span v-if="gameVersion" class="game-version">{{ gameVersion }}</span>
+        <span v-if="columns.length === 2 && gameVersion" class="separator" aria-hidden="true">·</span>
+        <span v-if="fixedWeekday" class="weekday">{{ formatHistoryWeekday(point.periodStart) }}</span>
+        <span v-if="fixedWeekday" class="separator" aria-hidden="true">·</span>
+        <span class="date">{{ fixedWeekday ? formatStatisticsDay(point.periodStart)
+          : formatHistoryPeriod(point.periodStart, point.periodEnd, point.step) }}</span>
+      </div>
+    </div>
     <div class="value-columns">
       <div v-for="column, index in columns" :key="index" class="value-column">
         <div v-for="row in column" :key="row.source.tag" class="value-row" :class="{ missing: !row.point }">
@@ -22,12 +31,14 @@ import { computed } from 'vue'
 import type { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
 import { availableSlots } from '../shared/vehicleMetrics'
 import { formatSlotValue } from '../shared/formatMetricValue'
-import { formatHistoryPeriod } from '../timeSeries/formatHistoryPeriod'
+import { formatStatisticsDay } from '../shared/formatStatisticsDay'
+import { formatHistoryPeriod, formatHistoryWeekday } from '../timeSeries/formatHistoryPeriod'
 import type { VehicleHistoryHit } from '../timeSeries/VehicleHistoryChart'
 
 const props = defineProps<{
   ctx: TooltipCtx<VehicleHistoryHit>
   sources: readonly { tag: string, name: string, color: string }[]
+  gameVersion?: string | null
 }>()
 
 const MAX_ROWS_PER_COLUMN = 10
@@ -63,6 +74,8 @@ const columns = computed(() => {
     return column
   })
 })
+
+const fixedWeekday = computed(() => columns.value.length === 2 && point.value.step === 'day')
 </script>
 
 <style scoped lang="scss">
@@ -95,10 +108,53 @@ const columns = computed(() => {
     text-align: left;
   }
 
+  .metadata span {
+    display: block;
+  }
+
   .date {
     color: rgba(255, 255, 255, 0.5);
-    margin-bottom: 6px;
     text-align: left;
+  }
+
+  .weekday {
+    flex: none;
+    width: 2ch;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+  }
+
+  .separator {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .game-version {
+    color: rgba(255, 255, 255, 0.5);
+    overflow-wrap: anywhere;
+    text-align: left;
+  }
+
+  &.columns-2 {
+    .header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .metadata {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      column-gap: 6px;
+      min-width: 0;
+      margin-left: auto;
+      text-align: right;
+
+      .date,
+      .game-version {
+        text-align: right;
+      }
+    }
   }
 
   &.columns-2 .value-columns {
@@ -113,6 +169,7 @@ const columns = computed(() => {
     display: grid;
     grid-template-columns: repeat(1, minmax(0, 1fr));
     column-gap: 20px;
+    margin-top: 6px;
 
     .value-column {
       min-width: 0;

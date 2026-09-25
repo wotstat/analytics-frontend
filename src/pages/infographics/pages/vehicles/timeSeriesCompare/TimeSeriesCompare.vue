@@ -57,9 +57,9 @@
     </div>
 
     <FloatingTooltip :ctx="chart.tooltipCtx.value" anchor="pivot-x" :placement="['top-float', 'bottom-float']"
-      :offset="12">
+      :offset="{ top: 28, bottom: versionAnnotations.length ? 40 : 12 }">
       <template #default="{ ctx }">
-        <ComparisonTooltip :ctx :sources="legend.enabled.value" />
+        <ComparisonTooltip :ctx :sources="legend.enabled.value" :game-version="versionForPeriod(ctx.hit.datum.periodEnd)" />
       </template>
     </FloatingTooltip>
   </section>
@@ -114,7 +114,8 @@ const metricTrigger = useTemplateRef<HTMLButtonElement>('metricTrigger')
 const step = ref<HistoryStep>('day')
 const averageWindow = ref<HistoryAverageWindow>(null)
 const annotationOptions = useHistoryAnnotationMenu()
-const versionAnnotations = useGameVersionAnnotations(annotationOptions.versions, computed(() => props.filters.regions))
+const { annotations: versionAnnotations, versionForPeriod } = useGameVersionAnnotations(
+  annotationOptions.versions, computed(() => props.filters.regions), { includeTooltipVersion: true })
 
 const now = useNow({ interval: 60_000 })
 const beforeDay = computed(() => now.value.toISOString().slice(0, 10))

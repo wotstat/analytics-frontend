@@ -40,7 +40,8 @@
     <Legend v-if="split !== null && splitSources.length" :legend toggleable highlightable class="legend" />
 
     <FloatingTooltip v-if="split !== null" :ctx="chart.tooltipCtx.value" anchor="pivot-x"
-      :placement="['top-float', 'bottom-float']" :offset="12">
+      :placement="['top-float', 'bottom-float']"
+      :offset="{ top: 28, bottom: versionAnnotations.length ? 40 : 12 }">
       <template #default="{ ctx }">
         <ComparisonTooltip :ctx :sources="legend.enabled.value" />
       </template>
@@ -92,7 +93,8 @@ const step = defineModel<HistoryStep>('step', { required: true })
 const averageWindow = defineModel<HistoryAverageWindow>('averageWindow', { required: true })
 const split = ref<VehicleHistorySplit | null>(null)
 const annotationOptions = useHistoryAnnotationMenu()
-const versionAnnotations = useGameVersionAnnotations(annotationOptions.versions, computed(() => props.filters.regions))
+const { annotations: versionAnnotations } = useGameVersionAnnotations(
+  annotationOptions.versions, computed(() => props.filters.regions))
 
 const now = useNow({ interval: 60_000 })
 
@@ -254,6 +256,7 @@ onBeforeUnmount(() => closeContextMenu(chartMenuId))
         line-height: 1;
         margin-top: 3px;
       }
+
     }
   }
 

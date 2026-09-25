@@ -4,6 +4,10 @@ import type { HistoryStep } from './historyStep'
 const monthFormatter = new Intl.DateTimeFormat('ru-RU', { month: 'long', timeZone: 'UTC' })
 const weekdayFormatter = new Intl.DateTimeFormat('ru-RU', { weekday: 'short', timeZone: 'UTC' })
 
+export function formatHistoryWeekday(day: string) {
+  return weekdayFormatter.format(new Date(`${day}T00:00:00Z`)).replace('.', '')
+}
+
 export function formatHistoryPeriod(start: string, end: string, step: HistoryStep) {
   if (step === 'month') {
     const date = new Date(`${start}T00:00:00Z`)
@@ -13,7 +17,7 @@ export function formatHistoryPeriod(start: string, end: string, step: HistorySte
 
   const from = formatStatisticsDay(start)
   if (step === 'day') {
-    const weekday = weekdayFormatter.format(new Date(`${start}T00:00:00Z`)).replace('.', '')
+    const weekday = formatHistoryWeekday(start)
     return `${from} · ${weekday}`
   }
 

@@ -2,6 +2,7 @@ import { computed, type ComputedRef } from 'vue'
 import { LONG_CACHE_SETTINGS, queryComputed } from '@/db'
 import type { VehicleRegion } from '../filters/types'
 import { DAY } from './timeLabels'
+import { historyDayStart } from './historyStep'
 import type { VersionAnnotationVisibility } from './useHistoryAnnotationMenu'
 
 export type HistoryAnnotation = {
@@ -28,13 +29,15 @@ const versionsQuery = `
 `
 
 export function useGameVersionAnnotations(
-  visibility: ComputedRef<VersionAnnotationVisibility>, regions: ComputedRef<readonly VehicleRegion[]>) {
+  visibility: ComputedRef<VersionAnnotationVisibility>, regions: ComputedRef<readonly VehicleRegion[]>,
+  { includeTooltipVersion = false }: { includeTooltipVersion?: boolean } = {}) {
   const versions = queryComputed<GameVersionRow>(() =>
-    Object.values(visibility.value).some(Boolean) ? versionsQuery : null,
+    includeTooltipVersion || Object.values(visibility.value).some(Boolean) ? versionsQuery : null,
     { settings: LONG_CACHE_SETTINGS })
+  const selectedRegions = computed(() => regions.value.length ? regions.value : allRegions)
 
-  return computed<HistoryAnnotation[]>(() => {
-    const selected = new Set(regions.value.length ? regions.value : allRegions)
+  const annotations = computed<HistoryAnnotation[]>(() => {
+    const selected = new Set(selectedRegions.value)
     const seenVersions = new Set<string>()
     const seenPatches = new Set<string>()
     const show = visibility.value
@@ -73,4 +76,31 @@ export function useGameVersionAnnotations(
 
     return annotations.sort((a, b) => a.timestamp - b.timestamp)
   })
+
+  function versionForPeriod(periodEnd: string): string | null {
+    const endExclusive = historyDayStart(periodEnd) + DAY
+    const selected = new Set(selectedRegions.value)
+    const latest = new Map<VehicleRegion, GameVersionRow>()
+
+    for (const row of versions.value.data) {
+      if (!selected.has(row.region) || row.timestamp >= endExclusive) continue
+      if (!/^v\.\d+\.\d+\.\d+\.\d+\s+#\d+$/.test(row.gameVersionFull)) continue
+
+      const previous = latest.get(row.region)
+      if (!previous || row.timestamp >= previous.timestamp) latest.set(row.region, row)
+    }
+
+    const labels = selectedRegions.value.flatMap(region => {
+      const row = latest.get(region)
+      if (!row) return []
+
+      const version = row.gameVersionFull.replace(/^v\./, '')
+      const label = version.endsWith('#0000') ? version.replace(/\.\d+\s+#0000$/, '') : version
+      return [selected.size > 1 ? `[${region}] ${label}` : label]
+    })
+
+    return labels.length ? labels.join(' · ') : null
+  }
+
+  return { annotations, versionForPeriod }
 }
