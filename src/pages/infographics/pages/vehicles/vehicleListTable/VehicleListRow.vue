@@ -38,8 +38,8 @@
     </div>
 
     <div v-if="expanded" class="chart-panel">
-      <VehicleTimeSeries v-model:step="historyStep" v-model:average-window="averageWindow" :selection="historySelection"
-        :name :slot="activeSlot" :filters :min-battles :min-players :skip-incomplete-days />
+      <VehicleTimeSeries v-model:slot="activeSlot" v-model:step="historyStep" v-model:average-window="averageWindow"
+        :selection="historySelection" :name :filters :min-battles :min-players :skip-incomplete-days />
     </div>
   </div>
 </template>

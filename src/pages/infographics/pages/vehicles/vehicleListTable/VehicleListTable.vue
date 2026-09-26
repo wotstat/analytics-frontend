@@ -215,10 +215,6 @@ watch(grouping, () => search.value = '')
 watch(maxSelectableSlots, limit => {
   if (width.value > 0 && selectedSlots.value.length > limit) selectedSlots.value = selectedSlots.value.slice(0, limit)
 }, { immediate: true })
-
-watch(visibleSlots, slots => {
-  if (!slots.includes(activeSlot.value)) activeSlot.value = slots[0] ?? 'battles'
-})
 </script>
 
 <style lang="scss" scoped>

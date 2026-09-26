@@ -2,10 +2,7 @@
   <section class="vehicle-time-series" :class="{ split: split !== null }">
     <HeaderTooltip :ctx="split === null ? chart.tooltipCtx.value : null" class="chart-toolbar">
       <template #left>
-        <div class="title">
-          <Icon name="chart-line" class="icon" :icon="availableSlots[props.slot].icon" />
-          <span>{{ availableSlots[slot].label }}</span>
-        </div>
+        <VehicleMetricSelector v-model="slot" />
       </template>
       <template #right>
         <HistoryControls v-model:step="step" v-model:average-window="averageWindow" compact class="step-selector">
@@ -65,7 +62,7 @@ import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/Univers
 import { closeContextMenu, isContextMenuOpen } from '@/shared/uiKit/contextMenu/createContextMenu'
 import { checkboxItem, separator, simpleContextMenu } from '@/shared/uiKit/contextMenu/simpleContextMenu'
 import type { VehicleFilters } from '../filters/types'
-import { availableSlots, type Slot } from '../shared/vehicleMetrics'
+import type { Slot } from '../shared/vehicleMetrics'
 import { formatSlotValue } from '../shared/formatMetricValue'
 import { formatHistoryPeriod } from './formatHistoryPeriod'
 import { vehicleHistoryQuery } from '../shared/vehicleStatisticsQuery'
@@ -81,20 +78,20 @@ import { useHistoryEventAnnotations } from './useHistoryEventAnnotations'
 import { applyHistoryFilters, hasHistoryValues } from './historyValues'
 import { historySplitName, historySplitOptions, orderHistorySplitKeys, type VehicleHistorySplit } from './historySplit'
 import { historySplitSeriesColor } from './seriesColors'
-import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
+import VehicleMetricSelector from '../VehicleMetricSelector.vue'
 import type { VehicleSelection } from '../shared/vehicleGrouping'
 import ComparisonTooltip from '../timeSeriesCompare/ComparisonTooltip.vue'
 
 const props = defineProps<{
   selection: VehicleSelection
   name: string
-  slot: Slot
   filters: VehicleFilters
   minBattles: number
   minPlayers: number
   skipIncompleteDays: boolean
 }>()
 
+const slot = defineModel<Slot>('slot', { required: true })
 const step = defineModel<HistoryStep>('step', { required: true })
 const averageWindow = defineModel<HistoryAverageWindow>('averageWindow', { required: true })
 const split = ref<VehicleHistorySplit | null>(null)
@@ -139,7 +136,7 @@ const series = computed<VehicleHistorySeries[]>(() => {
       tag: 'vehicle',
       name: '',
       color: 'var(--blue-thin-color)',
-      history: applyHistoryFilters(history.value.data, props.slot, props, step.value, props.skipIncompleteDays),
+      history: applyHistoryFilters(history.value.data, slot.value, props, step.value, props.skipIncompleteDays),
     }]
   }
 
@@ -147,16 +144,16 @@ const series = computed<VehicleHistorySeries[]>(() => {
     ...source,
     enabled: legend.isEnabled(source),
     history: applyHistoryFilters(history.value.data.filter(row => row.splitKey === source.tag),
-      props.slot, props, step.value, props.skipIncompleteDays),
+      slot.value, props, step.value, props.skipIncompleteDays),
   }))
 })
 
 const hasValues = computed(() => history.value.status === success &&
   series.value.some(source => source.enabled !== false &&
-    hasHistoryValues(source.history, props.slot)))
+    hasHistoryValues(source.history, slot.value)))
 
-watch([series, () => props.slot, beforeDay, step, averageWindow], () => {
-  chart.setHistories(series.value, props.slot, beforeDay.value, step.value, averageWindow.value)
+watch([series, slot, beforeDay, step, averageWindow], () => {
+  chart.setHistories(series.value, slot.value, beforeDay.value, step.value, averageWindow.value)
 }, { immediate: true })
 
 watch(annotations, value => chart.setAnnotations(value), { immediate: true })
@@ -221,22 +218,6 @@ onBeforeUnmount(() => closeContextMenu(splitMenuId))
 
     :deep(.right) {
       margin-left: auto;
-    }
-
-    .title {
-      display: flex;
-      align-items: center;
-      min-width: 0;
-      color: white;
-      margin-left: -7px;
-
-      span {
-        font-size: 16px;
-      }
-
-      .icon {
-        height: 32px;
-      }
     }
 
     .step-selector {

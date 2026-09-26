@@ -6,16 +6,7 @@
     <div class="toolbar">
       <h2>Сравнение <span v-if="sources.length">{{ sources.length }}</span></h2>
 
-      <button ref="metricTrigger" class="metric-trigger" @click="metricSelectorOpen = !metricSelectorOpen">
-        <Icon :icon="availableSlots[slot].icon" class="metric-icon" />
-        <span class="metric-label">{{ availableSlots[slot].label }}</span>
-        <ArrowDown class="metric-arrow" />
-      </button>
-
-      <PopoverAutoClose v-model="metricSelectorOpen" :target="metricTrigger"
-        :placement="['bottom-start', 'bottom-float']" :viewport-offset="popoverViewportOffset" :arrow-size="0">
-        <VehicleSlotOptions title="Выбор метрики" :selected="[slot]" @select="selectMetric" />
-      </PopoverAutoClose>
+      <VehicleMetricSelector v-model="slot" class="metric-selector" />
 
       <HistoryControls v-model:step="step" v-model:average-window="averageWindow" class="steps">
         <HistoryAnnotationSettings :settings="annotationOptions" :regions="filters.regions" />
@@ -66,21 +57,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, markRaw, reactive, ref, useTemplateRef, watch } from 'vue'
+import { computed, markRaw, reactive, ref, watch } from 'vue'
 import { useNow } from '@vueuse/core'
 import { isErrorStatus, loading, success, type Status } from '@/db'
-import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
-import ArrowDown from '@/assets/icons/arrow-down.svg'
 import ResetIcon from '@/assets/icons/reset.svg'
 import Legend from '@/shared/ui/chart/Legend.vue'
 import { useLegend } from '@/shared/ui/chart/useLegend'
 import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
-import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
-import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
-import VehicleSlotOptions from '../VehicleSlotOptions.vue'
+import VehicleMetricSelector from '../VehicleMetricSelector.vue'
 import type { VehicleFilters } from '../filters/types'
-import { availableSlots, type Slot } from '../shared/vehicleMetrics'
+import type { Slot } from '../shared/vehicleMetrics'
 import { VehicleHistoryChart } from '../timeSeries/VehicleHistoryChart'
 import type { VehicleHistoryPeriod, VehicleThresholds } from '../shared/types'
 import type { HistoryAverageWindow, HistoryStep } from '../timeSeries/historyStep'
@@ -108,8 +95,6 @@ const emit = defineEmits<{
 }>()
 
 const slot = ref<Slot>('damage')
-const metricSelectorOpen = ref(false)
-const metricTrigger = useTemplateRef<HTMLButtonElement>('metricTrigger')
 
 const step = ref<HistoryStep>('day')
 const averageWindow = ref<HistoryAverageWindow>(null)
@@ -178,12 +163,6 @@ watch(() => props.sources.map(source => source.tag), tags => {
     if (!selected.has(tag)) delete retries[tag]
   }
 })
-
-function selectMetric(value: Slot) {
-  slot.value = value
-  metricSelectorOpen.value = false
-}
-
 </script>
 
 <style scoped lang="scss">
@@ -220,46 +199,8 @@ function selectMetric(value: Slot) {
       }
     }
 
-    .metric-trigger {
-      display: inline-flex;
-      align-items: center;
-      min-width: 0;
-      max-width: 100%;
-      height: 30px;
-      padding: 0 8px 0 1px;
-      border-radius: 5px;
-      background: rgba(255, 255, 255, 0.05);
-      color: inherit;
-      font-size: 14px;
+    :deep(.metric-selector) {
       margin-left: 10px;
-
-      @media (hover: hover) and (pointer: fine) {
-        &:hover {
-          background: rgba(255, 255, 255, 0.1);
-        }
-      }
-
-      .metric-icon {
-        flex: none;
-        width: 30px;
-        height: 30px;
-      }
-
-      .metric-label {
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .metric-arrow {
-        flex: none;
-        width: 10px;
-        height: 10px;
-        margin-left: 5px;
-        fill: currentColor;
-        opacity: 0.6;
-      }
     }
 
     .steps {

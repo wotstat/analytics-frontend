@@ -3,7 +3,8 @@
     Столбцы · {{ selected.length }}/{{ maxSlots }}
   </button>
 
-  <PopoverAutoClose v-model="open" :target="trigger" :placement="['bottom-end', 'bottom-float']"
+  <PopoverAutoClose v-model="open" :target="trigger"
+    :placement="['bottom-end', 'bottom-float', 'top-end', 'left-float', 'top-end']"
     :viewport-offset="popoverViewportOffset" :arrow-size="0">
     <VehicleSlotOptions title="Выбор столбцов" :selected :max-slots="maxSlots" @select="toggle" />
   </PopoverAutoClose>
