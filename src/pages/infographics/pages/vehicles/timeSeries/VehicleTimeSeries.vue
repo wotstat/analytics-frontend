@@ -9,8 +9,8 @@
       </template>
       <template #right>
         <HistoryControls v-model:step="step" v-model:average-window="averageWindow" compact class="step-selector">
-          <button class="split-menu-trigger" :class="{ active: split !== null }" type="button"
-            title="Разбиение графика" @click="openSplitMenu">
+          <button class="split-menu-trigger" :class="{ active: split !== null }" type="button" title="Разбиение графика"
+            @click="openSplitMenu">
             <LineChartIcon />
           </button>
           <HistoryAnnotationSettings :settings="annotationOptions" :regions="filters.regions" />
@@ -210,6 +210,7 @@ onBeforeUnmount(() => closeContextMenu(splitMenuId))
   .chart-toolbar {
     padding-bottom: 3px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 2px;
 
     :deep(.items) {
       align-items: center;

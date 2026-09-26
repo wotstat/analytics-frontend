@@ -39,7 +39,7 @@ export function annotationLabelOptions(annotations: readonly HistoryAnnotation[]
     strategy: 'classic-flow',
     onlyFitted: false,
     padding: 8,
-    labelOffset: 13,
-    slotSize: hasLabels ? 28 : 0,
+    labelOffset: 6,
+    slotSize: hasLabels ? 21 : 0,
   }
 }

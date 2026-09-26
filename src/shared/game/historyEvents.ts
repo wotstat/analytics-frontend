@@ -21,6 +21,13 @@ export const historyEvents: readonly HistoryEvent[] = [
     regions: ['RU'],
   },
   {
+    id: 'stun-removal',
+    label: 'Отмена стана',
+    color: '#a6d9d4',
+    start: '2025-10-15',
+    regions: ['RU'],
+  },
+  {
     id: 'bops-removal',
     label: 'Вывод БОПС',
     color: '#d1b3e6',

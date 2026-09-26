@@ -1,5 +1,5 @@
 <template>
-  <button ref="trigger" class="history-menu-trigger" type="button" title="Настройки аннотаций"
+  <button ref="trigger" class="history-menu-trigger" :class="{ active: hasAnnotations }" type="button" title="Настройки аннотаций"
     aria-label="Настройки аннотаций" :aria-expanded="open" @click="open = !open">
     <span class="dots"></span>
   </button>
@@ -58,6 +58,9 @@ const props = defineProps<{
 }>()
 
 const visibleEvents = computed(() => historyEvents.filter(event => getHistoryEventRegions(event, props.regions)?.length !== 0))
+const hasAnnotations = computed(() => Object.values(props.settings.versions.value).some(Boolean) ||
+  props.settings.showWotstatOutages.value ||
+  visibleEvents.value.some(event => props.settings.enabledEvents.value.includes(event.id)))
 const open = ref(false)
 const trigger = useTemplateRef<HTMLButtonElement>('trigger')
 
@@ -82,6 +85,11 @@ const versionOptions = [
   &:hover {
     color: rgba(255, 255, 255, 0.8);
     background: rgba(255, 255, 255, 0.08);
+  }
+
+  &.active {
+    color: var(--blue-thin-color);
+    background: rgba(10, 132, 255, 0.12);
   }
 
   .dots {
