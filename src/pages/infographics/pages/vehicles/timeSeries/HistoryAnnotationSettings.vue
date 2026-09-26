@@ -15,7 +15,7 @@
         <h3>Версии игры</h3>
         <div class="version-options">
           <button v-for="option in versionOptions" :key="option.key" type="button" class="annotation-option"
-            :style="{ '--annotation-color': option.color }"
+            :style="{ '--annotation-color': menuAccentColor(option.color) }"
             :class="{ selected: settings[option.key].value }" :aria-pressed="settings[option.key].value"
             @click="settings[option.key].value = !settings[option.key].value">
             {{ option.label }}
@@ -26,13 +26,13 @@
       <div class="options">
         <h3>События</h3>
         <div class="event-options">
-          <button type="button" class="annotation-option" :style="{ '--annotation-color': outageAnnotationColor }"
+          <button type="button" class="annotation-option" :style="{ '--annotation-color': menuAccentColor(outageAnnotationColor) }"
             :class="{ selected: settings.showWotstatOutages.value }" :aria-pressed="settings.showWotstatOutages.value"
             @click="settings.showWotstatOutages.value = !settings.showWotstatOutages.value">
             Недоступность wotstat
           </button>
           <button v-for="event in visibleEvents" :key="event.id" type="button" class="annotation-option"
-            :style="{ '--annotation-color': event.color }"
+            :style="{ '--annotation-color': menuAccentColor(event.color) }"
             :class="{ selected: settings.enabledEvents.value.includes(event.id) }"
             :aria-pressed="settings.enabledEvents.value.includes(event.id)" @click="settings.toggleEvent(event.id)">
             {{ event.label }}
@@ -46,6 +46,7 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
+import { ColorHSVA } from '@/shared/uiKit/colorPicker/ColorHSVA'
 import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import type { useHistoryAnnotationSettings } from './useHistoryAnnotationSettings'
 import { getHistoryEventRegions, historyEvents } from '@/shared/game/historyEvents'
@@ -63,6 +64,15 @@ const hasAnnotations = computed(() => Object.values(props.settings.versions.valu
   visibleEvents.value.some(event => props.settings.enabledEvents.value.includes(event.id)))
 const open = ref(false)
 const trigger = useTemplateRef<HTMLButtonElement>('trigger')
+
+function menuAccentColor(color: string) {
+  const accent = new ColorHSVA(0, 0, 0)
+  accent.setHex(color)
+  accent.s = Math.min(0.75, accent.s * 1.4)
+  accent.v = Math.min(1, accent.v * 1.04)
+  accent.a = 1
+  return `#${accent.toHex()}`
+}
 
 const versionOptions = [
   { key: 'showVersions', label: 'Версии', color: versionAnnotationColors.version },
