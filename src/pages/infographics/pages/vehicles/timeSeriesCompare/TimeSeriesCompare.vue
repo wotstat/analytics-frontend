@@ -88,7 +88,7 @@ import HistoryControls from '../timeSeries/HistoryControls.vue'
 import HistoryAnnotationSettings from '../timeSeries/HistoryAnnotationSettings.vue'
 import { useHistoryAnnotationSettings } from '../timeSeries/useHistoryAnnotationSettings'
 import { useGameVersionAnnotations } from '../timeSeries/gameVersionAnnotations'
-import { applyHistoryThresholds, hasHistoryValues } from '../timeSeries/historyValues'
+import { applyHistoryFilters, hasHistoryValues } from '../timeSeries/historyValues'
 import { snapshotComparisonFilters, type ComparisonSource } from './types'
 import { comparisonName } from './comparisonName'
 import ComparisonHistory from './ComparisonHistory.vue'
@@ -97,6 +97,7 @@ import ComparisonTooltip from './ComparisonTooltip.vue'
 const props = defineProps<{
   filters: VehicleFilters
   sources: readonly ComparisonSource[]
+  skipIncompleteDays: boolean
 } & VehicleThresholds>()
 
 const emit = defineEmits<{
@@ -134,7 +135,8 @@ const chart = markRaw(new VehicleHistoryChart(legend.highlightSync))
 const series = computed(() => legendItems.value.map(source => ({
   ...source,
   enabled: legend.isEnabled(source),
-  history: applyHistoryThresholds(states.get(source.tag)?.data ?? [], slot.value, props),
+  history: applyHistoryFilters(states.get(source.tag)?.data ?? [], slot.value, props,
+    step.value, props.skipIncompleteDays),
 })))
 
 const hasValues = computed(() => series.value.some(source => source.enabled &&
@@ -160,6 +162,7 @@ watch([series, slot, beforeDay, step, averageWindow], () => {
 }, { immediate: true })
 
 watch(versionAnnotations, annotations => chart.setAnnotations(annotations), { immediate: true })
+watch(annotationOptions.showWotstatOutages, visible => chart.setOutagesVisible(visible), { immediate: true })
 
 watch(() => props.sources.map(source => source.tag), tags => {
   const selected = new Set(tags)

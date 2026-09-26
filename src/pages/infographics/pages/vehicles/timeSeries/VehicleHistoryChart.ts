@@ -12,6 +12,7 @@ import { InteractionController, type InteractionComponent } from '@/shared/uiKit
 import { AutoLabels, type Options as LabelsOptions } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
 import { labelCandidates } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/labelCandidates'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
+import { RectangleArea } from '@/shared/uiKit/chart/universalChart/plot/area/RectangleArea'
 import type { AutoLineInteraction, LinePointHit } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineInteractionSource'
 import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
@@ -26,6 +27,7 @@ import {
 import { ChartMask } from '@/shared/uiKit/chart/universalChart/defs/ChartMask'
 import type { HistoryAnnotation } from './gameVersionAnnotations'
 import { annotationLabelOptions } from './annotationLabelOptions'
+import { serverOutages } from '@/shared/wotstat/serverOutages'
 
 type HistoryPoint = {
   series: string
@@ -90,7 +92,21 @@ export class VehicleHistoryChart extends UniversalChart {
     this.interaction.addComponent(this.zoom)
     this.plot.clipBy(clip).maskBy(mask)
 
+    const outageAreas = new PlotGroup(['history-outage-areas']).clipBy(clip)
+    for (const { start, end } of serverOutages.intervals) {
+      const area = new RectangleArea('history-outage-area', {
+        layoutLimited: true,
+        padding: { left: -1, right: -1 },
+      })
+      area.setPoints(
+        { x: Date.parse(start) / 1000, y: -Infinity },
+        { x: Date.parse(end) / 1000, y: Infinity },
+      )
+      outageAreas.addPlot(area)
+    }
+
     this
+      .addPlot(outageAreas, 'outages')
       .addPlot(new TicksByLabels(this.labelsY), 'grid')
       .addPlot(new TicksByLabels(this.labelsX, { classes: 'time-grid' }), 'grid')
       .addPlot(this.plot, 'plot')
@@ -105,6 +121,10 @@ export class VehicleHistoryChart extends UniversalChart {
   setAnnotations(annotations: readonly HistoryAnnotation[]) {
     this.labelsAnnotations.updateOptions(annotationLabelOptions(annotations))
     this.svg.classList.toggle('with-annotations', annotations.length > 0)
+  }
+
+  setOutagesVisible(visible: boolean) {
+    this.svg.classList.toggle('with-outages', visible)
   }
 
   setHistory(history: VehicleHistoryPeriod[], slot: Slot, today: string, step: HistoryStep, averageWindow: HistoryAverageWindow = null) {

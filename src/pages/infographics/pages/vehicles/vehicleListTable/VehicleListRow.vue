@@ -39,7 +39,7 @@
 
     <div v-if="expanded" class="chart-panel">
       <VehicleTimeSeries v-model:step="historyStep" v-model:average-window="averageWindow" :selection="historySelection"
-        :name :slot="activeSlot" :filters :min-battles :min-players />
+        :name :slot="activeSlot" :filters :min-battles :min-players :skip-incomplete-days />
     </div>
   </div>
 </template>
@@ -72,6 +72,7 @@ const props = defineProps<{
   selection: VehicleSelection
   minBattles: number
   minPlayers: number
+  skipIncompleteDays: boolean
   compared: boolean
 }>()
 

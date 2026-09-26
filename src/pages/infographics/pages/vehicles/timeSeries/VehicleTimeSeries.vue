@@ -77,7 +77,7 @@ import HistoryAnnotationSettings from './HistoryAnnotationSettings.vue'
 import LineChartIcon from '../vehicleListTable/assets/line-chart.svg'
 import { useHistoryAnnotationSettings } from './useHistoryAnnotationSettings'
 import { useGameVersionAnnotations } from './gameVersionAnnotations'
-import { applyHistoryThresholds, hasHistoryValues } from './historyValues'
+import { applyHistoryFilters, hasHistoryValues } from './historyValues'
 import { historySplitName, historySplitOptions, orderHistorySplitKeys, type VehicleHistorySplit } from './historySplit'
 import { historySplitSeriesColor } from './seriesColors'
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
@@ -91,6 +91,7 @@ const props = defineProps<{
   filters: VehicleFilters
   minBattles: number
   minPlayers: number
+  skipIncompleteDays: boolean
 }>()
 
 const step = defineModel<HistoryStep>('step', { required: true })
@@ -131,13 +132,19 @@ const chart = markRaw(new VehicleHistoryChart(legend.highlightSync))
 
 const series = computed<VehicleHistorySeries[]>(() => {
   if (split.value === null) {
-    return [{ tag: 'vehicle', name: '', color: 'var(--blue-thin-color)', history: applyHistoryThresholds(history.value.data, props.slot, props) }]
+    return [{
+      tag: 'vehicle',
+      name: '',
+      color: 'var(--blue-thin-color)',
+      history: applyHistoryFilters(history.value.data, props.slot, props, step.value, props.skipIncompleteDays),
+    }]
   }
 
   return splitSources.value.map(source => ({
     ...source,
     enabled: legend.isEnabled(source),
-    history: applyHistoryThresholds(history.value.data.filter(row => row.splitKey === source.tag), props.slot, props),
+    history: applyHistoryFilters(history.value.data.filter(row => row.splitKey === source.tag),
+      props.slot, props, step.value, props.skipIncompleteDays),
   }))
 })
 
@@ -150,6 +157,7 @@ watch([series, () => props.slot, beforeDay, step, averageWindow], () => {
 }, { immediate: true })
 
 watch(versionAnnotations, annotations => chart.setAnnotations(annotations), { immediate: true })
+watch(annotationOptions.showWotstatOutages, visible => chart.setOutagesVisible(visible), { immediate: true })
 
 let splitMenuId = -1
 

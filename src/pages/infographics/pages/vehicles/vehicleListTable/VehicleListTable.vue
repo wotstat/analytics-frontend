@@ -62,6 +62,7 @@
         v-model:active-slot="activeSlot" v-model:history-step="historyStep" v-model:average-window="averageWindow"
         :slots="visibleSlots" :filters :compared="comparedKeys.includes(vehicle.rowKey)"
         :selection="effectiveSelection" :min-battles="localFilters.minBattles" :min-players="localFilters.minPlayers"
+        :skip-incomplete-days="localFilters.skipIncompleteDays"
         @compare="selection => $emit('compare', vehicle, selection)" />
 
       <button v-if="displayedVehicles.length < filteredVehicles.length" class="show-more text-button"

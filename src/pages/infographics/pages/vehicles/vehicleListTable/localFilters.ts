@@ -7,12 +7,14 @@ export type PlayerThreshold = 0 | 10 | 30 | 50 | 100 | 500
 export const DEFAULT_MIN_BATTLES: BattleThreshold = 50
 export const DEFAULT_MIN_PLAYERS: PlayerThreshold = 30
 export const DEFAULT_ONLY_ACTUAL = true
+export const DEFAULT_SKIP_INCOMPLETE_DAYS = true
 
 export type LocalVehicleFilters = {
   levels: number[]
   nations: Nation[]
   types: VehicleType[]
   onlyActual: boolean
+  skipIncompleteDays: boolean
   minBattles: BattleThreshold
   minPlayers: PlayerThreshold
 }
@@ -23,6 +25,7 @@ export function createLocalVehicleFilters(): LocalVehicleFilters {
     nations: [],
     types: [],
     onlyActual: DEFAULT_ONLY_ACTUAL,
+    skipIncompleteDays: DEFAULT_SKIP_INCOMPLETE_DAYS,
     minBattles: DEFAULT_MIN_BATTLES,
     minPlayers: DEFAULT_MIN_PLAYERS,
   }

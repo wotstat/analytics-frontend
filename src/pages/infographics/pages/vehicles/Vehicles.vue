@@ -1,7 +1,8 @@
 <template>
   <VehicleFilters v-model="filters" />
   <TimeSeriesCompare :sources="comparison.sources.value" :filters :min-battles="localFilters.minBattles"
-    :min-players="localFilters.minPlayers" @remove="comparison.remove" @color-change="comparison.setColor"
+    :min-players="localFilters.minPlayers" :skip-incomplete-days="localFilters.skipIncompleteDays"
+    @remove="comparison.remove" @color-change="comparison.setColor"
     @clear="comparison.clear" />
   <VehicleListTable v-model:grouping="grouping" v-model:local-filters="localFilters" v-model:period="period" :slots="defaultSlots"
     :vehicles="statistics.data" :status="statistics.status" :filters :compared-keys="comparison.comparedKeys.value"

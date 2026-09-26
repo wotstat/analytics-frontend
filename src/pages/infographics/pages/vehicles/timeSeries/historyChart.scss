@@ -1,4 +1,17 @@
 @mixin history-chart {
+  .history-outage-areas {
+    display: none;
+
+    .history-outage-area rect {
+      fill: rgba(235, 103, 89, 0.16);
+      pointer-events: none;
+    }
+  }
+
+  &.with-outages .history-outage-areas {
+    display: initial;
+  }
+
   .history-annotations {
     .label {
       fill: rgba(255, 255, 255, 0.5);
