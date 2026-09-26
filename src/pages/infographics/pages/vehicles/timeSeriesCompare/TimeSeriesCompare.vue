@@ -1,7 +1,8 @@
 <template>
   <section class="vehicle-comparison">
     <ComparisonHistory v-for="source in sources" :key="source.tag" :selection="source.selection" :filters="source.filters"
-      :before-day="beforeDay" :step :retry="retries[source.tag] ?? 0" @update="states.set(source.tag, $event)" />
+      :before-day="beforeDay" :step :retry="retries[source.tag] ?? 0" :queue="historyQueue"
+      @update="states.set(source.tag, $event)" />
 
     <div class="toolbar">
       <h2>Сравнение <span v-if="sources.length">{{ sources.length }}</span></h2>
@@ -81,6 +82,7 @@ import { snapshotComparisonFilters, type ComparisonSource } from './types'
 import { comparisonName } from './comparisonName'
 import ComparisonHistory from './ComparisonHistory.vue'
 import ComparisonTooltip from './ComparisonTooltip.vue'
+import { createComparisonHistoryQueue } from './comparisonHistoryQueue'
 
 const props = defineProps<{
   filters: VehicleFilters
@@ -109,6 +111,7 @@ const beforeDay = computed(() => now.value.toISOString().slice(0, 10))
 
 const states = reactive(new Map<string, { status: Status, data: VehicleHistoryPeriod[] }>())
 const retries = reactive<Record<string, number>>({})
+const historyQueue = createComparisonHistoryQueue()
 
 const currentFilters = computed(() => snapshotComparisonFilters(props.filters))
 const legendItems = computed(() => props.sources.map(source => ({

@@ -61,7 +61,7 @@ import type { VehicleStatistics } from '../shared/types'
 import type { VehicleFilters } from '../filters/types'
 import VehicleTimeSeries from '../timeSeries/VehicleTimeSeries.vue'
 import type { HistoryAverageWindow, HistoryStep } from '../timeSeries/historyStep'
-import type { VehicleSelection } from '../shared/vehicleGrouping'
+import { vehicleHistorySelection, type VehicleSelection } from '../shared/vehicleGrouping'
 import { vehicleName } from '../shared/vehicleName'
 
 const props = defineProps<{
@@ -80,16 +80,7 @@ defineEmits<{ compare: [selection: VehicleSelection] }>()
 
 const name = computed(() => vehicleName(props.vehicle))
 
-const historySelection = computed<VehicleSelection>(() => {
-  const { tankTag, tankLevel, tankType } = props.vehicle
-  if (tankTag !== null) return { tankTag, levels: [], types: [], nations: [] }
-
-  return {
-    levels: tankLevel === null ? props.selection.levels : [tankLevel],
-    types: tankType === null ? props.selection.types : [tankType],
-    nations: props.selection.nations,
-  }
-})
+const historySelection = computed(() => vehicleHistorySelection(props.vehicle, props.selection))
 
 const expanded = ref(false)
 const activeSlot = defineModel<Slot>('activeSlot', { required: true })

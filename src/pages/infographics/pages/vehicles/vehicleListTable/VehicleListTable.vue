@@ -16,7 +16,12 @@
     </div>
 
     <div class="head mt-font">
-      <span></span>
+      <button v-if="bulkComparisonTotal <= MAX_BULK_COMPARISON_LINES" class="compare-all" type="button"
+        :disabled="status !== success || !comparisonCandidates.length"
+        title="Добавить все строки в сравнение" aria-label="Добавить все строки в сравнение" @click="compareAll">
+        <PlusIcon />
+      </button>
+      <span v-else></span>
       <span></span>
 
       <SortableHeading v-if="showLevel" label="Уровень" v-bind="sorting.state('tankLevel')"
@@ -70,13 +75,39 @@
         Показать ещё {{ Math.min(PAGE_SIZE, filteredVehicles.length - displayLimit) }}
       </button>
     </div>
+
+    <Teleport to="body">
+      <ModalWindowContent v-if="pendingComparison" title="Слишком много линий" class="bulk-comparison-confirmation"
+        role="dialog" aria-modal="true" aria-label="Слишком много линий" aria-describedby="bulk-comparison-warning"
+        @close="pendingComparison = null">
+        <div id="bulk-comparison-warning" class="comparison-warning">
+          <p>
+            Вы пытаетесь добавить <b>{{ pendingComparison.candidates.length }}</b> {{ comparisonLineLabel }} в сравнение.
+          </p>
+          <ul>
+            <li>Линии перекроют друг друга — сравнивать их будет сложно.</li>
+            <li>График и страница могут тормозить.</li>
+          </ul>
+        </div>
+        <template #footer-content>
+          <div class="confirmation-actions">
+            <button type="button" class="confirmation-button" @click="pendingComparison = null">Отмена</button>
+            <button type="button" class="confirmation-button" @click="confirmComparison">
+              Всё равно добавить
+            </button>
+          </div>
+        </template>
+      </ModalWindowContent>
+    </Teleport>
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, useTemplateRef, watch } from 'vue'
 import { useElementSize } from '@vueuse/core'
-import { isErrorStatus, loading, type Status } from '@/db'
+import { isErrorStatus, loading, success, type Status } from '@/db'
+import ModalWindowContent from '@/shared/ui/modalWindow/ModalWindowContent.vue'
+import PlusIcon from './assets/plus-bold.svg'
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 import VehicleType from '@/shared/game/vehicles/type/VehicleType.vue'
 import { createVehicleNameFilter } from '@/shared/game/vehicles/vehicleSearch'
@@ -85,7 +116,7 @@ import Loader from '@/shared/ui/loaders/loader/Loader.vue'
 import { availableSlots, orderSlots, type Slot } from '../shared/vehicleMetrics'
 import type { VehicleStatistics } from '../shared/types'
 import { DEFAULT_MIN_BATTLES, DEFAULT_MIN_PLAYERS, DEFAULT_ONLY_ACTUAL, type LocalVehicleFilters } from './localFilters'
-import { vehicleGroupings, type VehicleGrouping, type VehicleSelection } from '../shared/vehicleGrouping'
+import { vehicleGroupings, vehicleHistorySelection, type VehicleGrouping, type VehicleSelection } from '../shared/vehicleGrouping'
 import { vehicleName } from '../shared/vehicleName'
 import VehicleColumnSelector from './VehicleColumnSelector.vue'
 import VehicleTableSettings from './VehicleTableSettings.vue'
@@ -96,6 +127,7 @@ import { useVehicleSorting } from './useVehicleSorting'
 import type { VehicleFilters } from '../filters/types'
 import type { HistoryAverageWindow, HistoryStep } from '../timeSeries/historyStep'
 import type { VehicleStatisticsPeriod } from '../shared/vehicleStatisticsPeriod'
+import type { ComparisonCandidate } from '../timeSeriesCompare/types'
 
 const props = defineProps<{
   slots: Slot[]
@@ -103,11 +135,17 @@ const props = defineProps<{
   status: Status
   filters: VehicleFilters
   comparedKeys: string[]
+  comparisonCount: number
 }>()
 
-defineEmits<{ retry: [], compare: [vehicle: VehicleStatistics, selection: VehicleSelection] }>()
+const emit = defineEmits<{
+  retry: []
+  compare: [vehicle: VehicleStatistics, selection: VehicleSelection]
+  compareAll: [candidates: ComparisonCandidate[]]
+}>()
 
 const PAGE_SIZE = 50
+const MAX_BULK_COMPARISON_LINES = 100
 const MAX_TANK_SLOTS = 7
 const MAX_CATEGORY_SLOTS = 12
 const MIN_SLOT_WIDTH = 86
@@ -208,6 +246,45 @@ const filteredVehicles = computed(() => {
 
 const displayedVehicles = computed(() => filteredVehicles.value.slice(0, displayLimit.value))
 
+const comparisonCandidates = computed<ComparisonCandidate[]>(() => {
+  const compared = new Set(props.comparedKeys)
+  return filteredVehicles.value
+    .filter(vehicle => !compared.has(vehicle.rowKey))
+    .map(vehicle => ({ vehicle, selection: vehicleHistorySelection(vehicle, effectiveSelection.value) }))
+})
+const bulkComparisonTotal = computed(() => props.comparisonCount + comparisonCandidates.value.length)
+
+const pendingComparison = ref<{ candidates: ComparisonCandidate[] } | null>(null)
+const comparisonLineLabel = computed(() => {
+  const category = new Intl.PluralRules('ru').select(pendingComparison.value?.candidates.length ?? 0)
+  return category === 'one' ? 'линию' : category === 'few' ? 'линии' : 'линий'
+})
+
+function compareAll() {
+  if (props.status !== success || !comparisonCandidates.value.length
+    || bulkComparisonTotal.value > MAX_BULK_COMPARISON_LINES) return
+
+  const candidates = comparisonCandidates.value
+  if (bulkComparisonTotal.value > 20) {
+    pendingComparison.value = { candidates }
+    return
+  }
+
+  emit('compareAll', candidates)
+}
+
+function confirmComparison() {
+  if (!pendingComparison.value) return
+  const { candidates } = pendingComparison.value
+  pendingComparison.value = null
+  emit('compareAll', candidates)
+}
+
+watch([() => props.filters, localFilters],
+  () => pendingComparison.value = null, { deep: true })
+watch([() => props.vehicles, () => props.comparedKeys, () => props.comparisonCount, grouping, search],
+  () => pendingComparison.value = null)
+
 watch([search, localFilters, () => props.vehicles], () => displayLimit.value = PAGE_SIZE)
 
 watch(grouping, () => search.value = '')
@@ -259,6 +336,33 @@ watch(maxSelectableSlots, limit => {
   .head {
     display: grid;
     grid-template-columns: var(--vehicle-columns);
+
+    .compare-all {
+      align-self: center;
+      display: grid;
+      place-items: center;
+      margin-left: 6px;
+      width: 28px;
+      height: 30px;
+      padding: 0;
+      border-radius: 5px;
+      color: rgba(255, 255, 255, 0.55);
+
+      svg {
+        width: 12px;
+        height: 12px;
+      }
+
+      &:hover:not(:disabled) {
+        color: white;
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      &:disabled {
+        opacity: 0.3;
+        cursor: default;
+      }
+    }
 
     .values {
       display: grid;
@@ -318,6 +422,68 @@ watch(maxSelectableSlots, limit => {
       width: 100%;
       padding: 18px;
       font-size: inherit;
+    }
+  }
+}
+
+.bulk-comparison-confirmation {
+  :deep(.modal) {
+    width: 480px;
+    height: auto;
+    max-width: calc(100vw - 30px);
+    margin: auto;
+    border-radius: 15px;
+  }
+
+  .comparison-warning {
+    margin: 10px 0;
+    line-height: 1.5;
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 20px;
+
+      li + li {
+        margin-top: 6px;
+      }
+    }
+  }
+
+  .confirmation-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 15px;
+
+    .confirmation-button {
+      min-height: 36px;
+      padding: 7px 14px;
+      border: 0;
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+      font: inherit;
+      font-size: 14px;
+
+      @media (hover: hover) and (pointer: fine) {
+        &:hover {
+          background: rgba(255, 255, 255, 0.15);
+        }
+      }
+
+      &:focus-visible {
+        outline: 2px solid rgba(255, 255, 255, 0.5);
+        outline-offset: 2px;
+      }
+
+      @media (max-width: 450px) {
+        flex: 1;
+      }
     }
   }
 }

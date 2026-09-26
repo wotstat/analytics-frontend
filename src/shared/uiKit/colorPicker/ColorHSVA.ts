@@ -31,10 +31,15 @@ export class ColorHSVA {
   }
 
   toHsla() {
+    const lightness = this.v * (1 - this.s / 2)
+    const saturation = lightness === 0 || lightness === 1
+      ? 0
+      : (this.v - lightness) / Math.min(lightness, 1 - lightness)
+
     return {
       h: this.h,
-      s: this.s,
-      l: (2 - this.s) * this.v / 2,
+      s: saturation,
+      l: lightness,
       a: this.a
     }
   }
@@ -81,10 +86,12 @@ export class ColorHSVA {
   }
 
   setHsla(h: number, s: number, l: number, a: number = 1): void {
+    s = clamp01(s)
+    l = clamp01(l)
     this.h = clamp(h, 0, 360)
-    this.s = clamp01(s)
+    this.v = l + s * Math.min(l, 1 - l)
+    this.s = this.v === 0 ? 0 : 2 * (1 - l / this.v)
     this.a = clamp01(a)
-    this.v = (2 - this.s) * l / 2
   }
 
   parseHsla(h: string, s: string, l: string, a: string): void {
@@ -198,12 +205,12 @@ export class ColorHSVA {
   }
 
   get cssString(): string {
-    const l = (2 - this.s) * this.v / 2
-    return `hsla(${this.h}, ${this.s * 100}%, ${l * 100}%, ${this.a})`
+    const { h, s, l, a } = this.toHsla()
+    return `hsla(${h}, ${s * 100}%, ${l * 100}%, ${a})`
   }
 
   get cssOpaqueString(): string {
-    const l = (2 - this.s) * this.v / 2
-    return `hsl(${this.h}, ${this.s * 100}%, ${l * 100}%)`
+    const { h, s, l } = this.toHsla()
+    return `hsl(${h}, ${s * 100}%, ${l * 100}%)`
   }
 }

@@ -4,7 +4,7 @@ import type { VehicleStatistics } from '../shared/types'
 import type { VehicleSelection } from '../shared/vehicleGrouping'
 import { vehicleName } from '../shared/vehicleName'
 import { historySeriesColor, historySeriesColors } from '../timeSeries/seriesColors'
-import { comparisonFiltersKey, snapshotComparisonFilters, type ComparisonSource } from './types'
+import { comparisonFiltersKey, snapshotComparisonFilters, type ComparisonCandidate, type ComparisonSource } from './types'
 
 export function useVehicleComparison(filters: Ref<VehicleFilters>) {
   const sources = ref<ComparisonSource[]>([])
@@ -23,25 +23,43 @@ export function useVehicleComparison(filters: Ref<VehicleFilters>) {
       return
     }
 
-    if (!sampleNumbers.has(filtersKey)) sampleNumbers.set(filtersKey, sampleNumbers.size + 1)
+    addMany([{ vehicle, selection }])
+  }
 
-    const color = historySeriesColors.find(color => !sources.value.some(source => source.color === color))
-      ?? historySeriesColor(sources.value.length)
+  function addMany(candidates: readonly ComparisonCandidate[]) {
+    const filtersKey = currentFiltersKey.value
+    const tags = new Set(sources.value.map(source => source.tag))
+    const colors = new Set(sources.value.map(source => source.color))
+    const additions: ComparisonSource[] = []
 
-    sources.value.push({
-      tag,
-      rowKey: vehicle.rowKey,
-      name: vehicle.tankTag === null ? `Среднее · ${vehicleName(vehicle)}` : vehicleName(vehicle),
-      color,
-      selection: {
-        ...selection,
-        levels: [...selection.levels],
-        types: [...selection.types],
-        nations: [...selection.nations],
-      },
-      filters: snapshotComparisonFilters(filters.value),
-      sampleNumber: sampleNumbers.get(filtersKey)!,
-    })
+    for (const { vehicle, selection } of candidates) {
+      const tag = JSON.stringify([vehicle.rowKey, filtersKey])
+      if (tags.has(tag)) continue
+      tags.add(tag)
+
+      if (!sampleNumbers.has(filtersKey)) sampleNumbers.set(filtersKey, sampleNumbers.size + 1)
+
+      const color = historySeriesColors.find(color => !colors.has(color))
+        ?? historySeriesColor(sources.value.length + additions.length)
+      colors.add(color)
+
+      additions.push({
+        tag,
+        rowKey: vehicle.rowKey,
+        name: vehicleName(vehicle),
+        color,
+        selection: {
+          ...selection,
+          levels: [...selection.levels],
+          types: [...selection.types],
+          nations: [...selection.nations],
+        },
+        filters: snapshotComparisonFilters(filters.value),
+        sampleNumber: sampleNumbers.get(filtersKey)!,
+      })
+    }
+
+    if (additions.length) sources.value.push(...additions)
   }
 
   function remove(tag: string) {
@@ -60,6 +78,7 @@ export function useVehicleComparison(filters: Ref<VehicleFilters>) {
     sources: computed<readonly ComparisonSource[]>(() => sources.value),
     comparedKeys,
     toggle,
+    addMany,
     remove,
     setColor,
     clear,

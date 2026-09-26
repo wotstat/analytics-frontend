@@ -6,7 +6,8 @@
     @clear="comparison.clear" />
   <VehicleListTable v-model:grouping="grouping" v-model:local-filters="localFilters" v-model:period="period" :slots="defaultSlots"
     :vehicles="statistics.data" :status="statistics.status" :filters :compared-keys="comparison.comparedKeys.value"
-    @compare="comparison.toggle" @retry="retry++" />
+    :comparison-count="comparison.sources.value.length"
+    @compare="comparison.toggle" @compare-all="comparison.addMany" @retry="retry++" />
 </template>
 
 <script setup lang="ts">
