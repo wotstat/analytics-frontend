@@ -25,7 +25,7 @@ import {
   type HistoryAverageWindow, type HistoryStep
 } from './historyStep'
 import { ChartMask } from '@/shared/uiKit/chart/universalChart/defs/ChartMask'
-import type { HistoryAnnotation } from './gameVersionAnnotations'
+import type { HistoryAnnotation } from './historyAnnotations'
 import { annotationLabelOptions } from './annotationLabelOptions'
 import { serverOutages } from '@/shared/wotstat/serverOutages'
 
@@ -51,12 +51,15 @@ export class VehicleHistoryChart extends UniversalChart {
 
   private readonly lines = new Map<string, AutoLine<HistoryPoint>>()
   private readonly plot = new PlotGroup()
+  private readonly eventAreas = new PlotGroup(['history-event-areas'])
+  private eventAreaPlots: RectangleArea[] = []
 
   private readonly interaction = new InteractionController()
   private interactionComponents: InteractionComponent[] = []
 
   private readonly mask = new ChartMask('center', { top: -4, bottom: -4 })
   private readonly seriesStyle = document.createElementNS('http://www.w3.org/2000/svg', 'style')
+  private readonly annotationStyle = document.createElementNS('http://www.w3.org/2000/svg', 'style')
   private readonly styleScopeClass = `vehicle-history-chart-${nextChartStyleScope++}`
   private seriesClassByTag = new Map<string, string>()
 
@@ -87,10 +90,12 @@ export class VehicleHistoryChart extends UniversalChart {
 
     this.svg.classList.add(this.styleScopeClass)
     this.svg.appendChild(this.seriesStyle)
+    this.svg.appendChild(this.annotationStyle)
 
     this.zoom = new ZoomChartComponent({ chart: this, zoom: true, panDirection: 'horizontal' })
     this.interaction.addComponent(this.zoom)
     this.plot.clipBy(clip).maskBy(mask)
+    this.eventAreas.clipBy(clip)
 
     const outageAreas = new PlotGroup(['history-outage-areas']).clipBy(clip)
     for (const { start, end } of serverOutages.intervals) {
@@ -107,6 +112,7 @@ export class VehicleHistoryChart extends UniversalChart {
 
     this
       .addPlot(outageAreas, 'outages')
+      .addPlot(this.eventAreas, 'events')
       .addPlot(new TicksByLabels(this.labelsY), 'grid')
       .addPlot(new TicksByLabels(this.labelsX, { classes: 'time-grid' }), 'grid')
       .addPlot(this.plot, 'plot')
@@ -119,6 +125,27 @@ export class VehicleHistoryChart extends UniversalChart {
   }
 
   setAnnotations(annotations: readonly HistoryAnnotation[]) {
+    for (const area of this.eventAreaPlots) this.eventAreas.removePlot(area)
+    this.eventAreaPlots = []
+
+    const colorRules: string[] = []
+    const events = annotations.filter(annotation => annotation.kind === 'event')
+    for (const [index, event] of events.entries()) {
+      const eventClass = `history-event-${index}`
+      const selector = `.${this.styleScopeClass} .${eventClass}`
+      colorRules.push(`${selector} { --history-event-color: ${event.color}; }`)
+
+      if (event.endTimestamp === undefined) continue
+
+      const area = new RectangleArea(['history-event-area', eventClass], { layoutLimited: true })
+      area.setPoints(
+        { x: event.timestamp, y: -Infinity },
+        { x: event.endTimestamp, y: Infinity },
+      )
+      this.eventAreas.addPlot(area)
+      this.eventAreaPlots.push(area)
+    }
+    this.annotationStyle.textContent = colorRules.join('\n')
     this.labelsAnnotations.updateOptions(annotationLabelOptions(annotations))
     this.svg.classList.toggle('with-annotations', annotations.length > 0)
   }

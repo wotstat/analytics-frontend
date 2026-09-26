@@ -13,7 +13,7 @@
             title="Разбиение графика" @click="openSplitMenu">
             <LineChartIcon />
           </button>
-          <HistoryAnnotationSettings :settings="annotationOptions" />
+          <HistoryAnnotationSettings :settings="annotationOptions" :regions="filters.regions" />
         </HistoryControls>
       </template>
       <template #tooltip="{ ctx }">
@@ -44,7 +44,7 @@
     <Legend v-if="split !== null && splitSources.length" :legend toggleable highlightable class="legend" />
 
     <FloatingTooltip v-if="split !== null" :ctx="chart.tooltipCtx.value" anchor="pivot-x"
-      :placement="['top-float', 'bottom-float']" :offset="{ top: 28, bottom: versionAnnotations.length ? 40 : 12 }">
+      :placement="['top-float', 'bottom-float']" :offset="{ top: 28, bottom: annotations.length ? 40 : 12 }">
       <template #default="{ ctx }">
         <ComparisonTooltip :ctx :sources="legend.enabled.value" />
       </template>
@@ -77,6 +77,7 @@ import HistoryAnnotationSettings from './HistoryAnnotationSettings.vue'
 import LineChartIcon from '../vehicleListTable/assets/line-chart.svg'
 import { useHistoryAnnotationSettings } from './useHistoryAnnotationSettings'
 import { useGameVersionAnnotations } from './gameVersionAnnotations'
+import { useHistoryEventAnnotations } from './useHistoryEventAnnotations'
 import { applyHistoryFilters, hasHistoryValues } from './historyValues'
 import { historySplitName, historySplitOptions, orderHistorySplitKeys, type VehicleHistorySplit } from './historySplit'
 import { historySplitSeriesColor } from './seriesColors'
@@ -100,6 +101,8 @@ const split = ref<VehicleHistorySplit | null>(null)
 const annotationOptions = useHistoryAnnotationSettings()
 const { annotations: versionAnnotations } = useGameVersionAnnotations(
   annotationOptions.versions, computed(() => props.filters.regions))
+const eventAnnotations = useHistoryEventAnnotations(annotationOptions.enabledEvents, computed(() => props.filters.regions))
+const annotations = computed(() => [...versionAnnotations.value, ...eventAnnotations.value])
 
 const now = useNow({ interval: 60_000 })
 
@@ -156,7 +159,7 @@ watch([series, () => props.slot, beforeDay, step, averageWindow], () => {
   chart.setHistories(series.value, props.slot, beforeDay.value, step.value, averageWindow.value)
 }, { immediate: true })
 
-watch(versionAnnotations, annotations => chart.setAnnotations(annotations), { immediate: true })
+watch(annotations, value => chart.setAnnotations(value), { immediate: true })
 watch(annotationOptions.showWotstatOutages, visible => chart.setOutagesVisible(visible), { immediate: true })
 
 let splitMenuId = -1

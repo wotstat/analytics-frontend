@@ -4,12 +4,7 @@ import type { VehicleRegion } from '../filters/types'
 import { DAY } from './timeLabels'
 import { historyDayStart } from './historyStep'
 import type { VersionAnnotationVisibility } from './useHistoryAnnotationSettings'
-
-export type HistoryAnnotation = {
-  timestamp: number
-  label: string
-  kind: 'version' | 'patch' | 'micropatch'
-}
+import type { VersionHistoryAnnotation } from './historyAnnotations'
 
 type GameVersionRow = {
   region: VehicleRegion
@@ -36,13 +31,13 @@ export function useGameVersionAnnotations(
     { settings: LONG_CACHE_SETTINGS })
   const selectedRegions = computed(() => regions.value.length ? regions.value : allRegions)
 
-  const annotations = computed<HistoryAnnotation[]>(() => {
+  const annotations = computed<VersionHistoryAnnotation[]>(() => {
     const selected = new Set(selectedRegions.value)
     const seenVersions = new Set<string>()
     const seenPatches = new Set<string>()
     const show = visibility.value
     const multipleRegions = selected.size > 1
-    const annotations: HistoryAnnotation[] = []
+    const annotations: VersionHistoryAnnotation[] = []
 
     for (const row of versions.value.data) {
       if (!selected.has(row.region)) continue

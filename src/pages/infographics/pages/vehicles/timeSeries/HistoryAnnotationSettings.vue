@@ -14,7 +14,8 @@
       <div class="options">
         <h3>Версии игры</h3>
         <div class="version-options">
-          <button v-for="option in versionOptions" :key="option.key" type="button" class="version-option"
+          <button v-for="option in versionOptions" :key="option.key" type="button" class="annotation-option"
+            :style="{ '--annotation-color': option.color }"
             :class="{ selected: settings[option.key].value }" :aria-pressed="settings[option.key].value"
             @click="settings[option.key].value = !settings[option.key].value">
             {{ option.label }}
@@ -24,36 +25,46 @@
 
       <div class="options">
         <h3>События</h3>
-        <label class="annotation-option">
-          <input v-model="settings.showImportantEvents.value" type="checkbox">
-          Важные события
-        </label>
-        <label class="annotation-option">
-          <input v-model="settings.showWotstatOutages.value" type="checkbox">
-          Недоступность wotstat
-        </label>
+        <div class="event-options">
+          <button type="button" class="annotation-option" :style="{ '--annotation-color': outageAnnotationColor }"
+            :class="{ selected: settings.showWotstatOutages.value }" :aria-pressed="settings.showWotstatOutages.value"
+            @click="settings.showWotstatOutages.value = !settings.showWotstatOutages.value">
+            Недоступность wotstat
+          </button>
+          <button v-for="event in visibleEvents" :key="event.id" type="button" class="annotation-option"
+            :style="{ '--annotation-color': event.color }"
+            :class="{ selected: settings.enabledEvents.value.includes(event.id) }"
+            :aria-pressed="settings.enabledEvents.value.includes(event.id)" @click="settings.toggleEvent(event.id)">
+            {{ event.label }}
+          </button>
+        </div>
       </div>
     </div>
   </PopoverAutoClose>
 </template>
 
 <script setup lang="ts">
-import { ref, useTemplateRef } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
 import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import type { useHistoryAnnotationSettings } from './useHistoryAnnotationSettings'
+import { getHistoryEventRegions, historyEvents } from '@/shared/game/historyEvents'
+import type { GameRegion } from '@/shared/game/wot'
+import { outageAnnotationColor, versionAnnotationColors } from './historyAnnotations'
 
-defineProps<{
+const props = defineProps<{
   settings: ReturnType<typeof useHistoryAnnotationSettings>
+  regions: readonly GameRegion[]
 }>()
 
+const visibleEvents = computed(() => historyEvents.filter(event => getHistoryEventRegions(event, props.regions)?.length !== 0))
 const open = ref(false)
 const trigger = useTemplateRef<HTMLButtonElement>('trigger')
 
 const versionOptions = [
-  { key: 'showVersions', label: 'Версии' },
-  { key: 'showPatches', label: 'Патчи' },
-  { key: 'showMicropatches', label: 'Микропатчи' },
+  { key: 'showVersions', label: 'Версии', color: versionAnnotationColors.version },
+  { key: 'showPatches', label: 'Патчи', color: versionAnnotationColors.patch },
+  { key: 'showMicropatches', label: 'Микропатчи', color: versionAnnotationColors.micropatch },
 ] as const
 </script>
 
@@ -129,31 +140,23 @@ const versionOptions = [
       font-size: 12px;
       font-weight: 500;
     }
-
-    .annotation-option {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      cursor: pointer;
-
-      & + .annotation-option {
-        margin-top: 4px;
-      }
-
-      input {
-        margin: 0;
-        accent-color: var(--blue-thin-color);
-      }
-    }
   }
 
-  .version-options {
+  .version-options,
+  .event-options {
     display: flex;
     gap: 4px;
   }
 
-  .version-option {
+  .event-options {
+    flex-direction: column;
+
+    .annotation-option {
+      text-align: left;
+    }
+  }
+
+  .annotation-option {
     position: relative;
     flex: 1;
     padding: 5px 8px;
@@ -180,7 +183,7 @@ const versionOptions = [
         left: 0;
         width: 3px;
         border-radius: 3px;
-        background: var(--blue-thin-color);
+        background: var(--annotation-color);
       }
     }
   }

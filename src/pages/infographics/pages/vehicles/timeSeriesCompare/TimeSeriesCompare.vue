@@ -18,7 +18,7 @@
       </PopoverAutoClose>
 
       <HistoryControls v-model:step="step" v-model:average-window="averageWindow" class="steps">
-        <HistoryAnnotationSettings :settings="annotationOptions" />
+        <HistoryAnnotationSettings :settings="annotationOptions" :regions="filters.regions" />
       </HistoryControls>
     </div>
 
@@ -57,7 +57,7 @@
     </div>
 
     <FloatingTooltip :ctx="chart.tooltipCtx.value" anchor="pivot-x" :placement="['top-float', 'bottom-float']"
-      :offset="{ top: 28, bottom: versionAnnotations.length ? 40 : 12 }">
+      :offset="{ top: 28, bottom: annotations.length ? 40 : 12 }">
       <template #default="{ ctx }">
         <ComparisonTooltip :ctx :sources="legend.enabled.value" :game-version="versionForPeriod(ctx.hit.datum.periodEnd)" />
       </template>
@@ -88,6 +88,7 @@ import HistoryControls from '../timeSeries/HistoryControls.vue'
 import HistoryAnnotationSettings from '../timeSeries/HistoryAnnotationSettings.vue'
 import { useHistoryAnnotationSettings } from '../timeSeries/useHistoryAnnotationSettings'
 import { useGameVersionAnnotations } from '../timeSeries/gameVersionAnnotations'
+import { useHistoryEventAnnotations } from '../timeSeries/useHistoryEventAnnotations'
 import { applyHistoryFilters, hasHistoryValues } from '../timeSeries/historyValues'
 import { snapshotComparisonFilters, type ComparisonSource } from './types'
 import { comparisonName } from './comparisonName'
@@ -115,6 +116,8 @@ const averageWindow = ref<HistoryAverageWindow>(null)
 const annotationOptions = useHistoryAnnotationSettings()
 const { annotations: versionAnnotations, versionForPeriod } = useGameVersionAnnotations(
   annotationOptions.versions, computed(() => props.filters.regions), { includeTooltipVersion: true })
+const eventAnnotations = useHistoryEventAnnotations(annotationOptions.enabledEvents, computed(() => props.filters.regions))
+const annotations = computed(() => [...versionAnnotations.value, ...eventAnnotations.value])
 
 const now = useNow({ interval: 60_000 })
 const beforeDay = computed(() => now.value.toISOString().slice(0, 10))
@@ -161,7 +164,7 @@ watch([series, slot, beforeDay, step, averageWindow], () => {
   chart.setHistories(series.value, slot.value, beforeDay.value, step.value, averageWindow.value)
 }, { immediate: true })
 
-watch(versionAnnotations, annotations => chart.setAnnotations(annotations), { immediate: true })
+watch(annotations, value => chart.setAnnotations(value), { immediate: true })
 watch(annotationOptions.showWotstatOutages, visible => chart.setOutagesVisible(visible), { immediate: true })
 
 watch(() => props.sources.map(source => source.tag), tags => {
