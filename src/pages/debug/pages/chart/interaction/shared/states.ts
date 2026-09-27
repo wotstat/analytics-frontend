@@ -2,6 +2,7 @@ import { BaseState } from '@/shared/uiKit/chart/universalChart/interaction/baseI
 import { StartState } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/states/StartState'
 import { MouseHoverState } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/states/MouseHoverState'
 import { MousePanState } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/states/MousePanState'
+import { MousePressState } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/states/MousePressState'
 import { AwaitingTouchPanOrHover } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/states/AwaitingTouchPanOrHover'
 import { TouchHoverState } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/states/touch/TouchHoverState'
 import { TouchPanState } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/states/touch/TouchPanState'
@@ -13,25 +14,31 @@ export const stateList = [
     name: 'StartState',
     input: 'общее',
     enter: 'старт и любой выход указателя за пределы зоны',
-    note: 'Мышь входит в зону → сразу MouseHoverState, без проверки mayHover. Палец — только если хоть один компонент разрешил mayPan или mayHover.',
+    note: 'Мышь входит в зону → MouseHoverState, без проверки mayHover. pointerdown пальцем запускает ожидание жеста даже без pan/hover, чтобы работал клик.',
   },
   {
     name: 'MouseHoverState',
     input: 'мышь',
     enter: 'pointerenter не-тач указателем',
-    note: 'Ховер и колесо. pointerdown левой кнопкой при mayPan сразу уводит в пан: порога расстояния для мыши нет.',
+    note: 'Ховер и колесо. При разрешённом пане мышь на pointerdown сразу уходит в MousePanState; без пана и для пера — в MousePressState.',
+  },
+  {
+    name: 'MousePressState',
+    input: 'мышь / перо',
+    enter: 'pointerdown в MouseHoverState',
+    note: 'Клик при отключённом пане или ожидание направления движения пера. Перо запускает пан первым движением в разрешённую сторону. Без пана смещение дальше 4 px отменяет клик.',
   },
   {
     name: 'MousePanState',
     input: 'мышь',
-    enter: 'pointerdown в MouseHoverState',
-    note: 'Пан с захватом указателя. Ховер продолжает обновляться вместе с паном. Отпускание возвращает прошлый MouseHoverState через returnToState.',
+    enter: 'pointerdown мышью или первое движение пера',
+    note: 'Пан начинается сразу. Ховер продолжает обновляться вместе с паном. Отпускание возвращает прошлый MouseHoverState и даёт click, если за всё нажатие смещение не превысило 4 px.',
   },
   {
     name: 'AwaitingTouchPanOrHover',
     input: 'палец',
     enter: 'касание в StartState',
-    note: 'Распознавание жеста. Таймаут до ховера: 200 мс если пан разрешён, иначе 75 мс. Порог движения — 0 px, поэтому сдвиг пальца до таймаута уводит в пан.',
+    note: 'Отпускание до таймаута без смещения больше 4 px даёт click. Пан начинается первым движением в разрешённую сторону. Таймаут до ховера: 200 мс если пан разрешён, иначе 75 мс. Второй палец отменяет клик.',
   },
   {
     name: 'TouchHoverState',
@@ -43,7 +50,7 @@ export const stateList = [
     name: 'TouchPanState',
     input: 'палец',
     enter: 'движение в AwaitingTouchPanOrHover или снятие пальца с пинча',
-    note: 'Пан пальцем. Ховер при этом не работает — это либо одно, либо другое.',
+    note: 'Пан пальцем без порога расстояния. При смещении до 4 px от исходного касания отпускание также даёт click; после пинча клика нет.',
   },
   {
     name: 'TouchZoomState',
@@ -57,6 +64,7 @@ export type StateName = typeof stateList[number]['name']
 
 export function stateName(state: BaseState): StateName {
   if (state instanceof MousePanState) return 'MousePanState'
+  if (state instanceof MousePressState) return 'MousePressState'
   if (state instanceof MouseHoverState) return 'MouseHoverState'
   if (state instanceof AwaitingTouchPanOrHover) return 'AwaitingTouchPanOrHover'
   if (state instanceof TouchZoomState) return 'TouchZoomState'

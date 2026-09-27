@@ -52,7 +52,7 @@
       </tbody>
     </table>
 
-    <EventLog :entries="entries" title="Переходы автомата" empty="Переходов ещё не было" @clear="clear" />
+    <EventLog :entries="entries" title="Переходы автомата и клики" empty="Переходов ещё не было" @clear="clear" />
 
     <div class="debug-col">
       <p class="debug-hint" v-for="item in stateList" :key="item.name">
@@ -61,22 +61,26 @@
     </div>
 
     <p class="debug-note">
-      Мышью: наведи — <span class="debug-value">MouseHoverState</span>; зажми ЛКМ — сразу
-      <span class="debug-value">MousePanState</span> (порога расстояния нет, поэтому «клик по графику» — это уже пан
-      нулевой длины); отпусти — <span class="debug-value">returnToState</span> возвращает тот же самый экземпляр
-      ховер-состояния, а не создаёт новый. Выключи и пан, и ховер: мышь всё равно уходит в
-      <span class="debug-value">MouseHoverState</span> — <span class="debug-value">StartState</span> проверяет
-      mayPan/mayHover только для тача.
+      Мышью: наведи — <span class="debug-value">MouseHoverState</span>; зажми ЛКМ —
+      <span class="debug-value">MousePanState</span>, если пан разрешён: перемещение графика начинается сразу.
+      Отпускание при максимальном смещении до 4 px даёт клик после завершения пана.
+      При отключённом пане нажатие переходит в <span class="debug-value">MousePressState</span>.
+      Отпускание возвращает тот же экземпляр ховер-состояния через <span class="debug-value">returnToState</span>.
+      Возврат после перетаскивания дальше 4 px в исходную точку не даёт клик.
+      Нажми в 1 px от края, выйди за него на 2 px и вернись: клика тоже быть не должно,
+      даже если указатель захвачен и общее смещение осталось в пределах 4 px.
     </p>
 
     <p class="debug-note">
       Пальцем: коснись и держи не двигаясь — через 200 мс (при разрешённом пане) загорится
       <span class="debug-value">TouchHoverState</span>. Выключи pan — порог падает до 75 мс, ховер появляется заметно
-      резвее. Коснись и сразу веди — <span class="debug-value">TouchPanState</span>, ховера не будет вовсе. Поставь
+      резвее. Коснись и сразу отпусти в пределах 4 px — клик; удержание до ховера уже не считается кликом.
+      Первое движение в разрешённую сторону — <span class="debug-value">TouchPanState</span>, без порога расстояния.
+      Отпускание при смещении до 4 px также даёт клик. Поставь
       второй палец из любого состояния — <span class="debug-value">TouchZoomState</span>; сними один палец — вернёшься
       в <span class="debug-value">TouchPanState</span>, а не в ховер. Поставь третий палец, потом сними первый:
-      третий подхватывается как активный без разрыва жеста. При выключенных пане и ховере касание не переводит
-      автомат никуда — он остаётся в <span class="debug-value">StartState</span>.
+      третий подхватывается как активный без разрыва жеста. При выключенных пане и ховере касание всё равно
+      запускает <span class="debug-value">AwaitingTouchPanOrHover</span> для распознавания клика.
     </p>
   </DebugSection>
 </template>
@@ -109,6 +113,7 @@ const stopStateLog = chart.controller.onStateChanged.on(() => {
   current.value = name
   push(name)
 })
+const stopClickLog = chart.callback.on('click', () => push('click'))
 
 watchEffect(() => chart.setZoom({
   zoom: zoom.value,
@@ -121,7 +126,10 @@ watchEffect(() => chart.setCursor({
   horizontalLine: hoverEnabled.value,
 }))
 
-onUnmounted(() => stopStateLog())
+onUnmounted(() => {
+  stopStateLog()
+  stopClickLog()
+})
 
 </script>
 

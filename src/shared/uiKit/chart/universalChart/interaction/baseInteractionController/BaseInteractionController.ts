@@ -12,7 +12,21 @@ export type InteractionDirection = 'horizontal' | 'vertical' | 'all' | false
 export type Position = { offsetX: number, offsetY: number, clientX: number, clientY: number }
 export type TouchZoomPoint = { cursor: Position, point: Point }
 
+export type ClickInteractionEvent = {
+  cursor: Position
+  point: Point
+  space: ChartSpace
+  isTouch: boolean
+  pointerType: string
+  altKey: boolean
+  shiftKey: boolean
+  ctrlKey: boolean
+  metaKey: boolean
+}
+
 export type Delegate = {
+  onClick(event: ClickInteractionEvent): boolean
+
   mayHover(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): InteractionDirection
   onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): boolean
   onHoverUpdate(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): boolean
@@ -57,6 +71,10 @@ export abstract class BaseInteractionController extends BasePlotRenderer {
       this.capturedPointers.delete(pointerId)
     },
     offsetToChart: (event: { offsetX: number, offsetY: number }) => this.offsetToChart(event),
+    isPointerInside: (event: { clientX: number, clientY: number }) => {
+      const rect = this.interactiveZone.getBoundingClientRect()
+      return event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom
+    },
     chartToPage: (point: Point) => this.chartToPage(point),
     requestRender: () => this.requestRender(),
     chart: () => this.chart!
@@ -85,6 +103,7 @@ export abstract class BaseInteractionController extends BasePlotRenderer {
     this.interactiveZone.addEventListener('pointerleave', this.onPointerLeave.bind(this), { signal: this.listenerAbortSignal })
     this.interactiveZone.addEventListener('pointerup', this.onPointerUp.bind(this), { signal: this.listenerAbortSignal })
     this.interactiveZone.addEventListener('pointercancel', this.onPointerCancel.bind(this), { signal: this.listenerAbortSignal })
+    this.interactiveZone.addEventListener('lostpointercapture', this.onLostPointerCapture.bind(this), { signal: this.listenerAbortSignal })
 
     this.interactiveZone.addEventListener('contextmenu', this.onContextmenu.bind(this), { signal: this.listenerAbortSignal })
     this.interactiveZone.addEventListener('touchmove', this.touchMove.bind(this), { signal: this.listenerAbortSignal })
@@ -135,6 +154,10 @@ export abstract class BaseInteractionController extends BasePlotRenderer {
     this.currentState.onPointerCancel(event)
   }
 
+  private onLostPointerCapture(event: PointerEvent) {
+    this.currentState.onLostPointerCapture(event)
+  }
+
   protected onWheel(event: WheelEvent) {
     this.currentState.onWheel(event)
   }
@@ -171,6 +194,12 @@ export abstract class BaseInteractionController extends BasePlotRenderer {
 
   private createDelegate(): Delegate {
     return {
+      onClick: event => {
+        const used = this.onClick(event)
+        if (used) this.requestRender()
+        return used
+      },
+
       mayHover: this.mayHover.bind(this),
       onHoverBegin: (cursor, point, space, isTouch) => {
         const used = this.onHoverBegin(cursor, point, space, isTouch)
@@ -232,6 +261,8 @@ export abstract class BaseInteractionController extends BasePlotRenderer {
 
   protected onBeforeLayout(space: ChartSpace, full: Size) { }
   protected onRender(space: ChartSpace, overflow: Overflow, full: Size) { }
+
+  protected onClick(event: ClickInteractionEvent): boolean { return false }
 
   protected mayHover(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): InteractionDirection { return false }
   protected onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): boolean { return false }

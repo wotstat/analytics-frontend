@@ -279,19 +279,11 @@ export class VehicleHistoryChart extends UniversalChart {
       (source, line) => source.union(line.interaction), lines[0].interaction)
     const selection = interactions.nearestByAxis('x')
 
-    // У точек выбранной даты одинаковый X, поэтому nearest выбирает ближайшую по Y.
-    const nearest = selection.nearest()
     let highlight: Highlight | null = null
 
     if (lines.length > 1) {
       highlight = new Highlight({
-        selection: {
-          interactionSources: selection.interactionSources,
-          resolve: ctx => ctx.frame.resolve(nearest).map(hit => ({
-            ...hit,
-            targets: interactions.sources.flatMap(source => source.getTargets(hit.datum.series)),
-          })),
-        },
+        selection: interactions.nearStroke({ maxDistance: 20 }).nearest(),
         class: 'highlighted',
       })
 

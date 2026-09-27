@@ -1,25 +1,14 @@
-import { InteractionDirection, Position } from '../BaseInteractionController'
 import { BaseState } from './BaseState'
+import { MousePressState } from './MousePressState'
 import { MousePanState } from './MousePanState'
 import { StartState } from './StartState'
+import { isPrimaryPress } from './pointerMovement'
 
 const CLASS_NAME = 'hover-active'
-const PAN_BEGIN_DISTANCE = 0
-
-function allowDirection(direction: InteractionDirection, dx: number, dy: number): boolean {
-  if (direction === 'all') return true
-  if (direction === 'horizontal') return Math.abs(dx) > Math.abs(dy)
-  if (direction === 'vertical') return Math.abs(dy) > Math.abs(dx)
-  return false
-}
 
 
 export class MouseHoverState extends BaseState {
   private activePointer: PointerEvent
-  private awaitingPenPan: {
-    direction: InteractionDirection
-    initialEvent: PointerEvent
-  } | null = null
 
   constructor(initialEvent: PointerEvent) {
     super()
@@ -36,43 +25,24 @@ export class MouseHoverState extends BaseState {
   }
 
   onPointerDown(event: PointerEvent): void {
-    if ((event.buttons & 1) !== 1) return
+    if (!isPrimaryPress(event)) return
 
-    const mayPan = this.delegate.mayPan(this.event2Position(event), this.offsetToChart(this.event2Position(event)), this.chart.space, false)
-    if (!mayPan) return
-
-    if (event.pointerType == 'pen') {
-      this.awaitingPenPan = { direction: mayPan, initialEvent: event }
-    } else {
-      this.changeState(new MousePanState(event, this))
-    }
-  }
-
-  onPointerUp(event: PointerEvent): void {
-    if (this.awaitingPenPan?.initialEvent.pointerId == event.pointerId) this.awaitingPenPan = null
-  }
-
-  onPointerMove(event: PointerEvent): void {
-    if (this.awaitingPenPan?.initialEvent.pointerId == event.pointerId) {
-      const dx = event.clientX - this.awaitingPenPan.initialEvent.clientX
-      const dy = event.clientY - this.awaitingPenPan.initialEvent.clientY
-      const distance = Math.sqrt(dx * dx + dy * dy)
-
-      const pos = this.event2Position(event)
-      this.activePointer = event
-      this.delegate.onHoverUpdate(pos, this.offsetToChart(pos), this.chart.space, false)
-
-      if (distance > PAN_BEGIN_DISTANCE) {
-        if (allowDirection(this.awaitingPenPan.direction, dx, dy)) {
-          this.awaitingPenPan = null
-          this.changeState(new MousePanState(event, this))
-        } else {
-          this.awaitingPenPan = null
-        }
-      }
+    if (event.pointerType === 'touch') {
+      this.endHover(this.activePointer)
+      const start = new StartState()
+      this.changeState(start)
+      start.onPointerDown(event)
       return
     }
 
+    const mayPan = this.delegate.mayPan(this.event2Position(event), this.offsetToChart(this.event2Position(event)), this.chart.space, false)
+    const click = this.createClickCandidate(event)
+    this.changeState(mayPan && event.pointerType !== 'pen'
+      ? new MousePanState(click, this)
+      : new MousePressState(click, this, mayPan))
+  }
+
+  onPointerMove(event: PointerEvent): void {
     if (this.activePointer.pointerId == event.pointerId) {
       const pos = this.event2Position(event)
       this.activePointer = event
@@ -82,13 +52,16 @@ export class MouseHoverState extends BaseState {
 
   onPointerLeave(event: PointerEvent): void {
     if (this.activePointer.pointerId !== event.pointerId) return
+    this.endHover(event)
+    this.changeState(new StartState())
+  }
 
+  private endHover(event: PointerEvent) {
     const pos = this.event2Position(event)
     const point = this.offsetToChart(pos)
 
     this.delegate.onHoverEnd(pos, point, this.chart.space, false)
     this.toggleClass(CLASS_NAME, false)
-    this.changeState(new StartState())
   }
 
   onWheel(event: WheelEvent): void {

@@ -1,33 +1,27 @@
 import { InteractionDirection } from '../BaseInteractionController'
 import { BaseState } from './BaseState'
+import { ClickCandidate } from './ClickCandidate'
 import { StartState } from './StartState'
 import { TouchHoverState } from './touch/TouchHoverState'
 import { TouchPanState } from './touch/TouchPanState'
 import { TouchZoomState } from './touch/TouchZoomState'
-
-function allowDirection(direction: InteractionDirection, dx: number, dy: number): boolean {
-  if (direction === 'all') return true
-  if (direction === 'horizontal') return Math.abs(dx) > Math.abs(dy)
-  if (direction === 'vertical') return Math.abs(dy) > Math.abs(dx)
-  return false
-}
+import { allowDirection } from './pointerMovement'
 
 const HOVER_BEGIN_TIMEOUT = 75
 const PAN_BEGIN_TIMEOUT = 200
-const PAN_BEGIN_DISTANCE = 0
 
 export class AwaitingTouchPanOrHover extends BaseState {
 
   private hoverBeginTimeoutId: number
-  private readonly initialEvent: PointerEvent
+  private activeEvent: PointerEvent
 
   constructor(
-    private activeEvent: PointerEvent,
+    private readonly click: ClickCandidate,
     private readonly mayPan: InteractionDirection,
     mayHover: InteractionDirection
   ) {
     super()
-    this.initialEvent = activeEvent
+    this.activeEvent = click.initialEvent
     this.hoverBeginTimeoutId = mayHover
       ? setTimeout(() => this.hoverBeginTimeout(), mayPan ? PAN_BEGIN_TIMEOUT : HOVER_BEGIN_TIMEOUT)
       : 0
@@ -35,6 +29,7 @@ export class AwaitingTouchPanOrHover extends BaseState {
 
   hoverBeginTimeout() {
     this.hoverBeginTimeoutId = 0
+    this.click.cancel()
     this.changeState(new TouchHoverState(this.activeEvent))
   }
 
@@ -51,6 +46,7 @@ export class AwaitingTouchPanOrHover extends BaseState {
 
   onPointerDown(event: PointerEvent): void {
     if (event.pointerId == this.activeEvent.pointerId) return
+    this.click.cancel()
 
     const first = this.event2TouchZoomPoint(this.activeEvent)
     const second = this.event2TouchZoomPoint(event)
@@ -62,23 +58,45 @@ export class AwaitingTouchPanOrHover extends BaseState {
   onPointerMove(event: PointerEvent): void {
     if (event.pointerId !== this.activeEvent.pointerId) return
     this.activeEvent = event
+    this.click.move(event)
+    if (event.buttons !== 1) {
+      this.changeState(new StartState())
+      return
+    }
 
-    const dx = event.clientX - this.initialEvent.clientX
-    const dy = event.clientY - this.initialEvent.clientY
-    const distance = Math.sqrt(dx * dx + dy * dy)
+    const { initialEvent } = this.click
+    const dx = event.clientX - initialEvent.clientX
+    const dy = event.clientY - initialEvent.clientY
 
-    if (this.mayPan && distance > PAN_BEGIN_DISTANCE && allowDirection(this.mayPan, dx, dy)) {
-      this.changeState(new TouchPanState(event))
+    if (this.mayPan && (dx !== 0 || dy !== 0) && allowDirection(this.mayPan, dx, dy)) {
+      const pan = new TouchPanState(initialEvent, this.click)
+      this.changeState(pan)
+      pan.onPointerMove(event)
     }
   }
 
   onPointerUp(event: PointerEvent): void {
     if (event.pointerId !== this.activeEvent.pointerId) return
-    this.clearHoverBeginTimeout()
+    const clicked = this.click.finish(event)
     this.changeState(new StartState())
+    if (clicked) this.emitClick(event)
   }
 
   onPointerCancel(event: PointerEvent): void {
-    this.onPointerUp(event)
+    if (event.pointerId !== this.activeEvent.pointerId) return
+    this.click.cancel()
+    this.changeState(new StartState())
+  }
+
+  onPointerLeave(event: PointerEvent): void {
+    if (event.pointerId === this.activeEvent.pointerId) this.click.cancel()
+  }
+
+  onContextmenu(event: PointerEvent): void {
+    this.click.cancel()
+  }
+
+  onWheel(event: WheelEvent): void {
+    this.click.cancel()
   }
 }

@@ -43,6 +43,52 @@
   - `BarInteractionSource.ts`, `AutoLineInteractionSource.ts`, `AutoMarkersInteractionSource.ts`, `PolygonAreaInteractionSource.ts` — источники запросов, каждый привязан к своему плоту: `bar.interaction`, `line.interaction`, `scatter.interaction`, `polygon.interaction`.
 - **`ChartRenderManager.ts`**, `BaseChart.ts` — базовая инфраструктура рендера.
 
+### Клики
+
+Клик распознаёт `states/ClickCandidate.ts`: один экземпляр на исходное нажатие хранит
+возможность клика, проверяет смещение и попадание в область, включая coalesced-события.
+Отмена необратима, `finish()` завершает кандидата и возвращает, нужно ли выдать клик.
+Состояния управляют жестами и передают того же кандидата при переходах
+`MousePressState → MousePanState` и `AwaitingTouchPanOrHover → TouchPanState`.
+`disposed()` не отменяет кандидата: он должен пережить эти переходы.
+`BaseInteractionController` передаёт DOM-события текущему состоянию и вызовы delegate компонентам.
+
+Для мыши `MouseHoverState` при нажатии основной кнопки переходит сразу в `MousePanState`, если пан разрешён:
+`panBegin` вызывается при нажатии, все движения сразу передаются пану. Если максимальное
+смещение от начальной позиции за всё нажатие не превысило 4 CSS-пикселей, отпускание
+внутри графика после `panEnd` также даёт клик. Возврат после более длинного перетаскивания
+в исходную точку не даёт клик: кандидат уже отменён, при этом сам пан продолжается.
+Без разрешённого пана используется `MousePressState`: движение дальше 4 px возвращает
+ховер без клика. Для пера это состояние также сохраняет проверку направления, но пан
+начинается при первом движении в разрешённую сторону, без ожидания порога 4 px.
+
+Касание на `pointerdown` переходит в `AwaitingTouchPanOrHover`, даже если pan/hover
+отключены. Пан начинается при первом движении в разрешённую сторону, без порога расстояния;
+отпускание в пределах 4 px также даёт клик, в том числе после такого короткого пана.
+Кандидат передаётся в `TouchPanState` только из исходного касания: после пинча его нет.
+Ховер по таймауту, второй указатель, отмена, уход из области, потеря capture,
+contextmenu и колесо исключают клик. Выход за границу проверяется при движении, поскольку
+pointer capture подавляет `pointerleave`; возврат внутрь не восстанавливает кандидата.
+
+`InteractionComponent.onClick(event, controller)` получает `ClickInteractionEvent`:
+`cursor`, `point` в layout-координатах (как у hover), актуальный `space`, `isTouch`,
+`pointerType` и `altKey`/`shiftKey`/`ctrlKey`/`metaKey`. Возврат `true` запрашивает кадр;
+все компоненты получают событие. Внешняя подписка — через `CallbackComponent`:
+
+```ts
+const callbacks = new CallbackComponent()
+controller.addComponent(callbacks)
+const stop = callbacks.on('click', event => {
+  const frame = new InteractionFrame(event.space, {
+    key: Symbol('click'),
+    pointer: { point: event.point, cursor: event.cursor, isTouch: event.isTouch },
+  })
+  const [hit] = frame.resolve(line.interaction.nearStroke({ maxDistance: 20 }).nearest())
+  if (hit) console.log(hit.interactionTag, event.altKey)
+})
+// stop() снимает подписку; hit вычисляется по позиции клика, а не прошлому hover.
+```
+
 ### Приоритеты подписей в одной полосе
 
 Этаж кандидата может задавать `priorities` вместо `source`. Это независимые источники

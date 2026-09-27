@@ -1,6 +1,6 @@
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
-import { Position, TouchZoomPoint } from '../../../baseInteractionController/BaseInteractionController'
+import { ClickInteractionEvent, Position, TouchZoomPoint } from '../../../baseInteractionController/BaseInteractionController'
 import { InteractionComponent } from '../../InteractionController'
 
 export type PointerInteractionEvent = {
@@ -26,6 +26,8 @@ export type WheelZoomEvent = {
 }
 
 export type CallbackComponentEvents = {
+  click: ClickInteractionEvent
+
   hoverBegin: PointerInteractionEvent
   hoverUpdate: PointerInteractionEvent
   hoverEnd: PointerInteractionEvent
@@ -64,6 +66,11 @@ export class CallbackComponent implements InteractionComponent {
 
   private emit<E extends keyof CallbackComponentEvents>(event: E, data: CallbackComponentEvents[E]): void {
     for (const listener of this.setFor(event)) listener(data)
+  }
+
+  onClick(event: ClickInteractionEvent): boolean {
+    this.emit('click', event)
+    return false
   }
 
   onHoverBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean): boolean {

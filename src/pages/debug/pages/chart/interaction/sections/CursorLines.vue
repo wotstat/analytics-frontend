@@ -43,7 +43,13 @@
       <DemoChartView :chart="chart" :height="260" />
     </div>
 
-    <EventLog :entries="entries" title="Ховер" empty="Ховера ещё не было" @clear="clear" />
+    <div class="debug-row current">
+      <span class="debug-label">кликов</span>
+      <span class="debug-value count" data-click-count>{{ clickCount }}</span>
+      <span class="debug-hint">Смещение до 4 px — клик. Перетаскивание, отмена и второй палец исключают клик.</span>
+    </div>
+
+    <EventLog :entries="entries" title="Ховер и клики" empty="Событий ещё не было" @clear="clear" />
 
     <p class="debug-note">
       Компоненты больше не хранят собственный <span class="debug-value">lastPoint</span> и не снимают себя в хуках.
@@ -66,7 +72,7 @@
     <p class="debug-note">
       Пальцем: коснись и держи не двигаясь — линии появятся вместе с
       <span class="debug-value">TouchHoverState</span>. Пан здесь разрешён по X, поэтому порог ожидания 200 мс, а
-      сдвиг пальца до срабатывания уводит в пан без ховера.
+      первое движение пальца в разрешённую сторону до срабатывания уводит в пан без ховера.
     </p>
 
     <p class="debug-note">
@@ -95,6 +101,7 @@ const offset = ref(0)
 const accent = ref(false)
 
 const lineCount = ref(0)
+const clickCount = ref(0)
 const pending = ref<string | null>(null)
 
 const stage = useTemplateRef<HTMLElement>('stage')
@@ -106,6 +113,12 @@ chart.setSeries([syntheticSeries('smooth', 3, 90)])
 const stopBegin = chart.callback.on('hoverBegin', () => push('hoverBegin'))
 const stopUpdate = chart.callback.on('hoverUpdate', () => push('hoverUpdate'))
 const stopEnd = chart.callback.on('hoverEnd', () => push('hoverEnd'))
+const stopClick = chart.callback.on('click', event => {
+  clickCount.value++
+  const modifiers = [event.altKey && 'Alt', event.shiftKey && 'Shift', event.ctrlKey && 'Ctrl', event.metaKey && 'Meta']
+    .filter(Boolean).join('+')
+  push(`click ${event.pointerType}${modifiers ? ` ${modifiers}` : ''} (${Math.round(event.point.x)}, ${Math.round(event.point.y)})`)
+})
 
 // Счётчик читается из DOM намеренно: set semantics — это ровно про число элементов, а не про состояние компонента
 const stopRender = chart.onAfterRender.on(() => {
@@ -148,6 +161,7 @@ onUnmounted(() => {
   stopBegin()
   stopUpdate()
   stopEnd()
+  stopClick()
   stopRender()
 })
 

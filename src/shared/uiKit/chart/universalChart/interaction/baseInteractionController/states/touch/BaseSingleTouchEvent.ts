@@ -2,11 +2,11 @@ import { Point } from '../../../../utils/Point'
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Position } from '../../BaseInteractionController'
 import { BaseState } from '../BaseState'
+import { ClickCandidate } from '../ClickCandidate'
 import { StartState } from '../StartState'
 
 export abstract class BaseSingleTouchEvent extends BaseState {
-
-  constructor(private activeEvent: PointerEvent, private CLASS_NAME: string) {
+  constructor(private activeEvent: PointerEvent, private CLASS_NAME: string, private readonly click?: ClickCandidate) {
     super()
   }
 
@@ -28,12 +28,14 @@ export abstract class BaseSingleTouchEvent extends BaseState {
   }
 
   onContextmenu(event: PointerEvent): void {
+    this.click?.cancel()
     event.preventDefault()
     event.stopPropagation()
   }
 
   onPointerDown(event: PointerEvent): void {
     if (event.pointerId == this.activeEvent.pointerId) return
+    this.click?.cancel()
 
     const first = this.event2TouchZoomPoint(this.activeEvent)
     const second = this.event2TouchZoomPoint(event)
@@ -49,6 +51,7 @@ export abstract class BaseSingleTouchEvent extends BaseState {
 
   onPointerMove(event: PointerEvent): void {
     if (event.pointerId !== this.activeEvent.pointerId) return
+    this.click?.move(event)
     this.activeEvent = event
 
     const pos = this.event2Position(event)
@@ -58,7 +61,13 @@ export abstract class BaseSingleTouchEvent extends BaseState {
 
   onPointerUp(event: PointerEvent): void {
     if (event.pointerId !== this.activeEvent.pointerId) return
+    const clicked = this.click?.finish(event)
+    this.endInteraction(event)
+    if (clicked) this.emitClick(event)
+  }
 
+  private endInteraction(event: PointerEvent) {
+    this.click?.cancel()
     const pos = this.event2Position(event)
     const point = this.offsetToChart(pos)
     this.endEvent(pos, point, this.chart.space)
@@ -69,6 +78,14 @@ export abstract class BaseSingleTouchEvent extends BaseState {
   }
 
   onPointerCancel(event: PointerEvent): void {
-    this.onPointerUp(event)
+    if (event.pointerId === this.activeEvent.pointerId) this.endInteraction(event)
+  }
+
+  onPointerLeave(event: PointerEvent): void {
+    if (event.pointerId === this.activeEvent.pointerId) this.click?.cancel()
+  }
+
+  onWheel(event: WheelEvent): void {
+    this.click?.cancel()
   }
 }

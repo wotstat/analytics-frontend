@@ -3,6 +3,7 @@ import { Point } from '../../../utils/Point'
 import { Position, TouchZoomPoint } from '../BaseInteractionController'
 import { Delegate } from '../BaseInteractionController'
 import { State, StateMachine } from '../StateMachine'
+import { ClickCandidate } from './ClickCandidate'
 
 function event2Position(event: { offsetX: number, offsetY: number, clientX: number, clientY: number }): Position {
   return {
@@ -19,6 +20,7 @@ export type Context = {
   capturePointer: (pointerId: number) => void
   releasePointer: (pointerId: number) => void
   offsetToChart: (event: { offsetX: number, offsetY: number }) => Point
+  isPointerInside: (event: { clientX: number, clientY: number }) => boolean
   chartToPage: (point: Point) => Point
   requestRender: () => void
   chart: () => UniversalChart
@@ -89,6 +91,27 @@ export class BaseState implements State<Context> {
     this.ctx.requestRender()
   }
 
+  protected createClickCandidate(event: PointerEvent) {
+    return new ClickCandidate(event, this.ctx.isPointerInside)
+  }
+
+  protected emitClick(event: PointerEvent) {
+    const chart = this.chart
+    if (!chart) return
+    const cursor = this.event2Position(event)
+    this.delegate.onClick({
+      cursor,
+      point: this.offsetToChart(cursor),
+      space: chart.space,
+      isTouch: event.pointerType === 'touch',
+      pointerType: event.pointerType,
+      altKey: event.altKey,
+      shiftKey: event.shiftKey,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey,
+    })
+  }
+
   onTouchMove(event: TouchEvent) { }
 
   onContextmenu(event: PointerEvent) { }
@@ -104,6 +127,8 @@ export class BaseState implements State<Context> {
   onPointerUp(event: PointerEvent) { }
 
   onPointerCancel(event: PointerEvent) { }
+
+  onLostPointerCapture(event: PointerEvent) { this.onPointerCancel(event) }
 
   onWheel(event: WheelEvent) { }
 

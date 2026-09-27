@@ -2,7 +2,7 @@ import { Overflow, Size, UniversalChart } from '../../UniversalChart'
 import { ChartSpace } from '../../utils/ChartSpace'
 import { Point } from '../../utils/Point'
 import { Classes } from '../../utils/utils'
-import { BaseInteractionController, InteractionDirection, Position, TouchZoomPoint } from '../baseInteractionController/BaseInteractionController'
+import { BaseInteractionController, ClickInteractionEvent, InteractionDirection, Position, TouchZoomPoint } from '../baseInteractionController/BaseInteractionController'
 import { InteractionFrame } from '../core/InteractionFrame'
 import { InteractionInput, InteractionPointer } from '../core/InteractionInput'
 
@@ -15,6 +15,8 @@ export interface InteractionComponent {
 
   prepareInteraction?(frame: InteractionFrame): void
   renderInteraction?(frame: InteractionFrame): void
+
+  onClick?(event: ClickInteractionEvent, controller: InteractionController): boolean
 
   mayHover?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, controller: InteractionController): InteractionDirection
   onHoverBegin?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, controller: InteractionController): boolean
@@ -151,6 +153,10 @@ export class InteractionController extends BaseInteractionController {
   didLayout(space: ChartSpace, full: Size): void {
     super.didLayout(space, full)
     for (const component of this.components) component.didLayout?.(space, full)
+  }
+
+  protected onClick(event: ClickInteractionEvent): boolean {
+    return processInteractionBoolean(this.components, component => component.onClick?.(event, this))
   }
 
   //#region Hover
