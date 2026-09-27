@@ -27,8 +27,8 @@ export function useVehicleSorting(grouping: Ref<VehicleGrouping>, slots: Ref<Slo
         continue
       }
 
-      const left = key === 'tankType' ? typeOrder.get(a.tankType ?? '') ?? null : a[key]
-      const right = key === 'tankType' ? typeOrder.get(b.tankType ?? '') ?? null : b[key]
+      const left = key === 'tankType' ? typeOrder.get(a.tankType ?? '') ?? null : a[key] ?? null
+      const right = key === 'tankType' ? typeOrder.get(b.tankType ?? '') ?? null : b[key] ?? null
 
       // Отсутствующие значения всегда идут последними, в том числе при сортировке по возрастанию.
       if (left === null && right !== null) return 1

@@ -1,6 +1,6 @@
 import { customBattleModes } from '@/shared/game/wot'
 import type { VehicleFilters } from '../filters/types'
-import { availableSlots } from './vehicleMetrics'
+import { availableSlots, baseSlots, type Slot } from './vehicleMetrics'
 import type { HistoryStep } from '../timeSeries/historyStep'
 import type { VehicleHistorySplit } from '../timeSeries/historySplit'
 import type { VehicleGrouping, VehicleSelection } from './vehicleGrouping'
@@ -19,13 +19,14 @@ function statisticsSource(filters: VehicleFilters) {
   return needsDetails ? 'VehiclesStatistics' : 'VehiclesStatisticsByBattleMode'
 }
 
-function statisticsMetrics(source: ReturnType<typeof statisticsSource>) {
+function statisticsMetrics(source: ReturnType<typeof statisticsSource>, slots: readonly Slot[]) {
   const winrate = source === 'VehiclesStatisticsByBattleMode'
     ? 'sum(winCount) / nullIf(sum(participations), 0) * 100'
     : availableSlots.winrate.sql
 
-  return Object.entries(availableSlots)
-    .map(([key, slot]) => `${key === 'winrate' ? winrate : slot.sql} as ${key}`)
+  // Тяжёлые состояния распределений читаем только для запрошенных агрегаций.
+  return [...new Set([...Object.keys(baseSlots) as Slot[], ...slots])]
+    .map(key => `${key === 'winrate' ? winrate : availableSlots[key].sql} as ${key}`)
     .join(',\n      ')
 }
 
@@ -80,7 +81,7 @@ function selectionWhere(selection?: VehicleSelection) {
 }
 
 export function vehicleHistoryQuery(filters: VehicleFilters, selection: VehicleSelection, beforeDay: string, step: HistoryStep,
-  split: VehicleHistorySplit | null = null) {
+  split: VehicleHistorySplit | null = null, slots: readonly Slot[] = []) {
   // Измерения разбиения есть только в подробной агрегации.
   const source = split === null ? statisticsSource(filters) : 'VehiclesStatistics'
   // Reaggregate source rows per period so averages keep their denominators and
@@ -106,7 +107,7 @@ export function vehicleHistoryQuery(filters: VehicleFilters, selection: VehicleS
   return `
     select
       ${period} as periodStart${splitSelect},
-      ${statisticsMetrics(source)}
+      ${statisticsMetrics(source, slots)}
     from ${source} as stats
     where ${vehicleStatisticsWhere(filters, beforeDay)}${selectionWhere(selection)}
     group by periodStart${splitGroup}
@@ -115,7 +116,7 @@ export function vehicleHistoryQuery(filters: VehicleFilters, selection: VehicleS
 }
 
 export function vehicleStatisticsQuery(filters: VehicleFilters, grouping: VehicleGrouping = 'tanks',
-  days: VehicleStatisticsPeriod = 30, selection?: VehicleSelection) {
+  days: VehicleStatisticsPeriod = 30, selection?: VehicleSelection, slots: readonly Slot[] = []) {
   const source = statisticsSource(filters)
   const isTank = grouping === 'tanks'
   const withLevel = grouping === 'levels' || grouping === 'classesByLevel'
@@ -157,7 +158,7 @@ export function vehicleStatisticsQuery(filters: VehicleFilters, grouping: Vehicl
       ${isTank || withType ? 'any(stats.tankType)' : 'NULL'} as tankType,
       min(stats.region) as region,
       max(stats.day) as day,
-      ${statisticsMetrics(source)}
+      ${statisticsMetrics(source, slots)}
     from ${source} as stats
     ${latestJoin}
     where ${where}

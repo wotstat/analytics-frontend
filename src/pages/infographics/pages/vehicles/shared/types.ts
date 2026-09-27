@@ -1,4 +1,6 @@
-import type { Slot } from './vehicleMetrics'
+import type { AggregatedSlot, BaseSlot } from './vehicleMetrics'
+
+type VehicleMetricValues = Record<BaseSlot, number | null> & Partial<Record<AggregatedSlot, number | null>>
 
 export type VehicleStatistics = {
   rowKey: string
@@ -7,9 +9,9 @@ export type VehicleStatistics = {
   tankType: string | null
   region: string
   day: string
-} & Record<Slot, number | null>
+} & VehicleMetricValues
 
-export type VehicleHistoryPeriod = { periodStart: string } & Record<Slot, number | null>
+export type VehicleHistoryPeriod = { periodStart: string } & VehicleMetricValues
 
 export type VehicleHistorySeries = {
   tag: string

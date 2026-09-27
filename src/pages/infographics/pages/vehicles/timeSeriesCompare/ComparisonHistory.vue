@@ -8,6 +8,7 @@ import type { VehicleSelection } from '../shared/vehicleGrouping'
 import type { VehicleHistoryPeriod } from '../shared/types'
 import type { HistoryStep } from '../timeSeries/historyStep'
 import { vehicleHistoryQuery } from '../shared/vehicleStatisticsQuery'
+import type { Slot } from '../shared/vehicleMetrics'
 import type { ComparisonHistoryQueue } from './comparisonHistoryQueue'
 
 const props = defineProps<{
@@ -17,12 +18,13 @@ const props = defineProps<{
   step: HistoryStep
   retry: number
   queue: ComparisonHistoryQueue
+  slot: Slot
 }>()
 
 const emit = defineEmits<{ update: [state: { status: Status, data: VehicleHistoryPeriod[] }] }>()
 
 watch(() =>
-  `${vehicleHistoryQuery(props.filters, props.selection, props.beforeDay, props.step)}\n-- retry ${props.retry}`,
+  `${vehicleHistoryQuery(props.filters, props.selection, props.beforeDay, props.step, null, [props.slot])}\n-- retry ${props.retry}`,
   async (sql, _, onCleanup) => {
     const controller = new AbortController()
     const { signal } = controller

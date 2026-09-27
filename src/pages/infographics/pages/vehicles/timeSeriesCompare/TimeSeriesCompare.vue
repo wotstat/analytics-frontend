@@ -1,7 +1,7 @@
 <template>
   <section class="vehicle-comparison">
     <ComparisonHistory v-for="source in sources" :key="source.tag" :selection="source.selection"
-      :filters="source.filters" :before-day="beforeDay" :step :retry="retries[source.tag] ?? 0" :queue="historyQueue"
+      :filters="source.filters" :before-day="beforeDay" :step :slot :retry="retries[source.tag] ?? 0" :queue="historyQueue"
       @update="states.set(source.tag, $event)" />
 
     <div class="toolbar">

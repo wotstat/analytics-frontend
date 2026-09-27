@@ -110,7 +110,7 @@ type SplitHistoryPeriod = VehicleHistoryPeriod & { splitKey?: string }
 type SplitSource = { tag: string, name: string, color: string }
 
 const history = queryComputed<SplitHistoryPeriod>(() =>
-  `${vehicleHistoryQuery(props.filters, props.selection, beforeDay.value, step.value, split.value)}\n-- retry ${retry.value}`,
+  `${vehicleHistoryQuery(props.filters, props.selection, beforeDay.value, step.value, split.value, [slot.value])}\n-- retry ${retry.value}`,
   { settings: { use_query_cache: 1, query_cache_ttl: 24 * 60 * 60 } })
 
 const splitSources = computed<SplitSource[]>(() => {

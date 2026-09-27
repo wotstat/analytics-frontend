@@ -44,8 +44,8 @@ function formatInteger(value: number, step: number | null) {
   return `${compactFormatters[digits].format(value / unit.value)}${unit.suffix}`
 }
 
-export function formatSlotValue(slot: Slot, value: number | null, step: number | null = null) {
-  if (value === null || !Number.isFinite(value)) return '—'
+export function formatSlotValue(slot: Slot, value: number | null | undefined, step: number | null = null) {
+  if (value == null || !Number.isFinite(value)) return '—'
 
   const definition: SlotDefinition = availableSlots[slot]
   switch (definition.format) {
@@ -59,4 +59,3 @@ export function formatSlotValue(slot: Slot, value: number | null, step: number |
     default: return formatInteger(value, step)
   }
 }
-

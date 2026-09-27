@@ -4,7 +4,7 @@
     :min-players="localFilters.minPlayers" :skip-incomplete-days="localFilters.skipIncompleteDays"
     @remove="comparison.remove" @color-change="comparison.setColor"
     @clear="comparison.clear" />
-  <VehicleListTable v-model:grouping="grouping" v-model:local-filters="localFilters" v-model:period="period" :slots="defaultSlots"
+  <VehicleListTable v-model:grouping="grouping" v-model:local-filters="localFilters" v-model:period="period" v-model:slots="slots"
     :vehicles="statistics.data" :status="statistics.status" :filters :compared-keys="comparison.comparedKeys.value"
     :comparison-count="comparison.sources.value.length"
     @compare="comparison.toggle" @compare-all="comparison.addMany" @retry="retry++" />
@@ -17,7 +17,7 @@ import type { VehicleGrouping } from './shared/vehicleGrouping'
 import { ref } from 'vue'
 import { useMeta } from '@/shared/composition/useMeta'
 import VehicleListTable from './vehicleListTable/VehicleListTable.vue'
-import { defaultSlots } from './shared/vehicleMetrics'
+import { defaultSlots, type Slot } from './shared/vehicleMetrics'
 import type { VehicleStatistics } from './shared/types'
 import VehicleFilters from './filters/VehicleFilters.vue'
 import { createVehicleFilters } from './filters/types'
@@ -40,11 +40,12 @@ const filters = ref(createVehicleFilters())
 const localFilters = ref(createLocalVehicleFilters())
 const grouping = ref<VehicleGrouping>('tanks')
 const period = ref<VehicleStatisticsPeriod>(30)
+const slots = ref<Slot[]>([...defaultSlots])
 
 const comparison = useVehicleComparison(filters)
 
 const retry = ref(0)
 const statistics = queryComputed<VehicleStatistics>(() =>
-  `${vehicleStatisticsQuery(filters.value, grouping.value, period.value)}\n-- retry ${retry.value}`,
+  `${vehicleStatisticsQuery(filters.value, grouping.value, period.value, undefined, slots.value)}\n-- retry ${retry.value}`,
   { settings: { ...LONG_CACHE_SETTINGS, query_cache_nondeterministic_function_handling: 'save' }, allowCache: false })
 </script>

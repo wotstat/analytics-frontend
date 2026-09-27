@@ -1,6 +1,6 @@
 <template>
   <button class="heading" :class="{ 'order-by': position > 0, 'secondary-sort': position > 1, asc: ascending }"
-    v-tooltip.instant.top-float="label" @click="$emit('click', $event)">
+    v-tooltip.instant.top-float="label" :aria-label="label" @click="$emit('click', $event)">
     <slot />
     <span v-if="position" class="sort-arrow">
       <span v-if="position > 1" class="sort-number">{{ position }}</span>

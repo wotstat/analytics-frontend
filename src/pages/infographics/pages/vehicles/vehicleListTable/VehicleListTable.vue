@@ -11,7 +11,7 @@
 
       <SearchLine v-if="showName" v-model="search" class="search" placeholder="Найти танк" />
       <VehicleListFilters v-model="localFilters" :show-vehicle-filters="showName" />
-      <VehicleColumnSelector v-model="selectedSlots" :max-slots="maxSelectableSlots" />
+      <VehicleColumnSelector v-model="selectedSlots" v-model:open="columnsOpen" :max-slots="maxSelectableSlots" />
       <VehicleTableSettings v-model="period" />
     </div>
 
@@ -43,6 +43,7 @@
         <SortableHeading v-for="slot in visibleSlots" :key="slot" :label="availableSlots[slot].label"
           v-bind="sorting.state(slot)" @click="sorting.toggle(slot, $event.altKey)">
           <Icon :icon="availableSlots[slot].icon" class="icon" />
+          <span v-if="slotAggregationLabel(slot)" class="aggregation-label">{{ slotAggregationLabel(slot) }}</span>
         </SortableHeading>
       </div>
     </div>
@@ -113,7 +114,7 @@ import VehicleType from '@/shared/game/vehicles/type/VehicleType.vue'
 import { createVehicleNameFilter } from '@/shared/game/vehicles/vehicleSearch'
 import SearchLine from '@/shared/game/selectors/components/searchLine/SearchLine.vue'
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
-import { availableSlots, orderSlots, type Slot } from '../shared/vehicleMetrics'
+import { availableSlots, baseSlot, orderSlots, slotAggregationLabel, type Slot } from '../shared/vehicleMetrics'
 import type { VehicleStatistics } from '../shared/types'
 import { DEFAULT_MIN_BATTLES, DEFAULT_MIN_PLAYERS, DEFAULT_ONLY_ACTUAL, type LocalVehicleFilters } from './localFilters'
 import { vehicleGroupings, vehicleHistorySelection, type VehicleGrouping, type VehicleSelection } from '../shared/vehicleGrouping'
@@ -130,7 +131,6 @@ import type { VehicleStatisticsPeriod } from '../shared/vehicleStatisticsPeriod'
 import type { ComparisonCandidate } from '../timeSeriesCompare/types'
 
 const props = defineProps<{
-  slots: Slot[]
   vehicles: VehicleStatistics[]
   status: Status
   filters: VehicleFilters
@@ -158,7 +158,7 @@ const localFilters = defineModel<LocalVehicleFilters>('localFilters', { required
 const grouping = defineModel<VehicleGrouping>('grouping', { required: true })
 const period = defineModel<VehicleStatisticsPeriod>('period', { required: true })
 
-const selectedSlots = ref<Slot[]>(orderSlots(props.slots))
+const selectedSlots = defineModel<Slot[]>('slots', { required: true })
 const activeSlot = ref<Slot>(selectedSlots.value[0] ?? 'battles')
 const historyStep = ref<HistoryStep>('day')
 const averageWindow = ref<HistoryAverageWindow>(null)
@@ -166,7 +166,15 @@ const averageWindow = ref<HistoryAverageWindow>(null)
 const displayLimit = ref(PAGE_SIZE)
 const sorting = useVehicleSorting(grouping, selectedSlots)
 
-const { width } = useElementSize(useTemplateRef('table'))
+const table = useTemplateRef<HTMLElement>('table')
+const { width } = useElementSize(table)
+const columnsOpen = ref(false)
+const columnSelectionHeight = ref(0)
+
+// Перезагрузка данных не должна сдвигать кнопку и закрывать открытый селектор.
+watch(columnsOpen, open => {
+  columnSelectionHeight.value = open ? table.value?.getBoundingClientRect().height ?? 0 : 0
+}, { flush: 'sync' })
 
 const showLevel = computed(() => grouping.value !== 'classes')
 const showType = computed(() => grouping.value !== 'levels')
@@ -191,6 +199,7 @@ const maxSelectableSlots = computed(() => {
 const visibleSlots = computed(() => selectedSlots.value)
 
 const tableStyle = computed(() => ({
+  minHeight: columnsOpen.value ? `${columnSelectionHeight.value}px` : undefined,
   '--name-width': `${nameWidth.value}px`,
   '--metadata-width': `${METADATA_COLUMN_WIDTH}px`,
   '--metadata-columns': `repeat(${metadataColumnCount.value}, var(--metadata-width))`,
@@ -203,7 +212,7 @@ const tableStyle = computed(() => ({
   '--vehicle-name-columns': showName.value
     ? 'var(--expand-width) var(--metadata-columns) minmax(0, 1fr)'
     : 'var(--expand-width) var(--metadata-columns)',
-  '--slot-count': visibleSlots.value.length,
+  '--slot-count': Math.max(1, visibleSlots.value.length),
 }))
 
 const latestDay = computed(() => props.vehicles.reduce((latest, vehicle) =>
@@ -289,8 +298,13 @@ watch([search, localFilters, () => props.vehicles], () => displayLimit.value = P
 
 watch(grouping, () => search.value = '')
 
-watch(maxSelectableSlots, limit => {
-  if (width.value > 0 && selectedSlots.value.length > limit) selectedSlots.value = selectedSlots.value.slice(0, limit)
+watch(selectedSlots, slots => {
+  if (slots.includes(activeSlot.value)) return
+  activeSlot.value = slots.find(slot => baseSlot(slot) === baseSlot(activeSlot.value)) ?? slots[0] ?? 'battles'
+})
+
+watch([maxSelectableSlots, width], ([limit, tableWidth]) => {
+  if (tableWidth > 0 && selectedSlots.value.length > limit) selectedSlots.value = orderSlots(selectedSlots.value.slice(0, limit))
 }, { immediate: true })
 </script>
 
@@ -370,6 +384,18 @@ watch(maxSelectableSlots, limit => {
     }
 
     .heading {
+      .aggregation-label {
+        position: absolute;
+        right: 3px;
+        bottom: 9px;
+        padding: 1px 4px;
+        color: #f6f6f6;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.1;
+        white-space: nowrap;
+      }
+
       .icon {
         width: 40px;
         height: 40px;

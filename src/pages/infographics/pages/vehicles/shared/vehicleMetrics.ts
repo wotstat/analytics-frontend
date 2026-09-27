@@ -11,7 +11,7 @@ export type SlotDefinition = {
 const average = (column: string) => `sum(${column}) / nullIf(sum(participations), 0)`
 
 // Все базовые показатели загружаются вместе, независимо от выбранных столбцов.
-export const availableSlots = {
+export const baseSlots = {
   battles: { icon: 'battles', label: 'Бои', sql: 'sum(participations)', description: 'Число участий на танке за выбранный период, не уникальных арен' },
   playerCount: { icon: 'player', label: 'Игроки', sql: 'uniqIfMerge(players)', description: 'Оценка числа уникальных игроков за выбранный период, без неизвестных аккаунтов' },
   winrate: { icon: 'winrate', label: 'Победы', sql: "sumIf(participations, result = 'win') / nullIf(sum(participations), 0) * 100", format: 'percent' },
@@ -59,7 +59,132 @@ export const availableSlots = {
   lowerTierEnemies: { icon: 'tank', label: 'Противники ниже уровнем', sql: average('lowerTierEnemiesSum'), format: 'decimal' },
 } as const satisfies Record<string, SlotDefinition>
 
-export type Slot = keyof typeof availableSlots
+export type BaseSlot = keyof typeof baseSlots
+
+export const aggregations = {
+  sum: { label: 'Сумма', shortLabel: 'Σ' },
+  min: { label: 'Минимум', shortLabel: 'Мин.' },
+  max: { label: 'Максимум', shortLabel: 'Макс.' },
+  q10: { label: 'Квантиль 10%', shortLabel: 'Q10' },
+  q25: { label: 'Квантиль 25%', shortLabel: 'Q25' },
+  q50: { label: 'Медиана (50%)', shortLabel: 'Мед.' },
+  q75: { label: 'Квантиль 75%', shortLabel: 'Q75' },
+  q90: { label: 'Квантиль 90%', shortLabel: 'Q90' },
+  q95: { label: 'Квантиль 95%', shortLabel: 'Q95' },
+  q99: { label: 'Квантиль 99%', shortLabel: 'Q99' },
+  variance: { label: 'Дисперсия', shortLabel: 'Дисп.' },
+  deviation: { label: 'Стандартное отклонение', shortLabel: 'σ' },
+  zero: { label: 'Доля нулевых значений', shortLabel: '0%' },
+} as const
+
+type Aggregation = keyof typeof aggregations
+const sumAggregations = ['sum'] as const
+const rangeAggregations = ['sum', 'min', 'max', 'zero'] as const
+const distributionAggregations = ['sum', 'min', 'max', 'q10', 'q25', 'q50', 'q75', 'q90', 'q95', 'q99', 'variance', 'deviation', 'zero'] as const
+const quantileLevels = [0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]
+
+// Возможности совпадают у VehiclesStatistics и VehiclesStatisticsByBattleMode.
+const aggregationSources = {
+  damage: { column: 'damageDealt', aggregations: distributionAggregations },
+  assist: { column: 'damageAssistedTotal', aggregations: distributionAggregations },
+  assistRadio: { column: 'damageAssistedRadio', aggregations: distributionAggregations },
+  assistTrack: { column: 'damageAssistedTrack', aggregations: distributionAggregations },
+  assistStun: { column: 'damageAssistedStun', aggregations: distributionAggregations },
+  assistMax: { column: 'damageAssistedMax', aggregations: distributionAggregations },
+  damageForMarks: { column: 'damageForMarks', aggregations: distributionAggregations },
+  blocked: { column: 'damageBlockedByArmor', aggregations: distributionAggregations },
+  damageReceived: { column: 'damageReceived', aggregations: distributionAggregations },
+  damageReceivedFromInvisibles: { column: 'damageReceivedFromInvisibles', aggregations: distributionAggregations },
+  xp: { column: 'xp', aggregations: distributionAggregations },
+  kills: { column: 'kills', aggregations: rangeAggregations },
+  spotted: { column: 'spotted', aggregations: rangeAggregations },
+  damaged: { column: 'damaged', aggregations: rangeAggregations },
+  shots: { column: 'shots', aggregations: rangeAggregations },
+  directEnemyHits: { column: 'directEnemyHits', aggregations: rangeAggregations },
+  piercingEnemyHits: { column: 'piercingEnemyHits', aggregations: rangeAggregations },
+  explosionHits: { column: 'explosionHits', aggregations: rangeAggregations },
+  directHitsReceived: { column: 'directHitsReceived', aggregations: rangeAggregations },
+  piercingsReceived: { column: 'piercingsReceived', aggregations: rangeAggregations },
+  explosionHitsReceived: { column: 'explosionHitsReceived', aggregations: rangeAggregations },
+  stunned: { column: 'stunned', aggregations: rangeAggregations },
+  stunDuration: { column: 'stunDuration', aggregations: distributionAggregations },
+  lifeTime: { column: 'lifeTime', aggregations: distributionAggregations },
+  duration: { column: 'duration', aggregations: distributionAggregations },
+  mileage: { column: 'mileage', aggregations: distributionAggregations },
+  maxHealth: { column: 'maxHealth', aggregations: rangeAggregations },
+  health: { column: 'health', aggregations: rangeAggregations },
+  higherTierEnemies: { column: 'higherTierEnemies', aggregations: sumAggregations },
+  sameTierEnemies: { column: 'sameTierEnemies', aggregations: sumAggregations },
+  lowerTierEnemies: { column: 'lowerTierEnemies', aggregations: sumAggregations },
+} as const satisfies Partial<Record<BaseSlot, { column: string, aggregations: readonly Aggregation[] }>>
+
+type AggregatableSlot = keyof typeof aggregationSources
+export type AggregatedSlot = {
+  [K in AggregatableSlot]: `${K}_${typeof aggregationSources[K]['aggregations'][number]}`
+}[AggregatableSlot]
+export type Slot = BaseSlot | AggregatedSlot
+
+// Переопределения агрегации, которая включается нажатием на название показателя.
+// Без переопределения используется базовый слот (обычно среднее).
+const defaultAggregations: Partial<Record<BaseSlot, Slot>> = {}
+
+export function defaultSlot(slot: BaseSlot): Slot {
+  return defaultAggregations[slot] ?? slot
+}
+
+function aggregationSql(slot: AggregatableSlot, aggregation: Aggregation) {
+  const { column } = aggregationSources[slot]
+  const count = slot === 'stunDuration' ? 'stunDurationCount' : 'participations'
+  switch (aggregation) {
+    case 'sum': return `sum(${column}Sum)`
+    case 'min': return `min(${column}Min)`
+    case 'max': return `max(${column}Max)`
+    case 'variance': return `varPopStableMerge(${column}Variance)`
+    case 'deviation': return `sqrt(varPopStableMerge(${column}Variance))`
+    case 'zero': return `sum(${column}ZeroCount) / nullIf(sum(${count}), 0) * 100`
+    default: {
+      const index = quantileLevels.indexOf(Number(aggregation.slice(1)) / 100) + 1
+      return `quantilesTDigestMerge(${quantileLevels.join(', ')})(${column}Quantiles)[${index}]`
+    }
+  }
+}
+
+export function baseSlot(slot: Slot): BaseSlot {
+  return slot.split('_')[0] as BaseSlot
+}
+
+export function metricLabel(slot: Slot) {
+  const label = baseSlots[baseSlot(slot)].label.replace(/^Средн(?:ий|ее|ие) /, '')
+  return label[0].toUpperCase() + label.slice(1)
+}
+
+export function slotAggregationLabel(slot: Slot) {
+  const aggregation = slot.split('_')[1] as Aggregation | undefined
+  return aggregation ? aggregations[aggregation].shortLabel : ''
+}
+
+export function slotAggregationOptions(slot: BaseSlot) {
+  if (!(slot in aggregationSources)) return []
+  const source = aggregationSources[slot as AggregatableSlot]
+  return [
+    { slot: slot as Slot, label: 'Среднее' },
+    ...source.aggregations.map(aggregation => ({ slot: `${slot}_${aggregation}` as Slot, label: aggregations[aggregation].label })),
+  ]
+}
+
+export const availableSlots: Record<Slot, SlotDefinition> = { ...baseSlots } as Record<Slot, SlotDefinition>
+for (const slot of Object.keys(aggregationSources) as AggregatableSlot[]) {
+  for (const aggregation of aggregationSources[slot].aggregations) {
+    const definition: SlotDefinition = baseSlots[slot]
+    availableSlots[`${slot}_${aggregation}` as AggregatedSlot] = {
+      ...definition,
+      label: `${metricLabel(slot)} · ${aggregations[aggregation].label}`,
+      description: `${definition.description ?? metricLabel(slot)}. Агрегация: ${aggregations[aggregation].label}`,
+      sql: aggregationSql(slot, aggregation),
+      format: aggregation === 'zero' ? 'percent' : aggregation === 'variance' ? 'decimal' : definition.format,
+    }
+  }
+}
 
 export const slotCategories = [
   { title: 'Общее', slots: ['battles', 'playerCount', 'winrate', 'survival', 'xp', 'lifeTime', 'duration', 'mileage'] },
@@ -67,15 +192,30 @@ export const slotCategories = [
   { title: 'Содействие', slots: ['assist', 'assistRadio', 'assistTrack', 'assistStun', 'assistMax'] },
   { title: 'Стрельба', slots: ['shots', 'directEnemyHits', 'piercingEnemyHits', 'explosionHits', 'directHitsReceived', 'piercingsReceived', 'explosionHitsReceived'] },
   { title: 'В бою', slots: ['kills', 'spotted', 'damaged', 'stunned', 'stunDuration', 'higherTierEnemies', 'sameTierEnemies', 'lowerTierEnemies'] },
-] as const satisfies readonly { title: string, slots: readonly Slot[] }[]
+] as const satisfies readonly { title: string, slots: readonly BaseSlot[] }[]
 
-const slotOrder: Slot[] = slotCategories.flatMap(category => [...category.slots])
+const slotOrder: BaseSlot[] = slotCategories.flatMap(category => [...category.slots])
 
 export function orderSlots(slots: readonly Slot[]): Slot[] {
-  return slotOrder.filter(slot => slots.includes(slot))
+  const selected = new Set(slots)
+  return slotOrder.flatMap(base => {
+    const options = slotAggregationOptions(base)
+    return (options.length ? options.map(option => option.slot) : [base]).filter(slot => selected.has(slot))
+  })
 }
 
-export const defaultSlots: Slot[] = ['battles', 'playerCount', 'winrate', 'damage', 'assist', 'kills', 'duration']
+// Порядок приоритета: сначала обрезаем набор по лимиту, затем упорядочиваем столбцы для отображения.
+const defaultSlotOrder = [
+  'battles', 'playerCount', 'winrate', 'damage', 'assist', 'kills', 'duration',
+  'survival', 'xp', 'blocked', 'damageForMarks', 'spotted', 'shots', 'damageReceived',
+  'assistRadio', 'assistTrack', 'piercingEnemyHits', 'directEnemyHits', 'lifeTime', 'mileage',
+] as const satisfies readonly BaseSlot[]
+
+export const defaultSlots: Slot[] = defaultSlotOrder.map(defaultSlot)
+
+export function defaultSlotsForLimit(limit: number): Slot[] {
+  return orderSlots(defaultSlots.slice(0, limit))
+}
 
 export function slotDescription(slot: Slot) {
   const definition: SlotDefinition = availableSlots[slot]

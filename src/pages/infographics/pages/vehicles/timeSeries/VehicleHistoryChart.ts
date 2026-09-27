@@ -338,7 +338,7 @@ export class VehicleHistoryChart extends UniversalChart {
     for (const row of series.history) {
       const { start, end } = historyPeriodWindow(row.periodStart, step, todayStart)
       const x = (start + end) / 2
-      const value = row[slot]
+      const value = row[slot] ?? null
 
       // Пропущенные периоды и NULL остаются разрывами, а не превращаются в нули.
       if (previousStart !== null && start > nextHistoryPeriod(previousStart, step)) points.push(null)
