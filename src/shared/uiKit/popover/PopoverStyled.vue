@@ -206,6 +206,7 @@ $animation-offset: var(--animation-transition-offset, 3px);
 
   .popover-content {
     overflow: hidden;
+    overscroll-behavior: contain;
     border-radius: 9px;
   }
 }

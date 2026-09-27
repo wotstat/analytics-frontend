@@ -224,5 +224,12 @@ const arrowProps = computed(() => {
   left: 0px;
   margin: 0px;
   pointer-events: none;
+
+  &,
+  > :deep(*),
+  :deep(.nice-scrollbar),
+  :deep(.nice-scrollbar-transparent) {
+    overscroll-behavior: contain;
+  }
 }
 </style>
