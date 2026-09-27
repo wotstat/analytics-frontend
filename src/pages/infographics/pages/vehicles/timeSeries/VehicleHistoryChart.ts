@@ -9,6 +9,9 @@ import { ZoomChartComponent } from '@/shared/uiKit/chart/universalChart/interact
 import { Highlight } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/highlight/Highlight'
 import type { HighlightSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/HighlightSynchronizer'
 import { InteractionController, type InteractionComponent } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController'
+import { CallbackComponent } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/callback/CallbackComponent'
+import { InteractionFrame } from '@/shared/uiKit/chart/universalChart/interaction/core/InteractionFrame'
+import type { ClickInteractionEvent } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/BaseInteractionController'
 import { AutoLabels, type Options as LabelsOptions } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
 import { labelCandidates } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/labelCandidates'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
@@ -17,6 +20,7 @@ import type { AutoLineInteraction, LinePointHit } from '@/shared/uiKit/chart/uni
 import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
+import { EventEmitter } from '@/shared/uiKit/chart/universalChart/utils/EventEmitter'
 import { availableSlots, type Slot } from '../shared/vehicleMetrics'
 import { formatSlotValue } from '../shared/formatMetricValue'
 import { DAY, timeLabels } from './timeLabels'
@@ -46,6 +50,7 @@ let nextChartStyleScope = 0
 
 export class VehicleHistoryChart extends UniversalChart {
   readonly tooltipCtx = shallowRef<TooltipCtx<VehicleHistoryHit> | null>(null)
+  readonly onSeriesClick = new EventEmitter<{ tag: string, event: ClickInteractionEvent }>()
 
   private readonly lines = new Map<string, AutoLine<HistoryPoint>>()
   private readonly seriesPoints = new Map<string, {
@@ -278,12 +283,23 @@ export class VehicleHistoryChart extends UniversalChart {
     const interactions = lines.slice(1).reduce<AutoLineInteraction<HistoryPoint>>(
       (source, line) => source.union(line.interaction), lines[0].interaction)
     const selection = interactions.nearestByAxis('x')
+    const strokeSelection = interactions.nearStroke({ maxDistance: 20 }).nearest()
+    const callbacks = new CallbackComponent()
+    callbacks.on('click', event => {
+      if (!this.onSeriesClick.hasListeners) return
+      const frame = new InteractionFrame(event.space, {
+        key: Symbol('click'),
+        pointer: { point: event.point, cursor: event.cursor, isTouch: event.isTouch },
+      })
+      const [hit] = frame.resolve(strokeSelection)
+      if (typeof hit?.interactionTag === 'string') this.onSeriesClick.emit({ tag: hit.interactionTag, event })
+    })
 
     let highlight: Highlight | null = null
 
     if (lines.length > 1) {
       highlight = new Highlight({
-        selection: interactions.nearStroke({ maxDistance: 20 }).nearest(),
+        selection: strokeSelection,
         class: 'highlighted',
       })
 
@@ -291,6 +307,7 @@ export class VehicleHistoryChart extends UniversalChart {
     }
 
     this.interactionComponents = [
+      callbacks,
       ...(highlight ? [highlight] : []),
       new VerticalLine({ selection, offset: { start: -4, end: 0 } }),
       new MarkerOverlay({

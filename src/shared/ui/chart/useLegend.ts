@@ -18,6 +18,7 @@ export type LegendModel<TItem extends LegendItem = LegendItem> = {
   readonly highlightSync: HighlightSynchronizer
   isEnabled(item: Pick<TItem, 'tag'>): boolean
   isHighlighted(item: TItem): boolean
+  setEnabled(targets: readonly TItem[], enabled: boolean): void
   toggle(item: TItem): void
   toggleFromClick(item: TItem, extend: boolean, isolate?: boolean): void
   highlight(item: TItem): void
@@ -138,6 +139,7 @@ export function useLegend<TItem extends LegendItem>(
     highlightSync,
     isEnabled,
     isHighlighted,
+    setEnabled,
     toggle,
     toggleFromClick,
     highlight,

@@ -99,6 +99,7 @@ export class BaseState implements State<Context> {
     const chart = this.chart
     if (!chart) return
     const cursor = this.event2Position(event)
+    let panInertionPrevented = false
     this.delegate.onClick({
       cursor,
       point: this.offsetToChart(cursor),
@@ -109,6 +110,8 @@ export class BaseState implements State<Context> {
       shiftKey: event.shiftKey,
       ctrlKey: event.ctrlKey,
       metaKey: event.metaKey,
+      get panInertionPrevented() { return panInertionPrevented },
+      preventPanInertion() { panInertionPrevented = true },
     })
   }
 

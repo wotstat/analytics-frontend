@@ -1,7 +1,7 @@
 <template>
   <section class="vehicle-comparison">
-    <ComparisonHistory v-for="source in sources" :key="source.tag" :selection="source.selection" :filters="source.filters"
-      :before-day="beforeDay" :step :retry="retries[source.tag] ?? 0" :queue="historyQueue"
+    <ComparisonHistory v-for="source in sources" :key="source.tag" :selection="source.selection"
+      :filters="source.filters" :before-day="beforeDay" :step :retry="retries[source.tag] ?? 0" :queue="historyQueue"
       @update="states.set(source.tag, $event)" />
 
     <div class="toolbar">
@@ -32,8 +32,7 @@
           <Legend :legend toggleable highlightable color-editable removable
             @color-change="(source, color) => emit('colorChange', source.tag, color)"
             @remove="source => emit('remove', source.tag)" class="legend" />
-          <button class="reset" title="Сбросить сравнение"
-            @click="emit('clear')">
+          <button class="reset" title="Сбросить сравнение" @click="emit('clear')">
             <ResetIcon />
           </button>
         </div>
@@ -43,7 +42,7 @@
           <button @click="retries[source.tag] = (retries[source.tag] ?? 0) + 1">Повторить</button>
         </div>
         <div v-if="emptySources.length" class="caption">
-          Нет данных: {{ emptySources.map(source => source.name).join(', ') }}
+          Нет данных: {{emptySources.map(source => source.name).join(', ')}}
         </div>
       </div>
     </div>
@@ -51,14 +50,15 @@
     <FloatingTooltip :ctx="chart.tooltipCtx.value" anchor="pivot-x" :placement="['top-float', 'bottom-float']"
       :offset="{ top: 28, bottom: annotations.length ? 40 : 12 }">
       <template #default="{ ctx }">
-        <ComparisonTooltip :ctx :sources="legend.enabled.value" :game-version="versionForPeriod(ctx.hit.datum.periodEnd)" />
+        <ComparisonTooltip :ctx :sources="legend.enabled.value"
+          :game-version="versionForPeriod(ctx.hit.datum.periodEnd)" />
       </template>
     </FloatingTooltip>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, markRaw, reactive, ref, watch } from 'vue'
+import { computed, markRaw, onScopeDispose, reactive, ref, watch } from 'vue'
 import { useNow } from '@vueuse/core'
 import { isErrorStatus, loading, success, type Status } from '@/db'
 import ResetIcon from '@/assets/icons/reset.svg'
@@ -122,6 +122,14 @@ const legendItems = computed(() => props.sources.map(source => ({
 
 const legend = useLegend<ComparisonSource & { loading?: boolean }>(legendItems)
 const chart = markRaw(new VehicleHistoryChart(legend.highlightSync))
+onScopeDispose(chart.onSeriesClick.on(({ tag, event }) => {
+  if (event.isTouch) return
+  const source = legend.items.value.find(item => item.tag === tag)
+  if (!source || !legend.isEnabled(source)) return
+  event.preventPanInertion()
+  const targets = event.altKey ? legend.items.value.filter(item => item.tag !== tag) : [source]
+  legend.setEnabled(targets, false)
+}))
 
 const histories = computed(() => props.sources.map(source => ({
   tag: source.tag,

@@ -62,6 +62,10 @@
 ховер без клика. Для пера это состояние также сохраняет проверку направления, но пан
 начинается при первом движении в разрешённую сторону, без ожидания порога 4 px.
 
+`ZoomChartComponent` обрабатывает последнее смещение и release синхронно в `panEnd`,
+до возможного клика. Если не осталось ввода, инерции или пружины возврата, он сразу
+отпускает auto-fit ось; изменения данных из клика пересчитывают её без хвоста интерполяции.
+
 Касание на `pointerdown` переходит в `AwaitingTouchPanOrHover`, даже если pan/hover
 отключены. Пан начинается при первом движении в разрешённую сторону, без порога расстояния;
 отпускание в пределах 4 px также даёт клик, в том числе после такого короткого пана.
@@ -73,7 +77,14 @@ pointer capture подавляет `pointerleave`; возврат внутрь �
 `InteractionComponent.onClick(event, controller)` получает `ClickInteractionEvent`:
 `cursor`, `point` в layout-координатах (как у hover), актуальный `space`, `isTouch`,
 `pointerType` и `altKey`/`shiftKey`/`ctrlKey`/`metaKey`. Возврат `true` запрашивает кадр;
-все компоненты получают событие. Внешняя подписка — через `CallbackComponent`:
+все компоненты получают событие. Обработчик может синхронно вызвать `event.preventPanInertion()`:
+флаг `event.panInertionPrevented` становится `true` для всех получателей этого клика.
+После всех `onClick` контроллер вызывает `onAfterClick` у того же набора компонентов,
+поэтому применение результата не зависит от порядка подписок. `ZoomChartComponent`
+отменяет инерцию пана, сохраняя инерцию зума и пружины возврата; при отмене инерции
+за пределами допустимого окна запускает пружину возврата. Если движения больше нет,
+он также отпускает auto-fit ось. Пустое место само по себе инерцию не отменяет.
+Внешняя подписка — через `CallbackComponent`:
 
 ```ts
 const callbacks = new CallbackComponent()
@@ -84,7 +95,10 @@ const stop = callbacks.on('click', event => {
     pointer: { point: event.point, cursor: event.cursor, isTouch: event.isTouch },
   })
   const [hit] = frame.resolve(line.interaction.nearStroke({ maxDistance: 20 }).nearest())
-  if (hit) console.log(hit.interactionTag, event.altKey)
+  if (hit) {
+    event.preventPanInertion()
+    console.log(hit.interactionTag, event.altKey)
+  }
 })
 // stop() снимает подписку; hit вычисляется по позиции клика, а не прошлому hover.
 ```

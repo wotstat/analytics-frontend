@@ -22,6 +22,8 @@ export type ClickInteractionEvent = {
   shiftKey: boolean
   ctrlKey: boolean
   metaKey: boolean
+  readonly panInertionPrevented: boolean
+  preventPanInertion(): void
 }
 
 export type Delegate = {

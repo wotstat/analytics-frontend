@@ -2,7 +2,7 @@ import { Size, UniversalChart } from '../../../../UniversalChart'
 import { Bounds, BoundsAxes, BoundsConstraint, BoundsPatch } from '../../../../utils/Bounds'
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
-import { InteractionDirection, Position, TouchZoomPoint } from '../../../baseInteractionController/BaseInteractionController'
+import { ClickInteractionEvent, InteractionDirection, Position, TouchZoomPoint } from '../../../baseInteractionController/BaseInteractionController'
 import { InteractionController, InteractionComponent } from '../../InteractionController'
 import {
   Axis, AxisBounds, DEFAULT_DECELERATION, DEFAULT_TOUCH_ZOOM_DECELERATION, INERTIA_MIN_REMAINING_PIXELS,
@@ -112,9 +112,9 @@ type Options = {
 // Controls the chart render bounds through pan, wheel zoom, pinch zoom, inertia and
 // limits with optional elastic overscroll. Renders nothing by itself.
 //
-// Event handlers only record state, all bounds changes are computed and applied in
-// onBeforeLayout. Gestures and inertia integrate in "raw" (unresisted) space, the
-// displayed bounds are a projection of raw anchored at the active zoom point:
+// Movement handlers record state; one pipeline applies bounds in onBeforeLayout and
+// synchronously at pan end, before a possible click. Gestures and inertia integrate in
+// "raw" (unresisted) space; displayed bounds are a projection anchored at the active zoom point:
 // identity inside limits, rubber band outside (elastic) or clamp (hard). Motions run
 // per channel (center / logRange): inertia integrates raw directly, springs follow a
 // displayed-space curve written back into raw through the inverse projection, and
@@ -217,6 +217,23 @@ export class ZoomChartComponent implements InteractionComponent {
 
   //#region Pan
 
+  onAfterClick(event: ClickInteractionEvent): boolean {
+    if (!event.panInertionPrevented) return false
+
+    for (const axis of this.activeAxes) {
+      const motions = this.motions[axis]
+      if (motions.center?.kind !== 'inertia' || motions.center.source === 'touchZoom') continue
+
+      motions.center = null
+      // A canceled inertia can leave elastic overscroll: return it with a spring.
+      this.releaseAxis(axis, this.ensureRaw(this.chart.space), getAxisSize(axis, this.chart.space.layout),
+        { center: 0, logRange: null }, null, this.now())
+    }
+
+    if (!this.hasActiveInput() && !this.hasAnyMotion()) this.releaseAutoFit(false)
+    return true
+  }
+
   mayPan(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, controller: InteractionController): InteractionDirection {
     return this.options.panDirection ?? false
   }
@@ -276,6 +293,8 @@ export class ZoomChartComponent implements InteractionComponent {
     this.recordPanVelocity(cursor)
     this.lastCursor = cursor
     this.pan.ended = true
+    // Finish the release before the state machine dispatches a possible click.
+    this.applyInteraction(space)
     return true
   }
 
@@ -369,6 +388,10 @@ export class ZoomChartComponent implements InteractionComponent {
   //#region Apply pipeline
 
   onBeforeLayout(space: ChartSpace, full: Size): void {
+    this.applyInteraction(space)
+  }
+
+  private applyInteraction(space: ChartSpace): void {
     const now = this.now()
 
     // Another linked chart is driving: follow its window (unless we are being gestured directly,
@@ -393,12 +416,13 @@ export class ZoomChartComponent implements InteractionComponent {
     }
 
     const patch: BoundsPatch = {}
+    let panEnded = false
 
     if (activeBusy) {
       const raw = this.ensureRaw(space)
 
       const pinchApplied = this.processPinch(raw, space.layout, now)
-      this.processPan(raw, space.layout, now)
+      panEnded = this.processPan(raw, space.layout, now)
       if (pinchApplied || this.pinch) this.wheel = null
       else this.processWheel(raw, space.layout, now)
 
@@ -408,7 +432,9 @@ export class ZoomChartComponent implements InteractionComponent {
       Object.assign(patch, this.computeDisplayed(raw, space).toPatch(this.enabledBoundsAxes))
     }
 
-    this.stepAutoFollow(space, patch, now, activeBusy)
+    const stillBusy = this.hasActiveInput() || this.hasAnyMotion()
+    if (panEnded && !stillBusy) this.releaseAutoFit(false)
+    this.stepAutoFollow(space, patch, now, stillBusy)
 
     if (Bounds.isPatchValid(patch) && !space.bounds.isEqualToPatch(patch)) this.applyChartBounds(patch, true)
 
@@ -507,9 +533,9 @@ export class ZoomChartComponent implements InteractionComponent {
     return changed
   }
 
-  private processPan(raw: Bounds, layout: LayoutValue, now: number): void {
+  private processPan(raw: Bounds, layout: LayoutValue, now: number): boolean {
     const pan = this.pan
-    if (!pan) return
+    if (!pan) return false
 
     const cursor = this.lastCursor
     if (cursor) {
@@ -525,7 +551,10 @@ export class ZoomChartComponent implements InteractionComponent {
       this.pan = null
       this.lastCursor = null
       this.releasePan(pan, raw, layout, now)
+      return true
     }
+
+    return false
   }
 
   private processWheel(raw: Bounds, layout: LayoutValue, now: number): void {

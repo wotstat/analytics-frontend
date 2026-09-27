@@ -17,6 +17,7 @@ export interface InteractionComponent {
   renderInteraction?(frame: InteractionFrame): void
 
   onClick?(event: ClickInteractionEvent, controller: InteractionController): boolean
+  onAfterClick?(event: ClickInteractionEvent, controller: InteractionController): boolean
 
   mayHover?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, controller: InteractionController): InteractionDirection
   onHoverBegin?(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, controller: InteractionController): boolean
@@ -156,7 +157,9 @@ export class InteractionController extends BaseInteractionController {
   }
 
   protected onClick(event: ClickInteractionEvent): boolean {
-    return processInteractionBoolean(this.components, component => component.onClick?.(event, this))
+    const components = [...this.components]
+    const shouldRender = processInteractionBoolean(components, component => component.onClick?.(event, this))
+    return processInteractionBoolean(components, component => component.onAfterClick?.(event, this), shouldRender)
   }
 
   //#region Hover
