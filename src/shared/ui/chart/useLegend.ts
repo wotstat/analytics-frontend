@@ -19,7 +19,7 @@ export type LegendModel<TItem extends LegendItem = LegendItem> = {
   isEnabled(item: Pick<TItem, 'tag'>): boolean
   isHighlighted(item: TItem): boolean
   toggle(item: TItem): void
-  toggleFromClick(item: TItem, extend: boolean): void
+  toggleFromClick(item: TItem, extend: boolean, isolate?: boolean): void
   highlight(item: TItem): void
   clearHighlight(): void
 }
@@ -70,7 +70,17 @@ export function useLegend<TItem extends LegendItem>(
     setEnabled([item], !isEnabled(item))
   }
 
-  function toggleFromClick(item: TItem, extend: boolean): void {
+  function toggleFromClick(item: TItem, extend: boolean, isolate = false): void {
+    if (isolate) {
+      const enabled = isEnabled(item)
+      const keepSelected = !enabled || items.value.some(candidate => candidate.tag !== item.tag && isEnabled(candidate))
+      setDisabledTags(keepSelected
+        ? new Set(items.value.filter(candidate => candidate.tag !== item.tag).map(candidate => candidate.tag))
+        : new Set([item.tag]))
+      toggleAnchor = { tag: item.tag, enabled: keepSelected }
+      return
+    }
+
     const anchor = toggleAnchor
     const anchorIndex = anchor
       ? items.value.findIndex(candidate => candidate.tag === anchor.tag)
@@ -96,9 +106,12 @@ export function useLegend<TItem extends LegendItem>(
       if (enabled) next.delete(target.tag)
       else next.add(target.tag)
     }
-    disabledTags.value = next
+    setDisabledTags(next)
+  }
 
-    if (publishedTag !== undefined && next.has(publishedTag)) clearHighlight()
+  function setDisabledTags(tags: ReadonlySet<InteractionTag>): void {
+    disabledTags.value = tags
+    if (publishedTag !== undefined && tags.has(publishedTag)) clearHighlight()
   }
 
   function highlight(item: TItem): void {

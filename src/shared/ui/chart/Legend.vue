@@ -82,7 +82,7 @@ function isInteractive(item: TItem) {
 
 function toggle(item: TItem, event: MouseEvent) {
   if (!props.toggleable) return
-  props.legend.toggleFromClick(item, event.shiftKey)
+  props.legend.toggleFromClick(item, event.shiftKey, event.altKey)
 }
 
 function highlight(item: TItem) {
