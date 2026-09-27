@@ -16,7 +16,7 @@ export type LegendModel<TItem extends LegendItem = LegendItem> = {
   readonly enabledTags: ComputedRef<readonly TItem['tag'][]>
   readonly highlighted: ComputedRef<readonly TItem[]>
   readonly highlightSync: HighlightSynchronizer
-  isEnabled(item: TItem): boolean
+  isEnabled(item: Pick<TItem, 'tag'>): boolean
   isHighlighted(item: TItem): boolean
   toggle(item: TItem): void
   toggleFromClick(item: TItem, extend: boolean): void
@@ -48,7 +48,9 @@ export function useLegend<TItem extends LegendItem>(
     highlightedTags.value = state ? [...state.tags] : []
   })
 
-  watch(() => items.value.map(item => item.tag), tags => {
+  watch(() => items.value.map(item => item.tag), (tags, previousTags) => {
+    if (tags.length === previousTags.length && tags.every((tag, index) => tag === previousTags[index])) return
+
     const currentTags = new Set(tags)
     disabledTags.value = new Set([...disabledTags.value].filter(tag => currentTags.has(tag)))
 
@@ -56,7 +58,7 @@ export function useLegend<TItem extends LegendItem>(
     if (toggleAnchor && !currentTags.has(toggleAnchor.tag)) toggleAnchor = undefined
   })
 
-  function isEnabled(item: TItem): boolean {
+  function isEnabled(item: Pick<TItem, 'tag'>): boolean {
     return !disabledTags.value.has(item.tag)
   }
 

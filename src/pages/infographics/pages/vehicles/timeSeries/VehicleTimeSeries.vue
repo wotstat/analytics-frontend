@@ -130,23 +130,24 @@ const splitSources = computed<SplitSource[]>(() => {
 const legend = useLegend(splitSources)
 const chart = markRaw(new VehicleHistoryChart(legend.highlightSync))
 
-const series = computed<VehicleHistorySeries[]>(() => {
+const histories = computed<VehicleHistorySeries[]>(() => {
   if (split.value === null) {
     return [{
       tag: 'vehicle',
-      name: '',
-      color: 'var(--blue-thin-color)',
       history: applyHistoryFilters(history.value.data, slot.value, props, step.value, props.skipIncompleteDays),
     }]
   }
 
   return splitSources.value.map(source => ({
-    ...source,
-    enabled: legend.isEnabled(source),
+    tag: source.tag,
     history: applyHistoryFilters(history.value.data.filter(row => row.splitKey === source.tag),
       slot.value, props, step.value, props.skipIncompleteDays),
   }))
 })
+const series = computed(() => histories.value.map(source => ({
+  ...source,
+  enabled: legend.isEnabled(source),
+})))
 
 const hasValues = computed(() => history.value.status === success &&
   series.value.some(source => source.enabled !== false &&
@@ -155,6 +156,10 @@ const hasValues = computed(() => history.value.status === success &&
 watch([series, slot, beforeDay, step, averageWindow], () => {
   chart.setHistories(series.value, slot.value, beforeDay.value, step.value, averageWindow.value)
 }, { immediate: true })
+
+watch(() => split.value === null
+  ? [{ tag: 'vehicle', color: 'var(--blue-thin-color)' }]
+  : splitSources.value, colors => chart.setSeriesColors(colors), { immediate: true })
 
 watch(annotations, value => chart.setAnnotations(value), { immediate: true })
 watch(annotationOptions.showWotstatOutages, visible => chart.setOutagesVisible(visible), { immediate: true })

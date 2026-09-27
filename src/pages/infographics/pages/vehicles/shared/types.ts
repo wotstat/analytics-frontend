@@ -13,8 +13,6 @@ export type VehicleHistoryPeriod = { periodStart: string } & Record<Slot, number
 
 export type VehicleHistorySeries = {
   tag: string
-  name: string
-  color: string
   history: VehicleHistoryPeriod[]
   enabled?: boolean
 }

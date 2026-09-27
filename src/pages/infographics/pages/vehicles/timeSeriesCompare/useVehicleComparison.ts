@@ -67,7 +67,8 @@ export function useVehicleComparison(filters: Ref<VehicleFilters>) {
   }
 
   function setColor(tag: string, color: string) {
-    sources.value = sources.value.map(source => source.tag === tag ? { ...source, color } : source)
+    const source = sources.value.find(source => source.tag === tag)
+    if (source) source.color = color
   }
 
   function clear() {

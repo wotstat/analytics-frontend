@@ -120,14 +120,17 @@ const legendItems = computed(() => props.sources.map(source => ({
   loading: !states.has(source.tag) || states.get(source.tag)?.status === loading,
 })))
 
-const legend = useLegend(legendItems)
+const legend = useLegend<ComparisonSource & { loading?: boolean }>(legendItems)
 const chart = markRaw(new VehicleHistoryChart(legend.highlightSync))
 
-const series = computed(() => legendItems.value.map(source => ({
-  ...source,
-  enabled: legend.isEnabled(source),
+const histories = computed(() => props.sources.map(source => ({
+  tag: source.tag,
   history: applyHistoryFilters(states.get(source.tag)?.data ?? [], slot.value, props,
     step.value, props.skipIncompleteDays),
+})))
+const series = computed(() => histories.value.map(source => ({
+  ...source,
+  enabled: legend.isEnabled(source),
 })))
 
 const hasValues = computed(() => series.value.some(source => source.enabled &&
@@ -145,12 +148,17 @@ const failedSources = computed(() => legendItems.value.filter(source => {
   return state && isErrorStatus(state.status)
 }))
 
-const emptySources = computed(() => series.value.filter(source => states.get(source.tag)?.status === success &&
-  !hasHistoryValues(source.history, slot.value)))
+const emptyTags = computed(() => new Set(histories.value
+  .filter(source => states.get(source.tag)?.status === success && !hasHistoryValues(source.history, slot.value))
+  .map(source => source.tag)))
+const emptySources = computed(() => legendItems.value.filter(source => emptyTags.value.has(source.tag)))
 
 watch([series, slot, beforeDay, step, averageWindow], () => {
   chart.setHistories(series.value, slot.value, beforeDay.value, step.value, averageWindow.value)
 }, { immediate: true })
+
+watch(() => props.sources.map(source => ({ tag: source.tag, color: source.color })),
+  colors => chart.setSeriesColors(colors), { immediate: true })
 
 watch(annotations, value => chart.setAnnotations(value), { immediate: true })
 watch(annotationOptions.showWotstatOutages, visible => chart.setOutagesVisible(visible), { immediate: true })

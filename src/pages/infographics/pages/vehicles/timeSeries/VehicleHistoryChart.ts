@@ -31,8 +31,6 @@ import { serverOutages } from '@/shared/wotstat/serverOutages'
 
 type HistoryPoint = {
   series: string
-  name: string
-  color: string
   x: number
   y: number
   periodStart: string
@@ -50,6 +48,12 @@ export class VehicleHistoryChart extends UniversalChart {
   readonly tooltipCtx = shallowRef<TooltipCtx<VehicleHistoryHit> | null>(null)
 
   private readonly lines = new Map<string, AutoLine<HistoryPoint>>()
+  private readonly seriesPoints = new Map<string, {
+    history: VehicleHistoryPeriod[]
+    key: string
+    points: (HistoryPoint | null)[] | null
+    enabled: boolean
+  }>()
   private readonly plot = new PlotGroup()
   private readonly eventAreas = new PlotGroup(['history-event-areas'])
   private eventAreaPlots: RectangleArea[] = []
@@ -62,12 +66,14 @@ export class VehicleHistoryChart extends UniversalChart {
   private readonly annotationStyle = document.createElementNS('http://www.w3.org/2000/svg', 'style')
   private readonly styleScopeClass = `vehicle-history-chart-${nextChartStyleScope++}`
   private seriesClassByTag = new Map<string, string>()
+  private seriesColors: readonly { tag: string, color: string }[] = []
 
   private readonly labelsX: AutoLabels
   private readonly labelsY: AutoLabels
   private readonly labelsAnnotations: AutoLabels
   private readonly zoom: ZoomChartComponent
   private labelStep: HistoryStep = 'day'
+  private labelSlot: Slot = 'battles'
   private interval: { minX: number, maxX: number, step: HistoryStep } | null = null
 
   constructor(private readonly highlightSync?: HighlightSynchronizer) {
@@ -155,7 +161,21 @@ export class VehicleHistoryChart extends UniversalChart {
   }
 
   setHistory(history: VehicleHistoryPeriod[], slot: Slot, today: string, step: HistoryStep, averageWindow: HistoryAverageWindow = null) {
-    this.setHistories([{ tag: 'vehicle', name: '', color: 'var(--blue-thin-color)', history }], slot, today, step, averageWindow)
+    this.setSeriesColors([{ tag: 'vehicle', color: 'var(--blue-thin-color)' }])
+    this.setHistories([{ tag: 'vehicle', history }], slot, today, step, averageWindow)
+  }
+
+  setSeriesColors(series: readonly { tag: string, color: string }[]) {
+    this.seriesColors = series
+    this.updateSeriesColors()
+  }
+
+  private updateSeriesColors() {
+    const rules = this.seriesColors.flatMap(item => {
+      const seriesClass = this.seriesClassByTag.get(item.tag)
+      return seriesClass ? [`.${this.styleScopeClass} .${seriesClass} { color: ${item.color}; }`] : []
+    }).join('\n')
+    if (this.seriesStyle.textContent !== rules) this.seriesStyle.textContent = rules
   }
 
   setHistories(series: VehicleHistorySeries[], slot: Slot, today: string, step: HistoryStep, averageWindow: HistoryAverageWindow = null) {
@@ -166,11 +186,14 @@ export class VehicleHistoryChart extends UniversalChart {
       this.labelStep = step
     }
 
-    this.labelsY.updateOptions(this.yLabels(slot))
+    if (this.labelSlot !== slot) {
+      this.labelsY.updateOptions(this.yLabels(slot))
+      this.labelSlot = slot
+    }
 
+    const pointsKey = JSON.stringify([slot, today, step, averageWindow])
     const tags = new Set(series.map(item => item.tag))
     const nextSeriesClassByTag = new Map<string, string>()
-    const colorRules: string[] = []
     let changed = false
 
     for (const [tag, line] of this.lines) {
@@ -178,6 +201,7 @@ export class VehicleHistoryChart extends UniversalChart {
 
       this.plot.removePlot(line)
       this.lines.delete(tag)
+      this.seriesPoints.delete(tag)
       changed = true
     }
 
@@ -197,14 +221,25 @@ export class VehicleHistoryChart extends UniversalChart {
       if (previousClass && previousClass !== seriesClass) line.getRootElement().classList.remove(previousClass)
       line.getRootElement().classList.add(seriesClass)
       nextSeriesClassByTag.set(item.tag, seriesClass)
-      colorRules.push(`.${this.styleScopeClass} .${seriesClass} { color: ${item.color}; }`)
 
-      const points = item.enabled === false ? [] : this.historyPoints(item, slot, today, step)
-      line.setPoints(averageWindow === null ? points : this.averagePoints(points, averageWindow))
+      const enabled = item.enabled !== false
+      const cached = this.seriesPoints.get(item.tag)
+      const sameData = cached?.history === item.history && cached.key === pointsKey
+      let points = sameData ? cached.points : null
+
+      if (enabled && points === null) {
+        const rawPoints = this.historyPoints(item, slot, today, step)
+        points = averageWindow === null ? rawPoints : this.averagePoints(rawPoints, averageWindow)
+      }
+
+      if (!cached || cached.enabled !== enabled || (enabled && !sameData)) {
+        line.setPoints(enabled && points ? points : [])
+      }
+      this.seriesPoints.set(item.tag, { history: item.history, key: pointsKey, points, enabled })
     }
 
     this.seriesClassByTag = nextSeriesClassByTag
-    this.seriesStyle.textContent = colorRules.join('\n')
+    this.updateSeriesColors()
 
     if (changed) this.updateInteractions()
 
@@ -302,8 +337,6 @@ export class VehicleHistoryChart extends UniversalChart {
       if (value !== null && Number.isFinite(value)) {
         points.push({
           series: series.tag,
-          name: series.name,
-          color: series.color,
           x,
           y: value,
           periodStart: row.periodStart,
