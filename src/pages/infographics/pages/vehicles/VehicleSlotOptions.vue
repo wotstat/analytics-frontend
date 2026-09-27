@@ -12,16 +12,20 @@
     </header>
 
     <div class="column-list nice-scrollbar" @scroll="closeAggregation()">
-      <section v-for="category in slotCategories" :key="category.title" class="category">
+      <section v-for="category in slotCategories" :key="category.title" class="category" :class="{ derived: category.derived }">
         <h3>{{ category.title }}</h3>
         <div class="tiles">
           <div v-for="slot in category.slots" :key="slot" class="tile-option"
-            :class="{ selected: isSelected(slot), disabled: !isSelected(slot) && isDisabled(defaultSlot(slot)) }">
+            :class="{ selected: isSelected(slot), disabled: !isSelected(slot) && isDisabled(defaultSlot(slot)), derived: !!availableSlots[slot].formula }">
             <button class="tile" type="button"
               :disabled="!isSelected(slot) && isDisabled(defaultSlot(slot))" :aria-pressed="isSelected(slot)"
+              :aria-label="metricLabel(slot)" :title="slotDescription(slot)"
               @click="selectMetric(slot)">
               <Icon :icon="availableSlots[slot].icon" class="tile-icon" />
-              <span class="tile-label">{{ metricLabel(slot) }}</span>
+              <span class="tile-text">
+                <span class="tile-label">{{ metricLabel(slot) }}</span>
+                <span v-if="availableSlots[slot].formula" class="tile-formula">{{ availableSlots[slot].formula }}</span>
+              </span>
               <span v-if="aggregationLabel(slot)" class="aggregation-value">
                 {{ aggregationLabel(slot) }}
               </span>
@@ -81,7 +85,7 @@ import ResetIcon from '@/assets/icons/reset.svg'
 import { computed, ref, shallowRef, useId, useTemplateRef } from 'vue'
 import Popover from '@/shared/uiKit/popover/Popover.vue'
 import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
-import { availableSlots, baseSlot, defaultSlot, metricLabel, slotAggregationLabel, slotAggregationOptions, slotCategories, type BaseSlot, type Slot } from './shared/vehicleMetrics'
+import { availableSlots, baseSlot, defaultSlot, metricLabel, slotAggregationLabel, slotAggregationOptions, slotCategories, slotDescription, type BaseSlot, type Slot } from './shared/vehicleMetrics'
 
 const props = defineProps<{
   title: string
@@ -312,6 +316,10 @@ function isDisabled(slot: Slot) {
         font-weight: 500;
       }
 
+      &.derived h3 {
+        color: #ece0ff;
+      }
+
       .tiles {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr));
@@ -349,6 +357,20 @@ function isDisabled(slot: Slot) {
               background: rgba(255, 255, 255, 0.12);
             }
           }
+
+          &.derived {
+            &.selected::before {
+              background: #bbaad6;
+            }
+
+            .tile {
+              padding-block: 7px;
+            }
+
+            .tile-icon {
+              color: #bbaad6;
+            }
+          }
         }
 
         .tile {
@@ -365,11 +387,23 @@ function isDisabled(slot: Slot) {
           font-size: 14px;
           line-height: 1.2;
 
-          .tile-label {
+          .tile-text {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
             min-width: 0;
+          }
+
+          .tile-label {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+          }
+
+          .tile-formula {
+            color: rgba(255, 255, 255, 0.45);
+            font-size: 11px;
+            line-height: 1.3;
           }
 
           .aggregation-value {

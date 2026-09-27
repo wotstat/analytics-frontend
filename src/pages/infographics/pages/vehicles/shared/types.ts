@@ -1,6 +1,6 @@
-import type { AggregatedSlot, BaseSlot } from './vehicleMetrics'
+import type { PrimarySlot, Slot } from './vehicleMetrics'
 
-type VehicleMetricValues = Record<BaseSlot, number | null> & Partial<Record<AggregatedSlot, number | null>>
+type VehicleMetricValues = Record<PrimarySlot, number | null> & Partial<Record<Exclude<Slot, PrimarySlot>, number | null>>
 
 export type VehicleStatistics = {
   rowKey: string

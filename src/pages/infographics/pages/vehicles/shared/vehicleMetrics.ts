@@ -4,6 +4,8 @@ export type SlotDefinition = {
   icon: IconType
   label: string
   description?: string
+  formula?: string
+  headingLabel?: string
   sql: string
   format?: 'integer' | 'decimal' | 'percent' | 'time' | 'distance'
 }
@@ -59,7 +61,78 @@ export const baseSlots = {
   lowerTierEnemies: { icon: 'tank', label: 'Противники ниже уровнем', sql: average('lowerTierEnemiesSum'), format: 'decimal' },
 } as const satisfies Record<string, SlotDefinition>
 
-export type BaseSlot = keyof typeof baseSlots
+export type PrimarySlot = keyof typeof baseSlots
+
+const ratio = (numerator: string, denominator: string, multiplier = 1) =>
+  `${numerator} / nullIf(${denominator}, 0)${multiplier === 1 ? '' : ` * ${multiplier}`}`
+
+// Отношения общих сумм за выбранный период, а не средние отношения по отдельным боям.
+// Распределения производных показателей в агрегатах не хранятся, поэтому модификаторов нет.
+export const derivedSlots = {
+  lifeTimeShare: {
+    icon: 'lifetime', label: 'Доля времени жизни', headingLabel: '%', formula: 'Время жизни / длительность боя',
+    sql: ratio('sum(lifeTimeSum)', 'sum(durationSum)', 100), format: 'percent',
+  },
+  shotsPerLifeMinute: {
+    icon: 'shots', label: 'Выстрелы в минуту жизни', headingLabel: '/мин', formula: 'Выстрелы / минуты жизни',
+    sql: ratio('sum(shotsSum)', 'sum(lifeTimeSum)', 60), format: 'decimal',
+  },
+  damagePerLifeMinute: {
+    icon: 'dmg', label: 'Урон в минуту жизни', headingLabel: '/мин', formula: 'Урон / минуты жизни',
+    sql: ratio('sum(damageDealtSum)', 'sum(lifeTimeSum)', 60),
+  },
+  assistPerLifeMinute: {
+    icon: 'assist', label: 'Содействие в минуту жизни', headingLabel: '/мин', formula: 'Содействие / минуты жизни',
+    sql: ratio('sum(damageAssistedTotalSum)', 'sum(lifeTimeSum)', 60),
+  },
+  directHitRate: {
+    icon: 'hits', label: 'Доля прямых попаданий', headingLabel: '%', formula: 'Попадания / выстрелы',
+    sql: ratio('sum(directEnemyHitsSum)', 'sum(shotsSum)', 100), format: 'percent',
+  },
+  penetrationRate: {
+    icon: 'piercing', label: 'Пробития среди попаданий', headingLabel: '%', formula: 'Пробития / попадания',
+    sql: ratio('sum(piercingEnemyHitsSum)', 'sum(directEnemyHitsSum)', 100), format: 'percent',
+  },
+  penetratingShotRate: {
+    icon: 'piercing', label: 'Пробития на выстрел', headingLabel: '/В', formula: 'Пробития / выстрелы',
+    sql: ratio('sum(piercingEnemyHitsSum)', 'sum(shotsSum)', 100), format: 'percent',
+  },
+  receivedPenetrationRate: {
+    icon: 'piercing', label: 'Доля входящих пробитий', headingLabel: 'Вх.%', formula: 'Пробития / попадания',
+    description: 'Полученные пробития / полученные прямые попадания × 100%. Попадания осколками не учитываются.',
+    sql: ratio('sum(piercingsReceivedSum)', 'sum(directHitsReceivedSum)', 100), format: 'percent',
+  },
+  damageExchangeRatio: {
+    icon: 'dmg', label: 'Отношение урона', headingLabel: 'Н/П', formula: 'Нанесённый / полученный',
+    sql: ratio('sum(damageDealtSum)', 'sum(damageReceivedSum)'), format: 'decimal',
+  },
+  damageToHealthRatio: {
+    icon: 'dmg', label: 'Урон к собственной прочности', headingLabel: '/HP', formula: 'Урон / начальная прочность',
+    description: 'Сколько собственных запасов прочности танк снимает с противников: суммарный урон / суммарная начальная прочность.',
+    sql: ratio('sum(damageDealtSum)', 'sum(maxHealthSum)'), format: 'decimal',
+  },
+  blockedDamageShare: {
+    icon: 'block', label: 'Доля заблокированного урона', headingLabel: '%', formula: 'Блок / (блок + полученный урон)',
+    description: 'Заблокированный урон / (заблокированный + полученный урон) × 100%. Доля учтённого урона, не вероятность непробития.',
+    sql: ratio('sum(damageBlockedByArmorSum)', 'sum(damageBlockedByArmorSum) + sum(damageReceivedSum)', 100), format: 'percent',
+  },
+  remainingHealthShare: {
+    icon: 'hp', label: 'Оставшаяся прочность, %', headingLabel: '%', formula: 'Остаток / начальная прочность',
+    description: 'Суммарная оставшаяся прочность / суммарная начальная прочность × 100%. Уничтоженные танки учитываются с нулевой оставшейся прочностью.',
+    sql: ratio('sum(healthSum)', 'sum(maxHealthSum)', 100), format: 'percent',
+  },
+  invisibleDamageShare: {
+    icon: 'hp', label: 'Доля урона от незасвеченных', headingLabel: 'НЗ%', formula: 'От незасвеченных / весь урон',
+    sql: ratio('sum(damageReceivedFromInvisiblesSum)', 'sum(damageReceivedSum)', 100), format: 'percent',
+  },
+  assistShare: {
+    icon: 'assist', label: 'Доля содействия', headingLabel: '%', formula: 'Содействие / (урон + содействие)',
+    sql: ratio('sum(damageAssistedTotalSum)', 'sum(damageDealtSum) + sum(damageAssistedTotalSum)', 100), format: 'percent',
+  },
+} as const satisfies Record<string, SlotDefinition>
+
+export type DerivedSlot = keyof typeof derivedSlots
+export type BaseSlot = PrimarySlot | DerivedSlot
 
 export const aggregations = {
   sum: { label: 'Сумма', shortLabel: 'Σ' },
@@ -116,7 +189,7 @@ const aggregationSources = {
   higherTierEnemies: { column: 'higherTierEnemies', aggregations: sumAggregations },
   sameTierEnemies: { column: 'sameTierEnemies', aggregations: sumAggregations },
   lowerTierEnemies: { column: 'lowerTierEnemies', aggregations: sumAggregations },
-} as const satisfies Partial<Record<BaseSlot, { column: string, aggregations: readonly Aggregation[] }>>
+} as const satisfies Partial<Record<PrimarySlot, { column: string, aggregations: readonly Aggregation[] }>>
 
 type AggregatableSlot = keyof typeof aggregationSources
 export type AggregatedSlot = {
@@ -154,13 +227,17 @@ export function baseSlot(slot: Slot): BaseSlot {
 }
 
 export function metricLabel(slot: Slot) {
-  const label = baseSlots[baseSlot(slot)].label.replace(/^Средн(?:ий|ее|ие) /, '')
+  const label = availableSlots[baseSlot(slot)].label.replace(/^Средн(?:ий|ее|ие) /, '')
   return label[0].toUpperCase() + label.slice(1)
 }
 
 export function slotAggregationLabel(slot: Slot) {
   const aggregation = slot.split('_')[1] as Aggregation | undefined
   return aggregation ? aggregations[aggregation].shortLabel : ''
+}
+
+export function slotHeadingLabel(slot: Slot) {
+  return availableSlots[slot].headingLabel ?? slotAggregationLabel(slot)
 }
 
 export function slotAggregationOptions(slot: BaseSlot) {
@@ -172,7 +249,7 @@ export function slotAggregationOptions(slot: BaseSlot) {
   ]
 }
 
-export const availableSlots: Record<Slot, SlotDefinition> = { ...baseSlots } as Record<Slot, SlotDefinition>
+export const availableSlots: Record<Slot, SlotDefinition> = { ...baseSlots, ...derivedSlots } as Record<Slot, SlotDefinition>
 for (const slot of Object.keys(aggregationSources) as AggregatableSlot[]) {
   for (const aggregation of aggregationSources[slot].aggregations) {
     const definition: SlotDefinition = baseSlots[slot]
@@ -186,13 +263,16 @@ for (const slot of Object.keys(aggregationSources) as AggregatableSlot[]) {
   }
 }
 
-export const slotCategories = [
+export const slotCategories: readonly { title: string, slots: readonly BaseSlot[], derived?: boolean }[] = [
   { title: 'Общее', slots: ['battles', 'playerCount', 'winrate', 'survival', 'xp', 'lifeTime', 'duration', 'mileage'] },
   { title: 'Урон и прочность', slots: ['damage', 'damageForMarks', 'blocked', 'damageReceived', 'damageReceivedFromInvisibles', 'maxHealth', 'health'] },
   { title: 'Содействие', slots: ['assist', 'assistRadio', 'assistTrack', 'assistStun', 'assistMax'] },
   { title: 'Стрельба', slots: ['shots', 'directEnemyHits', 'piercingEnemyHits', 'explosionHits', 'directHitsReceived', 'piercingsReceived', 'explosionHitsReceived'] },
   { title: 'В бою', slots: ['kills', 'spotted', 'damaged', 'stunned', 'stunDuration', 'higherTierEnemies', 'sameTierEnemies', 'lowerTierEnemies'] },
-] as const satisfies readonly { title: string, slots: readonly BaseSlot[] }[]
+  { title: 'Производные · время', derived: true, slots: ['lifeTimeShare', 'shotsPerLifeMinute', 'damagePerLifeMinute', 'assistPerLifeMinute'] },
+  { title: 'Производные · стрельба', derived: true, slots: ['directHitRate', 'penetrationRate', 'penetratingShotRate', 'receivedPenetrationRate'] },
+  { title: 'Производные · урон и прочность', derived: true, slots: ['damageExchangeRatio', 'damageToHealthRatio', 'blockedDamageShare', 'remainingHealthShare', 'invisibleDamageShare', 'assistShare'] },
+]
 
 const slotOrder: BaseSlot[] = slotCategories.flatMap(category => [...category.slots])
 
@@ -219,5 +299,9 @@ export function defaultSlotsForLimit(limit: number): Slot[] {
 
 export function slotDescription(slot: Slot) {
   const definition: SlotDefinition = availableSlots[slot]
+  if (definition.formula) {
+    const description = definition.description ?? definition.formula
+    return `${description.replace(/\.$/, '')}. Расчёт по общим суммам за выбранный период; время в секундах. При нулевом знаменателе — прочерк.`
+  }
   return definition.description ?? definition.label
 }

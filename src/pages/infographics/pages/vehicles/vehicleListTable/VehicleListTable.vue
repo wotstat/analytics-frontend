@@ -43,7 +43,9 @@
         <SortableHeading v-for="slot in visibleSlots" :key="slot" :label="availableSlots[slot].label"
           v-bind="sorting.state(slot)" @click="sorting.toggle(slot, $event.altKey)">
           <Icon :icon="availableSlots[slot].icon" class="icon" />
-          <span v-if="slotAggregationLabel(slot)" class="aggregation-label">{{ slotAggregationLabel(slot) }}</span>
+          <span v-if="slotHeadingLabel(slot)" class="aggregation-label" :class="{ derived: !!availableSlots[slot].formula }">
+            {{ slotHeadingLabel(slot) }}
+          </span>
         </SortableHeading>
       </div>
     </div>
@@ -114,7 +116,7 @@ import VehicleType from '@/shared/game/vehicles/type/VehicleType.vue'
 import { createVehicleNameFilter } from '@/shared/game/vehicles/vehicleSearch'
 import SearchLine from '@/shared/game/selectors/components/searchLine/SearchLine.vue'
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
-import { availableSlots, baseSlot, orderSlots, slotAggregationLabel, type Slot } from '../shared/vehicleMetrics'
+import { availableSlots, baseSlot, orderSlots, slotHeadingLabel, type Slot } from '../shared/vehicleMetrics'
 import type { VehicleStatistics } from '../shared/types'
 import { DEFAULT_MIN_BATTLES, DEFAULT_MIN_PLAYERS, DEFAULT_ONLY_ACTUAL, type LocalVehicleFilters } from './localFilters'
 import { vehicleGroupings, vehicleHistorySelection, type VehicleGrouping, type VehicleSelection } from '../shared/vehicleGrouping'
@@ -394,6 +396,10 @@ watch([maxSelectableSlots, width], ([limit, tableWidth]) => {
         font-weight: 600;
         line-height: 1.1;
         white-space: nowrap;
+
+        &.derived {
+          color: #bd8de8;
+        }
       }
 
       .icon {
