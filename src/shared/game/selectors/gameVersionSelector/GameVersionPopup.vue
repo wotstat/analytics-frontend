@@ -1,7 +1,7 @@
 <template>
-  <div class="game-version-selector-popup-container">
-    <header>
-      <h1>Выбор версии игры</h1>
+  <div class="version-popup">
+    <header class="version-popup-header">
+      <h2>Выбор версии игры</h2>
       <div class="game mt-font">
         <button class="variant selectable" @click="preferredGame = 'mt'" :class="preferredGame == 'mt' ? 'active' : ''">
           Lesta
@@ -21,8 +21,7 @@
       <SearchLine v-model="currentSearch" autofocus />
     </header>
 
-    <div class="content">
-      <div class="separator"></div>
+    <div class="version-popup-content">
       <div class="table-container deep-nice-scrollbar" :class="{ 'fast-scroll': isFastScroll }">
         <TableView ref="table" :delegate :class="'grouped-style'" />
       </div>
@@ -209,9 +208,6 @@ const grouped = computed(() => {
     lines: micropatches
   })
 
-  console.log('grouped', res);
-
-
   return res
 })
 
@@ -336,162 +332,174 @@ const delegate: TableViewDelegate = {
 
 
 <style lang="scss" scoped>
-.game-version-selector-popup-container {
+.version-popup {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+}
+
+.version-popup-header {
+  box-sizing: border-box;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
   padding: 10px;
-  padding-bottom: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 
-  header {
+  h2 {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 20px;
+    margin: 0 0 10px;
+    overflow-wrap: anywhere;
+  }
 
-    margin-bottom: 10px;
+  button {
+    border: none;
+  }
+
+  .selectable {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-radius: 5px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.07s;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    &.active {
+      background-color: var(--blue-color);
+    }
+  }
+
+  .region,
+  .game {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+
+    .vr {
+      width: 1px;
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .variant {
+      display: flex;
+      flex: 1;
+      align-items: center;
+      justify-content: center;
+      height: 22px;
+      padding: 0 10px;
+      line-height: 1;
+      font-size: 14px;
+
+      .icon {
+        height: 14px;
+      }
+    }
+  }
+
+  .region {
+    .variant {
+      padding: 0;
+    }
+  }
+}
+
+.version-popup-content {
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 10px;
+
+  .table-container {
+    flex: 0 1 300px;
+    min-height: 0;
+    height: 300px;
+    position: relative;
+    margin-right: -7px;
+    margin-left: 0px;
+    user-select: none;
+
+    --background-color: #2a2a2a;
+    --highlighted-text-color: var(--blue-thin-color);
+    --selected-highlighted-text-color: #d1e5ff;
+  }
+
+  :deep(.table-container) {
+    .reusable-table {
+      position: absolute;
+      inset: 0;
+    }
+
+    &.fast-scroll {
+      .line:not(.selected) {
+        &::before {
+          opacity: 0;
+        }
+      }
+    }
+
+    .scroll {
+      &::-webkit-scrollbar-track {
+        margin-block-end: 10px;
+        margin-block-start: 35px;
+      }
+    }
+
+    .cell-line {
+
+      &.extended {
+        background: #2e3d4f;
+        cursor: auto;
+      }
+
+      &.extended:has(+.extended) {
+        &::after {
+          background-color: #445161;
+        }
+      }
+    }
+  }
+
+  .loading,
+  .empty-list {
+    position: absolute;
+    inset: 0;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    width: 200px;
+    align-items: center;
+    justify-content: center;
+  }
 
-
-    h1 {
-      font-size: 1em;
+  .empty-list {
+    h5 {
       margin: 0;
-      margin-bottom: 10px;
+      font-size: 1em;
     }
 
     button {
+      background-color: transparent;
+      color: var(--blue-thin-color);
+      font-size: 14px;
       border: none;
-    }
-
-    .selectable {
-      background-color: rgba(255, 255, 255, 0.08);
-      border-radius: 5px;
-      cursor: pointer;
-      user-select: none;
-      transition: background-color 0.07s;
+      transition: color 0.2s;
 
       &:hover {
-        background-color: rgba(255, 255, 255, 0.2);
+        color: var(--blue-thin-color-hover);
       }
-
-      &.active {
-        background-color: var(--blue-color);
-      }
-    }
-
-    .region,
-    .game {
-      display: flex;
-      gap: 5px;
-      justify-content: center;
-
-      .vr {
-        width: 1px;
-        background-color: rgba(255, 255, 255, 0.1);
-      }
-
-      .variant {
-        display: flex;
-        flex: 1;
-        align-items: center;
-        justify-content: center;
-        height: 22px;
-        padding: 0 10px;
-        line-height: 1;
-        font-size: 14px;
-
-        .icon {
-          height: 14px;
-        }
-      }
-    }
-
-    .region {
-      .variant {
-        padding: 0;
-      }
-    }
-
-  }
-
-  .content {
-    position: relative;
-
-    .separator {
-      height: 1px;
-      background-color: rgba(255, 255, 255, 0.1);
-      margin: 0px -15px;
-    }
-
-    .table-container {
-      height: 300px;
-      position: relative;
-      margin-right: -7px;
-      margin-left: 0px;
-      user-select: none;
-
-      --background-color: #2a2a2a;
-      --highlighted-text-color: var(--blue-thin-color);
-      --selected-highlighted-text-color: #d1e5ff;
-    }
-
-    :deep(.table-container) {
-      &.fast-scroll {
-        .line:not(.selected) {
-          &::before {
-            opacity: 0;
-          }
-        }
-      }
-
-      .scroll {
-        &::-webkit-scrollbar-track {
-          margin-block-end: 10px;
-          margin-block-start: 35px;
-        }
-      }
-
-      .cell-line {
-
-        &.extended {
-          background: #2e3d4f;
-          cursor: auto;
-        }
-
-        &.extended:has(+.extended) {
-          &::after {
-            background-color: #445161;
-          }
-        }
-      }
-    }
-
-    .loading,
-    .empty-list {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-
-    }
-
-    .empty-list {
-      h5 {
-        margin: 0;
-        font-size: 1em;
-      }
-
-      button {
-        background-color: transparent;
-
-        color: var(--blue-thin-color);
-        font-size: 14px;
-        border: none;
-        transition: color 0.2s;
-
-        &:hover {
-          color: var(--blue-thin-color-hover);
-        }
-      }
-
     }
   }
 }

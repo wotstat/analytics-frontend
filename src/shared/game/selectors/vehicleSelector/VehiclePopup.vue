@@ -1,11 +1,13 @@
 <template>
-  <div class="vehicle-selector-popup-container">
-    <header>
-      <h1>Выбор техники
-        <button class="reset" :class="shouldVisibleReset ? '' : 'disabled'" @click="reset">
+  <div class="vehicle-popup">
+    <header class="vehicle-popup-header">
+      <div class="title-row">
+        <h2>Выбор техники</h2>
+        <button class="reset" type="button" aria-label="Сбросить фильтры техники"
+          :class="{ disabled: !shouldVisibleReset }" :disabled="!shouldVisibleReset" @click="reset">
           <Reload />
         </button>
-      </h1>
+      </div>
 
       <div class="types mt-font">
         <button class="type selectable" @click="preferredGame = 'mt'" :class="preferredGame == 'mt' ? 'active' : ''">
@@ -38,7 +40,7 @@
       <SearchLine v-model="currentSearch" autofocus />
     </header>
 
-    <div class="content">
+    <div class="vehicle-popup-content">
       <VehicleTable :display-sections="tankToDisplay" ref="vehicleTable" v-model:name-variant="nameVariant"
         v-model:selected="vehicles" :game="preferredGame == 'wot' ? 'wot' : 'mt'" />
 
@@ -335,193 +337,209 @@ function reset() {
 </script>
 
 <style scoped lang="scss">
-.vehicle-selector-popup-container {
-  padding: 15px;
-  padding-bottom: 0;
+.vehicle-popup {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+}
 
-  header {
+.vehicle-popup-header {
+  box-sizing: border-box;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  padding: 14px;
 
-    margin-bottom: 10px;
+  .title-row {
     display: flex;
-    flex-direction: column;
-    gap: 6px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
 
-
-    h1 {
-      font-size: 1em;
+    h2 {
+      min-width: 0;
       margin: 0;
-      margin-bottom: 10px;
-
-      position: relative;
-
-      .reset {
-        position: absolute;
-        right: 0;
-        top: -2px;
-        border: none;
-        border-radius: 20px;
-        background-color: rgba(255, 255, 255, 0.08);
-        transition: background-color 0.2s, opacity 0.2s;
-        padding: 0;
-        height: 23px;
-        width: 23px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 4px;
-        color: rgba(255, 255, 255, 0.9);
-
-        &:hover {
-          background-color: rgba(255, 255, 255, 0.2);
-        }
-
-        &.disabled {
-          opacity: 0;
-          pointer-events: none;
-        }
-      }
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 20px;
+      overflow-wrap: anywhere;
     }
 
-    button {
+    .reset {
+      flex: none;
       border: none;
-    }
-
-    .selectable {
+      border-radius: 20px;
       background-color: rgba(255, 255, 255, 0.08);
-      border-radius: 5px;
-      cursor: pointer;
-      user-select: none;
-      transition: background-color 0.07s;
+      transition: background-color 0.2s, opacity 0.2s;
+      height: 23px;
+      width: 23px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      color: rgba(255, 255, 255, 0.9);
 
       &:hover {
         background-color: rgba(255, 255, 255, 0.2);
       }
 
-      &.active {
-        background-color: var(--blue-color);
-      }
-    }
-
-    .levels {
-      display: flex;
-      gap: 5px;
-      justify-content: center;
-
-      .level {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
-        flex: 1;
-        text-align: center;
-        padding: 0 5px;
-        height: 22px;
-      }
-    }
-
-    .nations {
-      display: flex;
-      gap: 1px;
-      margin: -2px;
-      height: 20px;
-
-      .nation {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex: 1;
-        border-radius: 5px;
-        padding: 2px;
-        background-color: transparent;
-
-        .flag {
-          flex: 1;
-          min-width: auto;
-          width: 10px;
-          user-select: none;
-          pointer-events: none;
-          border-radius: 3px;
-          transition: filter 0.1s;
-          filter: brightness(1.1)
-        }
-
-        &:hover {
-          .flag {
-            filter: brightness(1.8)
-          }
-        }
-
-        &.active {
-          background-color: var(--blue-thin-color);
-
-          .flag {
-            filter: brightness(1.8);
-          }
-        }
-      }
-    }
-
-    .types {
-      display: flex;
-      gap: 5px;
-      justify-content: center;
-
-      .vr {
-        width: 1px;
-        background-color: rgba(255, 255, 255, 0.1);
-      }
-
-      .type {
-        display: flex;
-        flex: 1;
-        align-items: center;
-        justify-content: center;
-        height: 22px;
-        padding: 0 10px;
-        line-height: 1;
-        font-size: 14px;
-
-        .icon {
-          height: 14px;
-        }
+      &.disabled {
+        opacity: 0;
+        pointer-events: none;
       }
     }
   }
 
-  .content {
-    position: relative;
+  button {
+    border: none;
+  }
 
-    .loading,
-    .empty-list {
-      position: absolute;
-      inset: 30px 0;
+  .selectable {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-radius: 5px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.07s;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    &.active {
+      background-color: var(--blue-color);
+    }
+  }
+
+  .levels {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+
+    .level {
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-    }
-
-    .empty-list {
-      h5 {
-        margin: 0;
-        font-size: 1em;
-      }
-
-      button {
-        background-color: transparent;
-
-        color: var(--blue-thin-color);
-        font-size: 14px;
-        border: none;
-        transition: color 0.2s;
-
-        &:hover {
-          color: var(--blue-thin-color-hover);
-        }
-      }
-
+      font-size: 14px;
+      flex: 1;
+      text-align: center;
+      padding: 0 5px;
+      height: 22px;
     }
   }
 
+  .nations {
+    display: flex;
+    gap: 1px;
+    margin: -2px;
+    height: 20px;
+
+    .nation {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      border-radius: 5px;
+      padding: 2px;
+      background-color: transparent;
+
+      .flag {
+        flex: 1;
+        min-width: auto;
+        width: 10px;
+        user-select: none;
+        pointer-events: none;
+        border-radius: 3px;
+        transition: filter 0.1s;
+        filter: brightness(1.1)
+      }
+
+      &:hover {
+        .flag {
+          filter: brightness(1.8)
+        }
+      }
+
+      &.active {
+        background-color: var(--blue-thin-color);
+
+        .flag {
+          filter: brightness(1.8);
+        }
+      }
+    }
+  }
+
+  .types {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+
+    .vr {
+      width: 1px;
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .type {
+      display: flex;
+      flex: 1;
+      align-items: center;
+      justify-content: center;
+      height: 22px;
+      padding: 0 10px;
+      line-height: 1;
+      font-size: 14px;
+
+      .icon {
+        height: 14px;
+      }
+    }
+  }
+}
+
+.vehicle-popup-content {
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 14px;
+
+  .loading,
+  .empty-list {
+    position: absolute;
+    inset: 30px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .empty-list {
+    h5 {
+      margin: 0;
+      font-size: 1em;
+    }
+
+    button {
+      background-color: transparent;
+      color: var(--blue-thin-color);
+      font-size: 14px;
+      border: none;
+      transition: color 0.2s;
+
+      &:hover {
+        color: var(--blue-thin-color-hover);
+      }
+    }
+  }
 }
 </style>

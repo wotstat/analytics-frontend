@@ -34,6 +34,13 @@ const entries = [
     component: () => import('./pages/popover/Index.vue'),
   },
   {
+    path: 'panel-popover',
+    title: 'PanelPopover',
+    description: 'Обычная и компактная панели, шапка, toolbar, прокрутка и footer.',
+    group: 'uiKit',
+    component: () => import('./pages/panelPopover/Index.vue'),
+  },
+  {
     path: 'tooltip',
     title: 'Тултипы',
     description: 'Директивы с текстом, произвольное содержимое через useTooltip, поведение на тач-устройствах.',

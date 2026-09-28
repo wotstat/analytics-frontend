@@ -4,14 +4,10 @@
     <span class="dots"></span>
   </button>
 
-  <PopoverAutoClose v-model="open" :target="trigger" :placement="['bottom-end', 'bottom-float']"
-    :viewport-offset="popoverViewportOffset" :arrow-size="0">
-    <div class="annotation-settings">
-      <header class="popover-heading">
-        <h2>Настройки аннотаций</h2>
-      </header>
-
-      <div class="options">
+  <PanelPopover v-model="open" :target="trigger" title="Настройки аннотаций" density="compact" :width="250"
+    :placement="['bottom-end', 'bottom-float', 'top-end']">
+    <template #content>
+      <div class="options panel-section">
         <h3>Версии игры</h3>
         <div class="version-options">
           <button v-for="option in versionOptions" :key="option.key" type="button" class="annotation-option"
@@ -23,7 +19,7 @@
         </div>
       </div>
 
-      <div class="options">
+      <div class="options panel-section">
         <h3>События</h3>
         <div class="event-options">
           <button type="button" class="annotation-option" :style="{ '--annotation-color': menuAccentColor(outageAnnotationColor) }"
@@ -39,15 +35,14 @@
           </button>
         </div>
       </div>
-    </div>
-  </PopoverAutoClose>
+    </template>
+  </PanelPopover>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
-import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
+import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
 import { ColorHSVA } from '@/shared/uiKit/colorPicker/ColorHSVA'
-import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import type { useHistoryAnnotationSettings } from './useHistoryAnnotationSettings'
 import { getHistoryEventRegions, historyEvents } from '@/shared/game/historyEvents'
 import type { GameRegion } from '@/shared/game/wot'
@@ -131,78 +126,48 @@ const versionOptions = [
   }
 }
 
-.annotation-settings {
-  box-sizing: border-box;
+.version-options,
+.event-options {
   display: flex;
+  gap: 4px;
+}
+
+.event-options {
   flex-direction: column;
-  width: min(250px, calc(100vw - 20px));
-  line-height: 1.3;
-
-  .popover-heading {
-    padding: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-
-    h2 {
-      margin: 0;
-      font-size: 14px;
-      font-weight: 600;
-    }
-  }
-
-  .options {
-    padding: 10px;
-
-    h3 {
-      margin: 0 0 6px;
-      color: #fff;
-      font-size: 12px;
-      font-weight: 500;
-    }
-  }
-
-  .version-options,
-  .event-options {
-    display: flex;
-    gap: 4px;
-  }
-
-  .event-options {
-    flex-direction: column;
-
-    .annotation-option {
-      text-align: left;
-    }
-  }
 
   .annotation-option {
-    position: relative;
-    flex: 1;
-    padding: 5px 8px;
-    border-radius: 5px;
-    background: rgba(255, 255, 255, 0.05);
-    color: inherit;
-    font-size: 12px;
-    line-height: 1.2;
+    text-align: left;
+  }
+}
 
-    @media (hover: hover) and (pointer: fine) {
-      &:hover {
-        background: rgba(255, 255, 255, 0.12);
-      }
+.annotation-option {
+  position: relative;
+  flex: 1;
+  padding: 5px 8px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  font-size: 12px;
+  line-height: 1.2;
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background: rgba(255, 255, 255, 0.12);
     }
+  }
 
-    &.selected {
-      background: rgba(255, 255, 255, 0.1);
+  &.selected {
+    background: rgba(255, 255, 255, 0.1);
 
-      &::before {
-        content: '';
-        position: absolute;
-        top: 5px;
-        bottom: 5px;
-        left: 0;
-        width: 3px;
-        border-radius: 3px;
-        background: var(--annotation-color);
-      }
+    &::before {
+      content: '';
+      position: absolute;
+      top: 5px;
+      bottom: 5px;
+      left: 0;
+      width: 3px;
+      border-radius: 3px;
+      background: var(--annotation-color);
     }
   }
 }

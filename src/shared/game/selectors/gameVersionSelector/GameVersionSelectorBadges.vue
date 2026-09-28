@@ -1,6 +1,7 @@
 <template>
   <BadgesLinePopover v-model="versions" :close-on-outside-window="closeOnOutsideWindow" :tag-to-key="versionToKey"
-    :tag-to-text="tagToText">
+    :tag-to-text="tagToText" :width="220" scroll-mode="child"
+    :placement="['bottom-start', 'top-start', 'bottom-float', 'top-float']">
     <GameVersionPopup :versionList="versionsList.data" v-model="versions" :with-region="withRegion"
       :show-minor="showMinor" :show-patches="showPatches" :show-versions="showVersions" />
   </BadgesLinePopover>

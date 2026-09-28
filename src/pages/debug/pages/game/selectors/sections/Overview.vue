@@ -62,11 +62,14 @@
     </p>
 
     <p class="debug-note">
-      Все три поповерных селектора отдают в <span class="debug-value">PopoverAutoClose</span> общий
+      Поповеры техники и версий используют <span class="debug-value">PanelPopover</span> через
+      <span class="debug-value">BadgesLinePopover</span>. Панель передаёт в
+      <span class="debug-value">PopoverAutoClose</span> общий
       <span class="debug-value">popoverViewportOffset</span> из шапки сайта
       (<span class="debug-value">pages/shared/header/useAdditionalHeaderHeight.ts</span>): сверху высота шапки + 10px,
-      с остальных сторон 10px. Переопределить его на месте использования нельзя — пропа нет, только
-      <span class="debug-value">closeOnOutsideWindow</span>. Подробнее про сам оффсет — на странице
+      с остальных сторон 10px. <span class="debug-value">BadgesLinePopover</span> также принимает произвольное
+      содержимое через обычный слот.
+      Подробнее про сам оффсет — на странице
       <a href="/debug/popover">Popover</a>.
     </p>
 

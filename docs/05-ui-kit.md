@@ -39,6 +39,7 @@
 
 - `tooltip/textTooltip.ts` — `vTextTooltip`: базовая директива плюс `popoverViewportOffset` из шапки сайта.
 - `tipBubble/` — `TipBubble.vue`, `TipBubbleText.vue`: обёртки над `uiKit/tipBubble` с проектными дефолтами.
+- `popover/PanelPopover.vue` — панель сайта поверх `uiKit/popover/PopoverAutoClose`; интерфейс ниже.
 - `chart/` — Vue-обёртки графиков: тултипы (`HeaderTooltip.vue`, `FloatingTooltip.vue`), легенда (`Legend.vue` + `useLegend.ts`) и `VueChartRenderManager.ts`, см. [06-charts.md](06-charts.md).
 - `modalWindow/` — модальные окна (`ModalWindow.vue`, `ModalWindowContent.vue`, кнопки).
 - `components/Tooltip.vue`; `PopupWindow.vue` — самостоятельный попап, не часть `modalWindow`; `Canvas.vue` — обёртка canvas с ресайзом; `SnowCardWrapper.vue` — сезонное украшение.
@@ -46,6 +47,14 @@
 - `tween/` — анимация чисел: `TweenValue.vue`, `SimpleTweenValue.vue`, `useTweenRef.ts`, `easing.ts`, `processed.ts`. Единственная рабочая реализация — здесь; старый вариант `src/composition/tween/useTweenRef.ts` удалён. `options` (duration/easing/minStep) читаются один раз при setup и не реактивны.
 - `tableView/cells/HighlightedCell.ts` — ячейка `TableView` с подсветкой поиска.
 - `noScroll/noScroll.ts` — блокировка скролла: класс вешается на `<html>` (не на body), и это **счётчик**, а не переключатель — `requestNoScroll`/`releaseNoScroll`/`useNoScroll`, стили в `noScroll/styles.scss` по `html.no-scroll`. `PopupWindow.vue` и пара страниц вешают `no-scroll` на `body` мимо этого механизма — так делать не надо.
+
+### Панель поповера
+
+`PanelPopover` принимает `v-model` открытия, `target`, `placement`, `closeOnOutsideWindow`, текстовый `title`, ширину `width` в пикселях и независимую плотность `density` (`standard`/`compact`). Плотность определяет отступы и типографику обычной панели; отдельные CSS-отступы и ограничения высоты через пропсы не передаются. Для простой шапки используются `title` и слот `toolbar`; слот `header` полностью заменяет их обоих вместе с обёрткой. В нём потребитель сам задаёт отступы и границу. `content` (или default) и `footer` задают остальные части.
+
+По умолчанию прокручивается содержимое самой панели, а событие `contentScroll` позволяет закрыть вложенное меню при прокрутке. `scrollMode="child"` нужен для содержимого со своей прокруткой, например виртуализированной `TableView`: слот `content` выводится без обёртки и сам отвечает за отступы и прокрутку вложенного списка. Список сохраняет свою обычную высоту и сжимается, когда места вокруг цели мало. Селекторы техники и версий используют этот режим: их содержимое включает собственные шапки с фильтрами и поиском, а таблицы имеют высоту до 300 px. На экранах шириной до 500 px панели занимают доступную ширину. `BadgesLinePopover` монтирует такую панель для строки бейджей и передаёт ей ширину, плотность, режим прокрутки, размещение и параметры закрытия.
+
+Панель использует отступ от шапки сайта, ограничивает высоту доступным местом над или под целью и включает плавающие варианты размещения для узкого экрана. Прокручиваемое содержимое оставляет зазор между полосой прокрутки и правым краем панели. Вертикальные отступы дорожки по умолчанию составляют 10 px сверху и снизу. Особые значения потребитель задаёт в своём CSS через класс на `PanelPopover` и переменные `--panel-scrollbar-track-start` / `--panel-scrollbar-track-end`; у выбора столбцов верхний отступ равен 45 px. Классы `panel-section`, `panel-divider`, `panel-note` оформляют согласованную структуру содержимого, включая h3/h4/h5 внутри секций. Примеры без БД: `/debug/panel-popover`.
 
 ### Легенда графика
 

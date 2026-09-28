@@ -6,18 +6,17 @@
     <span v-if="activeCount" class="active-count" aria-hidden="true">{{ activeCount }}</span>
   </button>
 
-  <PopoverAutoClose v-model="open" :target="trigger" :placement="['bottom-start', 'bottom-float']"
-    :viewport-offset="popoverViewportOffset" :arrow-size="0">
-    <div class="vehicle-list-filters">
-      <header class="popover-heading">
-        <h2>Фильтр таблицы</h2>
-        <button v-if="activeCount" class="reset" title="Сбросить фильтры" @click="resetFilters">
-          <Reload />
-        </button>
-      </header>
+  <PanelPopover v-model="open" :target="trigger" title="Фильтр таблицы" :width="360"
+    :placement="['bottom-start', 'bottom-float', 'top-start']">
+    <template v-if="activeCount" #toolbar>
+      <button class="reset" title="Сбросить фильтры" @click="resetFilters">
+        <Reload />
+      </button>
+    </template>
 
+    <template #content>
       <div class="filters-content">
-        <section v-if="showVehicleFilters" class="group">
+        <section v-if="showVehicleFilters" class="group panel-section">
           <h3 class="group-label">Техника</h3>
           <div class="vehicle-options">
             <div class="types">
@@ -49,7 +48,7 @@
           </div>
         </section>
 
-        <div class="group">
+        <div class="group panel-section">
           <h3 class="group-label">Боёв больше</h3>
           <div class="thresholds mt-font">
             <button v-for="threshold in battleThresholds" :key="threshold" class="option"
@@ -58,7 +57,7 @@
           </div>
         </div>
 
-        <div class="group">
+        <div class="group panel-section">
           <h3 class="group-label">Игроков больше</h3>
           <div class="thresholds mt-font">
             <button v-for="threshold in playerThresholds" :key="threshold" class="option"
@@ -67,7 +66,7 @@
           </div>
         </div>
 
-        <div class="group">
+        <div class="group panel-section">
           <h3 class="group-label">График</h3>
           <label class="checkbox-option" title="Не показывать дневную точку, если wotstat был недоступен более 3 часов в этот день">
             <input type="checkbox" :checked="filters.skipIncompleteDays"
@@ -76,16 +75,15 @@
           </label>
         </div>
       </div>
-    </div>
-  </PopoverAutoClose>
+    </template>
+  </PanelPopover>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
 import Reload from '@/assets/icons/reset.svg'
 import FilterIcon from './assets/filter.svg'
-import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
-import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
+import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
 import Nation from '@/shared/game/vehicles/nations/Nation.vue'
 import { nations } from '@/shared/game/vehicles/nations/nations'
 import VehicleType from '@/shared/game/vehicles/type/VehicleType.vue'
@@ -189,60 +187,32 @@ function selectOption<T>(selected: readonly T[], option: T, options: readonly T[
   }
 }
 
-.vehicle-list-filters {
+.reset {
   box-sizing: border-box;
-  width: min(360px, calc(100vw - 20px));
-  font-size: 14px;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 23px;
+  height: 23px;
+  padding: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
 
-  .popover-heading {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 14px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-
-    h2 {
-      margin: 0;
-      font-size: 16px;
-      font-weight: 600;
-    }
-
-    .reset {
-      position: absolute;
-      top: 50%;
-      right: 14px;
-      transform: translateY(-50%);
-      box-sizing: border-box;
-      display: flex;
-      flex: none;
-      align-items: center;
-      justify-content: center;
-      width: 23px;
-      height: 23px;
-      padding: 4px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.08);
-      color: rgba(255, 255, 255, 0.9);
-
-      @media (hover: hover) and (pointer: fine) {
-        &:hover {
-          background: rgba(255, 255, 255, 0.2);
-        }
-      }
-
-      svg {
-        width: 100%;
-        height: 100%;
-      }
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
     }
   }
 
-  .filters-content {
-    padding: 14px;
+  svg {
+    width: 100%;
+    height: 100%;
   }
+}
 
+.filters-content {
   .checkbox-option {
     display: flex;
     align-items: center;
@@ -292,18 +262,6 @@ function selectOption<T>(selected: readonly T[], option: T, options: readonly T[
   }
 
   .group {
-    &+.group {
-      margin-top: 20px;
-    }
-
-    .group-label {
-      display: block;
-      margin: 0 0 8px;
-      color: #fff;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
     .vehicle-options {
       display: flex;
       flex-direction: column;

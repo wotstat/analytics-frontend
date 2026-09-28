@@ -74,7 +74,7 @@
         </div>
 
         <span class="debug-hint">лево</span>
-        <span class="debug-hint">поповер обязан перевернуться, а не уехать за край</span>
+        <span class="debug-hint">панель выбирает сторону с доступным местом</span>
         <span class="debug-hint">право</span>
 
         <div class="corner">
@@ -87,21 +87,16 @@
       </div>
 
       <p class="debug-note">
-        Placement у всех трёх поповерных селекторов — <span class="debug-value">['bottom-start', 'bottom-float']</span>,
-        варианта наверх нет ни одного. По горизонтали всё честно: у правых целей
-        <span class="debug-value">-float</span> прижимает попап к границе
-        <span class="debug-value">popoverViewportOffset</span>. А по вертикали <span class="debug-value">-float</span>
-        для вертикального placement не работает вовсе (в
-        <span class="debug-value">calculatePosition</span> подравнивается только X), поэтому у нижних целей попап не
-        переворачивается и не поднимается — он просто уходит за нижнюю границу окна и обрезается, а прокрутить к нему
-        нельзя: позиция пересчитывается каждый кадр и едет за целью. Прокрути страницу так, чтобы нижний ряд оказался у
-        нижнего края окна, и открой попап техники — он высокий (~430px), эффект виден сразу; у версий пониже.
+        Техника и версии перебирают нижнее и верхнее размещение панели. У нижней цели поповер может открыться сверху,
+        а <span class="debug-value">-float</span> прижимает его по горизонтали к доступной области. Высота
+        <span class="debug-value">PanelPopover</span> ограничена местом вокруг цели; таблица внутри использует
+        собственную прокрутку. Прокрути страницу так, чтобы нижний ряд оказался у нижнего края окна, и проверь обе панели.
       </p>
 
       <p class="debug-note">
-        Событие <span class="debug-value">popoverOutsideWindow</span> в этот момент честно эмитится (позиция не влезла в
-        границы), но с дефолтным <span class="debug-value">closeOnOutsideWindow: 'target'</span> оно игнорируется, и
-        обрезанный попап остаётся открытым. Как выглядят остальные режимы — в секции
+        Если ни один вариант размещения не помещается, базовый поповер сообщает об этом событием
+        <span class="debug-value">popoverOutsideWindow</span>. У селекторов по умолчанию действует
+        <span class="debug-value">closeOnOutsideWindow: 'target'</span>; остальные режимы можно попробовать в секции
         <a href="#vehicle">техники</a>.
       </p>
 

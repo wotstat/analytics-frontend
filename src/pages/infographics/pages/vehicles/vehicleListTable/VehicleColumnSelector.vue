@@ -4,19 +4,15 @@
     Столбцы · {{ selected.length }}/{{ maxSlots }}
   </button>
 
-  <PopoverAutoClose v-model="open" :target="trigger"
+  <VehicleSlotOptions v-model:open="open" :target="trigger"
     :placement="['bottom-end', 'bottom-float', 'top-end', 'left-float', 'top-end']"
-    :viewport-offset="popoverViewportOffset" :arrow-size="0">
-    <VehicleSlotOptions title="Выбор столбцов" :selected :max-slots="maxSlots" :can-reset="canReset" multiple @select="toggle"
-      @toggle-metric="toggleMetric" @reset="reset" />
-  </PopoverAutoClose>
+    title="Выбор столбцов" :selected :max-slots="maxSlots" :can-reset="canReset" multiple @select="toggle"
+    @toggle-metric="toggleMetric" @reset="reset" />
 </template>
 
 <script setup lang="ts">
 import { computed, useTemplateRef } from 'vue'
 import VehicleSlotOptions from '../VehicleSlotOptions.vue'
-import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
-import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import { baseSlot, defaultSlot, defaultSlotsForLimit, orderSlots, type BaseSlot, type Slot } from '../shared/vehicleMetrics'
 
 const props = defineProps<{ maxSlots: number }>()

@@ -1,6 +1,6 @@
 <template>
   <DebugSection title="Данные списков: загрузка, пусто, битый список" id="data"
-    description="Попапы принимают список пропом, поэтому здесь они смонтированы напрямую — без поповера и без запроса. Так видно ветки загрузки, пустого результата и падения на неразобранных данных."
+    description="Попапы принимают список пропом: открой их у тестовых кнопок без запроса к БД и проверь загрузку, пустой результат и неразобранные данные."
     source="src/shared/game/selectors/">
 
     <p class="debug-note">
@@ -25,10 +25,12 @@
         <span class="debug-hint">выбрано: <span class="debug-value">{{ vehicleSelected.size }}</span></span>
       </div>
 
-      <div class="debug-stage">
-        <PopupCard>
+      <div class="debug-stage center short">
+        <button ref="vehicleTarget" class="debug-btn" @click="vehicleOpen = !vehicleOpen">Панель техники</button>
+        <PanelPopover v-model="vehicleOpen" :target="vehicleTarget" :width="350" scroll-mode="child"
+          :placement="['bottom-start', 'top-start', 'bottom-float', 'top-float']">
           <VehiclePopup :tank-list="vehicleList" v-model="vehicleSelected" />
-        </PopupCard>
+        </PanelPopover>
       </div>
 
       <p class="debug-note">
@@ -79,12 +81,14 @@
         </label>
       </div>
 
-      <div class="debug-stage">
+      <div class="debug-stage center short">
+        <button ref="versionTarget" class="debug-btn" @click="versionOpen = !versionOpen">Панель версий</button>
         <RenderGuard :key="versionSource">
-          <PopupCard>
+          <PanelPopover v-model="versionOpen" :target="versionTarget" :width="220" scroll-mode="child"
+            :placement="['bottom-start', 'top-start', 'bottom-float', 'top-float']">
             <GameVersionPopup :version-list="versionList" v-model="versionSelected" :with-region="versionWithRegion"
               :show-versions="showVersions" :show-patches="showPatches" :show-minor="showMinor" />
-          </PopupCard>
+          </PanelPopover>
         </RenderGuard>
       </div>
 
@@ -174,14 +178,14 @@
 
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import VehiclePopup from '@/shared/game/selectors/vehicleSelector/VehiclePopup.vue'
 import GameVersionPopup from '@/shared/game/selectors/gameVersionSelector/GameVersionPopup.vue'
+import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
 import ArenaSelectorContent from '@/shared/game/selectors/arena/arenaSelectorModal/ArenaSelectorContent.vue'
 import SearchLine from '@/shared/game/selectors/components/searchLine/SearchLine.vue'
 import type { GameVendor } from '@/shared/game/wot'
-import PopupCard from '../shared/PopupCard.vue'
 import RenderGuard from '../shared/RenderGuard.vue'
 import { arenaListFixture, brokenVersionListFixture, vehicleListFixture, versionListFixture } from '../shared/fixtures'
 import { arenaRows, vehicleRows, versionRows } from '../shared/lists'
@@ -218,6 +222,10 @@ const showMinor = ref(true)
 const vehicleSelected = ref(new Set<string>())
 const versionSelected = ref(new Set<{ region?: string, version: string }>())
 const arenaSelected = ref(new Set<string>())
+const vehicleTarget = useTemplateRef<HTMLButtonElement>('vehicleTarget')
+const versionTarget = useTemplateRef<HTMLButtonElement>('versionTarget')
+const vehicleOpen = ref(false)
+const versionOpen = ref(false)
 
 const arenaGame = ref<GameVendor>('mt')
 const arenaSearch = ref('')

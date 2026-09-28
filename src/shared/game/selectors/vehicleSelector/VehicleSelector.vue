@@ -1,8 +1,8 @@
 <template>
-  <PopoverAutoClose :target="targetElement" v-model="displayPopup" :placement="['bottom-start', 'bottom-float']"
-    :viewport-offset="popoverViewportOffset" :arrow-size="0">
+  <PanelPopover v-model="displayPopup" :target="targetElement" :width="350" scroll-mode="child"
+    :placement="['bottom-start', 'top-start', 'bottom-float', 'top-float']">
     <VehiclePopup :tank-list="tankList.data" v-model="vehicles" />
-  </PopoverAutoClose>
+  </PanelPopover>
 </template>
 
 <script setup lang="ts">
@@ -10,9 +10,8 @@
 import { CACHE_SETTINGS, queryAsync } from '@/db'
 import { selectTagVehiclesLocalization } from '@/shared/i18n/i18n'
 import VehiclePopup from './VehiclePopup.vue'
-import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
-import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
 import { Nation } from '@/shared/game/vehicles/nations/nations'
+import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
 
 defineProps<{
   targetElement: HTMLElement | null,

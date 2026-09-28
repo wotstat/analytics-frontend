@@ -109,8 +109,16 @@ const delegate: TableViewDelegate = {
 <style lang="scss" scoped>
 @use './styles/vehicleLine.scss' as vehicleLine;
 
+.table {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .table-header {
   display: flex;
+  flex: none;
   height: 30px;
   align-items: center;
   margin: 0 -15px 0 -15px;
@@ -175,10 +183,11 @@ const delegate: TableViewDelegate = {
 }
 
 .table-container {
-  width: 340px;
+  width: calc(100% + 21px);
+  flex: 0 1 300px;
+  min-height: 0;
   height: 300px;
   position: relative;
-  margin-right: -11.5px;
   margin-left: -10px;
   user-select: none;
 
@@ -187,6 +196,11 @@ const delegate: TableViewDelegate = {
 
 
 :deep(.table-container) {
+
+  .reusable-table {
+    position: absolute;
+    inset: 0;
+  }
 
   &.fast-scroll {
     .line:not(.selected) {

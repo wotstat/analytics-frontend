@@ -121,7 +121,7 @@
           <BadgesLinePopover v-model="popoverTags" :tag-to-text="tagToText"
             :close-on-outside-window="closeOnOutsideWindow">
             <div class="slot-card">
-              <p>Содержимое слота — любое. Настоящие селекторы кладут сюда свой попап.</p>
+              <p>Обычный слот принимает содержимое панели. Селекторы техники и версий используют его со своей прокруткой.</p>
               <div class="row">
                 <button v-for="tag in slotTags" :key="tag" @click="toggle(popoverTags, tag)"
                   :class="{ active: popoverTags.has(tag) }">
@@ -144,7 +144,7 @@
       <p class="debug-note">
         Из того, что целью считается вся строка, следует полезный побочный эффект: клики по самой строке для поповера
         «внутри цели», а не снаружи. Открой попап и потыкай крестики на бейджах — попап останется открытым, хотя
-        <span class="debug-value">PopoverAutoClose</span> закрывается по нажатию вне. Повторный клик по «+» при этом
+        <span class="debug-value">PanelPopover</span> закрывается по нажатию вне. Повторный клик по «+» при этом
         честно закрывает: <span class="debug-value">displayPopup = !displayPopup</span> отрабатывает без гонки с
         автозакрытием.
       </p>
@@ -218,7 +218,8 @@ function toggle(set: Set<string>, tag: string) {
 
 .slot-card {
   padding: 10px;
-  width: 260px;
+  box-sizing: border-box;
+  width: 100%;
   font-size: 13px;
   line-height: 1.4;
 

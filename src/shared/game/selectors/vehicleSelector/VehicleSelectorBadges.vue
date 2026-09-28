@@ -1,6 +1,7 @@
 <template>
   <BadgesLinePopover :tagToText="t => getTankName(t, true)" v-model="vehicles"
-    :close-on-outside-window="closeOnOutsideWindow">
+    :close-on-outside-window="closeOnOutsideWindow" :width="350" scroll-mode="child"
+    :placement="['bottom-start', 'top-start', 'bottom-float', 'top-float']">
     <VehiclePopup :tank-list="tankList.data" v-model="vehicles" />
   </BadgesLinePopover>
 </template>

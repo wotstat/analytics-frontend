@@ -3,25 +3,35 @@
     <BadgesLine :tagToText="tagToText" :tagToKey="tagToKey" v-model="selected" show-add-button
       @openSelectModal="openSelect" ref="badges" />
 
-    <PopoverAutoClose :target="badges?.$el" v-model="displayPopup" :placement="['bottom-start', 'bottom-float']"
-      :viewport-offset="popoverViewportOffset" :arrow-size="0" :close-on-outside-window="closeOnOutsideWindow">
-      <slot></slot>
-    </PopoverAutoClose>
+    <PanelPopover v-model="displayPopup" :target="badges?.$el ?? null"
+      :placement="placement ?? ['bottom-start', 'bottom-float']" :close-on-outside-window="closeOnOutsideWindow"
+      :title :width :density :scroll-mode="scrollMode" :offset :arrow-size="arrowSize">
+      <template v-if="$slots.header" #header><slot name="header" /></template>
+      <template v-if="$slots.toolbar" #toolbar><slot name="toolbar" /></template>
+      <template #content><slot /></template>
+      <template v-if="$slots.footer" #footer><slot name="footer" /></template>
+    </PanelPopover>
   </div>
 </template>
 
 
 <script setup lang="ts" generic="T">
 import { ComponentInstance, ref, useTemplateRef } from 'vue'
-import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import BadgesLine from './BadgesLine.vue'
-import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
-import { CloseOnOutsideWindow } from '@/shared/uiKit/popover/utils'
+import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
+import type { CloseOnOutsideWindow, OffsetValue, PlacementParam } from '@/shared/uiKit/popover/utils'
 
-const props = defineProps<{
+defineProps<{
   tagToText?: (tag: T) => string
   tagToKey?: (tag: T) => string
   closeOnOutsideWindow?: CloseOnOutsideWindow
+  title?: string
+  width?: number
+  density?: 'standard' | 'compact'
+  scrollMode?: 'panel' | 'child'
+  placement?: PlacementParam
+  offset?: OffsetValue
+  arrowSize?: number
 }>()
 
 const selected = defineModel<Set<T>>({ default: () => new Set() })
@@ -31,7 +41,5 @@ const badges = useTemplateRef<ComponentInstance<typeof BadgesLine<T>>>('badges')
 function openSelect() {
   displayPopup.value = !displayPopup.value
 }
+
 </script>
-
-
-<style lang="scss" scoped></style>

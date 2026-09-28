@@ -6,19 +6,15 @@
     <ArrowDown class="metric-arrow" />
   </button>
 
-  <PopoverAutoClose v-model="open" :target="trigger"
-    :placement="['bottom-start', 'bottom-float', 'top-start', 'right-float']" :viewport-offset="popoverViewportOffset"
-    :arrow-size="0">
-    <VehicleSlotOptions title="Выбор метрики" :selected="[slot]" @select="selectMetric" />
-  </PopoverAutoClose>
+  <VehicleSlotOptions v-model:open="open" :target="trigger"
+    :placement="['bottom-start', 'bottom-float', 'top-start', 'right-float']"
+    title="Выбор метрики" :selected="[slot]" @select="selectMetric" />
 </template>
 
 <script setup lang="ts">
 import { ref, useTemplateRef } from 'vue'
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 import ArrowDown from '@/assets/icons/arrow-down.svg'
-import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
-import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import VehicleSlotOptions from './VehicleSlotOptions.vue'
 import { availableSlots, type Slot } from './shared/vehicleMetrics'
 

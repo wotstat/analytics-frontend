@@ -58,7 +58,7 @@
 
 Комплект UI для выбора фильтров статистики. Используется в `pages/replays/search/Index.vue` и секции фильтров `pages/infographics/pages/vehicles/`; `SearchLine` отдельно переиспользован в `onslaught/shared/settings/nicknameInput/`. В общих настройках сессионной инфографики этих селекторов **нет**.
 
-- `vehicleSelector/` — выбор танков: попап с таблицей (`VehiclePopup`, `VehicleTable`), бейджи выбранного (`VehicleSelectorBadges`).
+- `vehicleSelector/` — выбор танков: содержимое `VehiclePopup` с виртуализированной таблицей `VehicleTable` внутри общего `PanelPopover`, бейджи выбранного (`VehicleSelectorBadges`).
 - `arena/` — выбор карт (модалка + бейджи).
 - `gameVersionSelector/`, `gameSelector/` — версия игры и игра (Lesta/WG).
 - Общие части: `components/badges/` — `Badge.vue`, `BadgesLine.vue` (обычный `flex-wrap`, бейджи переносятся и растят фильтр по высоте: свёртки в «+N» нет) и `BadgesLinePopover.vue` (строка бейджей, по клику открывающая попап выбора); `components/searchLine/SearchLine.vue`.
@@ -73,7 +73,7 @@
 можно указать команду. При `false` переключатель команд и базы на миникарте скрыты, а модель
 содержит только теги карт; этот режим используется в статистике техники.
 
-`BadgesLinePopover` и надстроенные над ним `VehicleSelectorBadges` / `GameVersionSelectorBadges` пробрасывают в `PopoverAutoClose` проп `closeOnOutsideWindow` (см. 05), чтобы условие автозакрытия можно было переопределить на месте использования.
+`BadgesLinePopover` хранит состояние открытия, считает целью всю строку бейджей и всегда монтирует `PanelPopover`. Параметры ширины, плотности, режима прокрутки, размещения и закрытия передаются панели через пропсы обёртки. `VehiclePopup` и `GameVersionPopup` выводят содержимое со своими шапками; их `TableView` прокручивается внутри панели с `scrollMode="child"`. Для селектора техники без бейджей и прямых примеров на `/debug` та же панель монтируется снаружи содержимого (см. 05).
 
 ### Выбор версии игры
 
