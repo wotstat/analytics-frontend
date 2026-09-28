@@ -296,12 +296,3 @@ export const defaultSlots: Slot[] = defaultSlotOrder.map(defaultSlot)
 export function defaultSlotsForLimit(limit: number): Slot[] {
   return orderSlots(defaultSlots.slice(0, limit))
 }
-
-export function slotDescription(slot: Slot) {
-  const definition: SlotDefinition = availableSlots[slot]
-  if (definition.formula) {
-    const description = definition.description ?? definition.formula
-    return `${description.replace(/\.$/, '')}. Расчёт по общим суммам за выбранный период; время в секундах. При нулевом знаменателе — прочерк.`
-  }
-  return definition.description ?? definition.label
-}

@@ -1,6 +1,6 @@
 <template>
-  <button ref="trigger" class="history-menu-trigger" :class="{ active: hasAnnotations }" type="button" title="Настройки аннотаций"
-    aria-label="Настройки аннотаций" :aria-expanded="open" @click="open = !open">
+  <button ref="trigger" class="history-menu-trigger" :class="{ active: hasAnnotations }" type="button"
+    @click="open = !open">
     <span class="dots"></span>
   </button>
 
@@ -10,29 +10,28 @@
       <div class="options panel-section">
         <h3>Версии игры</h3>
         <div class="version-options">
-          <button v-for="option in versionOptions" :key="option.key" type="button" class="annotation-option"
-            :style="{ '--annotation-color': menuAccentColor(option.color) }"
-            :class="{ selected: settings[option.key].value }" :aria-pressed="settings[option.key].value"
-            @click="settings[option.key].value = !settings[option.key].value">
+          <SelectionTile v-for="option in versionOptions" :key="option.key" class="annotation-option"
+            density="compact" :accent-color="menuAccentColor(option.color)"
+            :selected="settings[option.key].value"
+            @select="settings[option.key].value = !settings[option.key].value">
             {{ option.label }}
-          </button>
+          </SelectionTile>
         </div>
       </div>
 
       <div class="options panel-section">
         <h3>События</h3>
         <div class="event-options">
-          <button type="button" class="annotation-option" :style="{ '--annotation-color': menuAccentColor(outageAnnotationColor) }"
-            :class="{ selected: settings.showWotstatOutages.value }" :aria-pressed="settings.showWotstatOutages.value"
-            @click="settings.showWotstatOutages.value = !settings.showWotstatOutages.value">
+          <SelectionTile class="annotation-option" density="compact" :accent-color="menuAccentColor(outageAnnotationColor)"
+            :selected="settings.showWotstatOutages.value"
+            @select="settings.showWotstatOutages.value = !settings.showWotstatOutages.value">
             Недоступность wotstat
-          </button>
-          <button v-for="event in visibleEvents" :key="event.id" type="button" class="annotation-option"
-            :style="{ '--annotation-color': menuAccentColor(event.color) }"
-            :class="{ selected: settings.enabledEvents.value.includes(event.id) }"
-            :aria-pressed="settings.enabledEvents.value.includes(event.id)" @click="settings.toggleEvent(event.id)">
+          </SelectionTile>
+          <SelectionTile v-for="event in visibleEvents" :key="event.id" class="annotation-option" density="compact"
+            :accent-color="menuAccentColor(event.color)" :selected="settings.enabledEvents.value.includes(event.id)"
+            @select="settings.toggleEvent(event.id)">
             {{ event.label }}
-          </button>
+          </SelectionTile>
         </div>
       </div>
     </template>
@@ -42,6 +41,7 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
 import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
+import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
 import { ColorHSVA } from '@/shared/uiKit/colorPicker/ColorHSVA'
 import type { useHistoryAnnotationSettings } from './useHistoryAnnotationSettings'
 import { getHistoryEventRegions, historyEvents } from '@/shared/game/historyEvents'
@@ -134,41 +134,13 @@ const versionOptions = [
 
 .event-options {
   flex-direction: column;
-
-  .annotation-option {
-    text-align: left;
-  }
 }
 
 .annotation-option {
-  position: relative;
   flex: 1;
-  padding: 5px 8px;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.05);
-  color: inherit;
-  font-size: 12px;
-  line-height: 1.2;
+}
 
-  @media (hover: hover) and (pointer: fine) {
-    &:hover {
-      background: rgba(255, 255, 255, 0.12);
-    }
-  }
-
-  &.selected {
-    background: rgba(255, 255, 255, 0.1);
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: 5px;
-      bottom: 5px;
-      left: 0;
-      width: 3px;
-      border-radius: 3px;
-      background: var(--annotation-color);
-    }
-  }
+.version-options .annotation-option {
+  flex-basis: auto;
 }
 </style>

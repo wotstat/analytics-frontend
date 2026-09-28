@@ -5,8 +5,8 @@
       <div class="selection-controls">
         <span class="selected-count">Выбрано {{ selected.length }} из {{ maxSlots }}</span>
         <button v-if="multiple" class="reset-button" type="button" :disabled="!canReset"
-          aria-label="Сбросить выбранные столбцы" title="Сбросить выбранные столбцы" @click="resetSelection">
-          <ResetIcon aria-hidden="true" />
+          @click="resetSelection">
+          <ResetIcon />
         </button>
       </div>
     </template>
@@ -16,32 +16,28 @@
         <section v-for="category in slotCategories" :key="category.title" class="category panel-section" :class="{ derived: category.derived }">
           <h3>{{ category.title }}</h3>
           <div class="tiles">
-            <div v-for="slot in category.slots" :key="slot" class="tile-option"
-              :class="{ selected: isSelected(slot), disabled: !isSelected(slot) && isDisabled(defaultSlot(slot)), derived: !!availableSlots[slot].formula }">
-              <button class="tile" type="button"
-                :disabled="!isSelected(slot) && isDisabled(defaultSlot(slot))" :aria-pressed="isSelected(slot)"
-                :aria-label="metricLabel(slot)" :title="slotDescription(slot)"
-                @click="selectMetric(slot)">
-                <Icon :icon="availableSlots[slot].icon" class="tile-icon" />
-                <span class="tile-text">
-                  <span class="tile-label">{{ metricLabel(slot) }}</span>
-                  <span v-if="availableSlots[slot].formula" class="tile-formula">{{ availableSlots[slot].formula }}</span>
-                </span>
-                <span v-if="aggregationLabel(slot)" class="aggregation-value">
-                  {{ aggregationLabel(slot) }}
-                </span>
-              </button>
-              <button v-if="slotAggregationOptions(slot).length" class="aggregation-trigger" type="button"
-                :class="{ active: extraAggregationCount(slot) > 0 }"
-                :disabled="!isSelected(slot) && isDisabled(defaultSlot(slot))" :aria-label="`Агрегация: ${metricLabel(slot)}`"
-                :title="aggregationTitle(slot)" aria-haspopup="menu" :aria-controls="menuId"
-                :aria-expanded="aggregationSlot === slot" @click="openAggregation(slot, $event)">
-                <span class="dots" aria-hidden="true"></span>
-                <span v-if="multiple && extraAggregationCount(slot)" class="aggregation-badge" aria-hidden="true">
+            <SelectionTile v-for="slot in category.slots" :key="slot" class="tile-option"
+              :class="{ derived: !!availableSlots[slot].formula }"
+              :selected="isSelected(slot)" :disabled="!isSelected(slot) && isDisabled(defaultSlot(slot))"
+              :accent-color="availableSlots[slot].formula ? '#bbaad6' : undefined"
+              :action="slotAggregationOptions(slot).length > 0" :action-active="extraAggregationCount(slot) > 0"
+              :action-open="aggregationSlot === slot"
+              @select="selectMetric(slot)" @action="openAggregation(slot, $event)">
+              <Icon :icon="availableSlots[slot].icon" class="tile-icon" />
+              <span class="tile-text">
+                <span class="tile-label">{{ metricLabel(slot) }}</span>
+                <span v-if="availableSlots[slot].formula" class="tile-formula">{{ availableSlots[slot].formula }}</span>
+              </span>
+              <span v-if="aggregationLabel(slot)" class="aggregation-value">
+                {{ aggregationLabel(slot) }}
+              </span>
+              <template #action>
+                <span class="dots"></span>
+                <span v-if="multiple && extraAggregationCount(slot)" class="aggregation-badge">
                   {{ extraAggregationCount(slot) }}
                 </span>
-              </button>
-            </div>
+              </template>
+            </SelectionTile>
           </div>
         </section>
       </div>
@@ -51,8 +47,7 @@
         :viewport-offset="popoverViewportOffset" @pointer-down-outside="closeAggregation()"
         @pointer-click-outside="closeAggregation()" @target-outside-window="closeAggregation()"
         @ready-to-visible="focusAggregationOption()">
-        <div v-if="aggregationSlot !== null" :id="menuId" ref="aggregationMenu" class="aggregation-menu"
-          role="menu" :aria-label="`Агрегация: ${metricLabel(aggregationSlot)}`"
+        <div v-if="aggregationSlot !== null" ref="aggregationMenu" class="aggregation-menu"
           @pointerdown.stop @pointerup.stop @click.stop
           @keydown.esc.stop.prevent="closeAggregation(true)" @keydown.down.prevent="moveAggregationFocus(1)"
           @keydown.up.prevent="moveAggregationFocus(-1)" @keydown.home.prevent="focusAggregationOption(0)"
@@ -60,18 +55,16 @@
           @keydown.end.prevent="focusAggregationOption(-1)">
           <div class="aggregation-heading">{{ metricLabel(aggregationSlot) }}</div>
           <div ref="aggregationList" class="aggregation-options nice-scrollbar">
-            <section v-for="group in aggregationGroups" :key="group.key" class="aggregation-group" role="group"
-              :aria-label="group.title" :class="{ quantiles: group.key === 'quantiles' }"
+            <section v-for="group in aggregationGroups" :key="group.key" class="aggregation-group"
+              :class="{ quantiles: group.key === 'quantiles' }"
               :style="{ '--aggregation-columns': group.columns }">
               <h3>{{ group.title }}</h3>
               <div class="aggregation-grid">
-                <button v-for="option in group.options" :key="option.slot" type="button" class="aggregation-option"
-                  :role="multiple ? 'menuitemcheckbox' : 'menuitemradio'" :aria-checked="selected.includes(option.slot)"
-                  :aria-label="option.label" :title="option.label"
-                  :disabled="isDisabled(option.slot)" :class="{ selected: selected.includes(option.slot) }"
-                  @click="selectAggregation(option.slot)">
+                <SelectionTile v-for="option in group.options" :key="option.slot" class="aggregation-option"
+                  density="compact" :selected="selected.includes(option.slot)"
+                  :disabled="isDisabled(option.slot)" @select="selectAggregation(option.slot)">
                   {{ aggregationOptionLabel(option.slot, option.label) }}
-                </button>
+                </SelectionTile>
               </div>
             </section>
           </div>
@@ -84,12 +77,13 @@
 <script setup lang="ts">
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 import ResetIcon from '@/assets/icons/reset.svg'
-import { computed, ref, shallowRef, useId, useTemplateRef, watch } from 'vue'
+import { computed, ref, shallowRef, useTemplateRef, watch } from 'vue'
 import Popover from '@/shared/uiKit/popover/Popover.vue'
 import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
+import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
 import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import type { PlacementParam, PopoverTarget } from '@/shared/uiKit/popover/utils'
-import { availableSlots, baseSlot, defaultSlot, metricLabel, slotAggregationLabel, slotAggregationOptions, slotCategories, slotDescription, type BaseSlot, type Slot } from './shared/vehicleMetrics'
+import { availableSlots, baseSlot, defaultSlot, metricLabel, slotAggregationLabel, slotAggregationOptions, slotCategories, type BaseSlot, type Slot } from './shared/vehicleMetrics'
 
 const props = defineProps<{
   title: string
@@ -113,7 +107,6 @@ const aggregationSlot = ref<BaseSlot | null>(null)
 const aggregationTrigger = shallowRef<HTMLButtonElement | null>(null)
 const aggregationMenu = useTemplateRef<HTMLElement>('aggregationMenu')
 const aggregationList = useTemplateRef<HTMLElement>('aggregationList')
-const menuId = useId()
 const aggregationOptions = computed(() => aggregationSlot.value === null ? [] : slotAggregationOptions(aggregationSlot.value))
 
 watch(open, isOpen => {
@@ -164,11 +157,6 @@ function extraAggregationCount(slot: BaseSlot) {
   return selectedAggregations(slot).filter(selected => selected !== defaultSlot(slot)).length
 }
 
-function aggregationTitle(slot: BaseSlot) {
-  const labels = selectedAggregations(slot).map(selected => availableSlots[selected].label)
-  return labels.length ? labels.join('\n') : `Агрегация: ${metricLabel(slot)}`
-}
-
 function openAggregation(slot: BaseSlot, event: MouseEvent) {
   if (aggregationSlot.value === slot) {
     closeAggregation()
@@ -189,7 +177,8 @@ function focusAggregationOption(index?: number) {
   const list = aggregationList.value
   const buttons = menu?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')
   if (!menu || !list || !buttons?.length) return
-  const selectedIndex = [...buttons].findIndex(button => button.getAttribute('aria-checked') === 'true')
+  const selectedIndex = aggregationGroups.value.flatMap(group => group.options)
+    .findIndex(option => props.selected.includes(option.slot))
   const button = buttons[index === -1 ? buttons.length - 1 : index ?? Math.max(0, selectedIndex)]
   if (!button) return
   button.focus({ preventScroll: true })
@@ -293,46 +282,11 @@ function isDisabled(slot: Slot) {
       gap: 6px;
 
       .tile-option {
-        position: relative;
-        display: flex;
-        align-items: stretch;
-        min-width: 0;
-        border-radius: 5px;
-        background: rgba(255, 255, 255, 0.05);
-
-        &.disabled {
-          opacity: 0.45;
-        }
-
-        &.selected {
-          background: rgba(255, 255, 255, 0.1);
-
-          &::before {
-            content: '';
-            position: absolute;
-            top: 7px;
-            bottom: 7px;
-            left: 0;
-            width: 3px;
-            border-radius: 3px;
-            background: var(--blue-thin-color);
-          }
-        }
-
-        @media (hover: hover) and (pointer: fine) {
-          &:hover:not(.disabled) {
-            background: rgba(255, 255, 255, 0.12);
-          }
-        }
+        --selection-tile-main-padding: 2px 6px;
+        --selection-tile-gap: 8px;
 
         &.derived {
-          &.selected::before {
-            background: #bbaad6;
-          }
-
-          .tile {
-            padding-block: 7px;
-          }
+          --selection-tile-main-padding: 7px 6px;
 
           .tile-icon {
             color: #bbaad6;
@@ -340,136 +294,85 @@ function isDisabled(slot: Slot) {
         }
       }
 
-      .tile {
-        flex: 1;
+      .tile-text {
         display: flex;
-        align-items: center;
-        gap: 8px;
+        flex-direction: column;
+        gap: 3px;
         min-width: 0;
-        padding: 2px 6px;
-        border-radius: 5px;
-        background: transparent;
-        color: inherit;
-        text-align: left;
-        font-size: 14px;
-        line-height: 1.2;
-
-        .tile-text {
-          display: flex;
-          flex-direction: column;
-          gap: 3px;
-          min-width: 0;
-        }
-
-        .tile-label {
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .tile-formula {
-          color: rgba(255, 255, 255, 0.45);
-          font-size: 11px;
-          line-height: 1.3;
-        }
-
-        .aggregation-value {
-          flex: none;
-          margin-left: auto;
-          color: rgba(255, 255, 255, 0.55);
-          font-size: 11px;
-          white-space: nowrap;
-        }
-
-        .tile-icon {
-          flex: none;
-          width: 34px;
-          height: 34px;
-          margin: -2px;
-        }
       }
 
-      .aggregation-trigger {
-        position: relative;
-        display: grid;
-        place-items: center;
+      .tile-label {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .tile-formula {
+        color: rgba(255, 255, 255, 0.45);
+        font-size: 11px;
+        line-height: 1.3;
+      }
+
+      .aggregation-value {
         flex: none;
-        align-self: center;
-        width: 24px;
-        height: 24px;
-        margin: 3px;
-        padding: 0;
-        border-radius: 5px;
-        color: rgba(197, 197, 197, 0.6);
-        background: transparent;
-
-        &:hover:not(:disabled),
-        &[aria-expanded='true'] {
-          color: rgba(255, 255, 255, 0.8);
-          background: rgba(255, 255, 255, 0.08);
-        }
-
-        &.active {
-          color: var(--blue-thin-color);
-          background: rgba(10, 132, 255, 0.12);
-
-          &:hover:not(:disabled) {
-            color: var(--blue-thin-color);
-            background: rgba(10, 132, 255, 0.22);
-          }
-        }
-
-        .aggregation-badge {
-          position: absolute;
-          top: -2px;
-          right: -2px;
-          display: grid;
-          place-items: center;
-          min-width: 12px;
-          height: 12px;
-          padding: 0 2px;
-          box-sizing: border-box;
-          border-radius: 6px;
-          background: var(--blue-thin-color);
-          color: #fff;
-          font-size: 9px;
-          line-height: 1;
-        }
-
-        .dots {
-          position: relative;
-
-          &,
-          &::before,
-          &::after {
-            width: 3px;
-            height: 3px;
-            border-radius: 50%;
-            background: currentColor;
-          }
-
-          &::before,
-          &::after {
-            content: '';
-            position: absolute;
-            top: 0;
-          }
-
-          &::before {
-            right: 6px;
-          }
-
-          &::after {
-            left: 6px;
-          }
-        }
+        margin-left: auto;
+        color: rgba(255, 255, 255, 0.55);
+        font-size: 11px;
+        white-space: nowrap;
       }
 
-      button:focus-visible {
-        outline: 2px solid var(--blue-thin-color);
-        outline-offset: -2px;
+      .tile-icon {
+        flex: none;
+        width: 34px;
+        height: 34px;
+        margin: -2px;
       }
     }
+  }
+}
+
+.aggregation-badge {
+  position: absolute;
+  top: calc(50% - 14px);
+  right: 1px;
+  display: grid;
+  place-items: center;
+  min-width: 12px;
+  height: 12px;
+  padding: 0 2px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  background: var(--blue-thin-color);
+  color: #fff;
+  font-size: 9px;
+  line-height: 1;
+}
+
+.dots {
+  position: relative;
+
+  &,
+  &::before,
+  &::after {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+  }
+
+  &::before {
+    right: 6px;
+  }
+
+  &::after {
+    left: 6px;
   }
 }
 
@@ -520,54 +423,16 @@ function isDisabled(slot: Slot) {
     }
 
     &.quantiles .aggregation-option {
-      padding-inline: 4px;
-      text-align: center;
+      --selection-tile-main-padding: 5px 4px;
+      --selection-tile-justify-content: center;
+
       font-variant-numeric: tabular-nums;
     }
   }
 
   .aggregation-option {
-    position: relative;
     flex: none;
     width: 100%;
-    min-height: 26px;
-    padding: 5px 8px;
-    border-radius: 5px;
-    background: rgba(255, 255, 255, 0.05);
-    color: inherit;
-    text-align: left;
-    font-size: 12px;
-    line-height: 1.2;
-
-    @media (hover: hover) and (pointer: fine) {
-      &:hover:not(:disabled) {
-        background: rgba(255, 255, 255, 0.12);
-      }
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--blue-thin-color);
-      outline-offset: -2px;
-    }
-
-    &:disabled:not(.selected) {
-      opacity: 0.45;
-    }
-
-    &.selected {
-      background: rgba(255, 255, 255, 0.1);
-
-      &::before {
-        content: '';
-        position: absolute;
-        top: 5px;
-        bottom: 5px;
-        left: 0;
-        width: 3px;
-        border-radius: 3px;
-        background: var(--blue-thin-color);
-      }
-    }
   }
 }
 </style>

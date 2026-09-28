@@ -1,7 +1,7 @@
 <template>
-  <button ref="trigger" class="mode-trigger" type="button" :aria-expanded="open" @click="open = !open">
+  <button ref="trigger" class="mode-trigger" type="button" @click="open = !open">
     <span class="mode-label">{{ triggerLabel }}</span>
-    <ArrowDown class="mode-arrow" aria-hidden="true" />
+    <ArrowDown class="mode-arrow" />
   </button>
 
   <PanelPopover v-model="open" :target="trigger" title="Выбор режимов боя" :width="560" class="battle-mode-panel"
@@ -12,19 +12,18 @@
 
     <template #content>
       <div class="options">
-        <button class="option all" type="button" :class="{ selected: model.length === 0 }"
-          :aria-pressed="model.length === 0" @click="selectAll">
+        <SelectionTile class="option all" :selected="model.length === 0" @select="selectAll">
           Все режимы
-        </button>
+        </SelectionTile>
 
         <section v-for="group in groups" :key="group.title" class="category panel-section">
           <h3>{{ group.title }}</h3>
           <div class="tiles">
-            <button v-for="option in group.options" :key="option.value" class="option" type="button"
-              :class="{ selected: model.includes(option.value) }" :aria-pressed="model.includes(option.value)"
-              @click="selectMode(option.value, $event)" @contextmenu="onOptionContextMenu(option.value, $event)">
+            <SelectionTile v-for="option in group.options" :key="option.value" class="option"
+              :selected="model.includes(option.value)" @select="selectMode(option.value, $event)"
+              @contextmenu="onOptionContextMenu(option.value, $event)">
               {{ option.label }}
-            </button>
+            </SelectionTile>
           </div>
         </section>
       </div>
@@ -38,6 +37,7 @@
 import { computed, ref, useTemplateRef } from 'vue'
 import ArrowDown from '@/assets/icons/arrow-down.svg'
 import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
+import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
 import type { VehicleBattleMode } from './types'
 
 const props = defineProps<{
@@ -123,43 +123,8 @@ function selectAll() {
 }
 
 .options {
-  .option {
-    position: relative;
-    min-width: 0;
-    min-height: 34px;
-    padding: 8px 12px;
-    border-radius: 5px;
-    background: rgba(255, 255, 255, 0.05);
-    color: inherit;
-    text-align: left;
-    font-size: 14px;
-    line-height: 1.2;
-    user-select: none;
-
-    @media (hover: hover) and (pointer: fine) {
-      &:hover {
-        background: rgba(255, 255, 255, 0.12);
-      }
-    }
-
-    &.selected {
-      background: rgba(255, 255, 255, 0.1);
-
-      &::before {
-        content: '';
-        position: absolute;
-        top: 7px;
-        bottom: 7px;
-        left: 0;
-        width: 3px;
-        border-radius: 3px;
-        background: var(--blue-thin-color);
-      }
-    }
-
-    &.all {
-      width: 100%;
-    }
+  .all {
+    width: 100%;
   }
 
   .category {

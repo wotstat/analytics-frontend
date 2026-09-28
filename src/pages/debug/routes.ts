@@ -41,6 +41,13 @@ const entries = [
     component: () => import('./pages/panelPopover/Index.vue'),
   },
   {
+    path: 'selection-tile',
+    title: 'SelectionTile',
+    description: 'Текстовая плитка и встроенное действие: выбор, цвет, disabled и область клика.',
+    group: 'uiKit',
+    component: () => import('./pages/selectionTile/Index.vue'),
+  },
+  {
     path: 'tooltip',
     title: 'Тултипы',
     description: 'Директивы с текстом, произвольное содержимое через useTooltip, поведение на тач-устройствах.',
