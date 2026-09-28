@@ -1,19 +1,13 @@
-import { hashToArena } from '@/shared/game/selectors/arena/utils'
 import { customBattleModes } from '@/shared/game/wot'
 import { countLocalize, getArenaName } from '@/shared/i18n/i18n'
 import { differentComparisonFilters, type ComparisonFilters, type ComparisonSource } from './types'
 
 function arenaLabel(arenas: string[]) {
   if (!arenas.length) return 'Все карты'
-
-  const selected = arenas.map(hashToArena)
-  const tags = [...new Set(selected.map(arena => arena.tag))]
-  if (tags.length > 1) return `${tags.length} ${countLocalize(tags.length, 'карта', 'карты', 'карт')}`
-
-  const teams = [...new Set(selected.map(arena => arena.team))]
-  const teamLabel = teams.includes('any') || teams.length > 1 ? '' : ` / респ ${teams[0]}`
-
-  return `${getArenaName(tags[0])}${teamLabel}`
+  const tags = [...new Set(arenas)]
+  return tags.length > 1
+    ? `${tags.length} ${countLocalize(tags.length, 'карта', 'карты', 'карт')}`
+    : getArenaName(tags[0])
 }
 
 export function comparisonName(source: ComparisonSource, current: ComparisonFilters) {

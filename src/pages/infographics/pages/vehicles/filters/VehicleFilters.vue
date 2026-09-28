@@ -8,12 +8,7 @@
 
       <div class="primary-filter">
         <span class="label">Режим</span>
-        <FilterSelectorBadges v-model="modes" title="Выбор режимов боя" all-label="Все режимы" :groups="modeGroups" />
-      </div>
-
-      <div class="primary-filter">
-        <span class="label">Карта</span>
-        <ArenaSelectorBadges v-model="arenas" :game="arenaGame" />
+        <BattleModeSelector v-model="modes" :groups="modeGroups" />
       </div>
 
       <div class="actions">
@@ -28,6 +23,11 @@
     </div>
 
     <div v-show="expanded" class="advanced-filters">
+      <div class="advanced-row">
+        <span class="label">Карта</span>
+        <ArenaSelectorBadges v-model="arenas" :game="arenaGame" :allow-team-selection="false" />
+      </div>
+
       <div class="advanced-row">
         <span class="label">Взвод</span>
         <div class="variants">
@@ -67,7 +67,7 @@ import ArrowDown from '@/assets/icons/arrow-down.svg'
 import ResetIcon from '@/assets/icons/reset.svg'
 import ArenaSelectorBadges from '@/shared/game/selectors/arena/ArenaSelectorBadges.vue'
 import { customBattleModes, customBattleModesKeys, regionToGame } from '@/shared/game/wot'
-import FilterSelectorBadges from './FilterSelectorBadges.vue'
+import BattleModeSelector from './BattleModeSelector.vue'
 import { createVehicleFilters, type VehicleBattleMode, type VehicleFilters, type VehicleRegion } from './types'
 import { useBadgeSelection } from './useBadgeSelection'
 
@@ -147,7 +147,7 @@ function field<K extends keyof VehicleFilters>(key: K) {
 }
 
 const regions = field('regions')
-const modes = useBadgeSelection(field('battleModes'))
+const modes = field('battleModes')
 const arenas = useBadgeSelection(field('arenas'))
 const platoon = field('platoon')
 const result = field('result')
@@ -168,13 +168,13 @@ const arenaGame = computed(() => {
   return games.size === 1 ? [...games][0] : undefined
 })
 
-const advancedCount = computed(() => [platoon.value, result.value, battleLevel.value]
+const advancedCount = computed(() => Number(arenas.value.size > 0) + [platoon.value, result.value, battleLevel.value]
   .filter(value => value !== 'any').length)
 
 const canReset = computed(() => {
   const defaults = createVehicleFilters()
-  return advancedCount.value > 0 || filters.value.arenas.length > 0 ||
-    filters.value.battleModes.length !== 1 || filters.value.battleModes[0] !== defaults.battleModes[0]
+  return advancedCount.value > 0 || filters.value.battleModes.length !== 1 ||
+    filters.value.battleModes[0] !== defaults.battleModes[0]
 })
 
 function reset() {
@@ -334,6 +334,10 @@ function reset() {
       display: flex;
       align-items: flex-start;
       gap: 12px;
+
+      > :deep(.badges) {
+        min-width: 0;
+      }
 
       .label {
         flex-basis: 88px;

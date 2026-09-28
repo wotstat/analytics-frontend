@@ -24,7 +24,7 @@
           <th>Карты</th>
           <td>ArenaSelectorBadges → BadgesLine + ModalWindow</td>
           <td>модалка</td>
-          <td>Set&lt;тег:команда&gt;</td>
+          <td>Set&lt;тег:команда&gt; или Set&lt;тег&gt;</td>
           <td><a href="#arena">карты</a></td>
         </tr>
         <tr>
@@ -45,9 +45,9 @@
     </table>
 
     <p class="debug-note">
-      Состояние выбора на этой странице — обычные локальные <span class="debug-value">ref</span>. В бою (единственное
-      живое применение — <span class="debug-value">src/pages/replays/search/Index.vue</span>) оно тоже локальное, а
-      фильтры статистики держат своё состояние в URL-query через
+      Состояние выбора на этой странице — обычные локальные <span class="debug-value">ref</span>. В поиске реплеев
+      оно тоже локальное, а фильтры статистики техники хранят его в состоянии страницы. Другие фильтры статистики
+      держат своё состояние в URL-query через
       <span class="debug-value">useQueryStatParams</span> (<span class="debug-value">src/shared/query/</span>) — так
       фильтр переживает перезагрузку и уезжает в ссылку. Здесь URL нарочно не задействован, иначе страница спорила бы
       с роутером на каждый клик.

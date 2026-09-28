@@ -1,7 +1,7 @@
 <template>
   <BadgesLine :tagToText="tagToText" v-model="selected" show-add-button @openSelectModal="openSelect" />
   <ArenaSelectorPopup :arenas="arenas.data" :visible-modal="visibleModal" @close="visibleModal = false"
-    v-model="selected" :game="props.game" />
+    v-model="selected" :game="props.game" :allow-team-selection="props.allowTeamSelection" />
 </template>
 
 
@@ -15,9 +15,10 @@ import ArenaSelectorPopup from './arenaSelectorModal/ArenaSelectorPopup.vue'
 import { hashToArena } from './utils'
 import type { GameVendor } from '@/shared/game/wot'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   game?: GameVendor
-}>()
+  allowTeamSelection?: boolean
+}>(), { allowTeamSelection: true })
 
 const visibleModal = ref(false)
 
@@ -46,6 +47,7 @@ const arenaNames = computed(() => new Map(arenas.value.data.map(a => [a.tag, a.n
 const selected = defineModel<Set<string>>({ default: () => new Set() })
 
 function tagToText(tag: string) {
+  if (!props.allowTeamSelection) return arenaNames.value.get(tag) || tag
   const info = hashToArena(tag)
   if (!info) return tag
   const name = arenaNames.value.get(info.tag) || info.tag

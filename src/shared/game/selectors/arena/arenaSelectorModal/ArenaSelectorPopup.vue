@@ -67,7 +67,7 @@
 
     <template #default>
       <ArenaSelectorModal :arenas="arenas" v-model="selected" :game="props.game ?? (preferredGame == 'mt' ? 'mt' : 'wot')"
-        :search="searchText" :season :onlyActual @reset="reset" />
+        :search="searchText" :season :onlyActual :allow-team-selection="props.allowTeamSelection" @reset="reset" />
     </template>
 
     <template #footer-content>
@@ -91,11 +91,12 @@ import { hashToArena } from '../utils'
 import BadgesLine from '../../components/badges/BadgesLine.vue'
 import type { GameVendor } from '@/shared/game/wot'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   arenas: { region: string, battleMode: string, battleGameplay: string, tag: string, name: string, gameVersion: string, season: string }[],
   visibleModal: boolean
   game?: GameVendor
-}>()
+  allowTeamSelection?: boolean
+}>(), { allowTeamSelection: true })
 
 const searchText = ref('')
 const season = ref<'winter' | 'summer' | 'desert' | null>(null)
@@ -122,6 +123,7 @@ function selectSeason(target: 'winter' | 'summer' | 'desert' | null) {
 }
 
 function badgeLabel(hash: string) {
+  if (!props.allowTeamSelection) return arenaNames.value.get(hash) || hash
   const info = hashToArena(hash)
   if (!info) return hash
   const name = arenaNames.value.get(info.tag) || info.tag

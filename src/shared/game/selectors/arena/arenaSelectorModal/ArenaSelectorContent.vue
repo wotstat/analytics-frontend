@@ -11,9 +11,9 @@
           <MinimapBackground :tag="arena.imageName" :game="game" :gameplay="arena.battleGameplay"
             :fallback="FallbackMinimap" class="minimap-background" />
           <MinimapBases class="minimap-bases" :tag="arena.tag" :game="game" :gameplay="arena.gameplay"
-            v-if="typeof selectedTeams.get(arena.tag) == 'number'" :team="getTeam(selectedTeams.get(arena.tag))" />
+            v-if="props.allowTeamSelection && typeof selectedTeams.get(arena.tag) == 'number'" :team="getTeam(selectedTeams.get(arena.tag))" />
           <div class="team-switcher mt-font"
-            v-if="selectedTags.has(arena.tag) && arenasTeamCount(game, arena.tag, arena.gameplay) == 2" @click.stop>
+            v-if="props.allowTeamSelection && selectedTags.has(arena.tag) && arenasTeamCount(game, arena.tag, arena.gameplay) == 2" @click.stop>
             <button class="left" @click="selectTeam(arena.tag, 1)"
               :class="{ 'selected': selectedTeams.get(arena.tag) === 1 }">1</button>
             <button class="slash" @click="selectTeam(arena.tag, 'any')"
@@ -52,23 +52,28 @@ import FallbackMinimap from './fallback-minimap.webp'
 import { arenaToHash, hashToArena } from '../utils'
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   game: GameVendor
   arenas: { region: string, battleMode: string, battleGameplay: string, tag: string, name: string, gameVersion: string, season: string }[]
   search: string
   season: 'winter' | 'summer' | 'desert' | null
   onlyActual: boolean
-}>()
+  allowTeamSelection?: boolean
+}>(), { allowTeamSelection: true })
 
 const emit = defineEmits<{
   (e: 'reset'): void
 }>()
 
 const selected = defineModel<Set<string>>({ default: () => new Set() })
-const parsedSelected = computed(() => new Set([...selected.value.values()].map(tag => hashToArena(tag))))
-const selectedTags = computed(() => new Set([...parsedSelected.value.values()].map(a => a.tag)))
+const parsedSelected = computed(() => new Set(props.allowTeamSelection
+  ? [...selected.value.values()].map(tag => hashToArena(tag))
+  : []))
+const selectedTags = computed(() => props.allowTeamSelection
+  ? new Set([...parsedSelected.value.values()].map(a => a.tag))
+  : new Set(selected.value))
 const selectedTeams = computed(() => new Map<string, 'any' | number>(
-  [...parsedSelected.value.values()].map(a => [a.tag, a.team])
+  props.allowTeamSelection ? [...parsedSelected.value.values()].map(a => [a.tag, a.team]) : []
 ))
 
 type VersionParts = [number, number, number]
@@ -214,6 +219,12 @@ const filtered = computed(() => {
 })
 
 function onArenaClick(tag: string) {
+  if (!props.allowTeamSelection) {
+    if (selected.value.has(tag)) selected.value.delete(tag)
+    else selected.value.add(tag)
+    return
+  }
+
   if (selectedTags.value.has(tag)) selected.value.delete([...selected.value].find(t => hashToArena(t).tag === tag)!)
   else selectTeam(tag, 'any')
 }

@@ -47,12 +47,9 @@ export function vehicleStatisticsWhere(filters: VehicleFilters, beforeDay?: stri
   }
 
   if (filters.arenas.length) {
-    conditions.push(`(${[...filters.arenas].sort().map(arena => {
-      const [tag, respawn] = arena.split(':')
-      const teamCondition = respawn === '1' || respawn === '2' ? ` and stats.team = ${respawn}` : ''
-      const arenaTag = tag.startsWith('spaces/') ? tag : `spaces/${tag}`
-      return `(stats.arenaTag = ${quote(arenaTag)}${teamCondition})`
-    }).join(' or ')})`)
+    const arenaTags = [...new Set(filters.arenas)].sort()
+      .map(tag => quote(tag.startsWith('spaces/') ? tag : `spaces/${tag}`))
+    conditions.push(`stats.arenaTag in (${arenaTags.join(', ')})`)
   }
 
   const platoons = { solo: '= 0', duo: '= 1', trio: '= 2', large: '>= 3' } as const

@@ -1,6 +1,6 @@
 <template>
   <DebugSection title="Селектор карт" id="arena"
-    description="Модалка со списком арен, выбор нескольких, переключатель команд у карты и бейджи с хешем «тег:команда». Сам список с миникартами вживую — в секции про данные."
+    description="Модалка со списком арен и выбором нескольких карт. Обычный режим позволяет выбрать команду, отдельный режим — только карту. Сам список с миникартами вживую — в секции про данные."
     source="src/shared/game/selectors/arena/">
 
     <div class="debug-row">
@@ -15,17 +15,28 @@
         <p>Карта:</p>
         <ArenaSelectorBadges v-model="selected" />
       </div>
+      <div class="selector-box">
+        <p>Карта без выбора команды:</p>
+        <ArenaSelectorBadges v-model="selectedMaps" :allow-team-selection="false" />
+      </div>
     </div>
 
     <SelectionReadout v-model="selected" :tag-to-text="describe" :total="arenaHashes.length"
       title="Выбрано (сырой хеш → разбор)" />
+    <SelectionReadout v-model="selectedMaps" :tag-to-text="getArenaName" :total="arenaHashes.length"
+      title="Выбрано без команды (теги карт)" />
 
     <p class="debug-note">
-      В модели не тег арены, а хеш <span class="debug-value">тег:команда</span>
+      В обычном режиме модель хранит хеш <span class="debug-value">тег:команда</span>
       (<span class="debug-value">arena/utils.ts</span>). Команда — <span class="debug-value">any</span> или номер;
       переключатель <b>1 / / 2</b> над миникартой появляется только у карт, где
       <span class="debug-value">getArenaMeta</span> нашла две команды, и заменяет хеш целиком. Проверь, что выбор карты
       без переключателя даёт ровно <span class="debug-value">тег:any</span>.
+    </p>
+
+    <p class="debug-note">
+      Второй селектор использует <span class="debug-value">allowTeamSelection=false</span>:
+      модель содержит только теги карт, выбранная карта имеет синюю рамку без переключателя команды.
     </p>
 
     <p class="debug-note">
@@ -66,6 +77,7 @@ import { brokenArenaHashes } from '../shared/fixtures'
 import { arenaHashes, take } from '../shared/lists'
 
 const selected = ref(new Set<string>())
+const selectedMaps = ref(new Set<string>())
 
 function describe(hash: string) {
   const info = hashToArena(hash)

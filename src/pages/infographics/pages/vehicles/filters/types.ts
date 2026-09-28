@@ -7,7 +7,7 @@ export type VehicleFilters = {
   // Пустой список означает отсутствие ограничения, значения внутри списка объединяются через OR.
   regions: VehicleRegion[]
   battleModes: VehicleBattleMode[]
-  // Формат общего селектора карт: tag:team, например 05_prohorovka:any.
+  // Теги карт без команды, например 05_prohorovka.
   arenas: string[]
   platoon: 'any' | 'solo' | 'duo' | 'trio' | 'large'
   result: 'any' | 'win' | 'loss' | 'draw'
