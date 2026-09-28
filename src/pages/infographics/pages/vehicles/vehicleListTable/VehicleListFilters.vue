@@ -1,17 +1,14 @@
 <template>
-  <button ref="trigger" class="filter-trigger" :class="{ active: activeCount > 0 }"
-    :aria-label="activeCount ? `Фильтры таблицы, активных: ${activeCount}` : 'Фильтры таблицы'" :aria-expanded="open"
-    title="Фильтры таблицы" @click="open = !open">
-    <FilterIcon class="filter-icon" aria-hidden="true" />
-    <span v-if="activeCount" class="active-count" aria-hidden="true">{{ activeCount }}</span>
-  </button>
+  <ToolbarButton ref="trigger" class="filter-trigger" variant="surface" size="large" :active="activeCount > 0"
+    @click="open = !open">
+    <FilterIcon class="filter-icon" />
+    <span v-if="activeCount" class="active-count">{{ activeCount }}</span>
+  </ToolbarButton>
 
-  <PanelPopover v-model="open" :target="trigger" title="Фильтр таблицы" :width="360"
+  <PanelPopover v-model="open" :target="target" title="Фильтр таблицы" :width="360"
     :placement="['bottom-start', 'bottom-float', 'top-start']">
     <template v-if="activeCount" #toolbar>
-      <button class="reset" title="Сбросить фильтры" @click="resetFilters">
-        <Reload />
-      </button>
+      <ToolbarButton :icon="Reload" variant="round" @click="resetFilters" />
     </template>
 
     <template #content>
@@ -84,6 +81,7 @@ import { computed, ref, useTemplateRef } from 'vue'
 import Reload from '@/assets/icons/reset.svg'
 import FilterIcon from './assets/filter.svg'
 import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
+import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import Nation from '@/shared/game/vehicles/nations/Nation.vue'
 import { nations } from '@/shared/game/vehicles/nations/nations'
 import VehicleType from '@/shared/game/vehicles/type/VehicleType.vue'
@@ -98,7 +96,8 @@ const filters = defineModel<LocalVehicleFilters>({ required: true })
 const { showVehicleFilters } = defineProps<{ showVehicleFilters: boolean }>()
 
 const open = ref(false)
-const trigger = useTemplateRef<HTMLButtonElement>('trigger')
+const trigger = useTemplateRef<InstanceType<typeof ToolbarButton>>('trigger')
+const target = computed(() => trigger.value?.element ?? null)
 
 const levels = Array.from({ length: 11 }, (_, index) => index + 1)
 const battleThresholds: BattleThreshold[] = [0, 20, 50, 100, 500, 1000]
@@ -149,23 +148,6 @@ function selectOption<T>(selected: readonly T[], option: T, options: readonly T[
 <style scoped lang="scss">
 .filter-trigger {
   position: relative;
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.05);
-  color: inherit;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.1);
-  }
-
-  &.active {
-    background: rgba(10, 132, 255, 0.12);
-  }
 
   .filter-icon {
     width: 14px;
@@ -184,31 +166,6 @@ function selectOption<T>(selected: readonly T[], option: T, options: readonly T[
     color: white;
     font-size: 10px;
     line-height: 14px;
-  }
-}
-
-.reset {
-  box-sizing: border-box;
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: 23px;
-  height: 23px;
-  padding: 4px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.9);
-
-  @media (hover: hover) and (pointer: fine) {
-    &:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
-  }
-
-  svg {
-    width: 100%;
-    height: 100%;
   }
 }
 

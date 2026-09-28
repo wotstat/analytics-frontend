@@ -1,10 +1,8 @@
 <template>
-  <button ref="trigger" class="settings-trigger" title="Настройки таблицы" aria-label="Настройки таблицы"
-    :aria-expanded="open" @click="open = !open">
-    <SettingsIcon />
-  </button>
+  <ToolbarButton ref="trigger" :icon="SettingsIcon" variant="surface" size="large"
+    @click="open = !open" />
 
-  <PanelPopover v-model="open" :target="trigger" title="Настройки таблицы" :width="250"
+  <PanelPopover v-model="open" :target="target" title="Настройки таблицы" :width="250"
     :placement="['bottom-end', 'bottom-float', 'top-end']">
     <template #content>
       <div class="options panel-section">
@@ -19,39 +17,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, useTemplateRef } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import SettingsIcon from '@/assets/icons/settings.svg'
 import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
+import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import { vehicleStatisticsPeriods, type VehicleStatisticsPeriod } from '../shared/vehicleStatisticsPeriod'
 
 const period = defineModel<VehicleStatisticsPeriod>({ required: true })
 const open = ref(false)
-const trigger = useTemplateRef<HTMLButtonElement>('trigger')
+const trigger = useTemplateRef<InstanceType<typeof ToolbarButton>>('trigger')
+const target = computed(() => trigger.value?.element ?? null)
 </script>
 
 <style scoped lang="scss">
-.settings-trigger {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.05);
-  color: inherit;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.1);
-  }
-
-  svg {
-    width: 17px;
-    height: 17px;
-    fill: currentColor;
-  }
-}
-
 .options {
   .period-option {
     display: flex;

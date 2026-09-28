@@ -1,10 +1,10 @@
 <template>
-  <button ref="trigger" class="history-menu-trigger" :class="{ active: hasAnnotations }" type="button"
+  <ToolbarButton ref="trigger" class="history-menu-trigger" variant="accent" :active="hasAnnotations"
     @click="open = !open">
     <span class="dots"></span>
-  </button>
+  </ToolbarButton>
 
-  <PanelPopover v-model="open" :target="trigger" title="Настройки аннотаций" density="compact" :width="250"
+  <PanelPopover v-model="open" :target="target" title="Настройки аннотаций" density="compact" :width="250"
     :placement="['bottom-end', 'bottom-float', 'top-end']">
     <template #content>
       <div class="options panel-section">
@@ -42,6 +42,7 @@
 import { computed, ref, useTemplateRef } from 'vue'
 import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
 import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
+import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import { ColorHSVA } from '@/shared/uiKit/colorPicker/ColorHSVA'
 import type { useHistoryAnnotationSettings } from './useHistoryAnnotationSettings'
 import { getHistoryEventRegions, historyEvents } from '@/shared/game/historyEvents'
@@ -58,7 +59,8 @@ const hasAnnotations = computed(() => Object.values(props.settings.versions.valu
   props.settings.showWotstatOutages.value ||
   visibleEvents.value.some(event => props.settings.enabledEvents.value.includes(event.id)))
 const open = ref(false)
-const trigger = useTemplateRef<HTMLButtonElement>('trigger')
+const trigger = useTemplateRef<InstanceType<typeof ToolbarButton>>('trigger')
+const target = computed(() => trigger.value?.element ?? null)
 
 function menuAccentColor(color: string) {
   const accent = new ColorHSVA(0, 0, 0)
@@ -78,24 +80,7 @@ const versionOptions = [
 
 <style scoped lang="scss">
 .history-menu-trigger {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
   margin-left: -2px;
-  border-radius: 5px;
-  padding: 0;
-  color: rgba(197, 197, 197, 0.6);
-
-  &:hover {
-    color: rgba(255, 255, 255, 0.8);
-    background: rgba(255, 255, 255, 0.08);
-  }
-
-  &.active {
-    color: var(--blue-thin-color);
-    background: rgba(10, 132, 255, 0.12);
-  }
 
   .dots {
     position: relative;

@@ -48,6 +48,13 @@ const entries = [
     component: () => import('./pages/selectionTile/Index.vue'),
   },
   {
+    path: 'toolbar-button',
+    title: 'ToolbarButton',
+    description: 'Размеры и состояния кнопки тулбара, события и цель поповера.',
+    group: 'uiKit',
+    component: () => import('./pages/toolbarButton/Index.vue'),
+  },
+  {
     path: 'tooltip',
     title: 'Тултипы',
     description: 'Директивы с текстом, произвольное содержимое через useTooltip, поведение на тач-устройствах.',

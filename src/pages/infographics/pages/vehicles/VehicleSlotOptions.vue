@@ -4,10 +4,8 @@
     <template v-if="maxSlots !== undefined" #toolbar>
       <div class="selection-controls">
         <span class="selected-count">Выбрано {{ selected.length }} из {{ maxSlots }}</span>
-        <button v-if="multiple" class="reset-button" type="button" :disabled="!canReset"
-          @click="resetSelection">
-          <ResetIcon />
-        </button>
+        <ToolbarButton v-if="multiple" :icon="ResetIcon" size="small" :disabled="!canReset"
+          @click="resetSelection" />
       </div>
     </template>
 
@@ -81,6 +79,7 @@ import { computed, ref, shallowRef, useTemplateRef, watch } from 'vue'
 import Popover from '@/shared/uiKit/popover/Popover.vue'
 import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
 import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
+import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import type { PlacementParam, PopoverTarget } from '@/shared/uiKit/popover/utils'
 import { availableSlots, baseSlot, defaultSlot, metricLabel, slotAggregationLabel, slotAggregationOptions, slotCategories, type BaseSlot, type Slot } from './shared/vehicleMetrics'
@@ -228,39 +227,6 @@ function isDisabled(slot: Slot) {
   align-items: center;
   gap: 10px;
   min-height: 20px;
-
-  .reset-button {
-    display: flex;
-    flex: none;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    height: 18px;
-    padding: 0;
-    border-radius: 5px;
-    background: transparent;
-    color: rgba(255, 255, 255, 0.65);
-    transition: color 0.15s;
-
-    &:hover:not(:disabled) {
-      color: white;
-    }
-
-    &:disabled {
-      opacity: 0.25;
-      cursor: default;
-    }
-
-    svg {
-      width: 12px;
-      height: 12px;
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--blue-thin-color);
-      outline-offset: -2px;
-    }
-  }
 
   .selected-count {
     color: rgba(255, 255, 255, 0.55);

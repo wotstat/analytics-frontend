@@ -44,9 +44,7 @@
             </label>
             <div class="space flex-1"></div>
             <div class="reset-container" :class="{ 'disabled': !canReset }">
-              <button class="reset" @click="reset">
-                <Reload />
-              </button>
+              <ToolbarButton class="reset" :icon="Reload" variant="round" :disabled="!canReset" @click="reset" />
               <div class="vr"></div>
             </div>
           </div>
@@ -82,6 +80,7 @@
 
 <script setup lang="ts">
 import ModalWindow from '@/shared/ui/modalWindow/ModalWindow.vue'
+import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import Reload from '@/assets/icons/reset.svg'
 import SearchLine from '../../components/searchLine/SearchLine.vue'
 import ArenaSelectorModal from './ArenaSelectorContent.vue'
@@ -208,27 +207,10 @@ function badgeLabel(hash: string) {
   }
 
   .reset-container {
-
     display: contents;
 
     .reset {
-      border: none;
-      border-radius: 20px;
-      background-color: rgba(255, 255, 255, 0.08);
       transition: background-color 0.2s, opacity 0.2s;
-      padding: 0;
-      height: 23px;
-      width: 23px;
-      min-width: 23px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 4px;
-      color: rgba(255, 255, 255, 0.9);
-
-      &:hover {
-        background-color: rgba(255, 255, 255, 0.2);
-      }
     }
 
     >* {

@@ -6,10 +6,8 @@
       </template>
       <template #right>
         <HistoryControls v-model:step="step" v-model:average-window="averageWindow" compact class="step-selector">
-          <button class="split-menu-trigger" :class="{ active: split !== null }" type="button" title="Разбиение графика"
-            @click="openSplitMenu">
-            <LineChartIcon />
-          </button>
+          <ToolbarButton :icon="LineChartIcon" variant="accent" :active="split !== null"
+            @click="openSplitMenu" />
           <HistoryAnnotationSettings :settings="annotationOptions" :regions="filters.regions" />
         </HistoryControls>
       </template>
@@ -58,6 +56,7 @@ import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
 import Legend from '@/shared/ui/chart/Legend.vue'
 import { useLegend } from '@/shared/ui/chart/useLegend'
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
+import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import { closeContextMenu, isContextMenuOpen } from '@/shared/uiKit/contextMenu/createContextMenu'
 import { checkboxItem, separator, simpleContextMenu } from '@/shared/uiKit/contextMenu/simpleContextMenu'
@@ -227,31 +226,6 @@ onBeforeUnmount(() => closeContextMenu(splitMenuId))
 
     .step-selector {
       margin-left: auto;
-    }
-
-    .split-menu-trigger {
-      display: grid;
-      place-items: center;
-      width: 24px;
-      height: 24px;
-      padding: 0;
-      border-radius: 5px;
-      color: rgba(197, 197, 197, 0.6);
-
-      svg {
-        width: 18px;
-        height: 18px;
-      }
-
-      &:hover {
-        color: rgba(255, 255, 255, 0.8);
-        background: rgba(255, 255, 255, 0.08);
-      }
-
-      &.active {
-        color: var(--blue-thin-color);
-        background: rgba(10, 132, 255, 0.12);
-      }
     }
 
     .history-tooltip {

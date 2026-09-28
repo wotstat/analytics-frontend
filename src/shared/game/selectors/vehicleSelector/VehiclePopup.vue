@@ -3,10 +3,7 @@
     <header class="vehicle-popup-header">
       <div class="title-row">
         <h2>Выбор техники</h2>
-        <button class="reset" type="button" aria-label="Сбросить фильтры техники"
-          :class="{ disabled: !shouldVisibleReset }" :disabled="!shouldVisibleReset" @click="reset">
-          <Reload />
-        </button>
+        <ToolbarButton :icon="Reload" class="reset" variant="round" :disabled="!shouldVisibleReset" @click="reset" />
       </div>
 
       <div class="types mt-font">
@@ -62,6 +59,7 @@ import { createVehicleNameFilter } from '@/shared/game/vehicles/vehicleSearch'
 import { compareIntervals } from '@/shared/uiKit/highlightString/highlightUtils'
 import { useLocalStorage } from '@vueuse/core'
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
+import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 
 import VehicleTable from './VehicleTable.vue'
 
@@ -372,24 +370,9 @@ function reset() {
     }
 
     .reset {
-      flex: none;
-      border: none;
-      border-radius: 20px;
-      background-color: rgba(255, 255, 255, 0.08);
       transition: background-color 0.2s, opacity 0.2s;
-      height: 23px;
-      width: 23px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 4px;
-      color: rgba(255, 255, 255, 0.9);
 
-      &:hover {
-        background-color: rgba(255, 255, 255, 0.2);
-      }
-
-      &.disabled {
+      &:disabled {
         opacity: 0;
         pointer-events: none;
       }

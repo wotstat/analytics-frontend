@@ -16,9 +16,7 @@
           Ещё фильтры<span v-if="advancedCount"> · {{ advancedCount }}</span>
           <ArrowDown class="arrow" :class="{ expanded }" />
         </button>
-        <button class="reset" :disabled="!canReset" title="Сбросить фильтры" @click="reset">
-          <ResetIcon />
-        </button>
+        <ToolbarButton :icon="ResetIcon" :disabled="!canReset" @click="reset" />
       </div>
     </div>
 
@@ -65,6 +63,7 @@
 import { computed, ref } from 'vue'
 import ArrowDown from '@/assets/icons/arrow-down.svg'
 import ResetIcon from '@/assets/icons/reset.svg'
+import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import ArenaSelectorBadges from '@/shared/game/selectors/arena/ArenaSelectorBadges.vue'
 import { customBattleModes, customBattleModesKeys, regionToGame } from '@/shared/game/wot'
 import BattleModeSelector from './BattleModeSelector.vue'
@@ -269,7 +268,7 @@ function reset() {
       gap: 10px;
       margin-left: auto;
 
-      button {
+      .expand {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -288,35 +287,19 @@ function reset() {
         }
       }
 
-      .reset {
-        width: 24px;
-
-        svg {
-          width: 16px;
-          height: 16px;
-        }
-
-        &:disabled {
-          opacity: 0.25;
-          cursor: default;
-        }
-      }
-
       @media (max-width: 550px) {
         margin-left: 0;
       }
 
-      .expand {
-        .arrow {
-          margin-left: 5px;
-          width: 12px;
-          height: 12px;
-          fill: currentColor;
-          transition: transform 0.15s;
+      .expand .arrow {
+        margin-left: 5px;
+        width: 12px;
+        height: 12px;
+        fill: currentColor;
+        transition: transform 0.15s;
 
-          &.expanded {
-            transform: rotate(180deg);
-          }
+        &.expanded {
+          transform: rotate(180deg);
         }
       }
     }

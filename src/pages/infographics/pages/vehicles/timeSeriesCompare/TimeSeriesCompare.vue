@@ -32,9 +32,7 @@
           <Legend :legend toggleable highlightable color-editable removable
             @color-change="(source, color) => emit('colorChange', source.tag, color)"
             @remove="source => emit('remove', source.tag)" class="legend" />
-          <button class="reset" title="Сбросить сравнение" @click="emit('clear')">
-            <ResetIcon />
-          </button>
+          <ToolbarButton :icon="ResetIcon" class="reset" @click="emit('clear')" />
         </div>
 
         <div v-for="source in failedSources" :key="source.tag" class="source-error">
@@ -62,6 +60,7 @@ import { computed, markRaw, onScopeDispose, reactive, ref, watch } from 'vue'
 import { useNow } from '@vueuse/core'
 import { isErrorStatus, loading, success, type Status } from '@/db'
 import ResetIcon from '@/assets/icons/reset.svg'
+import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import Legend from '@/shared/ui/chart/Legend.vue'
 import { useLegend } from '@/shared/ui/chart/useLegend'
 import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
@@ -288,23 +287,7 @@ watch(() => props.sources.map(source => source.tag), tags => {
         }
 
         .reset {
-          display: flex;
-          flex: none;
-          align-items: center;
-          justify-content: center;
-          width: 24px;
-          height: var(--legend-row-height);
-          color: rgba(255, 255, 255, 0.65);
-          transition: color 0.15s;
-
-          &:hover {
-            color: white;
-          }
-
-          svg {
-            width: 16px;
-            height: 16px;
-          }
+          --toolbar-button-height: var(--legend-row-height);
         }
       }
 

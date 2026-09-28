@@ -41,6 +41,7 @@
 - `tipBubble/` — `TipBubble.vue`, `TipBubbleText.vue`: обёртки над `uiKit/tipBubble` с проектными дефолтами.
 - `popover/PanelPopover.vue` — панель сайта поверх `uiKit/popover/PopoverAutoClose`; интерфейс ниже.
 - `selectionTile/SelectionTile.vue` — плитка выбора с основной кнопкой и необязательным встроенным действием; интерфейс ниже.
+- `toolbarButton/ToolbarButton.vue` — кнопка тулбара с вариантами оформления и размерами; интерфейс ниже.
 - `chart/` — Vue-обёртки графиков: тултипы (`HeaderTooltip.vue`, `FloatingTooltip.vue`), легенда (`Legend.vue` + `useLegend.ts`) и `VueChartRenderManager.ts`, см. [06-charts.md](06-charts.md).
 - `modalWindow/` — модальные окна (`ModalWindow.vue`, `ModalWindowContent.vue`, кнопки).
 - `components/Tooltip.vue`; `PopupWindow.vue` — самостоятельный попап, не часть `modalWindow`; `Canvas.vue` — обёртка canvas с ресайзом; `SnowCardWrapper.vue` — сезонное украшение.
@@ -62,6 +63,12 @@
 `SelectionTile` принимает `selected`, `disabled`, `density` (`standard`/`compact`) и `accentColor` для полосы выбора. Основной текст или составная разметка передаются в default-слот. Плитка выводит нативную кнопку для основной области и событие `select` с исходным `MouseEvent`. Клавиатурную навигацию по списку опций организует потребитель; начальную выбранную опцию он определяет из своих данных.
 
 Встроенная кнопка появляется при `action`, получает содержимое слота `action` и отправляет событие `action` с исходным `MouseEvent`. Визуальное состояние задаётся через `actionActive` и `actionOpen`. Соседние кнопки занимают всю площадь плитки каждая со своей стороны; вокруг встроенной кнопки нет отдельной некликабельной рамки. Фон встроенной кнопки при наведении — квадрат 24×24 px по центру её полной кликабельной области. Для специальных размеров содержимого доступны CSS-переменные `--selection-tile-main-padding`, `--selection-tile-min-height`, `--selection-tile-gap`, `--selection-tile-action-width`. Общая плитка не управляет предметным выбором и не открывает меню сама. Нативные `title` у плиток и кнопок этого этапа не используются. Пример без БД: `/debug/selection-tile`.
+
+### Кнопка тулбара
+
+`ToolbarButton` выводит нативную кнопку `type="button"` и принимает `icon` (Vue-компонент SVG) или содержимое default-слота. `variant` выбирает оформление: `surface` — кнопка на сером фоне, `accent` — прозрачная кнопка с синей подсветкой активного состояния, `plain` — кнопка без фона, `round` — круглая кнопка сброса. Размеры `small`/`medium`/`large` задают сторону 18/24/30 px; `round` по умолчанию имеет сторону 23 px. По умолчанию используются `plain` и `medium`. При необходимости потребитель задаёт точную ширину или высоту через `--toolbar-button-width` и `--toolbar-button-height`.
+
+Пропсы `active` и `disabled` задают состояние; обработчик `click` получает исходный `MouseEvent` один раз. Кнопки этого этапа не используют нативные `title` и `aria-*`. Template ref на компоненте предоставляет `element: HTMLButtonElement | null` для `target` поповера; например, `computed(() => trigger.value?.element ?? null)`. Кнопка имеет видимый фокус при навигации с клавиатуры. Пример без БД: `/debug/toolbar-button`.
 
 ### Легенда графика
 
