@@ -6,23 +6,32 @@
       <slot v-if="$slots.header" name="header" />
       <header v-else-if="title || $slots.toolbar" class="panel-header panel-header--row">
         <h2 v-if="title" class="panel-header-title">{{ title }}</h2>
-        <div v-if="$slots.toolbar" class="panel-toolbar"><slot name="toolbar" /></div>
+        <div v-if="$slots.toolbar" class="panel-toolbar">
+          <slot name="toolbar" />
+        </div>
       </header>
 
       <template v-if="scrollMode === 'child'">
-        <slot name="content"><slot /></slot>
+        <slot name="content">
+          <slot />
+        </slot>
       </template>
-      <div v-else class="panel-content nice-scrollbar" @scroll="$emit('contentScroll', $event)">
-        <slot name="content"><slot /></slot>
+      <div v-else ref="content" class="panel-content nice-scrollbar" :class="{ 'has-scrollbar': hasScrollbar }"
+        @scroll="$emit('contentScroll', $event)">
+        <slot name="content">
+          <slot />
+        </slot>
       </div>
 
-      <footer v-if="$slots.footer" class="panel-footer"><slot name="footer" /></footer>
+      <footer v-if="$slots.footer" class="panel-footer">
+        <slot name="footer" />
+      </footer>
     </div>
   </PopoverAutoClose>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, useTemplateRef, watch } from 'vue'
 import { useRafFn } from '@vueuse/core'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
 import { getViewportRect, type CloseOnOutsideWindow, type OffsetValue, type PlacementParam, type PlacementWithModifiers, type PopoverTarget } from '@/shared/uiKit/popover/utils'
@@ -38,11 +47,13 @@ const props = withDefaults(defineProps<{
   offset?: OffsetValue
   arrowSize?: number
   closeOnOutsideWindow?: CloseOnOutsideWindow
+  scrollbarOffsets?: [number, number]
 }>(), {
   density: 'standard',
   scrollMode: 'panel',
   width: 360,
   arrowSize: 0,
+  scrollbarOffsets: () => [10, 10],
 })
 
 const open = defineModel<boolean>({ default: false })
@@ -50,12 +61,15 @@ defineEmits<{ contentScroll: [event: Event] }>()
 
 const availableHeight = ref(700)
 const availableWidth = ref(360)
+const content = useTemplateRef<HTMLDivElement>('content')
+const hasScrollbar = ref(false)
 const panelPlacement = computed<PlacementParam>(() => {
   const preferred = Array.isArray(props.placement) ? props.placement : [props.placement ?? 'bottom-float']
   return preferred.map(value => value.endsWith('-float') ? value : `${value}-float` as PlacementWithModifiers)
 })
 
 function updateAvailableHeight() {
+  hasScrollbar.value = !!content.value && content.value.offsetWidth > content.value.clientWidth
   const viewport = getViewportRect()
   availableWidth.value = Math.max(0, Math.floor(viewport.right - viewport.left - 24))
   if (!props.target) return
@@ -78,6 +92,8 @@ const panelStyle = computed(() => ({
   '--panel-viewport-top': `${popoverViewportOffset.value.top}px`,
   '--panel-available-height': `${availableHeight.value}px`,
   '--panel-available-width': `${availableWidth.value}px`,
+  '--panel-scrollbar-track-start': `${props.scrollbarOffsets[0]}px`,
+  '--panel-scrollbar-track-end': `${props.scrollbarOffsets[1]}px`,
 }))
 </script>
 
@@ -137,12 +153,16 @@ const panelStyle = computed(() => ({
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
-    margin-right: 3px;
     padding: var(--panel-padding);
 
+    &.has-scrollbar {
+      margin-right: 3px;
+      padding-right: 3px;
+    }
+
     &::-webkit-scrollbar-track {
-      margin-block-start: var(--panel-scrollbar-track-start, 10px);
-      margin-block-end: var(--panel-scrollbar-track-end, 10px);
+      margin-block-start: var(--panel-scrollbar-track-start);
+      margin-block-end: var(--panel-scrollbar-track-end);
     }
 
     :deep(.panel-section + .panel-section) {

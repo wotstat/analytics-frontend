@@ -5,7 +5,8 @@
   </button>
 
   <PanelPopover v-model="open" :target="trigger" :width="380"
-    :placement="['bottom-start', 'bottom-float', 'top-start', 'right-float']" @content-scroll="activeKey = null">
+    :placement="['bottom-start', 'bottom-float', 'top-start', 'right-float']" @content-scroll="activeKey = null"
+    :scrollbar-offsets="[14, 14]">
     <template #header>
       <header class="panel-header">
         <h2 class="panel-header-title">Выбор режимов боя</h2>
@@ -24,8 +25,8 @@
     </template>
 
     <template #content>
-      <SelectionTile :selected="model.length === 0" data-battle-mode="*" data-battle-gameplay="*"
-        @select="selectAll">Все режимы</SelectionTile>
+      <SelectionTile :selected="model.length === 0" data-battle-mode="*" data-battle-gameplay="*" @select="selectAll">
+        Все режимы</SelectionTile>
       <section v-for="category in visibleCategories" :key="category.title" class="mode-category">
         <h3>{{ category.title }}</h3>
         <BattleModeOptions v-model:active-key="activeKey" :options="category.options" :selected="model"
@@ -39,7 +40,7 @@
     </template>
 
     <template v-if="multiple && selectionPriority === 'single'" #footer>
-      Ctrl / ⌘ / Shift + клик — выбрать несколько
+      Ctrl + клик — выбрать несколько
     </template>
   </PanelPopover>
 </template>
@@ -229,11 +230,16 @@ header {
   margin-top: 8px;
   color: #c5c5c5;
   cursor: pointer;
-  input { margin: 0; accent-color: var(--blue-thin-color); }
+
+  input {
+    margin: 0;
+    accent-color: var(--blue-thin-color);
+  }
 }
 
 .mode-category {
   margin-top: 14px;
+
   h3 {
     margin: 0 0 6px;
     color: var(--panel-heading-color, #fff);
@@ -246,6 +252,11 @@ header {
   margin: 8px 0 0;
   font-size: 11px;
   color: #c5c5c5;
-  button { background: transparent; color: var(--blue-thin-color); padding: 0; }
+
+  button {
+    background: transparent;
+    color: var(--blue-thin-color);
+    padding: 0;
+  }
 }
 </style>

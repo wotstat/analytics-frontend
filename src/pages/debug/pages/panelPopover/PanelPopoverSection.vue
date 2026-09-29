@@ -29,6 +29,7 @@
 
     <PanelPopover v-model="standardOpen" :target="standardTarget" :width="width"
       :title="longTitle ? 'Очень длинный заголовок настроек и дополнительных параметров' : 'Настройки панели'"
+      :scrollbar-offsets="[45, 10]"
       :placement="['bottom-start', 'top-start', 'bottom-float']">
       <template #toolbar>
         <button class="panel-action" type="button" @click="resetCount++">Сброс · {{ resetCount }}</button>
@@ -71,7 +72,7 @@
 
     <p class="debug-note">
       На узком экране длинный заголовок и кнопка справа должны переноситься без горизонтальной прокрутки.
-      Открой обычную панель, прокрути список и проверь неподвижность шапки и footer. В компактной панели
+      Открой обычную панель, прокрути список и проверь неподвижность шапки и footer; scrollbarOffsets задаёт отступы дорожки 45 px сверху и 10 px снизу. В компактной панели
       должна быть только своя шапка, без второго заголовка и toolbar. Обе панели закрываются по Escape и клику снаружи.
     </p>
   </DebugSection>

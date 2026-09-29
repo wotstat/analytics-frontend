@@ -1,26 +1,26 @@
 <template>
-  <PanelPopover v-model="open" :target :placement :title :width="900" class="vehicle-slot-panel"
-    @content-scroll="closeAggregation()">
+  <PanelPopover v-model="open" :target :placement :title :width="900" :scrollbar-offsets="[40, 14]"
+    @content-scroll="closeAggregation()" class="vehicle-slot-options">
     <template v-if="maxSlots !== undefined" #toolbar>
       <div class="selection-controls">
         <span class="selected-count">Выбрано {{ selected.length }} из {{ maxSlots }}</span>
-        <ToolbarButton v-if="multiple" :icon="ResetIcon" size="small" :disabled="!canReset"
-          @click="resetSelection" />
+        <ToolbarButton v-if="multiple" :icon="ResetIcon" size="small" :disabled="!canReset" @click="resetSelection" />
       </div>
     </template>
 
     <template #content>
       <div class="column-list">
-        <section v-for="category in slotCategories" :key="category.title" class="category panel-section" :class="{ derived: category.derived }">
+        <section v-for="category in slotCategories" :key="category.title" class="category panel-section"
+          :class="{ derived: category.derived }">
           <h3>{{ category.title }}</h3>
           <div class="tiles">
             <SelectionTile v-for="slot in category.slots" :key="slot" class="tile-option"
-              :class="{ derived: !!availableSlots[slot].formula }"
-              :selected="isSelected(slot)" :disabled="!isSelected(slot) && isDisabled(defaultSlot(slot))"
+              :class="{ derived: !!availableSlots[slot].formula }" :selected="isSelected(slot)"
+              :disabled="!isSelected(slot) && isDisabled(defaultSlot(slot))"
               :accent-color="availableSlots[slot].formula ? '#bbaad6' : undefined"
               :action="slotAggregationOptions(slot).length > 0" :action-active="extraAggregationCount(slot) > 0"
-              :action-open="aggregationSlot === slot"
-              @select="selectMetric(slot)" @action="openAggregation(slot, $event)">
+              :action-open="aggregationSlot === slot" @select="selectMetric(slot)"
+              @action="openAggregation(slot, $event)">
               <Icon :icon="availableSlots[slot].icon" class="tile-icon" />
               <span class="tile-text">
                 <span class="tile-label">{{ metricLabel(slot) }}</span>
@@ -45,22 +45,20 @@
         :viewport-offset="popoverViewportOffset" @pointer-down-outside="closeAggregation()"
         @pointer-click-outside="closeAggregation()" @target-outside-window="closeAggregation()"
         @ready-to-visible="focusAggregationOption()">
-        <div v-if="aggregationSlot !== null" ref="aggregationMenu" class="aggregation-menu"
-          @pointerdown.stop @pointerup.stop @click.stop
-          @keydown.esc.stop.prevent="closeAggregation(true)" @keydown.down.prevent="moveAggregationFocus(1)"
-          @keydown.up.prevent="moveAggregationFocus(-1)" @keydown.home.prevent="focusAggregationOption(0)"
-          @keydown.right.prevent="moveAggregationFocus(1)" @keydown.left.prevent="moveAggregationFocus(-1)"
-          @keydown.end.prevent="focusAggregationOption(-1)">
+        <div v-if="aggregationSlot !== null" ref="aggregationMenu" class="aggregation-menu" @pointerdown.stop
+          @pointerup.stop @click.stop @keydown.esc.stop.prevent="closeAggregation(true)"
+          @keydown.down.prevent="moveAggregationFocus(1)" @keydown.up.prevent="moveAggregationFocus(-1)"
+          @keydown.home.prevent="focusAggregationOption(0)" @keydown.right.prevent="moveAggregationFocus(1)"
+          @keydown.left.prevent="moveAggregationFocus(-1)" @keydown.end.prevent="focusAggregationOption(-1)">
           <div class="aggregation-heading">{{ metricLabel(aggregationSlot) }}</div>
           <div ref="aggregationList" class="aggregation-options nice-scrollbar">
             <section v-for="group in aggregationGroups" :key="group.key" class="aggregation-group"
-              :class="{ quantiles: group.key === 'quantiles' }"
-              :style="{ '--aggregation-columns': group.columns }">
+              :class="{ quantiles: group.key === 'quantiles' }" :style="{ '--aggregation-columns': group.columns }">
               <h3>{{ group.title }}</h3>
               <div class="aggregation-grid">
                 <SelectionTile v-for="option in group.options" :key="option.slot" class="aggregation-option"
-                  density="compact" :selected="selected.includes(option.slot)"
-                  :disabled="isDisabled(option.slot)" @select="selectAggregation(option.slot)">
+                  density="compact" :selected="selected.includes(option.slot)" :disabled="isDisabled(option.slot)"
+                  @select="selectAggregation(option.slot)">
                   {{ aggregationOptionLabel(option.slot, option.label) }}
                 </SelectionTile>
               </div>
@@ -218,10 +216,6 @@ function isDisabled(slot: Slot) {
 </script>
 
 <style scoped lang="scss">
-:global(.vehicle-slot-panel) {
-  --panel-scrollbar-track-start: 45px;
-}
-
 .selection-controls {
   display: flex;
   align-items: center;
