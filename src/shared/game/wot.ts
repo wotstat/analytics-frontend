@@ -32,14 +32,19 @@ export const customBattleModes = {
   'training': { title: 'Тренировочные комнаты', mode: 'TRAINING' },
 } as const
 
+export type CustomBattleModeKey = keyof typeof customBattleModes
+
 export const gameplayTypes = {
   'ctf': 'Стандартный',
   'domination': 'Встречный',
   'assault': 'Штурм',
   'maps_training': 'Топография',
-  'assault2': 'Штурм 2',
+  'assault2': 'Атака / Оборона',
   'ctf30x30': 'Стандартный 30x30',
   'epic': 'Генеральное сражение',
+  'bob': 'Битва блогеров',
+  'bootcamp': 'Учебный лагерь',
+  'comp7': 'Натиск',
 } as const
 
 export const modeCount = {
@@ -59,7 +64,7 @@ export function regionToGame(region: GameRegion): GameVendor {
   return region === 'RU' || region === 'RPT' || region === 'CT' ? 'mt' : 'wot'
 }
 
-export const customBattleModesKeys = Object.keys(customBattleModes) as (keyof typeof customBattleModes)[]
+export const customBattleModesKeys = Object.keys(customBattleModes) as CustomBattleModeKey[]
 
 export function accountLink(bdid: number, name: string, region: GameRegion) {
 

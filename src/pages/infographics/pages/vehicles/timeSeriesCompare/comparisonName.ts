@@ -1,4 +1,4 @@
-import { customBattleModes } from '@/shared/game/wot'
+import { battleModeSelection } from '@/shared/game/selectors/battleMode/catalog'
 import { countLocalize, getArenaName } from '@/shared/i18n/i18n'
 import { differentComparisonFilters, type ComparisonFilters, type ComparisonSource } from './types'
 
@@ -28,7 +28,7 @@ export function comparisonName(source: ComparisonSource, current: ComparisonFilt
 
       case 'battleModes':
         labels.push(filters.battleModes.length
-          ? filters.battleModes.map(mode => customBattleModes[mode].title).join(', ')
+          ? filters.battleModes.map(mode => battleModeSelection(mode).title).join(', ')
           : 'Все режимы')
         break
 

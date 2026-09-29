@@ -1,10 +1,11 @@
 <template>
-  <DebugPage title="Селекторы" description="Выбор техники, карт, игры и версии игры; бейджи выбранного и строка поиска."
+  <DebugPage title="Селекторы" description="Выбор техники, карт, режимов боя, игры и версии игры; бейджи выбранного и строка поиска."
     source="src/shared/game/selectors/">
 
     <Overview />
     <VehicleSelectorSection />
     <ArenaSelectorSection />
+    <BattleModeSelectorSection />
     <GameSelectorSection />
     <VersionSelectorSection />
     <SearchLineSection />
@@ -21,6 +22,7 @@ import DebugPage from '@/pages/debug/shared/DebugPage.vue'
 import Overview from './sections/Overview.vue'
 import VehicleSelectorSection from './sections/VehicleSelectorSection.vue'
 import ArenaSelectorSection from './sections/ArenaSelectorSection.vue'
+import BattleModeSelectorSection from './sections/BattleModeSelectorSection.vue'
 import GameSelectorSection from './sections/GameSelectorSection.vue'
 import VersionSelectorSection from './sections/VersionSelectorSection.vue'
 import SearchLineSection from './sections/SearchLineSection.vue'

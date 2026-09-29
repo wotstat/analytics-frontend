@@ -1,12 +1,11 @@
-import type { customBattleModes } from '@/shared/game/wot'
+import type { BattleModeSelectionKey } from '@/shared/game/selectors/battleMode/catalog'
 
 export type VehicleRegion = 'RU' | 'EU' | 'NA' | 'ASIA' | 'CN'
-export type VehicleBattleMode = keyof typeof customBattleModes
 
 export type VehicleFilters = {
   // Пустой список означает отсутствие ограничения, значения внутри списка объединяются через OR.
   regions: VehicleRegion[]
-  battleModes: VehicleBattleMode[]
+  battleModes: BattleModeSelectionKey[]
   // Теги карт без команды, например 05_prohorovka.
   arenas: string[]
   platoon: 'any' | 'solo' | 'duo' | 'trio' | 'large'
@@ -17,7 +16,7 @@ export type VehicleFilters = {
 export function createVehicleFilters(): VehicleFilters {
   return {
     regions: ['RU'],
-    battleModes: ['normalAny'],
+    battleModes: ['@regular'],
     arenas: [],
     platoon: 'any',
     result: 'any',

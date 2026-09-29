@@ -23,7 +23,7 @@ export function useArenaOptions() {
     return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, 'ru'))
   })
 
-  // Реальные значения battleGameplay, встречающиеся в БД — шире словаря gameplayTypes из wot.ts.
+  // Используем значения из арен без допущений о составе словаря gameplayTypes.
   const allGameplays = computed(() => [...new Set(arenas.value.map(a => a.gameplay))].sort())
 
   return { arenaList, allGameplays }

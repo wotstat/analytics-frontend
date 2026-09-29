@@ -2,7 +2,7 @@
   <div class="vehicle-popup">
     <header class="vehicle-popup-header">
       <div class="title-row">
-        <h2>Выбор техники</h2>
+        <h2 class="panel-header-title">Выбор техники</h2>
         <ToolbarButton :icon="Reload" class="reset" variant="round" :disabled="!shouldVisibleReset" @click="reset" />
       </div>
 
@@ -359,15 +359,6 @@ function reset() {
     justify-content: space-between;
     gap: 10px;
     margin-bottom: 10px;
-
-    h2 {
-      min-width: 0;
-      margin: 0;
-      font-size: 16px;
-      font-weight: 600;
-      line-height: 20px;
-      overflow-wrap: anywhere;
-    }
 
     .reset {
       transition: background-color 0.2s, opacity 0.2s;

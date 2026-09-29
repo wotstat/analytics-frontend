@@ -1,7 +1,7 @@
 <template>
   <div class="version-popup">
     <header class="version-popup-header">
-      <h2>Выбор версии игры</h2>
+      <h2 class="panel-header-title">Выбор версии игры</h2>
       <div class="game mt-font">
         <button class="variant selectable" @click="preferredGame = 'mt'" :class="preferredGame == 'mt' ? 'active' : ''">
           Lesta
@@ -341,6 +341,9 @@ const delegate: TableViewDelegate = {
 }
 
 .version-popup-header {
+  --panel-header-title-font-size: 14px;
+  --panel-header-title-margin: 0 0 10px;
+
   box-sizing: border-box;
   display: flex;
   flex: none;
@@ -350,14 +353,6 @@ const delegate: TableViewDelegate = {
   min-width: 0;
   padding: 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-
-  h2 {
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 20px;
-    margin: 0 0 10px;
-    overflow-wrap: anywhere;
-  }
 
   button {
     border: none;

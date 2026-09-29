@@ -1,4 +1,4 @@
-import { customBattleModes } from '@/shared/game/wot'
+import { battleModeSelection } from '@/shared/game/selectors/battleMode/catalog'
 import type { VehicleFilters } from '../filters/types'
 import { availableSlots, baseSlots, type Slot } from './vehicleMetrics'
 import type { HistoryStep } from '../timeSeries/historyStep'
@@ -38,11 +38,11 @@ export function vehicleStatisticsWhere(filters: VehicleFilters, beforeDay?: stri
   }
 
   if (filters.battleModes.length) {
-    const modes = [...new Set(filters.battleModes.map(key => customBattleModes[key].mode))].sort()
+    const targets = filters.battleModes.flatMap(key => battleModeSelection(key).targets)
+    const modes = [...new Set(targets.map(target => target.mode))].sort()
     conditions.push(`stats.battleMode in (${modes.map(quote).join(', ')})`)
-    conditions.push(`(${[...filters.battleModes].sort().map(key => {
-      const mode = customBattleModes[key]
-      return `(stats.battleMode = ${quote(mode.mode)}${'gameplay' in mode ? ` and stats.battleGameplay = ${quote(mode.gameplay)}` : ''})`
+    conditions.push(`(${targets.map(target => {
+      return `(stats.battleMode = ${quote(target.mode)}${target.gameplay !== undefined ? ` and stats.battleGameplay = ${quote(target.gameplay)}` : ''})`
     }).join(' or ')})`)
   }
 

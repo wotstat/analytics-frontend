@@ -4,8 +4,8 @@
     <div class="panel-popover" :class="{ compact: density === 'compact', 'child-scroll': scrollMode === 'child' }"
       :style="panelStyle">
       <slot v-if="$slots.header" name="header" />
-      <header v-else-if="title || $slots.toolbar" class="panel-header">
-        <h2 v-if="title">{{ title }}</h2>
+      <header v-else-if="title || $slots.toolbar" class="panel-header panel-header--row">
+        <h2 v-if="title" class="panel-header-title">{{ title }}</h2>
         <div v-if="$slots.toolbar" class="panel-toolbar"><slot name="toolbar" /></div>
       </header>
 
@@ -95,25 +95,34 @@ const panelStyle = computed(() => ({
   font-size: 14px;
   line-height: 1.3;
 
-  .panel-header {
-    display: flex;
+  :deep(.panel-header) {
+    box-sizing: border-box;
     flex: none;
+    width: 100%;
+    min-width: 0;
+    padding: var(--panel-header-padding, var(--panel-padding));
+    border-bottom: var(--panel-header-border, 1px solid rgba(255, 255, 255, 0.1));
+  }
+
+  :deep(.panel-header--row) {
+    display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 8px 12px;
-    padding: var(--panel-padding);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
 
-    h2 {
-      flex: 1 1 140px;
-      min-width: 0;
-      margin: 0;
-      overflow-wrap: anywhere;
-      font-size: 16px;
-      font-weight: 600;
-      line-height: 20px;
-    }
+  :deep(.panel-header-title) {
+    min-width: 0;
+    margin: var(--panel-header-title-margin, 0);
+    overflow-wrap: anywhere;
+    font-size: var(--panel-header-title-font-size, 16px);
+    font-weight: 600;
+    line-height: var(--panel-header-title-line-height, 20px);
+  }
+
+  :deep(.panel-header--row > .panel-header-title) {
+    flex: 1 1 140px;
   }
 
   .panel-toolbar {
@@ -179,13 +188,10 @@ const panelStyle = computed(() => ({
 
   &.compact {
     --panel-padding: 10px;
+    --panel-header-title-font-size: 14px;
+    --panel-header-title-line-height: 18px;
 
     font-size: 12px;
-
-    .panel-header h2 {
-      font-size: 14px;
-      line-height: 18px;
-    }
 
     .panel-content :deep(.panel-section > :is(h3, h4, h5)) {
       margin-bottom: 6px;

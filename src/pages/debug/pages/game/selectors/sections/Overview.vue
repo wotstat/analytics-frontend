@@ -1,6 +1,6 @@
 <template>
-  <DebugSection title="Четыре селектора и с чего начать" id="overview"
-    description="Все четыре собраны из одних и тех же кусков: строка бейджей + поповер (у карт — модалка) + список с поиском. Если что-то сломалось, сначала посмотри, на каком уровне: бейджи, обёртка с поповером или сам список.">
+  <DebugSection title="Игровые селекторы и с чего начать" id="overview"
+    description="Селекторы техники, карт и версий состоят из бейджей и списка; режимы боя используют плитки в поповере. Если что-то сломалось, сначала посмотри на модель, обёртку и содержимое селектора.">
 
     <table class="debug-table">
       <thead>
@@ -26,6 +26,13 @@
           <td>модалка</td>
           <td>Set&lt;тег:команда&gt; или Set&lt;тег&gt;</td>
           <td><a href="#arena">карты</a></td>
+        </tr>
+        <tr>
+          <th>Режимы боя</th>
+          <td>BattleModeSelector → PanelPopover + SelectionTile</td>
+          <td>поповер</td>
+          <td>BattleModeSelectionKey[]</td>
+          <td><a href="#battle-mode">режимы боя</a></td>
         </tr>
         <tr>
           <th>Игра</th>
@@ -85,7 +92,7 @@
       </div>
 
       <p class="debug-note">
-        Кнопки «Lesta / WG» <b>внутри</b> попапов техники, карт и версий пишут не в свою модель, а в этот глобальный
+        Кнопки «Lesta / WG» <b>внутри</b> попапов техники, карт и версий пишут в глобальный
         <span class="debug-value">preferredGame</span> (<span
           class="debug-value">shared/global/globalPreferred.ts</span>,
         ключ <span class="debug-value">preferred-game-variant</span>). То есть переключение игры в попапе техники молча
@@ -117,7 +124,7 @@
       </table>
 
       <p class="debug-note">
-        Ни один из четырёх селекторов не смотрит на <span class="debug-value">status</span> запроса — в попап уезжает
+        Селекторы техники, карт и версий не смотрят на <span class="debug-value">status</span> запроса — в попап уезжает
         только <span class="debug-value">.data</span>. Поэтому упавший запрос выглядит ровно как вечная загрузка:
         крутилка и ничего больше. Проверяется только через devtools → offline, см.
         <a href="#data">данные списков</a>.

@@ -53,8 +53,8 @@
     <PanelPopover v-model="compactOpen" :target="compactTarget" :width="width" density="compact"
       title="Этот заголовок заменён" :placement="['bottom-start', 'top-start', 'bottom-float']">
       <template #header>
-        <header class="custom-header">
-          <strong>Своя шапка</strong>
+        <header class="panel-header panel-header--row">
+          <h2 class="panel-header-title">Своя шапка</h2>
           <button class="panel-action" type="button" @click="compactOpen = false">Закрыть</button>
         </header>
       </template>
@@ -108,25 +108,6 @@ function toggleStandard() {
 
   &:hover {
     background: rgba(255, 255, 255, 0.16);
-  }
-}
-
-.custom-header {
-  box-sizing: border-box;
-  display: flex;
-  flex: none;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  min-width: 0;
-  padding: 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-
-  strong {
-    font-size: 14px;
-    overflow-wrap: anywhere;
   }
 }
 

@@ -96,11 +96,6 @@ const emit = defineEmits<{
   font-size: var(--selection-tile-font-size);
   line-height: 1.2;
   user-select: none;
-
-  &:focus-visible {
-    outline: 2px solid var(--blue-thin-color);
-    outline-offset: -2px;
-  }
 }
 
 .selection-tile__action {
@@ -135,20 +130,15 @@ const emit = defineEmits<{
   }
 
   &.active {
-    color: var(--blue-thin-color);
+    color: var(--selection-tile-accent, var(--blue-thin-color));
 
     &::before {
-      background: rgba(10, 132, 255, 0.12);
+      background: color-mix(in srgb, var(--selection-tile-accent, var(--blue-thin-color)) 12%, transparent);
     }
 
     &:hover:not(:disabled)::before {
-      background: rgba(10, 132, 255, 0.22);
+      background: color-mix(in srgb, var(--selection-tile-accent, var(--blue-thin-color)) 22%, transparent);
     }
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--blue-thin-color);
-    outline-offset: -2px;
   }
 }
 </style>
