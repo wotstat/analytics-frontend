@@ -83,6 +83,13 @@ const entries = [
     component: () => import('./pages/timeSeries/Index.vue'),
   },
   {
+    path: 'time-series-panel',
+    title: 'Панель временного графика',
+    description: 'Готовая сборка toolbar, графика, легенды и tooltip, состояния и действия без БД.',
+    group: 'uiKit',
+    component: () => import('./pages/timeSeriesPanel/Index.vue'),
+  },
+  {
     path: 'tip-bubble',
     title: 'TipBubble',
     description: 'Обучающие подсказки: очередь внутри группы, autoExtend, запоминание показов.',

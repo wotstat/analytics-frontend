@@ -543,8 +543,8 @@ connection.dispose()
 `historyChartAnnotations.ts` разрешает совпадения версий
 (версия → патч → микропатч), сохраняет порядок приоритетов событий и добавляет интервалы
 `serverOutages` без подписей. `setHistoryAnnotations` и `setOutagesVisible` остаются API адаптера.
-`VehicleTimeSeries.vue` и `TimeSeriesCompare.vue` сохраняют свои toolbar, tooltip, легенду,
-загрузку и настройки. Общая панель пока не выделена.
+`VehicleTimeSeries.vue` и `TimeSeriesCompare.vue` подключают общий `TimeSeriesPanel`,
+сохраняя загрузку, подготовку данных и игровые настройки в своих адаптерах.
 
 Стенд без БД: `/debug/time-series` в разделе «UI-компоненты»: оба ряда, разрывы,
 среднее, собственное форматирование, обновление значений, пустые данные, диапазон,
@@ -586,12 +586,13 @@ Toolbar собирается явно в Vue-шаблоне из трёх общ
 </ChartToolbar>
 ```
 
-В технике `vehicles/timeSeries/HistoryToolbar.vue` собирает эти модули с обязательными
-моделями `step` (`day/week/month`) и `averageWindow` (`3/5/7/null`). Подписи, наборы значений
-и подсказки среднего находятся в этой локальной сборке. Слоты `left` и `actions`
-позволяют двум потребителям добавить собственные метрику, заголовок и действия.
-Типы `HistoryStep` и `HistoryAverageWindow` остаются в локальном `historyStep.ts`.
-Загрузка и агрегация данных, расчёт среднего и диапазон графика остаются у потребителя.
+Локальный `vehicles/timeSeries/HistoryToolbarChoices.vue` содержит две соседние группы
+выбора с обязательными моделями `step` (`day/week/month`) и `averageWindow` (`3/5/7/null`).
+Подписи, наборы значений и подсказки среднего находятся в этой локальной сборке. Оба
+потребителя вставляют её в слот `toolbar` общего `TimeSeriesPanel`; каркас `ChartToolbar`
+и группу дополнительных действий собирает панель. Типы `HistoryStep` и `HistoryAverageWindow`
+остаются в локальном `historyStep.ts`. Загрузка и агрегация данных, расчёт среднего и диапазон
+графика остаются у потребителя.
 
 `ChartAnnotationSettings.vue` принимает `groups: readonly ChartAnnotationGroup[]` из
 `chartAnnotationSettings.ts`. Группа содержит устойчивый `id`, необязательный `label`,
@@ -609,12 +610,67 @@ Toolbar собирается явно в Vue-шаблоне из трёх общ
 Игровой адаптер `vehicles/timeSeries/HistoryAnnotationSettings.vue` готовит версии, недоступность
 wotstat и события по регионам. Состояние аннотаций остаётся отдельным для каждого графика.
 
-`VehicleTimeSeries` использует компактный `HistoryToolbar` в правом слоте `HeaderTooltip`:
-метрика остаётся в его левом слоте, поэтому механизм скрытия при пересечении tooltip сохраняется.
-`TimeSeriesCompare` задаёт собственную левую часть с заголовком и метрикой.
+`VehicleTimeSeries` использует компактный `TimeSeriesPanel`: метрика находится в слоте
+`header`, группы шага/среднего — в `toolbar`, разбиение и аннотации — в `actions`.
+`TimeSeriesCompare` задаёт в `header` заголовок и метрику обычной панели.
 Стенд без БД: `/debug/chart-toolbar` в разделе «UI-компоненты» — обе плотности,
 слоты, узкая раскладка, общий шаг/avg двух строк, независимое сравнение, произвольный состав
 групп выбора и действий, clearable, значение 0, disabled и динамические разделители.
+
+### Готовая панель временного графика
+
+`shared/ui/chart/TimeSeriesPanel.vue` собирает `TimeSeriesChart`, `ChartToolbar`, существующие
+`Legend`, `HeaderTooltip` / `FloatingTooltip` и renderer `TimeSeriesTooltip`. Общая панель
+не импортирует игровые модули и не запускает запросы. Потребитель создаёт один `useLegend(items)`
+и передаёт его `highlightSync` конструктору графика. Та же модель передаётся в проп `legend`;
+видимость готовых данных вычисляется через `legend.isEnabled(source)`. Отдельного состояния
+видимости, цвета или подсветки внутри панели нет.
+
+Обязательные пропы: `chart: TimeSeriesChart<TPoint>` (включая подкласс адаптера),
+`legend: LegendModel<TItem>` со **строковыми** tag, `hasValues` и `formatValue(value, ctx): string`.
+`TPoint` сохраняет дополнительные поля точки, `TItem` — дополнительные поля источника.
+Панель передаёт цвета `legend.items` в `chart.setSeriesColors` и строит tooltip только из
+`legend.enabled`, сопоставляя hits по tag. Проп `hasValues` управляет `v-show` графика;
+компонент графика остаётся смонтированным при загрузке и отсутствии данных.
+
+Необязательные пропы: `density="standard" | "compact"` (по умолчанию standard),
+`tooltip="floating" | "header"` (по умолчанию floating), `showLegend` (по умолчанию true),
+`colorEditable`, `removable`, `annotationLabels`. Компактная панель сохраняет шапку
+`HeaderTooltip` даже с плавающим tooltip; ctx шапки тогда null. `annotationLabels` снижает
+прозрачность сетки и увеличивает нижний отступ плавающего tooltip. Подключение слоя аннотаций
+и их состав остаются внешними. Базовые миксины графика и аннотаций подключены в панели;
+предметные CSS-классы задаёт адаптер.
+
+Слоты:
+
+- `header` — заголовок, выбор метрики; при tooltip в шапке пересечения обрабатывает HeaderTooltip.
+- `toolbar` — соседние `ToolbarChoiceGroup` / `ToolbarGroup` без внешнего ChartToolbar.
+- `actions` — дополнительные действия, панель оборачивает их в ToolbarGroup.
+- `tooltip-header` — шапка стандартного renderer с `{ ctx, columnCount, horizontal }`.
+- `tooltip` — полная замена содержимого tooltip с `{ ctx }`, например одно значение и период.
+- `state` — сообщения поверх графика; слот объявляется условно, когда сообщение нужно.
+- `legend-actions` — действия рядом с непустой легендой, например общий сброс.
+- `details` — сообщения отдельных источников под легендой, без перекрытия доступных рядов.
+
+События `colorChange(item, color)` и `remove(item)` сообщают о действиях владельцу источников.
+Событие `seriesClick({ tag, event })` передаёт исходный ClickInteractionEvent: потребитель
+выбирает действие и при необходимости вызывает `event.preventPanInertion()`. Обработчик
+подключается с очисткой при замене графика и уничтожении панели. Владельцем attach/dispose
+остаётся вложенный `UniversalChart.vue`; один экземпляр графика принадлежит одной панели.
+
+Размеры задаются CSS-переменными `--time-series-height`, `--time-series-gap` и
+`--time-series-legend-height`. Слоты состояния и details задают свои предметные подписи и стили.
+Стенд без БД: `/debug/time-series-panel` — две независимые панели, один/три/21 ряд, пропуски,
+смена метрики и цвета, удаление, частичная загрузка, состояния с повтором, 320 px и перемонтирование.
+
+```vue
+<TimeSeriesPanel :chart :legend :has-values="hasValues" :format-value="formatValue">
+  <template #header><h2>История</h2></template>
+  <template #toolbar><ToolbarChoiceGroup v-model="step" :options="stepOptions" /></template>
+  <template #tooltip-header="{ ctx }">{{ ctx.hit.datum.date }}</template>
+  <template v-if="loading" #state>Загружаем историю…</template>
+</TimeSeriesPanel>
+```
 
 ### Вывод тултипов (`src/shared/ui/chart/`)
 
@@ -651,10 +707,13 @@ wotstat и события по регионам. Состояние аннота
 </SeriesTooltip>
 ```
 
-В технике `timeSeriesCompare/ComparisonTooltip.vue` остаётся игровым адаптером:
-сопоставляет включённые источники с `ctx.hits` по тегам, читает snapshot подсветки,
-форматирует метрики и заполняет шапку датой/версией. Его используют сравнение и история с разбиением.
-Одиночная история сохраняет свой tooltip значения и периода в `HeaderTooltip`.
+`TimeSeriesTooltip.vue` адаптирует `TooltipCtx<TimeSeriesHit<TPoint>>` к этому renderer:
+принимает `ctx`, включённые `sources` с полями LegendItem и `formatValue(value, ctx)`.
+Сопоставляет hits по tag, читает snapshot подсветки, оставляет пропуски; слот `header`
+получает `{ ctx, columnCount, horizontal }`. Его использует `TimeSeriesPanel` в обоих режимах
+tooltip. В технике `timeSeriesCompare/HistoryTooltipHeader.vue` задаёт только игровую шапку
+по `point`, `horizontal` и необязательной `gameVersion`. Одиночная история заменяет
+содержимое через слот `tooltip` и сохраняет значение и период в HeaderTooltip.
 Стенд без БД: `/debug/series-tooltip` (1/10/11/20/21/40 рядов, пропуски,
 ноль, длинные названия, подсветка, слот шапки и поповер у краёв экрана).
 

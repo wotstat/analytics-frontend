@@ -1,65 +1,58 @@
 <template>
-  <section class="vehicle-time-series" :class="{ split: split !== null, 'with-annotations': annotations.length > 0 }">
-    <HeaderTooltip :ctx="split === null ? chart.tooltipCtx.value : null" class="history-toolbar-header">
-      <template #left>
-        <VehicleMetricSelector v-model="slot" />
-      </template>
-      <template #right>
-        <HistoryToolbar v-model:step="step" v-model:average-window="averageWindow" density="compact">
-          <template #actions>
-            <ToolbarButton :icon="LineChartIcon" variant="accent" :active="split !== null"
-              @click="openSplitMenu" />
-            <HistoryAnnotationSettings :settings="annotationOptions" :regions="filters.regions" />
-          </template>
-        </HistoryToolbar>
-      </template>
-      <template #tooltip="{ ctx }">
-        <div class="history-tooltip">
-          <div class="tooltip-value">
-            <b>{{ formatSlotValue(ctx.hit.datum.slot, ctx.hit.datum.y) }}</b>
-          </div>
-          <div class="tooltip-date">{{ formatHistoryPeriod(ctx.hit.datum.periodStart, ctx.hit.datum.periodEnd,
-            ctx.hit.datum.step) }}</div>
-        </div>
-      </template>
-    </HeaderTooltip>
+  <TimeSeriesPanel :chart :legend :has-values="hasValues" density="compact"
+    :tooltip="split === null ? 'header' : 'floating'" :show-legend="split !== null"
+    :annotation-labels="annotations.length > 0"
+    :format-value="(value, ctx) => formatSlotValue(ctx.hit.datum.slot, value)" class="vehicle-time-series">
 
-    <div class="chart-body">
-      <UniversalChartComponent v-show="hasValues" :chart />
+    <template #header>
+      <VehicleMetricSelector v-model="slot" />
+    </template>
 
-      <div v-if="history.status === loading" class="chart-state">
+    <template #toolbar>
+      <HistoryToolbarChoices v-model:step="step" v-model:average-window="averageWindow" />
+    </template>
+
+    <template #actions>
+      <ToolbarButton :icon="LineChartIcon" variant="accent" :active="split !== null" @click="openSplitMenu" />
+      <HistoryAnnotationSettings :settings="annotationOptions" :regions="filters.regions" />
+    </template>
+
+    <template v-if="split === null" #tooltip="{ ctx }">
+      <div class="history-tooltip">
+        <div class="tooltip-value"><b>{{ formatSlotValue(ctx.hit.datum.slot, ctx.hit.datum.y) }}</b></div>
+        <div class="tooltip-date">{{ formatHistoryPeriod(ctx.hit.datum.periodStart, ctx.hit.datum.periodEnd,
+          ctx.hit.datum.step) }}</div>
+      </div>
+    </template>
+
+    <template #tooltip-header="{ ctx, horizontal }">
+      <HistoryTooltipHeader :point="ctx.hit.datum" :horizontal />
+    </template>
+
+    <template v-if="history.status === loading || isErrorStatus(history.status) || !hasValues" #state>
+      <template v-if="history.status === loading">
         <Loader class="loader" />
         <span>Загружаем историю…</span>
-      </div>
-      <div v-else-if="isErrorStatus(history.status)" class="chart-state">
-        <span>Не удалось загрузить историю</span>
-        <button @click="retry++">Попробовать ещё раз</button>
-      </div>
-      <div v-else-if="!hasValues" class="chart-state">По выбранным фильтрам пока нет данных</div>
-    </div>
-
-    <Legend v-if="split !== null && splitSources.length" :legend toggleable highlightable class="legend" />
-
-    <FloatingTooltip v-if="split !== null" :ctx="chart.tooltipCtx.value" anchor="pivot-x"
-      :placement="['top-float', 'bottom-float']" :offset="{ top: 28, bottom: annotations.length ? 40 : 12 }">
-      <template #default="{ ctx }">
-        <ComparisonTooltip :ctx :sources="legend.enabled.value" />
       </template>
-    </FloatingTooltip>
-  </section>
+
+      <template v-else-if="isErrorStatus(history.status)">
+        <span>Не удалось загрузить историю</span>
+        <button class="retry" @click="retry++">Попробовать ещё раз</button>
+      </template>
+
+      <template v-else>По выбранным фильтрам пока нет данных</template>
+    </template>
+  </TimeSeriesPanel>
 </template>
 
 <script setup lang="ts">
 import { computed, markRaw, onBeforeUnmount, ref, watch } from 'vue'
 import { useNow } from '@vueuse/core'
 import { isErrorStatus, loading, queryComputed, success } from '@/db'
-import HeaderTooltip from '@/shared/ui/chart/HeaderTooltip.vue'
-import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
-import Legend from '@/shared/ui/chart/Legend.vue'
+import TimeSeriesPanel from '@/shared/ui/chart/TimeSeriesPanel.vue'
 import { useLegend } from '@/shared/ui/chart/useLegend'
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
-import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import { closeContextMenu, isContextMenuOpen } from '@/shared/uiKit/contextMenu/createContextMenu'
 import { checkboxItem, separator, simpleContextMenu } from '@/shared/uiKit/contextMenu/simpleContextMenu'
 import type { VehicleFilters } from '../filters/types'
@@ -70,7 +63,7 @@ import { vehicleHistoryQuery } from '../shared/vehicleStatisticsQuery'
 import { VehicleHistoryChart } from './VehicleHistoryChart'
 import type { VehicleHistoryPeriod, VehicleHistorySeries } from '../shared/types'
 import type { HistoryAverageWindow, HistoryStep } from './historyStep'
-import HistoryToolbar from './HistoryToolbar.vue'
+import HistoryToolbarChoices from './HistoryToolbarChoices.vue'
 import HistoryAnnotationSettings from './HistoryAnnotationSettings.vue'
 import LineChartIcon from '../vehicleListTable/assets/line-chart.svg'
 import { useHistoryAnnotationSettings } from './useHistoryAnnotationSettings'
@@ -82,7 +75,7 @@ import { historySplitName, historySplitOptions, orderHistorySplitKeys, type Vehi
 import { historySplitSeriesColor } from './seriesColors'
 import VehicleMetricSelector from '../VehicleMetricSelector.vue'
 import type { VehicleSelection } from '../shared/vehicleGrouping'
-import ComparisonTooltip from '../timeSeriesCompare/ComparisonTooltip.vue'
+import HistoryTooltipHeader from '../timeSeriesCompare/HistoryTooltipHeader.vue'
 
 useHistoryEventStyles()
 
@@ -131,7 +124,10 @@ const splitSources = computed<SplitSource[]>(() => {
   }))
 })
 
-const legend = useLegend(splitSources)
+const legendItems = computed(() => split.value === null
+  ? [{ tag: 'vehicle', name: props.name, color: 'var(--blue-thin-color)' }]
+  : splitSources.value)
+const legend = useLegend(legendItems)
 const chart = markRaw(new VehicleHistoryChart(legend.highlightSync))
 
 const histories = computed<VehicleHistorySeries[]>(() => {
@@ -160,10 +156,6 @@ const hasValues = computed(() => history.value.status === success &&
 watch([series, slot, beforeDay, step, averageWindow], () => {
   chart.setHistories(series.value, slot.value, beforeDay.value, step.value, averageWindow.value)
 }, { immediate: true })
-
-watch(() => split.value === null
-  ? [{ tag: 'vehicle', color: 'var(--blue-thin-color)' }]
-  : splitSources.value, colors => chart.setSeriesColors(colors), { immediate: true })
 
 watch(annotations, value => chart.setHistoryAnnotations(value), { immediate: true })
 watch(annotationOptions.showWotstatOutages, visible => chart.setOutagesVisible(visible), { immediate: true })
@@ -207,115 +199,59 @@ onBeforeUnmount(() => closeContextMenu(splitMenuId))
 </script>
 
 <style lang="scss" scoped>
-@use '@/shared/ui/chart/timeSeriesChart.scss' as *;
-@use '@/shared/ui/chart/timeSeriesAnnotations.scss' as *;
 @use './historyAnnotationStyles.scss' as *;
 
 .vehicle-time-series {
   margin-top: 12px;
-  min-width: 0;
 
-  .history-toolbar-header {
+  .history-tooltip {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    pointer-events: none;
     padding-bottom: 3px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 2px;
 
-    :deep(.items) {
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      min-height: 38px;
-    }
-
-    :deep(.right) {
-      margin-left: auto;
-    }
-
-    .history-tooltip {
-      text-align: center;
-      font-variant-numeric: tabular-nums;
-      white-space: nowrap;
-      pointer-events: none;
-      padding-bottom: 3px;
-
-      .tooltip-value {
-        display: flex;
-        align-items: baseline;
-        justify-content: center;
-        gap: 8px;
-
-        b {
-          color: white;
-          font-size: 20px;
-          line-height: 20px;
-        }
-      }
-
-      .tooltip-date {
-        color: rgba(255, 255, 255, 0.5);
-        font-size: 11px;
-        line-height: 1;
-        margin-top: 3px;
-      }
-
-    }
-  }
-
-  .chart-body {
-    position: relative;
-    height: clamp(230px, 28vw, 320px);
-
-    .chart-container {
-      width: 100%;
-      height: 100%;
-    }
-
-    .chart-state {
-      position: absolute;
-      inset: 0;
+    .tooltip-value {
       display: flex;
-      flex-direction: column;
-      align-items: center;
+      align-items: baseline;
       justify-content: center;
-      gap: 16px;
-      color: rgba(255, 255, 255, 0.55);
-      text-align: center;
+      gap: 8px;
 
-      .loader {
-        font-size: 3px;
-        margin-bottom: 16px;
+      b {
+        color: white;
+        font-size: 20px;
+        line-height: 20px;
       }
+    }
 
-      button {
-        color: var(--blue-thin-color);
+    .tooltip-date {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 11px;
+      line-height: 1;
+      margin-top: 3px;
+    }
+  }
 
-        @media (hover: hover) and (pointer: fine) {
-          &:hover {
-            color: white;
-          }
-        }
+  .loader {
+    font-size: 3px;
+    margin-bottom: 16px;
+  }
+
+  .retry {
+    color: var(--blue-thin-color);
+
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        color: white;
       }
     }
   }
 
-  .legend {
-    margin-top: 10px;
-  }
-
-  :deep(.universal-chart-root) {
-    @include time-series-chart;
-    @include time-series-annotations;
-
-    .time-series-annotation-area,
-    .time-series-annotations .label,
-    .time-series-annotation-ticks .tick-level {
-      @include history-annotation-styles;
-      color: var(--history-annotation-color);
-    }
-  }
-
-  &.with-annotations :deep(.grid) {
-    opacity: 0.1;
+  :deep(.time-series-annotation-area),
+  :deep(.time-series-annotations .label),
+  :deep(.time-series-annotation-ticks .tick-level) {
+    @include history-annotation-styles;
+    color: var(--history-annotation-color);
   }
 }
 </style>

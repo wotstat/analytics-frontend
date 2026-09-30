@@ -44,6 +44,7 @@
 - `toolbarButton/ToolbarButton.vue` — кнопка тулбара с вариантами оформления и размерами; интерфейс ниже.
 - `chart/ChartToolbar.vue`, `chart/ToolbarGroup.vue`, `chart/ToolbarChoiceGroup.vue` и `chart/ChartAnnotationSettings.vue` — композиция toolbar графика из групп выбора и действий, настройки аннотаций; интерфейсы и стенд описаны в [06-charts.md](06-charts.md#toolbar-графика-srcshareduichart).
 - `chart/TimeSeriesChart.ts` — общий временной график с готовыми точками; `timeSeries.ts` задаёт контракт, `timeSeriesChart.scss` — оформление. `TimeSeriesViewport.ts` подключает политику окна, `TimeSeriesAnnotationLayer.ts` — необязательные аннотации с отдельным миксином `timeSeriesAnnotations.scss`. Стенд: `/debug/time-series`, интерфейсы описаны в [06-charts.md](06-charts.md#общий-временной-график-srcshareduichart).
+- `chart/TimeSeriesPanel.vue` — готовая панель toolbar, графика, легенды, tooltip и сообщений; `TimeSeriesTooltip.vue` сопоставляет hits с включёнными источниками. Контракт описан в [06-charts.md](06-charts.md#готовая-панель-временного-графика), стенд — `/debug/time-series-panel`.
 - `chart/` — Vue-обёртки графиков: тултипы (`HeaderTooltip.vue`, `FloatingTooltip.vue`), легенда (`Legend.vue` + `useLegend.ts`) и `VueChartRenderManager.ts`, см. [06-charts.md](06-charts.md).
 - `modalWindow/` — модальные окна (`ModalWindow.vue`, `ModalWindowContent.vue`, кнопки).
 - `components/Tooltip.vue`; `PopupWindow.vue` — самостоятельный попап, не часть `modalWindow`; `Canvas.vue` — обёртка canvas с ресайзом; `SnowCardWrapper.vue` — сезонное украшение.

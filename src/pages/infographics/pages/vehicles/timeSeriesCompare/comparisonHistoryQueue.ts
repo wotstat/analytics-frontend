@@ -42,5 +42,3 @@ export function createComparisonHistoryQueue() {
 
   return { run }
 }
-
-export type ComparisonHistoryQueue = ReturnType<typeof createComparisonHistoryQueue>

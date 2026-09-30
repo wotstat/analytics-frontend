@@ -1,77 +1,71 @@
 <template>
-  <section class="vehicle-comparison" :class="{ 'with-annotations': annotations.length > 0 }">
-    <ComparisonHistory v-for="source in sources" :key="source.tag" :selection="source.selection"
-      :filters="source.filters" :before-day="beforeDay" :step :slot :retry="retries[source.tag] ?? 0" :queue="historyQueue"
-      @update="states.set(source.tag, $event)" />
+  <section class="vehicle-comparison">
+    <TimeSeriesPanel :chart :legend :has-values="hasValues" :annotation-labels="annotations.length > 0"
+      :format-value="(value, ctx) => formatSlotValue(ctx.hit.datum.slot, value)" color-editable removable
+      @color-change="(source, color) => emit('colorChange', source.tag, color)"
+      @remove="source => emit('remove', source.tag)" @series-click="onSeriesClick">
 
-    <HistoryToolbar v-model:step="step" v-model:average-window="averageWindow" class="toolbar">
-      <template #left>
+      <template #header>
         <h2>Сравнение <span v-if="sources.length">{{ sources.length }}</span></h2>
         <VehicleMetricSelector v-model="slot" class="metric-selector" />
       </template>
+
+      <template #toolbar>
+        <HistoryToolbarChoices v-model:step="step" v-model:average-window="averageWindow" />
+      </template>
+
       <template #actions>
         <HistoryAnnotationSettings :settings="annotationOptions" :regions="filters.regions" />
       </template>
-    </HistoryToolbar>
 
-    <div class="comparison-content">
-      <div class="chart-body">
-        <UniversalChartComponent v-show="hasValues" :chart />
-        <div v-if="!sources.length" class="chart-state">
-          <b>Сравните танки на одном графике</b>
+      <template v-if="!sources.length || !hasValues" #state>
+        <template v-if="!sources.length">
+          <b class="empty-heading">Сравните танки на одном графике</b>
           <span>Нажмите «+» в таблице ниже. Чтобы добавить среднее по уровню или классу, выберите нужный режим
             таблицы.</span>
-        </div>
-        <div v-else-if="!hasValues" class="chart-state">
-          {{ emptyMessage }}
-        </div>
-      </div>
+        </template>
+        <template v-else>{{ emptyMessage }}</template>
+      </template>
 
-      <div class="comparison-details">
-        <div v-if="sources.length" class="legend-row">
-          <Legend :legend toggleable highlightable color-editable removable
-            @color-change="(source, color) => emit('colorChange', source.tag, color)"
-            @remove="source => emit('remove', source.tag)" class="legend" />
-          <ToolbarButton :icon="ResetIcon" class="reset" @click="emit('clear')" />
-        </div>
+      <template #legend-actions>
+        <ToolbarButton :icon="ResetIcon" class="reset" @click="emit('clear')" />
+      </template>
 
+      <template #details>
         <div v-for="source in failedSources" :key="source.tag" class="source-error">
           <span>{{ source.name }}: не удалось загрузить историю.</span>
-          <button @click="retries[source.tag] = (retries[source.tag] ?? 0) + 1">Повторить</button>
+          <button @click="retry(source.tag)">Повторить</button>
         </div>
         <div v-if="emptySources.length" class="caption">
           Нет данных: {{emptySources.map(source => source.name).join(', ')}}
         </div>
-      </div>
-    </div>
+      </template>
 
-    <FloatingTooltip :ctx="chart.tooltipCtx.value" anchor="pivot-x" :placement="['top-float', 'bottom-float']"
-      :offset="{ top: 28, bottom: annotations.length ? 40 : 12 }">
-      <template #default="{ ctx }">
-        <ComparisonTooltip :ctx :sources="legend.enabled.value"
+      <template #tooltip-header="{ ctx, horizontal }">
+        <HistoryTooltipHeader :point="ctx.hit.datum" :horizontal
           :game-version="versionForPeriod(ctx.hit.datum.periodEnd)" />
       </template>
-    </FloatingTooltip>
+    </TimeSeriesPanel>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, markRaw, onScopeDispose, reactive, ref, watch } from 'vue'
+import { computed, markRaw, ref, watch } from 'vue'
 import { useNow } from '@vueuse/core'
-import { isErrorStatus, loading, success, type Status } from '@/db'
+import { isErrorStatus, loading, success } from '@/db'
 import ResetIcon from '@/assets/icons/reset.svg'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
-import Legend from '@/shared/ui/chart/Legend.vue'
+import TimeSeriesPanel from '@/shared/ui/chart/TimeSeriesPanel.vue'
+import type { ClickInteractionEvent } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/BaseInteractionController'
+import { formatSlotValue } from '../shared/formatMetricValue'
 import { useLegend } from '@/shared/ui/chart/useLegend'
-import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
-import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import VehicleMetricSelector from '../VehicleMetricSelector.vue'
 import type { VehicleFilters } from '../filters/types'
 import type { Slot } from '../shared/vehicleMetrics'
 import { VehicleHistoryChart } from '../timeSeries/VehicleHistoryChart'
-import type { VehicleHistoryPeriod, VehicleThresholds } from '../shared/types'
+import type { VehicleThresholds } from '../shared/types'
 import type { HistoryAverageWindow, HistoryStep } from '../timeSeries/historyStep'
-import HistoryToolbar from '../timeSeries/HistoryToolbar.vue'
+import HistoryToolbarChoices from '../timeSeries/HistoryToolbarChoices.vue'
 import HistoryAnnotationSettings from '../timeSeries/HistoryAnnotationSettings.vue'
 import { useHistoryAnnotationSettings } from '../timeSeries/useHistoryAnnotationSettings'
 import { useGameVersionAnnotations } from '../timeSeries/gameVersionAnnotations'
@@ -80,9 +74,8 @@ import { useHistoryEventStyles } from '../timeSeries/useHistoryEventStyles'
 import { applyHistoryFilters, hasHistoryValues } from '../timeSeries/historyValues'
 import { snapshotComparisonFilters, type ComparisonSource } from './types'
 import { comparisonName } from './comparisonName'
-import ComparisonHistory from './ComparisonHistory.vue'
-import ComparisonTooltip from './ComparisonTooltip.vue'
-import { createComparisonHistoryQueue } from './comparisonHistoryQueue'
+import { useComparisonHistories } from './useComparisonHistories'
+import HistoryTooltipHeader from './HistoryTooltipHeader.vue'
 
 useHistoryEventStyles()
 
@@ -111,9 +104,7 @@ const annotations = computed(() => [...versionAnnotations.value, ...eventAnnotat
 const now = useNow({ interval: 60_000 })
 const beforeDay = computed(() => now.value.toISOString().slice(0, 10))
 
-const states = reactive(new Map<string, { status: Status, data: VehicleHistoryPeriod[] }>())
-const retries = reactive<Record<string, number>>({})
-const historyQueue = createComparisonHistoryQueue()
+const { states, retry } = useComparisonHistories(() => props.sources, { beforeDay, step, slot })
 
 const currentFilters = computed(() => snapshotComparisonFilters(props.filters))
 const legendItems = computed(() => props.sources.map(source => ({
@@ -124,14 +115,14 @@ const legendItems = computed(() => props.sources.map(source => ({
 
 const legend = useLegend<ComparisonSource & { loading?: boolean }>(legendItems)
 const chart = markRaw(new VehicleHistoryChart(legend.highlightSync))
-onScopeDispose(chart.onSeriesClick.on(({ tag, event }) => {
+function onSeriesClick({ tag, event }: { tag: string, event: ClickInteractionEvent }) {
   if (event.isTouch) return
   const source = legend.items.value.find(item => item.tag === tag)
   if (!source || !legend.isEnabled(source)) return
   event.preventPanInertion()
   const targets = event.altKey ? legend.items.value.filter(item => item.tag !== tag) : [source]
   legend.setEnabled(targets, false)
-}))
+}
 
 const histories = computed(() => props.sources.map(source => ({
   tag: source.tag,
@@ -167,28 +158,11 @@ watch([series, slot, beforeDay, step, averageWindow], () => {
   chart.setHistories(series.value, slot.value, beforeDay.value, step.value, averageWindow.value)
 }, { immediate: true })
 
-watch(() => props.sources.map(source => ({ tag: source.tag, color: source.color })),
-  colors => chart.setSeriesColors(colors), { immediate: true })
-
 watch(annotations, value => chart.setHistoryAnnotations(value), { immediate: true })
 watch(annotationOptions.showWotstatOutages, visible => chart.setOutagesVisible(visible), { immediate: true })
-
-watch(() => props.sources.map(source => source.tag), tags => {
-  const selected = new Set(tags)
-
-  for (const tag of states.keys()) {
-    if (!selected.has(tag)) states.delete(tag)
-  }
-
-  for (const tag of Object.keys(retries)) {
-    if (!selected.has(tag)) delete retries[tag]
-  }
-})
 </script>
 
 <style scoped lang="scss">
-@use '@/shared/ui/chart/timeSeriesChart.scss' as *;
-@use '@/shared/ui/chart/timeSeriesAnnotations.scss' as *;
 @use '../timeSeries/historyAnnotationStyles.scss' as *;
 
 .vehicle-comparison {
@@ -203,120 +177,61 @@ watch(() => props.sources.map(source => source.tag), tags => {
     padding: 12px;
   }
 
-  .toolbar {
-    h2 {
-      margin: 0;
-      font-size: 18px;
-      color: white;
+  h2 {
+    margin: 0;
+    font-size: 18px;
+    color: white;
+    margin-right: 10px;
 
-      span {
-        display: inline-block;
-        font-variant-numeric: tabular-nums;
-        margin-left: 5px;
-        color: rgba(255, 255, 255, 0.4);
-        font-size: 14px;
-      }
-    }
-
-    :deep(.metric-selector) {
-      margin-left: 10px;
+    span {
+      display: inline-block;
+      font-variant-numeric: tabular-nums;
+      margin-left: 5px;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 14px;
     }
   }
 
-  .comparison-content {
-    --legend-row-height: 21px;
-    --legend-gap: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: var(--legend-gap);
+  .metric-selector {
+    margin-left: 10px;
+  }
+
+  .empty-heading {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 18px;
+  }
+
+  :deep(.chart-state)>span {
+    max-width: 520px;
+    line-height: 1.5;
+  }
+
+  .reset {
+    --toolbar-button-height: var(--time-series-legend-height);
+  }
+
+  .caption,
+  .source-error {
     margin-top: 12px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+  }
 
-    .chart-body {
-      position: relative;
-      flex-shrink: 0;
-      height: calc(clamp(260px, 30vw, 400px) - var(--legend-row-height) - var(--legend-gap));
+  .source-error {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 
-      .chart-container {
-        width: 100%;
-        height: 100%;
-      }
-
-      .chart-state {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        gap: 12px;
-        text-align: center;
-        color: rgba(255, 255, 255, 0.45);
-        padding: 20px;
-
-        b {
-          color: rgba(255, 255, 255, 0.8);
-          font-size: 18px;
-        }
-
-        span {
-          max-width: 520px;
-          line-height: 1.5;
-        }
-      }
-    }
-
-    .comparison-details {
-      min-height: var(--legend-row-height);
-      overflow-wrap: anywhere;
-
-      .legend-row {
-        display: flex;
-        align-items: flex-end;
-        gap: 10px;
-
-        .legend {
-          flex: 1;
-          min-width: 0;
-        }
-
-        .reset {
-          --toolbar-button-height: var(--legend-row-height);
-        }
-      }
-
-      .caption,
-      .source-error {
-        margin-top: 12px;
-        font-size: 12px;
-        color: rgba(255, 255, 255, 0.5);
-      }
-
-      .source-error {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-
-        button {
-          color: var(--blue-thin-color);
-        }
-      }
+    button {
+      color: var(--blue-thin-color);
     }
   }
 
-  :deep(.universal-chart-root) {
-    @include time-series-chart;
-    @include time-series-annotations;
-
-    .time-series-annotation-area,
-    .time-series-annotations .label,
-    .time-series-annotation-ticks .tick-level {
-      @include history-annotation-styles;
-      color: var(--history-annotation-color);
-    }
-  }
-
-  &.with-annotations :deep(.grid) {
-    opacity: 0.1;
+  :deep(.time-series-annotation-area),
+  :deep(.time-series-annotations .label),
+  :deep(.time-series-annotation-ticks .tick-level) {
+    @include history-annotation-styles;
+    color: var(--history-annotation-color);
   }
 }
 </style>

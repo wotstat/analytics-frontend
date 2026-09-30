@@ -1,20 +1,12 @@
 <template>
-  <ChartToolbar :density>
-    <template v-if="$slots.left" #left><slot name="left" /></template>
-    <ToolbarChoiceGroup v-model="step" :options="stepOptions" />
-    <ToolbarChoiceGroup v-model="averageWindow" :options="averageOptions" clearable />
-    <ToolbarGroup v-if="$slots.actions"><slot name="actions" /></ToolbarGroup>
-  </ChartToolbar>
+  <ToolbarChoiceGroup v-model="step" :options="stepOptions" />
+  <ToolbarChoiceGroup v-model="averageWindow" :options="averageOptions" clearable />
 </template>
 
 <script setup lang="ts">
-import ChartToolbar from '@/shared/ui/chart/ChartToolbar.vue'
 import ToolbarChoiceGroup from '@/shared/ui/chart/ToolbarChoiceGroup.vue'
-import ToolbarGroup from '@/shared/ui/chart/ToolbarGroup.vue'
 import type { ToolbarChoiceOption } from '@/shared/ui/chart/toolbarChoiceGroup'
 import type { HistoryAverageWindow, HistoryStep } from './historyStep'
-
-withDefaults(defineProps<{ density?: 'standard' | 'compact' }>(), { density: 'standard' })
 
 const step = defineModel<HistoryStep>('step', { required: true })
 const averageWindow = defineModel<HistoryAverageWindow>('averageWindow', { required: true })
