@@ -426,6 +426,70 @@ connection.dispose()
 
 Референс hover/bounds-проводки — `detail/Charts.ts` + `detail/Detail.vue` (лидерборд Натиска). Семантический Highlight показан парой графиков в `/debug/chart/interaction#synchronization`: обе линии имеют tag `sync-series`, но разные данные и Y-масштабы.
 
+### Toolbar графика (`src/shared/ui/chart/`)
+
+Toolbar собирается явно в Vue-шаблоне из трёх общих модулей:
+
+- `ChartToolbar.vue` — раскладка, необязательный слот `left` для заголовка/селекторов и
+  default-слот для групп. `density` (`standard` по умолчанию / `compact`) задаёт цвета,
+  отступы и переносы. При наличии левой части контролы прижаты вправо,
+  а на экранах до 600 px — влево. Компактный вариант остаётся в одной строке.
+- `ToolbarGroup.vue` — группа произвольных действий с единым расстоянием между ними.
+  В default-слоте `ChartToolbar` группы располагаются соседями; между соседними группами
+  toolbar рисует разделитель. Пустые группы произвольных действий потребитель скрывает через `v-if`.
+- `ToolbarChoiceGroup.vue` — группа выбора одного строкового или числового значения.
+  Обязательный `v-model` и `options: readonly ToolbarChoiceOption<TValue>[]` из
+  `toolbarChoiceGroup.ts` задают состояние и пункты. Опция содержит уникальный внутри
+  группы `value`, `label`, необязательные `tooltip` и `disabled`. Проп `disabled`
+  блокирует всю группу. Без `clearable` повторное нажатие сохраняет выбор;
+  с `clearable` возвращает `null`. Значение `0` является обычным выбранным значением.
+  Тип модели допускает `null` только при `clearable`. Пустой список options не создаёт
+  группу и разделитель; изменение списка не сбрасывает модель автоматически.
+
+Наборы кнопок, значения и их смысл задаёт потребитель. Общие модули не знают шагов времени,
+окон среднего, загрузки данных или аннотаций. `ChartToolbar` передаёт плотность группам
+через CSS-переменные, без отдельного состояния и настроек каждой кнопки.
+
+```vue
+<ChartToolbar density="compact">
+  <template #left><h2>История</h2></template>
+  <ToolbarChoiceGroup v-model="step" :options="stepOptions" />
+  <ToolbarChoiceGroup v-model="averageWindow" :options="averageOptions" clearable />
+  <ToolbarGroup>
+    <ChartAnnotationSettings :groups="annotationGroups" @toggle="toggleAnnotation" />
+  </ToolbarGroup>
+</ChartToolbar>
+```
+
+В технике `vehicles/timeSeries/HistoryToolbar.vue` собирает эти модули с обязательными
+моделями `step` (`day/week/month`) и `averageWindow` (`3/5/7/null`). Подписи, наборы значений
+и подсказки среднего находятся в этой локальной сборке. Слоты `left` и `actions`
+позволяют двум потребителям добавить собственные метрику, заголовок и действия.
+Типы `HistoryStep` и `HistoryAverageWindow` остаются в локальном `historyStep.ts`.
+Загрузка и агрегация данных, расчёт среднего и диапазон графика остаются у потребителя.
+
+`ChartAnnotationSettings.vue` принимает `groups: readonly ChartAnnotationGroup[]` из
+`chartAnnotationSettings.ts`. Группа содержит устойчивый `id`, необязательный `label`,
+`layout` (`column` по умолчанию / `row`) и `options`. Опция содержит `id`, `label`,
+`selected`, необязательные `color` и `disabled`. Идентификаторы опций уникальны внутри группы.
+Событие `toggle(groupId, optionId)` передаёт выбор владельцу настроек; renderer не меняет
+опции и не хранит предметное состояние. Пустые группы скрыты, активность кнопки определяется
+выбранными опциями переданных непустых групп. Цвет полосы приводится к прежнему насыщенному
+акценту меню; прозрачность цвета аннотации не переносится на полосу выбора.
+
+Кнопка использует `ToolbarButton`, панель — компактный `PanelPopover` с прежним размещением
+и закрытием по внешнему клику/Escape, опции — `SelectionTile`. Пропы `title` и `width` задают
+заголовок панели и ширину (по умолчанию «Настройки аннотаций» и 250 px).
+Игровой адаптер `vehicles/timeSeries/HistoryAnnotationSettings.vue` готовит версии, недоступность
+wotstat и события по регионам. Состояние аннотаций остаётся отдельным для каждого графика.
+
+`VehicleTimeSeries` использует компактный `HistoryToolbar` в правом слоте `HeaderTooltip`:
+метрика остаётся в его левом слоте, поэтому механизм скрытия при пересечении tooltip сохраняется.
+`TimeSeriesCompare` задаёт собственную левую часть с заголовком и метрикой.
+Стенд без БД: `/debug/chart-toolbar` в разделе «UI-компоненты» — обе плотности,
+слоты, узкая раскладка, общий шаг/avg двух строк, независимое сравнение, произвольный состав
+групп выбора и действий, clearable, значение 0, disabled и динамические разделители.
+
 ### Вывод тултипов (`src/shared/ui/chart/`)
 
 `ChartTooltip` ничего не рисует — публикует наружу `TooltipCtx` (hits в порядке selection, snapshot заказанных `exposeHighlights` с `isHighlighted()`, координаты pivot/курсора в клиентских и абсолютных координатах, бокс графика — контракт разобран выше, в «Интерактив → TooltipCtx и highlights»). Как это показать — дело Vue-обёрток; их две, обе принимают `:ctx="chart.tooltipCtx.value"`:

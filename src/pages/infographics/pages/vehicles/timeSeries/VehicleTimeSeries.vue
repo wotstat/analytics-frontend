@@ -1,15 +1,17 @@
 <template>
   <section class="vehicle-time-series" :class="{ split: split !== null }">
-    <HeaderTooltip :ctx="split === null ? chart.tooltipCtx.value : null" class="chart-toolbar">
+    <HeaderTooltip :ctx="split === null ? chart.tooltipCtx.value : null" class="history-toolbar-header">
       <template #left>
         <VehicleMetricSelector v-model="slot" />
       </template>
       <template #right>
-        <HistoryControls v-model:step="step" v-model:average-window="averageWindow" compact class="step-selector">
-          <ToolbarButton :icon="LineChartIcon" variant="accent" :active="split !== null"
-            @click="openSplitMenu" />
-          <HistoryAnnotationSettings :settings="annotationOptions" :regions="filters.regions" />
-        </HistoryControls>
+        <HistoryToolbar v-model:step="step" v-model:average-window="averageWindow" density="compact">
+          <template #actions>
+            <ToolbarButton :icon="LineChartIcon" variant="accent" :active="split !== null"
+              @click="openSplitMenu" />
+            <HistoryAnnotationSettings :settings="annotationOptions" :regions="filters.regions" />
+          </template>
+        </HistoryToolbar>
       </template>
       <template #tooltip="{ ctx }">
         <div class="history-tooltip">
@@ -68,7 +70,7 @@ import { vehicleHistoryQuery } from '../shared/vehicleStatisticsQuery'
 import { VehicleHistoryChart } from './VehicleHistoryChart'
 import type { VehicleHistoryPeriod, VehicleHistorySeries } from '../shared/types'
 import type { HistoryAverageWindow, HistoryStep } from './historyStep'
-import HistoryControls from './HistoryControls.vue'
+import HistoryToolbar from './HistoryToolbar.vue'
 import HistoryAnnotationSettings from './HistoryAnnotationSettings.vue'
 import LineChartIcon from '../vehicleListTable/assets/line-chart.svg'
 import { useHistoryAnnotationSettings } from './useHistoryAnnotationSettings'
@@ -208,7 +210,7 @@ onBeforeUnmount(() => closeContextMenu(splitMenuId))
   margin-top: 12px;
   min-width: 0;
 
-  .chart-toolbar {
+  .history-toolbar-header {
     padding-bottom: 3px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     margin-bottom: 2px;
@@ -221,10 +223,6 @@ onBeforeUnmount(() => closeContextMenu(splitMenuId))
     }
 
     :deep(.right) {
-      margin-left: auto;
-    }
-
-    .step-selector {
       margin-left: auto;
     }
 

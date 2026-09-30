@@ -42,6 +42,7 @@
 - `popover/PanelPopover.vue` — панель сайта поверх `uiKit/popover/PopoverAutoClose`; интерфейс ниже.
 - `selectionTile/SelectionTile.vue` — плитка выбора с основной кнопкой и необязательным встроенным действием; интерфейс ниже.
 - `toolbarButton/ToolbarButton.vue` — кнопка тулбара с вариантами оформления и размерами; интерфейс ниже.
+- `chart/ChartToolbar.vue`, `chart/ToolbarGroup.vue`, `chart/ToolbarChoiceGroup.vue` и `chart/ChartAnnotationSettings.vue` — композиция toolbar графика из групп выбора и действий, настройки аннотаций; интерфейсы и стенд описаны в [06-charts.md](06-charts.md#toolbar-графика-srcshareduichart).
 - `chart/` — Vue-обёртки графиков: тултипы (`HeaderTooltip.vue`, `FloatingTooltip.vue`), легенда (`Legend.vue` + `useLegend.ts`) и `VueChartRenderManager.ts`, см. [06-charts.md](06-charts.md).
 - `modalWindow/` — модальные окна (`ModalWindow.vue`, `ModalWindowContent.vue`, кнопки).
 - `components/Tooltip.vue`; `PopupWindow.vue` — самостоятельный попап, не часть `modalWindow`; `Canvas.vue` — обёртка canvas с ресайзом; `SnowCardWrapper.vue` — сезонное украшение.

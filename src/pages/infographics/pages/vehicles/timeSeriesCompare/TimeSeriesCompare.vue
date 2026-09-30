@@ -4,15 +4,15 @@
       :filters="source.filters" :before-day="beforeDay" :step :slot :retry="retries[source.tag] ?? 0" :queue="historyQueue"
       @update="states.set(source.tag, $event)" />
 
-    <div class="toolbar">
-      <h2>Сравнение <span v-if="sources.length">{{ sources.length }}</span></h2>
-
-      <VehicleMetricSelector v-model="slot" class="metric-selector" />
-
-      <HistoryControls v-model:step="step" v-model:average-window="averageWindow" class="steps">
+    <HistoryToolbar v-model:step="step" v-model:average-window="averageWindow" class="toolbar">
+      <template #left>
+        <h2>Сравнение <span v-if="sources.length">{{ sources.length }}</span></h2>
+        <VehicleMetricSelector v-model="slot" class="metric-selector" />
+      </template>
+      <template #actions>
         <HistoryAnnotationSettings :settings="annotationOptions" :regions="filters.regions" />
-      </HistoryControls>
-    </div>
+      </template>
+    </HistoryToolbar>
 
     <div class="comparison-content">
       <div class="chart-body">
@@ -71,7 +71,7 @@ import type { Slot } from '../shared/vehicleMetrics'
 import { VehicleHistoryChart } from '../timeSeries/VehicleHistoryChart'
 import type { VehicleHistoryPeriod, VehicleThresholds } from '../shared/types'
 import type { HistoryAverageWindow, HistoryStep } from '../timeSeries/historyStep'
-import HistoryControls from '../timeSeries/HistoryControls.vue'
+import HistoryToolbar from '../timeSeries/HistoryToolbar.vue'
 import HistoryAnnotationSettings from '../timeSeries/HistoryAnnotationSettings.vue'
 import { useHistoryAnnotationSettings } from '../timeSeries/useHistoryAnnotationSettings'
 import { useGameVersionAnnotations } from '../timeSeries/gameVersionAnnotations'
@@ -199,10 +199,6 @@ watch(() => props.sources.map(source => source.tag), tags => {
   }
 
   .toolbar {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-
     h2 {
       margin: 0;
       font-size: 18px;
@@ -219,14 +215,6 @@ watch(() => props.sources.map(source => source.tag), tags => {
 
     :deep(.metric-selector) {
       margin-left: 10px;
-    }
-
-    .steps {
-      margin-left: auto;
-
-      @media (max-width: 600px) {
-        margin-left: 0;
-      }
     }
   }
 

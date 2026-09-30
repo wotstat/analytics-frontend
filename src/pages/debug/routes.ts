@@ -69,6 +69,13 @@ const entries = [
     component: () => import('./pages/seriesTooltip/Index.vue'),
   },
   {
+    path: 'chart-toolbar',
+    title: 'Toolbar графика',
+    description: 'Композиция групп выбора и действий, плотность, слоты и настройки аннотаций.',
+    group: 'uiKit',
+    component: () => import('./pages/chartToolbar/Index.vue'),
+  },
+  {
     path: 'tip-bubble',
     title: 'TipBubble',
     description: 'Обучающие подсказки: очередь внутри группы, autoExtend, запоминание показов.',
