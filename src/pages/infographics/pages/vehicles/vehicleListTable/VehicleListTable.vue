@@ -15,69 +15,90 @@
       <VehicleTableSettings v-model="period" />
     </div>
 
-    <div class="head mt-font">
-      <button v-if="bulkComparisonTotal <= MAX_BULK_COMPARISON_LINES" class="compare-all" type="button"
-        :disabled="status !== success || !comparisonCandidates.length"
-        title="Добавить все строки в сравнение" aria-label="Добавить все строки в сравнение" @click="compareAll">
-        <PlusIcon />
-      </button>
-      <span v-else></span>
-      <span></span>
+    <ComposableTable v-model:expanded-rows="expandedRows" class="vehicle-stats" :columns
+      :rows="status === success ? displayedVehicles : []" :row-key="vehicle => vehicle.rowKey"
+      :sort="sorting.sortOrders.value" :loading="status === loading" :cell-class="cellClass" @sort="onSort"
+      @cell-click="onCellClick">
 
-      <SortableHeading v-if="showLevel" label="Уровень" v-bind="sorting.state('tankLevel')"
-        @click="sorting.toggle('tankLevel', $event.altKey)">
-        <span class="level-heading">Ур.</span>
-      </SortableHeading>
+      <template #header-compare>
+        <button v-if="bulkComparisonTotal <= MAX_BULK_COMPARISON_LINES" class="compare-all" type="button"
+          :disabled="status !== success || !comparisonCandidates.length" @click="compareAll">
+          <PlusIcon />
+        </button>
+      </template>
+      <template #header-expand><span></span></template>
+      <template #header-tankLevel><span class="level-heading">Ур.</span></template>
 
-      <SortableHeading v-if="showType" label="Тип техники" v-bind="sorting.state('tankType')"
-        @click="sorting.toggle('tankType', $event.altKey)">
+      <template #header-tankType>
         <VehicleType type="any" class="type-heading" />
-      </SortableHeading>
+      </template>
 
-      <SortableHeading v-if="showName" label="Название танка" v-bind="sorting.state('name')"
-        @click="sorting.toggle('name', $event.altKey)">
+      <template #header-name>
         <Icon icon="tank" class="icon" />
-      </SortableHeading>
+      </template>
 
-      <div class="values">
-        <SortableHeading v-for="slot in visibleSlots" :key="slot" :label="availableSlots[slot].label"
-          v-bind="sorting.state(slot)" @click="sorting.toggle(slot, $event.altKey)">
-          <Icon :icon="availableSlots[slot].icon" class="icon" />
-          <span v-if="slotHeadingLabel(slot)" class="aggregation-label" :class="{ derived: !!availableSlots[slot].formula }">
-            {{ slotHeadingLabel(slot) }}
+      <template #header="{ column }">
+        <template v-if="column.metric">
+          <Icon :icon="availableSlots[column.metric].icon" class="icon" />
+          <span v-if="slotHeadingLabel(column.metric)" class="aggregation-label"
+            :class="{ derived: !!availableSlots[column.metric].formula }">
+            {{ slotHeadingLabel(column.metric) }}
           </span>
-        </SortableHeading>
-      </div>
-    </div>
+        </template>
+      </template>
 
-    <div v-if="status === loading" class="state">
-      <Loader class="loader" />
-      <span>Загружаем статистику техники…</span>
-    </div>
 
-    <div v-else-if="isErrorStatus(status)" class="state">
-      <span>Не удалось загрузить статистику техники</span>
-      <button class="text-button" @click="$emit('retry')">Попробовать ещё раз</button>
-    </div>
+      <template #cell-compare="{ row }">
+        <VehicleCompareButton :compared="comparedKeys.includes(row.rowKey)"
+          @click.stop="$emit('compare', row, vehicleHistorySelection(row, effectiveSelection))" />
+      </template>
 
-    <div v-else-if="!filteredVehicles.length" class="state">
-      <span>{{ emptyMessage }}</span>
-      <span class="muted" v-if="!hasLocalFilters">История статистики ещё заполняется</span>
-    </div>
+      <template #cell-expand="{ expanded }">
+        <ArrowDown class="arrow" :class="{ expanded }" />
+      </template>
 
-    <div v-else class="body">
-      <VehicleListRow v-for="vehicle in displayedVehicles" :key="vehicle.rowKey" :vehicle :latest-day="latestDay"
-        v-model:active-slot="activeSlot" v-model:history-step="historyStep" v-model:average-window="averageWindow"
-        :slots="visibleSlots" :filters :compared="comparedKeys.includes(vehicle.rowKey)"
-        :selection="effectiveSelection" :min-battles="localFilters.minBattles" :min-players="localFilters.minPlayers"
-        :skip-incomplete-days="localFilters.skipIncompleteDays"
-        @compare="selection => $emit('compare', vehicle, selection)" />
+      <template #cell-tankLevel="{ row }">
+        {{ romanNumberProcessor(row.tankLevel!) }}
+      </template>
 
-      <button v-if="displayedVehicles.length < filteredVehicles.length" class="show-more text-button"
-        @click="displayLimit += PAGE_SIZE">
-        Показать ещё {{ Math.min(PAGE_SIZE, filteredVehicles.length - displayLimit) }}
-      </button>
-    </div>
+      <template #cell-tankType="{ row }">
+        <VehicleType :type="row.tankType && isVehicleType(row.tankType) ? row.tankType : 'any'" class="vehicle-type" />
+      </template>
+
+      <template #cell-name="{ row }">
+        <VehicleNameCell :vehicle="row" :latest-day="latestDay" />
+      </template>
+
+      <template #expanded="{ row }">
+        <VehicleTimeSeries v-model:slot="activeSlot" v-model:step="historyStep" v-model:average-window="averageWindow"
+          :selection="vehicleHistorySelection(row, effectiveSelection)" :name="vehicleName(row)" :filters
+          :min-battles="localFilters.minBattles" :min-players="localFilters.minPlayers"
+          :skip-incomplete-days="localFilters.skipIncompleteDays" />
+      </template>
+
+
+      <template #loading>
+        <div class="state">
+          <Loader class="loader" /><span>Загружаем статистику техники…</span>
+        </div>
+      </template>
+      <template #empty>
+        <div v-if="isErrorStatus(status)" class="state">
+          <span>Не удалось загрузить статистику техники</span>
+          <button class="text-button" @click="$emit('retry')">Попробовать ещё раз</button>
+        </div>
+        <div v-else class="state">
+          <span>{{ emptyMessage }}</span>
+          <span class="muted" v-if="!hasLocalFilters">История статистики ещё заполняется</span>
+        </div>
+      </template>
+      <template #footer>
+        <button v-if="status === success && displayedVehicles.length < filteredVehicles.length"
+          class="show-more text-button" @click="displayLimit += PAGE_SIZE">
+          Показать ещё {{ Math.min(PAGE_SIZE, filteredVehicles.length - displayLimit) }}
+        </button>
+      </template>
+    </ComposableTable>
 
     <Teleport to="body">
       <ModalWindowContent v-if="pendingComparison" title="Слишком много линий" class="bulk-comparison-confirmation"
@@ -85,7 +106,8 @@
         @close="pendingComparison = null">
         <div id="bulk-comparison-warning" class="comparison-warning">
           <p>
-            Вы пытаетесь добавить <b>{{ pendingComparison.candidates.length }}</b> {{ comparisonLineLabel }} в сравнение.
+            Вы пытаетесь добавить <b>{{ pendingComparison.candidates.length }}</b> {{ comparisonLineLabel }} в
+            сравнение.
           </p>
           <ul>
             <li>Линии перекроют друг друга — сравнивать их будет сложно.</li>
@@ -124,9 +146,16 @@ import { vehicleName } from '../shared/vehicleName'
 import VehicleColumnSelector from './VehicleColumnSelector.vue'
 import VehicleTableSettings from './VehicleTableSettings.vue'
 import VehicleListFilters from './VehicleListFilters.vue'
-import VehicleListRow from './VehicleListRow.vue'
-import SortableHeading from './SortableHeading.vue'
-import { useVehicleSorting } from './useVehicleSorting'
+import ComposableTable from '@/shared/ui/composableTable/ComposableTable.vue'
+import type { ComposableTableCellEvent, ComposableTableColumn, ComposableTableKey } from '@/shared/ui/composableTable/types'
+import VehicleCompareButton from './VehicleCompareButton.vue'
+import VehicleNameCell from './VehicleNameCell.vue'
+import VehicleTimeSeries from '../timeSeries/VehicleTimeSeries.vue'
+import ArrowDown from './assets/arrow-down.svg'
+import { isVehicleType } from '@/shared/game/vehicles/type/vehicleTypeToImage'
+import { romanNumberProcessor } from '@/shared/utils/processors/processors'
+import { formatSlotValue } from '../shared/formatMetricValue'
+import { useVehicleSorting, type SortKey } from './useVehicleSorting'
 import type { VehicleFilters } from '../filters/types'
 import type { HistoryAverageWindow, HistoryStep } from '../timeSeries/historyStep'
 import type { VehicleStatisticsPeriod } from '../shared/vehicleStatisticsPeriod'
@@ -202,20 +231,42 @@ const visibleSlots = computed(() => selectedSlots.value)
 
 const tableStyle = computed(() => ({
   minHeight: columnsOpen.value ? `${columnSelectionHeight.value}px` : undefined,
-  '--name-width': `${nameWidth.value}px`,
-  '--metadata-width': `${METADATA_COLUMN_WIDTH}px`,
-  '--metadata-columns': `repeat(${metadataColumnCount.value}, var(--metadata-width))`,
-  '--name-column-end': metadataColumnCount.value + (showName.value ? 4 : 3),
-  '--compare-width': `${COMPARE_COLUMN_WIDTH}px`,
-  '--expand-width': `${EXPAND_COLUMN_WIDTH}px`,
-  '--vehicle-columns': showName.value
-    ? 'var(--compare-width) var(--expand-width) var(--metadata-columns) var(--name-width) minmax(0, 1fr)'
-    : 'var(--compare-width) var(--expand-width) var(--metadata-columns) minmax(0, 1fr)',
-  '--vehicle-name-columns': showName.value
-    ? 'var(--expand-width) var(--metadata-columns) minmax(0, 1fr)'
-    : 'var(--expand-width) var(--metadata-columns)',
-  '--slot-count': Math.max(1, visibleSlots.value.length),
 }))
+
+type VehicleColumn = ComposableTableColumn<VehicleStatistics, SortKey | 'compare' | 'expand'> & { metric?: Slot }
+const columns = computed<VehicleColumn[]>(() => [
+  { key: 'compare', width: COMPARE_COLUMN_WIDTH },
+  { key: 'expand', width: EXPAND_COLUMN_WIDTH, interactive: true },
+  ...(showLevel.value ? [{ key: 'tankLevel', label: 'Уровень', width: METADATA_COLUMN_WIDTH, sortable: true, interactive: true } as const] : []),
+  ...(showType.value ? [{ key: 'tankType', label: 'Тип техники', width: METADATA_COLUMN_WIDTH, sortable: true, interactive: true } as const] : []),
+  ...(showName.value ? [{ key: 'name', label: 'Название танка', width: nameWidth.value, align: 'left', sortable: true, interactive: true } as const] : []),
+  ...visibleSlots.value.map(metric => ({
+    key: metric, metric, label: availableSlots[metric].label, tooltip: availableSlots[metric].label,
+    sortable: true, interactive: true, value: (vehicle: VehicleStatistics) => formatSlotValue(metric, vehicle[metric]),
+  })),
+])
+const expandedRows = ref<ComposableTableKey[]>([])
+
+function onSort(key: VehicleColumn['key'], event: MouseEvent) {
+  if (key !== 'compare' && key !== 'expand') sorting.toggle(key, event.altKey)
+}
+
+function cellClass(vehicle: VehicleStatistics, column: VehicleColumn) {
+  if (column.key === 'compare') return 'compare-cell'
+  if (!column.metric) return 'row-toggle'
+  return expandedRows.value.includes(vehicle.rowKey) && activeSlot.value === column.metric ? 'active-value' : undefined
+}
+
+function onCellClick({ rowKey, column }: ComposableTableCellEvent<VehicleStatistics, VehicleColumn>) {
+  if (column.key === 'compare') return
+  const expanded = expandedRows.value.includes(rowKey)
+  if (expanded && (!column.metric || activeSlot.value === column.metric)) {
+    expandedRows.value = expandedRows.value.filter(key => key !== rowKey)
+    return
+  }
+  if (column.metric) activeSlot.value = column.metric
+  if (!expanded) expandedRows.value = [...expandedRows.value, rowKey]
+}
 
 const latestDay = computed(() => props.vehicles.reduce((latest, vehicle) =>
   vehicle.day > latest ? vehicle.day : latest, ''))
@@ -349,73 +400,120 @@ watch([maxSelectableSlots, width], ([limit, tableWidth]) => {
     }
   }
 
-  .head {
-    display: grid;
-    grid-template-columns: var(--vehicle-columns);
+  .vehicle-stats {
+    --composable-table-cell-padding: 0 3px;
 
-    .compare-all {
-      align-self: center;
-      display: grid;
-      place-items: center;
-      margin-left: 6px;
-      width: 28px;
-      height: 30px;
+    :deep(.compare-cell),
+    :deep(.row-toggle) {
       padding: 0;
-      border-radius: 5px;
-      color: rgba(255, 255, 255, 0.55);
+    }
 
-      svg {
-        width: 12px;
-        height: 12px;
-      }
+    :deep(.heading:first-child) {
+      justify-content: flex-start;
+      padding: 0;
+    }
 
-      &:hover:not(:disabled) {
-        color: white;
-        background: rgba(255, 255, 255, 0.08);
-      }
+    :deep(.composable-table-cell.row-toggle:hover) {
+      background: none;
+    }
 
-      &:disabled {
-        opacity: 0.3;
-        cursor: default;
+    @media (hover: hover) and (pointer: fine) {
+      :deep(.composable-table-line:has(.row-toggle:hover)) {
+        background: rgba(255, 255, 255, 0.04);
       }
     }
 
-    .values {
-      display: grid;
-      grid-template-columns: repeat(var(--slot-count), minmax(0, 1fr));
-    }
+    :deep(.active-value) {
+      color: white;
 
-    .heading {
-      .aggregation-label {
+      &::before {
+        content: '';
         position: absolute;
-        right: 3px;
-        bottom: 9px;
-        padding: 1px 4px;
-        color: #f6f6f6;
-        font-size: 12px;
-        font-weight: 600;
-        line-height: 1.1;
-        white-space: nowrap;
-
-        &.derived {
-          color: #bd8de8;
-        }
+        bottom: 3px;
+        left: 10px;
+        right: 10px;
+        height: 2px;
+        background: var(--blue-thin-color);
+        border-radius: 2px;
       }
+    }
+  }
 
-      .icon {
-        width: 40px;
-        height: 40px;
-        display: block;
-      }
+  .compare-all {
+    display: grid;
+    place-items: center;
+    margin-left: 6px;
+    width: 28px;
+    height: 30px;
+    padding: 0;
+    border-radius: 5px;
+    color: rgba(255, 255, 255, 0.55);
 
-      .level-heading {
-        font-size: 14px;
-      }
+    svg {
+      width: 12px;
+      height: 12px;
+    }
 
-      .type-heading {
-        width: 24px;
-        height: 24px;
-      }
+    &:hover:not(:disabled) {
+      color: white;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    &:disabled {
+      opacity: 0.3;
+      cursor: default;
+    }
+  }
+
+  .aggregation-label {
+    position: absolute;
+    right: 3px;
+    bottom: 9px;
+    padding: 1px 4px;
+    color: #f6f6f6;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.1;
+    white-space: nowrap;
+
+    &.derived {
+      color: #bd8de8;
+    }
+  }
+
+  .icon {
+    width: 40px;
+    height: 40px;
+    display: block;
+  }
+
+  .level-heading {
+    font-size: 14px;
+  }
+
+  .type-heading {
+    width: 24px;
+    height: 24px;
+  }
+
+  .vehicle-type {
+    width: 16px;
+    height: 18px;
+    display: block;
+    margin: auto;
+  }
+
+  .arrow {
+    width: 12px;
+    height: 12px;
+    display: block;
+    margin: auto;
+    transform: rotate(-90deg);
+    color: rgba(255, 255, 255, 0.55);
+    transition: transform 0.15s;
+
+    &.expanded {
+      transform: rotate(0);
     }
   }
 
@@ -448,13 +546,11 @@ watch([maxSelectableSlots, width], ([limit, tableWidth]) => {
     }
   }
 
-  .body {
-    .show-more {
-      display: block;
-      width: 100%;
-      padding: 18px;
-      font-size: inherit;
-    }
+  .show-more {
+    display: block;
+    width: 100%;
+    padding: 18px;
+    font-size: inherit;
   }
 }
 
@@ -479,7 +575,7 @@ watch([maxSelectableSlots, width], ([limit, tableWidth]) => {
       margin: 0;
       padding-left: 20px;
 
-      li + li {
+      li+li {
         margin-top: 6px;
       }
     }

@@ -1,21 +1,38 @@
 <template>
-  <button class="heading" :class="{ 'order-by': position > 0, 'secondary-sort': position > 1, asc: ascending }"
-    v-tooltip.instant.top-float="label" :aria-label="label" @click="$emit('click', $event)">
+  <component
+    :is="sortable ? 'button' : 'div'"
+    :type="sortable ? 'button' : undefined"
+    class="heading" :class="classes"
+    @click="$emit('click', $event)"
+    v-tooltip.instant.top-float="{ text: label, class: tooltipClass, disabled: !label }">
     <slot />
     <span v-if="position" class="sort-arrow">
       <span v-if="position > 1" class="sort-number">{{ position }}</span>
     </span>
-  </button>
+  </component>
 </template>
 
 <script setup lang="ts">
-defineProps<{
-  label: string
-  position: number
-  ascending: boolean
-}>()
+import { computed } from 'vue'
+
+const props = withDefaults(defineProps<{
+  label?: string
+  tooltipClass?: string
+  sortable?: boolean
+  position?: number
+  ascending?: boolean
+}>(), { label: '', sortable: false, position: 0, ascending: false })
 
 defineEmits<{ click: [event: MouseEvent] }>()
+
+const classes = computed(() => ({
+  heading: true,
+  sortable: props.sortable,
+  'order-by': props.position > 0,
+  'secondary-sort': props.position > 1,
+  asc: props.ascending
+}))
+
 </script>
 
 <style scoped lang="scss">
@@ -25,13 +42,16 @@ defineEmits<{ click: [event: MouseEvent] }>()
   align-items: center;
   justify-content: center;
   min-width: 0;
-  height: 42px;
+  min-height: var(--composable-table-heading-height, 42px);
+  height: 100%;
+  box-sizing: border-box;
+  font: inherit;
   padding: 1px;
   color: #fff;
   transition: background-color 0.1s;
 
   @media (hover: hover) {
-    &:hover {
+    &.sortable:hover {
       background-color: rgba(255, 255, 255, 0.025);
 
       &.order-by {

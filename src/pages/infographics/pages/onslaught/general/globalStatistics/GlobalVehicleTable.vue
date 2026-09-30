@@ -16,19 +16,17 @@
 
     <div v-else class="table-container nice-scrollbar-transparent mt-font"
       :class="{ 'with-skill-column': !groupBySkill }">
-      <SortableTable v-model:order-by="vehicleOrderBy" v-model:order-direction="orderDirection" :data
-        :cols="headers.length" :limit="displayLimit" :loading="state.status === 'loading'" :skeleton-rows="skeletonRows"
-        :is-orderable="index => index !== 0" :default-order-by="defaultOrderBy"
-        :column-labels="headers.map(header => header.title)">
-        <template #head-cell="{ col }">
+      <ComposableTable :rows="displayedRows" :columns :sort="sorting.sort.value" @sort="sorting.toggle"
+        heading-tooltip-class="comp7-tooltip" :row-key="row => row.key" :loading="state.status === 'loading'" :skeleton-rows="skeletonRows">
+        <template #header="{ column: { key: col } }">
           <div class="column-title">
             <Icon v-if="headers[col].icon" :icon="headers[col].icon!" />
             <span v-else class="skill-heading">Навык</span>
           </div>
         </template>
 
-        <template #data-cell="{ value, index, col }">
-          <th v-if="headers[col].key === 'vehicle'" class="vehicle">
+        <template #cell-0="{ row: { index } }">
+          <div class="vehicle">
             <VehicleImage :tag="state.data[index].tankTag" class="image" size="preview" :game />
             <VehicleLevel :level="state.data[index].tankLevel" />
             <VehicleType :type="isVehicleType(state.data[index].tankType) ? state.data[index].tankType : 'any'"
@@ -39,8 +37,11 @@
               v-tooltip.top-float="{ text: getComp7SkillName(state.data[index].skillTag), class: 'comp7-tooltip' }">
               <SkillIcon :skill="state.data[index].skillTag" :game :season class="skill-icon" />
             </div>
-          </th>
-          <td v-else-if="headers[col].key === 'skill'">
+          </div>
+        </template>
+
+        <template #cell="{ value, row: { index }, column: { key: col } }">
+          <template v-if="headers[col].key === 'skill'">
             <div v-if="state.data[index].skillTag" class="skill" v-skill-distribution-tooltip.instant="{
               skills: state.data[index].skills,
               game,
@@ -49,16 +50,16 @@
               <SkillIcon :skill="state.data[index].skillTag" :game :season class="skill-icon" />
               <span>{{ skillPercentFormatter(state.data[index].skillShare) }}</span>
             </div>
-          </td>
-          <td v-else-if="headers[col].key === 'players' || headers[col].key === 'battles'">
+          </template>
+          <template v-else-if="headers[col].key === 'players' || headers[col].key === 'battles'">
             <span>{{ logProcessor(Number(value)) }}</span>
             <span class="column-share">({{ formatColumnShare(Number(value), headers[col].key) }})</span>
-          </td>
-          <td v-else-if="headers[col].key === 'winrate'">{{ percentFormatter.format(Number(value)) }}</td>
-          <td v-else-if="headers[col].key === 'kills'">{{ decimalFormatter.format(Number(value)) }}</td>
-          <td v-else>{{ integerFormatter.format(Number(value)) }}</td>
+          </template>
+          <template v-else-if="headers[col].key === 'winrate'">{{ percentFormatter.format(Number(value)) }}</template>
+          <template v-else-if="headers[col].key === 'kills'">{{ decimalFormatter.format(Number(value)) }}</template>
+          <template v-else>{{ integerFormatter.format(Number(value)) }}</template>
         </template>
-      </SortableTable>
+      </ComposableTable>
     </div>
   </section>
 </template>
@@ -77,7 +78,8 @@ import { getTankName } from '@/shared/i18n/i18n'
 import { createFixedSpaceProcessor, createLogProcessor, createPercentProcessor } from '@/shared/utils/processors/processors'
 import OnslaughtCheckbox from '../../shared/Checkbox.vue'
 import Loader from '../../shared/Loader.vue'
-import SortableTable from '../../shared/SortableTable.vue'
+import ComposableTable from '@/shared/ui/composableTable/ComposableTable.vue'
+import { useTableSorting, statisticsColumns } from '../../shared/useTableSorting'
 import TableState from './TableState.vue'
 import type { GlobalVehicleStatistic, StatisticsLoadState } from './types'
 import { getComp7SkillName } from '@/shared/game/comp7/utils.ts'
@@ -162,6 +164,18 @@ function formatColumnShare(value: number, column: 'players' | 'battles') {
   return skillPercentFormatter(total > 0 ? value / total : 0)
 }
 
+const columns = computed(() => statisticsColumns(headers.value.map(header => header.title)).map(column => {
+  const key = headers.value[column.key].key
+  if (key === 'skill') return { ...column, minWidth: 105 }
+  if (key === 'battles' || key === 'players') return { ...column, minWidth: 110 }
+  return column
+}))
+const sorting = useTableSorting(data, {
+  rowKey: index => `${props.state.data[index].tankTag}:${groupBySkill.value ? props.state.data[index].skillTag : ''}`,
+  defaultOrderBy, orderBy: vehicleOrderBy, orderDirection,
+})
+const displayedRows = computed(() => sorting.rows.value.slice(0, displayLimit.value))
+
 </script>
 
 <style scoped lang="scss">
@@ -223,11 +237,10 @@ function formatColumnShare(value: number, column: 'players' | 'battles') {
 .table-container {
   overflow-x: auto;
   padding-bottom: 5px;
+
+  :deep(.composable-table-cell:first-child) { padding: 0; }
   font-size: 14px;
 
-  :deep(thead th:first-child) {
-    width: 24%;
-  }
 }
 
 .column-title {
@@ -264,6 +277,7 @@ function formatColumnShare(value: number, column: 'players' | 'battles') {
   }
 
   .image {
+      flex-shrink: 0;
     height: 50px;
     user-select: none;
     pointer-events: none;
@@ -278,6 +292,9 @@ function formatColumnShare(value: number, column: 'players' | 'battles') {
     font-size: 14px;
     line-height: 16px;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
   }
 
   .vehicle-skill {
@@ -307,11 +324,6 @@ function formatColumnShare(value: number, column: 'players' | 'battles') {
   }
 }
 
-td {
-  text-align: center;
-  white-space: nowrap;
-  padding: 1px 10px;
-}
 
 .column-share {
   margin-left: 4px;

@@ -12,11 +12,11 @@
       <hr class="separator">
 
       <div class="table-container nice-scrollbar-transparent mt-font">
-        <SortableTable :data="data" :cols="7" :limit="displayLimit" :is-orderable="i => i !== 0" :default-order-by="1"
-          :column-labels="columnLabels">
+        <ComposableTable :rows="displayedRows" :columns :sort="sorting.sort.value" @sort="sorting.toggle"
+          heading-tooltip-class="comp7-tooltip" :row-key="row => row.key">
 
-          <template #head-cell="{ col }">
-            <Icon :icon="([
+          <template #header="{ column: { key: col } }">
+            <Icon class="heading-icon" :icon="([
               'arena',
               'battles',
               'winrate',
@@ -27,17 +27,20 @@
             ] as const)[col]" />
           </template>
 
-          <template #data-cell="{ value, index, col }">
-            <th class="minimap" v-if="col === 0">
+          <template #cell-0="{ row: { index } }">
+            <div class="minimap">
               <TooltipedMinimap :tag="props.mapsStats[index].tag" class="image" :game />
               <p>{{ getArenaName(props.mapsStats[index].tag) }}</p>
-            </th>
-            <td v-else-if="col == 2">{{ roundProcessor(value as number * 100, 2) }}%</td>
-            <td v-else-if="col == 6">{{ roundProcessor(value as number, 2) }}</td>
-            <td v-else>{{ roundProcessor(value as number) }}</td>
+            </div>
           </template>
 
-        </SortableTable>
+          <template #cell="{ value, column: { key: col } }">
+            <template v-if="col == 2">{{ roundProcessor(value as number * 100, 2) }}%</template>
+            <template v-else-if="col == 6">{{ roundProcessor(value as number, 2) }}</template>
+            <template v-else>{{ roundProcessor(value as number) }}</template>
+          </template>
+
+        </ComposableTable>
       </div>
     </section>
   </Transition>
@@ -52,7 +55,8 @@ import { roundProcessor } from '@/shared/utils/processors/processors'
 import { computed, ref } from 'vue'
 import TooltipedMinimap from './TooltipedMinimap.vue'
 import { GameVendor } from '@/shared/game/wot'
-import SortableTable from '../../shared/SortableTable.vue'
+import ComposableTable from '@/shared/ui/composableTable/ComposableTable.vue'
+import { useTableSorting, statisticsColumns } from '../../shared/useTableSorting'
 
 
 const SHOW_MORE_THRESHOLD = 6
@@ -86,6 +90,10 @@ const data = computed(() => props.mapsStats.map(v => [
 ]))
 
 const displayLimit = computed(() => props.mapsStats.length > SHOW_MORE_THRESHOLD && !showMore.value ? SHOW_MORE_THRESHOLD - 2 : undefined)
+
+const columns = statisticsColumns(columnLabels)
+const sorting = useTableSorting(data, { rowKey: index => props.mapsStats[index].tag })
+const displayedRows = computed(() => sorting.rows.value.slice(0, displayLimit.value))
 
 </script>
 
@@ -131,20 +139,10 @@ hr {
   font-size: 14px;
   padding-bottom: 5px;
 
-  thead {
-    th {
+  :deep(.composable-table-cell:first-child) { padding: 0; }
 
-      svg {
-        width: 40px;
-        display: block;
-        margin: 0 auto;
-      }
+  .heading-icon { width: 40px; display: block; margin: 0 auto; }
 
-      &:first-child {
-        width: 25%;
-      }
-    }
-  }
 
   .minimap {
     display: flex;
@@ -153,6 +151,7 @@ hr {
     font-weight: normal;
 
     .image {
+      flex-shrink: 0;
       height: 40px;
       width: 40px;
       user-select: none;
@@ -172,14 +171,12 @@ hr {
       font-size: 15px;
       line-height: 16px;
       white-space: nowrap;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 
-  td {
-    text-align: center;
-    white-space: nowrap;
-    padding: 1px 10px;
-  }
 }
 
 

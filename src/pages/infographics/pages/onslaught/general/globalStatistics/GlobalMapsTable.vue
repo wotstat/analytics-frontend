@@ -12,31 +12,33 @@
     <TableState v-if="state.status === 'empty' || state.status === 'error'" :state />
 
     <div v-else class="table-container nice-scrollbar-transparent mt-font">
-      <SortableTable v-model:order-by="orderBy" v-model:order-direction="orderDirection" :data :cols="9"
-        :limit="displayLimit" :loading="state.status === 'loading'" :skeleton-rows="skeletonRows"
-        :is-orderable="index => index !== 0" :default-order-by="1" :column-labels="headers.map(header => header.title)">
-        <template #head-cell="{ col }">
+      <ComposableTable :rows="displayedRows" :columns :sort="sorting.sort.value" @sort="sorting.toggle"
+        heading-tooltip-class="comp7-tooltip" :row-key="row => row.key" :loading="state.status === 'loading'" :skeleton-rows="skeletonRows">
+        <template #header="{ column: { key: col } }">
           <div class="column-title">
             <Icon :icon="headers[col].icon" />
           </div>
         </template>
 
-        <template #data-cell="{ value, index, col }">
-          <th v-if="col === 0" class="minimap">
+        <template #cell-0="{ row: { index } }">
+          <div class="minimap">
             <TooltipedMinimap :tag="state.data[index].arenaTag" class="image" :game />
             <p>{{ getArenaName(state.data[index].arenaTag) }}</p>
-          </th>
-          <td v-else-if="col === 1 || col === 2">
+          </div>
+        </template>
+
+        <template #cell="{ value, column: { key: col } }">
+          <template v-if="col === 1 || col === 2">
             <span>{{ logProcessor(Number(value)) }}</span>
             <span class="column-share">({{ formatColumnShare(Number(value), col === 1 ? 'battles' : 'players')
               }})</span>
-          </td>
-          <td v-else-if="col === 3 || col === 4">{{ percentFormatter.format(Number(value)) }}</td>
-          <td v-else-if="col === 5">{{ formatDuration(Number(value)) }}</td>
-          <td v-else-if="col === 8">{{ decimalFormatter.format(Number(value)) }}</td>
-          <td v-else>{{ integerFormatter.format(Number(value)) }}</td>
+          </template>
+          <template v-else-if="col === 3 || col === 4">{{ percentFormatter.format(Number(value)) }}</template>
+          <template v-else-if="col === 5">{{ formatDuration(Number(value)) }}</template>
+          <template v-else-if="col === 8">{{ decimalFormatter.format(Number(value)) }}</template>
+          <template v-else>{{ integerFormatter.format(Number(value)) }}</template>
         </template>
-      </SortableTable>
+      </ComposableTable>
     </div>
   </section>
 </template>
@@ -51,7 +53,8 @@ import { createFixedSpaceProcessor, createLogProcessor, createPercentProcessor }
 import { sec2minsec } from '@/shared/utils/time'
 import TooltipedMinimap from '../../statistics/mapsTable/TooltipedMinimap.vue'
 import Loader from '../../shared/Loader.vue'
-import SortableTable from '../../shared/SortableTable.vue'
+import ComposableTable from '@/shared/ui/composableTable/ComposableTable.vue'
+import { useTableSorting, statisticsColumns } from '../../shared/useTableSorting'
 import TableState from './TableState.vue'
 import type { GlobalArenaStatistic, StatisticsLoadState } from './types'
 
@@ -121,6 +124,15 @@ function formatColumnShare(value: number, column: 'players' | 'battles') {
 function formatDuration(value: number) {
   return sec2minsec(Math.max(0, Math.floor(value)))
 }
+const columns = computed(() => statisticsColumns(headers.value.map(header => header.title)).map(column =>
+  column.key === 1 || column.key === 2 ? { ...column, minWidth: 110 } : column
+))
+const sorting = useTableSorting(data, {
+  rowKey: index => props.state.data[index].arenaTag,
+  defaultOrderBy: 1, orderBy, orderDirection,
+})
+const displayedRows = computed(() => sorting.rows.value.slice(0, displayLimit.value))
+
 </script>
 
 <style scoped lang="scss">
@@ -176,11 +188,10 @@ function formatDuration(value: number) {
 .table-container {
   overflow-x: auto;
   padding-bottom: 5px;
+
+  :deep(.composable-table-cell:first-child) { padding: 0; }
   font-size: 14px;
 
-  :deep(thead th:first-child) {
-    width: 24%;
-  }
 }
 
 .column-title {
@@ -202,6 +213,7 @@ function formatDuration(value: number) {
   font-weight: normal;
 
   .image {
+      flex-shrink: 0;
     width: 40px;
     height: 40px;
     margin: 5px 10px 5px 5px;
@@ -215,14 +227,12 @@ function formatDuration(value: number) {
     font-size: 15px;
     line-height: 16px;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
   }
 }
 
-td {
-  text-align: center;
-  white-space: nowrap;
-  padding: 1px 10px;
-}
 
 .column-share {
   margin-left: 4px;

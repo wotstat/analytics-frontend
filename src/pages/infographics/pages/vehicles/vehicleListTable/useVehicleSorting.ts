@@ -54,11 +54,6 @@ export function useVehicleSorting(grouping: Ref<VehicleGrouping>, slots: Ref<Slo
     return sortOrders.value.findIndex(order => order.key === key) + 1
   }
 
-  function state(key: SortKey) {
-    const position = sortPosition(key)
-    return { position, ascending: sortOrders.value[position - 1]?.ascending ?? false }
-  }
-
   function toggle(key: SortKey, multiple = false) {
     const index = sortPosition(key) - 1
 
@@ -92,5 +87,5 @@ export function useVehicleSorting(grouping: Ref<VehicleGrouping>, slots: Ref<Slo
       key === 'name' || key === 'tankLevel' || key === 'tankType' || visible.includes(key))
   })
 
-  return { compare, toggle, state }
+  return { compare, toggle, sortOrders }
 }

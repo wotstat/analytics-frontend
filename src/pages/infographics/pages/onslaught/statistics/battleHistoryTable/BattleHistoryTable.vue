@@ -12,12 +12,12 @@
       <hr class="separator">
 
       <div class="table-container nice-scrollbar-transparent mt-font">
-        <SortableTable :data="data" :cols="8" :limit="displayLimit" :is-orderable="i => i != 1 && i != 2"
-          :default-order-by="0" :column-labels="columnLabels">
+        <ComposableTable :rows="displayedRows" :columns :sort="sorting.sort.value" @sort="sorting.toggle"
+          heading-tooltip-class="comp7-tooltip" :row-key="row => row.key">
 
-          <template #head-cell="{ col }">
+          <template #header="{ column: { key: col } }">
             <p v-if="col == 0">№</p>
-            <Icon v-else :icon="([
+            <Icon v-else class="heading-icon" :icon="([
               'tank',
               'arena',
               'tank',
@@ -29,16 +29,16 @@
             ] as const)[col]" />
           </template>
 
-          <template #data-cell="{ value, index, col }">
-            <td v-if="col === 0">{{ (value as number) + 1 }}</td>
-            <td v-else-if="col === 1">
+          <template #cell="{ value, row: { index }, column: { key: col } }">
+            <template v-if="col === 0">{{ (value as number) + 1 }}</template>
+            <template v-else-if="col === 1">
               <div class="minimap">
                 <TooltipedMinimap :tag="props.history[index].arena" class="image" :game
                   :team="props.history[index].team" />
                 <p>{{ getArenaName(props.history[index].arena) }}</p>
               </div>
-            </td>
-            <td v-else-if="col === 2">
+            </template>
+            <template v-else-if="col === 2">
               <div class="vehicle">
                 <VehicleImage :tag="props.history[index].tankTag" class="image" :size="'preview'" :game />
                 <VehicleLevel :level="props.history[index].tankLevel" />
@@ -47,8 +47,8 @@
                   class="type" />
                 <p>{{ getTankName(props.history[index].tankTag, true) }}</p>
               </div>
-            </td>
-            <td v-else-if="col === 7">
+            </template>
+            <template v-else-if="col === 7">
               <div class="rating" v-if="value">
                 <span class='delta green' v-if="(value as number) > 0">+{{ value }}</span>
                 <span class='delta red' v-else-if="(value as number) < 0">{{ value }}</span>
@@ -56,11 +56,11 @@
               <div class="rating-qual" :class="props.history[index].result == 'win' ? 'green' : 'red'" v-else>
                 <Icon :icon="'battles'" />
               </div>
-            </td>
-            <td v-else>{{ roundProcessor(value as number) }}</td>
+            </template>
+            <template v-else>{{ roundProcessor(value as number) }}</template>
           </template>
 
-        </SortableTable>
+        </ComposableTable>
       </div>
 
       <div class="footer">
@@ -87,7 +87,8 @@ import { getArenaName, getTankName } from '@/shared/i18n/i18n'
 import { roundProcessor } from '@/shared/utils/processors/processors'
 import { computed, ref, watch, useTemplateRef } from 'vue'
 import { GameVendor } from '@/shared/game/wot'
-import SortableTable from '../../shared/SortableTable.vue'
+import ComposableTable from '@/shared/ui/composableTable/ComposableTable.vue'
+import { useTableSorting, statisticsColumns } from '../../shared/useTableSorting'
 import TooltipedMinimap from '../mapsTable/TooltipedMinimap.vue'
 import TipShiftKeyForShowMore from '../tips/TipShiftKeyForShowMore.vue'
 
@@ -152,6 +153,15 @@ function increaseLimit(e: PointerEvent) {
   limit.value += e.shiftKey ? 100 : 30
 }
 
+const columns = statisticsColumns(columnLabels).map(column => ({
+  ...column,
+  sortable: column.key !== 1 && column.key !== 2,
+  width: column.key === 0 ? 50 : column.key === 1 || column.key === 2 ? 230 : '1fr',
+  minWidth: 86,
+}))
+const sorting = useTableSorting(data, { rowKey: index => index, defaultOrderBy: 0 })
+const displayedRows = computed(() => sorting.rows.value.slice(0, displayLimit.value))
+
 </script>
 
 
@@ -209,39 +219,7 @@ hr {
   font-size: 14px;
   padding-bottom: 5px;
 
-  :deep(table) {
-
-    th {
-      svg {
-        width: 40px;
-        display: block;
-        margin: 0 auto;
-      }
-    }
-
-    td,
-    th {
-      width: 20%;
-    }
-
-    td:first-child,
-    th:first-child {
-      min-width: 50px;
-      width: 50px;
-    }
-
-    td:nth-child(2),
-    th:nth-child(2) {
-      min-width: 190px;
-      width: 190px;
-    }
-
-    td:nth-child(3),
-    th:nth-child(3) {
-      min-width: 190px;
-      width: 190px;
-    }
-  }
+  .heading-icon { width: 40px; display: block; margin: 0 auto; }
 
 
   .minimap {
@@ -251,6 +229,7 @@ hr {
     font-weight: normal;
 
     .image {
+      flex-shrink: 0;
       height: 40px;
       width: 40px;
       user-select: none;
@@ -275,6 +254,7 @@ hr {
     font-weight: normal;
 
     .image {
+      flex-shrink: 0;
       height: 50px;
       user-select: none;
       pointer-events: none;
@@ -322,9 +302,6 @@ hr {
     }
   }
 
-  td {
-    text-align: center;
-  }
 }
 
 .fade-enter-active,

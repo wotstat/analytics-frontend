@@ -20,6 +20,13 @@ type Entry = {
 
 const entries = [
   {
+    path: 'composable-table',
+    title: 'ComposableTable',
+    description: 'Колонки, сортировка, общие и именные слоты, раскрытие строк и состояния на независимых демоданных.',
+    group: 'uiKit',
+    component: () => import('./pages/composableTable/Index.vue'),
+  },
+  {
     path: 'page-background',
     title: 'BackgroundRoot',
     description: 'Переходы между фонами и отдельная анимация изображения танка.',
