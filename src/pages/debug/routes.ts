@@ -62,6 +62,13 @@ const entries = [
     component: () => import('./pages/tooltip/Index.vue'),
   },
   {
+    path: 'series-tooltip',
+    title: 'Tooltip рядов и палитра',
+    description: 'Общие цвета, форматирование, пропуски, подсветка и раскладка tooltip в одну, две или три колонки.',
+    group: 'uiKit',
+    component: () => import('./pages/seriesTooltip/Index.vue'),
+  },
+  {
     path: 'tip-bubble',
     title: 'TipBubble',
     description: 'Обучающие подсказки: очередь внутри группы, autoExtend, запоминание показов.',

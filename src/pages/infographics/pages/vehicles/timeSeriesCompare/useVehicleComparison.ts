@@ -3,7 +3,7 @@ import type { VehicleFilters } from '../filters/types'
 import type { VehicleStatistics } from '../shared/types'
 import type { VehicleSelection } from '../shared/vehicleGrouping'
 import { vehicleName } from '../shared/vehicleName'
-import { historySeriesColor, historySeriesColors } from '../timeSeries/seriesColors'
+import { seriesColor, seriesColors } from '@/shared/ui/chart/seriesColors'
 import { comparisonFiltersKey, snapshotComparisonFilters, type ComparisonCandidate, type ComparisonSource } from './types'
 
 export function useVehicleComparison(filters: Ref<VehicleFilters>) {
@@ -39,8 +39,8 @@ export function useVehicleComparison(filters: Ref<VehicleFilters>) {
 
       if (!sampleNumbers.has(filtersKey)) sampleNumbers.set(filtersKey, sampleNumbers.size + 1)
 
-      const color = historySeriesColors.find(color => !colors.has(color))
-        ?? historySeriesColor(sources.value.length + additions.length)
+      const color = seriesColors.find(color => !colors.has(color))
+        ?? seriesColor(sources.value.length + additions.length)
       colors.add(color)
 
       additions.push({
