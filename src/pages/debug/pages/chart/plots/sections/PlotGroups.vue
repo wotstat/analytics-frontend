@@ -110,7 +110,7 @@ import { AutoLineArea } from '@/shared/uiKit/chart/universalChart/plot/line/auto
 import { AutoMarkers } from '@/shared/uiKit/chart/universalChart/plot/markers/autoMarkers/AutoMarkers'
 import { UniversalChart, type PlotRenderer } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
-import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
+import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager.ts'
 import ChartStage from '../shared/ChartStage.vue'
 import { afterRender } from '../shared/afterRender'
 

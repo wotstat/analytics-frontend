@@ -1,4 +1,4 @@
-import { seriesColor } from '@/shared/ui/chart/seriesColors'
+import { seriesColor } from '@/shared/ui/chart/legend/seriesColors'
 import type { VehicleHistorySplit } from './historySplit'
 
 const resultSeriesColors: Readonly<Record<string, string>> = {

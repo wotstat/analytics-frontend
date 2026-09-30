@@ -9,7 +9,7 @@
     </template>
 
     <template #toolbar>
-      <HistoryToolbarChoices v-model:step="step" v-model:average-window="averageWindow" />
+      <HistoryToolbarOptions v-model:step="step" v-model:average-window="averageWindow" />
     </template>
 
     <template #actions>
@@ -49,8 +49,8 @@
 import { computed, markRaw, onBeforeUnmount, ref, watch } from 'vue'
 import { useNow } from '@vueuse/core'
 import { isErrorStatus, loading, queryComputed, success } from '@/db'
-import TimeSeriesPanel from '@/shared/ui/chart/TimeSeriesPanel.vue'
-import { useLegend } from '@/shared/ui/chart/useLegend'
+import TimeSeriesPanel from '@/shared/ui/chart/timeSeries/panel/TimeSeriesPanel.vue'
+import { useLegend } from '@/shared/ui/chart/legend/useLegend'
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import { closeContextMenu, isContextMenuOpen } from '@/shared/uiKit/contextMenu/createContextMenu'
@@ -63,7 +63,7 @@ import { vehicleHistoryQuery } from '../shared/vehicleStatisticsQuery'
 import { VehicleHistoryChart } from './VehicleHistoryChart'
 import type { VehicleHistoryPeriod, VehicleHistorySeries } from '../shared/types'
 import type { HistoryAverageWindow, HistoryStep } from './historyStep'
-import HistoryToolbarChoices from './HistoryToolbarChoices.vue'
+import HistoryToolbarOptions from './HistoryToolbarOptions.vue'
 import HistoryAnnotationSettings from './HistoryAnnotationSettings.vue'
 import LineChartIcon from '../vehicleListTable/assets/line-chart.svg'
 import { useHistoryAnnotationSettings } from './useHistoryAnnotationSettings'

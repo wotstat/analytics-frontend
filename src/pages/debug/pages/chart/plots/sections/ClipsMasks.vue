@@ -100,7 +100,7 @@ import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine
 import { RectangleArea } from '@/shared/uiKit/chart/universalChart/plot/area/RectangleArea'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
-import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
+import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager.ts'
 import ChartStage from '../shared/ChartStage.vue'
 import { useChartInstance } from '../shared/useChartInstance'
 

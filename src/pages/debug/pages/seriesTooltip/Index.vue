@@ -1,9 +1,9 @@
 <template>
   <DebugPage title="SeriesTooltip и палитра" description="Общие ряды tooltip и цвета без данных из БД."
-    source="src/shared/ui/chart/SeriesTooltip.vue">
+    source="src/shared/ui/chart/tooltip/SeriesTooltip.vue">
     <DebugSection title="Палитра рядов" id="series-colors"
       description="Первые десять цветов фиксированы, следующие генерируются тем же алгоритмом, что в сравнении техники."
-      source="src/shared/ui/chart/seriesColors.ts">
+      source="src/shared/ui/chart/legend/seriesColors.ts">
       <div class="palette">
         <div v-for="color, index in colors" :key="index" class="swatch">
           <span class="color" :style="{ backgroundColor: color }"></span>
@@ -14,7 +14,7 @@
 
     <DebugSection title="Ряды и раскладка" id="series-tooltip"
       description="1–10 рядов — одна колонка, 11–20 — две, от 21 — три. Пропуски не показывают значение; ноль сохраняется."
-      source="src/shared/ui/chart/SeriesTooltip.vue">
+      source="src/shared/ui/chart/tooltip/SeriesTooltip.vue">
       <div class="debug-row">
         <label class="debug-control"><span class="debug-label">рядов</span>
           <select v-model.number="count" class="debug-select">
@@ -47,7 +47,7 @@
 
     <DebugSection title="Границы экрана" id="series-tooltip-edges"
       description="Та же карточка внутри обычного поповера: проверь все четыре угла, прокрутку и узкий экран."
-      source="src/shared/ui/chart/SeriesTooltip.vue">
+      source="src/shared/ui/chart/tooltip/SeriesTooltip.vue">
       <div class="edge-stage">
         <button v-for="corner in corners" :key="corner" class="debug-button edge-button" :class="corner"
           @click="openAt($event)">Tooltip</button>
@@ -64,9 +64,9 @@
 import { computed, ref, shallowRef } from 'vue'
 import DebugPage from '@/pages/debug/shared/DebugPage.vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import SeriesTooltip from '@/shared/ui/chart/SeriesTooltip.vue'
-import { seriesColor } from '@/shared/ui/chart/seriesColors'
-import type { SeriesTooltipItem } from '@/shared/ui/chart/seriesTooltip'
+import SeriesTooltip from '@/shared/ui/chart/tooltip/SeriesTooltip.vue'
+import { seriesColor } from '@/shared/ui/chart/legend/seriesColors'
+import type { SeriesTooltipItem } from '@/shared/ui/chart/tooltip/seriesTooltip'
 import PopoverStyled from '@/shared/uiKit/popover/PopoverStyled.vue'
 
 const colors = Array.from({ length: 30 }, (_, index) => seriesColor(index))

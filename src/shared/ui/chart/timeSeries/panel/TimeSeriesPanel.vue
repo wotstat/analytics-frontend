@@ -1,12 +1,17 @@
 <template>
   <section class="time-series-panel" :class="{ compact: density === 'compact', 'with-annotations': annotationLabels }">
-    <HeaderTooltip v-if="density === 'compact' || tooltip === 'header'" :ctx="tooltip === 'header' ? chart.tooltipCtx.value : null"
-      class="panel-header">
-      <template #left><slot name="header" /></template>
+
+    <HeaderTooltip v-if="density === 'compact' || tooltip === 'header'"
+      :ctx="tooltip === 'header' ? chart.tooltipCtx.value : null" class="panel-header">
+      <template #left>
+        <slot name="header" />
+      </template>
       <template #right>
         <ChartToolbar :density>
           <slot name="toolbar" />
-          <ToolbarGroup v-if="$slots.actions"><slot name="actions" /></ToolbarGroup>
+          <ToolbarGroup v-if="$slots.actions">
+            <slot name="actions" />
+          </ToolbarGroup>
         </ChartToolbar>
       </template>
       <template #tooltip="{ ctx }">
@@ -19,22 +24,28 @@
         </slot>
       </template>
     </HeaderTooltip>
+
     <ChartToolbar v-else :density class="panel-header">
-      <template v-if="$slots.header" #left><slot name="header" /></template>
+      <template v-if="$slots.header" #left>
+        <slot name="header" />
+      </template>
       <slot name="toolbar" />
-      <ToolbarGroup v-if="$slots.actions"><slot name="actions" /></ToolbarGroup>
+      <ToolbarGroup v-if="$slots.actions">
+        <slot name="actions" />
+      </ToolbarGroup>
     </ChartToolbar>
 
     <div class="panel-content">
       <div class="chart-body">
         <UniversalChartComponent v-show="hasValues" :chart />
-        <div v-if="$slots.state" class="chart-state"><slot name="state" /></div>
+        <div v-if="$slots.state" class="chart-state">
+          <slot name="state" />
+        </div>
       </div>
       <div v-if="hasLegend || $slots.details || $slots['legend-actions']" class="panel-details">
         <div v-if="hasLegend" class="legend-row">
           <Legend :legend toggleable highlightable :color-editable :removable
-            @color-change="(item, color) => emit('colorChange', item, color)"
-            @remove="item => emit('remove', item)" />
+            @color-change="(item, color) => emit('colorChange', item, color)" @remove="item => emit('remove', item)" />
           <slot name="legend-actions" />
         </div>
         <slot name="details" />
@@ -61,15 +72,15 @@ import { computed, watch } from 'vue'
 import type { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
 import type { ClickInteractionEvent } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/BaseInteractionController'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
-import type { TimeSeriesChart, TimeSeriesHit } from './TimeSeriesChart'
-import type { TimeSeriesPoint } from './timeSeries'
-import type { LegendItem, LegendModel } from './useLegend'
-import ChartToolbar from './ChartToolbar.vue'
-import ToolbarGroup from './ToolbarGroup.vue'
-import HeaderTooltip from './HeaderTooltip.vue'
-import FloatingTooltip from './FloatingTooltip.vue'
+import type { TimeSeriesChart, TimeSeriesHit } from '../chart/TimeSeriesChart'
+import type { TimeSeriesPoint } from '../chart/timeSeries'
+import type { LegendItem, LegendModel } from '../../legend/useLegend'
+import ChartToolbar from '../toolbar/layout/ChartToolbar.vue'
+import ToolbarGroup from '../toolbar/layout/ToolbarGroup.vue'
+import HeaderTooltip from '../../tooltip/HeaderTooltip.vue'
+import FloatingTooltip from '../../tooltip/FloatingTooltip.vue'
 import TimeSeriesTooltip from './TimeSeriesTooltip.vue'
-import Legend from './Legend.vue'
+import Legend from '../../legend/Legend.vue'
 
 const props = withDefaults(defineProps<{
   chart: TimeSeriesChart<TPoint>
@@ -106,8 +117,8 @@ watch(() => props.chart, (chart, _, onCleanup) => {
 </script>
 
 <style scoped lang="scss">
-@use './timeSeriesChart.scss' as *;
-@use './timeSeriesAnnotations.scss' as *;
+@use '../chart/timeSeriesChart.scss' as *;
+@use '../annotations/timeSeriesAnnotations.scss' as *;
 
 .time-series-panel {
   --time-series-legend-height: 21px;

@@ -3,7 +3,7 @@ import type { VehicleFilters } from '../filters/types'
 import type { VehicleStatistics } from '../shared/types'
 import type { VehicleSelection } from '../shared/vehicleGrouping'
 import { vehicleName } from '../shared/vehicleName'
-import { seriesColor, seriesColors } from '@/shared/ui/chart/seriesColors'
+import { seriesColor, seriesColors } from '@/shared/ui/chart/legend/seriesColors'
 import { comparisonFiltersKey, snapshotComparisonFilters, type ComparisonCandidate, type ComparisonSource } from './types'
 
 export function useVehicleComparison(filters: Ref<VehicleFilters>) {

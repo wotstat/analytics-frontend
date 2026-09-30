@@ -11,7 +11,7 @@
       </template>
 
       <template #toolbar>
-        <HistoryToolbarChoices v-model:step="step" v-model:average-window="averageWindow" />
+        <HistoryToolbarOptions v-model:step="step" v-model:average-window="averageWindow" />
       </template>
 
       <template #actions>
@@ -55,17 +55,17 @@ import { useNow } from '@vueuse/core'
 import { isErrorStatus, loading, success } from '@/db'
 import ResetIcon from '@/assets/icons/reset.svg'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
-import TimeSeriesPanel from '@/shared/ui/chart/TimeSeriesPanel.vue'
+import TimeSeriesPanel from '@/shared/ui/chart/timeSeries/panel/TimeSeriesPanel.vue'
 import type { ClickInteractionEvent } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/BaseInteractionController'
 import { formatSlotValue } from '../shared/formatMetricValue'
-import { useLegend } from '@/shared/ui/chart/useLegend'
+import { useLegend } from '@/shared/ui/chart/legend/useLegend'
 import VehicleMetricSelector from '../VehicleMetricSelector.vue'
 import type { VehicleFilters } from '../filters/types'
 import type { Slot } from '../shared/vehicleMetrics'
 import { VehicleHistoryChart } from '../timeSeries/VehicleHistoryChart'
 import type { VehicleThresholds } from '../shared/types'
 import type { HistoryAverageWindow, HistoryStep } from '../timeSeries/historyStep'
-import HistoryToolbarChoices from '../timeSeries/HistoryToolbarChoices.vue'
+import HistoryToolbarOptions from '../timeSeries/HistoryToolbarOptions.vue'
 import HistoryAnnotationSettings from '../timeSeries/HistoryAnnotationSettings.vue'
 import { useHistoryAnnotationSettings } from '../timeSeries/useHistoryAnnotationSettings'
 import { useGameVersionAnnotations } from '../timeSeries/gameVersionAnnotations'

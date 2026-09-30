@@ -115,7 +115,7 @@ import { ChartGradient } from '@/shared/uiKit/chart/universalChart/defs/ChartGra
 import { ChartRawPattern } from '@/shared/uiKit/chart/universalChart/defs/ChartRawPattern'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
-import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
+import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager.ts'
 import ChartStage from '../shared/ChartStage.vue'
 import { useChartInstance } from '../shared/useChartInstance'
 import { afterRender } from '../shared/afterRender'

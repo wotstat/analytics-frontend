@@ -58,13 +58,13 @@
 попытка отменяет предыдущую загрузку; удаление источника и уход со страницы также отменяют её.
 Ожидающий отменённый запрос удаляется из очереди, а выполняющийся освобождает место после завершения отмены.
 
-Оба графика используют общий `shared/ui/chart/TimeSeriesPanel.vue`, который собирает toolbar,
-график, легенду, tooltip и области сообщений. Локальный `timeSeries/HistoryToolbarChoices.vue`
+Оба графика используют общий `shared/ui/chart/timeSeries/panel/TimeSeriesPanel.vue`, который собирает toolbar,
+график, легенду, tooltip и области сообщений. Локальный `timeSeries/HistoryToolbarOptions.vue`
 передаёт в слот `toolbar` две группы выбора с моделями `step` и `averageWindow`.
 Шаг имеет обязательный выбор; среднее использует `clearable`: повторное нажатие выключает его.
 Наборы значений и подписи задаются внутри vehicles, типы `HistoryStep` и `HistoryAverageWindow`
 находятся в `timeSeries/historyStep.ts`. `HistoryStep` использует общий `TimeSeriesStep`;
-UTC-хелперы переэкспортируются из `shared/ui/chart/timeSeriesTime.ts`, набор окон 3/5/7 остаётся локальным.
+UTC-хелперы переэкспортируются из `shared/ui/chart/timeSeries/calendar/timeSeriesTime.ts`, набор окон 3/5/7 остаётся локальным.
 Слот `header` содержит метрику, в сравнении — также заголовок. В истории строки
 `density="compact"` и `tooltip="header"` сохраняют механизм пересечения tooltip с метрикой
 и контролами в HeaderTooltip. Слот `actions` добавляет настройки аннотаций и кнопку разбиения.
@@ -86,7 +86,7 @@ highlightSync графика; панель отображает ту же мод
 Поповеры получают нативный элемент через `element` ссылки на `ToolbarButton`.
 Встроенная кнопка меню агрегаций остаётся частью `SelectionTile`, чтобы сохранять отдельную
 кликабельную область внутри плитки.
-`HistoryAnnotationSettings.vue` — игровой адаптер общего `shared/ui/chart/ChartAnnotationSettings.vue`:
+`HistoryAnnotationSettings.vue` — игровой адаптер общего `shared/ui/chart/timeSeries/toolbar/annotationSettings/ChartAnnotationSettings.vue`:
 он передаёт группы версий и событий с выбранным состоянием и смысловыми CSS-классами, фильтрует события по
 регионам и связывает событие `toggle(groupId, optionId)` с `useHistoryAnnotationSettings`.
 Общий renderer отвечает за кнопку, панель и плитки; игровых каталогов и настроек страницы он не знает.
@@ -95,7 +95,7 @@ highlightSync графика; панель отображает ту же мод
 а в сравнении — из текущего выбора регионов над таблицей, независимо от регионов добавленных источников.
 `historyChartAnnotations.ts` подготавливает общие аннотации: разрешает совпадения версий,
 задаёт цвета/приоритеты событий и добавляет интервалы `serverOutages` без подписи.
-Подключаемый `shared/ui/chart/TimeSeriesAnnotationLayer.ts` задаёт подписи через `AutoLabels` в одной полосе над графиком,
+Подключаемый `shared/ui/chart/timeSeries/annotations/TimeSeriesAnnotationLayer.ts` задаёт подписи через `AutoLabels` в одной полосе над графиком,
 а `TicksByLabels` проводит тики через всю высоту графика. Подписи у края плавно
 сдвигаются и остаются видимыми, пока часть текста попадает в область графика;
 верхний слот обрезает оставшуюся за краем часть. Версии и патчи
@@ -139,9 +139,9 @@ highlightSync графика; панель отображает ту же мод
 `VehicleHistoryChart.ts` — игровой адаптер общего `TimeSeriesChart`: готовит точки выбранной
 метрики, пропуски периодов, кеш, форматирование Y и диапазон от 01.01.2024 или более ранних
 данных до текущего UTC-дня. Среднее применяется до передачи точек графику отдельной функцией
-`shared/ui/chart/transforms/movingAverage.ts`; кеш исходных и сглаженных точек хранится в адаптере.
+`shared/ui/chart/timeSeries/transforms/movingAverage.ts`; кеш исходных и сглаженных точек хранится в адаптере.
 Отрисовка, механизм зума, подсветка и клики живут в общем графике. Адаптер подключает
-`shared/ui/chart/TimeSeriesViewport.ts`: прежний минимум 3/21/93 дня и сброс окна при смене
+`shared/ui/chart/timeSeries/chart/TimeSeriesViewport.ts`: прежний минимум 3/21/93 дня и сброс окна при смене
 шага выбираются снаружи. Аннотации подключаются отдельным `TimeSeriesAnnotationLayer`;
 `timeSeriesChart.scss` и `timeSeriesAnnotations.scss` содержат отдельные миксины оформления.
 Tooltip сравнения сопоставляет hits с источниками по `interactionTag`. Проверка статуса загрузки остаётся
@@ -412,7 +412,7 @@ Alt/Option + клик выключает все остальные источн�
 шаг и сглаживание; удаление источника освобождает его кеш.
 `setHistory()` сохраняет API одиночных графиков. Легенда позволяет скрыть линию, изменить цвет
 и удалить источник. Начальные цвета сравнения и разбиения берутся из общей палитры в стиле Apple в
-`shared/ui/chart/seriesColors.ts`; локальный `timeSeries/seriesColors.ts` задаёт семантические цвета результатов боя.
+`shared/ui/chart/legend/seriesColors.ts`; локальный `timeSeries/seriesColors.ts` задаёт семантические цвета результатов боя.
 
 Основные фильтры — регионы и режимы из `shared/game/battleModes.ts` с дополнительными сочетаниями из БД.
 Параметры собраны в одну строку с переносом на узких экранах. Регионы выбираются открытым рядом кнопок:

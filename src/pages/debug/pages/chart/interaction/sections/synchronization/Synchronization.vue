@@ -116,7 +116,7 @@
 <script setup lang="ts">
 import { markRaw, ref, watchEffect } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import { LegendItem, useLegend } from '@/shared/ui/chart/useLegend'
+import { LegendItem, useLegend } from '@/shared/ui/chart/legend/useLegend'
 import { HoverSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/HoverSynchronizer'
 import { HighlightSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/HighlightSynchronizer'
 import { SyncChart, type SyncConfig } from '../../shared/SyncChart'

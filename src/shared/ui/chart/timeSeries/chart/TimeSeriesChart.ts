@@ -19,7 +19,7 @@ import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksBy
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
 import { EventEmitter } from '@/shared/uiKit/chart/universalChart/utils/EventEmitter'
-import { timeLabels } from './timeLabels'
+import { timeLabels } from '../utils/timeLabels'
 import type { TimeSeries, TimeSeriesPoint, TimeSeriesStep, TimeSeriesValueFormat, TimeSeriesZoomLimits } from './timeSeries'
 import { ChartMask } from '@/shared/uiKit/chart/universalChart/defs/ChartMask'
 

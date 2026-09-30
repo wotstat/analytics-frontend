@@ -9,10 +9,10 @@
 <script setup lang="ts" generic="TPoint extends TimeSeriesPoint, TItem extends LegendItem">
 import { computed } from 'vue'
 import type { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
-import type { TimeSeriesHit } from './TimeSeriesChart'
-import type { TimeSeriesPoint } from './timeSeries'
-import type { LegendItem } from './useLegend'
-import SeriesTooltip from './SeriesTooltip.vue'
+import type { TimeSeriesHit } from '../chart/TimeSeriesChart'
+import type { TimeSeriesPoint } from '../chart/timeSeries'
+import type { LegendItem } from '../../legend/useLegend'
+import SeriesTooltip from '../../tooltip/SeriesTooltip.vue'
 
 const props = defineProps<{
   ctx: TooltipCtx<TimeSeriesHit<TPoint>>

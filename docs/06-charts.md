@@ -6,8 +6,35 @@
 
 - `src/pages/infographics/shared/widgets/charts/MiniBarNew.vue` — мини-графики карточек с bloom, подписями и тултипами.
 - `pages/services/bob25/components/TimeSeriesChart.*` и `BattlesPerWinrateChart.*` — четыре таймсерии команд и распределения по винрейту; сохраняют фильтры, сглаживание, легенду и bloom страницы ББ-2025.
-- `src/shared/ui/chart/VueChartRenderManager.ts` — менеджер перерисовки.
+- `src/shared/ui/chart/rendering/VueChartRenderManager.ts` — менеджер перерисовки.
 - `pages/infographics/pages/onslaught/general/rankDistribution/` — специализированный flex-график распределения игроков по рангам. Общая с дневным графиком цветовая схема рангов вынесена в `onslaught/shared/rankColors.scss`.
+
+## Структура проектных компонентов (`src/shared/ui/chart/`)
+
+Файлы сгруппированы по назначению; компоненты, их типы и стили лежат рядом:
+
+```text
+chart/
+├─ rendering/       — VueChartRenderManager
+├─ legend/          — Legend, LegendColorPicker, useLegend и палитра seriesColors
+├─ tooltip/         — HeaderTooltip, FloatingTooltip, SeriesTooltip и типы рядов
+└─ timeSeries/
+   ├─ chart/        — TimeSeriesChart, TimeSeriesViewport, контракт данных и стили графика
+   ├─ calendar/     — UTC-хелперы и календарные подписи оси
+   ├─ panel/        — TimeSeriesPanel и его TimeSeriesTooltip
+   ├─ toolbar/
+   │  ├─ layout/             — ChartToolbar и ToolbarGroup: раскладка и разделители
+   │  ├─ options/            — ToolbarOptions и типы вариантов выбора
+   │  └─ annotationSettings/ — ChartAnnotationSettings и типы настроек
+   ├─ annotations/  — подключаемый слой аннотаций, его типы, подписи и стили
+   └─ transforms/   — необязательные преобразования точек (movingAverage)
+```
+
+Потребители импортируют нужные модули напрямую из этих каталогов. Общие легенда и tooltip
+используются разными графиками. Toolbar обслуживает `TimeSeriesPanel` и адаптеры истории
+техники, поэтому находится внутри `timeSeries/`; его отдельный стенд — `/debug/chart-toolbar`.
+Специфичный `TimeSeriesTooltip` находится в `timeSeries/panel/` вместе с панелью. График,
+календарь, аннотации и преобразования точек можно использовать без готовой Vue-панели.
 
 ## UniversalChart (`src/shared/uiKit/chart/universalChart/`)
 
@@ -423,17 +450,17 @@ stop()
 connection.dispose()
 ```
 
-`subscribe()` сразу отдаёт глобальный state и видит в том числе публикацию своей connection. `consume()` предназначен для `Highlight` и подавляет только собственную публикацию, чтобы она не вернулась как внешний highlight. Vue-адаптер этого API — `shared/ui/chart/useLegend.ts`: `Legend A → HighlightSynchronizer → Highlight A/B + Legend B`. `ChartTooltip.exposeHighlights` в этой связке не участвует; snapshot нужен только для отображения состояния Highlight внутри уже открытого тултипа.
+`subscribe()` сразу отдаёт глобальный state и видит в том числе публикацию своей connection. `consume()` предназначен для `Highlight` и подавляет только собственную публикацию, чтобы она не вернулась как внешний highlight. Vue-адаптер этого API — `shared/ui/chart/legend/useLegend.ts`: `Legend A → HighlightSynchronizer → Highlight A/B + Legend B`. `ChartTooltip.exposeHighlights` в этой связке не участвует; snapshot нужен только для отображения состояния Highlight внутри уже открытого тултипа.
 
 Референс hover/bounds-проводки — `detail/Charts.ts` + `detail/Detail.vue` (лидерборд Натиска). Семантический Highlight показан парой графиков в `/debug/chart/interaction#synchronization`: обе линии имеют tag `sync-series`, но разные данные и Y-масштабы.
 
-### Общий временной график (`src/shared/ui/chart/`)
+### Общий временной график (`src/shared/ui/chart/timeSeries/`)
 
 `TimeSeriesChart<T extends TimeSeriesPoint>` — чистая реализация поверх `UniversalChart`, без
 запросов, метрик и игровых каталогов. Точки `{ x, y }` используют секунды Unix-времени;
 дополнительные поля `T` сохраняются в `TimeSeriesHit<T>`. График получает окончательные
 значения: преобразования рядов выполняются до `setSeries`.
-Типы контракта находятся в `timeSeries.ts`:
+Типы контракта находятся в `chart/timeSeries.ts`:
 
 - `setSeries(series)`: ряды `{ tag, points, enabled? }`,
   готовые отсортированные точки и явные `null` для разрывов. Пропущенные периоды и неконечные
@@ -445,7 +472,7 @@ connection.dispose()
   По умолчанию используется `'auto'`: движок выбирает дневные, недельные, месячные или годовые
   подписи по видимому диапазону и доступному месту. Вызов без аргумента возвращает `'auto'`.
   Адаптер техники явно выбирает прежний режим по шагу истории; новый шаг данных готовит
-  потребитель, график не агрегирует точки. `timeLabels.ts` сохраняет недели с понедельника,
+  потребитель, график не агрегирует точки. `calendar/timeLabels.ts` сохраняет недели с понедельника,
   ISO-номера недель, календарные месяцы/годы и адаптивные этажи подписей.
 - `setZoomLimits({ minX?, maxX?, minDeltaX?, maxDeltaX?, elastic? })` передаёт числовые
   ограничения в `ZoomChartComponent`; без аргумента снимает их. Метод не задаёт видимое окно.
@@ -472,7 +499,7 @@ connection.dispose()
 импортирует этот модуль и не содержит опций или логики среднего; обычному графику достаточно
 готовых точек. Стенд и адаптер техники импортируют функцию явно.
 
-`TimeSeriesViewport` — необязательная политика окна, которую потребитель создаёт с графиком.
+`TimeSeriesViewport` из `chart/TimeSeriesViewport.ts` — необязательная политика окна, которую потребитель создаёт с графиком.
 `update({ range: { minX, maxX }, minWindow?, resetKey? })` задаёт границы зума, максимальный
 размер окна и упругие ограничения. Минимум передаётся числом в секундах и ограничивается
 длиной диапазона. Новые границы или новый `resetKey` показывают весь диапазон;
@@ -496,7 +523,7 @@ connection.dispose()
 до 0.1. Слой аннотаций сетку не оформляет. SVG и классы корня слой не меняет напрямую.
 `dispose()` снимает рендереры и клипы, освобождает верхний слот без пересоздания графика.
 На график подключается один слой аннотаций. Его `setAnnotations(annotations)` принимает
-общие `TimeSeriesAnnotation` из `timeSeriesAnnotations.ts`:
+общие `TimeSeriesAnnotation` из `annotations/timeSeriesAnnotations.ts`:
 `id`, `timestamp`, `endTimestamp?`, `label?`, `classes?`, `priority?` и `areaPadding?`.
 Без конца это метка; с концом — фоновая зона, подпись в её середине и тики на границах.
 Без `label` интервал не создаёт подписи, тиков и верхнего слота. Больший `priority` важнее,
@@ -505,13 +532,13 @@ connection.dispose()
 `AutoLabels.priorities`. В группе при совпадении центров остаётся последняя подпись.
 Тики всех подписанных аннотаций сохраняются независимо от отбора текста. `areaPadding`
 задаёт дополнительный отступ области в пикселях (по умолчанию 0).
-`timeSeriesAnnotationLabels(annotations)` в `timeSeriesAnnotations.ts` готовит опции `AutoLabels`
+`timeSeriesAnnotationLabels(annotations)` в `annotations/timeSeriesAnnotations.ts` готовит опции `AutoLabels`
 сразу из аннотаций; группировка по приоритету и классам остаётся внутренней функцией.
-`TimeSeriesAnnotationLayer.ts` использует `TicksByLabels` и `RectangleArea`.
-`timeSeriesChart.scss` экспортирует миксин `time-series-chart`, а отдельный
-`timeSeriesAnnotations.scss` — необязательный миксин `time-series-annotations`.
+`annotations/TimeSeriesAnnotationLayer.ts` использует `TicksByLabels` и `RectangleArea`.
+`chart/timeSeriesChart.scss` экспортирует миксин `time-series-chart`, а отдельный
+`annotations/timeSeriesAnnotations.scss` — необязательный миксин `time-series-annotations`.
 Контейнер SVG должен иметь `position: relative` и явную высоту, как у `UniversalChart`.
-Общие UTC-хелперы находятся в `timeSeriesTime.ts`.
+Общие UTC-хелперы находятся в `calendar/timeSeriesTime.ts`.
 
 Игровой `vehicles/timeSeries/VehicleHistoryChart.ts` наследует общий график и преобразует
 `VehicleHistoryPeriod` в точки с метаданными периода, шага и метрики. Он вставляет разрывы,
@@ -551,20 +578,20 @@ connection.dispose()
 приоритеты меток, интервалы и узкий контейнер. Слой аннотаций можно снять и подключить
 повторно, минимальное окно — изменить независимо от оси.
 
-### Toolbar графика (`src/shared/ui/chart/`)
+### Toolbar графика (`src/shared/ui/chart/timeSeries/toolbar/`)
 
 Toolbar собирается явно в Vue-шаблоне из трёх общих модулей:
 
-- `ChartToolbar.vue` — раскладка, необязательный слот `left` для заголовка/селекторов и
+- `layout/ChartToolbar.vue` — раскладка, необязательный слот `left` для заголовка/селекторов и
   default-слот для групп. `density` (`standard` по умолчанию / `compact`) задаёт цвета,
   отступы и переносы. При наличии левой части контролы прижаты вправо,
   а на экранах до 600 px — влево. Компактный вариант остаётся в одной строке.
-- `ToolbarGroup.vue` — группа произвольных действий с единым расстоянием между ними.
+- `layout/ToolbarGroup.vue` — группа произвольных действий с единым расстоянием между ними.
   В default-слоте `ChartToolbar` группы располагаются соседями; между соседними группами
   toolbar рисует разделитель. Пустые группы произвольных действий потребитель скрывает через `v-if`.
-- `ToolbarChoiceGroup.vue` — группа выбора одного строкового или числового значения.
-  Обязательный `v-model` и `options: readonly ToolbarChoiceOption<TValue>[]` из
-  `toolbarChoiceGroup.ts` задают состояние и пункты. Опция содержит уникальный внутри
+- `options/ToolbarOptions.vue` — группа выбора одного строкового или числового значения.
+  Обязательный `v-model` и `options: readonly ToolbarOption<TValue>[]` из
+  `options/toolbarOptions.ts` задают состояние и пункты. Опция содержит уникальный внутри
   группы `value`, `label`, необязательные `tooltip` и `disabled`. Проп `disabled`
   блокирует всю группу. Без `clearable` повторное нажатие сохраняет выбор;
   с `clearable` возвращает `null`. Значение `0` является обычным выбранным значением.
@@ -578,15 +605,15 @@ Toolbar собирается явно в Vue-шаблоне из трёх общ
 ```vue
 <ChartToolbar density="compact">
   <template #left><h2>История</h2></template>
-  <ToolbarChoiceGroup v-model="step" :options="stepOptions" />
-  <ToolbarChoiceGroup v-model="averageWindow" :options="averageOptions" clearable />
+  <ToolbarOptions v-model="step" :options="stepOptions" />
+  <ToolbarOptions v-model="averageWindow" :options="averageOptions" clearable />
   <ToolbarGroup>
     <ChartAnnotationSettings :groups="annotationGroups" @toggle="toggleAnnotation" />
   </ToolbarGroup>
 </ChartToolbar>
 ```
 
-Локальный `vehicles/timeSeries/HistoryToolbarChoices.vue` содержит две соседние группы
+Локальный `vehicles/timeSeries/HistoryToolbarOptions.vue` содержит две соседние группы
 выбора с обязательными моделями `step` (`day/week/month`) и `averageWindow` (`3/5/7/null`).
 Подписи, наборы значений и подсказки среднего находятся в этой локальной сборке. Оба
 потребителя вставляют её в слот `toolbar` общего `TimeSeriesPanel`; каркас `ChartToolbar`
@@ -594,8 +621,8 @@ Toolbar собирается явно в Vue-шаблоне из трёх общ
 остаются в локальном `historyStep.ts`. Загрузка и агрегация данных, расчёт среднего и диапазон
 графика остаются у потребителя.
 
-`ChartAnnotationSettings.vue` принимает `groups: readonly ChartAnnotationGroup[]` из
-`chartAnnotationSettings.ts`. Группа содержит устойчивый `id`, необязательный `label`,
+`annotationSettings/ChartAnnotationSettings.vue` принимает `groups: readonly ChartAnnotationGroup[]` из
+`annotationSettings/chartAnnotationSettings.ts`. Группа содержит устойчивый `id`, необязательный `label`,
 `layout` (`column` по умолчанию / `row`) и `options`. Опция содержит `id`, `label`,
 `selected`, необязательные `classes` и `disabled`. Идентификаторы опций уникальны внутри группы.
 Событие `toggle(groupId, optionId)` передаёт выбор владельцу настроек; renderer не меняет
@@ -619,7 +646,7 @@ wotstat и события по регионам. Состояние аннота
 
 ### Готовая панель временного графика
 
-`shared/ui/chart/TimeSeriesPanel.vue` собирает `TimeSeriesChart`, `ChartToolbar`, существующие
+`shared/ui/chart/timeSeries/panel/TimeSeriesPanel.vue` собирает `TimeSeriesChart`, `ChartToolbar`, существующие
 `Legend`, `HeaderTooltip` / `FloatingTooltip` и renderer `TimeSeriesTooltip`. Общая панель
 не импортирует игровые модули и не запускает запросы. Потребитель создаёт один `useLegend(items)`
 и передаёт его `highlightSync` конструктору графика. Та же модель передаётся в проп `legend`;
@@ -644,7 +671,7 @@ wotstat и события по регионам. Состояние аннота
 Слоты:
 
 - `header` — заголовок, выбор метрики; при tooltip в шапке пересечения обрабатывает HeaderTooltip.
-- `toolbar` — соседние `ToolbarChoiceGroup` / `ToolbarGroup` без внешнего ChartToolbar.
+- `toolbar` — соседние `ToolbarOptions` / `ToolbarGroup` без внешнего ChartToolbar.
 - `actions` — дополнительные действия, панель оборачивает их в ToolbarGroup.
 - `tooltip-header` — шапка стандартного renderer с `{ ctx, columnCount, horizontal }`.
 - `tooltip` — полная замена содержимого tooltip с `{ ctx }`, например одно значение и период.
@@ -666,13 +693,13 @@ wotstat и события по регионам. Состояние аннота
 ```vue
 <TimeSeriesPanel :chart :legend :has-values="hasValues" :format-value="formatValue">
   <template #header><h2>История</h2></template>
-  <template #toolbar><ToolbarChoiceGroup v-model="step" :options="stepOptions" /></template>
+  <template #toolbar><ToolbarOptions v-model="step" :options="stepOptions" /></template>
   <template #tooltip-header="{ ctx }">{{ ctx.hit.datum.date }}</template>
   <template v-if="loading" #state>Загружаем историю…</template>
 </TimeSeriesPanel>
 ```
 
-### Вывод тултипов (`src/shared/ui/chart/`)
+### Вывод тултипов (`src/shared/ui/chart/tooltip/`)
 
 `ChartTooltip` ничего не рисует — публикует наружу `TooltipCtx` (hits в порядке selection, snapshot заказанных `exposeHighlights` с `isHighlighted()`, координаты pivot/курсора в клиентских и абсолютных координатах, бокс графика — контракт разобран выше, в «Интерактив → TooltipCtx и highlights»). Как это показать — дело Vue-обёрток; их две, обе принимают `:ctx="chart.tooltipCtx.value"`:
 
@@ -707,7 +734,7 @@ wotstat и события по регионам. Состояние аннота
 </SeriesTooltip>
 ```
 
-`TimeSeriesTooltip.vue` адаптирует `TooltipCtx<TimeSeriesHit<TPoint>>` к этому renderer:
+`shared/ui/chart/timeSeries/panel/TimeSeriesTooltip.vue` адаптирует `TooltipCtx<TimeSeriesHit<TPoint>>` к этому renderer:
 принимает `ctx`, включённые `sources` с полями LegendItem и `formatValue(value, ctx)`.
 Сопоставляет hits по tag, читает snapshot подсветки, оставляет пропуски; слот `header`
 получает `{ ctx, columnCount, horizontal }`. Его использует `TimeSeriesPanel` в обоих режимах
@@ -719,7 +746,7 @@ tooltip. В технике `timeSeriesCompare/HistoryTooltipHeader.vue` зада
 
 #### Палитра рядов
 
-`seriesColors.ts` в том же общем каталоге экспортирует десять фиксированных `seriesColors`
+`shared/ui/chart/legend/seriesColors.ts` экспортирует десять фиксированных `seriesColors`
 и `seriesColor(index)`. После базовой палитры цвет вычисляется через прежний HSL-алгоритм
 с шагом оттенка 137.508°, насыщенностью 0.72 и светлотой 0.64.
 Сравнение выбирает первый незанятый базовый цвет, затем вызывает генератор с индексом нового источника;

@@ -42,7 +42,7 @@ import { ChartClip } from '@/shared/uiKit/chart/universalChart/defs/ChartClip.ts
 import { InteractionController } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController.ts'
 import { ChartTooltip, TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip.ts'
 import { BarItemHit } from '@/shared/uiKit/chart/universalChart/plot/bar/BarInteractionSource.ts'
-import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
+import FloatingTooltip from '@/shared/ui/chart/tooltip/FloatingTooltip.vue'
 import { Highlight } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/highlight/Highlight.ts'
 import { ChartShadowFilter } from '@/shared/uiKit/chart/universalChart/defs/ChartShadowFilter.ts'
 import { ChartAxis } from '@/shared/uiKit/chart/universalChart/plot/axis/ChartAxis.ts'

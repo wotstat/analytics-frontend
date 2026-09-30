@@ -1,33 +1,41 @@
 <template>
   <DebugPage title="Временной график" description="Готовые точки, ось UTC и общие аннотации без БД и игрового домена."
-    source="src/shared/ui/chart/TimeSeriesChart.ts">
+    source="src/shared/ui/chart/timeSeries/chart/TimeSeriesChart.ts">
     <DebugSection title="Данные и диапазон" id="time-series"
       description="Зум колесом, перемещение мышью. Среднее не соединяет разрывы. Метрика, обновление данных и видимость рядов сохраняют окно; другой шаг или диапазон сбрасывает его."
-      source="src/shared/ui/chart/TimeSeriesChart.ts">
+      source="src/shared/ui/chart/timeSeries/chart/TimeSeriesChart.ts">
       <div class="debug-row">
         <label class="debug-control">Шаг данных
           <select v-model="step" class="debug-select">
-            <option value="day">День</option><option value="week">Неделя</option><option value="month">Месяц</option>
+            <option value="day">День</option>
+            <option value="week">Неделя</option>
+            <option value="month">Месяц</option>
           </select>
         </label>
         <label class="debug-control">Ось X
           <select v-model="timeAxis" class="debug-select">
-            <option value="auto">Авто</option><option value="day">Дни</option><option value="week">Недели</option><option value="month">Месяцы</option>
+            <option value="auto">Авто</option>
+            <option value="day">Дни</option>
+            <option value="week">Недели</option>
+            <option value="month">Месяцы</option>
           </select>
         </label>
         <label class="debug-control">Среднее
           <select v-model="averageWindow" class="debug-select">
-            <option :value="null">Нет</option><option v-for="value in [3, 5, 7]" :key="value" :value="value">avg{{ value }}</option>
+            <option :value="null">Нет</option>
+            <option v-for="value in [3, 5, 7]" :key="value" :value="value">avg{{ value }}</option>
           </select>
         </label>
         <label class="debug-control">Метрика
           <select v-model="metric" class="debug-select">
-            <option value="count">Количество</option><option value="percent">Доля</option>
+            <option value="count">Количество</option>
+            <option value="percent">Доля</option>
           </select>
         </label>
         <label class="debug-control">Минимальное окно
           <select v-model="minWindowPeriods" class="debug-select">
-            <option v-for="value in [1, 3, 7]" :key="value" :value="value">{{ value }} {{ value === 1 ? 'период' : value === 3 ? 'периода' : 'периодов' }}</option>
+            <option v-for="value in [1, 3, 7]" :key="value" :value="value">{{ value }} {{ value === 1 ? 'период' : value
+              === 3 ? 'периода' : 'периодов' }}</option>
           </select>
         </label>
         <label class="debug-control"><input v-model="gaps" type="checkbox">Разрывы</label>
@@ -48,17 +56,25 @@
         <label class="debug-control"><input v-model="labels" type="checkbox">Метки и приоритеты</label>
         <label class="debug-control"><input v-model="bands" type="checkbox">Интервалы с подписью</label>
         <label class="debug-control"><input v-model="background" type="checkbox">Фон без подписи</label>
-        <label class="debug-control"><input v-model="alternativePalette" type="checkbox">Другая палитра аннотаций</label>
+        <label class="debug-control"><input v-model="alternativePalette" type="checkbox">Другая палитра
+          аннотаций</label>
       </div>
-      <div class="chart-stage" :class="{ narrow, 'alternative-palette': alternativePalette, 'with-annotations': annotationLayerEnabled && annotations.some(annotation => annotation.label !== undefined) }">
+      <div class="chart-stage"
+        :class="{ narrow, 'alternative-palette': alternativePalette, 'with-annotations': annotationLayerEnabled && annotations.some(annotation => annotation.label !== undefined) }">
         <UniversalChartComponent :chart />
       </div>
       <p class="debug-note">Окно UTC: {{ bounds }}. Точки: {{ pointCount }}. null: {{ gapCount }}.</p>
-      <p class="debug-note">Данные для каждого шага готовит стенд. Ось X настраивается независимо: «Авто» выбирает подписи по видимому диапазону. Смена оси сохраняет данные и окно. На таче: перемещение одним пальцем и зум двумя.</p>
-      <p class="debug-note">Главные метки важнее обычных; у интервала подпись посередине, тики на границах. Фон без подписи не занимает верхний слот. Рядом с метками проверь зум и перемещение.</p>
-      <p class="debug-note">Слой аннотаций подключается и снимается без пересоздания графика. Ограничения и сброс окна задаёт отдельная политика стенда.</p>
-      <p class="debug-note">Без явно заданного цвета первый ряд и его маркеры зелёные — цвет задан CSS-классом. Переключение цвета сохраняет окно.</p>
-      <p class="debug-note">Именные классы задают цвета аннотаций. Другая палитра меняет только CSS-переменные и сохраняет окно.</p>
+      <p class="debug-note">Данные для каждого шага готовит стенд. Ось X настраивается независимо: «Авто» выбирает
+        подписи по видимому диапазону. Смена оси сохраняет данные и окно. На таче: перемещение одним пальцем и зум
+        двумя.</p>
+      <p class="debug-note">Главные метки важнее обычных; у интервала подпись посередине, тики на границах. Фон без
+        подписи не занимает верхний слот. Рядом с метками проверь зум и перемещение.</p>
+      <p class="debug-note">Слой аннотаций подключается и снимается без пересоздания графика. Ограничения и сброс окна
+        задаёт отдельная политика стенда.</p>
+      <p class="debug-note">Без явно заданного цвета первый ряд и его маркеры зелёные — цвет задан CSS-классом.
+        Переключение цвета сохраняет окно.</p>
+      <p class="debug-note">Именные классы задают цвета аннотаций. Другая палитра меняет только CSS-переменные и
+        сохраняет окно.</p>
       <FloatingTooltip :ctx="chart.tooltipCtx.value" anchor="pivot-x" :placement="['top-float', 'bottom-float']">
         <template #default="{ ctx }">
           <SeriesTooltip :items="tooltipRows(ctx)" :format-value="formatValue">
@@ -78,16 +94,16 @@ import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import EventLog from '@/pages/debug/shared/EventLog.vue'
 import { useEventLog } from '@/pages/debug/shared/useEventLog'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
-import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
-import SeriesTooltip from '@/shared/ui/chart/SeriesTooltip.vue'
-import { TimeSeriesChart, type TimeSeriesHit } from '@/shared/ui/chart/TimeSeriesChart'
-import { TimeSeriesAnnotationLayer } from '@/shared/ui/chart/TimeSeriesAnnotationLayer'
-import { TimeSeriesViewport, minimumTimeSeriesWindow } from '@/shared/ui/chart/TimeSeriesViewport'
-import type { TimeSeriesPoint, TimeSeriesStep } from '@/shared/ui/chart/timeSeries'
-import type { TimeSeriesAnnotation } from '@/shared/ui/chart/timeSeriesAnnotations'
-import { DAY, nextTimeSeriesPeriod, utcDayStart, utcDayString } from '@/shared/ui/chart/timeSeriesTime'
-import { seriesColor } from '@/shared/ui/chart/seriesColors'
-import { movingAveragePoints } from '@/shared/ui/chart/transforms/movingAverage'
+import FloatingTooltip from '@/shared/ui/chart/tooltip/FloatingTooltip.vue'
+import SeriesTooltip from '@/shared/ui/chart/tooltip/SeriesTooltip.vue'
+import { TimeSeriesChart, type TimeSeriesHit } from '@/shared/ui/chart/timeSeries/chart/TimeSeriesChart'
+import { TimeSeriesAnnotationLayer } from '@/shared/ui/chart/timeSeries/annotations/TimeSeriesAnnotationLayer'
+import { TimeSeriesViewport, minimumTimeSeriesWindow } from '@/shared/ui/chart/timeSeries/chart/TimeSeriesViewport'
+import type { TimeSeriesPoint, TimeSeriesStep } from '@/shared/ui/chart/timeSeries/chart/timeSeries'
+import type { TimeSeriesAnnotation } from '@/shared/ui/chart/timeSeries/annotations/timeSeriesAnnotations'
+import { DAY, nextTimeSeriesPeriod, utcDayStart, utcDayString } from '@/shared/ui/chart/timeSeries/utils/timeSeriesTime'
+import { seriesColor } from '@/shared/ui/chart/legend/seriesColors'
+import { movingAveragePoints } from '@/shared/ui/chart/timeSeries/utils/movingAverage'
 import type { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
 
 type DemoPoint = TimeSeriesPoint & { period: string }
@@ -194,15 +210,17 @@ function tooltipRows(ctx: TooltipCtx<TimeSeriesHit<DemoPoint>>) {
   return [0, ...(second.value ? [1] : [])].map(index => {
     const tag = `source-${index}`
     const hit = hits.get(tag)
-    return { tag, name: `Ряд ${index + 1}`, color: index === 0 ? explicitColor.value ? color.value : fallbackColor : seriesColor(1), value: hit?.datum.y,
-      highlighted: !!hit && ctx.highlights.some(highlight => highlight.isHighlighted(hit)) }
+    return {
+      tag, name: `Ряд ${index + 1}`, color: index === 0 ? explicitColor.value ? color.value : fallbackColor : seriesColor(1), value: hit?.datum.y,
+      highlighted: !!hit && ctx.highlights.some(highlight => highlight.isHighlighted(hit))
+    }
   })
 }
 </script>
 
 <style scoped lang="scss">
-@use '@/shared/ui/chart/timeSeriesChart.scss' as *;
-@use '@/shared/ui/chart/timeSeriesAnnotations.scss' as *;
+@use '@/shared/ui/chart/timeSeries/chart/timeSeriesChart.scss' as *;
+@use '@/shared/ui/chart/timeSeries/annotations/timeSeriesAnnotations.scss' as *;
 
 .chart-stage {
   position: relative;

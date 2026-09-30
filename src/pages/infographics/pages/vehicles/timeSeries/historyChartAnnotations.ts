@@ -1,4 +1,4 @@
-import type { TimeSeriesAnnotation } from '@/shared/ui/chart/timeSeriesAnnotations'
+import type { TimeSeriesAnnotation } from '@/shared/ui/chart/timeSeries/annotations/timeSeriesAnnotations'
 import { serverOutages } from '@/shared/wotstat/serverOutages'
 import type { HistoryAnnotation, VersionHistoryAnnotation } from './historyAnnotations'
 

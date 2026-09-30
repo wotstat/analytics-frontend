@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
+import FloatingTooltip from '@/shared/ui/chart/tooltip/FloatingTooltip.vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import type { HoverSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/HoverSynchronizer'
 import { markRaw, watchEffect } from 'vue'

@@ -2,8 +2,10 @@
   <div class="debug-row">
     <label class="debug-control">Состояние
       <select v-model="state" class="debug-select">
-        <option value="ready">Готово</option><option value="loading">Загрузка</option>
-        <option value="error">Ошибка</option><option value="empty">Нет данных</option>
+        <option value="ready">Готово</option>
+        <option value="loading">Загрузка</option>
+        <option value="error">Ошибка</option>
+        <option value="empty">Нет данных</option>
       </select>
     </label>
     <label class="debug-control"><input v-model="multiple" type="checkbox">Несколько рядов</label>
@@ -13,12 +15,16 @@
     <button class="debug-button" @click="restore">Вернуть источники</button>
   </div>
   <TimeSeriesPanel :chart :legend :density :has-values="hasValues" :format-value="formatValue"
-    :tooltip="density === 'compact' && !multiple ? 'header' : 'floating'" :show-legend="multiple"
-    color-editable removable class="demo-panel" :class="{ narrow }" @color-change="changeColor"
+    :tooltip="density === 'compact' && !multiple ? 'header' : 'floating'" :show-legend="multiple" color-editable
+    removable class="demo-panel" :class="{ narrow }" @color-change="changeColor"
     @remove="source => removed.add(source.tag)" @series-click="onSeriesClick">
     <template #header><b>Синтетическая история</b></template>
-    <template #toolbar><ToolbarChoiceGroup v-model="metric" :options="metricOptions" /></template>
-    <template #actions><ToolbarButton :icon="ResetIcon" @click="viewport.showAll()" /></template>
+    <template #toolbar>
+      <ToolbarOptions v-model="metric" :options="metricOptions" />
+    </template>
+    <template #actions>
+      <ToolbarButton :icon="ResetIcon" @click="viewport.showAll()" />
+    </template>
     <template v-if="density === 'compact' && !multiple" #tooltip="{ ctx }">
       <div class="header-value">{{ formatValue(ctx.hit.datum.y) }} · {{ ctx.hit.datum.date }}</div>
     </template>
@@ -27,7 +33,9 @@
       <span :class="{ horizontal }">{{ ctx.hit.datum.date }}</span>
     </template>
     <template v-if="!hasValues" #state>
-      <template v-if="state === 'loading'"><Loader compact />Загружаем историю…</template>
+      <template v-if="state === 'loading'">
+        <Loader compact />Загружаем историю…
+      </template>
       <template v-else-if="state === 'error'">
         Не удалось загрузить историю<button @click="state = 'ready'">Повторить</button>
       </template>
@@ -48,18 +56,18 @@
 <script setup lang="ts">
 import { computed, markRaw, reactive, ref, watch } from 'vue'
 import ResetIcon from '@/assets/icons/reset.svg'
-import TimeSeriesPanel from '@/shared/ui/chart/TimeSeriesPanel.vue'
-import ToolbarChoiceGroup from '@/shared/ui/chart/ToolbarChoiceGroup.vue'
+import TimeSeriesPanel from '@/shared/ui/chart/timeSeries/panel/TimeSeriesPanel.vue'
+import ToolbarOptions from '@/shared/ui/chart/timeSeries/toolbar/options/ToolbarOptions.vue'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
 import EventLog from '@/pages/debug/shared/EventLog.vue'
 import { useEventLog } from '@/pages/debug/shared/useEventLog'
-import { TimeSeriesChart } from '@/shared/ui/chart/TimeSeriesChart'
-import { TimeSeriesViewport } from '@/shared/ui/chart/TimeSeriesViewport'
-import { useLegend } from '@/shared/ui/chart/useLegend'
-import { seriesColor } from '@/shared/ui/chart/seriesColors'
-import { DAY, utcDayStart, utcDayString } from '@/shared/ui/chart/timeSeriesTime'
-import type { TimeSeriesPoint } from '@/shared/ui/chart/timeSeries'
+import { TimeSeriesChart } from '@/shared/ui/chart/timeSeries/chart/TimeSeriesChart'
+import { TimeSeriesViewport } from '@/shared/ui/chart/timeSeries/chart/TimeSeriesViewport'
+import { useLegend } from '@/shared/ui/chart/legend/useLegend'
+import { seriesColor } from '@/shared/ui/chart/legend/seriesColors'
+import { DAY, utcDayStart, utcDayString } from '@/shared/ui/chart/timeSeries/utils/timeSeriesTime'
+import type { TimeSeriesPoint } from '@/shared/ui/chart/timeSeries/chart/timeSeries'
 import type { ClickInteractionEvent } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/BaseInteractionController'
 
 type DemoPoint = TimeSeriesPoint & { date: string }

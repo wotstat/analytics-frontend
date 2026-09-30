@@ -1,6 +1,5 @@
 <template>
   <button class="color-preview" @click.stop="showPopup = !showPopup" ref="colorPreview">
-
     <PopoverStyled :target="colorPreview" :display="showPopup" @pointer-down-outside="showPopup = false"
       :placement="placement" :arrow-size="0" :offset="5">
       <ColorPickerPopup v-model="color" :allowAlpha :savedColors :format="'hex'" />

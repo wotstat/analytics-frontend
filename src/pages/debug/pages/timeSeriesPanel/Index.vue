@@ -1,6 +1,6 @@
 <template>
   <DebugPage title="Панель временного графика" description="Две независимые панели без БД и игрового домена."
-    source="src/shared/ui/chart/TimeSeriesPanel.vue">
+    source="src/shared/ui/chart/timeSeries/panel/TimeSeriesPanel.vue">
     <DebugSection title="Обычная панель" id="standard"
       description="Плавающий tooltip, цвета, удаление и сообщения отдельных источников.">
       <label class="debug-control"><input v-model="showStandard" type="checkbox">Показывать панель</label>

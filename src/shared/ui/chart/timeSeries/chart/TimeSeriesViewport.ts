@@ -1,6 +1,6 @@
 import type { TimeSeriesChart } from './TimeSeriesChart'
 import type { TimeSeriesRange, TimeSeriesStep } from './timeSeries'
-import { DAY } from './timeSeriesTime'
+import { DAY } from '../utils/timeSeriesTime'
 
 type ViewportOptions = {
   range: TimeSeriesRange

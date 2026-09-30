@@ -24,9 +24,9 @@
 
 
 <script setup lang="ts">
-import FloatingTooltip from '@/shared/ui/chart/FloatingTooltip.vue'
-import Legend from '@/shared/ui/chart/Legend.vue'
-import { useLegend } from '@/shared/ui/chart/useLegend'
+import FloatingTooltip from '@/shared/ui/chart/tooltip/FloatingTooltip.vue'
+import Legend from '@/shared/ui/chart/legend/Legend.vue'
+import { useLegend } from '@/shared/ui/chart/legend/useLegend'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
 import { computed, markRaw, watch, watchEffect } from 'vue'

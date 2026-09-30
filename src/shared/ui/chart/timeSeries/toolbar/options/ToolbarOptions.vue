@@ -1,18 +1,18 @@
 <template>
-  <ToolbarGroup v-if="options.length" class="toolbar-choice-group">
-    <button v-for="option in options" :key="option.value" type="button" class="toolbar-choice"
+  <ToolbarGroup v-if="options.length" class="toolbar-options">
+    <button v-for="option in options" :key="option.value" type="button" class="toolbar-option"
       :class="{ active: model === option.value }" :disabled="disabled || option.disabled"
-      v-tooltip:toolbarChoice.top-float="{ text: option.tooltip ?? '', disabled: !option.tooltip }"
+      v-tooltip:toolbarOption.top-float="{ text: option.tooltip ?? '', disabled: !option.tooltip }"
       @click="select(option.value)">{{ option.label }}</button>
   </ToolbarGroup>
 </template>
 
 <script setup lang="ts" generic="TValue extends string | number, TClearable extends boolean = false">
-import ToolbarGroup from './ToolbarGroup.vue'
-import type { ToolbarChoiceOption } from './toolbarChoiceGroup'
+import ToolbarGroup from '../layout/ToolbarGroup.vue'
+import type { ToolbarOption } from './toolbarOptions'
 
 const props = defineProps<{
-  options: readonly ToolbarChoiceOption<TValue>[]
+  options: readonly ToolbarOption<TValue>[]
   clearable?: TClearable & boolean
   disabled?: boolean
 }>()
@@ -26,7 +26,7 @@ function select(value: TValue) {
 </script>
 
 <style scoped lang="scss">
-.toolbar-choice {
+.toolbar-option {
   padding: var(--toolbar-control-padding, 3px 0);
   color: var(--toolbar-control-color, rgba(255, 255, 255, 0.45));
   font-size: 12px;

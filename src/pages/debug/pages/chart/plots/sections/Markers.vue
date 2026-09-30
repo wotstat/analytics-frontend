@@ -73,7 +73,8 @@
       <b>size и maskSize пересчитываются из данных на каждом render().</b> setMarkers двигает уже созданные круги
       и создаёт недостающие, но при этом переиспользуемые инстансы больше не хранят старый радиус: подвигай size —
       все круги, и старые, и только что созданные при смене количества точек, сразу получат один и тот же радиус.
-      Это и есть починка известного бага переиспользования маркеров: раньше конструктор писал <span class="debug-value">r</span> один
+      Это и есть починка известного бага переиспользования маркеров: раньше конструктор писал <span
+        class="debug-value">r</span> один
       раз, и переиспользованный маркер отставал от нового size. markerClasses и цвет плота, наоборот, по-прежнему
       применяются только при создании: их меняет кнопка «пересоздать график», а не render().
     </p>
@@ -113,7 +114,7 @@ import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine
 import { AutoMarkers } from '@/shared/uiKit/chart/universalChart/plot/markers/autoMarkers/AutoMarkers'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
-import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
+import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager.ts'
 import ChartStage from '../shared/ChartStage.vue'
 import SeriesControls from '../shared/SeriesControls.vue'
 import { useChartInstance } from '../shared/useChartInstance'

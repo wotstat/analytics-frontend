@@ -28,8 +28,8 @@
 
 <script setup lang="ts">
 import { onUnmounted, shallowRef } from 'vue'
-import Legend from '@/shared/ui/chart/Legend.vue'
-import { LegendModel } from '@/shared/ui/chart/useLegend'
+import Legend from '@/shared/ui/chart/legend/Legend.vue'
+import { LegendModel } from '@/shared/ui/chart/legend/useLegend'
 import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
 import DemoChartView from '../../shared/DemoChartView.vue'
 import TooltipCard from '../../shared/TooltipCard.vue'

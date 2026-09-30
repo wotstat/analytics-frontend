@@ -4,8 +4,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import ChartAnnotationSettings from '@/shared/ui/chart/ChartAnnotationSettings.vue'
-import type { ChartAnnotationGroup } from '@/shared/ui/chart/chartAnnotationSettings'
+import ChartAnnotationSettings from '@/shared/ui/chart/timeSeries/toolbar/annotationSettings/ChartAnnotationSettings.vue'
+import type { ChartAnnotationGroup } from '@/shared/ui/chart/timeSeries/toolbar/annotationSettings/chartAnnotationSettings'
 import type { useHistoryAnnotationSettings } from './useHistoryAnnotationSettings'
 import { getHistoryEventRegions, historyEvents } from '@/shared/game/historyEvents'
 import type { GameRegion } from '@/shared/game/wot'

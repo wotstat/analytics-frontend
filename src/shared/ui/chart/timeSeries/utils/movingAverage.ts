@@ -1,4 +1,4 @@
-import type { TimeSeriesPoint } from '../timeSeries'
+import type { TimeSeriesPoint } from '../chart/timeSeries'
 
 export function movingAveragePoints<T extends TimeSeriesPoint>(points: readonly (T | null)[], window: number): (T | null)[] {
   if (!Number.isInteger(window) || window < 1 || window % 2 === 0) {

@@ -1,4 +1,4 @@
-import type { TimeSeriesStep } from './timeSeries'
+import type { TimeSeriesStep } from '../chart/timeSeries'
 
 export const DAY = 24 * 60 * 60
 

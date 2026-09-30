@@ -1,10 +1,10 @@
 <template>
   <DebugPage title="ChartToolbar"
     description="Явная композиция групп выбора и действий, плотность и настройки аннотаций без запросов к БД."
-    source="src/shared/ui/chart/ChartToolbar.vue">
+    source="src/shared/ui/chart/timeSeries/toolbar/layout/ChartToolbar.vue">
     <DebugSection title="Обычная плотность и слоты" id="standard"
       description="Левая часть задаётся потребителем; дополнительные действия остаются рядом с выбором сглаживания."
-      source="src/shared/ui/chart/ChartToolbar.vue">
+      source="src/shared/ui/chart/timeSeries/toolbar/layout/ChartToolbar.vue">
       <div class="debug-row">
         <label class="debug-control"><input v-model="narrow" type="checkbox"><span>Ширина 320 px</span></label>
         <label class="debug-control"><input v-model="showEvents" type="checkbox"><span>Показывать группу событий</span></label>
@@ -18,8 +18,8 @@
               <option>Среднее значение</option>
             </select>
           </template>
-          <ToolbarChoiceGroup v-model="comparisonStep" :options="stepOptions" />
-          <ToolbarChoiceGroup v-model="comparisonAverage" :options="averageOptions" clearable />
+          <ToolbarOptions v-model="comparisonStep" :options="stepOptions" />
+          <ToolbarOptions v-model="comparisonAverage" :options="averageOptions" clearable />
           <ToolbarGroup>
             <ToolbarButton :icon="ResetIcon" @click="resetComparison" />
             <ChartAnnotationSettings :groups="visibleComparisonGroups"
@@ -35,12 +35,12 @@
 
     <DebugSection title="Компактные строки с общими моделями" id="synchronized"
       description="Шаг и сглаживание общие у двух строк. Настройки аннотаций у каждой строки свои; сравнение выше независимо."
-      source="src/shared/ui/chart/ChartToolbar.vue">
+      source="src/shared/ui/chart/timeSeries/toolbar/layout/ChartToolbar.vue">
       <div v-for="(groups, index) in rowGroups" :key="index" class="toolbar-stage">
         <div class="row-heading">Строка {{ index + 1 }}</div>
         <ChartToolbar density="compact">
-          <ToolbarChoiceGroup v-model="rowStep" :options="stepOptions" />
-          <ToolbarChoiceGroup v-model="rowAverage" :options="averageOptions" clearable />
+          <ToolbarOptions v-model="rowStep" :options="stepOptions" />
+          <ToolbarOptions v-model="rowAverage" :options="averageOptions" clearable />
           <ToolbarGroup>
             <ChartAnnotationSettings :groups @toggle="(groupId, optionId) => toggleOption(groups, groupId, optionId)" />
           </ToolbarGroup>
@@ -53,17 +53,17 @@
 
     <DebugSection title="Произвольный состав групп" id="custom"
       description="У общего toolbar нет встроенных шагов и окон среднего. Группы могут скрываться, а пустой список выбора не создаёт разделитель."
-      source="src/shared/ui/chart/ToolbarChoiceGroup.vue">
+      source="src/shared/ui/chart/timeSeries/toolbar/options/ToolbarOptions.vue">
       <div class="debug-row">
-        <label class="debug-control"><input v-model="choicesDisabled" type="checkbox"><span>Заблокировать выбор</span></label>
+        <label class="debug-control"><input v-model="optionsDisabled" type="checkbox"><span>Заблокировать выбор</span></label>
         <label class="debug-control"><input v-model="showLimit" type="checkbox"><span>Показывать лимит</span></label>
         <label class="debug-control"><input v-model="showActions" type="checkbox"><span>Показывать действия</span></label>
       </div>
       <div class="toolbar-stage" :class="{ narrow }">
         <ChartToolbar>
-          <ToolbarChoiceGroup v-model="displayMode" :options="modeOptions" :disabled="choicesDisabled" />
-          <ToolbarChoiceGroup v-if="showLimit" v-model="limit" :options="limitOptions" clearable :disabled="choicesDisabled" />
-          <ToolbarChoiceGroup v-model="limit" :options="[]" clearable />
+          <ToolbarOptions v-model="displayMode" :options="modeOptions" :disabled="optionsDisabled" />
+          <ToolbarOptions v-if="showLimit" v-model="limit" :options="limitOptions" clearable :disabled="optionsDisabled" />
+          <ToolbarOptions v-model="limit" :options="[]" clearable />
           <ToolbarGroup v-if="showActions">
             <ToolbarButton :icon="ResetIcon" @click="limit = null" />
           </ToolbarGroup>
@@ -83,13 +83,13 @@ import { computed, reactive, ref } from 'vue'
 import ResetIcon from '@/assets/icons/reset.svg'
 import DebugPage from '@/pages/debug/shared/DebugPage.vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import ChartToolbar from '@/shared/ui/chart/ChartToolbar.vue'
-import ToolbarChoiceGroup from '@/shared/ui/chart/ToolbarChoiceGroup.vue'
-import ToolbarGroup from '@/shared/ui/chart/ToolbarGroup.vue'
-import ChartAnnotationSettings from '@/shared/ui/chart/ChartAnnotationSettings.vue'
+import ChartToolbar from '@/shared/ui/chart/timeSeries/toolbar/layout/ChartToolbar.vue'
+import ToolbarOptions from '@/shared/ui/chart/timeSeries/toolbar/options/ToolbarOptions.vue'
+import ToolbarGroup from '@/shared/ui/chart/timeSeries/toolbar/layout/ToolbarGroup.vue'
+import ChartAnnotationSettings from '@/shared/ui/chart/timeSeries/toolbar/annotationSettings/ChartAnnotationSettings.vue'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
-import type { ChartAnnotationGroup } from '@/shared/ui/chart/chartAnnotationSettings'
-import type { ToolbarChoiceOption } from '@/shared/ui/chart/toolbarChoiceGroup'
+import type { ChartAnnotationGroup } from '@/shared/ui/chart/timeSeries/toolbar/annotationSettings/chartAnnotationSettings'
+import type { ToolbarOption } from '@/shared/ui/chart/timeSeries/toolbar/options/toolbarOptions'
 
 type DemoStep = 'day' | 'week' | 'month'
 type DemoAverage = 3 | 5 | 7 | null
@@ -103,7 +103,7 @@ const comparisonAverage = ref<DemoAverage>(null)
 const rowStep = ref<DemoStep>('day')
 const rowAverage = ref<DemoAverage>(null)
 const resets = ref(0)
-const choicesDisabled = ref(false)
+const optionsDisabled = ref(false)
 const showLimit = ref(true)
 const showActions = ref(true)
 const displayMode = ref<DisplayMode>('count')
@@ -113,22 +113,22 @@ const stepOptions = [
   { value: 'day', label: 'День' },
   { value: 'week', label: 'Неделя' },
   { value: 'month', label: 'Месяц' },
-] as const satisfies readonly ToolbarChoiceOption<DemoStep>[]
+] as const satisfies readonly ToolbarOption<DemoStep>[]
 const averageOptions = ([3, 5, 7] as const).map(value => ({
   value,
   label: `avg${value}`,
   tooltip: `Скользящее среднее по ${value} соседним точкам. Повторное нажатие выключает сглаживание`,
-})) satisfies readonly ToolbarChoiceOption<NonNullable<DemoAverage>>[]
+})) satisfies readonly ToolbarOption<NonNullable<DemoAverage>>[]
 const modeOptions = [
   { value: 'count', label: 'Количество' },
   { value: 'percent', label: 'Доля' },
   { value: 'detail', label: 'Детально', disabled: true },
-] as const satisfies readonly ToolbarChoiceOption<DisplayMode>[]
+] as const satisfies readonly ToolbarOption<DisplayMode>[]
 const limitOptions = [
   { value: 0, label: 'Все' },
   { value: 25, label: '25' },
   { value: 50, label: '50' },
-] as const satisfies readonly ToolbarChoiceOption<NonNullable<typeof limit.value>>[]
+] as const satisfies readonly ToolbarOption<NonNullable<typeof limit.value>>[]
 
 function createGroups(): ChartAnnotationGroup[] {
   return [

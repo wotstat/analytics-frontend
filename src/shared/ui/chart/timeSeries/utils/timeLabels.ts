@@ -1,5 +1,5 @@
 import type { LabelLevel, Options, TickSource, ValueGenerator } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
-import type { TimeSeriesStep } from './timeSeries'
+import type { TimeSeriesStep } from '../chart/timeSeries'
 import { DAY } from './timeSeriesTime'
 
 const WEEK = 7 * DAY

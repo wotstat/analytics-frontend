@@ -62,7 +62,7 @@ import { ChartRawPattern } from '@/shared/uiKit/chart/universalChart/defs/ChartR
 import { PolygonArea } from '@/shared/uiKit/chart/universalChart/plot/area/PolygonArea'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import type { Point } from '@/shared/uiKit/chart/universalChart/utils/Point'
-import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
+import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager.ts'
 import ChartStage from '../shared/ChartStage.vue'
 import { afterRender } from '../shared/afterRender'
 import { useChartInstance } from '../shared/useChartInstance'
