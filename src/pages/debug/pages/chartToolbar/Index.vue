@@ -133,13 +133,13 @@ const limitOptions = [
 function createGroups(): ChartAnnotationGroup[] {
   return [
     { id: 'periods', label: 'Периоды', layout: 'row', options: [
-      { id: 'start', label: 'Начало', color: '#f1c578ff', selected: false },
-      { id: 'changes', label: 'Изменения', color: '#b6cde6ff', selected: false },
-      { id: 'pauses', label: 'Паузы', color: '#ffffff80', selected: false },
+      { id: 'start', label: 'Начало', classes: 'demo-annotation-start', selected: false },
+      { id: 'changes', label: 'Изменения', classes: 'demo-annotation-changes', selected: false },
+      { id: 'pauses', label: 'Паузы', classes: 'demo-annotation-pauses', selected: false },
     ] },
     { id: 'events', label: 'События', options: [
-      { id: 'maintenance', label: 'Плановое обслуживание', color: '#eb6759', selected: false },
-      { id: 'calculation', label: 'Изменение способа расчёта с длинной подписью', color: '#b8d9a6', selected: false },
+      { id: 'maintenance', label: 'Плановое обслуживание', classes: 'demo-annotation-maintenance', selected: false },
+      { id: 'calculation', label: 'Изменение способа расчёта с длинной подписью', classes: 'demo-annotation-calculation', selected: false },
       { id: 'unavailable', label: 'Недоступная опция', selected: false, disabled: true },
     ] },
     { id: 'empty', label: 'Пустая группа', options: [] },
@@ -189,6 +189,31 @@ function resetComparison() {
   .row-heading {
     margin-bottom: 8px;
     color: rgba(255, 255, 255, 0.5);
+  }
+}
+</style>
+
+<style lang="scss">
+// Пункты меню находятся в телепортированной панели.
+.annotation-option {
+  &.demo-annotation-start {
+    --selection-tile-accent: var(--demo-annotation-start-accent, #fbbb4a);
+  }
+
+  &.demo-annotation-changes {
+    --selection-tile-accent: var(--demo-annotation-changes-accent, #a9cbef);
+  }
+
+  &.demo-annotation-pauses {
+    --selection-tile-accent: var(--demo-annotation-pauses-accent, #fff);
+  }
+
+  &.demo-annotation-maintenance {
+    --selection-tile-accent: var(--demo-annotation-maintenance-accent, #f44f3d);
+  }
+
+  &.demo-annotation-calculation {
+    --selection-tile-accent: var(--demo-annotation-calculation-accent, #b2e297);
   }
 }
 </style>

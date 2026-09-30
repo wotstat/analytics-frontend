@@ -1,40 +1,20 @@
-import { shallowRef } from 'vue'
+import { TimeSeriesChart, type TimeSeriesHit } from '@/shared/ui/chart/TimeSeriesChart'
+import { TimeSeriesAnnotationLayer } from '@/shared/ui/chart/TimeSeriesAnnotationLayer'
+import { TimeSeriesViewport, minimumTimeSeriesWindow } from '@/shared/ui/chart/TimeSeriesViewport'
+import type { TimeSeries } from '@/shared/ui/chart/timeSeries'
+import { DAY } from '@/shared/ui/chart/timeSeriesTime'
+import { movingAveragePoints } from '@/shared/ui/chart/transforms/movingAverage'
 import type { VehicleHistoryPeriod, VehicleHistorySeries } from '../shared/types'
-import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
-import { ChartClip } from '@/shared/uiKit/chart/universalChart/defs/ChartClip'
-import { ChartTooltip, type TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
-import { VerticalLine } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/lines/VerticalLine'
-import { MarkerOverlay } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/markerOverlay/MarkerOverlay'
-import { ZoomChartComponent } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/zoomChartComponent/ZoomChartComponent'
-import { Highlight } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/highlight/Highlight'
-import type { HighlightSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/HighlightSynchronizer'
-import { InteractionController, type InteractionComponent } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController'
-import { CallbackComponent } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/callback/CallbackComponent'
-import { InteractionFrame } from '@/shared/uiKit/chart/universalChart/interaction/core/InteractionFrame'
-import type { ClickInteractionEvent } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/BaseInteractionController'
-import { AutoLabels, type Options as LabelsOptions } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
-import { labelCandidates } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/labelCandidates'
-import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
-import { RectangleArea } from '@/shared/uiKit/chart/universalChart/plot/area/RectangleArea'
-import type { AutoLineInteraction, LinePointHit } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineInteractionSource'
-import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
-import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
-import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
-import { EventEmitter } from '@/shared/uiKit/chart/universalChart/utils/EventEmitter'
 import { availableSlots, type Slot } from '../shared/vehicleMetrics'
 import { formatSlotValue } from '../shared/formatMetricValue'
-import { DAY, timeLabels } from './timeLabels'
 import {
-  historyDayStart, historyDayString, historyPeriodWindow, minimumHistoryWindow, nextHistoryPeriod,
-  type HistoryAverageWindow, type HistoryStep
+  historyDayStart, historyDayString, historyPeriodWindow, nextHistoryPeriod,
+  type HistoryAverageWindow, type HistoryStep,
 } from './historyStep'
-import { ChartMask } from '@/shared/uiKit/chart/universalChart/defs/ChartMask'
 import type { HistoryAnnotation } from './historyAnnotations'
-import { annotationLabelOptions } from './annotationLabelOptions'
-import { serverOutages } from '@/shared/wotstat/serverOutages'
+import { historyChartAnnotations } from './historyChartAnnotations'
 
 type HistoryPoint = {
-  series: string
   x: number
   y: number
   periodStart: string
@@ -44,309 +24,107 @@ type HistoryPoint = {
   slot: Slot
 }
 
-export type VehicleHistoryHit = LinePointHit<HistoryPoint>
+export type VehicleHistoryHit = TimeSeriesHit<HistoryPoint>
 
-let nextChartStyleScope = 0
-
-export class VehicleHistoryChart extends UniversalChart {
-  readonly tooltipCtx = shallowRef<TooltipCtx<VehicleHistoryHit> | null>(null)
-  readonly onSeriesClick = new EventEmitter<{ tag: string, event: ClickInteractionEvent }>()
-
-  private readonly lines = new Map<string, AutoLine<HistoryPoint>>()
-  private readonly seriesPoints = new Map<string, {
+export class VehicleHistoryChart extends TimeSeriesChart<HistoryPoint> {
+  private readonly viewport = new TimeSeriesViewport(this)
+  private readonly annotationLayer = new TimeSeriesAnnotationLayer(this)
+  private readonly historyPoints = new Map<string, {
     history: VehicleHistoryPeriod[]
     key: string
+    rawPoints: (HistoryPoint | null)[] | null
     points: (HistoryPoint | null)[] | null
-    enabled: boolean
+    averageWindow: HistoryAverageWindow
   }>()
-  private readonly plot = new PlotGroup()
-  private readonly eventAreas = new PlotGroup(['history-event-areas'])
-  private eventAreaPlots: RectangleArea[] = []
-
-  private readonly interaction = new InteractionController()
-  private interactionComponents: InteractionComponent[] = []
-
-  private readonly mask = new ChartMask('center', { top: -4, bottom: -4 })
-  private readonly seriesStyle = document.createElementNS('http://www.w3.org/2000/svg', 'style')
-  private readonly annotationStyle = document.createElementNS('http://www.w3.org/2000/svg', 'style')
-  private readonly styleScopeClass = `vehicle-history-chart-${nextChartStyleScope++}`
-  private seriesClassByTag = new Map<string, string>()
-  private seriesColors: readonly { tag: string, color: string }[] = []
-
-  private readonly labelsX: AutoLabels
-  private readonly labelsY: AutoLabels
-  private readonly labelsAnnotations: AutoLabels
-  private readonly zoom: ZoomChartComponent
-  private labelStep: HistoryStep = 'day'
-  private labelSlot: Slot = 'battles'
-  private interval: { minX: number, maxX: number, step: HistoryStep } | null = null
-
-  constructor(private readonly highlightSync?: HighlightSynchronizer) {
-    super({
-      layoutVariant: 'vertical',
-      renderManager: globalChartRenderManagerSteps4,
-      renderBoundsPxPadding: { top: 12, bottom: 12 },
-      minLayoutSize: { top: 8, right: 8 },
-    })
-
-    const clip = new ChartClip('center', { top: -4, bottom: -4 })
-    const mask = this.mask
-    const clipLeft = new ChartClip('left')
-    const clipBottom = new ChartClip('bottom')
-    const clipTop = new ChartClip('top')
-
-    this.labelsX = new AutoLabels('horizontal', timeLabels('day')).clipBy(clipBottom)
-    this.labelsY = new AutoLabels('vertical', this.yLabels('battles')).clipBy(clipLeft)
-    this.labelsAnnotations = new AutoLabels('horizontal', { ...annotationLabelOptions([]), classes: 'history-annotations' }, 'top').clipBy(clipTop)
-
-    this.svg.classList.add(this.styleScopeClass)
-    this.svg.appendChild(this.seriesStyle)
-    this.svg.appendChild(this.annotationStyle)
-
-    this.zoom = new ZoomChartComponent({ chart: this, zoom: true, panDirection: 'horizontal' })
-    this.interaction.addComponent(this.zoom)
-    this.plot.clipBy(clip).maskBy(mask)
-    this.eventAreas.clipBy(clip)
-
-    const outageAreas = new PlotGroup(['history-outage-areas']).clipBy(clip)
-    for (const { start, end } of serverOutages.intervals) {
-      const area = new RectangleArea('history-outage-area', {
-        layoutLimited: true,
-        padding: { left: -1, right: -1 },
-      })
-      area.setPoints(
-        { x: Date.parse(start) / 1000, y: -Infinity },
-        { x: Date.parse(end) / 1000, y: Infinity },
-      )
-      outageAreas.addPlot(area)
-    }
-
-    this
-      .addPlot(outageAreas, 'outages')
-      .addPlot(this.eventAreas, 'events')
-      .addPlot(new TicksByLabels(this.labelsY), 'grid')
-      .addPlot(new TicksByLabels(this.labelsX, { classes: 'time-grid' }), 'grid')
-      .addPlot(this.plot, 'plot')
-      .addPlot(new TicksByLabels(this.labelsAnnotations, { classes: 'history-annotation-ticks', start: 0 }), 'annotations')
-      .addSlot('bottom', this.labelsX, 'labels')
-      .addSlot('left', this.labelsY, 'labels')
-      .addSlot('top', this.labelsAnnotations, 'annotations')
-      .addPlot(this.interaction)
-      .addDefs(clip, clipLeft, clipBottom, clipTop, mask)
-  }
-
-  setAnnotations(annotations: readonly HistoryAnnotation[]) {
-    for (const area of this.eventAreaPlots) this.eventAreas.removePlot(area)
-    this.eventAreaPlots = []
-
-    const colorRules: string[] = []
-    const events = annotations.filter(annotation => annotation.kind === 'event')
-    for (const [index, event] of events.entries()) {
-      const eventClass = `history-event-${index}`
-      const selector = `.${this.styleScopeClass} .${eventClass}`
-      colorRules.push(`${selector} { --history-event-color: ${event.color}; }`)
-
-      if (event.endTimestamp === undefined) continue
-
-      const area = new RectangleArea(['history-event-area', eventClass], { layoutLimited: true })
-      area.setPoints(
-        { x: event.timestamp, y: -Infinity },
-        { x: event.endTimestamp, y: Infinity },
-      )
-      this.eventAreas.addPlot(area)
-      this.eventAreaPlots.push(area)
-    }
-    this.annotationStyle.textContent = colorRules.join('\n')
-    this.labelsAnnotations.updateOptions(annotationLabelOptions(annotations))
-    this.svg.classList.toggle('with-annotations', annotations.length > 0)
-  }
-
-  setOutagesVisible(visible: boolean) {
-    this.svg.classList.toggle('with-outages', visible)
-  }
-
-  setHistory(history: VehicleHistoryPeriod[], slot: Slot, today: string, step: HistoryStep, averageWindow: HistoryAverageWindow = null) {
-    this.setSeriesColors([{ tag: 'vehicle', color: 'var(--blue-thin-color)' }])
-    this.setHistories([{ tag: 'vehicle', history }], slot, today, step, averageWindow)
-  }
-
-  setSeriesColors(series: readonly { tag: string, color: string }[]) {
-    this.seriesColors = series
-    this.updateSeriesColors()
-  }
-
-  private updateSeriesColors() {
-    const rules = this.seriesColors.flatMap(item => {
-      const seriesClass = this.seriesClassByTag.get(item.tag)
-      return seriesClass ? [`.${this.styleScopeClass} .${seriesClass} { color: ${item.color}; }`] : []
-    }).join('\n')
-    if (this.seriesStyle.textContent !== rules) this.seriesStyle.textContent = rules
-  }
+  private labelSlot: Slot | null = null
+  private historyAnnotations: readonly HistoryAnnotation[] = []
+  private outagesVisible = false
 
   setHistories(series: VehicleHistorySeries[], slot: Slot, today: string, step: HistoryStep, averageWindow: HistoryAverageWindow = null) {
-    this.tooltipCtx.value = null
-
-    if (this.labelStep !== step) {
-      this.labelsX.updateOptions(timeLabels(step))
-      this.labelStep = step
-    }
-
     if (this.labelSlot !== slot) {
-      this.labelsY.updateOptions(this.yLabels(slot))
+      const definition = availableSlots[slot]
+      this.setValueFormat({
+        formatValue: (value, tickStep) => formatSlotValue(slot, value, tickStep),
+        fractional: 'format' in definition && (definition.format === 'decimal' || definition.format === 'percent'),
+        minValue: 0,
+      })
       this.labelSlot = slot
     }
 
-    const pointsKey = JSON.stringify([slot, today, step, averageWindow])
+    const key = JSON.stringify([slot, today, step])
     const tags = new Set(series.map(item => item.tag))
-    const nextSeriesClassByTag = new Map<string, string>()
-    let changed = false
-
-    for (const [tag, line] of this.lines) {
-      if (tags.has(tag)) continue
-
-      this.plot.removePlot(line)
-      this.lines.delete(tag)
-      this.seriesPoints.delete(tag)
-      changed = true
+    for (const tag of this.historyPoints.keys()) {
+      if (!tags.has(tag)) this.historyPoints.delete(tag)
     }
 
-    for (const [index, item] of series.entries()) {
-      let line = this.lines.get(item.tag)
-
-      if (!line) {
-        line = new AutoLine<HistoryPoint>({ classes: 'history-line', interactionTag: item.tag })
-        this.lines.set(item.tag, line)
-        this.plot.addPlot(line)
-        changed = true
+    const points: TimeSeries<HistoryPoint>[] = series.map(item => {
+      let cached = this.historyPoints.get(item.tag)
+      if (!cached || cached.history !== item.history || cached.key !== key) {
+        cached = { history: item.history, key, rawPoints: null, points: null, averageWindow }
+        this.historyPoints.set(item.tag, cached)
       }
 
-      const previousClass = this.seriesClassByTag.get(item.tag)
-      const seriesClass = `history-series-${index}`
-
-      if (previousClass && previousClass !== seriesClass) line.getRootElement().classList.remove(previousClass)
-      line.getRootElement().classList.add(seriesClass)
-      nextSeriesClassByTag.set(item.tag, seriesClass)
-
-      const enabled = item.enabled !== false
-      const cached = this.seriesPoints.get(item.tag)
-      const sameData = cached?.history === item.history && cached.key === pointsKey
-      let points = sameData ? cached.points : null
-
-      if (enabled && points === null) {
-        const rawPoints = this.historyPoints(item, slot, today, step)
-        points = averageWindow === null ? rawPoints : this.averagePoints(rawPoints, averageWindow)
+      if (item.enabled !== false) {
+        cached.rawPoints ??= this.preparePoints(item.history, slot, today, step)
+        if (cached.points === null || cached.averageWindow !== averageWindow) {
+          cached.points = averageWindow === null ? cached.rawPoints : movingAveragePoints(cached.rawPoints, averageWindow)
+          cached.averageWindow = averageWindow
+        }
       }
+      return { tag: item.tag, points: cached.points ?? [], enabled: item.enabled }
+    })
 
-      if (!cached || cached.enabled !== enabled || (enabled && !sameData)) {
-        line.setPoints(enabled && points ? points : [])
-      }
-      this.seriesPoints.set(item.tag, { history: item.history, key: pointsKey, points, enabled })
-    }
-
-    this.seriesClassByTag = nextSeriesClassByTag
-    this.updateSeriesColors()
-
-    if (changed) this.updateInteractions()
-
+    this.setTimeAxis(step)
+    this.setSeries(points)
     const starts = series.flatMap(item => item.history.length ? [historyDayStart(item.history[0].periodStart)] : [])
-    if (!starts.length) {
-      if (!series.length) this.interval = null
-      return
-    }
-
-    const minX = Math.min(...starts, historyDayStart('2024-01-01'))
-    const maxX = historyDayStart(today)
-    if (this.interval?.minX === minX && this.interval.maxX === maxX && this.interval.step === step) return
-
-    this.interval = { minX, maxX, step }
-    this.zoom.updateOptions({
-      chart: this,
-      zoom: true,
-      panDirection: 'horizontal',
-      limits: {
-        minX, maxX,
-        minDeltaX: Math.min(minimumHistoryWindow(step), maxX - minX),
-        maxDeltaX: maxX - minX,
-        elastic: true
-      },
-    })
-    this.showAllHistory()
+    if (starts.length) {
+      this.viewport.update({
+        range: {
+          minX: Math.min(...starts, historyDayStart('2024-01-01')),
+          maxX: historyDayStart(today),
+        },
+        minWindow: minimumTimeSeriesWindow(step),
+        resetKey: step,
+      })
+    } else if (!series.length) this.viewport.clear()
   }
 
-  private updateInteractions() {
-    for (const component of this.interactionComponents) this.interaction.removeComponent(component)
-    this.interactionComponents = []
-
-    const lines = [...this.lines.values()]
-    if (!lines.length) return
-
-    const interactions = lines.slice(1).reduce<AutoLineInteraction<HistoryPoint>>(
-      (source, line) => source.union(line.interaction), lines[0].interaction)
-    const selection = interactions.nearestByAxis('x')
-    const strokeSelection = interactions.nearStroke({ maxDistance: 20 }).nearest()
-    const callbacks = new CallbackComponent()
-    callbacks.on('click', event => {
-      if (!this.onSeriesClick.hasListeners) return
-      const frame = new InteractionFrame(event.space, {
-        key: Symbol('click'),
-        pointer: { point: event.point, cursor: event.cursor, isTouch: event.isTouch },
-      })
-      const [hit] = frame.resolve(strokeSelection)
-      if (typeof hit?.interactionTag === 'string') this.onSeriesClick.emit({ tag: hit.interactionTag, event })
-    })
-
-    let highlight: Highlight | null = null
-
-    if (lines.length > 1) {
-      highlight = new Highlight({
-        selection: strokeSelection,
-        class: 'highlighted',
-      })
-
-      if (this.highlightSync) highlight.syncWith(this.highlightSync)
-    }
-
-    this.interactionComponents = [
-      callbacks,
-      ...(highlight ? [highlight] : []),
-      new VerticalLine({ selection, offset: { start: -4, end: 0 } }),
-      new MarkerOverlay({
-        selection,
-        size: 4,
-        maskSize: 6,
-        markerClasses: 'history-hover-marker',
-        classesForHit: hit => this.seriesClassByTag.get(hit.datum.series) ?? [],
-        targetMasks: [this.mask.root],
-      }),
-      new ChartTooltip({
-        selection,
-        tooltipPivot: 'nearest',
-        exposeHighlights: highlight ? [highlight] : [],
-        onHide: () => this.tooltipCtx.value = null,
-        onPositionChange: ctx => this.tooltipCtx.value = ctx,
-      }),
-    ]
-
-    for (const component of this.interactionComponents) this.interaction.addComponent(component)
+  showAll() {
+    this.viewport.showAll()
   }
 
-  private historyPoints(series: VehicleHistorySeries, slot: Slot, today: string, step: HistoryStep) {
+  override dispose() {
+    this.annotationLayer.dispose()
+    super.dispose()
+  }
+
+  setHistoryAnnotations(annotations: readonly HistoryAnnotation[]) {
+    this.historyAnnotations = annotations
+    this.updateHistoryAnnotations()
+  }
+
+  setOutagesVisible(visible: boolean) {
+    this.outagesVisible = visible
+    this.updateHistoryAnnotations()
+  }
+
+  private updateHistoryAnnotations() {
+    this.annotationLayer.setAnnotations(historyChartAnnotations(this.historyAnnotations, this.outagesVisible))
+  }
+
+  private preparePoints(history: VehicleHistoryPeriod[], slot: Slot, today: string, step: HistoryStep) {
     const points: (HistoryPoint | null)[] = []
     let previousStart: number | null = null
     const todayStart = historyDayStart(today)
 
-    for (const row of series.history) {
+    for (const row of history) {
       const { start, end } = historyPeriodWindow(row.periodStart, step, todayStart)
-      const x = (start + end) / 2
       const value = row[slot] ?? null
-
       // Пропущенные периоды и NULL остаются разрывами, а не превращаются в нули.
       if (previousStart !== null && start > nextHistoryPeriod(previousStart, step)) points.push(null)
-
       if (value !== null && Number.isFinite(value)) {
         points.push({
-          series: series.tag,
-          x,
+          x: (start + end) / 2,
           y: value,
           periodStart: row.periodStart,
           periodEnd: historyDayString(end - DAY),
@@ -355,66 +133,9 @@ export class VehicleHistoryChart extends UniversalChart {
           slot,
         })
       } else points.push(null)
-
       previousStart = start
     }
 
     return points
-  }
-
-  showAllHistory() {
-    if (this.interval) this.setRenderBounds({ ...this.interval, minY: null, maxY: null })
-  }
-
-  private averagePoints(points: (HistoryPoint | null)[], window: NonNullable<HistoryAverageWindow>): (HistoryPoint | null)[] {
-    const averaged = [...points]
-    const radius = Math.floor(window / 2)
-    let segmentStart = 0
-
-    while (segmentStart < points.length) {
-      if (points[segmentStart] === null) {
-        segmentStart++
-        continue
-      }
-
-      let segmentEnd = segmentStart
-      while (segmentEnd < points.length && points[segmentEnd] !== null) segmentEnd++
-
-      for (let index = segmentStart; index < segmentEnd; index++) {
-        const from = Math.max(segmentStart, index - radius)
-        const to = Math.min(segmentEnd, index + radius + 1)
-
-        let sum = 0
-        for (let neighbor = from; neighbor < to; neighbor++) sum += points[neighbor]!.y
-        averaged[index] = { ...points[index]!, y: sum / (to - from) }
-      }
-
-      segmentStart = segmentEnd
-    }
-
-    return averaged
-  }
-
-  private yLabels(slot: Slot): LabelsOptions {
-    const definition = availableSlots[slot]
-    const fractional = 'format' in definition && (definition.format === 'decimal' || definition.format === 'percent')
-
-    const steps = [
-      ...(fractional ? [0.01, 0.02, 0.05, 0.1, 0.2, 0.5] : []),
-      1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000,
-    ]
-    const candidates = labelCandidates({ step: steps })
-    const candidateSteps = candidates.map(candidate => (candidate.source as { step: number }).step)
-
-    return {
-      values: candidates,
-      labelForValue: (value, ctx) => formatSlotValue(slot, value, candidateSteps[ctx.candidateIndex]),
-      keyForValue: value => `${value}`,
-      padding: { clip: 20, flow: 8 },
-      labelOffset: 8,
-      strategy: 'classic-flow',
-      from: 0,
-      onlyFitted: true,
-    }
   }
 }

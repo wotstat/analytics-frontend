@@ -1,0 +1,26 @@
+@mixin history-annotation-styles {
+  &.annotation-version {
+    --history-annotation-color: #f1c578;
+    --selection-tile-accent: #fbbb4a;
+  }
+
+  &.annotation-patch {
+    --history-annotation-color: #b6cde6;
+    --selection-tile-accent: #a9cbef;
+  }
+
+  &.annotation-micropatch {
+    --history-annotation-color: rgba(255, 255, 255, 0.5);
+    --selection-tile-accent: #fff;
+  }
+
+  &.annotation-outage {
+    --history-annotation-color: #eb6759;
+    --selection-tile-accent: #f44f3d;
+  }
+
+  &.history-event {
+    --history-annotation-color: var(--history-event-color);
+    --selection-tile-accent: var(--history-event-accent);
+  }
+}

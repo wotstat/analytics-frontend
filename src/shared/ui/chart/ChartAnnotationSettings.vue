@@ -11,7 +11,7 @@
         <h3 v-if="group.label">{{ group.label }}</h3>
         <div class="annotation-options" :class="{ row: group.layout === 'row' }">
           <SelectionTile v-for="option in group.options" :key="option.id" class="annotation-option"
-            density="compact" :accent-color="option.color ? menuAccentColor(option.color) : undefined"
+            :class="classNames(option.classes)" density="compact"
             :selected="option.selected" :disabled="option.disabled"
             @select="emit('toggle', group.id, option.id)">
             {{ option.label }}
@@ -27,7 +27,7 @@ import { computed, ref, useTemplateRef } from 'vue'
 import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
 import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
-import { ColorHSVA } from '@/shared/uiKit/colorPicker/ColorHSVA'
+import { classNames } from '@/shared/uiKit/chart/universalChart/utils/utils'
 import type { ChartAnnotationGroup } from './chartAnnotationSettings'
 
 const props = withDefaults(defineProps<{
@@ -43,15 +43,6 @@ const hasAnnotations = computed(() => visibleGroups.value.some(group => group.op
 const open = ref(false)
 const trigger = useTemplateRef<InstanceType<typeof ToolbarButton>>('trigger')
 const target = computed(() => trigger.value?.element ?? null)
-
-function menuAccentColor(color: string) {
-  const accent = new ColorHSVA(0, 0, 0)
-  accent.setHex(color)
-  accent.s = Math.min(0.75, accent.s * 1.4)
-  accent.v = Math.min(1, accent.v * 1.04)
-  accent.a = 1
-  return `#${accent.toHex()}`
-}
 </script>
 
 <style scoped lang="scss">

@@ -70,6 +70,10 @@ export class AutoMarker<T extends AutoMarkerDatum = AutoMarkerDatum> implements 
     return this.circle
   }
 
+  setColor(color?: string) {
+    this.circle.style.color = color ?? ''
+  }
+
   render(data: T, space: ChartSpace): void {
     const resolved = resolveMarkerData(data, this.defaultData)
     const point = space.chartToLayout(resolved)

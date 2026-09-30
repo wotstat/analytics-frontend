@@ -18,6 +18,7 @@ const DEFAULT_SMOOTHING = 1
 
 type Options = {
   classes?: Classes
+  color?: string
   interactionTag?: InteractionTag
   area?: boolean | ChartGradient
   precision?: number
@@ -38,11 +39,13 @@ export class AutoLine<T extends Point = Point> extends BasePlotRenderer {
 
   private strokeSampleD: string | null = null
   private strokeSampleSubpaths: readonly StrokeSubpath[] = []
+  private color: string | undefined
 
   readonly interaction: AutoLineInteractionSource<T>
 
   constructor(readonly options: Options) {
     super(options.classes, { affectsBounds: options.affectsBounds ?? true })
+    this.color = options.color
     this.interaction = new AutoLineInteractionSource<T>(
       () => this.points,
       () => this.getStrokeGeometry(),
@@ -78,6 +81,16 @@ export class AutoLine<T extends Point = Point> extends BasePlotRenderer {
 
   getPoints(): readonly (T | null)[] {
     return this.points
+  }
+
+  setColor(color?: string) {
+    if (this.color === color) return this
+
+    this.color = color
+    if (this.line) this.line.style.color = color ?? ''
+    if (this.area) this.area.style.color = color ?? ''
+    this.requestRender()
+    return this
   }
 
   setPoints(points: (T | null)[]) {
@@ -157,6 +170,7 @@ export class AutoLine<T extends Point = Point> extends BasePlotRenderer {
       if (!this.area) {
         this.area = document.createElementNS(NAMESPACE, 'path')
         addClasses(this.area, 'area', this.options.classes)
+        this.area.style.color = this.color ?? ''
         this.root.appendChild(this.area)
         if (this.options.area instanceof ChartGradient) this.options.area.fill(this.area)
       }
@@ -166,6 +180,7 @@ export class AutoLine<T extends Point = Point> extends BasePlotRenderer {
     if (!this.line) {
       this.line = document.createElementNS(NAMESPACE, 'path')
       addClasses(this.line, 'line', this.options.classes)
+      this.line.style.color = this.color ?? ''
       this.root.appendChild(this.line)
     }
     this.line?.setAttribute('d', paths.map(t => t.line).join(' '))

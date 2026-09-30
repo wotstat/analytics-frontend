@@ -1,7 +1,7 @@
 import type { LabelLevel, Options, TickSource, ValueGenerator } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
-import type { HistoryStep } from './historyStep'
+import type { TimeSeriesStep } from './timeSeries'
+import { DAY } from './timeSeriesTime'
 
-export const DAY = 24 * 60 * 60
 const WEEK = 7 * DAY
 // Начало Unix-времени приходится на четверг; сдвиг привязывает недели к понедельнику по UTC.
 const MONDAY_OFFSET = -3 * DAY
@@ -37,7 +37,7 @@ export function isoWeekNumber(monday: number): number {
   return Math.floor((monday - firstMonday) / WEEK) + 1
 }
 
-export function timeLabels(step: HistoryStep): Options {
+export function timeLabels(mode: TimeSeriesStep | 'auto' = 'auto'): Options {
   const dayTicks: TickSource = { source: { step: DAY }, minPixelSpacing: 6, classes: 'day-ticks' }
   const weekSource = { step: WEEK, offset: MONDAY_OFFSET }
   const weekTicks: TickSource = { source: weekSource, minPixelSpacing: 8, classes: 'week-ticks' }
@@ -75,8 +75,8 @@ export function timeLabels(step: HistoryStep): Options {
   }
 
   const smallerTicks: TickSource[] = []
-  if (step === 'day') smallerTicks.push(dayTicks)
-  else if (step === 'week') smallerTicks.push(weekTicks)
+  if (mode === 'day') smallerTicks.push(dayTicks)
+  else if (mode === 'week') smallerTicks.push(weekTicks)
 
   const monthWithSubticks: LabelLevel = {
     ...month,
@@ -94,10 +94,12 @@ export function timeLabels(step: HistoryStep): Options {
   }
 
   const denseCandidates: LabelLevel[][] = []
-  if (step === 'month') {
+  if (mode === 'auto') {
+    denseCandidates.push([day, month, year], [week, month, year], [month, year])
+  } else if (mode === 'month') {
     denseCandidates.push([month, year])
   } else {
-    const period = step === 'day' ? day : week
+    const period = mode === 'day' ? day : week
     denseCandidates.push([period, month, year], [monthWithSubticks, year])
   }
   denseCandidates.push([abbreviatedMonth, year])

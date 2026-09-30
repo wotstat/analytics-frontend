@@ -1,7 +1,9 @@
+import type { Classes } from '@/shared/uiKit/chart/universalChart/utils/utils'
+
 export type ChartAnnotationOption = {
   id: string
   label: string
-  color?: string
+  classes?: Classes
   selected: boolean
   disabled?: boolean
 }

@@ -128,13 +128,14 @@ export class UniversalChart extends BaseChart {
     return this
   }
 
-  addPlot(plot: PlotRenderer, path: string | string[] = []) {
+  addPlot(plot: PlotRenderer, path: string | string[] = [], options: { placement?: 'front' | 'back' } = {}) {
     const root = this.getRootFor(Array.isArray(path) ? path : path.split('>'))
 
     const element = plot.getRootElement?.()
     if (element) root.appendChild(element)
 
     plot.attach?.(root, this)
+    if (element && options.placement === 'back') root.prepend(element)
     this.plotRenderers.add(plot)
     this.allRenderers.add(plot)
     this.dataDidChange()

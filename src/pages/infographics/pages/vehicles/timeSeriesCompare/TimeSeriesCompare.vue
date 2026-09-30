@@ -1,5 +1,5 @@
 <template>
-  <section class="vehicle-comparison">
+  <section class="vehicle-comparison" :class="{ 'with-annotations': annotations.length > 0 }">
     <ComparisonHistory v-for="source in sources" :key="source.tag" :selection="source.selection"
       :filters="source.filters" :before-day="beforeDay" :step :slot :retry="retries[source.tag] ?? 0" :queue="historyQueue"
       @update="states.set(source.tag, $event)" />
@@ -76,12 +76,15 @@ import HistoryAnnotationSettings from '../timeSeries/HistoryAnnotationSettings.v
 import { useHistoryAnnotationSettings } from '../timeSeries/useHistoryAnnotationSettings'
 import { useGameVersionAnnotations } from '../timeSeries/gameVersionAnnotations'
 import { useHistoryEventAnnotations } from '../timeSeries/useHistoryEventAnnotations'
+import { useHistoryEventStyles } from '../timeSeries/useHistoryEventStyles'
 import { applyHistoryFilters, hasHistoryValues } from '../timeSeries/historyValues'
 import { snapshotComparisonFilters, type ComparisonSource } from './types'
 import { comparisonName } from './comparisonName'
 import ComparisonHistory from './ComparisonHistory.vue'
 import ComparisonTooltip from './ComparisonTooltip.vue'
 import { createComparisonHistoryQueue } from './comparisonHistoryQueue'
+
+useHistoryEventStyles()
 
 const props = defineProps<{
   filters: VehicleFilters
@@ -167,7 +170,7 @@ watch([series, slot, beforeDay, step, averageWindow], () => {
 watch(() => props.sources.map(source => ({ tag: source.tag, color: source.color })),
   colors => chart.setSeriesColors(colors), { immediate: true })
 
-watch(annotations, value => chart.setAnnotations(value), { immediate: true })
+watch(annotations, value => chart.setHistoryAnnotations(value), { immediate: true })
 watch(annotationOptions.showWotstatOutages, visible => chart.setOutagesVisible(visible), { immediate: true })
 
 watch(() => props.sources.map(source => source.tag), tags => {
@@ -184,7 +187,9 @@ watch(() => props.sources.map(source => source.tag), tags => {
 </script>
 
 <style scoped lang="scss">
-@use '../timeSeries/historyChart.scss' as *;
+@use '@/shared/ui/chart/timeSeriesChart.scss' as *;
+@use '@/shared/ui/chart/timeSeriesAnnotations.scss' as *;
+@use '../timeSeries/historyAnnotationStyles.scss' as *;
 
 .vehicle-comparison {
   min-width: 0;
@@ -299,7 +304,19 @@ watch(() => props.sources.map(source => source.tag), tags => {
   }
 
   :deep(.universal-chart-root) {
-    @include history-chart;
+    @include time-series-chart;
+    @include time-series-annotations;
+
+    .time-series-annotation-area,
+    .time-series-annotations .label,
+    .time-series-annotation-ticks .tick-level {
+      @include history-annotation-styles;
+      color: var(--history-annotation-color);
+    }
+  }
+
+  &.with-annotations :deep(.grid) {
+    opacity: 0.1;
   }
 }
 </style>

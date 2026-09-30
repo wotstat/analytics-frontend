@@ -9,7 +9,9 @@ import type { ChartAnnotationGroup } from '@/shared/ui/chart/chartAnnotationSett
 import type { useHistoryAnnotationSettings } from './useHistoryAnnotationSettings'
 import { getHistoryEventRegions, historyEvents } from '@/shared/game/historyEvents'
 import type { GameRegion } from '@/shared/game/wot'
-import { outageAnnotationColor, versionAnnotationColors } from './historyAnnotations'
+import { useHistoryEventStyles } from './useHistoryEventStyles'
+
+useHistoryEventStyles()
 
 const props = defineProps<{
   settings: ReturnType<typeof useHistoryAnnotationSettings>
@@ -19,9 +21,9 @@ const props = defineProps<{
 const visibleEvents = computed(() => historyEvents.filter(event => getHistoryEventRegions(event, props.regions)?.length !== 0))
 
 const versionOptions = [
-  { key: 'showVersions', label: 'Версии', color: versionAnnotationColors.version },
-  { key: 'showPatches', label: 'Патчи', color: versionAnnotationColors.patch },
-  { key: 'showMicropatches', label: 'Микропатчи', color: versionAnnotationColors.micropatch },
+  { key: 'showVersions', label: 'Версии', classes: 'annotation-version' },
+  { key: 'showPatches', label: 'Патчи', classes: 'annotation-patch' },
+  { key: 'showMicropatches', label: 'Микропатчи', classes: 'annotation-micropatch' },
 ] as const
 
 const groups = computed<ChartAnnotationGroup[]>(() => [
@@ -32,7 +34,7 @@ const groups = computed<ChartAnnotationGroup[]>(() => [
     options: versionOptions.map(option => ({
       id: option.key,
       label: option.label,
-      color: option.color,
+      classes: option.classes,
       selected: props.settings[option.key].value,
     })),
   },
@@ -40,12 +42,12 @@ const groups = computed<ChartAnnotationGroup[]>(() => [
     id: 'events',
     label: 'События',
     options: [
-      { id: 'showWotstatOutages', label: 'Недоступность wotstat', color: outageAnnotationColor,
+      { id: 'showWotstatOutages', label: 'Недоступность wotstat', classes: 'annotation-outage',
         selected: props.settings.showWotstatOutages.value },
       ...visibleEvents.value.map(event => ({
         id: event.id,
         label: event.label,
-        color: event.color,
+        classes: ['history-event', `annotation-${event.id}`],
         selected: props.settings.enabledEvents.value.includes(event.id),
       })),
     ],
@@ -63,3 +65,11 @@ function toggleOption(groupId: string, optionId: string) {
   }
 }
 </script>
+
+<style lang="scss">
+@use './historyAnnotationStyles.scss' as *;
+
+.annotation-option {
+  @include history-annotation-styles;
+}
+</style>

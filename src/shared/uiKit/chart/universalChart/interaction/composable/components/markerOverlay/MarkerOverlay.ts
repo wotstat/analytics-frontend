@@ -11,12 +11,13 @@ export type MarkerOverlayOptions<THit extends InteractionHit = InteractionHit> =
   classes?: Classes
   markerClasses?: Classes
   classesForHit?: (hit: THit) => Classes
+  colorForHit?: (hit: THit) => string | undefined
   targetMasks?: Element[] | Element
   size?: number
   maskSize?: number
 }
 
-type PlannedMarker = { anchor: Point, classes: string }
+type PlannedMarker = { anchor: Point, classes: string, color?: string }
 type PlacedMarker = { marker: AutoMarker, classes: string }
 
 const DEFAULT_SIZE = 4
@@ -68,7 +69,11 @@ export class MarkerOverlay<THit extends InteractionHit = InteractionHit> impleme
       if (ys.has(anchor.y)) continue
       ys.add(anchor.y)
 
-      planned.push({ anchor, classes: classNames('hover-marker', this.options.markerClasses, this.options.classesForHit?.(hit)).join(' ') })
+      planned.push({
+        anchor,
+        classes: classNames('hover-marker', this.options.markerClasses, this.options.classesForHit?.(hit)).join(' '),
+        color: this.options.colorForHit?.(hit),
+      })
     }
 
     this.planned = planned
@@ -88,6 +93,7 @@ export class MarkerOverlay<THit extends InteractionHit = InteractionHit> impleme
         this.markers[i] = { marker: this.createMarker(plan.classes), classes: plan.classes }
       }
 
+      this.markers[i].marker.setColor(plan.color)
       this.markers[i].marker.renderLayout(plan.anchor)
     }
   }

@@ -10,15 +10,6 @@ export type HistoryEventAnnotation = {
   endTimestamp?: number
   label: string
   kind: 'event'
-  color: string
 }
 
 export type HistoryAnnotation = VersionHistoryAnnotation | HistoryEventAnnotation
-
-export const versionAnnotationColors = {
-  version: '#f1c578ff',
-  patch: '#b6cde6ff',
-  micropatch: '#ffffff80',
-}
-
-export const outageAnnotationColor = '#eb6759'

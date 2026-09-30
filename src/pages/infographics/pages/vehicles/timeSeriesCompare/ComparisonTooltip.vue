@@ -39,7 +39,7 @@ const props = defineProps<{
 const point = computed(() => props.ctx.hit.datum)
 
 const rows = computed(() => {
-  const hits = new Map(props.ctx.hits.map(hit => [hit.datum.series, hit]))
+  const hits = new Map(props.ctx.hits.map(hit => [hit.interactionTag, hit]))
 
   return props.sources.map(source => {
     const hit = hits.get(source.tag)

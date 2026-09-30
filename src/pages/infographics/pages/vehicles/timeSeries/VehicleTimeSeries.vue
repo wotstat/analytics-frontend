@@ -1,5 +1,5 @@
 <template>
-  <section class="vehicle-time-series" :class="{ split: split !== null }">
+  <section class="vehicle-time-series" :class="{ split: split !== null, 'with-annotations': annotations.length > 0 }">
     <HeaderTooltip :ctx="split === null ? chart.tooltipCtx.value : null" class="history-toolbar-header">
       <template #left>
         <VehicleMetricSelector v-model="slot" />
@@ -76,12 +76,15 @@ import LineChartIcon from '../vehicleListTable/assets/line-chart.svg'
 import { useHistoryAnnotationSettings } from './useHistoryAnnotationSettings'
 import { useGameVersionAnnotations } from './gameVersionAnnotations'
 import { useHistoryEventAnnotations } from './useHistoryEventAnnotations'
+import { useHistoryEventStyles } from './useHistoryEventStyles'
 import { applyHistoryFilters, hasHistoryValues } from './historyValues'
 import { historySplitName, historySplitOptions, orderHistorySplitKeys, type VehicleHistorySplit } from './historySplit'
 import { historySplitSeriesColor } from './seriesColors'
 import VehicleMetricSelector from '../VehicleMetricSelector.vue'
 import type { VehicleSelection } from '../shared/vehicleGrouping'
 import ComparisonTooltip from '../timeSeriesCompare/ComparisonTooltip.vue'
+
+useHistoryEventStyles()
 
 const props = defineProps<{
   selection: VehicleSelection
@@ -162,7 +165,7 @@ watch(() => split.value === null
   ? [{ tag: 'vehicle', color: 'var(--blue-thin-color)' }]
   : splitSources.value, colors => chart.setSeriesColors(colors), { immediate: true })
 
-watch(annotations, value => chart.setAnnotations(value), { immediate: true })
+watch(annotations, value => chart.setHistoryAnnotations(value), { immediate: true })
 watch(annotationOptions.showWotstatOutages, visible => chart.setOutagesVisible(visible), { immediate: true })
 
 let splitMenuId = -1
@@ -204,7 +207,9 @@ onBeforeUnmount(() => closeContextMenu(splitMenuId))
 </script>
 
 <style lang="scss" scoped>
-@use './historyChart.scss' as *;
+@use '@/shared/ui/chart/timeSeriesChart.scss' as *;
+@use '@/shared/ui/chart/timeSeriesAnnotations.scss' as *;
+@use './historyAnnotationStyles.scss' as *;
 
 .vehicle-time-series {
   margin-top: 12px;
@@ -298,11 +303,19 @@ onBeforeUnmount(() => closeContextMenu(splitMenuId))
   }
 
   :deep(.universal-chart-root) {
-    @include history-chart;
+    @include time-series-chart;
+    @include time-series-annotations;
 
-    .history-line {
-      stroke: currentColor;
+    .time-series-annotation-area,
+    .time-series-annotations .label,
+    .time-series-annotation-ticks .tick-level {
+      @include history-annotation-styles;
+      color: var(--history-annotation-color);
     }
+  }
+
+  &.with-annotations :deep(.grid) {
+    opacity: 0.1;
   }
 }
 </style>

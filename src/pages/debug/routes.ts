@@ -76,6 +76,13 @@ const entries = [
     component: () => import('./pages/chartToolbar/Index.vue'),
   },
   {
+    path: 'time-series',
+    title: 'Временной график',
+    description: 'Ось UTC, готовые ряды, разрывы, среднее, диапазон и общие аннотации.',
+    group: 'uiKit',
+    component: () => import('./pages/timeSeries/Index.vue'),
+  },
+  {
     path: 'tip-bubble',
     title: 'TipBubble',
     description: 'Обучающие подсказки: очередь внутри группы, autoExtend, запоминание показов.',

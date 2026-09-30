@@ -2,7 +2,7 @@ import { computed, type ComputedRef, type Ref } from 'vue'
 import { getHistoryEventRegions, historyEvents } from '@/shared/game/historyEvents'
 import type { VehicleRegion } from '../filters/types'
 import type { HistoryEventAnnotation } from './historyAnnotations'
-import { DAY } from './timeLabels'
+import { DAY } from '@/shared/ui/chart/timeSeriesTime'
 
 export function useHistoryEventAnnotations(enabledEvents: Ref<string[]>, regions: ComputedRef<readonly VehicleRegion[]>) {
   return computed<HistoryEventAnnotation[]>(() => historyEvents.flatMap(event => {
@@ -20,7 +20,6 @@ export function useHistoryEventAnnotations(enabledEvents: Ref<string[]>, regions
         : Date.parse(event.end) / 1000 + (/^\d{4}-\d{2}-\d{2}$/.test(event.end) ? DAY : 0),
       label,
       kind: 'event',
-      color: event.color,
     }]
   }))
 }
