@@ -16,7 +16,7 @@ export type VehicleFilters = {
 export function createVehicleFilters(): VehicleFilters {
   return {
     regions: ['RU'],
-    battleModes: ['@regular'],
+    battleModes: ['REGULAR'],
     arenas: [],
     platoon: 'any',
     result: 'any',
