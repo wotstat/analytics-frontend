@@ -1,6 +1,6 @@
 <template>
   <div class="player-nickname">
-    <SearchLine v-model="nickname" :placeholder="'Никнейм'" @clear="handleClear">
+    <SearchLine v-model="nickname" name="nickname" :placeholder="'Никнейм'" @clear="handleClear">
       <template #icon>
         <PlayerIcon />
       </template>

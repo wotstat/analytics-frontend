@@ -5,7 +5,8 @@
       <Search class="search-icon" v-else />
     </div>
     <!-- <Search class="search-icon" /> -->
-    <input name="search" type="text" :placeholder="placeholder ?? 'Поиск'" v-model="value" ref="searchInput" />
+    <input :name="name" :autocomplete="name ? undefined : 'off'" type="text" :placeholder="placeholder ?? 'Поиск'"
+      v-model="value" ref="searchInput" />
     <button class="clear-input" @click="value = ''; emit('clear')" :class="value == '' ? 'empty' : ''">
       <X class="clear-icon" />
     </button>
@@ -23,6 +24,7 @@ import { onMounted, useSlots, useTemplateRef } from 'vue'
 const searchInput = useTemplateRef<HTMLInputElement>('searchInput')
 
 const props = defineProps<{
+  name?: string
   placeholder?: string
   autofocus?: boolean
 }>()
