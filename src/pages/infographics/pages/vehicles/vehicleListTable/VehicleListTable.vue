@@ -6,7 +6,8 @@
       <SearchLine v-if="showName" v-model="search" class="search" placeholder="Найти танк" />
       <VehicleListFilters v-model="localFilters" :show-vehicle-filters="showName" />
       <VehicleColumnSelector v-model="selectedSlots" v-model:open="columnsOpen" :max-slots="maxSelectableSlots" />
-      <VehicleTableSettings v-model="period" />
+      <VehicleTableSettings v-model="period" v-model:show-value-bars="showValueBars"
+        v-model:extended-palette="extendedPalette" />
     </div>
 
     <ComposableTable v-model:expanded-rows="expandedRows" class="vehicle-stats" :columns
@@ -61,6 +62,12 @@
 
       <template #cell-name="{ row }">
         <VehicleNameCell :vehicle="row" :latest-day="latestDay" :search />
+      </template>
+
+      <template #cell="{ row, column, value }">
+        <span v-if="showValueBars && column.metric && Number.isFinite(row[column.metric])" class="value-bar"
+          :style="valueBarStyle(row, column.metric)"></span>
+        <span class="metric-value" :class="{ 'with-bar': showValueBars }">{{ value ?? '—' }}</span>
       </template>
 
       <template #expanded="{ row }">
@@ -123,7 +130,7 @@
 
 <script setup lang="ts">
 import { computed, ref, useTemplateRef, watch } from 'vue'
-import { useElementSize } from '@vueuse/core'
+import { useElementSize, useLocalStorage } from '@vueuse/core'
 import { isErrorStatus, loading, success, type Status } from '@/db'
 import ModalWindowContent from '@/shared/ui/modalWindow/ModalWindowContent.vue'
 import PlusIcon from './assets/plus-bold.svg'
@@ -179,6 +186,11 @@ const METADATA_COLUMN_WIDTH = 40
 const EXPAND_COLUMN_WIDTH = 20
 const COMPARE_COLUMN_WIDTH = 36
 
+// Apple System Colors (Default dark): red, orange, yellow, green, cyan, purple.
+// https://developer.apple.com/design/human-interface-guidelines/color#Specifications
+const VALUE_BAR_COLORS = ['#ff4245', '#ffd600', '#30d158']
+const EXTENDED_VALUE_BAR_COLORS = ['#ff4245', '#ff9230', '#ffd600', '#30d158', '#3cd3fe', '#db34f2']
+
 const search = ref('')
 const localFilters = defineModel<LocalVehicleFilters>('localFilters', { required: true })
 const grouping = defineModel<VehicleGrouping>('grouping', { required: true })
@@ -188,6 +200,8 @@ const selectedSlots = defineModel<Slot[]>('slots', { required: true })
 const activeSlot = ref<Slot>(selectedSlots.value[0] ?? 'battles')
 const historyStep = ref<HistoryStep>('day')
 const averageWindow = ref<HistoryAverageWindow>(null)
+const showValueBars = useLocalStorage('vehicles-table-show-value-bars', false)
+const extendedPalette = useLocalStorage('vehicles-table-extended-value-bar-palette', false)
 
 const displayLimit = ref(PAGE_SIZE)
 const sorting = useVehicleSorting(grouping, selectedSlots)
@@ -302,6 +316,46 @@ const filteredVehicles = computed(() => {
 })
 
 const displayedVehicles = computed(() => filteredVehicles.value.slice(0, displayLimit.value))
+
+const metricRanges = computed(() => {
+  const ranges = new Map<Slot, { min: number, max: number }>()
+  if (!showValueBars.value) return ranges
+
+  // Диапазон охватывает все отфильтрованные строки, включая ещё не показанные.
+  for (const metric of visibleSlots.value) {
+    let min = Infinity
+    let max = -Infinity
+
+    for (const vehicle of filteredVehicles.value) {
+      const value = vehicle[metric]
+      if (value == null || !Number.isFinite(value)) continue
+      min = Math.min(min, value)
+      max = Math.max(max, value)
+    }
+
+    if (min !== Infinity) ranges.set(metric, { min, max })
+  }
+
+  return ranges
+})
+
+function valueBarStyle(vehicle: VehicleStatistics, metric: Slot) {
+  const range = metricRanges.value.get(metric)
+  const value = vehicle[metric]
+  if (!range || value == null || !Number.isFinite(value)) return
+
+  // При одинаковых значениях выделять минимум или максимум не нужно.
+  const progress = range.max === range.min ? 0.5 : (value - range.min) / (range.max - range.min)
+  const colors = extendedPalette.value ? EXTENDED_VALUE_BAR_COLORS : VALUE_BAR_COLORS
+  const colorPosition = progress * (colors.length - 1)
+  const colorIndex = Math.min(Math.floor(colorPosition), colors.length - 2)
+  const colorMix = (colorPosition - colorIndex) * 100
+
+  return {
+    '--value-bar-height': `${progress * 100}%`,
+    '--value-bar-color': `color-mix(in oklab, ${colors[colorIndex]}, ${colors[colorIndex + 1]} ${colorMix}%)`,
+  }
+}
 
 const comparisonCandidates = computed<ComparisonCandidate[]>(() => {
   const compared = new Set(props.comparedKeys)
@@ -436,6 +490,42 @@ watch([maxSelectableSlots, width], ([limit, tableWidth]) => {
     &:disabled {
       opacity: 0.3;
       cursor: default;
+    }
+  }
+
+  .metric-value {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &.with-bar {
+      padding: 0 8px;
+    }
+  }
+
+  .value-bar {
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    width: 3px;
+    height: 24px;
+    transform: translateY(-50%);
+    overflow: hidden;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--value-bar-color) 10%, transparent);
+    pointer-events: none;
+    opacity: 0.8;
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: var(--value-bar-height);
+      min-height: 2px;
+      border-radius: inherit;
+      background: var(--value-bar-color);
     }
   }
 
