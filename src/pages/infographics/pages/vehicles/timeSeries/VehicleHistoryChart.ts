@@ -5,14 +5,14 @@ import type { TimeSeries } from '@/shared/ui/chart/timeSeries/chart/timeSeries'
 import { DAY } from '@/shared/ui/chart/timeSeries/utils/timeSeriesTime'
 import { movingAveragePoints } from '@/shared/ui/chart/timeSeries/utils/movingAverage'
 import type { VehicleHistoryPeriod, VehicleHistorySeries } from '../shared/types'
-import { availableSlots, type Slot } from '../shared/vehicleMetrics'
-import { formatSlotValue } from '../shared/formatMetricValue'
+import { availableSlots, type Slot } from '../vehicleMetricSelector/vehicleMetrics'
+import { formatSlotValue } from '../vehicleMetricSelector/formatMetricValue'
 import {
   historyDayStart, historyDayString, historyPeriodWindow, nextHistoryPeriod,
   type HistoryAverageWindow, type HistoryStep,
-} from './historyStep'
-import type { HistoryAnnotation } from './historyAnnotations'
-import { historyChartAnnotations } from './historyChartAnnotations'
+} from './period/historyStep'
+import type { HistoryAnnotation } from './annotations/historyAnnotations'
+import { historyChartAnnotations } from './annotations/historyChartAnnotations'
 
 type HistoryPoint = {
   x: number

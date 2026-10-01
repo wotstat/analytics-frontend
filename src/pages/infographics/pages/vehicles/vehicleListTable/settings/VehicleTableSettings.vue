@@ -21,7 +21,7 @@ import { computed, ref, useTemplateRef } from 'vue'
 import SettingsIcon from '@/assets/icons/settings.svg'
 import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
-import { vehicleStatisticsPeriods, type VehicleStatisticsPeriod } from '../shared/vehicleStatisticsPeriod'
+import { vehicleStatisticsPeriods, type VehicleStatisticsPeriod } from '../../shared/vehicleStatisticsPeriod'
 
 const period = defineModel<VehicleStatisticsPeriod>({ required: true })
 const open = ref(false)

@@ -1,6 +1,6 @@
-import type { Slot } from '../shared/vehicleMetrics'
+import type { Slot } from '../vehicleMetricSelector/vehicleMetrics'
 import type { VehicleHistoryPeriod, VehicleThresholds } from '../shared/types'
-import type { HistoryStep } from './historyStep'
+import type { HistoryStep } from './period/historyStep'
 import { hasServerOutageOver } from '@/shared/wotstat/serverOutages'
 
 const INCOMPLETE_DAY_THRESHOLD_MS = 3 * 60 * 60 * 1000

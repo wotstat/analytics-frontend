@@ -57,25 +57,25 @@ import ResetIcon from '@/assets/icons/reset.svg'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import TimeSeriesPanel from '@/shared/ui/chart/timeSeries/panel/TimeSeriesPanel.vue'
 import type { ClickInteractionEvent } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/BaseInteractionController'
-import { formatSlotValue } from '../shared/formatMetricValue'
+import { formatSlotValue } from '../vehicleMetricSelector/formatMetricValue.ts'
 import { useLegend } from '@/shared/ui/chart/legend/useLegend'
-import VehicleMetricSelector from '../VehicleMetricSelector.vue'
+import VehicleMetricSelector from '../vehicleMetricSelector/VehicleMetricSelector.vue'
 import type { VehicleFilters } from '../filters/types'
-import type { Slot } from '../shared/vehicleMetrics'
+import type { Slot } from '../vehicleMetricSelector/vehicleMetrics.ts'
 import { VehicleHistoryChart } from '../timeSeries/VehicleHistoryChart'
 import type { VehicleThresholds } from '../shared/types'
-import type { HistoryAverageWindow, HistoryStep } from '../timeSeries/historyStep'
-import HistoryToolbarOptions from '../timeSeries/HistoryToolbarOptions.vue'
-import HistoryAnnotationSettings from '../timeSeries/HistoryAnnotationSettings.vue'
-import { useHistoryAnnotationSettings } from '../timeSeries/useHistoryAnnotationSettings'
-import { useGameVersionAnnotations } from '../timeSeries/gameVersionAnnotations'
-import { useHistoryEventAnnotations } from '../timeSeries/useHistoryEventAnnotations'
-import { useHistoryEventStyles } from '../timeSeries/useHistoryEventStyles'
+import type { HistoryAverageWindow, HistoryStep } from '../timeSeries/period/historyStep'
+import HistoryToolbarOptions from '../timeSeries/period/HistoryToolbarOptions.vue'
+import HistoryAnnotationSettings from '../timeSeries/annotations/settings/HistoryAnnotationSettings.vue'
+import { useHistoryAnnotationSettings } from '../timeSeries/annotations/settings/useHistoryAnnotationSettings'
+import { useGameVersionAnnotations } from '../timeSeries/annotations/gameVersionAnnotations'
+import { useHistoryEventAnnotations } from '../timeSeries/annotations/events/useHistoryEventAnnotations'
+import { useHistoryEventStyles } from '../timeSeries/annotations/events/useHistoryEventStyles'
 import { applyHistoryFilters, hasHistoryValues } from '../timeSeries/historyValues'
 import { snapshotComparisonFilters, type ComparisonSource } from './types'
 import { comparisonName } from './comparisonName'
-import { useComparisonHistories } from './useComparisonHistories'
-import HistoryTooltipHeader from './HistoryTooltipHeader.vue'
+import { useComparisonHistories } from './history/useComparisonHistories'
+import HistoryTooltipHeader from '../timeSeries/tooltip/HistoryTooltipHeader.vue'
 
 useHistoryEventStyles()
 
@@ -163,7 +163,7 @@ watch(annotationOptions.showWotstatOutages, visible => chart.setOutagesVisible(v
 </script>
 
 <style scoped lang="scss">
-@use '../timeSeries/historyAnnotationStyles.scss' as *;
+@use '../timeSeries/annotations/historyAnnotationStyles.scss' as *;
 
 .vehicle-comparison {
   min-width: 0;

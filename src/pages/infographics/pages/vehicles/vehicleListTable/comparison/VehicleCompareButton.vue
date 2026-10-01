@@ -8,8 +8,8 @@
 </template>
 
 <script setup lang="ts">
-import PlusIcon from './assets/plus-bold.svg'
-import Checkmark from './assets/checkmark-bold.svg'
+import PlusIcon from '../assets/plus-bold.svg'
+import Checkmark from './checkmark-bold.svg'
 
 defineProps<{ compared: boolean }>()
 defineEmits<{ click: [event: MouseEvent] }>()

@@ -17,10 +17,10 @@
 </template>
 
 <script setup lang="ts">
-import { availableSlots } from '../shared/vehicleMetrics'
-import { formatStatisticsDay } from '../shared/formatStatisticsDay'
-import { formatHistoryPeriod, formatHistoryWeekday } from '../timeSeries/formatHistoryPeriod'
-import type { VehicleHistoryHit } from '../timeSeries/VehicleHistoryChart'
+import { availableSlots } from '../../vehicleMetricSelector/vehicleMetrics'
+import { formatStatisticsDay } from '../../shared/formatStatisticsDay'
+import { formatHistoryPeriod, formatHistoryWeekday } from './formatHistoryPeriod'
+import type { VehicleHistoryHit } from '../VehicleHistoryChart'
 
 defineProps<{
   point: VehicleHistoryHit['datum']

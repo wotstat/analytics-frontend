@@ -80,7 +80,7 @@ import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import type { PlacementParam, PopoverTarget } from '@/shared/uiKit/popover/utils'
-import { availableSlots, baseSlot, defaultSlot, metricLabel, slotAggregationLabel, slotAggregationOptions, slotCategories, type BaseSlot, type Slot } from './shared/vehicleMetrics'
+import { availableSlots, baseSlot, defaultSlot, metricLabel, slotAggregationLabel, slotAggregationOptions, slotCategories, type BaseSlot, type Slot } from './vehicleMetrics'
 
 const props = defineProps<{
   title: string

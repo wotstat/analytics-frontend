@@ -9,7 +9,7 @@ import type { ChartAnnotationGroup } from '@/shared/ui/chart/timeSeries/toolbar/
 import type { useHistoryAnnotationSettings } from './useHistoryAnnotationSettings'
 import { getHistoryEventRegions, historyEvents } from '@/shared/game/historyEvents'
 import type { GameRegion } from '@/shared/game/wot'
-import { useHistoryEventStyles } from './useHistoryEventStyles'
+import { useHistoryEventStyles } from '../events/useHistoryEventStyles'
 
 useHistoryEventStyles()
 
@@ -67,7 +67,7 @@ function toggleOption(groupId: string, optionId: string) {
 </script>
 
 <style lang="scss">
-@use './historyAnnotationStyles.scss' as *;
+@use '../historyAnnotationStyles.scss' as *;
 
 .annotation-option {
   @include history-annotation-styles;

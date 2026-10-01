@@ -1,6 +1,6 @@
 import { ref, watch, type Ref } from 'vue'
 import { vehicleTypes } from '@/shared/game/vehicles/vehicle/utils'
-import type { Slot } from '../shared/vehicleMetrics'
+import type { Slot } from '../vehicleMetricSelector/vehicleMetrics'
 import type { VehicleStatistics } from '../shared/types'
 import type { VehicleGrouping } from '../shared/vehicleGrouping'
 import { vehicleName } from '../shared/vehicleName'

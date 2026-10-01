@@ -1,9 +1,9 @@
 import { computed, type ComputedRef } from 'vue'
 import { LONG_CACHE_SETTINGS, queryComputed } from '@/db'
-import type { VehicleRegion } from '../filters/types'
+import type { VehicleRegion } from '../../filters/types'
 import { DAY } from '@/shared/ui/chart/timeSeries/utils/timeSeriesTime'
-import { historyDayStart } from './historyStep'
-import type { VersionAnnotationVisibility } from './useHistoryAnnotationSettings'
+import { historyDayStart } from '../period/historyStep'
+import type { VersionAnnotationVisibility } from './settings/useHistoryAnnotationSettings'
 import type { VersionHistoryAnnotation } from './historyAnnotations'
 
 type GameVersionRow = {

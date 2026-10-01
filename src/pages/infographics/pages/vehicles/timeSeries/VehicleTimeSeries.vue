@@ -56,26 +56,26 @@ import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import { closeContextMenu, isContextMenuOpen } from '@/shared/uiKit/contextMenu/createContextMenu'
 import { checkboxItem, separator, simpleContextMenu } from '@/shared/uiKit/contextMenu/simpleContextMenu'
 import type { VehicleFilters } from '../filters/types'
-import type { Slot } from '../shared/vehicleMetrics'
-import { formatSlotValue } from '../shared/formatMetricValue'
-import { formatHistoryPeriod } from './formatHistoryPeriod'
+import type { Slot } from '../vehicleMetricSelector/vehicleMetrics.ts'
+import { formatSlotValue } from '../vehicleMetricSelector/formatMetricValue.ts'
+import { formatHistoryPeriod } from './tooltip/formatHistoryPeriod'
 import { vehicleHistoryQuery } from '../shared/vehicleStatisticsQuery'
 import { VehicleHistoryChart } from './VehicleHistoryChart'
 import type { VehicleHistoryPeriod, VehicleHistorySeries } from '../shared/types'
-import type { HistoryAverageWindow, HistoryStep } from './historyStep'
-import HistoryToolbarOptions from './HistoryToolbarOptions.vue'
-import HistoryAnnotationSettings from './HistoryAnnotationSettings.vue'
-import LineChartIcon from '../vehicleListTable/assets/line-chart.svg'
-import { useHistoryAnnotationSettings } from './useHistoryAnnotationSettings'
-import { useGameVersionAnnotations } from './gameVersionAnnotations'
-import { useHistoryEventAnnotations } from './useHistoryEventAnnotations'
-import { useHistoryEventStyles } from './useHistoryEventStyles'
+import type { HistoryAverageWindow, HistoryStep } from './period/historyStep'
+import HistoryToolbarOptions from './period/HistoryToolbarOptions.vue'
+import HistoryAnnotationSettings from './annotations/settings/HistoryAnnotationSettings.vue'
+import LineChartIcon from './line-chart.svg'
+import { useHistoryAnnotationSettings } from './annotations/settings/useHistoryAnnotationSettings'
+import { useGameVersionAnnotations } from './annotations/gameVersionAnnotations'
+import { useHistoryEventAnnotations } from './annotations/events/useHistoryEventAnnotations'
+import { useHistoryEventStyles } from './annotations/events/useHistoryEventStyles'
 import { applyHistoryFilters, hasHistoryValues } from './historyValues'
-import { historySplitName, historySplitOptions, orderHistorySplitKeys, type VehicleHistorySplit } from './historySplit'
-import { historySplitSeriesColor } from './seriesColors'
-import VehicleMetricSelector from '../VehicleMetricSelector.vue'
+import { historySplitName, historySplitOptions, orderHistorySplitKeys, type VehicleHistorySplit } from './split/historySplit'
+import { historySplitSeriesColor } from './split/seriesColors'
+import VehicleMetricSelector from '../vehicleMetricSelector/VehicleMetricSelector.vue'
 import type { VehicleSelection } from '../shared/vehicleGrouping'
-import HistoryTooltipHeader from '../timeSeriesCompare/HistoryTooltipHeader.vue'
+import HistoryTooltipHeader from './tooltip/HistoryTooltipHeader.vue'
 
 useHistoryEventStyles()
 
@@ -199,7 +199,7 @@ onBeforeUnmount(() => closeContextMenu(splitMenuId))
 </script>
 
 <style lang="scss" scoped>
-@use './historyAnnotationStyles.scss' as *;
+@use './annotations/historyAnnotationStyles.scss' as *;
 
 .vehicle-time-series {
   margin-top: 12px;

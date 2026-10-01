@@ -1,4 +1,4 @@
-import type { PrimarySlot, Slot } from './vehicleMetrics'
+import type { PrimarySlot, Slot } from '../vehicleMetricSelector/vehicleMetrics'
 
 type VehicleMetricValues = Record<PrimarySlot, number | null> & Partial<Record<Exclude<Slot, PrimarySlot>, number | null>>
 

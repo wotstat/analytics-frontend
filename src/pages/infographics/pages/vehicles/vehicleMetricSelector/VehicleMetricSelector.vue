@@ -7,8 +7,8 @@
   </button>
 
   <VehicleSlotOptions v-model:open="open" :target="trigger"
-    :placement="['bottom-start', 'bottom-float', 'top-start', 'right-float']"
-    title="Выбор метрики" :selected="[slot]" @select="selectMetric" />
+    :placement="['bottom-start', 'bottom-float', 'top-start', 'right-float']" title="Выбор метрики" :selected="[slot]"
+    @select="selectMetric" />
 </template>
 
 <script setup lang="ts">
@@ -16,7 +16,7 @@ import { ref, useTemplateRef } from 'vue'
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 import ArrowDown from '@/assets/icons/arrow-down.svg'
 import VehicleSlotOptions from './VehicleSlotOptions.vue'
-import { availableSlots, type Slot } from './shared/vehicleMetrics'
+import { availableSlots, type Slot } from './vehicleMetrics.ts'
 
 defineOptions({ inheritAttrs: false })
 

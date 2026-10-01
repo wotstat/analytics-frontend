@@ -1,5 +1,5 @@
-import { formatStatisticsDay } from '../shared/formatStatisticsDay'
-import type { HistoryStep } from './historyStep'
+import { formatStatisticsDay } from '../../shared/formatStatisticsDay'
+import type { HistoryStep } from '../period/historyStep'
 
 const monthFormatter = new Intl.DateTimeFormat('ru-RU', { month: 'long', timeZone: 'UTC' })
 const weekdayFormatter = new Intl.DateTimeFormat('ru-RU', { weekday: 'short', timeZone: 'UTC' })

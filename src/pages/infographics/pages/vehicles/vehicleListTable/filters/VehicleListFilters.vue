@@ -79,7 +79,7 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
 import Reload from '@/assets/icons/reset.svg'
-import FilterIcon from './assets/filter.svg'
+import FilterIcon from './filter.svg'
 import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import Nation from '@/shared/game/vehicles/nations/Nation.vue'

@@ -1,7 +1,7 @@
 import { computed, type ComputedRef, type Ref } from 'vue'
 import { getHistoryEventRegions, historyEvents } from '@/shared/game/historyEvents'
-import type { VehicleRegion } from '../filters/types'
-import type { HistoryEventAnnotation } from './historyAnnotations'
+import type { VehicleRegion } from '../../../filters/types'
+import type { HistoryEventAnnotation } from '../historyAnnotations'
 import { DAY } from '@/shared/ui/chart/timeSeries/utils/timeSeriesTime'
 
 export function useHistoryEventAnnotations(enabledEvents: Ref<string[]>, regions: ComputedRef<readonly VehicleRegion[]>) {

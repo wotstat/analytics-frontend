@@ -1,11 +1,11 @@
 import { onScopeDispose, reactive, toValue, watch, type MaybeRefOrGetter } from 'vue'
 import { error, loading, query, success, type Status } from '@/db'
-import type { VehicleHistoryPeriod } from '../shared/types'
-import type { Slot } from '../shared/vehicleMetrics'
-import { vehicleHistoryQuery } from '../shared/vehicleStatisticsQuery'
-import type { HistoryStep } from '../timeSeries/historyStep'
+import type { VehicleHistoryPeriod } from '../../shared/types'
+import type { Slot } from '../../vehicleMetricSelector/vehicleMetrics'
+import { vehicleHistoryQuery } from '../../shared/vehicleStatisticsQuery'
+import type { HistoryStep } from '../../timeSeries/period/historyStep'
 import { createComparisonHistoryQueue } from './comparisonHistoryQueue'
-import type { ComparisonSource } from './types'
+import type { ComparisonSource } from '../types'
 
 type HistorySource = Pick<ComparisonSource, 'tag' | 'selection' | 'filters'>
 type HistoryState = { status: Status, data: VehicleHistoryPeriod[] }

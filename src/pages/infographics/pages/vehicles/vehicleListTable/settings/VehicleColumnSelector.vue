@@ -1,19 +1,19 @@
 <template>
-  <button ref="trigger" class="column-trigger" :class="{ 'double-digit-limit': maxSlots >= 10 }"
-    type="button" :aria-expanded="open" @click="open = !open">
+  <button ref="trigger" class="column-trigger" :class="{ 'double-digit-limit': maxSlots >= 10 }" type="button"
+    :aria-expanded="open" @click="open = !open">
     Столбцы · {{ selected.length }}/{{ maxSlots }}
   </button>
 
   <VehicleSlotOptions v-model:open="open" :target="trigger"
-    :placement="['bottom-end', 'bottom-float', 'top-end', 'left-float', 'top-end']"
-    title="Выбор столбцов" :selected :max-slots="maxSlots" :can-reset="canReset" multiple @select="toggle"
-    @toggle-metric="toggleMetric" @reset="reset" />
+    :placement="['bottom-end', 'bottom-float', 'top-end', 'left-float', 'top-end']" title="Выбор столбцов" :selected
+    :max-slots="maxSlots" :can-reset="canReset" multiple @select="toggle" @toggle-metric="toggleMetric"
+    @reset="reset" />
 </template>
 
 <script setup lang="ts">
 import { computed, useTemplateRef } from 'vue'
-import VehicleSlotOptions from '../VehicleSlotOptions.vue'
-import { baseSlot, defaultSlot, defaultSlotsForLimit, orderSlots, type BaseSlot, type Slot } from '../shared/vehicleMetrics'
+import VehicleSlotOptions from '../../vehicleMetricSelector/VehicleSlotOptions.vue'
+import { baseSlot, defaultSlot, defaultSlotsForLimit, orderSlots, type BaseSlot, type Slot } from '../../vehicleMetricSelector/vehicleMetrics.ts'
 
 const props = defineProps<{ maxSlots: number }>()
 const selected = defineModel<Slot[]>({ required: true })

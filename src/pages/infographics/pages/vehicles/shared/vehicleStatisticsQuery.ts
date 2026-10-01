@@ -1,8 +1,8 @@
 import { battleModeSelection } from '@/shared/game/selectors/battleMode/catalog'
 import type { VehicleFilters } from '../filters/types'
-import { availableSlots, baseSlots, type Slot } from './vehicleMetrics'
-import type { HistoryStep } from '../timeSeries/historyStep'
-import type { VehicleHistorySplit } from '../timeSeries/historySplit'
+import { availableSlots, baseSlots, type Slot } from '../vehicleMetricSelector/vehicleMetrics'
+import type { HistoryStep } from '../timeSeries/period/historyStep'
+import type { VehicleHistorySplit } from '../timeSeries/split/historySplit'
 import type { VehicleGrouping, VehicleSelection } from './vehicleGrouping'
 import type { VehicleStatisticsPeriod } from './vehicleStatisticsPeriod'
 

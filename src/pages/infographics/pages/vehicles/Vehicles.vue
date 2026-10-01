@@ -2,11 +2,10 @@
   <VehicleFilters v-model="filters" />
   <TimeSeriesCompare :sources="comparison.sources.value" :filters :min-battles="localFilters.minBattles"
     :min-players="localFilters.minPlayers" :skip-incomplete-days="localFilters.skipIncompleteDays"
-    @remove="comparison.remove" @color-change="comparison.setColor"
-    @clear="comparison.clear" />
-  <VehicleListTable v-model:grouping="grouping" v-model:local-filters="localFilters" v-model:period="period" v-model:slots="slots"
-    :vehicles="statistics.data" :status="statistics.status" :filters :compared-keys="comparison.comparedKeys.value"
-    :comparison-count="comparison.sources.value.length"
+    @remove="comparison.remove" @color-change="comparison.setColor" @clear="comparison.clear" />
+  <VehicleListTable v-model:grouping="grouping" v-model:local-filters="localFilters" v-model:period="period"
+    v-model:slots="slots" :vehicles="statistics.data" :status="statistics.status" :filters
+    :compared-keys="comparison.comparedKeys.value" :comparison-count="comparison.sources.value.length"
     @compare="comparison.toggle" @compare-all="comparison.addMany" @retry="retry++" />
 </template>
 
@@ -17,14 +16,14 @@ import type { VehicleGrouping } from './shared/vehicleGrouping'
 import { ref } from 'vue'
 import { useMeta } from '@/shared/composition/useMeta'
 import VehicleListTable from './vehicleListTable/VehicleListTable.vue'
-import { defaultSlots, type Slot } from './shared/vehicleMetrics'
+import { defaultSlots, type Slot } from './vehicleMetricSelector/vehicleMetrics.ts'
 import type { VehicleStatistics } from './shared/types'
 import VehicleFilters from './filters/VehicleFilters.vue'
 import { createVehicleFilters } from './filters/types'
 import { LONG_CACHE_SETTINGS, queryComputed } from '@/db'
 import { vehicleStatisticsQuery } from './shared/vehicleStatisticsQuery'
 import type { VehicleStatisticsPeriod } from './shared/vehicleStatisticsPeriod'
-import { createLocalVehicleFilters } from './vehicleListTable/localFilters'
+import { createLocalVehicleFilters } from './vehicleListTable/filters/localFilters'
 import { useBackground } from '@/shared/uiKit/pageBackground/useBackground'
 import VehiclesBackground from './VehiclesBackground.vue'
 

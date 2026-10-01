@@ -547,7 +547,7 @@ connection.dispose()
 текущего среднего; изменение видимости не пересчитывает его, отключённые ряды обрабатываются
 при включении. Нижняя граница истории остаётся прежней — 01.01.2024.
 Адаптер явно подключает `TimeSeriesViewport` и `TimeSeriesAnnotationLayer`.
-`vehicles/timeSeries/historyAnnotationStyles.scss` задаёт статическую палитру графика и меню
+`vehicles/timeSeries/annotations/historyAnnotationStyles.scss` задаёт статическую палитру графика и меню
 для `annotation-version`, `annotation-patch`, `annotation-micropatch`, `annotation-outage`.
 Четыре явных класса задают восемь цветов через `--history-annotation-color` и
 `--selection-tile-accent`, без палитры и циклов SCSS. Основные hex-цвета событий хранятся только в
@@ -613,7 +613,7 @@ Toolbar собирается явно в Vue-шаблоне из трёх общ
 </ChartToolbar>
 ```
 
-Локальный `vehicles/timeSeries/HistoryToolbarOptions.vue` содержит две соседние группы
+Локальный `vehicles/timeSeries/period/HistoryToolbarOptions.vue` содержит две соседние группы
 выбора с обязательными моделями `step` (`day/week/month`) и `averageWindow` (`3/5/7/null`).
 Подписи, наборы значений и подсказки среднего находятся в этой локальной сборке. Оба
 потребителя вставляют её в слот `toolbar` общего `TimeSeriesPanel`; каркас `ChartToolbar`
@@ -634,7 +634,7 @@ Toolbar собирается явно в Vue-шаблоне из трёх общ
 Кнопка использует `ToolbarButton`, панель — компактный `PanelPopover` с прежним размещением
 и закрытием по внешнему клику/Escape, опции — `SelectionTile`. Пропы `title` и `width` задают
 заголовок панели и ширину (по умолчанию «Настройки аннотаций» и 250 px).
-Игровой адаптер `vehicles/timeSeries/HistoryAnnotationSettings.vue` готовит версии, недоступность
+Игровой адаптер `vehicles/timeSeries/annotations/settings/HistoryAnnotationSettings.vue` готовит версии, недоступность
 wotstat и события по регионам. Состояние аннотаций остаётся отдельным для каждого графика.
 
 `VehicleTimeSeries` использует компактный `TimeSeriesPanel`: метрика находится в слоте
@@ -738,7 +738,7 @@ wotstat и события по регионам. Состояние аннота
 принимает `ctx`, включённые `sources` с полями LegendItem и `formatValue(value, ctx)`.
 Сопоставляет hits по tag, читает snapshot подсветки, оставляет пропуски; слот `header`
 получает `{ ctx, columnCount, horizontal }`. Его использует `TimeSeriesPanel` в обоих режимах
-tooltip. В технике `timeSeriesCompare/HistoryTooltipHeader.vue` задаёт только игровую шапку
+tooltip. В технике `timeSeries/tooltip/HistoryTooltipHeader.vue` задаёт только игровую шапку
 по `point`, `horizontal` и необязательной `gameVersion`. Одиночная история заменяет
 содержимое через слот `tooltip` и сохраняет значение и период в HeaderTooltip.
 Стенд без БД: `/debug/series-tooltip` (1/10/11/20/21/40 рядов, пропуски,
@@ -750,7 +750,7 @@ tooltip. В технике `timeSeriesCompare/HistoryTooltipHeader.vue` зада
 и `seriesColor(index)`. После базовой палитры цвет вычисляется через прежний HSL-алгоритм
 с шагом оттенка 137.508°, насыщенностью 0.72 и светлотой 0.64.
 Сравнение выбирает первый незанятый базовый цвет, затем вызывает генератор с индексом нового источника;
-пользовательские цвета остаются у потребителя. Игровой адаптер `vehicles/timeSeries/seriesColors.ts`
+пользовательские цвета остаются у потребителя. Игровой адаптер `vehicles/timeSeries/split/seriesColors.ts`
 переопределяет только победу/поражение/ничью для разбиения по результату.
 
 ### Пример использования
