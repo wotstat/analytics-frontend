@@ -60,7 +60,7 @@
       </template>
 
       <template #cell-name="{ row }">
-        <VehicleNameCell :vehicle="row" :latest-day="latestDay" />
+        <VehicleNameCell :vehicle="row" :latest-day="latestDay" :search />
       </template>
 
       <template #expanded="{ row }">

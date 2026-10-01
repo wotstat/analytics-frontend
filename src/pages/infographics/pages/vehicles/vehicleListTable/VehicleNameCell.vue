@@ -3,7 +3,9 @@
     <VehicleImage :tag="vehicle.tankTag!" :game="regionToGame(vehicle.region)" size="preview" loading="lazy"
       class="vehicle-image" />
     <span class="vehicle-info">
-      <span class="vehicle-name" :title="vehicleName(vehicle, false)">{{ name }}</span>
+      <span class="vehicle-name" :title="vehicleName(vehicle, false)">
+        <span v-for="(part, index) in nameParts" :key="index" :class="{ highlight: part.highlight }">{{ part.text }}</span>
+      </span>
       <span v-if="vehicle.day !== latestDay" class="postfix">{{ formatStatisticsDay(vehicle.day) }}</span>
     </span>
   </span>
@@ -13,12 +15,13 @@
 import { computed } from 'vue'
 import VehicleImage from '@/shared/game/vehicles/vehicle/VehicleImage.vue'
 import { regionToGame } from '@/shared/game/wot'
+import { getHighlightedTextParts, highlight } from '@/shared/uiKit/highlightString/highlightUtils'
 import type { VehicleStatistics } from '../shared/types'
 import { formatStatisticsDay } from '../shared/formatStatisticsDay'
 import { vehicleName } from '../shared/vehicleName'
 
-const props = defineProps<{ vehicle: VehicleStatistics, latestDay: string }>()
-const name = computed(() => vehicleName(props.vehicle))
+const props = defineProps<{ vehicle: VehicleStatistics, latestDay: string, search: string }>()
+const nameParts = computed(() => getHighlightedTextParts(highlight(vehicleName(props.vehicle), props.search)))
 </script>
 
 <style scoped lang="scss">
@@ -64,6 +67,10 @@ const name = computed(() => vehicleName(props.vehicle))
       text-overflow: ellipsis;
       white-space: nowrap;
       font-size: 14px;
+
+      .highlight {
+        color: var(--blue-thin-color);
+      }
     }
   }
 }
