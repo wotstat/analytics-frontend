@@ -193,7 +193,6 @@ function moveAggregationFocus(direction: number) {
 }
 
 function selectAggregation(slot: Slot) {
-  if (!props.multiple) closeAggregation(true)
   emit('select', slot)
 }
 

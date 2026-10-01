@@ -20,6 +20,13 @@ type Entry = {
 
 const entries = [
   {
+    path: 'options-select',
+    title: 'OptionsSelect',
+    description: 'Контекстное меню на компьютере, нативный select на сенсорном устройстве, общая модель и disabled.',
+    group: 'uiKit',
+    component: () => import('./pages/optionsSelect/Index.vue'),
+  },
+  {
     path: 'dropdown-arrow',
     title: 'DropdownArrow',
     description: 'Направления, толщина и угол стрелки, отдельная иконка с превращением в крестик.',

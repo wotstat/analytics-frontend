@@ -63,30 +63,10 @@
           </div>
 
           <h4>Режим</h4>
-          <select v-model="battleMode">
-            <option value="any">Любой</option>
-            <option v-for="mode in customBattleModesKeys" :value="mode">{{ customBattleModes[mode].title }}</option>
-          </select>
-
-          <!-- <h4>Режим</h4>
-          <select v-model="battleMode">
-            <option value="any">Любой</option>
-            <option v-for="mode in battleModesKeys" :value="mode">{{ battleModes[mode] }}</option>
-          </select>
-
-          <h4>Геймплей</h4>
-          <select v-model="battleGameplay">
-            <option value="any">Любой</option>
-            <option v-for="mode in battleGameplaysKeys" :value="mode">{{ battleGameplays[mode] }}</option>
-          </select> -->
+          <OptionsSelect v-model="battleMode" :options="battleModeOptions" />
 
           <h4>Период</h4>
-          <select v-model="periodVariant">
-            <option value="allTime">За всё время</option>
-            <option value="lastX">X последних боёв</option>
-            <option value="fromTo">Дата от/до</option>
-            <option value="fromToNow">От даты до текущего момента</option>
-          </select>
+          <OptionsSelect v-model="periodVariant" :options="periodOptions" />
 
           <div class="lastx" v-if="periodVariant == 'lastX'">
             <h5>Последних боёв</h5>
@@ -151,6 +131,8 @@ import { TankLevel, TankType, useQueryStatParams } from '@/shared/query/useQuery
 import { customBattleModes, customBattleModesKeys } from '@/shared/game/wot'
 import { useRoute, useRouter } from 'vue-router'
 import { getTankName } from '@/shared/i18n/i18n'
+import OptionsSelect from '@/shared/ui/optionsSelect/OptionsSelect.vue'
+import { isContextMenuOpen } from '@/shared/uiKit/contextMenu/createContextMenu'
 
 const route = useRoute()
 const router = useRouter()
@@ -200,6 +182,16 @@ useDraggable(right, {
 
 
 const nickname = ref('')
+const battleModeOptions = [
+  { value: 'any', label: 'Любой' },
+  ...customBattleModesKeys.map(mode => ({ value: mode, label: customBattleModes[mode].title })),
+] as const
+const periodOptions = [
+  { value: 'allTime', label: 'За всё время' },
+  { value: 'lastX', label: 'X последних боёв' },
+  { value: 'fromTo', label: 'Дата от/до' },
+  { value: 'fromToNow', label: 'От даты до текущего момента' },
+] as const
 const periodVariant = ref<'allTime' | 'lastX' | 'fromTo' | 'fromToNow'>('allTime')
 const selectedClasses = ref<(TankType)[]>([])
 const selectedLevels = ref<(TankLevel)[]>([])
@@ -549,7 +541,7 @@ onUnmounted(() => {
 })
 
 function onKey(params: KeyboardEvent) {
-  if (params.key == 'Escape') {
+  if (params.key == 'Escape' && !isContextMenuOpen()) {
     emit('close')
   }
 }

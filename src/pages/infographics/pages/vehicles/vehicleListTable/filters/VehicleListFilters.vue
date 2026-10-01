@@ -7,8 +7,8 @@
 
   <PanelPopover v-model="open" :target="target" title="Фильтр таблицы" :width="360"
     :placement="['bottom-start', 'bottom-float', 'top-start']">
-    <template v-if="activeCount" #toolbar>
-      <ToolbarButton :icon="Reload" variant="round" @click="resetFilters" />
+    <template #toolbar>
+      <ToolbarButton class="reset-button" :icon="Reload" variant="round" :disabled="!activeCount" @click="resetFilters" />
     </template>
 
     <template #content>
@@ -146,6 +146,10 @@ function selectOption<T>(selected: readonly T[], option: T, options: readonly T[
 </script>
 
 <style scoped lang="scss">
+.reset-button:disabled {
+  visibility: hidden;
+}
+
 .filter-trigger {
   position: relative;
 

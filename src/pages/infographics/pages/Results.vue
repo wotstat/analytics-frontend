@@ -68,16 +68,7 @@
     </div>
 
     <div class="flex hor">
-      <div class="select-container">
-        <DropdownArrow class="dropdown-arrow" />
-        <select class="h4" v-model="infoVariant" ref="variantSelector">
-          <option value="avg">Средние показатели</option>
-          <option value="max">Максимальные показатели</option>
-          <option value="q3">Квантиль 30</option>
-          <option value="med">Медианные показатели</option>
-          <option value="q7">Квантиль 70</option>
-        </select>
-      </div>
+      <OptionsSelect v-model="infoVariant" :options="infoVariants" class="info-variant" />
     </div>
     <p v-if="infoVariant == 'med'">В половине боёв показатели были меньше</p>
     <p v-else-if="infoVariant == 'q3'">В 30% боёв показатели были меньше</p>
@@ -174,7 +165,7 @@ import { createPercentProcessor, createFixedProcessor, createFixedSpaceProcessor
 import { getQueryStatParamsCache, useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import TeamLevelTable from '@/pages/infographics/shared/widgets/TeamLevelTable.vue'
 import { countLocalize } from '@/shared/i18n/i18n'
-import DropdownArrow from '@/shared/uiKit/dropdown/DropdownArrow.vue'
+import OptionsSelect from '@/shared/ui/optionsSelect/OptionsSelect.vue'
 import { useMeta } from '@/shared/composition/useMeta'
 import { normalizeArray } from '@/shared/utils/math'
 import MiniBarNew from '../shared/widgets/charts/MiniBarNew.vue'
@@ -189,8 +180,6 @@ useMeta({
 
 const percentProcessor = createPercentProcessor(1)
 
-const variantSelector = useTemplateRef<HTMLSelectElement>('variantSelector')
-
 const container = useTemplateRef<HTMLElement>('container')
 const enabled = useElementVisibility(container)
 
@@ -202,6 +191,13 @@ const settings = useQueryStatParamsCache(params)
 
 const places = new Array(15).fill(0).map((_, i) => i + 1)
 
+const infoVariants = [
+  { value: 'avg', label: 'Средние показатели' },
+  { value: 'max', label: 'Максимальные показатели' },
+  { value: 'q3', label: 'Квантиль 30' },
+  { value: 'med', label: 'Медианные показатели' },
+  { value: 'q7', label: 'Квантиль 70' },
+] as const
 const infoVariant = useLocalStorage<'avg' | 'med' | 'max' | 'q3' | 'q7'>('infoResultsVariant', 'avg')
 
 const logProcessor = createLogProcessor(0)
@@ -342,40 +338,17 @@ order by battleType, position;
 
 <style lang="scss" scoped>
 @use '/src/styles/mixins.scss' as *;
-@use '/src/styles/variables.scss' as *;
 @use '/src/styles/textColors.scss';
 
 h4 {
   margin: 10px 0 0 0;
 }
 
-.select-container {
-  select.h4 {
-    appearance: none;
-    -webkit-appearance: none;
-    border: none;
-    background: none;
-    padding: 0;
-    margin: 0;
-    padding-left: 25px;
-    padding-right: 25px;
-    font-size: 17px;
-    font-weight: var(--medium-bold-weight);
-    color: inherit;
-
-    option {
-      color: var(--font-color);
-      background-color: $background-secondary;
-    }
-  }
-
-  .dropdown-arrow {
-    pointer-events: none;
-    color: var(--font-color);
-    width: 12px;
-    height: 12px;
-    margin-right: -20px;
-  }
+.info-variant {
+  --options-select-font-size: 17px;
+  --options-select-background: transparent;
+  --options-select-active-background: transparent;
+  font-weight: var(--medium-bold-weight);
 }
 
 .grid-mini {

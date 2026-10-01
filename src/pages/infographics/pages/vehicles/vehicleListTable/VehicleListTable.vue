@@ -1,13 +1,7 @@
 <template>
   <section class="vehicle-table" ref="table" :style="tableStyle">
     <div class="toolbar">
-      <label class="grouping-selector">
-        <select v-model="grouping">
-          <option v-for="option in vehicleGroupings" :key="option.value" :value="option.value">
-            {{ option.label }}
-          </option>
-        </select>
-      </label>
+      <OptionsSelect v-model="grouping" :options="vehicleGroupings" />
 
       <SearchLine v-if="showName" v-model="search" class="search" placeholder="Найти танк" />
       <VehicleListFilters v-model="localFilters" :show-vehicle-filters="showName" />
@@ -146,6 +140,7 @@ import { vehicleName } from '../shared/vehicleName'
 import VehicleColumnSelector from './settings/VehicleColumnSelector.vue'
 import VehicleTableSettings from './settings/VehicleTableSettings.vue'
 import VehicleListFilters from './filters/VehicleListFilters.vue'
+import OptionsSelect from '@/shared/ui/optionsSelect/OptionsSelect.vue'
 import ComposableTable from '@/shared/ui/composableTable/ComposableTable.vue'
 import type { ComposableTableCellEvent, ComposableTableColumn, ComposableTableKey } from '@/shared/ui/composableTable/types'
 import VehicleCompareButton from './comparison/VehicleCompareButton.vue'
@@ -376,27 +371,6 @@ watch([maxSelectableSlots, width], ([limit, tableWidth]) => {
     .search {
       width: 240px;
       max-width: 100%;
-    }
-
-    .grouping-selector {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      max-width: 100%;
-      color: rgba(255, 255, 255, 0.6);
-
-      select {
-        min-width: 0;
-        height: 30px;
-        padding: 0 8px;
-        border: none;
-        border-radius: 5px;
-        background: rgba(255, 255, 255, 0.08);
-        color: white;
-        color-scheme: dark;
-        font: inherit;
-        cursor: pointer;
-      }
     }
   }
 

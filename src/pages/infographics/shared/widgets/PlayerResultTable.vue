@@ -15,19 +15,13 @@
 
           <tr>
             <th colspan="4">
-              <select v-model="youTeamResult">
-                <option value="win">Победила</option>
-                <option value="lose">Проиграла</option>
-              </select>
+              <OptionsSelect v-model="youTeamResult" :options="teamResultOptions" />
             </th>
 
             <th></th>
 
             <th colspan="4">
-              <select v-model="opponentTeamResult">
-                <option value="win">Победила</option>
-                <option value="lose">Проиграла</option>
-              </select>
+              <OptionsSelect v-model="opponentTeamResult" :options="teamResultOptions" />
             </th>
           </tr>
 
@@ -124,6 +118,7 @@ import { computed, ref, useTemplateRef } from 'vue'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'
 import { createFixedSpaceProcessor } from '@/shared/utils/processors/processors'
 import { bestMV } from '@/db/schema'
+import OptionsSelect from '@/shared/ui/optionsSelect/OptionsSelect.vue'
 
 const { params } = defineProps<{
   params: StatParams
@@ -136,6 +131,10 @@ const enabled = useElementVisibility(container)
 const categoryContainer = useTemplateRef<HTMLElement>('categoryContainer')
 const { width } = useElementSize(categoryContainer)
 
+const teamResultOptions = [
+  { value: 'win', label: 'Победила' },
+  { value: 'lose', label: 'Проиграла' },
+] as const
 const youTeamResult = ref<'win' | 'lose'>('win')
 const opponentTeamResult = ref<'win' | 'lose'>('win')
 const hightlight = ref<'none' | 'dmg' | 'radio' | 'block' | 'kill'>('dmg')

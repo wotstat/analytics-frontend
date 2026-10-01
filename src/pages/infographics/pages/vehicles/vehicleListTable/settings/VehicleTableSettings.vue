@@ -2,7 +2,7 @@
   <ToolbarButton ref="trigger" :icon="SettingsIcon" variant="surface" size="large"
     @click="open = !open" />
 
-  <PanelPopover v-model="open" :target="target" title="Настройки таблицы" :width="250"
+  <PanelPopover v-model="open" :target="target" title="Настройки таблицы" :width="250" density="compact"
     :placement="['bottom-end', 'bottom-float', 'top-end']">
     <template #content>
       <div class="options panel-section">
@@ -35,7 +35,7 @@ const target = computed(() => trigger.value?.element ?? null)
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 14px;
+    font-size: inherit;
     cursor: pointer;
 
     input {

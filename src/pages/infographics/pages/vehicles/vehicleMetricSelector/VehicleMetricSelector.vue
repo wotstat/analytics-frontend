@@ -15,6 +15,7 @@
 import { ref, useTemplateRef } from 'vue'
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 import DropdownArrow from '@/shared/uiKit/dropdown/DropdownArrow.vue'
+import { usePopoverCloseDelay } from '@/shared/uiKit/popover/usePopoverCloseDelay'
 import VehicleSlotOptions from './VehicleSlotOptions.vue'
 import { availableSlots, type Slot } from './vehicleMetrics.ts'
 
@@ -22,11 +23,12 @@ defineOptions({ inheritAttrs: false })
 
 const slot = defineModel<Slot>({ required: true })
 const open = ref(false)
+const { closeAfterSelection } = usePopoverCloseDelay(open)
 const trigger = useTemplateRef<HTMLButtonElement>('trigger')
 
 function selectMetric(value: Slot) {
   slot.value = value
-  open.value = false
+  closeAfterSelection()
 }
 </script>
 

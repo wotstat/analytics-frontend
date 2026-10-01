@@ -6,19 +6,11 @@
       <div class="flex center setup">
         <div class="flex selector">
           <p>Режим:</p>
-          <select v-model="battleMode">
-            <option value="any">Любой</option>
-            <option v-for="mode in customBattleModesKeys" :value="mode">{{ customBattleModes[mode].title }}
-            </option>
-          </select>
+          <OptionsSelect v-model="battleMode" :options="battleModeOptions" />
         </div>
         <div class="flex selector">
           <p>Результат:</p>
-          <select v-model="battleResult">
-            <option value="any">Любой</option>
-            <option value="win">Победа</option>
-            <option value="lose">Поражение</option>
-          </select>
+          <OptionsSelect v-model="battleResult" :options="battleResultOptions" />
         </div>
       </div>
 
@@ -123,6 +115,7 @@ import { useElementVisibility, useElementSize, useLocalStorage } from '@vueuse/c
 import { computed, ref, useTemplateRef } from 'vue'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'
 import { timeProcessor } from '@/shared/utils/time'
+import OptionsSelect from '@/shared/ui/optionsSelect/OptionsSelect.vue'
 
 const { params } = defineProps<{
   params: StatParams
@@ -136,6 +129,15 @@ const { width } = useElementSize(container)
 const { width: firstWidth } = useElementSize(firstColumn)
 
 
+const battleModeOptions = [
+  { value: 'any', label: 'Любой' },
+  ...customBattleModesKeys.map(mode => ({ value: mode, label: customBattleModes[mode].title })),
+] as const
+const battleResultOptions = [
+  { value: 'any', label: 'Любой' },
+  { value: 'win', label: 'Победа' },
+  { value: 'lose', label: 'Поражение' },
+] as const
 const battleResult = ref<'any' | 'win' | 'lose'>('any')
 const battleMode = ref<keyof typeof customBattleModes | 'any'>('any')
 

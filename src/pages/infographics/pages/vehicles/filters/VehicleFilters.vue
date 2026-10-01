@@ -282,10 +282,25 @@ function reset() {
 
       > :deep(.badges) {
         min-width: 0;
+
+        .badge,
+        .select,
+        .add {
+          height: 22px;
+        }
+
+        .add {
+          width: 22px;
+        }
       }
 
       .label {
         flex-basis: 88px;
+        min-height: 22px;
+      }
+
+      .variants {
+        min-height: 22px;
       }
 
       @media (max-width: 550px) {

@@ -47,6 +47,7 @@
 
 <script setup lang="ts">
 import DropdownArrow from '@/shared/uiKit/dropdown/DropdownArrow.vue'
+import { usePopoverCloseDelay } from '@/shared/uiKit/popover/usePopoverCloseDelay'
 import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
 import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
 import { computed, ref, useTemplateRef, watch } from 'vue'
@@ -68,6 +69,7 @@ const props = withDefaults(defineProps<{
 const model = defineModel<BattleModeSelectionKey[]>({ required: true })
 const trigger = useTemplateRef<HTMLButtonElement>('trigger')
 const open = ref(false)
+const { closeAfterSelection, cancelClose } = usePopoverCloseDelay(open)
 const search = ref('')
 const showArchived = ref(false)
 const selectedGame = ref<GameVendor>(props.game ?? preferredGameOrDefault.value)
@@ -122,16 +124,18 @@ function isMultiple(event: MouseEvent) {
 }
 
 function select(key: BattleModeSelectionKey, event: MouseEvent) {
+  cancelClose()
   if (isMultiple(event)) model.value = toggleBattleMode(model.value, key)
   else {
     model.value = [key]
-    open.value = false
+    closeAfterSelection()
   }
 }
 
 function selectAll(event: MouseEvent) {
+  cancelClose()
   model.value = []
-  if (!isMultiple(event)) open.value = false
+  if (!isMultiple(event)) closeAfterSelection()
   activeKey.value = null
 }
 </script>
