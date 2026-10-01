@@ -54,7 +54,7 @@
       </template>
 
       <template #cell-expand="{ expanded }">
-        <ArrowDown class="arrow" :class="{ expanded }" />
+        <DropdownArrow class="arrow" :expanded horizontal angle="large" />
       </template>
 
       <template #cell-tankLevel="{ row }">
@@ -151,7 +151,7 @@ import type { ComposableTableCellEvent, ComposableTableColumn, ComposableTableKe
 import VehicleCompareButton from './comparison/VehicleCompareButton.vue'
 import VehicleNameCell from './VehicleNameCell.vue'
 import VehicleTimeSeries from '../timeSeries/VehicleTimeSeries.vue'
-import ArrowDown from './assets/arrow-down.svg'
+import DropdownArrow from '@/shared/uiKit/dropdown/DropdownArrow.vue'
 import { isVehicleType } from '@/shared/game/vehicles/type/vehicleTypeToImage'
 import { romanNumberProcessor } from '@/shared/utils/processors/processors'
 import { formatSlotValue } from '../vehicleMetricSelector/formatMetricValue.ts'
@@ -508,13 +508,7 @@ watch([maxSelectableSlots, width], ([limit, tableWidth]) => {
     height: 12px;
     display: block;
     margin: auto;
-    transform: rotate(-90deg);
     color: rgba(255, 255, 255, 0.55);
-    transition: transform 0.15s;
-
-    &.expanded {
-      transform: rotate(0);
-    }
   }
 
   .state {

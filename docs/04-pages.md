@@ -61,7 +61,7 @@ vehicles/
 ```
 
 Одиночные файлы остаются рядом с непосредственным потребителем: например, `VehicleNameCell.vue`,
-`useVehicleSorting.ts` и `arrow-down.svg` — рядом с `VehicleListTable.vue`,
+`useVehicleSorting.ts` — рядом с `VehicleListTable.vue`,
 а `line-chart.svg` — рядом с использующим её `VehicleTimeSeries.vue`.
 Ресурс нескольких потребителей лежит в их ближайшем общем каталоге: `vehicleListTable/plus-bold.svg`
 используют сама таблица и `comparison/VehicleCompareButton.vue`.

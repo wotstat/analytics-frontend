@@ -14,7 +14,7 @@
       <div class="actions">
         <button class="expand" :class="{ enabled: advancedCount > 0 }" @click="expanded = !expanded">
           Ещё фильтры<span v-if="advancedCount"> · {{ advancedCount }}</span>
-          <ArrowDown class="arrow" :class="{ expanded }" />
+          <DropdownArrow class="arrow" :expanded />
         </button>
         <ToolbarButton :icon="ResetIcon" :disabled="!canReset" @click="reset" />
       </div>
@@ -61,7 +61,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import ArrowDown from '@/assets/icons/arrow-down.svg'
+import DropdownArrow from '@/shared/uiKit/dropdown/DropdownArrow.vue'
 import ResetIcon from '@/assets/icons/reset.svg'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import ArenaSelectorBadges from '@/shared/game/selectors/arena/ArenaSelectorBadges.vue'
@@ -263,12 +263,6 @@ function reset() {
         margin-left: 5px;
         width: 12px;
         height: 12px;
-        fill: currentColor;
-        transition: transform 0.15s;
-
-        &.expanded {
-          transform: rotate(180deg);
-        }
       }
     }
   }

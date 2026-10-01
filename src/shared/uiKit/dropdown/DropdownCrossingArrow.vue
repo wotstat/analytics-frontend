@@ -1,24 +1,27 @@
 <template>
-  <div class="icon" :class="{ open: isOpen }">
-    <div class="l1"></div>
-    <div class="l2"></div>
-  </div>
+  <span class="dropdown-crossing-arrow" :class="{ 'is-expanded': expanded }">
+    <span class="line-left"></span>
+    <span class="line-right"></span>
+  </span>
 </template>
 
 <script setup lang="ts">
-defineProps<{
-  isOpen: boolean
-}>()
+withDefaults(defineProps<{
+  expanded?: boolean
+}>(), { expanded: false })
 </script>
 
 <style lang="scss" scoped>
-.icon {
+.dropdown-crossing-arrow {
+  display: inline-block;
+  flex: none;
   position: relative;
   width: 20px;
   height: 20px;
+  vertical-align: middle;
 
-  .l1,
-  .l2 {
+  .line-left,
+  .line-right {
     position: absolute;
     height: 2px;
     transition: transform 0.2s ease;
@@ -32,13 +35,13 @@ defineProps<{
       top: 0;
       bottom: 0;
       width: 55%;
-      background-color: rgb(255, 255, 255);
+      background-color: currentColor;
       border-radius: 10px;
       transition: width 0.2s ease, left 0.2s ease, right 0.2s ease;
     }
   }
 
-  .l1 {
+  .line-left {
     transform: translate(-57%, 20%) rotate(35deg);
 
     &::after {
@@ -46,7 +49,7 @@ defineProps<{
     }
   }
 
-  .l2 {
+  .line-right {
     transform: translate(-43%, 20%) rotate(-35deg);
 
     &::after {
@@ -54,9 +57,8 @@ defineProps<{
     }
   }
 
-  &.open {
-    .l1 {
-      width: 100%;
+  &.is-expanded {
+    .line-left {
       transform: translate(-50%, -50%) rotate(45deg);
 
       &::after {
@@ -65,8 +67,7 @@ defineProps<{
       }
     }
 
-    .l2 {
-      width: 100%;
+    .line-right {
       transform: translate(-50%, -50%) rotate(-45deg);
 
       &::after {

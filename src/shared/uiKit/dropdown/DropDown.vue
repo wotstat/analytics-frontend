@@ -4,7 +4,7 @@
       <div class="current" @pointerdown="pointerDown">
         <slot name="current" v-if="slots.current" :currentValue></slot>
         <p v-else>{{ valueToLabel(currentValue) }}</p>
-        <ArrowDown />
+        <DropdownArrow :expanded="isOpen" />
       </div>
 
       <div class="lines">
@@ -20,7 +20,7 @@
 
 
 <script setup lang="ts" generic="T">
-import ArrowDown from './arrow-down.svg'
+import DropdownArrow from './DropdownArrow.vue'
 import { onClickOutside, useEventListener } from '@vueuse/core'
 import { ref, useSlots, useTemplateRef } from 'vue'
 
@@ -118,10 +118,9 @@ function select(value: T) {
     height: 1.6em;
     padding: 0px 0.4em;
 
-    svg {
+    .dropdown-arrow {
       height: auto;
       width: 0.7em;
-      fill: currentColor;
       margin-left: 0.4em;
       margin-right: -0.1em;
     }

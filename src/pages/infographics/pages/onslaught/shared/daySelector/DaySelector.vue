@@ -4,7 +4,7 @@
       <span class="trigger-content">
         <span v-if="caption" class="caption">{{ caption }}:</span>
         <span class="selection-label">{{ selectionLabel }}</span>
-        <DropdownArrow :is-open="displayPopup" class="arrow" />
+        <DropdownCrossingArrow :expanded="displayPopup" class="arrow" />
       </span>
     </button>
   </div>
@@ -112,7 +112,7 @@ import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeader
 import { getRegionDayChangeHourOffset } from '@/shared/game/comp7/utils'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
 import TipSelectDayGroups from './tips/TipSelectDayGroups.vue'
-import DropdownArrow from './DropdownArrow.vue'
+import DropdownCrossingArrow from '@/shared/uiKit/dropdown/DropdownCrossingArrow.vue'
 
 export type DaySelectionMode = 'arbitrary' | 'interval'
 
@@ -357,6 +357,7 @@ function selectWholeSeason() {
 
   .arrow {
     display: block;
+    color: white;
     width: 12px;
     height: 12px;
     margin: 2px 0 0 1px;

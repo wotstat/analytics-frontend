@@ -3,7 +3,7 @@
     @click="open = !open">
     <Icon :icon="availableSlots[slot].icon" class="metric-icon" />
     <span class="metric-label">{{ availableSlots[slot].label }}</span>
-    <ArrowDown class="metric-arrow" />
+    <DropdownArrow class="metric-arrow" :expanded="open" />
   </button>
 
   <VehicleSlotOptions v-model:open="open" :target="trigger"
@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import { ref, useTemplateRef } from 'vue'
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
-import ArrowDown from '@/assets/icons/arrow-down.svg'
+import DropdownArrow from '@/shared/uiKit/dropdown/DropdownArrow.vue'
 import VehicleSlotOptions from './VehicleSlotOptions.vue'
 import { availableSlots, type Slot } from './vehicleMetrics.ts'
 
@@ -63,11 +63,9 @@ function selectMetric(value: Slot) {
   }
 
   .metric-arrow {
-    flex: none;
     width: 10px;
     height: 10px;
     margin-left: 5px;
-    fill: currentColor;
     opacity: 0.6;
   }
 }

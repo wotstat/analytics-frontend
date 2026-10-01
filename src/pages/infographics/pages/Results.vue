@@ -69,7 +69,7 @@
 
     <div class="flex hor">
       <div class="select-container">
-        <ArrowDownIcon class="dropdown-arrow" />
+        <DropdownArrow class="dropdown-arrow" />
         <select class="h4" v-model="infoVariant" ref="variantSelector">
           <option value="avg">Средние показатели</option>
           <option value="max">Максимальные показатели</option>
@@ -174,7 +174,7 @@ import { createPercentProcessor, createFixedProcessor, createFixedSpaceProcessor
 import { getQueryStatParamsCache, useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import TeamLevelTable from '@/pages/infographics/shared/widgets/TeamLevelTable.vue'
 import { countLocalize } from '@/shared/i18n/i18n'
-import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
+import DropdownArrow from '@/shared/uiKit/dropdown/DropdownArrow.vue'
 import { useMeta } from '@/shared/composition/useMeta'
 import { normalizeArray } from '@/shared/utils/math'
 import MiniBarNew from '../shared/widgets/charts/MiniBarNew.vue'
@@ -371,7 +371,8 @@ h4 {
 
   .dropdown-arrow {
     pointer-events: none;
-    fill: var(--font-color);
+    color: var(--font-color);
+    width: 12px;
     height: 12px;
     margin-right: -20px;
   }

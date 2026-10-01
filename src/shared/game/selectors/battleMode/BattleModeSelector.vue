@@ -1,7 +1,7 @@
 <template>
   <button ref="trigger" class="mode-trigger" :class="{ open }" type="button" @click="open = !open">
     <span class="mode-label">{{ triggerLabel }}</span>
-    <ArrowDown class="mode-arrow" />
+    <DropdownArrow class="mode-arrow" :expanded="open" />
   </button>
 
   <PanelPopover v-model="open" :target="trigger" :width="380"
@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import ArrowDown from '@/assets/icons/arrow-down.svg'
+import DropdownArrow from '@/shared/uiKit/dropdown/DropdownArrow.vue'
 import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
 import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
 import { computed, ref, useTemplateRef, watch } from 'vue'
@@ -163,17 +163,10 @@ function selectAll(event: MouseEvent) {
   }
 
   .mode-arrow {
-    flex: none;
     width: 10px;
     height: 10px;
     margin-left: 5px;
-    fill: currentColor;
     opacity: 0.7;
-    transition: transform 0.15s;
-  }
-
-  &.open .mode-arrow {
-    transform: rotate(180deg);
   }
 }
 

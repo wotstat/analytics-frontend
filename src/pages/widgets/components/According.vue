@@ -1,8 +1,8 @@
 <template>
-  <div class="according" :class="isOpen ? 'open' : ''">
+  <div class="according">
     <div class="header" @click="toggle">
       <div class="collapse-icon">
-        <ArrowDownIcon class="icon" />
+        <DropdownArrow class="icon" :expanded="isOpen" horizontal />
       </div>
       <slot name="header"></slot>
     </div>
@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
 import { ref, useTemplateRef } from 'vue'
-import ArrowDownIcon from '@/assets/icons/arrow-down.svg'
+import DropdownArrow from '@/shared/uiKit/dropdown/DropdownArrow.vue'
 
 
 const isOpen = ref(false)
@@ -40,14 +40,6 @@ function toggle() {
 <style lang="scss" scoped>
 .according {
 
-  &.open {
-    .header {
-      .collapse-icon {
-        transform: rotate(0);
-      }
-    }
-  }
-
   .header {
     cursor: pointer;
     padding: 0.5em 0;
@@ -61,8 +53,6 @@ function toggle() {
 
     .collapse-icon {
       border-radius: 50%;
-      transition: 0.4s;
-      transform: rotate(-90deg);
       width: 20px;
       height: 20px;
 

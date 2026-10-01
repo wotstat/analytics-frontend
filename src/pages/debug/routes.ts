@@ -20,6 +20,13 @@ type Entry = {
 
 const entries = [
   {
+    path: 'dropdown-arrow',
+    title: 'DropdownArrow',
+    description: 'Направления, толщина и угол стрелки, отдельная иконка с превращением в крестик.',
+    group: 'uiKit',
+    component: () => import('./pages/dropdownArrow/Index.vue'),
+  },
+  {
     path: 'composable-table',
     title: 'ComposableTable',
     description: 'Колонки, сортировка, общие и именные слоты, раскрытие строк и состояния на независимых демоданных.',
