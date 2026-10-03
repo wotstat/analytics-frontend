@@ -15,11 +15,14 @@
           <h3>{{ category.title }}</h3>
           <div class="tiles">
             <SelectionTile v-for="slot in category.slots" :key="slot" class="tile-option"
-              :class="{ derived: !!availableSlots[slot].formula }" :selected="isSelected(slot)"
+              :class="{ derived: !!availableSlots[slot].formula }"
+              :selected="isSelected(slot)"
               :disabled="!isSelected(slot) && isDisabled(defaultSlot(slot))"
               :accent-color="availableSlots[slot].formula ? '#bbaad6' : undefined"
-              :action="slotAggregationOptions(slot).length > 0" :action-active="extraAggregationCount(slot) > 0"
-              :action-open="aggregationSlot === slot" @select="selectMetric(slot)"
+              :action="isAggregatableSlot(slot)"
+              :action-active="extraAggregationCount(slot) > 0"
+              :action-open="aggregationOpen && aggregationSlot === slot"
+              @select="selectMetric(slot)"
               @action="openAggregation(slot, $event)">
               <Icon :icon="availableSlots[slot].icon" class="tile-icon" />
               <span class="tile-text">
@@ -40,32 +43,9 @@
         </section>
       </div>
 
-      <Popover :display="aggregationSlot !== null" :target="aggregationTrigger"
-        :placement="['bottom-end', 'top-end', 'right-start-float', 'left-start-float']" :offset="4"
-        :viewport-offset="popoverViewportOffset" @pointer-down-outside="closeAggregation()"
-        @pointer-click-outside="closeAggregation()" @target-outside-window="closeAggregation()"
-        @ready-to-visible="focusAggregationOption()">
-        <div v-if="aggregationSlot !== null" ref="aggregationMenu" class="aggregation-menu" @pointerdown.stop
-          @pointerup.stop @click.stop @keydown.esc.stop.prevent="closeAggregation(true)"
-          @keydown.down.prevent="moveAggregationFocus(1)" @keydown.up.prevent="moveAggregationFocus(-1)"
-          @keydown.home.prevent="focusAggregationOption(0)" @keydown.right.prevent="moveAggregationFocus(1)"
-          @keydown.left.prevent="moveAggregationFocus(-1)" @keydown.end.prevent="focusAggregationOption(-1)">
-          <div class="aggregation-heading">{{ metricLabel(aggregationSlot) }}</div>
-          <div ref="aggregationList" class="aggregation-options nice-scrollbar">
-            <section v-for="group in aggregationGroups" :key="group.key" class="aggregation-group"
-              :class="{ quantiles: group.key === 'quantiles' }" :style="{ '--aggregation-columns': group.columns }">
-              <h3>{{ group.title }}</h3>
-              <div class="aggregation-grid">
-                <SelectionTile v-for="option in group.options" :key="option.slot" class="aggregation-option"
-                  density="compact" :selected="selected.includes(option.slot)" :disabled="isDisabled(option.slot)"
-                  @select="selectAggregation(option.slot)">
-                  {{ aggregationOptionLabel(option.slot, option.label) }}
-                </SelectionTile>
-              </div>
-            </section>
-          </div>
-        </div>
-      </Popover>
+      <VehicleAggregationPopover v-if="aggregationSlot !== null" v-model="aggregationOpen"
+        :metric="aggregationSlot" :target="aggregationTrigger" :selected :max-slots
+        @select="emit('select', $event)" />
     </template>
   </PanelPopover>
 </template>
@@ -73,14 +53,13 @@
 <script setup lang="ts">
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 import ResetIcon from '@/assets/icons/reset.svg'
-import { computed, ref, shallowRef, useTemplateRef, watch } from 'vue'
-import Popover from '@/shared/uiKit/popover/Popover.vue'
+import { ref, shallowRef, watch } from 'vue'
 import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
 import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
-import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import type { PlacementParam, PopoverTarget } from '@/shared/uiKit/popover/utils'
-import { availableSlots, baseSlot, defaultSlot, metricLabel, slotAggregationLabel, slotAggregationOptions, slotCategories, type BaseSlot, type Slot } from './vehicleMetrics'
+import { availableSlots, baseSlot, defaultSlot, isAggregatableSlot, metricLabel, slotAggregationLabel, slotCategories, type AggregatableSlot, type BaseSlot, type Slot } from './vehicleMetrics'
+import VehicleAggregationPopover from './VehicleAggregationPopover.vue'
 
 const props = defineProps<{
   title: string
@@ -100,42 +79,13 @@ const emit = defineEmits<{
   reset: []
 }>()
 
-const aggregationSlot = ref<BaseSlot | null>(null)
+const aggregationOpen = ref(false)
+const aggregationSlot = ref<AggregatableSlot | null>(null)
 const aggregationTrigger = shallowRef<HTMLButtonElement | null>(null)
-const aggregationMenu = useTemplateRef<HTMLElement>('aggregationMenu')
-const aggregationList = useTemplateRef<HTMLElement>('aggregationList')
-const aggregationOptions = computed(() => aggregationSlot.value === null ? [] : slotAggregationOptions(aggregationSlot.value))
 
 watch(open, isOpen => {
   if (!isOpen) closeAggregation()
 })
-
-const aggregationGroupDefinitions = [
-  { key: 'basic', title: 'Основные', columns: 2 },
-  { key: 'quantiles', title: 'Квантили', columns: 4 },
-  { key: 'spread', title: 'Разброс', columns: 2 },
-  { key: 'zero', title: 'Нулевые значения', columns: 1 },
-] as const
-
-const aggregationGroups = computed(() => aggregationGroupDefinitions.map(group => ({
-  ...group,
-  options: aggregationOptions.value.filter(option => aggregationGroup(option.slot) === group.key),
-})).filter(group => group.options.length > 0))
-
-function aggregationGroup(slot: Slot): typeof aggregationGroupDefinitions[number]['key'] {
-  const modifier = slot.split('_')[1]
-  if (modifier?.startsWith('q')) return 'quantiles'
-  if (modifier === 'variance' || modifier === 'deviation') return 'spread'
-  if (modifier === 'zero') return 'zero'
-  return 'basic'
-}
-
-function aggregationOptionLabel(slot: Slot, label: string) {
-  const modifier = slot.split('_')[1]
-  if (modifier?.startsWith('q')) return `${modifier.slice(1)}%`
-  if (modifier === 'deviation') return 'Отклонение (σ)'
-  return label
-}
 
 function selectedAggregations(slot: BaseSlot) {
   return props.selected.filter(selected => baseSlot(selected) === slot)
@@ -155,45 +105,19 @@ function extraAggregationCount(slot: BaseSlot) {
 }
 
 function openAggregation(slot: BaseSlot, event: MouseEvent) {
-  if (aggregationSlot.value === slot) {
+  if (!isAggregatableSlot(slot)) return
+  if (aggregationOpen.value && aggregationSlot.value === slot) {
     closeAggregation()
     return
   }
 
   aggregationTrigger.value = event.currentTarget as HTMLButtonElement
   aggregationSlot.value = slot
+  aggregationOpen.value = true
 }
 
-function closeAggregation(restoreFocus = false) {
-  aggregationSlot.value = null
-  if (restoreFocus) aggregationTrigger.value?.focus({ preventScroll: true })
-}
-
-function focusAggregationOption(index?: number) {
-  const menu = aggregationMenu.value
-  const list = aggregationList.value
-  const buttons = menu?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')
-  if (!menu || !list || !buttons?.length) return
-  const selectedIndex = aggregationGroups.value.flatMap(group => group.options)
-    .findIndex(option => props.selected.includes(option.slot))
-  const button = buttons[index === -1 ? buttons.length - 1 : index ?? Math.max(0, selectedIndex)]
-  if (!button) return
-  button.focus({ preventScroll: true })
-  const listRect = list.getBoundingClientRect()
-  const buttonRect = button.getBoundingClientRect()
-  if (buttonRect.top < listRect.top) list.scrollTop += buttonRect.top - listRect.top - 5
-  else if (buttonRect.bottom > listRect.bottom) list.scrollTop += buttonRect.bottom - listRect.bottom + 5
-}
-
-function moveAggregationFocus(direction: number) {
-  const buttons = [...aggregationMenu.value?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)') ?? []]
-  if (!buttons.length) return
-  const index = buttons.findIndex(button => button === document.activeElement)
-  focusAggregationOption((index + direction + buttons.length) % buttons.length)
-}
-
-function selectAggregation(slot: Slot) {
-  emit('select', slot)
+function closeAggregation() {
+  aggregationOpen.value = false
 }
 
 function selectMetric(slot: BaseSlot) {
@@ -332,66 +256,6 @@ function isDisabled(slot: Slot) {
 
   &::after {
     left: 6px;
-  }
-}
-
-.aggregation-menu {
-  pointer-events: auto;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  width: min(250px, calc(100vw - 20px));
-  max-height: min(450px, 60dvh);
-  overflow: hidden;
-  border: 1px solid #444;
-  border-radius: 10px;
-  background: #2a2a2a;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-  color: #f6f6f6;
-  line-height: 1.3;
-
-  .aggregation-heading {
-    flex: none;
-    padding: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    font-size: 14px;
-    font-weight: 600;
-  }
-
-  .aggregation-options {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 10px;
-    min-height: 0;
-    overflow-y: auto;
-  }
-
-  .aggregation-group {
-    h3 {
-      margin: 0 0 6px;
-      color: rgba(255, 255, 255, 0.55);
-      font-size: 11px;
-      font-weight: 500;
-    }
-
-    .aggregation-grid {
-      display: grid;
-      grid-template-columns: repeat(var(--aggregation-columns), minmax(0, 1fr));
-      gap: 4px;
-    }
-
-    &.quantiles .aggregation-option {
-      --selection-tile-main-padding: 5px 4px;
-      --selection-tile-justify-content: center;
-
-      font-variant-numeric: tabular-nums;
-    }
-  }
-
-  .aggregation-option {
-    flex: none;
-    width: 100%;
   }
 }
 </style>

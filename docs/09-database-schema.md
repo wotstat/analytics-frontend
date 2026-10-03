@@ -303,7 +303,7 @@
 | `playersResults.tankRole` | `Array(LowCardinality(String))` | Роль танка (см. tankRole) |
 | `playersResults.tankType` | `Array(LowCardinality(String))` | Тип танка (HT/MT/LT/AT/SPG) |
 | `playersResults.tankLevel` | `Array(UInt8)` | Уровень танка |
-| `playersResults.killerIndex` | `Array(Int8)` | Индекс убийцы в массивах playersResults (−1 — выжил) |
+| `playersResults.killerIndex` | `Array(Int8)` | Индекс убийцы в массивах playersResults, начиная с 1; −1 — убийца отсутствует в списке, в том числе если игрок выжил |
 | `playersResults.maxHealth` | `Array(UInt16)` | Максимальное HP танка |
 | `playersResults.health` | `Array(UInt16)` | HP на конец боя (0 — уничтожен) |
 | `playersResults.isAlive` | `Array(Bool)` | Выжил ли в бою |
@@ -343,7 +343,7 @@
 | `personal.tankType` | `LowCardinality(String)` | Тип танка (HT/MT/LT/AT/SPG) |
 | `personal.tankRole` | `LowCardinality(String)` | Роль танка |
 | `personal.tankLevel` | `UInt8` | Уровень танка |
-| `personal.killerIndex` | `Int8` | Индекс убийцы в массивах playersResults (−1 — выжил) |
+| `personal.killerIndex` | `Int8` | Индекс убийцы в массивах playersResults, начиная с 1; −1 — убийца отсутствует в списке, в том числе если игрок выжил |
 | `personal.maxHealth` | `UInt16` | Максимальное HP танка |
 | `personal.health` | `UInt16` | HP на конец боя (0 — уничтожен) |
 | `personal.isAlive` | `Bool` | Выжил ли в бою |
@@ -1000,6 +1000,49 @@
 Итог: так получается **общая статистика по всем игрокам** игры (из `playersResults.*`), собранная без двойного учёта боёв. Схема таблицы — срез `Event_OnBattleResult`: `arenaId`, `battleMode`/`battleGameplay`, `region`, командные показатели и полный набор `playersResults.*`.
 
 ---
+
+## Результаты участников — `PlayerBattleResults`
+
+Источник `session/vehicles`, добавлен в октябре 2026: обычный `MergeTree`, одна строка на участие
+игрока после дедупликации `Event_OnBattleResult` и разворачивания `playersResults`.
+Партиционирование — `toYYYYMM(day)`, ключ сортировки и первичный ключ:
+`(region, battleMode, battleGameplay, tankTag, result, squadmatesCount, battleLevel, arenaTag, day)`.
+Команда игрока не хранится; `squadmatesCount` — `UInt8`, число совзводных без самого игрока.
+
+Сохраняются `arenaId`, `participantIndex` (с 1), `participantId`, дата и режим боя,
+характеристики техники (`tankTag`, `tankLevel`, `tankType`, `tankRole`), карта, результат,
+длительность, все числовые показатели участника, `name`, `clan`, `clanDBID`, `playerRank`
+и `comp7PrestigePoints`/`comp7SkillTag`/`comp7Rank`. Вместо индекса убийцы — `killerTankTag`.
+`battleLevel` — MATERIALIZED Enum8 `same/top/middle/bottom`, рассчитанный по уровням всех участников.
+`stunDuration` — Nullable(Float32); некорректные значения очищаются при загрузке.
+ALIAS-колонки: суммы/максимум содействия, урон для отметки и 14 производных отношений
+(доли, коэффициенты, показатели в минуту). Нулевой знаменатель даёт NULL.
+Агрегатных состояний в таблице нет: средние и квантили рассчитываются при чтении.
+
+Историческое заполнение проверено за январь 2024 — сентябрь 2026; постоянное поступление новых
+данных ещё не подключено. Последние даты для основной таблицы берутся из `PlayerBattleLatestDays`.
+Старые `VehiclesStatistics` и
+`VehiclesStatisticsByBattleMode` оставлены для обратной совместимости и сравнения.
+Локальные DDL, SQL заполнения и инструкция — [`.local/sql/player-battle-results.md`](../.local/sql/player-battle-results.md).
+
+## Последние дни результатов — `PlayerBattleLatestDays`
+
+Обычный `MergeTree`, ключ сортировки:
+`(region, battleMode, battleGameplay, tankTag, result, squadmatesCount, battleLevel, arenaTag, tankLevel, tankType)`.
+Типы измерений совпадают с `PlayerBattleResults`; `lastDay` — `Date`, последний завершённый день
+для полной комбинации. На 3 октября 2026 — 8 723 038 строк.
+
+Refreshable MV `player_battle_latest_days_rmv` заменяет содержимое раз в сутки
+(`REFRESH EVERY 1 DAY OFFSET 10 MINUTE`), группируя `PlayerBattleResults` по этому ключу
+и вычисляя `max(day)` при `day < toDate(now('UTC'))`.
+Фронт фильтрует срез, находит `max(lastDay)` для танка или категории и читает соответствующие
+1/7/30 календарных дней фактов. Опорная дата — самая частая последняя дата группы в диапазоне
+от максимальной минус два дня до максимальной включительно (при равной частоте выбирается более поздняя).
+Группы с этой датой и новее читаются первым запросом, остальные — вторым.
+Оба запроса сохраняют индивидуальные периоды групп и явные общие границы для отсечения партиций.
+Второй запрос выполняется после первого, если нужны неактуальные строки; результаты
+непересекающихся групп объединяются на клиенте.
+Исторические версии среза не хранятся.
 
 ## Производные таблицы и легаси
 

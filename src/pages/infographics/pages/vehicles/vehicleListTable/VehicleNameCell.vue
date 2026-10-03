@@ -6,7 +6,7 @@
       <span class="vehicle-name" :title="vehicleName(vehicle, false)">
         <span v-for="(part, index) in nameParts" :key="index" :class="{ highlight: part.highlight }">{{ part.text }}</span>
       </span>
-      <span v-if="vehicle.day !== latestDay" class="postfix">{{ formatStatisticsDay(vehicle.day) }}</span>
+      <span v-if="!vehicle.isActual" class="postfix">{{ formatStatisticsDay(vehicle.day) }}</span>
     </span>
   </span>
 </template>
@@ -20,7 +20,7 @@ import type { VehicleStatistics } from '../shared/types'
 import { formatStatisticsDay } from '../shared/formatStatisticsDay'
 import { vehicleName } from '../shared/vehicleName'
 
-const props = defineProps<{ vehicle: VehicleStatistics, latestDay: string, search: string }>()
+const props = defineProps<{ vehicle: VehicleStatistics, search: string }>()
 const nameParts = computed(() => getHighlightedTextParts(highlight(vehicleName(props.vehicle), props.search)))
 </script>
 

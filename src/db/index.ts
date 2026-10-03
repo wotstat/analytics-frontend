@@ -24,6 +24,7 @@ export const clickhouse = createClient({
   pathname: '/api/db/',
   username: 'public',
   database: 'WOT',
+  request_timeout: 120_000,
   clickhouse_settings: {
     max_temporary_columns: '1000',
     add_http_cors_header: 1

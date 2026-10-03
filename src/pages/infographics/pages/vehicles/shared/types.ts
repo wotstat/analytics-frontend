@@ -9,6 +9,7 @@ export type VehicleStatistics = {
   tankType: string | null
   region: string
   day: string
+  isActual: boolean
 } & VehicleMetricValues
 
 export type VehicleHistoryPeriod = { periodStart: string } & VehicleMetricValues

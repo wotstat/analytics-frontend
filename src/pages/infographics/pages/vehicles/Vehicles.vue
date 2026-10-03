@@ -13,15 +13,14 @@
 import TimeSeriesCompare from './timeSeriesCompare/TimeSeriesCompare.vue'
 import { useVehicleComparison } from './timeSeriesCompare/useVehicleComparison'
 import type { VehicleGrouping } from './shared/vehicleGrouping'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useMeta } from '@/shared/composition/useMeta'
 import VehicleListTable from './vehicleListTable/VehicleListTable.vue'
 import { defaultSlots, type Slot } from './vehicleMetricSelector/vehicleMetrics.ts'
-import type { VehicleStatistics } from './shared/types'
 import VehicleFilters from './filters/VehicleFilters.vue'
 import { createVehicleFilters } from './filters/types'
-import { LONG_CACHE_SETTINGS, queryComputed } from '@/db'
-import { vehicleStatisticsQuery } from './shared/vehicleStatisticsQuery'
+import { vehicleStatisticsQueries } from './shared/vehicleStatisticsQuery'
+import { useVehicleTableStatistics } from './vehicleListTable/useVehicleTableStatistics'
 import type { VehicleStatisticsPeriod } from './shared/vehicleStatisticsPeriod'
 import { createLocalVehicleFilters } from './vehicleListTable/filters/localFilters'
 import { useBackground } from '@/shared/uiKit/pageBackground/useBackground'
@@ -43,8 +42,12 @@ const slots = ref<Slot[]>([...defaultSlots])
 
 const comparison = useVehicleComparison(filters)
 
+const beforeDay = new Date().toISOString().slice(0, 10)
 const retry = ref(0)
-const statistics = queryComputed<VehicleStatistics>(() =>
-  `${vehicleStatisticsQuery(filters.value, grouping.value, period.value, undefined, slots.value)}\n-- retry ${retry.value}`,
-  { settings: { ...LONG_CACHE_SETTINGS, query_cache_nondeterministic_function_handling: 'save' }, allowCache: false })
+const queries = computed(() => vehicleStatisticsQueries(filters.value, grouping.value, period.value, undefined, slots.value, beforeDay))
+const onlyActual = computed(() => grouping.value === 'tanks' && localFilters.value.onlyActual)
+const statistics = useVehicleTableStatistics(
+  () => `${queries.value.actual}\n-- retry ${retry.value}`,
+  () => onlyActual.value ? null : `${queries.value.inactive}\n-- retry ${retry.value}`,
+)
 </script>

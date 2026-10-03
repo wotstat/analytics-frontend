@@ -37,7 +37,7 @@
                 {{ romanNumberProcessor(level) }}
               </button>
             </div>
-            <label class="checkbox-option" title="Техника с данными за последний доступный день текущей выборки">
+            <label class="checkbox-option">
               <input type="checkbox" :checked="filters.onlyActual"
                 @change="filters = { ...filters, onlyActual: !filters.onlyActual }">
               Только актуальные

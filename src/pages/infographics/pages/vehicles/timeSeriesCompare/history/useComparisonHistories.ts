@@ -2,7 +2,7 @@ import { onScopeDispose, reactive, toValue, watch, type MaybeRefOrGetter } from 
 import { error, loading, query, success, type Status } from '@/db'
 import type { VehicleHistoryPeriod } from '../../shared/types'
 import type { Slot } from '../../vehicleMetricSelector/vehicleMetrics'
-import { vehicleHistoryQuery } from '../../shared/vehicleStatisticsQuery'
+import { VEHICLE_STATISTICS_QUERY_OPTIONS, vehicleHistoryQuery } from '../../shared/vehicleStatisticsQuery'
 import type { HistoryStep } from '../../timeSeries/period/historyStep'
 import { createComparisonHistoryQueue } from './comparisonHistoryQueue'
 import type { ComparisonSource } from '../types'
@@ -49,7 +49,7 @@ export function useComparisonHistories(sources: MaybeRefOrGetter<readonly Histor
   async function load(tag: string, sql: string, signal: AbortSignal) {
     try {
       const { data } = await queue.run(() => query<VehicleHistoryPeriod>(sql, {
-        settings: { use_query_cache: 1, query_cache_ttl: 24 * 60 * 60 },
+        ...VEHICLE_STATISTICS_QUERY_OPTIONS,
         abortSignal: signal,
       }), signal)
       if (!signal.aborted) states.set(tag, { status: success, data })

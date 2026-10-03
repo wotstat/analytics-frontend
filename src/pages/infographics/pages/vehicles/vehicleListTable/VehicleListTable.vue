@@ -61,7 +61,7 @@
       </template>
 
       <template #cell-name="{ row }">
-        <VehicleNameCell :vehicle="row" :latest-day="latestDay" :search />
+        <VehicleNameCell :vehicle="row" :search />
       </template>
 
       <template #cell="{ row, column, value }">
@@ -277,9 +277,6 @@ function onCellClick({ rowKey, column }: ComposableTableCellEvent<VehicleStatist
   if (!expanded) expandedRows.value = [...expandedRows.value, rowKey]
 }
 
-const latestDay = computed(() => props.vehicles.reduce((latest, vehicle) =>
-  vehicle.day > latest ? vehicle.day : latest, ''))
-
 const hasLocalFilters = computed(() => {
   const { levels, types, nations, onlyActual, minBattles, minPlayers } = localFilters.value
   if (minBattles !== DEFAULT_MIN_BATTLES || minPlayers !== DEFAULT_MIN_PLAYERS) return true
@@ -306,8 +303,6 @@ const filteredVehicles = computed(() => {
       if (filters.types.length && !filters.types.some(type => type === vehicle.tankType)) return false
       if (filters.nations.length && !filters.nations.some(nation => nation === vehicle.tankTag?.split(':')[0])) return false
     }
-
-    if (showName.value && filters.onlyActual && vehicle.day !== latestDay.value) return false
 
     return (vehicle.battles ?? 0) > filters.minBattles && (vehicle.playerCount ?? 0) > filters.minPlayers
   })
@@ -660,11 +655,6 @@ watch([maxSelectableSlots, width], ([limit, tableWidth]) => {
         &:hover {
           background: rgba(255, 255, 255, 0.15);
         }
-      }
-
-      &:focus-visible {
-        outline: 2px solid rgba(255, 255, 255, 0.5);
-        outline-offset: 2px;
       }
 
       @media (max-width: 450px) {

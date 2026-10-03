@@ -59,7 +59,7 @@ import type { VehicleFilters } from '../filters/types'
 import type { Slot } from '../vehicleMetricSelector/vehicleMetrics.ts'
 import { formatSlotValue } from '../vehicleMetricSelector/formatMetricValue.ts'
 import { formatHistoryPeriod } from './tooltip/formatHistoryPeriod'
-import { vehicleHistoryQuery } from '../shared/vehicleStatisticsQuery'
+import { VEHICLE_STATISTICS_QUERY_OPTIONS, vehicleHistoryQuery } from '../shared/vehicleStatisticsQuery'
 import { VehicleHistoryChart } from './VehicleHistoryChart'
 import type { VehicleHistoryPeriod, VehicleHistorySeries } from '../shared/types'
 import type { HistoryAverageWindow, HistoryStep } from './period/historyStep'
@@ -108,7 +108,7 @@ type SplitSource = { tag: string, name: string, color: string }
 
 const history = queryComputed<SplitHistoryPeriod>(() =>
   `${vehicleHistoryQuery(props.filters, props.selection, beforeDay.value, step.value, split.value, [slot.value])}\n-- retry ${retry.value}`,
-  { settings: { use_query_cache: 1, query_cache_ttl: 24 * 60 * 60 } })
+  VEHICLE_STATISTICS_QUERY_OPTIONS)
 
 const splitSources = computed<SplitSource[]>(() => {
   const activeSplit = split.value

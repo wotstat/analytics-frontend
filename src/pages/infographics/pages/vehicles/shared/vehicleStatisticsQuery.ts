@@ -1,37 +1,35 @@
 import { battleModeSelection } from '@/shared/game/selectors/battleMode/catalog'
 import type { VehicleFilters } from '../filters/types'
-import { availableSlots, baseSlots, type Slot } from '../vehicleMetricSelector/vehicleMetrics'
+import { availableSlots, baseSlots, derivedSlots, type Slot } from '../vehicleMetricSelector/vehicleMetrics'
 import type { HistoryStep } from '../timeSeries/period/historyStep'
 import type { VehicleHistorySplit } from '../timeSeries/split/historySplit'
 import type { VehicleGrouping, VehicleSelection } from './vehicleGrouping'
 import type { VehicleStatisticsPeriod } from './vehicleStatisticsPeriod'
 
+// any и TDigest зависят от порядка обработки строк. Их результат допустимо
+// кешировать: запросы ограничены завершёнными днями с явной датой в SQL.
+export const VEHICLE_STATISTICS_QUERY_OPTIONS = {
+  settings: {
+    use_query_cache: 1,
+    query_cache_ttl: 24 * 60 * 60,
+    query_cache_nondeterministic_function_handling: 'save',
+  },
+} as const
+
 function quote(value: string) {
   return `'${value.replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`
 }
 
-function statisticsSource(filters: VehicleFilters) {
-  const needsDetails = filters.arenas.length > 0
-    || filters.platoon !== 'any'
-    || filters.result !== 'any'
-    || filters.battleLevel !== 'any'
-
-  return needsDetails ? 'VehiclesStatistics' : 'VehiclesStatisticsByBattleMode'
-}
-
-function statisticsMetrics(source: ReturnType<typeof statisticsSource>, slots: readonly Slot[]) {
-  const winrate = source === 'VehiclesStatisticsByBattleMode'
-    ? 'sum(winCount) / nullIf(sum(participations), 0) * 100'
-    : availableSlots.winrate.sql
-
-  // Тяжёлые состояния распределений читаем только для запрошенных агрегаций.
-  return [...new Set([...Object.keys(baseSlots) as Slot[], ...slots])]
-    .map(key => `${key === 'winrate' ? winrate : availableSlots[key].sql} as ${key}`)
+function statisticsMetrics(slots: readonly Slot[]) {
+  // Базовые и производные показатели приходят вместе; распределения — по запросу.
+  // Порядок столбцов интерфейса не должен менять SQL и ключ кеша.
+  return [...new Set([...Object.keys(baseSlots) as Slot[], ...Object.keys(derivedSlots) as Slot[], ...[...slots].sort()])]
+    .map(key => `${availableSlots[key].sql} as ${key}`)
     .join(',\n      ')
 }
 
-export function vehicleStatisticsWhere(filters: VehicleFilters, beforeDay?: string) {
-  const conditions: string[] = [`stats.day < ${beforeDay ? `toDate(${quote(beforeDay)})` : 'today()'}`]
+export function vehicleStatisticsWhere(filters: VehicleFilters, beforeDay: string, dateColumn: 'day' | 'lastDay' = 'day') {
+  const conditions: string[] = [`stats.${dateColumn} < toDate(${quote(beforeDay)})`]
 
   if (filters.regions.length) {
     conditions.push(`stats.region in (${[...filters.regions].sort().map(quote).join(', ')})`)
@@ -56,13 +54,7 @@ export function vehicleStatisticsWhere(filters: VehicleFilters, beforeDay?: stri
   if (filters.platoon !== 'any') conditions.push(`stats.squadmatesCount ${platoons[filters.platoon]}`)
   if (filters.result !== 'any') conditions.push(`stats.result = ${quote(filters.result)}`)
 
-  const levels = {
-    same: 'stats.minBattleTankLevel = stats.tankLevel and stats.maxBattleTankLevel = stats.tankLevel',
-    top: 'stats.minBattleTankLevel < stats.tankLevel and stats.maxBattleTankLevel = stats.tankLevel',
-    middle: 'stats.minBattleTankLevel < stats.tankLevel and stats.maxBattleTankLevel > stats.tankLevel',
-    bottom: 'stats.minBattleTankLevel = stats.tankLevel and stats.maxBattleTankLevel > stats.tankLevel',
-  } as const
-  if (filters.battleLevel !== 'any') conditions.push(`(${levels[filters.battleLevel]})`)
+  if (filters.battleLevel !== 'any') conditions.push(`stats.battleLevel = ${quote(filters.battleLevel)}`)
 
   return conditions.length ? conditions.join('\n      and ') : '1'
 }
@@ -79,10 +71,8 @@ function selectionWhere(selection?: VehicleSelection) {
 
 export function vehicleHistoryQuery(filters: VehicleFilters, selection: VehicleSelection, beforeDay: string, step: HistoryStep,
   split: VehicleHistorySplit | null = null, slots: readonly Slot[] = []) {
-  // Измерения разбиения есть только в подробной агрегации.
-  const source = split === null ? statisticsSource(filters) : 'VehiclesStatistics'
-  // Reaggregate source rows per period so averages keep their denominators and
-  // player states are merged across days instead of adding daily results.
+  // Агрегируем участия сразу за весь период: игроки не складываются по дням,
+  // отношения сумм сохраняют веса, квантили считаются по индивидуальным значениям.
   const period = {
     day: 'stats.day',
     week: 'toMonday(stats.day)',
@@ -92,11 +82,7 @@ export function vehicleHistoryQuery(filters: VehicleFilters, selection: VehicleS
     arena: 'stats.arenaTag',
     platoon: "multiIf(stats.squadmatesCount = 0, 'solo', stats.squadmatesCount = 1, 'duo', stats.squadmatesCount = 2, 'trio', 'large')",
     result: 'toString(stats.result)',
-    battleLevel: `multiIf(
-        stats.minBattleTankLevel = stats.tankLevel and stats.maxBattleTankLevel = stats.tankLevel, 'same',
-        stats.minBattleTankLevel < stats.tankLevel and stats.maxBattleTankLevel = stats.tankLevel, 'top',
-        stats.minBattleTankLevel < stats.tankLevel and stats.maxBattleTankLevel > stats.tankLevel, 'middle',
-        'bottom')`,
+    battleLevel: 'toString(stats.battleLevel)',
   }
   const splitSelect = split === null ? '' : `,\n      ${splitExpression[split]} as splitKey`
   const splitGroup = split === null ? '' : ', splitKey'
@@ -104,17 +90,17 @@ export function vehicleHistoryQuery(filters: VehicleFilters, selection: VehicleS
   return `
     select
       ${period} as periodStart${splitSelect},
-      ${statisticsMetrics(source, slots)}
-    from ${source} as stats
-    where ${vehicleStatisticsWhere(filters, beforeDay)}${selectionWhere(selection)}
+      ${statisticsMetrics(slots)}
+    from PlayerBattleResults as stats
+    prewhere ${vehicleStatisticsWhere(filters, beforeDay)}${selectionWhere(selection)}
     group by periodStart${splitGroup}
     order by periodStart${splitGroup}
   `
 }
 
-export function vehicleStatisticsQuery(filters: VehicleFilters, grouping: VehicleGrouping = 'tanks',
-  days: VehicleStatisticsPeriod = 30, selection?: VehicleSelection, slots: readonly Slot[] = []) {
-  const source = statisticsSource(filters)
+export function vehicleStatisticsQueries(filters: VehicleFilters, grouping: VehicleGrouping = 'tanks',
+  days: VehicleStatisticsPeriod = 30, selection?: VehicleSelection, slots: readonly Slot[] = [],
+  beforeDay = new Date().toISOString().slice(0, 10)) {
   const isTank = grouping === 'tanks'
   const withLevel = grouping === 'levels' || grouping === 'classesByLevel'
   const withType = grouping === 'classes' || grouping === 'classesByLevel'
@@ -123,31 +109,16 @@ export function vehicleStatisticsQuery(filters: VehicleFilters, grouping: Vehicl
     ...(withType ? ['stats.tankType'] : []),
   ]
   const groupBy = dimensions.join(', ')
-  const joinKeys = isTank ? ['tankTag'] : [
+  const keys = isTank ? ['tankTag'] : [
     ...(withLevel ? ['tankLevel'] : []),
     ...(withType ? ['tankType'] : []),
   ]
-  const where = vehicleStatisticsWhere(filters) + selectionWhere(isTank ? undefined : selection)
+  const selectionFilter = selectionWhere(isTank ? undefined : selection)
+  const where = vehicleStatisticsWhere(filters, beforeDay) + selectionFilter
+  const latestWhere = vehicleStatisticsWhere(filters, beforeDay, 'lastDay') + selectionFilter
   const rowKey = isTank ? 'stats.tankTag' : `concat(${quote(`${grouping}:`)}, ${dimensions.map(column => `toString(${column})`).join(", ':', ")})`
-  const latestRows = days === 1
-    ? `and (${groupBy}, stats.day) in (
-        select ${groupBy}, max(stats.day)
-        from ${source} as stats
-        where ${where}
-        group by ${groupBy}
-      )`
-    : `and stats.day >= latest.latestDay - toIntervalDay(${days - 1})
-      and stats.day <= latest.latestDay`
-  const latestJoin = days === 1 ? '' : `inner join (
-      select ${groupBy}, max(stats.day) as latestDay
-      from ${source} as stats
-      where ${where}
-      group by ${groupBy}
-    ) as latest on ${joinKeys.map(key => `stats.${key} = latest.${key}`).join(' and ')}`
 
-  // У каждой строки свой последний завершённый день после фильтрации.
-  // Для недели и месяца агрегируем исходные состояния за 7 или 30 дней до него.
-  return `
+  const selectPeriod = (conditions: string, isActual: boolean) => `
     select
       ${rowKey} as rowKey,
       ${isTank ? 'stats.tankTag' : 'NULL'} as tankTag,
@@ -155,12 +126,65 @@ export function vehicleStatisticsQuery(filters: VehicleFilters, grouping: Vehicl
       ${isTank || withType ? 'any(stats.tankType)' : 'NULL'} as tankType,
       min(stats.region) as region,
       max(stats.day) as day,
-      ${statisticsMetrics(source, slots)}
-    from ${source} as stats
-    ${latestJoin}
-    where ${where}
-      ${latestRows}
+      toBool(${isActual ? 1 : 0}) as isActual,
+      ${statisticsMetrics(slots)}
+    from PlayerBattleResults as stats
+    prewhere ${where}
+      and ${conditions}
     group by ${groupBy}
-    order by battles desc, rowKey
   `
+
+  // Опорный день — самый частый среди последних дат в пределах двух дней от максимума.
+  // Более свежие группы тоже актуальны; период каждой группы заканчивается её последним днём.
+  // Оба запроса используют одинаковый срез, но читают непересекающиеся группы.
+  const latest = `
+    with
+      latest as (
+        select ${groupBy}, max(stats.lastDay) as latestDay
+        from PlayerBattleLatestDays as stats
+        prewhere ${latestWhere}
+        group by ${groupBy}
+      ),
+      (select max(latestDay) from latest) as latestDataDay,
+      (
+        select latestDay from latest
+        where latestDay >= latestDataDay - toIntervalDay(2)
+        group by latestDay
+        order by count() desc, latestDay desc
+        limit 1
+      ) as actualDay
+  `
+
+  return {
+    actual: `${latest},
+      actual as (
+        select ${keys.join(', ')}, latestDay
+        from latest
+        where latestDay >= actualDay
+      )
+      ${selectPeriod(`stats.day >= actualDay - toIntervalDay(${days - 1})
+      and stats.day <= latestDataDay
+      and (${groupBy}, stats.day) in (
+        select ${keys.join(', ')},
+          arrayJoin(arrayMap(offset -> latestDay - toIntervalDay(offset), range(${days}))) as day
+        from actual
+      )`, true)}
+      order by battles desc, rowKey
+    `,
+    inactive: `${latest},
+      inactive as (
+        select ${keys.join(', ')}, latestDay
+        from latest
+        where latestDay < actualDay
+      )
+      ${selectPeriod(`stats.day >= (select min(latestDay) from inactive) - toIntervalDay(${days - 1})
+      and stats.day <= (select max(latestDay) from inactive)
+      and (${groupBy}, stats.day) in (
+        select ${keys.join(', ')},
+          arrayJoin(arrayMap(offset -> latestDay - toIntervalDay(offset), range(${days}))) as day
+        from inactive
+      )`, false)}
+      order by battles desc, rowKey
+    `,
+  }
 }
