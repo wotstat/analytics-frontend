@@ -119,10 +119,15 @@ export async function query<T>(query: string, options: QueryOptions = {}): Promi
     abortSignal?.throwIfAborted()
     const policy = resolveCachePolicy(toValue(cache))
     const executionKey = queryCacheKey(query, options)
+    const cacheHeaders = proxyCache && policy && policy.ttl > 0 ? policy.headers : undefined
     const result = await clickhouse.query({
       query, format, abort_signal: abortSignal,
-      clickhouse_settings: { output_format_json_quote_64bit_integers: 0, ...cacheClickHouseSettings(policy, settings) },
-      http_headers: proxyCache && policy && policy.ttl > 0 ? policy.headers : undefined,
+      clickhouse_settings: {
+        output_format_json_quote_64bit_integers: 0,
+        ...cacheClickHouseSettings(policy, settings),
+        ...(cacheHeaders ? { wait_end_of_query: 1, send_progress_in_http_headers: 0 } : {}),
+      },
+      http_headers: cacheHeaders,
     })
     const cacheExpiresAt = responseCacheExpiresAt(policy, result.response_headers)
     const response: ResponseJSON<T> = format === 'JSONCompact'
