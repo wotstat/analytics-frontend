@@ -69,6 +69,7 @@ export function isErrorStatus(status: Status): status is { status: typeof error,
 
 export type QueryOptions = {
   allowCache?: boolean
+  format?: 'JSON' | 'JSONCompact'
   settings?: ClickHouseSettings
   abortSignal?: AbortSignal
   concurrency?: ConcurrencyGroup
@@ -84,26 +85,43 @@ type ActiveQuery = {
 
 const activeQueries = new Map<string, Set<ActiveQuery>>()
 const cachedResults = new Map<string, unknown>()
+const queryCacheKey = (sql: string, format: QueryOptions['format'] = 'JSON') => `${format}\n${sql}`
+
 export async function query<T>(query: string, {
   allowCache = true,
+  format = 'JSON',
   settings = {},
   abortSignal,
   concurrency,
 }: QueryOptions = {}) {
   abortSignal?.throwIfAborted()
-  if (allowCache && cachedResults.has(query)) return cachedResults.get(query) as ResponseJSON<T>
+  const cacheKey = queryCacheKey(query, format)
+  if (allowCache && cachedResults.has(cacheKey)) return cachedResults.get(cacheKey) as ResponseJSON<T>
 
   // Запросы с разными владельцами отмены или очередями не разделяют выполнение.
   if (allowCache) {
-    const active = [...activeQueries.get(query) ?? []].find(request =>
+    const active = [...activeQueries.get(cacheKey) ?? []].find(request =>
       request.abortSignal === abortSignal && request.concurrency === concurrency)
     if (active) return active.promise as Promise<ResponseJSON<T>>
   }
 
   async function execute() {
     abortSignal?.throwIfAborted()
-    const result = await clickhouse.query({ query, format: 'JSON', abort_signal: abortSignal, clickhouse_settings: { output_format_json_quote_64bit_integers: 0, ...settings } })
-    const response = await result.json<T>()
+    const result = await clickhouse.query({ query, format, abort_signal: abortSignal, clickhouse_settings: { output_format_json_quote_64bit_integers: 0, ...settings } })
+    const response: ResponseJSON<T> = format === 'JSONCompact'
+      ? await result.json<unknown[]>().then(response => {
+        const columns = response.meta
+        if (!columns) throw new Error('JSONCompact response is missing column metadata')
+        const decode = (row: unknown[]) => Object.fromEntries(columns.map((column, index) => [column.name, row[index]])) as T
+        return {
+          ...response,
+          data: response.data.map(decode),
+          totals: response.totals === undefined ? undefined : decode(response.totals),
+          extremes: response.extremes === undefined ? undefined
+            : Object.fromEntries(Object.entries(response.extremes).map(([key, row]) => [key, decode(row)])),
+        }
+      })
+      : await result.json<T>()
 
     totalElapsed.value += response.statistics?.elapsed ?? 0
     totalRowsRead.value += response.statistics?.rows_read ?? 0
@@ -111,22 +129,22 @@ export async function query<T>(query: string, {
     totalRequests.value++
 
     abortSignal?.throwIfAborted()
-    if (allowCache) cachedResults.set(query, response)
+    if (allowCache) cachedResults.set(cacheKey, response)
     return response
   }
 
   const current = concurrency ? concurrency.run(execute, abortSignal) : execute()
   if (!allowCache) return current
 
-  const requests = activeQueries.get(query) ?? new Set<ActiveQuery>()
+  const requests = activeQueries.get(cacheKey) ?? new Set<ActiveQuery>()
   const request: ActiveQuery = { promise: current, abortSignal, concurrency }
   requests.add(request)
-  activeQueries.set(query, requests)
+  activeQueries.set(cacheKey, requests)
   try {
     return await current
   } finally {
     requests.delete(request)
-    if (!requests.size) activeQueries.delete(query)
+    if (!requests.size) activeQueries.delete(cacheKey)
   }
 }
 
@@ -142,8 +160,9 @@ export function queryComputed<T>(queryString: () => string | null, { enabled = r
     if (signal.aborted) return
 
     try {
-      if (cachedResults.has(q) && options.allowCache !== false) {
-        result.value = { data: (cachedResults.get(q) as ResponseJSON<T>).data, status: success }
+      const cacheKey = queryCacheKey(q, options.format)
+      if (cachedResults.has(cacheKey) && options.allowCache !== false) {
+        result.value = { data: (cachedResults.get(cacheKey) as ResponseJSON<T>).data, status: success }
         return
       }
 

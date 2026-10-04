@@ -1,8 +1,6 @@
 import { battleModeSelection } from '@/shared/game/selectors/battleMode/catalog'
 import type { VehicleFilters } from '../filters/types'
-import { availableSlots, baseSlots, derivedSlots, metricQuerySlots, type Slot } from '../vehicleMetricSelector/vehicleMetrics'
-import type { HistoryStep } from '../timeSeries/period/historyStep'
-import type { VehicleHistorySplit } from '../timeSeries/split/historySplit'
+import { availableSlots, metricQuerySlots, type Slot } from '../vehicleMetricSelector/vehicleMetrics'
 import type { VehicleGrouping, VehicleSelection } from './vehicleGrouping'
 import type { VehicleStatisticsPeriod } from './vehicleStatisticsPeriod'
 import type { VehicleStatistics } from './types'
@@ -19,12 +17,6 @@ function quote(value: string) {
   return `'${value.replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`
 }
 
-function statisticsMetrics(slots: readonly Slot[]) {
-  return [...new Set([...Object.keys(baseSlots) as Slot[], ...Object.keys(derivedSlots) as Slot[], ...[...slots].sort()])]
-    .map(key => `${availableSlots[key].sql} as ${key}`)
-    .join(',\n      ')
-}
-
 export function vehicleStatisticsWhere(filters: VehicleFilters, beforeDay: string, dateColumn: 'day' | 'lastDay' = 'day') {
   const conditions: string[] = [`stats.${dateColumn} < toDate(${quote(beforeDay)})`]
 
@@ -36,9 +28,9 @@ export function vehicleStatisticsWhere(filters: VehicleFilters, beforeDay: strin
     const targets = filters.battleModes.flatMap(key => battleModeSelection(key).targets)
     const modes = [...new Set(targets.map(target => target.mode))].sort()
     conditions.push(`stats.battleMode in (${modes.map(quote).join(', ')})`)
-    conditions.push(`(${targets.map(target => {
+    conditions.push(`(${[...new Set(targets.map(target => {
       return `(stats.battleMode = ${quote(target.mode)}${target.gameplay !== undefined ? ` and stats.battleGameplay = ${quote(target.gameplay)}` : ''})`
-    }).join(' or ')})`)
+    }))].sort().join(' or ')})`)
   }
 
   if (filters.arenas.length) {
@@ -56,7 +48,7 @@ export function vehicleStatisticsWhere(filters: VehicleFilters, beforeDay: strin
   return conditions.length ? conditions.join('\n      and ') : '1'
 }
 
-function selectionWhere(selection?: VehicleSelection) {
+export function vehicleSelectionWhere(selection?: VehicleSelection) {
   if (!selection) return ''
   const conditions: string[] = []
   if (selection.tankTag) conditions.push(`stats.tankTag = ${quote(selection.tankTag)}`)
@@ -66,49 +58,19 @@ function selectionWhere(selection?: VehicleSelection) {
   return conditions.map(condition => `\n      and ${condition}`).join('')
 }
 
-export function vehicleHistoryQuery(filters: VehicleFilters, selection: VehicleSelection, beforeDay: string, step: HistoryStep,
-  split: VehicleHistorySplit | null = null, slots: readonly Slot[] = []) {
-  // Агрегируем участия сразу за весь период: игроки не складываются по дням,
-  // отношения сумм сохраняют веса, квантили считаются по индивидуальным значениям.
-  const period = {
-    day: 'stats.day',
-    week: 'toMonday(stats.day)',
-    month: 'toStartOfMonth(stats.day)',
-  }[step]
-  const splitExpression: Record<VehicleHistorySplit, string> = {
-    arena: 'stats.arenaTag',
-    platoon: "multiIf(stats.squadmatesCount = 0, 'solo', stats.squadmatesCount = 1, 'duo', stats.squadmatesCount = 2, 'trio', 'large')",
-    result: 'toString(stats.result)',
-    battleLevel: 'toString(stats.battleLevel)',
-  }
-  const splitSelect = split === null ? '' : `,\n      ${splitExpression[split]} as splitKey`
-  const splitGroup = split === null ? '' : ', splitKey'
-
-  return `
-    select
-      ${period} as periodStart${splitSelect},
-      ${statisticsMetrics(slots)}
-    from PlayerBattleResults as stats
-    prewhere ${vehicleStatisticsWhere(filters, beforeDay)}${selectionWhere(selection)}
-    group by periodStart${splitGroup}
-    order by periodStart${splitGroup}
-  `
+export function vehicleDailyStatisticsTable(filters: VehicleFilters, selection?: VehicleSelection, byTank = false) {
+  if (filters.arenas.length || filters.platoon !== 'any' || filters.result !== 'any' || filters.battleLevel !== 'any') return null
+  return byTank || selection?.tankTag || selection?.nations.length
+    ? 'PlayerBattleDailyStatistics'
+    : 'PlayerBattleDailyStatisticsByClassLevel'
 }
 
 export function vehicleStatisticsQueries(filters: VehicleFilters, grouping: VehicleGrouping = 'tanks',
   days: VehicleStatisticsPeriod = 30, selection?: VehicleSelection,
   beforeDay = new Date().toISOString().slice(0, 10)) {
   const isTank = grouping === 'tanks'
-  const daily = !filters.arenas.length &&
-    filters.platoon === 'any' &&
-    filters.result === 'any' &&
-    filters.battleLevel === 'any'
-
-  const table = (() => {
-    if (!daily) return 'PlayerBattleResults'
-    if (isTank || selection?.tankTag || selection?.nations.length) return 'PlayerBattleDailyStatistics'
-    return 'PlayerBattleDailyStatisticsByClassLevel'
-  })()
+  const daily = vehicleDailyStatisticsTable(filters, selection, isTank)
+  const table = daily ?? 'PlayerBattleResults'
 
   const latestTable = daily ? table : 'PlayerBattleLatestDays'
   const latestDate = daily ? 'day' : 'lastDay'
@@ -124,7 +86,7 @@ export function vehicleStatisticsQueries(filters: VehicleFilters, grouping: Vehi
     ...(withLevel ? ['tankLevel'] : []),
     ...(withType ? ['tankType'] : []),
   ]
-  const selectionFilter = selectionWhere(isTank ? undefined : selection)
+  const selectionFilter = vehicleSelectionWhere(isTank ? undefined : selection)
   const where = vehicleStatisticsWhere(filters, beforeDay) + selectionFilter
   const latestWhere = vehicleStatisticsWhere(filters, beforeDay, latestDate) + selectionFilter
   const rowKey = isTank ? 'stats.tankTag' : `concat(${quote(`${grouping}:`)}, ${dimensions.map(column => `toString(${column})`).join(", ':', ")})`

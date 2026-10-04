@@ -37,7 +37,7 @@
 
       <template v-else-if="isErrorStatus(history.status)">
         <span>Не удалось загрузить историю</span>
-        <button class="retry" @click="retry++">Попробовать ещё раз</button>
+        <button class="retry" @click="retry('vehicle')">Попробовать ещё раз</button>
       </template>
 
       <template v-else>По выбранным фильтрам пока нет данных</template>
@@ -48,7 +48,7 @@
 <script setup lang="ts">
 import { computed, markRaw, onBeforeUnmount, ref, watch } from 'vue'
 import { useNow } from '@vueuse/core'
-import { isErrorStatus, loading, queryComputed, success } from '@/db'
+import { isErrorStatus, loading, success, type Status } from '@/db'
 import TimeSeriesPanel from '@/shared/ui/chart/timeSeries/panel/TimeSeriesPanel.vue'
 import { useLegend } from '@/shared/ui/chart/legend/useLegend'
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
@@ -59,7 +59,7 @@ import type { VehicleFilters } from '../filters/types'
 import type { Slot } from '../vehicleMetricSelector/vehicleMetrics.ts'
 import { formatSlotValue } from '../vehicleMetricSelector/formatMetricValue.ts'
 import { formatHistoryPeriod } from './tooltip/formatHistoryPeriod'
-import { VEHICLE_STATISTICS_QUERY_OPTIONS, vehicleHistoryQuery } from '../shared/vehicleStatisticsQuery'
+import { useVehicleHistories } from './useVehicleHistories'
 import { VehicleHistoryChart } from './VehicleHistoryChart'
 import type { VehicleHistoryPeriod, VehicleHistorySeries } from '../shared/types'
 import type { HistoryAverageWindow, HistoryStep } from './period/historyStep'
@@ -101,14 +101,14 @@ const annotations = computed(() => [...versionAnnotations.value, ...eventAnnotat
 const now = useNow({ interval: 60_000 })
 
 const beforeDay = computed(() => now.value.toISOString().slice(0, 10))
-const retry = ref(0)
 
-type SplitHistoryPeriod = VehicleHistoryPeriod & { splitKey?: string }
 type SplitSource = { tag: string, name: string, color: string }
 
-const history = queryComputed<SplitHistoryPeriod>(() =>
-  `${vehicleHistoryQuery(props.filters, props.selection, beforeDay.value, step.value, split.value, [slot.value])}\n-- retry ${retry.value}`,
-  VEHICLE_STATISTICS_QUERY_OPTIONS)
+const { states, retry } = useVehicleHistories(() => [{
+  tag: 'vehicle', filters: props.filters, selection: props.selection, split: split.value,
+}], { beforeDay, step, slot })
+const history = computed<{ status: Status, data: VehicleHistoryPeriod[] }>(() =>
+  states.get('vehicle') ?? { status: loading, data: [] })
 
 const splitSources = computed<SplitSource[]>(() => {
   const activeSplit = split.value

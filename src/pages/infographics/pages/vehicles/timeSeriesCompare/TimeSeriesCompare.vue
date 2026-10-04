@@ -74,7 +74,7 @@ import { useHistoryEventStyles } from '../timeSeries/annotations/events/useHisto
 import { applyHistoryFilters, hasHistoryValues } from '../timeSeries/historyValues'
 import { snapshotComparisonFilters, type ComparisonSource } from './types'
 import { comparisonName } from './comparisonName'
-import { useComparisonHistories } from './history/useComparisonHistories'
+import { useVehicleHistories } from '../timeSeries/useVehicleHistories'
 import HistoryTooltipHeader from '../timeSeries/tooltip/HistoryTooltipHeader.vue'
 
 useHistoryEventStyles()
@@ -104,7 +104,7 @@ const annotations = computed(() => [...versionAnnotations.value, ...eventAnnotat
 const now = useNow({ interval: 60_000 })
 const beforeDay = computed(() => now.value.toISOString().slice(0, 10))
 
-const { states, retry } = useComparisonHistories(() => props.sources, { beforeDay, step, slot })
+const { states, retry } = useVehicleHistories(() => props.sources, { beforeDay, step, slot })
 
 const currentFilters = computed(() => snapshotComparisonFilters(props.filters))
 const legendItems = computed(() => props.sources.map(source => ({
