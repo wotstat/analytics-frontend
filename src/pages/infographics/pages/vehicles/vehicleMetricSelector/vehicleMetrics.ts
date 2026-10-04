@@ -12,7 +12,7 @@ export type SlotDefinition = {
 
 const average = (column: string) => `avgOrNull(stats.${column})`
 
-// Все базовые показатели загружаются вместе, независимо от выбранных столбцов.
+// Основные показатели без дополнительных агрегаций.
 export const baseSlots = {
   battles: { icon: 'battles', label: 'Бои', sql: 'count()', description: 'Число участий на танке за выбранный период, не уникальных арен' },
   playerCount: { icon: 'player', label: 'Игроки', sql: 'uniqIf(stats.participantId, stats.participantId != 0)', description: 'Оценка числа уникальных игроков за выбранный период, без неизвестных аккаунтов' },
@@ -229,6 +229,12 @@ function aggregationSql(slot: AggregatableSlot, aggregation: Aggregation) {
 
 export function baseSlot(slot: Slot): BaseSlot {
   return slot.split('_')[0] as BaseSlot
+}
+
+export function metricQuerySlots(slot: Slot): Slot[] {
+  const base = baseSlot(slot)
+  if (!isAggregatableSlot(base)) return [slot]
+  return [base, ...aggregationOrder.map(aggregation => `${base}_${aggregation}` as AggregatedSlot)]
 }
 
 export function metricLabel(slot: Slot) {

@@ -80,7 +80,9 @@
 
       <template #loading>
         <div class="state">
-          <Loader class="loader" /><span>Загружаем статистику техники…</span>
+          <Loader class="loader" />
+          <span>Загружаем статистику техники…</span>
+          <span class="progress">{{ progress.completed + 1 }} из {{ progress.total }}</span>
         </div>
       </template>
       <template #empty>
@@ -166,6 +168,7 @@ import type { ComparisonCandidate } from '../timeSeriesCompare/types'
 const props = defineProps<{
   vehicles: VehicleStatistics[]
   status: Status
+  progress: { completed: number, total: number }
   filters: VehicleFilters
   comparedKeys: string[]
   comparisonCount: number
@@ -582,6 +585,11 @@ watch([maxSelectableSlots, width], ([limit, tableWidth]) => {
     .loader {
       font-size: 4px;
       margin-bottom: 20px;
+    }
+
+    .progress {
+      color: rgba(255, 255, 255, 0.55);
+      font-variant-numeric: tabular-nums;
     }
 
     .muted {

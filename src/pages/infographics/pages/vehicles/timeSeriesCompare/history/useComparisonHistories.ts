@@ -1,10 +1,9 @@
 import { onScopeDispose, reactive, toValue, watch, type MaybeRefOrGetter } from 'vue'
-import { error, loading, query, success, type Status } from '@/db'
+import { createConcurrencyGroup, error, loading, query, success, type Status } from '@/db'
 import type { VehicleHistoryPeriod } from '../../shared/types'
 import type { Slot } from '../../vehicleMetricSelector/vehicleMetrics'
 import { VEHICLE_STATISTICS_QUERY_OPTIONS, vehicleHistoryQuery } from '../../shared/vehicleStatisticsQuery'
 import type { HistoryStep } from '../../timeSeries/period/historyStep'
-import { createComparisonHistoryQueue } from './comparisonHistoryQueue'
 import type { ComparisonSource } from '../types'
 
 type HistorySource = Pick<ComparisonSource, 'tag' | 'selection' | 'filters'>
@@ -18,7 +17,7 @@ export function useComparisonHistories(sources: MaybeRefOrGetter<readonly Histor
   const states = reactive(new Map<string, HistoryState>())
   const retries = reactive(new Map<string, number>())
   const requests = new Map<string, { sql: string, controller: AbortController }>()
-  const queue = createComparisonHistoryQueue()
+  const concurrency = createConcurrencyGroup(5)
 
   const stop = watch(() => toValue(sources).map(source => ({
     tag: source.tag,
@@ -48,10 +47,11 @@ export function useComparisonHistories(sources: MaybeRefOrGetter<readonly Histor
 
   async function load(tag: string, sql: string, signal: AbortSignal) {
     try {
-      const { data } = await queue.run(() => query<VehicleHistoryPeriod>(sql, {
+      const { data } = await query<VehicleHistoryPeriod>(sql, {
         ...VEHICLE_STATISTICS_QUERY_OPTIONS,
         abortSignal: signal,
-      }), signal)
+        concurrency,
+      })
       if (!signal.aborted) states.set(tag, { status: success, data })
     } catch (reason) {
       if (signal.aborted) return

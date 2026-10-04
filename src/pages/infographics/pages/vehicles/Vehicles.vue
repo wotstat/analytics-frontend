@@ -4,7 +4,7 @@
     :min-players="localFilters.minPlayers" :skip-incomplete-days="localFilters.skipIncompleteDays"
     @remove="comparison.remove" @color-change="comparison.setColor" @clear="comparison.clear" />
   <VehicleListTable v-model:grouping="grouping" v-model:local-filters="localFilters" v-model:period="period"
-    v-model:slots="slots" :vehicles="statistics.data" :status="statistics.status" :filters
+    v-model:slots="slots" :vehicles="statistics.data" :status="statistics.status" :progress="statistics.progress" :filters
     :compared-keys="comparison.comparedKeys.value" :comparison-count="comparison.sources.value.length"
     @compare="comparison.toggle" @compare-all="comparison.addMany" @retry="retry++" />
 </template>
@@ -44,10 +44,7 @@ const comparison = useVehicleComparison(filters)
 
 const beforeDay = new Date().toISOString().slice(0, 10)
 const retry = ref(0)
-const queries = computed(() => vehicleStatisticsQueries(filters.value, grouping.value, period.value, undefined, slots.value, beforeDay))
+const queries = computed(() => vehicleStatisticsQueries(filters.value, grouping.value, period.value, undefined, beforeDay))
 const onlyActual = computed(() => grouping.value === 'tanks' && localFilters.value.onlyActual)
-const statistics = useVehicleTableStatistics(
-  () => `${queries.value.actual}\n-- retry ${retry.value}`,
-  () => onlyActual.value ? null : `${queries.value.inactive}\n-- retry ${retry.value}`,
-)
+const statistics = useVehicleTableStatistics(queries, slots, onlyActual, retry)
 </script>

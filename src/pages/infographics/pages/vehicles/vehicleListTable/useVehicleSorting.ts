@@ -39,7 +39,7 @@ export function useVehicleSorting(grouping: Ref<VehicleGrouping>, slots: Ref<Slo
     }
 
     if (sortOrders.value.some(({ key }) => key !== 'name' && key !== 'tankLevel' && key !== 'tankType')) {
-      const secondary = compareDescending(a.battles, b.battles) || compareDescending(a.damage, b.damage)
+      const secondary = compareDescending(a.battles, b.battles)
       if (secondary) return secondary
     }
 

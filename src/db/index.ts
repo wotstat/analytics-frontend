@@ -2,7 +2,10 @@
 import { CLICKHOUSE_WEB_PROXY_URL } from '@/shared/external/externalUrl'
 import { ResponseJSON, createClient, type ClickHouseSettings } from '@clickhouse/client-web'
 import { useLocalStorage } from '@vueuse/core'
-import { computed, ref, shallowRef, watch } from 'vue'
+import { computed, getCurrentScope, onScopeDispose, ref, shallowRef, watch, type Ref } from 'vue'
+import type { ConcurrencyGroup } from './concurrency'
+
+export { createConcurrencyGroup, type ConcurrencyGroup } from './concurrency'
 
 if (import.meta.env.MODE == 'development' && import.meta.env.VITE_MODE_DEV_LOCAL === 'true' && !window.crypto.randomUUID) {
   console.warn('crypto.randomUUID is not supported in this browser, using fallback implementation')
@@ -25,9 +28,10 @@ export const clickhouse = createClient({
   username: 'public',
   database: 'WOT',
   request_timeout: 120_000,
+  keep_alive: { enabled: false },
   clickhouse_settings: {
     max_temporary_columns: '1000',
-    add_http_cors_header: 1
+    add_http_cors_header: 1,
   },
   compression: {
     response: true
@@ -63,68 +67,88 @@ export function isErrorStatus(status: Status): status is { status: typeof error,
   return typeof status !== 'symbol' && status.status === error
 }
 
-const activeQueries = new Map<string, Promise<unknown>>()
+export type QueryOptions = {
+  allowCache?: boolean
+  settings?: ClickHouseSettings
+  abortSignal?: AbortSignal
+  concurrency?: ConcurrencyGroup
+}
+
+export type ReactiveQueryOptions = QueryOptions & { enabled?: Ref<boolean> }
+
+type ActiveQuery = {
+  promise: Promise<ResponseJSON<unknown>>
+  abortSignal?: AbortSignal
+  concurrency?: ConcurrencyGroup
+}
+
+const activeQueries = new Map<string, Set<ActiveQuery>>()
 const cachedResults = new Map<string, unknown>()
 export async function query<T>(query: string, {
   allowCache = true,
-  settings = {} as ClickHouseSettings,
-  abortSignal = undefined as AbortSignal | undefined } = {}) {
+  settings = {},
+  abortSignal,
+  concurrency,
+}: QueryOptions = {}) {
+  abortSignal?.throwIfAborted()
   if (allowCache && cachedResults.has(query)) return cachedResults.get(query) as ResponseJSON<T>
 
-  if (activeQueries.has(query)) return activeQueries.get(query) as Promise<ResponseJSON<T>>
+  // Запросы с разными владельцами отмены или очередями не разделяют выполнение.
+  if (allowCache) {
+    const active = [...activeQueries.get(query) ?? []].find(request =>
+      request.abortSignal === abortSignal && request.concurrency === concurrency)
+    if (active) return active.promise as Promise<ResponseJSON<T>>
+  }
 
-  const current = new Promise<ResponseJSON<T>>(async (resolve, reject) => {
-    try {
-      // await new Promise(resolve => setTimeout(resolve, 100000))
+  async function execute() {
+    abortSignal?.throwIfAborted()
+    const result = await clickhouse.query({ query, format: 'JSON', abort_signal: abortSignal, clickhouse_settings: { output_format_json_quote_64bit_integers: 0, ...settings } })
+    const response = await result.json<T>()
 
-      const result = await clickhouse.query({ query, format: 'JSON', abort_signal: abortSignal, clickhouse_settings: { output_format_json_quote_64bit_integers: 0, ...settings } })
-      const response = await result.json<T>()
+    totalElapsed.value += response.statistics?.elapsed ?? 0
+    totalRowsRead.value += response.statistics?.rows_read ?? 0
+    totalBytesRead.value += response.statistics?.bytes_read ?? 0
+    totalRequests.value++
 
-      totalElapsed.value += response.statistics?.elapsed ?? 0
-      totalRowsRead.value += response.statistics?.rows_read ?? 0
-      totalBytesRead.value += response.statistics?.bytes_read ?? 0
-      totalRequests.value++
+    abortSignal?.throwIfAborted()
+    if (allowCache) cachedResults.set(query, response)
+    return response
+  }
 
-      if (abortSignal?.aborted) return reject(new Error('Query aborted'))
-      if (allowCache) cachedResults.set(query, response)
-      resolve(response)
-    } catch (error) {
-      return reject(error)
-    }
-    finally {
-      activeQueries.delete(query)
-    }
-  })
+  const current = concurrency ? concurrency.run(execute, abortSignal) : execute()
+  if (!allowCache) return current
 
-  if (allowCache) activeQueries.set(query, current)
-
-  return current
+  const requests = activeQueries.get(query) ?? new Set<ActiveQuery>()
+  const request: ActiveQuery = { promise: current, abortSignal, concurrency }
+  requests.add(request)
+  activeQueries.set(query, requests)
+  try {
+    return await current
+  } finally {
+    requests.delete(request)
+    if (!requests.size) activeQueries.delete(query)
+  }
 }
 
-export function queryComputed<T>(queryString: () => string | null, { settings = {} as ClickHouseSettings, enabled = ref(true), allowCache = true } = {}) {
+export function queryComputed<T>(queryString: () => string | null, { enabled = ref(true), ...options }: ReactiveQueryOptions = {}) {
   const result = shallowRef<{ status: Status, data: T[] }>({ status: loading, data: [] })
 
-  let abortController = new AbortController()
-
-  watch(() => [queryString(), enabled.value] as const, async (value, old) => {
-    const [q, enabled] = value
-    const [oldQ, oldEnabled] = old ?? [null, null]
-
-    if (q === oldQ && enabled === oldEnabled) return
+  watch([queryString, enabled], async ([q, enabled], _, onCleanup) => {
     if (!q || !enabled) return
 
-    abortController.abort()
-    abortController = new AbortController()
-    const signal = abortController.signal
+    const controller = new AbortController()
+    onCleanup(() => controller.abort())
+    const signal = options.abortSignal ? AbortSignal.any([options.abortSignal, controller.signal]) : controller.signal
+    if (signal.aborted) return
 
     try {
-      if (cachedResults.has(q) && allowCache) {
+      if (cachedResults.has(q) && options.allowCache !== false) {
         result.value = { data: (cachedResults.get(q) as ResponseJSON<T>).data, status: success }
         return
       }
 
       result.value = { data: [], status: loading }
-      const { data } = await query<T>(q, { settings, allowCache, abortSignal: signal })
+      const { data } = await query<T>(q, { ...options, abortSignal: signal })
       if (signal.aborted) return
 
       result.value = { data, status: success }
@@ -139,10 +163,8 @@ export function queryComputed<T>(queryString: () => string | null, { settings = 
   return result
 }
 
-export function queryComputedFirst<T>(queryString: () => string | null, defaultValue: T, { settings = {} as ClickHouseSettings, enabled = ref(true), allowCache = true } = {}) {
-  const result = queryComputed<T>(queryString, { settings, enabled, allowCache })
-
-
+export function queryComputedFirst<T>(queryString: () => string | null, defaultValue: T, options: ReactiveQueryOptions = {}) {
+  const result = queryComputed<T>(queryString, options)
 
   return computed(() => ({
     status: result.value.status as Status,
@@ -151,18 +173,24 @@ export function queryComputedFirst<T>(queryString: () => string | null, defaultV
 
 }
 
-export function queryAsync<T>(queryString: string, { enabled = ref(true), settings = {} as ClickHouseSettings, allowCache = true } = {}) {
+export function queryAsync<T>(queryString: string, { enabled = ref(true), ...options }: ReactiveQueryOptions = {}) {
   const result = shallowRef<{ status: Status, data: T[] }>({ status: loading, data: [] })
+  const controller = new AbortController()
+  const signal = options.abortSignal ? AbortSignal.any([options.abortSignal, controller.signal]) : controller.signal
+  if (getCurrentScope()) onScopeDispose(() => controller.abort())
+  let started = false
 
   const stop = watch(enabled, async (value) => {
-    if (!value) return
-
+    if (!value || started) return
+    started = true
     setTimeout(() => stop(), 0)
 
     try {
-      const { data } = await query<T>(queryString, { settings, allowCache })
+      const { data } = await query<T>(queryString, { ...options, abortSignal: signal })
+      if (signal.aborted) return
       result.value = { data, status: success }
     } catch (reason) {
+      if (signal.aborted) return
       console.error(reason)
       result.value = { data: [], status: { status: error, reason: (reason as any).message as string } }
     }
@@ -171,8 +199,8 @@ export function queryAsync<T>(queryString: string, { enabled = ref(true), settin
   return result
 }
 
-export function queryAsyncFirst<T>(queryString: string, defaultValue: T, { enabled = ref(true), settings = {} as ClickHouseSettings, allowCache = true } = {}) {
-  const result = queryAsync<T>(queryString, { enabled, settings, allowCache })
+export function queryAsyncFirst<T>(queryString: string, defaultValue: T, options: ReactiveQueryOptions = {}) {
+  const result = queryAsync<T>(queryString, options)
 
   return computed(() => ({
     status: result.value.status as Status,

@@ -10,7 +10,7 @@ export type VehicleStatistics = {
   region: string
   day: string
   isActual: boolean
-} & VehicleMetricValues
+} & Record<'battles' | 'playerCount', number> & Partial<Record<Slot, number | null>>
 
 export type VehicleHistoryPeriod = { periodStart: string } & VehicleMetricValues
 

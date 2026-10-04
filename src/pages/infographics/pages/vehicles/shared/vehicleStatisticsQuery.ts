@@ -1,16 +1,15 @@
 import { battleModeSelection } from '@/shared/game/selectors/battleMode/catalog'
 import type { VehicleFilters } from '../filters/types'
-import { availableSlots, baseSlots, derivedSlots, type Slot } from '../vehicleMetricSelector/vehicleMetrics'
+import { availableSlots, baseSlots, derivedSlots, metricQuerySlots, type Slot } from '../vehicleMetricSelector/vehicleMetrics'
 import type { HistoryStep } from '../timeSeries/period/historyStep'
 import type { VehicleHistorySplit } from '../timeSeries/split/historySplit'
 import type { VehicleGrouping, VehicleSelection } from './vehicleGrouping'
 import type { VehicleStatisticsPeriod } from './vehicleStatisticsPeriod'
+import type { VehicleStatistics } from './types'
 
-// any и TDigest зависят от порядка обработки строк. Их результат допустимо
-// кешировать: запросы ограничены завершёнными днями с явной датой в SQL.
 export const VEHICLE_STATISTICS_QUERY_OPTIONS = {
   settings: {
-    use_query_cache: 1,
+    use_query_cache: 0,
     query_cache_ttl: 24 * 60 * 60,
     query_cache_nondeterministic_function_handling: 'save',
   },
@@ -21,8 +20,6 @@ function quote(value: string) {
 }
 
 function statisticsMetrics(slots: readonly Slot[]) {
-  // Базовые и производные показатели приходят вместе; распределения — по запросу.
-  // Порядок столбцов интерфейса не должен менять SQL и ключ кеша.
   return [...new Set([...Object.keys(baseSlots) as Slot[], ...Object.keys(derivedSlots) as Slot[], ...[...slots].sort()])]
     .map(key => `${availableSlots[key].sql} as ${key}`)
     .join(',\n      ')
@@ -99,7 +96,7 @@ export function vehicleHistoryQuery(filters: VehicleFilters, selection: VehicleS
 }
 
 export function vehicleStatisticsQueries(filters: VehicleFilters, grouping: VehicleGrouping = 'tanks',
-  days: VehicleStatisticsPeriod = 30, selection?: VehicleSelection, slots: readonly Slot[] = [],
+  days: VehicleStatisticsPeriod = 30, selection?: VehicleSelection,
   beforeDay = new Date().toISOString().slice(0, 10)) {
   const isTank = grouping === 'tanks'
   const withLevel = grouping === 'levels' || grouping === 'classesByLevel'
@@ -127,7 +124,8 @@ export function vehicleStatisticsQueries(filters: VehicleFilters, grouping: Vehi
       min(stats.region) as region,
       max(stats.day) as day,
       toBool(${isActual ? 1 : 0}) as isActual,
-      ${statisticsMetrics(slots)}
+      ${baseSlots.battles.sql} as battles,
+      ${baseSlots.playerCount.sql} as playerCount
     from PlayerBattleResults as stats
     prewhere ${where}
       and ${conditions}
@@ -156,6 +154,50 @@ export function vehicleStatisticsQueries(filters: VehicleFilters, grouping: Vehi
   `
 
   return {
+    column(slot: Slot, rows: readonly VehicleStatistics[]) {
+      if (!rows.length) return null
+
+      // Даты уже получены базовым запросом. Порядок строк не меняет SQL и кеш.
+      const groups = [...rows].sort((a, b) => a.rowKey < b.rowKey ? -1 : a.rowKey > b.rowKey ? 1 : 0)
+      const dates = [...new Set(rows.map(row => row.day))].sort()
+      const isActual = rows.every(row => row.isActual)
+      const metrics = metricQuerySlots(slot).map(key => `${availableSlots[key].sql} as ${key}`).join(',\n          ')
+      let periodFilter = ''
+
+      if (isActual) {
+        // Обычно у всех актуальных групп один день. Перечисляем только исключения
+        // с более свежей датой, сохраняя индивидуальные окна и правило актуальности.
+        const overrides = dates.slice(1).map(day => {
+          const keys = groups.filter(row => row.day === day).map(row => quote(row.rowKey)).join(', ')
+          return `${rowKey} in (${keys}), toDate(${quote(day)})`
+        })
+        if (overrides.length) {
+          const lastDay = `multiIf(${overrides.join(', ')}, firstDay)`
+          periodFilter = `\n          and stats.day >= ${lastDay} - toIntervalDay(${days - 1})
+          and stats.day <= ${lastDay}`
+        }
+      } else {
+        const latest = groups.map(row => `(${quote(row.rowKey)}, ${quote(row.day)})`).join(', ')
+        periodFilter = `\n          and (${rowKey}, stats.day) in (
+            select latest.1,
+              arrayJoin(arrayMap(offset -> toDate(latest.2) - toIntervalDay(offset), range(${days}))) as day
+            from (select arrayJoin([${latest}]) as latest)
+          )`
+      }
+
+      return `
+        with toDate(${quote(dates[0])}) as firstDay
+        select
+          ${rowKey} as rowKey,
+          ${metrics}
+        from PlayerBattleResults as stats
+        prewhere ${where}
+          and stats.day >= firstDay - toIntervalDay(${days - 1})
+          and stats.day <= ${dates.length === 1 ? 'firstDay' : `toDate(${quote(dates[dates.length - 1])})`}${periodFilter}
+        group by ${groupBy}${isActual ? '\n        having max(stats.day) >= firstDay' : ''}
+        order by rowKey
+      `
+    },
     actual: `${latest},
       actual as (
         select ${keys.join(', ')}, latestDay
@@ -188,3 +230,5 @@ export function vehicleStatisticsQueries(filters: VehicleFilters, grouping: Vehi
     `,
   }
 }
+
+export type VehicleStatisticsQueries = ReturnType<typeof vehicleStatisticsQueries>
