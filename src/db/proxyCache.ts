@@ -28,5 +28,6 @@ export async function proxyCacheFetch(input: RequestInfo | URL, init?: RequestIn
   init.signal?.throwIfAborted()
   const hash = [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('')
   headers.set(`${QUERY_CACHE_HEADER}Key`, `v1:${hash}`)
-  return send(input, { ...init, headers })
+
+  return send(input, { ...init, headers, credentials: 'omit' })
 }
