@@ -10,7 +10,7 @@
 
 <script setup lang="ts">
 import BadgesLinePopover from '../components/badges/BadgesLinePopover.vue'
-import { CACHE_SETTINGS, queryAsync } from '@/db'
+import { DEFAULT_CACHE, queryAsync } from '@/db'
 import GameVersionPopup from './GameVersionPopup.vue'
 import { CloseOnOutsideWindow } from '@/shared/uiKit/popover/utils'
 
@@ -33,7 +33,7 @@ const versionsList = queryAsync<{ region: string, version: string }>(`
   select region, gameVersionFull as version
   from GameVersions
   group by region, gameVersionFull
-`, { settings: CACHE_SETTINGS })
+`, { cache: DEFAULT_CACHE })
 
 const versions = defineModel<Set<OptionalRegionVersion>>({ default: () => new Set() })
 

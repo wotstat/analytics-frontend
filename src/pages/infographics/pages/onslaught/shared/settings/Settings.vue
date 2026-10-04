@@ -30,7 +30,7 @@ import { computed, watch, watchEffect } from 'vue'
 import { useI18n } from '@/shared/i18n/useI18n'
 import i18n from '@/shared/game/comp7/i18n.json'
 import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router'
-import { LONG_CACHE_SETTINGS, queryAsync, success } from '@/db'
+import { LONG_CACHE, queryAsync, success } from '@/db'
 import { getRegionIsoHourOffset } from '@/shared/game/comp7/utils'
 
 const { t } = useI18n(i18n)
@@ -77,7 +77,7 @@ const seasonsData = queryAsync<{ region: string, season: string, start: string }
   where region in ('RU', 'EU', 'NA', 'ASIA', 'CN', 'CT', 'RPT')
   group by region, season
   order by start desc
-`, { settings: LONG_CACHE_SETTINGS })
+`, { cache: LONG_CACHE })
 
 watchEffect(() => seasons.value = seasonsData.value?.data ?? [])
 

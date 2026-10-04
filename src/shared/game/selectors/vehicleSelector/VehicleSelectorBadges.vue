@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import { getTankName, selectTagVehiclesLocalization } from '@/shared/i18n/i18n'
 import BadgesLinePopover from '../components/badges/BadgesLinePopover.vue'
-import { CACHE_SETTINGS, queryAsync } from '@/db'
+import { DEFAULT_CACHE, queryAsync } from '@/db'
 import VehiclePopup from './VehiclePopup.vue'
 import { Nation } from '@/shared/game/vehicles/nations/nations'
 import { CloseOnOutsideWindow } from '@/shared/uiKit/popover/utils'
@@ -30,7 +30,7 @@ with
 select tag, type, role, level, short, name, region, nation
 from tanks
 left any join locals using tag;
-`, { settings: CACHE_SETTINGS })
+`, { cache: DEFAULT_CACHE })
 
 const vehicles = defineModel<Set<string>>({ default: () => new Set() })
 

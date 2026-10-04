@@ -1,4 +1,5 @@
 import { battleModeSelection } from '@/shared/game/selectors/battleMode/catalog'
+import { LONG_CACHE } from '@/db/cache'
 import type { VehicleFilters } from '../filters/types'
 import { availableSlots, metricQuerySlots, type Slot } from '../vehicleMetricSelector/vehicleMetrics'
 import type { VehicleGrouping, VehicleSelection } from './vehicleGrouping'
@@ -6,9 +7,10 @@ import type { VehicleStatisticsPeriod } from './vehicleStatisticsPeriod'
 import type { VehicleStatistics } from './types'
 
 export const VEHICLE_STATISTICS_QUERY_OPTIONS = {
+  cache: LONG_CACHE,
+  proxyCache: true,
   settings: {
     use_query_cache: 1,
-    query_cache_ttl: 24 * 60 * 60,
     query_cache_nondeterministic_function_handling: 'save',
   },
 } as const
@@ -17,8 +19,8 @@ function quote(value: string) {
   return `'${value.replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`
 }
 
-export function vehicleStatisticsWhere(filters: VehicleFilters, beforeDay: string, dateColumn: 'day' | 'lastDay' = 'day') {
-  const conditions: string[] = [`stats.${dateColumn} < toDate(${quote(beforeDay)})`]
+export function vehicleStatisticsWhere(filters: VehicleFilters, beforeDay: string | null, dateColumn: 'day' | 'lastDay' = 'day') {
+  const conditions: string[] = beforeDay === null ? [] : [`stats.${dateColumn} < toDate(${quote(beforeDay)})`]
 
   if (filters.regions.length) {
     conditions.push(`stats.region in (${[...filters.regions].sort().map(quote).join(', ')})`)
@@ -167,7 +169,7 @@ export function vehicleStatisticsQueries(filters: VehicleFilters, grouping: Vehi
           ${rowKey} as rowKey,
           ${metrics}
         from ${table} as stats
-        prewhere ${where}
+        prewhere ${vehicleStatisticsWhere(filters, null) + selectionFilter}
           and stats.day >= firstDay - toIntervalDay(${days - 1})
           and stats.day <= ${dates.length === 1 ? 'firstDay' : `toDate(${quote(dates[dates.length - 1])})`}${periodFilter}
         group by ${groupBy}${isActual ? '\n        having max(stats.day) >= firstDay' : ''}

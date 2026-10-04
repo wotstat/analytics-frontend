@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-import { CACHE_SETTINGS, queryAsync } from '@/db'
+import { DEFAULT_CACHE, queryAsync } from '@/db'
 import { GameVendor, regionToGame } from '@/shared/game/wot'
 import { Nation } from '@/shared/game/vehicles/nations/nations'
 import { VehicleType } from '@/shared/game/vehicles/vehicle/utils'
@@ -40,7 +40,7 @@ left any join localeSamples using tag
 order by count desc
 `
 
-export const vehicleListQuery = queryAsync<VehicleRow>(listQuery, { settings: CACHE_SETTINGS })
+export const vehicleListQuery = queryAsync<VehicleRow>(listQuery, { cache: DEFAULT_CACHE })
 
 export type VehicleRowWithGame = VehicleRow & { game: GameVendor }
 

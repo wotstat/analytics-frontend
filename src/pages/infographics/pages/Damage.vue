@@ -112,7 +112,7 @@ useMeta({
 })
 
 const params = useQueryStatParams()
-const settings = useQueryStatParamsCache(params)
+const cache = useQueryStatParamsCache(params)
 
 const shellLabels = Object.values(shellNames).map(t => t[0])
 const shellFullNames = Object.values(shellNames).map(t => t[1])
@@ -122,7 +122,7 @@ const enabled = useElementVisibility(container)
 
 const damageLabels = new Array(21).fill(0).map((v, i) => `${i == 10 ? '' : i < 10 ? '-' : '+'}${Math.abs((i - 10) * 2.5)}%`)
 
-const totalShots = queryAsyncFirst(`select countIf(arrayMax(results.shotDamage) > 0) as data from Event_OnShot ${whereClause(params)}`, { data: 0 }, { enabled, settings: settings.value })
+const totalShots = queryAsyncFirst(`select countIf(arrayMax(results.shotDamage) > 0) as data from Event_OnShot ${whereClause(params)}`, { data: 0 }, { enabled, cache })
 
 const damageDistributionResult = queryAsync<{ k: number, count: number }>(`
 with arrayMax(results.shotDamage) as dmg,
@@ -140,7 +140,7 @@ where shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME'
 ${whereClause(params, { withWhere: false })}
 group by k
 having k between -10 and 10
-order by k;`, { enabled, settings: settings.value })
+order by k;`, { enabled, cache })
 
 const damageAggregatedResult = queryAsyncFirst(`
 with arrayMax(results.shotDamage) as dmg,
@@ -156,7 +156,7 @@ select
 from Event_OnShot
 where shellTag not in ('HIGH_EXPLOSIVE', 'FLAME')
 ${whereClause(params, { withWhere: false })};
-`, { less: 0, more: 0, avgDamage: 0 }, { enabled, settings: settings.value })
+`, { less: 0, more: 0, avgDamage: 0 }, { enabled, cache })
 
 const safeStillResult = queryAsyncFirst(`
 with arrayMax(results.shotDamage) as dmg,
@@ -169,7 +169,7 @@ select countIf(dmg > 0 and health = 0 and healthBeforeShot > shellDamage and not
 from Event_OnShot
 where shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME'
 ${whereClause(params, { withWhere: false })}
-`, { stilled: 0, saved: 0 }, { enabled, settings: settings.value })
+`, { stilled: 0, saved: 0 }, { enabled, cache })
 
 const byShellResult = queryAsync<{ shellTag: string, percentDamage: number, percentNoDamage: number }>(`
 with arrayMax(results.shotDamage) as dmg,
@@ -180,7 +180,7 @@ select shellTag,
        countIf(hits > 0 and dmg = 0) / hitCount as percentNoDamage
 from Event_OnShot
 ${whereClause(params)}
-group by shellTag;`, { enabled, settings: settings.value })
+group by shellTag;`, { enabled, cache })
 
 const healthEnoughBestMV = bestMV('event_OnShot_health_damage', params)
 const healthEnoughQuery = healthEnoughBestMV ? `
@@ -198,7 +198,7 @@ ${whereClause(params, { withWhere: false })}
 group by healthEnough;
 `
 
-const smallDamageResult = queryAsync<{ healthEnough: number, count: number }>(healthEnoughQuery, { enabled, settings: settings.value })
+const smallDamageResult = queryAsync<{ healthEnough: number, count: number }>(healthEnoughQuery, { enabled, cache })
 
 
 const smallDamageData = computed(() => {
@@ -241,7 +241,7 @@ select
   count() / frags as shotPerFrag
 from Event_OnShot
 ${whereClause(params)};
-`, { fired: 0, ammoBayDestroyed: 0, frags: 0, shotPerFrag: 0 }, { enabled, settings: settings.value })
+`, { fired: 0, ammoBayDestroyed: 0, frags: 0, shotPerFrag: 0 }, { enabled, cache })
 
 
 function openDamage() {

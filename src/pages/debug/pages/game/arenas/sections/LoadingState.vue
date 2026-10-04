@@ -50,7 +50,7 @@
 import { ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { arenas } from '@/shared/game/arenas/arenas'
-import { query, MEDIUM_CACHE_SETTINGS } from '@/db'
+import { query, MEDIUM_CACHE } from '@/db'
 
 const log = ref<{ time: string, text: string }[]>([])
 
@@ -62,7 +62,7 @@ function push(text: string) {
 async function runOk() {
   push('query("select 1 as x") — отправлен')
   try {
-    const result = await query<{ x: number }>('select 1 as x', { settings: MEDIUM_CACHE_SETTINGS, allowCache: false })
+    const result = await query<{ x: number }>('select 1 as x', { cache: MEDIUM_CACHE, allowCache: false })
     push(`успех: ${JSON.stringify(result.data)}, elapsed=${result.statistics?.elapsed ?? '?'}с`)
   } catch (e) {
     push(`неожиданная ошибка: ${(e as Error).message}`)

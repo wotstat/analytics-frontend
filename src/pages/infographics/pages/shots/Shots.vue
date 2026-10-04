@@ -76,7 +76,7 @@
 import ShotsCircle from '@/pages/infographics/shared/widgets/ShotsCircle.vue'
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import { createFixedSpaceProcessor, createPercentProcessor } from '@/shared/utils/processors/processors'
-import { SHORT_CACHE_SETTINGS, queryAsyncFirst } from '@/db'
+import { SHORT_CACHE, queryAsyncFirst } from '@/db'
 import { computed, ref, useTemplateRef } from 'vue'
 import { useElementVisibility, useMouseInElement } from '@vueuse/core'
 import { getQueryStatParamsCache, useQueryStatParams, whereClause } from '@/shared/query/useQueryStatParams'
@@ -123,7 +123,7 @@ const shotsCount = queryAsyncFirst(`
 select count() as count 
 from Event_OnShot
 ${whereClause(params)}
-`, { count: 0 }, { enabled: visible, settings: params.value.player ? {} : SHORT_CACHE_SETTINGS })
+`, { count: 0 }, { enabled: visible, cache: params.value.player ? undefined : SHORT_CACHE })
 
 const dataResult = queryAsyncFirst(`
 select count()                                                                                       as count,
@@ -137,7 +137,7 @@ select count()                                                                  
        countIf(clientMarkerDistance > 300) / count                                                   as dist300
 from Event_OnShot
 ${whereClause(params)}
-`, { count: 0, hit: 0, damaged: 0, first50: 0, first30: 0, full: 0, stopped: 0, dist300: 0 }, { enabled: visible, settings: getQueryStatParamsCache(params.value) })
+`, { count: 0, hit: 0, damaged: 0, first50: 0, first30: 0, full: 0, stopped: 0, dist300: 0 }, { enabled: visible, cache: getQueryStatParamsCache(params.value) })
 
 const selectedShot = computed(() => route.query.shot as string | undefined)
 

@@ -31,7 +31,7 @@
 
 <script setup lang="ts">
 import { computed, markRaw, watchEffect } from 'vue'
-import { LONG_CACHE_SETTINGS, isErrorStatus, loading, queryComputed, success } from '@/db'
+import { LONG_CACHE, isErrorStatus, loading, queryComputed, success } from '@/db'
 import { getRegionDayChangeHourOffset } from '@/shared/game/comp7/utils'
 import HeaderTooltip from '@/shared/ui/chart/tooltip/HeaderTooltip.vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
@@ -51,7 +51,7 @@ const props = defineProps<{
 
 const data = queryComputed<GlobalDailyPlayersStatistic>(
   () => buildGlobalDailyPlayersStatisticsQuery(props.filters),
-  { settings: LONG_CACHE_SETTINGS },
+  { cache: LONG_CACHE },
 )
 
 const chart = markRaw(new DailyPlayersChart(props.seasonInterval.length))

@@ -141,7 +141,7 @@ useMeta({
 
 
 const params = useQueryStatParams()
-const settings = useQueryStatParamsCache(params)
+const cache = useQueryStatParamsCache(params)
 const showTestData = useLocalStorage('lootbox-show-test-data', false)
 
 const localizationQueries = {
@@ -227,7 +227,7 @@ const openWithStats = queryComputed<{ tag: string, locale: LocalizedName, count:
         group by openByTag
     ) as M
     left any join locales using tag
-`}, { settings: settings.value })
+`}, { cache })
 
 const rerollStats = queryComputed<{ tag: string, locale: LocalizedName, count: number, rerollCount: number, totalCount?: number, totalReroll?: number }>(() => {
   let where: string | null = whereClause(['tag'])
@@ -266,7 +266,7 @@ const rerollStats = queryComputed<{ tag: string, locale: LocalizedName, count: n
     ) as M
     left any join locales using tag
   `
-}, { settings: settings.value })
+}, { cache })
 
 const mainStats = queryComputedFirst(() => `
 select
@@ -280,7 +280,7 @@ select
     sum(arraySum(arrayFilter(t -> t.1 == 'ny25_mandarin', arrayZip(compensatedToys.currency, compensatedToys.count)).2)) as compensatedMandarin25
 from Event_OnLootboxOpen
 where ${whereClause()}
-  `, { prem: 0, credits: 0, freeXP: 0, gold: 0, equipCoin: 0, vehicles: 0, mandarin25: 0, compensatedMandarin25: 0 }, { settings: settings.value })
+  `, { prem: 0, credits: 0, freeXP: 0, gold: 0, equipCoin: 0, vehicles: 0, mandarin25: 0, compensatedMandarin25: 0 }, { cache })
 
 type Stats = {
   title: string,
@@ -358,7 +358,7 @@ countMerge(count) as count,
 }
 
 function load(queryString: () => string) {
-  return queryComputed<Stats>(queryString, { settings: settings.value })
+  return queryComputed<Stats>(queryString, { cache })
 }
 
 const lootboxesStats = load(() => getQuery(

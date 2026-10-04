@@ -1,11 +1,14 @@
 import { onScopeDispose, shallowRef, toValue, watch, type MaybeRefOrGetter } from 'vue'
-import { createConcurrencyGroup, error, loading, query, success, type Status } from '@/db'
+import { createConcurrencyGroup, createQueryCache, error, loading, query, success, type CachePolicy, type Status } from '@/db'
 import type { VehicleStatistics } from '../shared/types'
 import { metricQuerySlots, type Slot } from '../vehicleMetricSelector/vehicleMetrics'
 import { VEHICLE_STATISTICS_QUERY_OPTIONS, type VehicleStatisticsQueries } from '../shared/vehicleStatisticsQuery'
 
 type ColumnSlot = Exclude<Slot, 'battles' | 'playerCount'>
 type ColumnValues = { rowKey: string } & Partial<Record<ColumnSlot, number | null>>
+
+// Даты метрик заданы в SQL: кеш должен переживать календарные границы.
+const METRIC_CACHE = { ttl: 7 * 24 * 60 * 60 } as const satisfies CachePolicy
 
 export function useVehicleTableStatistics(
   queries: MaybeRefOrGetter<VehicleStatisticsQueries>,
@@ -18,11 +21,11 @@ export function useVehicleTableStatistics(
     data: VehicleStatistics[]
     progress: { completed: number, total: number }
   }>({ status: loading, data: [], progress: { completed: 0, total: 0 } })
-  const cache = new Map<string, unknown[]>()
+  const cache = createQueryCache<unknown[]>()
   const requests = new Map<string, { controller: AbortController, promise: Promise<unknown[]> }>()
   const concurrency = createConcurrencyGroup(1)
 
-  function load<T>(sql: string): Promise<T[]> {
+  function load<T>(sql: string, policy: CachePolicy = VEHICLE_STATISTICS_QUERY_OPTIONS.cache): Promise<T[]> {
     const cached = cache.get(sql)
     if (cached) return Promise.resolve(cached as T[])
 
@@ -34,12 +37,13 @@ export function useVehicleTableStatistics(
     const { signal } = controller
     const promise = query<T>(sql, {
       ...VEHICLE_STATISTICS_QUERY_OPTIONS,
+      cache: policy,
       allowCache: false,
       abortSignal: signal,
       concurrency,
-    }).then(({ data }) => {
+    }).then(({ data, cacheExpiresAt }) => {
       signal.throwIfAborted()
-      cache.set(sql, data)
+      cache.set(sql, data, cacheExpiresAt)
       return data
     }).finally(() => {
       if (requests.get(sql)?.controller === controller) requests.delete(sql)
@@ -111,7 +115,7 @@ export function useVehicleTableStatistics(
 
     async function loadColumns(rows: VehicleStatistics[], sqls: string[]) {
       const columns = await Promise.all(sqls.map(async sql => {
-        const values = await load<ColumnValues>(sql)
+        const values = await load<ColumnValues>(sql, METRIC_CACHE)
         completeRequest(sql)
         return values
       }))

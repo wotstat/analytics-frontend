@@ -226,8 +226,8 @@ type TableItem = {
   enemyKill: number,
 }
 
-const teamResultWin = queryAsync<TableItem>(getQuery('win'), { enabled, settings: { ...getQueryStatParamsCache(params), query_cache_nondeterministic_function_handling: 'save' } })
-const teamResultLose = queryAsync<TableItem>(getQuery('lose'), { enabled: shouldLoadLose, settings: { ...getQueryStatParamsCache(params), query_cache_nondeterministic_function_handling: 'save' } })
+const teamResultWin = queryAsync<TableItem>(getQuery('win'), { enabled, cache: getQueryStatParamsCache(params), settings: { query_cache_nondeterministic_function_handling: 'save' } })
+const teamResultLose = queryAsync<TableItem>(getQuery('lose'), { enabled: shouldLoadLose, cache: getQueryStatParamsCache(params), settings: { query_cache_nondeterministic_function_handling: 'save' } })
 
 const loadingStatus = computed(() => {
   if (youTeamResult.value == 'lose' || opponentTeamResult.value == 'lose') return teamResultLose.value.status

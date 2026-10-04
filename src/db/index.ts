@@ -2,10 +2,13 @@
 import { CLICKHOUSE_WEB_PROXY_URL } from '@/shared/external/externalUrl'
 import { ResponseJSON, createClient, type ClickHouseSettings } from '@clickhouse/client-web'
 import { useLocalStorage } from '@vueuse/core'
-import { computed, getCurrentScope, onScopeDispose, ref, shallowRef, watch, type Ref } from 'vue'
+import { computed, getCurrentScope, onScopeDispose, ref, shallowRef, toValue, watch, type MaybeRefOrGetter, type Ref } from 'vue'
 import type { ConcurrencyGroup } from './concurrency'
+import { cacheClickHouseSettings, createQueryCache, resolveCachePolicy, responseCacheExpiresAt, type CachePolicy } from './cache'
+import { proxyCacheFetch, sortedEntries } from './proxyCache'
 
 export { createConcurrencyGroup, type ConcurrencyGroup } from './concurrency'
+export { SUPER_SHORT_CACHE, SHORT_CACHE, DEFAULT_CACHE, MEDIUM_CACHE, LONG_CACHE, DAILY_CACHE, MONTHLY_CACHE, createQueryCache, type CachePolicy } from './cache'
 
 if (import.meta.env.MODE == 'development' && import.meta.env.VITE_MODE_DEV_LOCAL === 'true' && !window.crypto.randomUUID) {
   console.warn('crypto.randomUUID is not supported in this browser, using fallback implementation')
@@ -28,6 +31,7 @@ export const clickhouse = createClient({
   username: 'public',
   database: 'WOT',
   request_timeout: 120_000,
+  fetch: proxyCacheFetch,
   keep_alive: { enabled: false },
   clickhouse_settings: {
     max_temporary_columns: '1000',
@@ -37,12 +41,6 @@ export const clickhouse = createClient({
     response: true
   }
 })
-
-export const MEDIUM_CACHE_SETTINGS = { use_query_cache: 1, query_cache_ttl: 60 * 5 } as ClickHouseSettings
-export const CACHE_SETTINGS = { use_query_cache: 1, query_cache_ttl: 60 } as ClickHouseSettings
-export const SHORT_CACHE_SETTINGS = { use_query_cache: 1, query_cache_ttl: 10 } as ClickHouseSettings
-export const SUPER_SHORT_CACHE_SETTINGS = { use_query_cache: 1, query_cache_ttl: 5 } as ClickHouseSettings
-export const LONG_CACHE_SETTINGS = { use_query_cache: 1, query_cache_ttl: 600 } as ClickHouseSettings
 
 export const totalRequests = useLocalStorage('totalRequests', 0)
 export const totalElapsed = useLocalStorage('totalElapsed', 0)
@@ -68,6 +66,8 @@ export function isErrorStatus(status: Status): status is { status: typeof error,
 }
 
 export type QueryOptions = {
+  cache?: MaybeRefOrGetter<CachePolicy | undefined>
+  proxyCache?: boolean
   allowCache?: boolean
   format?: 'JSON' | 'JSONCompact'
   settings?: ClickHouseSettings
@@ -76,38 +76,55 @@ export type QueryOptions = {
 }
 
 export type ReactiveQueryOptions = QueryOptions & { enabled?: Ref<boolean> }
+export type QueryResponse<T> = ResponseJSON<T> & { cacheExpiresAt: number }
 
 type ActiveQuery = {
-  promise: Promise<ResponseJSON<unknown>>
+  promise: Promise<QueryResponse<unknown>>
   abortSignal?: AbortSignal
   concurrency?: ConcurrencyGroup
 }
 
 const activeQueries = new Map<string, Set<ActiveQuery>>()
-const cachedResults = new Map<string, unknown>()
-const queryCacheKey = (sql: string, format: QueryOptions['format'] = 'JSON') => `${format}\n${sql}`
+const cachedResults = createQueryCache<QueryResponse<unknown>>()
+function queryCacheKey(sql: string, options: QueryOptions) {
+  const settings = sortedEntries(Object.entries(options.settings ?? {})
+    .filter(([, value]) => value !== undefined)
+    .map(([key, value]) => [key, String(value)]))
+  return JSON.stringify([sql, options.format ?? 'JSON', settings, resolveCachePolicy(toValue(options.cache))?.key ?? null])
+}
 
-export async function query<T>(query: string, {
-  allowCache = true,
-  format = 'JSON',
-  settings = {},
-  abortSignal,
-  concurrency,
-}: QueryOptions = {}) {
+export async function query<T>(query: string, options: QueryOptions = {}): Promise<QueryResponse<T>> {
+  const {
+    allowCache = true,
+    format = 'JSON',
+    settings = {}, abortSignal,
+    concurrency,
+    cache,
+    proxyCache = false
+  } = options
+
+  if (proxyCache && !toValue(cache)) throw new Error('proxyCache requires a cache policy')
   abortSignal?.throwIfAborted()
-  const cacheKey = queryCacheKey(query, format)
-  if (allowCache && cachedResults.has(cacheKey)) return cachedResults.get(cacheKey) as ResponseJSON<T>
+  const cacheKey = queryCacheKey(query, options)
+  const cached = allowCache ? cachedResults.get(cacheKey) : undefined
+  if (cached) return cached as QueryResponse<T>
 
-  // Запросы с разными владельцами отмены или очередями не разделяют выполнение.
   if (allowCache) {
     const active = [...activeQueries.get(cacheKey) ?? []].find(request =>
       request.abortSignal === abortSignal && request.concurrency === concurrency)
-    if (active) return active.promise as Promise<ResponseJSON<T>>
+    if (active) return active.promise as Promise<QueryResponse<T>>
   }
 
   async function execute() {
     abortSignal?.throwIfAborted()
-    const result = await clickhouse.query({ query, format, abort_signal: abortSignal, clickhouse_settings: { output_format_json_quote_64bit_integers: 0, ...settings } })
+    const policy = resolveCachePolicy(toValue(cache))
+    const executionKey = queryCacheKey(query, options)
+    const result = await clickhouse.query({
+      query, format, abort_signal: abortSignal,
+      clickhouse_settings: { output_format_json_quote_64bit_integers: 0, ...cacheClickHouseSettings(policy, settings) },
+      http_headers: proxyCache && policy && policy.ttl > 0 ? policy.headers : undefined,
+    })
+    const cacheExpiresAt = responseCacheExpiresAt(policy, result.response_headers)
     const response: ResponseJSON<T> = format === 'JSONCompact'
       ? await result.json<unknown[]>().then(response => {
         const columns = response.meta
@@ -129,8 +146,9 @@ export async function query<T>(query: string, {
     totalRequests.value++
 
     abortSignal?.throwIfAborted()
-    if (allowCache) cachedResults.set(cacheKey, response)
-    return response
+    const value = { ...response, cacheExpiresAt }
+    if (allowCache) cachedResults.set(executionKey, value, cacheExpiresAt)
+    return value
   }
 
   const current = concurrency ? concurrency.run(execute, abortSignal) : execute()
@@ -151,7 +169,7 @@ export async function query<T>(query: string, {
 export function queryComputed<T>(queryString: () => string | null, { enabled = ref(true), ...options }: ReactiveQueryOptions = {}) {
   const result = shallowRef<{ status: Status, data: T[] }>({ status: loading, data: [] })
 
-  watch([queryString, enabled], async ([q, enabled], _, onCleanup) => {
+  watch([queryString, enabled, () => toValue(options.cache)], async ([q, enabled], _, onCleanup) => {
     if (!q || !enabled) return
 
     const controller = new AbortController()
@@ -160,9 +178,9 @@ export function queryComputed<T>(queryString: () => string | null, { enabled = r
     if (signal.aborted) return
 
     try {
-      const cacheKey = queryCacheKey(q, options.format)
-      if (cachedResults.has(cacheKey) && options.allowCache !== false) {
-        result.value = { data: (cachedResults.get(cacheKey) as ResponseJSON<T>).data, status: success }
+      const cached = options.allowCache !== false ? cachedResults.get(queryCacheKey(q, options)) : undefined
+      if (cached) {
+        result.value = { data: (cached as QueryResponse<T>).data, status: success }
         return
       }
 

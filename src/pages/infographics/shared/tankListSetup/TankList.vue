@@ -46,7 +46,7 @@
 
 <script lang="ts" setup>
 import { useQueryStatParams, whereClause } from '@/shared/query/useQueryStatParams'
-import { LONG_CACHE_SETTINGS, queryComputed } from '@/db'
+import { LONG_CACHE, queryComputed } from '@/db'
 import { useRoute, useRouter } from 'vue-router'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'
 import { computed, ref } from 'vue'
@@ -85,9 +85,9 @@ function logProcessor(value: number) {
   if (value < 1e9) return (value / 1e6).toFixed(1) + 'M'
 }
 
-const cacheSettings = computed(() => {
-  if (stats.value.player) return {}
-  return LONG_CACHE_SETTINGS
+const cache = computed(() => {
+  if (stats.value.player) return undefined
+  return LONG_CACHE
 })
 
 const tanks = queryComputed<{ tag: string, battleCount: number, shotsCount: number }>(() => `
@@ -98,7 +98,7 @@ from (select tankTag, count() as battleCount from Event_OnBattleStart ${whereCla
 left join (select tankTag, count() as shotsCount from Event_OnShot ${whereClause(stats.value, { ignore: ['tanks'] })} group by tankTag) as shots on shots.tankTag = battles.tankTag
 order by battleCount desc
 limit 150;
-`, { settings: cacheSettings.value })
+`, { cache })
 
 </script>
 

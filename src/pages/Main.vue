@@ -361,7 +361,7 @@
 import GenericInfoQuery from '@/pages/infographics/shared/widgets/GenericInfoQuery.vue'
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import ShotsCircle from '@/pages/infographics/shared/widgets/ShotsCircle.vue'
-import { LONG_CACHE_SETTINGS, queryAsync, queryAsyncFirst } from '@/db'
+import { LONG_CACHE, queryAsync, queryAsyncFirst } from '@/db'
 import { computed } from 'vue'
 import { getArenaName } from '@/shared/i18n/i18n'
 import { createFixedSpaceProcessor } from '@/shared/utils/processors/processors'
@@ -408,7 +408,7 @@ from Event_OnShot
 where shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME' and battleMode = 'REGULAR'
 group by k
 having k between -10 and 10
-order by k`, { settings: LONG_CACHE_SETTINGS })
+order by k`, { cache: LONG_CACHE })
 const damageDistributionData = computed(() => {
 
   const res = damageDistributionResult.value.data.reduce((prev, cur) => {
@@ -434,7 +434,7 @@ select
   avgIf(allyTeamCount - allyTeamSurvivedCount, result = 'lose') as enemyFragsLose,
   avgIf(enemyTeamCount - enemyTeamSurvivedCount, result = 'lose') as allyFragsLose
   from Event_OnBattleResult where battleMode = 'REGULAR'
-`, { settings: LONG_CACHE_SETTINGS })
+`, { cache: LONG_CACHE })
 
 // TURBO
 // const turboResult = queryAsyncFirst(`
@@ -449,7 +449,7 @@ select
 //              countIf(isTurbo) over (order by id rows between 99 preceding and current row) as countTurbo
 //       from Event_OnBattleResult
 //       where battleMode = 'REGULAR')
-// `, { count: 0, maxTurbo: 0, avgTurbo: 0, medTurbo: 0, minTurbo: 0 }, { settings: { ...LONG_CACHE_SETTINGS, query_cache_ttl: 86400 } });
+// `, { count: 0, maxTurbo: 0, avgTurbo: 0, medTurbo: 0, minTurbo: 0 }, { cache: { ttl: 86400 } });
 
 // STRIMSNIPER
 const strimsniper = [
@@ -474,7 +474,7 @@ and battleMode = 'REGULAR'
 group by arenaTag
 order by count desc
 limit 5;
-`, { settings: LONG_CACHE_SETTINGS })
+`, { cache: LONG_CACHE })
 
 const maps = [
   ['Перевал', 9, 4230, 2344],
@@ -489,7 +489,7 @@ const maps = [
 
 const medianResults = queryAsyncFirst('select median(personal.damageDealt) as medDamage, median(personal.mileage) as medMileage from Event_OnBattleResult where tankLevel = 10',
   { medDamage: 0, medMileage: 0 },
-  { settings: LONG_CACHE_SETTINGS }
+  { cache: LONG_CACHE }
 )
 
 

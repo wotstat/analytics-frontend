@@ -214,7 +214,7 @@ ${whereSum(expressions.value)}
 ${params ? whereClause(params, { withWhere: expressions.value.length == 0 }) : ''}
 group by arenaTag
 order by count desc;
-  `, { settings: getQueryStatParamsCache(params) })
+  `, { cache: getQueryStatParamsCache(params) })
 
 const resultProcessed = computed(() => {
   const m = battleResult.value

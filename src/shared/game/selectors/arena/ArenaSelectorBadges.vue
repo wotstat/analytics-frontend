@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import { LONG_CACHE_SETTINGS, queryAsync } from '@/db'
+import { LONG_CACHE, queryAsync } from '@/db'
 import BadgesLine from '../components/badges/BadgesLine.vue'
 import { selectTagArenasLocalization } from '@/shared/i18n/i18n'
 import ArenaSelectorPopup from './arenaSelectorModal/ArenaSelectorPopup.vue'
@@ -40,7 +40,7 @@ select region, battleMode, battleGameplay, tag, gameVersion, name, season
 from arenas
 left any join locals using tag
 left any join seasons using tag
-`, { settings: LONG_CACHE_SETTINGS })
+`, { cache: LONG_CACHE })
 
 const arenaNames = computed(() => new Map(arenas.value.data.map(a => [a.tag, a.name])))
 

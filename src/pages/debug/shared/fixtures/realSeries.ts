@@ -1,7 +1,7 @@
 // Реальные данные из ClickHouse в той же форме, что и синтетика.
 // Запрос стартует только когда `enabled` стал true.
 
-import { LONG_CACHE_SETTINGS, queryComputed, success, type Status } from '@/db'
+import { LONG_CACHE, queryComputed, success, type Status } from '@/db'
 import { computed, type Ref } from 'vue'
 import type { ChartSeries, TableRow } from './types'
 

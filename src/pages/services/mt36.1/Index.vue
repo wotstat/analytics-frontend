@@ -242,7 +242,7 @@
 <script setup lang="ts">
 import { setFeatureVisit } from '@/shared/uiKit/newFeatureBadge/newFeatureBadge'
 import TeamLevelTable from '@/pages/infographics/shared/widgets/TeamLevelTable.vue'
-import { CACHE_SETTINGS, LONG_CACHE_SETTINGS, query, queryComputed } from '@/db'
+import { DEFAULT_CACHE, LONG_CACHE, query, queryComputed } from '@/db'
 import { computed, onUnmounted, ref, watch, watchEffect } from 'vue'
 import LevelSwitcher from './LevelSwitcher.vue'
 import { refDebounced, useDebounce } from '@vueuse/core'
@@ -362,7 +362,7 @@ select
 from "MT-36-1".AveragePlayerResults
 where battleMode = 'REGULAR' and region in (${regionFilter.value}) and gameVersion in (${gameVersionFilter.value})
 group by gameVersion;
-`, { settings: LONG_CACHE_SETTINGS })
+`, { cache: LONG_CACHE })
 
 
 const averageDamageAndAssist = queryComputed<{ gameVersion: string, tankType: string, tankLevel: number, damage: number, assistRadio: number }>(() => `
@@ -374,7 +374,7 @@ from "MT-36-1".AveragePlayerResults
 where battleMode = 'REGULAR' and region in (${regionFilter.value}) and gameVersion in (${gameVersionFilter.value})
 group by gameVersion, tankType, tankLevel
 order by gameVersion, tankType, tankLevel;
-`, { settings: LONG_CACHE_SETTINGS })
+`, { cache: LONG_CACHE })
 
 const averageSpgDamageChartData = computed<ComparisonBarChartData>(() => {
   const data = averageDamageAndAssist.value.data.filter(item => item.tankType == 'SPG')
@@ -411,7 +411,7 @@ select gameVersion,
 from WOT.Event_OnBattleResult
 where gameVersion in (${gameVersionFilter.value}) and battleMode = 'REGULAR' and region in (${regionFilter.value})
 group by gameVersion, time, tankLevel;
-`, { settings: LONG_CACHE_SETTINGS })
+`, { cache: LONG_CACHE })
 
 const durationDistributionChartData = computed<ComparisonBarChartData>(() => {
   const data = durationDistributionData.value.data.filter(item => item.tankLevel == durationSelectedLevel.value)
@@ -433,7 +433,7 @@ select gameVersion,
 from WOT.Event_OnBattleResult
 where gameVersion in (${gameVersionFilter.value}) and battleMode = 'REGULAR' and region in (${regionFilter.value})
 group by gameVersion, tankLevel
-`, { settings: LONG_CACHE_SETTINGS })
+`, { cache: LONG_CACHE })
 
 const durationByLevelChartData = computed<ComparisonBarChartData>(() => {
   const data = durationByLevelData.value.data
@@ -476,7 +476,7 @@ select length(visibleLevels)      as battleType,
 from levelDistribution
 group by battleType, position, gameVersion
 order by battleType, position, gameVersion;
-`, { settings: LONG_CACHE_SETTINGS })
+`, { cache: LONG_CACHE })
 
 const leftTeamLevelTableData = computed(() => teamLevelTableData.value.data.filter(item => leftVersions.value.has(item.gameVersion)))
 const rightTeamLevelTableData = computed(() => teamLevelTableData.value.data.filter(item => rightVersions.value.has(item.gameVersion)))
@@ -501,7 +501,7 @@ const byTankTypeDistributionData = queryComputed<{
   select * from lt
   union all select * from at
   union all select * from spg;
-`, { settings: LONG_CACHE_SETTINGS })
+`, { cache: LONG_CACHE })
 
 const typeDistributionData = computed<{ chart: { key: string, label: string }, data: ComparisonBarChartData }[]>(() => {
   return [
@@ -615,7 +615,7 @@ const damageDistributionData = queryComputed<{
     group by shotDamage, gameVersion
     order by shotDamage, gameVersion;
 `
-}, { settings: LONG_CACHE_SETTINGS })
+}, { cache: LONG_CACHE })
 
 const stepVariants = computed(() => {
   let steps = [1, 3, 5, 7, 11, 13, 15, 17, 21, 47]
@@ -720,7 +720,7 @@ const ballisticDistributionData = queryComputed<{
     ${ballisticDistributionIdeal.value ? 'and isIdealCondition = 1' : ''}  
     group by r, gameVersion
     order by gameVersion, r;
-`, { settings: CACHE_SETTINGS })
+`, { cache: DEFAULT_CACHE })
 
 
 const distributionVariant = ref<'cdf' | 'pdf'>('pdf')
@@ -745,7 +745,7 @@ async function loadNextBatch(options: Options, gameVersion: string[]): Promise<{
     order by id desc
     limit ${options.loadCount}
     offset ${options.offset};
-  `, { settings: CACHE_SETTINGS })
+  `, { cache: DEFAULT_CACHE })
 
   return result.data.map(t => ({ id: t.idS, r: t.r, theta: t.theta, hit: t.hit }))
 }

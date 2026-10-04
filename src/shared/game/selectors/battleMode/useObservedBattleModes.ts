@@ -1,5 +1,5 @@
 import { ref, shallowRef } from 'vue'
-import { LONG_CACHE_SETTINGS, query } from '@/db'
+import { LONG_CACHE, query } from '@/db'
 import type { ObservedBattleMode } from './catalog'
 
 const rows = shallowRef<ObservedBattleMode[]>([])
@@ -19,7 +19,7 @@ export function useObservedBattleModes() {
         from Event_OnBattleStart
         where region in ('RU', 'RPT', 'EU', 'NA', 'ASIA', 'CN')
         group by game, battleMode, battleGameplay
-      `, { settings: { ...LONG_CACHE_SETTINGS, max_execution_time: 30, max_rows_to_read: '1000000000', max_result_rows: '10000' } })
+      `, { cache: LONG_CACHE, settings: { max_execution_time: 30, max_rows_to_read: '1000000000', max_result_rows: '10000' } })
       rows.value = result.data
       loaded = true
     } catch {

@@ -1,5 +1,5 @@
 import { onScopeDispose, reactive, shallowReactive, toValue, watch, type MaybeRefOrGetter } from 'vue'
-import { createConcurrencyGroup, error, loading, query, success, type Status } from '@/db'
+import { createConcurrencyGroup, createQueryCache, error, loading, query, success, type CachePolicy, type Status } from '@/db'
 import type { VehicleFilters } from '../filters/types'
 import type { VehicleSelection } from '../shared/vehicleGrouping'
 import type { VehicleHistoryPeriod } from '../shared/types'
@@ -24,11 +24,11 @@ export function useVehicleHistories(sources: MaybeRefOrGetter<readonly HistorySo
   const states = shallowReactive(new Map<string, HistoryState>())
   const retries = reactive(new Map<string, number>())
   const plans = new Map<string, HistoryPlan>()
-  const cache = new Map<string, HistoryValues[]>()
+  const cache = createQueryCache<HistoryValues[]>()
   const requests = new Map<string, { controller: AbortController, promise: Promise<HistoryValues[]> }>()
   const concurrency = createConcurrencyGroup(5)
 
-  function load(sql: string, cacheTtl: number) {
+  function load(sql: string, policy: CachePolicy) {
     const cached = cache.get(sql)
     if (cached) return Promise.resolve(cached)
     const pending = requests.get(sql)
@@ -36,14 +36,15 @@ export function useVehicleHistories(sources: MaybeRefOrGetter<readonly HistorySo
 
     const controller = new AbortController()
     const promise = query<HistoryValues>(sql, {
+      ...VEHICLE_STATISTICS_QUERY_OPTIONS,
+      cache: policy,
       allowCache: true,
       format: 'JSONCompact',
-      settings: { ...VEHICLE_STATISTICS_QUERY_OPTIONS.settings, query_cache_ttl: cacheTtl },
       abortSignal: controller.signal,
       concurrency,
-    }).then(({ data }) => {
+    }).then(({ data, cacheExpiresAt }) => {
       controller.signal.throwIfAborted()
-      cache.set(sql, data)
+      cache.set(sql, data, cacheExpiresAt)
       return data
     }).finally(() => {
       if (requests.get(sql)?.controller === controller) requests.delete(sql)
@@ -52,13 +53,13 @@ export function useVehicleHistories(sources: MaybeRefOrGetter<readonly HistorySo
     return promise
   }
 
-  function cachedHistory(parts: VehicleHistoryQueries): VehicleHistoryPeriod[] | null {
+  function cachedHistory(parts: VehicleHistoryQueries, get = cache.get): VehicleHistoryPeriod[] | null {
     const rows: VehicleHistoryPeriod[] = []
     for (const part of parts) {
-      const base = cache.get(part.base)
+      const base = get(part.base)
       if (!base) return null
       if (!base.length) continue
-      const metrics = part.metric ? cache.get(part.metric) : []
+      const metrics = part.metric ? get(part.metric) : []
       if (!metrics) return null
       const byKey = new Map(metrics.map(row => [rowKey(row), row]))
       for (const row of base) {
@@ -71,17 +72,19 @@ export function useVehicleHistories(sources: MaybeRefOrGetter<readonly HistorySo
   async function loadHistory(tag: string, plan: HistoryPlan) {
     const current = () => plans.get(tag) === plan
     try {
+      // Срок кеша может истечь прямо во время загрузки остальных частей.
+      const loaded = new Map<string, HistoryValues[]>()
       // Бои и игроки независимы от метрики. Сначала загружаем их для всех частей;
       // смена метрики переиспользует даже ещё выполняющиеся базовые запросы.
       for (const part of plan.parts) {
-        await load(part.base, part.cacheTtl)
+        loaded.set(part.base, await load(part.base, part.cache))
         if (!current()) return
       }
       for (const part of plan.parts) {
-        if (part.metric && cache.get(part.base)!.length) await load(part.metric, part.cacheTtl)
+        if (part.metric && loaded.get(part.base)!.length) loaded.set(part.metric, await load(part.metric, part.cache))
         if (!current()) return
       }
-      states.set(tag, { status: success, data: cachedHistory(plan.parts)! })
+      states.set(tag, { status: success, data: cachedHistory(plan.parts, sql => loaded.get(sql))! })
     } catch (reason) {
       if (!current()) return
       console.error(reason)

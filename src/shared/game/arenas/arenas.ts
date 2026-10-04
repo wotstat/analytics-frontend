@@ -1,4 +1,4 @@
-import { LONG_CACHE_SETTINGS, query } from '@/db'
+import { LONG_CACHE, query } from '@/db'
 import { STATIC_URL } from '@/shared/external/externalUrl'
 import { computed, shallowRef } from 'vue'
 import { GameVendor, regionToGame } from '../wot'
@@ -115,7 +115,7 @@ async function loadArenas() {
           "spawn.positions", control, "poi.position", "poi.type"
     from ArenasLatest
     where region in ('RU', 'EU');
-  `, { settings: LONG_CACHE_SETTINGS })
+  `, { cache: LONG_CACHE })
 
   arenas.value = response.data.map((arena) => ({
     region: arena.region,

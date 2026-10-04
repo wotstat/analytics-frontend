@@ -1,11 +1,12 @@
 import type { VehicleFilters } from '../filters/types'
+import { DAILY_CACHE, MONTHLY_CACHE, type CachePolicy } from '@/db/cache'
 import type { VehicleSelection } from '../shared/vehicleGrouping'
 import { vehicleDailyStatisticsTable, vehicleSelectionWhere, vehicleStatisticsWhere } from '../shared/vehicleStatisticsQuery'
 import { availableSlots, metricQuerySlots, type Slot } from '../vehicleMetricSelector/vehicleMetrics'
 import type { HistoryStep } from './period/historyStep'
 import type { VehicleHistorySplit } from './split/historySplit'
 
-type HistoryRange = { from: string | null, until: string, cacheTtl: number, recent: boolean }
+type HistoryRange = { from: string | null, until: string, cache: CachePolicy, recent: boolean }
 
 function periodStart(day: string, step: HistoryStep) {
   const date = new Date(`${day}T00:00:00Z`)
@@ -20,9 +21,9 @@ export function vehicleHistoryRanges(beforeDay: string, step: HistoryStep): Hist
   const year = periodStart(`${beforeDay.slice(0, 4)}-01-01`, step)
   const month = periodStart(`${beforeDay.slice(0, 7)}-01`, step)
   const until = periodStart(beforeDay, step)
-  const ranges: HistoryRange[] = [{ from: null, until: year, cacheTtl: 30 * 24 * 60 * 60, recent: false }]
-  if (year < month) ranges.push({ from: year, until: month, cacheTtl: 30 * 24 * 60 * 60, recent: false })
-  if (month < until) ranges.push({ from: month, until, cacheTtl: 24 * 60 * 60, recent: true })
+  const ranges: HistoryRange[] = [{ from: null, until: year, cache: MONTHLY_CACHE, recent: false }]
+  if (year < month) ranges.push({ from: year, until: month, cache: MONTHLY_CACHE, recent: false })
+  if (month < until) ranges.push({ from: month, until, cache: DAILY_CACHE, recent: true })
   return ranges
 }
 

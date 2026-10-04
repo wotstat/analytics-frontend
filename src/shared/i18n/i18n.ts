@@ -1,4 +1,4 @@
-import { LONG_CACHE_SETTINGS, queryAsync } from '@/db'
+import { LONG_CACHE, queryAsync } from '@/db'
 import { computed } from 'vue'
 
 const LOCALE = 'RU'
@@ -64,13 +64,13 @@ export const selectCustomizationsLocalization = `
   group by tag
 `
 
-const tankNames = queryAsync<{ tag: string, short: string, name: string }>(selectVehiclesLocalization, { settings: LONG_CACHE_SETTINGS })
+const tankNames = queryAsync<{ tag: string, short: string, name: string }>(selectVehiclesLocalization, { cache: LONG_CACHE })
 const tankNamesMap = computed(() => new Map<string, [string, string]>(tankNames.value.data.map(t => [t.tag, [t.name, t.short]])))
 
-const arenaNames = queryAsync<{ tag: string, name: string }>(selectTagArenasLocalization, { settings: LONG_CACHE_SETTINGS })
+const arenaNames = queryAsync<{ tag: string, name: string }>(selectTagArenasLocalization, { cache: LONG_CACHE })
 const arenaNamesMap = computed(() => new Map<string, string>(arenaNames.value.data.map(t => [t.tag, t.name])))
 
-const artefactsNames = queryAsync<{ tag: string, name: string }>(selectArtefactsLocalization, { settings: LONG_CACHE_SETTINGS })
+const artefactsNames = queryAsync<{ tag: string, name: string }>(selectArtefactsLocalization, { cache: LONG_CACHE })
 const artefactsNamesMap = computed(() => new Map<string, string>(artefactsNames.value.data.map(t => [t.tag, t.name])))
 
 function getBestTankLocale(tag: string, short: boolean = false) {

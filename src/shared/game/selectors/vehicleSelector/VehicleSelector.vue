@@ -7,7 +7,7 @@
 
 <script setup lang="ts">
 
-import { CACHE_SETTINGS, queryAsync } from '@/db'
+import { DEFAULT_CACHE, queryAsync } from '@/db'
 import { selectTagVehiclesLocalization } from '@/shared/i18n/i18n'
 import VehiclePopup from './VehiclePopup.vue'
 import { Nation } from '@/shared/game/vehicles/nations/nations'
@@ -32,6 +32,6 @@ with
 select tag, type, role, level, short, name, region, nation
 from tanks
 left any join locals using tag;
-`, { settings: CACHE_SETTINGS })
+`, { cache: DEFAULT_CACHE })
 
 </script>

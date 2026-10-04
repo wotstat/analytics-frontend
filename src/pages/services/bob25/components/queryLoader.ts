@@ -1,4 +1,4 @@
-import { CACHE_SETTINGS, LONG_CACHE_SETTINGS, query, queryAsync, SHORT_CACHE_SETTINGS, Status, success, SUPER_SHORT_CACHE_SETTINGS } from '@/db'
+import { DEFAULT_CACHE, LONG_CACHE, query, queryAsync, SHORT_CACHE, Status, success, SUPER_SHORT_CACHE } from '@/db'
 import { computed, Ref, shallowRef, watch } from 'vue'
 import { bloggerGameIdArrayToArray, bloggerGameIdToIndex, bloggerNameByGameId, bloggerRecordToArray, bloggerTimeSeriesProcess } from './bloggerNames'
 import { useDebounceFn, useIntervalFn, useLocalStorage } from '@vueuse/core'
@@ -93,7 +93,7 @@ export function useBloggerChart(q: (from: number, to: number, step: number) => s
     const to = periodToInterval[period.value]()[1]
 
     const currentRaceId = ++raceId
-    const { data } = await query<{ bloggerId: number, value: number, t: number }>(q(from, to, stepToInterval[step.value]), { allowCache: false, settings: SUPER_SHORT_CACHE_SETTINGS })
+    const { data } = await query<{ bloggerId: number, value: number, t: number }>(q(from, to, stepToInterval[step.value]), { allowCache: false, cache: SUPER_SHORT_CACHE })
 
     if (currentRaceId != raceId) return
 
@@ -130,7 +130,7 @@ export function useTotalPlayers() {
       select bloggerId, argMax(count, dateTime) as count
       from BOB25.TotalPlayers
       group by bloggerId
-    `, { allowCache: false, settings: SHORT_CACHE_SETTINGS })
+    `, { allowCache: false, cache: SHORT_CACHE })
 
     const byBlogger = Object.groupBy(data, t => bloggerNameByGameId(t.bloggerId)) as Record<string, { count: number }[]>
     const result = bloggerRecordToArray(byBlogger).flat().map(t => t?.count ?? 0)
@@ -151,7 +151,7 @@ export function useTotalWinrate() {
       select bloggerId, countMerge(wins) / countMerge(battles) as winrate
       from BOB25.Battles
       group by bloggerId
-    `, { allowCache: false, settings: CACHE_SETTINGS })
+    `, { allowCache: false, cache: DEFAULT_CACHE })
 
     const byBlogger = Object.groupBy(data, t => bloggerNameByGameId(t.bloggerId)) as Record<string, { winrate: number }[]>
     const result = bloggerRecordToArray(byBlogger).flat().map(t => t?.winrate ?? 0)
@@ -180,7 +180,7 @@ export function useTotalBattles() {
       from BOB25.ModdedPlayerBattles
       group by bloggerId
       order by bloggerId;
-    `, { allowCache: false, settings: CACHE_SETTINGS })
+    `, { allowCache: false, cache: DEFAULT_CACHE })
 
     const byBlogger = Object.groupBy(data, t => bloggerNameByGameId(t.bloggerId)) as Record<string, { value: number }[]>
     const result = bloggerRecordToArray(byBlogger).flat().map(t => t?.value ?? 0)
@@ -257,7 +257,7 @@ export function useTotalScore() {
       from BOB25.Scores
       where dateTime = (select max(dateTime) from BOB25.Scores)
       group by dateTime;
-    `, { allowCache: false, settings: SHORT_CACHE_SETTINGS })
+    `, { allowCache: false, cache: SHORT_CACHE })
 
     total.value = (data.length ? bloggerGameIdArrayToArray([data[0].b1, data[0].b2, data[0].b3, data[0].b4]) : [0, 0, 0, 0]).map(v => v ?? 0)
   }
@@ -317,7 +317,7 @@ export function useHourTotalScoreDelta() {
           current.b4 - last.b4 AS b4
       from current
       cross join last;
-    `, { allowCache: false, settings: { ...SHORT_CACHE_SETTINGS, query_cache_nondeterministic_function_handling: 'save' } })
+    `, { allowCache: false, cache: SHORT_CACHE, settings: { query_cache_nondeterministic_function_handling: 'save' } })
 
     total.value = (data.length ? bloggerGameIdArrayToArray([data[0].b1, data[0].b2, data[0].b3, data[0].b4]) : [0, 0, 0, 0])
       .map(v => v ?? 0)
@@ -353,7 +353,7 @@ export function use24HourTotalScoreDelta() {
           current.b4 - last.b4 AS b4
       from current
       cross join last;
-    `, { allowCache: false, settings: { ...SUPER_SHORT_CACHE_SETTINGS, query_cache_nondeterministic_function_handling: 'save' } })
+    `, { allowCache: false, cache: SUPER_SHORT_CACHE, settings: { query_cache_nondeterministic_function_handling: 'save' } })
 
     total.value = (data.length ? bloggerGameIdArrayToArray([data[0].b1, data[0].b2, data[0].b3, data[0].b4]) : [0, 0, 0, 0])
       .map(v => v ?? 0)
@@ -389,7 +389,7 @@ export function useYesterdayTotalScoreDelta() {
       current.b4 - if(isNaN(last.b4), 0, last.b4) AS b4
     from current
     cross join last;
-    `, { allowCache: false, settings: { ...SUPER_SHORT_CACHE_SETTINGS, query_cache_nondeterministic_function_handling: 'save' } })
+    `, { allowCache: false, cache: SUPER_SHORT_CACHE, settings: { query_cache_nondeterministic_function_handling: 'save' } })
 
     total.value = (data.length ? bloggerGameIdArrayToArray([data[0].b1, data[0].b2, data[0].b3, data[0].b4]) : [0, 0, 0, 0])
       .map(v => v ?? 0)
@@ -425,7 +425,7 @@ export function useTodayTotalScoreDelta() {
       current.b4 - if(isNaN(last.b4), 0, last.b4) AS b4
     from current
     cross join last;
-    `, { allowCache: false, settings: { ...SUPER_SHORT_CACHE_SETTINGS, query_cache_nondeterministic_function_handling: 'save' } })
+    `, { allowCache: false, cache: SUPER_SHORT_CACHE, settings: { query_cache_nondeterministic_function_handling: 'save' } })
 
     total.value = (data.length ? bloggerGameIdArrayToArray([data[0].b1, data[0].b2, data[0].b3, data[0].b4]) : [0, 0, 0, 0])
       .map(v => v ?? 0)
@@ -446,7 +446,7 @@ export function useAvgBattleDuration() {
         avgMerge(duration) as duration
       from BOB25.Battles
       group by bloggerId
-    `, { allowCache: false, settings: CACHE_SETTINGS })
+    `, { allowCache: false, cache: DEFAULT_CACHE })
 
     const byBlogger = Object.groupBy(data, t => bloggerNameByGameId(t.bloggerId)) as Record<string, { duration: number }[]>
     const result = bloggerRecordToArray(byBlogger).flat().map(t => t?.duration ?? 0)
@@ -497,7 +497,7 @@ export function usePopularTanks() {
     group by bloggerId, tankTag
     order by bloggerId, percent desc
     limit 30 by bloggerId;
-  `, { settings: CACHE_SETTINGS })
+  `, { cache: DEFAULT_CACHE })
 
   return computed(() => {
     if (data.value.status != success) return { status: data.value.status as Status, data: undefined }
@@ -519,7 +519,7 @@ export function useScoredTanks() {
     having countMerge(battles) > 100
     order by bloggerId, score desc
     limit 30 by bloggerId;
-  `, { settings: CACHE_SETTINGS })
+  `, { cache: DEFAULT_CACHE })
 
   return computed(() => {
     if (data.value.status != success) return { status: data.value.status as Status, data: undefined }
@@ -550,7 +550,7 @@ export function useScoredPopularTanks() {
     having countMerge(battles) > 100
     order by bloggerId, score desc
     limit 30 by bloggerId
-  `, { settings: CACHE_SETTINGS })
+  `, { cache: DEFAULT_CACHE })
 
   return computed(() => {
     if (data.value.status != success) return { status: data.value.status as Status, data: undefined }
@@ -572,7 +572,7 @@ export function useSkillsHistory() {
   async function update() {
     const { data } = await query<{ bloggerId: number, skill: string, start: string, end: string, startD: number, endD: number }>(`
       select *, toUnixTimestamp(start) as startD, toUnixTimestamp(end) as endD from BOB25.Skills order by bloggerId, start;
-      `, { allowCache: false, settings: SHORT_CACHE_SETTINGS })
+      `, { allowCache: false, cache: SHORT_CACHE })
 
     const byBlogger = Object.groupBy(data,
       t => bloggerNameByGameId(t.bloggerId)) as Record<string, { skill: string, startD: number, endD: number }[]>
@@ -644,7 +644,7 @@ export function useCrossWinrate() {
       from joined
       group by t1, t2
       order by t1, t2;
-    `, { settings: LONG_CACHE_SETTINGS })
+    `, { cache: LONG_CACHE })
 
     if (currentCounter != counter) return
 
@@ -698,7 +698,7 @@ export function useCrossBattleCount() {
       from joined
       group by t1, t2
       order by t1, t2;
-    `, { settings: LONG_CACHE_SETTINGS })
+    `, { cache: LONG_CACHE })
 
     if (currentCounter != counter) return
 
@@ -735,7 +735,7 @@ export function usePlayerDistribution() {
     group by bloggerId, w
     order by bloggerId, w
     with fill from 0 to 101 step 1;
-  `, { settings: LONG_CACHE_SETTINGS })
+  `, { cache: LONG_CACHE })
 
   return computed(() => {
     if (data.value.status != success) return { status: data.value.status as Status, data: undefined }

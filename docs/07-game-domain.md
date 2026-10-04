@@ -113,7 +113,7 @@
 
 Два не связанных механизма:
 
-1. **Имена игровых сущностей из БД** — `src/shared/i18n/i18n.ts`: запросы читают `VehiclesLocalizationDictionary`, `ArenasLocalizationDictionary`, `ArtefactsLocalizationDictionary`, `LootboxesLocalizationDictionary` и `CustomizationsLocalizationDictionary`. Ключ словаря — `(region, locale, tag)`, локализованные значения выбираются для фиксированной `LOCALE = 'RU'`, а при совпадении тега в нескольких регионах используется `localeRegionPriority`. Имена техники, карт и артефактов грузятся один раз с `LONG_CACHE_SETTINGS`; основные хелперы — `getTankName(tag, short?)`, `getArenaName(tag)` и `getArtefactName(tag)`.
+1. **Имена игровых сущностей из БД** — `src/shared/i18n/i18n.ts`: запросы читают `VehiclesLocalizationDictionary`, `ArenasLocalizationDictionary`, `ArtefactsLocalizationDictionary`, `LootboxesLocalizationDictionary` и `CustomizationsLocalizationDictionary`. Ключ словаря — `(region, locale, tag)`, локализованные значения выбираются для фиксированной `LOCALE = 'RU'`, а при совпадении тега в нескольких регионах используется `localeRegionPriority`. Имена техники, карт и артефактов грузятся один раз с `LONG_CACHE`; основные хелперы — `getTankName(tag, short?)`, `getArenaName(tag)` и `getArtefactName(tag)`.
    - Страница лутбоксов использует те же dictionary-запросы для списка и названий контейнеров, расходников и кастомизаций. После агрегации до одной строки на `tag` локализация присоединяется через `LEFT ANY JOIN`.
    - Старые таблицы `*Localization` остаются в БД для обратной совместимости, но production- и debug-код фронтенда их больше не читает.
    - Ручные словари и фолбэки: `crewBookName`, `entitlementsName`, `getBestLocalization`; если перевода нет, UI показывает читаемый или исходный `tag`.

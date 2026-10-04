@@ -120,7 +120,7 @@ useMeta({
 const container = useTemplateRef<HTMLElement>('container')
 const visible = useElementVisibility(container)
 const params = useQueryStatParams()
-const settings = useQueryStatParamsCache(params)
+const cache = useQueryStatParamsCache(params)
 
 const tankLabels = ['СТ', 'ТТ', 'ПТ', 'ЛТ', 'САУ']
 const percentageFormatter = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 })
@@ -141,14 +141,14 @@ select sum(inQueueWaitTime + loadTime + preBattleWaitTime) / 1000 / 60 / 60 as w
        avgIf(inQueueWaitTime, inQueueWaitTime < 300000)                              as avgInQueue
 from Event_OnBattleStart
 ${whereClause(params, { isBattleStart: true })}
-`, { waitTime: 0, avgWaitTime: 0, avgInQueue: 0, battleCount: 0 }, { enabled: visible, settings: settings.value })
+`, { waitTime: 0, avgWaitTime: 0, avgInQueue: 0, battleCount: 0 }, { enabled: visible, cache })
 
 const dataResult = queryAsyncFirst(`
 select round(avg(personal.lifeTime))    as lifetime,
        round(avg(duration))             as duration,
        sum(personal.lifeTime) / 60 / 60 as inBattle
 from Event_OnBattleResult
-${whereClause(params)};`, { lifetime: 0, duration: 0, inBattle: 0 }, { enabled: visible, settings: settings.value })
+${whereClause(params)};`, { lifetime: 0, duration: 0, inBattle: 0 }, { enabled: visible, cache })
 
 const durationResult = queryAsync<{ percent: number, duration: number, lifetime: number }>(`
 select duration, lifetime, count / sum(count) over () as percent
@@ -158,7 +158,7 @@ from (select ceil(duration / 60)         as duration,
       from Event_OnBattleResult
       ${whereClause(params)}
       group by duration
-      order by duration)`, { enabled: visible, settings: settings.value })
+      order by duration)`, { enabled: visible, cache })
 
 const avgTypeResult = queryAsyncFirst(`
 select avg(ltCount / playersCount) as LT,
@@ -168,11 +168,11 @@ select avg(ltCount / playersCount) as LT,
       avg(spgCount / playersCount) as SPG
 from Event_OnBattleResult
 ${whereClause(params)};
-`, { LT: 0, HT: 0, MT: 0, AT: 0, SPG: 0 }, { enabled: visible, settings: settings.value })
+`, { LT: 0, HT: 0, MT: 0, AT: 0, SPG: 0 }, { enabled: visible, cache })
 
 const winrateResult = queryAsync<{ count: number, result: BattleResult }>(
   `select count(*) as count, result from Event_OnBattleResult ${whereClause(params)} group by result`,
-  { enabled: visible, settings: settings.value }
+  { enabled: visible, cache }
 )
 
 const winrateSegments = computed(() => {

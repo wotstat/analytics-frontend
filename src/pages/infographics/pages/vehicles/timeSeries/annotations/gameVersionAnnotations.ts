@@ -1,5 +1,5 @@
 import { computed, type ComputedRef } from 'vue'
-import { LONG_CACHE_SETTINGS, queryComputed } from '@/db'
+import { LONG_CACHE, queryComputed } from '@/db'
 import type { VehicleRegion } from '../../filters/types'
 import { DAY } from '@/shared/ui/chart/timeSeries/utils/timeSeriesTime'
 import { historyDayStart } from '../period/historyStep'
@@ -28,7 +28,7 @@ export function useGameVersionAnnotations(
   { includeTooltipVersion = false }: { includeTooltipVersion?: boolean } = {}) {
   const versions = queryComputed<GameVersionRow>(() =>
     includeTooltipVersion || Object.values(visibility.value).some(Boolean) ? versionsQuery : null,
-    { settings: LONG_CACHE_SETTINGS })
+    { cache: LONG_CACHE })
   const selectedRegions = computed(() => regions.value.length ? regions.value : allRegions)
 
   const annotations = computed<VersionHistoryAnnotation[]>(() => {

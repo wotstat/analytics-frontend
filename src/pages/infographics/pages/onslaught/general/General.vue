@@ -44,7 +44,7 @@ import Settings from '../shared/settings/Settings.vue'
 import RankDistributionChart from './rankDistribution/RankDistributionChart.vue'
 import type { RankDistributionItem } from './rankDistribution/types'
 import { useSeasonInterval } from '../shared/useSeasonInterval.ts'
-import { dateToDbDate, LONG_CACHE_SETTINGS, query } from '@/db/index.ts'
+import { dateToDbDate, LONG_CACHE, query } from '@/db/index.ts'
 import { DivisionLetter, getRatingForDivision, isComp7SkillChangeSupported, Rank } from '@/shared/game/comp7/utils.ts'
 import { regionToGame } from '@/shared/game/wot.ts'
 import { LEADERBOARD_STEP, processDistribution } from './rankDistribution/processDistribution.ts'
@@ -190,7 +190,7 @@ async function load(abortSignal: AbortSignal, soft = false) {
     select * from playersData
     union all
     select * from leaderboardData
-    `, { abortSignal, settings: LONG_CACHE_SETTINGS })
+    `, { abortSignal, cache: LONG_CACHE })
 
 
   if (abortSignal.aborted) return
@@ -249,7 +249,7 @@ function reloadVehicle(sql: string) {
     try {
       const response = await query<GlobalVehicleStatistic>(sql, {
         abortSignal: signal,
-        settings: LONG_CACHE_SETTINGS,
+        cache: LONG_CACHE,
       })
       if (signal.aborted || requestId !== vehicleRequestId) return
 
@@ -276,7 +276,7 @@ async function reloadArena(sql: string, commonId: number) {
   try {
     const response = await query<GlobalArenaStatistic>(sql, {
       abortSignal: signal,
-      settings: LONG_CACHE_SETTINGS,
+      cache: LONG_CACHE,
     })
     if (signal.aborted || commonId !== commonRequestId) return
 
