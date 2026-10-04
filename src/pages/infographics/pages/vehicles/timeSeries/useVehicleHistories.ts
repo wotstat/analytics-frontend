@@ -1,5 +1,5 @@
 import { onScopeDispose, reactive, shallowReactive, toValue, watch, type MaybeRefOrGetter } from 'vue'
-import { createConcurrencyGroup, createQueryCache, error, loading, query, success, type CachePolicy, type Status } from '@/db'
+import { createConcurrencyGroup, createQueryCache, error, loading, query, success, type CachePolicy, type ConcurrencyGroup, type Status } from '@/db'
 import type { VehicleFilters } from '../filters/types'
 import type { VehicleSelection } from '../shared/vehicleGrouping'
 import type { VehicleHistoryPeriod } from '../shared/types'
@@ -12,7 +12,7 @@ import { vehicleHistoryQueries, type VehicleHistoryQueries } from './vehicleHist
 type HistorySource = { tag: string, filters: VehicleFilters, selection: VehicleSelection, split?: VehicleHistorySplit | null }
 type HistoryValues = Pick<VehicleHistoryPeriod, 'periodStart' | 'splitKey'> & Partial<Record<Slot, number | null>>
 type HistoryState = { status: Status, data: VehicleHistoryPeriod[] }
-type HistoryPlan = { key: string, parts: VehicleHistoryQueries }
+type HistoryPlan = { key: string, parts: VehicleHistoryQueries, concurrency: ConcurrencyGroup }
 
 const rowKey = (row: HistoryValues) => JSON.stringify([row.periodStart, row.splitKey ?? null])
 
@@ -28,7 +28,7 @@ export function useVehicleHistories(sources: MaybeRefOrGetter<readonly HistorySo
   const requests = new Map<string, { controller: AbortController, promise: Promise<HistoryValues[]> }>()
   const concurrency = createConcurrencyGroup(5)
 
-  function load(sql: string, policy: CachePolicy) {
+  function load(sql: string, policy: CachePolicy, concurrency: ConcurrencyGroup) {
     const cached = cache.get(sql)
     if (cached) return Promise.resolve(cached)
     const pending = requests.get(sql)
@@ -76,14 +76,16 @@ export function useVehicleHistories(sources: MaybeRefOrGetter<readonly HistorySo
       const loaded = new Map<string, HistoryValues[]>()
       // Бои и игроки независимы от метрики. Сначала загружаем их для всех частей;
       // смена метрики переиспользует даже ещё выполняющиеся базовые запросы.
-      for (const part of plan.parts) {
-        loaded.set(part.base, await load(part.base, part.cache))
-        if (!current()) return
-      }
-      for (const part of plan.parts) {
-        if (part.metric && loaded.get(part.base)!.length) loaded.set(part.metric, await load(part.metric, part.cache))
-        if (!current()) return
-      }
+      await Promise.all(plan.parts.map(async part => {
+        loaded.set(part.base, await load(part.base, part.cache, plan.concurrency))
+      }))
+      if (!current()) return
+      await Promise.all(plan.parts.map(async part => {
+        if (part.metric && loaded.get(part.base)!.length) {
+          loaded.set(part.metric, await load(part.metric, part.cache, plan.concurrency))
+        }
+      }))
+      if (!current()) return
       states.set(tag, { status: success, data: cachedHistory(plan.parts, sql => loaded.get(sql))! })
     } catch (reason) {
       if (!current()) return
@@ -120,7 +122,7 @@ export function useVehicleHistories(sources: MaybeRefOrGetter<readonly HistorySo
 
     for (const { tag, key, parts } of histories) {
       if (plans.get(tag)?.key === key) continue
-      const plan = { key, parts }
+      const plan = { key, parts, concurrency: concurrency.createOrderedGroup() }
       plans.set(tag, plan)
       const cached = cachedHistory(parts)
       if (cached) states.set(tag, { status: success, data: cached })

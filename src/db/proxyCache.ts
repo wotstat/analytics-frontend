@@ -16,10 +16,10 @@ export async function proxyCacheFetch(input: RequestInfo | URL, init?: RequestIn
 
   const url = new URL(input instanceof Request ? input.url : input)
   const params = sortedEntries([...url.searchParams].filter(([key]) => key !== 'query_id' && key !== 'query_cache_ttl'))
-  // Формат v1 фиксирован: сервер сможет проверить те же UTF-8 байты JSON-массива.
-  // FORMAT уже добавлен SDK к телу. TTL в URL меняется каждую секунду и исключён.
+
+  // Клиент работает с одним ClickHouse, независимо от адреса прокси.
   const canonical = JSON.stringify([
-    'wotstat-query-cache-v1', 'POST', url.origin + url.pathname, params,
+    'wotstat-query-cache-v1', 'POST', 'wotstat-clickhouse', params,
     headers.get('Authorization') ?? '',
     ttl !== null ? ['ttl', ttl] : ['until', until],
     init.body,
