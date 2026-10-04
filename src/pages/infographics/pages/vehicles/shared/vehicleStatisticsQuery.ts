@@ -7,7 +7,7 @@ import type { VehicleStatistics } from './types'
 
 export const VEHICLE_STATISTICS_QUERY_OPTIONS = {
   settings: {
-    use_query_cache: 0,
+    use_query_cache: 1,
     query_cache_ttl: 24 * 60 * 60,
     query_cache_nondeterministic_function_handling: 'save',
   },
