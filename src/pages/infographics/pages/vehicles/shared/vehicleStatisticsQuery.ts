@@ -99,6 +99,20 @@ export function vehicleStatisticsQueries(filters: VehicleFilters, grouping: Vehi
   days: VehicleStatisticsPeriod = 30, selection?: VehicleSelection,
   beforeDay = new Date().toISOString().slice(0, 10)) {
   const isTank = grouping === 'tanks'
+  const daily = !filters.arenas.length &&
+    filters.platoon === 'any' &&
+    filters.result === 'any' &&
+    filters.battleLevel === 'any'
+
+  const table = (() => {
+    if (!daily) return 'PlayerBattleResults'
+    if (isTank || selection?.tankTag || selection?.nations.length) return 'PlayerBattleDailyStatistics'
+    return 'PlayerBattleDailyStatisticsByClassLevel'
+  })()
+
+  const latestTable = daily ? table : 'PlayerBattleLatestDays'
+  const latestDate = daily ? 'day' : 'lastDay'
+  const metricSql = (slot: Slot) => availableSlots[slot][daily ? 'dailySql' : 'sql']
   const withLevel = grouping === 'levels' || grouping === 'classesByLevel'
   const withType = grouping === 'classes' || grouping === 'classesByLevel'
   const dimensions = isTank ? ['stats.tankTag'] : [
@@ -112,7 +126,7 @@ export function vehicleStatisticsQueries(filters: VehicleFilters, grouping: Vehi
   ]
   const selectionFilter = selectionWhere(isTank ? undefined : selection)
   const where = vehicleStatisticsWhere(filters, beforeDay) + selectionFilter
-  const latestWhere = vehicleStatisticsWhere(filters, beforeDay, 'lastDay') + selectionFilter
+  const latestWhere = vehicleStatisticsWhere(filters, beforeDay, latestDate) + selectionFilter
   const rowKey = isTank ? 'stats.tankTag' : `concat(${quote(`${grouping}:`)}, ${dimensions.map(column => `toString(${column})`).join(", ':', ")})`
 
   const selectPeriod = (conditions: string, isActual: boolean) => `
@@ -124,9 +138,9 @@ export function vehicleStatisticsQueries(filters: VehicleFilters, grouping: Vehi
       min(stats.region) as region,
       max(stats.day) as day,
       toBool(${isActual ? 1 : 0}) as isActual,
-      ${baseSlots.battles.sql} as battles,
-      ${baseSlots.playerCount.sql} as playerCount
-    from PlayerBattleResults as stats
+      ${metricSql('battles')} as battles,
+      ${metricSql('playerCount')} as playerCount
+    from ${table} as stats
     prewhere ${where}
       and ${conditions}
     group by ${groupBy}
@@ -138,8 +152,8 @@ export function vehicleStatisticsQueries(filters: VehicleFilters, grouping: Vehi
   const latest = `
     with
       latest as (
-        select ${groupBy}, max(stats.lastDay) as latestDay
-        from PlayerBattleLatestDays as stats
+        select ${groupBy}, max(stats.${latestDate}) as latestDay
+        from ${latestTable} as stats
         prewhere ${latestWhere}
         group by ${groupBy}
       ),
@@ -161,7 +175,7 @@ export function vehicleStatisticsQueries(filters: VehicleFilters, grouping: Vehi
       const groups = [...rows].sort((a, b) => a.rowKey < b.rowKey ? -1 : a.rowKey > b.rowKey ? 1 : 0)
       const dates = [...new Set(rows.map(row => row.day))].sort()
       const isActual = rows.every(row => row.isActual)
-      const metrics = metricQuerySlots(slot).map(key => `${availableSlots[key].sql} as ${key}`).join(',\n          ')
+      const metrics = metricQuerySlots(slot).map(key => `${metricSql(key)} as ${key}`).join(',\n          ')
       let periodFilter = ''
 
       if (isActual) {
@@ -190,7 +204,7 @@ export function vehicleStatisticsQueries(filters: VehicleFilters, grouping: Vehi
         select
           ${rowKey} as rowKey,
           ${metrics}
-        from PlayerBattleResults as stats
+        from ${table} as stats
         prewhere ${where}
           and stats.day >= firstDay - toIntervalDay(${days - 1})
           and stats.day <= ${dates.length === 1 ? 'firstDay' : `toDate(${quote(dates[dates.length - 1])})`}${periodFilter}

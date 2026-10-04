@@ -7,127 +7,136 @@ export type SlotDefinition = {
   formula?: string
   headingLabel?: string
   sql: string
+  dailySql: string
   format?: 'integer' | 'decimal' | 'percent' | 'time' | 'distance'
 }
 
-const average = (column: string) => `avgOrNull(stats.${column})`
+const average = (column: string) => ({
+  sql: `avgOrNull(stats.${column})`,
+  dailySql: `sum(stats.${column}Sum) / nullIf(sum(stats.${column === 'stunDuration' ? 'stunDurationValueCount' : 'battles'}), 0)`,
+})
 
 // Основные показатели без дополнительных агрегаций.
 export const baseSlots = {
-  battles: { icon: 'battles', label: 'Бои', sql: 'count()', description: 'Число участий на танке за выбранный период, не уникальных арен' },
-  playerCount: { icon: 'player', label: 'Игроки', sql: 'uniqIf(stats.participantId, stats.participantId != 0)', description: 'Оценка числа уникальных игроков за выбранный период, без неизвестных аккаунтов' },
-  winrate: { icon: 'winrate', label: 'Победы', sql: "countIf(stats.result = 'win') / nullIf(count(), 0) * 100", format: 'percent' },
-  survival: { icon: 'hp', label: 'Выживаемость', sql: `${average('alive')} * 100`, format: 'percent' },
+  battles: { icon: 'battles', label: 'Бои', sql: 'count()', dailySql: 'sum(stats.battles)', description: 'Число участий на танке за выбранный период, не уникальных арен' },
+  playerCount: { icon: 'player', label: 'Игроки', sql: 'uniqIf(stats.participantId, stats.participantId != 0)', dailySql: 'uniqIfMerge(stats.playersState)', description: 'Оценка числа уникальных игроков за выбранный период, без неизвестных аккаунтов' },
+  winrate: { icon: 'winrate', label: 'Победы', sql: "countIf(stats.result = 'win') / nullIf(count(), 0) * 100", dailySql: 'sum(stats.wins) / nullIf(sum(stats.battles), 0) * 100', format: 'percent' },
+  survival: { icon: 'hp', label: 'Выживаемость', sql: 'avgOrNull(stats.alive) * 100', dailySql: 'sum(stats.survived) / nullIf(sum(stats.battles), 0) * 100', format: 'percent' },
 
-  damage: { icon: 'dmg', label: 'Средний урон', sql: average('damageDealt') },
+  damage: { icon: 'dmg', label: 'Средний урон', ...average('damageDealt') },
 
-  assist: { icon: 'assist', label: 'Среднее содействие', sql: average('damageAssistedTotal'), description: 'Суммарное содействие по разведданным, гусеницам и оглушению за бой' },
-  assistRadio: { icon: 'assist-radio', label: 'Содействие по разведданным', sql: average('damageAssistedRadio') },
-  assistTrack: { icon: 'assist-track', label: 'Содействие по гусеницам', sql: average('damageAssistedTrack') },
-  assistStun: { icon: 'stun', label: 'Содействие по оглушению', sql: average('damageAssistedStun') },
-  assistMax: { icon: 'assist', label: 'Максимальный вид содействия', sql: average('damageAssistedMax'), description: 'Среднее от максимума трёх видов содействия в каждом бою' },
+  assist: { icon: 'assist', label: 'Среднее содействие', ...average('damageAssistedTotal'), description: 'Суммарное содействие по разведданным, гусеницам и оглушению за бой' },
+  assistRadio: { icon: 'assist-radio', label: 'Содействие по разведданным', ...average('damageAssistedRadio') },
+  assistTrack: { icon: 'assist-track', label: 'Содействие по гусеницам', ...average('damageAssistedTrack') },
+  assistStun: { icon: 'stun', label: 'Содействие по оглушению', ...average('damageAssistedStun') },
+  assistMax: { icon: 'assist', label: 'Максимальный вид содействия', ...average('damageAssistedMax'), description: 'Среднее от максимума трёх видов содействия в каждом бою' },
 
-  damageForMarks: { icon: 'gun-mark-dmg', label: 'Урон для отметки', sql: average('damageForMarks') },
-  blocked: { icon: 'block', label: 'Заблокированный урон', sql: average('damageBlockedByArmor') },
-  damageReceived: { icon: 'hp', label: 'Полученный урон', sql: average('damageReceived') },
-  damageReceivedFromInvisibles: { icon: 'hp', label: 'Урон от незасвеченных', sql: average('damageReceivedFromInvisibles') },
+  damageForMarks: { icon: 'gun-mark-dmg', label: 'Урон для отметки', ...average('damageForMarks') },
+  blocked: { icon: 'block', label: 'Заблокированный урон', ...average('damageBlockedByArmor') },
+  damageReceived: { icon: 'hp', label: 'Полученный урон', ...average('damageReceived') },
+  damageReceivedFromInvisibles: { icon: 'hp', label: 'Урон от незасвеченных', ...average('damageReceivedFromInvisibles') },
 
-  xp: { icon: 'xp', label: 'Средний опыт', sql: average('xp') },
-  kills: { icon: 'kill', label: 'Средние уничтожения', sql: average('kills'), format: 'decimal' },
-  spotted: { icon: 'discover', label: 'Обнаружено противников', sql: average('spotted'), format: 'decimal' },
-  damaged: { icon: 'dmg', label: 'Повреждено противников', sql: average('damaged'), format: 'decimal' },
+  xp: { icon: 'xp', label: 'Средний опыт', ...average('xp') },
+  kills: { icon: 'kill', label: 'Средние уничтожения', ...average('kills'), format: 'decimal' },
+  spotted: { icon: 'discover', label: 'Обнаружено противников', ...average('spotted'), format: 'decimal' },
+  damaged: { icon: 'dmg', label: 'Повреждено противников', ...average('damaged'), format: 'decimal' },
 
-  shots: { icon: 'shots', label: 'Выстрелы', sql: average('shots'), format: 'decimal' },
-  directEnemyHits: { icon: 'hits', label: 'Прямые попадания', sql: average('directEnemyHits'), format: 'decimal' },
-  piercingEnemyHits: { icon: 'piercing', label: 'Пробития', sql: average('piercingEnemyHits'), format: 'decimal' },
-  explosionHits: { icon: 'hits', label: 'Попадания осколками', sql: average('explosionHits'), format: 'decimal' },
+  shots: { icon: 'shots', label: 'Выстрелы', ...average('shots'), format: 'decimal' },
+  directEnemyHits: { icon: 'hits', label: 'Прямые попадания', ...average('directEnemyHits'), format: 'decimal' },
+  piercingEnemyHits: { icon: 'piercing', label: 'Пробития', ...average('piercingEnemyHits'), format: 'decimal' },
+  explosionHits: { icon: 'hits', label: 'Попадания осколками', ...average('explosionHits'), format: 'decimal' },
 
-  directHitsReceived: { icon: 'hits', label: 'Получено прямых попаданий', sql: average('directHitsReceived'), format: 'decimal' },
-  piercingsReceived: { icon: 'piercing', label: 'Получено пробитий', sql: average('piercingsReceived'), format: 'decimal' },
-  explosionHitsReceived: { icon: 'hits', label: 'Получено попаданий осколками', sql: average('explosionHitsReceived'), format: 'decimal' },
+  directHitsReceived: { icon: 'hits', label: 'Получено прямых попаданий', ...average('directHitsReceived'), format: 'decimal' },
+  piercingsReceived: { icon: 'piercing', label: 'Получено пробитий', ...average('piercingsReceived'), format: 'decimal' },
+  explosionHitsReceived: { icon: 'hits', label: 'Получено попаданий осколками', ...average('explosionHitsReceived'), format: 'decimal' },
 
-  stunned: { icon: 'stun', label: 'Оглушено противников', sql: average('stunned'), format: 'decimal' },
-  stunDuration: { icon: 'stun', label: 'Время оглушения', sql: average('stunDuration'), format: 'time' },
+  stunned: { icon: 'stun', label: 'Оглушено противников', ...average('stunned'), format: 'decimal' },
+  stunDuration: { icon: 'stun', label: 'Время оглушения', ...average('stunDuration'), format: 'time' },
 
-  lifeTime: { icon: 'lifetime', label: 'Время жизни', sql: average('lifeTime'), format: 'time' },
-  duration: { icon: 'duration', label: 'Длительность боя', sql: average('duration'), format: 'time' },
-  mileage: { icon: 'distance', label: 'Пройденная дистанция', sql: average('mileage'), format: 'distance' },
+  lifeTime: { icon: 'lifetime', label: 'Время жизни', ...average('lifeTime'), format: 'time' },
+  duration: { icon: 'duration', label: 'Длительность боя', ...average('duration'), format: 'time' },
+  mileage: { icon: 'distance', label: 'Пройденная дистанция', ...average('mileage'), format: 'distance' },
 
-  maxHealth: { icon: 'hp', label: 'Начальная прочность', sql: average('maxHealth') },
-  health: { icon: 'hp', label: 'Оставшаяся прочность', sql: average('health') },
+  maxHealth: { icon: 'hp', label: 'Начальная прочность', ...average('maxHealth') },
+  health: { icon: 'hp', label: 'Оставшаяся прочность', ...average('health') },
 
-  higherTierEnemies: { icon: 'tank', label: 'Противники выше уровнем', sql: average('higherTierEnemies'), format: 'decimal' },
-  sameTierEnemies: { icon: 'tank', label: 'Противники того же уровня', sql: average('sameTierEnemies'), format: 'decimal' },
-  lowerTierEnemies: { icon: 'tank', label: 'Противники ниже уровнем', sql: average('lowerTierEnemies'), format: 'decimal' },
+  higherTierEnemies: { icon: 'tank', label: 'Противники выше уровнем', ...average('higherTierEnemies'), format: 'decimal' },
+  sameTierEnemies: { icon: 'tank', label: 'Противники того же уровня', ...average('sameTierEnemies'), format: 'decimal' },
+  lowerTierEnemies: { icon: 'tank', label: 'Противники ниже уровнем', ...average('lowerTierEnemies'), format: 'decimal' },
 } as const satisfies Record<string, SlotDefinition>
 
 export type PrimarySlot = keyof typeof baseSlots
 
-const ratio = (numerator: string, denominator: string, multiplier = 1) =>
-  `${numerator} / nullIf(${denominator}, 0)${multiplier === 1 ? '' : ` * ${multiplier}`}`
+function ratio(numerator: string | string[], denominator: string | string[], multiplier = 1) {
+  const sum = (columns: string | string[], suffix: string) =>
+    (Array.isArray(columns) ? columns : [columns]).map(column => `sum(stats.${column}${suffix})`).join(' + ')
+  const expression = (suffix: string) =>
+    `${sum(numerator, suffix)} / nullIf(${sum(denominator, suffix)}, 0)${multiplier === 1 ? '' : ` * ${multiplier}`}`
+  return { sql: expression(''), dailySql: expression('Sum') }
+}
 
 // Отношения общих сумм за выбранный период, а не средние отношения по отдельным боям.
 // Дополнительные агрегации ниже считаются по индивидуальным значениям из PlayerBattleResults.
 export const derivedSlots = {
   lifeTimeShare: {
     icon: 'lifetime', label: 'Доля времени жизни', headingLabel: '%', formula: 'Время жизни / длительность боя',
-    sql: ratio('sum(stats.lifeTime)', 'sum(stats.duration)', 100), format: 'percent',
+    ...ratio('lifeTime', 'duration', 100), format: 'percent',
   },
   shotsPerLifeMinute: {
     icon: 'shots', label: 'Выстрелы в минуту жизни', headingLabel: '/мин', formula: 'Выстрелы / минуты жизни',
-    sql: ratio('sum(stats.shots)', 'sum(stats.lifeTime)', 60), format: 'decimal',
+    ...ratio('shots', 'lifeTime', 60), format: 'decimal',
   },
   damagePerLifeMinute: {
     icon: 'dmg', label: 'Урон в минуту жизни', headingLabel: '/мин', formula: 'Урон / минуты жизни',
-    sql: ratio('sum(stats.damageDealt)', 'sum(stats.lifeTime)', 60),
+    ...ratio('damageDealt', 'lifeTime', 60),
   },
   assistPerLifeMinute: {
     icon: 'assist', label: 'Содействие в минуту жизни', headingLabel: '/мин', formula: 'Содействие / минуты жизни',
-    sql: ratio('sum(stats.damageAssistedTotal)', 'sum(stats.lifeTime)', 60),
+    ...ratio('damageAssistedTotal', 'lifeTime', 60),
   },
   directHitRate: {
     icon: 'hits', label: 'Доля прямых попаданий', headingLabel: '%', formula: 'Попадания / выстрелы',
-    sql: ratio('sum(stats.directEnemyHits)', 'sum(stats.shots)', 100), format: 'percent',
+    ...ratio('directEnemyHits', 'shots', 100), format: 'percent',
   },
   penetrationRate: {
     icon: 'piercing', label: 'Пробития среди попаданий', headingLabel: '%', formula: 'Пробития / попадания',
-    sql: ratio('sum(stats.piercingEnemyHits)', 'sum(stats.directEnemyHits)', 100), format: 'percent',
+    ...ratio('piercingEnemyHits', 'directEnemyHits', 100), format: 'percent',
   },
   penetratingShotRate: {
     icon: 'piercing', label: 'Пробития на выстрел', headingLabel: '/В', formula: 'Пробития / выстрелы',
-    sql: ratio('sum(stats.piercingEnemyHits)', 'sum(stats.shots)', 100), format: 'percent',
+    ...ratio('piercingEnemyHits', 'shots', 100), format: 'percent',
   },
   receivedPenetrationRate: {
     icon: 'piercing', label: 'Доля входящих пробитий', headingLabel: 'Вх.%', formula: 'Пробития / попадания',
     description: 'Полученные пробития / полученные прямые попадания × 100%. Попадания осколками не учитываются.',
-    sql: ratio('sum(stats.piercingsReceived)', 'sum(stats.directHitsReceived)', 100), format: 'percent',
+    ...ratio('piercingsReceived', 'directHitsReceived', 100), format: 'percent',
   },
   damageExchangeRatio: {
     icon: 'dmg', label: 'Отношение урона', headingLabel: 'Н/П', formula: 'Нанесённый / полученный',
-    sql: ratio('sum(stats.damageDealt)', 'sum(stats.damageReceived)'), format: 'decimal',
+    ...ratio('damageDealt', 'damageReceived'), format: 'decimal',
   },
   damageToHealthRatio: {
     icon: 'dmg', label: 'Урон к собственной прочности', headingLabel: '/HP', formula: 'Урон / начальная прочность',
     description: 'Сколько собственных запасов прочности танк снимает с противников: суммарный урон / суммарная начальная прочность.',
-    sql: ratio('sum(stats.damageDealt)', 'sum(stats.maxHealth)'), format: 'decimal',
+    ...ratio('damageDealt', 'maxHealth'), format: 'decimal',
   },
   blockedDamageShare: {
     icon: 'block', label: 'Доля заблокированного урона', headingLabel: '%', formula: 'Блок / (блок + полученный урон)',
     description: 'Заблокированный урон / (заблокированный + полученный урон) × 100%. Доля учтённого урона, не вероятность непробития.',
-    sql: ratio('sum(stats.damageBlockedByArmor)', 'sum(stats.damageBlockedByArmor) + sum(stats.damageReceived)', 100), format: 'percent',
+    ...ratio('damageBlockedByArmor', ['damageBlockedByArmor', 'damageReceived'], 100), format: 'percent',
   },
   remainingHealthShare: {
     icon: 'hp', label: 'Оставшаяся прочность, %', headingLabel: '%', formula: 'Остаток / начальная прочность',
     description: 'Суммарная оставшаяся прочность / суммарная начальная прочность × 100%. Уничтоженные танки учитываются с нулевой оставшейся прочностью.',
-    sql: ratio('sum(stats.health)', 'sum(stats.maxHealth)', 100), format: 'percent',
+    ...ratio('health', 'maxHealth', 100), format: 'percent',
   },
   invisibleDamageShare: {
     icon: 'hp', label: 'Доля урона от незасвеченных', headingLabel: 'НЗ%', formula: 'От незасвеченных / весь урон',
-    sql: ratio('sum(stats.damageReceivedFromInvisibles)', 'sum(stats.damageReceived)', 100), format: 'percent',
+    ...ratio('damageReceivedFromInvisibles', 'damageReceived', 100), format: 'percent',
   },
   assistShare: {
     icon: 'assist', label: 'Доля содействия', headingLabel: '%', formula: 'Содействие / (урон + содействие)',
-    sql: ratio('sum(stats.damageAssistedTotal)', 'sum(stats.damageDealt) + sum(stats.damageAssistedTotal)', 100), format: 'percent',
+    ...ratio('damageAssistedTotal', ['damageDealt', 'damageAssistedTotal'], 100), format: 'percent',
   },
 } as const satisfies Record<string, SlotDefinition>
 
@@ -153,7 +162,7 @@ type Aggregation = keyof typeof aggregations
 const aggregationOrder = Object.keys(aggregations) as Aggregation[]
 const quantileLevels = [0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]
 
-// Все распределения считаются по результатам участников, без сохранённых агрегатных состояний.
+// Имена исходных колонок совпадают с префиксами агрегатов в дневных витринах.
 const aggregationSources = {
   damage: 'damageDealt',
   assist: 'damageAssistedTotal',
@@ -214,15 +223,18 @@ export function defaultSlot(slot: BaseSlot): Slot {
   return defaultAggregations[slot] ?? slot
 }
 
-function aggregationSql(slot: AggregatableSlot, aggregation: Aggregation) {
+function aggregationSql(slot: AggregatableSlot, aggregation: Aggregation, daily = false) {
   const column = `stats.${aggregationSources[slot]}`
+  const count = daily
+    ? `sum(stats.${slot in derivedSlots || slot === 'stunDuration' ? `${aggregationSources[slot]}ValueCount` : 'battles'})`
+    : `count(${column})`
   switch (aggregation) {
-    case 'min': return `minOrNull(${column})`
-    case 'max': return `maxOrNull(${column})`
-    case 'zero': return `countIf(${column} = 0) / nullIf(count(${column}), 0) * 100`
+    case 'min': return `minOrNull(${column}${daily ? 'Min' : ''})`
+    case 'max': return `maxOrNull(${column}${daily ? 'Max' : ''})`
+    case 'zero': return `${daily ? `sum(${column}ZeroCount)` : `countIf(${column} = 0)`} / nullIf(${count}, 0) * 100`
     default: {
       const index = quantileLevels.indexOf(Number(aggregation.slice(1)) / 100) + 1
-      return `if(count(${column}) = 0, NULL, quantilesTDigest(${quantileLevels.join(', ')})(${column})[${index}])`
+      return `if(${count} = 0, NULL, quantilesTDigest${daily ? 'Merge' : ''}(${quantileLevels.join(', ')})(${column}${daily ? 'QuantilesState' : ''})[${index}])`
     }
   }
 }
@@ -267,6 +279,7 @@ for (const slot of Object.keys(aggregationSources) as AggregatableSlot[]) {
         : `${definition.description ?? metricLabel(slot)}. Агрегация: ${aggregations[aggregation].label}`,
       headingLabel: undefined,
       sql: aggregationSql(slot, aggregation),
+      dailySql: aggregationSql(slot, aggregation, true),
       format: aggregation === 'zero' ? 'percent' : definition.format,
     }
   }
