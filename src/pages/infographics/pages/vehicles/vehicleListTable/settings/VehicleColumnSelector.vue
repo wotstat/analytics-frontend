@@ -6,12 +6,12 @@
 
   <VehicleSlotOptions v-model:open="open" :target="trigger"
     :placement="['bottom-end', 'bottom-float', 'top-end', 'left-float', 'top-end']" title="Выбор столбцов" :selected
-    :max-slots="maxSlots" :can-reset="canReset" multiple @select="toggle" @toggle-metric="toggleMetric"
-    @reset="reset" />
+    :max-slots="maxSlots" multiple @select="toggle" @toggle-metric="toggleMetric"
+    @clear="selected = []" @reset="reset" />
 </template>
 
 <script setup lang="ts">
-import { computed, useTemplateRef } from 'vue'
+import { useTemplateRef } from 'vue'
 import VehicleSlotOptions from '../../vehicleMetricSelector/VehicleSlotOptions.vue'
 import { baseSlot, defaultSlot, defaultSlotsForLimit, orderSlots, type BaseSlot, type Slot } from '../../vehicleMetricSelector/vehicleMetrics.ts'
 
@@ -20,10 +20,6 @@ const selected = defineModel<Slot[]>({ required: true })
 
 const open = defineModel<boolean>('open', { default: false })
 const trigger = useTemplateRef<HTMLButtonElement>('trigger')
-const canReset = computed(() => {
-  const defaults = defaultSlotsForLimit(props.maxSlots)
-  return selected.value.length !== defaults.length || defaults.some(slot => !selected.value.includes(slot))
-})
 
 function toggle(slot: Slot) {
   if (selected.value.includes(slot)) {

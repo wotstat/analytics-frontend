@@ -4,7 +4,9 @@
     <template v-if="maxSlots !== undefined" #toolbar>
       <div class="selection-controls">
         <span class="selected-count">Выбрано {{ selected.length }} из {{ maxSlots }}</span>
-        <ToolbarButton v-if="multiple" :icon="ResetIcon" size="small" :disabled="!canReset" @click="resetSelection" />
+        <ToolbarButton v-if="multiple" :icon="selected.length ? ClearIcon : ResetIcon" size="small" class="icon-button"
+          v-tooltip.instant="{ text: selected.length ? 'Очистить' : 'По умолчанию', placement: ['top-float', 'bottom-float'], viewportOffset: 5 }"
+          @click="clearOrResetSelection" />
       </div>
     </template>
 
@@ -52,6 +54,7 @@
 
 <script setup lang="ts">
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
+import ClearIcon from '@/assets/icons/x-bold.svg'
 import ResetIcon from '@/assets/icons/reset.svg'
 import { ref, shallowRef, watch } from 'vue'
 import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
@@ -68,7 +71,6 @@ const props = defineProps<{
   selected: readonly Slot[]
   maxSlots?: number
   multiple?: boolean
-  canReset?: boolean
 }>()
 
 const open = defineModel<boolean>('open', { default: false })
@@ -76,6 +78,7 @@ const open = defineModel<boolean>('open', { default: false })
 const emit = defineEmits<{
   select: [slot: Slot]
   toggleMetric: [slot: BaseSlot]
+  clear: []
   reset: []
 }>()
 
@@ -126,9 +129,10 @@ function selectMetric(slot: BaseSlot) {
   else emit('select', defaultSlot(slot))
 }
 
-function resetSelection() {
+function clearOrResetSelection() {
   closeAggregation()
-  emit('reset')
+  if (props.selected.length) emit('clear')
+  else emit('reset')
 }
 
 function isDisabled(slot: Slot) {
