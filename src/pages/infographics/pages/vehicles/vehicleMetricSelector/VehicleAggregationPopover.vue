@@ -24,8 +24,7 @@
         <section class="aggregation-group quantiles">
           <h3>
             Квантили
-            <span class="quantile-help"
-              v-tooltip="'Если квантиль 90% по урону равен 3000, то примерно в 90% случаев игроки нанесли не больше 3000 урона.\n\n50% — медиана: значение в середине списка результатов, отсортированного от меньшего к большему.'">?</span>
+            <span class="quantile-help" v-quantile-tooltip="{ disabled: !open }">?</span>
           </h3>
           <div class="aggregation-grid">
             <AggregationTile v-for="item in ['01', '05', '10', '25', '50', '75', '90', '95', '99']"
@@ -45,6 +44,19 @@ import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
 import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
 import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import { aggregations, metricLabel, type AggregatableSlot, type Slot } from './vehicleMetrics'
+import { useTooltip } from '@/shared/uiKit/tooltip/useTooltip'
+import QuantileTooltip from './QuantileTooltip.vue'
+
+const vQuantileTooltip = useTooltip<{ disabled: boolean }>(QuantileTooltip, {
+  interactive: true,
+  interactiveDelay: 450,
+  interactiveHideDelay: 300,
+  arrowSize: 6,
+  offset: 8,
+  placement: ['right-float', 'left-float', 'top-float', 'bottom-float'],
+  viewportOffset: popoverViewportOffset,
+  valueAdapter: value => ({ contentProps: {}, tooltipProps: { disabled: value.disabled } }),
+})
 
 type AggregationItem = 'mean' | keyof typeof aggregations
 
