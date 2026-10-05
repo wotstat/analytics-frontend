@@ -49,6 +49,12 @@ watch(() => route.matched[0], (current, previous) => {
   if (!current) nextTick(backgroundController.finishHandoff)
 }, { flush: 'sync' })
 
+if (import.meta.env.MODE == 'development' && import.meta.env.VITE_MODE_DEV_LOCAL === 'true') {
+  window.addEventListener('keydown', e => {
+    if (e.key === 'F19') debugger
+  })
+}
+
 </script>
 
 
