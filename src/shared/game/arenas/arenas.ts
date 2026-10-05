@@ -115,7 +115,7 @@ async function loadArenas() {
           "spawn.positions", control, "poi.position", "poi.type"
     from ArenasLatest
     where region in ('RU', 'EU');
-  `, { cache: LONG_CACHE })
+  `, { cache: LONG_CACHE, proxyCache: true })
 
   arenas.value = response.data.map((arena) => ({
     region: arena.region,

@@ -10,6 +10,7 @@ export const SHORT_CACHE = { ttl: 10 } as const satisfies CachePolicy
 export const DEFAULT_CACHE = { ttl: 60 } as const satisfies CachePolicy
 export const MEDIUM_CACHE = { ttl: 300 } as const satisfies CachePolicy
 export const LONG_CACHE = { ttl: 600 } as const satisfies CachePolicy
+export const DAY_CACHE = { ttl: 24 * 60 * 60 } as const satisfies CachePolicy
 export const DAILY_CACHE = { until: 'day' } as const satisfies CachePolicy
 export const MONTHLY_CACHE = { until: 'month' } as const satisfies CachePolicy
 

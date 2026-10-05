@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-import { DEFAULT_CACHE, LONG_CACHE, queryAsync, type Status } from '@/db'
+import { DEFAULT_CACHE, LONG_CACHE, MEDIUM_CACHE, queryAsync, type Status } from '@/db'
 import { selectTagArenasLocalization, selectTagVehiclesLocalization } from '@/shared/i18n/i18n'
 import { arenaToHash } from '@/shared/game/selectors/arena/utils'
 import type { Nation } from '@/shared/game/vehicles/nations/nations'
@@ -26,7 +26,7 @@ with
 select tag, type, role, level, short, name, region, nation
 from tanks
 left any join locals using tag;
-`, { cache: DEFAULT_CACHE })
+`, { cache: MEDIUM_CACHE, proxyCache: true })
 
 const arenas = queryAsync<ArenaRow>(`
 with
@@ -42,13 +42,13 @@ select region, battleMode, battleGameplay, tag, gameVersion, name, season
 from arenas
 left any join locals using tag
 left any join seasons using tag
-`, { cache: LONG_CACHE })
+`, { cache: LONG_CACHE, proxyCache: true })
 
 const versions = queryAsync<VersionRow>(`
   select region, gameVersionFull as version
   from GameVersions
   group by region, gameVersionFull
-`, { cache: DEFAULT_CACHE })
+`, { cache: MEDIUM_CACHE, proxyCache: true })
 
 export const listStatuses = computed<{ title: string, status: Status, count: number }[]>(() => [
   { title: 'техника', status: vehicles.value.status, count: vehicles.value.data.length },

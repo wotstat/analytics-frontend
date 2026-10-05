@@ -64,13 +64,13 @@ export const selectCustomizationsLocalization = `
   group by tag
 `
 
-const tankNames = queryAsync<{ tag: string, short: string, name: string }>(selectVehiclesLocalization, { cache: LONG_CACHE })
+const tankNames = queryAsync<{ tag: string, short: string, name: string }>(selectVehiclesLocalization, { cache: LONG_CACHE, proxyCache: true })
 const tankNamesMap = computed(() => new Map<string, [string, string]>(tankNames.value.data.map(t => [t.tag, [t.name, t.short]])))
 
-const arenaNames = queryAsync<{ tag: string, name: string }>(selectTagArenasLocalization, { cache: LONG_CACHE })
+const arenaNames = queryAsync<{ tag: string, name: string }>(selectTagArenasLocalization, { cache: LONG_CACHE, proxyCache: true })
 const arenaNamesMap = computed(() => new Map<string, string>(arenaNames.value.data.map(t => [t.tag, t.name])))
 
-const artefactsNames = queryAsync<{ tag: string, name: string }>(selectArtefactsLocalization, { cache: LONG_CACHE })
+const artefactsNames = queryAsync<{ tag: string, name: string }>(selectArtefactsLocalization, { cache: LONG_CACHE, proxyCache: true })
 const artefactsNamesMap = computed(() => new Map<string, string>(artefactsNames.value.data.map(t => [t.tag, t.name])))
 
 function getBestTankLocale(tag: string, short: boolean = false) {

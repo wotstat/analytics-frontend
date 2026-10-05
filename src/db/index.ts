@@ -8,7 +8,7 @@ import { cacheClickHouseSettings, createQueryCache, resolveCachePolicy, response
 import { proxyCacheFetch, sortedEntries } from './proxyCache'
 
 export { createConcurrencyGroup, type ConcurrencyGroup } from './concurrency'
-export { SUPER_SHORT_CACHE, SHORT_CACHE, DEFAULT_CACHE, MEDIUM_CACHE, LONG_CACHE, DAILY_CACHE, MONTHLY_CACHE, createQueryCache, type CachePolicy } from './cache'
+export { SUPER_SHORT_CACHE, SHORT_CACHE, DEFAULT_CACHE, MEDIUM_CACHE, LONG_CACHE, DAY_CACHE, DAILY_CACHE, MONTHLY_CACHE, createQueryCache, type CachePolicy } from './cache'
 
 if (import.meta.env.MODE == 'development' && import.meta.env.VITE_MODE_DEV_LOCAL === 'true' && !window.crypto.randomUUID) {
   console.warn('crypto.randomUUID is not supported in this browser, using fallback implementation')

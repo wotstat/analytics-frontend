@@ -40,7 +40,7 @@ select region, battleMode, battleGameplay, tag, gameVersion, name, season
 from arenas
 left any join locals using tag
 left any join seasons using tag
-`, { cache: LONG_CACHE })
+`, { cache: LONG_CACHE, proxyCache: true })
 
 const arenaNames = computed(() => new Map(arenas.value.data.map(a => [a.tag, a.name])))
 
