@@ -283,12 +283,19 @@ function onPalettePointerUp(event: PointerEvent) {
 }
 
 function showContextMenu(event: MouseEvent) {
-  simpleContextMenu({ position: { x: event.clientX, y: event.clientY }, closeOnAction: true, actionOnPointerUp: true }, [
-    ...options(valueInputType, [
-      { key: 'hex', label: 'hex' },
-      { key: 'rgba', label: allowAlpha ? 'rgba' : 'rgb' },
-      { key: 'hsla', label: allowAlpha ? 'hsla' : 'hsl' }] as const)
-  ])
+
+  simpleContextMenu({
+    position: (event.currentTarget as HTMLElement).getBoundingClientRect(),
+    alignY: 'bottom',
+    closeOnAction: true,
+    actionOnPointerUp: true
+  },
+    [
+      ...options(valueInputType, [
+        { key: 'hex', label: 'hex' },
+        { key: 'rgba', label: allowAlpha ? 'rgba' : 'rgb' },
+        { key: 'hsla', label: allowAlpha ? 'hsla' : 'hsl' }] as const)
+    ])
 }
 
 function syncRgba() {
@@ -379,7 +386,13 @@ function showColorContextMenu(event: MouseEvent, index: number) {
   event.preventDefault()
   event.stopPropagation()
 
-  simpleContextMenu({ position: { x: event.clientX, y: event.clientY }, closeOnAction: true, actionOnPointerUp: true }, [
+
+  simpleContextMenu({
+    position: (event.currentTarget as HTMLElement).getBoundingClientRect(),
+    alignY: 'bottom',
+    closeOnAction: true,
+    actionOnPointerUp: true
+  }, [
     {
       label: 'Remove',
       action: () => savedColors.value.splice(index, 1)
