@@ -75,8 +75,6 @@
         </template>
       </div>
     </div>
-    <p class="example-hint">Интерактивный пример с демо данными. Наведите курсор на график или перемещайте
-      ползунок, чтобы посмотреть разные квантили.</p>
   </div>
 </template>
 
@@ -446,12 +444,6 @@ function moveSlider(event: Event) {
       color: #ffffff90;
       font-size: 11px;
     }
-  }
-
-  .example-hint {
-    margin-top: 10px;
-    color: #ffffff60;
-    font-size: 11px;
   }
 }
 
