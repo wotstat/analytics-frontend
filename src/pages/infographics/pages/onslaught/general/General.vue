@@ -190,7 +190,7 @@ async function load(abortSignal: AbortSignal, soft = false) {
     select * from playersData
     union all
     select * from leaderboardData
-    `, { abortSignal, cache: LONG_CACHE })
+    `, { abortSignal, cache: LONG_CACHE, proxyCache: true })
 
 
   if (abortSignal.aborted) return
@@ -250,6 +250,7 @@ function reloadVehicle(sql: string) {
       const response = await query<GlobalVehicleStatistic>(sql, {
         abortSignal: signal,
         cache: LONG_CACHE,
+        proxyCache: true,
       })
       if (signal.aborted || requestId !== vehicleRequestId) return
 
@@ -277,6 +278,7 @@ async function reloadArena(sql: string, commonId: number) {
     const response = await query<GlobalArenaStatistic>(sql, {
       abortSignal: signal,
       cache: LONG_CACHE,
+      proxyCache: true,
     })
     if (signal.aborted || commonId !== commonRequestId) return
 

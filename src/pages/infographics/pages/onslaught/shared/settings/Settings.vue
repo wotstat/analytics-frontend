@@ -77,7 +77,7 @@ const seasonsData = queryAsync<{ region: string, season: string, start: string }
   where region in ('RU', 'EU', 'NA', 'ASIA', 'CN', 'CT', 'RPT')
   group by region, season
   order by start desc
-`, { cache: LONG_CACHE })
+`, { cache: LONG_CACHE, proxyCache: true })
 
 watchEffect(() => seasons.value = seasonsData.value?.data ?? [])
 

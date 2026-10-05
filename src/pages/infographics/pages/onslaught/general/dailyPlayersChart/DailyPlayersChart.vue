@@ -51,7 +51,7 @@ const props = defineProps<{
 
 const data = queryComputed<GlobalDailyPlayersStatistic>(
   () => buildGlobalDailyPlayersStatisticsQuery(props.filters),
-  { cache: LONG_CACHE },
+  { cache: LONG_CACHE, proxyCache: true },
 )
 
 const chart = markRaw(new DailyPlayersChart(props.seasonInterval.length))
