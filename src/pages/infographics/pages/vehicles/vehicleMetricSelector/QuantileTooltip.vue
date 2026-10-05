@@ -48,6 +48,7 @@
         </div>
       </div>
 
+      <div class="compact-example-heading">Пример</div>
       <div class="slider-controls">
         <div class="shares">
           <strong>{{ percentile }}% ниже границы</strong>
@@ -96,7 +97,7 @@ const threshold = computed(() => percentile.value === 50
   : values[belowCount.value - 1])
 const formatValue = (value: number) => value.toLocaleString('ru-RU')
 const clipId = `quantile-share-${useId()}`
-const rowHeight = 20
+const rowHeight = 16
 const sampleRadius = 3
 const baseline = values.length * rowHeight
 const chartHeight = baseline + sampleRadius
@@ -158,10 +159,10 @@ function moveSlider(event: Event) {
   --quantile-accent: rgba(92, 184, 255, 1);
 
   box-sizing: border-box;
-  width: min(460px, calc(100vw - 24px));
+  width: min(400px, calc(100vw - 24px));
   max-height: var(--available-height);
   overflow-y: auto;
-  padding: 14px;
+  padding: 10px;
   font-size: 12px;
   line-height: 1.35;
   font-variant-numeric: tabular-nums;
@@ -171,8 +172,8 @@ function moveSlider(event: Event) {
   }
 
   .heading {
-    margin-bottom: 6px;
-    font-size: 14px;
+    margin-bottom: 4px;
+    font-size: 13px;
     font-weight: 700;
   }
 
@@ -182,16 +183,24 @@ function moveSlider(event: Event) {
 
   .example {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 100px;
-    column-gap: 18px;
-    row-gap: 16px;
-    margin: 16px 0;
+    grid-template-columns: minmax(0, 1fr) 92px;
+    column-gap: 14px;
+    row-gap: 12px;
+    margin: 12px 0;
   }
 
   .section-label {
-    margin-bottom: 7px;
+    margin-bottom: 5px;
     color: #ffffff80;
     font-size: 11px;
+  }
+
+  .compact-example-heading {
+    display: none;
+    margin-bottom: 6px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
   }
 
   .results .section-label {
@@ -421,7 +430,7 @@ function moveSlider(event: Event) {
 
   .explanation {
     border-radius: 7px;
-    padding: 10px 12px;
+    padding: 8px 10px;
     background: color-mix(in srgb, var(--quantile-accent) 6.25%, transparent);
 
     .explanation-label {
@@ -431,7 +440,7 @@ function moveSlider(event: Event) {
 
     .explanation-value {
       margin-top: 2px;
-      font-size: 16px;
+      font-size: 14px;
     }
 
     strong {
@@ -440,7 +449,7 @@ function moveSlider(event: Event) {
     }
 
     .explanation-detail {
-      margin-top: 4px;
+      margin-top: 2px;
       color: #ffffff90;
       font-size: 11px;
     }
@@ -449,17 +458,17 @@ function moveSlider(event: Event) {
 
 @media (max-width: 600px) {
   .quantile-tooltip {
-    max-height: calc(var(--available-height) / 2 - 8px);
-  }
-}
-
-@media (max-width: 400px) {
-  .quantile-tooltip {
-    padding: 12px;
-
     .example {
-      grid-template-columns: minmax(0, 1fr) 80px;
-      column-gap: 14px;
+      display: block;
+    }
+
+    .distribution,
+    .results {
+      display: none;
+    }
+
+    .compact-example-heading {
+      display: block;
     }
   }
 }
