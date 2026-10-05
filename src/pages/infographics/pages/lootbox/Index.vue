@@ -111,7 +111,7 @@
 <script lang="ts" setup>
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import { createFixedSpaceProcessor, createLogProcessor } from '@/shared/utils/processors/processors'
-import { useQueryStatParams, useQueryStatParamsCache } from '@/shared/query/useQueryStatParams'
+import { useQueryStatParams } from '@/shared/query/useQueryStatParams'
 import { Status, dateToDbIndex, queryComputed, queryComputedFirst, success } from '@/db'
 import { computed, ref } from 'vue'
 import TableSection from './TableSection.vue'
@@ -132,6 +132,7 @@ import LootboxList from './lootboxList/Index.vue'
 import { useRoute } from 'vue-router'
 import { useMeta } from '@/shared/composition/useMeta'
 import { useLocalStorage } from '@vueuse/core'
+import { useLootboxQueryOptions } from './useLootboxQueryOptions'
 
 useMeta({
   title: 'Статистика коробок',
@@ -141,7 +142,7 @@ useMeta({
 
 
 const params = useQueryStatParams()
-const cache = useQueryStatParamsCache(params)
+const queryOptions = useLootboxQueryOptions(params)
 const showTestData = useLocalStorage('lootbox-show-test-data', false)
 
 const localizationQueries = {
@@ -191,7 +192,7 @@ const total = queryComputedFirst(() => `
 select sum(recordBoxCount) as count
 from Event_OnLootboxOpen
 where ${whereClause()} and isOpenSuccess
-`, { count: 0 })
+`, { count: 0 }, queryOptions)
 
 const openWithStats = queryComputed<{ tag: string, locale: LocalizedName, count: number, successCount: number, totalCount?: number, totalSuccess?: number }>(() => {
   let where: string | null = whereClause(['tag'])
@@ -227,7 +228,7 @@ const openWithStats = queryComputed<{ tag: string, locale: LocalizedName, count:
         group by openByTag
     ) as M
     left any join locales using tag
-`}, { cache })
+`}, queryOptions)
 
 const rerollStats = queryComputed<{ tag: string, locale: LocalizedName, count: number, rerollCount: number, totalCount?: number, totalReroll?: number }>(() => {
   let where: string | null = whereClause(['tag'])
@@ -266,7 +267,7 @@ const rerollStats = queryComputed<{ tag: string, locale: LocalizedName, count: n
     ) as M
     left any join locales using tag
   `
-}, { cache })
+}, queryOptions)
 
 const mainStats = queryComputedFirst(() => `
 select
@@ -280,7 +281,7 @@ select
     sum(arraySum(arrayFilter(t -> t.1 == 'ny25_mandarin', arrayZip(compensatedToys.currency, compensatedToys.count)).2)) as compensatedMandarin25
 from Event_OnLootboxOpen
 where ${whereClause()}
-  `, { prem: 0, credits: 0, freeXP: 0, gold: 0, equipCoin: 0, vehicles: 0, mandarin25: 0, compensatedMandarin25: 0 }, { cache })
+  `, { prem: 0, credits: 0, freeXP: 0, gold: 0, equipCoin: 0, vehicles: 0, mandarin25: 0, compensatedMandarin25: 0 }, queryOptions)
 
 type Stats = {
   title: string,
@@ -358,7 +359,7 @@ countMerge(count) as count,
 }
 
 function load(queryString: () => string) {
-  return queryComputed<Stats>(queryString, { cache })
+  return queryComputed<Stats>(queryString, queryOptions)
 }
 
 const lootboxesStats = load(() => getQuery(

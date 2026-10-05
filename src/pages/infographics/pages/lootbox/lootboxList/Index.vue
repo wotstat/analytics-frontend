@@ -65,6 +65,7 @@ import { useQueryParamStorage } from '@/shared/query/useQueryParamStorage'
 
 import NoImageLB from './noImageLB.png'
 import { STATIC_URL } from '@/shared/external/externalUrl'
+import { useLootboxQueryOptions } from '../useLootboxQueryOptions'
 
 const customOrderKeys = new Map<string, number>(objectEntries({
   'mtl_1_35': 1000,
@@ -103,6 +104,7 @@ const props = defineProps<{
 }>()
 
 const stats = useQueryStatParams()
+const queryOptions = useLootboxQueryOptions(stats)
 const selectedContainers = ref<string[]>([])
 const selectedContainersQuery = useQueryParamStorage<string | null>('selectedLootbox', null, true)
 
@@ -161,7 +163,7 @@ with containers as (
     )
 select * from containers
 left any join locales using tag
-`)
+`, queryOptions)
 
 const containersVariants = computed(() => containersTag.value.data
   .map((x) => ({
