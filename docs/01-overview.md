@@ -33,7 +33,7 @@ bunx eslint src      # линт (правила: одинарные кавычк
 
 Файлы: `.env.development`, `.env.development.local`, `.env.prod`. Типы объявлены в `src/vite-env.d.ts`:
 
-- `VITE_MODE_DEV_LOCAL` — `'true'` при локальной разработке против локальной БД (включает фолбэк `crypto.randomUUID` в `src/db/index.ts`).
+- `VITE_MODE_DEV_LOCAL` — `'true'` при локальной разработке против локальной БД (в режиме `development` включает полифилы `crypto.randomUUID` и `crypto.subtle.digest('SHA-256')` из `src/db/devPolyfill/`, если браузер не предоставляет эти API).
 - `VITE_DEFAULT_URL_PREFIX` — префикс поддоменов wotstat, когда сайт открыт не с `*.wotstat.info` (например dev). См. `src/shared/external/externalUrl.ts`.
 
 Прод-сборка: `--mode prod`. Режим логируется в консоль при старте (`main.ts`).

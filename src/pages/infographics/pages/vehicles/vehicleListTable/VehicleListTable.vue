@@ -5,7 +5,7 @@
 
       <SearchLine v-if="showName" v-model="search" class="search" placeholder="Найти танк" />
       <VehicleListFilters v-model="localFilters" :show-vehicle-filters="showName" />
-      <VehicleColumnSelector v-model="selectedSlots" v-model:open="columnsOpen" :max-slots="maxSelectableSlots" />
+      <VehicleColumnSelector v-model="visibleSlots" v-model:open="columnsOpen" :max-slots="maxSelectableSlots" />
       <VehicleTableSettings v-model="period" v-model:show-value-bars="showValueBars"
         v-model:extended-palette="extendedPalette" />
     </div>
@@ -200,6 +200,7 @@ const grouping = defineModel<VehicleGrouping>('grouping', { required: true })
 const period = defineModel<VehicleStatisticsPeriod>('period', { required: true })
 
 const selectedSlots = defineModel<Slot[]>('slots', { required: true })
+const configuredSlots = ref<Slot[]>([...selectedSlots.value])
 const activeSlot = ref<Slot>(selectedSlots.value[0] ?? 'battles')
 const historyStep = ref<HistoryStep>('day')
 const averageWindow = ref<HistoryAverageWindow>(null)
@@ -207,7 +208,6 @@ const showValueBars = useLocalStorage('vehicles-table-show-value-bars', false)
 const extendedPalette = useLocalStorage('vehicles-table-extended-value-bar-palette', false)
 
 const displayLimit = ref(PAGE_SIZE)
-const sorting = useVehicleSorting(grouping, selectedSlots)
 
 const table = useTemplateRef<HTMLElement>('table')
 const { width } = useElementSize(table)
@@ -239,7 +239,12 @@ const maxSelectableSlots = computed(() => {
   return Math.min(maxSlots, fittedSlots)
 })
 
-const visibleSlots = computed(() => selectedSlots.value)
+// Лимит меняет только видимую часть; ручной выбор заменяет весь сохранённый набор.
+const visibleSlots = computed({
+  get: () => orderSlots(configuredSlots.value.slice(0, maxSelectableSlots.value)),
+  set: (slots: Slot[]) => configuredSlots.value = slots,
+})
+const sorting = useVehicleSorting(grouping, visibleSlots)
 
 const tableStyle = computed(() => ({
   minHeight: columnsOpen.value ? `${columnSelectionHeight.value}px` : undefined,
@@ -403,8 +408,8 @@ watch(selectedSlots, slots => {
   activeSlot.value = slots.find(slot => baseSlot(slot) === baseSlot(activeSlot.value)) ?? slots[0] ?? 'battles'
 })
 
-watch([maxSelectableSlots, width], ([limit, tableWidth]) => {
-  if (tableWidth > 0 && selectedSlots.value.length > limit) selectedSlots.value = orderSlots(selectedSlots.value.slice(0, limit))
+watch([visibleSlots, width], ([slots, tableWidth]) => {
+  if (tableWidth > 0) selectedSlots.value = slots
 }, { immediate: true })
 </script>
 

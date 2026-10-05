@@ -1,4 +1,4 @@
-
+import './devPolyfill'
 import { CLICKHOUSE_WEB_PROXY_URL } from '@/shared/external/externalUrl'
 import { ResponseJSON, createClient, type ClickHouseSettings } from '@clickhouse/client-web'
 import { useLocalStorage } from '@vueuse/core'
@@ -9,21 +9,6 @@ import { proxyCacheFetch, sortedEntries } from './proxyCache'
 
 export { createConcurrencyGroup, type ConcurrencyGroup } from './concurrency'
 export { SUPER_SHORT_CACHE, SHORT_CACHE, DEFAULT_CACHE, MEDIUM_CACHE, LONG_CACHE, DAY_CACHE, DAILY_CACHE, MONTHLY_CACHE, createQueryCache, type CachePolicy } from './cache'
-
-if (import.meta.env.MODE == 'development' && import.meta.env.VITE_MODE_DEV_LOCAL === 'true' && !window.crypto.randomUUID) {
-  console.warn('crypto.randomUUID is not supported in this browser, using fallback implementation')
-
-  // @ts-ignore
-  window.crypto.randomUUID = () => {
-    // Fallback implementation for browsers that do not support crypto.randomUUID
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = Math.random() * 16 | 0
-      const v = c === 'x' ? r : (r & 0x3 | 0x8)
-      return v.toString(16)
-    })
-  }
-
-}
 
 export const clickhouse = createClient({
   url: CLICKHOUSE_WEB_PROXY_URL,
