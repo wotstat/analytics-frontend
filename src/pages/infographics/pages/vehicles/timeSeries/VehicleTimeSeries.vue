@@ -5,7 +5,10 @@
     :format-value="(value, ctx) => formatSlotValue(ctx.hit.datum.slot, value)" class="vehicle-time-series">
 
     <template #header>
-      <VehicleMetricSelector v-model="slot" />
+      <div class="metric-header">
+        <slot name="header-before" />
+        <VehicleMetricSelector v-model="slot" />
+      </div>
     </template>
 
     <template #toolbar>
@@ -203,6 +206,14 @@ onBeforeUnmount(() => closeContextMenu(splitMenuId))
 
 .vehicle-time-series {
   margin-top: 12px;
+
+  .metric-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    max-width: 100%;
+  }
 
   .history-tooltip {
     text-align: center;

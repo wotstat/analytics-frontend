@@ -21,7 +21,7 @@
       <template v-if="!sources.length || !hasValues" #state>
         <template v-if="!sources.length">
           <b class="empty-heading">Сравните танки на одном графике</b>
-          <span>Нажмите «+» в таблице ниже. Чтобы добавить среднее по уровню или классу, выберите нужный режим
+          <span>Нажмите «+» в таблице или в раскрытом графике. Чтобы добавить среднее по уровню или классу, выберите нужный режим
             таблицы.</span>
         </template>
         <template v-else>{{ emptyMessage }}</template>

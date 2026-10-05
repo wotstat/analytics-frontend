@@ -1,16 +1,19 @@
 <template>
   <section class="vehicle-table" ref="table" :style="tableStyle">
-    <div class="toolbar">
-      <OptionsSelect v-model="grouping" :options="vehicleGroupings" />
-
-      <SearchLine v-if="showName" v-model="search" class="search" placeholder="Найти танк" />
-      <VehicleListFilters v-model="localFilters" :show-vehicle-filters="showName" />
-      <VehicleColumnSelector v-model="visibleSlots" v-model:open="columnsOpen" :max-slots="maxSelectableSlots" />
-      <VehicleTableSettings v-model="period" v-model:show-value-bars="showValueBars"
-        v-model:extended-palette="extendedPalette" />
+    <div class="toolbar" ref="toolbar" :class="{ wrapped: toolbarWrapped }">
+      <div class="toolbar-left" :class="{ 'with-search': showName }">
+        <OptionsSelect v-model="grouping" :options="vehicleGroupings" class="grouping" />
+        <SearchLine v-if="showName" v-model="search" class="search" placeholder="Найти танк" />
+        <VehicleListFilters v-model="localFilters" :show-vehicle-filters="showName" />
+      </div>
+      <div class="toolbar-right" ref="toolbarRight">
+        <VehicleColumnSelector v-model="visibleSlots" v-model:open="columnsOpen" :max-slots="maxSelectableSlots" />
+        <VehicleTableSettings v-model="period" v-model:show-value-bars="showValueBars"
+          v-model:extended-palette="extendedPalette" />
+      </div>
     </div>
 
-    <ComposableTable v-model:expanded-rows="expandedRows" class="vehicle-stats" :columns
+    <ComposableTable v-model:expanded-rows="expandedRows" class="vehicle-stats" :class="{ 'with-compare': showCompare }" :columns
       :rows="status === success ? displayedVehicles : []" :row-key="vehicle => vehicle.rowKey"
       :sort="sorting.sortOrders.value" :loading="status === loading" :cell-class="cellClass" @sort="onSort"
       @cell-click="onCellClick">
@@ -61,7 +64,7 @@
       </template>
 
       <template #cell-name="{ row }">
-        <VehicleNameCell :vehicle="row" :search />
+        <VehicleNameCell :vehicle="row" :search :show-image="showImage" />
       </template>
 
       <template #cell="{ row, column, value }">
@@ -74,7 +77,12 @@
         <VehicleTimeSeries v-model:slot="activeSlot" v-model:step="historyStep" v-model:average-window="averageWindow"
           :selection="vehicleHistorySelection(row, effectiveSelection)" :name="vehicleName(row)" :filters
           :min-battles="localFilters.minBattles" :min-players="localFilters.minPlayers"
-          :skip-incomplete-days="localFilters.skipIncompleteDays" />
+          :skip-incomplete-days="localFilters.skipIncompleteDays">
+          <template v-if="!showCompare" #header-before>
+            <VehicleCompareButton class="history-compare" :compared="comparedKeys.includes(row.rowKey)"
+              @click.stop="$emit('compare', row, vehicleHistorySelection(row, effectiveSelection))" />
+          </template>
+        </VehicleTimeSeries>
       </template>
 
 
@@ -188,6 +196,10 @@ const MIN_SLOT_WIDTH = 86
 const METADATA_COLUMN_WIDTH = 40
 const EXPAND_COLUMN_WIDTH = 20
 const COMPARE_COLUMN_WIDTH = 36
+const EXPAND_MIN_TABLE_WIDTH = 720
+const METADATA_MIN_TABLE_WIDTH = 520
+const COMPARE_MIN_TABLE_WIDTH = 440
+const IMAGE_MIN_TABLE_WIDTH = 320
 
 // Apple System Colors (Default dark): red, orange, yellow, green, cyan, purple.
 // https://developer.apple.com/design/human-interface-guidelines/color#Specifications
@@ -211,6 +223,11 @@ const displayLimit = ref(PAGE_SIZE)
 
 const table = useTemplateRef<HTMLElement>('table')
 const { width } = useElementSize(table)
+const toolbar = useTemplateRef<HTMLElement>('toolbar')
+const toolbarRight = useTemplateRef<HTMLElement>('toolbarRight')
+const { height: toolbarHeight } = useElementSize(toolbar)
+const { height: toolbarGroupHeight } = useElementSize(toolbarRight)
+const toolbarWrapped = computed(() => toolbarHeight.value > toolbarGroupHeight.value)
 const columnsOpen = ref(false)
 const columnSelectionHeight = ref(0)
 
@@ -219,9 +236,13 @@ watch(columnsOpen, open => {
   columnSelectionHeight.value = open ? table.value?.getBoundingClientRect().height ?? 0 : 0
 }, { flush: 'sync' })
 
-const showLevel = computed(() => grouping.value !== 'classes')
-const showType = computed(() => grouping.value !== 'levels')
 const showName = computed(() => grouping.value === 'tanks')
+const showExpand = computed(() => !showName.value || width.value >= EXPAND_MIN_TABLE_WIDTH)
+const showImage = computed(() => width.value >= IMAGE_MIN_TABLE_WIDTH)
+const showMetadata = computed(() => !showName.value || width.value >= METADATA_MIN_TABLE_WIDTH)
+const showLevel = computed(() => grouping.value !== 'classes' && showMetadata.value)
+const showType = computed(() => grouping.value !== 'levels' && showMetadata.value)
+const showCompare = computed(() => width.value >= COMPARE_MIN_TABLE_WIDTH)
 const effectiveSelection = computed<VehicleSelection>(() => {
   if (showName.value) return localFilters.value
   return { levels: [], types: [], nations: [] }
@@ -233,7 +254,9 @@ const maxSelectableSlots = computed(() => {
   const maxSlots = showName.value ? MAX_TANK_SLOTS : MAX_CATEGORY_SLOTS
   const nameColumnWidth = showName.value ? nameWidth.value : 0
   const metadataWidth = METADATA_COLUMN_WIDTH * metadataColumnCount.value
-  const availableWidth = width.value - nameColumnWidth - metadataWidth - EXPAND_COLUMN_WIDTH - COMPARE_COLUMN_WIDTH
+  const expandWidth = showExpand.value ? EXPAND_COLUMN_WIDTH : 0
+  const compareWidth = showCompare.value ? COMPARE_COLUMN_WIDTH : 0
+  const availableWidth = width.value - nameColumnWidth - metadataWidth - expandWidth - compareWidth
   const fittedSlots = Math.max(1, Math.floor(availableWidth / MIN_SLOT_WIDTH))
 
   return Math.min(maxSlots, fittedSlots)
@@ -252,8 +275,8 @@ const tableStyle = computed(() => ({
 
 type VehicleColumn = ComposableTableColumn<VehicleStatistics, SortKey | 'compare' | 'expand'> & { metric?: Slot }
 const columns = computed<VehicleColumn[]>(() => [
-  { key: 'compare', width: COMPARE_COLUMN_WIDTH },
-  { key: 'expand', width: EXPAND_COLUMN_WIDTH, interactive: true },
+  ...(showCompare.value ? [{ key: 'compare', width: COMPARE_COLUMN_WIDTH } as const] : []),
+  ...(showExpand.value ? [{ key: 'expand', width: EXPAND_COLUMN_WIDTH, interactive: true } as const] : []),
   ...(showLevel.value ? [{ key: 'tankLevel', label: 'Уровень', width: METADATA_COLUMN_WIDTH, sortable: true, interactive: true } as const] : []),
   ...(showType.value ? [{ key: 'tankType', label: 'Тип техники', width: METADATA_COLUMN_WIDTH, sortable: true, interactive: true } as const] : []),
   ...(showName.value ? [{ key: 'name', label: 'Название танка', width: nameWidth.value, align: 'left', sortable: true, interactive: true } as const] : []),
@@ -425,9 +448,71 @@ watch([visibleSlots, width], ([slots, tableWidth]) => {
     gap: 8px;
     margin-bottom: 12px;
 
-    .search {
-      width: 240px;
-      max-width: 100%;
+    .toolbar-left,
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toolbar-left {
+      flex: 1 1 auto;
+      min-width: 0;
+
+      .grouping {
+        flex: none;
+      }
+
+      .search {
+        flex: none;
+        width: 240px;
+        min-width: 240px;
+      }
+    }
+
+    .toolbar-right {
+      flex: none;
+      margin-left: auto;
+    }
+
+    &.wrapped .toolbar-left .search {
+      flex: 1;
+    }
+
+    @container content (max-width: 420px) {
+      .toolbar-left {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 30px;
+        grid-template-areas: 'grouping filters';
+        flex-basis: 100%;
+
+        &.with-search {
+          grid-template-areas: 'grouping filters' 'search search';
+        }
+
+        .grouping {
+          grid-area: grouping;
+          width: 100%;
+        }
+
+        .search {
+          grid-area: search;
+          width: 100%;
+          min-width: 0;
+        }
+
+        :deep(.filter-trigger) {
+          grid-area: filters;
+        }
+      }
+
+      .toolbar-right {
+        flex-basis: 100%;
+
+        :deep(.column-trigger) {
+          flex: 1;
+        }
+      }
     }
   }
 
@@ -439,7 +524,7 @@ watch([visibleSlots, width], ([slots, tableWidth]) => {
       padding: 0;
     }
 
-    :deep(.heading:first-child) {
+    &.with-compare :deep(.heading:first-child) {
       justify-content: flex-start;
       padding: 0;
     }
@@ -467,6 +552,20 @@ watch([visibleSlots, width], ([slots, tableWidth]) => {
         background: var(--blue-thin-color);
         border-radius: 2px;
       }
+    }
+  }
+
+  .history-compare {
+    flex: none;
+    margin-left: 0;
+    background: rgba(255, 255, 255, 0.05);
+
+    &:not(.added) {
+      color: inherit;
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
     }
   }
 

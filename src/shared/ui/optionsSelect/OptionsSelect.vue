@@ -95,6 +95,7 @@ onBeforeUnmount(() => closeContextMenu(menuId.value))
   box-sizing: border-box;
   display: inline-flex;
   align-items: center;
+  gap: 5px;
   width: 100%;
   min-width: 0;
   height: var(--options-select-height, 30px);
@@ -117,7 +118,7 @@ onBeforeUnmount(() => closeContextMenu(menuId.value))
   flex: none;
   width: 0.75em;
   height: 0.75em;
-  margin-left: 5px;
+  margin-left: auto;
   opacity: 0.7;
 }
 

@@ -1,7 +1,9 @@
 <template>
-  <span class="vehicle-cell">
-    <VehicleImage :tag="vehicle.tankTag!" :game="regionToGame(vehicle.region)" size="preview" loading="lazy"
-      class="vehicle-image" />
+  <span class="vehicle-cell" :class="{ compact: !showImage }">
+    <span v-if="showImage" class="vehicle-image-frame">
+      <VehicleImage :tag="vehicle.tankTag!" :game="regionToGame(vehicle.region)" size="preview" loading="lazy"
+        class="vehicle-image" />
+    </span>
     <span class="vehicle-info">
       <span class="vehicle-name" :title="vehicleName(vehicle, false)">
         <span v-for="(part, index) in nameParts" :key="index" :class="{ highlight: part.highlight }">{{ part.text }}</span>
@@ -20,7 +22,7 @@ import type { VehicleStatistics } from '../shared/types'
 import { formatStatisticsDay } from '../shared/formatStatisticsDay'
 import { vehicleName } from '../shared/vehicleName'
 
-const props = defineProps<{ vehicle: VehicleStatistics, search: string }>()
+const props = defineProps<{ vehicle: VehicleStatistics, search: string, showImage: boolean }>()
 const nameParts = computed(() => getHighlightedTextParts(highlight(vehicleName(props.vehicle), props.search)))
 </script>
 
@@ -31,20 +33,31 @@ const nameParts = computed(() => getHighlightedTextParts(highlight(vehicleName(p
   min-width: 0;
   padding: 1px 10px 1px 0;
 
-  @media (max-width: 700px) {
+  &.compact {
     gap: 6px;
     padding: 4px 6px;
   }
 
-  .vehicle-image {
+  .vehicle-image-frame {
     height: 50px;
     width: 80px;
-    object-fit: contain;
     flex-shrink: 0;
-    pointer-events: none;
+    overflow: hidden;
 
-    @media (max-width: 700px) {
-      display: none;
+    .vehicle-image {
+      display: block;
+      height: 50px;
+      width: 80px;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    @container content (width < 520px) {
+      width: 56px;
+
+      .vehicle-image {
+        transform: translateX(-12px);
+      }
     }
   }
 
