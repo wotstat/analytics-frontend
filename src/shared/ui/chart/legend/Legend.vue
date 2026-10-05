@@ -9,7 +9,8 @@
           <div v-if="item.loading" key="loading" class="marker loading-marker">
             <Loader compact class="item-loader" />
           </div>
-          <LegendColorPicker v-else-if="colorEditable" key="color" class="marker" :placement="'bottom-float'"
+          <LegendColorPicker v-else-if="colorEditable" key="color" class="marker"
+            :placement="['bottom-float', 'left-float', 'top-float']"
             :model-value="item.color" @update:model-value="color => emit('colorChange', item, `#${color}`)" />
           <div v-else key="static" class="marker"></div>
         </Transition>
