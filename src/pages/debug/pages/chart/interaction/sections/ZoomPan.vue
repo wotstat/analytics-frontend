@@ -1,6 +1,6 @@
 <template>
   <DebugSection title="Зум и пан под курсорными линиями" id="zoom-pan"
-    description="ZoomChartComponent не завязан на interaction sources и selections, поэтому в этом рефакторинге не менялся. Здесь он стоит рядом с курсорными линиями — жест двигает область, линии обязаны оставаться под курсором и не отставать на кадр."
+    description="Пан, тач-жесты и адаптивный зум колёсиком. Линии обязаны оставаться под курсором и не отставать на кадр. Общий анализатор учитывает прокрутку всей страницы, ещё до наведения на график."
     source="src/shared/uiKit/chart/universalChart/interaction/composable/components/zoomChartComponent/">
 
     <div class="debug-row">
@@ -37,7 +37,26 @@
       <button class="debug-btn" @click="chart.resetView()">Сбросить область</button>
     </div>
 
+    <p class="debug-note">
+      Ввод: <span class="debug-value">{{ wheelModes[wheelSnapshot.mode] }}</span>.
+      Последнее событие: <span class="debug-value">{{ wheelActions[wheelSnapshot.eventMode] }}</span>.
+      Причина: {{ wheelReasons[wheelSnapshot.reason] }}.
+      ΔX: {{ wheelSnapshot.deltaX }}, ΔY: {{ wheelSnapshot.deltaY }},
+      единицы: {{ wheelUnits[wheelSnapshot.deltaMode] ?? wheelSnapshot.deltaMode }},
+      интервал: {{ wheelSnapshot.interval === null ? '—' : `${wheelSnapshot.interval.toFixed(1)} мс` }}.
+      <button class="debug-btn" @click="wheelInput.reset()">Сбросить анализатор</button>
+    </p>
+
     <DemoChartView :chart="chart" :height="280" />
+
+    <p class="debug-note">
+      Сначала покрути страницу вне графика, затем приблизь график: шаговое колесо должно анимировать зум,
+      плавный поток — применяться напрямую. Переключись на тачпад или включи сглаживание мыши:
+      анализатор должен переопределить ввод. Пинч и пан пальцами сохраняют прежнее поведение;
+      Ctrl + колесо применяется напрямую. Анализатор учитывает величину дельты и интервал вместе.
+      После паузы больше 400 мс неоднозначное событие ждёт продолжения до 40 мс;
+      одиночный шаг анимируется. Быстрое вращение уже распознанного колеса сохраняет сглаживание.
+    </p>
 
     <table class="debug-table">
       <thead>
@@ -83,7 +102,7 @@
 
 
 <script setup lang="ts">
-import { computed, markRaw, ref, watchEffect } from 'vue'
+import { computed, markRaw, onUnmounted, ref, shallowRef, watchEffect } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { syntheticSeries } from '@/pages/debug/shared/fixtures/syntheticSeries'
 import { InteractionDirection } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/BaseInteractionController'
@@ -92,6 +111,18 @@ import { CursorChart, type ZoomConfig } from '../shared/CursorChart'
 import { panDirections } from '../shared/panDirections'
 import { seriesExtent } from '../shared/series'
 import { formatBound, useChartBounds } from '../shared/useChartBounds'
+import { wheelInput } from '@/shared/uiKit/chart/wheelInput'
+
+const wheelSnapshot = shallowRef(wheelInput.snapshot)
+const wheelModes = { unknown: 'ещё не определён', smooth: 'плавный', discrete: 'шаговый' }
+const wheelActions = { unknown: 'ожидание до 40 мс', smooth: 'прямой зум', discrete: 'плавное движение к цели' }
+const wheelReasons = {
+  pending: 'нужно продолжение', fine: 'малая дельта', units: 'строки / страницы',
+  cadence: 'частые небольшие дельты', isolated: 'нет признаков плавного потока', gesture: 'продолжение жеста',
+  pinch: 'Ctrl / пинч', momentum: 'нативная инерция'
+}
+const wheelUnits: Record<number, string> = { 0: 'пиксели', 1: 'строки', 2: 'страницы' }
+onUnmounted(wheelInput.onChange.on(snapshot => wheelSnapshot.value = snapshot))
 
 const autoFitVariants = [
   { value: true, label: 'true (по умолчанию)' },

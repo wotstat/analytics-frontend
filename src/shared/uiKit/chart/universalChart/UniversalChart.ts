@@ -202,6 +202,8 @@ export class UniversalChart extends BaseChart {
     if (!bounds) {
       this.userDefinedBounds = null
       this.dataDidChange()
+      if (immediate) this.relayout()
+      this.onSetRenderBounds.emit({ minX: null, maxX: null, minY: null, maxY: null, immediate })
       return
     }
 

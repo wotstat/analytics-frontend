@@ -18,6 +18,7 @@ import { CriticalFollower, DEFAULT_FOLLOW_OMEGA } from '../../../../utils/follow
 import { ScalarSpring } from './spring'
 import { PinchGesture } from './TouchZoomSolver'
 import { BoundsSyncState, BoundsSynchronizer } from '../../sync/BoundsSynchronizer'
+import { WheelZoom, WheelZoomStep } from './WheelZoom'
 
 // A pan started right after a pinch suppresses its own inertia (the lift-off jitter must
 // not fight the pinch inertia) until it moves this far and becomes a deliberate pan
@@ -78,8 +79,7 @@ type PinchState = {
 }
 
 type WheelBatch = {
-  pending: { deltaY: number, point: Point, layout: LayoutValue }[],
-  lastEventTime: number,
+  input: WheelZoom,
   anchor: { x: number, y: number } | null
 }
 
@@ -156,6 +156,12 @@ export class ZoomChartComponent implements InteractionComponent {
   private applyingBounds = false
   private readonly onChartBoundsSet = () => {
     if (this.applyingBounds) return
+    if (this.wheel) {
+      // An explicit viewport change owns the next frame; the wheel tail must not
+      // overwrite a reset or a range selected outside this component.
+      this.wheel = null
+      this.raw = null
+    }
     this.boundsSync?.invalidate()
   }
 
@@ -243,7 +249,11 @@ export class ZoomChartComponent implements InteractionComponent {
     const afterPinch = isTouch && (this.pinch?.ended ?? false)
     this.stopMotionsForPan(isTouch)
     this.lastCursor = null
-    if (this.wheel) this.wheel.anchor = null // pan owns the display now, anchor context resets to 0.5
+    if (isTouch) this.wheel = null // touch takes over from the displayed frame, without a wheel tail
+    else if (this.wheel) {
+      this.wheel.input.cancelAnimation()
+      this.wheel.anchor = null // pan owns the display now, anchor context resets to 0.5
+    }
 
     const raw = this.resetRawFrom(space)
     this.applyPinchResidual(raw)
@@ -369,16 +379,13 @@ export class ZoomChartComponent implements InteractionComponent {
     if (!this.isZoomEnabled()) return false
     if (this.pinch && !this.pinch.ended) return false // touch zoom has priority over wheel
 
+    const input = this.wheel?.input ?? new WheelZoom()
+    if (!Number.isFinite(deltaX) || !input.push(deltaY, deltaMode, point, space.layout, this.now())) return false
+    if (!this.wheel) this.wheel = { input, anchor: null }
+
+    // Only actual zoom input owns the gesture and may interrupt other motion.
     this.boundsSync?.claim(this.boundsSyncParticipant) // this chart is the drive source now
     this.stopMotionsForWheel()
-
-    if (!this.wheel) this.wheel = { pending: [], lastEventTime: 0, anchor: null }
-    this.wheel.pending.push({
-      deltaY: normalizeWheelDelta(deltaY, deltaMode, space.layout.height),
-      point: { ...point },
-      layout: { ...space.layout }
-    })
-    this.wheel.lastEventTime = this.now()
 
     return true
   }
@@ -561,7 +568,10 @@ export class ZoomChartComponent implements InteractionComponent {
     const wheel = this.wheel
     if (!wheel) return
 
-    this.applyPendingWheelZooms(wheel, raw)
+    const active = wheel.input.flush(now,
+      step => this.applyWheelZoom(wheel, raw, step),
+      step => this.clampWheelTarget(raw, step))
+    if (active) return
 
     // only an elastic wheel batch has release logic: the spring may start after input stops
     if (!this.limits.elastic || !this.hasEnabledLimits() || this.pan || this.pinch) {
@@ -569,7 +579,7 @@ export class ZoomChartComponent implements InteractionComponent {
       return
     }
 
-    if ((now - wheel.lastEventTime) / 1000 > WHEEL_BATCH_TIMEOUT) {
+    if ((now - wheel.input.lastEventTime) / 1000 > WHEEL_BATCH_TIMEOUT) {
       const anchor = wheel.anchor
       this.wheel = null
       if (anchor) this.rebaseRawAnchor(raw, layout, axis => anchor[axis], () => 0.5)
@@ -585,38 +595,52 @@ export class ZoomChartComponent implements InteractionComponent {
     }
   }
 
-  private applyPendingWheelZooms(wheel: WheelBatch, raw: Bounds): void {
-    if (wheel.pending.length === 0) return
+  private clampWheelTarget(raw: Bounds, zoom: WheelZoomStep): number {
+    const { logDelta } = zoom
+    if (this.limits.elastic) return logDelta
+    // Constrain the target as well as each frame. Otherwise an
+    // invisible tail beyond a hard limit consumes the first steps of a reversal.
+    let constrained = 0
+    for (const axis of this.activeAxes) {
+      if (!(getAxisSize(axis, zoom.layout) > 0)) continue
+      const current = getAxisBounds(raw, axis)
+      const anchorT = getAxisPosition(axis, zoom.point, zoom.layout)
+      const next = zoomAxisAboutAnchor(current, anchorT, Math.exp(logDelta))
+      if (!next) continue
+      const delta = Math.log(axisRange(this.hardClampAxis(next, axis, anchorT)) / axisRange(current))
+      // One axis may reach its limit before the other; let the other finish.
+      if (Math.abs(delta) > Math.abs(constrained)) constrained = delta
+    }
+    return constrained
+  }
 
-    let changed = false
+  private applyWheelZoom(wheel: WheelBatch, raw: Bounds, zoom: WheelZoomStep): void {
+    const { logDelta } = zoom
+    if (logDelta === 0) return
+    const zoomFactor = Math.exp(logDelta)
 
-    for (const zoom of wheel.pending) {
-      const zoomFactor = Math.exp(clamp(zoom.deltaY * 0.001, -0.5, 0.5))
-
-      // while the batch drives the display, its projection anchor follows the cursor
-      if (!this.pan) {
-        const previous = wheel.anchor
-        const anchor = {
-          x: clamp(getAxisPosition('x', zoom.point, zoom.layout), 0, 1),
-          y: clamp(getAxisPosition('y', zoom.point, zoom.layout), 0, 1),
-        }
-        this.rebaseRawAnchor(raw, zoom.layout, axis => previous?.[axis] ?? 0.5, axis => anchor[axis])
-        wheel.anchor = anchor
+    // Each animation increment uses the cursor anchor, just like direct wheel input.
+    if (!this.pan) {
+      const previous = wheel.anchor
+      const anchor = {
+        x: clamp(getAxisPosition('x', zoom.point, zoom.layout), 0, 1),
+        y: clamp(getAxisPosition('y', zoom.point, zoom.layout), 0, 1),
       }
-
-      for (const axis of this.activeAxes) {
-        if (!(getAxisSize(axis, zoom.layout) > 0)) continue
-
-        const anchorT = getAxisPosition(axis, zoom.point, zoom.layout)
-        const next = zoomAxisAboutAnchor(getAxisBounds(raw, axis), anchorT, zoomFactor)
-        if (!next) continue
-
-        setAxisBounds(raw, axis, this.hardClampAxis(next, axis, anchorT))
-        changed = true
-      }
+      this.rebaseRawAnchor(raw, zoom.layout, axis => previous?.[axis] ?? 0.5, axis => anchor[axis])
+      wheel.anchor = anchor
     }
 
-    wheel.pending = []
+    let changed = false
+    for (const axis of this.activeAxes) {
+      if (!(getAxisSize(axis, zoom.layout) > 0)) continue
+
+      const anchorT = getAxisPosition(axis, zoom.point, zoom.layout)
+      const next = zoomAxisAboutAnchor(getAxisBounds(raw, axis), anchorT, zoomFactor)
+      if (!next) continue
+
+      setAxisBounds(raw, axis, this.hardClampAxis(next, axis, anchorT))
+      changed = true
+    }
     if (changed && this.pan) this.pan.startBounds = raw.clone()
   }
 
@@ -1276,11 +1300,6 @@ function isAcceptableSampleDt(dt: number, averageDt: number | null): boolean {
   return averageDt === null || dt >= averageDt * VELOCITY_SAMPLE_OUTLIER_RATIO
 }
 
-function normalizeWheelDelta(delta: number, deltaMode: number, pageSize: number): number {
-  if (deltaMode === 1) return delta * 16
-  if (deltaMode === 2) return delta * pageSize
-  return delta
-}
 
 function zoomAxisAboutAnchor(bounds: AxisBounds, anchorT: number, zoomFactor: number): AxisBounds | null {
   const range = axisRange(bounds)
