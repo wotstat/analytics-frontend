@@ -1,6 +1,6 @@
 <template>
   <DebugSection title="Галерея всех иконок" id="gallery"
-    description="Сетка построена по фактическому списку файлов assets/ (import.meta.glob), а не по типу IconType — сразу видно и неподхватившуюся иконку, и подпись, которой нет в i18n.ts."
+    description="Сетка построена по фактическому списку файлов assets/ (import.meta.glob), а не по типу IconType — сразу видно и неподхватившуюся иконку, и подпись, которой нет в i18n.ts. Вначале иконки вне семейств, затем — в порядке «Семейств»."
     source="src/shared/game/efficiencyIcon/assets/">
 
     <div class="debug-row">
@@ -11,6 +11,10 @@
       <label class="debug-control">
         <span class="debug-label">направляющие</span>
         <input type="checkbox" v-model="guides">
+      </label>
+      <label class="debug-control">
+        <span class="debug-label">скрыть модификаторы</span>
+        <input type="checkbox" v-model="hideModifiers">
       </label>
       <span class="debug-hint">найдено: <span class="debug-value">{{ filtered.length }}</span> из {{
         iconFileKeys.length }}</span>
@@ -38,13 +42,21 @@
 import { computed, ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
-import { IconType } from '@/shared/game/efficiencyIcon/utils'
+import { efficiencyWithMods, IconType, modificationLabel } from '@/shared/game/efficiencyIcon/utils'
 import { i18n } from '@/shared/game/efficiencyIcon/i18n'
 import { iconFileKeys } from '../useIconFiles'
 import IconGuides from '../shared/IconGuides.vue'
 
 const query = ref('')
 const guides = ref(false)
+const hideModifiers = ref(false)
+
+const fileKeySet = new Set<string>(iconFileKeys)
+const familyIconKeys = new Set<string>(efficiencyWithMods.flatMap(family => [family.value, ...family.modifications]))
+const galleryIconKeys = [
+  ...iconFileKeys.filter(key => !familyIconKeys.has(key)),
+  ...[...familyIconKeys].filter(key => fileKeySet.has(key))
+]
 
 function hasLabel(key: string) {
   return key in i18n.ru
@@ -60,9 +72,12 @@ function asIconType(key: string) {
 }
 
 const filtered = computed(() => {
+  const keys = hideModifiers.value
+    ? galleryIconKeys.filter(key => modificationLabel(key) === 'total')
+    : galleryIconKeys
   const q = query.value.trim().toLowerCase()
-  if (!q) return iconFileKeys
-  return iconFileKeys.filter(key => key.toLowerCase().includes(q) || label(key).toLowerCase().includes(q))
+  if (!q) return keys
+  return keys.filter(key => key.toLowerCase().includes(q) || label(key).toLowerCase().includes(q))
 })
 </script>
 
