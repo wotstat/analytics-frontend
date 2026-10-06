@@ -4,7 +4,6 @@
       '--available-height': `calc(100dvh - ${headerOffset}px - 24px)`,
       '--results-height': `${chartHeight}px`,
       '--result-row-height': `${rowHeight}px`,
-      '--result-bottom-margin': `${sampleRadius}px`,
       '--slider-progress': `${percentile}%`,
     }"
     @pointerdown.stop @pointerup.stop @click.stop>
@@ -103,7 +102,8 @@ const formatValue = (value: number) => value.toLocaleString('ru-RU')
 const clipId = `quantile-share-${useId()}`
 const rowHeight = 16
 const sampleRadius = 3
-const baseline = values.length * rowHeight
+// Выравниваем ось по нижнему краю цифр, а не по краю последней строки.
+const baseline = values.length * rowHeight - 4
 const chartHeight = baseline + sampleRadius
 const chart = useTemplateRef<SVGSVGElement>('chart')
 const { width } = useElementSize(chart, { width: 280, height: chartHeight })
@@ -393,7 +393,7 @@ function moveSlider(event: Event) {
 
   .value-list {
     position: relative;
-    margin-bottom: var(--result-bottom-margin);
+    margin-bottom: -5px;
   }
 
   .value-row {
