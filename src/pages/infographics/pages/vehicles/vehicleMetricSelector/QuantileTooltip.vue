@@ -9,12 +9,14 @@
     }"
     @pointerdown.stop @pointerup.stop @click.stop>
     <div class="heading">Что такое квантиль</div>
-    <p class="intro">Квантиль — это граница в результатах боёв. Процент показывает, какая часть боёв находится ниже неё.
+    <p class="intro">Квантиль — это граница, ниже которой находится заданная доля значений. <a
+        href="https://ru.wikipedia.org/wiki/%D0%9A%D0%B2%D0%B0%D0%BD%D1%82%D0%B8%D0%BB%D1%8C" target="_blank"
+        rel="noopener noreferrer">Википедия</a>
     </p>
 
     <div class="example">
       <div class="distribution">
-        <div class="section-label">Распределение урона</div>
+        <!-- <div class="section-label">Распределение урона</div> -->
         <svg ref="chart" class="chart" :viewBox="`0 0 ${chartWidth} ${chartHeight}`"
           @pointermove="moveSlice" @pointerdown="moveSlice">
           <defs>
@@ -35,7 +37,7 @@
       </div>
 
       <div class="results">
-        <div class="section-label">10 боёв · урон <span class="sort-direction"></span></div>
+        <!-- <div class="section-label">10 боёв · урон <span class="sort-direction"></span></div> -->
         <div class="value-list">
           <button v-for="(value, index) in values" :key="value" type="button" class="value-row"
             :class="{ lower: index < belowCount }" @pointerenter="selectRow(index)" @click="selectRow(index)">
@@ -67,12 +69,14 @@
 
     <div class="explanation">
       <div class="explanation-label">Квантиль {{ percentile }}%{{ percentile === 50 ? ' · медиана' : '' }}</div>
-      <div class="explanation-value">В {{ percentile }}% боёв урон ниже <strong>{{ formatValue(threshold) }}</strong>
+      <div class="explanation-value">
+        В {{ percentile }}% боёв значение ниже <strong>{{ formatValue(threshold) }}</strong>
       </div>
       <div class="explanation-detail">
-        <template v-if="percentile === 50">В половине боёв урон ниже, в половине — выше.</template>
+        <template v-if="percentile === 50">В половине боёв значение ниже, в половине — выше.</template>
         <template v-else>
-          В {{ belowCount }} {{ belowCount === 1 ? 'бою' : 'боях' }} из 10 урон ниже, в {{ 10 - belowCount }} — выше.
+          В {{ belowCount }} {{ belowCount === 1 ? 'бою' : 'боях' }} из 10 ниже, в {{ 10 - belowCount }} —
+          выше.
         </template>
       </div>
     </div>
@@ -161,9 +165,8 @@ function moveSlider(event: Event) {
   box-sizing: border-box;
   width: min(400px, calc(100vw - 24px));
   max-height: var(--available-height);
-  overflow-y: auto;
   padding: 10px;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.35;
   font-variant-numeric: tabular-nums;
 
@@ -179,6 +182,15 @@ function moveSlider(event: Event) {
 
   .intro {
     color: #ffffff90;
+
+    a {
+      color: var(--quantile-accent);
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
   }
 
   .example {
