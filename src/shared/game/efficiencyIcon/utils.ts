@@ -1,17 +1,18 @@
 import { playerNameProcessor } from '@/shared/utils/processors/usePlayerNameProcessor'
 
 export const shared = [
-  'battles',
   'player',
   'tank',
   'arena',
   'win',
-  'winrate',
   'solo',
-  'platoon'
+  'platoon',
+  'stronghold'
 ] as const
 
 export const efficiency = [
+  'battles', 'battles-avg', 'battles-max',
+  'winrate', 'winrate-avg', 'winrate-max',
   'ammo-bay-destroyed', 'ammo-bay-destroyed-avg', 'ammo-bay-destroyed-max',
   'ammo-bay-destroyed-dmg', 'ammo-bay-destroyed-dmg-avg', 'ammo-bay-destroyed-dmg-max',
   'ammo-bay-destroyed-dmg-battle', 'ammo-bay-destroyed-dmg-battle-avg', 'ammo-bay-destroyed-dmg-battle-max',
@@ -21,6 +22,7 @@ export const efficiency = [
   'base-capture', 'base-capture-avg', 'base-capture-max',
   'base-defend', 'base-defend-avg', 'base-defend-max',
   'stun', 'stun-avg', 'stun-max',
+  'stun-duration', 'stun-duration-avg', 'stun-duration-max',
   'block', 'block-avg', 'block-max',
   'chuck-score', 'chuck-score-avg', 'chuck-score-max',
   'crits', 'crits-avg', 'crits-max',
@@ -29,7 +31,11 @@ export const efficiency = [
   'dmg', 'dmg-avg', 'dmg-max',
   'shots', 'shots-avg', 'shots-max',
   'hits', 'hits-avg', 'hits-max',
+  'received-hits', 'received-hits-avg', 'received-hits-max',
+  'explosion-hits', 'explosion-hits-avg', 'explosion-hits-max',
+  'received-explosion-hits', 'received-explosion-hits-avg', 'received-explosion-hits-max',
   'piercing', 'piercing-avg', 'piercing-max',
+  'received-piercing', 'received-piercing-avg', 'received-piercing-max',
   'duration', 'duration-avg', 'duration-max',
   'fire', 'fire-avg', 'fire-max', 'fire-dmg', 'fire-dmg-avg', 'fire-dmg-max', 'fire-dmg-battle', 'fire-dmg-battle-avg', 'fire-dmg-battle-max',
   'kill', 'kill-avg', 'kill-max',
@@ -43,12 +49,15 @@ export const efficiency = [
   'gun-mark-percent',
   'hp',
   'prestige-points', 'prestige-points-avg', 'prestige-points-max',
+  'tank-lower', 'tank-lower-avg', 'tank-lower-max',
+  'tank-upper', 'tank-upper-avg', 'tank-upper-max',
+  'tank-equal', 'tank-equal-avg', 'tank-equal-max'
 ] as const
 
 export const efficiencyWithMods = [
-  { value: 'battles', modifications: ['battles'] },
+  { value: 'battles', modifications: ['battles', 'battles-avg', 'battles-max'] },
   { value: 'win', modifications: ['win'] },
-  { value: 'winrate', modifications: ['winrate'] },
+  { value: 'winrate', modifications: ['winrate', 'winrate-avg', 'winrate-max'] },
   { value: 'solo', modifications: ['solo'] },
   { value: 'platoon', modifications: ['platoon'] },
   { value: 'dmg', modifications: ['dmg', 'dmg-avg', 'dmg-max'] },
@@ -59,6 +68,7 @@ export const efficiencyWithMods = [
   { value: 'assist-radio', modifications: ['assist-radio', 'assist-radio-avg', 'assist-radio-max'] },
   { value: 'assist-track', modifications: ['assist-track', 'assist-track-avg', 'assist-track-max'] },
   { value: 'stun', modifications: ['stun', 'stun-avg', 'stun-max'] },
+  { value: 'stun-duration', modifications: ['stun-duration', 'stun-duration-avg', 'stun-duration-max'] },
   { value: 'kill', modifications: ['kill', 'kill-avg', 'kill-max'] },
   { value: 'crits', modifications: ['crits', 'crits-avg', 'crits-max'] },
   { value: 'xp', modifications: ['xp', 'xp-avg', 'xp-max'] },
@@ -75,13 +85,20 @@ export const efficiencyWithMods = [
   { value: 'ammo-bay-destroyed-dmg-battle', modifications: ['ammo-bay-destroyed-dmg-battle', 'ammo-bay-destroyed-dmg-battle-avg', 'ammo-bay-destroyed-dmg-battle-max'] },
   { value: 'shots', modifications: ['shots', 'shots-avg', 'shots-max'] },
   { value: 'hits', modifications: ['hits', 'hits-avg', 'hits-max'] },
+  { value: 'received-hits', modifications: ['received-hits', 'received-hits-avg', 'received-hits-max'] },
+  { value: 'explosion-hits', modifications: ['explosion-hits', 'explosion-hits-avg', 'explosion-hits-max'] },
+  { value: 'received-explosion-hits', modifications: ['received-explosion-hits', 'received-explosion-hits-avg', 'received-explosion-hits-max'] },
   { value: 'piercing', modifications: ['piercing', 'piercing-avg', 'piercing-max'] },
+  { value: 'received-piercing', modifications: ['received-piercing', 'received-piercing-avg', 'received-piercing-max'] },
   { value: 'chuck-score', modifications: ['chuck-score', 'chuck-score-avg', 'chuck-score-max'] },
   { value: 'distance', modifications: ['distance', 'distance-avg', 'distance-max'] },
   { value: 'duration', modifications: ['duration', 'duration-avg', 'duration-max'] },
   { value: 'lifetime', modifications: ['lifetime', 'lifetime-avg', 'lifetime-max'] },
   { value: 'base-capture', modifications: ['base-capture', 'base-capture-avg', 'base-capture-max'] },
   { value: 'base-defend', modifications: ['base-defend', 'base-defend-avg', 'base-defend-max'] },
+  { value: 'tank-lower', modifications: ['tank-lower', 'tank-lower-avg', 'tank-lower-max'] },
+  { value: 'tank-upper', modifications: ['tank-upper', 'tank-upper-avg', 'tank-upper-max'] },
+  { value: 'tank-equal', modifications: ['tank-equal', 'tank-equal-avg', 'tank-equal-max'] },
   { value: 'gun-mark-dmg', modifications: ['gun-mark-dmg'] },
   { value: 'gun-mark-percent', modifications: ['gun-mark-percent'] },
   { value: 'prestige-points', modifications: ['prestige-points', 'prestige-points-avg', 'prestige-points-max'] },
