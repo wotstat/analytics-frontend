@@ -15,8 +15,9 @@
     </p>
 
     <div class="example">
+      <div class="example-heading">Например</div>
       <div class="distribution">
-        <!-- <div class="section-label">Распределение урона</div> -->
+        <div class="section-label">Распределение урона</div>
         <svg ref="chart" class="chart" :viewBox="`0 0 ${chartWidth} ${chartHeight}`"
           @pointermove="moveSlice" @pointerdown="moveSlice">
           <defs>
@@ -37,7 +38,7 @@
       </div>
 
       <div class="results">
-        <!-- <div class="section-label">10 боёв · урон <span class="sort-direction"></span></div> -->
+        <div class="section-label">Урон за 10 боёв</div>
         <div class="value-list">
           <button v-for="(value, index) in values" :key="value" type="button" class="value-row"
             :class="{ lower: index < belowCount }" @pointerenter="selectRow(index)" @click="selectRow(index)">
@@ -50,10 +51,9 @@
         </div>
       </div>
 
-      <div class="compact-example-heading">Пример</div>
       <div class="slider-controls">
         <div class="shares">
-          <strong>{{ percentile }}% ниже границы</strong>
+          <strong>{{ percentile }}% боёв ниже порога</strong>
           <span>{{ 100 - percentile }}% выше</span>
         </div>
         <input :value="percentile" class="slider" type="range" min="0" max="100" step="10" @input="moveSlider" />
@@ -70,12 +70,12 @@
     <div class="explanation">
       <div class="explanation-label">Квантиль {{ percentile }}%{{ percentile === 50 ? ' · медиана' : '' }}</div>
       <div class="explanation-value">
-        В {{ percentile }}% боёв значение ниже <strong>{{ formatValue(threshold) }}</strong>
+        В {{ percentile }}% боёв урон ниже <strong>{{ formatValue(threshold) }}</strong>
       </div>
       <div class="explanation-detail">
-        <template v-if="percentile === 50">В половине боёв значение ниже, в половине — выше.</template>
+        <template v-if="percentile === 50">В половине боёв урон ниже, в половине — выше.</template>
         <template v-else>
-          В {{ belowCount }} {{ belowCount === 1 ? 'бою' : 'боях' }} из 10 ниже, в {{ 10 - belowCount }} —
+          В {{ belowCount }} {{ belowCount === 1 ? 'бою' : 'боях' }} из 10 урон ниже, в {{ 10 - belowCount }} —
           выше.
         </template>
       </div>
@@ -197,7 +197,6 @@ function moveSlider(event: Event) {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 92px;
     column-gap: 14px;
-    row-gap: 12px;
     margin: 12px 0;
   }
 
@@ -207,12 +206,12 @@ function moveSlider(event: Event) {
     font-size: 11px;
   }
 
-  .compact-example-heading {
-    display: none;
-    margin-bottom: 6px;
+  .example-heading {
+    grid-column: 1 / -1;
     color: #fff;
     font-size: 12px;
     font-weight: 600;
+    margin-bottom: 2px;
   }
 
   .results .section-label {
@@ -286,6 +285,7 @@ function moveSlider(event: Event) {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    margin-top: 12px;
   }
 
   .shares {
@@ -479,8 +479,8 @@ function moveSlider(event: Event) {
       display: none;
     }
 
-    .compact-example-heading {
-      display: block;
+    .example-heading {
+      margin-bottom: 6px;
     }
   }
 }
