@@ -88,31 +88,37 @@ import { useElementSize } from '@vueuse/core'
 import { headerOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 
 const values = [100, 600, 1000, 1300, 1600, 1900, 2200, 2600, 3000, 3800]
+
 const presets = [
   { value: 10, label: 'Q10' },
   { value: 50, label: 'Q50 · медиана' },
   { value: 90, label: 'Q90' },
 ]
+
 const percentile = ref(20)
 const belowCount = computed(() => percentile.value / 10)
 const threshold = computed(() => percentile.value === 50
   ? (values[4] + values[5]) / 2
   : values[belowCount.value - 1])
+
 const formatValue = (value: number) => value.toLocaleString('ru-RU')
 const clipId = `quantile-share-${useId()}`
 const rowHeight = 16
 const sampleRadius = 3
+
 // Выравниваем ось по нижнему краю цифр, а не по краю последней строки.
 const baseline = values.length * rowHeight - 4
 const chartHeight = baseline + sampleRadius
 const chart = useTemplateRef<SVGSVGElement>('chart')
 const { width } = useElementSize(chart, { width: 280, height: chartHeight })
 const chartWidth = computed(() => Math.max(width.value, 1))
+
 const chartX = (x: number) => x / 280 * chartWidth.value
 const chartLeft = 12
 const chartRight = 268
 const center = (chartLeft + chartRight) / 2
 const deviation = (chartRight - chartLeft) / 6
+
 const density = (x: number) => Math.exp(-0.5 * ((x - center) / deviation) ** 2)
 const densityY = (x: number) => baseline - density(x) * (baseline - 24)
 
@@ -121,11 +127,13 @@ const points = Array.from({ length: chartRight - chartLeft + 1 }, (_, index) => 
   const x = chartLeft + index
   return { x, y: densityY(x), density: density(x) }
 })
+
 let cumulative = 0
 const cumulativePoints = points.map((point, index) => {
   if (index > 0) cumulative += (points[index - 1].density + point.density) / 2
   return { x: point.x, cumulative }
 })
+
 const totalDensity = cumulative
 
 function quantileX(percent: number) {
@@ -444,7 +452,8 @@ function moveSlider(event: Event) {
     @media (max-width: 600px) {
       display: block;
 
-      .distribution, .results {
+      .distribution,
+      .results {
         display: none;
       }
 
