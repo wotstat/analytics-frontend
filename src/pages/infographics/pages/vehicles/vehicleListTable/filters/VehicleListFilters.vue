@@ -13,31 +13,31 @@
 
     <template #content>
       <div class="filters-content">
-        <section v-if="showVehicleFilters" class="group panel-section">
-          <h3 class="group-label">Техника</h3>
+        <section class="group panel-section">
+          <h3 class="group-label">Показывать</h3>
           <div class="vehicle-options">
-            <div class="types">
+            <div v-if="showTypes" class="types">
               <button v-for="type in vehicleTypes" :key="type" class="option type"
                 :class="{ active: filters.types.includes(type) }" :title="type"
                 @click="filters = { ...filters, types: selectOption(filters.types, type, vehicleTypes, $event) }">
                 <VehicleType :type="type" class="type-icon" />
               </button>
             </div>
-            <div class="nations">
+            <div v-if="showTankFilters" class="nations">
               <button v-for="nation in nations" :key="nation" class="option nation"
                 :class="{ active: filters.nations.includes(nation) }" :title="nation"
                 @click="filters = { ...filters, nations: selectOption(filters.nations, nation, nations, $event) }">
                 <Nation :nation="nation" class="flag" />
               </button>
             </div>
-            <div class="levels mt-font">
+            <div v-if="showLevels" class="levels mt-font">
               <button v-for="level in levels" :key="level" class="option"
                 :class="{ active: filters.levels.includes(level) }"
                 @click="filters = { ...filters, levels: selectOption(filters.levels, level, levels, $event) }">
                 {{ romanNumberProcessor(level) }}
               </button>
             </div>
-            <label class="checkbox-option">
+            <label v-if="showTankFilters" class="checkbox-option">
               <input type="checkbox" :checked="filters.onlyActual"
                 @change="filters = { ...filters, onlyActual: !filters.onlyActual }">
               Только актуальные
@@ -78,13 +78,18 @@ import { nations } from '@/shared/game/vehicles/nations/nations'
 import VehicleType from '@/shared/game/vehicles/type/VehicleType.vue'
 import { vehicleTypes } from '@/shared/game/vehicles/vehicle/utils'
 import { romanNumberProcessor } from '@/shared/utils/processors/processors'
+import type { VehicleGrouping } from '../../shared/vehicleGrouping'
 import {
   createLocalVehicleFilters, DEFAULT_MIN_BATTLES, DEFAULT_MIN_PLAYERS, DEFAULT_ONLY_ACTUAL,
   type BattleThreshold, type LocalVehicleFilters, type PlayerThreshold
 } from './localFilters'
 
 const filters = defineModel<LocalVehicleFilters>({ required: true })
-const { showVehicleFilters } = defineProps<{ showVehicleFilters: boolean }>()
+const { grouping } = defineProps<{ grouping: VehicleGrouping }>()
+
+const showLevels = computed(() => grouping !== 'classes')
+const showTypes = computed(() => grouping !== 'levels')
+const showTankFilters = computed(() => grouping === 'tanks')
 
 const open = ref(false)
 const trigger = useTemplateRef<InstanceType<typeof ToolbarButton>>('trigger')
@@ -98,7 +103,9 @@ const activeCount = computed(() => {
   const { levels, nations, types, onlyActual, minBattles, minPlayers } = filters.value
   let count = Number(minBattles !== DEFAULT_MIN_BATTLES) + Number(minPlayers !== DEFAULT_MIN_PLAYERS)
 
-  if (showVehicleFilters) count += levels.length + nations.length + types.length + Number(onlyActual !== DEFAULT_ONLY_ACTUAL)
+  if (showLevels.value) count += levels.length
+  if (showTypes.value) count += types.length
+  if (showTankFilters.value) count += nations.length + Number(onlyActual !== DEFAULT_ONLY_ACTUAL)
 
   return count
 })
@@ -106,19 +113,27 @@ const activeCount = computed(() => {
 function resetFilters() {
   const defaults = createLocalVehicleFilters()
 
-  if (showVehicleFilters) {
+  if (showTankFilters.value) {
     filters.value = defaults
     return
   }
 
   filters.value = {
     ...filters.value,
+    levels: showLevels.value ? defaults.levels : filters.value.levels,
+    types: showTypes.value ? defaults.types : filters.value.types,
     minBattles: defaults.minBattles,
     minPlayers: defaults.minPlayers,
   }
 }
 
 function selectOption<T>(selected: readonly T[], option: T, options: readonly T[], event: MouseEvent): T[] {
+  if (event.altKey) {
+    const others = options.filter(item => item !== option)
+    const allOthersSelected = selected.length === others.length && others.every(item => selected.includes(item))
+    return allOthersSelected ? [option] : others
+  }
+
   if (selected.includes(option)) return selected.filter(item => item !== option)
 
   if (event.shiftKey && selected.length) {

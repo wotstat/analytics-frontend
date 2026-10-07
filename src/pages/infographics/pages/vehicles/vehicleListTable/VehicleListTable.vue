@@ -4,7 +4,7 @@
       <div class="toolbar-left" :class="{ 'with-search': showName }">
         <OptionsSelect v-model="grouping" :options="vehicleGroupings" class="grouping" />
         <SearchLine v-if="showName" v-model="search" class="search" placeholder="Найти танк" />
-        <VehicleListFilters v-model="localFilters" :show-vehicle-filters="showName" />
+        <VehicleListFilters v-model="localFilters" :grouping />
       </div>
       <div class="toolbar-right" ref="toolbarRight">
         <VehicleColumnSelector v-model="visibleSlots" v-model:open="columnsOpen" :max-slots="maxSelectableSlots" />
@@ -243,8 +243,12 @@ const showLevel = computed(() => grouping.value !== 'classes' && showMetadata.va
 const showType = computed(() => grouping.value !== 'levels' && showMetadata.value)
 const showCompare = computed(() => width.value >= COMPARE_MIN_TABLE_WIDTH)
 const effectiveSelection = computed<VehicleSelection>(() => {
-  if (showName.value) return localFilters.value
-  return { levels: [], types: [], nations: [] }
+  const { levels, types, nations } = localFilters.value
+  return {
+    levels: grouping.value !== 'classes' ? levels : [],
+    types: grouping.value !== 'levels' ? types : [],
+    nations: showName.value ? nations : [],
+  }
 })
 
 const metadataColumnCount = computed(() => Number(showLevel.value) + Number(showType.value))
@@ -308,11 +312,12 @@ function onCellClick({ rowKey, column }: ComposableTableCellEvent<VehicleStatist
 }
 
 const hasLocalFilters = computed(() => {
-  const { levels, types, nations, onlyActual, minBattles, minPlayers } = localFilters.value
+  const { onlyActual, minBattles, minPlayers } = localFilters.value
+  const { levels, types, nations } = effectiveSelection.value
   if (minBattles !== DEFAULT_MIN_BATTLES || minPlayers !== DEFAULT_MIN_PLAYERS) return true
-  if (!showName.value) return false
 
-  return search.value.trim().length > 0 || levels.length > 0 || types.length > 0 || nations.length > 0 || onlyActual !== DEFAULT_ONLY_ACTUAL
+  return levels.length > 0 || types.length > 0 || nations.length > 0
+    || (showName.value && (search.value.trim().length > 0 || onlyActual !== DEFAULT_ONLY_ACTUAL))
 })
 
 const emptyMessage = computed(() => {
@@ -324,15 +329,14 @@ const emptyMessage = computed(() => {
 const filteredVehicles = computed(() => {
   const matchVehicle = createVehicleNameFilter(showName.value ? search.value : '')
   const filters = localFilters.value
+  const selection = effectiveSelection.value
 
   const vehicles = props.vehicles.filter(vehicle => {
     if (matchVehicle(vehicleName(vehicle)) === null) return false
 
-    if (vehicle.tankTag !== null) {
-      if (filters.levels.length && !filters.levels.some(level => level === vehicle.tankLevel)) return false
-      if (filters.types.length && !filters.types.some(type => type === vehicle.tankType)) return false
-      if (filters.nations.length && !filters.nations.some(nation => nation === vehicle.tankTag?.split(':')[0])) return false
-    }
+    if (selection.levels.length && !selection.levels.some(level => level === vehicle.tankLevel)) return false
+    if (selection.types.length && !selection.types.some(type => type === vehicle.tankType)) return false
+    if (selection.nations.length && !selection.nations.some(nation => nation === vehicle.tankTag?.split(':')[0])) return false
 
     return (vehicle.battles ?? 0) > filters.minBattles && (vehicle.playerCount ?? 0) > filters.minPlayers
   })

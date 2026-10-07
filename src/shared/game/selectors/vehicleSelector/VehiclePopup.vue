@@ -21,16 +21,16 @@
       </div>
 
       <div class="nations mt-font">
-        <button class="nation selectable" v-for="nation in (preferredGame == 'mt' ? mtNations : wotNations)"
+        <button class="nation selectable" v-for="nation in availableNations"
           :class="currentNations.has(nation) ? 'active' : ''" @click="e => selectNation(e, nation)">
           <NationComponent :nation="nation" class="flag" />
         </button>
       </div>
 
       <div class="levels mt-font">
-        <button class="level selectable" :class="currentLevels.has(i + 1) ? 'active' : ''"
-          v-for="(_, i) in new Array(11)" @click="e => selectLevel(e, i + 1)">
-          {{ romanNumberProcessor(i + 1) }}
+        <button class="level selectable" :class="currentLevels.has(level) ? 'active' : ''"
+          v-for="level in levels" @click="e => selectLevel(e, level)">
+          {{ romanNumberProcessor(level) }}
         </button>
       </div>
 
@@ -78,6 +78,8 @@ const currentSearch = ref('')
 const currentLevels = ref(new Set<number>())
 const currentTypes = ref(new Set<VehicleType>())
 const currentNations = ref(new Set<Nation>())
+const levels = Array.from({ length: 11 }, (_, index) => index + 1)
+const availableNations = computed(() => preferredGame.value === 'mt' ? mtNations : wotNations)
 const nameVariant = useLocalStorage<'full' | 'short'>('preferred-vehicle-name-variant', 'full')
 
 const props = defineProps<{
@@ -260,7 +262,18 @@ const tankToDisplay = computed(() => {
 
 const shouldVisibleReset = computed(() => currentLevels.value.size > 0 || currentTypes.value.size > 0 || currentNations.value.size > 0 || currentSearch.value != '')
 
+function toggleAllExcept<T>(selected: ReadonlySet<T>, option: T, options: readonly T[]): Set<T> {
+  const others = options.filter(item => item !== option)
+  const allOthersSelected = selected.size === others.length && others.every(item => selected.has(item))
+  return new Set(allOthersSelected ? [option] : others)
+}
+
 function selectLevel(e: MouseEvent, level: number) {
+  if (e.altKey) {
+    currentLevels.value = toggleAllExcept(currentLevels.value, level, levels)
+    return
+  }
+
   if (currentLevels.value.has(level)) currentLevels.value.delete(level)
   else {
     if (e.shiftKey) {
@@ -282,6 +295,11 @@ function selectLevel(e: MouseEvent, level: number) {
 }
 
 function selectType(e: MouseEvent, type: VehicleType) {
+  if (e.altKey) {
+    currentTypes.value = toggleAllExcept(currentTypes.value, type, vehicleTypes)
+    return
+  }
+
   if (currentTypes.value.has(type)) currentTypes.value.delete(type)
   else {
     if (e.shiftKey) {
@@ -304,6 +322,11 @@ function selectType(e: MouseEvent, type: VehicleType) {
 }
 
 function selectNation(e: MouseEvent, nation: Nation) {
+  if (e.altKey) {
+    currentNations.value = toggleAllExcept(currentNations.value, nation, availableNations.value)
+    return
+  }
+
   if (currentNations.value.has(nation)) currentNations.value.delete(nation)
   else {
     if (e.shiftKey) {
