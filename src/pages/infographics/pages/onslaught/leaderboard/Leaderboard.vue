@@ -4,7 +4,7 @@
   <div class="onslaught-leaderboard-page">
 
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" v-model:region="region"
-      v-model:seasons="seasons" :showNameInput="true" />
+      v-model:seasons="seasons" :showNameInput="true" @clear-nickname="nicknameStorage.flush()" />
 
     <div class="search-result-animator" v-if="searchState != 'idle'" :class="{ 'height-animated': animateSearchHeight }"
       :style="{ height: searchResultHeight != null ? `${searchResultHeight}px` : undefined }">
@@ -188,6 +188,7 @@ import Detail from './components/detail/Detail.vue'
 import Loader from '../shared/Loader.vue'
 
 import Settings from '../shared/settings/Settings.vue'
+import { useOnslaughtQueryStorage, useOnslaughtNicknameStorage } from '../shared/useOnslaughtQueryStorage'
 import { refDebounced, useResizeObserver } from '@vueuse/core'
 import { watchWithAbortSignal } from '@/shared/utils/core'
 import PageSelector from './components/PageSelector.vue'
@@ -210,9 +211,9 @@ const page = ref(1)
 const selectedName = ref<string | null>(null)
 
 const seasons = ref<{ region: string, season: string, start: string }[]>([])
-const selectedSeason = ref<string | null>(null)
-const region = ref<'RU' | 'EU' | 'NA' | 'ASIA' | 'CN' | 'CT'>('RU')
-const nickname = ref<string>('')
+const { params: { season: selectedSeason, region: region } } = useOnslaughtQueryStorage()
+const nicknameStorage = useOnslaughtNicknameStorage()
+const { nickname } = nicknameStorage.params
 const debouncedNickname = refDebounced(nickname, 500)
 
 const seasonInterval = useSeasonInterval(seasons, selectedSeason, region)

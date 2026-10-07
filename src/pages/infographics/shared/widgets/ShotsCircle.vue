@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
 import CanvasVue from '@/shared/ui/components/Canvas.vue'
-import { computed, ref, useTemplateRef } from 'vue'
+import { computed, onScopeDispose, ref, shallowRef, triggerRef, useTemplateRef, watch } from 'vue'
 import { Quadtree, Circle } from '@timohausmann/quadtree-ts'
 
 import { useDebounceFn, useMouseInElement } from '@vueuse/core'
@@ -43,13 +43,13 @@ const { elementX, elementY, elementHeight, elementWidth, isOutside } = useMouseI
 const widthRef = ref(0)
 const heightRef = ref(0)
 
-const quadTree = new Quadtree({
+const quadTree = shallowRef(new Quadtree({
   x: -1,
   y: -1,
   width: 2,
   height: 2,
   maxLevels: 5,
-})
+}))
 
 const props = defineProps<{
   limitShot?: number,
@@ -69,12 +69,21 @@ const emit = defineEmits<{
 const radius = computed(() => Math.min(widthRef.value, heightRef.value) / 2 - 1)
 let timeoutHandler: ReturnType<typeof setTimeout> | null = null
 let totalCount = -1
+let dataController = new AbortController()
+let drawVersion = 0
+
+function stopDrawing() {
+  drawVersion++
+  if (timeoutHandler) clearTimeout(timeoutHandler)
+  timeoutHandler = null
+}
 
 const renderShotsDebounce = useDebounceFn(() => {
   startDrawProcess()
 }, 200)
 
 function redraw(ctx: CanvasRenderingContext2D, width: number, height: number) {
+  stopDrawing()
   widthRef.value = width
   heightRef.value = height
 
@@ -94,7 +103,6 @@ function redraw(ctx: CanvasRenderingContext2D, width: number, height: number) {
   ctx.closePath()
   ctx.fill()
 
-  if (timeoutHandler) clearTimeout(timeoutHandler)
   renderShotsDebounce()
 }
 
@@ -106,64 +114,78 @@ async function loadNextBatch() {
   if (loading) return
   if (loadingFinished) return
 
+  const signal = dataController.signal
+  if (signal.aborted) return
+
   loading = true
 
-  let resultData: { id: string, r: number, theta: number, hit: number }[] = []
-  const loadCount = shotsData.length === 0 ? FIRST_LOAD_COUNT : LOAD_COUNT
-  if (props.loadNextBatch) {
+  try {
+    let resultData: { id: string, r: number, theta: number, hit: number }[] = []
+    const loadCount = shotsData.length === 0 ? FIRST_LOAD_COUNT : LOAD_COUNT
+    if (props.loadNextBatch) {
 
-    resultData = await props.loadNextBatch({
-      loadCount: loadCount,
-      offset: shotsData.length,
-      startId: shotsData.length > 0 ? shotsData[0].id : null
-    })
+      resultData = await props.loadNextBatch({
+        loadCount: loadCount,
+        offset: shotsData.length,
+        startId: shotsData.length > 0 ? shotsData[0].id : null
+      })
 
-  } else {
+    } else {
 
-    console.log(`load ${loadCount} shots offset ${shotsData.length} started at ${shotsData.length > 0 ? 'where id < ' + shotsData[0].id : 'all'}`)
+      console.log(`load ${loadCount} shots offset ${shotsData.length} started at ${shotsData.length > 0 ? 'where id < ' + shotsData[0].id : 'all'}`)
 
-    const best = bestMV('accuracy_hit_points', props.params ? props.params : [])
-    const order = best && best != 'accuracy_hit_points_mv' ? [...bestMVOrder('accuracy_hit_points', best), 'id'] : ['id']
+      const best = bestMV('accuracy_hit_points', props.params ? props.params : [])
+      const order = best && best != 'accuracy_hit_points_mv' ? [...bestMVOrder('accuracy_hit_points', best), 'id'] : ['id']
 
-    const prefix = best ? `
-      toString(id) as idS, r, theta, hit FROM ${best}
-      ` : `
-      toString(id) as idS, ballisticResultClient_r as r, ballisticResultClient_theta as theta, length(results.order) > 0 as hit FROM Event_OnShot
-      `
+      const prefix = best ? `
+        toString(id) as idS, r, theta, hit FROM ${best}
+        ` : `
+        toString(id) as idS, ballisticResultClient_r as r, ballisticResultClient_theta as theta, length(results.order) > 0 as hit FROM Event_OnShot
+        `
 
-    const ordering = order.map(o => `${o} desc`).join(', ')
+      const ordering = order.map(o => `${o} desc`).join(', ')
 
-    const result = await query<{ idS: string, r: number, theta: number, hit: number }>(`
-    SELECT ${prefix}
-      ${shotsData.length > 0 ? `where id < '${shotsData[shotsData.length - 1].id}'` : ''}
-      ${props.params ? whereClause(props.params, { withWhere: shotsData.length == 0 }) : ''}
-      order by ${ordering}
-      limit ${loadCount}
-    SETTINGS optimize_read_in_order = 1`)
+      const result = await query<{ idS: string, r: number, theta: number, hit: number }>(`
+      SELECT ${prefix}
+        ${shotsData.length > 0 ? `where id < '${shotsData[shotsData.length - 1].id}'` : ''}
+        ${props.params ? whereClause(props.params, { withWhere: shotsData.length == 0 }) : ''}
+        order by ${ordering}
+        limit ${loadCount}
+      SETTINGS optimize_read_in_order = 1`, { abortSignal: signal })
 
-    resultData = result.data.map(t => ({ id: t.idS, r: t.r, theta: t.theta, hit: t.hit }))
+      resultData = result.data.map(t => ({ id: t.idS, r: t.r, theta: t.theta, hit: t.hit }))
+    }
+
+    if (signal.aborted) return
+
+    const toAdd = resultData.map(row => ({
+      id: row.id,
+      x: row.r * Math.cos(row.theta),
+      y: -row.r * Math.sin(row.theta),
+      hit: row.hit == 1,
+    }))
+
+    shotsData.push(...toAdd)
+
+    const circles = toAdd.map(p => new Circle({
+      x: p.x,
+      y: p.y,
+      r: 0.001,
+      data: p.id
+    }))
+
+    for (const circle of circles) quadTree.value.insert(circle)
+    triggerRef(quadTree)
+
+    loadingFinished = resultData.length < loadCount || (props.limitShot != null && loadCount + shotsData.length > props.limitShot)
+  } catch (error) {
+    if (!signal.aborted) {
+      loadingFinished = true
+      console.error(error)
+    }
+  } finally {
+    if (!signal.aborted) loading = false
   }
-
-  const toAdd = resultData.map(row => ({
-    id: row.id,
-    x: row.r * Math.cos(row.theta),
-    y: -row.r * Math.sin(row.theta),
-    hit: row.hit == 1,
-  }))
-
-  shotsData.push(...toAdd)
-
-  const circles = toAdd.map(p => new Circle({
-    x: p.x,
-    y: p.y,
-    r: 0.001,
-    data: p.id
-  }))
-
-  for (const circle of circles) quadTree.insert(circle)
-
-  loadingFinished = resultData.length < loadCount || (props.limitShot != null && loadCount + shotsData.length > props.limitShot)
-  loading = false
 }
 
 function lerp(from: number, to: number, from2: number, to2: number, value: number) {
@@ -171,19 +193,28 @@ function lerp(from: number, to: number, from2: number, to2: number, value: numbe
 }
 
 async function startDrawProcess() {
-  if (timeoutHandler) clearTimeout(timeoutHandler)
+  stopDrawing()
+  const version = drawVersion
+  const signal = dataController.signal
+  if (signal.aborted) return
 
   if (totalCount == -1) {
 
-    const count = query<{ count: number }>(`
-      SELECT count(*) as count FROM Event_OnShot 
-      ${props.params ? whereClause(props.params) : ''};`)
+    try {
+      const count = query<{ count: number }>(`
+        SELECT count(*) as count FROM Event_OnShot
+        ${props.params ? whereClause(props.params) : ''};`, { abortSignal: signal })
 
-    const loadFirstBatch = loadNextBatch()
+      const loadFirstBatch = loadNextBatch()
 
-    const [countResult, _] = await Promise.all([count, loadFirstBatch])
+      const [countResult, _] = await Promise.all([count, loadFirstBatch])
+      if (signal.aborted || version !== drawVersion) return
 
-    totalCount = Math.min(countResult.data[0].count, props.limitShot ?? 100000)
+      totalCount = Math.min(countResult.data[0].count, props.limitShot ?? 100000)
+    } catch (error) {
+      if (!signal.aborted && version === drawVersion) console.error(error)
+      return
+    }
   }
 
   let currentCount = 0
@@ -193,6 +224,8 @@ async function startDrawProcess() {
   const renderCount = props.drawCount ?? RENDER_COUNT * (totalCount > COUNT_TO_SMALL_SIZE ? 2 : 1)
 
   function draw() {
+    if (signal.aborted || version !== drawVersion) return
+
     let countToDraw = props.drawCount ?? renderCount
 
     if (currentCount + LOAD_COUNT > shotsData.length) {
@@ -218,12 +251,32 @@ async function startDrawProcess() {
     }
     currentCount += countToDraw
 
-    if (currentCount < totalCount) {
+    if (currentCount < totalCount && (!loadingFinished || currentCount < shotsData.length)) {
       timeoutHandler = setTimeout(draw, props.drawDelay ?? 1)
     }
   }
   draw()
 }
+
+watch([() => JSON.stringify(props.params), () => props.loadNextBatch, () => props.limitShot], () => {
+  stopDrawing()
+  dataController.abort()
+  dataController = new AbortController()
+
+  shotsData = []
+  quadTree.value.clear()
+  triggerRef(quadTree)
+  totalCount = -1
+  loading = false
+  loadingFinished = false
+
+  canvasRef.value?.redraw()
+})
+
+onScopeDispose(() => {
+  stopDrawing()
+  dataController.abort()
+})
 
 const maskPath = computed(() => {
   if (!props.maskRadius) return ''
@@ -256,7 +309,7 @@ const highlighted = computed(() => {
 
   const radius = isMobile() ? MOBILE_HOVER_RADIUS : HOVER_RADIUS
 
-  const res = quadTree.retrieve(new Circle({
+  const res = quadTree.value.retrieve(new Circle({
     x, y, r: radius,
   })) as Circle<string>[]
 

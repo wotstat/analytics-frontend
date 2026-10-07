@@ -57,27 +57,27 @@
       <div class="flex-1"></div>
       <div class="header-right flex">
         <router-link to="/" class="hero">Главная</router-link>
-        <QueryPreserveRouterLink to="/session" class="infographics">Инфографика</QueryPreserveRouterLink>
+        <RouterLink to="/session" class="infographics">Инфографика</RouterLink>
         <router-link to="/widgets" class="widgets">Виджеты</router-link>
         <router-link to="/install" class="install" v-new-feature-badge="'mod-installer'">Скачать</router-link>
         <!-- <router-link to="/bb25" class="replays bob25">ББ2025</router-link> -->
         <!-- <router-link to="/mt-36-1" class="replays bob25" v-new-feature-badge="'mt-36-1'">Разворот 1.36.1</router-link> -->
         <!-- <router-link to="/replays" class="replays">Реплеи</router-link> -->
-        <QueryPreserveRouterLink to="/onslaught" class="replays bob25" v-new-feature-badge="'onslaught'">Натиск
-        </QueryPreserveRouterLink>
+        <RouterLink to="/onslaught" :class="{ 'router-link-active': route.path.startsWith('/onslaught') }" class="replays bob25" v-new-feature-badge="'onslaught'">Натиск
+        </RouterLink>
 
         <div class="drop-down points-menu">
           <PointsIcon class="icon" />
           <div class="menu">
 
             <router-link to="/" class="hero">Главная</router-link>
-            <QueryPreserveRouterLink to="/session" class="infographics">Инфографика</QueryPreserveRouterLink>
+            <RouterLink to="/session" class="infographics">Инфографика</RouterLink>
             <router-link to="/widgets" class="widgets">Виджеты</router-link>
             <router-link to="/install" class="install">Скачать</router-link>
             <!-- <router-link to="/bb25" class="replays">ББ2025</router-link> -->
             <!-- <router-link to="/mt-36-1" class="replays">Разворот 1.36.1</router-link> -->
-            <QueryPreserveRouterLink to="/onslaught" class="comp7" v-new-feature-badge="'onslaught'">Натиск
-            </QueryPreserveRouterLink>
+            <RouterLink to="/onslaught" :class="{ 'router-link-active': route.path.startsWith('/onslaught') }" class="comp7" v-new-feature-badge="'onslaught'">Натиск
+            </RouterLink>
             <!-- <router-link to="/replays" class="replays">Реплеи</router-link> -->
             <a :href="SQLUrl" target="_blank" rel="noopener noreferrer" class="sql">Доступ к БД </a>
             <hr class="any-page-divider">
@@ -190,8 +190,10 @@ import { useLocalStorage } from '@vueuse/core'
 import { vNewFeatureBadge } from '@/shared/uiKit/newFeatureBadge/newFeatureBadge'
 import HetznerBlock0126 from '../problems/hetznerBlock0126/HetznerBlock0126.vue'
 import Problem280426 from '../problems/problem280426/problem280426.vue'
-import QueryPreserveRouterLink from '../sidebarLayout/QueryPreserveRouterLink.vue'
+import { RouterLink, useRoute } from 'vue-router'
 
+
+const route = useRoute()
 
 const SQLUrl = CLICKHOUSE_URL + '/play?user=public#c2VsZWN0IHRhYmxlLCBuYW1lLCBjb21tZW50LCB0eXBlIGZyb20gZGVzY3JpcHRpb247'
 

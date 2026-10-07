@@ -125,25 +125,21 @@
 
 <script setup lang="ts">
 import { dateToDbIndex, query, queryAsync } from '@/db'
-import { computed, onMounted, onUnmounted, ref, shallowRef, toRaw, toValue, watch, useTemplateRef } from 'vue'
+import { computed, onMounted, onUnmounted, ref, shallowRef, toValue, watch, useTemplateRef } from 'vue'
 import { useDebounce, useDraggable, useElementBounding, watchOnce, useVirtualList } from '@vueuse/core'
 import { TankLevel, TankType, useQueryStatParams } from '@/shared/query/useQueryStatParams'
 import { customBattleModes, customBattleModesKeys } from '@/shared/game/wot'
-import { useRoute, useRouter } from 'vue-router'
+import { useStatQueryStorage } from '@/shared/query/statQueryParams'
 import { getTankName } from '@/shared/i18n/i18n'
 import OptionsSelect from '@/shared/ui/optionsSelect/OptionsSelect.vue'
 import { isContextMenuOpen } from '@/shared/uiKit/contextMenu/createContextMenu'
 
-const route = useRoute()
-const router = useRouter()
+const queryStorage = useStatQueryStorage()
 
 const emit = defineEmits<{
   close: [];
 }>()
 
-const props = defineProps<{
-  reload?: boolean
-}>()
 
 type Tank = {
   level: TankLevel,
@@ -454,80 +450,34 @@ watch(sortedTanks, () => {
 })
 
 function apply() {
-  let target = window.location.pathname + '?'
+  let from: Date | undefined
+  let to: Date | undefined
 
-  if (enablePlayerFilter.value && nickname.value != '') target += `nickname=${nickname.value}&`
-  if (enableLevelFilter.value && selectedLevels.value.length > 0) target += `level=${selectedLevels.value.join(',')}&`
-  if (enableTypeFilter.value && selectedClasses.value.length > 0) target += `type=${selectedClasses.value.join(',')}&`
-  if (enableTankFilter.value && selectedTanks.value.length > 0) target += `tank=${selectedTanks.value.map(t => t.tag).join(',')}&`
-  if (battleMode.value != 'normalAny') target += `mode=${battleMode.value}&`
-
-  function processPeriod() {
-    if (periodVariant.value == 'allTime') return
-    if (periodVariant.value == 'lastX') return target += `lastX=${lastX.value}&`
-
-    const processFromTo = () => {
-      const from = new Date(fromDate.value!)
-      const to = toDate.value ? new Date(toDate.value) : new Date()
-
-      if (!enablePlayerFilter.value || nickname.value == '') return { from, to }
-
-      const delta = to.getTime() - from.getTime()
-      const fromT = new Date(from.getTime() + delta * leftXPosition.value)
-      const toT = new Date(fromT.getTime() + delta * (rightXPosition.value - leftXPosition.value))
-
-      return { from: fromT, to: toT }
-    }
-
-    if (periodVariant.value == 'fromToNow') {
-      if (fromDate.value == null) return
-      const { from } = processFromTo()
-      target += `from=${from.toISOString()}&`
-    } else if (periodVariant.value == 'fromTo') {
-      if (fromDate.value == null || toDate.value == null) return
-      const { from, to } = processFromTo()
-      target += `from=${from.toISOString()}&to=${to.toISOString()}&`
+  if (periodVariant.value === 'fromToNow' || periodVariant.value === 'fromTo') {
+    if (fromDate.value != null) {
+      from = new Date(fromDate.value)
+      if (periodVariant.value === 'fromTo' && toDate.value != null) to = new Date(toDate.value)
+      if (enablePlayerFilter.value && nickname.value !== '') {
+        const delta = (to ?? new Date()).getTime() - from.getTime()
+        const start = from.getTime()
+        from = new Date(start + delta * leftXPosition.value)
+        if (to) to = new Date(start + delta * rightXPosition.value)
+      }
     }
   }
 
-  processPeriod()
-
-  const keys = [
-    'nickname',
-    'level',
-    'type',
-    'tank',
-    'mode',
-    'lastX',
-    'from',
-    'to',
-  ]
-
-  target = target.slice(0, -1)
-  if (props.reload !== false) {
-    const old = Object.entries(route.query).filter(t => !keys.includes(t[0])).map(t => t.join('=')).join('&')
-
-    if (old != '') target += (!target.includes('?') ? '?' : '&') + old
-
-    window.open(target, '_self')
-  } else {
-    const targetParams = target.split('?')
-    if (targetParams.length > 1) {
-      const params = targetParams[1].split('&')
-      const p = Object.fromEntries(params.map(t => t.split('=')))
-      router.push({
-        query: {
-          ...route.query,
-          ...Object.fromEntries(keys.map(t => [t, undefined])),
-          ...p
-        }
-      })
-    } else {
-      router.push(target)
-    }
-  }
-
-  if (props.reload !== true) emit('close')
+  queryStorage.patch({
+    nickname: enablePlayerFilter.value ? nickname.value : '',
+    level: enableLevelFilter.value ? [...selectedLevels.value] : [],
+    types: enableTypeFilter.value ? [...selectedClasses.value] : [],
+    tanks: enableTankFilter.value ? selectedTanks.value.map(tank => tank.tag) : [],
+    battleMode: battleMode.value,
+    battleId: [],
+    lastX: periodVariant.value === 'lastX' ? lastX.value : undefined,
+    from,
+    to
+  }, { history: 'push', debounce: 0 })
+  emit('close')
 }
 
 onMounted(() => {

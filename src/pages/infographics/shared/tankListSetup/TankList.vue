@@ -47,37 +47,19 @@
 <script lang="ts" setup>
 import { useQueryStatParams, whereClause } from '@/shared/query/useQueryStatParams'
 import { LONG_CACHE, queryComputed } from '@/db'
-import { useRoute, useRouter } from 'vue-router'
+import { useStatQueryStorage } from '@/shared/query/statQueryParams'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { createFixedSpaceProcessor } from '@/shared/utils/processors/processors'
 import { getTankName } from '@/shared/i18n/i18n'
 import HorizontalScrollItems from '@/pages/shared/HorizontalScrollItems.vue'
-import { pausableWatch } from '@vueuse/core'
 import VehicleImage from '@/shared/game/vehicles/vehicle/VehicleImage.vue'
 
 
 
 
-const router = useRouter()
-const route = useRoute()
-
 const stats = useQueryStatParams()
-
-const selectedTanks = ref<string[]>([])
-
-const selectedToStats = pausableWatch(() => selectedTanks.value, (tanks) => {
-  statsToSelected.pause()
-  const target = { ...route.query, tank: tanks.length != 0 ? tanks.join(',') : undefined }
-  router.push({ query: target })
-  statsToSelected.resume()
-})
-
-const statsToSelected = pausableWatch(() => stats.value.tanks, (tanks) => {
-  selectedToStats.pause()
-  selectedTanks.value = tanks || []
-  selectedToStats.resume()
-}, { immediate: true })
+const { params: { tanks: selectedTanks } } = useStatQueryStorage()
 
 const fixedSpaceProcessor = createFixedSpaceProcessor(0)
 function logProcessor(value: number) {

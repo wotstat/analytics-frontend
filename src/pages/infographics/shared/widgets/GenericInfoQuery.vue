@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-import { queryAsyncFirst } from '@/db'
+import { queryComputedFirst } from '@/db'
 import GenericInfo from './GenericInfo.vue'
 import { computed, toRaw, watchEffect, useTemplateRef } from 'vue'
 import { useElementVisibility } from '@vueuse/core'
@@ -23,7 +23,7 @@ const props = defineProps<{
   miniProcessor?: (data: any) => string,
 }>()
 
-const dataDB = queryAsyncFirst(props.query, { data: 0 }, { enabled })
+const dataDB = queryComputedFirst(() => props.query, { data: 0 }, { enabled })
 const value = computed(() => dataDB.value.data.data)
 
 </script>

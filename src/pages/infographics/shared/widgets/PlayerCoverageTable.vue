@@ -1,49 +1,51 @@
 <template>
   <ServerStatusWrapper :status="result.status" v-slot="{ showError, status }">
-    <div class="container" ref="container" v-if="status != 'error'">
-      <table class="hover-highlight">
+    <div class="container" ref="container">
+      <template v-if="status != 'error'">
+        <table class="hover-highlight">
 
-        <thead>
-          <tr>
-            <th colspan="9" class="title">Игроки с которыми вы попадали чаще всего</th>
-          </tr>
-          <tr v-if="status == 'success'">
-            <th>Никнейм</th>
-            <th>Количество боёв</th>
-            <td>Урон как союзник</td>
-            <td>Урон как противник</td>
-          </tr>
-        </thead>
+          <thead>
+            <tr>
+              <th colspan="9" class="title">Игроки с которыми вы попадали чаще всего</th>
+            </tr>
+            <tr v-if="status == 'success'">
+              <th>Никнейм</th>
+              <th>Количество боёв</th>
+              <td>Урон как союзник</td>
+              <td>Урон как противник</td>
+            </tr>
+          </thead>
 
-        <tbody>
-          <tr class="skeleton" v-for="i in new Array(5)" v-if="status == 'loading'">
-            <td colspan="9"></td>
-          </tr>
+          <tbody>
+            <tr class="skeleton" v-for="i in new Array(5)" v-if="status == 'loading'">
+              <td colspan="9"></td>
+            </tr>
 
-          <tr v-for="item in data">
-            <td>
-              <a :href="item.url" target="_blank" rel="noopener noreferrer">{{ item.name }}</a>
-            </td>
-            <td class="text-effect orange"><b>{{ item.count }}</b></td>
-            <td class="text-effect green">{{ item.playerDamage?.toFixed(0) ?? '-' }}</td>
-            <td class="text-effect red">{{ item.opponentDamage?.toFixed(0) ?? '-' }}</td>
-          </tr>
-        </tbody>
-      </table>
+            <tr v-for="item in data">
+              <td>
+                <a :href="item.url" target="_blank" rel="noopener noreferrer">{{ item.name }}</a>
+              </td>
+              <td class="text-effect orange"><b>{{ item.count }}</b></td>
+              <td class="text-effect green">{{ item.playerDamage?.toFixed(0) ?? '-' }}</td>
+              <td class="text-effect red">{{ item.opponentDamage?.toFixed(0) ?? '-' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </template>
+
+      <template v-else>
+        <div class="flex flex-1 center pointer" @click="showError">
+          <p class="card-main-info error">!</p>
+        </div>
+        <p class="card-main-info description">Игроки с которыми вы попадали чаще всего</p>
+      </template>
     </div>
-
-    <template v-else>
-      <div class="flex flex-1 center pointer" @click="showError">
-        <p class="card-main-info error">!</p>
-      </div>
-      <p class="card-main-info description">Игроки с которыми вы попадали чаще всего</p>
-    </template>
   </ServerStatusWrapper>
 </template>
 
 <script setup lang="ts">
 import { StatParams, whereClause } from '@/shared/query/useQueryStatParams'
-import { queryAsync, semverCompareStartFrom } from '@/db'
+import { queryComputed, semverCompareStartFrom } from '@/db'
 import { useElementVisibility } from '@vueuse/core'
 import { computed, useTemplateRef } from 'vue'
 import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
@@ -56,14 +58,14 @@ const container = useTemplateRef<HTMLElement>('container')
 const enabled = useElementVisibility(container)
 
 
-const result = queryAsync<{
+const result = queryComputed<{
   name: string,
   bdid: string,
   region: string,
   count: number,
   playerDamage: number,
   opponentDamage: number
-}>(`
+}>(() => `
 select *
 from (select name,
              bdid,

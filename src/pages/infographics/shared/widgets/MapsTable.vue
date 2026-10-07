@@ -1,108 +1,110 @@
 <template>
   <ServerStatusWrapper :status="dataQ.status" v-slot="{ showError, status }">
-    <div class="container" ref="container" v-if="status != 'error'">
+    <div class="container" ref="container">
+      <template v-if="status != 'error'">
 
-      <p class="title center">Распределение карт</p>
-      <div class="flex center setup">
-        <div class="flex selector">
-          <p>Режим:</p>
-          <OptionsSelect v-model="battleMode" :options="battleModeOptions" />
+        <p class="title center">Распределение карт</p>
+        <div class="flex center setup">
+          <div class="flex selector">
+            <p>Режим:</p>
+            <OptionsSelect v-model="battleMode" :options="battleModeOptions" />
+          </div>
+          <div class="flex selector">
+            <p>Результат:</p>
+            <OptionsSelect v-model="battleResult" :options="battleResultOptions" />
+          </div>
         </div>
-        <div class="flex selector">
-          <p>Результат:</p>
-          <OptionsSelect v-model="battleResult" :options="battleResultOptions" />
+
+        <table class="hover-highlight">
+          <thead>
+            <tr>
+              <th ref="firstColumn">Карта</th>
+              <td>
+                <img src="@/assets/efficiency-icon/percent.png" @click="click('count')"
+                  :class="hightlight == 'count' ? 'selected' : ''">
+                <span class="tooltiptext">Количество</span>
+              </td>
+              <td>
+                <img src="@/assets/efficiency-icon/dmg.png" @click="click('damage')"
+                  :class="hightlight == 'damage' ? 'selected' : ''">
+                <span class="tooltiptext">Урон</span>
+              </td>
+              <td>
+                <img src="@/assets/efficiency-icon/spot.png" @click="click('radio')"
+                  :class="hightlight == 'radio' ? 'selected' : ''">
+                <span class="tooltiptext">Насвечено</span>
+              </td>
+              <td>
+                <img src="@/assets/efficiency-icon/mgsum.png" @click="click('mgSum')"
+                  :class="hightlight == 'mgSum' ? 'selected' : ''">
+                <span class="tooltiptext">Сумма отметки</span>
+              </td>
+              <td>
+                <img src="@/assets/efficiency-icon/block.png" @click="click('block')"
+                  :class="hightlight == 'block' ? 'selected' : ''">
+                <span class="tooltiptext">Натанковано</span>
+              </td>
+              <td>
+                <img src="@/assets/efficiency-icon/kill.png" @click="click('kills')"
+                  :class="hightlight == 'kills' ? 'selected' : ''">
+                <span class="tooltiptext">Фрагов</span>
+              </td>
+              <td>
+                <img src="@/assets/efficiency-icon/duration.png" @click="click('duration')"
+                  :class="hightlight == 'duration' ? 'selected' : ''">
+                <span class="tooltiptext">Продолжительность</span>
+              </td>
+              <td>
+                <img src="@/assets/efficiency-icon/lifetime.png" @click="click('lifeTime')"
+                  :class="hightlight == 'lifeTime' ? 'selected' : ''">
+                <span class="tooltiptext">Время жизни</span>
+              </td>
+            </tr>
+          </thead>
+
+          <!-- <TransitionGroup name="list" tag="tbody"> -->
+          <tbody>
+            <tr class="skeleton" v-for="i in new Array(5)" v-if="status == 'loading'">
+              <td colspan="9"></td>
+            </tr>
+            <tr v-for="(item, index) in ordered" :key="item.arenaTag">
+              <td>{{ getArenaName(item.arenaTag) }}
+                <div v-if="hightlighted[index]" class="bar-box right" :style="{ width: hightlighted[index] + 'px' }">
+                </div>
+              </td>
+              <td class="text-effect gold">{{ item.percent }}</td>
+              <td class="text-effect orange">{{ item.damage.toFixed() }}</td>
+              <td class="text-effect green">{{ item.radio.toFixed() }}</td>
+              <td class="text-effect light-blue">{{ item.mgSum.toFixed() }}</td>
+              <td class="text-effect blue">{{ item.block.toFixed() }}</td>
+              <td class="text-effect red"> {{ item.kills.toFixed(1) }}</td>
+              <td class="text-effect yellow">
+                <div class="time-align">
+                  <div class="left">{{ timeProcessor(item.duration)[0] }}</div>
+                  <div>:</div>
+                  <div class="right">{{ timeProcessor(item.duration)[1] }}</div>
+                </div>
+              </td>
+              <td class="text-effect light-blue">
+                <div class="time-align">
+                  <div class="left">{{ timeProcessor(item.lifeTime)[0] }}</div>
+                  <div>:</div>
+                  <div class="right">{{ timeProcessor(item.lifeTime)[1] }}</div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+          <!-- </TransitionGroup> -->
+        </table>
+      </template>
+
+      <template v-else>
+        <div class="flex flex-1 center pointer" @click="showError">
+          <p class="card-main-info error">!</p>
         </div>
-      </div>
-
-      <table class="hover-highlight">
-        <thead>
-          <tr>
-            <th ref="firstColumn">Карта</th>
-            <td>
-              <img src="@/assets/efficiency-icon/percent.png" @click="click('count')"
-                :class="hightlight == 'count' ? 'selected' : ''">
-              <span class="tooltiptext">Количество</span>
-            </td>
-            <td>
-              <img src="@/assets/efficiency-icon/dmg.png" @click="click('damage')"
-                :class="hightlight == 'damage' ? 'selected' : ''">
-              <span class="tooltiptext">Урон</span>
-            </td>
-            <td>
-              <img src="@/assets/efficiency-icon/spot.png" @click="click('radio')"
-                :class="hightlight == 'radio' ? 'selected' : ''">
-              <span class="tooltiptext">Насвечено</span>
-            </td>
-            <td>
-              <img src="@/assets/efficiency-icon/mgsum.png" @click="click('mgSum')"
-                :class="hightlight == 'mgSum' ? 'selected' : ''">
-              <span class="tooltiptext">Сумма отметки</span>
-            </td>
-            <td>
-              <img src="@/assets/efficiency-icon/block.png" @click="click('block')"
-                :class="hightlight == 'block' ? 'selected' : ''">
-              <span class="tooltiptext">Натанковано</span>
-            </td>
-            <td>
-              <img src="@/assets/efficiency-icon/kill.png" @click="click('kills')"
-                :class="hightlight == 'kills' ? 'selected' : ''">
-              <span class="tooltiptext">Фрагов</span>
-            </td>
-            <td>
-              <img src="@/assets/efficiency-icon/duration.png" @click="click('duration')"
-                :class="hightlight == 'duration' ? 'selected' : ''">
-              <span class="tooltiptext">Продолжительность</span>
-            </td>
-            <td>
-              <img src="@/assets/efficiency-icon/lifetime.png" @click="click('lifeTime')"
-                :class="hightlight == 'lifeTime' ? 'selected' : ''">
-              <span class="tooltiptext">Время жизни</span>
-            </td>
-          </tr>
-        </thead>
-
-        <!-- <TransitionGroup name="list" tag="tbody"> -->
-        <tbody>
-          <tr class="skeleton" v-for="i in new Array(5)" v-if="status == 'loading'">
-            <td colspan="9"></td>
-          </tr>
-          <tr v-for="(item, index) in ordered" :key="item.arenaTag">
-            <td>{{ getArenaName(item.arenaTag) }}
-              <div v-if="hightlighted[index]" class="bar-box right" :style="{ width: hightlighted[index] + 'px' }">
-              </div>
-            </td>
-            <td class="text-effect gold">{{ item.percent }}</td>
-            <td class="text-effect orange">{{ item.damage.toFixed() }}</td>
-            <td class="text-effect green">{{ item.radio.toFixed() }}</td>
-            <td class="text-effect light-blue">{{ item.mgSum.toFixed() }}</td>
-            <td class="text-effect blue">{{ item.block.toFixed() }}</td>
-            <td class="text-effect red"> {{ item.kills.toFixed(1) }}</td>
-            <td class="text-effect yellow">
-              <div class="time-align">
-                <div class="left">{{ timeProcessor(item.duration)[0] }}</div>
-                <div>:</div>
-                <div class="right">{{ timeProcessor(item.duration)[1] }}</div>
-              </div>
-            </td>
-            <td class="text-effect light-blue">
-              <div class="time-align">
-                <div class="left">{{ timeProcessor(item.lifeTime)[0] }}</div>
-                <div>:</div>
-                <div class="right">{{ timeProcessor(item.lifeTime)[1] }}</div>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-        <!-- </TransitionGroup> -->
-      </table>
+        <p class="card-main-info description">Распределение карт</p>
+      </template>
     </div>
-
-    <template v-else>
-      <div class="flex flex-1 center pointer" @click="showError">
-        <p class="card-main-info error">!</p>
-      </div>
-      <p class="card-main-info description">Распределение карт</p>
-    </template>
   </ServerStatusWrapper>
 </template>
 
@@ -214,7 +216,7 @@ ${whereSum(expressions.value)}
 ${params ? whereClause(params, { withWhere: expressions.value.length == 0 }) : ''}
 group by arenaTag
 order by count desc;
-  `, { cache: getQueryStatParamsCache(params) })
+  `, { enabled: visible, cache: () => getQueryStatParamsCache(params) })
 
 const resultProcessed = computed(() => {
   const m = battleResult.value

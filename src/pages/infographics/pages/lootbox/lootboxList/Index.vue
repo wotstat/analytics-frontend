@@ -54,14 +54,13 @@
 <script lang="ts" setup>
 import { useQueryStatParams, whereClause } from '@/shared/query/useQueryStatParams'
 import { queryComputed } from '@/db'
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { createFixedSpaceProcessor } from '@/shared/utils/processors/processors'
 import { getBestLocalization, selectLootboxesLocalization, type LocalizedName } from '@/shared/i18n/i18n'
-import { objectEntries, pausableWatch } from '@vueuse/core'
+import { objectEntries } from '@vueuse/core'
 import FallbackImg from '@/shared/uiKit/fallbackImg/FallbackImg.vue'
 import HorizontalScrollItems from '@/pages/shared/HorizontalScrollItems.vue'
 import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
-import { useQueryParamStorage } from '@/shared/query/useQueryParamStorage'
 
 import NoImageLB from './noImageLB.png'
 import { STATIC_URL } from '@/shared/external/externalUrl'
@@ -105,23 +104,7 @@ const props = defineProps<{
 
 const stats = useQueryStatParams()
 const queryOptions = useLootboxQueryOptions(stats)
-const selectedContainers = ref<string[]>([])
-const selectedContainersQuery = useQueryParamStorage<string | null>('selectedLootbox', null, true)
-
-const selectedToStats = pausableWatch(() => selectedContainers.value, (containers) => {
-  statsToSelected.pause()
-  selectedContainersQuery.value = containers.length != 0 ? containers.join(',') : null
-  statsToSelected.resume()
-})
-
-const statsToSelected = pausableWatch(() => selectedContainersQuery.value, (containers) => {
-  selectedToStats.pause()
-  selectedContainers.value = containers?.split(',') || []
-  selectedToStats.resume()
-}, { immediate: true })
-
-const model = defineModel<string[]>()
-watch(selectedContainers, (value) => model.value = value, { immediate: true })
+const selectedContainers = defineModel<string[]>({ required: true })
 
 const fixedSpaceProcessor = createFixedSpaceProcessor(0)
 function logProcessor(value: number) {

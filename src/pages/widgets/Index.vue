@@ -142,7 +142,6 @@ useIframeMessages(collection, data => {
     selectedTitle.value = data.title
 
     router.push({
-      query: { ...route.query },
       params: { widget: data.route.split('/').filter(Boolean) }
     })
   } else if (data.type === 'collection-mounted') {
@@ -166,13 +165,11 @@ onDeactivated(() => {
   if (collection.value)
     isCollectionLoading.value = false
 
-  if (selectedRoute.value) onClosePreview()
 })
 
 function onClosePreview() {
   showCollection.value = true
   router.push({
-    query: { ...route.query },
     params: { widget: '' }
   })
 }

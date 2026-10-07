@@ -312,7 +312,7 @@ SQL и ответ передаются потоком. У nginx запрашив
 
 ## StatParams и генерация WHERE (`src/shared/query/useQueryStatParams.ts`)
 
-`useQueryStatParams()` парсит query-параметры URL в объект:
+`useQueryStatParams()` собирает объект из refs `useStatQueryStorage()` (см. [10-query-storage.md](10-query-storage.md)). Массивы копируются, чтобы потребители не меняли состояние хранилища при сортировке:
 
 ```ts
 type StatParams = {
@@ -323,7 +323,7 @@ type StatParams = {
   battleMode: keyof customBattleModes | 'any'  // ?mode=
   period: 'allTime' | {type:'lastX',count} | {type:'fromTo',from,to} | {type:'fromToNow',from}
           // ?lastX= | ?from=&to= | ?from=
-  battleId: string[] | null    // ?battleId= (приоритетнее периода)
+  battleId: string[] | null    // ?battle-id= (приоритетнее периода)
 }
 ```
 

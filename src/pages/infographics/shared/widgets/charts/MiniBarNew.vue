@@ -1,7 +1,7 @@
 <template>
 
   <ServerStatusWrapper :status="status" v-slot="{ showError, status }">
-    <div class="chart-container" v-if="status != 'error'" :style="{
+    <div class="chart-container" v-show="status != 'error'" :style="{
       ['--bar-color']: getColor(props.color).main,
       ['--bar-color-highlighted']: getColor(props.color).highlight,
     }">
@@ -18,7 +18,7 @@
       </FloatingTooltip>
       <UniversalChartComponent :chart="chart" />
     </div>
-    <div class="flex flex-1 center pointer" v-else @click="showError">
+    <div class="flex flex-1 center pointer" v-if="status == 'error'" @click="showError">
       <p class="card-main-info error">!</p>
     </div>
   </ServerStatusWrapper>

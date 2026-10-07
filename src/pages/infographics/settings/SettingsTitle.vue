@@ -1,5 +1,5 @@
 <template>
-  <Settings v-if="showSettings" @close="showSettings = false" :reload="reload" />
+  <Settings v-if="showSettings" @close="showSettings = false"  />
   <h1 class="params">
     <SettingsIcon class="settings-icon" @click="showSettings = true" />
     <slot></slot>
@@ -11,9 +11,6 @@ import Settings from './Settings.vue'
 import { ref } from 'vue'
 import SettingsIcon from '@/assets/icons/settings.svg'
 
-const props = defineProps<{
-  reload?: boolean
-}>()
 
 const showSettings = ref(false)
 

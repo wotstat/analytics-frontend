@@ -22,11 +22,11 @@
 
 <script setup lang="ts">
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
-import { queryAsyncFirst } from '@/db'
+import { queryComputedFirst } from '@/db'
 import { useTemplateRef } from 'vue'
 import { useElementVisibility } from '@vueuse/core'
 import PlayerCoverageTable from '@/pages/infographics/shared/widgets/PlayerCoverageTable.vue'
-import { useQueryStatParams, useQueryStatParamsCache, whereClause, whereClauseColumns } from '@/shared/query/useQueryStatParams'
+import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import { createFixedSpaceProcessor } from '@/shared/utils/processors/processors'
 import { bestMV } from '@/db/schema'
 import { useMeta } from '@/shared/composition/useMeta'
@@ -43,9 +43,10 @@ const params = useQueryStatParams()
 const cache = useQueryStatParamsCache(params)
 
 
-const mv = bestMV('player_coverage', params)
+const coverageData = queryComputedFirst(() => {
+  const mv = bestMV('player_coverage', params)
 
-const query = mv ? `
+  return mv ? `
   select uniqMerge(uniq) as data
   from ${mv}
   ${whereClause(params)}`
@@ -54,9 +55,7 @@ const query = mv ? `
   from Event_OnBattleResult
   ${whereClause(params)}`
 
-const coverageData = queryAsyncFirst(query, { data: 0 }, { enabled, cache, settings: { query_cache_nondeterministic_function_handling: 'save' } })
-
-console.log(bestMV('player_coverage', params))
+}, { data: 0 }, { enabled, cache, settings: { query_cache_nondeterministic_function_handling: 'save' } })
 
 
 

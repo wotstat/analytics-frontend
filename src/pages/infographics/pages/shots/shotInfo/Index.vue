@@ -166,7 +166,7 @@
 import { dbIndexToDate, query, RESTRICTED_COLUMNS } from '@/db'
 import { computed, onMounted, ref, shallowRef, watch, useTemplateRef } from 'vue'
 import { useDraggable, useMediaQuery } from '@vueuse/core'
-import { useRoute, useRouter } from 'vue-router'
+import { useShotQueryStorage } from '../useShotQueryStorage'
 import InfoTable from './InfoTable.vue'
 import { getArenaName, getTankName } from '@/shared/i18n/i18n'
 import { sec2minsec } from '@/shared/utils/time'
@@ -337,29 +337,27 @@ const thirdTable = (s: Shot) => [
   ['Автоприцел', s.autoAim ? 'Да' : 'Нет']
 ]
 
-const router = useRouter()
-const route = useRoute()
+const shotStorage = useShotQueryStorage()
 
 const barProgress = useTemplateRef<HTMLElement>('barProgress')
 const dragProgress = ref(0)
 
-function updateProgress(t: PointerEvent, shoudReplace = true) {
+function updateProgress(t: PointerEvent) {
   if (!barProgress.value) return
 
   const bbox = barProgress.value.getBoundingClientRect()
   dragProgress.value = Math.max(0, Math.min(1, (t.clientX - bbox.left) / bbox.width))
 
-  updateDisplayIndex(shoudReplace)
+  updateDisplayIndex()
 }
 
-function updateDisplayIndex(shoudReplace: boolean) {
+function updateDisplayIndex() {
   const max = Math.max(0, (allShots.value?.length ?? 0) - 1)
   const index = Math.round(dragProgress.value * max)
   if (index < 0 || index >= (allShots.value?.length ?? 0)) return
   if (index === shotIndex.value) return
 
-  if (shoudReplace) router.replace({ query: { ...route.query, shot: allShots.value?.[index].id } })
-  else router.push({ query: { ...route.query, shot: allShots.value?.[index].id } })
+  shotStorage.patch({ shot: allShots.value![index].id }, { history: 'replace', debounce: 150 })
 
 }
 
@@ -367,7 +365,10 @@ const { isDragging: isBarDragging } = useDraggable(barProgress, {
   axis: 'x',
   onStart: (e, t) => updateProgress(t),
   onMove: (e, t) => updateProgress(t),
-  onEnd: (e, t) => updateProgress(t, false),
+  onEnd: (e, t) => {
+    updateProgress(t)
+    void shotStorage.flush('shot')
+  },
   preventDefault: true,
   stopPropagation: true,
 })
@@ -538,7 +539,7 @@ function changeShot(delta: number) {
   if (nextIndex >= allShots.value.length || nextIndex < 0) return
 
   const nextShot = allShots.value[nextIndex]
-  router.push({ query: { ...route.query, shot: nextShot.id } })
+  shotStorage.params.shot.value = nextShot.id
 }
 
 watch(() => props.shotID, () => {

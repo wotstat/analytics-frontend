@@ -1,7 +1,7 @@
 <template>
   <div class="settings">
     <div class="line-main">
-      <NicknameInput :syncToRoute="true" class="nickname" v-model="nickname" v-if="props.showNameInput" />
+      <NicknameInput @clear="emit('clearNickname')" class="nickname" v-model="nickname" v-if="props.showNameInput" />
 
       <div class="game-select">
         <div class="vr" v-if="props.showNameInput"></div>
@@ -29,8 +29,8 @@ import NicknameInput from './nicknameInput/NicknameInput.vue'
 import { computed, watch, watchEffect } from 'vue'
 import { useI18n } from '@/shared/i18n/useI18n'
 import i18n from '@/shared/game/comp7/i18n.json'
-import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router'
-import { LONG_CACHE, queryAsync, success } from '@/db'
+import { regions, useOnslaughtQueryStorage, type OnslaughtRegion } from '../useOnslaughtQueryStorage'
+import { LONG_CACHE, queryComputed, success } from '@/db'
 import { getRegionIsoHourOffset } from '@/shared/game/comp7/utils'
 
 const { t } = useI18n(i18n)
@@ -40,37 +40,26 @@ const props = defineProps<{
   showLive?: boolean
 }>()
 
-const route = useRoute()
-const router = useRouter()
-
-const regions = ['RU', 'EU', 'NA', 'ASIA', 'CN'] as const
-type Region = typeof regions[number] | 'CT'
+const emit = defineEmits<{ clearNickname: [] }>()
+const queryStorage = useOnslaughtQueryStorage()
 
 const seasons = defineModel<{ region: string, season: string, start: string }[]>('seasons')
 const selectedSeason = defineModel<string | null>('season')
-const selectedRegion = defineModel<Region>('region')
+const selectedRegion = defineModel<OnslaughtRegion>('region')
 const nickname = defineModel<string>('nickname')
 const currentSeasons = computed(() => seasons.value?.filter(s => s.region === selectedRegion.value) || [])
 
-selectedSeason.value = typeof route.query.season === 'string' ? route.query.season : null
-selectedRegion.value = typeof route.query.region === 'string' ? route.query.region as Region : 'RU'
-
 function changeSeason(season: string) {
-  if (season === selectedSeason.value) return
-  void router.push({ query: { ...route.query, region: selectedRegion.value, season } })
+  queryStorage.patch({ season })
 }
 
-function changeRegion(target: Region) {
-  if (target === selectedRegion.value) return
-  const season = seasons.value?.find(s => s.region === target)?.season
-  const query: LocationQueryRaw = { ...route.query, region: target }
-  if (season) query.season = season
-  else delete query.season
-
-  void router.push({ query })
+function changeRegion(region: OnslaughtRegion) {
+  if (region === queryStorage.params.region.value) return
+  const season = seasons.value?.find(item => item.region === region)?.season ?? null
+  queryStorage.patch({ region, season })
 }
 
-const seasonsData = queryAsync<{ region: string, season: string, start: string }>(`
+const seasonsData = queryComputed<{ region: string, season: string, start: string }>(() => `
   select region, season,
         min(toStartOfDay(dateTime + interval ${getRegionIsoHourOffset(selectedRegion.value ?? 'RU')} hour)) as start
   from Event_OnComp7Info
@@ -81,24 +70,15 @@ const seasonsData = queryAsync<{ region: string, season: string, start: string }
 
 watchEffect(() => seasons.value = seasonsData.value?.data ?? [])
 
-watch([() => route.query.region, () => route.query.season, seasons], () => {
-  const region = typeof route.query.region === 'string' ? route.query.region as Region : 'RU'
-  const requestedSeason = typeof route.query.season === 'string' ? route.query.season : null
-  const regionSeasons = seasons.value?.filter(s => s.region === region) ?? []
-  const season = seasonsData.value.status === success
-    ? regionSeasons.some(s => s.season === requestedSeason)
-      ? requestedSeason
-      : regionSeasons[0]?.season ?? null
-    : requestedSeason
-
-  selectedRegion.value = region
-  selectedSeason.value = season
-
-  if (route.query.region === region && requestedSeason === season) return
-  const query: LocationQueryRaw = { ...route.query, region }
-  if (season) query.season = season
-  else delete query.season
-  void router.replace({ query })
+watch([queryStorage.params.region, queryStorage.params.season, seasonsData], () => {
+  if (seasonsData.value.status !== success) return
+  const region = queryStorage.params.region.value
+  const requestedSeason = queryStorage.params.season.value
+  const regionSeasons = seasonsData.value.data.filter(item => item.region === region)
+  const season = regionSeasons.some(item => item.season === requestedSeason)
+    ? requestedSeason
+    : regionSeasons[0]?.season ?? null
+  if (season !== requestedSeason) queryStorage.patch({ season }, { history: 'replace' })
 }, { immediate: true })
 
 </script>

@@ -92,7 +92,7 @@
 
 <script setup lang="ts">
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
-import { queryAsync, queryAsyncFirst } from '@/db'
+import { queryComputed, queryComputedFirst } from '@/db'
 import { computed, watchEffect, useTemplateRef } from 'vue'
 import { useElementVisibility } from '@vueuse/core'
 import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
@@ -122,9 +122,9 @@ const enabled = useElementVisibility(container)
 
 const damageLabels = new Array(21).fill(0).map((v, i) => `${i == 10 ? '' : i < 10 ? '-' : '+'}${Math.abs((i - 10) * 2.5)}%`)
 
-const totalShots = queryAsyncFirst(`select countIf(arrayMax(results.shotDamage) > 0) as data from Event_OnShot ${whereClause(params)}`, { data: 0 }, { enabled, cache })
+const totalShots = queryComputedFirst(() => `select countIf(arrayMax(results.shotDamage) > 0) as data from Event_OnShot ${whereClause(params)}`, { data: 0 }, { enabled, cache })
 
-const damageDistributionResult = queryAsync<{ k: number, count: number }>(`
+const damageDistributionResult = queryComputed<{ k: number, count: number }>(() => `
 with arrayMax(results.shotDamage) as dmg,
      indexOf(results.shotDamage, dmg) as idx,
      results.shotHealth[idx] as health,
@@ -142,7 +142,7 @@ group by k
 having k between -10 and 10
 order by k;`, { enabled, cache })
 
-const damageAggregatedResult = queryAsyncFirst(`
+const damageAggregatedResult = queryComputedFirst(() => `
 with arrayMax(results.shotDamage) as dmg,
      indexOf(results.shotDamage, dmg) as idx,
      results.shotHealth[idx] as health,
@@ -158,7 +158,7 @@ where shellTag not in ('HIGH_EXPLOSIVE', 'FLAME')
 ${whereClause(params, { withWhere: false })};
 `, { less: 0, more: 0, avgDamage: 0 }, { enabled, cache })
 
-const safeStillResult = queryAsyncFirst(`
+const safeStillResult = queryComputedFirst(() => `
 with arrayMax(results.shotDamage) as dmg,
     indexOf(results.shotDamage, dmg) as idx,
     results.shotHealth[idx] as health,
@@ -171,7 +171,7 @@ where shellTag != 'HIGH_EXPLOSIVE' and shellTag != 'FLAME'
 ${whereClause(params, { withWhere: false })}
 `, { stilled: 0, saved: 0 }, { enabled, cache })
 
-const byShellResult = queryAsync<{ shellTag: string, percentDamage: number, percentNoDamage: number }>(`
+const byShellResult = queryComputed<{ shellTag: string, percentDamage: number, percentNoDamage: number }>(() => `
 with arrayMax(results.shotDamage) as dmg,
      length(results.shotDamage) as hits,
      countIf(hits > 0) as hitCount
@@ -182,8 +182,10 @@ from Event_OnShot
 ${whereClause(params)}
 group by shellTag;`, { enabled, cache })
 
-const healthEnoughBestMV = bestMV('event_OnShot_health_damage', params)
-const healthEnoughQuery = healthEnoughBestMV ? `
+const smallDamageResult = queryComputed<{ healthEnough: number, count: number }>(() => {
+  const healthEnoughBestMV = bestMV('event_OnShot_health_damage', params)
+
+  return healthEnoughBestMV ? `
 select healthEnough, countMerge(count) as count
 from ${healthEnoughBestMV}
 where healthEnough between 1 and 5
@@ -198,7 +200,7 @@ ${whereClause(params, { withWhere: false })}
 group by healthEnough;
 `
 
-const smallDamageResult = queryAsync<{ healthEnough: number, count: number }>(healthEnoughQuery, { enabled, cache })
+}, { enabled, cache })
 
 
 const smallDamageData = computed(() => {
@@ -233,7 +235,7 @@ const damageK = computed(() => {
   return more == 0 ? 0 : less / (more + less)
 })
 
-const onShotResult = queryAsyncFirst(`
+const onShotResult = queryComputedFirst(() => `
 select
   sum(firedCount) as fired,
   sum(ammoBayDestroyedFragsCount) as ammoBayDestroyed,

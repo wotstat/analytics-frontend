@@ -243,7 +243,7 @@
 import { setFeatureVisit } from '@/shared/uiKit/newFeatureBadge/newFeatureBadge'
 import TeamLevelTable from '@/pages/infographics/shared/widgets/TeamLevelTable.vue'
 import { DAY_CACHE, query, queryComputed, type QueryOptions } from '@/db'
-import { computed, onUnmounted, ref, watch, watchEffect } from 'vue'
+import { computed, ref, watch, watchEffect } from 'vue'
 import LevelSwitcher from './LevelSwitcher.vue'
 import { refDebounced, useDebounce } from '@vueuse/core'
 
@@ -254,8 +254,8 @@ import { roundProcessor, createPercentProcessor, romanNumberProcessor } from '@/
 import CompareCard from './CompareCard.vue'
 import { sec2minsec } from '@/shared/utils/time'
 import GameVersionSelectorBadges from '@/shared/game/selectors/gameVersionSelector/GameVersionSelectorBadges.vue'
-import { OptionalRegionVersion } from '@/shared/game/selectors/gameVersionSelector/utils.ts'
-import { useRoute, useRouter } from 'vue-router'
+import { useQueryStorage } from '@/shared/ui/queryStorage/useQueryStorage'
+import { compareQueryParams } from './compareQueryParams'
 import BallisticDistributionChart from './charts/BallisticDistributionChart.vue'
 import ComparisonBarChart from './charts/ComparisonBarChart.vue'
 import type { ComparisonBarChartData } from './charts/ComparisonBarChart'
@@ -272,59 +272,9 @@ const queryOptions = {
   proxyCache: true,
 } satisfies QueryOptions
 
-const route = useRoute()
-const router = useRouter()
-
-function parseVersionQuery(value: unknown): Set<OptionalRegionVersion> | null {
-  const queryValue = Array.isArray(value) ? value[0] : value
-  if (typeof queryValue !== 'string') return null
-
-  const versions = new Set<OptionalRegionVersion>()
-  for (const value of queryValue.split(',')) {
-    const match = value.match(/^([a-z]+)_(\d+(?:-\d+)*)$/i)
-    if (!match) continue
-
-    versions.add({
-      region: match[1].toUpperCase(),
-      version: match[2].replaceAll('-', '.'),
-    })
-  }
-
-  return versions
-}
-
-function serializeVersions(versions: Set<OptionalRegionVersion>): string {
-  return [...versions]
-    .filter(version => version.region)
-    .map(version => `${version.region!.toLowerCase()}_${version.version.replaceAll('.', '-')}`)
-    .join(',')
-}
-
-function updateVersionQuery() {
-  const query = { ...route.query }
-  const leftVersions = serializeVersions(modelLeftVersions.value)
-  const rightVersions = serializeVersions(modelRightVersions.value)
-
-  if (leftVersions) query.a = leftVersions
-  else delete query.a
-
-  if (rightVersions) query.b = rightVersions
-  else delete query.b
-
-  router.push({ query })
-}
-
-const modelLeftVersions = ref(parseVersionQuery(route.query.a) ?? new Set<OptionalRegionVersion>([{ region: 'RU', version: '1.36.0' }]))
-const modelRightVersions = ref(parseVersionQuery(route.query.b) ?? new Set<OptionalRegionVersion>([{ region: 'RU', version: '1.36.1' }]))
-
-watch([modelLeftVersions, modelRightVersions], updateVersionQuery, { deep: true })
-
-onUnmounted(() => {
-  const query = { ...route.query }
-  delete query.a
-  delete query.b
-  router.push({ query })
-})
+const { params: { leftVersions: modelLeftVersions, rightVersions: modelRightVersions } } = useQueryStorage(
+  compareQueryParams, { history: 'push' }
+)
 
 const leftVersions = refDebounced(computed(() => new Set([...modelLeftVersions.value.values()]
   .filter(v => v.region)

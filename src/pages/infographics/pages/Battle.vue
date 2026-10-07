@@ -102,7 +102,7 @@ import MiniBarNew from '@/pages/infographics/shared/widgets/charts/MiniBarNew.vu
 import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
 import { getColor } from '@/pages/infographics/shared/bloomColors'
 import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
-import { queryAsync, queryAsyncFirst } from '@/db'
+import { queryComputed, queryComputedFirst } from '@/db'
 import { useElementVisibility } from '@vueuse/core'
 import { computed, useTemplateRef, watchEffect } from 'vue'
 
@@ -133,7 +133,7 @@ const winrateSegmentDefinitions = [
 type BattleResult = typeof winrateSegmentDefinitions[number]['result']
 const winrateSegmentPaintOrder: Record<BattleResult, number> = { lose: 0, tie: 1, win: 2 }
 
-const dataStart = queryAsyncFirst(`
+const dataStart = queryComputedFirst(() => `
 select sum(inQueueWaitTime + loadTime + preBattleWaitTime) / 1000 / 60 / 60 as waitTime,
        count(*)                                                             as battleCount,        
        avg(preBattleWaitTime + 
@@ -143,14 +143,14 @@ from Event_OnBattleStart
 ${whereClause(params, { isBattleStart: true })}
 `, { waitTime: 0, avgWaitTime: 0, avgInQueue: 0, battleCount: 0 }, { enabled: visible, cache })
 
-const dataResult = queryAsyncFirst(`
+const dataResult = queryComputedFirst(() => `
 select round(avg(personal.lifeTime))    as lifetime,
        round(avg(duration))             as duration,
        sum(personal.lifeTime) / 60 / 60 as inBattle
 from Event_OnBattleResult
 ${whereClause(params)};`, { lifetime: 0, duration: 0, inBattle: 0 }, { enabled: visible, cache })
 
-const durationResult = queryAsync<{ percent: number, duration: number, lifetime: number }>(`
+const durationResult = queryComputed<{ percent: number, duration: number, lifetime: number }>(() => `
 select duration, lifetime, count / sum(count) over () as percent
 from (select ceil(duration / 60)         as duration,
              count(*)                    as count,
@@ -160,7 +160,7 @@ from (select ceil(duration / 60)         as duration,
       group by duration
       order by duration)`, { enabled: visible, cache })
 
-const avgTypeResult = queryAsyncFirst(`
+const avgTypeResult = queryComputedFirst(() => `
 select avg(ltCount / playersCount) as LT,
       avg(htCount / playersCount) as HT,
       avg(mtCount / playersCount) as MT,
@@ -170,8 +170,8 @@ from Event_OnBattleResult
 ${whereClause(params)};
 `, { LT: 0, HT: 0, MT: 0, AT: 0, SPG: 0 }, { enabled: visible, cache })
 
-const winrateResult = queryAsync<{ count: number, result: BattleResult }>(
-  `select count(*) as count, result from Event_OnBattleResult ${whereClause(params)} group by result`,
+const winrateResult = queryComputed<{ count: number, result: BattleResult }>(
+  () => `select count(*) as count, result from Event_OnBattleResult ${whereClause(params)} group by result`,
   { enabled: visible, cache }
 )
 

@@ -3,7 +3,7 @@
 
   <div class="onslaught-page">
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" v-model:region="selectedRegion"
-      v-model:seasons="seasons" :showNameInput="true" />
+      v-model:seasons="seasons" :showNameInput="true" @clear-nickname="nicknameStorage.flush()" />
 
     <div class="live-line">
       <Live :show="showLiveBadge" />
@@ -43,6 +43,7 @@ import DayChart from './dayChart/DayChart.vue'
 import { dateToDbDate, query, queryComputedFirst } from '@/db'
 import { gameToRegion, regionToGame } from '@/shared/game/wot'
 import Settings from '../shared/settings/Settings.vue'
+import { useOnslaughtQueryStorage, useOnslaughtNicknameStorage } from '../shared/useOnslaughtQueryStorage'
 import { computedWithControl, onKeyStroke, refDebounced, useElementBounding } from '@vueuse/core'
 import { DayChartData } from './types'
 import MainStat from './mainStat/MainStat.vue'
@@ -84,10 +85,10 @@ const daySelectTipBubble = useTemplateRef<InstanceType<typeof TipSelectDay>>('da
 const dayChart = useTemplateRef<HTMLElement>('dayChart')
 
 const selectedDayIndex = ref<number | null>(null)
-const selectedSeason = ref<string | null>(null)
+const { params: { season: selectedSeason, region: selectedRegion } } = useOnslaughtQueryStorage()
 const seasons = ref<{ region: string, season: string, start: string, end: string }[]>([])
-const selectedRegion = ref<'RU' | 'EU' | 'NA' | 'ASIA' | 'CT'>('RU')
-const nickname = ref<string>('')
+const nicknameStorage = useOnslaughtNicknameStorage()
+const { nickname } = nicknameStorage.params
 const debouncedNickname = refDebouncedCheck(nickname, (n, old) => old.length > 0 ? 500 : 0)
 const isLoading = ref(false)
 const game = computed(() => regionToGame(selectedRegion.value))

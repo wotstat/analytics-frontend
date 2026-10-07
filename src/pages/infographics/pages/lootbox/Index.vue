@@ -109,9 +109,9 @@
 </template>
 
 <script lang="ts" setup>
+import { useQueryStatParams } from '@/shared/query/useQueryStatParams'
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import { createFixedSpaceProcessor, createLogProcessor } from '@/shared/utils/processors/processors'
-import { useQueryStatParams } from '@/shared/query/useQueryStatParams'
 import { Status, dateToDbIndex, queryComputed, queryComputedFirst, success } from '@/db'
 import { computed, ref } from 'vue'
 import TableSection from './TableSection.vue'
@@ -129,7 +129,8 @@ import {
   type LocalizedName
 } from '@/shared/i18n/i18n'
 import LootboxList from './lootboxList/Index.vue'
-import { useRoute } from 'vue-router'
+import { useQueryStorage } from '@/shared/ui/queryStorage/useQueryStorage'
+import { stringListParam } from '@/shared/query/statQueryParams'
 import { useMeta } from '@/shared/composition/useMeta'
 import { useLocalStorage } from '@vueuse/core'
 import { useLootboxQueryOptions } from './useLootboxQueryOptions'
@@ -156,8 +157,9 @@ function localeFor(table: keyof typeof localizationQueries) {
   return localizationQueries[table]
 }
 
-const route = useRoute()
-const selectedContainer = ref<string[]>((route.query.selectedLootbox as string)?.split(',') || [])
+const { params: { selectedContainer } } = useQueryStorage({
+  selectedContainer: { ...stringListParam, label: 'selected-lootbox' }
+}, { history: 'push' })
 
 function whereClause(ignore: ('player' | 'tag' | 'date' | 'region')[] = []) {
   const result = []

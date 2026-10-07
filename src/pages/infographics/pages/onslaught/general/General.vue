@@ -41,6 +41,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, shallowRef, useTemplateRef, watch } from 'vue'
 import Settings from '../shared/settings/Settings.vue'
+import { useOnslaughtQueryStorage } from '../shared/useOnslaughtQueryStorage'
 import RankDistributionChart from './rankDistribution/RankDistributionChart.vue'
 import type { RankDistributionItem } from './rankDistribution/types'
 import { useSeasonInterval } from '../shared/useSeasonInterval.ts'
@@ -76,8 +77,7 @@ useStableScrollbarGutter()
 setFeatureVisit('onslaught-general')
 
 const seasons = ref<{ region: string, season: string, start: string }[]>([])
-const selectedSeason = ref<string | null>(null)
-const selectedRegion = ref<'RU' | 'EU' | 'NA' | 'ASIA' | 'CN' | 'CT'>('RU')
+const { params: { season: selectedSeason, region: selectedRegion } } = useOnslaughtQueryStorage()
 const selectedRankDistributionItems = ref<RankDistributionItem[]>([])
 const selectedDays = ref<string[]>([])
 const isDaySelectorOpen = ref(false)

@@ -20,6 +20,13 @@ type Entry = {
 
 const entries = [
   {
+    path: 'query-storage',
+    title: 'Query storage',
+    description: 'Параметры URL, общая память, вложенные компоненты, KeepAlive, debounce и история.',
+    group: 'uiKit',
+    component: () => import('./pages/queryStorage/Index.vue'),
+  },
+  {
     path: 'options-select',
     title: 'OptionsSelect',
     description: 'Контекстное меню на компьютере, нативный select на сенсорном устройстве, общая модель и disabled.',

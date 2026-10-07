@@ -3,7 +3,7 @@
 Два слоя общих компонентов, и это **не** «старое и новое»:
 
 - **`src/shared/uiKit/`** — базовые компоненты без проектных зависимостей: их можно вынуть и перенести в другой проект как есть.
-- **`src/shared/ui/`** — имплементации этих баз под специфику сайта, с проектными зависимостями. Именно они используются на страницах.
+- **`src/shared/ui/`** — имплементации этих баз под специфику сайта, с проектными зависимостями, а также общие механизмы состояния интерфейса (`queryStorage/`). Именно они используются на страницах.
 
 Примеры связки: `ui/tooltip/textTooltip.ts` оборачивает базовую `uiKit/tooltip/textTooltip`, подставляя проектный `popoverViewportOffset` из шапки сайта; `ui/tipBubble/TipBubble.vue` — обёртка над `uiKit/tipBubble/useTipBubble` с проектными дефолтами (`--content-page-margin`, политика `autoExtend`), и все страницы импортируют именно её.
 
@@ -44,6 +44,7 @@
 
 ## `src/shared/ui/` — проектный слой
 
+- `queryStorage/` — универсальная синхронизация реактивных параметров с URL: `useQueryStorage.ts`, координатор и типы. Описания параметров статистики и `useQueryStatParams` находятся отдельно в `shared/query/`; зависимости от них в ядре нет. API и жизненный цикл описаны в [10-query-storage.md](10-query-storage.md).
 - `tooltip/textTooltip.ts` — `vTextTooltip`: базовая директива плюс `popoverViewportOffset` из шапки сайта.
 - `tipBubble/` — `TipBubble.vue`, `TipBubbleText.vue`: обёртки над `uiKit/tipBubble` с проектными дефолтами.
 - `popover/PanelPopover.vue` — панель сайта поверх `uiKit/popover/PopoverAutoClose`; интерфейс ниже.

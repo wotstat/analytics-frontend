@@ -1,6 +1,6 @@
 <template>
   <div class="player-nickname">
-    <SearchLine v-model="nickname" name="nickname" :placeholder="'Никнейм'" @clear="handleClear">
+    <SearchLine v-model="nickname" name="nickname" :placeholder="'Никнейм'" @clear="emit('clear')">
       <template #icon>
         <PlayerIcon />
       </template>
@@ -11,56 +11,10 @@
 
 <script setup lang="ts">
 import SearchLine from '@/shared/game/selectors/components/searchLine/SearchLine.vue'
-import { onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import PlayerIcon from './player.svg'
-import { refDebounced } from '@vueuse/core'
 
-const props = defineProps<{
-  syncToRoute?: boolean
-  syncDebounceTime?: number
-}>()
-
-const nickname = defineModel({
-  type: String,
-  required: false,
-  default: '',
-})
-
-
-const route = useRoute()
-const router = useRouter()
-onMounted(() => {
-  if (props.syncToRoute) {
-    nickname.value = route.query.nickname as string || ''
-  }
-})
-
-watch(route, (newRoute) => {
-  if (!props.syncToRoute) return
-
-  const newNickname = newRoute.query.nickname as string || ''
-  if (newNickname !== nickname.value) nickname.value = newNickname
-})
-
-const debouncedNickname = refDebounced(nickname, props.syncDebounceTime ?? 1000)
-
-watch(debouncedNickname, (newNickname) => {
-  if (!props.syncToRoute) return
-  updateQuery(newNickname)
-})
-
-function handleClear() {
-  updateQuery('')
-}
-
-function updateQuery(newNickname: string) {
-  const query = { ...route.query }
-  if (newNickname) query.nickname = newNickname
-  else delete query.nickname
-
-  router.push({ ...route, query })
-}
+const nickname = defineModel<string>({ default: '' })
+const emit = defineEmits<{ clear: [] }>()
 
 </script>
 

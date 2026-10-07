@@ -22,7 +22,7 @@
 | `/widgets/:widget*` | `pages/widgets/Index.vue` | Каталог/просмотр OBS-виджетов (iframe на widgets.wotstat.info) |
 | `/debug` + дети | `pages/debug/Debug.vue` | Песочница технических фичей — см. ниже |
 
-Route meta, используемые лейаутом `/session`: `hideTankList`, `customTitle`, `preventRemountOnStatChange`, глобальные `clearPage`, `hideHeader`.
+Route meta, используемые лейаутом `/session`: `hideTankList`, `customTitle`, глобальные `clearPage`, `hideHeader`. Общими фильтрами владеют страницы и видимые элементы настройки; layout не подключает хранилище параметров.
 
 `scrollBehavior`: скролл вверх только при смене корневого matched-маршрута.
 
@@ -53,9 +53,9 @@ src/
 │  └─ shared/        — общие для страниц: header, sidebarLayout, problems (банеры инцидентов)
 ├─ shared/        — переиспользуемый код
 │  ├─ uiKit/      — базовые компоненты без проектных зависимостей, переносимые (см. 05)
-│  ├─ ui/         — их имплементации под специфику сайта; на страницах используются эти (см. 05)
+│  ├─ ui/         — UI сайта и общие механизмы интерфейса, включая queryStorage (см. 05)
 │  ├─ game/       — игровой домен: режимы, танки, арены, селекторы (см. 07)
-│  ├─ query/      — StatParams из URL + генерация WHERE (см. 03)
+│  ├─ query/      — фильтры статистики, StatParams + генерация WHERE (см. 03)
 │  ├─ i18n/       — локализация имён танков/карт из БД + мини-хелпер useI18n
 │  ├─ external/   — URL поддоменов, realtime WS, метрика, wotInspector
 │  ├─ composition/, utils/, global/ — хелперы
@@ -68,7 +68,7 @@ src/
 - Алиас `@` → `/src` (vite.config + tsconfig).
 - ESLint: **одинарные кавычки**, **без точек с запятой** (`semi: never`). Соблюдай при генерации кода.
 - Компоненты: PascalCase `.vue`, композаблы `useXxx.ts`, попапки по фичам — компонент + рядом его `utils.ts`/`store.ts`/`i18n.json`.
-- Состояние страницы кладут в **URL query** (см. `useQueryStatParams`, `useQueryParamStorage`) и/или `useLocalStorage`. Глобальных сторов нет; модульный синглтон-стейт — просто `ref` на уровне модуля (пример: `pages/services/bob25/store.ts`, `shared/global/globalPreferred.ts`).
+- Состояние страницы кладут в **URL query** через `shared/ui/queryStorage/useQueryStorage` (общий реестр с sessionStorage, жизненным циклом владельцев и историей; см. [10-query-storage.md](10-query-storage.md)) и/или `useLocalStorage`. Ядро не зависит от фильтров и страниц. В `shared/query/` находятся описания фильтров статистики и `useQueryStatParams`, который адаптирует их для запросов. Глобальных сторов нет; модульный синглтон-стейт — просто `ref` на уровне модуля (пример: `pages/services/bob25/store.ts`, `shared/global/globalPreferred.ts`).
 - Многие страницы грузят данные лениво по видимости карточки: `useElementVisibility` + опция `enabled` у query-хелперов.
 - Markdown-файлы импортируются как Vue-компоненты (`import { VueComponent } from './index.md'`).
 - Комментарии и тексты — по-русски.

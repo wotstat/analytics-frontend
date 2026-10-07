@@ -1,7 +1,7 @@
 import { DEFAULT_CACHE, MEDIUM_CACHE, SHORT_CACHE, dateToDbDate, dateToDbIndex, type CachePolicy } from '@/db'
 import { customBattleModes } from '@/shared/game/wot'
-import { MaybeRefOrGetter, Ref, ShallowRef, computed, ref, shallowRef, toValue, watchEffect } from 'vue'
-import { useRoute } from 'vue-router'
+import { type MaybeRefOrGetter, type Ref, computed, toValue } from 'vue'
+import { useStatQueryStorage } from './statQueryParams'
 
 export type TankType = 'LT' | 'MT' | 'HT' | 'AT' | 'SPG';
 export type TankLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
@@ -27,100 +27,25 @@ export type StatParams = {
 };
 
 export function useQueryStatParams() {
-  const route = useRoute()
+  const { params } = useStatQueryStorage()
+  return computed<StatParams>(() => {
+    const { nickname, level, types, tanks, battleMode, battleId, lastX, from, to } = params
+    const result: StatParams = {
+      player: nickname.value || null,
+      level: level.value.length ? [...level.value] : null,
+      types: types.value.length ? [...types.value] : null,
+      tanks: tanks.value.length ? [...tanks.value] : null,
+      battleMode: battleMode.value,
+      battleId: battleId.value.length ? [...battleId.value] : null,
+      period: 'allTime'
+    }
 
-  const result = ref<StatParams>({
-    period: 'allTime',
-    player: null,
-    level: null,
-    types: null,
-    tanks: null,
-    battleMode: 'normalAny',
-    battleId: null
+    if (result.battleId) return result
+    if (from.value && to.value) result.period = { type: 'fromTo', from: from.value, to: to.value }
+    else if (from.value) result.period = { type: 'fromToNow', from: from.value }
+    else if (lastX.value !== undefined) result.period = { type: 'lastX', count: lastX.value }
+    return result
   })
-
-  watchEffect(() => {
-
-    const temp: StatParams = {
-      period: 'allTime',
-      player: null,
-      level: null,
-      types: null,
-      tanks: null,
-      battleMode: 'normalAny',
-      battleId: null
-    }
-
-    if ('nickname' in route.query) temp.player = route.query.nickname as string
-    if ('level' in route.query) {
-      const level = route.query.level as string
-      const splitted = level.split(',')
-      temp.level = splitted
-        .map(t => parseInt(t))
-        .filter(t => !isNaN(t))
-        .filter(t => t >= 1 && t <= 11) as TankLevel[]
-    }
-
-    if ('mode' in route.query) {
-      const battleMode = route.query.mode as string
-
-      if (battleMode === 'any') {
-        temp.battleMode = 'any'
-      } else if (battleMode in customBattleModes) {
-        temp.battleMode = battleMode as keyof typeof customBattleModes
-      }
-    }
-
-    if ('type' in route.query) {
-      const type = route.query.type as string
-      const splitted = type.split(',')
-      temp.types = splitted
-        .filter(t => ['LT', 'MT', 'HT', 'AT', 'SPG'].includes(t)) as TankType[]
-    }
-
-    if ('tank' in route.query) {
-      const tank = route.query.tank as string
-      const splitted = tank.split(',')
-      temp.tanks = splitted
-    }
-
-    if ('battleId' in route.query) {
-      const battleId = route.query.battleId as string
-      const splitted = battleId.split(',')
-      temp.battleId = splitted
-    } else if ('lastX' in route.query) {
-      const lastX = route.query.lastX as string
-      const count = parseInt(lastX)
-      if (!isNaN(count)) {
-        temp.period = {
-          type: 'lastX',
-          count
-        }
-      }
-    } else if ('from' in route.query && 'to' in route.query) {
-      const from = new Date(route.query.from as string)
-      const to = new Date(route.query.to as string)
-      if (!isNaN(from.getTime()) && !isNaN(to.getTime())) {
-        temp.period = {
-          type: 'fromTo',
-          from,
-          to
-        }
-      }
-    } else if ('from' in route.query) {
-      const from = new Date(route.query.from as string)
-      if (!isNaN(from.getTime())) {
-        temp.period = {
-          type: 'fromToNow',
-          from
-        }
-      }
-    }
-
-    result.value = temp
-
-  })
-  return result
 }
 
 export function getQueryStatParamsCache(params: StatParams) {

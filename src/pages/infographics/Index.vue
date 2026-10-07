@@ -3,7 +3,7 @@
   <SidebarLayout :links>
     <template #content-top>
       <template v-if="!route.meta.customTitle">
-        <SettingsTitle :reload="false">
+        <SettingsTitle>
           Сессионная инфографика
         </SettingsTitle>
         <h3>
@@ -16,7 +16,7 @@
     </template>
 
     <template #default>
-      <RouterView v-slot="{ Component }" :key="key">
+      <RouterView v-slot="{ Component }">
         <KeepAlive>
           <component :is="Component" />
         </KeepAlive>
@@ -52,10 +52,8 @@
 
 import SettingsTitle from '@/pages/infographics/settings/SettingsTitle.vue'
 import StatParamsTitle from '@/pages/infographics/settings/StatParamsTitle.vue'
-import { useQueryStatParams } from '@/shared/query/useQueryStatParams'
 import { totalRequests, totalElapsed, totalRowsRead } from '@/db'
 import { countLocalize } from '@/shared/i18n/i18n'
-import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import TankList from './shared/tankListSetup/TankList.vue'
 
@@ -79,15 +77,6 @@ const links: SidebarLink[] = [
 ]
 
 const route = useRoute()
-
-const key = ref(0)
-
-const stat = useQueryStatParams()
-watch(stat, (current, old) => {
-  if (JSON.stringify(current) == JSON.stringify(old)) return
-  if (route.meta.preventRemountOnStatChange) return
-  key.value++
-})
 
 </script>
 

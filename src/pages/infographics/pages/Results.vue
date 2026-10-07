@@ -157,12 +157,12 @@
 
 <script setup lang="ts">
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
-import { Status, mergeStatuses, queryAsync, queryAsyncFirst, queryComputed } from '@/db'
+import { Status, mergeStatuses, queryComputed, queryComputedFirst } from '@/db'
 import { useElementVisibility, useLocalStorage } from '@vueuse/core'
 import { computed, useTemplateRef } from 'vue'
 import PlayerResultTable from '@/pages/infographics/shared/widgets/PlayerResultTable.vue'
 import { createPercentProcessor, createFixedProcessor, createFixedSpaceProcessor, createLogProcessor } from '@/shared/utils/processors/processors'
-import { getQueryStatParamsCache, useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
+import { useQueryStatParams, getQueryStatParamsCache, useQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import TeamLevelTable from '@/pages/infographics/shared/widgets/TeamLevelTable.vue'
 import { countLocalize } from '@/shared/i18n/i18n'
 import OptionsSelect from '@/shared/ui/optionsSelect/OptionsSelect.vue'
@@ -245,9 +245,9 @@ const functionalResults = queryComputed<{
   ${fn(true)}(enemyTeamCount - enemyTeamSurvivedCount, result = 'lose') as allyFragsLose
   from Event_OnBattleResult
   ${whereClause(params)}
-`}, { cache })
+`}, { enabled, cache })
 
-const resultsInfo = queryAsyncFirst(`select 
+const resultsInfo = queryComputedFirst(() => `select
        avg(personal.piercingEnemyHits)           as piercingHits,
        sum(personal.directEnemyHits)             as sumDirect,
        sum(personal.shots)                       as sumShots,
@@ -271,7 +271,7 @@ function getValue(param: typeof resultsList[number][1] | 'enemyFragsWin' | 'ally
   return { data: functionalResults.value.data[0]?.[param] ?? 0, status: functionalResults.value.status as Status }
 }
 
-const turboResult = queryAsyncFirst(`
+const turboResult = queryComputedFirst(() => `
 select max(countTurbo)    as maxTurbo,
        min(countTurbo)    as minTurbo,
        avg(countTurbo)    as avgTurbo,
@@ -282,10 +282,10 @@ from (select allyTeamCount - allyTeamSurvivedCount                              
              duration < 5 * 60 and abs(opponentTeamFrags - playerTeamFrags) > 10 as isTurbo,
              countIf(isTurbo) over (partition by playerName order by playerName, id rows between 9 preceding and current row) as countTurbo
       from Event_OnBattleResult
-      ${whereClause(params)});`, { count: 0, maxTurbo: 0, avgTurbo: 0, medTurbo: 0, minTurbo: 0 }, { enabled: turboVisible, cache: params.value.player ? undefined : { ttl: 3600 } })
+      ${whereClause(params)});`, { count: 0, maxTurbo: 0, avgTurbo: 0, medTurbo: 0, minTurbo: 0 }, { enabled: turboVisible, cache: () => params.value.player ? undefined : { ttl: 3600 } })
 
 function usePlayerDistribution(value: 'Damage' | 'Radio' | 'Kills') {
-  const result = queryAsync<{ playerPosition: number, count: number }>(`
+  const result = queryComputed<{ playerPosition: number, count: number }>(() => `
   select playerTeamPositionBy${value} as playerPosition, count() as count
   from Event_OnBattleResult
   ${whereClause(params)}
@@ -314,11 +314,11 @@ function teamScore(win: boolean) {
   return [left, right]
 }
 
-const teamLevelTableData = queryAsync<{
+const teamLevelTableData = queryComputed<{
   battleType: 1 | 2 | 3,
   position: 0 | -1 | -2,
   percent: number
-}>(`
+}>(() => `
 select length(visibleLevels)       as battleType,
        position,
        sum(count)                 as count,
@@ -332,7 +332,7 @@ from (select visibleLevels,
       group by visibleLevels, tankLevel)
 group by battleType, position
 order by battleType, position;
-`, { enabled, cache: getQueryStatParamsCache(params.value) })
+`, { enabled, cache: () => getQueryStatParamsCache(params.value) })
 </script>
 
 

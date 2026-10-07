@@ -13,6 +13,7 @@ import Install from './pages/install/Index.vue'
 import { AsyncComponentLoader, defineAsyncComponent } from 'vue'
 import PageLoader from './shared/ui/loaders/pageLoader/PageLoader.vue'
 import { debugRoutes } from './pages/debug/routes'
+import { setupQueryStorage } from './shared/ui/queryStorage/useQueryStorage'
 
 
 function asyncPage(loader: AsyncComponentLoader): any {
@@ -81,3 +82,5 @@ export const router = createRouter({
     return { top: 0 }
   },
 })
+
+setupQueryStorage(router)

@@ -5,9 +5,9 @@
       <slot name="sidebar">
         <div class="sticky-sidebar router-links">
           <template v-for="link in links">
-            <QueryPreserveRouterLink :to="link.to" v-if="link != 'separator'">
+            <RouterLink :to="link.to" v-if="link != 'separator'">
               {{ link.labels }}
-            </QueryPreserveRouterLink>
+            </RouterLink>
             <hr v-else>
           </template>
         </div>
@@ -21,9 +21,9 @@
         <slot name="menu-bar">
           <div class="router-links">
             <template v-for="link in links">
-              <QueryPreserveRouterLink :to="link.to" v-if="link != 'separator'">
+              <RouterLink :to="link.to" v-if="link != 'separator'">
                 {{ link.shortLabel ?? link.labels }}
-              </QueryPreserveRouterLink>
+              </RouterLink>
             </template>
           </div>
         </slot>
@@ -37,7 +37,7 @@
 
 <script setup lang="ts">
 import { useElementBounding } from '@vueuse/core'
-import QueryPreserveRouterLink from '@/pages/shared/sidebarLayout/QueryPreserveRouterLink.vue'
+import { RouterLink } from 'vue-router'
 import { computed, watchEffect, useTemplateRef } from 'vue'
 import { headerHeight, useAdditionalHeaderHeight } from '@/pages/shared/header/useAdditionalHeaderHeight.ts'
 import { type SidebarLink } from './utils.ts'

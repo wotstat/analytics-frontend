@@ -3,11 +3,11 @@
 
     <template #sidebar>
       <div class="sticky-sidebar router-links">
-        <QueryPreserveRouterLink to="/onslaught" v-new-feature-badge="'onslaught-general'">
+        <RouterLink to="/onslaught" v-new-feature-badge="'onslaught-general'">
           Общее
-        </QueryPreserveRouterLink>
-        <QueryPreserveRouterLink to="/onslaught/personal">Статистика</QueryPreserveRouterLink>
-        <QueryPreserveRouterLink to="/onslaught/leaderboard">Таблица лидеров</QueryPreserveRouterLink>
+        </RouterLink>
+        <RouterLink to="/onslaught/personal">Статистика</RouterLink>
+        <RouterLink to="/onslaught/leaderboard">Таблица лидеров</RouterLink>
       </div>
     </template>
 
@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
 
-import QueryPreserveRouterLink from '@/pages/shared/sidebarLayout/QueryPreserveRouterLink.vue'
+import { RouterLink } from 'vue-router'
 import SidebarLayout from '@/pages/shared/sidebarLayout/SidebarLayout.vue'
 import { SidebarLink } from '@/pages/shared/sidebarLayout/utils'
 import { setFeatureVisit, vNewFeatureBadge } from '@/shared/uiKit/newFeatureBadge/newFeatureBadge'

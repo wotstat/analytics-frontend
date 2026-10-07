@@ -76,13 +76,13 @@
 import ShotsCircle from '@/pages/infographics/shared/widgets/ShotsCircle.vue'
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import { createFixedSpaceProcessor, createPercentProcessor } from '@/shared/utils/processors/processors'
-import { SHORT_CACHE, queryAsyncFirst } from '@/db'
+import { SHORT_CACHE, queryComputedFirst } from '@/db'
 import { computed, ref, useTemplateRef } from 'vue'
 import { useElementVisibility, useMouseInElement } from '@vueuse/core'
-import { getQueryStatParamsCache, useQueryStatParams, whereClause } from '@/shared/query/useQueryStatParams'
+import { useQueryStatParams, getQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import PopupWindow from '@/shared/ui/components/PopupWindow.vue'
 import ShotInfo from './shotInfo/Index.vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useShotQueryStorage } from './useShotQueryStorage'
 import { useMeta } from '@/shared/composition/useMeta'
 import ShotDistribution from './shotDistribution/ShotDistribution.vue'
 
@@ -93,8 +93,7 @@ useMeta({
 })
 
 
-const route = useRoute()
-const router = useRouter()
+const { params: { shot: selectedShot } } = useShotQueryStorage()
 
 const container = useTemplateRef<HTMLElement>('container')
 const visible = useElementVisibility(container)
@@ -119,13 +118,13 @@ const maskRadius = computed(() => {
   return 1
 })
 
-const shotsCount = queryAsyncFirst(`
+const shotsCount = queryComputedFirst(() => `
 select count() as count 
 from Event_OnShot
 ${whereClause(params)}
-`, { count: 0 }, { enabled: visible, cache: params.value.player ? undefined : SHORT_CACHE })
+`, { count: 0 }, { enabled: visible, cache: () => params.value.player ? undefined : SHORT_CACHE })
 
-const dataResult = queryAsyncFirst(`
+const dataResult = queryComputedFirst(() => `
 select count()                                                                                       as count,
        countIf(length(results.shotDamage) > 0) / count                                               as hit,
        countIf(arrayMax(results.shotDamage) > 0) / count                                             as damaged,
@@ -137,16 +136,15 @@ select count()                                                                  
        countIf(clientMarkerDistance > 300) / count                                                   as dist300
 from Event_OnShot
 ${whereClause(params)}
-`, { count: 0, hit: 0, damaged: 0, first50: 0, first30: 0, full: 0, stopped: 0, dist300: 0 }, { enabled: visible, cache: getQueryStatParamsCache(params.value) })
+`, { count: 0, hit: 0, damaged: 0, first50: 0, first30: 0, full: 0, stopped: 0, dist300: 0 }, { enabled: visible, cache: () => getQueryStatParamsCache(params.value) })
 
-const selectedShot = computed(() => route.query.shot as string | undefined)
 
 function onClickShot(shot: string) {
-  router.push({ query: { ...route.query, shot } })
+  selectedShot.value = shot
 }
 
 function closeShotInfo() {
-  router.push({ query: { ...route.query, shot: undefined } })
+  selectedShot.value = null
 }
 
 </script>

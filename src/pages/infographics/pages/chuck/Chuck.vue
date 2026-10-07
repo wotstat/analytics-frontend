@@ -1,7 +1,7 @@
 <template>
 
   <h2 class="page-title">Очки Чака</h2>
-  <div class="flex ver chuck">
+  <div class="flex ver chuck" ref="container">
     <p>
       Подсчитывает очки по правилам <a href="https://lebwa.tv/landing/chuck-norris-tournament-vk-play-live-2023"
         target="_blank">Турнира Чака</a>. Работает для любых боёв, ничего дополнительно настраивать не нужно.
@@ -91,10 +91,10 @@ import PopupWindow from '@/shared/ui/components/PopupWindow.vue'
 import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
 import ChuckTable from '@/pages/infographics/shared/widgets/ChuckTable.vue'
 import { useQueryStatParams, whereClause } from '@/shared/query/useQueryStatParams'
-import { dbIndexToDate, loading, queryAsync, queryComputed, success } from '@/db'
+import { dbIndexToDate, loading, queryComputed, success } from '@/db'
 import { ChuckResult } from '@/db/schema'
-import { useLocalStorage } from '@vueuse/core'
-import { computed, ref } from 'vue'
+import { useElementVisibility, useLocalStorage } from '@vueuse/core'
+import { computed, ref, useTemplateRef } from 'vue'
 import Timecodes from '../../shared/Timecodes.vue'
 
 import CopyIcon from '@/assets/icons/copy.svg'
@@ -124,6 +124,8 @@ const classSettings = computed(() => {
 const params = useQueryStatParams()
 
 const allow = computed(() => params.value.player != null)
+const visible = useElementVisibility(useTemplateRef<HTMLElement>('container'))
+const enabled = computed(() => allow.value && visible.value)
 
 const response = queryComputed<ChuckResult>(() => `
 with
@@ -172,7 +174,7 @@ array join squads as psquad,
 where psquad = playerSquad and pteam = playerTeam ${withoutObservers.value ? 'and ptag != \'ussr:Observer\'' : ''} and playerSquad != 0 or pname = playerName 
 group by onBattleStartId, arena, result, duration, id, dateTime, spgCount, enemyTeamMaxHealth
 order by id desc
-`, { enabled: allow })
+`, { enabled })
 
 const splittedResult = computed(() => {
   let parts = new Map<string, ChuckResult[]>()
