@@ -118,21 +118,21 @@ export class VehicleHistoryChart extends TimeSeriesChart<HistoryPoint> {
     const todayStart = historyDayStart(today)
 
     for (const row of history) {
-      const { start, end } = historyPeriodWindow(row.periodStart, step, todayStart)
       const value = row[slot] ?? null
-      // Пропущенные периоды и NULL остаются разрывами, а не превращаются в нули.
-      if (previousStart !== null && start > nextHistoryPeriod(previousStart, step)) points.push(null)
-      if (value !== null && Number.isFinite(value)) {
-        points.push({
-          x: (start + end) / 2,
-          y: value,
-          periodStart: row.periodStart,
-          periodEnd: historyDayString(end - DAY),
-          step,
-          battles: row.battles,
-          slot,
-        })
-      } else points.push(null)
+      if (value === null || !Number.isFinite(value)) continue
+
+      const { start, end } = historyPeriodWindow(row.periodStart, step, todayStart)
+      // Пропуски до четырёх дней соединяем без новых точек, более длинные оставляем разрывами.
+      if (previousStart !== null && start - nextHistoryPeriod(previousStart, step) > 4 * DAY) points.push(null)
+      points.push({
+        x: (start + end) / 2,
+        y: value,
+        periodStart: row.periodStart,
+        periodEnd: historyDayString(end - DAY),
+        step,
+        battles: row.battles,
+        slot,
+      })
       previousStart = start
     }
 

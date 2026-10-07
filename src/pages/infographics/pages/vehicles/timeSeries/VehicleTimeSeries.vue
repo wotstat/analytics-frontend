@@ -88,7 +88,6 @@ const props = defineProps<{
   filters: VehicleFilters
   minBattles: number
   minPlayers: number
-  skipIncompleteDays: boolean
 }>()
 
 const slot = defineModel<Slot>('slot', { required: true })
@@ -137,14 +136,14 @@ const histories = computed<VehicleHistorySeries[]>(() => {
   if (split.value === null) {
     return [{
       tag: 'vehicle',
-      history: applyHistoryFilters(history.value.data, slot.value, props, step.value, props.skipIncompleteDays),
+      history: applyHistoryFilters(history.value.data, slot.value, props, step.value),
     }]
   }
 
   return splitSources.value.map(source => ({
     tag: source.tag,
     history: applyHistoryFilters(history.value.data.filter(row => row.splitKey === source.tag),
-      slot.value, props, step.value, props.skipIncompleteDays),
+      slot.value, props, step.value),
   }))
 })
 const series = computed(() => histories.value.map(source => ({

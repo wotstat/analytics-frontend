@@ -76,8 +76,7 @@
       <template #expanded="{ row }">
         <VehicleTimeSeries v-model:slot="activeSlot" v-model:step="historyStep" v-model:average-window="averageWindow"
           :selection="vehicleHistorySelection(row, effectiveSelection)" :name="vehicleName(row)" :filters
-          :min-battles="localFilters.minBattles" :min-players="localFilters.minPlayers"
-          :skip-incomplete-days="localFilters.skipIncompleteDays">
+          :min-battles="localFilters.minBattles" :min-players="localFilters.minPlayers">
           <template v-if="!showCompare" #header-before>
             <VehicleCompareButton class="history-compare" :compared="comparedKeys.includes(row.rowKey)"
               @click.stop="$emit('compare', row, vehicleHistorySelection(row, effectiveSelection))" />

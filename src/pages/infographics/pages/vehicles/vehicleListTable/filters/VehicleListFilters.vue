@@ -62,15 +62,6 @@
               @click="filters = { ...filters, minPlayers: threshold }">{{ threshold }}</button>
           </div>
         </div>
-
-        <div class="group panel-section">
-          <h3 class="group-label">График</h3>
-          <label class="checkbox-option" title="Не показывать дневную точку, если wotstat был недоступен более 3 часов в этот день">
-            <input type="checkbox" :checked="filters.skipIncompleteDays"
-              @change="filters = { ...filters, skipIncompleteDays: !filters.skipIncompleteDays }">
-            Пропускать неполные дни
-          </label>
-        </div>
       </div>
     </template>
   </PanelPopover>
@@ -88,7 +79,7 @@ import VehicleType from '@/shared/game/vehicles/type/VehicleType.vue'
 import { vehicleTypes } from '@/shared/game/vehicles/vehicle/utils'
 import { romanNumberProcessor } from '@/shared/utils/processors/processors'
 import {
-  createLocalVehicleFilters, DEFAULT_MIN_BATTLES, DEFAULT_MIN_PLAYERS, DEFAULT_ONLY_ACTUAL, DEFAULT_SKIP_INCOMPLETE_DAYS,
+  createLocalVehicleFilters, DEFAULT_MIN_BATTLES, DEFAULT_MIN_PLAYERS, DEFAULT_ONLY_ACTUAL,
   type BattleThreshold, type LocalVehicleFilters, type PlayerThreshold
 } from './localFilters'
 
@@ -104,9 +95,8 @@ const battleThresholds: BattleThreshold[] = [0, 20, 50, 100, 500, 1000]
 const playerThresholds: PlayerThreshold[] = [0, 10, 30, 50, 100, 500]
 
 const activeCount = computed(() => {
-  const { levels, nations, types, onlyActual, skipIncompleteDays, minBattles, minPlayers } = filters.value
+  const { levels, nations, types, onlyActual, minBattles, minPlayers } = filters.value
   let count = Number(minBattles !== DEFAULT_MIN_BATTLES) + Number(minPlayers !== DEFAULT_MIN_PLAYERS)
-    + Number(skipIncompleteDays !== DEFAULT_SKIP_INCOMPLETE_DAYS)
 
   if (showVehicleFilters) count += levels.length + nations.length + types.length + Number(onlyActual !== DEFAULT_ONLY_ACTUAL)
 
@@ -125,7 +115,6 @@ function resetFilters() {
     ...filters.value,
     minBattles: defaults.minBattles,
     minPlayers: defaults.minPlayers,
-    skipIncompleteDays: defaults.skipIncompleteDays,
   }
 }
 
