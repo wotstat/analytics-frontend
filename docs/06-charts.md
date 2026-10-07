@@ -712,7 +712,7 @@ wotstat и события по регионам. Состояние аннота
   <template #header><h2>История</h2></template>
   <template #toolbar><ToolbarOptions v-model="step" :options="stepOptions" /></template>
   <template #tooltip-header="{ ctx }">{{ ctx.hit.datum.date }}</template>
-  <template v-if="loading" #state>Загружаем историю…</template>
+  <template v-if="loading" #state>Загрузка истории…</template>
 </TimeSeriesPanel>
 ```
 

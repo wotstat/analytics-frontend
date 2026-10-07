@@ -34,7 +34,7 @@
     </template>
     <template v-if="!hasValues" #state>
       <template v-if="state === 'loading'">
-        <Loader compact />Загружаем историю…
+        <Loader compact />Загрузка истории…
       </template>
       <template v-else-if="state === 'error'">
         Не удалось загрузить историю<button @click="state = 'ready'">Повторить</button>

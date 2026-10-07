@@ -55,7 +55,7 @@
         Вернуть пример
       </button>
       <span class="debug-value">{{ sourceName }}</span>
-      <span class="debug-hint" v-if="loading">Читаю и разбираю файл…</span>
+      <span class="debug-hint" v-if="loading">Чтение и разбор файла…</span>
       <span class="load-error" v-if="error">{{ error }}</span>
     </div>
 

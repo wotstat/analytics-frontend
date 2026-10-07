@@ -13,7 +13,8 @@
       </div>
     </div>
 
-    <ComposableTable v-model:expanded-rows="expandedRows" class="vehicle-stats" :class="{ 'with-compare': showCompare }" :columns
+    <ComposableTable v-model:expanded-rows="expandedRows" class="vehicle-stats" :class="{ 'with-compare': showCompare }"
+      :columns
       :rows="status === success ? displayedVehicles : []" :row-key="vehicle => vehicle.rowKey"
       :sort="sorting.sortOrders.value" :loading="status === loading" :cell-class="cellClass" @sort="onSort"
       @cell-click="onCellClick">
@@ -88,7 +89,7 @@
       <template #loading>
         <div class="state">
           <Loader class="loader" />
-          <span>Загружаем статистику техники…</span>
+          <span>Загрузка статистики техники…</span>
           <span class="progress">{{ progress.completed + 1 }} из {{ progress.total }}</span>
         </div>
       </template>

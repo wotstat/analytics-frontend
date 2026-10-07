@@ -91,7 +91,7 @@
 
     <div class="debug-row">
       <button class="debug-btn" @click="measure">Замерить hover на «{{ densePresetLabel }}»</button>
-      <span class="debug-hint" v-if="measuring">считаю…</span>
+      <span class="debug-hint" v-if="measuring">Расчёт…</span>
       <span class="debug-hint" v-else-if="measurement">
         первый resolve (кеш ещё не построен): <span class="debug-value">{{ measurement.cold.toFixed(2) }} мс</span> ·
         тёплый resolve, среднее по {{ measurement.steps }}: <span class="debug-value">{{

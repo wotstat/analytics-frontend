@@ -35,7 +35,7 @@
     <template v-if="history.status === loading || isErrorStatus(history.status) || !hasValues" #state>
       <template v-if="history.status === loading">
         <Loader class="loader" />
-        <span>Загружаем историю…</span>
+        <span>Загрузка истории…</span>
       </template>
 
       <template v-else-if="isErrorStatus(history.status)">

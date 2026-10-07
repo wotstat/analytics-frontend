@@ -33,7 +33,7 @@
           :archived-selected="archivedSelected" :search @select="select" />
       </section>
       <p v-if="!visibleCategories.length" class="mode-notice">Ничего не найдено</p>
-      <p v-if="loading" class="mode-notice">Проверяем дополнительные режимы…</p>
+      <p v-if="loading" class="mode-notice">Проверка дополнительных режимов…</p>
       <p v-else-if="failed" class="mode-notice">
         Не удалось загрузить дополнительные режимы. <button type="button" @click="load">Повторить</button>
       </p>

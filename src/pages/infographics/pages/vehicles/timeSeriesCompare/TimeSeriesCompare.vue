@@ -137,7 +137,7 @@ const hasValues = computed(() => series.value.some(source => source.enabled &&
 const pending = computed(() => legendItems.value.some(source => source.loading))
 
 const emptyMessage = computed(() => {
-  if (pending.value) return 'Загружаем историю…'
+  if (pending.value) return 'Загрузка истории…'
   if (!legend.enabled.value.length) return 'Включите источники в легенде'
   return 'По выбранным фильтрам нет данных для отображения'
 })
