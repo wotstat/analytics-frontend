@@ -18,6 +18,7 @@ export type DefineTooltipProps = {
 export type TooltipBindingProps = DefineTooltipProps & {
   target?: HTMLElement | null
   disabled?: boolean
+  delay?: number
 }
 
 export type TextTooltipValue = string | TooltipBindingProps & {

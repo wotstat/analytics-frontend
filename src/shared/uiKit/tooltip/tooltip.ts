@@ -368,8 +368,11 @@ export function defineTooltip<T>(
         const {
           target,
           disabled = false,
+          delay = requiredOptions.delay,
           ...propsFromValue
         } = propsFromBindingValue?.(value) ?? {}
+
+        overrides.delay = binding.modifiers.instant ? 0 : delay
 
         const propsOverrides: DefineTooltipProps = Object.fromEntries(objectEntries({
           ...propsFromValue,

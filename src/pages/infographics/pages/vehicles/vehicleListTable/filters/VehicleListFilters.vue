@@ -18,15 +18,16 @@
           <div class="vehicle-options">
             <div v-if="showTypes" class="types">
               <button v-for="type in vehicleTypes" :key="type" class="option type"
-                :class="{ active: filters.types.includes(type) }" :title="type"
+                :class="{ active: filters.types.includes(type) }"
                 @click="filters = { ...filters, types: selectOption(filters.types, type, vehicleTypes, $event) }">
                 <VehicleType :type="type" class="type-icon" />
               </button>
             </div>
             <div v-if="showTankFilters" class="nations">
-              <button v-for="nation in nations" :key="nation" class="option nation"
-                :class="{ active: filters.nations.includes(nation) }" :title="nation"
-                @click="filters = { ...filters, nations: selectOption(filters.nations, nation, nations, $event) }">
+              <button v-for="nation in availableNations" :key="nation" class="option nation"
+                :class="{ active: filters.nations.includes(nation) }"
+                v-tooltip:vehicleFilters.top-float="{ text: nationNames[nation], delay: 500 }"
+                @click="filters = { ...filters, nations: selectOption(filters.nations, nation, availableNations, $event) }">
                 <Nation :nation="nation" class="flag" />
               </button>
             </div>
@@ -74,7 +75,7 @@ import FilterIcon from './filter.svg'
 import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import Nation from '@/shared/game/vehicles/nations/Nation.vue'
-import { nations } from '@/shared/game/vehicles/nations/nations'
+import { nationNames, type Nation as NationId } from '@/shared/game/vehicles/nations/nations'
 import VehicleType from '@/shared/game/vehicles/type/VehicleType.vue'
 import { vehicleTypes } from '@/shared/game/vehicles/vehicle/utils'
 import { romanNumberProcessor } from '@/shared/utils/processors/processors'
@@ -85,7 +86,10 @@ import {
 } from './localFilters'
 
 const filters = defineModel<LocalVehicleFilters>({ required: true })
-const { grouping } = defineProps<{ grouping: VehicleGrouping }>()
+const { grouping, availableNations } = defineProps<{
+  grouping: VehicleGrouping
+  availableNations: readonly NationId[]
+}>()
 
 const showLevels = computed(() => grouping !== 'classes')
 const showTypes = computed(() => grouping !== 'levels')

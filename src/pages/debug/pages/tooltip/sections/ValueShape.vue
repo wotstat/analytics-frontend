@@ -1,6 +1,6 @@
 <template>
   <DebugSection title="Значение: строка или объект" id="value-shape"
-    description="Строка — это сахар для { text }. Объект добавляет параметры поповера, отдельный target и disabled. Меняй параметры и смотри, как переезжает карточка; «открыть программно» держит тултип открытым, чтобы крутить контролы, не убирая указатель."
+    description="Строка — это сахар для { text }. Объект добавляет параметры поповера, delay, отдельный target и disabled. Меняй параметры и смотри, как переезжает карточка; «открыть программно» держит тултип открытым, чтобы крутить контролы, не убирая указатель."
     source="src/shared/uiKit/tooltip/types.ts">
 
     <div class="debug-row">
@@ -18,6 +18,11 @@
       </label>
 
       <PlacementSelect v-model="placement" allow-none />
+
+      <label class="debug-control">
+        <span class="debug-label">delay, мс</span>
+        <input type="number" min="0" max="2000" v-model.number="delay">
+      </label>
 
       <label class="debug-control">
         <span class="debug-label">offset</span>
@@ -99,6 +104,7 @@ import { closeByPointer, openByPointer } from '../shared/pointerSimulation'
 const mode = ref<'string' | 'object'>('object')
 const text = ref('Подсказка из значения-объекта')
 const placement = ref<PlacementWithModifiers | null>('top')
+const delay = ref(300)
 const offset = ref(7)
 const arrowSize = ref(7)
 const cardClass = ref<CardClass>('')
@@ -114,6 +120,7 @@ const value = computed<TextTooltipValue>(() => {
   return {
     text: text.value,
     placement: placement.value ?? undefined,
+    delay: delay.value,
     offset: offset.value,
     arrowSize: arrowSize.value,
     class: cardClass.value || undefined,

@@ -4,7 +4,7 @@
       <div class="toolbar-left" :class="{ 'with-search': showName }">
         <OptionsSelect v-model="grouping" :options="vehicleGroupings" class="grouping" />
         <SearchLine v-if="showName" v-model="search" class="search" placeholder="Найти танк" />
-        <VehicleListFilters v-model="localFilters" :grouping />
+        <VehicleListFilters v-model="localFilters" :grouping :available-nations="availableNations" />
       </div>
       <div class="toolbar-right" ref="toolbarRight">
         <VehicleColumnSelector v-model="visibleSlots" v-model:open="columnsOpen" :max-slots="maxSelectableSlots" />
@@ -145,6 +145,8 @@ import ModalWindowContent from '@/shared/ui/modalWindow/ModalWindowContent.vue'
 import PlusIcon from './assets/plus-bold.svg'
 import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
 import VehicleType from '@/shared/game/vehicles/type/VehicleType.vue'
+import { mtNations, wotNations, type Nation } from '@/shared/game/vehicles/nations/nations'
+import { regionToGame } from '@/shared/game/wot'
 import { createVehicleNameFilter } from '@/shared/game/vehicles/vehicleSearch'
 import SearchLine from '@/shared/game/selectors/components/searchLine/SearchLine.vue'
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
@@ -242,6 +244,15 @@ const showMetadata = computed(() => !showName.value || width.value >= METADATA_M
 const showLevel = computed(() => grouping.value !== 'classes' && showMetadata.value)
 const showType = computed(() => grouping.value !== 'levels' && showMetadata.value)
 const showCompare = computed(() => width.value >= COMPARE_MIN_TABLE_WIDTH)
+const availableNations = computed<readonly Nation[]>(() =>
+  props.filters.regions.length === 0 || props.filters.regions.some(region => regionToGame(region) === 'mt')
+    ? mtNations : wotNations)
+
+watch(availableNations, options => {
+  const nations = localFilters.value.nations.filter(nation => options.includes(nation))
+  if (nations.length !== localFilters.value.nations.length) localFilters.value = { ...localFilters.value, nations }
+}, { immediate: true })
+
 const effectiveSelection = computed<VehicleSelection>(() => {
   const { levels, types, nations } = localFilters.value
   return {

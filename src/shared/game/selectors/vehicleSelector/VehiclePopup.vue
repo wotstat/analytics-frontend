@@ -22,6 +22,7 @@
 
       <div class="nations mt-font">
         <button class="nation selectable" v-for="nation in availableNations"
+          v-tooltip:vehicleFilters.top-float="{ text: nationNames[nation], delay: 500 }"
           :class="currentNations.has(nation) ? 'active' : ''" @click="e => selectNation(e, nation)">
           <NationComponent :nation="nation" class="flag" />
         </button>
@@ -68,7 +69,7 @@ import VehicleTypeComponent from '@/shared/game/vehicles/type/VehicleType.vue'
 import NationComponent from '@/shared/game/vehicles/nations/Nation.vue'
 import SearchLine from '../components/searchLine/SearchLine.vue'
 import { preferredGame } from '@/shared/global/globalPreferred'
-import { mtNations, wotNations, nations, nationsIndexes, Nation } from '@/shared/game/vehicles/nations/nations'
+import { mtNations, wotNations, nationNames, nations, nationsIndexes, Nation } from '@/shared/game/vehicles/nations/nations'
 import { VehicleType, vehicleTypes } from '@/shared/game/vehicles/vehicle/utils'
 import { romanNumberProcessor } from '@/shared/utils/processors/processors'
 

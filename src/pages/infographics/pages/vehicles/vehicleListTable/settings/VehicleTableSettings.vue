@@ -43,6 +43,10 @@ const target = computed(() => trigger.value?.element ?? null)
 
 <style scoped lang="scss">
 .options {
+  .option + .option {
+    margin-top: 3px;
+  }
+
   .palette-option {
     margin-top: 6px;
   }

@@ -9,7 +9,7 @@
           без модификаторов
         </button>
 
-        <button class="debug-btn" v-text-tooltip.instant="'instant: delay и hideDelay обнулены'">
+        <button class="debug-btn" v-text-tooltip.instant="{ text: 'instant: delay и hideDelay обнулены', delay: 500 }">
           .instant
         </button>
 

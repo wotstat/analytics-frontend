@@ -61,7 +61,8 @@
       А <span class="debug-value">delay</span>, <span class="debug-value">hideDelay</span>,
       <span class="debug-value">interactive</span>, <span class="debug-value">touchBehavior</span> читаются один раз
       при вызове <span class="debug-value">useTooltip</span> — ref туда положить не даст даже тип. В docs это не
-      разделено.
+      разделено. Для отдельной цели <span class="debug-value">delay</span> можно переопределить в значении
+      директивы; при обновлении значения новая задержка применяется без пересоздания определения.
     </p>
 
     <p class="debug-note">
