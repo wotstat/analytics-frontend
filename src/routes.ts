@@ -1,4 +1,4 @@
-import { type RouteRecordRaw, createRouter, createWebHistory } from 'vue-router'
+import { type RouteRecordRaw, createRouter } from 'vue-router'
 
 import infographics from './pages/infographics/Index.vue'
 import Battle from './pages/infographics/pages/Battle.vue'
@@ -14,6 +14,7 @@ import { AsyncComponentLoader, defineAsyncComponent } from 'vue'
 import PageLoader from './shared/ui/loaders/pageLoader/PageLoader.vue'
 import { debugRoutes } from './pages/debug/routes'
 import { setupQueryStorage } from './shared/ui/queryStorage/useQueryStorage'
+import { createDeferredWebHistory } from './shared/ui/router/createDeferredWebHistory'
 
 
 function asyncPage(loader: AsyncComponentLoader): any {
@@ -72,8 +73,10 @@ const routes = [
   ...debugRoutes,
 ] satisfies RouteRecordRaw[]
 
+const history = createDeferredWebHistory()
+
 export const router = createRouter({
-  history: createWebHistory(),
+  history,
   routes,
   scrollBehavior(to, from, savedPosition) {
     if (to.path === from.path) return
@@ -83,4 +86,4 @@ export const router = createRouter({
   },
 })
 
-setupQueryStorage(router)
+setupQueryStorage(router, history)

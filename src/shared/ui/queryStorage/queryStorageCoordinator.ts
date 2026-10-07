@@ -1,5 +1,6 @@
-import { effectScope, nextTick, ref, watch, type Ref } from 'vue'
+import { effectScope, ref, watch, type Ref } from 'vue'
 import type { LocationQuery, LocationQueryRaw, RouteLocation, RouteLocationNormalized, RouteRecordNormalized, Router } from 'vue-router'
+import type { DeferredWebHistory } from '../router/createDeferredWebHistory'
 import type { QueryParam, QueryWriteOptions } from './queryStorageTypes'
 
 type Encoded = string | null | undefined
@@ -87,7 +88,7 @@ function sameRecord(a: RouteRecordNormalized, b: RouteRecordNormalized) {
   return (a.aliasOf ?? a) === (b.aliasOf ?? b)
 }
 
-// Один координатор на роутер: компоненты меняют значения, только он записывает URL.
+// Компоненты меняют значения, координатор собирает query для общего цикла записи history.
 class QueryStorageCoordinator {
   private entries = new Map<string, Entry>()
   private labels = new Set<string>()
@@ -102,11 +103,10 @@ class QueryStorageCoordinator {
   private pop = false
 
   private timer?: ReturnType<typeof setTimeout>
-  private queued = false
-  private writing?: { to: string, promise?: Promise<void> }
+  private writing?: { to: string }
   private override?: { binding: Binding, options: QueryWriteOptions }
 
-  constructor(private router: Router) {
+  constructor(private router: Router, private history: DeferredWebHistory) {
     this.incoming = { ...router.currentRoute.value.query }
 
     router.options.history.listen(() => { this.pop = true })
@@ -156,6 +156,8 @@ class QueryStorageCoordinator {
       this.pop = false
       this.schedule()
     })
+
+    history.setup(router, () => this.write())
   }
 
   private prepareNavigation(to: RouteLocationNormalized, from: RouteLocationNormalized) {
@@ -169,17 +171,9 @@ class QueryStorageCoordinator {
     this.navigations.set(to, navigation)
     if (navigation.authoritative || redirected?.carriedTo === to.fullPath) return
 
-    // Передаём параметры до фиксации маршрута, без промежуточного пустого URL.
-    const query: LocationQueryRaw = to.path === from.path ? { ...from.query } : { ...to.query }
-
-    for (const entry of this.entries.values()) {
-      const value = queryValue(entry)
-      if (value === undefined) continue
-
-      for (const { label } of this.activeBindings(entry)) {
-        if (!Object.hasOwn(query, label)) query[label] = value
-      }
-    }
+    // Повторная ссылка на текущую страницу не означает сброс её параметров.
+    if (to.path !== from.path) return
+    const query = { ...from.query }
 
     const target = { path: to.path, hash: to.hash, query }
     const fullPath = this.router.resolve(target).fullPath
@@ -354,28 +348,20 @@ class QueryStorageCoordinator {
 
   private schedule() {
     if (this.timer) clearTimeout(this.timer)
-    if (this.queued) return
-
-    this.queued = true
-    // После обновления Vue видны владельцы новой страницы, включая KeepAlive и кеш async-компонентов.
-    void nextTick().then(() => {
-      this.queued = false
-      void this.write()
-    })
+    this.history.schedule()
   }
 
-  async flush(bindings: Binding[]) {
+  flush(bindings: Binding[]) {
     for (const { entry } of bindings) {
       if (entry.pending) entry.pending.at = 0
     }
 
-    await nextTick()
-    if (this.writing?.promise) await this.writing.promise
-    await this.write()
+    return this.history.flush()
   }
 
-  private async write(): Promise<void> {
+  private prepareWrite() {
     if (this.writing || this.transitioning) return
+    if (this.timer) clearTimeout(this.timer)
 
     const route = this.router.currentRoute.value
     const query: LocationQueryRaw = { ...route.query }
@@ -414,12 +400,20 @@ class QueryStorageCoordinator {
     const fullPath = this.router.resolve(target).fullPath
     if (fullPath === route.fullPath) return
 
+    return { target, fullPath, history }
+  }
+
+  private write(): Promise<void> | undefined {
+    const prepared = this.prepareWrite()
+    if (!prepared) return
+
+    const { target, fullPath, history } = prepared
     const epoch = this.epoch
-    const writing = { to: fullPath, promise: undefined as Promise<void> | undefined }
+    const writing = { to: fullPath }
     this.writing = writing
     let succeeded = false
 
-    writing.promise = this.router[history](target)
+    return this.router[history](target)
       .then(failure => {
         succeeded = !failure
       })
@@ -448,16 +442,15 @@ class QueryStorageCoordinator {
 
         if (succeeded || epoch !== this.epoch || [...this.entries.values()].some(entry => entry.pending)) this.schedule()
       })
-
-    await writing.promise
   }
 }
 
-export function setupQueryStorage(router: Router) {
+export function setupQueryStorage(router: Router, history?: DeferredWebHistory) {
   let coordinator = coordinators.get(router)
 
   if (!coordinator) {
-    coordinator = new QueryStorageCoordinator(router)
+    if (!history) throw new Error('Вызовите setupQueryStorage(router, history) до использования useQueryStorage')
+    coordinator = new QueryStorageCoordinator(router, history)
     coordinators.set(router, coordinator)
   }
 

@@ -10,7 +10,7 @@
 
 - **Vue 3.5** — только Composition API + `<script setup lang="ts">`, стили SCSS scoped.
 - **TypeScript** (строгий), **Vite 8**, **Bun** как пакетный менеджер (`bun.lock`).
-- **vue-router 5** — SPA с `createWebHistory`.
+- **vue-router 5** — SPA с `createDeferredWebHistory`: адрес браузера записывается после обновления компонентов и синхронизации query.
 - **@clickhouse/client-web** — запросы напрямую в ClickHouse из браузера.
 - **UniversalChart** — собственный SVG-движок графиков в `src/shared/uiKit/chart/universalChart/`.
 - **VueUse** (`@vueuse/core`) — активно используется повсюду (`useLocalStorage`, `useWebSocket`, `useElementVisibility`, ...).
