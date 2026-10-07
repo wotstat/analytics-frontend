@@ -37,6 +37,26 @@ export type Binding = {
 
 const storagePrefix = 'wotstat:query:v1:'
 const coordinators = new WeakMap<Router, QueryStorageCoordinator>()
+let syncEntries: Set<Entry> | undefined
+
+// Контекст действует только в текущем стеке; вложенные вызовы завершаются вместе с внешним.
+export function queryStorageSync<T>(callback: () => T): T {
+  if (syncEntries) return callback()
+
+  const entries = new Set<Entry>()
+  syncEntries = entries
+
+  try {
+    return callback()
+  } finally {
+    syncEntries = undefined
+
+    // changed() уже запланировал запись history; убираем только задержку этих изменений.
+    for (const entry of entries) {
+      if (entry.pending) entry.pending.at = 0
+    }
+  }
+}
 
 function defaultValue(definition: QueryParam) {
   return typeof definition.default === 'function' ? definition.default() : definition.default
@@ -293,6 +313,7 @@ class QueryStorageCoordinator {
       history: options.history ?? 'replace'
     }
 
+    syncEntries?.add(entry)
     this.schedule()
   }
 

@@ -13,7 +13,7 @@
 страницами. Стенд `/debug/query-storage` использует собственные определения параметров.
 
 ```ts
-import { useQueryStorage } from '@/shared/ui/queryStorage/useQueryStorage'
+import { queryStorageSync, useQueryStorage } from '@/shared/ui/queryStorage/useQueryStorage'
 
 const storage = useQueryStorage({
   nickname: { type: String, default: '', debounce: 1000 },
@@ -23,6 +23,10 @@ const storage = useQueryStorage({
 
 const { nickname, season } = storage.params
 nickname.value = 'SomePlayer'
+queryStorageSync(() => {
+  nickname.value = 'AnotherPlayer'
+  season.value = 'season-id'
+})
 storage.patch({ nickname: '', season: 'season-id' }, { history: 'push', debounce: 0 })
 await storage.flush()
 await storage.flush('nickname')
@@ -113,6 +117,16 @@ Debounce задерживает только URL. Запросы к данным
 `replace`. `flush` немедленно отправляет ожидающие изменения выбранного поля или группы.
 Неизменившийся URL не записывается.
 
+`queryStorageSync(() => { ... })` в конце callback снимает debounce только с параметров,
+которые действительно изменились внутри него. Работает с refs разных хранилищ, `patch`
+и deep-изменениями, сохраняет выбранный `push`/`replace`. Остальные ожидающие параметры
+сохраняют свою задержку; присваивание прежнего значения не вызывает flush.
+Вложенные контексты объединяются и завершаются при выходе из внешнего.
+Если callback бросил исключение, уже сделанные изменения также отправляются без debounce,
+контекст очищается, ошибка передаётся вызывающему коду. Результат callback возвращается
+как есть. Контекст синхронный: изменения после `await` или в отложенных watchers
+в него не входят. Физическая запись URL остаётся в общем цикле history, без новых ожиданий.
+
 `createDeferredWebHistory` сразу обновляет `location/state` в памяти, а физические
 `pushState/replaceState` выполняет в конце общего цикла. Последовательность
 `push(страница) → replace(страница с query)` создаёт одну запись с итоговым адресом;
@@ -150,7 +164,8 @@ History отмечает начало `router.push/replace` синхронно, 
   только на персональной странице и в лидерборде, debounce URL — 1000 мс.
 - Сравнение версий: `versions-left`/`versions-right`, кодек Set в `compareQueryParams.ts`.
 - Стрельба: `shot`, открытие/закрытие/стрелки — push, слайдер — replace с debounce 150 мс,
-  отпускание вызывает flush. Владельцем остаётся страница, даже когда окно закрыто.
+  отпускание вызывает flush. Открытие/закрытие/стрелки обходят общую задержку через
+  `queryStorageSync`. Владельцем остаётся страница, даже когда окно закрыто.
 - Коробки: `selected-lootbox`, массив выбранных контейнеров принадлежит странице,
   список получает обычный v-model. Переключатель тестовых серверов остаётся localStorage.
 
@@ -162,6 +177,8 @@ History отмечает начало `router.push/replace` синхронно, 
 
 Стенд `/debug/query-storage`: общий nickname у двух компонентов, вложенный владелец
 в KeepAlive, Number/Boolean/Set, debounce, атомарный patch, внешний сброс URL и история.
+Кнопки переключения выстрелов и «Применить пару» используют `queryStorageSync`:
+они записывают изменения без debounce, не ускоряя ожидающий ввод никнейма.
 Проверяйте скрытие последнего владельца во время ввода, возврат обычной ссылкой,
 Назад/Вперёд и прямое открытие ссылки при уже заполненном sessionStorage.
 Повторный клик на ссылку текущего стенда должен сохранять фильтры. При переходе

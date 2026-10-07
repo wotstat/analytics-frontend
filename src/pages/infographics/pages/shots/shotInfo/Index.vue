@@ -167,6 +167,7 @@ import { dbIndexToDate, query, RESTRICTED_COLUMNS } from '@/db'
 import { computed, onMounted, ref, shallowRef, watch, useTemplateRef } from 'vue'
 import { useDraggable, useMediaQuery } from '@vueuse/core'
 import { useShotQueryStorage } from '../useShotQueryStorage'
+import { queryStorageSync } from '@/shared/ui/queryStorage/useQueryStorage'
 import InfoTable from './InfoTable.vue'
 import { getArenaName, getTankName } from '@/shared/i18n/i18n'
 import { sec2minsec } from '@/shared/utils/time'
@@ -357,8 +358,7 @@ function updateDisplayIndex() {
   if (index < 0 || index >= (allShots.value?.length ?? 0)) return
   if (index === shotIndex.value) return
 
-  shotStorage.patch({ shot: allShots.value![index].id }, { history: 'replace', debounce: 150 })
-
+  shotStorage.patch({ shot: allShots.value![index].id }, { history: 'replace' })
 }
 
 const { isDragging: isBarDragging } = useDraggable(barProgress, {
@@ -539,7 +539,9 @@ function changeShot(delta: number) {
   if (nextIndex >= allShots.value.length || nextIndex < 0) return
 
   const nextShot = allShots.value[nextIndex]
-  shotStorage.params.shot.value = nextShot.id
+  queryStorageSync(() => {
+    shotStorage.params.shot.value = nextShot.id
+  })
 }
 
 watch(() => props.shotID, () => {

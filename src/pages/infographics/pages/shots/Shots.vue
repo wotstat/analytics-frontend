@@ -83,6 +83,7 @@ import { useQueryStatParams, getQueryStatParamsCache, whereClause } from '@/shar
 import PopupWindow from '@/shared/ui/components/PopupWindow.vue'
 import ShotInfo from './shotInfo/Index.vue'
 import { useShotQueryStorage } from './useShotQueryStorage'
+import { queryStorageSync } from '@/shared/ui/queryStorage/useQueryStorage'
 import { useMeta } from '@/shared/composition/useMeta'
 import ShotDistribution from './shotDistribution/ShotDistribution.vue'
 
@@ -140,11 +141,11 @@ ${whereClause(params)}
 
 
 function onClickShot(shot: string) {
-  selectedShot.value = shot
+  queryStorageSync(() => selectedShot.value = shot)
 }
 
 function closeShotInfo() {
-  selectedShot.value = null
+  queryStorageSync(() => selectedShot.value = null)
 }
 
 </script>

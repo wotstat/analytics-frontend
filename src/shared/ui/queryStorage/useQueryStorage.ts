@@ -5,7 +5,7 @@ import type { QueryParams, QueryStorage, QueryStorageOptions } from './queryStor
 
 export { defineParams } from './queryStorageTypes'
 export type { QueryParam, QueryParams, QueryStorage, QueryValues, QueryWriteOptions, QueryStorageOptions } from './queryStorageTypes'
-export { setupQueryStorage } from './queryStorageCoordinator'
+export { setupQueryStorage, queryStorageSync } from './queryStorageCoordinator'
 
 export function useQueryStorage<P extends QueryParams>(definitions: P, options: QueryStorageOptions = {}): QueryStorage<P> {
   const coordinator = setupQueryStorage(useRouter())

@@ -7,12 +7,17 @@
       <label class="debug-control">Сезон <input type="text" v-model="season" /></label>
       <label class="debug-control">Слайдер <input v-model.number="shot" type="range" min="0" max="100" @change="storage.flush('shot')" /></label>
       <p>Выстрел: {{ shot }}</p>
+      <div class="debug-row">
+        <button class="debug-btn" @click="changeShot(-1)">Предыдущий выстрел</button>
+        <button class="debug-btn" @click="changeShot(1)">Следующий выстрел</button>
+      </div>
+      <p>Кнопки обходят debounce через queryStorageSync. Ожидающий ввод никнейма сохраняет свою задержку.</p>
       <label class="debug-control"><input v-model="visible" type="checkbox" /> Видимость: {{ visible }}</label>
       <p>Набор: {{ [...items].join(', ') || 'пусто' }}</p>
       <div class="debug-row">
         <button class="debug-btn" @click="items.add(items.size + 1)">Добавить в Set</button>
         <button class="debug-btn" @click="items.clear()">Очистить Set</button>
-        <button class="debug-btn" @click="storage.patch({ season: 'Новый сезон', shot: 75 }, { history: 'push', debounce: 0 })">Применить пару</button>
+        <button class="debug-btn" @click="applyPair">Применить пару</button>
         <button class="debug-btn" @click="storage.flush()">Записать сейчас</button>
         <button class="debug-btn" @click="resetThroughUrl">Сбросить через URL</button>
         <button class="debug-btn" @click="router.back()">Назад</button>
@@ -43,7 +48,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { useQueryStorage } from '@/shared/ui/queryStorage/useQueryStorage'
+import { queryStorageSync, useQueryStorage } from '@/shared/ui/queryStorage/useQueryStorage'
 import DebugPage from '../../shared/DebugPage.vue'
 import DebugSection from '../../shared/DebugSection.vue'
 import Nickname from './Nickname.vue'
@@ -56,6 +61,18 @@ const storage = useQueryStorage(demoParams)
 const { season, shot, visible, items } = storage.params
 const showFirst = ref(true)
 const showNested = ref(true)
+
+function changeShot(delta: number) {
+  queryStorageSync(() => {
+    shot.value = Math.max(0, Math.min(100, shot.value + delta))
+  })
+}
+
+function applyPair() {
+  queryStorageSync(() => {
+    storage.patch({ season: 'Новый сезон', shot: 75 }, { history: 'push' })
+  })
+}
 
 function resetThroughUrl() {
   void router.push({ query: {
