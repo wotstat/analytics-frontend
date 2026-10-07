@@ -3,8 +3,8 @@ import type { VehicleStatistics } from './types'
 export const vehicleGroupings = [
   { value: 'tanks', label: 'Танки' },
   { value: 'levels', label: 'Уровни' },
-  { value: 'classes', label: 'Классы' },
-  { value: 'classesByLevel', label: 'Классы по уровням' },
+  { value: 'classes', label: 'Типы' },
+  { value: 'classesByLevel', label: 'Типы по уровням' },
 ] as const
 
 export type VehicleGrouping = typeof vehicleGroupings[number]['value']
