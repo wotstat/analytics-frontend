@@ -31,7 +31,7 @@ export const baseSlots = {
   assistStun: { icon: 'stun', label: 'Содействие по оглушению', ...average('damageAssistedStun') },
   assistMax: { icon: 'assist', label: 'Максимальный вид содействия', ...average('damageAssistedMax'), description: 'Среднее от максимума трёх видов содействия в каждом бою' },
 
-  damageForMarks: { icon: 'gun-mark-dmg', label: 'Урон для отметки', ...average('damageForMarks') },
+  damageForMarks: { icon: 'gun-mark-dmg', label: 'Сумма для отметки', ...average('damageForMarks') },
   blocked: { icon: 'block', label: 'Заблокированный урон', ...average('damageBlockedByArmor') },
   damageReceived: { icon: 'hp', label: 'Полученный урон', ...average('damageReceived') },
   damageReceivedFromInvisibles: { icon: 'hp', label: 'Урон от незасвеченных', ...average('damageReceivedFromInvisibles') },
@@ -44,14 +44,14 @@ export const baseSlots = {
   shots: { icon: 'shots', label: 'Выстрелы', ...average('shots'), format: 'decimal' },
   directEnemyHits: { icon: 'hits', label: 'Прямые попадания', ...average('directEnemyHits'), format: 'decimal' },
   piercingEnemyHits: { icon: 'piercing', label: 'Пробития', ...average('piercingEnemyHits'), format: 'decimal' },
-  explosionHits: { icon: 'hits', label: 'Попадания осколками', ...average('explosionHits'), format: 'decimal' },
+  explosionHits: { icon: 'explosion-hits', label: 'Попадания осколками', ...average('explosionHits'), format: 'decimal' },
 
-  directHitsReceived: { icon: 'hits', label: 'Получено прямых попаданий', ...average('directHitsReceived'), format: 'decimal' },
-  piercingsReceived: { icon: 'piercing', label: 'Получено пробитий', ...average('piercingsReceived'), format: 'decimal' },
-  explosionHitsReceived: { icon: 'hits', label: 'Получено попаданий осколками', ...average('explosionHitsReceived'), format: 'decimal' },
+  directHitsReceived: { icon: 'received-hits', label: 'Получено прямых попаданий', ...average('directHitsReceived'), format: 'decimal' },
+  piercingsReceived: { icon: 'received-piercing', label: 'Получено пробитий', ...average('piercingsReceived'), format: 'decimal' },
+  explosionHitsReceived: { icon: 'received-explosion-hits', label: 'Получено попаданий осколками', ...average('explosionHitsReceived'), format: 'decimal' },
 
   stunned: { icon: 'stun', label: 'Оглушено противников', ...average('stunned'), format: 'decimal' },
-  stunDuration: { icon: 'stun', label: 'Время оглушения', ...average('stunDuration'), format: 'time' },
+  stunDuration: { icon: 'stun-duration', label: 'Время оглушения', ...average('stunDuration'), format: 'time' },
 
   lifeTime: { icon: 'lifetime', label: 'Время жизни', ...average('lifeTime'), format: 'time' },
   duration: { icon: 'duration', label: 'Длительность боя', ...average('duration'), format: 'time' },
@@ -60,9 +60,9 @@ export const baseSlots = {
   maxHealth: { icon: 'hp', label: 'Начальная прочность', ...average('maxHealth') },
   health: { icon: 'hp', label: 'Оставшаяся прочность', ...average('health') },
 
-  higherTierEnemies: { icon: 'tank', label: 'Противники выше уровнем', ...average('higherTierEnemies'), format: 'decimal' },
-  sameTierEnemies: { icon: 'tank', label: 'Противники того же уровня', ...average('sameTierEnemies'), format: 'decimal' },
-  lowerTierEnemies: { icon: 'tank', label: 'Противники ниже уровнем', ...average('lowerTierEnemies'), format: 'decimal' },
+  higherTierEnemies: { icon: 'tank-upper', label: 'Противники выше уровнем', ...average('higherTierEnemies'), format: 'decimal' },
+  sameTierEnemies: { icon: 'tank-equal', label: 'Противники того же уровня', ...average('sameTierEnemies'), format: 'decimal' },
+  lowerTierEnemies: { icon: 'tank-lower', label: 'Противники ниже уровнем', ...average('lowerTierEnemies'), format: 'decimal' },
 } as const satisfies Record<string, SlotDefinition>
 
 export type PrimarySlot = keyof typeof baseSlots
@@ -286,11 +286,13 @@ for (const slot of Object.keys(aggregationSources) as AggregatableSlot[]) {
 }
 
 export const slotCategories: readonly { title: string, slots: readonly BaseSlot[], derived?: boolean }[] = [
-  { title: 'Общее', slots: ['battles', 'playerCount', 'winrate', 'survival', 'xp', 'lifeTime', 'duration', 'mileage'] },
-  { title: 'Урон и прочность', slots: ['damage', 'damageForMarks', 'blocked', 'damageReceived', 'damageReceivedFromInvisibles', 'maxHealth', 'health'] },
-  { title: 'Содействие', slots: ['assist', 'assistRadio', 'assistTrack', 'assistStun', 'assistMax'] },
+  { title: 'Общее', slots: ['battles', 'playerCount', 'winrate', 'survival', 'xp', 'mileage', 'lifeTime', 'duration'] },
+  { title: 'Основные', slots: ['damage', 'blocked', 'assist', 'kills', 'spotted'] },
+  { title: 'Содействие', slots: ['assistRadio', 'assistTrack', 'assistStun', 'assistMax', 'damageForMarks', 'damaged', 'stunned', 'stunDuration'] },
+  { title: 'Сетап', slots: ['higherTierEnemies', 'sameTierEnemies', 'lowerTierEnemies'] },
   { title: 'Стрельба', slots: ['shots', 'directEnemyHits', 'piercingEnemyHits', 'explosionHits', 'directHitsReceived', 'piercingsReceived', 'explosionHitsReceived'] },
-  { title: 'В бою', slots: ['kills', 'spotted', 'damaged', 'stunned', 'stunDuration', 'higherTierEnemies', 'sameTierEnemies', 'lowerTierEnemies'] },
+  { title: 'Прочность', slots: ['maxHealth', 'health', 'damageReceived', 'damageReceivedFromInvisibles'] },
+
   { title: 'Производные · время', derived: true, slots: ['lifeTimeShare', 'shotsPerLifeMinute', 'damagePerLifeMinute', 'assistPerLifeMinute'] },
   { title: 'Производные · стрельба', derived: true, slots: ['directHitRate', 'penetrationRate', 'penetratingShotRate', 'receivedPenetrationRate'] },
   { title: 'Производные · урон и прочность', derived: true, slots: ['damageExchangeRatio', 'damageToHealthRatio', 'blockedDamageShare', 'remainingHealthShare', 'invisibleDamageShare', 'assistShare'] },
@@ -310,9 +312,9 @@ export function orderSlots(slots: readonly Slot[]): Slot[] {
 
 // Порядок приоритета: сначала обрезаем набор по лимиту, затем упорядочиваем столбцы для отображения.
 const defaultSlotOrder = [
-  'battles', 'playerCount', 'winrate', 'damage', 'assist', 'kills', 'duration',
-  'survival', 'xp', 'blocked', 'damageForMarks', 'spotted', 'shots', 'damageReceived',
-  'assistRadio', 'assistTrack', 'piercingEnemyHits', 'directEnemyHits', 'lifeTime', 'mileage',
+  'battles', 'playerCount', 'winrate', 'damage', 'blocked', 'assist', 'duration',
+  'kills', 'xp', 'spotted', 'survival', 'shots', 'mileage', 'lifeTime', 'damageReceived', 'assistRadio', 'assistTrack',
+  'piercingEnemyHits', 'directEnemyHits'
 ] as const satisfies readonly BaseSlot[]
 
 export const defaultSlots: Slot[] = defaultSlotOrder.map(defaultSlot)
