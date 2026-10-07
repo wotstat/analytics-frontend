@@ -5,6 +5,23 @@
 
     <div class="debug-row">
       <label class="debug-control">
+        <span class="debug-label">ряд</span>
+        <select v-model="seriesVariant">
+          <option value="smooth">кривая</option>
+          <option value="zero">константа 0</option>
+          <option value="constant">константа 500</option>
+          <option value="vertical">вертикальная линия</option>
+        </select>
+      </label>
+
+      <label class="debug-control">
+        <span class="debug-label">заливка</span>
+        <input type="checkbox" v-model="withArea">
+      </label>
+    </div>
+
+    <div class="debug-row">
+      <label class="debug-control">
         <span class="debug-label">clip target</span>
         <select v-model="clipTarget">
           <option v-for="item in targets" :key="item" :value="item">{{ item }}</option>
@@ -82,6 +99,13 @@
     </p>
 
     <p class="debug-note">
+      <b>Область самой маски занимает весь SVG viewport.</b> Её размеры не зависят от bbox ряда:
+      отключи заливку, включи маску и выбери константу или вертикальную линию — линия должна остаться видимой
+      даже при нулевой высоте или ширине bbox. Белый прямоугольник по-прежнему ограничивает видимость выбранным
+      слотом и padding.
+    </p>
+
+    <p class="debug-note">
       Клип и маска пересчитывают свой прямоугольник в <span class="debug-value">didLayout</span>, то есть только
       когда layout действительно изменился. Смена одних bounds прямоугольник не двигает — и не должна: он привязан к
       пикселям области, а не к данным.
@@ -107,6 +131,8 @@ import { useChartInstance } from '../shared/useChartInstance'
 const targets = ['none', 'center', 'left', 'right', 'top', 'bottom'] as const
 
 const series = syntheticSeries('smooth', 2, 100)
+const seriesVariant = ref<'smooth' | 'zero' | 'constant' | 'vertical'>('smooth')
+const withArea = ref(true)
 
 const clipTarget = ref<typeof targets[number]>('none')
 const clipPadding = ref(0)
@@ -124,7 +150,7 @@ function build() {
 
   const line = new AutoLine({
     classes: ['main-line', 'solid-area', 'series-a'],
-    area: true,
+    area: withArea.value,
     smoothingMethod: 'monotone',
   })
 
@@ -146,14 +172,27 @@ function build() {
   if (clip) chart.addDefs(clip)
   if (mask) chart.addDefs(mask)
 
-  line.setPoints(series)
+  switch (seriesVariant.value) {
+    case 'smooth':
+      line.setPoints(series)
+      break
+    case 'zero':
+      line.setPoints([{ x: 0, y: 0 }, { x: 100, y: 0 }])
+      break
+    case 'constant':
+      line.setPoints([{ x: 0, y: 500 }, { x: 100, y: 500 }])
+      break
+    case 'vertical':
+      line.setPoints([{ x: 45, y: 0 }, { x: 45, y: 500 }])
+      break
+  }
 
   chart.setRenderBounds({ minX: 20, maxX: 70 })
 
   return { chart, line }
 }
 
-watch([clipTarget, clipPadding, layoutVariant, withMask, maskPadding, fillTarget], () => rebuild())
+watch([seriesVariant, withArea, clipTarget, clipPadding, layoutVariant, withMask, maskPadding, fillTarget], () => rebuild())
 
 watchEffect(() => instance.value.chart.setMinLayoutSize(margin.value))
 

@@ -20,6 +20,14 @@ export class ChartMask extends BaseDefs {
 
     super(document.createElementNS(NAMESPACE, 'mask'), 'mask')
 
+    // Область маски — весь viewport: bbox горизонтальной или вертикальной линии вырожден.
+    this.root.setAttribute('maskUnits', 'userSpaceOnUse')
+    this.root.setAttribute('maskContentUnits', 'userSpaceOnUse')
+    this.root.setAttribute('x', '0')
+    this.root.setAttribute('y', '0')
+    this.root.setAttribute('width', '100%')
+    this.root.setAttribute('height', '100%')
+
     if (fillTarget) {
       this.rect.setAttribute('fill', 'white')
       this.rect.classList.add('chart-mask-target-rect')
