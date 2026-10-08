@@ -335,8 +335,8 @@ function onAction() {
   border-radius: 6px;
   padding: 5px 0;
 
+  -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(40px);
 
   line-height: normal;
 
