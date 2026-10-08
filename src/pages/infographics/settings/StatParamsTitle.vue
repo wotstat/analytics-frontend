@@ -43,15 +43,15 @@
         stat.period.count }}</span> {{ countLocalize(stat.period.count, 'бой', 'боя', 'боёв') }}.
   </span>
 
-  <span v-if="stat.battleMode != 'any'">
-    <span class="text-effect light-blue">{{ customBattleModes[stat.battleMode].title }}</span>.
+  <span v-if="stat.battleModes.length">
+    <span class="text-effect light-blue">{{ stat.battleModes.map(mode => battleModeSelection(mode).title).join(', ') }}</span>.
   </span>
 </template>
 
 <script lang="ts" setup>
 import { useQueryStatParams } from '@/shared/query/useQueryStatParams'
 import { countLocalize, getTankName } from '@/shared/i18n/i18n'
-import { customBattleModes } from '@/shared/game/wot'
+import { battleModeSelection } from '@/shared/game/battleModes/battleModeSelection'
 
 
 const stat = useQueryStatParams()

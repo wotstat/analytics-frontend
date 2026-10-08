@@ -1,4 +1,4 @@
-import { customBattleModes } from '@/shared/game/wot'
+import { battleModeQueryParam } from './battleModeQueryParam'
 import { defineParams, useQueryStorage } from '@/shared/ui/queryStorage/useQueryStorage'
 import type { TankLevel, TankType } from './useQueryStatParams'
 
@@ -35,14 +35,7 @@ export const statQueryParams = defineParams({
     deserialize: (raw: string) => raw.split(',').filter((value): value is TankType => ['LT', 'MT', 'HT', 'AT', 'SPG'].includes(value))
   },
   tanks: { ...stringListParam, label: 'tank' },
-  battleMode: {
-    label: 'mode',
-    default: 'normalAny' as keyof typeof customBattleModes | 'any',
-    deserialize: (raw: string): keyof typeof customBattleModes | 'any' => {
-      if (raw === 'any' || Object.hasOwn(customBattleModes, raw)) return raw as keyof typeof customBattleModes | 'any'
-      throw new Error('Неизвестный режим боя')
-    }
-  },
+  battleModes: battleModeQueryParam,
   battleId: { ...stringListParam, label: 'battle-id' },
   lastX: {
     default: undefined,

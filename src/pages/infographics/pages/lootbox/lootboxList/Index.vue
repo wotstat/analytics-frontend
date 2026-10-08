@@ -134,7 +134,7 @@ with containers as (
       toStartOfDay(max(dateTime)) as end
       from Event_OnLootboxOpen
     ${whereClause(stats.value, {
-  ignore: ['tanks', 'level', 'types', 'battleMode'],
+  ignore: ['tanks', 'level', 'types', 'battleModes'],
   additional: props.withoutTest ? 'region not in (\'CT\')' : ''
 })}
     group by containerTag

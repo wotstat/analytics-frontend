@@ -114,7 +114,6 @@
 <script setup lang="ts">
 import { StatParams, getQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import { mergeStatuses, queryComputed } from '@/db'
-import { modeCount } from '@/shared/game/wot'
 import { useElementVisibility, useElementSize } from '@vueuse/core'
 import { computed, ref, useTemplateRef } from 'vue'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'
@@ -146,12 +145,6 @@ function click(on: 'dmg' | 'radio' | 'block' | 'kill') {
   else hightlight.value = on
 }
 
-const playersCount = computed(() => {
-  const mode = params.battleMode
-  if (mode == 'any') return 15
-  return mode in modeCount ? (modeCount as any)[mode] : 15
-})
-
 function getQuery(result: 'win' | 'lose') {
 
   const best = bestMV('team_results', params)
@@ -166,26 +159,24 @@ function getQuery(result: 'win' | 'lose') {
     avgForEachMerge(enemyBlocks) as enemyBlocksA,
     avgForEachMerge(enemyRadios) as enemyRadiosA,
     avgForEachMerge(enemyKills) as enemyKillsA,
-    arrayJoin(arrayZip(range(${playersCount.value}), allyDamagesA, allyBlocksA, allyRadiosA, allyKillsA, enemyDamagesA, enemyBlocksA, enemyRadiosA, enemyKillsA)) as arr
-  select arr.1 as place, 
-        arr.2 as allyDamage,
-        arr.3 as allyBlock,
-        arr.4 as allyRadio,
-        arr.5 as allyKill,
-        arr.6 as enemyDamage,
-        arr.7 as enemyBlock,
-        arr.8 as enemyRadio,
-        arr.9 as enemyKill
+    arrayJoin(range(greatest(length(allyDamagesA), length(enemyDamagesA)))) as place
+  select place,
+        allyDamagesA[place + 1] as allyDamage,
+        allyBlocksA[place + 1] as allyBlock,
+        allyRadiosA[place + 1] as allyRadio,
+        allyKillsA[place + 1] as allyKill,
+        enemyDamagesA[place + 1] as enemyDamage,
+        enemyBlocksA[place + 1] as enemyBlock,
+        enemyRadiosA[place + 1] as enemyRadio,
+        enemyKillsA[place + 1] as enemyKill
   from ${best}
   where result = '${result}'
-  and playersCount = ${playersCount.value * 2}
   ${whereClause(params, { withWhere: false })};
   ` : `
   with
       arrayZip(playersResults.team, playersResults.damageDealt, playersResults.damageBlockedByArmor, playersResults.damageAssistedRadio, playersResults.kills) as teamValues,
       arrayFilter(t -> t.1 = playerTeam, teamValues) as allyTeam,
       arrayFilter(t -> t.1 != playerTeam, teamValues) as enemyTeam,
-      length(playersResults.team) as playersCount,
       avgForEach(arrayReverseSort(allyTeam.2))  as allyDamages,
       avgForEach(arrayReverseSort(allyTeam.3))  as allyBlocks,
       avgForEach(arrayReverseSort(allyTeam.4))  as allyRadios,
@@ -194,19 +185,18 @@ function getQuery(result: 'win' | 'lose') {
       avgForEach(arrayReverseSort(enemyTeam.3)) as enemyBlocks,
       avgForEach(arrayReverseSort(enemyTeam.4)) as enemyRadios,
       avgForEach(arrayReverseSort(enemyTeam.5)) as enemyKills,
-      arrayJoin(arrayZip(range(${playersCount.value}), allyDamages, allyBlocks, allyRadios, allyKills, enemyDamages, enemyBlocks, enemyRadios, enemyKills)) as arr
-    select arr.1 as place, 
-        arr.2 as allyDamage,
-        arr.3 as allyBlock,
-        arr.4 as allyRadio,
-        arr.5 as allyKill,
-        arr.6 as enemyDamage,
-        arr.7 as enemyBlock,
-        arr.8 as enemyRadio,
-        arr.9 as enemyKill
+      arrayJoin(range(greatest(length(allyDamages), length(enemyDamages)))) as place
+    select place,
+        allyDamages[place + 1] as allyDamage,
+        allyBlocks[place + 1] as allyBlock,
+        allyRadios[place + 1] as allyRadio,
+        allyKills[place + 1] as allyKill,
+        enemyDamages[place + 1] as enemyDamage,
+        enemyBlocks[place + 1] as enemyBlock,
+        enemyRadios[place + 1] as enemyRadio,
+        enemyKills[place + 1] as enemyKill
   from Event_OnBattleResult
   where result = '${result}'
-  and playersCount = ${playersCount.value * 2}
   ${whereClause(params, { withWhere: false })};
   `
 

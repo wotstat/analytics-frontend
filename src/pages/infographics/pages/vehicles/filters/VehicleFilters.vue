@@ -2,7 +2,7 @@
   <section class="vehicle-filters">
     <div class="toolbar">
       <div class="region-select" title="Shift + клик — выбрать несколько регионов">
-        <button v-for="region in regionOptions" :key="region" class="variant mt-font"
+        <button v-for="region in vehicleRegions" :key="region" class="variant mt-font"
           :class="{ active: regions.includes(region) }" @click="selectRegion(region, $event)">{{ region }}</button>
       </div>
 
@@ -67,13 +67,11 @@ import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import ArenaSelectorBadges from '@/shared/game/selectors/arena/ArenaSelectorBadges.vue'
 import { regionToGame } from '@/shared/game/wot'
 import BattleModeSelector from '@/shared/game/selectors/battleMode/BattleModeSelector.vue'
-import { createVehicleFilters, type VehicleFilters, type VehicleRegion } from './types'
+import { createVehicleFilters, vehicleRegions, type VehicleFilters, type VehicleRegion } from './types'
 import { useBadgeSelection } from './useBadgeSelection'
 
 const filters = defineModel<VehicleFilters>({ required: true })
 const expanded = ref(false)
-
-const regionOptions = ['RU', 'EU', 'NA', 'ASIA', 'CN'] as const
 
 const platoonOptions = [
   { value: 'any', label: 'Любой' },

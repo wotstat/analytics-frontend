@@ -5,8 +5,8 @@
 
     <div class="debug-row">
       <button class="debug-btn" @click="selected = []">Все режимы</button>
-      <button class="debug-btn" @click="selected = ['COMP7']">Натиск</button>
-      <button class="debug-btn" @click="selected = ['REGULAR', 'COMP7', 'TRAINING']">Три режима</button>
+      <button class="debug-btn" @click="selected = ['onslaught']">Натиск</button>
+      <button class="debug-btn" @click="selected = ['random', 'onslaught', 'training']">Три режима</button>
       <span class="debug-label">Модель:</span>
       <span class="debug-value">{{ selected.length ? selected.join(', ') : 'без ограничения' }}</span>
     </div>
@@ -54,11 +54,11 @@
 import { ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import BattleModeSelector from '@/shared/game/selectors/battleMode/BattleModeSelector.vue'
-import { type BattleModeSelectionKey } from '@/shared/game/selectors/battleMode/catalog'
+import { type BattleModeSelectionKey } from '@/shared/game/battleModes/battleModeSelection'
 import type { GameRegion } from '@/shared/game/wot'
 
-const selected = ref<BattleModeSelectionKey[]>(['@regular'])
-const multipleSelected = ref<BattleModeSelectionKey[]>(['@regular'])
-const singleSelected = ref<BattleModeSelectionKey[]>(['@regular'])
+const selected = ref<BattleModeSelectionKey[]>(['random'])
+const multipleSelected = ref<BattleModeSelectionKey[]>(['random'])
+const singleSelected = ref<BattleModeSelectionKey[]>(['random'])
 const forcedRegions = ref<GameRegion[]>(['RU'])
 </script>

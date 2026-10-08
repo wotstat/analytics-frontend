@@ -1,8 +1,11 @@
 import type { Nation } from '@/shared/game/vehicles/nations/nations'
 import type { VehicleType } from '@/shared/game/vehicles/vehicle/utils'
 
-export type BattleThreshold = 0 | 20 | 50 | 100 | 500 | 1000
-export type PlayerThreshold = 0 | 10 | 30 | 50 | 100 | 500
+export const vehicleLevels = Array.from({ length: 11 }, (_, index) => index + 1)
+export const battleThresholds = [0, 20, 50, 100, 500, 1000] as const
+export const playerThresholds = [0, 10, 30, 50, 100, 500] as const
+export type BattleThreshold = typeof battleThresholds[number]
+export type PlayerThreshold = typeof playerThresholds[number]
 
 export const DEFAULT_MIN_BATTLES: BattleThreshold = 50
 export const DEFAULT_MIN_PLAYERS: PlayerThreshold = 30

@@ -32,9 +32,9 @@
               </button>
             </div>
             <div v-if="showLevels" class="levels mt-font">
-              <button v-for="level in levels" :key="level" class="option"
+              <button v-for="level in vehicleLevels" :key="level" class="option"
                 :class="{ active: filters.levels.includes(level) }"
-                @click="filters = { ...filters, levels: selectOption(filters.levels, level, levels, $event) }">
+                @click="filters = { ...filters, levels: selectOption(filters.levels, level, vehicleLevels, $event) }">
                 {{ romanNumberProcessor(level) }}
               </button>
             </div>
@@ -82,7 +82,7 @@ import { romanNumberProcessor } from '@/shared/utils/processors/processors'
 import type { VehicleGrouping } from '../../shared/vehicleGrouping'
 import {
   createLocalVehicleFilters, DEFAULT_MIN_BATTLES, DEFAULT_MIN_PLAYERS, DEFAULT_ONLY_ACTUAL,
-  type BattleThreshold, type LocalVehicleFilters, type PlayerThreshold
+  vehicleLevels, battleThresholds, playerThresholds, type LocalVehicleFilters
 } from './localFilters'
 
 const filters = defineModel<LocalVehicleFilters>({ required: true })
@@ -98,10 +98,6 @@ const showTankFilters = computed(() => grouping === 'tanks')
 const open = ref(false)
 const trigger = useTemplateRef<InstanceType<typeof ToolbarButton>>('trigger')
 const target = computed(() => trigger.value?.element ?? null)
-
-const levels = Array.from({ length: 11 }, (_, index) => index + 1)
-const battleThresholds: BattleThreshold[] = [0, 20, 50, 100, 500, 1000]
-const playerThresholds: PlayerThreshold[] = [0, 10, 30, 50, 100, 500]
 
 const activeCount = computed(() => {
   const { levels, nations, types, onlyActual, minBattles, minPlayers } = filters.value

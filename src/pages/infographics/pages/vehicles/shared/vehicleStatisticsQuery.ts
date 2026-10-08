@@ -1,4 +1,4 @@
-import { battleModeSelection } from '@/shared/game/selectors/battleMode/catalog'
+import { battleModeConditions } from '@/shared/query/battleModeFilter'
 import { LONG_CACHE } from '@/db/cache'
 import type { VehicleFilters } from '../filters/types'
 import { availableSlots, metricQuerySlots, type Slot } from '../vehicleMetricSelector/vehicleMetrics'
@@ -26,14 +26,7 @@ export function vehicleStatisticsWhere(filters: VehicleFilters, beforeDay: strin
     conditions.push(`stats.region in (${[...filters.regions].sort().map(quote).join(', ')})`)
   }
 
-  if (filters.battleModes.length) {
-    const targets = filters.battleModes.flatMap(key => battleModeSelection(key).targets)
-    const modes = [...new Set(targets.map(target => target.mode))].sort()
-    conditions.push(`stats.battleMode in (${modes.map(quote).join(', ')})`)
-    conditions.push(`(${[...new Set(targets.map(target => {
-      return `(stats.battleMode = ${quote(target.mode)}${target.gameplay !== undefined ? ` and stats.battleGameplay = ${quote(target.gameplay)}` : ''})`
-    }))].sort().join(' or ')})`)
-  }
+  conditions.push(...battleModeConditions(filters.battleModes, 'stats.'))
 
   if (filters.arenas.length) {
     const arenaTags = [...new Set(filters.arenas)].sort()

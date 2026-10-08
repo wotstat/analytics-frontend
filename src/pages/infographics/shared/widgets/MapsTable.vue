@@ -7,7 +7,7 @@
         <div class="flex center setup">
           <div class="flex selector">
             <p>Режим:</p>
-            <OptionsSelect v-model="battleMode" :options="battleModeOptions" />
+            <BattleModeSelector v-model="battleModes" />
           </div>
           <div class="flex selector">
             <p>Результат:</p>
@@ -112,7 +112,9 @@
 import { StatParams, getQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
 import { queryComputed } from '@/db'
 import { getArenaName } from '@/shared/i18n/i18n'
-import { customBattleModesKeys, customBattleModes } from '@/shared/game/wot'
+import BattleModeSelector from '@/shared/game/selectors/battleMode/BattleModeSelector.vue'
+import type { BattleModeSelectionKey } from '@/shared/game/battleModes/battleModeSelection'
+import { battleModeConditions } from '@/shared/query/battleModeFilter'
 import { useElementVisibility, useElementSize, useLocalStorage } from '@vueuse/core'
 import { computed, ref, useTemplateRef } from 'vue'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'
@@ -131,17 +133,13 @@ const { width } = useElementSize(container)
 const { width: firstWidth } = useElementSize(firstColumn)
 
 
-const battleModeOptions = [
-  { value: 'any', label: 'Любой' },
-  ...customBattleModesKeys.map(mode => ({ value: mode, label: customBattleModes[mode].title })),
-] as const
 const battleResultOptions = [
   { value: 'any', label: 'Любой' },
   { value: 'win', label: 'Победа' },
   { value: 'lose', label: 'Поражение' },
 ] as const
 const battleResult = ref<'any' | 'win' | 'lose'>('any')
-const battleMode = ref<keyof typeof customBattleModes | 'any'>('any')
+const battleModes = ref<BattleModeSelectionKey[]>([])
 
 type Selected = 'count' | 'damage' | 'radio' | 'block' | 'kills' | 'duration' | 'lifeTime' | 'mgSum'
 function click(name: Selected) {
@@ -150,17 +148,7 @@ function click(name: Selected) {
 
 const hightlight = useLocalStorage<Selected>('MapsTableColumnSelected', 'count')
 
-const expressions = computed(() => {
-  let result = []
-
-  if (battleMode.value != 'any') {
-    const t = customBattleModes[battleMode.value]
-    if ('gameplay' in t) result.push(`battleGameplay = '${t.gameplay}'`)
-    if ('mode' in t) result.push(`battleMode = '${t.mode}'`)
-  }
-
-  return result
-})
+const expressions = computed(() => battleModeConditions(battleModes.value))
 
 type ResultRow = {
   arenaTag: string,

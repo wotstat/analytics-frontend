@@ -1,8 +1,8 @@
-import { battleGameplayName, battleModeName, type BattleMode, type BattleGameplay } from '../../battleModes'
+import { battleGameplayName, battleModeName } from '../../battleModes/battleModes'
+import { battleModeFamilies } from '../../battleModes/battleModeFamilies'
+import { battleModeKey, battleModeSelection, type BattleModeSelectionKey } from '../../battleModes/battleModeSelection'
 import type { GameVendor } from '../../wot'
 
-export type BattleModeSelectionKey = string
-export type BattleModeTarget = { mode: string, gameplay?: string }
 export type ObservedBattleMode = {
   game: GameVendor
   battleMode: string
@@ -105,179 +105,21 @@ const initialCatalog: Record<GameVendor, Record<string, Record<string, ArchiveRu
   },
 }
 
-type BattleModeFamilyItem = { mode: BattleMode, gameplay?: BattleGameplay, label?: string }
-type BattleModeFamily = {
-  title: string
-  children: (BattleModeFamilyItem | { label: string, children: BattleModeFamilyItem[] })[]
-}
-
-const families: Record<string, BattleModeFamily> = {
-  battleRoyale: {
-    title: 'Стальной охотник',
-    children: [
-      { mode: 'BATTLE_ROYALE_SOLO', label: 'Соло' },
-      { mode: 'BATTLE_ROYALE_SQUAD', label: 'Взвод' },
-    ],
-  },
-  tournaments: {
-    title: 'Турниры',
-    children: [
-      {
-        label: 'Обычные',
-        children: [
-          { mode: 'TOURNAMENT_REGULAR', gameplay: 'ctf' },
-          { mode: 'TOURNAMENT_REGULAR', gameplay: 'domination' },
-          { mode: 'TOURNAMENT_REGULAR', gameplay: 'assault2' },
-          { mode: 'TOURNAMENT_REGULAR', gameplay: 'domination3' },
-        ],
-      },
-      {
-        label: 'Натиск',
-        children: [
-          { mode: 'TOURNAMENT_COMP7', gameplay: 'comp7' },
-          { mode: 'TOURNAMENT_COMP7', gameplay: 'assault2' },
-        ],
-      },
-    ],
-  },
-  training: {
-    title: 'Тренировочные',
-    children: [
-      {
-        label: 'Обычные',
-        children: [
-          { mode: 'TRAINING', gameplay: 'ctf' },
-          { mode: 'TRAINING', gameplay: 'domination' },
-          { mode: 'TRAINING', gameplay: 'assault' },
-          { mode: 'TRAINING', gameplay: 'assault2' },
-          { mode: 'TRAINING', gameplay: 'domination3' },
-          { mode: 'TRAINING', gameplay: 'bootcamp' },
-          { mode: 'TRAINING', gameplay: 'comp7' },
-          { mode: 'EPIC_RANDOM_TRAINING', label: 'Генеральное сражение' },
-        ],
-      },
-      {
-        label: 'Стальной охотник',
-        children: [
-          { mode: 'BATTLE_ROYALE_TRN_SOLO', label: 'Соло' },
-          { mode: 'BATTLE_ROYALE_TRN_SQUAD', label: 'Взвод' },
-        ],
-      },
-      {
-        label: 'Другое',
-        children: [
-          { mode: 'TRAINING_COMP7', label: 'Натиск' },
-        ],
-      }
-    ],
-  },
-  whiteTiger: {
-    title: 'Последний Waffenträger',
-    children: [
-      { mode: 'WHITE_TIGER', label: 'Обычный' },
-      { mode: 'WHITE_TIGER_2', label: 'Против блогеров' },
-      { mode: 'EVENT_BATTLES', label: 'Обычный до 2025' },
-      { mode: 'EVENT_BATTLES_2', label: 'Против блогеров до 2025' },
-    ],
-  },
-  heroesTime: {
-    title: 'Время героев',
-    children: [
-      { mode: 'HB_OFFENCE', label: 'Прорыв' },
-      { mode: 'HB_DEFENCE', label: 'Оборона' },
-    ],
-  },
-  halloween: {
-    title: 'Вавилон: Запретная зона',
-    children: [
-      { mode: 'HALLOWEEN', label: 'Обычный' },
-      { mode: 'HALLOWEEN_MEDIUM', label: 'Средний' },
-      { mode: 'HALLOWEEN_HARD', label: 'Сложный' },
-      { mode: 'HALLOWEEN_DEFENCE', label: 'Проект Вавилон' },
-    ],
-  },
-  lastStand: {
-    title: 'Последний рубеж',
-    children: [
-      { mode: 'LAST_STAND', label: 'Нормально' },
-      { mode: 'LAST_STAND_MEDIUM', label: 'Тяжело' },
-      { mode: 'LAST_STAND_HARD', label: 'Жесть' },
-    ],
-  },
-  regular: {
-    title: 'Случайный бой',
-    children: [
-      { mode: 'REGULAR', gameplay: 'ctf' },
-      { mode: 'REGULAR', gameplay: 'domination' },
-      { mode: 'REGULAR', gameplay: 'assault' },
-    ],
-  },
-  regularNewbie: {
-    title: 'Случайный бой (для новичков)',
-    children: [
-      { mode: 'RANDOM_NP2', label: 'Новые аккаунты' },
-      { mode: 'WINBACK', label: 'Вернулись в игру' },
-    ],
-  },
-  stories: {
-    title: 'Сценарии',
-    children: [
-      { mode: 'STORY_MODE', label: 'Сюжетный режим' },
-      { mode: 'STORY_MODE_ONBOARDING', label: 'Введение' },
-      { mode: 'STORY_MODE_REGULAR', label: 'Обычный' },
-    ],
-  },
-}
-
 const categories: Record<GameVendor, { title: string, keys: BattleModeSelectionKey[] }[]> = {
   mt: [
-    { title: 'Основные', keys: ['REGULAR', 'EPIC_RANDOM', 'COMP7', 'EPIC_BATTLE', '@battleRoyale', 'VERSUS_AI'] },
-    { title: 'Клановые', keys: ['GLOBAL_MAP', 'FORT_BATTLE_2', 'SORTIE_2'] },
-    { title: 'Особые', keys: ['RANKED', '@tournaments', 'MAPBOX', 'FUN_RANDOM'] },
-    { title: 'События', keys: ['@whiteTiger', 'COSMIC_EVENT', 'HISTORICAL_BATTLES', 'BOB', '@heroesTime', 'PORTAL', 'RACES'] },
-    { title: 'Обучение', keys: ['@training', 'MAPS_TRAINING', '@stories'] }
+    { title: 'Основные', keys: ['random', 'epic-battle', 'onslaught', 'frontline', 'steel-hunter', 'versus-ai'] },
+    { title: 'Клановые', keys: ['global-map', 'advance', 'skirmish'] },
+    { title: 'Особые', keys: ['ranked', 'tournaments', 'recon-mission', 'arcade'] },
+    { title: 'События', keys: ['waffentrager', 'cosmic-event', 'historical-battles', 'bob', 'heroes-time', 'portal', 'races'] },
+    { title: 'Обучение', keys: ['training-all', 'topography', 'stories'] }
   ],
   wot: [
-    { title: 'Основные', keys: ['@regular', 'EPIC_RANDOM', 'COMP7', 'EPIC_BATTLE', '@battleRoyale'] },
-    { title: 'Клановые', keys: ['GLOBAL_MAP', 'FORT_BATTLE_2', 'SORTIE_2'] },
-    { title: 'Особые', keys: ['RANKED', '@tournaments', 'MAPBOX', 'FUN_RANDOM'] },
-    { title: 'События', keys: ['@whiteTiger', 'COSMIC_EVENT', 'COMP7_LIGHT', 'GRINCH', '@halloween', '@lastStand'] },
-    { title: 'Обучение', keys: ['@training', 'MAPS_TRAINING', '@stories', '@regularNewbie'] }
+    { title: 'Основные', keys: ['random', 'epic-battle', 'onslaught', 'frontline', 'steel-hunter'] },
+    { title: 'Клановые', keys: ['global-map', 'advance', 'skirmish'] },
+    { title: 'Особые', keys: ['ranked', 'tournaments', 'recon-mission', 'arcade'] },
+    { title: 'События', keys: ['waffentrager', 'cosmic-event', 'onslaught-light', 'winter-raid', 'babylon', 'last-stand'] },
+    { title: 'Обучение', keys: ['training-all', 'topography', 'stories', 'random-newbie'] }
   ],
-}
-
-function familyFor(key: string) {
-  return key.startsWith('@') ? families[key.slice(1)] : undefined
-}
-
-function familyItems(family: BattleModeFamily) {
-  return family.children.flatMap(child => 'children' in child ? child.children : [child])
-}
-
-export function battleModeKey(mode: string, gameplay?: string): BattleModeSelectionKey {
-  return encodeURIComponent(mode) + (gameplay === undefined ? '' : `/${encodeURIComponent(gameplay)}`)
-}
-
-export function battleModeSelection(key: BattleModeSelectionKey): { title: string, targets: BattleModeTarget[] } {
-  const family = familyFor(key)
-  if (family) return { title: family.title, targets: familyItems(family).map(({ mode, gameplay }) => ({ mode, gameplay })) }
-  const [mode, gameplay] = key.split('/').map(decodeURIComponent)
-  return { title: battleModeName(mode, gameplay), targets: [{ mode, gameplay }] }
-}
-
-function covers(parent: BattleModeTarget, child: BattleModeTarget) {
-  return parent.mode === child.mode && (parent.gameplay === undefined || parent.gameplay === child.gameplay)
-}
-
-export function selectionContains(parent: BattleModeSelectionKey, child: BattleModeSelectionKey) {
-  const parents = battleModeSelection(parent).targets
-  return battleModeSelection(child).targets.every(target => parents.some(parent => covers(parent, target)))
-}
-
-export function toggleBattleMode(selected: BattleModeSelectionKey[], key: BattleModeSelectionKey) {
-  if (selected.includes(key)) return selected.filter(value => value !== key)
-  // Уточнение заменяет общий выбор; общий выбор убирает дублирующие уточнения.
-  return [...selected.filter(value => !selectionContains(value, key) && !selectionContains(key, value)), key]
 }
 
 function isArchived(rule: ArchiveRule, lastBattle: string | undefined, now: Date) {
@@ -352,13 +194,15 @@ export function buildBattleModeCategories(games: GameVendor[], observed: Observe
   const groups = [...selectedCategories].map(([title, keys]) => ({
     title,
     options: keys.flatMap(key => {
-      const family = familyFor(key)
+      const family = Object.hasOwn(battleModeFamilies, key) ? battleModeFamilies[key] : undefined
       if (!family) {
-        classified.add(key)
-        const option = modeOption(key)
+        const { mode } = battleModeSelection(key).targets[0]
+        classified.add(mode)
+        const option = modeOption(mode)
         return option ? [option] : []
       }
-      familyItems(family).forEach(child => classified.add(child.mode))
+      family.children.flatMap(child => 'children' in child ? child.children : [child])
+        .forEach(child => classified.add(child.mode))
       const children = family.children.flatMap(child => {
         const items = 'children' in child ? child.children : [child]
         const group = 'children' in child ? child.label : undefined

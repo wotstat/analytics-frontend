@@ -54,7 +54,8 @@ import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
 import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
 import HighlightString from '@/shared/uiKit/highlightString/HighlightString.vue'
 import { highlight } from '@/shared/uiKit/highlightString/highlightUtils'
-import { battleModeSelection, selectionContains, type BattleModeOption, type BattleModeSelectionKey, type BattleModeVariant } from './catalog'
+import { type BattleModeOption, type BattleModeVariant } from './catalog'
+import { battleModeSelection, selectionContains, type BattleModeSelectionKey } from '@/shared/game/battleModes/battleModeSelection'
 
 const props = defineProps<{
   options: BattleModeOption[]

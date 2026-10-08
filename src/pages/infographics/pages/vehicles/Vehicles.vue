@@ -3,7 +3,7 @@
   <TimeSeriesCompare :sources="comparison.sources.value" :filters :min-battles="localFilters.minBattles"
     :min-players="localFilters.minPlayers"
     @remove="comparison.remove" @color-change="comparison.setColor" @clear="comparison.clear" />
-  <VehicleListTable v-model:grouping="grouping" v-model:local-filters="localFilters" v-model:period="period"
+  <VehicleListTable v-model:grouping="grouping" v-model:local-filters="localFilters" v-model:search="search" v-model:period="period"
     v-model:slots="slots" :vehicles="statistics.data" :status="statistics.status" :progress="statistics.progress"
     :filters
     :compared-keys="comparison.comparedKeys.value" :comparison-count="comparison.sources.value.length"
@@ -27,11 +27,10 @@ import { useMeta } from '@/shared/composition/useMeta'
 import VehicleListTable from './vehicleListTable/VehicleListTable.vue'
 import { defaultSlots, type Slot } from './vehicleMetricSelector/vehicleMetrics.ts'
 import VehicleFilters from './filters/VehicleFilters.vue'
-import { createVehicleFilters } from './filters/types'
+import { useVehicleQueryStorage } from './filters/useVehicleQueryStorage'
 import { vehicleStatisticsQueries } from './shared/vehicleStatisticsQuery'
 import { useVehicleTableStatistics } from './vehicleListTable/useVehicleTableStatistics'
 import type { VehicleStatisticsPeriod } from './shared/vehicleStatisticsPeriod'
-import { createLocalVehicleFilters } from './vehicleListTable/filters/localFilters'
 import { useBackground } from '@/shared/uiKit/pageBackground/useBackground'
 import VehiclesBackground from './VehiclesBackground.vue'
 
@@ -43,8 +42,7 @@ useMeta({
   keywords: 'статистика танков, статистика танков в боях, статистика танков в игре, статистика танков в world of tanks'
 })
 
-const filters = ref(createVehicleFilters())
-const localFilters = ref(createLocalVehicleFilters())
+const { filters, localFilters, search } = useVehicleQueryStorage()
 const grouping = ref<VehicleGrouping>('tanks')
 const period = ref<VehicleStatisticsPeriod>(30)
 const slots = ref<Slot[]>([...defaultSlots])

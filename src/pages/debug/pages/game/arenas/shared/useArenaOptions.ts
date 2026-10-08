@@ -23,7 +23,7 @@ export function useArenaOptions() {
     return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, 'ru'))
   })
 
-  // Используем значения из арен без допущений о составе словаря gameplayTypes.
+  // Используем значения из арен без ограничения статическим списком геймплеев.
   const allGameplays = computed(() => [...new Set(arenas.value.map(a => a.gameplay))].sort())
 
   return { arenaList, allGameplays }

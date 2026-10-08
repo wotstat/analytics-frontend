@@ -320,7 +320,7 @@ type StatParams = {
   level: TankLevel[] | null    // ?level=8,10   (1..11)
   types: TankType[] | null     // ?type=HT,MT   (LT|MT|HT|AT|SPG)
   tanks: string[] | null       // ?tank=ussr:R45_IS-7,...
-  battleMode: keyof customBattleModes | 'any'  // ?mode=
+  battleModes: BattleModeSelectionKey[]      // ?mode=random-domination,onslaught; [] — все
   period: 'allTime' | {type:'lastX',count} | {type:'fromTo',from,to} | {type:'fromToNow',from}
           // ?lastX= | ?from=&to= | ?from=
   battleId: string[] | null    // ?battle-id= (приоритетнее периода)
@@ -334,6 +334,16 @@ type StatParams = {
 - `isBattleStart: true` — фильтр по `id`, иначе по `onBattleStartId` (события, привязанные к бою).
 
 `whereClauseColumns(params)` — список колонок, участвующих в фильтре; нужен для выбора materialized view.
+
+`battleModeFilter.ts` — общий SQL-фильтр режимов для StatParams, карт и техники. Он разворачивает
+читаемые ключи через `battleModeTargets`, удаляет покрытые цели, оставляет прямое условие
+`battleMode in (...)` и при необходимости добавляет OR точных пар `battleMode/battleGameplay`.
+Колонка `battleGameplay` требуется только при оставшихся ограничениях по геймплею;
+это учитывается при выборе MV. При заданном `battleId` общий фильтр режимов игнорируется.
+
+`PlayerResultTable` строит места по длине агрегированных массивов результатов, без словаря
+размеров команд и без отсеивания боёв по числу игроков. `avgForEach` / `avgForEachMerge`
+усредняют каждое место по боям, в которых оно присутствует, в том числе при нескольких режимах.
 
 ## Materialized Views (`src/db/schema.ts`)
 

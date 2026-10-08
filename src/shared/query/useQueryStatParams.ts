@@ -1,5 +1,6 @@
 import { DEFAULT_CACHE, MEDIUM_CACHE, SHORT_CACHE, dateToDbDate, dateToDbIndex, type CachePolicy } from '@/db'
-import { customBattleModes } from '@/shared/game/wot'
+import type { BattleModeSelectionKey } from '@/shared/game/battleModes/battleModeSelection'
+import { battleModeColumns, battleModeConditions } from './battleModeFilter'
 import { type MaybeRefOrGetter, type Ref, computed, toValue } from 'vue'
 import { useStatQueryStorage } from './statQueryParams'
 
@@ -11,7 +12,7 @@ export type StatParams = {
   level: TankLevel[] | null
   types: TankType[] | null
   tanks: string[] | null
-  battleMode: keyof typeof customBattleModes | 'any'
+  battleModes: BattleModeSelectionKey[]
   period: 'allTime' | {
     type: 'lastX'
     count: number
@@ -29,13 +30,13 @@ export type StatParams = {
 export function useQueryStatParams() {
   const { params } = useStatQueryStorage()
   return computed<StatParams>(() => {
-    const { nickname, level, types, tanks, battleMode, battleId, lastX, from, to } = params
+    const { nickname, level, types, tanks, battleModes, battleId, lastX, from, to } = params
     const result: StatParams = {
       player: nickname.value || null,
       level: level.value.length ? [...level.value] : null,
       types: types.value.length ? [...types.value] : null,
       tanks: tanks.value.length ? [...tanks.value] : null,
-      battleMode: battleMode.value,
+      battleModes: [...battleModes.value],
       battleId: battleId.value.length ? [...battleId.value] : null,
       period: 'allTime'
     }
@@ -61,30 +62,26 @@ export function useQueryStatParamsCache(params: Ref<StatParams>) {
   })
 }
 
-function whereClauseArray(params: StatParams, ignore: ('player' | 'level' | 'types' | 'tanks' | 'id' | 'battleMode')[] = []) {
+function whereClauseArray(params: StatParams, ignore: ('player' | 'level' | 'types' | 'tanks' | 'id' | 'battleModes')[] = []) {
   const result: string[] = []
   if (!ignore.includes('player') && params.player) result.push(`playerName = '${params.player}'`)
   if (!ignore.includes('level') && params.level) result.push(`tankLevel in (${params.level.sort().join(', ')})`)
   if (!ignore.includes('types') && params.types) result.push(`tankType in ('${params.types.sort().join("', '")}')`)
   if (!ignore.includes('tanks') && params.tanks) result.push(`tankTag in ('${params.tanks.sort().join("', '")}')`)
-  if (!ignore.includes('battleMode') && params.battleId === null && params.battleMode !== 'any') {
-    const t = customBattleModes[params.battleMode]
-    if ('mode' in t) result.push(`battleMode = '${t.mode}'`)
-    if ('gameplay' in t) result.push(`battleGameplay = '${t.gameplay}'`)
+  if (!ignore.includes('battleModes') && params.battleId === null) {
+    result.push(...battleModeConditions(params.battleModes))
   }
   return result
 }
 
-function whereClauseArrayColumns(params: StatParams, ignore: ('player' | 'level' | 'types' | 'tanks' | 'id' | 'battleMode')[] = []) {
+function whereClauseArrayColumns(params: StatParams, ignore: ('player' | 'level' | 'types' | 'tanks' | 'id' | 'battleModes')[] = []) {
   const result: string[] = []
   if (!ignore.includes('player') && params.player) result.push('playerName')
   if (!ignore.includes('level') && params.level) result.push('tankLevel')
   if (!ignore.includes('types') && params.types) result.push('tankType')
   if (!ignore.includes('tanks') && params.tanks) result.push('tankTag')
-  if (!ignore.includes('battleMode') && params.battleId === null && params.battleMode !== 'any') {
-    const t = customBattleModes[params.battleMode]
-    if ('mode' in t) result.push('battleMode')
-    if ('gameplay' in t) result.push('battleGameplay')
+  if (!ignore.includes('battleModes') && params.battleId === null) {
+    result.push(...battleModeColumns(params.battleModes))
   }
   return result
 }
@@ -92,7 +89,7 @@ function whereClauseArrayColumns(params: StatParams, ignore: ('player' | 'level'
 type Options = Partial<{
   withWhere: boolean,
   isBattleStart: boolean,
-  ignore: ('player' | 'level' | 'types' | 'tanks' | 'id' | 'battleMode')[],
+  ignore: ('player' | 'level' | 'types' | 'tanks' | 'id' | 'battleModes')[],
   additional: string[] | string
 }>
 

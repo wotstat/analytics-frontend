@@ -1,6 +1,7 @@
-import type { BattleModeSelectionKey } from '@/shared/game/selectors/battleMode/catalog'
+import type { BattleModeSelectionKey } from '@/shared/game/battleModes/battleModeSelection'
 
-export type VehicleRegion = 'RU' | 'EU' | 'NA' | 'ASIA' | 'CN'
+export const vehicleRegions = ['RU', 'EU', 'NA', 'ASIA', 'CN'] as const
+export type VehicleRegion = typeof vehicleRegions[number]
 
 export type VehicleFilters = {
   // Пустой список означает отсутствие ограничения, значения внутри списка объединяются через OR.
@@ -16,7 +17,7 @@ export type VehicleFilters = {
 export function createVehicleFilters(): VehicleFilters {
   return {
     regions: ['RU'],
-    battleModes: ['REGULAR'],
+    battleModes: ['random'],
     arenas: [],
     platoon: 'any',
     result: 'any',

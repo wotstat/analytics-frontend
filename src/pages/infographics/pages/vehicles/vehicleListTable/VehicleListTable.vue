@@ -208,7 +208,7 @@ const IMAGE_MIN_TABLE_WIDTH = 320
 const VALUE_BAR_COLORS = ['#ff4245', '#ffd600', '#30d158']
 const EXTENDED_VALUE_BAR_COLORS = ['#ff4245', '#ff9230', '#ffd600', '#30d158', '#3cd3fe', '#db34f2']
 
-const search = ref('')
+const search = defineModel<string>('search', { required: true })
 const localFilters = defineModel<LocalVehicleFilters>('localFilters', { required: true })
 const grouping = defineModel<VehicleGrouping>('grouping', { required: true })
 const period = defineModel<VehicleStatisticsPeriod>('period', { required: true })

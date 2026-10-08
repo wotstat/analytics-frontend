@@ -63,7 +63,7 @@
           </div>
 
           <h4>Режим</h4>
-          <OptionsSelect v-model="battleMode" :options="battleModeOptions" />
+          <BattleModeSelector v-model="battleModes" />
 
           <h4>Период</h4>
           <OptionsSelect v-model="periodVariant" :options="periodOptions" />
@@ -128,7 +128,8 @@ import { dateToDbIndex, query, queryAsync } from '@/db'
 import { computed, onMounted, onUnmounted, ref, shallowRef, toValue, watch, useTemplateRef } from 'vue'
 import { useDebounce, useDraggable, useElementBounding, watchOnce, useVirtualList } from '@vueuse/core'
 import { TankLevel, TankType, useQueryStatParams } from '@/shared/query/useQueryStatParams'
-import { customBattleModes, customBattleModesKeys } from '@/shared/game/wot'
+import BattleModeSelector from '@/shared/game/selectors/battleMode/BattleModeSelector.vue'
+import type { BattleModeSelectionKey } from '@/shared/game/battleModes/battleModeSelection'
 import { useStatQueryStorage } from '@/shared/query/statQueryParams'
 import { getTankName } from '@/shared/i18n/i18n'
 import OptionsSelect from '@/shared/ui/optionsSelect/OptionsSelect.vue'
@@ -178,10 +179,6 @@ useDraggable(right, {
 
 
 const nickname = ref('')
-const battleModeOptions = [
-  { value: 'any', label: 'Любой' },
-  ...customBattleModesKeys.map(mode => ({ value: mode, label: customBattleModes[mode].title })),
-] as const
 const periodOptions = [
   { value: 'allTime', label: 'За всё время' },
   { value: 'lastX', label: 'X последних боёв' },
@@ -193,7 +190,7 @@ const selectedClasses = ref<(TankType)[]>([])
 const selectedLevels = ref<(TankLevel)[]>([])
 const selectedTanks = ref<(Tank)[]>([])
 const playerBattles = shallowRef<Battle[]>([])
-const battleMode = ref<keyof typeof customBattleModes | 'any'>('any')
+const battleModes = ref<BattleModeSelectionKey[]>([])
 const fromDate = shallowRef<string | null>(null)
 const toDate = shallowRef<string | null>(null)
 const lastX = ref(10)
@@ -232,7 +229,7 @@ const queryParams = toValue(useQueryStatParams())
 if (queryParams.player) { nickname.value = queryParams.player; enablePlayerFilter.value = true }
 if (queryParams.level) { selectedLevels.value = queryParams.level; enableLevelFilter.value = true }
 if (queryParams.types) { selectedClasses.value = queryParams.types; enableTypeFilter.value = true }
-if (queryParams.battleMode) battleMode.value = queryParams.battleMode
+battleModes.value = [...queryParams.battleModes]
 if (queryParams.tanks != null) {
   const tanks = queryParams.tanks
   watchOnce(tanksProcessed, () => {
@@ -471,7 +468,7 @@ function apply() {
     level: enableLevelFilter.value ? [...selectedLevels.value] : [],
     types: enableTypeFilter.value ? [...selectedClasses.value] : [],
     tanks: enableTankFilter.value ? selectedTanks.value.map(tank => tank.tag) : [],
-    battleMode: battleMode.value,
+    battleModes: [...battleModes.value],
     battleId: [],
     lastX: periodVariant.value === 'lastX' ? lastX.value : undefined,
     from,
