@@ -10,7 +10,7 @@ import {
 
 function parseOption<T extends string | number>(options: readonly T[], raw: string): T {
   const value = options.find(option => String(option) === raw)
-  if (value === undefined) throw new Error('Неизвестное значение фильтра техники')
+  if (value === undefined) throw new Error('Unknown vehicle filter value')
   return value
 }
 
