@@ -5,7 +5,7 @@ function deserialize(raw: string): Set<OptionalRegionVersion> {
   const versions = new Map<string, OptionalRegionVersion>()
   for (const value of raw.split(',').filter(Boolean)) {
     const match = value.match(/^([a-z]+)_(\d+(?:-\d+)*)$/i)
-    if (!match) throw new Error('Некорректная версия')
+    if (!match) throw new Error('Invalid version')
     const region = match[1].toUpperCase()
     const version = match[2].replaceAll('-', '.')
     versions.set(`${region}:${version}`, { region, version })

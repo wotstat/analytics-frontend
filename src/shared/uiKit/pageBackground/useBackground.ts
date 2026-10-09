@@ -81,7 +81,7 @@ export function provideBackgroundController() {
 
 export function useBackgroundController() {
   const controller = inject(backgroundControllerKey)
-  if (!controller) throw new Error('Не найден провайдер BackgroundRoot')
+  if (!controller) throw new Error('BackgroundRoot provider not found')
   return controller
 }
 

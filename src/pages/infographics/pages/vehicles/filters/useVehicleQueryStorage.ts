@@ -27,7 +27,7 @@ function listParam<T>(defaultValue: T[], parse: (raw: string) => T) {
 }
 
 function parseIdentifier(raw: string) {
-  if (!/^[\w-]+$/.test(raw)) throw new Error('Некорректный идентификатор фильтра техники')
+  if (!/^[\w-]+$/.test(raw)) throw new Error('Invalid vehicle filter identifier')
   return raw
 }
 

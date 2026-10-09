@@ -9,7 +9,7 @@ const params = defineParams({
     default: 'RU' as OnslaughtRegion,
     deserialize: (raw: string): OnslaughtRegion => {
       if ([...regions, 'CT'].includes(raw)) return raw as OnslaughtRegion
-      throw new Error('Неизвестный регион')
+      throw new Error('Unknown region')
     }
   },
   season: { type: String, default: null }

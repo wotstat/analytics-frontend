@@ -15,7 +15,7 @@ export const dateParam = {
   serialize: (value: Date) => value.toISOString(),
   deserialize: (raw: string) => {
     const date = new Date(raw)
-    if (!Number.isFinite(date.getTime())) throw new Error('Некорректная дата')
+    if (!Number.isFinite(date.getTime())) throw new Error('Invalid date')
     return date
   }
 }
@@ -41,7 +41,7 @@ export const statQueryParams = defineParams({
     default: undefined,
     deserialize: (raw: string) => {
       const count = Number(raw)
-      if (!Number.isSafeInteger(count) || count < 1) throw new Error('Некорректное число боёв')
+      if (!Number.isSafeInteger(count) || count < 1) throw new Error('Invalid battle count')
       return count
     }
   },

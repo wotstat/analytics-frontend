@@ -1,7 +1,7 @@
 import { HighlightSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/HighlightSynchronizer'
 import type { InteractionTag } from '@/shared/uiKit/chart/universalChart/interaction/core/InteractionSource'
 import { computed, onScopeDispose, shallowRef, toValue, watch } from 'vue'
-import type { ComputedRef, MaybeRefOrGetter } from 'vue'
+import type { ComputedRef, MaybeRefOrGetter, Ref } from 'vue'
 
 export type LegendItem = {
   readonly name: string
@@ -27,10 +27,10 @@ export type LegendModel<TItem extends LegendItem = LegendItem> = {
 
 export function useLegend<TItem extends LegendItem>(
   source: MaybeRefOrGetter<readonly TItem[]>,
-  options: { highlightSync?: HighlightSynchronizer } = {},
+  options: { highlightSync?: HighlightSynchronizer, disabledTags?: Ref<ReadonlySet<InteractionTag>> } = {},
 ): LegendModel<TItem> {
   const items = computed(() => toValue(source))
-  const disabledTags = shallowRef<ReadonlySet<InteractionTag>>(new Set())
+  const disabledTags = options.disabledTags ?? shallowRef<ReadonlySet<InteractionTag>>(new Set())
   const highlightedTags = shallowRef<readonly InteractionTag[]>([])
 
   const highlightSync = options.highlightSync ?? new HighlightSynchronizer()
@@ -53,10 +53,15 @@ export function useLegend<TItem extends LegendItem>(
     if (tags.length === previousTags.length && tags.every((tag, index) => tag === previousTags[index])) return
 
     const currentTags = new Set(tags)
-    disabledTags.value = new Set([...disabledTags.value].filter(tag => currentTags.has(tag)))
+    const retained = new Set([...disabledTags.value].filter(tag => currentTags.has(tag)))
+    if (retained.size !== disabledTags.value.size) disabledTags.value = retained
 
     if (publishedTag !== undefined && !currentTags.has(publishedTag)) clearHighlight()
     if (toggleAnchor && !currentTags.has(toggleAnchor.tag)) toggleAnchor = undefined
+  })
+
+  watch(disabledTags, tags => {
+    if (publishedTag !== undefined && tags.has(publishedTag)) clearHighlight()
   })
 
   function isEnabled(item: Pick<TItem, 'tag'>): boolean {

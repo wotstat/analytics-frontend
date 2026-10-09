@@ -248,7 +248,7 @@ export function createDeferredWebHistory(base?: string): DeferredWebHistory {
     },
 
     setup(router, prepare) {
-      if (synchronize) throw new Error('DeferredWebHistory уже подключена к роутеру')
+      if (synchronize) throw new Error('DeferredWebHistory is already attached to a router')
       synchronize = prepare
 
       // beforeEach вызывается асинхронно. Отмечаем вызов push/replace сразу,

@@ -3,12 +3,9 @@ import type { GameRegion } from './wot'
 export type HistoryEvent = Readonly<{
   id: string
   label: string
-  // Основной цвет в hex; акцент меню вычисляется из него.
   color: string
   start: string
-  // Без end событие мгновенное. Дата окончания без времени включается целиком.
   end?: string
-  // Без regions событие отображается во всех регионах.
   regions?: readonly GameRegion[]
 }>
 
