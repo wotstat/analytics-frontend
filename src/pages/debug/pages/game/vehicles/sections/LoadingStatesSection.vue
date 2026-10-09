@@ -3,16 +3,15 @@
     description="Что видно, пока ClickHouse не ответил, и что при ошибке запроса — вживую и искусственно.">
 
     <div class="debug-col">
-      <p class="debug-label">статус общего списка техники (запрос один на всю страницу)</p>
+      <p class="debug-label">статус каталога и дополнительных данных этой страницы</p>
       <div class="debug-row">
         <span class="debug-hint">status: <span class="debug-value">{{ listStatusLabel }}</span></span>
         <span class="debug-hint">строк: <span class="debug-value">{{ vehicleList.length }}</span></span>
       </div>
       <p class="debug-note">
-        Запрос стартует сразу при импорте модуля <span class="debug-value">store.ts</span> (module-level
-        <span class="debug-value">queryAsync</span>), обычно раньше, чем успевает смонтироваться эта секция — поймать
-        живой <span class="debug-value">loading</span> здесь получится только на самой первой загрузке страницы, до
-        того как ответ ClickHouse придёт.
+        Общий каталог техники загружается один раз при старте приложения вместе с локализациями.
+        Модуль <span class="debug-value">store.ts</span> дополнительно запрашивает только количество боёв
+        и примеры других языков для этой страницы. Здесь показан объединённый статус обеих загрузок.
       </p>
     </div>
 

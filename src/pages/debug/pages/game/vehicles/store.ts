@@ -1,9 +1,9 @@
 import { computed } from 'vue'
-import { DEFAULT_CACHE, queryAsync } from '@/db'
+import { DEFAULT_CACHE, mergeStatuses, queryAsync, type Status } from '@/db'
 import { GameVendor, regionToGame } from '@/shared/game/wot'
 import { Nation } from '@/shared/game/vehicles/nations/nations'
 import { VehicleType } from '@/shared/game/vehicles/vehicle/utils'
-import { selectTagVehiclesLocalization } from '@/shared/i18n/i18n'
+import { vehicleCatalog, vehiclesByRegion } from '@/shared/game/vehicles/catalog'
 
 export type VehicleRow = {
   tag: string
@@ -21,8 +21,7 @@ export type VehicleRow = {
 
 const listQuery = `
 with
-    tanks as (select tag, type, level, nation, region, count from LatestBattleVehicleInfo final where updated > now() - interval 1 month),
-    locals as (${selectTagVehiclesLocalization}),
+    tanks as (select tag, region, count from LatestBattleVehicleInfo final where updated > now() - interval 1 month),
     localeSamples as (
       select
         tag,
@@ -33,14 +32,23 @@ with
       where (region, locale) in (('RU', 'RU'), ('EU', 'EN'), ('CN', 'ZH_CN'))
       group by tag
     )
-select tag, type, level, nation, region, count, short, name, nameRu, nameEn, nameZhCn
+select tag, region, count, nameRu, nameEn, nameZhCn
 from tanks
-left any join locals using tag
 left any join localeSamples using tag
 order by count desc
 `
 
-export const vehicleListQuery = queryAsync<VehicleRow>(listQuery, { cache: DEFAULT_CACHE })
+const diagnostics = queryAsync<Pick<VehicleRow, 'tag' | 'region' | 'count' | 'nameRu' | 'nameEn' | 'nameZhCn'>>(listQuery, {
+  cache: DEFAULT_CACHE, settings: { query_cache_nondeterministic_function_handling: 'save' },
+})
+
+export const vehicleListQuery = computed<{ status: Status, data: VehicleRow[] }>(() => ({
+  status: mergeStatuses(vehicleCatalog.value.status, diagnostics.value.status),
+  data: diagnostics.value.data.flatMap(row => {
+    const vehicle = vehiclesByRegion.value.get(row.region)?.get(row.tag)
+    return vehicle && vehicle.type !== 'unknown' ? [{ ...vehicle, type: vehicle.type, ...row }] : []
+  }),
+}))
 
 export type VehicleRowWithGame = VehicleRow & { game: GameVendor }
 

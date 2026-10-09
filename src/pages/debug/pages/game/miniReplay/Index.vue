@@ -96,10 +96,10 @@ function seek(tick: number) {
 
 function applyReplay(replay: MiniReplay, name: string) {
   if (replay.schemaVersion !== 1) {
-    throw new Error(`Ожидалась schemaVersion 1, получена ${replay.schemaVersion ?? 'неизвестная версия'}`)
+    throw new Error(`Expected schemaVersion 1, received ${replay.schemaVersion ?? 'unknown version'}`)
   }
   if (!replay.battle || !Array.isArray(replay.vehicleLives) || !Array.isArray(replay.participants)) {
-    throw new Error('Файл не похож на mini replay: нет battle, participants или vehicleLives')
+    throw new Error('Invalid mini replay file: missing battle, participants or vehicleLives')
   }
 
   pause()

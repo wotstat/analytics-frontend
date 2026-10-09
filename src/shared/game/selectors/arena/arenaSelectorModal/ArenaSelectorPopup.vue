@@ -87,11 +87,12 @@ import ArenaSelectorModal from './ArenaSelectorContent.vue'
 import { preferredGame } from '@/shared/global/globalPreferred'
 import { computed, ref } from 'vue'
 import { hashToArena } from '../utils'
+import { getArenaName } from '@/shared/i18n/i18n'
 import BadgesLine from '../../components/badges/BadgesLine.vue'
 import type { GameVendor } from '@/shared/game/wot'
 
 const props = withDefaults(defineProps<{
-  arenas: { region: string, battleMode: string, battleGameplay: string, tag: string, name: string, gameVersion: string, season: string }[],
+  arenas: { region: string, battleMode: string, battleGameplay: string, tag: string, gameVersion: string }[],
   visibleModal: boolean
   game?: GameVendor
   allowTeamSelection?: boolean
@@ -102,7 +103,6 @@ const season = ref<'winter' | 'summer' | 'desert' | null>(null)
 const onlyActual = ref(true)
 
 const canReset = computed(() => searchText.value.length > 0 || season.value !== null || onlyActual.value == false)
-const arenaNames = computed(() => new Map(props.arenas.map(a => [a.tag, a.name])))
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -122,10 +122,10 @@ function selectSeason(target: 'winter' | 'summer' | 'desert' | null) {
 }
 
 function badgeLabel(hash: string) {
-  if (!props.allowTeamSelection) return arenaNames.value.get(hash) || hash
+  if (!props.allowTeamSelection) return getArenaName(hash)
   const info = hashToArena(hash)
   if (!info) return hash
-  const name = arenaNames.value.get(info.tag) || info.tag
+  const name = getArenaName(info.tag)
   if (info.team == 'any') return name
   return `${name}/${info.team}`
 }

@@ -124,14 +124,15 @@
 </template>
 
 <script setup lang="ts">
-import { dateToDbIndex, query, queryAsync } from '@/db'
+import { dateToDbIndex, query, success } from '@/db'
 import { computed, onMounted, onUnmounted, ref, shallowRef, toValue, watch, useTemplateRef } from 'vue'
-import { useDebounce, useDraggable, useElementBounding, watchOnce, useVirtualList } from '@vueuse/core'
+import { useDebounce, useDraggable, useElementBounding, whenever, useVirtualList } from '@vueuse/core'
 import { TankLevel, TankType, useQueryStatParams } from '@/shared/query/useQueryStatParams'
 import BattleModeSelector from '@/shared/game/selectors/battleMode/BattleModeSelector.vue'
 import type { BattleModeSelectionKey } from '@/shared/game/battleModes/battleModeSelection'
 import { useStatQueryStorage } from '@/shared/query/statQueryParams'
 import { getTankName } from '@/shared/i18n/i18n'
+import { vehicleCatalog, selectableVehicles } from '@/shared/game/vehicles/catalog'
 import OptionsSelect from '@/shared/ui/optionsSelect/OptionsSelect.vue'
 import { isContextMenuOpen } from '@/shared/uiKit/contextMenu/createContextMenu'
 
@@ -195,35 +196,20 @@ const fromDate = shallowRef<string | null>(null)
 const toDate = shallowRef<string | null>(null)
 const lastX = ref(10)
 
-const tankList = queryAsync<{
-  type: 'MT' | 'LT' | 'HT' | 'AT' | 'SPG',
-  tag: string, level: TankLevel
-}>(`
-select tankTag as tag, 
-       tankType as type, 
-       tankLevel as level 
-from Event_OnBattleStart
-group by tankTag, tankType, tankLevel
-having count() > 10;
-`)
-
-const tanks = computed(() => tankList.value.data.map(t => {
-  return {
-    tankLevel: t.level,
-    tankType: t.type,
-    tankTag: t.tag,
-    tankName: getTankName(t.tag, false),
-    shortName: getTankName(t.tag, true)
-  }
-}))
-
-const tanksProcessed = computed(() => tanks.value.map(t => ({
-  level: t.tankLevel,
-  type: t.tankType,
-  tag: t.tankTag,
-  name: t.tankName,
-  short: t.shortName,
-})))
+const tanksProcessed = computed(() => {
+  const seen = new Set<string>()
+  return selectableVehicles.value.filter(tank => {
+    if (seen.has(tank.tag)) return false
+    seen.add(tank.tag)
+    return true
+  }).map(tank => ({
+    level: tank.level as TankLevel,
+    type: tank.type,
+    tag: tank.tag,
+    name: getTankName(tank.tag),
+    short: getTankName(tank.tag, true),
+  }))
+})
 
 const queryParams = toValue(useQueryStatParams())
 if (queryParams.player) { nickname.value = queryParams.player; enablePlayerFilter.value = true }
@@ -232,9 +218,9 @@ if (queryParams.types) { selectedClasses.value = queryParams.types; enableTypeFi
 battleModes.value = [...queryParams.battleModes]
 if (queryParams.tanks != null) {
   const tanks = queryParams.tanks
-  watchOnce(tanksProcessed, () => {
+  whenever(() => vehicleCatalog.value.status === success, () => {
     selectedTanks.value = tanksProcessed.value.filter(t => tanks.includes(t.tag))
-  })
+  }, { immediate: true, once: true })
   enableTankFilter.value = true
 }
 

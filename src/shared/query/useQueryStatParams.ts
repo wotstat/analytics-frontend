@@ -4,8 +4,8 @@ import { battleModeColumns, battleModeConditions } from './battleModeFilter'
 import { type MaybeRefOrGetter, type Ref, computed, toValue } from 'vue'
 import { useStatQueryStorage } from './statQueryParams'
 
-export type TankType = 'LT' | 'MT' | 'HT' | 'AT' | 'SPG';
-export type TankLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
+export type { VehicleType as TankType, VehicleLevel as TankLevel } from '@/shared/game/vehicles/types'
+import type { VehicleType as TankType, VehicleLevel as TankLevel } from '@/shared/game/vehicles/types'
 
 export type StatParams = {
   player: string | null

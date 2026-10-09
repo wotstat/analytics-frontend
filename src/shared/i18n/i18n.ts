@@ -1,41 +1,15 @@
 import { LONG_CACHE, queryAsync } from '@/db'
 import { computed } from 'vue'
 
-const LOCALE = 'RU'
-const localeRegionPriority = {
-  'RU': ['RU', 'PT_RU', 'EU', 'NA'],
-  'EN': ['EU', 'NA', 'RU'],
-} as const
-
-const localizationRegionPriority = [...localeRegionPriority[LOCALE], 'CN', 'ASIA'] as const
-const localizationRegionsSql = localizationRegionPriority.map(region => `'${region}'`).join(', ')
-const localizationRegionPrioritySql = `indexOf([${[...localizationRegionPriority].reverse().map(region => `'${region}'`).join(', ')}], region)`
+import { arenasByTag } from '@/shared/game/arenas/catalog'
+import { vehiclesByTag } from '@/shared/game/vehicles/catalog'
+import { LOCALE, localeRegionPriority, localizationRegionsSql, localizationRegionPrioritySql } from './localization'
 
 export function countLocalize(count: number, one: string, two: string, five: string = two) {
   if (count % 10 == 1 && count % 100 != 11) return one
   if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) return two
   return five
 }
-
-export const selectVehiclesLocalization = `
-  select
-    tag,
-    argMax(shortName, ${localizationRegionPrioritySql}) as short,
-    argMax(name, ${localizationRegionPrioritySql}) as name
-  from VehiclesLocalizationDictionary
-  where region in (${localizationRegionsSql}) and locale = '${LOCALE}'
-  group by tag
-`
-export const selectTagVehiclesLocalization = selectVehiclesLocalization
-
-export const selectTagArenasLocalization = `
-  select
-    tag,
-    argMax(name, ${localizationRegionPrioritySql}) as name
-  from ArenasLocalizationDictionary
-  where region in (${localizationRegionsSql}) and locale = '${LOCALE}'
-  group by tag
-`
 
 export const selectArtefactsLocalization = `
   select
@@ -64,19 +38,13 @@ export const selectCustomizationsLocalization = `
   group by tag
 `
 
-const tankNames = queryAsync<{ tag: string, short: string, name: string }>(selectVehiclesLocalization, { cache: LONG_CACHE, proxyCache: true })
-const tankNamesMap = computed(() => new Map<string, [string, string]>(tankNames.value.data.map(t => [t.tag, [t.name, t.short]])))
-
-const arenaNames = queryAsync<{ tag: string, name: string }>(selectTagArenasLocalization, { cache: LONG_CACHE, proxyCache: true })
-const arenaNamesMap = computed(() => new Map<string, string>(arenaNames.value.data.map(t => [t.tag, t.name])))
-
 const artefactsNames = queryAsync<{ tag: string, name: string }>(selectArtefactsLocalization, { cache: LONG_CACHE, proxyCache: true })
 const artefactsNamesMap = computed(() => new Map<string, string>(artefactsNames.value.data.map(t => [t.tag, t.name])))
 
 function getBestTankLocale(tag: string, short: boolean = false) {
-  const locales = tankNamesMap.value.get(tag)
+  const locales = vehiclesByTag.value.get(tag)
   if (!locales) return null
-  const result = short ? locales[1] : locales[0]
+  const result = short ? locales.short : locales.name
   if (result && result != '?empty?') return result
   return null
 }
@@ -102,7 +70,7 @@ export function tankTagToReadable(tag: string) {
 
 export function getArenaName(tag: string) {
   tag = tag.replace('spaces/', '')
-  const name = arenaNamesMap.value.get(tag)
+  const name = arenasByTag.value.get(tag)?.name
   if (name) return name
   return tag
 }

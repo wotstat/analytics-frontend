@@ -95,7 +95,7 @@ function gameplayCode(slug: string) {
   const known = gameplayCodes.get(slug)
   if (known) return known
   if (slug.startsWith('code-') && slug.length > 5) return slug.slice(5).replaceAll('-', '_')
-  throw new Error('Неизвестный геймплей')
+  throw new Error('Unknown gameplay')
 }
 
 function selectionTarget(key: string): BattleModeTarget {
@@ -119,11 +119,11 @@ function selectionTarget(key: string): BattleModeTarget {
       }
     }
   }
-  throw new Error('Неизвестный режим боя')
+  throw new Error('Unknown battle mode')
 }
 
 export function battleModeSelection(key: BattleModeSelectionKey): { title: string, targets: BattleModeTarget[] } {
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(key)) throw new Error('Некорректный режим боя')
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(key)) throw new Error('Invalid battle mode')
   if (Object.hasOwn(battleModeFamilies, key)) {
     const family = battleModeFamilies[key]
     return {

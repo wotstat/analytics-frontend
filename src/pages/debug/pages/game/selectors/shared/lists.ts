@@ -1,47 +1,25 @@
 import { computed } from 'vue'
-import { DEFAULT_CACHE, LONG_CACHE, MEDIUM_CACHE, queryAsync, type Status } from '@/db'
-import { selectTagArenasLocalization, selectTagVehiclesLocalization } from '@/shared/i18n/i18n'
+import { LONG_CACHE, MEDIUM_CACHE, queryAsync, type Status } from '@/db'
 import { arenaToHash } from '@/shared/game/selectors/arena/utils'
-import type { Nation } from '@/shared/game/vehicles/nations/nations'
+import { vehicleCatalog, selectableVehicles, type SelectableVehicle } from '@/shared/game/vehicles/catalog'
 import type { OptionalRegionVersion } from '@/shared/game/selectors/gameVersionSelector/utils.ts'
 import { versionToKey } from '@/shared/game/selectors/gameVersionSelector/utils.ts'
 
-export type VehicleRow = {
-  type: 'MT' | 'LT' | 'HT' | 'AT' | 'SPG',
-  tag: string, level: number, short: string, name: string, region: string, nation: Nation
-}
+export type VehicleRow = Omit<SelectableVehicle, 'id' | 'role'>
 
 export type ArenaRow = {
   region: string, battleMode: string, battleGameplay: string,
-  tag: string, name: string, gameVersion: string, season: string
+  tag: string, gameVersion: string
 }
 
 export type VersionRow = { region: string, version: string }
 
 
-const vehicles = queryAsync<VehicleRow>(`
-with
-    tanks as (select tag, type, level, role, nation, region, from LatestBattleVehicleInfo final),
-    locals as (${selectTagVehiclesLocalization})
-select tag, type, role, level, short, name, region, nation
-from tanks
-left any join locals using tag;
-`, { cache: MEDIUM_CACHE, proxyCache: true })
-
 const arenas = queryAsync<ArenaRow>(`
-with
-    arenas as (
-      select region, battleMode, battleGameplay, splitByChar('/', arenaTag)[2] as tag, argMax(gameVersion, dateTime) as gameVersion
-      from Event_OnBattleStart
-      where region in ('RU', 'EU')
-      group by arenaTag, region, battleGameplay, battleMode
-    ),
-    locals as (${selectTagArenasLocalization}),
-    seasons as (select tag, season from ArenasLatest)
-select region, battleMode, battleGameplay, tag, gameVersion, name, season
-from arenas
-left any join locals using tag
-left any join seasons using tag
+select region, battleMode, battleGameplay, splitByChar('/', arenaTag)[2] as tag, argMax(gameVersion, dateTime) as gameVersion
+from Event_OnBattleStart
+where region in ('RU', 'EU')
+group by arenaTag, region, battleGameplay, battleMode
 `, { cache: LONG_CACHE, proxyCache: true })
 
 const versions = queryAsync<VersionRow>(`
@@ -51,7 +29,7 @@ const versions = queryAsync<VersionRow>(`
 `, { cache: MEDIUM_CACHE, proxyCache: true })
 
 export const listStatuses = computed<{ title: string, status: Status, count: number }[]>(() => [
-  { title: 'техника', status: vehicles.value.status, count: vehicles.value.data.length },
+  { title: 'техника', status: vehicleCatalog.value.status, count: selectableVehicles.value.length },
   { title: 'карты', status: arenas.value.status, count: arenas.value.data.length },
   { title: 'версии', status: versions.value.status, count: versions.value.data.length },
 ])
@@ -61,11 +39,11 @@ export function regionForGame(game: string) {
   return game == 'mt' ? 'RU' : 'EU'
 }
 
-export const vehicleRows = computed(() => vehicles.value.data)
+export const vehicleRows = computed(() => selectableVehicles.value)
 
-export const vehicleTags = computed(() => [...new Set(vehicles.value.data.map(v => v.tag))])
+export const vehicleTags = computed(() => [...new Set(selectableVehicles.value.map(v => v.tag))])
 
-export const vehicleNames = computed(() => vehicles.value.data
+export const vehicleNames = computed(() => selectableVehicles.value
   .filter(v => v.region == 'RU' && v.name)
   .map(v => ({ tag: v.tag, name: v.name, short: v.short })))
 

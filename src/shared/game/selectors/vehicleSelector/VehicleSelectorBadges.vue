@@ -2,35 +2,20 @@
   <BadgesLinePopover :tagToText="t => getTankName(t, true)" v-model="vehicles"
     :close-on-outside-window="closeOnOutsideWindow" :width="350" scroll-mode="child"
     :placement="['bottom-start', 'top-start', 'bottom-float', 'top-float']">
-    <VehiclePopup :tank-list="tankList.data" v-model="vehicles" />
+    <VehiclePopup :tank-list="selectableVehicles" v-model="vehicles" />
   </BadgesLinePopover>
 </template>
 
-
 <script setup lang="ts">
-import { getTankName, selectTagVehiclesLocalization } from '@/shared/i18n/i18n'
+import { getTankName } from '@/shared/i18n/i18n'
 import BadgesLinePopover from '../components/badges/BadgesLinePopover.vue'
-import { DEFAULT_CACHE, queryAsync } from '@/db'
 import VehiclePopup from './VehiclePopup.vue'
-import { Nation } from '@/shared/game/vehicles/nations/nations'
+import { selectableVehicles } from '@/shared/game/vehicles/catalog'
 import { CloseOnOutsideWindow } from '@/shared/uiKit/popover/utils'
 
 defineProps<{
   closeOnOutsideWindow?: CloseOnOutsideWindow
 }>()
-
-
-const tankList = queryAsync<{
-  type: 'MT' | 'LT' | 'HT' | 'AT' | 'SPG',
-  tag: string, level: number, short: string, name: string, region: string, nation: Nation
-}>(`
-with
-    tanks as (select tag, type, level, role, nation, region, from LatestBattleVehicleInfo final),
-    locals as (${selectTagVehiclesLocalization})
-select tag, type, role, level, short, name, region, nation
-from tanks
-left any join locals using tag;
-`, { cache: DEFAULT_CACHE })
 
 const vehicles = defineModel<Set<string>>({ default: () => new Set() })
 

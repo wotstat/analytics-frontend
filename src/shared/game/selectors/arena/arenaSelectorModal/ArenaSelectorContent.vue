@@ -40,7 +40,8 @@
 
 
 <script setup lang="ts">
-import { getArenaMeta, tagToImageName } from '@/shared/game/arenas/arenas'
+import { arenas as arenaMetadata, getArenaMeta, tagToImageName } from '@/shared/game/arenas/arenas'
+import { getArenaName } from '@/shared/i18n/i18n'
 import MinimapBackground from '@/shared/game/arenas/minimap/minimapBackground/MinimapBackground.vue'
 import MinimapBases from '@/shared/game/arenas/minimap/minimapBases/MinimapBases.vue'
 import { GameVendor } from '@/shared/game/wot'
@@ -54,7 +55,7 @@ import Loader from '@/shared/ui/loaders/loader/Loader.vue'
 
 const props = withDefaults(defineProps<{
   game: GameVendor
-  arenas: { region: string, battleMode: string, battleGameplay: string, tag: string, name: string, gameVersion: string, season: string }[]
+  arenas: { region: string, battleMode: string, battleGameplay: string, tag: string, gameVersion: string }[]
   search: string
   season: 'winter' | 'summer' | 'desert' | null
   onlyActual: boolean
@@ -91,13 +92,20 @@ function parseVersion(string: string): VersionParts {
   return parts as VersionParts
 }
 
-const prepared = computed(() => props.arenas.map(arena => ({
-  ...arena,
-  version: parseVersion(arena.gameVersion),
-  gameplay: arena.battleGameplay,
-  imageName: tagToImageName(arena.tag),
-  highlighted: new Highlighted((!arena.name || arena.name.endsWith('/name')) ? arena.tag : arena.name)
-})))
+const seasonsByArena = computed(() => new Map(arenaMetadata.value.map(arena => [`${arena.region}:${arena.tag}`, arena.season])))
+
+const prepared = computed(() => props.arenas.map(arena => {
+  const name = getArenaName(arena.tag)
+  return {
+    ...arena,
+    name,
+    season: seasonsByArena.value.get(`${arena.region}:${arena.tag}`) ?? '',
+    version: parseVersion(arena.gameVersion),
+    gameplay: arena.battleGameplay,
+    imageName: tagToImageName(arena.tag),
+    highlighted: new Highlighted(name.endsWith('/name') ? arena.tag : name),
+  }
+}))
 
 const groups = computed(() => {
 

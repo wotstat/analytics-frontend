@@ -1,6 +1,7 @@
 import { LONG_CACHE, query } from '@/db'
 import { STATIC_URL } from '@/shared/external/externalUrl'
-import { computed, shallowRef } from 'vue'
+import { computed } from 'vue'
+import { computedAsync } from '@vueuse/core'
 import { GameVendor, regionToGame } from '../wot'
 
 export function tagToImageName(tag: string): string {
@@ -87,7 +88,7 @@ type ArenasLatest = {
   'poi.type': number[];                  // Array(UInt8)
 };
 
-export const arenas = shallowRef(<Arena[]>([]))
+export const arenas = computedAsync<Arena[]>(loadArenas, [], { lazy: true, onError: console.error })
 const arenasMap = computed(() => new Map<string, Arena>(
   arenas.value.map((arena) => [arenaKey(arena.game, arena.tag, arena.gameplay), arena])
 ))
@@ -117,7 +118,7 @@ async function loadArenas() {
     where region in ('RU', 'EU');
   `, { cache: LONG_CACHE, proxyCache: true })
 
-  arenas.value = response.data.map((arena) => ({
+  return response.data.map((arena) => ({
     region: arena.region,
     game: regionToGame(arena.region),
     tag: arena.tag,
@@ -142,5 +143,3 @@ async function loadArenas() {
     control: arena.control.map(pos => ({ x: pos[0], y: pos[1] })),
   }))
 }
-
-loadArenas()

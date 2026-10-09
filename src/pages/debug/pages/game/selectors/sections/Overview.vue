@@ -102,7 +102,7 @@
     </div>
 
     <div class="debug-col">
-      <span class="debug-label">Списки из ClickHouse (те же запросы, что внутри селекторов)</span>
+      <span class="debug-label">Общие списки селекторов из ClickHouse</span>
 
       <table class="debug-table">
         <thead>

@@ -21,9 +21,10 @@
         </tbody>
       </table>
       <p class="debug-hint">
-        Оба пути используют <span class="debug-value">selectTagVehiclesLocalization</span> из общего
-        <span class="debug-value">i18n.ts</span>: dictionary фильтруется по locale, затем выбирается регион по
-        приоритету. Глобальный кеш и debug-запрос должны возвращать одинаковые значения.
+        Имена в списке и <span class="debug-value">getTankName</span> берутся из общего
+        <span class="debug-value">game/vehicles/catalog.ts</span>: dictionary фильтруется по locale,
+        затем выбирается регион по приоритету. Отдельный debug-запрос добавляет только примеры других языков
+        и количество боёв.
       </p>
     </div>
 

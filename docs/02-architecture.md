@@ -78,7 +78,7 @@ src/
 - Состояние страницы кладут в **URL query** через `shared/ui/queryStorage/useQueryStorage` (общий реестр с sessionStorage, жизненным циклом владельцев и историей; см. [10-query-storage.md](10-query-storage.md)) и/или `useLocalStorage`. Ядро не зависит от фильтров и страниц. В `shared/query/` находятся описания фильтров статистики и `useQueryStatParams`, который адаптирует их для запросов. Глобальных сторов нет; модульный синглтон-стейт — просто `ref` на уровне модуля (пример: `pages/services/bob25/store.ts`, `shared/global/globalPreferred.ts`).
 - Многие страницы грузят данные лениво по видимости карточки: `useElementVisibility` + опция `enabled` у query-хелперов.
 - Markdown-файлы импортируются как Vue-компоненты (`import { VueComponent } from './index.md'`).
-- Комментарии и тексты — по-русски.
+- Комментарии и тексты интерфейса — по-русски. Сообщения в `new Error(...)` — по-английски.
 
 ## Типичный паттерн страницы-«инфографики»
 

@@ -1,7 +1,9 @@
 import type { Nation } from '@/shared/game/vehicles/nations/nations'
 import type { VehicleType } from '@/shared/game/vehicles/vehicle/utils'
 
-export const vehicleLevels = Array.from({ length: 11 }, (_, index) => index + 1)
+import { vehicleLevels as gameVehicleLevels } from '@/shared/game/vehicles/types'
+
+export const vehicleLevels = [...gameVehicleLevels]
 export const battleThresholds = [0, 20, 50, 100, 500, 1000] as const
 export const playerThresholds = [0, 10, 30, 50, 100, 500] as const
 export type BattleThreshold = typeof battleThresholds[number]

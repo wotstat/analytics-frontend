@@ -1,6 +1,6 @@
 <template>
   <DebugSection title="Состояния загрузки" id="loading-state"
-    description="arenas.ts не использует queryComputed из @/db — это shallowRef, который заполняет один неотслеживаемый async loadArenas() при импорте модуля. Явного статуса loading/error, в отличие от queryComputed, здесь нет."
+    description="arenas.ts использует computedAsync с lazy: true: загрузка начинается при первом чтении arenas.value, а импорт модуля не отправляет запрос. Явного статуса loading/error здесь нет."
     source="src/shared/game/arenas/arenas.ts">
 
     <table class="debug-table">
@@ -17,7 +17,7 @@
     </table>
 
     <p class="debug-hint">
-      Если открыть эту страницу первой (до того, как что-то ещё импортировало arenas.ts), несколько кадров все секции
+      Если открыть эту страницу первой (до того, как другой потребитель прочитал arenas.value), несколько кадров все секции
       выше рисуют пустые селекты и «Нет меты» — это нормально, реактивность подхватит данные сама, когда придёт ответ.
       Отличить «ещё грузится» от «пришёл пустой список» этот модуль не позволяет: обе ситуации — length === 0.
     </p>
@@ -37,10 +37,9 @@
     </div>
 
     <p class="debug-note">
-      arenas.ts вызывает низкоуровневый <span class="debug-value">query()</span> напрямую, а не queryComputed/queryAsync
-      — значит ошибку сети или синтаксиса он просто не поймает и не покажет: промис loadArenas() падает молча
-      (в консоль ничего не пишется, catch отсутствует). Кнопки выше используют тот же query() с заведомо битым SQL,
-      чтобы показать, как выглядит настоящая ошибка ClickHouse — сам arenas.ts на неё так отреагировать не может.
+      Загрузка использует низкоуровневый <span class="debug-value">query()</span> внутри computedAsync.
+      Ошибки попадают в console.error, а список остаётся пустым. Кнопки выше вызывают query() напрямую,
+      чтобы показать успешный ответ и настоящую ошибку ClickHouse в логе.
     </p>
   </DebugSection>
 </template>

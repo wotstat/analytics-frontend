@@ -1,4 +1,5 @@
 import './styles/index.scss'
+import './shared/i18n/i18n'
 import { createApp } from 'vue'
 import App from './App.vue'
 import { router } from './routes'

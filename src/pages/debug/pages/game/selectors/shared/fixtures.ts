@@ -49,14 +49,14 @@ export const vehicleListFixture: VehicleRow[] = [
 // Одна карта нарочно из старой версии: с «Только актуальные» её не видно,
 // без галки у неё появляется плашка «До 1.43.0».
 export const arenaListFixture: ArenaRow[] = [
-  { tag: '01_karelia', name: 'Карелия', region: 'RU', battleMode: 'REGULAR', battleGameplay: 'ctf', gameVersion: 'ru_1.44.0', season: 'summer' },
-  { tag: '04_himmelsdorf', name: 'Химмельсдорф', region: 'RU', battleMode: 'REGULAR', battleGameplay: 'ctf', gameVersion: 'ru_1.44.0', season: 'summer' },
-  { tag: '05_prohorovka', name: 'Прохоровка', region: 'RU', battleMode: 'REGULAR', battleGameplay: 'ctf', gameVersion: 'ru_1.44.0', season: 'summer' },
-  { tag: '06_ensk', name: 'Энск', region: 'RU', battleMode: 'REGULAR', battleGameplay: 'domination', gameVersion: 'ru_1.44.0', season: 'summer' },
-  { tag: '02_malinovka', name: 'Малиновка', region: 'RU', battleMode: 'REGULAR', battleGameplay: 'assault', gameVersion: 'ru_1.44.0', season: 'summer' },
-  { tag: '08_ruinberg', name: 'Руинберг', region: 'RU', battleMode: 'REGULAR', battleGameplay: 'ctf', gameVersion: 'ru_1.43.0', season: 'summer' },
+  { tag: '01_karelia', region: 'RU', battleMode: 'REGULAR', battleGameplay: 'ctf', gameVersion: 'ru_1.44.0' },
+  { tag: '04_himmelsdorf', region: 'RU', battleMode: 'REGULAR', battleGameplay: 'ctf', gameVersion: 'ru_1.44.0' },
+  { tag: '05_prohorovka', region: 'RU', battleMode: 'REGULAR', battleGameplay: 'ctf', gameVersion: 'ru_1.44.0' },
+  { tag: '06_ensk', region: 'RU', battleMode: 'REGULAR', battleGameplay: 'domination', gameVersion: 'ru_1.44.0' },
+  { tag: '02_malinovka', region: 'RU', battleMode: 'REGULAR', battleGameplay: 'assault', gameVersion: 'ru_1.44.0' },
+  { tag: '08_ruinberg', region: 'RU', battleMode: 'REGULAR', battleGameplay: 'ctf', gameVersion: 'ru_1.43.0' },
   // Без локализации: вместо имени показывается тег.
-  { tag: '99_no_such_arena', name: '', region: 'RU', battleMode: 'REGULAR', battleGameplay: 'ctf', gameVersion: 'ru_1.44.0', season: 'winter' },
+  { tag: '99_no_such_arena', region: 'RU', battleMode: 'REGULAR', battleGameplay: 'ctf', gameVersion: 'ru_1.44.0' },
 ]
 
 export const versionListFixture: VersionRow[] = [
