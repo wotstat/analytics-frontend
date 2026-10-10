@@ -1,13 +1,32 @@
 <template>
   <VehicleFilters v-model="filters" />
-  <TimeSeriesCompare :sources="comparison.sources.value" :filters :min-battles="localFilters.minBattles"
-    :min-players="localFilters.minPlayers"
-    @remove="comparison.remove" @color-change="comparison.setColor" @clear="comparison.clear" />
-  <VehicleListTable v-model:grouping="grouping" v-model:local-filters="localFilters" v-model:search="search" v-model:period="period"
-    v-model:slots="slots" :vehicles="statistics.data" :status="statistics.status" :progress="statistics.progress"
+
+  <TimeSeriesCompare
+    :sources="comparison.sources.value"
     :filters
-    :compared-keys="comparison.comparedKeys.value" :comparison-count="comparison.sources.value.length"
-    @compare="comparison.toggle" @compare-all="comparison.addMany" @retry="retry++" />
+    :min-battles="localFilters.minBattles"
+    :min-players="localFilters.minPlayers"
+    v-model:settings="comparison.settings.value"
+    @visibility-change="comparison.setDisabled"
+    @remove="comparison.remove"
+    @color-change="comparison.setColor"
+    @clear="comparison.clear" />
+
+  <VehicleListTable
+    v-model:grouping="grouping"
+    v-model:local-filters="localFilters"
+    v-model:search="search"
+    v-model:period="period"
+    v-model:slots="slots"
+    :vehicles="statistics.data"
+    :status="statistics.status"
+    :progress="statistics.progress"
+    :filters
+    :compared-keys="comparison.comparedKeys.value"
+    :comparison-count="comparison.sources.value.length"
+    @compare="comparison.toggle"
+    @compare-all="comparison.addMany"
+    @retry="retry++" />
 
   <section class="data-source">
     <h5>Источник данных</h5>

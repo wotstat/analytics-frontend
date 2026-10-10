@@ -1,13 +1,11 @@
-import type { BattleModeSelectionKey } from '@/shared/game/battleModes/battleModeSelection'
+import type { BattleModeSelectionKey } from '@/shared/game/domain/battleModes/battleModeSelection'
 
 export const vehicleRegions = ['RU', 'EU', 'NA', 'ASIA', 'CN'] as const
 export type VehicleRegion = typeof vehicleRegions[number]
 
 export type VehicleFilters = {
-  // Пустой список означает отсутствие ограничения, значения внутри списка объединяются через OR.
   regions: VehicleRegion[]
   battleModes: BattleModeSelectionKey[]
-  // Теги карт без команды, например 05_prohorovka.
   arenas: string[]
   platoon: 'any' | 'solo' | 'duo' | 'trio' | 'large'
   result: 'any' | 'win' | 'loss' | 'draw'

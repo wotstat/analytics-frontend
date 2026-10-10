@@ -13,7 +13,7 @@
 
 <script setup lang="ts">
 import { ref, useTemplateRef } from 'vue'
-import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
+import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
 import DropdownArrow from '@/shared/uiKit/dropdown/DropdownArrow.vue'
 import { usePopoverCloseDelay } from '@/shared/uiKit/popover/usePopoverCloseDelay'
 import VehicleSlotOptions from './VehicleSlotOptions.vue'

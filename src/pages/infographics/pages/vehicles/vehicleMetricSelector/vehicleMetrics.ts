@@ -1,4 +1,4 @@
-import type { IconType } from '@/shared/game/efficiencyIcon/utils'
+import type { IconType } from '@/shared/game/components/efficiencyIcon/utils'
 
 export type SlotDefinition = {
   icon: IconType

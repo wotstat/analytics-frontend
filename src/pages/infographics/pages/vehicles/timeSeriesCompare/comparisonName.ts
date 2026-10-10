@@ -1,4 +1,4 @@
-import { battleModeSelection } from '@/shared/game/battleModes/battleModeSelection'
+import { battleModeSelection } from '@/shared/game/domain/battleModes/battleModeSelection'
 import { countLocalize, getArenaName } from '@/shared/i18n/i18n'
 import { differentComparisonFilters, type ComparisonFilters, type ComparisonSource } from './types'
 

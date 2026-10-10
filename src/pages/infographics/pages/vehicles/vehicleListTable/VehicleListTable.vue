@@ -48,7 +48,7 @@
 
 
       <template #cell-compare="{ row }">
-        <VehicleCompareButton :compared="comparedKeys.includes(row.rowKey)"
+        <VehicleCompareButton :compared="isCompared(row)"
           @click.stop="$emit('compare', row, vehicleHistorySelection(row, effectiveSelection))" />
       </template>
 
@@ -79,7 +79,7 @@
           :selection="vehicleHistorySelection(row, effectiveSelection)" :name="vehicleName(row)" :filters
           :min-battles="localFilters.minBattles" :min-players="localFilters.minPlayers">
           <template v-if="!showCompare" #header-before>
-            <VehicleCompareButton class="history-compare" :compared="comparedKeys.includes(row.rowKey)"
+            <VehicleCompareButton class="history-compare" :compared="isCompared(row)"
               @click.stop="$emit('compare', row, vehicleHistorySelection(row, effectiveSelection))" />
           </template>
         </VehicleTimeSeries>
@@ -144,16 +144,17 @@ import { useElementSize, useLocalStorage } from '@vueuse/core'
 import { isErrorStatus, loading, success, type Status } from '@/db'
 import ModalWindowContent from '@/shared/ui/modalWindow/ModalWindowContent.vue'
 import PlusIcon from './assets/plus-bold.svg'
-import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
-import VehicleType from '@/shared/game/vehicles/type/VehicleType.vue'
-import { mtNations, wotNations, type Nation } from '@/shared/game/vehicles/nations/nations'
-import { regionToGame } from '@/shared/game/wot'
-import { createVehicleNameFilter } from '@/shared/game/vehicles/vehicleSearch'
-import SearchLine from '@/shared/game/selectors/components/searchLine/SearchLine.vue'
+import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
+import VehicleType from '@/shared/game/components/vehicles/vehicleType/VehicleType.vue'
+import { mtNations, wotNations, type Nation } from '@/shared/game/domain/vehicles/nations'
+import { regionToGame } from '@/shared/game/domain/wot'
+import { createVehicleNameFilter } from '@/shared/game/components/vehicles/vehicleSearch'
+import SearchLine from '@/shared/game/components/selectors/components/searchLine/SearchLine.vue'
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
 import { availableSlots, baseSlot, orderSlots, slotHeadingLabel, type Slot } from '../vehicleMetricSelector/vehicleMetrics.ts'
 import type { VehicleStatistics } from '../shared/types'
 import { DEFAULT_MIN_BATTLES, DEFAULT_MIN_PLAYERS, DEFAULT_ONLY_ACTUAL, type LocalVehicleFilters } from './filters/localFilters'
+import { comparisonRowKey } from '../timeSeriesCompare/types'
 import { vehicleGroupings, vehicleHistorySelection, type VehicleGrouping, type VehicleSelection } from '../shared/vehicleGrouping'
 import { vehicleName } from '../shared/vehicleName'
 import VehicleColumnSelector from './settings/VehicleColumnSelector.vue'
@@ -166,7 +167,7 @@ import VehicleCompareButton from './comparison/VehicleCompareButton.vue'
 import VehicleNameCell from './VehicleNameCell.vue'
 import VehicleTimeSeries from '../timeSeries/VehicleTimeSeries.vue'
 import DropdownArrow from '@/shared/uiKit/dropdown/DropdownArrow.vue'
-import { isVehicleType } from '@/shared/game/vehicles/type/vehicleTypeToImage'
+import { isVehicleType } from '@/shared/game/components/vehicles/vehicleType/vehicleTypeToImage'
 import { romanNumberProcessor } from '@/shared/utils/processors/processors'
 import { formatSlotValue } from '../vehicleMetricSelector/formatMetricValue.ts'
 import { useVehicleSorting, type SortKey } from './useVehicleSorting'
@@ -253,6 +254,10 @@ watch(availableNations, options => {
   const nations = localFilters.value.nations.filter(nation => options.includes(nation))
   if (nations.length !== localFilters.value.nations.length) localFilters.value = { ...localFilters.value, nations }
 }, { immediate: true })
+
+function isCompared(vehicle: VehicleStatistics) {
+  return props.comparedKeys.includes(comparisonRowKey(vehicle.rowKey, vehicleHistorySelection(vehicle, effectiveSelection.value)))
+}
 
 const effectiveSelection = computed<VehicleSelection>(() => {
   const { levels, types, nations } = localFilters.value
@@ -399,9 +404,8 @@ function valueBarStyle(vehicle: VehicleStatistics, metric: Slot) {
 }
 
 const comparisonCandidates = computed<ComparisonCandidate[]>(() => {
-  const compared = new Set(props.comparedKeys)
   return filteredVehicles.value
-    .filter(vehicle => !compared.has(vehicle.rowKey))
+    .filter(vehicle => !isCompared(vehicle))
     .map(vehicle => ({ vehicle, selection: vehicleHistorySelection(vehicle, effectiveSelection.value) }))
 })
 const bulkComparisonTotal = computed(() => props.comparisonCount + comparisonCandidates.value.length)

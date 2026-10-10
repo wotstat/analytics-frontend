@@ -53,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
+import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
 import ClearIcon from '@/assets/icons/x-bold.svg'
 import ResetIcon from '@/assets/icons/reset.svg'
 import { ref, shallowRef, watch } from 'vue'

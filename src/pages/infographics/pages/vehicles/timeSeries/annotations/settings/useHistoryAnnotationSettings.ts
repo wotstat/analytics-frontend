@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue'
+import { computed, ref, type Ref } from 'vue'
 
 export type VersionAnnotationVisibility = {
   versions: boolean
@@ -6,16 +6,35 @@ export type VersionAnnotationVisibility = {
   micropatches: boolean
 }
 
-export function useHistoryAnnotationSettings() {
-  const showVersions = ref(false)
-  const showPatches = ref(false)
-  const showMicropatches = ref(false)
-  const showWotstatOutages = ref(false)
-  const enabledEvents = ref<string[]>([])
+export type HistoryAnnotationState = {
+  showVersions: boolean
+  showPatches: boolean
+  showMicropatches: boolean
+  showWotstatOutages: boolean
+  enabledEvents: string[]
+}
+
+export function createHistoryAnnotationState(): HistoryAnnotationState {
+  return { showVersions: false, showPatches: false, showMicropatches: false, showWotstatOutages: false, enabledEvents: [] }
+}
+
+export function useHistoryAnnotationSettings(state: Ref<HistoryAnnotationState> = ref(createHistoryAnnotationState())) {
+  function field<K extends keyof HistoryAnnotationState>(key: K) {
+    return computed({
+      get: () => state.value[key],
+      set: (value: HistoryAnnotationState[K]) => { state.value = { ...state.value, [key]: value } },
+    })
+  }
+  const showVersions = field('showVersions')
+  const showPatches = field('showPatches')
+  const showMicropatches = field('showMicropatches')
+  const showWotstatOutages = field('showWotstatOutages')
+  const enabledEvents = field('enabledEvents')
 
   function toggleEvent(id: string) {
-    enabledEvents.value = enabledEvents.value.includes(id)
-      ? enabledEvents.value.filter(value => value !== id) : [...enabledEvents.value, id]
+    if (!enabledEvents.value.includes(id)) enabledEvents.value = [...enabledEvents.value, id]
+    else enabledEvents.value = enabledEvents.value.filter(value => value !== id)
+
   }
 
   const versions = computed<VersionAnnotationVisibility>(() => ({

@@ -1,6 +1,6 @@
 import { createSharedComposable, useStyleTag } from '@vueuse/core'
 import { onActivated, onDeactivated, onScopeDispose } from 'vue'
-import { historyEvents } from '@/shared/game/historyEvents'
+import { historyEvents } from '@/shared/game/domain/historyEvents'
 import { ColorHSVA } from '@/shared/uiKit/colorPicker/ColorHSVA'
 
 const useSharedStyles = createSharedComposable(() => {

@@ -1,4 +1,4 @@
-import { battleModeConditions } from '@/shared/query/battleModeFilter'
+import { battleModeConditions } from '@/shared/game/domain/battleModes/battleModeFilter'
 import { LONG_CACHE } from '@/db/cache'
 import type { VehicleFilters } from '../filters/types'
 import { availableSlots, metricQuerySlots, type Slot } from '../vehicleMetricSelector/vehicleMetrics'

@@ -15,8 +15,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import VehicleImage from '@/shared/game/vehicles/vehicle/VehicleImage.vue'
-import { regionToGame } from '@/shared/game/wot'
+import VehicleImage from '@/shared/game/components/vehicles/vehicleImage/VehicleImage.vue'
+import { regionToGame } from '@/shared/game/domain/wot'
 import { getHighlightedTextParts, highlight } from '@/shared/uiKit/highlightString/highlightUtils'
 import type { VehicleStatistics } from '../shared/types'
 import { formatStatisticsDay } from '../shared/formatStatisticsDay'

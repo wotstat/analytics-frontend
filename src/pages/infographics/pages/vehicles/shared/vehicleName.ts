@@ -6,7 +6,7 @@ const classNames: Record<string, string> = {
   HT: 'ТТ', MT: 'СТ', LT: 'ЛТ', AT: 'ПТ-САУ', SPG: 'САУ'
 }
 
-export function vehicleName(vehicle: VehicleStatistics, short = true) {
+export function vehicleName(vehicle: Pick<VehicleStatistics, 'tankTag' | 'tankLevel' | 'tankType'>, short = true) {
   if (vehicle.tankTag !== null) return getTankName(vehicle.tankTag, short)
 
   const level = vehicle.tankLevel === null ? '' : romanNumberProcessor(vehicle.tankLevel)

@@ -7,8 +7,8 @@ import { computed } from 'vue'
 import ChartAnnotationSettings from '@/shared/ui/chart/timeSeries/toolbar/annotationSettings/ChartAnnotationSettings.vue'
 import type { ChartAnnotationGroup } from '@/shared/ui/chart/timeSeries/toolbar/annotationSettings/chartAnnotationSettings'
 import type { useHistoryAnnotationSettings } from './useHistoryAnnotationSettings'
-import { getHistoryEventRegions, historyEvents } from '@/shared/game/historyEvents'
-import type { GameRegion } from '@/shared/game/wot'
+import { getHistoryEventRegions, historyEvents } from '@/shared/game/domain/historyEvents'
+import type { GameRegion } from '@/shared/game/domain/wot'
 import { useHistoryEventStyles } from '../events/useHistoryEventStyles'
 
 useHistoryEventStyles()

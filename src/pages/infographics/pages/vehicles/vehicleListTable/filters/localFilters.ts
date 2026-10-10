@@ -1,7 +1,7 @@
-import type { Nation } from '@/shared/game/vehicles/nations/nations'
-import type { VehicleType } from '@/shared/game/vehicles/vehicle/utils'
+import type { Nation } from '@/shared/game/domain/vehicles/nations'
+import type { VehicleType } from '@/shared/game/domain/vehicles/types'
 
-import { vehicleLevels as gameVehicleLevels } from '@/shared/game/vehicles/types'
+import { vehicleLevels as gameVehicleLevels } from '@/shared/game/domain/vehicles/types'
 
 export const vehicleLevels = [...gameVehicleLevels]
 export const battleThresholds = [0, 20, 50, 100, 500, 1000] as const
