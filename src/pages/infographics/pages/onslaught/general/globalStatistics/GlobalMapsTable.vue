@@ -45,9 +45,9 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
-import type { IconType } from '@/shared/game/efficiencyIcon/utils'
-import type { GameRegion, GameVendor } from '@/shared/game/wot'
+import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
+import type { IconType } from '@/shared/game/components/efficiencyIcon/utils'
+import type { GameRegion, GameVendor } from '@/shared/game/domain/wot'
 import { getArenaName } from '@/shared/i18n/i18n'
 import { createFixedSpaceProcessor, createLogProcessor, createPercentProcessor } from '@/shared/utils/processors/processors'
 import { sec2minsec } from '@/shared/utils/time'

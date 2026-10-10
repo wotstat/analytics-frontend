@@ -38,7 +38,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import VehicleImage from '@/shared/game/vehicles/vehicle/VehicleImage.vue'
+import VehicleImage from '@/shared/game/components/vehicles/vehicleImage/VehicleImage.vue'
 import { getTankName } from '@/shared/i18n/i18n'
 import type { PlayerResultRow } from '../types'
 

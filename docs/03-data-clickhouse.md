@@ -310,7 +310,11 @@ SQL и ответ передаются потоком. У nginx запрашив
 разными SQL и проверкой хеша. Подключение опубликованного маршрута требует
 отдельной проверки в Cloudflare. См. [Cache API](https://developers.cloudflare.com/workers/runtime-apis/cache/).
 
-## StatParams и генерация WHERE (`src/shared/query/useQueryStatParams.ts`)
+## StatParams и генерация WHERE (`src/shared/legacyStatQuery/useQueryStatParams.ts`)
+
+`shared/legacyStatQuery/` — адаптер совместимости общих фильтров старой инфографики.
+В нём пока остаются модель `StatParams`, преобразование URL-параметров, SQL и политика кеша.
+Новые страницы задают собственные параметры через универсальный `useQueryStorage`.
 
 `useQueryStatParams()` собирает объект из refs `useStatQueryStorage()` (см. [10-query-storage.md](10-query-storage.md)). Массивы копируются, чтобы потребители не меняли состояние хранилища при сортировке:
 
@@ -335,7 +339,7 @@ type StatParams = {
 
 `whereClauseColumns(params)` — список колонок, участвующих в фильтре; нужен для выбора materialized view.
 
-`battleModeFilter.ts` — общий SQL-фильтр режимов для StatParams, карт и техники. Он разворачивает
+`shared/game/domain/battleModes/battleModeFilter.ts` — общий SQL-фильтр режимов для StatParams, карт и техники. Он разворачивает
 читаемые ключи через `battleModeTargets`, удаляет покрытые цели, оставляет прямое условие
 `battleMode in (...)` и при необходимости добавляет OR точных пар `battleMode/battleGameplay`.
 Колонка `battleGameplay` требуется только при оставшихся ограничениях по геймплею;

@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Селектор техники" id="vehicle"
     description="Открытие поповера, выбор нескольких, фильтры внутри попапа, «выбрать всё» и сброс. Внизу — тот же попап, но привязанный к произвольной цели через VehicleSelector."
-    source="src/shared/game/selectors/vehicleSelector/">
+    source="src/shared/game/components/selectors/vehicleSelector/">
 
     <div class="debug-row">
       <label class="debug-control">
@@ -96,8 +96,8 @@
 <script setup lang="ts">
 import { ref, useTemplateRef } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import VehicleSelectorBadges from '@/shared/game/selectors/vehicleSelector/VehicleSelectorBadges.vue'
-import VehicleSelector from '@/shared/game/selectors/vehicleSelector/VehicleSelector.vue'
+import VehicleSelectorBadges from '@/shared/game/components/selectors/vehicleSelector/VehicleSelectorBadges.vue'
+import VehicleSelector from '@/shared/game/components/selectors/vehicleSelector/VehicleSelector.vue'
 import { getTankName } from '@/shared/i18n/i18n'
 import type { CloseOnOutsideWindow } from '@/shared/uiKit/popover/utils'
 import SelectionReadout from '../shared/SelectionReadout.vue'

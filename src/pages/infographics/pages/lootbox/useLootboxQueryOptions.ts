@@ -1,5 +1,5 @@
 import { createConcurrencyGroup, type ReactiveQueryOptions } from '@/db'
-import { getQueryStatParamsCache, type StatParams } from '@/shared/query/useQueryStatParams'
+import { getQueryStatParamsCache, type StatParams } from '@/shared/legacyStatQuery/useQueryStatParams'
 import { computed, onActivated, onDeactivated, ref, type Ref } from 'vue'
 
 // Общий лимит для статистики и списка контейнеров.

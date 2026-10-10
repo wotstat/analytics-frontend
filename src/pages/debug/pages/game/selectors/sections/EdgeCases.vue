@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Крайние случаи" id="edge-cases"
     description="Ничего не выбрано, выбрано всё, выбран несуществующий тег, узкий контейнер и поповер у края экрана. Ломать поведение здесь — норма: именно эти состояния в бою и всплывают."
-    source="src/shared/game/selectors/">
+    source="src/shared/game/components/selectors/">
 
     <div class="debug-row">
       <button class="debug-btn" @click="selectAll">выбрать всё во всех трёх</button>
@@ -137,12 +137,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import VehicleSelectorBadges from '@/shared/game/selectors/vehicleSelector/VehicleSelectorBadges.vue'
-import ArenaSelectorBadges from '@/shared/game/selectors/arena/ArenaSelectorBadges.vue'
-import GameVersionSelectorBadges from '@/shared/game/selectors/gameVersionSelector/GameVersionSelectorBadges.vue'
-import GameSelector from '@/shared/game/selectors/gameSelector/GameSelector.vue'
-import type { GameVendor } from '@/shared/game/wot'
-import type { OptionalRegionVersion } from '@/shared/game/selectors/gameVersionSelector/utils.ts'
+import VehicleSelectorBadges from '@/shared/game/components/selectors/vehicleSelector/VehicleSelectorBadges.vue'
+import ArenaSelectorBadges from '@/shared/game/components/selectors/arena/ArenaSelectorBadges.vue'
+import GameVersionSelectorBadges from '@/shared/game/components/selectors/gameVersionSelector/GameVersionSelectorBadges.vue'
+import GameSelector from '@/shared/game/components/selectors/gameSelector/GameSelector.vue'
+import type { GameVendor } from '@/shared/game/domain/wot'
+import type { OptionalRegionVersion } from '@/shared/game/components/selectors/gameVersionSelector/utils.ts'
 import { brokenArenaHashes, brokenVehicleTags, brokenVersionTags } from '../shared/fixtures'
 import { arenaHashes, vehicleTags, versionTags } from '../shared/lists'
 

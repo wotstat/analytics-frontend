@@ -79,11 +79,11 @@ import { createFixedSpaceProcessor, createPercentProcessor } from '@/shared/util
 import { SHORT_CACHE, queryComputedFirst } from '@/db'
 import { computed, ref, useTemplateRef } from 'vue'
 import { useElementVisibility, useMouseInElement } from '@vueuse/core'
-import { useQueryStatParams, getQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
+import { useQueryStatParams, getQueryStatParamsCache, whereClause } from '@/shared/legacyStatQuery/useQueryStatParams'
 import PopupWindow from '@/shared/ui/components/PopupWindow.vue'
 import ShotInfo from './shotInfo/Index.vue'
 import { useShotQueryStorage } from './useShotQueryStorage'
-import { queryStorageSync } from '@/shared/ui/queryStorage/useQueryStorage'
+import { queryStorageSync } from '@/shared/uiKit/queryStorage/useQueryStorage'
 import { useMeta } from '@/shared/composition/useMeta'
 import ShotDistribution from './shotDistribution/ShotDistribution.vue'
 

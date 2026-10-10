@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="bbox: игровые координаты → позиция на миникарте" id="bbox-transform"
     description="relativeMapPosition(position, meta) переводит игровые метры в долю [0..1] по каждой оси картинки, отдельно по x и y — своим bbox на каждую арену. Введи координаты и посмотри, куда попадёт точка; сравни две арены — одни и те же метры оказываются в разных местах."
-    source="src/shared/game/arenas/arenas.ts">
+    source="src/shared/game/domain/arenas/arenas.ts">
 
     <div class="formula">
       <code>x = (px - bbox.bottomLeft.x) / (bbox.upperRight.x - bbox.bottomLeft.x)</code>
@@ -86,7 +86,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import { getArenaMeta } from '@/shared/game/arenas/arenas'
+import { getArenaMeta } from '@/shared/game/domain/arenas/arenas'
 import { useArenaOptions } from '../shared/useArenaOptions'
 import { usePickedArena } from '../shared/usePickedArena'
 import BboxSide from './bboxTransform/BboxSide.vue'

@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Размер и цвет" id="sizes-colors"
     description="SVG рисуются с fill=currentColor и без width/height — размер и цвет задаются снаружи через CSS на самом Icon (см. использование class='icon' в реальных местах), а не пропами. Заливка должна меняться вместе с color, а не быть запечена в файле."
-    source="src/shared/game/efficiencyIcon/assets/dmg.svg">
+    source="src/shared/game/components/efficiencyIcon/assets/dmg.svg">
 
     <div class="debug-row">
       <label class="debug-control">
@@ -33,8 +33,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
-import { IconType } from '@/shared/game/efficiencyIcon/utils'
+import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
+import { IconType } from '@/shared/game/components/efficiencyIcon/utils'
 
 const size = ref(40)
 const color = ref('#4fa3ff')

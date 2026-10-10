@@ -9,7 +9,7 @@
 
 
 <script setup lang="ts">
-import { Rank } from '@/shared/game/comp7/utils'
+import { Rank } from '@/shared/game/domain/comp7/utils'
 
 defineProps<{
   label: string

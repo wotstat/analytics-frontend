@@ -1,4 +1,4 @@
-import type { DivisionLetter, Rank } from '@/shared/game/comp7/utils'
+import type { DivisionLetter, Rank } from '@/shared/game/domain/comp7/utils'
 import type { RankDistributionItem } from './types'
 
 type DistributionRow = {

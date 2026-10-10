@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Семейства" id="families"
     description="Группировка по efficiencyWithMods: для каждой метрики видно, какие из total/avg/max/in-row у неё реально есть. Пустая клетка — вариант не предусмотрен списком modifications, а не потерянная иконка."
-    source="src/shared/game/efficiencyIcon/utils.ts">
+    source="src/shared/game/components/efficiencyIcon/utils.ts">
 
     <div class="debug-row">
       <label class="debug-control">
@@ -50,9 +50,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
-import { efficiency, efficiencyWithMods, modificationLabel, IconType } from '@/shared/game/efficiencyIcon/utils'
-import { i18n } from '@/shared/game/efficiencyIcon/i18n'
+import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
+import { efficiency, efficiencyWithMods, modificationLabel, IconType } from '@/shared/game/components/efficiencyIcon/utils'
+import { i18n } from '@/shared/game/components/efficiencyIcon/i18n'
 import IconGuides from '../shared/IconGuides.vue'
 
 const COLUMNS = ['total', 'avg', 'max', 'in-row', 'in-row-max'] as const

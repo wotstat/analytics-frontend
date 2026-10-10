@@ -1,5 +1,5 @@
 <template>
-  <DebugPage title="Иконки эффективности" description="Галерея всех иконок метрик с их подписями." source="src/shared/game/efficiencyIcon/">
+  <DebugPage title="Иконки эффективности" description="Галерея всех иконок метрик с их подписями." source="src/shared/game/components/efficiencyIcon/">
     <Gallery />
     <Families />
     <SizesAndColors />

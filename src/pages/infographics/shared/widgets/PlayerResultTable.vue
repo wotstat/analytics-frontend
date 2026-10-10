@@ -112,7 +112,7 @@
 
 
 <script setup lang="ts">
-import { StatParams, getQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
+import { StatParams, getQueryStatParamsCache, whereClause } from '@/shared/legacyStatQuery/useQueryStatParams'
 import { mergeStatuses, queryComputed } from '@/db'
 import { useElementVisibility, useElementSize } from '@vueuse/core'
 import { computed, ref, useTemplateRef } from 'vue'

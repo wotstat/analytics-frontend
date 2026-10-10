@@ -67,7 +67,7 @@ function parseCommands(d: string): PathCommand[] {
 
     if (/^[A-Za-z]$/.test(token)) {
       if (!KNOWN_COMMANDS.has(token)) {
-        console.error(`LineStrokeSampler: неожиданная команда path "${token}" — nearStroke понимает только M/L/C, разбор прерван`)
+        console.error(`LineStrokeSampler: unexpected path command "${token}" — nearStroke supports only M/L/C, parsing stopped`)
         break
       }
       type = token as PathCommand['type']

@@ -25,12 +25,12 @@
 
 
 <script setup lang="ts">
-import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
-import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
+import RankIcon from '@/shared/game/components/comp7/rank/RankIcon.vue'
+import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
 import { computed } from 'vue'
 import ArrowRight from './assets/arrow-right.svg'
-import { gameToRegion, GameVendor } from '@/shared/game/wot'
-import { getSeasonQualificationCount } from '@/shared/game/comp7/utils'
+import { gameToRegion, GameVendor } from '@/shared/game/domain/wot'
+import { getSeasonQualificationCount } from '@/shared/game/domain/comp7/utils'
 
 const props = defineProps<{
   battles: { battleIndex: number, result: 'win' | 'loss' | 'draw' }[]

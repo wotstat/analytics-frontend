@@ -1,4 +1,4 @@
-import { DivisionLetter, Rank } from '@/shared/game/comp7/utils'
+import { DivisionLetter, Rank } from '@/shared/game/domain/comp7/utils'
 
 
 export type DayChartData = {

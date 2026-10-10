@@ -1,5 +1,5 @@
-import { IconType } from '@/shared/game/efficiencyIcon/utils'
-import { GameVendor } from '@/shared/game/wot'
+import { IconType } from '@/shared/game/components/efficiencyIcon/utils'
+import { GameVendor } from '@/shared/game/domain/wot'
 import { Component, computed, h, Ref } from 'vue'
 import PrestigeTooltip from './tooltips/PrestigeTooltip.vue'
 import WinrateTooltip from './tooltips/WinrateTooltip.vue'

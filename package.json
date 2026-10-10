@@ -20,6 +20,7 @@
     "@vueuse/core": "^14.3.0",
     "canvas-confetti": "^1.9.4",
     "colorjs.io": "^0.7.0",
+    "fflate": "0.8.3",
     "idb-keyval": "^6.3.0",
     "jszip": "^3.10.1",
     "motion": "^12.42.2",

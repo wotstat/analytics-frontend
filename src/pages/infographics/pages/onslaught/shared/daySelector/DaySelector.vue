@@ -109,7 +109,7 @@
 import { computed, ref, useTemplateRef, watch } from 'vue'
 import Reload from '@/assets/icons/reset.svg'
 import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
-import { getRegionDayChangeHourOffset } from '@/shared/game/comp7/utils'
+import { getRegionDayChangeHourOffset } from '@/shared/game/domain/comp7/utils'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
 import TipSelectDayGroups from './tips/TipSelectDayGroups.vue'
 import DropdownCrossingArrow from '@/shared/uiKit/dropdown/DropdownCrossingArrow.vue'

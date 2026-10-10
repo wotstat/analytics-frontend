@@ -2,14 +2,31 @@
 
 Два слоя общих компонентов, и это **не** «старое и новое»:
 
-- **`src/shared/uiKit/`** — базовые компоненты без проектных зависимостей: их можно вынуть и перенести в другой проект как есть.
-- **`src/shared/ui/`** — имплементации этих баз под специфику сайта, с проектными зависимостями, а также общие механизмы состояния интерфейса (`queryStorage/`). Именно они используются на страницах.
+- **`src/shared/uiKit/`** — базовые компоненты и механизмы без проектных зависимостей: их можно вынуть и перенести в другой проект как есть.
+- **`src/shared/ui/`** — имплементации этих баз под специфику сайта, с проектными зависимостями.
 
 Примеры связки: `ui/tooltip/textTooltip.ts` оборачивает базовую `uiKit/tooltip/textTooltip`, подставляя проектный `popoverViewportOffset` из шапки сайта; `ui/tipBubble/TipBubble.vue` — обёртка над `uiKit/tipBubble/useTipBubble` с проектными дефолтами (`--content-page-margin`, политика `autoExtend`), и все страницы импортируют именно её.
 
 Новый переносимый примитив клади в `uiKit`, его проектную настройку — в `ui`, а специфичный для одной страницы компонент — рядом со страницей.
 
 ## `src/shared/uiKit/`
+
+- **`queryStorage/`** — универсальная синхронизация реактивных параметров с URL: `useQueryStorage.ts`, координатор, утилиты определений и типы. `utils/createDeferredWebHistory.ts` находится внутри этого модуля и откладывает запись browser history до синхронизации параметров. `utils/compactBinary.ts` содержит независимые Writer/Reader для компактных целых и строк UTF-8. Модуль зависит только от Vue, Vue Router и браузерных API; адаптер общих фильтров старой инфографики находится отдельно в `shared/legacyStatQuery/`. API и жизненный цикл описаны в [10-query-storage.md](10-query-storage.md).
+
+  `serializers/` — отдельные сериализаторы даты, строки, числа, `oneOf`, массива, Set и SetOf,
+  общий `Serializer<T>`; импорты идут напрямую из файлов. Массив и Set принимают сериализатор
+  элемента и необязательный валидатор, используют одинаковое экранирование и сохраняют порядок
+  и пустые строки. Массив сохраняет повторы; Set убирает их. `setOfSerializer(options)` задаёт
+  Set допустимых значений. Defaults и настройки записи задаёт потребитель; напрямую заданный
+  default QueryStorage копирует через `structuredClone`, результат фабрики оставляет как есть.
+  Ручные примеры и некорректные значения: `/debug/query-storage#serializers`.
+
+  `params.ts` — коллекция готовых определений: `stringParam`, `numberParam`, `booleanParam`,
+  `dateParam`, `oneOfParam`, `arrayParam`, `setParam`, `setOfParam`. Основные аргументы задают
+  формат и default, последний необязательный объект — настройки параметра и сериализатора.
+  Set-фабрики принимают iterable default, поэтому массив не нужно вручную оборачивать в Set.
+  Стандартные форматы объявляйте через эти фабрики; для нестандартного кодека остаётся объект `QueryParam`.
+  Примеры: `/debug/query-storage#standard-params`; сигнатуры и правила — в [10-query-storage.md](10-query-storage.md).
 
 - **`dropdown/DropdownCrossingArrow.vue`** — отдельная иконка «стрелка → крестик» из календаря Натиска. `expanded` (по умолчанию `false`) управляет исходной анимацией двух линий за 200 мс. Компонент только отображает состояние; кнопка и открытие меню остаются у потребителя. Размер по умолчанию — 20×20 px, цвет — `currentColor`; размеры и отступы задаются классом. `DaySelector` сохраняет прежние размер, цвет и масштаб. Пример с поповером: `/debug/dropdown-arrow#dropdown-crossing-arrow`.
 
@@ -38,13 +55,12 @@
 - **`dropdown/DropDown.vue`** — выпадающий список.
 - **`fallbackImg/`** — `FallbackImg.vue` — картинка с фолбэком и кешем ошибок (`store.ts`).
 - **`highlightString/`** — подсветка совпадений поиска в строке.
-- **`spriteAtlas/SpriteAtlas.ts`** — отрисовка иконок из спрайт-атласов (флаги наций: `shared/game/vehicles/nations/60x40/atlas/atlases.json`).
+- **`spriteAtlas/SpriteAtlas.ts`** — отрисовка иконок из спрайт-атласов (флаги наций: `shared/game/components/vehicles/nation/60x40/atlas/atlases.json`).
 - **`newFeatureBadge/`** — бейдж «новое» с запоминанием просмотра.
 - **`chart/`** — движок графиков UniversalChart, см. [06-charts.md](06-charts.md).
 
 ## `src/shared/ui/` — проектный слой
 
-- `queryStorage/` — универсальная синхронизация реактивных параметров с URL: `useQueryStorage.ts`, координатор и типы. Описания параметров статистики и `useQueryStatParams` находятся отдельно в `shared/query/`; зависимости от них в ядре нет. API и жизненный цикл описаны в [10-query-storage.md](10-query-storage.md).
 - `tooltip/textTooltip.ts` — `vTextTooltip`: базовая директива плюс `popoverViewportOffset` из шапки сайта.
 - `tipBubble/` — `TipBubble.vue`, `TipBubbleText.vue`: обёртки над `uiKit/tipBubble` с проектными дефолтами.
 - `popover/PanelPopover.vue` — панель сайта поверх `uiKit/popover/PopoverAutoClose`; интерфейс ниже.

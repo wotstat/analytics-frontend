@@ -188,6 +188,13 @@ const entries = [
     component: () => import('./pages/chart/interaction/Index.vue'),
   },
   {
+    path: 'game/compact',
+    title: 'Компактеры и кодек',
+    description: 'Региональные ID и реактивное разрешение игровых значений.',
+    group: 'game',
+    component: () => import('./pages/game/compact/Index.vue'),
+  },
+  {
     path: 'game/vehicles',
     title: 'Танки',
     description: 'Иконки техники, флаги наций, типы и уровни.',

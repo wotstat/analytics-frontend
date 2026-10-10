@@ -1,7 +1,7 @@
 import { computed } from 'vue'
-import { arenas } from '@/shared/game/arenas/arenas'
+import { arenas } from '@/shared/game/domain/arenas/arenas'
 import { getArenaName } from '@/shared/i18n/i18n'
-import { GameVendor } from '@/shared/game/wot'
+import { GameVendor } from '@/shared/game/domain/wot'
 
 export type ArenaOption = {
   game: GameVendor

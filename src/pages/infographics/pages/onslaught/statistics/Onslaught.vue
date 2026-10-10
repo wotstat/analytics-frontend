@@ -41,16 +41,13 @@
 import { computed, ref, shallowRef, watch, useTemplateRef } from 'vue'
 import DayChart from './dayChart/DayChart.vue'
 import { dateToDbDate, query, queryComputedFirst } from '@/db'
-import { gameToRegion, regionToGame } from '@/shared/game/wot'
+import { gameToRegion, regionToGame } from '@/shared/game/domain/wot'
 import Settings from '../shared/settings/Settings.vue'
 import { useOnslaughtQueryStorage, useOnslaughtNicknameStorage } from '../shared/useOnslaughtQueryStorage'
 import { computedWithControl, onKeyStroke, refDebounced, useElementBounding } from '@vueuse/core'
 import { DayChartData } from './types'
 import MainStat from './mainStat/MainStat.vue'
-import {
-  compareRanks, getDivisionLetterByRating, getEnergyPerBattle, getMaxEnergyLimit,
-  getRankByRating, getRatingInactiveDecreasePerDay, getRegionIsoHourOffset, getSeasonQualificationCount, Rank
-} from '@/shared/game/comp7/utils'
+import { compareRanks, getDivisionLetterByRating, getEnergyPerBattle, getMaxEnergyLimit, getRankByRating, getRatingInactiveDecreasePerDay, getRegionIsoHourOffset, getSeasonQualificationCount, Rank } from '@/shared/game/domain/comp7/utils'
 import { useMainStat, type StatisticRes } from './mainStat/useMainStat'
 import VehicleTable from './vehicleTable/VehicleTable.vue'
 import { useVehicleTable, VehicleRes } from './vehicleTable/useVehicleTable'

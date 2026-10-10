@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Данные списков: загрузка, пусто, битый список" id="data"
     description="Попапы принимают список пропом: открой их у тестовых кнопок без запроса к БД и проверь загрузку, пустой результат и неразобранные данные."
-    source="src/shared/game/selectors/">
+    source="src/shared/game/components/selectors/">
 
     <p class="debug-note">
       Ни один из этих попапов не смотрит на <span class="debug-value">status</span> загрузки:
@@ -180,12 +180,12 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import VehiclePopup from '@/shared/game/selectors/vehicleSelector/VehiclePopup.vue'
-import GameVersionPopup from '@/shared/game/selectors/gameVersionSelector/GameVersionPopup.vue'
+import VehiclePopup from '@/shared/game/components/selectors/vehicleSelector/VehiclePopup.vue'
+import GameVersionPopup from '@/shared/game/components/selectors/gameVersionSelector/GameVersionPopup.vue'
 import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
-import ArenaSelectorContent from '@/shared/game/selectors/arena/arenaSelectorModal/ArenaSelectorContent.vue'
-import SearchLine from '@/shared/game/selectors/components/searchLine/SearchLine.vue'
-import type { GameVendor } from '@/shared/game/wot'
+import ArenaSelectorContent from '@/shared/game/components/selectors/arena/arenaSelectorModal/ArenaSelectorContent.vue'
+import SearchLine from '@/shared/game/components/selectors/components/searchLine/SearchLine.vue'
+import type { GameVendor } from '@/shared/game/domain/wot'
 import RenderGuard from '../shared/RenderGuard.vue'
 import { arenaListFixture, brokenVersionListFixture, vehicleListFixture, versionListFixture } from '../shared/fixtures'
 import { arenaRows, vehicleRows, versionRows } from '../shared/lists'

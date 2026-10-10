@@ -568,7 +568,7 @@ connection.dispose()
 для `annotation-version`, `annotation-patch`, `annotation-micropatch`, `annotation-outage`.
 Четыре явных класса задают восемь цветов через `--history-annotation-color` и
 `--selection-tile-accent`, без палитры и циклов SCSS. Основные hex-цвета событий хранятся только в
-`shared/game/historyEvents.ts`. `useHistoryEventStyles()` вызывается в обеих Vue-обёртках
+`shared/game/domain/historyEvents.ts`. `useHistoryEventStyles()` вызывается в обеих Vue-обёртках
 графиков и в `HistoryAnnotationSettings`. VueUse `createSharedComposable` дедуплицирует
 таблицу стилей, а `useStyleTag` создаёт правила `.history-event.annotation-${event.id}` с переменными
 `--history-event-color` и `--history-event-accent`. Акцент вычисляется из основного цвета:
@@ -669,6 +669,10 @@ wotstat и события по регионам. Состояние аннота
 и передаёт его `highlightSync` конструктору графика. Та же модель передаётся в проп `legend`;
 видимость готовых данных вычисляется через `legend.isEnabled(source)`. Отдельного состояния
 видимости, цвета или подсветки внутри панели нет.
+`useLegend(items, { disabledTags })` может принимать записываемый `Ref<ReadonlySet<InteractionTag>>`:
+в этом случае все переключения легенды пишут во внешнюю модель, а восстановление модели сразу
+меняет видимость. Без опции используется прежнее локальное состояние. Сравнение техники связывает
+этот ref с источниками из `compare`; подсветка и anchor диапазона остаются временными.
 
 Обязательные пропы: `chart: TimeSeriesChart<TPoint>` (включая подкласс адаптера),
 `legend: LegendModel<TItem>` со **строковыми** tag, `hasValues` и `formatValue(value, ctx): string`.

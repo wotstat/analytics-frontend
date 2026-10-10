@@ -36,7 +36,7 @@ import { ref, watch } from 'vue'
 import { exportArchive } from './exportArchive'
 
 import MedalSrc from '../../assets/medal.webp'
-import { GameVendor } from '@/shared/game/wot'
+import { GameVendor } from '@/shared/game/domain/wot'
 
 const visible = ref(false)
 

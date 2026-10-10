@@ -1,0 +1,101 @@
+import { battleModes, battleGameplays } from '../../domain/battleModes/battleModes'
+import type { BattleModeFamilyKey } from '../../domain/battleModes/battleModeFamilies'
+
+export type KnownBattleMode = typeof battleModes[number]
+export type KnownBattleGameplay = typeof battleGameplays[number]
+
+// Явные коды формата: shortCode — короткий выбор режима, pairCode — компонент пары с геймплеем.
+export const modeCodes = {
+  REGULAR: { shortCode: 0, pairCode: 0 },
+  COMP7: { shortCode: 1, pairCode: 1 },
+  SORTIE_2: { shortCode: 8, pairCode: 2 },
+  VERSUS_AI: { shortCode: 19, pairCode: 3 },
+  BATTLE_ROYALE_SOLO: { shortCode: 20, pairCode: 4 },
+  FUN_RANDOM: { shortCode: 21, pairCode: 5 },
+  RANKED: { shortCode: 22, pairCode: 6 },
+  TRAINING: { shortCode: 23, pairCode: 7 },
+  BOB: { shortCode: 24, pairCode: 8 },
+  EPIC_BATTLE: { shortCode: 6, pairCode: 9 },
+  EPIC_RANDOM: { shortCode: 5, pairCode: 10 },
+  COSMIC_EVENT: { shortCode: 25, pairCode: 11 },
+  WHITE_TIGER: { shortCode: 26, pairCode: 12 },
+  PORTAL: { shortCode: 27, pairCode: 13 },
+  HB_DEFENCE: { shortCode: 28, pairCode: 14 },
+  RANDOM_NP2: { shortCode: 29, pairCode: 15 },
+  FORT_BATTLE_2: { shortCode: 9, pairCode: 16 },
+  GLOBAL_MAP: { shortCode: 30, pairCode: 17 },
+  HB_OFFENCE: { shortCode: 31, pairCode: 18 },
+  MAPBOX: { shortCode: 32, pairCode: 19 },
+  HISTORICAL_BATTLES: { shortCode: 33, pairCode: 20 },
+  LAST_STAND_HARD: { shortCode: 34, pairCode: 21 },
+  BATTLE_ROYALE_SQUAD: { shortCode: 35, pairCode: 22 },
+  MAPS_TRAINING: { shortCode: 36, pairCode: 23 },
+  GRINCH: { shortCode: 37, pairCode: 24 },
+  RACES: { shortCode: 38, pairCode: 25 },
+  EVENT_BATTLES: { shortCode: 11, pairCode: 26 },
+  TOURNAMENT_REGULAR: { shortCode: 39, pairCode: 27 },
+  LAST_STAND: { shortCode: 40, pairCode: 28 },
+  LAST_STAND_MEDIUM: { shortCode: 41, pairCode: 29 },
+  COMP7_LIGHT: { shortCode: 42, pairCode: 30 },
+  STORY_MODE: { shortCode: 43, pairCode: 31 },
+  STORY_MODE_REGULAR: { shortCode: 44, pairCode: 32 },
+  HALLOWEEN: { shortCode: 45, pairCode: 33 },
+  HALLOWEEN_MEDIUM: { shortCode: 46, pairCode: 34 },
+  HALLOWEEN_HARD: { shortCode: 47, pairCode: 35 },
+  WINBACK: { shortCode: 48, pairCode: 36 },
+  EPIC_RANDOM_TRAINING: { shortCode: 49, pairCode: 37 },
+  HALLOWEEN_DEFENCE: { shortCode: 50, pairCode: 38 },
+  STORY_MODE_ONBOARDING: { shortCode: 51, pairCode: 39 },
+  TRAINING_COMP7: { shortCode: 52, pairCode: 40 },
+  TOURNAMENT_COMP7: { shortCode: 53, pairCode: 41 },
+  WHITE_TIGER_2: { shortCode: 54, pairCode: 42 },
+  BATTLE_ROYALE_TRN_SOLO: { shortCode: 55, pairCode: 43 },
+  EVENT_BATTLES_2: { shortCode: 56, pairCode: 44 },
+  BATTLE_ROYALE_TRN_SQUAD: { shortCode: 57, pairCode: 45 },
+} as const satisfies Record<KnownBattleMode, { shortCode: number, pairCode: number }>
+
+export const gameplayCodes = {
+  ctf: 0,
+  comp7: 1,
+  domination: 2,
+  assault: 3,
+  assault2: 4,
+  bob: 5,
+  epic: 6,
+  ctf30x30: 7,
+  maps_training: 8,
+  domination3: 9,
+  bootcamp: 10,
+} as const satisfies Record<KnownBattleGameplay, number>
+
+export const familyCodes = {
+  'steel-hunter': 10,
+  'tournaments': 12,
+  'training-all': 7,
+  'waffentrager': 13,
+  'heroes-time': 14,
+  'babylon': 15,
+  'last-stand': 16,
+  'random-newbie': 17,
+  'stories': 18,
+} as const satisfies Record<BattleModeFamilyKey, number>
+
+// Частые пары занимают один байт вместо общего двухбайтного кода пары.
+export const preferredPairs = [
+  { mode: 'REGULAR', gameplay: 'ctf', code: 2 },
+  { mode: 'REGULAR', gameplay: 'domination', code: 3 },
+  { mode: 'REGULAR', gameplay: 'assault', code: 4 },
+  { mode: 'TOURNAMENT_REGULAR', gameplay: 'ctf', code: 58 },
+  { mode: 'TOURNAMENT_REGULAR', gameplay: 'domination', code: 59 },
+  { mode: 'TOURNAMENT_REGULAR', gameplay: 'assault2', code: 60 },
+  { mode: 'TOURNAMENT_REGULAR', gameplay: 'domination3', code: 61 },
+  { mode: 'TOURNAMENT_COMP7', gameplay: 'comp7', code: 62 },
+  { mode: 'TOURNAMENT_COMP7', gameplay: 'assault2', code: 63 },
+  { mode: 'TRAINING', gameplay: 'ctf', code: 64 },
+  { mode: 'TRAINING', gameplay: 'domination', code: 65 },
+  { mode: 'TRAINING', gameplay: 'assault', code: 66 },
+  { mode: 'TRAINING', gameplay: 'assault2', code: 67 },
+  { mode: 'TRAINING', gameplay: 'domination3', code: 68 },
+  { mode: 'TRAINING', gameplay: 'bootcamp', code: 69 },
+  { mode: 'TRAINING', gameplay: 'comp7', code: 70 },
+] as const satisfies readonly { mode: KnownBattleMode, gameplay: KnownBattleGameplay, code: number }[]

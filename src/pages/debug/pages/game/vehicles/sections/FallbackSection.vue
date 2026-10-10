@@ -84,8 +84,8 @@ import { computed, ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import FallbackImg from '@/shared/uiKit/fallbackImg/FallbackImg.vue'
 import { isUrlMayValidImage, onErrorRemoveUrl } from '@/shared/uiKit/fallbackImg/store'
-import VehicleImage from '@/shared/game/vehicles/vehicle/VehicleImage.vue'
-import { vehicleFallbackUrl, vehicleUrl } from '@/shared/game/vehicles/vehicle/utils'
+import VehicleImage from '@/shared/game/components/vehicles/vehicleImage/VehicleImage.vue'
+import { vehicleFallbackUrl, vehicleUrl } from '@/shared/game/components/vehicles/vehicleImage/utils'
 
 const brokenUrl = vehicleUrl('mt:__DEBUG_BROKEN_TAG__', 'preview')
 const fallbackUrl = vehicleFallbackUrl('preview')

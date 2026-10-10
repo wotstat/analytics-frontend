@@ -49,9 +49,9 @@
 </template>
 
 <script lang="ts" setup>
-import { useQueryStatParams } from '@/shared/query/useQueryStatParams'
+import { useQueryStatParams } from '@/shared/legacyStatQuery/useQueryStatParams'
 import { countLocalize, getTankName } from '@/shared/i18n/i18n'
-import { battleModeSelection } from '@/shared/game/battleModes/battleModeSelection'
+import { battleModeSelection } from '@/shared/game/domain/battleModes/battleModeSelection'
 
 
 const stat = useQueryStatParams()

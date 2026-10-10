@@ -55,7 +55,7 @@
       Состояние выбора на этой странице — обычные локальные <span class="debug-value">ref</span>. В поиске реплеев
       оно тоже локальное, а фильтры статистики техники хранят его в состоянии страницы. Другие фильтры статистики
       держат своё состояние в URL-query через
-      <span class="debug-value">useQueryStatParams</span> (<span class="debug-value">src/shared/query/</span>) — так
+      <span class="debug-value">useQueryStatParams</span> (<span class="debug-value">src/shared/legacyStatQuery/</span>) — так
       фильтр переживает перезагрузку и уезжает в ссылку. Здесь URL нарочно не задействован, иначе страница спорила бы
       с роутером на каждый клик.
     </p>

@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Галерея всех иконок" id="gallery"
     description="Сетка построена по фактическому списку файлов assets/ (import.meta.glob), а не по типу IconType — сразу видно и неподхватившуюся иконку, и подпись, которой нет в i18n.ts. Вначале иконки вне семейств, затем — в порядке «Семейств»."
-    source="src/shared/game/efficiencyIcon/assets/">
+    source="src/shared/game/components/efficiencyIcon/assets/">
 
     <div class="debug-row">
       <label class="debug-control">
@@ -41,9 +41,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
-import { efficiencyWithMods, IconType, modificationLabel } from '@/shared/game/efficiencyIcon/utils'
-import { i18n } from '@/shared/game/efficiencyIcon/i18n'
+import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
+import { efficiencyWithMods, IconType, modificationLabel } from '@/shared/game/components/efficiencyIcon/utils'
+import { i18n } from '@/shared/game/components/efficiencyIcon/i18n'
 import { iconFileKeys } from '../useIconFiles'
 import IconGuides from '../shared/IconGuides.vue'
 

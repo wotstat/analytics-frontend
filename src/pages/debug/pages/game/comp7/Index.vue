@@ -1,5 +1,5 @@
 <template>
-  <DebugPage title="Натиск" description="Иконки рангов и навыков." source="src/shared/game/comp7/">
+  <DebugPage title="Натиск" description="Иконки рангов и навыков." source="src/shared/game/components/comp7/">
     <AllRanks />
     <RankBoundaries />
     <AllSkills />

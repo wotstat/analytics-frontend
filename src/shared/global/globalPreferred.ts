@@ -1,5 +1,5 @@
 import { useLocalStorage } from '@vueuse/core'
-import { GameVendor } from '../game/wot'
+import { GameVendor } from '../game/domain/wot'
 import { computed } from 'vue'
 
 export const preferredGame = useLocalStorage<GameVendor | 'any' | 'unknown'>('preferred-game-variant', 'unknown')

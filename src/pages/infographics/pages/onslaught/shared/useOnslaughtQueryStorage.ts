@@ -1,5 +1,5 @@
-import { defineParams, useQueryStorage } from '@/shared/ui/queryStorage/useQueryStorage'
-import { nicknameParam } from '@/shared/query/statQueryParams'
+import { defineParams, useQueryStorage } from '@/shared/uiKit/queryStorage/useQueryStorage'
+import { nicknameParam } from '@/shared/legacyStatQuery/statQueryParams'
 
 export const regions = ['RU', 'EU', 'NA', 'ASIA', 'CN'] as const
 export type OnslaughtRegion = typeof regions[number] | 'CT'

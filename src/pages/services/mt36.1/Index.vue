@@ -253,8 +253,8 @@ import { spaceProcessor } from '@/shared/utils/processors/useSpaceProcessor'
 import { roundProcessor, createPercentProcessor, romanNumberProcessor } from '@/shared/utils/processors/processors'
 import CompareCard from './CompareCard.vue'
 import { sec2minsec } from '@/shared/utils/time'
-import GameVersionSelectorBadges from '@/shared/game/selectors/gameVersionSelector/GameVersionSelectorBadges.vue'
-import { useQueryStorage } from '@/shared/ui/queryStorage/useQueryStorage'
+import GameVersionSelectorBadges from '@/shared/game/components/selectors/gameVersionSelector/GameVersionSelectorBadges.vue'
+import { useQueryStorage } from '@/shared/uiKit/queryStorage/useQueryStorage'
 import { compareQueryParams } from './compareQueryParams'
 import BallisticDistributionChart from './charts/BallisticDistributionChart.vue'
 import ComparisonBarChart from './charts/ComparisonBarChart.vue'
@@ -272,9 +272,10 @@ const queryOptions = {
   proxyCache: true,
 } satisfies QueryOptions
 
-const { params: { leftVersions: modelLeftVersions, rightVersions: modelRightVersions } } = useQueryStorage(
-  compareQueryParams, { history: 'push' }
-)
+const { params: {
+  leftVersions: modelLeftVersions,
+  rightVersions: modelRightVersions
+} } = useQueryStorage(compareQueryParams, { history: 'push' })
 
 const leftVersions = refDebounced(computed(() => new Set([...modelLeftVersions.value.values()]
   .filter(v => v.region)

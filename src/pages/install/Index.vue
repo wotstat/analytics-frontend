@@ -362,8 +362,6 @@ import ArrowRight from './assets/arrow-right.svg'
 import CheckmarkShield from './assets/checkmark-shield.svg'
 import XIcon from '@/assets/icons/x.svg'
 
-
-
 import WidgetsMainScreen from './assets/mods/widgets-layer-main.webp'
 import WidgetsBackScreen from './assets/mods/widgets-layer-back.webp'
 
@@ -386,14 +384,14 @@ import SmallCheckbox from './components/SmallCheckbox.vue'
 import { INSTALL_URL, POSITIONS_URL } from '@/shared/external/externalUrl'
 import { showContextMenu } from './components/cardIntaractionControl'
 import { button, simpleContextMenu } from '@/shared/uiKit/contextMenu/simpleContextMenu'
-import { latestGameVersion } from '@/shared/game/gameVersion'
+import { latestGameVersion } from '@/shared/game/domain/gameVersion'
 import ExportArchive from './components/exportArchive/ExportArchive.vue'
 import InstallMods from './components/InstallMods.vue'
 import SelectFolderError from './components/SelectFolderError.vue'
 import { showFocusEffect } from '@/shared/uiKit/focusEffect/focusEffect'
 import { useRoute } from 'vue-router'
 import { setFeatureVisit } from '@/shared/uiKit/newFeatureBadge/newFeatureBadge'
-import { GameVendor } from '@/shared/game/wot'
+import { GameVendor } from '@/shared/game/domain/wot'
 
 setFeatureVisit('mod-installer')
 

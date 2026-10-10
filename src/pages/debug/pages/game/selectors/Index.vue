@@ -1,6 +1,6 @@
 <template>
   <DebugPage title="Селекторы" description="Выбор техники, карт, режимов боя, игры и версии игры; бейджи выбранного и строка поиска."
-    source="src/shared/game/selectors/">
+    source="src/shared/game/components/selectors/">
 
     <Overview />
     <VehicleSelectorSection />

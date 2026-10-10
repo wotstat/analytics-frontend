@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Селектор игры" id="game"
     description="Три состояния: «Мир танков», обе игры, World of Tanks. Логотипы — локальные svg, поповера нет вовсе."
-    source="src/shared/game/selectors/gameSelector/GameSelector.vue">
+    source="src/shared/game/components/selectors/gameSelector/GameSelector.vue">
 
     <div class="debug-row">
       <span class="debug-label">модель</span>
@@ -70,9 +70,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import GameSelector from '@/shared/game/selectors/gameSelector/GameSelector.vue'
+import GameSelector from '@/shared/game/components/selectors/gameSelector/GameSelector.vue'
 import { preferredGame } from '@/shared/global/globalPreferred'
-import type { GameVendor } from '@/shared/game/wot'
+import type { GameVendor } from '@/shared/game/domain/wot'
 
 const variants = ['mt', 'any', 'wot'] as const
 

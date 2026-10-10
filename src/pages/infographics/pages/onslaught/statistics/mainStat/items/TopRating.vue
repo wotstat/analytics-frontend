@@ -20,9 +20,9 @@
 
 
 <script setup lang="ts">
-import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
+import RankIcon from '@/shared/game/components/comp7/rank/RankIcon.vue'
 import Item from './Item.vue'
-import { GameVendor } from '@/shared/game/wot'
+import { GameVendor } from '@/shared/game/domain/wot'
 import { type Component } from 'vue'
 
 const props = defineProps<{

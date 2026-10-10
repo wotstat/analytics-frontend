@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Расхождения: файлы vs i18n.ts" id="discrepancies"
     description="iconFileKeys — реальный список SVG из assets/. i18nIconKeys — ключи i18n.ts, входящие в IconType (isIconType). Несовпадение значит битую иконку без подписи или подпись без файла."
-    source="src/shared/game/efficiencyIcon/i18n.ts">
+    source="src/shared/game/components/efficiencyIcon/i18n.ts">
 
     <table class="debug-table">
       <thead>
@@ -47,8 +47,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import { isIconType } from '@/shared/game/efficiencyIcon/utils'
-import { i18n } from '@/shared/game/efficiencyIcon/i18n'
+import { isIconType } from '@/shared/game/components/efficiencyIcon/utils'
+import { i18n } from '@/shared/game/components/efficiencyIcon/i18n'
 import { iconFileKeys } from '../useIconFiles'
 
 const i18nKeys = Object.keys(i18n.ru)

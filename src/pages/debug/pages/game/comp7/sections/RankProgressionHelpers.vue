@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Хелперы: энергия и рейтинг" id="rank-progression"
     description="getEnergyPerBattle/getRatingInactiveDecreasePerDay считают прогресс сезона; isComp7SkillChangeSupported переключает набор навыков по региону+сезону."
-    source="src/shared/game/comp7/utils.ts">
+    source="src/shared/game/domain/comp7/utils.ts">
 
     <div class="debug-row">
       <GameSelect v-model="game" />
@@ -62,10 +62,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import {
-  Rank, getMaxEnergyLimit, getEnergyPerBattle, getRatingInactiveDecreasePerDay, isComp7SkillChangeSupported
-} from '@/shared/game/comp7/utils'
-import { GameVendor } from '@/shared/game/wot'
+import { Rank, getMaxEnergyLimit, getEnergyPerBattle, getRatingInactiveDecreasePerDay, isComp7SkillChangeSupported } from '@/shared/game/domain/comp7/utils'
+import { GameVendor } from '@/shared/game/domain/wot'
 import GameSelect from '../shared/GameSelect.vue'
 import RankSelect from '../shared/RankSelect.vue'
 

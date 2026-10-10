@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="gameplay: одна арена в разных режимах" id="gameplay-modes"
     description="Каждая комбинация game+tag+gameplay — своя строка в ArenasLatest со своим minimap/bbox/базами. getArenaMeta ищет точное совпадение всех трёх — если для режима меты нет, возвращает undefined."
-    source="src/shared/game/arenas/arenas.ts">
+    source="src/shared/game/domain/arenas/arenas.ts">
 
     <div class="debug-row">
       <label class="debug-control">
@@ -64,8 +64,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import Minimap from '@/shared/game/arenas/minimap/Minimap.vue'
-import { getArenaMeta } from '@/shared/game/arenas/arenas'
+import Minimap from '@/shared/game/components/minimap/Minimap.vue'
+import { getArenaMeta } from '@/shared/game/domain/arenas/arenas'
 import { useArenaOptions } from '../shared/useArenaOptions'
 import { usePickedArena } from '../shared/usePickedArena'
 

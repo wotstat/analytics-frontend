@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Селектор версии игры" id="version"
     description="Три уровня в одном списке: версия, патч, микропатч. Модель хранит объекты версии, а режим withRegion управляет тем, входит ли регион в выбор."
-    source="src/shared/game/selectors/gameVersionSelector/">
+    source="src/shared/game/components/selectors/gameVersionSelector/">
 
     <div class="debug-row">
       <button class="debug-btn" @click="addTags(take(currentVersionTags.versions, 2))">+2 версии</button>
@@ -89,9 +89,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import GameVersionSelectorBadges from '@/shared/game/selectors/gameVersionSelector/GameVersionSelectorBadges.vue'
-import type { OptionalRegionVersion } from '@/shared/game/selectors/gameVersionSelector/utils.ts'
-import { versionToKey } from '@/shared/game/selectors/gameVersionSelector/utils.ts'
+import GameVersionSelectorBadges from '@/shared/game/components/selectors/gameVersionSelector/GameVersionSelectorBadges.vue'
+import type { OptionalRegionVersion } from '@/shared/game/components/selectors/gameVersionSelector/utils.ts'
+import { versionToKey } from '@/shared/game/components/selectors/gameVersionSelector/utils.ts'
 import SelectionReadout from '../shared/SelectionReadout.vue'
 import { brokenVersionTags } from '../shared/fixtures'
 import { take, versionSelections, versionTags } from '../shared/lists'

@@ -1,4 +1,4 @@
-import { GameVendor } from '@/shared/game/wot'
+import { GameVendor } from '@/shared/game/domain/wot'
 import { useEventListener } from '@vueuse/core'
 import { get, set, del } from 'idb-keyval'
 import { ref, shallowRef, watch } from 'vue'

@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { StatParams, whereClause } from '@/shared/query/useQueryStatParams'
+import { StatParams, whereClause } from '@/shared/legacyStatQuery/useQueryStatParams'
 import { queryComputed, semverCompareStartFrom } from '@/db'
 import { useElementVisibility } from '@vueuse/core'
 import { computed, useTemplateRef } from 'vue'

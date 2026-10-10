@@ -109,12 +109,12 @@
 </template>
 
 <script setup lang="ts">
-import { StatParams, getQueryStatParamsCache, whereClause } from '@/shared/query/useQueryStatParams'
+import { StatParams, getQueryStatParamsCache, whereClause } from '@/shared/legacyStatQuery/useQueryStatParams'
 import { queryComputed } from '@/db'
 import { getArenaName } from '@/shared/i18n/i18n'
-import BattleModeSelector from '@/shared/game/selectors/battleMode/BattleModeSelector.vue'
-import type { BattleModeSelectionKey } from '@/shared/game/battleModes/battleModeSelection'
-import { battleModeConditions } from '@/shared/query/battleModeFilter'
+import BattleModeSelector from '@/shared/game/components/selectors/battleMode/BattleModeSelector.vue'
+import type { BattleModeSelectionKey } from '@/shared/game/domain/battleModes/battleModeSelection'
+import { battleModeConditions } from '@/shared/game/domain/battleModes/battleModeFilter'
 import { useElementVisibility, useElementSize, useLocalStorage } from '@vueuse/core'
 import { computed, ref, useTemplateRef } from 'vue'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'

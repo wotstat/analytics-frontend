@@ -1,5 +1,5 @@
 <template>
-  <DebugPage title="Карты" description="Список арен и миникарта с базами, спавнами и точками интереса." source="src/shared/game/arenas/">
+  <DebugPage title="Карты" description="Список арен и миникарта с базами, спавнами и точками интереса." source="src/shared/game/domain/arenas/">
     <ArenaGallery />
     <MinimapUrlBuilder />
     <MinimapOverlays />

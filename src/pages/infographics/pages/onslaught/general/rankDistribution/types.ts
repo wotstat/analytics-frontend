@@ -1,5 +1,6 @@
-import type { DivisionLetter, Rank, RankImageDefinition } from '@/shared/game/comp7/utils'
-import type { GameVendor } from '@/shared/game/wot'
+import type { DivisionLetter, Rank } from '@/shared/game/domain/comp7/utils'
+import type { RankImageDefinition } from '@/shared/game/components/comp7/rank/images'
+import type { GameVendor } from '@/shared/game/domain/wot'
 import { OffsetValue, PlacementParam } from '@/shared/uiKit/popover/utils'
 
 export type RankDistributionItem = {

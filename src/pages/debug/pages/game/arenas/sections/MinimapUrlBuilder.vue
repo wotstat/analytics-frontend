@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="minimapUrl: как собирается адрес картинки" id="minimap-url"
     description="Адрес зависит от игры, размера, tag, gameplay и формата. Small хранится плоско в minimap[/comp7], medium — в папке арены как minimap-medium/{tag}/mmap[_comp7]. tagToImageName в сборке URL не участвует (см. заметку ниже)."
-    source="src/shared/game/arenas/arenas.ts">
+    source="src/shared/game/domain/arenas/arenas.ts">
 
     <div class="debug-row">
       <label class="debug-control">
@@ -113,8 +113,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import { getArenaMeta, minimapUrl, tagToImageName } from '@/shared/game/arenas/arenas'
-import { GameVendor } from '@/shared/game/wot'
+import { getArenaMeta } from '@/shared/game/domain/arenas/arenas'
+import { minimapUrl, tagToImageName } from '@/shared/game/components/minimap/images'
+import { GameVendor } from '@/shared/game/domain/wot'
 import { useArenaOptions } from '../shared/useArenaOptions'
 
 const { arenaList, allGameplays } = useArenaOptions()

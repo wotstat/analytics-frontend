@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Неизвестный ключ" id="unknown-key"
     description="Icon.vue ищет компонент в Map по строке 1:1 (iconByName.get). Ключа нет — вернётся undefined, и <component :is='undefined'> ничего не рисует: без фолбэка и без ошибки в консоли."
-    source="src/shared/game/efficiencyIcon/Icon.vue">
+    source="src/shared/game/components/efficiencyIcon/Icon.vue">
 
     <div class="debug-row">
       <label class="debug-control">
@@ -30,8 +30,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
-import { IconType } from '@/shared/game/efficiencyIcon/utils'
+import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
+import { IconType } from '@/shared/game/components/efficiencyIcon/utils'
 
 const customKey = ref('totally-unknown-metric')
 

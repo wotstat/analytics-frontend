@@ -33,9 +33,9 @@
 
 
 <script setup lang="ts">
-import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
-import { getDivisionByRating, getDivisionsByRank, getNextDivision, getRankByRating, getRatingForDivision, getSeasonQualificationCount } from '@/shared/game/comp7/utils'
-import { gameToRegion, GameVendor } from '@/shared/game/wot'
+import RankIcon from '@/shared/game/components/comp7/rank/RankIcon.vue'
+import { getDivisionByRating, getDivisionsByRank, getNextDivision, getRankByRating, getRatingForDivision, getSeasonQualificationCount } from '@/shared/game/domain/comp7/utils'
+import { gameToRegion, GameVendor } from '@/shared/game/domain/wot'
 import { computed } from 'vue'
 
 

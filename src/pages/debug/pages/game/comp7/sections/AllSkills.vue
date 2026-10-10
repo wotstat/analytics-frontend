@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Все навыки" id="skills"
     description="Полный набор SKILL_TAGS. Подпись приходит из ClickHouse (ArtefactsLocalizationDictionary) через getComp7SkillName, а не из локального i18n.json — до загрузки данных или для неизвестного тега вернётся сырой tag."
-    source="src/shared/game/comp7/skill/SkillIcon.vue">
+    source="src/shared/game/components/comp7/skill/SkillIcon.vue">
 
     <div class="debug-row">
       <GameSelect v-model="game" />
@@ -47,9 +47,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import SkillIcon from '@/shared/game/comp7/skill/SkillIcon.vue'
-import { SKILL_TAGS, getComp7SkillName } from '@/shared/game/comp7/utils'
-import { GameVendor } from '@/shared/game/wot'
+import SkillIcon from '@/shared/game/components/comp7/skill/SkillIcon.vue'
+import { SKILL_TAGS, getComp7SkillName } from '@/shared/game/domain/comp7/utils'
+import { GameVendor } from '@/shared/game/domain/wot'
 import GameSelect from '../shared/GameSelect.vue'
 import SeasonSelect from '../shared/SeasonSelect.vue'
 

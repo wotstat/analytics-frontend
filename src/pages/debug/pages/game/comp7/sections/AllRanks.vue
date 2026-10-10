@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Все ранги" id="ranks"
     description="Полный набор дивизионов от квалификации до легенды. Подпись — тир из i18n.json + буква дивизиона, под ней сырое значение Division."
-    source="src/shared/game/comp7/rank/RankIcon.vue">
+    source="src/shared/game/components/comp7/rank/RankIcon.vue">
 
     <div class="debug-row">
       <GameSelect v-model="game" />
@@ -40,11 +40,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
-import { Division, Rank, getDivisionsByRank } from '@/shared/game/comp7/utils'
-import { GameVendor } from '@/shared/game/wot'
+import RankIcon from '@/shared/game/components/comp7/rank/RankIcon.vue'
+import { Division, Rank, getDivisionsByRank } from '@/shared/game/domain/comp7/utils'
+import { GameVendor } from '@/shared/game/domain/wot'
 import { useI18n } from '@/shared/i18n/useI18n'
-import i18n from '@/shared/game/comp7/i18n.json'
+import i18n from '@/shared/game/domain/comp7/i18n.json'
 import GameSelect from '../shared/GameSelect.vue'
 import SeasonSelect from '../shared/SeasonSelect.vue'
 

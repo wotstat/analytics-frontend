@@ -4,7 +4,7 @@
 // drop table player_coverage_mv_tankLevel_tankType;
 // drop table player_coverage_mv_tankType;
 
-import { StatParams, whereClauseColumns } from '@/shared/query/useQueryStatParams'
+import { StatParams, whereClauseColumns } from '@/shared/legacyStatQuery/useQueryStatParams'
 import { MaybeRefOrGetter } from 'vue'
 
 const player_coverage = {

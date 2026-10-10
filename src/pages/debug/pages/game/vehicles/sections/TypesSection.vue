@@ -1,5 +1,5 @@
 <template>
-  <DebugSection title="Типы техники" id="types" source="src/shared/game/vehicles/type/VehicleType.vue"
+  <DebugSection title="Типы техники" id="types" source="src/shared/game/components/vehicles/vehicleType/VehicleType.vue"
     description="LT/MT/HT/AT/SPG плюс алиасы полными именами; что рисуется вместо неизвестного типа.">
 
     <div class="debug-row">
@@ -60,8 +60,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import VehicleType from '@/shared/game/vehicles/type/VehicleType.vue'
-import type { VehicleType as VehicleTypeProp } from '@/shared/game/vehicles/type/vehicleTypeToImage'
+import VehicleType from '@/shared/game/components/vehicles/vehicleType/VehicleType.vue'
+import type { VehicleType as VehicleTypeProp } from '@/shared/game/components/vehicles/vehicleType/vehicleTypeToImage'
 
 const vehicleTypes = ['HT', 'MT', 'LT', 'AT', 'SPG'] as const
 

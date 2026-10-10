@@ -109,7 +109,7 @@
 </template>
 
 <script lang="ts" setup>
-import { useQueryStatParams } from '@/shared/query/useQueryStatParams'
+import { useQueryStatParams } from '@/shared/legacyStatQuery/useQueryStatParams'
 import GenericInfo from '@/pages/infographics/shared/widgets/GenericInfo.vue'
 import { createFixedSpaceProcessor, createLogProcessor } from '@/shared/utils/processors/processors'
 import { Status, dateToDbIndex, queryComputed, queryComputedFirst, success } from '@/db'
@@ -129,8 +129,8 @@ import {
   type LocalizedName
 } from '@/shared/i18n/i18n'
 import LootboxList from './lootboxList/Index.vue'
-import { useQueryStorage } from '@/shared/ui/queryStorage/useQueryStorage'
-import { stringListParam } from '@/shared/query/statQueryParams'
+import { useQueryStorage } from '@/shared/uiKit/queryStorage/useQueryStorage'
+import { stringListParam } from '@/shared/legacyStatQuery/statQueryParams'
 import { useMeta } from '@/shared/composition/useMeta'
 import { useLocalStorage } from '@vueuse/core'
 import { useLootboxQueryOptions } from './useLootboxQueryOptions'

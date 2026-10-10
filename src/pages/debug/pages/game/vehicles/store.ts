@@ -1,9 +1,9 @@
 import { computed } from 'vue'
 import { DEFAULT_CACHE, mergeStatuses, queryAsync, type Status } from '@/db'
-import { GameVendor, regionToGame } from '@/shared/game/wot'
-import { Nation } from '@/shared/game/vehicles/nations/nations'
-import { VehicleType } from '@/shared/game/vehicles/vehicle/utils'
-import { vehicleCatalog, vehiclesByRegion } from '@/shared/game/vehicles/catalog'
+import { GameVendor, regionToGame } from '@/shared/game/domain/wot'
+import { Nation } from '@/shared/game/domain/vehicles/nations'
+import { VehicleType } from '@/shared/game/domain/vehicles/types'
+import { vehicleCatalog, vehiclesByRegion } from '@/shared/game/domain/vehicles/catalog'
 
 export type VehicleRow = {
   tag: string

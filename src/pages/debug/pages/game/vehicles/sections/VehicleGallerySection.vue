@@ -1,6 +1,6 @@
 <template>
   <DebugSection title="Иконки техники (реальные данные)" id="gallery"
-    source="src/shared/game/vehicles/vehicle/VehicleImage.vue"
+    source="src/shared/game/components/vehicles/vehicleImage/VehicleImage.vue"
     description="Метаданные и имена — из общего каталога техники, картинки — со STATIC_URL. Проверь обе игры и все размеры.">
 
     <div class="debug-row">
@@ -69,11 +69,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import VehicleImage from '@/shared/game/vehicles/vehicle/VehicleImage.vue'
-import VehicleLevel from '@/shared/game/vehicles/VehicleLevel.vue'
-import VehicleType from '@/shared/game/vehicles/type/VehicleType.vue'
-import { isVehicleType } from '@/shared/game/vehicles/type/vehicleTypeToImage'
-import Nation from '@/shared/game/vehicles/nations/Nation.vue'
+import VehicleImage from '@/shared/game/components/vehicles/vehicleImage/VehicleImage.vue'
+import VehicleLevel from '@/shared/game/components/vehicles/vehicleLevel/VehicleLevel.vue'
+import VehicleType from '@/shared/game/components/vehicles/vehicleType/VehicleType.vue'
+import { isVehicleType } from '@/shared/game/components/vehicles/vehicleType/vehicleTypeToImage'
+import Nation from '@/shared/game/components/vehicles/nation/Nation.vue'
 import { vehicleList } from '../store'
 
 const size = ref<'small' | 'preview' | 'shop'>('preview')

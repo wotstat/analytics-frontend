@@ -1,5 +1,5 @@
 import { computed, ref, watch, type Ref } from 'vue'
-import { GameVendor } from '@/shared/game/wot'
+import { GameVendor } from '@/shared/game/domain/wot'
 import { ArenaOption } from './useArenaOptions'
 
 // Управляемый выбор game+tag+gameplay, синхронизированный со списком доступных арен из useArenaOptions.

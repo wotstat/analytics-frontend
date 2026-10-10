@@ -13,7 +13,7 @@
 
 
 <script setup lang="ts">
-import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
+import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
 
 const props = defineProps<{
   solo: number

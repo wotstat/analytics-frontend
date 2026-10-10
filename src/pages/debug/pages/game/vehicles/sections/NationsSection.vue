@@ -1,5 +1,5 @@
 <template>
-  <DebugSection title="Нации (флаги)" id="nations" source="src/shared/game/vehicles/nations/Nation.vue"
+  <DebugSection title="Нации (флаги)" id="nations" source="src/shared/game/components/vehicles/nation/Nation.vue"
     description="Все флаги наций, размер, поведение при неизвестной нации и пустой строке.">
 
     <div class="debug-row">
@@ -70,8 +70,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import Nation from '@/shared/game/vehicles/nations/Nation.vue'
-import { nations, mtNations, wotNations } from '@/shared/game/vehicles/nations/nations'
+import Nation from '@/shared/game/components/vehicles/nation/Nation.vue'
+import { nations, mtNations, wotNations } from '@/shared/game/domain/vehicles/nations'
 
 const size = ref(60)
 const customNation = ref('atlantis')

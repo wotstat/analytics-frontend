@@ -1,5 +1,5 @@
 <template>
-  <DebugPage title="Танки" description="Иконки техники, флаги наций, типы и уровни." source="src/shared/game/vehicles/">
+  <DebugPage title="Танки" description="Иконки техники, флаги наций, типы и уровни." source="src/shared/game/components/vehicles/">
     <NationsSection />
     <TypesSection />
     <LevelsSection />

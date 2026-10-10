@@ -32,7 +32,7 @@
 <script setup lang="ts">
 import { computed, markRaw, watchEffect } from 'vue'
 import { LONG_CACHE, isErrorStatus, loading, queryComputed, success } from '@/db'
-import { getRegionDayChangeHourOffset } from '@/shared/game/comp7/utils'
+import { getRegionDayChangeHourOffset } from '@/shared/game/domain/comp7/utils'
 import HeaderTooltip from '@/shared/ui/chart/tooltip/HeaderTooltip.vue'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import type { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'

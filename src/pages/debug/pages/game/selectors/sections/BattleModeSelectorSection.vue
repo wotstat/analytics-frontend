@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Селектор режимов боя" id="battle-mode"
     description="Общий справочник режимов и геймплеев с подгрузкой новых сочетаний при открытии."
-    source="src/shared/game/selectors/battleMode/BattleModeSelector.vue">
+    source="src/shared/game/components/selectors/battleMode/BattleModeSelector.vue">
 
     <div class="debug-row">
       <button class="debug-btn" @click="selected = []">Все режимы</button>
@@ -53,9 +53,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import BattleModeSelector from '@/shared/game/selectors/battleMode/BattleModeSelector.vue'
-import { type BattleModeSelectionKey } from '@/shared/game/battleModes/battleModeSelection'
-import type { GameRegion } from '@/shared/game/wot'
+import BattleModeSelector from '@/shared/game/components/selectors/battleMode/BattleModeSelector.vue'
+import { type BattleModeSelectionKey } from '@/shared/game/domain/battleModes/battleModeSelection'
+import type { GameRegion } from '@/shared/game/domain/wot'
 
 const selected = ref<BattleModeSelectionKey[]>(['random'])
 const multipleSelected = ref<BattleModeSelectionKey[]>(['random'])

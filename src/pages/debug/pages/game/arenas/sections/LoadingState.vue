@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Состояния загрузки" id="loading-state"
     description="arenas.ts использует computedAsync с lazy: true: загрузка начинается при первом чтении arenas.value, а импорт модуля не отправляет запрос. Явного статуса loading/error здесь нет."
-    source="src/shared/game/arenas/arenas.ts">
+    source="src/shared/game/domain/arenas/arenas.ts">
 
     <table class="debug-table">
       <tbody>
@@ -48,7 +48,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import { arenas } from '@/shared/game/arenas/arenas'
+import { arenas } from '@/shared/game/domain/arenas/arenas'
 import { query, MEDIUM_CACHE } from '@/db'
 
 const log = ref<{ time: string, text: string }[]>([])

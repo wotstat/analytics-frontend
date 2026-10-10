@@ -36,14 +36,13 @@
 
 <script setup lang="ts">
 
-
 import { ref } from 'vue'
 import Battle from '../shared/Battle.vue'
-import VehicleSelectorBadges from '@/shared/game/selectors/vehicleSelector/VehicleSelectorBadges.vue'
-import GameSelector from '@/shared/game/selectors/gameSelector/GameSelector.vue'
-import GameVersionSelectorBadges from '@/shared/game/selectors/gameVersionSelector/GameVersionSelectorBadges.vue'
-import ArenaSelectorBadges from '@/shared/game/selectors/arena/ArenaSelectorBadges.vue'
-import type { OptionalRegionVersion } from '@/shared/game/selectors/gameVersionSelector/utils.ts'
+import VehicleSelectorBadges from '@/shared/game/components/selectors/vehicleSelector/VehicleSelectorBadges.vue'
+import GameSelector from '@/shared/game/components/selectors/gameSelector/GameSelector.vue'
+import GameVersionSelectorBadges from '@/shared/game/components/selectors/gameVersionSelector/GameVersionSelectorBadges.vue'
+import ArenaSelectorBadges from '@/shared/game/components/selectors/arena/ArenaSelectorBadges.vue'
+import type { OptionalRegionVersion } from '@/shared/game/components/selectors/gameVersionSelector/utils.ts'
 
 const info = {
   meta: {

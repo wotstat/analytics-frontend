@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Галерея всех арен" id="arena-gallery"
     description="Все арены из ArenasLatest (регионы RU/EU) — по одной карточке на game+tag. Главная проверка: не пропала ли картинка миникарты хоть у одной арены."
-    source="src/shared/game/arenas/arenas.ts">
+    source="src/shared/game/domain/arenas/arenas.ts">
 
     <div class="debug-row">
       <label class="debug-control">
@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import MinimapBackground from '@/shared/game/arenas/minimap/minimapBackground/MinimapBackground.vue'
+import MinimapBackground from '@/shared/game/components/minimap/minimapBackground/MinimapBackground.vue'
 import { useArenaOptions } from '../shared/useArenaOptions'
 
 const { arenaList } = useArenaOptions()

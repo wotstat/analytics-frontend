@@ -37,9 +37,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import Minimap from '@/shared/game/arenas/minimap/Minimap.vue'
-import { getArenaMeta, relativeMapPosition } from '@/shared/game/arenas/arenas'
-import { GameVendor } from '@/shared/game/wot'
+import Minimap from '@/shared/game/components/minimap/Minimap.vue'
+import { getArenaMeta, relativeMapPosition } from '@/shared/game/domain/arenas/arenas'
+import { GameVendor } from '@/shared/game/domain/wot'
 
 const props = defineProps<{
   tag: string

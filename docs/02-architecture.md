@@ -26,7 +26,7 @@ Route meta, используемые лейаутом `/session`: `hideTankList`
 
 `scrollBehavior`: скролл вверх только при смене корневого matched-маршрута.
 
-`shared/ui/router/createDeferredWebHistory.ts` реализует `RouterHistory` с отложенной
+`shared/uiKit/queryStorage/utils/createDeferredWebHistory.ts` реализует `RouterHistory` с отложенной
 записью в browser history. Маршрут и компоненты переключаются сразу; после обновления
 Vue подключённый через `setupQueryStorage(router, history)` координатор синхронно
 пересчитывает query. History ждёт применения query роутером и записывает итоговый адрес.
@@ -59,10 +59,10 @@ src/
 │  ├─ widgets/       — каталог OBS-виджетов
 │  └─ shared/        — общие для страниц: header, sidebarLayout, problems (банеры инцидентов)
 ├─ shared/        — переиспользуемый код
-│  ├─ uiKit/      — базовые компоненты без проектных зависимостей, переносимые (см. 05)
-│  ├─ ui/         — UI сайта и общие механизмы интерфейса, включая queryStorage (см. 05)
-│  ├─ game/       — игровой домен: режимы, танки, арены, селекторы (см. 07)
-│  ├─ query/      — фильтры статистики, StatParams + генерация WHERE (см. 03)
+│  ├─ uiKit/      — переносимые компоненты и механизмы без проектных зависимостей, включая queryStorage (см. 05)
+│  ├─ ui/         — UI сайта с проектными зависимостями (см. 05)
+│  ├─ game/       — domain (данные и правила), components (отображение), encoding (короткие URL) (см. 07)
+│  ├─ legacyStatQuery/ — адаптер совместимости общих фильтров инфографики, StatParams, WHERE и кеш (см. 03, 10)
 │  ├─ i18n/       — локализация имён танков/карт из БД + мини-хелпер useI18n
 │  ├─ external/   — URL поддоменов, realtime WS, метрика, wotInspector
 │  ├─ composition/, utils/, global/ — хелперы
@@ -75,12 +75,14 @@ src/
 - Алиас `@` → `/src` (vite.config + tsconfig).
 - ESLint: **одинарные кавычки**, **без точек с запятой** (`semi: never`). Соблюдай при генерации кода.
 - Компоненты: PascalCase `.vue`, композаблы `useXxx.ts`, попапки по фичам — компонент + рядом его `utils.ts`/`store.ts`/`i18n.json`.
-- Состояние страницы кладут в **URL query** через `shared/ui/queryStorage/useQueryStorage` (общий реестр с sessionStorage, жизненным циклом владельцев и историей; см. [10-query-storage.md](10-query-storage.md)) и/или `useLocalStorage`. Ядро не зависит от фильтров и страниц. В `shared/query/` находятся описания фильтров статистики и `useQueryStatParams`, который адаптирует их для запросов. Глобальных сторов нет; модульный синглтон-стейт — просто `ref` на уровне модуля (пример: `pages/services/bob25/store.ts`, `shared/global/globalPreferred.ts`).
+- Состояние страницы кладут в **URL query** через `shared/uiKit/queryStorage/useQueryStorage` (общий реестр с sessionStorage, жизненным циклом владельцев и историей; см. [10-query-storage.md](10-query-storage.md)) и/или `useLocalStorage`. Ядро не зависит от фильтров и страниц. Новые страницы объявляют собственные параметры рядом со своим кодом. `shared/legacyStatQuery/` сохраняет общий набор фильтров инфографики и интерфейс `StatParams` для старых потребителей, включая SQL и выбор кеша. URL-кодек и SQL-условия режимов находятся в `shared/game/domain/battleModes/`, бинарные Writer/Reader — в `shared/uiKit/queryStorage/utils/compactBinary.ts`. Конкретные бинарные форматы реализуются на страницах. Глобальных сторов нет; модульный синглтон-стейт — просто `ref` на уровне модуля (пример: `pages/services/bob25/store.ts`, `shared/global/globalPreferred.ts`).
 - Многие страницы грузят данные лениво по видимости карточки: `useElementVisibility` + опция `enabled` у query-хелперов.
 - Markdown-файлы импортируются как Vue-компоненты (`import { VueComponent } from './index.md'`).
 - Комментарии и тексты интерфейса — по-русски. Сообщения в `new Error(...)` — по-английски.
 
-## Типичный паттерн страницы-«инфографики»
+## Паттерн старых страниц инфографики
+
+Сохраняется через адаптер `shared/legacyStatQuery/` до переписывания этих страниц на собственные параметры `useQueryStorage`.
 
 ```ts
 const params = useQueryStatParams()          // фильтры из URL

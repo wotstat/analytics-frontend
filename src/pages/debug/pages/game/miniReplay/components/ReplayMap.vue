@@ -60,10 +60,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import Minimap from '@/shared/game/arenas/minimap/Minimap.vue'
+import Minimap from '@/shared/game/components/minimap/Minimap.vue'
 import { getTankName } from '@/shared/i18n/i18n'
-import VehicleType from '@/shared/game/vehicles/type/VehicleType.vue'
-import type { VehicleType as VehicleTypeName } from '@/shared/game/vehicles/type/vehicleTypeToImage'
+import VehicleType from '@/shared/game/components/vehicles/vehicleType/VehicleType.vue'
+import type { VehicleType as VehicleTypeName } from '@/shared/game/components/vehicles/vehicleType/vehicleTypeToImage'
 import { formatDuration, lifeFrameAt, worldToRelative } from '../model'
 import type { LifeFrame, PreparedReplay } from '../types'
 import ProjectileCanvas from './ProjectileCanvas.vue'

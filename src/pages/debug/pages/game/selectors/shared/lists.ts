@@ -1,9 +1,9 @@
 import { computed } from 'vue'
 import { LONG_CACHE, MEDIUM_CACHE, queryAsync, type Status } from '@/db'
-import { arenaToHash } from '@/shared/game/selectors/arena/utils'
-import { vehicleCatalog, selectableVehicles, type SelectableVehicle } from '@/shared/game/vehicles/catalog'
-import type { OptionalRegionVersion } from '@/shared/game/selectors/gameVersionSelector/utils.ts'
-import { versionToKey } from '@/shared/game/selectors/gameVersionSelector/utils.ts'
+import { arenaToHash } from '@/shared/game/components/selectors/arena/utils'
+import { vehicleCatalog, selectableVehicles, type SelectableVehicle } from '@/shared/game/domain/vehicles/catalog'
+import type { OptionalRegionVersion } from '@/shared/game/components/selectors/gameVersionSelector/utils.ts'
+import { versionToKey } from '@/shared/game/components/selectors/gameVersionSelector/utils.ts'
 
 export type VehicleRow = Omit<SelectableVehicle, 'id' | 'role'>
 

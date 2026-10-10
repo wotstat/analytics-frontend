@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
+import RankIcon from '@/shared/game/components/comp7/rank/RankIcon.vue'
 import type { RankDistributionTooltipProps } from '../types'
 
 const props = defineProps<RankDistributionTooltipProps>()

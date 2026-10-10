@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Границы и некорректные значения" id="rank-boundaries"
     description="Калькулятор по рейтингу: getDivisionByRating/getRankByRating/getNextDivision/getPrevDivision живьём. Ниже — что рисуется для значений, которые функции не ждут."
-    source="src/shared/game/comp7/utils.ts">
+    source="src/shared/game/domain/comp7/utils.ts">
 
     <div class="debug-row">
       <GameSelect v-model="game" />
@@ -116,13 +116,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
-import {
-  Rank, Division,
-  getDivisionByRating, getRankByRating, getDivisionLetterByRating,
-  getNextDivision, getPrevDivision, getRatingIntervalForDivision, hasEliteDivisions
-} from '@/shared/game/comp7/utils'
-import { GameVendor } from '@/shared/game/wot'
+import RankIcon from '@/shared/game/components/comp7/rank/RankIcon.vue'
+import { Rank, Division, getDivisionByRating, getRankByRating, getDivisionLetterByRating, getNextDivision, getPrevDivision, getRatingIntervalForDivision, hasEliteDivisions } from '@/shared/game/domain/comp7/utils'
+import { GameVendor } from '@/shared/game/domain/wot'
 import GameSelect from '../shared/GameSelect.vue'
 import SeasonSelect from '../shared/SeasonSelect.vue'
 

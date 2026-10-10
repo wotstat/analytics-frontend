@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Миникарта с наложениями: базы, спавны, точки интереса" id="minimap-overlays"
     description="Minimap.vue = фон + MinimapBases поверх. team определяет, какие базы/спавны красятся зелёным (свои), какие — красным (чужие)."
-    source="src/shared/game/arenas/minimap/">
+    source="src/shared/game/components/minimap/">
 
     <div class="debug-row">
       <label class="debug-control">
@@ -76,7 +76,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import Minimap from '@/shared/game/arenas/minimap/Minimap.vue'
+import Minimap from '@/shared/game/components/minimap/Minimap.vue'
 import { useArenaOptions } from '../shared/useArenaOptions'
 import { usePickedArena } from '../shared/usePickedArena'
 
@@ -87,7 +87,7 @@ const team = ref(1)
 const showBases = ref(true)
 
 const images = Object.fromEntries(
-  Object.entries(import.meta.glob<{ default: string }>('../../../../../../shared/game/arenas/minimap/minimapBases/assets/*', { eager: true }))
+  Object.entries(import.meta.glob<{ default: string }>('../../../../../../shared/game/components/minimap/minimapBases/assets/*', { eager: true }))
     .map(([key, value]) => [key.replace(/^.*\/assets\//, '').replace('.png', ''), value.default])
 )
 </script>

@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="SearchLine и подсветка совпадений" id="search"
     description="Одна и та же строка поиска стоит во всех попапах. Проверяем совпадение в начале и в середине, кириллицу и латиницу, пустой результат, крестик очистки и очень длинный запрос."
-    source="src/shared/game/selectors/components/searchLine/SearchLine.vue">
+    source="src/shared/game/components/selectors/components/searchLine/SearchLine.vue">
 
     <div class="debug-row">
       <label class="debug-control">
@@ -125,7 +125,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import SearchLine from '@/shared/game/selectors/components/searchLine/SearchLine.vue'
+import SearchLine from '@/shared/game/components/selectors/components/searchLine/SearchLine.vue'
 import HighlightString from '@/shared/uiKit/highlightString/HighlightString.vue'
 import { compareIntervals, Highlighted } from '@/shared/uiKit/highlightString/highlightUtils'
 import { highlightSamples, longQuery } from '../shared/fixtures'

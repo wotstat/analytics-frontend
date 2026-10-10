@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Бейджи выбранного" id="badges"
     description="Badge → BadgesLine → BadgesLinePopover. Один бейдж, много бейджей, очень длинные названия и что происходит, когда они не влезают в контейнер."
-    source="src/shared/game/selectors/components/badges/">
+    source="src/shared/game/components/selectors/components/badges/">
 
     <div class="debug-col">
       <span class="debug-label">Badge: один бейдж</span>
@@ -156,9 +156,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import Badge from '@/shared/game/selectors/components/badges/Badge.vue'
-import BadgesLine from '@/shared/game/selectors/components/badges/BadgesLine.vue'
-import BadgesLinePopover from '@/shared/game/selectors/components/badges/BadgesLinePopover.vue'
+import Badge from '@/shared/game/components/selectors/components/badges/Badge.vue'
+import BadgesLine from '@/shared/game/components/selectors/components/badges/BadgesLine.vue'
+import BadgesLinePopover from '@/shared/game/components/selectors/components/badges/BadgesLinePopover.vue'
 import type { CloseOnOutsideWindow } from '@/shared/uiKit/popover/utils'
 import { longTexts } from '../shared/fixtures'
 

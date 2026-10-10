@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
 import Item from './Item.vue'
-import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
+import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
 import { createPercentProcessor } from '@/shared/utils/processors/processors'
 
 

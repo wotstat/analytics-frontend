@@ -22,8 +22,9 @@
 
 <script setup lang="ts">
 import { computed, useTemplateRef } from 'vue'
-import type { Division, RankImageDefinition } from '@/shared/game/comp7/utils'
-import type { GameVendor } from '@/shared/game/wot'
+import type { Division } from '@/shared/game/domain/comp7/utils'
+import type { RankImageDefinition } from '@/shared/game/components/comp7/rank/images'
+import type { GameVendor } from '@/shared/game/domain/wot'
 import type { RankDistributionItem, RankDistributionTooltipProps } from './types'
 import { vRankDistributionTooltip } from './rankDistributionTooltip/useRankDistributionTooltip'
 

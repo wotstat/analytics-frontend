@@ -73,11 +73,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import MinimapBackground from '@/shared/game/arenas/minimap/minimapBackground/MinimapBackground.vue'
+import MinimapBackground from '@/shared/game/components/minimap/minimapBackground/MinimapBackground.vue'
 import FallbackImg from '@/shared/uiKit/fallbackImg/FallbackImg.vue'
 import { isUrlMayValidImage, onErrorRemoveUrl } from '@/shared/uiKit/fallbackImg/store'
 import { STATIC_URL } from '@/shared/external/externalUrl'
-import FallbackImage from '@/shared/game/arenas/minimap/minimapBackground/fallback.webp'
+import FallbackImage from '@/shared/game/components/minimap/minimapBackground/fallback.webp'
 
 function randomBrokenUrl() {
   return `${STATIC_URL}/mt/latest/arenas/minimap/broken-${Math.random().toString(36).slice(2)}.webp`

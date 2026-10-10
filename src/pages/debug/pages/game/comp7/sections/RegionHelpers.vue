@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Хелперы: регионы и сезоны" id="region-helpers"
     description="getRegionIsoHourOffset и getRegionDayChangeHourOffset используются в графиках для группировки по игровым суткам (см. RankDistributionChart/Settings); getSeasonDuration/getSeasonQualificationCount — в расчёте интервала сезона."
-    source="src/shared/game/comp7/utils.ts">
+    source="src/shared/game/domain/comp7/utils.ts">
 
     <table class="debug-table">
       <thead>
@@ -60,10 +60,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import {
-  getRegionIsoHourOffset, getRegionDayChangeHourOffset,
-  getSeasonDuration, getSeasonQualificationCount
-} from '@/shared/game/comp7/utils'
+import { getRegionIsoHourOffset, getRegionDayChangeHourOffset, getSeasonDuration, getSeasonQualificationCount } from '@/shared/game/domain/comp7/utils'
 import SeasonSelect from '../shared/SeasonSelect.vue'
 
 const DAY_MS = 24 * 3_600_000

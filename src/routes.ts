@@ -13,8 +13,8 @@ import Install from './pages/install/Index.vue'
 import { AsyncComponentLoader, defineAsyncComponent } from 'vue'
 import PageLoader from './shared/ui/loaders/pageLoader/PageLoader.vue'
 import { debugRoutes } from './pages/debug/routes'
-import { setupQueryStorage } from './shared/ui/queryStorage/useQueryStorage'
-import { createDeferredWebHistory } from './shared/ui/router/createDeferredWebHistory'
+import { setupQueryStorage } from './shared/uiKit/queryStorage/useQueryStorage'
+import { createDeferredWebHistory } from './shared/uiKit/queryStorage/utils/createDeferredWebHistory.ts'
 
 
 function asyncPage(loader: AsyncComponentLoader): any {

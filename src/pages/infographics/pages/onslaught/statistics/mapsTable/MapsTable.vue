@@ -48,13 +48,13 @@
 
 
 <script setup lang="ts">
-import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
+import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
 import { useMapsTable } from './useMapsTable'
 import { getArenaName } from '@/shared/i18n/i18n'
 import { roundProcessor } from '@/shared/utils/processors/processors'
 import { computed, ref } from 'vue'
 import TooltipedMinimap from './TooltipedMinimap.vue'
-import { GameVendor } from '@/shared/game/wot'
+import { GameVendor } from '@/shared/game/domain/wot'
 import ComposableTable from '@/shared/ui/composableTable/ComposableTable.vue'
 import { useTableSorting, statisticsColumns } from '../../shared/useTableSorting'
 

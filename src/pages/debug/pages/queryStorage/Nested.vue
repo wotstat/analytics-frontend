@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import { useQueryStorage } from '@/shared/ui/queryStorage/useQueryStorage'
+import { useQueryStorage } from '@/shared/uiKit/queryStorage/useQueryStorage'
 import Nickname from './Nickname.vue'
 
 const { params: { selection } } = useQueryStorage({

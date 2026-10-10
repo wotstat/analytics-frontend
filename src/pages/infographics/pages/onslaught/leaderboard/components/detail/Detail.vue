@@ -87,7 +87,7 @@ import { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/comp
 import type { Point } from '@/shared/uiKit/chart/universalChart/utils/Point'
 import { HoverSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/HoverSynchronizer'
 import { BoundsSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/BoundsSynchronizer'
-import { getRegionDayChangeHourOffset } from '@/shared/game/comp7/utils'
+import { getRegionDayChangeHourOffset } from '@/shared/game/domain/comp7/utils'
 import HeaderTooltip from '@/shared/ui/chart/tooltip/HeaderTooltip.vue'
 import TriangleUp from '../../assets/triangle-up.svg'
 import TipZoomChart from '../tips/TipZoomChart.vue'

@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-import TankIcon from '@/shared/game/efficiencyIcon/assets/tank.svg'
+import TankIcon from '@/shared/game/components/efficiencyIcon/assets/tank.svg'
 </script>
 
 <style scoped lang="scss">

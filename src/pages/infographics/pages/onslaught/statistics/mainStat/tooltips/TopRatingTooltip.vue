@@ -18,8 +18,8 @@
 
 <script setup lang="ts">
 import { createFixedProcessor } from '@/shared/utils/processors/processors'
-import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
-import { GameVendor } from '@/shared/game/wot'
+import RankIcon from '@/shared/game/components/comp7/rank/RankIcon.vue'
+import { GameVendor } from '@/shared/game/domain/wot'
 
 const props = defineProps<{
   last: [rating: number, eliteRating: number]

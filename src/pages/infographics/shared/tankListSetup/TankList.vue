@@ -45,17 +45,15 @@
 </template>
 
 <script lang="ts" setup>
-import { useQueryStatParams, whereClause } from '@/shared/query/useQueryStatParams'
+import { useQueryStatParams, whereClause } from '@/shared/legacyStatQuery/useQueryStatParams'
 import { LONG_CACHE, queryComputed } from '@/db'
-import { useStatQueryStorage } from '@/shared/query/statQueryParams'
+import { useStatQueryStorage } from '@/shared/legacyStatQuery/statQueryParams'
 import ServerStatusWrapper from '../ServerStatusWrapper.vue'
 import { computed } from 'vue'
 import { createFixedSpaceProcessor } from '@/shared/utils/processors/processors'
 import { getTankName } from '@/shared/i18n/i18n'
 import HorizontalScrollItems from '@/pages/shared/HorizontalScrollItems.vue'
-import VehicleImage from '@/shared/game/vehicles/vehicle/VehicleImage.vue'
-
-
+import VehicleImage from '@/shared/game/components/vehicles/vehicleImage/VehicleImage.vue'
 
 
 const stats = useQueryStatParams()

@@ -1,4 +1,4 @@
-import type { GameVendor } from '@/shared/game/wot'
+import type { GameVendor } from '@/shared/game/domain/wot'
 
 export type StatisticsLoadState<T> =
   | { status: 'loading', data: T[] }

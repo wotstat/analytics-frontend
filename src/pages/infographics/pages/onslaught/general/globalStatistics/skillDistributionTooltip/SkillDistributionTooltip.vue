@@ -15,8 +15,8 @@
 </template>
 
 <script setup lang="ts">
-import SkillIcon from '@/shared/game/comp7/skill/SkillIcon.vue'
-import { getComp7SkillName } from '@/shared/game/comp7/utils'
+import SkillIcon from '@/shared/game/components/comp7/skill/SkillIcon.vue'
+import { getComp7SkillName } from '@/shared/game/domain/comp7/utils'
 import type { SkillDistributionTooltipProps } from '../types'
 
 const props = defineProps<SkillDistributionTooltipProps>()

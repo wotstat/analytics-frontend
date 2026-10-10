@@ -1,22 +1,37 @@
 # Игровая доменная модель (`src/shared/game/`)
 
+## Структура и зависимости
+
+- `domain/` — игровые типы, справочники, каталоги и правила игры. Здесь допустимы
+  загрузка данных и реактивные представления, но нет зависимостей от компонентов, спрайтов и изображений.
+- `components/` — селекторы, миникарты, изображения техники, иконки и их TS-хелперы, стили и assets.
+- `encoding/` — общая упаковка игровых значений для коротких URL, независимая от конкретного сравнения.
+
+Компоненты используют домен и общие утилиты; encoding использует каталоги и типы домена.
+Домен не импортирует encoding; упаковка ID, категории и маски отделены от метаданных игровых сущностей.
+В `encoding/` находятся компактеры, маски и публичные типы.
+Модуль `encoding/battleModes/` объединяет компактер режимов и его таблицы кодов.
+`encoding/utils/` содержит общий поиск тегов и упаковку регионального ID.
+Типы техники импортируются прямо из `domain/vehicles/types.ts`, нации — из `domain/vehicles/nations.ts`.
+Модуль изображений техники больше не переэкспортирует игровые типы.
+
 ## Две игры: Lesta («Мир танков», RU) и Wargaming (World of Tanks, EU/NA/ASIA)
 
-- `wot.ts`: тип `GameVendor = 'wot' | 'mt'` (`mt` = Мир танков/Lesta), `GameRegion = 'RU' | 'EU' | 'NA' | 'ASIA' | 'CT' | ...`. Конвертации `gameToRegion` / `regionToGame` (RU/RPT/CT → `mt`). `accountLink(bdid, name, region)` — ссылка на профиль игрока на портале.
+- `domain/wot.ts`: тип `GameVendor = 'wot' | 'mt'` (`mt` = Мир танков/Lesta), `GameRegion = 'RU' | 'EU' | 'NA' | 'ASIA' | 'CT' | ...`. Конвертации `gameToRegion` / `regionToGame` (RU/RPT/CT → `mt`). `accountLink(bdid, name, region)` — ссылка на профиль игрока на портале.
 - Предпочтение игры пользователем — `src/shared/global/globalPreferred.ts`: `preferredGame` в localStorage (`'mt' | 'wot' | 'any' | 'unknown'`), `preferredGameOrDefault` (дефолт `mt`).
-- Версии игры: `gameVersion.ts`; выбор версии в фильтрах — `selectors/gameVersionSelector/`.
+- Версии игры: `domain/gameVersion.ts`; выбор версии в фильтрах — `components/selectors/gameVersionSelector/`.
 
-## Режимы боёв (`battleModes/battleModes.ts`)
+## Режимы боёв (`domain/battleModes/battleModes.ts`)
 
-- `BattleMode` и `BattleGameplay` допускают неизвестные строковые коды. Списки `battleModes` и `battleGameplays` перечисляют известные технические коды без привязки к доступности в конкретной игре. Сочетания режимов и геймплеев и правила архивности находятся рядом с селектором в `selectors/battleMode/catalog.ts`.
+- `BattleMode` и `BattleGameplay` допускают неизвестные строковые коды. Списки `battleModes` и `battleGameplays` перечисляют известные технические коды без привязки к доступности в конкретной игре. Сочетания режимов и геймплеев и правила архивности находятся рядом с селектором в `components/selectors/battleMode/catalog.ts`.
 - `battleModeNames`, `battleGameplaysNames`, `battleGameplaysOverrides` — локализация и переопределения геймплея внутри режима. `battleGameplayName(gameplay, mode?)` и `battleModeName(mode, gameplay?)` возвращают технический код при отсутствии перевода. Категорий и составных групп селектора здесь нет.
-- `battleModes/battleModeSelection.ts` — единый контракт выбора для селектора, URL и запросов: читаемые kebab-case ключи, `battleModeKey`, `battleModeSelection`, `battleModeTargets` и правила переключения. `battleModes/battleModeFamilies.ts` хранит состав групп. Старые `customBattleModes`, `gameplayTypes` и `modeCount` удалены; `wot.ts` хранит `shellNames` и общие типы игр/регионов.
+- `domain/battleModes/battleModeSelection.ts` — единый контракт выбора для селектора, URL и запросов: читаемые kebab-case ключи, `battleModeKey`, `battleModeSelection`, `battleModeTargets` и правила переключения. `domain/battleModes/battleModeFamilies.ts` хранит состав групп. Старые `customBattleModes`, `gameplayTypes` и `modeCount` удалены; `domain/wot.ts` хранит `shellNames` и общие типы игр/регионов.
 - Ключи режима (`random`, `onslaught`, `epic-battle`), геймплея (`random-standard`, `random-domination`) и группы (`training-all`, `steel-hunter`) не зависят от UI или ответа БД. `training-onslaught` обозначает `TRAINING_COMP7`, а `training-gameplay-onslaught` — отдельную пару `TRAINING/comp7`. Неизвестные коды получают технические kebab-case ключи с префиксом `mode-` или суффиксом `-gameplay-`. Формат URL описан в [10-query-storage.md](10-query-storage.md).
-- Comp7/Натиск-специфика: `comp7/utils.ts` + `comp7/i18n.json`, иконки рангов `comp7/rank/RankIcon.vue`.
+- Comp7/Натиск-специфика: `domain/comp7/utils.ts` + `domain/comp7/i18n.json`, иконки рангов `components/comp7/rank/RankIcon.vue`.
 
 ### Сезонные правила рангов Натиска
 
-Хелперы в `comp7/utils.ts` принимают игру и сезон (по умолчанию `mt` / `latest`).
+Хелперы в `domain/comp7/utils.ts` принимают игру и сезон (по умолчанию `mt` / `latest`).
 `hasEliteDivisions(game, season)` включает дивизионы C/B/A у `fifth` и `sixth` для МТ начиная с
 `comp7_6_1`; старые сезоны МТ и все сезоны WoT используют бездивизионные `fifth` / `sixth`.
 Неизвестные форматы id сезона сохраняют старую систему. Явный `Rank` без буквы означает ранг целиком
@@ -30,7 +45,9 @@
 - `getDivisionsByRank`, `getNextDivision`, `getPrevDivision` принимают `(rankOrDivision, game, season)`.
   `getRatingForDivision` / `getRatingIntervalForDivision` дополнительно принимают `eliteRating` четвёртым
   аргументом; неизвестная граница — `Infinity`. `getDivisionLetterByRating` принимает `(rating, game, season, eliteRating)`.
-- `rankImageUrl` выбирает дивизион по правилам переданного сезона; явные новые дивизионы для старого сезона
+- `components/comp7/rank/images.ts` содержит `RankImageDefinition`, `rankImageUrl` и `rankImageFallbackUrl`;
+  `components/comp7/skill/images.ts` — `skillImageUrl`. Расчёты рангов, сезонов и список навыков остаются в `domain/comp7/utils.ts`.
+  `rankImageUrl` выбирает дивизион по правилам переданного сезона; явные новые дивизионы для старого сезона
   или WoT отображаются иконкой соответствующего ранга без буквы. `rankImageFallbackUrl` меняет оформление
   на `latest`, сохраняя смысл ранга исходного сезона.
 - Статистика передаёт выбранный сезон в хелперы. Её текущие данные содержат один порог Легенды, поэтому
@@ -39,7 +56,70 @@
 
 Источник границ и процентов: [официальное руководство](https://tanki.su/ru/content/guide/game-events-rules/onslaught_guide/).
 
-## Танки (`vehicles/`)
+## Компактные игровые значения
+
+URL-формат выбора режимов задаёт `domain/battleModes/battleModeQueryParam.ts`: параметр `mode`,
+default `['random']`, значение `all` для отсутствия ограничения, нормализация и проверка ключей.
+Его используют старые общие фильтры инфографики и собственные фильтры техники.
+`domain/battleModes/battleModeFilter.ts` переводит тот же выбор в SQL-условия и список необходимых колонок;
+он используется адаптером StatParams, таблицей карт и запросами техники.
+
+`encoding/types.ts` содержит `CompactValue = number | string` и
+результат разрешения `Expansion<T>`: `ready/value`, `loading` либо `unresolved/reason`
+(`missing`, `ambiguous`, `invalid`, `error`). Число — упакованный ID, строка — полный исходный ключ.
+
+Компактеры — прямые объекты в `encoding/vehicles.ts`, `encoding/arenas.ts` и `encoding/battleModes/battleModes.ts`.
+Это общий механизм коротких URL для разных страниц и сравнений. Каждый явно реализует `compact`
+и `expand`; фабрик нет. `arenaCompactor.expandMany(values, contextRegion?)` разрешает список целиком:
+ошибка любого элемента имеет приоритет над загрузкой, порядок и повторы готовых значений сохраняются.
+Потребитель создаёт обычный `computed(() => compactor.expand(...))` или `computed(() => arenaCompactor.expandMany(...))`.
+Изменение входов, региона или загрузка каталога автоматически пересчитывают результат.
+Неразрешённые ID сохраняются в модели, произвольная первая строка не выбирается; неоднозначность
+выводит один `console.warn` на сочетание ID/контекста региона.
+
+`encoding/utils/regionalTagLookup.ts` содержит общие поиск тегов по ID и региону
+и индекс `Map<number, RegionalTagRow[]>` для восстановления компактных ID техники и карт.
+Сами игровые каталоги остаются в `domain/`.
+Упаковка регионального поля находится в `encoding/utils/regionalIdPacking.ts`:
+
+- бит `HAS_REGION_FLAG` (бит 0) задаёт наличие региона внутри ID;
+- если флаг снят, остальные биты содержат ID, а регион берётся из `contextRegion` при чтении;
+- если флаг установлен, биты 1..4 содержат код региона, биты 5+ — ID;
+- `packRegionalId(id, encodedRegion?)` записывает регион; `unpackRegionalId(value, contextRegion?)`
+  использует внешний регион только при снятом флаге.
+
+Аргумент `contextRegion` у компактеров — регион, известный из окружающего состояния страницы.
+При его наличии запись обычно пропускает регион. Без контекста выбирается подходящий регион каталога
+и записывается внутри ID. Поле региона в ID разрешает тег и не меняет фильтры данных графика.
+Список регионов находится в `domain/regions.ts`; `singleRegion` используется для фильтров сравнения.
+
+- `encoding/vehicles.ts` — номер танка и индекс нации (`number * 16 + nationIndex`), проверенные по каталогу.
+  Префиксы наций типизированы через `Record<Nation, string>`. Суффиксные варианты, неизвестные префиксы
+  и неоднозначные сокращения остаются полными строками.
+- `encoding/arenas.ts` — число из префикса тега (`05_prohorovka → 5`). Основная карта и специальные
+  варианты различаются: `_ny`/`_fp` и другие суффиксы сохраняются точно.
+- `encoding/battleModes/battleModeCodes.ts` — явные коды технических режимов, геймплеев и семейств.
+  `satisfies Record<KnownBattleMode, ...>`, `Record<KnownBattleGameplay, number>` и `Record<BattleModeFamilyKey, number>`
+  запрещают добавлять известное значение без кода. `preferredPairs` типизирован техническими режимом/геймплеем,
+  читаемые ключи вручную не дублируются. Повторные коды дополнительно проверяются при инициализации.
+- `encoding/battleModes/battleModes.ts` — прямой поиск по этим таблицам. У режима `shortCode` задаёт короткий выбор,
+  `pairCode` — компонент общей пары. Семейства и частые пары также имеют короткие коды.
+  Для прочих известных пар используется `128 + pairCode * 16 + gameplayCode`: отдельный диапазон пар
+  и четыре бита геймплея. Код не зависит от порядка доменных массивов.
+  Неизвестные ключи сохраняются полными строками и проверяются при чтении.
+- `encoding/vehicleCategories.ts` — `{ level?, type? }` и диапазоны категорий: уровни 1–15, классы 16–23,
+  пары `32 + (level - 1) * 8 + typeIndex`. Не зависит от строкового rowKey конкретной страницы.
+- `encoding/masks.ts` — маски наций, классов и уровней на основе общих `compactMask`/`expandMask`
+  из `shared/uiKit/queryStorage/utils/compactBinary.ts`.
+  `domain/vehicles/types.ts` теперь содержит только игровые списки и типы, без упаковки.
+
+Рабочий формат сохранён. Явные коды и индексы не переназначаются; новые значения регистрируются
+осознанно. Сравнение текущей упаковки с двумя упрощениями и их комбинацией —
+[game-encoding-size-comparison.md](game-encoding-size-comparison.md).
+Ручной стенд `/debug/game/compact` показывает загрузку, полные/короткие значения, смену контекста региона,
+неоднозначность, длины типовых сравнений и восстановленные модели.
+
+## Танки (`domain/vehicles/`)
 
 - `catalog.ts` — общий реактивный каталог, загружаемый при старте вместе с `i18n.ts` (явный импорт в `main.ts`).
   Один запрос с `LONG_CACHE`, proxy cache и `JSONCompact` объединяет `VehiclesLatest` с архивными строками
@@ -54,8 +134,8 @@
   обычный `queryAsync`: один запрос при старте, стандартные статус и кеширование, без отдельных повторных попыток.
   Размонтирование страницы не отменяет загрузку справочника для остальных потребителей.
 - Тег танка — строка вида `nation:Tag` (например `ussr:R45_IS-7`); `tankTagToReadable` (в `i18n/i18n.ts`) делает из тега читаемое имя, если нет локализации.
-- `vehicle/VehicleImage.vue` + `utils.ts` — картинки танков (со `STATIC_URL`), `VehicleLevel.vue` — римские уровни (1–11), `type/VehicleType.vue` — иконки классов (LT/MT/HT/AT/SPG), `nations/` — флаги наций из спрайт-атласа (`atlases.json`, `Nation.vue`).
-- `vehicleSearch.ts` — общий поиск техники для селектора и таблицы статистики. `createVehicleNameFilter(query)`
+- `components/vehicles/vehicleImage/VehicleImage.vue` + `utils.ts` — картинки танков (со `STATIC_URL`), `components/vehicles/vehicleLevel/VehicleLevel.vue` — римские уровни (1–11), `components/vehicles/vehicleType/VehicleType.vue` — иконки классов (LT/MT/HT/AT/SPG), `components/vehicles/nation/` — флаги наций из спрайт-атласа (`atlases.json`, `Nation.vue`).
+- `components/vehicles/vehicleSearch.ts` — общий поиск техники для селектора и таблицы статистики. `createVehicleNameFilter(query)`
   возвращает функцию, принимающую отображаемое название: результат — `Highlighted` либо `null`.
   Поиск использует прежнюю логику селектора: буквы по порядку (например `kpz` → `Kanonenjagdpanzer`),
   без учёта регистра и диакритики. Селектор сохраняет ранжирование через `compareIntervals`.
@@ -63,15 +143,17 @@
   В селекторе поиск зависит от «полн./сокр.», в таблице статистики используется короткое имя.
   Теги и скрытые варианты названия дополнительно не проверяются.
 
-## Арены (`arenas/`)
+## Арены (`domain/arenas/`)
 
 - `arenas.ts` — метаданные арен из `ArenasLatest` (RU/EU): геометрия, базы, спавны и варианты миникарт.
   `arenas` — общий `computedAsync` с `lazy: true`: запрос выполняется при первом чтении списка или вызове
   `getArenaMeta`, результат переиспользуется всеми потребителями. Импорт модуля не загружает метаданные.
   Ошибки выводятся в `console.error`. Тег арены — `spaces/xxx` (в локализации без префикса).
-- `minimap/Minimap.vue` — миникарта с фоном (`minimapBackground/`) и базами (`minimapBases/`); фоны — со статик-сервера. Проп `size` (`'small' | 'medium'`, по умолчанию `'small'`) выбирает разрешение ресурса, но не CSS-размер компонента. `minimapUrl(tag, game, gameplay, format, size)` сохраняет прежние первые четыре аргумента: small-фоны лежат в `arenas/minimap/{tag}` (вариант Натиска — `minimap/comp7/{tag}`), medium — в `arenas/minimap-medium/{tag}/mmap` (вариант Натиска — `mmap_comp7`). Comp7-вариант выбирается только когда `getArenaMeta(...)?.minimap` содержит `_comp7`; при отсутствии меты возвращается обычный фон выбранного размера.
+- URL-хелперы `minimapUrl` и `tagToImageName` находятся в `components/minimap/images.ts`,
+  метаданные и геометрия — в `domain/arenas/arenas.ts`.
+- `components/minimap/Minimap.vue` — миникарта с фоном (`minimapBackground/`) и базами (`minimapBases/`); фоны — со статик-сервера. Проп `size` (`'small' | 'medium'`, по умолчанию `'small'`) выбирает разрешение ресурса, но не CSS-размер компонента. `minimapUrl(tag, game, gameplay, format, size)` сохраняет прежние первые четыре аргумента: small-фоны лежат в `arenas/minimap/{tag}` (вариант Натиска — `minimap/comp7/{tag}`), medium — в `arenas/minimap-medium/{tag}/mmap` (вариант Натиска — `mmap_comp7`). Comp7-вариант выбирается только когда `getArenaMeta(...)?.minimap` содержит `_comp7`; при отсутствии меты возвращается обычный фон выбранного размера.
 
-## Селекторы фильтров (`selectors/`)
+## Селекторы фильтров (`components/selectors/`)
 
 Комплект UI для выбора фильтров статистики. Используется в `pages/replays/search/Index.vue` и секции фильтров `pages/infographics/pages/vehicles/`; `SearchLine` отдельно переиспользован в `onslaught/shared/settings/nicknameInput/`. В общих настройках сессионной инфографики этих селекторов **нет**.
 
@@ -87,7 +169,7 @@
   Составная группа показывает только явно заданные пункты и подгруппы; при единственном видимом пункте три точки скрыты. Заголовок секции скрыт, если в подменю осталась только одна секция. Бейдж у трёх точек показывает количество выбранных подвариантов, включая скрытые поиском или галочкой архива. Если среди выбранных подвариантов есть архивный, полоса родителя, активная кнопка с точками и бейдж становятся оранжевыми, в том числе при смешанном выборе.
   `multiple=true`, `selectionPriority="single"` по умолчанию: обычный клик выбирает один и закрывает панель, Ctrl/⌘/Shift переключают множественный выбор. При `selectionPriority="multiple"` обычный клик переключает пункт без закрытия; при `multiple=false` модификаторы игнорируются. Уточнение заменяет покрывающий его общий выбор, общий выбор удаляет дублирующие уточнения. Смена игры и скрытие архива сохраняют модель. При нескольких выборах кнопка показывает их количество.
   `game` фиксирует игру; `regions` преобразуется через `regionToGame` (пустой массив — обе игры). Эти пропы скрывают Lesta/WG. Без них начальная игра берётся из `preferredGameOrDefault`, дальнейшее переключение локально для экземпляра.
-- `battleMode/catalog.ts` — каталог и представление селектора: ручные правила `initialCatalog` в формате `игра → режим → геймплей → ArchiveRule`, категории и построение дерева. Доменное разрешение ключей и состав групп находятся в `battleModes/battleModeSelection.ts` и `battleModes/battleModeFamilies.ts`. Каталог содержит 91 сочетание из `Event_OnBattleStart` на 29.09.2026 без CT (46 MT, 45 WG), без статических дат последних боёв. Правило каждой пары — `'archived'` (принудительный архив), `'active'` (принудительно актуальна) или `{ archived, inactiveDays, since? }`: `archived` задаёт статус до загрузки БД и при отсутствии корректной даты, `inactiveDays` — допустимое число суток без боёв, `since` — дата решения об архиве, которую могут отменить только бои строго после неё и внутри окна неактивности. Данные БД дополняют неизвестные пары и используются в рамках ручного правила известных пар. Актуальность в нескольких играх объединяется через OR. Новые неизвестные режимы попадают в «Другое» с техническими названиями; новые геймплеи отдельного режима дополняют его подменю; в families состав пунктов задаётся явно.
+- `battleMode/catalog.ts` — каталог и представление селектора: ручные правила `initialCatalog` в формате `игра → режим → геймплей → ArchiveRule`, категории и построение дерева. Доменное разрешение ключей и состав групп находятся в `domain/battleModes/battleModeSelection.ts` и `domain/battleModes/battleModeFamilies.ts`. Каталог содержит 91 сочетание из `Event_OnBattleStart` на 29.09.2026 без CT (46 MT, 45 WG), без статических дат последних боёв. Правило каждой пары — `'archived'` (принудительный архив), `'active'` (принудительно актуальна) или `{ archived, inactiveDays, since? }`: `archived` задаёт статус до загрузки БД и при отсутствии корректной даты, `inactiveDays` — допустимое число суток без боёв, `since` — дата решения об архиве, которую могут отменить только бои строго после неё и внутри окна неактивности. Данные БД дополняют неизвестные пары и используются в рамках ручного правила известных пар. Актуальность в нескольких играх объединяется через OR. Новые неизвестные режимы попадают в «Другое» с техническими названиями; новые геймплеи отдельного режима дополняют его подменю; в families состав пунктов задаётся явно.
   `categories` содержит отдельные явные списки `mt` и `wot`; `battleModeFamilies` общий для обеих игр. Категории можно независимо менять по составу и порядку. Для нескольких игр списки объединяются по названию категории, повторяющиеся ключи тайлов удаляются глобально; порядок и категория повторного ключа определяются первым появлением в списках выбранных игр. Режим, не классифицированный в выбранных играх, попадает в «Другое», даже если он классифицирован для другой игры. Геймплеи и архивность по-прежнему фильтруются по данным выбранных игр.
   `battleModeFamilies[key].children` содержит пункты `{ mode, gameplay?, label? }` и явные подгруппы `{ label, children: { mode, gameplay?, label? }[] }`. Пункт без `gameplay` выбирает весь режим, с `gameplay` — конкретную пару; оба отображаются одним тайлом и не раскрываются автоматически. Подгруппа задаёт собственный заголовок и перечисляет пункты в одном подменю без дополнительного уровня поповеров. Необязательный `label` пункта переопределяет локализацию. Автоматический пункт «Любой геймплей» не добавляется; общий выбор режима можно явно включить в список собственным пунктом `{ mode, label }`. «Любой» в шапке выбирает все перечисленные цели, включая цели подгрупп. Тренировочные комнаты и виды турниров оформлены явными подгруппами со списками геймплеев; отсутствующие в выбранной игре и скрытые архивные варианты отфильтровываются. `random-newbie` отдельно объединяет `RANDOM_NP2` («Новые аккаунты») и `WINBACK` («Вернулись в игру») в Обучении WoT. В Основных обеих игр используется `random`. Новые геймплеи не добавляются в families автоматически; общий выбор разворачивается именно в перечисленные цели. Старые форматы выбора не поддерживаются.
   Общие настройки: `defaultRule` — изначально актуальна, окно 365 дней; `softArchive` — изначально архивна, окно 30 дней, бои не позднее 30.09.2026 00:00 UTC не возвращают её в актуальные; `seasonal` — изначально актуальна, окно 36500 дней (около 100 лет); `historical` — изначально архивна, окно 30 дней. `COSMIC_EVENT` в обеих играх и `HALLOWEEN` / `HALLOWEEN_MEDIUM` / `HALLOWEEN_HARD` используют сезонное правило; прежний `HALLOWEEN_DEFENCE` остаётся мягко архивным. Исторический ивент использует месячное окно. `REGULAR/assault` и `REGULAR/domination` WG принудительно архивные. Для отдельной пары можно задать собственные значения, например `{ archived: true, inactiveDays: 30, since: '2026-09-30' }`, или использовать `'active'` / `'archived'` независимо от ответа БД.
@@ -140,13 +222,13 @@
 
 Два не связанных механизма:
 
-1. **Имена игровых сущностей из БД** — `src/shared/i18n/i18n.ts` и общий каталог `game/vehicles/catalog.ts`: запросы читают `VehiclesLocalizationDictionary`, `ArenasLocalizationDictionary`, `ArtefactsLocalizationDictionary`, `LootboxesLocalizationDictionary` и `CustomizationsLocalizationDictionary`. Ключ словаря — `(region, locale, tag)`, локализованные значения выбираются для фиксированной `LOCALE = 'RU'`, а при совпадении тега в нескольких регионах используется `localeRegionPriority`. Настройки языка и приоритета вынесены в `i18n/localization.ts`, чтобы каталог не зависел от модуля хелперов локализации. Имена техники и карт загружаются внутри общих каталогов с `LONG_CACHE`; артефакты — отдельным однократным запросом; основные хелперы — `getTankName(tag, short?)`, `getArenaName(tag)` и `getArtefactName(tag)`.
+1. **Имена игровых сущностей из БД** — `src/shared/i18n/i18n.ts` и общий каталог `game/domain/vehicles/catalog.ts`: запросы читают `VehiclesLocalizationDictionary`, `ArenasLocalizationDictionary`, `ArtefactsLocalizationDictionary`, `LootboxesLocalizationDictionary` и `CustomizationsLocalizationDictionary`. Ключ словаря — `(region, locale, tag)`, локализованные значения выбираются для фиксированной `LOCALE = 'RU'`, а при совпадении тега в нескольких регионах используется `localeRegionPriority`. Настройки языка и приоритета вынесены в `i18n/localization.ts`, чтобы каталог не зависел от модуля хелперов локализации. Имена техники и карт загружаются внутри общих каталогов с `LONG_CACHE`; артефакты — отдельным однократным запросом; основные хелперы — `getTankName(tag, short?)`, `getArenaName(tag)` и `getArtefactName(tag)`.
    - Страница лутбоксов использует те же dictionary-запросы для списка и названий контейнеров, расходников и кастомизаций. После агрегации до одной строки на `tag` локализация присоединяется через `LEFT ANY JOIN`.
    - Старые таблицы `*Localization` остаются в БД для обратной совместимости, но production- и debug-код фронтенда их больше не читает.
    - Ручные словари и фолбэки: `crewBookName`, `entitlementsName`, `getBestLocalization`; если перевода нет, UI показывает читаемый или исходный `tag`.
    - `countLocalize(count, 'запрос', 'запроса', 'запросов')` — русская плюрализация, используется часто.
-2. **UI-переводы** — минималистичный `src/shared/i18n/useI18n.ts`: `useI18n(i18nRecord)` → `t(key)`; словари — локальные `i18n.json` рядом с фичей (пример: `pages/install/mods/i18n.json`, `shared/game/comp7/i18n.json`). Фолбэк be→ru→en. Большинство текстов при этом просто захардкожено по-русски в шаблонах — это норма проекта.
+2. **UI-переводы** — минималистичный `src/shared/i18n/useI18n.ts`: `useI18n(i18nRecord)` → `t(key)`; словари — локальные `i18n.json` рядом с фичей (пример: `pages/install/mods/i18n.json`, `shared/game/domain/comp7/i18n.json`). Фолбэк be→ru→en. Большинство текстов при этом просто захардкожено по-русски в шаблонах — это норма проекта.
 
-## Иконки эффективности (`efficiencyIcon/`)
+## Иконки эффективности (`components/efficiencyIcon/`)
 
-`Icon.vue` + `utils.ts` + `i18n.ts` — иконки показателей (урон, фраги, засвет, блок и т.д., картинки в `src/assets/efficiency-icon/`).
+`Icon.vue` + `utils.ts` + `i18n.ts` — иконки показателей (урон, фраги, засвет, блок и т.д., картинки в `src/shared/game/components/efficiencyIcon/assets/`).

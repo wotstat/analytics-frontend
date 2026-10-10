@@ -1,5 +1,5 @@
 <template>
-  <DebugSection title="Уровни" id="levels" source="src/shared/game/vehicles/VehicleLevel.vue"
+  <DebugSection title="Уровни" id="levels" source="src/shared/game/components/vehicles/vehicleLevel/VehicleLevel.vue"
     description="Римские цифры I–XI, ширина двузначных (X, XI) в узкой ячейке; поведение за пределами игровых уровней.">
 
     <div class="debug-row">
@@ -51,7 +51,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import VehicleLevel from '@/shared/game/vehicles/VehicleLevel.vue'
+import VehicleLevel from '@/shared/game/components/vehicles/vehicleLevel/VehicleLevel.vue'
 
 const customLevel = ref(12)
 </script>

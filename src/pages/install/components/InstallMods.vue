@@ -58,7 +58,7 @@ import { defineAsyncComponent, ref, watch, useTemplateRef } from 'vue'
 
 import Tada1Src from '../assets/tada-1.webp'
 import Tada2Src from '../assets/tada-2.webp'
-import { GameVendor } from '@/shared/game/wot'
+import { GameVendor } from '@/shared/game/domain/wot'
 
 const Confetti = defineAsyncComponent(() => import('@/pages/install/components/Confetti.vue'))
 

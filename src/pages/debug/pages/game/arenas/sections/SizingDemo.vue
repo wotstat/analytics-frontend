@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Размеры и пропорции контейнера" id="sizing"
     description="Minimap.vue сам не квадратный: .background тянется на width:100% с aspect-ratio 1/1 у img, а оверлей MinimapBases — отдельный position:absolute; inset:0 с собственным aspect-ratio 1/1. В неквадратном контейнере это два независимых расчёта размера — сверяй визуально, что база на фоне не съезжает."
-    source="src/shared/game/arenas/minimap/Minimap.vue">
+    source="src/shared/game/components/minimap/Minimap.vue">
 
     <div class="debug-row">
       <label class="debug-control">
@@ -84,7 +84,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import Minimap from '@/shared/game/arenas/minimap/Minimap.vue'
+import Minimap from '@/shared/game/components/minimap/Minimap.vue'
 import { useArenaOptions } from '../shared/useArenaOptions'
 import { usePickedArena } from '../shared/usePickedArena'
 

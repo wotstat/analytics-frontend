@@ -22,7 +22,7 @@
       </table>
       <p class="debug-hint">
         Имена в списке и <span class="debug-value">getTankName</span> берутся из общего
-        <span class="debug-value">game/vehicles/catalog.ts</span>: dictionary фильтруется по locale,
+        <span class="debug-value">game/domain/vehicles/catalog.ts</span>: dictionary фильтруется по locale,
         затем выбирается регион по приоритету. Отдельный debug-запрос добавляет только примеры других языков
         и количество боёв.
       </p>
@@ -122,7 +122,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import VehicleImage from '@/shared/game/vehicles/vehicle/VehicleImage.vue'
+import VehicleImage from '@/shared/game/components/vehicles/vehicleImage/VehicleImage.vue'
 import { getTankName, tankTagToReadable } from '@/shared/i18n/i18n'
 import { vehicleList, vehiclesWithoutLocalization } from '../store'
 

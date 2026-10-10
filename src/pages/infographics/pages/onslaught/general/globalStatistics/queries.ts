@@ -1,4 +1,4 @@
-import { SKILL_TAGS } from '@/shared/game/comp7/utils'
+import { SKILL_TAGS } from '@/shared/game/domain/comp7/utils'
 import type { RankDistributionItem } from '../rankDistribution/types'
 
 export const COMP7_BATTLE_PLAYERS = 14

@@ -48,7 +48,7 @@
 
 
 <script setup lang="ts">
-import { accountLink, GameRegion, GameVendor } from '@/shared/game/wot'
+import { accountLink, GameRegion, GameVendor } from '@/shared/game/domain/wot'
 import TriangleUp from '../assets/triangle-up.svg'
 import { spaceProcessor } from '@/shared/utils/processors/useSpaceProcessor'
 

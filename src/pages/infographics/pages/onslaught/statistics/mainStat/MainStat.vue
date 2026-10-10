@@ -20,7 +20,7 @@
 
 
 <script setup lang="ts">
-import { GameVendor } from '@/shared/game/wot'
+import { GameVendor } from '@/shared/game/domain/wot'
 import { StatItem } from './useMainStat'
 import SimpleItem from './items/SimpleItem.vue'
 import TopRating from './items/TopRating.vue'

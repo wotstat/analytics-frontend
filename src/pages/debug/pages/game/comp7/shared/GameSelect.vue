@@ -10,7 +10,7 @@
 
 
 <script setup lang="ts">
-import { GameVendor } from '@/shared/game/wot'
+import { GameVendor } from '@/shared/game/domain/wot'
 
 defineProps<{
   label?: string

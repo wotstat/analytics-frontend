@@ -28,10 +28,10 @@
 import NicknameInput from './nicknameInput/NicknameInput.vue'
 import { computed, watch, watchEffect } from 'vue'
 import { useI18n } from '@/shared/i18n/useI18n'
-import i18n from '@/shared/game/comp7/i18n.json'
+import i18n from '@/shared/game/domain/comp7/i18n.json'
 import { regions, useOnslaughtQueryStorage, type OnslaughtRegion } from '../useOnslaughtQueryStorage'
 import { LONG_CACHE, queryComputed, success } from '@/db'
-import { getRegionIsoHourOffset } from '@/shared/game/comp7/utils'
+import { getRegionIsoHourOffset } from '@/shared/game/domain/comp7/utils'
 
 const { t } = useI18n(i18n)
 

@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Селектор карт" id="arena"
     description="Модалка со списком арен и выбором нескольких карт. Обычный режим позволяет выбрать команду, отдельный режим — только карту. Сам список с миникартами вживую — в секции про данные."
-    source="src/shared/game/selectors/arena/">
+    source="src/shared/game/components/selectors/arena/">
 
     <div class="debug-row">
       <button class="debug-btn" @click="addTags(take(arenaHashes, 3))">+3 карты</button>
@@ -69,8 +69,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import ArenaSelectorBadges from '@/shared/game/selectors/arena/ArenaSelectorBadges.vue'
-import { hashToArena } from '@/shared/game/selectors/arena/utils'
+import ArenaSelectorBadges from '@/shared/game/components/selectors/arena/ArenaSelectorBadges.vue'
+import { hashToArena } from '@/shared/game/components/selectors/arena/utils'
 import { getArenaName } from '@/shared/i18n/i18n'
 import SelectionReadout from '../shared/SelectionReadout.vue'
 import { brokenArenaHashes } from '../shared/fixtures'

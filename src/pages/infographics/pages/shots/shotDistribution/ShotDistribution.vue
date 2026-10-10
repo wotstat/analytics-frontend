@@ -31,7 +31,7 @@
 <script setup lang="ts">
 import { loading, mergeStatuses, queryComputed } from '@/db'
 import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
-import { getQueryStatParamsCache, StatParams, whereClause } from '@/shared/query/useQueryStatParams'
+import { getQueryStatParamsCache, StatParams, whereClause } from '@/shared/legacyStatQuery/useQueryStatParams'
 import { useElementVisibility } from '@vueuse/core'
 import { computed, markRaw, useTemplateRef, watch, watchEffect } from 'vue'
 

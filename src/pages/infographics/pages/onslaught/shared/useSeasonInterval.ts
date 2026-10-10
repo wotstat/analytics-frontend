@@ -1,4 +1,4 @@
-import { getSeasonDuration } from '@/shared/game/comp7/utils'
+import { getSeasonDuration } from '@/shared/game/domain/comp7/utils'
 import { computed, Ref } from 'vue'
 
 

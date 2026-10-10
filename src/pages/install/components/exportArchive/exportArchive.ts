@@ -1,6 +1,5 @@
-import { latestGameVersion } from '@/shared/game/gameVersion'
-import { GameVendor } from '@/shared/game/wot'
-
+import { latestGameVersion } from '@/shared/game/domain/gameVersion'
+import { GameVendor } from '@/shared/game/domain/wot'
 
 export async function exportArchive(mods: { filename: string, blob: Blob }[], vendor: GameVendor) {
   const JSZip = (await import('jszip')).default

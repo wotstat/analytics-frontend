@@ -78,9 +78,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import { nationFlagAtlas } from '@/shared/game/vehicles/nations/utils'
-import { nations } from '@/shared/game/vehicles/nations/nations'
-import { smallVehiclesAtlasMt, tagToImageName } from '@/shared/game/vehicles/vehicle/utils'
+import { nationFlagAtlas } from '@/shared/game/components/vehicles/nation/utils'
+import { nations } from '@/shared/game/domain/vehicles/nations'
+import { smallVehiclesAtlasMt, tagToImageName } from '@/shared/game/components/vehicles/vehicleImage/utils'
 import { vehicleList } from '../store'
 
 const flagKeys = [...nations, 'no-image']

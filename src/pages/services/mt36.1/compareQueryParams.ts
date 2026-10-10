@@ -1,5 +1,5 @@
-import type { OptionalRegionVersion } from '@/shared/game/selectors/gameVersionSelector/utils'
-import { defineParams } from '@/shared/ui/queryStorage/useQueryStorage'
+import type { OptionalRegionVersion } from '@/shared/game/components/selectors/gameVersionSelector/utils'
+import { defineParams } from '@/shared/uiKit/queryStorage/useQueryStorage'
 
 function deserialize(raw: string): Set<OptionalRegionVersion> {
   const versions = new Map<string, OptionalRegionVersion>()

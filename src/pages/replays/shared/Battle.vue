@@ -50,7 +50,7 @@
 
 <script setup lang="ts">
 import DownloadFill from '@/assets/icons/download-fill.svg'
-import VehicleImage from '@/shared/game/vehicles/vehicle/VehicleImage.vue'
+import VehicleImage from '@/shared/game/components/vehicles/vehicleImage/VehicleImage.vue'
 import { getArenaName, getTankName } from '@/shared/i18n/i18n'
 import BattleStatValue from './BattleStatValue.vue'
 import { timeProcessor } from '@/shared/utils/time'

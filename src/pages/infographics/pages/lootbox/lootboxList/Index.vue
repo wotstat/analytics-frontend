@@ -52,7 +52,7 @@
 </template>
 
 <script lang="ts" setup>
-import { useQueryStatParams, whereClause } from '@/shared/query/useQueryStatParams'
+import { useQueryStatParams, whereClause } from '@/shared/legacyStatQuery/useQueryStatParams'
 import { queryComputed } from '@/db'
 import { computed } from 'vue'
 import { createFixedSpaceProcessor } from '@/shared/utils/processors/processors'

@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Размеры и фон" id="sizes-backgrounds"
     description="Ранги и навыки — растровые картинки с реальными цветами, а не currentColor: проверяем, что читаются на светлом фоне так же хорошо, как на тёмном."
-    source="src/shared/game/comp7/">
+    source="src/shared/game/components/comp7/">
 
     <div class="debug-row">
       <GameSelect v-model="game" />
@@ -35,10 +35,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
-import RankIcon from '@/shared/game/comp7/rank/RankIcon.vue'
-import SkillIcon from '@/shared/game/comp7/skill/SkillIcon.vue'
-import { Division, Rank, SKILL_TAGS, getDivisionsByRank } from '@/shared/game/comp7/utils'
-import { GameVendor } from '@/shared/game/wot'
+import RankIcon from '@/shared/game/components/comp7/rank/RankIcon.vue'
+import SkillIcon from '@/shared/game/components/comp7/skill/SkillIcon.vue'
+import { Division, Rank, SKILL_TAGS, getDivisionsByRank } from '@/shared/game/domain/comp7/utils'
+import { GameVendor } from '@/shared/game/domain/wot'
 import GameSelect from '../shared/GameSelect.vue'
 import SeasonSelect from '../shared/SeasonSelect.vue'
 

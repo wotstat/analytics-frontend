@@ -77,16 +77,16 @@
 
 
 <script setup lang="ts">
-import Icon from '@/shared/game/efficiencyIcon/Icon.vue'
-import VehicleType from '@/shared/game/vehicles/type/VehicleType.vue'
-import VehicleImage from '@/shared/game/vehicles/vehicle/VehicleImage.vue'
-import VehicleLevel from '@/shared/game/vehicles/VehicleLevel.vue'
+import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
+import VehicleType from '@/shared/game/components/vehicles/vehicleType/VehicleType.vue'
+import VehicleImage from '@/shared/game/components/vehicles/vehicleImage/VehicleImage.vue'
+import VehicleLevel from '@/shared/game/components/vehicles/vehicleLevel/VehicleLevel.vue'
 import { useBattleResultTable } from './useBattleHistory'
-import { isVehicleType } from '@/shared/game/vehicles/type/vehicleTypeToImage'
+import { isVehicleType } from '@/shared/game/components/vehicles/vehicleType/vehicleTypeToImage'
 import { getArenaName, getTankName } from '@/shared/i18n/i18n'
 import { roundProcessor } from '@/shared/utils/processors/processors'
 import { computed, ref, watch, useTemplateRef } from 'vue'
-import { GameVendor } from '@/shared/game/wot'
+import { GameVendor } from '@/shared/game/domain/wot'
 import ComposableTable from '@/shared/ui/composableTable/ComposableTable.vue'
 import { useTableSorting, statisticsColumns } from '../../shared/useTableSorting'
 import TooltipedMinimap from '../mapsTable/TooltipedMinimap.vue'

@@ -14,8 +14,8 @@
 
 <script setup lang="ts">
 import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
-import Minimap from '@/shared/game/arenas/minimap/Minimap.vue'
-import { GameVendor } from '@/shared/game/wot'
+import Minimap from '@/shared/game/components/minimap/Minimap.vue'
+import { GameVendor } from '@/shared/game/domain/wot'
 import { defineTooltip } from '@/shared/uiKit/tooltip/tooltip'
 
 const props = defineProps<{

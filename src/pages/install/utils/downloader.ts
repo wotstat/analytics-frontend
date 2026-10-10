@@ -1,7 +1,7 @@
 import { INSTALL_URL } from '@/shared/external/externalUrl'
 import { latestModsMap } from '../mods/mods'
 import { ref } from 'vue'
-import { GameVendor } from '@/shared/game/wot'
+import { GameVendor } from '@/shared/game/domain/wot'
 
 type State = { type: 'begin' } |
 { type: 'downloading', mod: string, index: number, total: number } |

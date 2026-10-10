@@ -1,8 +1,8 @@
 import { LONG_CACHE, queryAsync } from '@/db'
 import { computed } from 'vue'
 
-import { arenasByTag } from '@/shared/game/arenas/catalog'
-import { vehiclesByTag } from '@/shared/game/vehicles/catalog'
+import { arenasByTag } from '@/shared/game/domain/arenas/catalog'
+import { vehiclesByTag } from '@/shared/game/domain/vehicles/catalog'
 import { LOCALE, localeRegionPriority, localizationRegionsSql, localizationRegionPrioritySql } from './localization'
 
 export function countLocalize(count: number, one: string, two: string, five: string = two) {

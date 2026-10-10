@@ -10,7 +10,7 @@
 
 
 <script setup lang="ts">
-import SearchLine from '@/shared/game/selectors/components/searchLine/SearchLine.vue'
+import SearchLine from '@/shared/game/components/selectors/components/searchLine/SearchLine.vue'
 import PlayerIcon from './player.svg'
 
 const nickname = defineModel<string>({ default: '' })

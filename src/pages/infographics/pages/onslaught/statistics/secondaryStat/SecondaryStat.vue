@@ -17,7 +17,7 @@
 
 
 <script setup lang="ts">
-import { GameVendor } from '@/shared/game/wot'
+import { GameVendor } from '@/shared/game/domain/wot'
 import RatingBar from './currentRating/RatingBar.vue'
 import Qualification from './qualification/Qualification.vue'
 

@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-import { useQueryStorage } from '@/shared/ui/queryStorage/useQueryStorage'
+import { useQueryStorage } from '@/shared/uiKit/queryStorage/useQueryStorage'
 
 defineProps<{ caption: string }>()
 const storage = useQueryStorage({ nickname: { type: String, default: '' } }, { debounce: 500 })
