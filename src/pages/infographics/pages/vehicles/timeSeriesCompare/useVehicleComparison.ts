@@ -46,6 +46,7 @@ function comparisonContext(context?: ComparisonContext): VehicleFilters | undefi
 
 const compareParam = {
   key: 'vehicles.compare',
+  priority: -10,
   default: [] as SavedComparisonSource[],
   serialize: (sources: SavedComparisonSource[], context?: ComparisonContext) => serializeComparison(sources, comparisonContext(context)),
   deserialize: (raw: string, context?: ComparisonContext) => deserializeComparison(raw, comparisonContext(context)),

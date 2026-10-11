@@ -13,6 +13,7 @@ export type QueryParam<T = any, C = any> = QueryWriteOptions & {
   type?: StringConstructor | NumberConstructor | BooleanConstructor
   label?: string
   key?: string
+  priority?: number
   default?: T | (() => T)
   context?: { [K in keyof C]: QueryParam<C[K]> & { label: string } }
   serialize?: (value: T, context?: C) => string

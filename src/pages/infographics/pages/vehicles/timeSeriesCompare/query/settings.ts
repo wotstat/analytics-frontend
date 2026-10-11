@@ -24,8 +24,8 @@ export const comparisonSettingsParams = defineParams({
       return slot
     },
   },
-  step: oneOfParam(['day', 'week', 'month'], 'day', { key: 'vehicles.compare.step' }),
-  averageWindow: oneOfParam([3, 5, 7], null, { label: 'avg', key: 'vehicles.compare.averageWindow' }),
+  step: oneOfParam(['day', 'week', 'month'], 'day', { key: 'vehicles.compare.step', priority: -1 }),
+  averageWindow: oneOfParam([3, 5, 7], null, { label: 'avg', key: 'vehicles.compare.averageWindow', priority: -2 }),
 })
 
 export type ComparisonSettings = QueryValues<typeof comparisonSettingsParams>

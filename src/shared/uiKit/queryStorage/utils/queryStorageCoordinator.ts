@@ -33,6 +33,7 @@ export type Binding = {
   owner: QueryOwner
   entry: Entry
   label: string
+  priority: number
   options: QueryWriteOptions
 }
 
@@ -233,7 +234,7 @@ class QueryStorageCoordinator {
     assertContext(definition, new Set([label]))
 
     const entry = this.getEntry(key, definition)
-    const binding = { owner, entry, label, options: { ...options, ...definition } }
+    const binding = { owner, entry, label, priority: definition.priority ?? 0, options: { ...options, ...definition } }
 
     entry.bindings.add(binding)
     owner.bindings.push(binding)
@@ -409,15 +410,17 @@ class QueryStorageCoordinator {
 
     const active = new Map<Entry, Binding[]>()
     const byLabel = new Map<string, Entry>()
+    const priorities = new Map<string, number>()
 
     for (const entry of this.entries.values()) {
       const bindings = this.activeBindings(entry)
       if (!bindings.length) continue
 
       active.set(entry, bindings)
-      for (const { label } of bindings) {
+      for (const { label, priority } of bindings) {
         activeLabels.add(label)
         byLabel.set(label, entry)
+        priorities.set(label, Math.max(priorities.get(label) ?? priority, priority))
       }
     }
 
@@ -510,7 +513,10 @@ class QueryStorageCoordinator {
 
     if (next !== Infinity) this.timer = setTimeout(() => this.schedule(), Math.max(0, next - Date.now()))
 
-    const target = { path: route.path, hash: route.hash, query }
+    const sortedQuery = Object.fromEntries(Object.entries(query).sort(([a], [b]) =>
+      (priorities.get(b) ?? 0) - (priorities.get(a) ?? 0) || a.localeCompare(b, 'en')
+    ))
+    const target = { path: route.path, hash: route.hash, query: sortedQuery }
     const fullPath = this.router.resolve(target).fullPath
     if (fullPath === route.fullPath) return
 
