@@ -1,4 +1,4 @@
-import { ref, watch, type Ref } from 'vue'
+import { watch, type Ref } from 'vue'
 import { vehicleTypes } from '@/shared/game/domain/vehicles/types'
 import type { Slot } from '../vehicleMetricSelector/vehicleMetrics'
 import type { VehicleStatistics } from '../shared/types'
@@ -6,7 +6,8 @@ import type { VehicleGrouping } from '../shared/vehicleGrouping'
 import { vehicleName } from '../shared/vehicleName'
 
 export type SortKey = Slot | 'name' | 'tankLevel' | 'tankType'
-type SortOrder = { key: SortKey, ascending: boolean }
+export type SortOrder = { key: SortKey, ascending: boolean }
+export const defaultSortOrders: SortOrder[] = [{ key: 'battles', ascending: false }]
 
 const typeOrder = new Map<string, number>(vehicleTypes.map((type, index) => [type, vehicleTypes.length - index]))
 
@@ -16,9 +17,7 @@ function compareDescending(left: number | null, right: number | null) {
   return right - left
 }
 
-export function useVehicleSorting(grouping: Ref<VehicleGrouping>, slots: Ref<Slot[]>) {
-  const sortOrders = ref<SortOrder[]>([{ key: 'battles', ascending: false }])
-
+export function useVehicleSorting(grouping: Ref<VehicleGrouping>, slots: Ref<Slot[]>, sortOrders: Ref<SortOrder[]>) {
   function compare(a: VehicleStatistics, b: VehicleStatistics) {
     for (const { key, ascending } of sortOrders.value) {
       if (key === 'name') {
@@ -65,27 +64,35 @@ export function useVehicleSorting(grouping: Ref<VehicleGrouping>, slots: Ref<Slo
       return
     }
 
-    if (index < 0) sortOrders.value.push({ key, ascending: defaultAscending(key) })
-    else if (sortOrders.value[index].ascending === defaultAscending(key)) {
-      sortOrders.value[index].ascending = !defaultAscending(key)
-    } else sortOrders.value.splice(index, 1)
+    if (index < 0) {
+      sortOrders.value = [...sortOrders.value, { key, ascending: defaultAscending(key) }]
+      return
+    }
+
+    if (sortOrders.value[index].ascending === defaultAscending(key)) {
+      sortOrders.value = sortOrders.value.map((order, position) =>
+        position === index ? { key, ascending: !defaultAscending(key) } : order)
+    } else sortOrders.value = sortOrders.value.filter((_, position) => position !== index)
   }
 
-  watch(grouping, value => {
-    sortOrders.value = sortOrders.value.filter(({ key }) => {
-      if (key === 'tankLevel') return value !== 'classes'
-      if (key === 'tankType') return value !== 'levels'
-      if (key === 'name') return value === 'tanks'
-      return true
+  watch([grouping, slots, sortOrders], ([group, selected, orders]) => {
+    const available = orders.filter(({ key }) => {
+      if (key === 'tankLevel') return group !== 'classes'
+      if (key === 'tankType') return group !== 'levels'
+      if (key === 'name') return group === 'tanks'
+      return selected.includes(key)
     })
 
-    if (!sortOrders.value.length) sortOrders.value = [{ key: 'battles', ascending: false }]
-  })
+    let next = available
+    if (!next.length && selected.length) {
+      const key = selected.includes('battles') ? 'battles' : selected[0]
+      next = [{ key, ascending: false }]
+    }
 
-  watch(slots, visible => {
-    sortOrders.value = sortOrders.value.filter(({ key }) =>
-      key === 'name' || key === 'tankLevel' || key === 'tankType' || visible.includes(key))
-  })
+    if (next.length === orders.length && next.every((order, index) =>
+      order.key === orders[index].key && order.ascending === orders[index].ascending)) return
+    sortOrders.value = next
+  }, { immediate: true })
 
   return { compare, toggle, sortOrders }
 }

@@ -19,6 +19,8 @@
     v-model:search="search"
     v-model:period="period"
     v-model:slots="slots"
+    v-model:visible-slots="visibleSlots"
+    v-model:sort="sort"
     :vehicles="statistics.data"
     :status="statistics.status"
     :progress="statistics.progress"
@@ -44,12 +46,11 @@ import { useVehicleComparison } from './timeSeriesCompare/useVehicleComparison'
 import { computed, ref } from 'vue'
 import { useMeta } from '@/shared/composition/useMeta'
 import VehicleListTable from './vehicleListTable/VehicleListTable.vue'
-import { defaultSlots, type Slot } from './vehicleMetricSelector/vehicleMetrics.ts'
+import type { Slot } from './vehicleMetricSelector/vehicleMetrics.ts'
 import VehicleFilters from './filters/VehicleFilters.vue'
 import { useVehicleQueryStorage } from './filters/useVehicleQueryStorage'
 import { vehicleStatisticsQueries } from './shared/vehicleStatisticsQuery'
 import { useVehicleTableStatistics } from './vehicleListTable/useVehicleTableStatistics'
-import type { VehicleStatisticsPeriod } from './shared/vehicleStatisticsPeriod'
 import { useBackground } from '@/shared/uiKit/pageBackground/useBackground'
 import VehiclesBackground from './VehiclesBackground.vue'
 
@@ -61,9 +62,8 @@ useMeta({
   keywords: 'статистика танков, статистика танков в боях, статистика танков в игре, статистика танков в world of tanks'
 })
 
-const { filters, localFilters, search, grouping } = useVehicleQueryStorage()
-const period = ref<VehicleStatisticsPeriod>(30)
-const slots = ref<Slot[]>([...defaultSlots])
+const { filters, localFilters, search, grouping, period, slots, sort } = useVehicleQueryStorage()
+const visibleSlots = ref<Slot[]>([])
 
 const comparison = useVehicleComparison(filters)
 
@@ -71,7 +71,11 @@ const beforeDay = new Date().toISOString().slice(0, 10)
 const retry = ref(0)
 const queries = computed(() => vehicleStatisticsQueries(filters.value, grouping.value, period.value, undefined, beforeDay))
 const onlyActual = computed(() => grouping.value === 'tanks' && localFilters.value.onlyActual)
-const statistics = useVehicleTableStatistics(queries, slots, onlyActual, retry)
+const statisticsSlots = computed(() => [...new Set([
+  ...visibleSlots.value,
+  ...sort.value.flatMap(({ key }) => key === 'name' || key === 'tankLevel' || key === 'tankType' ? [] : [key]),
+])])
+const statistics = useVehicleTableStatistics(queries, statisticsSlots, onlyActual, retry)
 </script>
 
 <style scoped lang="scss">

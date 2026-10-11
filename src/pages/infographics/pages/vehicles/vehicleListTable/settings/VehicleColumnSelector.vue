@@ -13,7 +13,7 @@
 <script setup lang="ts">
 import { useTemplateRef } from 'vue'
 import VehicleSlotOptions from '../../vehicleMetricSelector/VehicleSlotOptions.vue'
-import { baseSlot, defaultSlot, defaultSlotsForLimit, orderSlots, type BaseSlot, type Slot } from '../../vehicleMetricSelector/vehicleMetrics.ts'
+import { baseSlot, defaultSlot, defaultSlots, orderSlots, type BaseSlot, type Slot } from '../../vehicleMetricSelector/vehicleMetrics.ts'
 
 const props = defineProps<{ maxSlots: number }>()
 const selected = defineModel<Slot[]>({ required: true })
@@ -37,7 +37,7 @@ function toggleMetric(slot: BaseSlot) {
 }
 
 function reset() {
-  selected.value = defaultSlotsForLimit(props.maxSlots)
+  selected.value = [...defaultSlots]
 }
 
 </script>

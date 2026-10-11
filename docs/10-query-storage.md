@@ -395,6 +395,8 @@ History отмечает начало `router.push/replace` синхронно, 
   Прочие параметры с приоритетом `0` следуют за ними по алфавиту.
   Настройки сравнения всегда в конце: `metric` (-1) → `step` (-2) → `avg` (-3) →
   `annotations` (-4) → `compare` (-10). Defaults и отключённые параметры пропускаются.
+  `metric`, `step`, `avg` и `annotations` включены только при непустом `compare` через `context` и `enabled`.
+  Без источников настройки остаются в памяти; при добавлении танка или категории возвращаются в URL.
   Метрика, шаг и усреднение вынесены в `metric`, `step`, `avg` в `query/settings.ts`.
   Метрика — ключ из `availableSlots` в kebab-case (`damage-q50`, `damage-per-life-minute-q50`),
   с обратной таблицей в исходный `Slot`. Шаг и усреднение используют `oneOfParam`:

@@ -45,6 +45,7 @@ function comparisonContext(context?: ComparisonContext): VehicleFilters | undefi
 }
 
 const compareParam = {
+  label: 'compare',
   key: 'vehicles.compare',
   priority: -10,
   default: [] as SavedComparisonSource[],
@@ -62,10 +63,17 @@ const compareParam = {
   debounce: 150,
 } satisfies QueryParam<SavedComparisonSource[], ComparisonContext>
 
+const comparisonSettingsAvailability = {
+  context: { compare: compareParam },
+  enabled: ({ compare }: { compare: SavedComparisonSource[] }) => compare.length > 0,
+}
+
 export function useVehicleComparison(filters: Ref<VehicleFilters>) {
   const storage = useQueryStorage({
-    ...comparisonSettingsParams,
-    annotations: comparisonAnnotationsParam,
+    slot: { ...comparisonSettingsParams.slot, ...comparisonSettingsAvailability },
+    step: { ...comparisonSettingsParams.step, ...comparisonSettingsAvailability },
+    averageWindow: { ...comparisonSettingsParams.averageWindow, ...comparisonSettingsAvailability },
+    annotations: { ...comparisonAnnotationsParam, ...comparisonSettingsAvailability },
     compare: compareParam,
   }, { history: 'replace', debounce: 150 })
   const { compare: savedSources, annotations: annotationKeys, slot, step, averageWindow } = storage.params

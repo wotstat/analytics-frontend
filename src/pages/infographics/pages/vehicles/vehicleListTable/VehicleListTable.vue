@@ -151,7 +151,7 @@ import { regionToGame } from '@/shared/game/domain/wot'
 import { createVehicleNameFilter } from '@/shared/game/components/vehicles/vehicleSearch'
 import SearchLine from '@/shared/game/components/selectors/components/searchLine/SearchLine.vue'
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
-import { availableSlots, baseSlot, orderSlots, slotHeadingLabel, type Slot } from '../vehicleMetricSelector/vehicleMetrics.ts'
+import { availableSlots, baseSlot, defaultSlots, defaultSlotsForLimit, orderSlots, slotHeadingLabel, type Slot } from '../vehicleMetricSelector/vehicleMetrics.ts'
 import type { VehicleStatistics } from '../shared/types'
 import { DEFAULT_MIN_BATTLES, DEFAULT_MIN_PLAYERS, DEFAULT_ONLY_ACTUAL, type LocalVehicleFilters } from './filters/localFilters'
 import { comparisonRowKey } from '../timeSeriesCompare/utils/comparisonRowKey'
@@ -170,7 +170,7 @@ import DropdownArrow from '@/shared/uiKit/dropdown/DropdownArrow.vue'
 import { isVehicleType } from '@/shared/game/components/vehicles/vehicleType/vehicleTypeToImage'
 import { romanNumberProcessor } from '@/shared/utils/processors/processors'
 import { formatSlotValue } from '../vehicleMetricSelector/formatMetricValue.ts'
-import { useVehicleSorting, type SortKey } from './useVehicleSorting'
+import { useVehicleSorting, type SortKey, type SortOrder } from './useVehicleSorting'
 import type { VehicleFilters } from '../filters/types'
 import type { HistoryAverageWindow, HistoryStep } from '../timeSeries/period/historyStep'
 import type { VehicleStatisticsPeriod } from '../shared/vehicleStatisticsPeriod'
@@ -214,9 +214,10 @@ const localFilters = defineModel<LocalVehicleFilters>('localFilters', { required
 const grouping = defineModel<VehicleGrouping>('grouping', { required: true })
 const period = defineModel<VehicleStatisticsPeriod>('period', { required: true })
 
-const selectedSlots = defineModel<Slot[]>('slots', { required: true })
-const configuredSlots = ref<Slot[]>([...selectedSlots.value])
-const activeSlot = ref<Slot>(selectedSlots.value[0] ?? 'battles')
+const configuredSlots = defineModel<Slot[]>('slots', { required: true })
+const requestedSlots = defineModel<Slot[]>('visibleSlots', { required: true })
+const sortOrders = defineModel<SortOrder[]>('sort', { required: true })
+const activeSlot = ref<Slot>(configuredSlots.value[0] ?? 'battles')
 const historyStep = ref<HistoryStep>('day')
 const averageWindow = ref<HistoryAverageWindow>(null)
 const showValueBars = useLocalStorage('vehicles-table-show-value-bars', false)
@@ -282,12 +283,26 @@ const maxSelectableSlots = computed(() => {
   return Math.min(maxSlots, fittedSlots)
 })
 
-// Лимит меняет только видимую часть; ручной выбор заменяет весь сохранённый набор.
+function normalizeColumnSelection(slots: Slot[]) {
+  const defaults = defaultSlotsForLimit(maxSelectableSlots.value)
+  const selected = orderSlots(slots)
+  if (selected.length !== defaults.length) return slots
+  if (!selected.every((slot, index) => slot === defaults[index])) return slots
+  return [...defaultSlots]
+}
+
+// Видимый дефолтный набор восстанавливает полный список с исходным порядком приоритета.
 const visibleSlots = computed({
   get: () => orderSlots(configuredSlots.value.slice(0, maxSelectableSlots.value)),
-  set: (slots: Slot[]) => configuredSlots.value = slots,
+  set: (slots: Slot[]) => configuredSlots.value = normalizeColumnSelection(slots),
 })
-const sorting = useVehicleSorting(grouping, visibleSlots)
+
+watch([configuredSlots, maxSelectableSlots], ([slots]) => {
+  const normalized = normalizeColumnSelection(slots)
+  if (normalized !== slots) configuredSlots.value = normalized
+}, { immediate: true })
+
+const sorting = useVehicleSorting(grouping, configuredSlots, sortOrders)
 
 const tableStyle = computed(() => ({
   minHeight: columnsOpen.value ? `${columnSelectionHeight.value}px` : undefined,
@@ -443,13 +458,13 @@ watch([() => props.vehicles, () => props.comparedKeys, () => props.comparisonCou
 
 watch([search, localFilters, () => props.vehicles], () => displayLimit.value = PAGE_SIZE)
 
-watch(selectedSlots, slots => {
+watch(visibleSlots, slots => {
   if (slots.includes(activeSlot.value)) return
   activeSlot.value = slots.find(slot => baseSlot(slot) === baseSlot(activeSlot.value)) ?? slots[0] ?? 'battles'
 })
 
 watch([visibleSlots, width], ([slots, tableWidth]) => {
-  if (tableWidth > 0) selectedSlots.value = slots
+  if (tableWidth > 0) requestedSlots.value = slots
 }, { immediate: true })
 </script>
 

@@ -9,6 +9,7 @@ import { vehicleTypes } from '@/shared/game/domain/vehicles/types'
 import { createVehicleFilters, vehicleRegions, type VehicleFilters } from './types'
 import { createLocalVehicleFilters, vehicleLevels, battleThresholds, playerThresholds, type LocalVehicleFilters } from '../vehicleListTable/filters/localFilters'
 import { vehicleGroupings, type VehicleGrouping } from '../shared/vehicleGrouping'
+import { vehicleTableSettingsParams } from '../vehicleListTable/query/settings'
 
 const defaults = createVehicleFilters()
 const localDefaults = createLocalVehicleFilters()
@@ -50,7 +51,8 @@ export const vehicleQueryParams = defineParams({
   }),
   onlyActual: booleanParam(localDefaults.onlyActual, { label: 'only-actual', key: 'vehicles.onlyActual', priority: 50, ...tankOnly }),
   minBattles: oneOfParam(battleThresholds, localDefaults.minBattles, { label: 'min-battles', key: 'vehicles.minBattles', priority: 40 }),
-  minPlayers: oneOfParam(playerThresholds, localDefaults.minPlayers, { label: 'min-players', key: 'vehicles.minPlayers', priority: 30 })
+  minPlayers: oneOfParam(playerThresholds, localDefaults.minPlayers, { label: 'min-players', key: 'vehicles.minPlayers', priority: 30 }),
+  ...vehicleTableSettingsParams,
 })
 
 export function useVehicleQueryStorage() {
@@ -83,5 +85,5 @@ export function useVehicleQueryStorage() {
     })
   })
 
-  return { filters, localFilters, search: p.search, grouping: p.grouping }
+  return { filters, localFilters, search: p.search, grouping: p.grouping, period: p.period, slots: p.slots, sort: p.sort }
 }
