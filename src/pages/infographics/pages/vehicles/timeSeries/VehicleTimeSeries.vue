@@ -86,6 +86,7 @@ const props = defineProps<{
   name: string
   filters: VehicleFilters
   beforeDay: string
+  fromDay: string | null
   minBattles: number
   minPlayers: number
 }>()
@@ -132,14 +133,14 @@ const histories = computed<VehicleHistorySeries[]>(() => {
   if (split.value === null) {
     return [{
       tag: 'vehicle',
-      history: applyHistoryFilters(history.value.data, slot.value, props, step.value),
+      history: applyHistoryFilters(history.value.data, slot.value, props, step.value, props.fromDay),
     }]
   }
 
   return splitSources.value.map(source => ({
     tag: source.tag,
     history: applyHistoryFilters(history.value.data.filter(row => row.splitKey === source.tag),
-      slot.value, props, step.value),
+      slot.value, props, step.value, props.fromDay),
   }))
 })
 const series = computed(() => histories.value.map(source => ({

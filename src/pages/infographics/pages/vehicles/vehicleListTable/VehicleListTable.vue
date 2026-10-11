@@ -9,7 +9,7 @@
       <div class="toolbar-right" ref="toolbarRight">
         <VehicleColumnSelector v-model="visibleSlots" v-model:open="columnsOpen" :max-slots="maxSelectableSlots" />
         <VehicleTableSettings v-model="period" v-model:show-value-bars="showValueBars"
-          v-model:extended-palette="extendedPalette" />
+          v-model:extended-palette="extendedPalette" v-model:from-beginning="fromBeginning" />
       </div>
     </div>
 
@@ -78,6 +78,7 @@
         <VehicleTimeSeries v-model:slot="activeSlot" v-model:step="historyStep" v-model:average-window="averageWindow"
           :selection="vehicleHistorySelection(row, effectiveSelection)" :name="vehicleName(row)" :filters
           :before-day="beforeDay"
+          :from-day="fromDay"
           :min-battles="localFilters.minBattles" :min-players="localFilters.minPlayers">
           <template v-if="!showCompare" #header-before>
             <VehicleCompareButton class="history-compare" :compared="isCompared(row)"
@@ -183,6 +184,7 @@ const props = defineProps<{
   progress: { completed: number, total: number }
   filters: VehicleFilters
   beforeDay: string
+  fromDay: string | null
   comparedKeys: string[]
   comparisonCount: number
 }>()
@@ -215,6 +217,7 @@ const search = defineModel<string>('search', { required: true })
 const localFilters = defineModel<LocalVehicleFilters>('localFilters', { required: true })
 const grouping = defineModel<VehicleGrouping>('grouping', { required: true })
 const period = defineModel<VehicleStatisticsPeriod>('period', { required: true })
+const fromBeginning = defineModel<boolean>('fromBeginning', { required: true })
 
 const configuredSlots = defineModel<Slot[]>('slots', { required: true })
 const requestedSlots = defineModel<Slot[]>('visibleSlots', { required: true })
@@ -366,6 +369,7 @@ const filteredVehicles = computed(() => {
   const selection = effectiveSelection.value
 
   const vehicles = props.vehicles.filter(vehicle => {
+    if (props.fromDay !== null && vehicle.day < props.fromDay) return false
     if (matchVehicle(vehicleName(vehicle)) === null) return false
 
     if (selection.levels.length && !selection.levels.some(level => level === vehicle.tankLevel)) return false
@@ -458,7 +462,7 @@ watch([() => props.filters, localFilters],
 watch([() => props.vehicles, () => props.comparedKeys, () => props.comparisonCount, grouping, search],
   () => pendingComparison.value = null)
 
-watch([search, localFilters, () => props.vehicles], () => displayLimit.value = PAGE_SIZE)
+watch([search, localFilters, () => props.vehicles, () => props.fromDay], () => displayLimit.value = PAGE_SIZE)
 
 watch(visibleSlots, slots => {
   if (slots.includes(activeSlot.value)) return

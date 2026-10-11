@@ -87,6 +87,7 @@ useHistoryEventStyles()
 const props = defineProps<{
   filters: VehicleFilters
   beforeDay: string
+  fromDay: string | null
   sources: readonly ComparisonSource[]
 } & VehicleThresholds>()
 
@@ -161,7 +162,7 @@ function onSeriesClick({ tag, event }: { tag: string, event: ClickInteractionEve
 
 const histories = computed(() => props.sources.map(source => ({
   tag: source.tag,
-  history: applyHistoryFilters(states.get(source.tag)?.data ?? [], slot.value, props, step.value),
+  history: applyHistoryFilters(states.get(source.tag)?.data ?? [], slot.value, props, step.value, props.fromDay),
 })))
 
 const series = computed(() => histories.value.map(source => ({

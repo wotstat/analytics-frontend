@@ -1,5 +1,5 @@
 <template>
-  <ToolbarButton ref="trigger" :icon="SettingsIcon" variant="surface" size="large" @click="open = !open" />
+  <ToolbarButton ref="trigger" :icon="SettingsIcon" variant="surface" size="large" @click="toggle" />
 
   <PanelPopover v-model="open" :target="target" title="Настройки таблицы" :width="250" density="compact"
     :placement="['bottom-end', 'bottom-float', 'top-end']">
@@ -22,6 +22,13 @@
           Расширенная палитра
         </label>
       </div>
+      <div v-if="showAdvanced" class="options panel-section">
+        <h3>История данных</h3>
+        <label class="option">
+          <input v-model="fromBeginning" type="checkbox">
+          Начинать с самого начала
+        </label>
+      </div>
     </template>
   </PanelPopover>
 </template>
@@ -36,9 +43,16 @@ import { vehicleStatisticsPeriods, type VehicleStatisticsPeriod } from '../../sh
 const period = defineModel<VehicleStatisticsPeriod>({ required: true })
 const showValueBars = defineModel<boolean>('showValueBars', { required: true })
 const extendedPalette = defineModel<boolean>('extendedPalette', { required: true })
+const fromBeginning = defineModel<boolean>('fromBeginning', { required: true })
 const open = ref(false)
+const showAdvanced = ref(false)
 const trigger = useTemplateRef<InstanceType<typeof ToolbarButton>>('trigger')
 const target = computed(() => trigger.value?.element ?? null)
+
+function toggle(event: MouseEvent) {
+  if (!open.value) showAdvanced.value = event.altKey
+  open.value = !open.value
+}
 </script>
 
 <style scoped lang="scss">

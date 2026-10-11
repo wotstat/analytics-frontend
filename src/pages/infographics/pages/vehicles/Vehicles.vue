@@ -5,6 +5,7 @@
     :sources="comparison.sources.value"
     :filters
     :before-day="beforeDay"
+    :from-day="fromDay"
     :min-battles="localFilters.minBattles"
     :min-players="localFilters.minPlayers"
     v-model:settings="comparison.settings.value"
@@ -19,6 +20,7 @@
     v-model:local-filters="localFilters"
     v-model:search="search"
     v-model:period="period"
+    v-model:from-beginning="fromBeginning"
     v-model:slots="slots"
     v-model:visible-slots="visibleSlots"
     v-model:sort="sort"
@@ -27,6 +29,7 @@
     :progress="statistics.progress"
     :filters
     :before-day="beforeDay"
+    :from-day="fromDay"
     :compared-keys="comparison.comparedKeys.value"
     :comparison-count="comparison.sources.value.length"
     @compare="comparison.toggle"
@@ -46,6 +49,7 @@
 import TimeSeriesCompare from './timeSeriesCompare/TimeSeriesCompare.vue'
 import { useVehicleComparison } from './timeSeriesCompare/useVehicleComparison'
 import { computed, ref } from 'vue'
+import { useLocalStorage } from '@vueuse/core'
 import { useMeta } from '@/shared/composition/useMeta'
 import VehicleListTable from './vehicleListTable/VehicleListTable.vue'
 import type { Slot } from './vehicleMetricSelector/vehicleMetrics.ts'
@@ -70,6 +74,8 @@ const visibleSlots = ref<Slot[]>([])
 const comparison = useVehicleComparison(filters)
 
 const beforeDay = new Date().toISOString().slice(0, 10)
+const fromBeginning = useLocalStorage('vehicles-from-beginning', false)
+const fromDay = computed(() => fromBeginning.value ? null : '2024-03-06')
 const retry = ref(0)
 const queries = computed(() => vehicleStatisticsQueries(filters.value, grouping.value, period.value, undefined, beforeDay))
 const onlyActual = computed(() => grouping.value === 'tanks' && localFilters.value.onlyActual)
