@@ -77,6 +77,7 @@
       <template #expanded="{ row }">
         <VehicleTimeSeries v-model:slot="activeSlot" v-model:step="historyStep" v-model:average-window="averageWindow"
           :selection="vehicleHistorySelection(row, effectiveSelection)" :name="vehicleName(row)" :filters
+          :before-day="beforeDay"
           :min-battles="localFilters.minBattles" :min-players="localFilters.minPlayers">
           <template v-if="!showCompare" #header-before>
             <VehicleCompareButton class="history-compare" :compared="isCompared(row)"
@@ -181,6 +182,7 @@ const props = defineProps<{
   status: Status
   progress: { completed: number, total: number }
   filters: VehicleFilters
+  beforeDay: string
   comparedKeys: string[]
   comparisonCount: number
 }>()

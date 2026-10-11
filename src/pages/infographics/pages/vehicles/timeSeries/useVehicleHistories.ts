@@ -17,7 +17,7 @@ type HistoryPlan = { key: string, parts: VehicleHistoryQueries, concurrency: Con
 const rowKey = (row: HistoryValues) => JSON.stringify([row.periodStart, row.splitKey ?? null])
 
 export function useVehicleHistories(sources: MaybeRefOrGetter<readonly HistorySource[]>, options: {
-  beforeDay: MaybeRefOrGetter<string>
+  beforeDay: string
   step: MaybeRefOrGetter<HistoryStep>
   slot: MaybeRefOrGetter<Slot>
 }) {
@@ -98,7 +98,7 @@ export function useVehicleHistories(sources: MaybeRefOrGetter<readonly HistorySo
   }
 
   const stop = watch(() => toValue(sources).map(source => {
-    const parts = vehicleHistoryQueries(source.filters, source.selection, toValue(options.beforeDay),
+    const parts = vehicleHistoryQueries(source.filters, source.selection, options.beforeDay,
       toValue(options.step), source.split ?? null, toValue(options.slot))
     return { tag: source.tag, parts, key: JSON.stringify([parts, retries.get(source.tag) ?? 0]) }
   }), histories => {

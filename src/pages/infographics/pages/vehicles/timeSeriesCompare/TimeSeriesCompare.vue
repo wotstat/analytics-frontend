@@ -55,7 +55,6 @@
 
 <script setup lang="ts">
 import { computed, markRaw, watch } from 'vue'
-import { useIntervalFn, useNow } from '@vueuse/core'
 import { isErrorStatus, loading, success } from '@/db'
 import ResetIcon from '@/assets/icons/reset.svg'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
@@ -87,6 +86,7 @@ useHistoryEventStyles()
 
 const props = defineProps<{
   filters: VehicleFilters
+  beforeDay: string
   sources: readonly ComparisonSource[]
 } & VehicleThresholds>()
 
@@ -121,11 +121,8 @@ const { annotations: versionAnnotations, versionForPeriod } = useGameVersionAnno
 const eventAnnotations = useHistoryEventAnnotations(annotationOptions.enabledEvents, annotationRegions)
 const annotations = computed(() => [...versionAnnotations.value, ...eventAnnotations.value])
 
-const now = useNow({ scheduler: cb => useIntervalFn(cb, 60_000) })
-const beforeDay = computed(() => now.value.toISOString().slice(0, 10))
-
 const readySources = computed(() => props.sources.filter((source): source is ComparisonSource & { selection: VehicleSelection } => source.selection !== null))
-const { states, retry } = useVehicleHistories(readySources, { beforeDay, step, slot })
+const { states, retry } = useVehicleHistories(readySources, { beforeDay: props.beforeDay, step, slot })
 const unresolvedSources = computed(() => props.sources.filter(source => source.resolution === 'error' || source.resolution === 'missing'))
 const unresolvedMessage = computed(() => {
   if (unresolvedSources.value.some(source => source.resolution === 'error')) return 'Не удалось загрузить игровые справочники.'
@@ -193,8 +190,8 @@ const emptyTags = computed(() => new Set(histories.value
 
 const emptySources = computed(() => legendItems.value.filter(source => emptyTags.value.has(source.tag)))
 
-watch([series, slot, beforeDay, step, averageWindow], () => {
-  chart.setHistories(series.value, slot.value, beforeDay.value, step.value, averageWindow.value)
+watch([series, slot, step, averageWindow], () => {
+  chart.setHistories(series.value, slot.value, props.beforeDay, step.value, averageWindow.value)
 }, { immediate: true })
 
 watch(annotations, value => chart.setHistoryAnnotations(value), { immediate: true })

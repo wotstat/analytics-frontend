@@ -50,7 +50,6 @@
 
 <script setup lang="ts">
 import { computed, markRaw, onBeforeUnmount, ref, watch } from 'vue'
-import { useIntervalFn, useNow } from '@vueuse/core'
 import { isErrorStatus, loading, success, type Status } from '@/db'
 import TimeSeriesPanel from '@/shared/ui/chart/timeSeries/panel/TimeSeriesPanel.vue'
 import { useLegend } from '@/shared/ui/chart/legend/useLegend'
@@ -86,6 +85,7 @@ const props = defineProps<{
   selection: VehicleSelection
   name: string
   filters: VehicleFilters
+  beforeDay: string
   minBattles: number
   minPlayers: number
 }>()
@@ -100,15 +100,11 @@ const { annotations: versionAnnotations } = useGameVersionAnnotations(
 const eventAnnotations = useHistoryEventAnnotations(annotationOptions.enabledEvents, computed(() => props.filters.regions))
 const annotations = computed(() => [...versionAnnotations.value, ...eventAnnotations.value])
 
-const now = useNow({ scheduler: cb => useIntervalFn(cb, 60_000) })
-
-const beforeDay = computed(() => now.value.toISOString().slice(0, 10))
-
 type SplitSource = { tag: string, name: string, color: string }
 
 const { states, retry } = useVehicleHistories(() => [{
   tag: 'vehicle', filters: props.filters, selection: props.selection, split: split.value,
-}], { beforeDay, step, slot })
+}], { beforeDay: props.beforeDay, step, slot })
 const history = computed<{ status: Status, data: VehicleHistoryPeriod[] }>(() =>
   states.get('vehicle') ?? { status: loading, data: [] })
 
@@ -155,8 +151,8 @@ const hasValues = computed(() => history.value.status === success &&
   series.value.some(source => source.enabled !== false &&
     hasHistoryValues(source.history, slot.value)))
 
-watch([series, slot, beforeDay, step, averageWindow], () => {
-  chart.setHistories(series.value, slot.value, beforeDay.value, step.value, averageWindow.value)
+watch([series, slot, step, averageWindow], () => {
+  chart.setHistories(series.value, slot.value, props.beforeDay, step.value, averageWindow.value)
 }, { immediate: true })
 
 watch(annotations, value => chart.setHistoryAnnotations(value), { immediate: true })

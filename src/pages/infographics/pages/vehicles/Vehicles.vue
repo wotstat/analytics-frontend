@@ -4,6 +4,7 @@
   <TimeSeriesCompare
     :sources="comparison.sources.value"
     :filters
+    :before-day="beforeDay"
     :min-battles="localFilters.minBattles"
     :min-players="localFilters.minPlayers"
     v-model:settings="comparison.settings.value"
@@ -25,6 +26,7 @@
     :status="statistics.status"
     :progress="statistics.progress"
     :filters
+    :before-day="beforeDay"
     :compared-keys="comparison.comparedKeys.value"
     :comparison-count="comparison.sources.value.length"
     @compare="comparison.toggle"
