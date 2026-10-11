@@ -68,7 +68,7 @@ import type { VehicleHistoryPeriod, VehicleHistorySeries } from '../shared/types
 import type { HistoryAverageWindow, HistoryStep } from './period/historyStep'
 import HistoryToolbarOptions from './period/HistoryToolbarOptions.vue'
 import HistoryAnnotationSettings from './annotations/settings/HistoryAnnotationSettings.vue'
-import LineChartIcon from './line-chart.svg'
+import LineChartIcon from './assets/line-chart.svg'
 import { useHistoryAnnotationSettings } from './annotations/settings/useHistoryAnnotationSettings'
 import { useGameVersionAnnotations } from './annotations/gameVersionAnnotations'
 import { useHistoryEventAnnotations } from './annotations/events/useHistoryEventAnnotations'

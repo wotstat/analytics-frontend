@@ -11,7 +11,7 @@
 
 ## `src/shared/uiKit/`
 
-- **`queryStorage/`** — универсальная синхронизация реактивных параметров с URL: `useQueryStorage.ts`, координатор, утилиты определений и типы. `utils/createDeferredWebHistory.ts` находится внутри этого модуля и откладывает запись browser history до синхронизации параметров. `utils/compactBinary.ts` содержит независимые Writer/Reader для компактных целых и строк UTF-8. Модуль зависит только от Vue, Vue Router и браузерных API; адаптер общих фильтров старой инфографики находится отдельно в `shared/legacyStatQuery/`. API и жизненный цикл описаны в [10-query-storage.md](10-query-storage.md).
+- **`queryStorage/`** — универсальная синхронизация реактивных параметров с URL: `useQueryStorage.ts`, координатор, утилиты определений и типы. `utils/createDeferredWebHistory.ts` находится внутри этого модуля и откладывает запись browser history до синхронизации параметров. Бинарные форматы принадлежат сериализаторам, общие примитивы находятся отдельно в `shared/utils/encoding/`. Модуль зависит только от Vue, Vue Router и браузерных API; адаптер общих фильтров старой инфографики находится отдельно в `shared/legacyStatQuery/`. API и жизненный цикл описаны в [10-query-storage.md](10-query-storage.md).
 
   `serializers/` — отдельные сериализаторы даты, строки, числа, `oneOf`, массива, Set и SetOf,
   общий `Serializer<T>`; импорты идут напрямую из файлов. Массив и Set принимают сериализатор

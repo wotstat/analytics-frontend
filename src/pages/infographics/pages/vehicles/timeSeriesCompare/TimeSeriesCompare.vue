@@ -15,13 +15,14 @@
       </template>
 
       <template #actions>
-        <HistoryAnnotationSettings :settings="annotationOptions" :regions="filters.regions" />
+        <HistoryAnnotationSettings :settings="annotationOptions" :regions="annotationRegions" />
       </template>
 
       <template v-if="!sources.length || !hasValues" #state>
         <template v-if="!sources.length">
           <b class="empty-heading">Сравните танки на одном графике</b>
-          <span>Нажмите «+» в таблице или в раскрытом графике. Чтобы добавить среднее по уровню или типу, выберите нужный режим
+          <span>Нажмите «+» в таблице или в раскрытом графике. Чтобы добавить среднее по уровню или типу, выберите
+            нужный режим
             таблицы.</span>
         </template>
         <template v-else>{{ emptyMessage }}</template>
@@ -32,6 +33,9 @@
       </template>
 
       <template #details>
+        <div v-if="unresolvedSources.length" class="source-error">
+          <span>{{ unresolvedMessage }}</span>
+        </div>
         <div v-for="source in failedSources" :key="source.tag" class="source-error">
           <span>{{ source.name }}: не удалось загрузить историю.</span>
           <button @click="retry(source.tag)">Повторить</button>
@@ -50,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, markRaw, ref, watch } from 'vue'
+import { computed, markRaw, watch } from 'vue'
 import { useNow } from '@vueuse/core'
 import { isErrorStatus, loading, success } from '@/db'
 import ResetIcon from '@/assets/icons/reset.svg'
@@ -61,19 +65,21 @@ import { formatSlotValue } from '../vehicleMetricSelector/formatMetricValue.ts'
 import { useLegend } from '@/shared/ui/chart/legend/useLegend'
 import VehicleMetricSelector from '../vehicleMetricSelector/VehicleMetricSelector.vue'
 import type { VehicleFilters } from '../filters/types'
-import type { Slot } from '../vehicleMetricSelector/vehicleMetrics.ts'
+import type { ComparisonSettings } from './query/settings'
+import type { VehicleSelection } from '../shared/vehicleGrouping'
+import type { InteractionTag } from '@/shared/uiKit/chart/universalChart/interaction/core/InteractionSource'
 import { VehicleHistoryChart } from '../timeSeries/VehicleHistoryChart'
 import type { VehicleThresholds } from '../shared/types'
-import type { HistoryAverageWindow, HistoryStep } from '../timeSeries/period/historyStep'
 import HistoryToolbarOptions from '../timeSeries/period/HistoryToolbarOptions.vue'
 import HistoryAnnotationSettings from '../timeSeries/annotations/settings/HistoryAnnotationSettings.vue'
-import { useHistoryAnnotationSettings } from '../timeSeries/annotations/settings/useHistoryAnnotationSettings'
+import { useHistoryAnnotationSettings, type HistoryAnnotationState } from '../timeSeries/annotations/settings/useHistoryAnnotationSettings'
 import { useGameVersionAnnotations } from '../timeSeries/annotations/gameVersionAnnotations'
 import { useHistoryEventAnnotations } from '../timeSeries/annotations/events/useHistoryEventAnnotations'
 import { useHistoryEventStyles } from '../timeSeries/annotations/events/useHistoryEventStyles'
 import { applyHistoryFilters, hasHistoryValues } from '../timeSeries/historyValues'
-import { snapshotComparisonFilters, type ComparisonSource } from './types'
-import { comparisonName } from './comparisonName'
+import type { ComparisonSource } from './types'
+import { snapshotComparisonFilters } from './utils/comparisonFilters'
+import { comparisonName } from './utils/comparisonName'
 import { useVehicleHistories } from '../timeSeries/useVehicleHistories'
 import HistoryTooltipHeader from '../timeSeries/tooltip/HistoryTooltipHeader.vue'
 
@@ -88,36 +94,69 @@ const emit = defineEmits<{
   remove: [tag: string]
   colorChange: [tag: string, color: string]
   clear: []
+  visibilityChange: [disabledTags: string[]]
 }>()
 
-const slot = ref<Slot>('damage')
+const settings = defineModel<ComparisonSettings>('settings', { required: true })
+const annotationSettings = defineModel<HistoryAnnotationState>('annotations', { required: true })
 
-const step = ref<HistoryStep>('day')
-const averageWindow = ref<HistoryAverageWindow>(null)
-const annotationOptions = useHistoryAnnotationSettings()
-const { annotations: versionAnnotations, versionForPeriod } = useGameVersionAnnotations(
-  annotationOptions.versions, computed(() => props.filters.regions), { includeTooltipVersion: true })
-const eventAnnotations = useHistoryEventAnnotations(annotationOptions.enabledEvents, computed(() => props.filters.regions))
+function setting<K extends keyof ComparisonSettings>(key: K) {
+  return computed({
+    get: () => settings.value[key],
+    set: (value: ComparisonSettings[K]) => { settings.value = { ...settings.value, [key]: value } },
+  })
+}
+
+const slot = setting('slot')
+const step = setting('step')
+const averageWindow = setting('averageWindow')
+const annotationOptions = useHistoryAnnotationSettings(annotationSettings)
+const annotationRegions = computed(() => {
+  if (!props.sources.length) return props.filters.regions
+  if (props.sources.some(source => !source.filters.regions.length)) return []
+  return [...new Set(props.sources.flatMap(source => source.filters.regions))]
+})
+
+const { annotations: versionAnnotations, versionForPeriod } = useGameVersionAnnotations(annotationOptions.versions, annotationRegions, { includeTooltipVersion: true })
+const eventAnnotations = useHistoryEventAnnotations(annotationOptions.enabledEvents, annotationRegions)
 const annotations = computed(() => [...versionAnnotations.value, ...eventAnnotations.value])
 
 const now = useNow({ interval: 60_000 })
 const beforeDay = computed(() => now.value.toISOString().slice(0, 10))
 
-const { states, retry } = useVehicleHistories(() => props.sources, { beforeDay, step, slot })
+const readySources = computed(() => props.sources.filter((source): source is ComparisonSource & { selection: VehicleSelection } => source.selection !== null))
+const { states, retry } = useVehicleHistories(readySources, { beforeDay, step, slot })
+const unresolvedSources = computed(() => props.sources.filter(source => source.resolution === 'error' || source.resolution === 'missing'))
+const unresolvedMessage = computed(() => {
+  if (unresolvedSources.value.some(source => source.resolution === 'error')) return 'Не удалось загрузить игровые справочники.'
+  return 'Некоторые источники из ссылки не найдены в игровых справочниках.'
+})
 
 const currentFilters = computed(() => snapshotComparisonFilters(props.filters))
-const legendItems = computed(() => props.sources.map(source => ({
-  ...source,
-  name: comparisonName(source, currentFilters.value),
-  loading: !states.has(source.tag) || states.get(source.tag)?.status === loading,
-})))
+const legendItems = computed(() => props.sources.map(source => {
+  const state = states.get(source.tag)
+  const pending = !source.resolution && (!state || state.status === loading)
+  return {
+    ...source,
+    name: comparisonName(source, currentFilters.value),
+    loading: source.resolution === 'loading' || pending,
+  }
+}))
 
-const legend = useLegend<ComparisonSource & { loading?: boolean }>(legendItems)
+const disabledTags = computed<ReadonlySet<InteractionTag>>({
+  get: () => new Set(props.sources.filter(source => !source.enabled).map(source => source.tag)),
+  set: tags => emit('visibilityChange', [...tags].filter((tag): tag is string => typeof tag === 'string')),
+})
+
+const legend = useLegend<ComparisonSource & { loading?: boolean }>(legendItems, { disabledTags })
 const chart = markRaw(new VehicleHistoryChart(legend.highlightSync))
+
 function onSeriesClick({ tag, event }: { tag: string, event: ClickInteractionEvent }) {
   if (event.isTouch) return
+
   const source = legend.items.value.find(item => item.tag === tag)
   if (!source || !legend.isEnabled(source)) return
+
   event.preventPanInertion()
   const targets = event.altKey ? legend.items.value.filter(item => item.tag !== tag) : [source]
   legend.setEnabled(targets, false)
@@ -127,18 +166,19 @@ const histories = computed(() => props.sources.map(source => ({
   tag: source.tag,
   history: applyHistoryFilters(states.get(source.tag)?.data ?? [], slot.value, props, step.value),
 })))
+
 const series = computed(() => histories.value.map(source => ({
   ...source,
   enabled: legend.isEnabled(source),
 })))
 
-const hasValues = computed(() => series.value.some(source => source.enabled &&
-  hasHistoryValues(source.history, slot.value)))
+const hasValues = computed(() => series.value.some(source => source.enabled && hasHistoryValues(source.history, slot.value)))
 const pending = computed(() => legendItems.value.some(source => source.loading))
 
 const emptyMessage = computed(() => {
   if (pending.value) return 'Загрузка истории…'
   if (!legend.enabled.value.length) return 'Включите источники в легенде'
+  if (!readySources.value.length && unresolvedSources.value.length) return 'Не удалось восстановить источники из ссылки'
   return 'По выбранным фильтрам нет данных для отображения'
 })
 
@@ -150,6 +190,7 @@ const failedSources = computed(() => legendItems.value.filter(source => {
 const emptyTags = computed(() => new Set(histories.value
   .filter(source => states.get(source.tag)?.status === success && !hasHistoryValues(source.history, slot.value))
   .map(source => source.tag)))
+
 const emptySources = computed(() => legendItems.value.filter(source => emptyTags.value.has(source.tag)))
 
 watch([series, slot, beforeDay, step, averageWindow], () => {

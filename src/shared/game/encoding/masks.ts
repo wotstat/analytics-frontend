@@ -1,4 +1,4 @@
-import { compactMask, expandMask } from '@/shared/uiKit/queryStorage/utils/compactBinary'
+import { compactMask, expandMask } from '@/shared/utils/encoding/compactBinary'
 import { vehicleLevels, vehicleTypes } from '../domain/vehicles/types'
 import { nations } from '../domain/vehicles/nations'
 

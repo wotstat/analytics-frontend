@@ -1,6 +1,7 @@
 import { battleModeSelection } from '@/shared/game/domain/battleModes/battleModeSelection'
 import { countLocalize, getArenaName } from '@/shared/i18n/i18n'
-import { differentComparisonFilters, type ComparisonFilters, type ComparisonSource } from './types'
+import type { ComparisonFilters, ComparisonSource } from '../types'
+import { differentComparisonFilters } from './comparisonFilters'
 
 function arenaLabel(arenas: string[]) {
   if (!arenas.length) return 'Все карты'

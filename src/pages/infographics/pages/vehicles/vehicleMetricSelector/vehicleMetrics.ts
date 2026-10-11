@@ -29,7 +29,7 @@ export const baseSlots = {
   assistRadio: { icon: 'assist-radio', label: 'Содействие по разведданным', ...average('damageAssistedRadio') },
   assistTrack: { icon: 'assist-track', label: 'Содействие по гусеницам', ...average('damageAssistedTrack') },
   assistStun: { icon: 'stun', label: 'Содействие по оглушению', ...average('damageAssistedStun') },
-  assistMax: { icon: 'assist', label: 'Максимальный вид содействия', ...average('damageAssistedMax'), description: 'Среднее от максимума трёх видов содействия в каждом бою' },
+  maxAssist: { icon: 'assist', label: 'Максимальный вид содействия', ...average('damageAssistedMax'), description: 'Среднее от максимума трёх видов содействия в каждом бою' },
 
   damageForMarks: { icon: 'gun-mark-dmg', label: 'Сумма для отметки', ...average('damageForMarks') },
   blocked: { icon: 'block', label: 'Заблокированный урон', ...average('damageBlockedByArmor') },
@@ -169,7 +169,7 @@ const aggregationSources = {
   assistRadio: 'damageAssistedRadio',
   assistTrack: 'damageAssistedTrack',
   assistStun: 'damageAssistedStun',
-  assistMax: 'damageAssistedMax',
+  maxAssist: 'damageAssistedMax',
   damageForMarks: 'damageForMarks',
   blocked: 'damageBlockedByArmor',
   damageReceived: 'damageReceived',
@@ -288,7 +288,7 @@ for (const slot of Object.keys(aggregationSources) as AggregatableSlot[]) {
 export const slotCategories: readonly { title: string, slots: readonly BaseSlot[], derived?: boolean }[] = [
   { title: 'Общее', slots: ['battles', 'playerCount', 'winrate', 'survival', 'xp', 'mileage', 'lifeTime', 'duration'] },
   { title: 'Основные', slots: ['damage', 'blocked', 'assist', 'kills', 'spotted'] },
-  { title: 'Содействие', slots: ['assistRadio', 'assistTrack', 'assistStun', 'assistMax', 'damageForMarks', 'damaged', 'stunned', 'stunDuration'] },
+  { title: 'Содействие', slots: ['assistRadio', 'assistTrack', 'assistStun', 'maxAssist', 'damageForMarks', 'damaged', 'stunned', 'stunDuration'] },
   { title: 'Сетап', slots: ['higherTierEnemies', 'sameTierEnemies', 'lowerTierEnemies'] },
   { title: 'Стрельба', slots: ['shots', 'directEnemyHits', 'piercingEnemyHits', 'explosionHits', 'directHitsReceived', 'piercingsReceived', 'explosionHitsReceived'] },
   { title: 'Прочность', slots: ['maxHealth', 'health', 'damageReceived', 'damageReceivedFromInvisibles'] },

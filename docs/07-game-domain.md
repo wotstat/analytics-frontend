@@ -110,7 +110,7 @@ default `['random']`, значение `all` для отсутствия огр�
 - `encoding/vehicleCategories.ts` — `{ level?, type? }` и диапазоны категорий: уровни 1–15, классы 16–23,
   пары `32 + (level - 1) * 8 + typeIndex`. Не зависит от строкового rowKey конкретной страницы.
 - `encoding/masks.ts` — маски наций, классов и уровней на основе общих `compactMask`/`expandMask`
-  из `shared/uiKit/queryStorage/utils/compactBinary.ts`.
+  из `shared/utils/encoding/compactBinary.ts`.
   `domain/vehicles/types.ts` теперь содержит только игровые списки и типы, без упаковки.
 
 Рабочий формат сохранён. Явные коды и индексы не переназначаются; новые значения регистрируются

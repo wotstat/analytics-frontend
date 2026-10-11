@@ -7,6 +7,7 @@
     :min-battles="localFilters.minBattles"
     :min-players="localFilters.minPlayers"
     v-model:settings="comparison.settings.value"
+    v-model:annotations="comparison.annotations.value"
     @visibility-change="comparison.setDisabled"
     @remove="comparison.remove"
     @color-change="comparison.setColor"
