@@ -1,6 +1,7 @@
 import { computed, inject, onActivated, onDeactivated, onMounted, onScopeDispose, toValue, watch } from 'vue'
 import { matchedRouteKey, useRouter } from 'vue-router'
 import { setupQueryStorage, type QueryOwner } from './utils/queryStorageCoordinator'
+import { paramEnabled } from './utils/queryParamUtils'
 import type { QueryParams, QueryStorage, QueryStorageOptions } from './queryStorageTypes'
 
 export { defineParams } from './queryStorageTypes'
@@ -8,7 +9,8 @@ export type { QueryParam, QueryParams, QueryStorage, QueryValues, QueryWriteOpti
 export { setupQueryStorage, queryStorageSync } from './utils/queryStorageCoordinator'
 
 export function useQueryStorage<P extends QueryParams>(definitions: P, options: QueryStorageOptions = {}): QueryStorage<P> {
-  const coordinator = setupQueryStorage(useRouter())
+  const router = useRouter()
+  const coordinator = setupQueryStorage(router)
   const owner: QueryOwner = {
     record: inject(matchedRouteKey, undefined)?.value,
     active: true,
@@ -30,7 +32,11 @@ export function useQueryStorage<P extends QueryParams>(definitions: P, options: 
   onDeactivated(() => coordinator.deactivate(owner))
   onScopeDispose(() => coordinator.deactivate(owner, true))
 
-  watch(owner.enabled, () => {
+  const enabledSources = Object.values(definitions)
+    .filter(definition => definition.enabled !== undefined)
+    .map(definition => () => paramEnabled(definition, router.currentRoute.value.query))
+
+  watch([owner.enabled, ...enabledSources], () => {
     if (owner.active) coordinator.activate(owner)
   })
 

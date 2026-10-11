@@ -41,7 +41,6 @@
 <script setup lang="ts">
 import TimeSeriesCompare from './timeSeriesCompare/TimeSeriesCompare.vue'
 import { useVehicleComparison } from './timeSeriesCompare/useVehicleComparison'
-import type { VehicleGrouping } from './shared/vehicleGrouping'
 import { computed, ref } from 'vue'
 import { useMeta } from '@/shared/composition/useMeta'
 import VehicleListTable from './vehicleListTable/VehicleListTable.vue'
@@ -62,8 +61,7 @@ useMeta({
   keywords: 'статистика танков, статистика танков в боях, статистика танков в игре, статистика танков в world of tanks'
 })
 
-const { filters, localFilters, search } = useVehicleQueryStorage()
-const grouping = ref<VehicleGrouping>('tanks')
+const { filters, localFilters, search, grouping } = useVehicleQueryStorage()
 const period = ref<VehicleStatisticsPeriod>(30)
 const slots = ref<Slot[]>([...defaultSlots])
 

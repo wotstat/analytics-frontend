@@ -263,18 +263,32 @@ URL-ключи метрик строй из существующего `availabl
 
 Плохо — отдельный бинарный словарь метрик, маски шага, усреднения и аннотаций внутри `compare`.
 
-Хорошо — `compare=HpeZ&metric=winrate&step=week&avg=3&annotations=versions,razvorot`.
+Хорошо — `metric=winrate&step=week&avg=3&annotations=versions,razvorot&compare=HpeZ`.
 
-## 13. Регистр и разделители метрик в URL
+## 13. Регистр и разделители составных значений в URL
 
-Имена метрик и агрегаций в query записывай в kebab-case: строчные буквы, слова и агрегация разделены
-дефисами. Внутренние ключи `Slot` преобразуй в сериализаторе; для восстановления используй известный каталог метрик.
+Составные названия значений в query, включая группировки, метрики и агрегации, записывай в kebab-case:
+строчные буквы, слова и агрегация разделены дефисами. Внутренние ключи преобразуй в сериализаторе;
+для восстановления используй известный каталог значений. Например, `classesByLevel` записывается как `classes-by-level`.
 Проверяй коллизии. Максимальный вид содействия называй `maxAssist` (`max-assist` в URL),
 чтобы отличать его от агрегации `assist_max` (`assist-max`) без исключений в сериализаторе.
 
-Плохо — `metric=damagePerLifeMinute_q50` или `metric=damage_q50`.
+Плохо — `group=classesByLevel`, `metric=damagePerLifeMinute_q50` или `metric=damage_q50`.
 
-Хорошо — `metric=damage-per-life-minute-q50` и `metric=damage-q50`.
+Хорошо — `group=classes-by-level`, `metric=damage-per-life-minute-q50` и `metric=damage-q50`.
+
+## 14. Порядок параметров страницы техники в URL
+
+Задавай явные `priority` в определениях QueryStorage. Первыми идут фильтры боя:
+`region` → `mode` → `arena` → `platoon` → `result` → `battle-level`.
+Затем параметры таблицы: `group` → `search` → `type` → `nation` → `level` → `only-actual` →
+`min-battles` → `min-players`. Настройки сравнения идут в конце:
+`metric` → `step` → `avg` → `annotations` → `compare`. Не полагайся на алфавитный порядок
+для этих параметров; аннотации должны находиться после скользящего среднего.
+
+Плохо — `annotations=versions&level=5&search=КВ&type=HT&region=EU&metric=winrate`.
+
+Хорошо — `region=EU&search=КВ&type=HT&level=5&metric=winrate&annotations=versions`.
 
 ## Как пополнять список
 

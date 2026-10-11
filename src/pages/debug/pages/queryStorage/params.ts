@@ -33,3 +33,13 @@ export const contextSources = {
     return region
   }) : []
 }
+
+export const conditionalMode = oneOfParam(['details', 'summary'], 'details', {
+  label: 'debug-conditional-mode', history: 'push', debounce: 400
+})
+
+export const conditionalSearch = stringParam('', {
+  label: 'debug-conditional-search', debounce: 600,
+  context: { mode: conditionalMode },
+  enabled: ({ mode }: { mode: 'details' | 'summary' }) => mode === 'details'
+})

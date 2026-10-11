@@ -2,7 +2,7 @@ import { effectScope, ref, watch, type Ref } from 'vue'
 import type { LocationQuery, LocationQueryRaw, RouteLocation, RouteLocationNormalized, RouteRecordNormalized, Router } from 'vue-router'
 import type { DeferredWebHistory } from './createDeferredWebHistory'
 import type { QueryParam, QueryWriteOptions } from '../queryStorageTypes'
-import { defaultValue, encode, decode, contextDefinitions, assertContext, sameDefinition, type Encoded, type QuerySnapshot } from './queryParamUtils'
+import { defaultValue, encode, decode, contextDefinitions, assertContext, sameDefinition, paramEnabled, type Encoded, type QuerySnapshot } from './queryParamUtils'
 
 type Navigation = {
   incoming: LocationQuery
@@ -32,6 +32,8 @@ export type QueryOwner = {
 export type Binding = {
   owner: QueryOwner
   entry: Entry
+  definition: QueryParam
+  epoch: number
   label: string
   priority: number
   options: QueryWriteOptions
@@ -127,8 +129,7 @@ class QueryStorageCoordinator {
 
       for (const entry of this.entries.values()) {
         entry.pending = undefined
-        const binding = this.activeBindings(entry)[0]
-        if (binding) this.hydrate(binding)
+        for (const binding of this.activeBindings(entry)) this.hydrate(binding)
       }
 
       this.schedule()
@@ -234,7 +235,7 @@ class QueryStorageCoordinator {
     assertContext(definition, new Set([label]))
 
     const entry = this.getEntry(key, definition)
-    const binding = { owner, entry, label, priority: definition.priority ?? 0, options: { ...options, ...definition } }
+    const binding = { owner, entry, definition, epoch: -1, label, priority: definition.priority ?? 0, options: { ...options, ...definition } }
 
     entry.bindings.add(binding)
     owner.bindings.push(binding)
@@ -263,7 +264,12 @@ class QueryStorageCoordinator {
 
   private hydrate(binding: Binding) {
     const { entry, label } = binding
-    if (!this.isActive(binding.owner) || entry.epoch === this.epoch) return
+    if (!this.isActive(binding.owner) || binding.epoch === this.epoch || entry.epoch === this.epoch) return
+
+    // Отключённое объявление не должно позднее прочитать уже отвергнутый входящий URL.
+    binding.epoch = this.epoch
+    if (binding.definition.enabled !== undefined
+      && !paramEnabled(binding.definition, this.hydrationQuery(binding.definition))) return
 
     entry.epoch = this.epoch
     this.reading = true
@@ -277,6 +283,23 @@ class QueryStorageCoordinator {
     } finally {
       this.reading = false
     }
+  }
+
+  private hydrationQuery(definition: QueryParam): QuerySnapshot {
+    if (this.authoritative || !definition.context) return this.incoming
+
+    const query: LocationQueryRaw = { ...this.incoming }
+    const restore = (dependency: QueryParam) => {
+      for (const parent of Object.values(dependency.context ?? {})) restore(parent)
+      const label = dependency.label!
+      if (Object.hasOwn(this.incoming, label)) return
+
+      const entry = this.getEntry(dependency.key ?? label, dependency)
+      query[label] = queryValue(entry, query)
+    }
+
+    for (const dependency of Object.values(definition.context)) restore(dependency)
+    return query
   }
 
   private persist(entry: Entry) {
@@ -417,10 +440,9 @@ class QueryStorageCoordinator {
       if (!bindings.length) continue
 
       active.set(entry, bindings)
-      for (const { label, priority } of bindings) {
+      for (const { label } of bindings) {
         activeLabels.add(label)
         byLabel.set(label, entry)
-        priorities.set(label, Math.max(priorities.get(label) ?? priority, priority))
       }
     }
 
@@ -451,6 +473,48 @@ class QueryStorageCoordinator {
       dependencies.set(entry, parents)
     }
 
+    const ordered: Entry[] = []
+    const visited = new Set<Entry>()
+    const visiting = new Set<Entry>()
+    const visit = (entry: Entry) => {
+      if (visited.has(entry)) return
+      if (visiting.has(entry)) throw new Error('useQueryStorage: circular context dependency')
+      visiting.add(entry)
+      for (const parent of dependencies.get(entry)!) visit(parent)
+      visiting.delete(entry)
+      visited.add(entry)
+      ordered.push(entry)
+    }
+
+    for (const entry of active.keys()) visit(entry)
+
+    const enabledBindings = (entry: Entry, target: LocationQueryRaw) => {
+      const bindings = active.get(entry)!
+      const enabled = bindings.filter(binding => paramEnabled(binding.definition, target))
+      const labels = new Set(enabled.map(binding => binding.label))
+      for (const { label } of bindings) if (!labels.has(label)) delete target[label]
+      return enabled
+    }
+
+    const writeValue = (entry: Entry, target: LocationQueryRaw, model: any) => {
+      const enabled = enabledBindings(entry, target)
+      if (!enabled.length) return enabled
+      const value = queryValue(entry, target, model)
+      for (const { label } of enabled) {
+        if (value === undefined) delete target[label]
+        else target[label] = value
+      }
+
+      return enabled
+    }
+
+    // Сначала определяем будущую активность: скрытый поиск не задерживает смену группировки.
+    const desiredQuery = { ...query }
+    for (const entry of ordered) {
+      const enabled = writeValue(entry, desiredQuery, entry.value.value)
+      if (!enabled.length) entry.pending = undefined
+    }
+
     // Зависимые параметры образуют одну группу записи с общим сроком debounce.
     const blocked = new Set<Entry>()
     const grouped = new Set<Entry>()
@@ -475,41 +539,27 @@ class QueryStorageCoordinator {
       }
     }
 
-    const written = new Set<Entry>()
-    const visiting = new Set<Entry>()
-
-    const writeEntry = (entry: Entry) => {
-      if (written.has(entry)) return
-      if (visiting.has(entry)) throw new Error('useQueryStorage: circular context dependency')
-
-      visiting.add(entry)
-      for (const parent of dependencies.get(entry)!) writeEntry(parent)
-      visiting.delete(entry)
-      written.add(entry)
-
+    for (const entry of ordered) {
       const bindings = active.get(entry)!
       let model = entry.value.value
 
       if (blocked.has(entry)) {
-        if (!entry.definition.context) return
-        model = decode(entry.definition, route.query[bindings[0].label], route.query)
-      } else {
-        if (entry.pending?.history === 'push') history = 'push'
-        entry.pending = undefined
-      }
-
-      const value = queryValue(entry, query, model)
-      for (const { label } of bindings) {
-        if (value === undefined) {
-          delete query[label]
+        if (!entry.definition.context) {
+          for (const { label, priority } of enabledBindings(entry, query)) {
+            priorities.set(label, Math.max(priorities.get(label) ?? priority, priority))
+          }
           continue
         }
+        model = decode(entry.definition, route.query[bindings[0].label], route.query)
+      }
 
-        query[label] = value
+      const enabled = writeValue(entry, query, model)
+      for (const { label, priority } of enabled) priorities.set(label, Math.max(priorities.get(label) ?? priority, priority))
+      if (!blocked.has(entry)) {
+        if (enabled.length && entry.pending?.history === 'push') history = 'push'
+        entry.pending = undefined
       }
     }
-
-    for (const entry of active.keys()) writeEntry(entry)
 
     if (next !== Infinity) this.timer = setTimeout(() => this.schedule(), Math.max(0, next - Date.now()))
 
@@ -550,7 +600,8 @@ class QueryStorageCoordinator {
 
           try {
             for (const entry of this.entries.values()) {
-              const binding = this.activeBindings(entry)[0]
+              const binding = this.activeBindings(entry)
+                .find(binding => paramEnabled(binding.definition, this.router.currentRoute.value.query))
               if (!binding || entry.pending) continue
 
               entry.value.value = decode(entry.definition, this.router.currentRoute.value.query[binding.label], this.router.currentRoute.value.query)

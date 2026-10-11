@@ -38,6 +38,7 @@
         <button class="debug-btn" @click="contextStorage.flush('sources')">Записать контекст сейчас</button>
       </div>
     </DebugSection>
+    <ConditionalParams />
     <DebugSection title="Стандартные параметры" id="standard-params"
       source="src/shared/uiKit/queryStorage/params.ts"
       description="Фабрики объединяют сериализатор, default и настройки URL. SetOf принимает массив default и создаёт Set; массив сохраняет повторы, дата округляется до дня.">
@@ -94,6 +95,7 @@ import DebugSection from '../../shared/DebugSection.vue'
 import Nickname from './Nickname.vue'
 import Nested from './Nested.vue'
 import Serializers from './Serializers.vue'
+import ConditionalParams from './ConditionalParams.vue'
 import { demoParams, contextRegion, contextSources } from './params'
 
 const route = useRoute()

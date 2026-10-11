@@ -443,8 +443,6 @@ watch([() => props.vehicles, () => props.comparedKeys, () => props.comparisonCou
 
 watch([search, localFilters, () => props.vehicles], () => displayLimit.value = PAGE_SIZE)
 
-watch(grouping, () => search.value = '')
-
 watch(selectedSlots, slots => {
   if (slots.includes(activeSlot.value)) return
   activeSlot.value = slots.find(slot => baseSlot(slot) === baseSlot(activeSlot.value)) ?? slots[0] ?? 'battles'

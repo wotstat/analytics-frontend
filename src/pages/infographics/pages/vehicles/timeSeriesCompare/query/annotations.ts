@@ -7,6 +7,7 @@ const eventIds = historyEvents.map(event => event.id)
 
 export const comparisonAnnotationsParam = setOfParam([...visibilityKeys, ...eventIds], [], {
   key: 'vehicles.compare.annotations',
+  priority: -4,
   history: 'replace',
   debounce: 150,
 })

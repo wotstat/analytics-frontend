@@ -12,7 +12,7 @@ if (slotsByKey.size !== metricKeys.size) throw new Error('Ambiguous metric query
 
 export const comparisonSettingsParams = defineParams({
   slot: {
-    label: 'metric', key: 'vehicles.compare.metric', default: 'damage' as const,
+    label: 'metric', key: 'vehicles.compare.metric', default: 'damage' as const, priority: -1,
     serialize: (slot: Slot) => {
       const key = metricKeys.get(slot)
       if (key === undefined) throw new Error('Unknown metric')
@@ -24,8 +24,8 @@ export const comparisonSettingsParams = defineParams({
       return slot
     },
   },
-  step: oneOfParam(['day', 'week', 'month'], 'day', { key: 'vehicles.compare.step', priority: -1 }),
-  averageWindow: oneOfParam([3, 5, 7], null, { label: 'avg', key: 'vehicles.compare.averageWindow', priority: -2 }),
+  step: oneOfParam(['day', 'week', 'month'], 'day', { key: 'vehicles.compare.step', priority: -2 }),
+  averageWindow: oneOfParam([3, 5, 7], null, { label: 'avg', key: 'vehicles.compare.averageWindow', priority: -3 }),
 })
 
 export type ComparisonSettings = QueryValues<typeof comparisonSettingsParams>

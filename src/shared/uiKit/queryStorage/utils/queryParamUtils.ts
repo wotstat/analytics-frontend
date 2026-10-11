@@ -1,4 +1,5 @@
 import type { LocationQuery, LocationQueryRaw } from 'vue-router'
+import { unref } from 'vue'
 import type { QueryParam } from '../queryStorageTypes'
 
 export type Encoded = string | null | undefined
@@ -9,11 +10,16 @@ export function defaultValue(definition: QueryParam) {
   return structuredClone(definition.default)
 }
 
-function codecContext(definition: QueryParam, query?: QuerySnapshot): Record<string, any> | undefined {
+function paramContext(definition: QueryParam, query?: QuerySnapshot): Record<string, any> | undefined {
   if (!query || !definition.context) return undefined
   return Object.fromEntries(Object.entries(definition.context).map(([name, dependency]) => [
     name, decode(dependency, query[dependency.label], query)
   ]))
+}
+
+export function paramEnabled(definition: QueryParam, query: QuerySnapshot): boolean {
+  if (typeof definition.enabled === 'function') return definition.enabled(paramContext(definition, query) ?? {})
+  return unref(definition.enabled) ?? true
 }
 
 export function contextDefinitions(definition: QueryParam): QueryParam[] {
@@ -42,7 +48,7 @@ export function sameDefinition(a: QueryParam, b: QueryParam): boolean {
 
 export function encode(definition: QueryParam, value: any, query?: QuerySnapshot): Encoded {
   if (value === undefined || value === null) return value
-  if (definition.serialize) return definition.serialize(value, codecContext(definition, query))
+  if (definition.serialize) return definition.serialize(value, paramContext(definition, query))
   if (typeof value === 'boolean') return value ? '1' : '0'
   if (typeof value === 'object') return JSON.stringify(value)
   return String(value)
@@ -52,7 +58,7 @@ export function decode(definition: QueryParam, raw: unknown, query?: QuerySnapsh
   if (typeof raw !== 'string') return defaultValue(definition)
 
   try {
-    if (definition.deserialize) return definition.deserialize(raw, codecContext(definition, query))
+    if (definition.deserialize) return definition.deserialize(raw, paramContext(definition, query))
 
     const initial = defaultValue(definition)
 

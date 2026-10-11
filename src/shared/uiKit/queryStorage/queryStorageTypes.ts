@@ -16,6 +16,7 @@ export type QueryParam<T = any, C = any> = QueryWriteOptions & {
   priority?: number
   default?: T | (() => T)
   context?: { [K in keyof C]: QueryParam<C[K]> & { label: string } }
+  enabled?: boolean | Ref<boolean> | ((context: C) => boolean)
   serialize?: (value: T, context?: C) => string
   deserialize?: (value: string, context?: C) => T
 }
