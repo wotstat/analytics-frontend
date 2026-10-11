@@ -25,7 +25,7 @@ SPA на **Vue 3** (Composition API + TypeScript) и **Vite**, пакетный 
 ```bash
 bun install      # установить зависимости
 bun run dev      # dev-сервер (vite --host)
-bun run build    # проверка типов (vue-tsc) + прод-сборка
+bun run build    # тесты совместимости ссылок + проверка типов (vue-tsc) + прод-сборка
 bun run preview  # предпросмотр сборки
 ```
 

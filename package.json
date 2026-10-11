@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "bunx --bun vite --host",
-    "build": "vue-tsc && bunx --bun vite build --mode prod",
+    "test": "bun test",
+    "build": "bun run test && vue-tsc && bunx --bun vite build --mode prod",
     "preview": "bunx --bun vite preview --host"
   },
   "dependencies": {
