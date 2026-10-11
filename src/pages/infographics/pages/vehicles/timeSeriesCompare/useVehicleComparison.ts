@@ -64,9 +64,9 @@ const compareParam = {
 
 export function useVehicleComparison(filters: Ref<VehicleFilters>) {
   const storage = useQueryStorage({
-    compare: compareParam,
     ...comparisonSettingsParams,
     annotations: comparisonAnnotationsParam,
+    compare: compareParam,
   }, { history: 'replace', debounce: 150 })
   const { compare: savedSources, annotations: annotationKeys, slot, step, averageWindow } = storage.params
   const annotations = computed({

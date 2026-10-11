@@ -285,6 +285,8 @@ URL-ключи метрик строй из существующего `availabl
 `min-battles` → `min-players`. Настройки сравнения идут в конце:
 `metric` → `step` → `avg` → `annotations` → `compare`. Не полагайся на алфавитный порядок
 для этих параметров; аннотации должны находиться после скользящего среднего.
+Сами объявления в `defineParams` и `useQueryStorage`, включая spread наборов параметров,
+располагай в том же порядке, что и в URL, даже если порядок уже обеспечен через `priority`.
 
 Плохо — `annotations=versions&level=5&search=КВ&type=HT&region=EU&metric=winrate`.
 
