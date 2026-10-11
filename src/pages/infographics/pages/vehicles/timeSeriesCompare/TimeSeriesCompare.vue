@@ -55,7 +55,7 @@
 
 <script setup lang="ts">
 import { computed, markRaw, watch } from 'vue'
-import { useNow } from '@vueuse/core'
+import { useIntervalFn, useNow } from '@vueuse/core'
 import { isErrorStatus, loading, success } from '@/db'
 import ResetIcon from '@/assets/icons/reset.svg'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
@@ -121,7 +121,7 @@ const { annotations: versionAnnotations, versionForPeriod } = useGameVersionAnno
 const eventAnnotations = useHistoryEventAnnotations(annotationOptions.enabledEvents, annotationRegions)
 const annotations = computed(() => [...versionAnnotations.value, ...eventAnnotations.value])
 
-const now = useNow({ interval: 60_000 })
+const now = useNow({ scheduler: cb => useIntervalFn(cb, 60_000) })
 const beforeDay = computed(() => now.value.toISOString().slice(0, 10))
 
 const readySources = computed(() => props.sources.filter((source): source is ComparisonSource & { selection: VehicleSelection } => source.selection !== null))

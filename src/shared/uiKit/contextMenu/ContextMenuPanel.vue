@@ -1,6 +1,6 @@
 <template>
   <div class="context-menu-panel" :style="contextMenuStyle" :class="{
-    'some-element-has-checkbox': props.items.some(i => i.type == ContextMenuItemVariant.Button && i.checkbox != undefined),
+    'some-element-has-checkbox': hasCheckboxItems,
   }" ref="panelElement" @pointerleave="panelLeave" @pointerenter="panelEnter" @pointermove="pointerMove"
     @pointerdown.stop @pointerup.stop>
 
@@ -71,6 +71,9 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   (e: 'onAction'): void
 }>()
+
+const hasCheckboxItems = computed(() => props.items.some(item =>
+  item.type == ContextMenuItemVariant.Button && item.checkbox != undefined))
 
 targetDirection.value = props.direction == 'left' ? 'left' : 'right'
 

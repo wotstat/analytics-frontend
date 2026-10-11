@@ -57,7 +57,7 @@ import SavingBattle from './assets/saving_battle.png'
 import TerritoryControl from './assets/territory_control.png'
 import WarNeverChanges from './assets/war_never_changes.png'
 import Tooltip from '@/shared/ui/components/Tooltip.vue'
-import { useNow } from '@vueuse/core'
+import { useIntervalFn, useNow } from '@vueuse/core'
 
 
 const props = defineProps<{
@@ -94,7 +94,7 @@ function getNameDescription(skill: string) {
   return namesAndDescriptions[skill as keyof typeof namesAndDescriptions]
 }
 
-const now = useNow({ interval: 1000 })
+const now = useNow({ scheduler: cb => useIntervalFn(cb, 1000) })
 const withTime = computed(() => reverted.value.map(skill => {
   const secondsAgo = Math.floor((now.value.getTime() / 1000 - skill.start))
   return { ...skill, timeLabel: Math.ceil((3600 - secondsAgo) / 60) }

@@ -50,7 +50,7 @@
 
 <script setup lang="ts">
 import { computed, markRaw, onBeforeUnmount, ref, watch } from 'vue'
-import { useNow } from '@vueuse/core'
+import { useIntervalFn, useNow } from '@vueuse/core'
 import { isErrorStatus, loading, success, type Status } from '@/db'
 import TimeSeriesPanel from '@/shared/ui/chart/timeSeries/panel/TimeSeriesPanel.vue'
 import { useLegend } from '@/shared/ui/chart/legend/useLegend'
@@ -100,7 +100,7 @@ const { annotations: versionAnnotations } = useGameVersionAnnotations(
 const eventAnnotations = useHistoryEventAnnotations(annotationOptions.enabledEvents, computed(() => props.filters.regions))
 const annotations = computed(() => [...versionAnnotations.value, ...eventAnnotations.value])
 
-const now = useNow({ interval: 60_000 })
+const now = useNow({ scheduler: cb => useIntervalFn(cb, 60_000) })
 
 const beforeDay = computed(() => now.value.toISOString().slice(0, 10))
 
