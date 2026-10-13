@@ -3,7 +3,7 @@ import vueParser from 'vue-eslint-parser'
 
 export default [
   // Ignore build artifacts
-  { ignores: ['dist/**', 'node_modules/**', 'public/**'] },
+  { ignores: ['dist/**', 'dist-meta/**', '.dist-meta-*/**', 'node_modules/**', 'public/**'] },
 
   // JS/TS files
   {

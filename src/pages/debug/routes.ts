@@ -6,6 +6,7 @@ export const debugGroups = [
   { value: 'uiKit', title: 'UI-компоненты' },
   { value: 'chart', title: 'Графики' },
   { value: 'game', title: 'Игровой домен' },
+  { value: 'meta', title: 'Open Graph' },
 ] as const
 
 export type DebugGroup = typeof debugGroups[number]['value']
@@ -19,6 +20,13 @@ type Entry = {
 }
 
 const entries = [
+  {
+    path: 'meta/delayed',
+    title: 'Meta: задержка 5 секунд',
+    description: 'Готовность карточки через useMetaReady и замер асинхронной подготовки.',
+    group: 'meta',
+    component: () => import('./pages/meta/Delayed.vue'),
+  },
   {
     path: 'query-storage',
     title: 'Query storage',

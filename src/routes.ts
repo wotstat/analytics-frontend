@@ -70,6 +70,16 @@ const routes = [
 
   { path: '/widgets/:widget*', component: asyncPage(() => import('./pages/widgets/Index.vue')) },
 
+  {
+    path: '/meta',
+    component: () => import('./pages/metaStudio/Studio.vue'),
+    meta: { clearPage: true },
+    children: [
+      { path: '', component: () => import('./pages/metaStudio/Gallery.vue') },
+      { path: 'cards/:id', component: () => import('./pages/metaStudio/CardEditor.vue') },
+    ],
+  },
+
   ...debugRoutes,
 ] satisfies RouteRecordRaw[]
 

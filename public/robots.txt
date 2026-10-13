@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /debug
+Disallow: /meta
 
 Sitemap: https://wotstat.info/sitemap.xml

@@ -1,4 +1,6 @@
-import { defineConfig } from 'vite'
+import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { defineConfig, type UserConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { plugin as mdPlugin, Mode } from 'vite-plugin-markdown'
 import svgLoader from 'vite-svg-loader'
@@ -9,18 +11,24 @@ import MarkdownIt from 'markdown-it'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import { visualizer } from 'rollup-plugin-visualizer'
 
-// https://vitejs.dev/config/
-export default defineConfig({
+const projectRoot = fileURLToPath(new URL('./', import.meta.url))
+const common = {
+  envDir: projectRoot,
+  resolve: { alias: { '@': resolve(projectRoot, 'src') } }
+}
+
+const svgLoaderConfig: Parameters<typeof svgLoader>[0] = {
+  svgoConfig: {
+    plugins: ['removeDimensions']
+  }
+}
+
+const mainConfig: UserConfig = {
+  ...common,
   plugins: [
     vue(),
     vueDevTools(),
-    svgLoader({
-      svgoConfig: {
-        plugins: [
-          'removeDimensions'
-        ]
-      }
-    }),
+    svgLoader(svgLoaderConfig),
     mdPlugin({
       mode: [Mode.VUE],
       markdownIt: new MarkdownIt({ html: true })
@@ -33,10 +41,47 @@ export default defineConfig({
       gzipSize: true,
       brotliSize: true,
     })
-  ],
-  resolve: {
-    alias: {
-      '@': '/src'
+  ]
+}
+
+const metaRendererConfig: UserConfig = {
+  ...common,
+  root: resolve(projectRoot, 'src/meta/renderer'),
+  publicDir: false,
+  plugins: [vue(), svgLoader(svgLoaderConfig)],
+  build: {
+    outDir: resolve(projectRoot, 'dist-meta/client'),
+    emptyOutDir: true
+  }
+}
+
+const metaServerConfig: UserConfig = {
+  ...common,
+  root: projectRoot,
+  publicDir: false,
+  plugins: [{
+    name: 'meta-server-components',
+    load: id => id.endsWith('.vue') ? 'export default {}' : undefined,
+  }],
+  ssr: { noExternal: true },
+  build: {
+    ssr: resolve(projectRoot, 'src/meta/utils.ts'),
+    outDir: resolve(projectRoot, 'dist-meta'),
+    emptyOutDir: false,
+    rolldownOptions: {
+      output: {
+        format: 'esm',
+        entryFileNames: 'server.mjs',
+        codeSplitting: false
+      }
     }
   }
+}
+
+export default defineConfig(() => {
+  const target = process.env.BUILD_TARGET ?? 'main'
+  if (target === 'main') return mainConfig
+  if (target === 'meta-renderer') return metaRendererConfig
+  if (target === 'meta-server') return metaServerConfig
+  throw new Error(`Unknown BUILD_TARGET: ${target}`)
 })

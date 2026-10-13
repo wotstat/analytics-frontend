@@ -1,5 +1,4 @@
 /// <reference types="vite/client" />
-/// <reference types="vite-svg-loader" />
 /// <reference types="yandex-metrika-tag" />
 /// <reference types="wicg-file-system-access" />
 
@@ -11,6 +10,12 @@ interface ImportMetaEnv {
 
 interface ImportMeta {
   readonly env: ImportMetaEnv
+}
+
+declare module '*.svg?component' {
+  import type { FunctionalComponent, SVGAttributes } from 'vue'
+  const component: FunctionalComponent<SVGAttributes>
+  export default component
 }
 
 declare module '*.md' {

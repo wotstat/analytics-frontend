@@ -5,6 +5,44 @@
 - `index.html` → `src/main.ts`: импорт глобальных стилей `styles/index.scss`, создание приложения, роутер, Яндекс.Метрика (`shared/external/ym/metrika.ts`).
 - `src/App.vue`: каркас — `Header` + `HeaderSpacer` + `RouterView`, плюс корневые слои `BackgroundRoot`, `FocusEffectRoot` и `ContextMenuRoot`. Через route meta `clearPage` страница может рендериться без каркаса, `hideHeader` — без шапки. CSS-переменные `--bold-weight` подстраиваются под Windows (700 вместо 800).
 
+## Отдельный target Open Graph
+
+Определения `**/meta-definition.ts` и компоненты карточек находятся в обычном `src/`
+рядом с соответствующими страницами. В `src/meta/` код разделён по назначению:
+`utils.ts` — каталог определений, типы и размеры; `cards/` — `CardSurface` и default-карточка;
+`renderer/` — приложение для Chromium. Студия — асинхронная страница основного SPA по `/meta`
+(`pages/metaStudio/`), без iframe. Команды и зависимости общие с frontend.
+
+`src/meta/renderer/index.html` → `src/meta/renderer/main.ts` → `App.vue` — отдельное минимальное
+приложение для backend с внешним `prepare`, без собственного Vue Router.
+В `main.ts` — монтирование App, в `App.vue` — полотно, состояние задания,
+обработка ошибок карточки и ожидание готовности.
+`App` регистрирует `window.prepare` в `onMounted`, а в `onUnmounted` удаляет его
+и отменяет незавершённую подготовку. На вкладке «Карточка» студия встраивает этот же
+компонент с `embedded`: ограниченное полотно без изменения маршрута, прокрутки
+и глобальных стилей студии. Вызовы `prepare` и их длительность видны в журнале.
+Карточку выбирает общий каталог по URL из запроса. `App` напрямую рендерит `CardSurface`;
+логика `prepare` одинакова в студии и backend, `embedded` меняет только оформление.
+Backend вызывает `window.prepare({ url, format })` и дожидается Promise перед скриншотом.
+Для асинхронной подготовки карточка вызывает `useMetaReady` в setup: callback запускается
+после mount, получает `AbortSignal`, а App ждёт его завершения через `CardSurface`.
+Без хука карточка считается синхронной. Стенд `/debug/meta/delayed` проверяет задержку 5 секунд.
+Приложение не импортирует основной App, роутер сайта или студию. Команда `build` в `package.json`
+после основного SPA собирает браузерный renderer и серверный модуль метаданных через корневой
+`vite.config.ts` с целями `BUILD_TARGET=meta-renderer` и `BUILD_TARGET=meta-server`.
+Компоненты импортируются
+прямо в `meta-definition.ts` и записываются в `component`; отдельного glob компонентов
+и ограничения на имена файлов нет. `meta/utils.ts` напрямую собирается
+в `server.mjs` для Bun, без отдельной точки входа с реэкспортами.
+Только в этой сборке содержимое `.vue` заменяется пустым объектом, поэтому код
+карточек, Vue и их браузерные зависимости в Bun не попадают.
+
+Выбирается определение с наибольшим `priority`; default — обычное правило `*`
+с приоритетом -1000. Компонент изображения необязателен, поэтому определение может
+содержать только title. Стили компонентов — scoped SCSS с вложенностью;
+reset документа renderer — в блоке `<style lang="scss">` без `scoped` в `src/meta/renderer/App.vue`.
+Сборка, контракт и правила обновления описаны в [11-open-graph.md](11-open-graph.md).
+
 ## Роутинг (`src/routes.ts`)
 
 Все маршруты в одном файле. Тяжёлые страницы — через `asyncPage()` (обёртка `defineAsyncComponent` с `PageLoader` и `suspensible: true`). Карта маршрутов:
@@ -20,6 +58,7 @@
 | `/services/fixed-match-detector` | `services/fixedMatchDetect` | Детектор договорных боёв |
 | `/install` | `pages/install/Index.vue` | Установщик модов (File System Access API) |
 | `/widgets/:widget*` | `pages/widgets/Index.vue` | Каталог/просмотр OBS-виджетов (iframe на widgets.wotstat.info) |
+| `/meta` + `/meta/cards/:id` | `pages/metaStudio/` | Студия карточек и текстовых метаданных (async) |
 | `/debug` + дети | `pages/debug/Debug.vue` | Песочница технических фичей — см. ниже |
 
 Route meta, используемые лейаутом `/session`: `hideTankList`, `customTitle`, глобальные `clearPage`, `hideHeader`. Общими фильтрами владеют страницы и видимые элементы настройки; layout не подключает хранилище параметров.
@@ -38,6 +77,7 @@ Vue подключённый через `setupQueryStorage(router, history)` к�
 Страница-стенд для технических фичей: по подстранице на компонент, внутри — секции с вариантами применения, которые можно потыкать руками. Открыта по прямой ссылке (никакой авторизации), но ссылок с сайта нет, `Disallow: /debug` в `robots.txt` и `<meta name="robots" content="noindex">` на время пребывания на странице (`shared/useNoIndex.ts`). Сюда же ходят, когда надо воспроизвести баг в изоляции от боевой страницы.
 
 - **`pages/debug/routes.ts`** — единственный источник правды: массив записей `{ path, title, description, group, component }`, из которого выводятся и роуты, и навигация, и индекс. **Новая страница добавляется одной записью.** Компоненты только через `import()`, поэтому в главный бандл попадают лишь пути.
+- Раздел «Open Graph»: `/debug/meta/delayed` встраивает renderer с журналом длительности; тестовые карточки и определения лежат в `pages/debug/pages/meta/cards/`. Карточка `delayed` сообщает о готовности через `useMetaReady` после 5 секунд.
 - Раздел «Графики» содержит стенды ядра `shared/uiKit/chart`. Проектные UI-компоненты относятся к «UI-компонентам», включая таблицу данных на `/debug/composable-table` (независимые примеры колонок, сортировки, слотов, раскрытия и состояний без импорта страниц сайта), палитру и renderer рядов tooltip на `/debug/series-tooltip`, toolbar на `/debug/chart-toolbar`, временной график на `/debug/time-series` и готовую панель на `/debug/time-series-panel`.
 - **`pages/debug/Debug.vue`** — лейаут: шапка сайта остаётся, под ней не-sticky блок чипсов-ссылок (sticky ломал бы проверки скролла, флипа поповеров и позиционирования тултипов), ниже `RouterView`.
 - **`pages/debug/shared/`** — служебная обвязка, общая для всех подстраниц: `DebugPage.vue` (заголовок + описание + путь к источнику), `DebugSection.vue` (секция с якорем и строкой «на что смотреть»), `debug.scss` (не-scoped, всё внутри `.debug-root`: классы контролов, сцен `.debug-stage` с модификаторами, лога событий, таблицы состояний), `fixtures/` (синтетика с сидом и реальные запросы **в одной форме данных**, чтобы переключатель источника стоил пары строк), `useNoIndex.ts`. Плюс переиспользуемая начинка секций: `EventLog.vue` + `useEventLog.ts` (лог событий; опции `max`, `time: 'clock' | 'relative'`, `collapseRepeats` — последняя схлопывает поток одинаковых записей вроде `hoverUpdate` в «текст ×N»), `useFrameStats.ts` (средний и худший кадр за окно ~500 мс), `PlacementSelect.vue`, `ViewportBox.vue`, `useStageViewportOffset.ts` (сцена как границы вьюпорта — чтобы флип поповера и тултипа воспроизводился посреди страницы).
@@ -72,6 +112,10 @@ src/
 
 ## Конвенции кода
 
+- Браузерный `tsconfig.json` включает DOM и `types: []`; Bun-типы подключаются только
+  в `tsconfig.node.json` для `vite.config.ts`. Явные ссылки из зависимостей обходят
+  `types: []`, поэтому SVG-компоненты описаны локально в `src/vite-env.d.ts`.
+  Для архивов модов используется `fflate`; патчи типов зависимостей не нужны.
 - Алиас `@` → `/src` (vite.config + tsconfig).
 - ESLint: **одинарные кавычки**, **без точек с запятой** (`semi: never`). Соблюдай при генерации кода.
 - Компоненты: PascalCase `.vue`, композаблы `useXxx.ts`, попапки по фичам — компонент + рядом его `utils.ts`/`store.ts`/`i18n.json`.

@@ -21,10 +21,11 @@
 
 ```bash
 bun install          # зависимости
-bun run dev          # vite --host (dev-сервер)
-bun run build        # bun run test && vue-tsc && vite build --mode prod
+bun run dev          # vite --host (dev-сервер; студия Open Graph: /meta)
+bun run check        # тесты и проверки типов
+bun run build        # тесты, проверка типов, SPA и meta-артефакт одной версии
 bun run test         # Bun: совместимость бинарных ссылок compare
-bun run preview      # предпросмотр сборки
+bun run preview      # предпросмотр SPA со студией Open Graph на /meta
 bunx eslint src      # линт (правила: одинарные кавычки, без точек с запятой)
 ```
 
@@ -39,9 +40,20 @@ bunx eslint src      # линт (правила: одинарные кавычк
 
 Прод-сборка: `--mode prod`. Режим логируется в консоль при старте (`main.ts`).
 
+Open Graph использует корневой `vite.config.ts` с целями `BUILD_TARGET=meta-renderer`
+и `BUILD_TARGET=meta-server` и тот же корень env-файлов. Основной SPA выбирает `main`.
+Renderer не запускает основное приложение или Метрику; студия — страница
+основного SPA. Подробнее: [11-open-graph.md](11-open-graph.md).
+
 ## Деплой
 
 `publish-reserve.sh` — синхронизация `dist/` в S3-бакет `wotstat.info` на Yandex Cloud Object Storage (`aws s3 sync`, профиль `wotstat`), `index.html` с уменьшенным кешем (max-age=300). Основной деплой, судя по названию скрипта, «резервный» — вероятно есть и другой канал вне репозитория.
+
+Обычный `bun run build` также собирает Open Graph в `dist-meta/`: `server.mjs`, точная копия SPA как `spa.html`
+и browser renderer в `client/`. Артефакт предназначен для volume сервиса
+`analytics-frontend-meta`; после его обновления сервис перезапускается. Команды сборки
+не меняют CI и не выполняют деплой. Подробности и ответственность Nginx за кеш ответов —
+в [11-open-graph.md](11-open-graph.md).
 
 ## Важные ограничения
 
