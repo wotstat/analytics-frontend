@@ -5,7 +5,7 @@ export function createConcurrencyGroup(limit: number) {
     throw new RangeError('Concurrency limit must be a positive integer')
   }
 
-  const pending: { order: number, start: () => void }[] = []
+  const pending: { priority: number, order: number, start: () => void }[] = []
   let active = 0
   let nextOrder = 0
 
@@ -13,7 +13,7 @@ export function createConcurrencyGroup(limit: number) {
     while (active < limit && pending.length) pending.shift()!.start()
   }
 
-  function enqueue<T>(request: () => Promise<T>, signal: AbortSignal | undefined, order: number): Promise<T> {
+  function enqueue<T>(request: () => Promise<T>, signal: AbortSignal | undefined, order: number, priority: number): Promise<T> {
     return new Promise<T>((resolve, reject) => {
       function cancel() {
         const index = pending.indexOf(task)
@@ -37,29 +37,30 @@ export function createConcurrencyGroup(limit: number) {
         }).then(resolve, reject)
       }
 
-      const task = { order, start }
+      const task = { priority, order, start }
       if (signal?.aborted) {
         cancel()
         return
       }
 
       signal?.addEventListener('abort', cancel, { once: true })
-      const index = pending.findIndex(task => task.order > order)
+      const index = pending.findIndex(task =>
+        task.priority < priority || (task.priority === priority && task.order > order))
       if (index === -1) pending.push(task)
       else pending.splice(index, 0, task)
       drain()
     })
   }
 
-  function run<T>(request: () => Promise<T>, signal?: AbortSignal) {
-    return enqueue(request, signal, nextOrder++)
+  function run<T>(request: () => Promise<T>, signal?: AbortSignal, priority = 0) {
+    return enqueue(request, signal, nextOrder++, priority)
   }
 
   function createOrderedGroup() {
     const order = nextOrder++
     return {
-      run<T>(request: () => Promise<T>, signal?: AbortSignal) {
-        return enqueue(request, signal, order)
+      run: <T>(request: () => Promise<T>, signal?: AbortSignal, priority = 0) => {
+        return enqueue(request, signal, order, priority)
       },
     }
   }

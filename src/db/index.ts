@@ -58,6 +58,7 @@ export type QueryOptions = {
   settings?: ClickHouseSettings
   abortSignal?: AbortSignal
   concurrency?: ConcurrencyGroup
+  priority?: number
 }
 
 export type ReactiveQueryOptions = QueryOptions & { enabled?: Ref<boolean> }
@@ -67,6 +68,7 @@ type ActiveQuery = {
   promise: Promise<QueryResponse<unknown>>
   abortSignal?: AbortSignal
   concurrency?: ConcurrencyGroup
+  priority: number
 }
 
 const activeQueries = new Map<string, Set<ActiveQuery>>()
@@ -84,6 +86,7 @@ export async function query<T>(query: string, options: QueryOptions = {}): Promi
     format = 'JSON',
     settings = {}, abortSignal,
     concurrency,
+    priority = 0,
     cache,
     proxyCache = false
   } = options
@@ -96,7 +99,7 @@ export async function query<T>(query: string, options: QueryOptions = {}): Promi
 
   if (allowCache) {
     const active = [...activeQueries.get(cacheKey) ?? []].find(request =>
-      request.abortSignal === abortSignal && request.concurrency === concurrency)
+      request.abortSignal === abortSignal && request.concurrency === concurrency && request.priority === priority)
     if (active) return active.promise as Promise<QueryResponse<T>>
   }
 
@@ -141,11 +144,11 @@ export async function query<T>(query: string, options: QueryOptions = {}): Promi
     return value
   }
 
-  const current = concurrency ? concurrency.run(execute, abortSignal) : execute()
+  const current = concurrency ? concurrency.run(execute, abortSignal, priority) : execute()
   if (!allowCache) return current
 
   const requests = activeQueries.get(cacheKey) ?? new Set<ActiveQuery>()
-  const request: ActiveQuery = { promise: current, abortSignal, concurrency }
+  const request: ActiveQuery = { promise: current, abortSignal, concurrency, priority }
   requests.add(request)
   activeQueries.set(cacheKey, requests)
   try {

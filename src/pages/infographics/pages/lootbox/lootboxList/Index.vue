@@ -146,7 +146,7 @@ with containers as (
     )
 select * from containers
 left any join locales using tag
-`, queryOptions)
+`, { ...queryOptions, priority: 1 })
 
 const containersVariants = computed(() => containersTag.value.data
   .map((x) => ({
