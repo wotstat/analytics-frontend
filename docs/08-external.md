@@ -40,7 +40,7 @@
 
 - Файлы модов скачиваются с `INSTALL_URL` (`pages/install/utils/downloader.ts`).
 - Запись в папку игры — File System Access API (`showDirectoryPicker`, типы `@types/wicg-file-system-access`); хэндл папки сохраняется в IndexedDB через `idb-keyval` и переиспользуется между визитами.
-- Если API недоступен (не Chromium) — фолбэк: сборка zip-архива в браузере (`jszip`, `exportArchive/`).
+- Если API недоступен (не Chromium) — фолбэк: сборка zip-архива в браузере (`fflate`, `exportArchive/`), без сжатия и изменения содержимого файлов модов.
 
 ## Виджеты (iframe)
 

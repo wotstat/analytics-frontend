@@ -725,10 +725,10 @@ SQL фильтрует непосредственно `battleLevel = 'same'/'top
 
 Устанавливает моды прямо в папку игры через **File System Access API** (только Chromium).
 
-- `utils/installer.ts` — ядро: выбор папки игры (`showDirectoryPicker`), хэндл хранится в IndexedDB (`idb-keyval`), определение игры/региона и версии, парсинг имён `*.wotmod|*.mtmod`, копирование файлов, сравнение версий (`dotSeparatedCompare`).
+- `utils/installer.ts` — ядро: выбор папки игры (`showDirectoryPicker`), хэндл хранится в IndexedDB (`idb-keyval`), определение игры/региона и версии, парсинг имён `*.wotmod|*.mtmod`, копирование файлов, сравнение версий (`dotSeparatedCompare`). Для чтения версии `fflate.unzip` извлекает только корневой `meta.xml`.
 - `utils/downloader.ts` — скачивание модов с `INSTALL_URL`.
 - `mods/mods.ts` — реестр модов: обязательный `wotstat.analytics`, `wotstat.positions`, `wotstat.widgets` + списки `lestaMods`/`wgMods` (разные для Lesta и WG) с зависимостями `required`. Описания модов — markdown в `mods/details/ru/*.md`, i18n — `mods/i18n.json`.
-- `components/` — карточки модов с 3D-наклоном (`modCard/useCardRotation.ts`), экспорт архива вместо установки (`exportArchive/` через jszip), конфетти по завершении.
+- `components/` — карточки модов с 3D-наклоном (`modCard/useCardRotation.ts`), экспорт архива вместо установки (`exportArchive/` через `fflate.zip`), конфетти по завершении. ZIP создаётся без сжатия (`level: 0`), с `ИНСТРУКЦИЯ.txt` и файлами в `mods/<версия>/`; байты самих `.mtmod`/`.wotmod` не меняются. Служебные ZIP-заголовки отличаются от прежнего экспорта через JSZip.
 
 ## Виджеты — `pages/widgets/` (маршруты `/widgets/:widget*`, `/session/widgets/:widget*`)
 

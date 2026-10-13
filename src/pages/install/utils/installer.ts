@@ -155,7 +155,7 @@ async function getAllMods(mods: FileSystemDirectoryHandle) {
 
 
 async function checkModsVersion(mods: FileSystemDirectoryHandle, check: string[]) {
-  const JSZip = (await import('jszip')).default
+  const { unzip, strFromU8 } = await import('fflate')
 
   const installedMods = await getAllMods(mods)
 
@@ -175,17 +175,22 @@ async function checkModsVersion(mods: FileSystemDirectoryHandle, check: string[]
       const file = await m.handler.getFile()
       if (!file) return null
 
-      let archive: typeof JSZip
+      let content: string
       try {
-        archive = await JSZip.loadAsync(await file.arrayBuffer())
+        const data = new Uint8Array(await file.arrayBuffer())
+        const meta = await new Promise<Uint8Array | undefined>((resolve, reject) => {
+          unzip(data, { filter: entry => entry.name === 'meta.xml' }, (error, files) => {
+            if (error) return reject(error)
+            resolve(files['meta.xml'])
+          })
+        })
+
+        if (!meta) return null
+        content = strFromU8(meta)
       } catch (error) {
         console.warn('Error loading ZIP archive:', error)
         return null
       }
-
-      const meta = archive.file('meta.xml')
-      if (!meta) return null
-      const content = await meta.async('text')
 
       const parser = new DOMParser()
       const xmlDoc = parser.parseFromString(content, 'application/xml')

@@ -14,7 +14,7 @@
 - **@clickhouse/client-web** — запросы напрямую в ClickHouse из браузера.
 - **UniversalChart** — собственный SVG-движок графиков в `src/shared/uiKit/chart/universalChart/`.
 - **VueUse** (`@vueuse/core`) — активно используется повсюду (`useLocalStorage`, `useWebSocket`, `useElementVisibility`, ...).
-- Прочее: `jszip` (архивы модов), `idb-keyval` (IndexedDB), `canvas-confetti`, `motion`, `colorjs.io`, `typescript-cubic-spline`, `@timohausmann/quadtree-ts` (хит-тесты на графиках).
+- Прочее: `fflate` (архивы модов и DEFLATE для ссылок сравнения), `idb-keyval` (IndexedDB), `canvas-confetti`, `motion`, `colorjs.io`, `typescript-cubic-spline`, `@timohausmann/quadtree-ts` (хит-тесты на графиках).
 - Markdown как Vue-компоненты через `vite-plugin-markdown` (Mode.VUE) + плагины `@mdit/*` (alert, attrs, align, embed). SVG как компоненты через `vite-svg-loader`.
 
 ## Команды
