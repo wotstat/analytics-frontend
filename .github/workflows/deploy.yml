@@ -7,6 +7,10 @@ on:
 
   workflow_dispatch:
 
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -47,3 +51,31 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ru-central1
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/production.key
+          chmod 600 ~/.ssh/production.key
+          cat >>~/.ssh/config <<END
+          Host node
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/production.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+
+      - name: Copy to server
+        run: |
+          find dist/assets dist-meta/client/assets -type f -exec touch {} +
+          ssh node "mkdir -p '${{ vars.APP_PATH }}'"
+          rsync -avz --delay-updates ./dist ./dist-meta "node:${{ vars.APP_PATH }}/"
+
+      - name: Remove old assets
+        run: |
+          # 7 days since the asset last appeared in a deployed build.
+          ssh node "find '${{ vars.APP_PATH }}/dist/assets' '${{ vars.APP_PATH }}/dist-meta/client/assets' -type f -mmin +10080 -delete"
