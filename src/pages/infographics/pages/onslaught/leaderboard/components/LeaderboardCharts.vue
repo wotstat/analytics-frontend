@@ -103,11 +103,12 @@ import TipZoomChart from './tips/TipZoomChart.vue'
 import { useDisposer } from '@/shared/ui/disposer/disposer.ts'
 import OnslaughtCheckbox from '../../shared/Checkbox.vue'
 import { useLocalStorage } from '@vueuse/core'
+import { LEADERBOARD_QUERY_OPTIONS } from '../utils/cache'
 
 const props = defineProps<{
   region: string
   seasonInterval: { start: Date, end: Date, length: number }
-  refreshKey: number
+  lastRecalculation: string | null
 }>()
 
 const loading = ref(true)
@@ -129,6 +130,7 @@ const data = queryComputed<{
   placeEliteThreshold: number
   placeElitePlayers: number
 }>(() => `
+  -- last-recalculation: ${props.lastRecalculation ?? ''}
   with
     '${dateToDbDate(props.seasonInterval.start)}' as START_DATE,
     '${dateToDbDate(props.seasonInterval.end)}' as END_DATE
@@ -145,8 +147,10 @@ const data = queryComputed<{
     recalculationTime between START_DATE and END_DATE + interval 5 day
   group by recalculationTime
   order by recalculationTime
-  -- refresh-key: ${props.refreshKey}
-`, { allowCache: false })
+`, {
+  ...LEADERBOARD_QUERY_OPTIONS,
+  cache: () => props.lastRecalculation ? LEADERBOARD_QUERY_OPTIONS.cache : { ttl: 0 },
+})
 
 watchEffect(() => {
   loading.value = data.value.status == loadingState

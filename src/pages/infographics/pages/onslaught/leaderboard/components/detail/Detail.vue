@@ -92,6 +92,7 @@ import HeaderTooltip from '@/shared/ui/chart/tooltip/HeaderTooltip.vue'
 import TriangleUp from '../../assets/triangle-up.svg'
 import TipZoomChart from '../tips/TipZoomChart.vue'
 import { useDisposer } from '@/shared/ui/disposer/disposer.ts'
+import { LEADERBOARD_QUERY_OPTIONS } from '../../utils/cache'
 
 const loading = ref(true)
 
@@ -111,6 +112,7 @@ const props = defineProps<{
   bdid: number
   region: string
   seasonInterval: { start: Date, end: Date, length: number }
+  lastRecalculation: string | null
 }>()
 
 const MINUTE = 1 * 60
@@ -119,6 +121,7 @@ const DAY = HOUR * 24
 const DAY_MS = DAY * 1000
 
 const data = queryComputed<{ recalculationTime: string, rank: number, rating: number, battlesCount: number }>(() => `
+  -- last-recalculation: ${props.lastRecalculation ?? ''}
   with
     '${dateToDbDate(props.seasonInterval.start)}' as START_DATE,
     '${dateToDbDate(props.seasonInterval.end)}' as END_DATE,
@@ -145,7 +148,10 @@ const data = queryComputed<{ recalculationTime: string, rank: number, rating: nu
   select *
   from player
   right join recalculation using recalculationTime
-`)
+`, {
+  ...LEADERBOARD_QUERY_OPTIONS,
+  cache: () => props.lastRecalculation ? LEADERBOARD_QUERY_OPTIONS.cache : { ttl: 0 },
+})
 
 watchEffect(() => {
   loading.value = data.value.status == loadingState

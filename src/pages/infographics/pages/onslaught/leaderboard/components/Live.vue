@@ -1,5 +1,5 @@
 <template>
-  <div class="live" v-if="lastUpdate.data && lastUpdate.status.value == 'OPEN' && liveUpdate"
+  <div class="live" v-if="isConnected && liveUpdate"
     v-tooltip.instant.bottom-float="{ class: 'comp7-tooltip', text: 'Таблица автоматически синхронизируется с сервером' }">
     {{ liveUpdate.text }}
   </div>
@@ -7,44 +7,30 @@
 
 
 <script setup lang="ts">
-import { useAnalyticsRealtime } from '@/shared/external/realtime/useAnalyticsRealtime'
-import { computed, watch } from 'vue'
+import { computed } from 'vue'
 
 const props = defineProps<{
-  region: string
+  lastRecalculation: string | null
+  isConnected: boolean
   seasonInterval: { start: Date, end: Date, length: number } | null
   leaderboardDay: { day: string, recalculation: string, lastRank: number } | null
 }>()
 
-
-const emit = defineEmits<{
-  mayUpdate: []
-}>()
-
-const lastUpdate = useAnalyticsRealtime('comp7LastRecalculation')
 const liveUpdate = computed(() => {
-  if (!lastUpdate.data.value) return null
-
-  const current = lastUpdate.data.value[props.region]
-  if (!current) return null
+  if (!props.lastRecalculation) return null
   if (!props.seasonInterval) return null
   if (!props.leaderboardDay) return null
 
   const seasonEnd = props.seasonInterval.end
-  const recalculationDate = new Date(current.recalculation + 'Z')
+  const recalculationDate = new Date(props.lastRecalculation + 'Z')
   const lastLoadedDate = new Date(props.leaderboardDay.recalculation + 'Z')
 
   if (Date.now() > (seasonEnd.getTime() + 1000 * 60 * 60 * 24)) return { text: 'Сезон закончился' }
 
-  if (recalculationDate.getTime() == lastLoadedDate.getTime()) return { text: 'LIVE', isLive: true }
+  if (recalculationDate.getTime() == lastLoadedDate.getTime()) return { text: 'LIVE' }
 
-  return { text: 'Можно обновить', mayUpdate: true }
+  return { text: 'Можно обновить' }
 })
-
-
-watch(liveUpdate, (value, old) => {
-  if (value?.mayUpdate && !old?.mayUpdate) emit('mayUpdate')
-}, { immediate: true })
 
 
 </script>

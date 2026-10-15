@@ -33,8 +33,12 @@
                     'overflow-visible': searchResultExpansionComplete,
                   }">
                     <div class="search-expandable-inner">
-                      <Detail :key="`${searchedPlayer.bdid}-${region}-${selectedSeason}`" :bdid="searchedPlayer.bdid"
-                        :region="region" :seasonInterval="seasonInterval" />
+                      <Detail
+                        :key="`${searchedPlayer.bdid}-${region}-${selectedSeason}`"
+                        :bdid="searchedPlayer.bdid"
+                        :region="region"
+                        :seasonInterval="seasonInterval"
+                        :lastRecalculation="leaderboardDay?.recalculation ?? null" />
                     </div>
                   </div>
                 </td>
@@ -113,8 +117,12 @@
       </div>
     </div>
 
-    <LeaderboardCharts v-if="seasonInterval" :key="`${region}-${selectedSeason}`" class="leaderboard-charts"
-      :region="region" :seasonInterval="seasonInterval" :refreshKey="chartsRefreshKey" />
+    <LeaderboardCharts v-if="seasonInterval"
+      :key="`${region}-${selectedSeason}`"
+      class="leaderboard-charts"
+      :region="region"
+      :seasonInterval="seasonInterval"
+      :lastRecalculation="leaderboardDay?.recalculation ?? null" />
 
     <div class="info">
       <PageSelector :start="1" :end="endPage" v-model="page" class="page-selector"
@@ -123,8 +131,10 @@
 
       <div class="last-recalculation">
         <p v-if="updatedAt">Обновлено: {{ updatedAt }}</p>
-        <Live :region="region" :seasonInterval="seasonInterval" :leaderboardDay="leaderboardDay"
-          @mayUpdate="loadLatestData" />
+        <Live :seasonInterval="seasonInterval"
+          :leaderboardDay="leaderboardDay"
+          :lastRecalculation="lastRecalculation"
+          :isConnected="lastUpdate.status.value == 'OPEN'" />
       </div>
     </div>
 
@@ -155,8 +165,13 @@
             'searched': searchedPlayer?.bdid == line.bdid,
           }">
             <td colspan="6">
-              <Detail :bdid="line.bdid" :region="region" :seasonInterval="seasonInterval"
-                v-model:captureClose="captureDetailClose" v-model:selectedInterval="selectedInterval" />
+              <Detail
+                :bdid="line.bdid"
+                :region="region"
+                :seasonInterval="seasonInterval"
+                :lastRecalculation="leaderboardDay?.recalculation ?? null"
+                v-model:captureClose="captureDetailClose"
+                v-model:selectedInterval="selectedInterval" />
             </td>
           </tr>
 
@@ -180,10 +195,9 @@
 
 
 <script setup lang="ts">
-import { dateToDbDate, query, queryComputedFirst } from '@/db'
-import { computed, nextTick, ref, watch, watchEffect, useTemplateRef } from 'vue'
+import { dateToDbDate, query } from '@/db'
+import { computed, nextTick, ref, watch, useTemplateRef } from 'vue'
 import LeaderboardLine from './components/LeaderboardLine.vue'
-import { regionToGame } from '@/shared/game/domain/wot'
 import Detail from './components/detail/Detail.vue'
 import Loader from '../shared/Loader.vue'
 
@@ -199,6 +213,8 @@ import { useMeta } from '@/shared/composition/useMeta'
 import type { SelectedInterval } from './components/detail/types.ts'
 import { useStableScrollbarGutter } from '@/shared/composition/useStableScrollbarGutter.ts'
 import LeaderboardCharts from './components/LeaderboardCharts.vue'
+import { useAnalyticsRealtime } from '@/shared/external/realtime/useAnalyticsRealtime'
+import { LEADERBOARD_QUERY_OPTIONS } from './utils/cache'
 
 useMeta({
   title: 'Таблица лидеров Натиска - WotStat',
@@ -220,7 +236,12 @@ const seasonInterval = useSeasonInterval(seasons, selectedSeason, region)
 const leaderboardDay = ref<{ day: string, recalculation: string, lastRank: number, eliteThreshold: number, lastEliteRank: number } | null>(null)
 const leaderboardData = ref<LeaderboardData[]>([])
 const isLoading = ref(false)
-const chartsRefreshKey = ref(0)
+const lastUpdate = useAnalyticsRealtime('comp7LastRecalculation')
+const lastRecalculation = computed(() => {
+  if (lastUpdate.status.value !== 'OPEN') return null
+  return lastUpdate.data.value?.[region.value]?.recalculation ?? null
+})
+let loadedRecalculation: string | null = null
 
 const selectedInterval = ref<SelectedInterval | null>(null)
 
@@ -256,65 +277,79 @@ type LeaderboardData = {
   lastDayRating: number
 }
 
-function loadLatestData() {
-  console.log('Loading latest data', region.value, selectedSeason.value)
-  chartsRefreshKey.value++
-  load(new AbortController().signal, true)
-}
+async function load(abortSignal: AbortSignal) {
+  const interval = seasonInterval.value
+  if (!interval) return
 
-async function load(abortSignal: AbortSignal, latest = false) {
-  if (!seasonInterval.value) return
+  const currentRegion = region.value
+  const currentPage = page.value
+  const recalculation = lastRecalculation.value
 
+  let resetTimeout: ReturnType<typeof setTimeout> | undefined
+  const clearResetTimeout = () => clearTimeout(resetTimeout)
+  abortSignal.addEventListener('abort', clearResetTimeout, { once: true })
   isLoading.value = true
-  if (!leaderboardDay.value || latest) {
-    const lastData = await query<{ day: string, recalculation: string, lastRank: number, lastEliteRank: number, eliteThreshold: number }>(`
-    with
-      '${dateToDbDate(seasonInterval.value.start)}' as START_DATE,
-      '${dateToDbDate(seasonInterval.value.end)}' as END_DATE,
-      (
-        select max(recalculationTime)
-        from Comp7Leaderboard
-        where 
-          not startsWith(name, 'MT_COMP_QA_') and 
-          region = '${region.value}' and
-        recalculationTime between START_DATE and END_DATE + interval 5 day
-      ) as LAST_RECALCULATION
-    select max(day) as day,
-      max(recalculationTime) as recalculation,
-      max(rank) as lastRank,
-      maxIf(rank, elite) as lastEliteRank,
-      maxIf(rank, elite) as eliteThreshold
-    from Comp7Leaderboard where
-      not startsWith(name, 'MT_COMP_QA_') and
-      region = '${region.value}' and
-      recalculationTime between START_DATE and END_DATE + interval 5 day and
-      recalculationTime = LAST_RECALCULATION
-  `, { allowCache: false })
+
+  try {
+    if (!recalculation || !leaderboardDay.value || loadedRecalculation !== recalculation) {
+      const lastData = await query<{ day: string, recalculation: string, lastRank: number, lastEliteRank: number, eliteThreshold: number }>(`
+        -- last-recalculation: ${recalculation ?? ''}
+        with
+          '${dateToDbDate(interval.start)}' as START_DATE,
+          '${dateToDbDate(interval.end)}' as END_DATE,
+          (
+            select max(recalculationTime)
+            from Comp7Leaderboard
+            where
+              not startsWith(name, 'MT_COMP_QA_') and
+              region = '${currentRegion}' and
+              recalculationTime between START_DATE and END_DATE + interval 5 day
+          ) as LAST_RECALCULATION
+        select max(day) as day,
+          max(recalculationTime) as recalculation,
+          max(rank) as lastRank,
+          maxIf(rank, elite) as lastEliteRank,
+          maxIf(rank, elite) as eliteThreshold
+        from Comp7Leaderboard where
+          not startsWith(name, 'MT_COMP_QA_') and
+          region = '${currentRegion}' and
+          recalculationTime between START_DATE and END_DATE + interval 5 day and
+          recalculationTime = LAST_RECALCULATION
+      `, {
+        ...LEADERBOARD_QUERY_OPTIONS,
+        abortSignal,
+        cache: recalculation ? LEADERBOARD_QUERY_OPTIONS.cache : { ttl: 0 },
+      })
+
+      if (abortSignal.aborted) return
+      if (lastData.data.length == 0) return
+
+      leaderboardDay.value = lastData.data[0]
+      loadedRecalculation = recalculation
+    }
+
+    resetTimeout = setTimeout(() => leaderboardData.value = [], 500)
+
+    const data = await query<LeaderboardData>(`
+      select day, name, bdid, clan, clanColor, lastRank, lastDayRank, lastBattlesCount, lastDayBattlesCount, lastRating, lastDayRating
+      from Comp7LeaderboardDailyByRank final
+      where not startsWith(name, 'MT_COMP_QA_') and region = '${currentRegion}' and
+        day = '${leaderboardDay.value.day}' and
+        lastRank between ${(currentPage - 1) * 100 + 1} and ${currentPage * 100} and
+        lastRecalculationTime = '${leaderboardDay.value.recalculation}'
+      order by lastRank
+    `, { ...LEADERBOARD_QUERY_OPTIONS, abortSignal })
 
     if (abortSignal.aborted) return
-    if (lastData.data.length == 0) return
 
-    leaderboardDay.value = lastData.data[0]
+    leaderboardData.value = data.data
+  } catch (error) {
+    if (!abortSignal.aborted) console.error(error)
+  } finally {
+    clearResetTimeout()
+    abortSignal.removeEventListener('abort', clearResetTimeout)
+    if (!abortSignal.aborted) isLoading.value = false
   }
-
-  const resetTimeout = setTimeout(() => leaderboardData.value = [], 500)
-  abortSignal.addEventListener('abort', () => clearTimeout(resetTimeout))
-
-  const data = await query<LeaderboardData>(`
-    select day, name, bdid, clan, clanColor, lastRank, lastDayRank, lastBattlesCount, lastDayBattlesCount, lastRating, lastDayRating
-    from Comp7LeaderboardDailyByRank final
-    where not startsWith(name, 'MT_COMP_QA_') and region = '${region.value}' and
-      day = '${leaderboardDay.value.day}' and 
-      lastRank between ${(page.value - 1) * 100 + 1} and ${page.value * 100} and
-      lastRecalculationTime = '${leaderboardDay.value.recalculation}'
-    order by lastRank
-  `, { abortSignal, allowCache: false })
-
-  if (abortSignal.aborted) return
-
-  clearTimeout(resetTimeout)
-  leaderboardData.value = data.data
-  isLoading.value = false
 }
 
 watch([selectedSeason, region], () => {
@@ -324,7 +359,11 @@ watch([selectedSeason, region], () => {
   page.value = 1
 })
 
-watchWithAbortSignal([region, page, selectedSeason, seasonInterval], signal => load(signal), { immediate: true })
+watch([region, page, selectedSeason, seasonInterval, lastRecalculation], (_, __, onCleanup) => {
+  const controller = new AbortController()
+  onCleanup(() => controller.abort())
+  load(controller.signal)
+}, { immediate: true })
 
 const searchedPlayer = ref<LeaderboardData | null>(null)
 const searchResolvedFor = ref<string | null>(null)
@@ -383,7 +422,7 @@ async function searchPlayer(abortSignal: AbortSignal) {
       lastRecalculationTime = '${leaderboardDay.value.recalculation}' and
       lower(name) = lower('${escapedName}')
     limit 1
-  `, { abortSignal, allowCache: false })
+  `, { ...LEADERBOARD_QUERY_OPTIONS, abortSignal })
 
   if (abortSignal.aborted) return
 
