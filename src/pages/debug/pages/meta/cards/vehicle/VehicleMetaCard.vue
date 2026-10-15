@@ -1,5 +1,6 @@
 <template>
   <div class="vehicle-meta-card">
+    <VehicleImage v-if="tag" class="vehicle-image" :tag size="shop" loading="eager" />
     <div class="card-heading">
       <span>WotStat Analytics</span>
       <span>DEBUG / OPEN GRAPH</span>
@@ -21,6 +22,7 @@ import { ref } from 'vue'
 import { DAILY_CACHE, query } from '@/db'
 import { useMetaReady } from '@/meta/cards/useMetaReady'
 import type { RenderContext } from '@/meta/utils'
+import VehicleImage from '@/shared/game/components/vehicles/vehicleImage/VehicleImage.vue'
 
 const props = defineProps<{ context: RenderContext }>()
 const tag = new URL(props.context.url).searchParams.get('tag') ?? ''
@@ -60,12 +62,29 @@ useMetaReady(async ({ signal }) => {
 
 <style scoped lang="scss">
 .vehicle-meta-card {
+  position: relative;
+  overflow: hidden;
   height: 100%;
   padding: 64px 72px 54px;
   display: flex;
   flex-direction: column;
   background: #242d38;
   color: #f7f7f8;
+
+  .vehicle-image {
+    position: absolute;
+    top: 50%;
+    right: -90px;
+    width: 660px;
+    transform: translateY(-50%);
+    object-fit: contain;
+  }
+
+  .card-heading,
+  .message,
+  .card-footer {
+    position: relative;
+  }
 
   .card-heading,
   .card-footer {
@@ -87,6 +106,7 @@ useMetaReady(async ({ signal }) => {
   }
 
   .message {
+    max-width: 540px;
     margin: auto 0;
 
     p {
