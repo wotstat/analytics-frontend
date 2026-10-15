@@ -48,24 +48,51 @@ Renderer не запускает основное приложение или М
 ## Деплой
 
 Продовый CI — `.github/workflows/deploy.yml`: push в `main` или ручной запуск.
-После `bun run build` он сохраняет публикацию `dist/` в S3-бакет `wotstat.info`
-и копирует по SSH обе сборки в каталог из GitHub Actions variable `APP_PATH`
-(задать `/app/wotstat/analytics-frontend`):
+`bun run build` собирает SPA и meta, затем `scripts/release.ts` создаёт
+`dist-meta/release.json`: SHA-256 каждого файла обеих сборок и общий content ID.
+`dist/index.html` и `dist-meta/spa.html` должны совпадать. Манифест проверяется на сервере.
 
-- `dist/` — основной сайт;
-- `dist-meta/` — `server.mjs`, копия SPA как `spa.html` и browser renderer в `client/`.
+CI сохраняет независимую резервную публикацию `dist/` в S3, затем загружает
+`dist/` и `dist-meta/` в `APP_PATH/incoming/<run-id>-<attempt>/` и вызывает
+`META_APP_PATH/current/rerun.sh frontend --app-dir META_APP_PATH --incoming ...`.
+S3 остаётся аварийным каналом для ручного переключения DNS; его `sync --delete`
+не участвует в политике хранения основного сервера.
 
-Нужны secrets `SSH_HOST`, `SSH_USER`, `SSH_KEY`; пользователь SSH должен иметь право
-записи в каталог назначения. Перед `rsync --delay-updates` CI обновляет `mtime` файлов
-в `dist/assets/` и `dist-meta/client/assets/`; `rsync -a` переносит эти даты на сервер.
-После успешного копирования удаляются файлы из этих двух каталогов, которые не входили
-ни в одну опубликованную сборку больше 7 дней. Текущие assets сохраняются независимо
-от того, когда впервые появились. Очистка выполняется при деплое; продовые запуски CI идут по одному.
-На этом этапе CI только доставляет файлы: подключение Nginx и перезапуск
-`analytics-frontend-meta` выполняются отдельно. Контракт артефакта — в [11-open-graph.md](11-open-graph.md).
+GitHub Actions variables:
 
-S3 остаётся резервным каналом после переключения Nginx; до переключения сайт работает
-по прежней схеме. `publish-reserve.sh` позволяет обновить S3 вручную через AWS-профиль `wotstat`.
+- `APP_PATH` = `/app/wotstat/analytics-frontend`;
+- `META_APP_PATH` = `/app/wotstat/og-meta` (это значение используется по умолчанию).
+
+Secrets SSH прежние: `SSH_HOST`, `SSH_USER`, `SSH_KEY`; для S3 — `ACCESS_KEY_ID`,
+`SECRET_ACCESS_KEY`. На Linux-сервере нужны Bun 1.4.3, Docker с Compose v2,
+`flock` из `util-linux`, права на Docker и запись в каталоги обоих приложений.
+Первый meta deployment запускается вручную на сервере с новой frontend-сборкой
+через `rerun.sh meta --incoming`. После его успешной активации
+появляется `META_APP_PATH/current`, и можно запускать обычный frontend CI.
+
+На основном сервере:
+
+- `releases/<id>/dist` и `releases/<id>/dist-meta` — неизменяемый комплект;
+- `shared/assets` — общий каталог хешированных assets, `/assets/` раздаётся отсюда;
+- `current` — ссылка на `dist` успешно активированного релиза для public-файлов и SPA fallback.
+
+Скрипт meta-сервиса под общим lock запускает свободный blue/green слот, ждёт
+контексты и Chromium, проверяет HTML/PNG, переключает только внутренний Nginx,
+проверяет версию через gateway, переключает fallback и удаляет старый контейнер.
+Внешний Nginx при обычных деплоях не перезагружается. Неуспешное переключение
+восстанавливает прошлую версию; прерванное — восстанавливается перед следующей операцией.
+После ребута Docker запускает gateway и активную мету. `rerun.sh start --app-dir META_APP_PATH`
+восстанавливает сохранённый релиз после остановки или удаления контейнеров без новой сборки.
+
+Активный и предыдущий успешный релизы защищены от удаления. Остальные сохраняются
+7 дней + 300 секунд после окончания выдачи их HTML. Assets удаляются только когда
+их нет ни в одном сохраняемом манифесте; время изменения файлов не используется.
+Откат запускает свежий процесс с предыдущими Docker image и frontend-артефактом.
+Давно открытая вкладка после окончания срока хранения может потребовать обновления.
+
+Первый запуск и справка по командам:
+[analytics-frontend-meta: деплой](../../analytics-frontend-meta/README.md#деплой).
+Контракт renderer и контекстов — в [Open Graph](11-open-graph.md).
 
 ## Важные ограничения
 

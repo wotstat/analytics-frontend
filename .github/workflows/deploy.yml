@@ -70,12 +70,19 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
 
       - name: Copy to server
+        env:
+          APP_PATH: ${{ vars.APP_PATH }}
         run: |
-          find dist/assets dist-meta/client/assets -type f -exec touch {} +
-          ssh node "mkdir -p '${{ vars.APP_PATH }}'"
-          rsync -avz --delay-updates ./dist ./dist-meta "node:${{ vars.APP_PATH }}/"
+          incoming="$APP_PATH/incoming/$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          printf -v command '%q ' mkdir -p "$incoming"
+          ssh node "$command"
+          rsync -avz --protect-args ./dist ./dist-meta "node:$incoming/"
+          echo "DEPLOY_INCOMING=$incoming" >> "$GITHUB_ENV"
 
-      - name: Remove old assets
+      - name: Activate release
+        env:
+          META_APP_PATH: ${{ vars.META_APP_PATH }}
         run: |
-          # 7 days since the asset last appeared in a deployed build.
-          ssh node "find '${{ vars.APP_PATH }}/dist/assets' '${{ vars.APP_PATH }}/dist-meta/client/assets' -type f -mmin +10080 -delete"
+          printf -v command '%q ' sh "$META_APP_PATH/current/rerun.sh" frontend \
+            --app-dir "$META_APP_PATH" --incoming "$DEPLOY_INCOMING"
+          ssh node "$command"

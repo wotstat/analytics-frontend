@@ -40,6 +40,7 @@ export function createMetaResolver(query: Query, onUpdate?: () => void) {
   )
 
   return {
+    warmup: contexts.warmup,
     readMeta: (url: URL) => {
       const definition = matchMetaDefinition(url)
       return resolveDefinition(definition, url, contexts.read(definition.contexts ?? {}))

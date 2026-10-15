@@ -59,6 +59,9 @@ export function createMetaContexts(definitions: Iterable<MetaContextDefinition>,
   }
 
   return {
+    warmup: async () => {
+      await Promise.all([...entries.values()].map(entry => entry.ready))
+    },
     read: (contexts: MetaContexts) => Object.fromEntries(
       Object.entries(contexts).map(([name, definition]) => [name, entries.get(definition.id)?.value])
     ),
