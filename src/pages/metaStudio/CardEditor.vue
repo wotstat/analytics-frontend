@@ -74,7 +74,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { metaDefinitions as cards, parsePageUrl, type MetaFormat, type RenderContext } from '@/meta/utils'
+import { parsePageUrl, type MetaFormat, type RenderContext } from '@/meta/utils'
+import { metaDefinitions as cards } from '@/meta/resolver'
 import { getBrowserMetaResolver } from '@/meta/context/browser'
 import RenderPreview from './RenderPreview.vue'
 import SocialPreview from './SocialPreview.vue'

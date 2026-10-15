@@ -25,7 +25,8 @@
 </template>
 
 <script setup lang="ts">
-import { metaDefinitions as cards, type RenderContext } from '@/meta/utils'
+import type { RenderContext } from '@/meta/utils'
+import { metaDefinitions as cards } from '@/meta/resolver'
 import { getBrowserMetaResolver } from '@/meta/context/browser'
 import ScaledCard from './ScaledCard.vue'
 

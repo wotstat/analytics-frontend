@@ -21,8 +21,8 @@ Debug-пример `/debug/meta/vehicle?tag=ussr:R45_IS-7` расположен 
 Заголовок этого же примера берёт имя из общего контекста
 `meta/contexts/vehicleNames.ts`: «ИС-7 — WotStat Analytics». Контекст загружает
 словарь `(region = 'RU', locale = 'RU')` целиком при старте и раз в час. Первоначальное
-ожидание ограничено тремя секундами. Если имени ещё нет, title содержит исходный тег;
-без тега — «Название танка — WotStat Analytics». Vue-карточка продолжает выполнять
+ожидание ограничено тремя секундами. Если имени ещё нет, title —
+«Название танка — WotStat Analytics». Vue-карточка продолжает выполнять
 свой отдельный запрос через `useMetaReady`.
 
 В сборке renderer `VITE_META_RENDERER=true` выбирает `/api/db/` локального origin.
@@ -67,7 +67,8 @@ src/
    │  ├─ index.html      # HTML-точка входа renderer
    │  ├─ main.ts         # монтирование App
    │  └─ App.vue         # полотно, context, prepare, ожидание готовности и reset
-   ├─ utils.ts           # типы, форматы, каталог и resolver; точка входа server.mjs
+   ├─ utils.ts           # типы, форматы и чистые хелперы
+   ├─ resolver.ts        # каталог и resolver; точка входа server.mjs
    ├─ context/           # типы контекстов, загрузка, запросы и адаптация для студии
    ├─ contexts/          # общие объявления контекстов, например vehicleNames
    └─ cards/
@@ -98,7 +99,7 @@ src/
 Неудачная сборка останавливает команду, её результат не публикуется.
 Артефакт передаётся на сервер только после успешного завершения всей команды сборки.
 Сборка `server.mjs` использует Vite SSR как режим упаковки модуля, без SSR страниц.
-Точка входа — непосредственно `meta/utils.ts`, который также экспортирует `formats`.
+Точка входа — непосредственно `meta/resolver.ts`, который также экспортирует `formats`.
 Glob раскрывается в статические импорты. Полученный модуль не зависит от Vue и DOM;
 Bun загружает его при старте, создаёт клиент через `createDatabase(database)`
 и передаёт его `query` в `createMetaResolver(query)`.
@@ -115,9 +116,14 @@ dist-meta/
 ```
 
 Renderer не импортирует основной `App.vue`, его роутер или студию. Компоненты карточек
-подключаются обычными импортами из `meta-definition.ts`. `CardSurface.vue` использует
-`definition.component` напрямую: отдельного glob компонентов, реестра и ограничения
-на имя `.vue`-файла нет. В renderer попадают только импортированные карточки и их зависимости.
+подключаются обычными импортами из `meta-definition.ts`. Каждый такой модуль содержит
+`export default defineMetaDefinition({ ... })`. `CardSurface.vue` использует общий каталог
+из `resolver.ts` и выбирает компонент по готовому `meta.definitionId`.
+Определения собираются обычным Vite без специального преобразования. Код загрузчиков
+контекстов может входить в renderer-бандл, но renderer не создаёт resolver и не запускает
+эти загрузчики: метаданные ему передаёт Bun или страница студии/debug.
+Собственные запросы Vue-карточек выполняются через `useMetaReady`.
+Отдельного реестра и ограничения на имя `.vue`-файла нет.
 Общие парсеры и компоненты можно импортировать обычным `@/…`; `public/` сайта
 в renderer не копируется, поэтому ресурсы карточек импортируются явно.
 
@@ -130,14 +136,16 @@ Renderer не импортирует основной `App.vue`, его роут
 ## Определения и выбор по URL
 
 Создайте `meta-definition.ts` в любой вложенной директории `src/`. Ручной регистрации
-нет: каталог автоматически импортирует `src/**/meta-definition.ts`.
+нет: каталог автоматически импортирует `src/**/meta-definition.ts`. В каждом модуле
+один default-экспорт вызова `defineMetaDefinition` с объектом определения.
 
 ```ts
-import type { MetaDefinition } from '@/meta/utils'
+import { defineMetaDefinition } from '@/meta/utils'
 import Card from './Card.vue'
 
-const playerMeta = {
+export default defineMetaDefinition({
   id: 'player',
+  component: Card,
   priority: 100,
   match: (url: URL) => url.pathname === '/player',
   meta: (url: URL) => ({
@@ -145,13 +153,10 @@ const playerMeta = {
     description: 'Статистика игрока WotStat',
     imageAlt: 'Карточка игрока',
   }),
-  component: Card,
   cache: { htmlSeconds: 300, imageSeconds: 3600 },
   name: 'Игрок',
   examples: [{ name: 'Пример', url: 'https://wotstat.info/player?nickname=Player' }],
-} satisfies MetaDefinition
-
-export default playerMeta
+})
 ```
 
 `match` принимает точный pathname, `'*'` или синхронную функцию от полного URL.
@@ -174,21 +179,24 @@ DOM или импорт browser-only модулей для вычисления 
 `component` — необязательный Vue-компонент, импортированный из `.vue` обычным
 `import Card from './Card.vue'`. Имя файла и расположение произвольные; работают
 относительные пути и алиас `@/…`. Определения — обычные TypeScript-модули:
-можно использовать константы, spread и функции. Отдельного AST-парсера нет.
+можно использовать константы, spread и функции.
+Модули определений и контекстов не должны выполнять запросы, запускать таймеры
+или другие побочные действия при импорте: загрузка выполняется только внутри `load`.
+Импорт определения не запускает подготовку метаданных; её запускает создание resolver.
 Импорт карточки служит для рендера; вычисление `match` и `meta` не должно обращаться
 к внутренним свойствам Vue-компонента, поскольку для backend он заменяется пустым объектом.
 
 Для страницы без картинки достаточно такого определения:
 
 ```ts
-import type { MetaDefinition } from '@/meta/utils'
+import { defineMetaDefinition } from '@/meta/utils'
 
-export default {
+export default defineMetaDefinition({
   id: 'about',
   priority: 10,
   match: '/about',
   meta: { title: 'О WotStat Analytics' },
-} satisfies MetaDefinition
+})
 ```
 
 Такое правило не получает картинку или description из default. Студия показывает
@@ -238,7 +246,8 @@ const { data } = await query<Row>(sql, {
 Ключ в `contexts` становится именем значения во втором аргументе `meta`.
 `defineMetaDefinition` выводит его тип из результата `load` и добавляет `undefined`.
 Это функция для вывода типов: она возвращает исходное определение без копирования
-объекта или обёртки над `meta`.
+объекта или обёртки над `meta`. Все определения, включая статические и определения
+без картинки, используют этот же хелпер.
 Значения общие для процесса, не зависят от URL и используются как неизменяемые снимки.
 Нужную запись по URL выбирает сам `meta`; полный словарь в HTML и Chromium не передаётся.
 

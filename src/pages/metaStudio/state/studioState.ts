@@ -1,5 +1,6 @@
 import { createGlobalState, useLocalStorage } from '@vueuse/core'
-import { metaDefinitions as cards, type MetaFormat } from '@/meta/utils'
+import type { MetaFormat } from '@/meta/utils'
+import { metaDefinitions as cards } from '@/meta/resolver'
 
 type StudioCardState = {
   mode: 'examples' | 'url'

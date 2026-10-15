@@ -1,8 +1,9 @@
-import type { MetaDefinition } from '@/meta/utils'
+import { defineMetaDefinition } from '@/meta/utils'
 import DefaultMetaCard from './DefaultMetaCard.vue'
 
-const defaultMetaCard = {
+export default defineMetaDefinition({
   id: 'default',
+  component: DefaultMetaCard,
   priority: -1000,
   match: '*',
   name: 'Общая карточка',
@@ -11,13 +12,10 @@ const defaultMetaCard = {
     { name: 'Главная', url: 'https://wotstat.info/' },
     { name: 'Техника без сравнения', url: 'https://wotstat.info/session/vehicles' }
   ],
-  component: DefaultMetaCard,
   meta: {
     title: 'WotStat Analytics',
     description: 'Статистика и аналитика для игр «Мир танков» и World of Tanks.',
     imageAlt: 'WotStat Analytics — статистика и аналитика танковых боёв',
   },
   cache: { htmlSeconds: 300, imageSeconds: 86400 },
-} satisfies MetaDefinition
-
-export default defaultMetaCard
+})

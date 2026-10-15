@@ -67,7 +67,7 @@ const metaServerConfig: UserConfig = {
   }],
   ssr: { noExternal: true },
   build: {
-    ssr: resolve(projectRoot, 'src/meta/utils.ts'),
+    ssr: resolve(projectRoot, 'src/meta/resolver.ts'),
     outDir: resolve(projectRoot, 'dist-meta'),
     emptyOutDir: false,
     rolldownOptions: {

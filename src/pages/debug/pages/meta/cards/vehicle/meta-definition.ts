@@ -4,6 +4,7 @@ import VehicleMetaCard from './VehicleMetaCard.vue'
 
 export default defineMetaDefinition({
   id: 'debug-vehicle',
+  component: VehicleMetaCard,
   priority: 100,
   match: '/debug/meta/vehicle',
   name: 'Название танка',
@@ -12,7 +13,6 @@ export default defineMetaDefinition({
     { name: 'ИС-7', url: 'https://wotstat.info/debug/meta/vehicle?tag=ussr:R45_IS-7' },
     { name: 'Неизвестный танк', url: 'https://wotstat.info/debug/meta/vehicle?tag=ussr:unknown' },
   ],
-  component: VehicleMetaCard,
   contexts: { vehicleNames },
 
   meta: (url, { vehicleNames }) => {

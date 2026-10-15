@@ -1,6 +1,6 @@
 import { shallowRef, triggerRef } from 'vue'
 import { query } from '@/db'
-import { createMetaResolver } from '../utils'
+import { createMetaResolver } from '../resolver'
 
 const resolver = shallowRef<ReturnType<typeof createMetaResolver>>()
 

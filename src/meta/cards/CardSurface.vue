@@ -6,7 +6,8 @@
 
 <script setup lang="ts">
 import { computed, provide } from 'vue'
-import { metaDefinitions, formats, type RenderContext } from '../utils'
+import { formats, type RenderContext } from '../utils'
+import { metaDefinitions } from '../resolver'
 import { metaReadyKey } from './useMetaReady'
 
 const props = defineProps<{ context: RenderContext }>()
