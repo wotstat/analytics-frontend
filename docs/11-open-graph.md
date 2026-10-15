@@ -10,7 +10,11 @@
 выбранного определения в пределах их `initialWaitMs`; затем метаданные вычисляются
 синхронно из последнего успешного снимка.
 
-Debug-пример `/debug/meta/vehicle?tag=ussr:R45_IS-7` расположен рядом с карточкой
+Страница `/debug/meta` содержит только заголовок и ссылку на студию `/meta`.
+Отдельных debug-страниц превью и категории Open Graph нет; тестовые карточки
+и их определения сохранены для проверки в студии и renderer.
+
+Debug-карточка для URL `/debug/meta/vehicle?tag=ussr:R45_IS-7` расположена рядом с карточкой
 задержки: `pages/debug/pages/meta/cards/vehicle/`. Карточка читает русское название
 по составному ключу `(RU, RU, tag)` из `VehiclesLocalizationDictionary` через
 `dictGetOrDefault` и завершает `useMetaReady` после ответа. Неизвестный тег показывает
@@ -57,8 +61,8 @@ src/
 ├─ pages/
 │  ├─ metaStudio/        # /meta и /meta/cards/:id основного SPA
 │  ├─ debug/pages/meta/
-│  │  ├─ Delayed.vue    # стенд /debug/meta/delayed
-│  │  └─ cards/delayed/ # DelayedMetaCard.vue и meta-definition.ts
+│  │  ├─ Index.vue     # /debug/meta: переход в студию
+│  │  └─ cards/        # debug-карточки delayed и vehicle с meta-definition.ts
 │  └─ infographics/pages/vehicles/meta/
 │     ├─ meta-definition.ts
 │     └─ CompareMetaCard.vue
@@ -383,9 +387,10 @@ App ждёт его, затем делает `nextTick` и обычную фин
 а ожидание отклоняется; используйте этот сигнал для отмены запросов и таймеров.
 Хук работает и в обычных превью студии, где App отсутствует.
 
-`/debug/meta/delayed` — стенд с тем же App и журналом `prepare`. Его карточка и определение
-лежат в `src/pages/debug/pages/meta/cards/delayed/` и автоматически появляются в Meta Studio
-как `debug-delayed`. Карточка показывает ожидание, через 5 секунд меняет текст на
+Карточка для URL `/debug/meta/delayed` и её определение лежат в
+`src/pages/debug/pages/meta/cards/delayed/` и автоматически появляются в Meta Studio
+как `debug-delayed` (`/meta/cards/debug-delayed`). На вкладке «Карточка» доступны App
+и журнал `prepare`. Карточка показывает ожидание, через 5 секунд меняет текст на
 «Карточка готова» и завершает хук. Метаданные по этому URL вычисляются синхронно;
 задержка применяется только при рендере изображения. Кеш для этого определения выключен.
 

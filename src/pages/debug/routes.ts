@@ -6,7 +6,6 @@ export const debugGroups = [
   { value: 'uiKit', title: 'UI-компоненты' },
   { value: 'chart', title: 'Графики' },
   { value: 'game', title: 'Игровой домен' },
-  { value: 'meta', title: 'Open Graph' },
 ] as const
 
 export type DebugGroup = typeof debugGroups[number]['value']
@@ -21,18 +20,11 @@ type Entry = {
 
 const entries = [
   {
-    path: 'meta/delayed',
-    title: 'Meta: задержка 5 секунд',
-    description: 'Готовность карточки через useMetaReady и замер асинхронной подготовки.',
-    group: 'meta',
-    component: () => import('./pages/meta/Delayed.vue'),
-  },
-  {
-    path: 'meta/vehicle',
-    title: 'Meta: название танка',
-    description: 'Название техники из ClickHouse по tag в URL и ожидание загрузки карточки.',
-    group: 'meta',
-    component: () => import('./pages/meta/Vehicle.vue'),
+    path: 'meta',
+    title: 'Meta',
+    description: 'Студия метаданных и debug-карточек Open Graph.',
+    group: 'uiKit',
+    component: () => import('./pages/meta/Index.vue'),
   },
   {
     path: 'query-storage',
