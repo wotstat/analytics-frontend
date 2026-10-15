@@ -41,7 +41,7 @@
           </section>
         </div>
         <div v-else-if="!context.meta.hasImage" class="empty-preview">Для этой страницы изображение не задано.</div>
-        <RenderPreview v-else :url="context.url" :format="cardState.format" />
+        <RenderPreview v-else :url="context.url" :format="cardState.format" :meta="context.meta" />
       </section>
 
       <aside class="metadata-panel">
@@ -74,7 +74,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { metaDefinitions as cards, parsePageUrl, resolveMeta, type MetaFormat, type RenderContext } from '@/meta/utils'
+import { metaDefinitions as cards, parsePageUrl, type MetaFormat, type RenderContext } from '@/meta/utils'
+import { readBrowserMeta } from '@/meta/context/browser'
 import RenderPreview from './RenderPreview.vue'
 import SocialPreview from './SocialPreview.vue'
 import { getStudioUrl, useStudioState } from './state/studioState'
@@ -90,7 +91,7 @@ const parsedUrl = computed(() => {
 })
 const context = computed<RenderContext | null>(() => {
   if (!parsedUrl.value) return null
-  return { url: parsedUrl.value.href, format: cardState.value.format, meta: resolveMeta(parsedUrl.value) }
+  return { url: parsedUrl.value.href, format: cardState.value.format, meta: readBrowserMeta(parsedUrl.value) }
 })
 const matchedCard = computed(() => cards.find(card => card.id === context.value?.meta.definitionId) ?? cards[0])
 

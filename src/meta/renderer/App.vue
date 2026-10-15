@@ -7,11 +7,12 @@
 <script setup lang="ts">
 import { nextTick, onErrorCaptured, onMounted, onUnmounted, shallowRef, useTemplateRef } from 'vue'
 import CardSurface from '../cards/CardSurface.vue'
-import { parsePageUrl, resolveMeta, type MetaFormat, type RenderContext } from '../utils'
+import { parsePageUrl, type MetaFormat, type PageMeta, type RenderContext } from '../utils'
+import { resolveBrowserMeta } from '../context/browser'
 
 declare global {
   interface Window {
-    prepare?: (request: { url: string, format: MetaFormat, signal?: AbortSignal }) => Promise<void>
+    prepare?: (request: { url: string, format: MetaFormat, meta?: PageMeta, signal?: AbortSignal }) => Promise<void>
   }
 }
 
@@ -31,7 +32,7 @@ onErrorCaptured(error => {
   return false
 })
 
-const prepare: NonNullable<Window['prepare']> = async ({ url: input, format, signal: requestSignal }) => {
+const prepare: NonNullable<Window['prepare']> = async ({ url: input, format, meta: preparedMeta, signal: requestSignal }) => {
   const lifecycleSignal = lifecycle?.signal
 
   if (!root.value || !lifecycleSignal || lifecycleSignal.aborted) throw new Error('Renderer is not mounted')
@@ -41,9 +42,6 @@ const prepare: NonNullable<Window['prepare']> = async ({ url: input, format, sig
   if (format !== 'og' && format !== 'twitter') throw new Error('Unknown image format')
 
   const url = parsePageUrl(input)
-  const meta = resolveMeta(url)
-  if (!meta.hasImage) throw new Error('This page has no meta image')
-
   busy = true
   renderError = null
 
@@ -55,6 +53,8 @@ const prepare: NonNullable<Window['prepare']> = async ({ url: input, format, sig
   const wait = <T>(promise: Promise<T>) => Promise.race([promise, cancelled])
 
   try {
+    const meta = preparedMeta ?? await wait(resolveBrowserMeta(url))
+    if (!meta.hasImage) throw new Error('This page has no meta image')
     context.value = null
     await wait(nextTick())
 

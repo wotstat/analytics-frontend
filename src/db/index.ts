@@ -1,36 +1,30 @@
 import './devPolyfill'
 import { CLICKHOUSE_WEB_PROXY_URL } from '@/shared/external/externalUrl'
-import { ResponseJSON, createClient, type ClickHouseSettings } from '@clickhouse/client-web'
 import { useLocalStorage } from '@vueuse/core'
 import { computed, getCurrentScope, onScopeDispose, ref, shallowRef, toValue, watch, type MaybeRefOrGetter, type Ref } from 'vue'
-import type { ConcurrencyGroup } from './concurrency'
-import { cacheClickHouseSettings, createQueryCache, resolveCachePolicy, responseCacheExpiresAt, type CachePolicy } from './cache'
-import { proxyCacheFetch, sortedEntries } from './proxyCache'
+import { createDatabase, type QueryOptions as ClientQueryOptions } from './client'
+import type { CachePolicy } from './cache'
 
 export { createConcurrencyGroup, type ConcurrencyGroup } from './concurrency'
 export { SUPER_SHORT_CACHE, SHORT_CACHE, DEFAULT_CACHE, MEDIUM_CACHE, LONG_CACHE, DAY_CACHE, DAILY_CACHE, MONTHLY_CACHE, createQueryCache, type CachePolicy } from './cache'
-
-export const clickhouse = createClient({
-  url: CLICKHOUSE_WEB_PROXY_URL,
-  pathname: '/api/db/',
-  username: 'public',
-  database: 'WOT',
-  request_timeout: 120_000,
-  fetch: proxyCacheFetch,
-  keep_alive: { enabled: false },
-  clickhouse_settings: {
-    max_temporary_columns: '1000',
-    add_http_cors_header: 1,
-  },
-  compression: {
-    response: true
-  }
-})
+export type { QueryResponse } from './client'
 
 export const totalRequests = useLocalStorage('totalRequests', 0)
 export const totalElapsed = useLocalStorage('totalElapsed', 0)
 export const totalRowsRead = useLocalStorage('totalRowsRead', 0)
 export const totalBytesRead = useLocalStorage('totalBytesRead', 0)
+
+const database = createDatabase({
+  url: new URL('/api/db/', CLICKHOUSE_WEB_PROXY_URL).href,
+  username: 'public',
+}, response => {
+  totalElapsed.value += response.statistics?.elapsed ?? 0
+  totalRowsRead.value += response.statistics?.rows_read ?? 0
+  totalBytesRead.value += response.statistics?.bytes_read ?? 0
+  totalRequests.value++
+})
+
+export const clickhouse = database.clickhouse
 
 export const loading = Symbol('loading')
 export const success = Symbol('success')
@@ -50,113 +44,13 @@ export function isErrorStatus(status: Status): status is { status: typeof error,
   return typeof status !== 'symbol' && status.status === error
 }
 
-export type QueryOptions = {
+export type QueryOptions = Omit<ClientQueryOptions, 'cache'> & {
   cache?: MaybeRefOrGetter<CachePolicy | undefined>
-  proxyCache?: boolean
-  allowCache?: boolean
-  format?: 'JSON' | 'JSONCompact'
-  settings?: ClickHouseSettings
-  abortSignal?: AbortSignal
-  concurrency?: ConcurrencyGroup
-  priority?: number
 }
-
 export type ReactiveQueryOptions = QueryOptions & { enabled?: Ref<boolean> }
-export type QueryResponse<T> = ResponseJSON<T> & { cacheExpiresAt: number }
 
-type ActiveQuery = {
-  promise: Promise<QueryResponse<unknown>>
-  abortSignal?: AbortSignal
-  concurrency?: ConcurrencyGroup
-  priority: number
-}
-
-const activeQueries = new Map<string, Set<ActiveQuery>>()
-const cachedResults = createQueryCache<QueryResponse<unknown>>()
-function queryCacheKey(sql: string, options: QueryOptions) {
-  const settings = sortedEntries(Object.entries(options.settings ?? {})
-    .filter(([, value]) => value !== undefined)
-    .map(([key, value]) => [key, String(value)]))
-  return JSON.stringify([sql, options.format ?? 'JSON', settings, resolveCachePolicy(toValue(options.cache))?.key ?? null])
-}
-
-export async function query<T>(query: string, options: QueryOptions = {}): Promise<QueryResponse<T>> {
-  const {
-    allowCache = true,
-    format = 'JSON',
-    settings = {}, abortSignal,
-    concurrency,
-    priority = 0,
-    cache,
-    proxyCache = false
-  } = options
-
-  if (proxyCache && !toValue(cache)) throw new Error('proxyCache requires a cache policy')
-  abortSignal?.throwIfAborted()
-  const cacheKey = queryCacheKey(query, options)
-  const cached = allowCache ? cachedResults.get(cacheKey) : undefined
-  if (cached) return cached as QueryResponse<T>
-
-  if (allowCache) {
-    const active = [...activeQueries.get(cacheKey) ?? []].find(request =>
-      request.abortSignal === abortSignal && request.concurrency === concurrency && request.priority === priority)
-    if (active) return active.promise as Promise<QueryResponse<T>>
-  }
-
-  async function execute() {
-    abortSignal?.throwIfAborted()
-    const policy = resolveCachePolicy(toValue(cache))
-    const executionKey = queryCacheKey(query, options)
-    const cacheHeaders = proxyCache && policy && policy.ttl > 0 ? policy.headers : undefined
-    const result = await clickhouse.query({
-      query, format, abort_signal: abortSignal,
-      clickhouse_settings: {
-        output_format_json_quote_64bit_integers: 0,
-        ...cacheClickHouseSettings(policy, settings),
-        ...(cacheHeaders ? { wait_end_of_query: 1, send_progress_in_http_headers: 0 } : {}),
-      },
-      http_headers: cacheHeaders,
-    })
-    const cacheExpiresAt = responseCacheExpiresAt(policy, result.response_headers)
-    const response: ResponseJSON<T> = format === 'JSONCompact'
-      ? await result.json<unknown[]>().then(response => {
-        const columns = response.meta
-        if (!columns) throw new Error('JSONCompact response is missing column metadata')
-        const decode = (row: unknown[]) => Object.fromEntries(columns.map((column, index) => [column.name, row[index]])) as T
-        return {
-          ...response,
-          data: response.data.map(decode),
-          totals: response.totals === undefined ? undefined : decode(response.totals),
-          extremes: response.extremes === undefined ? undefined
-            : Object.fromEntries(Object.entries(response.extremes).map(([key, row]) => [key, decode(row)])),
-        }
-      })
-      : await result.json<T>()
-
-    totalElapsed.value += response.statistics?.elapsed ?? 0
-    totalRowsRead.value += response.statistics?.rows_read ?? 0
-    totalBytesRead.value += response.statistics?.bytes_read ?? 0
-    totalRequests.value++
-
-    abortSignal?.throwIfAborted()
-    const value = { ...response, cacheExpiresAt }
-    if (allowCache) cachedResults.set(executionKey, value, cacheExpiresAt)
-    return value
-  }
-
-  const current = concurrency ? concurrency.run(execute, abortSignal, priority) : execute()
-  if (!allowCache) return current
-
-  const requests = activeQueries.get(cacheKey) ?? new Set<ActiveQuery>()
-  const request: ActiveQuery = { promise: current, abortSignal, concurrency, priority }
-  requests.add(request)
-  activeQueries.set(cacheKey, requests)
-  try {
-    return await current
-  } finally {
-    requests.delete(request)
-    if (!requests.size) activeQueries.delete(cacheKey)
-  }
+export async function query<T>(sql: string, options: QueryOptions = {}) {
+  return database.query<T>(sql, { ...options, cache: toValue(options.cache) })
 }
 
 export function queryComputed<T>(queryString: () => string | null, { enabled = ref(true), ...options }: ReactiveQueryOptions = {}) {
@@ -171,9 +65,9 @@ export function queryComputed<T>(queryString: () => string | null, { enabled = r
     if (signal.aborted) return
 
     try {
-      const cached = options.allowCache !== false ? cachedResults.get(queryCacheKey(q, options)) : undefined
+      const cached = database.getCached<T>(q, { ...options, cache: toValue(options.cache) })
       if (cached) {
-        result.value = { data: (cached as QueryResponse<T>).data, status: success }
+        result.value = { data: cached.data, status: success }
         return
       }
 

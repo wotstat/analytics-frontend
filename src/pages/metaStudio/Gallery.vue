@@ -25,12 +25,13 @@
 </template>
 
 <script setup lang="ts">
-import { metaDefinitions as cards, resolveMeta, type RenderContext } from '@/meta/utils'
+import { metaDefinitions as cards, type RenderContext } from '@/meta/utils'
+import { readBrowserMeta } from '@/meta/context/browser'
 import ScaledCard from './ScaledCard.vue'
 
 const exampleContext = (card: (typeof cards)[number]): RenderContext => {
   const url = card.examples[0].url
-  return { url, format: 'og', meta: resolveMeta(new URL(url)) }
+  return { url, format: 'og', meta: readBrowserMeta(new URL(url)) }
 }
 </script>
 

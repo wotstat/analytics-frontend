@@ -44,8 +44,6 @@ useMetaReady(async ({ signal }) => {
       abortSignal: AbortSignal.any([signal, AbortSignal.timeout(8000)]),
       settings: {
         max_execution_time: 5,
-        max_rows_to_read: '1000000',
-        max_bytes_to_read: '100000000',
         query_cache_nondeterministic_function_handling: 'save',
       },
     })

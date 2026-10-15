@@ -2,17 +2,26 @@
 
 Фронтенд ходит **напрямую в ClickHouse** через web-прокси. Это центральный механизм всего сайта.
 
-## Клиент (`src/db/index.ts`)
+## Клиент (`src/db/client.ts`)
+
+`createDatabase` создаёт клиент и обычный `query`, локальный кеш и реестр выполняющихся
+запросов. Этот модуль не импортирует Vue, `location` или `localStorage` и используется
+как браузером, так и Bun. Адрес передаётся целиком, включая путь прокси.
+
+Браузерный экземпляр создаётся один раз в `src/db/index.ts`:
 
 ```ts
-export const clickhouse = createClient({
-  url: CLICKHOUSE_WEB_PROXY_URL,   // https://<prefix>wotstat.info
-  pathname: '/api/db/',
+const database = createDatabase({
+  url: new URL('/api/db/', CLICKHOUSE_WEB_PROXY_URL).href,
   username: 'public',
-  database: 'WOT',
-  ...
-})
+}, response => { /* обновление счётчиков в localStorage */ })
 ```
+
+`src/db/index.ts` сохраняет публичные импорты `query`, `queryComputed`, `queryAsync`
+и остальные Vue-хелперы. Браузерные контексты используют этот же `query`, экземпляр
+клиента и локальный кеш. В Bun создаётся свой экземпляр с серверными настройками;
+отдельной реализации запросов для контекстов нет. Callback статистики вызывается
+только при получении ответа из сети, без повторного учёта локальных HIT и дубликатов.
 
 - Пользователь `public` — только чтение. CORS-заголовок включён настройкой `add_http_cors_header`. В dev запросы также идут напрямую на сервер из `VITE_DEFAULT_URL_PREFIX`, без Vite proxy. Три заголовка кеша должны быть явно разрешены в CORS сервера.
 - Общий HTTP-кеш использует группу (`scope`) `public` для `public` и `internal-public`.
@@ -24,7 +33,7 @@ export const clickhouse = createClient({
 - Сборка meta-renderer получает `VITE_META_RENDERER=true` из Vite-конфига и использует
   `/api/db/` своего локального origin. Bun добавляет пароль `internal-public` и передаёт
   запрос во внутренний Nginx. Основной SPA и Meta Studio продолжают использовать `public`.
-- `keep_alive.enabled = false`: Fetch иначе ограничивает суммарный размер тел запросов в полёте до 64 КиБ. Несколько запросов колонок со списками дат могут превышать этот лимит. HTTP-сжатие ответов включено.
+- В браузере `keep_alive.enabled = false`: Fetch иначе ограничивает суммарный размер тел запросов в полёте до 64 КиБ. Несколько запросов колонок со списками дат могут превышать этот лимит. В Bun keep-alive включён для переиспользования соединений. HTTP-сжатие ответов включено.
 - Счётчики статистики использования (`totalRequests`, `totalElapsed`, `totalRowsRead`, `totalBytesRead`) — в localStorage, показываются в футере/настройках.
 
 ## Статусы запроса
@@ -38,7 +47,7 @@ isErrorStatus(status)
 
 Компоненты-виджеты принимают `status: Status` и сами показывают лоадер/ошибку.
 
-## Query-хелперы (все в `src/db/index.ts`)
+## Query-хелперы (импорт из `src/db/index.ts`)
 
 | Функция | Что делает |
 | --- | --- |
@@ -47,6 +56,9 @@ isErrorStatus(status)
 | `queryComputedFirst<T>(..., defaultValue)` | То же, но `data` — первая строка либо дефолт |
 | `queryAsync<T>(sql, {enabled, ...})` | Одноразовый запрос, ждёт `enabled === true` и выполняется один раз |
 | `queryAsyncFirst<T>(sql, defaultValue, ...)` | Одноразовый + первая строка |
+
+Обычный `query` реализован в `src/db/client.ts`; он принимает готовую `CachePolicy`.
+Браузерная обёртка дополнительно разворачивает `ref` и getter политики перед вызовом.
 
 `format` по умолчанию `JSON`; для компактного ответа можно передать `JSONCompact`.
 Названия колонок передаются один раз в `meta`, строки — массивами. `query` восстанавливает

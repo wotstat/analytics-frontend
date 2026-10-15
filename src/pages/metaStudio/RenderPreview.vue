@@ -31,9 +31,9 @@
 import { computed, onUnmounted, ref, shallowRef, useTemplateRef, watch } from 'vue'
 import { useElementSize } from '@vueuse/core'
 import MetaApp from '@/meta/renderer/App.vue'
-import { formats, type MetaFormat } from '@/meta/utils'
+import { formats, type MetaFormat, type PageMeta } from '@/meta/utils'
 
-const props = defineProps<{ url: string, format: MetaFormat }>()
+const props = defineProps<{ url: string, format: MetaFormat, meta?: PageMeta }>()
 const container = useTemplateRef<HTMLDivElement>('container')
 const { width } = useElementSize(container)
 const size = computed(() => formats[props.format])
@@ -62,7 +62,7 @@ const run = async () => {
   }
   rerun = false
   hotUpdated = false
-  const { url, format } = props
+  const { url, format, meta } = props
   const startedAt = performance.now()
   const controller = new AbortController()
   currentController = controller
@@ -71,7 +71,7 @@ const run = async () => {
 
   try {
     if (!window.prepare) throw new Error('Renderer is not mounted')
-    await window.prepare({ url, format, signal: controller.signal })
+    await window.prepare({ url, format, meta, signal: controller.signal })
   } catch (cause) {
     error = cause instanceof Error ? cause.message : String(cause)
   } finally {
@@ -105,7 +105,7 @@ const recoverAfterHotUpdate = () => {
 }
 
 import.meta.hot?.on('vite:afterUpdate', recoverAfterHotUpdate)
-watch(() => [props.url, props.format], () => void run(), { flush: 'post' })
+watch(() => [props.url, props.format, props.meta], () => void run(), { flush: 'post' })
 onUnmounted(() => {
   active = false
   currentController?.abort(new Error('Preview is unmounted'))

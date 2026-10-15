@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { metaDefinitions as cards, parsePageUrl, resolveMeta } from '@/meta/utils'
+import { metaDefinitions as cards, parsePageUrl, matchMetaDefinition } from '@/meta/utils'
 import { useNoIndex } from '@/pages/debug/shared/useNoIndex'
 import { getStudioUrl, useStudioState } from './state/studioState'
 
@@ -87,7 +87,7 @@ const openUrl = () => {
   const url = parsedUrl.value
   if (!url) return
 
-  const { definitionId } = resolveMeta(url)
+  const { id: definitionId } = matchMetaDefinition(url)
   const cardState = studioState.value[definitionId]
   cardState.customUrl = url.href
   cardState.mode = 'url'
