@@ -14,6 +14,7 @@ import { visualizer } from 'rollup-plugin-visualizer'
 const projectRoot = fileURLToPath(new URL('./', import.meta.url))
 const common = {
   envDir: projectRoot,
+  define: { 'import.meta.env.VITE_META_RENDERER': false },
   resolve: { alias: { '@': resolve(projectRoot, 'src') } }
 }
 
@@ -46,6 +47,7 @@ const mainConfig: UserConfig = {
 
 const metaRendererConfig: UserConfig = {
   ...common,
+  define: { 'import.meta.env.VITE_META_RENDERER': true },
   root: resolve(projectRoot, 'src/meta/renderer'),
   publicDir: false,
   plugins: [vue(), svgLoader(svgLoaderConfig)],

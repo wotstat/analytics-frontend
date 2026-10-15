@@ -17,17 +17,16 @@ export async function proxyCacheFetch(input: RequestInfo | URL, init?: RequestIn
   const url = new URL(input instanceof Request ? input.url : input)
   const params = sortedEntries([...url.searchParams].filter(([key]) => key !== 'query_id' && key !== 'query_cache_ttl'))
 
-  // Клиент работает с одним ClickHouse, независимо от адреса прокси.
+  // Публичный кеш одного ClickHouse; авторизация не участвует в ключе.
   const canonical = JSON.stringify([
-    'wotstat-query-cache-v1', 'POST', 'wotstat-clickhouse', params,
-    headers.get('Authorization') ?? '',
+    'wotstat-clickhouse', 'public', 'POST', params,
     ttl !== null ? ['ttl', ttl] : ['until', until],
     init.body,
   ])
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonical))
   init.signal?.throwIfAborted()
   const hash = [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('')
-  headers.set(`${QUERY_CACHE_HEADER}Key`, `v1:${hash}`)
+  headers.set(`${QUERY_CACHE_HEADER}Key`, hash)
 
   return send(input, { ...init, headers, credentials: 'omit' })
 }

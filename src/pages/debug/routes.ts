@@ -28,6 +28,13 @@ const entries = [
     component: () => import('./pages/meta/Delayed.vue'),
   },
   {
+    path: 'meta/vehicle',
+    title: 'Meta: название танка',
+    description: 'Название техники из ClickHouse по tag в URL и ожидание загрузки карточки.',
+    group: 'meta',
+    component: () => import('./pages/meta/Vehicle.vue'),
+  },
+  {
     path: 'query-storage',
     title: 'Query storage',
     description: 'Параметры URL, общая память, вложенные компоненты, KeepAlive, debounce и история.',
