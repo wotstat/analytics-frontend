@@ -1,13 +1,12 @@
 import type { MetaContextDefinition } from '../context/utils/types'
 
-
 type VehicleNames = Readonly<Record<string, string | undefined>>
 
 export const vehicleNames = {
   id: 'vehicle-names',
   initialWaitMs: 3_000,
   refreshIntervalMs: 60 * 60 * 1000,
-  load: async ({ query, signal }) => {
+  load: async ({ query, signal }): Promise<VehicleNames> => {
     const { data } = await query<{ tag: string, name: string }>(`
       SELECT tag, name
       FROM WOT.VehiclesLocalizationDictionary
@@ -23,6 +22,6 @@ export const vehicleNames = {
       },
     })
 
-    return Object.freeze(Object.fromEntries(data.map(({ tag, name }) => [tag, name]))) as VehicleNames
+    return Object.freeze(Object.fromEntries(data.map(({ tag, name }) => [tag, name])))
   },
-} satisfies MetaContextDefinition<VehicleNames>
+} satisfies MetaContextDefinition

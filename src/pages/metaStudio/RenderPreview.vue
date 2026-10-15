@@ -33,7 +33,7 @@ import { useElementSize } from '@vueuse/core'
 import MetaApp from '@/meta/renderer/App.vue'
 import { formats, type MetaFormat, type PageMeta } from '@/meta/utils'
 
-const props = defineProps<{ url: string, format: MetaFormat, meta?: PageMeta }>()
+const props = defineProps<{ url: string, format: MetaFormat, meta: PageMeta }>()
 const container = useTemplateRef<HTMLDivElement>('container')
 const { width } = useElementSize(container)
 const size = computed(() => formats[props.format])

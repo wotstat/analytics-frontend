@@ -1,12 +1,10 @@
 import type { Query } from '@/db/client'
 
-export type ContextServices = { query: Query, signal: AbortSignal }
-
 export type MetaContextDefinition<T = unknown> = {
   id: string
   initialWaitMs: number
   refreshIntervalMs: number
-  load: (services: ContextServices) => Promise<T>
+  load: (services: { query: Query, signal: AbortSignal }) => Promise<T>
 }
 
 export type MetaContexts = Record<string, MetaContextDefinition>

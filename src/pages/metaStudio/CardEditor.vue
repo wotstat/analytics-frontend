@@ -75,7 +75,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { metaDefinitions as cards, parsePageUrl, type MetaFormat, type RenderContext } from '@/meta/utils'
-import { readBrowserMeta } from '@/meta/context/browser'
+import { getBrowserMetaResolver } from '@/meta/context/browser'
 import RenderPreview from './RenderPreview.vue'
 import SocialPreview from './SocialPreview.vue'
 import { getStudioUrl, useStudioState } from './state/studioState'
@@ -91,7 +91,7 @@ const parsedUrl = computed(() => {
 })
 const context = computed<RenderContext | null>(() => {
   if (!parsedUrl.value) return null
-  return { url: parsedUrl.value.href, format: cardState.value.format, meta: readBrowserMeta(parsedUrl.value) }
+  return { url: parsedUrl.value.href, format: cardState.value.format, meta: getBrowserMetaResolver().readMeta(parsedUrl.value) }
 })
 const matchedCard = computed(() => cards.find(card => card.id === context.value?.meta.definitionId) ?? cards[0])
 

@@ -5,7 +5,7 @@
     source="src/pages/debug/pages/meta/cards/vehicle/VehicleMetaCard.vue">
     <RouterLink to="/meta/cards/debug-vehicle">Открыть в Meta Studio →</RouterLink>
     <div class="preview-panel">
-      <RenderPreview :url format="og" />
+      <RenderPreview :url :meta format="og" />
     </div>
   </DebugSection>
 </template>
@@ -15,9 +15,11 @@ import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import DebugSection from '../../shared/DebugSection.vue'
 import RenderPreview from '@/pages/metaStudio/RenderPreview.vue'
+import { getBrowserMetaResolver } from '@/meta/context/browser'
 
 const route = useRoute()
 const url = computed(() => new URL(route.fullPath, window.location.origin).href)
+const meta = computed(() => getBrowserMetaResolver().readMeta(new URL(url.value)))
 </script>
 
 <style scoped lang="scss">

@@ -5,17 +5,20 @@
     source="src/pages/debug/pages/meta/cards/delayed/DelayedMetaCard.vue">
     <RouterLink to="/meta/cards/debug-delayed">Открыть в Meta Studio →</RouterLink>
     <div class="preview-panel">
-      <RenderPreview :url format="og" />
+      <RenderPreview :url :meta format="og" />
     </div>
   </DebugSection>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import DebugSection from '../../shared/DebugSection.vue'
 import RenderPreview from '@/pages/metaStudio/RenderPreview.vue'
+import { getBrowserMetaResolver } from '@/meta/context/browser'
 
 const url = new URL('/debug/meta/delayed', window.location.origin).href
+const meta = computed(() => getBrowserMetaResolver().readMeta(new URL(url)))
 </script>
 
 <style scoped lang="scss">

@@ -1,21 +1,12 @@
-import { shallowRef } from 'vue'
+import { shallowRef, triggerRef } from 'vue'
 import { query } from '@/db'
 import { createMetaResolver } from '../utils'
 
-const revision = shallowRef(0)
-let resolver: ReturnType<typeof createMetaResolver> | undefined
+const resolver = shallowRef<ReturnType<typeof createMetaResolver>>()
 
-function getResolver() {
-  resolver ??= createMetaResolver(query, () => { revision.value++ })
-  return resolver
+export function getBrowserMetaResolver() {
+  resolver.value ??= createMetaResolver(query, () => triggerRef(resolver))
+  return resolver.value
 }
 
-export function readBrowserMeta(url: URL) {
-  // Зависимость computed/render от последнего успешного обновления контекстов.
-  void revision.value
-  return getResolver().readMeta(url)
-}
-
-export const resolveBrowserMeta = (url: URL) => getResolver().resolveMeta(url)
-
-import.meta.hot?.dispose(() => resolver?.close())
+import.meta.hot?.dispose(() => resolver.value?.close())

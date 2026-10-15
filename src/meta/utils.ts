@@ -1,7 +1,9 @@
 import type { Component } from 'vue'
-import { createDatabase, type DatabaseConfig, type Query } from '@/db/client'
+import type { Query } from '@/db/client'
 import { createMetaContexts } from './context/runtime'
 import type { ContextValues, MetaContexts } from './context/utils/types'
+
+export { createDatabase } from '@/db/client'
 
 export const formats = {
   og: { width: 1200, height: 630 },
@@ -29,12 +31,8 @@ export type MetaDefinition<C extends MetaContexts = MetaContexts> = {
   examples?: readonly { name: string, url: string }[]
 }
 
-export function defineMetaDefinition<const C extends MetaContexts>(definition: MetaDefinition<C>): MetaDefinition {
-  const meta = definition.meta
-  return {
-    ...definition,
-    meta: typeof meta === 'function' ? (url, context) => meta(url, context as ContextValues<C>) : meta,
-  }
+export function defineMetaDefinition<const C extends MetaContexts>(definition: MetaDefinition<C>) {
+  return definition
 }
 
 export type PageMeta = MetaTags & {
@@ -74,10 +72,6 @@ export const matchMetaDefinition = (url: URL) => {
 
   if (!definition) throw new Error(`No meta definition matches URL: ${url.href}`)
   return definition
-}
-
-export function createServerMetaResolver(database: DatabaseConfig) {
-  return createMetaResolver(createDatabase(database).query)
 }
 
 export function createMetaResolver(query: Query, onUpdate?: () => void) {
