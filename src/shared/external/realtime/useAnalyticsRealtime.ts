@@ -17,7 +17,11 @@ function jsonProcessor(value: unknown) {
 export type ChannelsTypes = {
   'time': number,
   'totalEvents': number,
-  'comp7LastRecalculation': Record<string, { day: string, recalculation: string }> | null
+  'comp7LastRecalculation': Record<string, {
+    day: string
+    recalculation: string
+    daily?: { day: string, recalculation: string }
+  }> | null
   'battleResult': { id: string, battleMode: string, playerName: string, region: string }[]
   'comp7Info': { id: string, playerName: string, region: string, rating: number }[]
 }

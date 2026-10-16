@@ -24,7 +24,20 @@
 - `time`, `totalEvents` — числовые счётчики (главная страница);
 - `battleResult` — поток завершённых боёв `{id, battleMode, playerName, region}`;
 - `comp7Info` — рейтинг игроков Натиска в реальном времени;
-- `comp7LastRecalculation` — время последнего пересчёта лидерборда.
+- `comp7LastRecalculation` — объект по регионам: `day` и `recalculation` для исходной
+  `Comp7Leaderboard`, вложенное необязательное `daily: { day, recalculation }` для
+  готового снимка `Comp7LeaderboardDailyByRank`. Сервис проверяет обе таблицы каждую
+  секунду без query cache ClickHouse; лидерборд обновляется по `daily.recalculation`.
+  Старые поля сохранены для совместимости. Сначала следует обновить `analytics-realtime`,
+  затем фронтенд: без поля `daily` данные загрузятся из БД, но автоматического обновления
+  и индикатора LIVE не будет.
+
+После вставки лидерборда `server-microtasks` принудительно запускает
+`SYSTEM REFRESH VIEW WOT.comp7_leaderboard_daily_by_rank_rmv`, дожидается завершения
+через `SYSTEM WAIT VIEW`, затем выполняет `SYSTEM RELOAD DICTIONARY WOT.Comp7LatestRatingDictionary`.
+Поэтому обычная задержка дневного снимка определяется выполнением refresh после вставки,
+а не ожиданием его периодического расписания. Поле `daily` отражает появление данных
+в `Comp7LeaderboardDailyByRank`, но не подтверждает завершение последующей перезагрузки словаря.
 
 Канал может иметь query-часть (`channel?param=`), процессоры парсят число или JSON.
 

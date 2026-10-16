@@ -239,7 +239,7 @@ const isLoading = ref(false)
 const lastUpdate = useAnalyticsRealtime('comp7LastRecalculation')
 const lastRecalculation = computed(() => {
   if (lastUpdate.status.value !== 'OPEN') return null
-  return lastUpdate.data.value?.[region.value]?.recalculation ?? null
+  return lastUpdate.data.value?.[region.value]?.daily?.recalculation ?? null
 })
 let loadedRecalculation: string | null = null
 
@@ -298,23 +298,26 @@ async function load(abortSignal: AbortSignal) {
           '${dateToDbDate(interval.start)}' as START_DATE,
           '${dateToDbDate(interval.end)}' as END_DATE,
           (
-            select max(recalculationTime)
-            from Comp7Leaderboard
+            select max(lastRecalculationTime)
+            from Comp7LeaderboardDailyByRank as snapshots
             where
               not startsWith(name, 'MT_COMP_QA_') and
               region = '${currentRegion}' and
-              recalculationTime between START_DATE and END_DATE + interval 5 day
+              snapshots.day between START_DATE and END_DATE + interval 5 day and
+              lastRecalculationTime between START_DATE and END_DATE + interval 5 day
           ) as LAST_RECALCULATION
-        select max(day) as day,
-          max(recalculationTime) as recalculation,
-          max(rank) as lastRank,
-          maxIf(rank, elite) as lastEliteRank,
-          maxIf(rank, elite) as eliteThreshold
-        from Comp7Leaderboard where
+        select max(leaderboard.day) as day,
+          max(lastRecalculationTime) as recalculation,
+          max(leaderboard.lastRank) as lastRank,
+          maxIf(leaderboard.lastRank, lastElite) as lastEliteRank,
+          maxIf(leaderboard.lastRank, lastElite) as eliteThreshold
+        from Comp7LeaderboardDailyByRank as leaderboard where
           not startsWith(name, 'MT_COMP_QA_') and
           region = '${currentRegion}' and
-          recalculationTime between START_DATE and END_DATE + interval 5 day and
-          recalculationTime = LAST_RECALCULATION
+          leaderboard.day between START_DATE and END_DATE + interval 5 day and
+          lastRecalculationTime between START_DATE and END_DATE + interval 5 day and
+          lastRecalculationTime = LAST_RECALCULATION
+        group by region
       `, {
         ...LEADERBOARD_QUERY_OPTIONS,
         abortSignal,
