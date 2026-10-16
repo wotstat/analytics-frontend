@@ -77,7 +77,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { parsePageUrl, type MetaFormat, type RenderContext } from '@/meta/utils'
-import { metaDefinitions as cards } from '@/meta/resolver'
+import { studioCards as cards } from './utils/catalog'
 import { getBrowserMetaResolver } from '@/meta/context/browser'
 import RenderPreview from './RenderPreview.vue'
 import SocialPreview from './SocialPreview.vue'

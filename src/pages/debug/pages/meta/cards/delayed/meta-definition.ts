@@ -6,7 +6,7 @@ export default defineMetaDefinition({
   component: DelayedMetaCard,
   priority: 100,
   match: '/debug/meta/delayed',
-  name: 'Задержка 5 секунд',
+  name: 'Debug/Задержка 5 секунд',
   summary: 'Debug-карточка с асинхронной подготовкой через useMetaReady.',
   examples: [
     { name: 'Задержка 5 секунд', url: 'https://wotstat.info/debug/meta/delayed' },

@@ -13,9 +13,12 @@
         }}</span></RouterLink>
         <RouterLink to="/meta/backgrounds" active-class="active">Фоны карточек</RouterLink>
         <div class="card-links">
-          <RouterLink v-for="card in cards" :key="card.id" :to="`/meta/cards/${card.id}`" active-class="active">
-            {{ card.name }}
-          </RouterLink>
+          <section v-for="group in studioCardGroups" :key="group.name" class="card-group">
+            <h2>{{ group.name }}</h2>
+            <RouterLink v-for="card in group.cards" :key="card.id" :to="`/meta/cards/${card.id}`" active-class="active">
+              {{ card.name }}
+            </RouterLink>
+          </section>
         </div>
       </nav>
 
@@ -47,6 +50,7 @@ import { parsePageUrl } from '@/meta/utils'
 import { metaDefinitions as cards, matchMetaDefinition } from '@/meta/resolver'
 import { useNoIndex } from '@/pages/debug/shared/useNoIndex'
 import { getStudioUrl, useStudioState } from './state/studioState'
+import { studioCardGroups } from './utils/catalog'
 
 const route = useRoute()
 const router = useRouter()
@@ -215,6 +219,19 @@ useNoIndex()
       .card-links {
         margin-top: 12px;
         padding-top: 12px;
+
+        .card-group {
+          & + .card-group {
+            margin-top: 20px;
+          }
+
+          h2 {
+            margin: 0 12px 6px;
+            color: var(--studio-muted);
+            font-size: 11px;
+            font-weight: 600;
+          }
+        }
       }
     }
 
@@ -294,7 +311,7 @@ useNoIndex()
       .studio-sidebar {
         padding: 10px 16px;
         display: flex;
-        align-items: center;
+        flex-wrap: wrap;
         gap: 4px;
         overflow-x: auto;
 
@@ -304,9 +321,18 @@ useNoIndex()
 
         .card-links {
           display: flex;
-          gap: 4px;
+          gap: 16px;
+          flex-basis: 100%;
           margin: 0;
-          padding: 0 0 0 4px;
+          padding: 12px 0 0;
+
+          .card-group {
+            flex-shrink: 0;
+
+            & + .card-group {
+              margin-top: 0;
+            }
+          }
         }
       }
 

@@ -7,7 +7,7 @@ export default defineMetaDefinition({
   component: VehicleMetaCard,
   priority: 100,
   match: '/debug/meta/vehicle',
-  name: 'Название танка',
+  name: 'Debug/Название танка',
   summary: 'Название из общего контекста в title и отдельный запрос ClickHouse для PNG.',
   examples: [
     { name: 'ИС-7', url: 'https://wotstat.info/debug/meta/vehicle?tag=ussr:R45_IS-7' },

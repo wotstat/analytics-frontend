@@ -6,7 +6,7 @@ export default defineMetaDefinition({
   component: DefaultMetaCard,
   priority: -1000,
   match: '*',
-  name: 'Общая карточка',
+  name: 'По умолчанию/Общая карточка',
   summary: 'Главная и все страницы без собственного превью.',
   examples: [
     { name: 'Главная', url: 'https://wotstat.info/' },

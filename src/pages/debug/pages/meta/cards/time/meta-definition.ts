@@ -6,7 +6,7 @@ export default defineMetaDefinition({
   component: TimeMetaCard,
   priority: 100,
   match: '/debug/meta/time',
-  name: 'Текущее время',
+  name: 'Debug/Текущее время',
   summary: 'Текущее время UTC для проверки кеширования по постоянному URL.',
   examples: [
     { name: 'Текущее время', url: 'https://wotstat.info/debug/meta/time' },

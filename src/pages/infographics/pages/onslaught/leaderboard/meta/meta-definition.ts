@@ -9,7 +9,7 @@ export default defineMetaDefinition({
   priority: 100,
   match: url => isOnslaughtLeaderboard(url) && !hasOnslaughtPlayer(url),
   contexts: { onslaughtSeasons },
-  name: 'Натиск · Таблица лидеров',
+  name: 'Натиск/Таблица лидеров',
   summary: 'Порог Легенды, число игроков в ней и пятёрка лидеров.',
   examples: [
     { name: 'RU · Огненный сокол', url: 'https://wotstat.info/onslaught/leaderboard?region=RU&season=comp7_6_1' },

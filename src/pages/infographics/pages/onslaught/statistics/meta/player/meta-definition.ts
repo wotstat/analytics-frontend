@@ -9,7 +9,7 @@ export default defineMetaDefinition({
   priority: 100,
   match: url => isOnslaughtPersonal(url) && hasOnslaughtPlayer(url),
   contexts: { onslaughtSeasons },
-  name: 'Натиск · Статистика игрока',
+  name: 'Натиск/Статистика игрока',
   summary: 'Ник, ранг, рейтинг и результаты боёв за сезон.',
   examples: [
     { name: 'RU · Игрок', url: 'https://wotstat.info/onslaught/personal?region=RU&season=comp7_6_1&nickname=Tolstoi_2024' },

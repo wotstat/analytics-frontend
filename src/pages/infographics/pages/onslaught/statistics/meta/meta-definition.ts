@@ -9,7 +9,7 @@ export default defineMetaDefinition({
   priority: 100,
   match: url => isOnslaughtPersonal(url) && !hasOnslaughtPlayer(url),
   contexts: { onslaughtSeasons },
-  name: 'Натиск · Личная статистика',
+  name: 'Натиск/Личная статистика',
   summary: 'Карточка раздела без выбранного игрока.',
   examples: [
     { name: 'RU · Огненный сокол', url: 'https://wotstat.info/onslaught/personal?region=RU&season=comp7_6_1' },

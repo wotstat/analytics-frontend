@@ -9,7 +9,7 @@ export default defineMetaDefinition({
   priority: 100,
   match: url => /^\/onslaught(?:\/general)?\/?$/.test(url.pathname),
   contexts: { onslaughtSeasons },
-  name: 'Натиск · Общая статистика',
+  name: 'Натиск/Общая статистика',
   summary: 'Игроки, собранные бои и Легенда выбранного региона и сезона.',
   examples: [
     { name: 'RU · Огненный сокол', url: 'https://wotstat.info/onslaught?region=RU&season=comp7_6_1' },

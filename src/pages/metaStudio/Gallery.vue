@@ -5,32 +5,35 @@
       <p>Выберите карточку для просмотра.</p>
     </header>
 
-    <div class="gallery-grid">
-      <RouterLink v-for="card in cards" :key="card.id" :to="`/meta/cards/${card.id}`" class="gallery-card">
-        <div class="card-thumbnail">
-          <ScaledCard v-if="card.component && card.examples.length" :context="exampleContext(card)" />
-          <div v-else class="text-preview">{{ card.component ? 'Нет примера' : 'Без изображения' }}</div>
-        </div>
-        <div class="card-info">
-          <div class="card-heading">
-            <h2>{{ card.name }}</h2>
-            <span class="open-arrow">→</span>
+    <section v-for="group in studioCardGroups" :key="group.name" class="gallery-group">
+      <h2>{{ group.name }}</h2>
+      <div class="gallery-grid">
+        <RouterLink v-for="card in group.cards" :key="card.id" :to="`/meta/cards/${card.id}`" class="gallery-card">
+          <div class="card-thumbnail">
+            <ScaledCard v-if="card.component && card.examples.length" :context="exampleContext(card)" />
+            <div v-else class="text-preview">{{ card.component ? 'Нет примера' : 'Без изображения' }}</div>
           </div>
-          <p v-if="card.summary">{{ card.summary }}</p>
-          <code>{{ card.id }}</code>
-        </div>
-      </RouterLink>
-    </div>
+          <div class="card-info">
+            <div class="card-heading">
+              <h3>{{ card.name }}</h3>
+              <span class="open-arrow">→</span>
+            </div>
+            <p v-if="card.summary">{{ card.summary }}</p>
+            <code>{{ card.id }}</code>
+          </div>
+        </RouterLink>
+      </div>
+    </section>
   </section>
 </template>
 
 <script setup lang="ts">
 import type { RenderContext } from '@/meta/utils'
-import { metaDefinitions as cards } from '@/meta/resolver'
 import { getBrowserMetaResolver } from '@/meta/context/browser'
 import ScaledCard from './ScaledCard.vue'
+import { studioCards, studioCardGroups } from './utils/catalog'
 
-const exampleContext = (card: (typeof cards)[number]): RenderContext => {
+const exampleContext = (card: (typeof studioCards)[number]): RenderContext => {
   const url = card.examples[0].url
   return { url, format: 'og', meta: getBrowserMetaResolver().readMeta(new URL(url)) }
 }
@@ -38,7 +41,7 @@ const exampleContext = (card: (typeof cards)[number]): RenderContext => {
 
 <style scoped lang="scss">
 .gallery {
-  h1, h2, p {
+  h1, h2, h3, p {
     margin: 0;
   }
 
@@ -57,9 +60,21 @@ const exampleContext = (card: (typeof cards)[number]): RenderContext => {
     }
   }
 
+  .gallery-group {
+    & + .gallery-group {
+      margin-top: 36px;
+    }
+
+    > h2 {
+      margin-bottom: 18px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+  }
+
   .gallery-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
     gap: 32px 24px;
 
     .gallery-card {
@@ -99,7 +114,7 @@ const exampleContext = (card: (typeof cards)[number]): RenderContext => {
           justify-content: space-between;
           gap: 12px;
 
-          h2 {
+          h3 {
             font-size: 16px;
             font-weight: 600;
             line-height: 1.4;

@@ -9,7 +9,7 @@ export default defineMetaDefinition({
   priority: 100,
   match: url => isOnslaughtLeaderboard(url) && hasOnslaughtPlayer(url),
   contexts: { onslaughtSeasons },
-  name: 'Натиск · Игрок в рейтинге',
+  name: 'Натиск/Игрок в рейтинге',
   summary: 'Место игрока, очки и количество боёв в таблице лидеров.',
   examples: [
     { name: 'RU · Лидер', url: 'https://wotstat.info/onslaught/leaderboard?region=RU&season=comp7_6_1&nickname=UnLucKy_LLIKoJIbHuK' },
