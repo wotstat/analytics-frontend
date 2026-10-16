@@ -334,6 +334,7 @@ async function load(abortSignal: AbortSignal) {
     resetTimeout = setTimeout(() => leaderboardData.value = [], 500)
 
     const data = await query<LeaderboardData>(`
+      -- ready-daily-snapshot: ${leaderboardDay.value.recalculation}
       select day, name, bdid, clan, clanColor, lastRank, lastDayRank, lastBattlesCount, lastDayBattlesCount, lastRating, lastDayRating
       from Comp7LeaderboardDailyByRank final
       where not startsWith(name, 'MT_COMP_QA_') and region = '${currentRegion}' and
@@ -418,6 +419,7 @@ async function searchPlayer(abortSignal: AbortSignal) {
 
   const escapedName = name.replaceAll('\\', '\\\\').replaceAll('\'', '\\\'')
   const data = await query<LeaderboardData>(`
+    -- ready-daily-snapshot: ${leaderboardDay.value.recalculation}
     select day, name, bdid, clan, clanColor, lastRank, lastDayRank, lastBattlesCount, lastDayBattlesCount, lastRating, lastDayRating
     from Comp7LeaderboardDailyByRank final
     where not startsWith(name, 'MT_COMP_QA_') and region = '${region.value}' and
