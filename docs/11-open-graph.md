@@ -3,6 +3,8 @@
 Карточки и метаданные живут в обычном `src/` рядом со страницами сайта. Студия —
 асинхронная страница основного SPA по `/meta`. Второе приложение, `App`, содержит
 только renderer карточек для Bun backend. Общего отдельного проекта `meta/` нет.
+`src/meta/` содержит общие протоколы и механизм Open Graph. Дизайн карточек,
+default-определение и общие контексты сайта находятся в `src/shared/ui/meta/`.
 
 Основной сайт остаётся SPA. Сервис `analytics-frontend-meta` добавляет мета-теги
 в собранный `index.html`, а PNG получает отдельным запросом через Chromium.
@@ -23,7 +25,7 @@ Debug-карточка для URL `/debug/meta/vehicle?tag=ussr:R45_IS-7` рас
 кеш HTML/PNG debug-примера выключен.
 
 Заголовок этого же примера берёт имя из общего контекста
-`meta/contexts/vehicleNames.ts`: «ИС-7 — WotStat Analytics». Контекст загружает
+`shared/ui/meta/contexts/vehicleNames.ts`: «ИС-7 — WotStat Analytics». Контекст загружает
 словарь `(region = 'RU', locale = 'RU')` целиком при старте и раз в час. Первоначальное
 ожидание ограничено тремя секундами. Если имени ещё нет, title —
 «Название танка — WotStat Analytics». Vue-карточка продолжает выполнять
@@ -66,6 +68,22 @@ src/
 │  └─ infographics/pages/vehicles/meta/
 │     ├─ meta-definition.ts
 │     └─ CompareMetaCard.vue
+├─ shared/ui/meta/
+│  ├─ components/
+│  │  ├─ MetaCard.vue    # общий дизайн: default и content
+│  │  ├─ MetaCardBackground.vue # базовый слой и палитра подписей
+│  │  ├─ MetaCardPattern.vue # точки, крестики, шум или SVG
+│  │  ├─ backgrounds/    # отдельные Vue-компоненты фонов
+│  │  ├─ assets/         # статические SVG-текстуры
+│  │  └─ utils/
+│  │     ├─ backgrounds.ts # каталог компонентов для студии
+│  │     ├─ palette.ts   # цвета и локальный контекст палитры
+│  │     └─ pattern.ts   # общие props паттерна
+│  ├─ contexts/
+│  │  └─ vehicleNames.ts # общий контекст названий техники
+│  └─ defaultMetaCard/
+│     ├─ meta-definition.ts
+│     └─ DefaultMetaCard.vue
 └─ meta/
    ├─ renderer/
    │  ├─ index.html      # HTML-точка входа renderer
@@ -74,13 +92,9 @@ src/
    ├─ utils.ts           # типы, форматы и чистые хелперы
    ├─ resolver.ts        # каталог и resolver; точка входа server.mjs
    ├─ context/           # типы контекстов, загрузка, запросы и адаптация для студии
-   ├─ contexts/          # общие объявления контекстов, например vehicleNames
    └─ cards/
       ├─ CardSurface.vue # выбор компонента и размер полотна
-      ├─ useMetaReady.ts # асинхронная готовность карточки
-      └─ defaultMetaCard/
-         ├─ meta-definition.ts
-         └─ DefaultMetaCard.vue
+      └─ useMetaReady.ts # асинхронная готовность карточки
 ```
 
 Команда `build` в `package.json` последовательно запускает `check`, сборку SPA в `dist/`
@@ -137,6 +151,95 @@ Renderer не импортирует основной `App.vue`, его роут
 а код карточек, их CSS, ресурсы и зависимости даже не загружаются в серверную сборку.
 Браузерные сборки компилируют эти же импорты обычным Vue-плагином.
 
+## Общий дизайн карточек
+
+`shared/ui/meta/components/MetaCard.vue` задаёт общий фон, отступы, цвета, шапку и подвал.
+Он используется внутри компонента конкретной карточки; `CardSurface` продолжает отвечать
+только за выбор компонента, размеры и готовность. `MetaCard` не зависит от URL или данных.
+Оба формата — Open Graph 1200×630 и X / Twitter 1200×600 — используют одну компоновку.
+
+У `variant` два значения:
+
+- `default` (по умолчанию) — большой `title` и `subtitle` под ним, по вертикали в центре.
+  В шапке — WotStat, в подвале — `footer` и wotstat.info.
+- `content` — `title` в компактной верхней полосе с разделителем, по центру — default-слот
+  со своей разметкой. Её типографику и предметные изображения задаёт специализация.
+
+`title` по умолчанию — WotStat Analytics. Необязательный `label` выводится справа в шапке.
+Слот `title` заменяет текст заголовка в выбранном варианте; `subtitle` заменяет подзаголовок
+варианта `default`. Default-слот заменяет центральное содержимое целиком, `footer` — весь подвал.
+
+```vue
+<MetaCard title="Статистика техники" subtitle="Динамика показателей и сравнение танков" />
+
+<MetaCard variant="content" label="Статистика техники" footer="Статистика. Динамика. Сравнение.">
+  <VehicleComparison :vehicles />
+</MetaCard>
+```
+
+Каждый фон — отдельный Vue-компонент в `components/backgrounds/`. По умолчанию карточка
+рендерит `AuroraMistBackground` — вариант 09 «Сияние: дымка»: тёмную основу с мягким
+бирюзовым и лиловым светом. Чтобы заменить фон, передай компонент через prop
+`background: Component` или одноимённый слот. Слот имеет приоритет над prop.
+
+```vue
+<script setup lang="ts">
+import MetaCard from '@/shared/ui/meta/components/MetaCard.vue'
+import ContoursBackground from '@/shared/ui/meta/components/backgrounds/ContoursBackground.vue'
+import AuroraMistBackground from '@/shared/ui/meta/components/backgrounds/AuroraMistBackground.vue'
+import customPattern from '@/shared/ui/meta/components/assets/contours.svg?url'
+</script>
+
+<template>
+  <MetaCard :background="ContoursBackground" title="Статистика техники" />
+
+  <MetaCard title="Статистика техники">
+    <template #background><AuroraMistBackground pattern="dots" /></template>
+  </MetaCard>
+
+  <MetaCard title="Статистика техники">
+    <template #background><AuroraMistBackground :pattern="customPattern" pattern-size="cover" /></template>
+  </MetaCard>
+</template>
+```
+
+Слот позволяет настроить props фона или добавить произвольную разметку и изображения.
+Общая и сравнительная карточки также принимают `background` и пробрасывают слот.
+`MetaCard` импортирует только фон по умолчанию; каталог всех компонентов с названиями,
+описаниями и стабильным порядком номеров находится в `components/utils/backgrounds.ts`
+и используется студией. Добавление фона не требует изменений в `MetaCard`.
+
+`MetaCardBackground.vue` — общий абсолютный слой на всё полотно с псевдоэлементами
+для света и текстур. Конкретные фоны используют его как основу и задают `palette`.
+Для своего CSS-фона можно передать в слот `<MetaCardBackground palette="teal" style="background: …" />`.
+`VehiclesBackground` повторяет фон страницы «Статистика техники».
+Паттерн — отдельный слой `MetaCardPattern`, а не разновидность фона. Все фоны принимают
+общие props из `MetaCardPatternProps`: `pattern?: string` и `patternSize?: string`.
+`pattern` выбирает `dots`, `crosses`, `noise` или строку с URL / содержимым `<svg>…</svg>`.
+Для импортированного SVG используй `?url`; `none` отключает наложение.
+`patternSize` принимает CSS-размер, например `28px 28px`, `80px` или `cover`.
+Точки и крестики повторяются в исходном размере, свой SVG по умолчанию центрируется
+и масштабируется через `cover`; явно заданный размер позволяет повторять свой SVG плиткой.
+Шум использует `soft-light` без маски, остальные паттерны плавно проявляются к правому краю.
+У сияний, медной орбиты и графитового фона по умолчанию остаётся шум; у рельефа,
+диагональных полос и сетки дополнительное наложение не задано.
+Статические SVG-текстуры находятся в `components/assets/`. Зерно фиксировано, фоны не анимируются.
+
+Цвета переопределяются CSS-переменными `--meta-card-text` и `--meta-card-muted` на компоненте,
+отступы — `--meta-card-padding`, размер крупного заголовка — `--meta-card-title-size`.
+Вторичный текст использует светлый ненасыщенный непрозрачный оттенок, близкий к белому
+и подобранный к фону: оливковый для зелёного
+рельефа, голубой для стальных фонов, лавандовый для сияния, бирюзовый для холодного рельефа
+и тёплый медный для `EmberBackground`. `palette` базового `MetaCardBackground` выбирает
+цвет из `metaCardSecondaryColors` в `components/utils/palette.ts` и через локальный
+provide/inject сообщает его родительской карточке. Палитра меняется вместе с компонентом
+фона, в том числе внутри слота; `--meta-card-muted`
+по-прежнему позволяет задать свой цвет поверх выбранной палитры.
+Для `VehiclesBackground` используется более приглушённый голубой `slate`, чтобы вторичный текст
+не конкурировал с основным заголовком на почти однотонном тёмном фоне.
+Общая, сравнительная и обе debug-карточки используют этот компонент;
+запросы данных и `useMetaReady` остаются в специализациях.
+
 ## Определения и выбор по URL
 
 Создайте `meta-definition.ts` в любой вложенной директории `src/`. Ручной регистрации
@@ -168,7 +271,7 @@ export default defineMetaDefinition({
 по `id`, независимо от директории. Выбирается одно определение, без объединения
 с менее приоритетными. Дубли `id` и отсутствие подходящего правила — ошибки.
 
-`defaultMetaCard` — обычное определение: `id: 'default'`, `match: '*'`,
+`shared/ui/meta/defaultMetaCard` — обычное определение: `id: 'default'`, `match: '*'`,
 `priority: -1000`. Отдельной логики fallback нет; его можно переопределить теми же
 правилами приоритета. Compare имеет приоритет 100 и матчится на `/session/vehicles`
 (включая завершающий `/`) с непустым после `trim()` параметром `compare`.
@@ -209,13 +312,13 @@ export default defineMetaDefinition({
 
 ## Контексты определений
 
-Общие контексты объявляются в `src/meta/contexts/`. Специфичный контекст можно
+Общие контексты сайта объявляются в `src/shared/ui/meta/contexts/`. Специфичный контекст можно
 объявить прямо в `contexts` определения; его `load` также может быть импортированной
 функцией. Все загрузчики работают без Vue, DOM и browser-only импортов.
 
 ```ts
 import { defineMetaDefinition } from '@/meta/utils'
-import { vehicleNames } from '@/meta/contexts/vehicleNames'
+import { vehicleNames } from '@/shared/ui/meta/contexts/vehicleNames'
 
 export default defineMetaDefinition({
   id: 'vehicle-title',
@@ -277,6 +380,16 @@ title и предпросмотр. Студия использует `public`, B
 клиента или кеша. Объявления контекстов не содержат адресов сервера или паролей.
 
 ## Студия
+
+`/meta/backgrounds` — подбор фона: сохранённые варианты 05–07, 09, 12 и 15, сохранённые
+сочетания дымки с точками (16) и крестиками (18), увеличенное превью выбранного.
+В превью можно выбрать паттерн: по умолчанию, без паттерна, точки, крестики, шум или SVG
+с линиями рельефа. Для фонов со своей геометрией (рельеф и диагональные полосы)
+переключатель скрыт. Также доступны настоящие default/compare-карточки и форматы Open Graph / X.
+Исходные номера явно заданы в каталоге и сохраняются при удалении вариантов из подборки.
+09 — затемнённая дымка на основе 06, 12 — рельеф со свечением, 15 — исходный фон статистики техники.
+Выбор на этой странице не меняет фон карточек сайта. `CardSurface` и `ScaledCard`
+предоставляют default-слот для таких превью, сохраняя размеры, типографику и протокол готовности.
 
 `/meta` — каталог определений, `/meta/cards/:id` — редактор. Оба экрана загружаются
 асинхронно из основного SPA. Превью — те же Vue-компоненты через `CardSurface`, без iframe.

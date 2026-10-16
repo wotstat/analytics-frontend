@@ -1,6 +1,8 @@
 <template>
   <div class="meta-card-surface" :style="{ width: `${size.width}px`, height: `${size.height}px` }">
-    <component v-if="component" :is="component" :context />
+    <slot>
+      <component v-if="component" :is="component" :context />
+    </slot>
   </div>
 </template>
 

@@ -10,7 +10,6 @@ export default defineMetaDefinition({
   summary: 'Главная и все страницы без собственного превью.',
   examples: [
     { name: 'Главная', url: 'https://wotstat.info/' },
-    { name: 'Техника без сравнения', url: 'https://wotstat.info/session/vehicles' }
   ],
   meta: {
     title: 'WotStat Analytics',

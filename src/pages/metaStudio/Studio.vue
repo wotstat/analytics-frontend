@@ -11,6 +11,7 @@
       <nav class="studio-sidebar">
         <RouterLink to="/meta" class="catalog-link" exact-active-class="active">Все карточки <span>{{ cards.length
         }}</span></RouterLink>
+        <RouterLink to="/meta/backgrounds" active-class="active">Фоны карточек</RouterLink>
         <div class="card-links">
           <RouterLink v-for="card in cards" :key="card.id" :to="`/meta/cards/${card.id}`" active-class="active">
             {{ card.name }}

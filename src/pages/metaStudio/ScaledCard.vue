@@ -1,6 +1,8 @@
 <template>
   <div ref="container" class="scaled-card" :style="{ aspectRatio: `${size.width} / ${size.height}` }">
-    <CardSurface :key="`${context.url}:${context.format}`" :context :style="{ transform: `scale(${scale})` }" />
+    <CardSurface :key="`${context.url}:${context.format}`" :context :style="{ transform: `scale(${scale})` }">
+      <template v-if="$slots.default" #default><slot /></template>
+    </CardSurface>
   </div>
 </template>
 

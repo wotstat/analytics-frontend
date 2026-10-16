@@ -8,9 +8,11 @@
 ## Отдельный target Open Graph
 
 Определения `**/meta-definition.ts` и компоненты карточек находятся в обычном `src/`
-рядом с соответствующими страницами. В `src/meta/` код разделён по назначению:
+рядом с соответствующими страницами. Общий дизайн карточек, default-карточка с определением
+и общие контексты сайта находятся в `src/shared/ui/meta/`.
+В `src/meta/` остаётся общий механизм Open Graph, разделённый по назначению:
 `utils.ts` — типы, размеры и чистые хелперы; `resolver.ts` — каталог определений и вычисление метаданных;
-`cards/` — `CardSurface` и default-карточка;
+`cards/` — `CardSurface` и протокол асинхронной готовности `useMetaReady`;
 `renderer/` — приложение для Chromium. Студия — асинхронная страница основного SPA по `/meta`
 (`pages/metaStudio/`), без iframe. Команды и зависимости общие с frontend.
 
@@ -46,7 +48,7 @@ resolver и не загружает контексты. В студии мета
 Только в этой сборке содержимое `.vue` заменяется пустым объектом, поэтому код
 карточек, Vue и их браузерные зависимости в Bun не попадают.
 
-Определения могут объявлять `contexts`. Общие объявления находятся в `meta/contexts/`,
+Определения могут объявлять `contexts`. Общие объявления сайта находятся в `shared/ui/meta/contexts/`,
 механизм прогрева и обновления — в `meta/context/`. `createMetaResolver(query)`
 запускает одну загрузку на уникальный id и передаёт снимки в синхронный `meta(url, context)`.
 HTTP ждёт только зависимости выбранного определения в пределах первоначального
@@ -80,6 +82,7 @@ reset документа renderer — в блоке `<style lang="scss">` без
 | `/install` | `pages/install/Index.vue` | Установщик модов (File System Access API) |
 | `/widgets/:widget*` | `pages/widgets/Index.vue` | Каталог/просмотр OBS-виджетов (iframe на widgets.wotstat.info) |
 | `/meta` + `/meta/cards/:id` | `pages/metaStudio/` | Студия карточек и текстовых метаданных (async) |
+| `/meta/backgrounds` | `pages/metaStudio/Backgrounds.vue` | Сравнение вариантов фона на двух типах карточек |
 | `/debug` + дети | `pages/debug/Debug.vue` | Песочница технических фичей — см. ниже |
 
 Route meta, используемые лейаутом `/session`: `hideTankList`, `customTitle`, глобальные `clearPage`, `hideHeader`. Общими фильтрами владеют страницы и видимые элементы настройки; layout не подключает хранилище параметров.

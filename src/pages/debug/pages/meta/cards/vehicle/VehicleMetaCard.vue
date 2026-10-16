@@ -1,26 +1,23 @@
 <template>
-  <div class="vehicle-meta-card">
+  <MetaCard variant="content" class="vehicle-meta-card" label="Debug / Open Graph">
     <VehicleImage v-if="tag" class="vehicle-image" :tag size="shop" loading="eager" />
-    <div class="card-heading">
-      <span>WotStat Analytics</span>
-      <span>DEBUG / OPEN GRAPH</span>
-    </div>
     <div class="message">
       <p>Техника</p>
       <h1>{{ name }}</h1>
       <span class="tag">{{ tag || 'Укажите ?tag=ussr:R45_IS-7' }}</span>
     </div>
-    <div class="card-footer">
+    <template #footer>
       <span>{{ status }}</span>
       <span>/debug/meta/vehicle</span>
-    </div>
-  </div>
+    </template>
+  </MetaCard>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { DAILY_CACHE, query } from '@/db'
 import { useMetaReady } from '@/meta/cards/useMetaReady'
+import MetaCard from '@/shared/ui/meta/components/MetaCard.vue'
 import type { RenderContext } from '@/meta/utils'
 import VehicleImage from '@/shared/game/components/vehicles/vehicleImage/VehicleImage.vue'
 
@@ -62,56 +59,22 @@ useMetaReady(async ({ signal }) => {
 
 <style scoped lang="scss">
 .vehicle-meta-card {
-  position: relative;
-  overflow: hidden;
-  height: 100%;
-  padding: 64px 72px 54px;
-  display: flex;
-  flex-direction: column;
-  background: #242d38;
-  color: #f7f7f8;
-
   .vehicle-image {
     position: absolute;
     top: 50%;
-    right: -90px;
+    right: -162px;
     width: 660px;
     transform: translateY(-50%);
     object-fit: contain;
   }
 
-  .card-heading,
-  .message,
-  .card-footer {
-    position: relative;
-  }
-
-  .card-heading,
-  .card-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .card-heading {
-    font-size: 26px;
-    font-weight: 700;
-
-    span:last-child {
-      color: #9daabd;
-      font-size: 16px;
-      letter-spacing: 3px;
-      font-weight: 400;
-    }
-  }
-
   .message {
+    position: relative;
     max-width: 540px;
-    margin: auto 0;
 
     p {
       margin: 0 0 18px;
-      color: #a9b7c9;
+      color: var(--meta-card-muted);
       font-size: 24px;
     }
 
@@ -123,14 +86,9 @@ useMetaReady(async ({ signal }) => {
     }
 
     .tag {
-      color: #a9b7c9;
+      color: var(--meta-card-muted);
       font-size: 24px;
     }
-  }
-
-  .card-footer {
-    font-size: 20px;
-    color: #9daabd;
   }
 }
 </style>

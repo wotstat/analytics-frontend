@@ -1,4 +1,4 @@
-import type { MetaContextDefinition } from '../context/utils/types'
+import type { MetaContextDefinition } from '@/meta/context/utils/types'
 
 type VehicleNames = Readonly<Record<string, string | undefined>>
 

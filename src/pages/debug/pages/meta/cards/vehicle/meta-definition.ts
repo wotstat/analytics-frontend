@@ -1,5 +1,5 @@
 import { defineMetaDefinition } from '@/meta/utils'
-import { vehicleNames } from '@/meta/contexts/vehicleNames'
+import { vehicleNames } from '@/shared/ui/meta/contexts/vehicleNames'
 import VehicleMetaCard from './VehicleMetaCard.vue'
 
 export default defineMetaDefinition({
