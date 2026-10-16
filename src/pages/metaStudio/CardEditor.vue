@@ -49,6 +49,8 @@
         <dl>
           <dt>Шаблон</dt>
           <dd><code>{{ context.meta.definitionId }}</code></dd>
+          <dt>revisionKey</dt>
+          <dd><code>{{ context.meta.revisionKey ?? 'Не задан' }}</code></dd>
           <dt>title</dt>
           <dd>{{ context.meta.title }}</dd>
           <template v-if="context.meta.description !== undefined">
