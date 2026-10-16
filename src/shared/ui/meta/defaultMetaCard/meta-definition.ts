@@ -1,4 +1,4 @@
-import { defineMetaDefinition } from '@/meta/utils'
+import { defineMetaDefinition, everyDays } from '@/meta/utils'
 import DefaultMetaCard from './DefaultMetaCard.vue'
 
 export default defineMetaDefinition({
@@ -16,5 +16,6 @@ export default defineMetaDefinition({
     description: 'Статистика и аналитика для игр «Мир танков» и World of Tanks.',
     imageAlt: 'WotStat Analytics — статистика и аналитика танковых боёв',
   },
+  revisionKey: () => everyDays(1),
   cache: { htmlSeconds: 300, imageSeconds: 86400 },
 })

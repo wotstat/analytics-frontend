@@ -1,4 +1,4 @@
-import { defineMetaDefinition } from '@/meta/utils'
+import { defineMetaDefinition, everySeconds } from '@/meta/utils'
 import DelayedMetaCard from './DelayedMetaCard.vue'
 
 export default defineMetaDefinition({
@@ -16,5 +16,6 @@ export default defineMetaDefinition({
     description: 'Тестовая карточка сообщает о готовности к рендеру через 5 секунд.',
     imageAlt: 'Карточка готова к рендеру после задержки 5 секунд.',
   },
+  revisionKey: () => everySeconds(1),
   cache: { htmlSeconds: 0, imageSeconds: 0 },
 })

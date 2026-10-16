@@ -255,7 +255,7 @@ provide/inject сообщает его родительской карточке
 один default-экспорт вызова `defineMetaDefinition` с объектом определения.
 
 ```ts
-import { defineMetaDefinition } from '@/meta/utils'
+import { defineMetaDefinition, everyHours } from '@/meta/utils'
 import Card from './Card.vue'
 
 export default defineMetaDefinition({
@@ -268,6 +268,7 @@ export default defineMetaDefinition({
     description: 'Статистика игрока WotStat',
     imageAlt: 'Карточка игрока',
   }),
+  revisionKey: () => everyHours(1),
   cache: { htmlSeconds: 300, imageSeconds: 3600 },
   name: 'Игрок',
   examples: [{ name: 'Пример', url: 'https://wotstat.info/player?nickname=Player' }],
@@ -290,6 +291,22 @@ export default defineMetaDefinition({
 `description`, `imageAlt`. Здесь разрешены быстрые вычисления из URL и контекста, но не сеть,
 DOM или импорт browser-only модулей для вычисления метаданных. `cache` необязателен: по умолчанию HTML 300 с,
 изображение 86400 с. `name`, `summary`, `examples` нужны только студии и тоже необязательны.
+
+`revisionKey` — необязательная строка или синхронная функция `(url, context) => string | undefined`.
+Resolver вычисляет её при каждом разрешении метаданных с тем же URL и снимком контекста,
+что и `meta`, и возвращает в `PageMeta.revisionKey`. Backend добавляет значение в параметр
+`r` URL картинки для Open Graph и Twitter; при `undefined` параметр отсутствует.
+Ключ может зависеть от URL, версии успешно загруженных данных или времени.
+`everySeconds(seconds)` из `@/meta/utils` возвращает строку
+`String(Math.floor(Date.now() / (seconds * 1000)))`: внутри периода ключ постоянный,
+на границе меняется. Интервал должен быть конечным положительным числом секунд.
+Для других единиц доступны `everyMinutes(minutes)`, `everyHours(hours)` и `everyDays(days)`:
+например, `everyMinutes(15)`, `everyHours(2)` или `everyDays(1)`. Они переводят интервал
+в секунды и используют тот же расчёт. День равен 24 часам; `everyDays(1)` меняет ключ
+в полночь UTC. Базовая карточка использует `everyDays(1)`, debug-карточки — `everySeconds(1)`.
+Вызывайте helper внутри callback (`revisionKey: () => everyHours(1)`), чтобы
+значение не фиксировалось при импорте модуля. Этот ключ не меняет HTTP TTL и не запускает
+обновление данных; `cache.imageSeconds` и загрузчики контекстов настраиваются отдельно.
 
 `component` — необязательный Vue-компонент, импортированный из `.vue` обычным
 `import Card from './Card.vue'`. Имя файла и расположение произвольные; работают
@@ -358,7 +375,7 @@ const { data } = await query<Row>(sql, {
 Например, `vehicleNames` ограничивает запрос восемью секундами, выполнение в ClickHouse —
 пятью секундами; SQL ограничивает количество возвращаемых строк.
 
-Ключ в `contexts` становится именем значения во втором аргументе `meta`.
+Ключ в `contexts` становится именем значения во втором аргументе `meta` и `revisionKey`.
 `defineMetaDefinition` выводит его тип из результата `load` и добавляет `undefined`.
 Это функция для вывода типов: она возвращает исходное определение без копирования
 объекта или обёртки над `meta`. Все определения, включая статические и определения
@@ -530,8 +547,13 @@ App ждёт его, затем делает `nextTick` и обычную фин
 URL картинки содержит исходный путь, query, формат и версию `v` — общий ID
 frontend-релиза из обязательного `dist-meta/release.json`. Он вычисляется при сборке
 по всем файлам SPA и meta и используется также в dev. В production backend проверяет
-его совпадение с ожидаемым `RELEASE_ID`. Старые версии PNG перенаправляются на актуальную
-с `Cache-Control: no-store`.
+его совпадение с ожидаемым `RELEASE_ID`. Необязательный параметр `r` содержит
+`revisionKey` выбранного определения и меняется независимо от версии сборки.
+Старые версии PNG перенаправляются на актуальную с сохранением `r`
+и `Cache-Control: no-store`. `r` разделяет URL для кеша, но не выбирает исторический
+снимок данных: сервер рендерит текущее содержимое. Новый URL изображения станет
+известен внешнему сервису, когда тот повторно прочитает метаданные страницы;
+уже сохранённые превью не обязаны обновляться по этому расписанию.
 
 HTML имеет `max-age` из определения, ограниченный backend сверху 300 секундами.
 Ни Nginx, ни CDN не должны увеличивать этот срок или бессрочно выдавать stale HTML:

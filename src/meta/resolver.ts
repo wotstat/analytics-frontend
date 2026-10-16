@@ -56,11 +56,13 @@ export function createMetaResolver(query: Query, onUpdate?: () => void) {
 
 function resolveDefinition(definition: MetaDefinition, url: URL, context: Record<string, unknown>): PageMeta {
   const tags = typeof definition.meta === 'function' ? definition.meta(url, context) : definition.meta
+  const { revisionKey } = definition
 
   return {
     ...tags,
     definitionId: definition.id,
     hasImage: Boolean(definition.component),
+    revisionKey: typeof revisionKey === 'function' ? revisionKey(url, context) : revisionKey,
     cache: {
       htmlSeconds: definition.cache?.htmlSeconds ?? 300,
       imageSeconds: definition.cache?.imageSeconds ?? 86400

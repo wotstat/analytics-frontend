@@ -1,4 +1,4 @@
-import { defineMetaDefinition } from '@/meta/utils'
+import { defineMetaDefinition, everySeconds } from '@/meta/utils'
 import { vehicleNames } from '@/shared/ui/meta/contexts/vehicleNames'
 import VehicleMetaCard from './VehicleMetaCard.vue'
 
@@ -28,5 +28,6 @@ export default defineMetaDefinition({
       imageAlt: 'Название танка из ClickHouse',
     }
   },
+  revisionKey: () => everySeconds(1),
   cache: { htmlSeconds: 0, imageSeconds: 0 },
 })
