@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Неизвестный ключ" id="unknown-key"
-    description="Icon.vue ищет компонент в Map по строке 1:1 (iconByName.get). Ключа нет — вернётся undefined, и <component :is='undefined'> ничего не рисует: без фолбэка и без ошибки в консоли."
-    source="src/shared/game/components/efficiencyIcon/Icon.vue">
+    description="IconRenderer.vue ищет компонент в Map по строке 1:1 (iconByName.get). Ключа нет — вернётся undefined, и <component :is='undefined'> ничего не рисует: без фолбэка и без ошибки в консоли."
+    source="src/shared/game/components/efficiencyIcon/IconRenderer.vue">
 
     <div class="debug-row">
       <label class="debug-control">

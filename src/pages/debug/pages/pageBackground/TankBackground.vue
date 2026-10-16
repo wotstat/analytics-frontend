@@ -1,12 +1,12 @@
 <template>
   <div class="tank-background">
     <div class="glow"></div>
-    <TankIcon class="tank" />
+    <Icon icon="tank" class="tank" />
   </div>
 </template>
 
 <script setup lang="ts">
-import TankIcon from '@/shared/game/components/efficiencyIcon/assets/tank.svg'
+import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
 </script>
 
 <style scoped lang="scss">

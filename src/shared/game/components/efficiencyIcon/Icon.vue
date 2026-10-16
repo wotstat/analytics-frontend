@@ -1,16 +1,13 @@
 <template>
-  <component :is="iconByName.get(props.icon)" />
+  <IconRenderer :icon="props.icon" />
 </template>
 
 
 <script setup lang="ts">
-import { IconType } from './utils'
+import { defineAsyncComponent } from 'vue'
+import type { IconType } from './utils'
 
-const icons = import.meta.glob('./assets/*.svg', { eager: true })
-const iconByName = new Map(Object.entries(icons).map(([key, value]) => [key.replace('./assets/', '').replace('.svg', ''), value]))
+const IconRenderer = defineAsyncComponent(() => import('./IconRenderer.vue'))
 
 const props = defineProps<{ icon: IconType }>()
 </script>
-
-
-<style lang="scss" scoped></style>
