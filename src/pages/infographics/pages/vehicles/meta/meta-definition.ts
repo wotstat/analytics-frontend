@@ -17,5 +17,4 @@ export default defineMetaDefinition({
     description: 'Сравнение статистики техники в «Мире танков» и World of Tanks.',
     imageAlt: 'Здесь будет сравнение техники — WotStat Analytics',
   },
-  cache: { htmlSeconds: 300, imageSeconds: 86400 },
 })

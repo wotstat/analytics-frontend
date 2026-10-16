@@ -64,7 +64,7 @@ function resolveDefinition(definition: MetaDefinition, url: URL, context: Record
     hasImage: Boolean(definition.component),
     revisionKey: typeof revisionKey === 'function' ? revisionKey(url, context) : revisionKey,
     cache: {
-      htmlSeconds: definition.cache?.htmlSeconds ?? 300,
+      htmlSeconds: definition.cache?.htmlSeconds ?? 15,
       imageSeconds: definition.cache?.imageSeconds ?? 86400
     },
   }

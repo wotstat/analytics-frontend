@@ -17,5 +17,4 @@ export default defineMetaDefinition({
     imageAlt: 'WotStat Analytics — статистика и аналитика танковых боёв',
   },
   revisionKey: () => everyDays(1),
-  cache: { htmlSeconds: 300, imageSeconds: 86400 },
 })
