@@ -1,5 +1,5 @@
 <template>
-  <MetaCard variant="content" class="delayed-meta-card" label="Debug / Open Graph">
+  <MetaCard variant="compact-full" class="delayed-meta-card" label="Debug / Open Graph">
     <div class="message">
       <span class="duration">5 секунд</span>
       <h1>{{ ready ? 'Карточка готова' : 'Подготовка карточки' }}</h1>

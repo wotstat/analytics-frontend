@@ -1,5 +1,5 @@
 <template>
-  <MetaCard variant="content" class="compare-card" :background label="Статистика техники" footer="Статистика. Динамика. Сравнение.">
+  <MetaCard :variant class="compare-card" :background label="Статистика техники" footer="Статистика. Динамика. Сравнение.">
     <template v-if="$slots.background" #background><slot name="background" /></template>
     <h1>Здесь будет<br>сравнение техники</h1>
   </MetaCard>
@@ -9,8 +9,11 @@
 import type { RenderContext } from '@/meta/utils'
 import type { Component } from 'vue'
 import MetaCard from '@/shared/ui/meta/components/MetaCard.vue'
+import type { MetaCardVariant } from '@/shared/ui/meta/components/utils/variants'
 
-defineProps<{ context: RenderContext, background?: Component }>()
+withDefaults(defineProps<{ context: RenderContext, background?: Component, variant?: MetaCardVariant }>(), {
+  variant: 'compact-full',
+})
 </script>
 
 <style scoped lang="scss">

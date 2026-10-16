@@ -9,8 +9,9 @@
       <label>
         <span>Карточка</span>
         <select v-model="layout">
-          <option value="default">Большой заголовок</option>
-          <option value="content">Компактная шапка</option>
+          <option value="full">Полный</option>
+          <option value="compact">Компактный</option>
+          <option value="compact-full">Compact Full</option>
         </select>
       </label>
       <label>
@@ -35,7 +36,7 @@
 
     <div ref="preview" class="selected-preview">
       <ScaledCard :context>
-        <component :is="definition.component" :context>
+        <component :is="definition.component" :context :variant="layout">
           <template #background><component :is="selected.component" v-bind="selectedPatternProps" /></template>
         </component>
       </ScaledCard>
@@ -56,7 +57,7 @@
           :class="{ selected: selected.id === background.id }"
           @click="selectBackground(background)">
           <ScaledCard :context>
-            <component :is="definition.component" :context>
+            <component :is="definition.component" :context :variant="layout">
               <template #background><component :is="background.component" v-bind="background.props" /></template>
             </component>
           </ScaledCard>
@@ -78,9 +79,10 @@ import { metaDefinitions as cards } from '@/meta/resolver'
 import { getBrowserMetaResolver } from '@/meta/context/browser'
 import { metaCardBackgrounds } from '@/shared/ui/meta/components/utils/backgrounds'
 import contoursPattern from '@/shared/ui/meta/components/assets/contours.svg?url'
+import type { MetaCardVariant } from '@/shared/ui/meta/components/utils/variants'
 import ScaledCard from './ScaledCard.vue'
 
-const layout = ref('default')
+const layout = ref<MetaCardVariant>('full')
 const format = ref<MetaFormat>('og')
 const pattern = ref('default')
 const backgroundGroups = [
@@ -94,7 +96,7 @@ const selectedPatternProps = computed(() => {
 })
 const preview = useTemplateRef<HTMLDivElement>('preview')
 const definition = computed(() => {
-  const id = layout.value === 'content' ? 'vehicles-compare' : 'default'
+  const id = layout.value === 'full' ? 'default' : 'vehicles-compare'
   return cards.find(card => card.id === id) ?? cards[0]
 })
 const context = computed<RenderContext>(() => {

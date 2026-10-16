@@ -2,6 +2,7 @@
   <MetaCard
     class="default-card"
     :background
+    :variant
     subtitle="Статистика и аналитика танковых боёв"
     footer="Мир танков · World of Tanks">
     <template #title>
@@ -17,8 +18,9 @@
 import type { RenderContext } from '@/meta/utils'
 import type { Component } from 'vue'
 import MetaCard from '../components/MetaCard.vue'
+import type { MetaCardVariant } from '../components/utils/variants'
 
-defineProps<{ context: RenderContext, background?: Component }>()
+defineProps<{ context: RenderContext, background?: Component, variant?: MetaCardVariant }>()
 </script>
 
 <style scoped lang="scss">

@@ -1,5 +1,5 @@
 <template>
-  <MetaCard variant="content" class="vehicle-meta-card" label="Debug / Open Graph">
+  <MetaCard variant="compact-full" class="vehicle-meta-card" label="Debug / Open Graph">
     <VehicleImage v-if="tag" class="vehicle-image" :tag size="shop" loading="eager" />
     <div class="message">
       <p>Техника</p>

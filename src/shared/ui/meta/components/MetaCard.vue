@@ -7,7 +7,7 @@
     </div>
 
     <div class="heading">
-      <h1 v-if="variant === 'content'" class="heading-title">
+      <h1 v-if="variant !== 'full'" class="heading-title">
         <slot name="title">{{ title }}</slot>
       </h1>
       <span v-else class="wordmark">WotStat</span>
@@ -15,16 +15,18 @@
     </div>
 
     <div class="content">
-      <slot>
-        <div v-if="variant === 'default'" class="message">
-          <h1 class="title">
-            <slot name="title">{{ title }}</slot>
-          </h1>
-          <p v-if="subtitle || $slots.subtitle" class="subtitle">
-            <slot name="subtitle">{{ subtitle }}</slot>
-          </p>
-        </div>
-      </slot>
+      <div class="content-body">
+        <slot>
+          <div v-if="variant === 'full'" class="message">
+            <h1 class="title">
+              <slot name="title">{{ title }}</slot>
+            </h1>
+            <p v-if="subtitle || $slots.subtitle" class="subtitle">
+              <slot name="subtitle">{{ subtitle }}</slot>
+            </p>
+          </div>
+        </slot>
+      </div>
     </div>
 
     <div class="footer">
@@ -40,16 +42,17 @@
 import { computed, provide, shallowRef, type Component } from 'vue'
 import AuroraMistBackground from './backgrounds/AuroraMistBackground.vue'
 import { metaCardPaletteKey, metaCardSecondaryColors, type MetaCardPalette } from './utils/palette'
+import type { MetaCardVariant } from './utils/variants'
 
 withDefaults(defineProps<{
-  variant?: 'default' | 'content'
+  variant?: MetaCardVariant
   title?: string
   subtitle?: string
   label?: string
   footer?: string
   background?: Component
 }>(), {
-  variant: 'default',
+  variant: 'full',
   title: 'WotStat Analytics',
 })
 
@@ -111,7 +114,8 @@ const secondaryColor = computed(() => metaCardSecondaryColors[palette.value])
     }
   }
 
-  .content {
+  .content,
+  .content-body {
     position: relative;
     flex: 1;
     min-width: 0;
@@ -119,7 +123,9 @@ const secondaryColor = computed(() => metaCardSecondaryColors[palette.value])
     display: flex;
     flex-direction: column;
     justify-content: center;
+  }
 
+  .content {
     .message {
       .title {
         margin: 0;
@@ -145,9 +151,25 @@ const secondaryColor = computed(() => metaCardSecondaryColors[palette.value])
     line-height: 1.4;
   }
 
-  &.variant-content .heading {
-    padding-bottom: 24px;
-    border-bottom: 1px solid #ffffff14;
+  &.variant-compact,
+  &.variant-compact-full {
+    .heading {
+      padding-bottom: 24px;
+      border-bottom: 1px solid #ffffff14;
+    }
+  }
+
+  &.variant-compact-full {
+    .content {
+      position: absolute;
+      inset: 0;
+      padding: inherit;
+      padding-block: 0;
+    }
+
+    .footer {
+      margin-top: auto;
+    }
   }
 }
 </style>
