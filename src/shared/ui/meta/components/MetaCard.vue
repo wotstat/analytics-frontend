@@ -7,7 +7,11 @@
     </div>
 
     <div class="heading">
-      <h1 v-if="variant !== 'full'" class="heading-title">
+      <h1 v-if="heading" class="heading-title section-heading">
+        <span>{{ heading }}</span>
+        <span class="heading-brand">WotStat Analytics</span>
+      </h1>
+      <h1 v-else-if="variant !== 'full'" class="heading-title">
         <slot name="title">{{ title }}</slot>
       </h1>
       <span v-else class="wordmark">WotStat</span>
@@ -46,6 +50,7 @@ import type { MetaCardVariant } from './utils/variants'
 
 withDefaults(defineProps<{
   variant?: MetaCardVariant
+  heading?: string
   title?: string
   subtitle?: string
   label?: string
@@ -106,11 +111,28 @@ const secondaryColor = computed(() => metaCardSecondaryColors[palette.value])
     }
 
     .label {
+      min-width: 0;
+      max-width: 570px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
       color: var(--meta-card-muted);
-      font-size: 14px;
+      font-size: 20px;
+      font-weight: 600;
       line-height: 1.4;
-      letter-spacing: 3px;
-      text-transform: uppercase;
+      text-align: right;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: baseline;
+      gap: 24px;
+      flex-shrink: 0;
+      font-size: 30px;
+
+      .heading-brand {
+        color: var(--meta-card-muted);
+      }
     }
   }
 
