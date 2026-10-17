@@ -35,10 +35,11 @@
     </div>
 
     <div class="footer">
-      <slot name="footer">
+      <slot v-if="$slots.footer" name="footer" />
+      <template v-else>
         <span>{{ footer }}</span>
         <span>wotstat.info</span>
-      </slot>
+      </template>
     </div>
   </div>
 </template>
@@ -171,6 +172,10 @@ const secondaryColor = computed(() => metaCardSecondaryColors[palette.value])
   }
 
   .footer {
+    &:empty {
+      display: none;
+    }
+
     color: var(--meta-card-muted);
     font-size: 20px;
     line-height: 1.4;

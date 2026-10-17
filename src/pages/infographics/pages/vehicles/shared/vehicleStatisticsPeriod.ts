@@ -1,5 +1,7 @@
 export type VehicleStatisticsPeriod = 1 | 7 | 30
 
+export const defaultVehicleStatisticsFromDay = '2024-03-06'
+
 export const vehicleStatisticsPeriods: { value: VehicleStatisticsPeriod, label: string }[] = [
   { value: 1, label: 'За последний день' },
   { value: 7, label: 'За последнюю неделю' },

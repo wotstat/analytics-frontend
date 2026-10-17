@@ -55,6 +55,7 @@ import type { Slot } from './vehicleMetricSelector/vehicleMetrics.ts'
 import VehicleFilters from './filters/VehicleFilters.vue'
 import { useVehicleQueryStorage } from './filters/useVehicleQueryStorage'
 import { vehicleStatisticsQueries } from './shared/vehicleStatisticsQuery'
+import { defaultVehicleStatisticsFromDay } from './shared/vehicleStatisticsPeriod'
 import { useVehicleTableStatistics } from './vehicleListTable/useVehicleTableStatistics'
 import { useBackground } from '@/shared/uiKit/pageBackground/useBackground'
 import VehiclesBackground from './VehiclesBackground.vue'
@@ -68,7 +69,7 @@ const comparison = useVehicleComparison(filters)
 
 const beforeDay = new Date().toISOString().slice(0, 10)
 const fromBeginning = useLocalStorage('vehicles-from-beginning', false)
-const fromDay = computed(() => fromBeginning.value ? null : '2024-03-06')
+const fromDay = computed(() => fromBeginning.value ? null : defaultVehicleStatisticsFromDay)
 const retry = ref(0)
 const queries = computed(() => vehicleStatisticsQueries(filters.value, grouping.value, period.value, undefined, beforeDay))
 const onlyActual = computed(() => grouping.value === 'tanks' && localFilters.value.onlyActual)
