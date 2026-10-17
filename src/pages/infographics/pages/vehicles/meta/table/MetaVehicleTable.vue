@@ -82,7 +82,7 @@ function formatValue(slot: Slot, value: number | null | undefined) {
   border-bottom: 0;
   border-radius: 17px 17px 0 0;
   overflow: hidden;
-  background: linear-gradient(115deg, #253445f5, #192032f5);
+  background: linear-gradient(115deg, #1b2839f5, #192032f5);
   box-shadow: 0 25px 70px #0004;
   font-variant-numeric: tabular-nums;
 
