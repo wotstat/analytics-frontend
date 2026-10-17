@@ -94,7 +94,7 @@ read-only `readyRoute`: во время перехода он равен `null`,
 | `/install` | `pages/install/Index.vue` | Установщик модов (File System Access API) |
 | `/widgets/:widget*` | `pages/widgets/Index.vue` | Каталог/просмотр OBS-виджетов (iframe на widgets.wotstat.info) |
 | `/meta` + `/meta/cards/:id` | `pages/metaStudio/` | Студия карточек и текстовых метаданных (async) |
-| `/meta/backgrounds` | `pages/metaStudio/Backgrounds.vue` | Сравнение вариантов фона на двух типах карточек |
+| `/meta/backgrounds` | `pages/metaStudio/backgrounds/Backgrounds.vue` | Сравнение вариантов фона на двух типах карточек |
 | `/debug` + дети | `pages/debug/Debug.vue` | Песочница технических фичей — см. ниже |
 
 Route meta, используемые лейаутом `/session`: `hideTankList`, `customTitle`, глобальные `clearPage`, `hideHeader`. Общими фильтрами владеют страницы и видимые элементы настройки; layout не подключает хранилище параметров.

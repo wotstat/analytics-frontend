@@ -1,20 +1,22 @@
 <template>
   <div class="meta-card-surface" :style="{ width: `${size.width}px`, height: `${size.height}px` }">
     <slot>
-      <component v-if="component" :is="component" v-bind="context.meta.props" :context />
+      <component v-if="context && component" :is="component" v-bind="context.meta.props" :context />
     </slot>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, provide } from 'vue'
-import { formats, type RenderContext } from '../utils'
+import { formats, type MetaFormat, type RenderContext } from '../utils'
 import { metaDefinitions } from '../definitions'
 import { metaReadyKey } from './useMetaReady'
 
-const props = defineProps<{ context: RenderContext }>()
-const size = computed(() => formats[props.context.format])
-const component = computed(() => metaDefinitions.find(item => item.id === props.context.meta.definitionId)?.component)
+const props = withDefaults(defineProps<{ context?: RenderContext, format?: MetaFormat }>(), {
+  format: 'og',
+})
+const size = computed(() => formats[props.context?.format ?? props.format])
+const component = computed(() => metaDefinitions.find(item => item.id === props.context?.meta.definitionId)?.component)
 
 const preparations: Promise<void>[] = []
 provide(metaReadyKey, ready => {

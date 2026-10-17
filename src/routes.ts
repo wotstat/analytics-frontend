@@ -66,7 +66,7 @@ const routes = [
     meta: { clearPage: true },
     children: [
       { path: '', component: () => import('./pages/metaStudio/Gallery.vue') },
-      { path: 'backgrounds', component: () => import('./pages/metaStudio/Backgrounds.vue') },
+      { path: 'backgrounds', component: () => import('./pages/metaStudio/backgrounds/Backgrounds.vue') },
       { path: 'cards/:id', component: () => import('./pages/metaStudio/CardEditor.vue') },
     ],
   },

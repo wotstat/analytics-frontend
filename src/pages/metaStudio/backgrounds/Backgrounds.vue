@@ -7,7 +7,7 @@
 
     <div class="preview-controls">
       <label>
-        <span>Карточка</span>
+        <span>Компоновка</span>
         <select v-model="layout">
           <option value="full">Полный</option>
           <option value="compact">Компактный</option>
@@ -35,9 +35,11 @@
     </div>
 
     <div ref="preview" class="selected-preview">
-      <ScaledCard :context>
-        <component :is="definition.component" :context :variant="layout">
-          <template #background><component :is="selected.component" v-bind="selectedPatternProps" /></template>
+      <ScaledCard :format>
+        <component :is="previewCard" :variant="layout">
+          <template #background>
+            <component :is="selected.component" v-bind="selectedPatternProps" />
+          </template>
         </component>
       </ScaledCard>
       <div class="selected-description">
@@ -56,9 +58,11 @@
           class="variant"
           :class="{ selected: selected.id === background.id }"
           @click="selectBackground(background)">
-          <ScaledCard :context>
-            <component :is="definition.component" :context :variant="layout">
-              <template #background><component :is="background.component" v-bind="background.props" /></template>
+          <ScaledCard :format>
+            <component :is="previewCard" :variant="layout">
+              <template #background>
+                <component :is="background.component" v-bind="background.props" />
+              </template>
             </component>
           </ScaledCard>
           <span class="variant-heading">
@@ -74,35 +78,30 @@
 
 <script setup lang="ts">
 import { computed, ref, shallowRef, useTemplateRef } from 'vue'
-import type { MetaFormat, RenderContext } from '@/meta/utils'
-import { metaDefinitions as cards } from '@/meta/definitions'
-import { getBrowserMetaResolver } from '@/meta/context/browser'
+import type { MetaFormat } from '@/meta/utils'
 import { metaCardBackgrounds } from '@/shared/ui/meta/components/utils/backgrounds'
 import contoursPattern from '@/shared/ui/meta/components/assets/contours.svg?url'
 import type { MetaCardVariant } from '@/shared/ui/meta/components/utils/variants'
-import ScaledCard from './ScaledCard.vue'
+import ScaledCard from '../ScaledCard.vue'
+import DefaultPreviewCard from './DefaultPreviewCard.vue'
+import StatisticsPreviewCard from './StatisticsPreviewCard.vue'
 
 const layout = ref<MetaCardVariant>('full')
+const previewCard = computed(() => layout.value === 'full' ? DefaultPreviewCard : StatisticsPreviewCard)
 const format = ref<MetaFormat>('og')
 const pattern = ref('default')
 const backgroundGroups = [
   { id: 'saved', name: 'Сохранённые', variants: ['contours', 'aurora', 'rays', 'aurora-mist', 'contours-glow', 'vehicles'] },
   { id: 'saved-patterns', name: 'Сохранённые паттерны', variants: ['pattern-dots', 'pattern-crosses'] },
 ].map(group => ({ ...group, backgrounds: metaCardBackgrounds.filter(background => group.variants.includes(background.id)) }))
+
 const selected = shallowRef(metaCardBackgrounds.find(background => background.id === 'aurora-mist') ?? metaCardBackgrounds[0])
 const selectedPatternProps = computed(() => {
   if (selected.value.supportsPattern === false || pattern.value === 'default') return selected.value.props
   return { pattern: pattern.value === 'svg' ? contoursPattern : pattern.value }
 })
+
 const preview = useTemplateRef<HTMLDivElement>('preview')
-const definition = computed(() => {
-  const id = layout.value === 'full' ? 'default' : 'vehicles-compare'
-  return cards.find(card => card.id === id) ?? cards[0]
-})
-const context = computed<RenderContext>(() => {
-  const url = definition.value.examples[0].url
-  return { url, format: format.value, meta: getBrowserMetaResolver().readMeta(new URL(url)) }
-})
 
 const selectBackground = (background: (typeof metaCardBackgrounds)[number]) => {
   selected.value = background
