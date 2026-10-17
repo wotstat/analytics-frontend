@@ -29,6 +29,9 @@
     "src/**/*.tsx",
     "src/**/*.vue"
   ],
+  "exclude": [
+    "src/shared/ui/meta/components/assets/generateAuroraMist.ts"
+  ],
   "vueCompilerOptions": {
     "checkUnknownDirectives": true
   },
