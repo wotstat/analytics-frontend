@@ -1,17 +1,14 @@
 <template>
   <OnslaughtMetaFrame :params :state section="Таблица лидеров" :footer>
-    <div v-if="params.nickname" class="leaderboard-player" :class="{ 'has-rank': division }">
+    <div v-if="params.nickname" class="leaderboard-player" :class="{ 'has-position': player || state === 'loading' }">
       <div class="player-overview">
         <div class="player-copy">
-          <h2 class="og-nickname" :class="{ long: playerName.length > 20 }">{{ playerName }}</h2>
-          <template v-if="player || state === 'loading'">
-            <p class="position">
-              <span class="og-number">{{ formatNumber(player?.position) }}</span>
-              <span class="position-label">место</span>
-            </p>
-            <p v-if="division" class="rank-label">{{ rankLabel(division) }}</p>
-          </template>
-          <template v-else>
+          <h2 class="og-nickname" :class="{ long: playerName.length > 18 }">{{ playerName }}</h2>
+          <div v-if="division" class="player-rank">
+            <RankIcon :rank="division" :game :season="params.season ?? 'latest'" size="large" loading="eager" />
+            <p>{{ rankLabel(division) }}</p>
+          </div>
+          <template v-if="!player && state !== 'loading'">
             <p class="no-data">Игрок вне таблицы лидеров</p>
             <p class="og-caption">В выбранном регионе и сезоне</p>
           </template>
@@ -21,8 +18,13 @@
           { label: 'боёв', value: formatNumber(player?.battles) },
         ]" />
       </div>
-      <div v-if="division" class="player-rank">
-        <RankIcon :rank="division" :game :season="params.season ?? 'latest'" size="large" loading="eager" />
+      <div v-if="player || state === 'loading'" class="player-position">
+        <div class="position-value">
+          <LaurelBranch class="laurel" />
+          <span class="og-number" :style="{ fontSize: `${positionFontSize}px` }">{{ formattedPosition }}</span>
+          <LaurelBranch class="laurel right" />
+        </div>
+        <p class="position-label">место в рейтинге</p>
       </div>
     </div>
 
@@ -65,6 +67,7 @@ import MetaMetrics from '../../meta/MetaMetrics.vue'
 import { useOnslaughtMeta } from '../../meta/utils/useOnslaughtMeta'
 import { loadLeaderboardSnapshot, type LeaderboardSnapshot } from '../../meta/utils/data'
 import { formatNumber, rankLabel } from '../../meta/utils/format'
+import LaurelBranch from './assets/laurel-branch.svg?component'
 
 const props = defineProps<{ context: RenderContext }>()
 const snapshot = shallowRef<LeaderboardSnapshot | null>(null)
@@ -77,6 +80,8 @@ const game = computed(() => regionToGame(params.value.region))
 const players = computed(() => snapshot.value?.entries ?? [])
 const player = computed(() => params.value.nickname ? players.value[0] : null)
 const playerName = computed(() => player.value?.name ?? params.value.nickname)
+const formattedPosition = computed(() => formatNumber(player.value?.position))
+const positionFontSize = computed(() => Math.min(188, 620 / formattedPosition.value.length))
 
 const division = computed(() => {
   if (!player.value) return null
@@ -201,8 +206,8 @@ const footer = computed(() => {
   gap: 48px;
   height: 100%;
 
-  &.has-rank {
-    grid-template-columns: minmax(0, 1fr) 420px;
+  &.has-position {
+    grid-template-columns: minmax(0, 1fr) 560px;
   }
 
   .player-overview {
@@ -221,44 +226,66 @@ const footer = computed(() => {
     min-width: 0;
   }
 
-  .position {
-    display: flex;
-    align-items: baseline;
-    gap: 20px;
-    margin: 24px 0 0;
-
-    .og-number {
-      font-size: 80px;
-      letter-spacing: normal;
-    }
-
-    .position-label {
-      color: var(--meta-card-muted);
-      font-size: 23px;
-    }
-  }
-
-  .rank-label {
-    margin: 16px 0 0;
-    color: var(--onslaught-accent);
-    font-size: 25px;
-    font-weight: 600;
-    line-height: 1.2;
-  }
-
   .player-rank {
-    align-self: center;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 24px;
 
     img {
       display: block;
-      width: 420px;
-      margin-top: -36px;
-      filter: drop-shadow(0 12px 28px #0006);
+      flex: none;
+      width: 96px;
+      margin: -14px -8px -14px -16px;
+    }
 
-      &.game-wot {
-        width: 380px;
-        margin-inline: auto;
+    p {
+      margin: 0;
+      color: var(--onslaught-accent);
+      font-size: 25px;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+  }
+
+  .player-position {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+
+    .position-value {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      height: 260px;
+    }
+
+    .og-number {
+      letter-spacing: -5px;
+      white-space: nowrap;
+    }
+
+    .laurel {
+      flex: none;
+      width: 88px;
+      height: 248px;
+      color: #ddc995;
+      opacity: .8;
+
+      &.right {
+        transform: scaleX(-1);
       }
+    }
+
+    .position-label {
+      margin: 4px 0 0;
+      color: var(--meta-card-muted);
+      font-size: 23px;
+      line-height: 1.2;
     }
   }
 
