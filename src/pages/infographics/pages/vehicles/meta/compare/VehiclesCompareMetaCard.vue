@@ -14,19 +14,6 @@
 
     <template v-if="state === 'ready' && series.length && !params.invalidComparison">
       <div class="comparison-body">
-        <div v-if="isDuel" class="rivals">
-          <div v-for="source in series" :key="source.tag" class="rival" :style="{ '--source-color': source.color }">
-            <VehicleImage v-if="source.selection.tankTag" :tag="source.selection.tankTag" size="shop"
-              :game="regionToGame(source.filters.regions[0] ?? 'RU')" loading="eager" />
-            <h3>{{ source.name }}</h3>
-            <span :style="{ color: source.color === '#0a84ff' ? '#2f96ff' : undefined }">
-              {{ latestValue(source.history) }}
-            </span>
-            <small v-if="source.details" class="source-filters">{{ source.details }}</small>
-          </div>
-          <span v-if="series.length > 1" class="versus">VS</span>
-        </div>
-
         <div class="plot-panel">
           <div v-if="!isDuel" class="legend" :class="{ extended: hasSourceDetails }">
             <div v-for="source in series.slice(0, 8)" :key="source.tag" class="legend-item">
@@ -41,6 +28,20 @@
           </div>
         </div>
 
+        <div v-if="isDuel" class="rivals">
+          <div v-for="source in series" :key="source.tag" class="rival" :style="{ '--source-color': source.color }">
+            <VehicleImage v-if="source.selection.tankTag" :tag="source.selection.tankTag" size="shop"
+              :game="regionToGame(source.filters.regions[0] ?? 'RU')" loading="eager" />
+            <div class="rival-info">
+              <h3>{{ source.name }}</h3>
+              <span class="rival-value" :style="{ color: source.color === '#0a84ff' ? '#2f96ff' : undefined }">
+                {{ latestValue(source.history) }}
+              </span>
+              <small v-if="source.details" class="source-filters">{{ source.details }}</small>
+            </div>
+          </div>
+          <span v-if="series.length > 1" class="versus">VS</span>
+        </div>
       </div>
     </template>
     <div v-else class="state">{{ stateMessage }}</div>
@@ -223,25 +224,40 @@ const stateMessage = computed(() => {
 
     .rivals {
       position: relative;
+      z-index: 2;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      min-height: 155px;
+      min-height: 170px;
+      margin-top: 12px;
       flex-shrink: 0;
+    }
+
+    &:not(.single-source) .rivals {
+      margin-top: -40px;
+      margin-bottom: 20px;
     }
 
     .rival {
       position: relative;
-      padding: 12px 0 16px;
+      display: flex;
+      align-items: flex-end;
+      padding-top: 12px;
+
+      .rival-info {
+        position: relative;
+        z-index: 2;
+        max-width: 280px;
+      }
 
       img {
         position: absolute;
-        width: 380px;
+        width: 370px;
         max-width: none;
-        top: -80px;
+        top: -68px;
         left: 140px;
         transform: scaleX(-1);
         filter: drop-shadow(0 12px 22px #0009);
-        z-index: 10;
+        z-index: 1;
       }
 
       h3 {
@@ -252,7 +268,7 @@ const stateMessage = computed(() => {
         line-height: 1.05;
       }
 
-      >span {
+      .rival-value {
         position: relative;
         font-size: 34px;
         font-weight: 700;
@@ -270,6 +286,7 @@ const stateMessage = computed(() => {
       }
 
       &:nth-child(2) {
+        justify-content: flex-end;
         text-align: right;
       }
 
@@ -290,42 +307,55 @@ const stateMessage = computed(() => {
 
     .versus {
       position: absolute;
-      top: 45px;
+      bottom: 36px;
       left: 50%;
       transform: translateX(-50%);
       font-size: 25px;
       font-weight: 700;
       color: #ccd4e5;
     }
+  }
+
+  &.duel.single-source {
+    .comparison-body {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      column-gap: 28px;
+    }
 
     .plot-panel {
-      padding-top: 12px;
+      grid-column: 1 / -1;
+      grid-row: 1;
+      margin-right: 120px;
     }
 
-    &.single-source .rivals {
-      grid-template-columns: 1fr;
-      min-height: 140px;
+    .rivals {
+      grid-column: 2;
+      grid-row: 1;
+      display: block;
+      min-height: 0;
+      margin-top: 0;
     }
 
-    &.single-source .rival {
-      padding-bottom: 0;
+    .rival {
+      height: 100%;
+      align-items: flex-start;
+      justify-content: flex-end;
+      padding-top: 8px;
+      text-align: right;
     }
 
-    &.single-source .rival img {
-      width: 520px;
-      top: -150px;
+    .rival img {
+      width: 620px;
+      top: auto;
+      bottom: -30px;
       left: auto;
-      right: 15px;
+      right: -130px;
       transform: none;
     }
 
-    &.single-source .rival h3 {
-      max-width: 600px;
+    .rival h3 {
       font-size: 44px;
-    }
-
-    &.single-source .plot-panel {
-      padding-top: 0;
     }
   }
 
@@ -341,22 +371,21 @@ const stateMessage = computed(() => {
         margin-top: 10px;
       }
 
-      .rivals {
-        min-height: 143px;
-      }
+      &:not(.single-source) {
+        .rivals {
+          min-height: 158px;
+        }
 
-      .rival img {
-        width: 360px;
-        top: -76px;
-      }
-
-      &.single-source .rivals {
-        min-height: 128px;
+        .rival img {
+          width: 380px;
+          top: -70px;
+        }
       }
 
       &.single-source .rival img {
-        width: 500px;
-        top: -142px;
+        width: 580px;
+        bottom: -28px;
+        right: -120px;
       }
     }
   }
