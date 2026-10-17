@@ -3,8 +3,7 @@
     section="Личная статистика" :footer>
     <div v-if="!params.nickname" class="personal-intro">
       <div class="intro-copy">
-        <p class="og-eyebrow">Результаты за сезон</p>
-        <h2>Личная статистика</h2>
+        <h2>Личная статистика<br>Натиска</h2>
         <p class="og-caption">Рейтинг, победы и статистика по технике</p>
         <div class="invitation">
           Введите свой никнейм на странице

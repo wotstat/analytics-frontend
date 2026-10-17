@@ -2,22 +2,18 @@
   <OnslaughtMetaFrame :params :state section="Общая статистика" footer="Общая статистика · По собранным боям сезона">
     <div class="general-content">
       <div class="overview">
-        <div class="audience">
-          <p class="og-eyebrow">Общая статистика сезона</p>
-          <template v-if="state === 'loading' || overview?.players">
-            <h2 class="og-number">{{ formatNumber(overview?.players) }}</h2>
-            <p class="og-caption">игроков в собранных боях</p>
-          </template>
-          <template v-else>
-            <h2 class="empty-title">Сезон в цифрах</h2>
-            <p class="og-caption">Пока нет записанных боёв</p>
-          </template>
+        <div class="overview-copy">
+          <h2>Общая статистика<br>Натиска</h2>
+          <p class="og-caption">{{ state === 'loading' || overview?.players
+            ? 'Игроки, бои и рейтинг за сезон'
+            : 'Пока нет записанных боёв' }}</p>
         </div>
 
         <MetaRankPair :game :season="params.season ?? 'latest'" />
       </div>
 
       <MetaMetrics :items="[
+        { label: 'игроков в выборке', value: formatNumber(overview?.players) },
         { label: 'боёв в выборке', value: formatNumber(overview?.battles) },
         { label: 'игроков в Легенде', value: formatNumber(snapshot?.legends) },
         { label: 'порог Легенды', value: formatNumber(snapshot?.legends ? snapshot.threshold : null) },
@@ -68,10 +64,15 @@ const game = computed(() => regionToGame(params.value.region))
     gap: 24px;
   }
 
-  .empty-title {
-    margin: 0;
-    font-size: 62px;
-    line-height: 1.1;
+  .overview-copy {
+    min-width: 0;
+
+    h2 {
+      margin: 0;
+      font-size: 64px;
+      line-height: 1.06;
+      letter-spacing: -2px;
+    }
   }
 }
 </style>

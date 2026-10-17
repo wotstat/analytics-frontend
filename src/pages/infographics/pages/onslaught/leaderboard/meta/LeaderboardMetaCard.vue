@@ -1,8 +1,9 @@
 <template>
-  <OnslaughtMetaFrame :params :state section="Таблица лидеров" :footer>
+  <OnslaughtMetaFrame :params :state section="Таблица лидеров Натиска" :footer>
     <div v-if="params.nickname" class="leaderboard-player" :class="{ 'has-position': player || state === 'loading' }">
       <div class="player-overview">
         <div class="player-copy">
+          <p class="section-label">Рейтинг Натиска</p>
           <h2 class="og-nickname" :class="{ long: playerName.length > 18 }">{{ playerName }}</h2>
           <div v-if="division" class="player-rank">
             <RankIcon :rank="division" :game :season="params.season ?? 'latest'" size="large" loading="eager" />
@@ -30,6 +31,7 @@
 
     <div v-else-if="snapshot || state === 'loading'" class="leaderboard-overview">
       <div class="legend-summary">
+        <p class="section-label">Таблица лидеров Натиска</p>
         <p class="legend-heading">Порог Легенды</p>
         <div class="legend-rating">
           <RankIcon rank="sixth_hero" :game :season="params.season ?? 'latest'" size="large" loading="eager" />
@@ -49,7 +51,7 @@
     </div>
 
     <div v-else class="empty-leaderboard">
-      <p class="og-eyebrow">Таблица лидеров</p>
+      <p class="section-label">Таблица лидеров Натиска</p>
       <h2>Лидеры сезона</h2>
       <p class="og-caption">В этом сезоне пока нет данных рейтинга</p>
     </div>
@@ -99,6 +101,13 @@ const footer = computed(() => {
 </script>
 
 <style scoped lang="scss">
+.section-label {
+  margin: 0 0 22px;
+  color: var(--meta-card-muted);
+  font-size: 22px;
+  line-height: 1.3;
+}
+
 .leaderboard-overview {
   display: grid;
   grid-template-columns: 340px minmax(0, 1fr);
