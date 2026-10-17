@@ -32,7 +32,7 @@
       <div class="legend-summary">
         <p class="legend-heading">Порог Легенды</p>
         <div class="legend-rating">
-          <RankIcon rank="sixth" :game :season="params.season ?? 'latest'" size="large" loading="eager" />
+          <RankIcon rank="sixth_hero" :game :season="params.season ?? 'latest'" size="large" loading="eager" />
           <h2 class="og-number">{{ formatNumber(snapshot?.legends ? snapshot.threshold : null) }}</h2>
         </div>
         <p class="legend-population"><strong>{{ formatNumber(snapshot?.legends) }}</strong> игроков в Легенде</p>

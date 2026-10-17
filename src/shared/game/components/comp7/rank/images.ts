@@ -1,15 +1,16 @@
 import { STATIC_URL } from '@/shared/external/externalUrl'
 import type { GameVendor } from '@/shared/game/domain/wot'
-import { getDivisionByRating, hasEliteDivisions, type EliteRating, type Rank, type Division } from '@/shared/game/domain/comp7/utils'
+import { getDivisionByRating, getMaxDivisionByRank, hasEliteDivisions, type EliteRating, type Rank, type Division } from '@/shared/game/domain/comp7/utils'
 
-export type RankImageDefinition = number | { value: number, eliteRating: EliteRating } | Rank | Division | [rating: number, eliteRating: EliteRating]
+export type RankImageDefinition = number | { value: number, eliteRating: EliteRating } | Rank | Division | `${Rank}_hero` | [rating: number, eliteRating: EliteRating]
 
 function resolveRankImage(rank: RankImageDefinition, game: GameVendor, season: string): Rank | Division {
   let division: Rank | Division
   if (typeof rank === 'number') division = getDivisionByRating(rank, game, null, season)
   else if (Array.isArray(rank)) division = getDivisionByRating(rank[0], game, rank[1], season)
   else if (typeof rank === 'object') division = getDivisionByRating(rank.value, game, rank.eliteRating, season)
-  else division = rank
+  else if (rank.endsWith('_hero')) division = getMaxDivisionByRank(rank.split('_')[0] as Rank, game, season)
+  else division = rank as Rank | Division
 
   if (!hasEliteDivisions(game, season) && /^(fifth|sixth)_[CBA]$/.test(division)) {
     return division.split('_')[0] as Rank

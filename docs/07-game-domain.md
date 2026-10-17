@@ -46,6 +46,8 @@
   топ-5%/3%/1%. Только полный набор позволяет определить `sixth_C` / `sixth_B` / `sixth_A`.
   С одним числом возвращается общий `sixth`, без выдуманной буквы. Неположительный порог считается неизвестным.
 - `getDivisionsByRank`, `getNextDivision`, `getPrevDivision` принимают `(rankOrDivision, game, season)`.
+  `getMaxDivisionByRank(rank, game, season)` возвращает максимальный доступный дивизион ранга:
+  A при наличии дивизионов, иначе сам ранг.
   `getRatingForDivision` / `getRatingIntervalForDivision` дополнительно принимают `eliteRating` четвёртым
   аргументом; неизвестная граница — `Infinity`. `getDivisionLetterByRating` принимает `(rating, game, season, eliteRating)`.
 - `components/comp7/rank/images.ts` содержит `RankImageDefinition`, `rankImageUrl` и `rankImageFallbackUrl`;
@@ -53,6 +55,9 @@
   `rankImageUrl` выбирает дивизион по правилам переданного сезона; явные новые дивизионы для старого сезона
   или WoT отображаются иконкой соответствующего ранга без буквы. `rankImageFallbackUrl` меняет оформление
   на `latest`, сохраняя смысл ранга исходного сезона.
+  `RankImageDefinition` и `RankIcon` также принимают `${Rank}_hero` (например, `fifth_hero` и `sixth_hero`):
+  выбирается максимальный дивизион по `getMaxDivisionByRank`. Для старых сезонов МТ это `fifth_logo` /
+  `sixth_logo`, для WoT — общая эмблема ранга. Маленький размер по-прежнему отображается без буквы.
 - Статистика передаёт выбранный сезон в хелперы. Её текущие данные содержат один порог Легенды, поэтому
   она показывает Легенду без буквы. Песочница `/debug/game/comp7` позволяет проверить обе системы, все
   иконки и расчёт с тремя порогами Легенды.

@@ -287,6 +287,11 @@ export function getDivisionsByRank(rank: Rank, game: GameVendor = 'mt', season: 
   return letters.map(letter => `${rank}_${letter}` as Division)
 }
 
+export function getMaxDivisionByRank(rank: Rank, game: GameVendor = 'mt', season: string = 'latest'): Division {
+  const divisions = getDivisionsByRank(rank, game, season)
+  return divisions[divisions.length - 1]
+}
+
 export function getRatingForDivision(division: Division, game: GameVendor = 'mt', season: string = 'latest',
   eliteRating: EliteRating | null = null): number {
   if (division == 'qual') return 0

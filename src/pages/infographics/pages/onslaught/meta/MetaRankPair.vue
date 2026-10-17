@@ -1,7 +1,7 @@
 <template>
   <div class="meta-rank-pair">
-    <RankIcon rank="fifth" :game :season size="large" loading="eager" class="champion" />
-    <RankIcon rank="sixth" :game :season size="large" loading="eager" class="legend" />
+    <RankIcon rank="fifth_hero" :game :season size="large" loading="eager" class="champion" />
+    <RankIcon rank="sixth_hero" :game :season size="large" loading="eager" class="legend" />
   </div>
 </template>
 

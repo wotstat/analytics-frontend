@@ -28,6 +28,19 @@
       </div>
     </div>
 
+    <p class="debug-hint">hero — максимальный дивизион ранга для выбранной игры и сезона.</p>
+    <div class="debug-grid" style="--debug-grid-min: 110px">
+      <div class="card" v-for="rank in TIERS" :key="rank">
+        <div class="debug-stage center">
+          <RankIcon :rank="`${rank}_hero`" :game :season :size class="icon" :class="`size-${size}`" />
+        </div>
+        <div class="caption">
+          <span class="debug-value">{{ rank }}_hero</span>
+          <span class="debug-hint">{{ getMaxDivisionByRank(rank, game, season) }}</span>
+        </div>
+      </div>
+    </div>
+
     <p class="debug-note">
       Для <span class="debug-value">qual</span> подпись берётся по ключу <span class="debug-value">rank:qual</span>,
       которого нет в <span class="debug-value">comp7/i18n.json</span> (там есть только first..sixth) — виден фолбэк
@@ -41,7 +54,7 @@
 import { computed, ref } from 'vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import RankIcon from '@/shared/game/components/comp7/rank/RankIcon.vue'
-import { Division, Rank, getDivisionsByRank } from '@/shared/game/domain/comp7/utils'
+import { Division, Rank, getDivisionsByRank, getMaxDivisionByRank } from '@/shared/game/domain/comp7/utils'
 import { GameVendor } from '@/shared/game/domain/wot'
 import { useI18n } from '@/shared/i18n/useI18n'
 import i18n from '@/shared/game/domain/comp7/i18n.json'
