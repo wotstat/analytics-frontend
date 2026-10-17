@@ -61,7 +61,7 @@
 
 ## `src/shared/ui/` — проектный слой
 
-- `meta/` — `components/` с общим дизайном мета-карточек (`MetaCard.vue`, базовый слой `MetaCardBackground.vue`, отдельные фоны в `backgrounds/`, наложение `MetaCardPattern.vue`), `defaultMetaCard/` с default-определением и `contexts/` с общими контекстами сайта. Фон передаётся Vue-компонентом через prop `background` или одноимённый слот; по умолчанию — `AuroraMistBackground`. Фоны принимают `pattern` (точки, крестики, шум или SVG строкой) и CSS-размер `patternSize`. Механизм рендера и контекстов остаётся в `src/meta/`; интерфейс карточек описан в [11-open-graph.md](11-open-graph.md#общий-дизайн-карточек).
+- `meta/` — `components/` с общим дизайном мета-карточек (`MetaCard.vue`, базовый слой `MetaCardBackground.vue`, отдельные фоны в `backgrounds/`, наложение `MetaCardPattern.vue`), `generalMetaCard/` с default-определением и `contexts/` с общими контекстами сайта. Фон передаётся Vue-компонентом через prop `background` или одноимённый слот; по умолчанию — `AuroraMistBackground`. Фоны принимают `pattern` (точки, крестики, шум или SVG строкой) и CSS-размер `patternSize`. Механизм рендера и контекстов остаётся в `src/meta/`; интерфейс карточек описан в [11-open-graph.md](11-open-graph.md#общий-дизайн-карточек).
 - `tooltip/textTooltip.ts` — `vTextTooltip`: базовая директива плюс `popoverViewportOffset` из шапки сайта.
 - `tipBubble/` — `TipBubble.vue`, `TipBubbleText.vue`: обёртки над `uiKit/tipBubble` с проектными дефолтами.
 - `popover/PanelPopover.vue` — панель сайта поверх `uiKit/popover/PopoverAutoClose`; интерфейс ниже.

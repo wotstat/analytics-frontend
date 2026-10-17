@@ -7,15 +7,16 @@
     </div>
 
     <div class="heading">
-      <h1 v-if="heading" class="heading-title section-heading">
-        <span>{{ heading }}</span>
-        <span class="heading-brand">WotStat Analytics</span>
-      </h1>
-      <h1 v-else-if="variant !== 'full'" class="heading-title">
-        <slot name="title">{{ title }}</slot>
-      </h1>
-      <span v-else class="wordmark">WotStat</span>
-      <span v-if="label" class="label">{{ label }}</span>
+      <slot v-if="$slots.header" name="header" />
+      <template v-else>
+        <h1 class="heading-title">
+          <slot name="brand">
+            <span v-if="specificBrand">{{ specificBrand }}</span>
+            <span class="heading-brand" :class="{ accent: specificBrand }">{{ brand }}</span>
+          </slot>
+        </h1>
+        <span v-if="label || $slots.label" class="label"><slot name="label">{{ label }}</slot></span>
+      </template>
     </div>
 
     <div class="content">
@@ -44,13 +45,16 @@
 
 <script setup lang="ts">
 import { computed, provide, shallowRef, type Component } from 'vue'
+import type { RenderContext } from '@/meta/utils'
 import AuroraMistBackground from './backgrounds/AuroraMistBackground.vue'
 import { metaCardPaletteKey, metaCardSecondaryColors, type MetaCardPalette } from './utils/palette'
 import type { MetaCardVariant } from './utils/variants'
 
 withDefaults(defineProps<{
   variant?: MetaCardVariant
-  heading?: string
+  context?: RenderContext
+  specificBrand?: string
+  brand?: string
   title?: string
   subtitle?: string
   label?: string
@@ -58,6 +62,7 @@ withDefaults(defineProps<{
   background?: Component
 }>(), {
   variant: 'full',
+  brand: 'WotStat Analytics',
   title: 'WotStat Analytics',
 })
 
@@ -101,11 +106,17 @@ const secondaryColor = computed(() => metaCardSecondaryColors[palette.value])
   }
 
   .heading {
+    &:empty {
+      display: none;
+    }
 
-    .heading-title,
-    .wordmark {
+    .heading-title {
+      display: flex;
+      align-items: baseline;
+      gap: 24px;
+      flex-shrink: 0;
       margin: 0;
-      font-size: 26px;
+      font-size: 24px;
       line-height: 1.2;
       font-weight: 700;
     }
@@ -123,16 +134,8 @@ const secondaryColor = computed(() => metaCardSecondaryColors[palette.value])
       text-align: right;
     }
 
-    .section-heading {
-      display: flex;
-      align-items: baseline;
-      gap: 24px;
-      flex-shrink: 0;
-      font-size: 30px;
-
-      .heading-brand {
-        color: var(--meta-card-muted);
-      }
+    .heading-brand.accent {
+      color: var(--meta-card-muted);
     }
   }
 
@@ -171,6 +174,11 @@ const secondaryColor = computed(() => metaCardSecondaryColors[palette.value])
     color: var(--meta-card-muted);
     font-size: 20px;
     line-height: 1.4;
+  }
+
+  &:has(> .heading:empty) {
+    padding-top: 0;
+    gap: 0;
   }
 
   &.variant-compact,

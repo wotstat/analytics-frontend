@@ -1,13 +1,11 @@
 <template>
   <div class="render-preview">
-    <div class="render-stage">
-      <div ref="container" class="render-viewport" :style="{ aspectRatio: `${size.width} / ${size.height}` }">
-        <MetaApp
-          embedded
-          class="preview-app"
-          :style="{ width: `${size.width}px`, height: `${size.height}px`, transform: `scale(${scale})` }"
-          @vue:mounted="run" />
-      </div>
+    <div ref="container" class="render-viewport" :style="{ aspectRatio: `${size.width} / ${size.height}` }">
+      <MetaApp
+        embedded
+        class="preview-app"
+        :style="{ width: `${size.width}px`, height: `${size.height}px`, transform: `scale(${scale})` }"
+        @vue:mounted="run" />
     </div>
     <p class="render-size">{{ size.width }} × {{ size.height }} px</p>
     <div class="render-controls">
@@ -154,23 +152,13 @@ onUnmounted(() => {
     }
   }
 
-  .render-stage {
-    padding: 24px;
-    background: var(--studio-canvas, #1d1d1d);
-    border-radius: 4px;
+  .render-viewport {
+    width: 100%;
+    overflow: hidden;
+    background: #303236;
 
-    .render-viewport {
-      width: 100%;
-      overflow: hidden;
-      background: #303236;
-
-      .preview-app {
-        transform-origin: left top;
-      }
-    }
-
-    @media (max-width: 500px) {
-      padding: 12px;
+    .preview-app {
+      transform-origin: left top;
     }
   }
 

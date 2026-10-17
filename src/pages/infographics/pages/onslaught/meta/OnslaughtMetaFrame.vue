@@ -1,5 +1,5 @@
 <template>
-  <MetaCard :variant class="onslaught-meta" heading="НАТИСК" :label="`${params.region} · ${params.seasonName}`" :footer>
+  <MetaCard :variant class="onslaught-meta" specific-brand="НАТИСК" :label="`${params.region} · ${params.seasonName}`" :footer>
     <template #background>
       <MetaCardBackground palette="slate" class="onslaught-background">
         <img src="../assets/bg-1.jpg" alt="" loading="eager">

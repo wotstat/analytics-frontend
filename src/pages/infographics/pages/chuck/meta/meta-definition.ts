@@ -1,9 +1,9 @@
 import { defineMetaDefinition } from '@/meta/utils'
-import DefaultMetaCard from '@/shared/ui/meta/defaultMetaCard/DefaultMetaCard.vue'
+import MetaCard from '@/shared/ui/meta/components/MetaCard.vue'
 
 export default defineMetaDefinition({
   id: 'infographics-chuck',
-  component: DefaultMetaCard,
+  component: MetaCard,
   priority: 10,
   match: url => url.pathname.replace(/\/$/, '') === '/session/chuck-norris-tournament',
   name: 'Инфографика/Очки Чака',
@@ -21,5 +21,6 @@ export default defineMetaDefinition({
     title: 'Очки Чака',
     subtitle: 'Результаты боёв по правилам Турнира Чака',
     label: 'Инфографика',
+    footer: 'Мир танков · World of Tanks',
   },
 })

@@ -1,27 +1,32 @@
 <template>
   <MetaCard
-    class="default-preview-card"
-    :variant
+    class="general-card"
+    :background
     subtitle="Статистика и аналитика танковых боёв"
     footer="Мир танков · World of Tanks">
+    <template #header />
     <template #title>
       WotStat
       <br>
       <span class="secondary-title">Analytics</span>
     </template>
-    <template #background><slot name="background" /></template>
+    <template v-if="$slots.background" #background><slot name="background" /></template>
   </MetaCard>
 </template>
 
 <script setup lang="ts">
-import MetaCard from '@/shared/ui/meta/components/MetaCard.vue'
-import type { MetaCardVariant } from '@/shared/ui/meta/components/utils/variants'
+import type { RenderContext } from '@/meta/utils'
+import type { Component } from 'vue'
+import MetaCard from '../components/MetaCard.vue'
 
-defineProps<{ variant: MetaCardVariant }>()
+defineProps<{
+  context?: RenderContext
+  background?: Component
+}>()
 </script>
 
 <style scoped lang="scss">
-.default-preview-card .secondary-title {
+.general-card .secondary-title {
   color: var(--meta-card-muted);
 }
 </style>

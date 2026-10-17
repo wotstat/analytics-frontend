@@ -36,7 +36,7 @@
 
     <div ref="preview" class="selected-preview">
       <ScaledCard :format>
-        <component :is="previewCard" :variant="layout">
+        <component :is="previewCard" v-bind="previewProps">
           <template #background>
             <component :is="selected.component" v-bind="selectedPatternProps" />
           </template>
@@ -59,7 +59,7 @@
           :class="{ selected: selected.id === background.id }"
           @click="selectBackground(background)">
           <ScaledCard :format>
-            <component :is="previewCard" :variant="layout">
+            <component :is="previewCard" v-bind="previewProps">
               <template #background>
                 <component :is="background.component" v-bind="background.props" />
               </template>
@@ -83,11 +83,12 @@ import { metaCardBackgrounds } from '@/shared/ui/meta/components/utils/backgroun
 import contoursPattern from '@/shared/ui/meta/components/assets/contours.svg?url'
 import type { MetaCardVariant } from '@/shared/ui/meta/components/utils/variants'
 import ScaledCard from '../ScaledCard.vue'
-import DefaultPreviewCard from './DefaultPreviewCard.vue'
+import GeneralMetaCard from '@/shared/ui/meta/generalMetaCard/GeneralMetaCard.vue'
 import StatisticsPreviewCard from './StatisticsPreviewCard.vue'
 
 const layout = ref<MetaCardVariant>('full')
-const previewCard = computed(() => layout.value === 'full' ? DefaultPreviewCard : StatisticsPreviewCard)
+const previewCard = computed(() => layout.value === 'full' ? GeneralMetaCard : StatisticsPreviewCard)
+const previewProps = computed(() => layout.value === 'full' ? {} : { variant: layout.value })
 const format = ref<MetaFormat>('og')
 const pattern = ref('default')
 const backgroundGroups = [

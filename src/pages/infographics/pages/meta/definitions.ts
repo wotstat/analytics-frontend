@@ -1,9 +1,9 @@
 import { defineMetaDefinition } from '@/meta/utils'
-import DefaultMetaCard from '@/shared/ui/meta/defaultMetaCard/DefaultMetaCard.vue'
+import MetaCard from '@/shared/ui/meta/components/MetaCard.vue'
 
 export const battleMeta = defineMetaDefinition({
   id: 'infographics-battle',
-  component: DefaultMetaCard,
+  component: MetaCard,
   priority: 10,
   match: url => url.pathname.replace(/\/$/, '') === '/session',
   name: 'Инфографика/Бои',
@@ -21,12 +21,13 @@ export const battleMeta = defineMetaDefinition({
     title: 'Бои',
     subtitle: 'Винрейт, время в бою и выживаемость',
     label: 'Инфографика',
+    footer: 'Мир танков · World of Tanks',
   },
 })
 
 export const coverageMeta = defineMetaDefinition({
   id: 'infographics-coverage',
-  component: DefaultMetaCard,
+  component: MetaCard,
   priority: 10,
   match: url => url.pathname.replace(/\/$/, '') === '/session/players',
   name: 'Инфографика/Охват игроков',
@@ -44,12 +45,13 @@ export const coverageMeta = defineMetaDefinition({
     title: 'Охват игроков',
     subtitle: 'Игроки, с которыми вы встречались в боях',
     label: 'Инфографика',
+    footer: 'Мир танков · World of Tanks',
   },
 })
 
 export const damageMeta = defineMetaDefinition({
   id: 'infographics-damage',
-  component: DefaultMetaCard,
+  component: MetaCard,
   priority: 10,
   match: url => url.pathname.replace(/\/$/, '') === '/session/damage',
   name: 'Инфографика/Урон',
@@ -67,12 +69,13 @@ export const damageMeta = defineMetaDefinition({
     title: 'Урон',
     subtitle: 'Нанесённый и полученный урон в деталях',
     label: 'Инфографика',
+    footer: 'Мир танков · World of Tanks',
   },
 })
 
 export const mapsMeta = defineMetaDefinition({
   id: 'infographics-maps',
-  component: DefaultMetaCard,
+  component: MetaCard,
   priority: 10,
   match: url => url.pathname.replace(/\/$/, '') === '/session/maps',
   name: 'Инфографика/Карты',
@@ -90,12 +93,13 @@ export const mapsMeta = defineMetaDefinition({
     title: 'Карты',
     subtitle: 'Результаты боёв на разных картах',
     label: 'Инфографика',
+    footer: 'Мир танков · World of Tanks',
   },
 })
 
 export const resultsMeta = defineMetaDefinition({
   id: 'infographics-results',
-  component: DefaultMetaCard,
+  component: MetaCard,
   priority: 10,
   match: url => url.pathname.replace(/\/$/, '') === '/session/results',
   name: 'Инфографика/Результаты',
@@ -113,5 +117,6 @@ export const resultsMeta = defineMetaDefinition({
     title: 'Результаты',
     subtitle: 'Урон, насвет и эффективность в боях',
     label: 'Инфографика',
+    footer: 'Мир танков · World of Tanks',
   },
 })

@@ -1,9 +1,9 @@
 import { defineMetaDefinition } from '@/meta/utils'
-import DefaultMetaCard from '@/shared/ui/meta/defaultMetaCard/DefaultMetaCard.vue'
+import MetaCard from '@/shared/ui/meta/components/MetaCard.vue'
 
 export default defineMetaDefinition({
   id: 'infographics-lootbox',
-  component: DefaultMetaCard,
+  component: MetaCard,
   priority: 10,
   match: url => url.pathname.replace(/\/$/, '') === '/session/lootbox',
   name: 'Инфографика/Коробки',
@@ -21,5 +21,6 @@ export default defineMetaDefinition({
     title: 'Коробки',
     subtitle: 'Награды и статистика открытия коробок',
     label: 'Инфографика',
+    footer: 'Мир танков · World of Tanks',
   },
 })

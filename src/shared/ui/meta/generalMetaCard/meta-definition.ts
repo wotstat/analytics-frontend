@@ -1,9 +1,9 @@
 import { defineMetaDefinition, everyDays } from '@/meta/utils'
-import DefaultMetaCard from './DefaultMetaCard.vue'
+import GeneralMetaCard from './GeneralMetaCard.vue'
 
 export default defineMetaDefinition({
-  id: 'default',
-  component: DefaultMetaCard,
+  id: 'general',
+  component: GeneralMetaCard,
   priority: -1000,
   match: '*',
   name: 'По умолчанию/Общая карточка',
