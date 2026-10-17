@@ -15,7 +15,10 @@ import { metaDefinitionsPlugin } from './vitePlugins/metaDefinitions/metaDefinit
 const projectRoot = fileURLToPath(new URL('./', import.meta.url))
 const common = {
   envDir: projectRoot,
-  define: { 'import.meta.env.VITE_META_RENDERER': false },
+  define: {
+    'import.meta.env.VITE_META_RENDERER': false,
+    'import.meta.env.VITE_META_SERVER': false,
+  },
   resolve: { alias: { '@': resolve(projectRoot, 'src') } }
 }
 
@@ -49,7 +52,7 @@ const mainConfig: UserConfig = {
 
 const metaRendererConfig: UserConfig = {
   ...common,
-  define: { 'import.meta.env.VITE_META_RENDERER': true },
+  define: { ...common.define, 'import.meta.env.VITE_META_RENDERER': true },
   root: resolve(projectRoot, 'src/meta/renderer'),
   publicDir: false,
   plugins: [metaDefinitionsPlugin(projectRoot), vue(), svgLoader(svgLoaderConfig)],
@@ -61,6 +64,7 @@ const metaRendererConfig: UserConfig = {
 
 const metaServerConfig: UserConfig = {
   ...common,
+  define: { ...common.define, 'import.meta.env.VITE_META_SERVER': true },
   root: projectRoot,
   publicDir: false,
   plugins: [metaDefinitionsPlugin(projectRoot), {
