@@ -1,11 +1,6 @@
-import type { MetaDefinition } from './utils'
+import definitions from 'virtual:meta-definitions'
 
-const modules = import.meta.glob<MetaDefinition>([
-  '../**/meta-definition.ts',
-  '../**/*-meta-definition.ts',
-], { eager: true, import: 'default' })
-
-export const metaDefinitions = Object.values(modules)
+export const metaDefinitions = definitions
   .map(definition => ({
     ...definition,
     name: definition.name ?? definition.id,

@@ -10,6 +10,7 @@ import { align } from '@mdit/plugin-align'
 import MarkdownIt from 'markdown-it'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import { visualizer } from 'rollup-plugin-visualizer'
+import { metaDefinitionsPlugin } from './vitePlugins/metaDefinitions/metaDefinitions.ts'
 
 const projectRoot = fileURLToPath(new URL('./', import.meta.url))
 const common = {
@@ -27,6 +28,7 @@ const svgLoaderConfig: Parameters<typeof svgLoader>[0] = {
 const mainConfig: UserConfig = {
   ...common,
   plugins: [
+    metaDefinitionsPlugin(projectRoot),
     vue(),
     vueDevTools(),
     svgLoader(svgLoaderConfig),
@@ -50,7 +52,7 @@ const metaRendererConfig: UserConfig = {
   define: { 'import.meta.env.VITE_META_RENDERER': true },
   root: resolve(projectRoot, 'src/meta/renderer'),
   publicDir: false,
-  plugins: [vue(), svgLoader(svgLoaderConfig)],
+  plugins: [metaDefinitionsPlugin(projectRoot), vue(), svgLoader(svgLoaderConfig)],
   build: {
     outDir: resolve(projectRoot, 'dist-meta/client'),
     emptyOutDir: true
@@ -61,7 +63,7 @@ const metaServerConfig: UserConfig = {
   ...common,
   root: projectRoot,
   publicDir: false,
-  plugins: [{
+  plugins: [metaDefinitionsPlugin(projectRoot), {
     name: 'meta-server-components',
     load: id => id.endsWith('.vue') ? 'export default {}' : undefined,
   }],

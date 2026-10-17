@@ -13,6 +13,12 @@ interface ImportMeta {
   readonly env: ImportMetaEnv
 }
 
+declare module 'virtual:meta-definitions' {
+  import type { MetaDefinition } from '@/meta/utils'
+  const definitions: MetaDefinition[]
+  export default definitions
+}
+
 declare module '*.svg?component' {
   import type { FunctionalComponent, SVGAttributes } from 'vue'
   const component: FunctionalComponent<SVGAttributes>

@@ -5,6 +5,7 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
+    "rewriteRelativeImportExtensions": true,
     "target": "ES2022",
     "lib": [
       "ES2024"
@@ -16,6 +17,7 @@
     "tsBuildInfoFile": "node_modules/.cache/build.tsbuildinfo"
   },
   "include": [
-    "vite.config.ts"
+    "vite.config.ts",
+    "vitePlugins/**/*.ts"
   ]
 }

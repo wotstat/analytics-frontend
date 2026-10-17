@@ -10,7 +10,7 @@
     <div class="studio-workspace">
       <nav class="studio-sidebar">
         <RouterLink to="/meta" class="catalog-link" exact-active-class="active">Все карточки <span>{{ cards.length
-        }}</span></RouterLink>
+            }}</span></RouterLink>
         <RouterLink to="/meta/backgrounds" active-class="active">Фоны карточек</RouterLink>
         <div class="card-links">
           <section v-for="group in studioCardGroups" :key="group.name" class="card-group">
@@ -221,13 +221,13 @@ useNoIndex()
         padding-top: 12px;
 
         .card-group {
-          & + .card-group {
+          &+.card-group {
             margin-top: 20px;
           }
 
           h2 {
             margin: 0 12px 6px;
-            color: var(--studio-muted);
+            color: #ffffff;
             font-size: 11px;
             font-weight: 600;
           }
@@ -329,7 +329,7 @@ useNoIndex()
           .card-group {
             flex-shrink: 0;
 
-            & + .card-group {
+            &+.card-group {
               margin-top: 0;
             }
           }
