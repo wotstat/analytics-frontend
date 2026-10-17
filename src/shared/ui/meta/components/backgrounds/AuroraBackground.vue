@@ -11,7 +11,7 @@ const props = withDefaults(defineProps<MetaCardPatternProps>(), { pattern: 'nois
 
 <style scoped lang="scss">
 .background-aurora {
-  --meta-card-noise-opacity: .18;
+  --meta-card-noise-opacity: .1;
 
   background:
     radial-gradient(ellipse 45% 90% at 100% 8%, #315b6073, transparent 80%),

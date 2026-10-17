@@ -11,7 +11,7 @@ const props = withDefaults(defineProps<MetaCardPatternProps>(), { pattern: 'nois
 
 <style scoped lang="scss">
 .background-ember {
-  --meta-card-noise-opacity: .18;
+  --meta-card-noise-opacity: .1;
 
   background:
     radial-gradient(ellipse 70% 120% at 95% 45%, #78503866, transparent 78%),
