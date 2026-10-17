@@ -950,12 +950,15 @@
 
 **`Comp7Leaderboard`** / **`Comp7LeaderboardByRank`** (`ReplacingMergeTree`, ~114M):
 `region`, `recalculationTime` (момент пересчёта), `name` (ник), `bdid` (id аккаунта), `clan`,
-`clanColor`, `rank` (позиция), `rating`, `battlesCount`, `elite` (bool), `day`.
+`clanColor`, `rank` (позиция), `rating`, `battlesCount`, `division` (код API, `UInt8`), `day`.
+`elite` — материализованный bool: `division IN (11, 12, 13)`. Коды 11/12/13 соответствуют
+Легенде A/B/C, 21/22/23 — Чемпиону A/B/C; применимость букв определяется игрой и сезоном.
 Первая отсортирована по игроку, вторая — по рангу (для выборок «топ-N»).
 
 **`Comp7LeaderboardDaily`** / **`Comp7LeaderboardDailyByRank`** — дневные агрегаты:
 `region`, `day`, `bdid`, `lastRecalculationTime`, `firstSnapshot`/`lastSnapshot`,
 `minRank`/`maxRank`, `minRating`/`maxRating`, `minElite`/`maxElite`.
+Дневные агрегаты сохраняют только признак Легенды, без `division`.
 
 ### Отметки и мастерство
 

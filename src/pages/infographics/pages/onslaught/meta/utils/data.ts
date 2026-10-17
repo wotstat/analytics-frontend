@@ -11,7 +11,7 @@ export type LeaderboardSnapshot = {
   threshold: number
   entries: LeaderboardPlayer[]
 }
-export type LeaderboardPlayer = { name: string, position: number, rating: number, battles: number, elite: number }
+export type LeaderboardPlayer = { name: string, position: number, rating: number, battles: number, elite: number, division: number | null }
 export type PersonalStatistics = {
   updatedAt: number
   rating: number | null
@@ -66,11 +66,24 @@ export async function loadLeaderboardSnapshot(params: OnslaughtMetaPeriod, signa
   const snapshot = data[0]
   if (!snapshot) return null
 
+  let playerDivision: number | null = null
+  if (params.nickname && snapshot.entries.length) {
+    const [name, position] = snapshot.entries[0]
+    const { data } = await query<{ division: number }>(`
+      SELECT division FROM Comp7LeaderboardByRank FINAL
+      WHERE region = ${sqlString(params.region)}
+        AND recalculationTime = toDateTime(${sqlString(snapshot.recalculation)}, 'UTC')
+        AND rank = ${position} AND name = ${sqlString(name)}
+      LIMIT 1
+    `, queryOptions(signal))
+    playerDivision = data[0]?.division ?? null
+  }
+
   const { snapshotDay, entries, ...summary } = snapshot
   return {
     ...summary,
     day: snapshotDay,
-    entries: entries.map(([name, position, rating, battles, elite]) => ({ name, position, rating, battles, elite })),
+    entries: entries.map(([name, position, rating, battles, elite]) => ({ name, position, rating, battles, elite, division: playerDivision })),
   }
 }
 

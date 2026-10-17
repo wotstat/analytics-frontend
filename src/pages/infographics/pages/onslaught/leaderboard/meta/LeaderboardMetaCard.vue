@@ -1,6 +1,6 @@
 <template>
   <OnslaughtMetaFrame :params :state section="Таблица лидеров" :footer>
-    <div v-if="params.nickname" class="leaderboard-player">
+    <div v-if="params.nickname" class="leaderboard-player" :class="{ 'has-rank': division }">
       <div class="player-overview">
         <div class="player-copy">
           <h2 class="og-nickname" :class="{ long: playerName.length > 20 }">{{ playerName }}</h2>
@@ -9,21 +9,21 @@
               <span class="og-number">{{ formatNumber(player?.position) }}</span>
               <span class="position-label">место</span>
             </p>
+            <p v-if="division" class="rank-label">{{ rankLabel(division) }}</p>
           </template>
           <template v-else>
             <p class="no-data">Игрок вне таблицы лидеров</p>
             <p class="og-caption">В выбранном регионе и сезоне</p>
           </template>
         </div>
-        <div v-if="division" class="player-rank">
-          <RankIcon :rank="division" :game :season="params.season ?? 'latest'" size="large" loading="eager" />
-          <p>{{ rankLabel(division) }}</p>
-        </div>
+        <MetaMetrics v-if="player || state === 'loading'" :items="[
+          { label: 'рейтинг', value: formatNumber(player?.rating) },
+          { label: 'боёв', value: formatNumber(player?.battles) },
+        ]" />
       </div>
-      <MetaMetrics v-if="player || state === 'loading'" :items="[
-        { label: 'рейтинг', value: formatNumber(player?.rating) },
-        { label: 'боёв', value: formatNumber(player?.battles) },
-      ]" />
+      <div v-if="division" class="player-rank">
+        <RankIcon :rank="division" :game :season="params.season ?? 'latest'" size="large" loading="eager" />
+      </div>
     </div>
 
     <div v-else-if="snapshot || state === 'loading'" class="leaderboard-overview">
@@ -59,7 +59,7 @@ import { computed, shallowRef } from 'vue'
 import type { RenderContext } from '@/meta/utils'
 import RankIcon from '@/shared/game/components/comp7/rank/RankIcon.vue'
 import { regionToGame } from '@/shared/game/domain/wot'
-import { getDivisionByRating } from '@/shared/game/domain/comp7/utils'
+import { getDivisionByLeaderboardCode, getDivisionByRating } from '@/shared/game/domain/comp7/utils'
 import OnslaughtMetaFrame from '../../meta/OnslaughtMetaFrame.vue'
 import MetaMetrics from '../../meta/MetaMetrics.vue'
 import { useOnslaughtMeta } from '../../meta/utils/useOnslaughtMeta'
@@ -80,8 +80,11 @@ const playerName = computed(() => player.value?.name ?? params.value.nickname)
 
 const division = computed(() => {
   if (!player.value) return null
+  const season = params.value.season ?? 'latest'
+  const recordedDivision = getDivisionByLeaderboardCode(player.value.division, game.value, season)
+  if (recordedDivision) return recordedDivision
   if (player.value.elite) return 'sixth'
-  return getDivisionByRating(player.value.rating, game.value, null, params.value.season ?? 'latest')
+  return getDivisionByRating(player.value.rating, game.value, null, season)
 })
 
 const footer = computed(() => {
@@ -192,21 +195,28 @@ const footer = computed(() => {
 }
 
 .leaderboard-player {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 32px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 48px;
   height: 100%;
+
+  &.has-rank {
+    grid-template-columns: minmax(0, 1fr) 420px;
+  }
 
   .player-overview {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     justify-content: space-between;
-    flex: 1;
+    min-width: 0;
     gap: 32px;
   }
 
   .player-copy {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     flex: 1;
     min-width: 0;
   }
@@ -228,20 +238,27 @@ const footer = computed(() => {
     }
   }
 
+  .rank-label {
+    margin: 16px 0 0;
+    color: var(--onslaught-accent);
+    font-size: 25px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
   .player-rank {
-    flex: 0 0 240px;
-    text-align: center;
+    align-self: center;
 
     img {
-      width: 220px;
+      display: block;
+      width: 420px;
+      margin-top: -36px;
       filter: drop-shadow(0 12px 28px #0006);
-    }
 
-    p {
-      margin: -10px 0 0;
-      color: var(--onslaught-accent);
-      font-size: 25px;
-      font-weight: 600;
+      &.game-wot {
+        width: 380px;
+        margin-inline: auto;
+      }
     }
   }
 

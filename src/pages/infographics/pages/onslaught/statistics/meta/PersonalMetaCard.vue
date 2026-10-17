@@ -14,11 +14,7 @@
           </svg>
         </div>
       </div>
-      <div class="intro-ranks">
-        <RankIcon rank="fifth" :game :season="params.season ?? 'latest'" size="large" loading="eager"
-          class="champion" />
-        <RankIcon rank="sixth" :game :season="params.season ?? 'latest'" size="large" loading="eager" class="legend" />
-      </div>
+      <MetaRankPair :game :season="params.season ?? 'latest'" />
     </div>
 
     <div v-else-if="hasNoStatistics" class="personal-empty">
@@ -37,11 +33,11 @@
           <div class="rating">
             <span class="og-number">{{ formatNumber(statistics?.rating) }}</span><span>очков рейтинга</span>
           </div>
+          <p v-if="division" class="rank-label">{{ rankLabel(division) }}</p>
         </div>
 
         <div v-if="division" class="player-rank">
           <RankIcon :rank="division" :game :season="params.season ?? 'latest'" size="large" loading="eager" />
-          <p>{{ rankLabel(division) }}</p>
         </div>
       </div>
 
@@ -65,6 +61,7 @@ import { regionToGame } from '@/shared/game/domain/wot'
 import { getDivisionByRating } from '@/shared/game/domain/comp7/utils'
 import OnslaughtMetaFrame from '../../meta/OnslaughtMetaFrame.vue'
 import MetaMetrics from '../../meta/MetaMetrics.vue'
+import MetaRankPair from '../../meta/MetaRankPair.vue'
 import { useOnslaughtMeta } from '../../meta/utils/useOnslaughtMeta'
 import { loadLeaderboardSnapshot, loadPersonalStatistics, type PersonalStatistics } from '../../meta/utils/data'
 import { formatNumber, formatPercent, rankLabel } from '../../meta/utils/format'
@@ -134,29 +131,6 @@ const footer = computed(() => {
       height: 24px;
     }
   }
-
-  .intro-ranks {
-    position: relative;
-    height: 310px;
-
-    img {
-      position: absolute;
-      filter: drop-shadow(0 16px 32px #0007);
-    }
-
-    .champion {
-      width: 200px;
-      left: -25px;
-      bottom: 0;
-      opacity: .7;
-    }
-
-    .legend {
-      width: 290px;
-      right: -20px;
-      top: -10px;
-    }
-  }
 }
 
 .personal-empty {
@@ -185,22 +159,20 @@ const footer = computed(() => {
 }
 
 .personal-player {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: 32px;
   height: 100%;
 
   .player-overview {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
     align-items: center;
-    justify-content: space-between;
-    flex: 1;
     gap: 32px;
+    min-height: 0;
   }
 
   .player-copy {
-    flex: 1;
     min-width: 0;
   }
 
@@ -221,20 +193,28 @@ const footer = computed(() => {
     }
   }
 
+  .rank-label {
+    margin: 16px 0 0;
+    color: var(--onslaught-accent);
+    font-size: 25px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
   .player-rank {
-    flex: 0 0 240px;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 0;
 
     img {
-      width: 220px;
+      width: 340px;
       filter: drop-shadow(0 12px 28px #0006);
-    }
 
-    p {
-      margin: -10px 0 0;
-      color: var(--onslaught-accent);
-      font-size: 25px;
-      font-weight: 600;
+      &.game-wot {
+        width: 320px;
+      }
     }
   }
 }

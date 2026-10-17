@@ -156,6 +156,22 @@ export function hasEliteDivisions(game: GameVendor = 'mt', season: string = 'lat
   return !!match && (Number(match[1]) > 6 || (Number(match[1]) === 6 && Number(match[2]) >= 1))
 }
 
+const leaderboardDivisionsMap: Partial<Record<number, Division>> = {
+  11: 'sixth_A',
+  12: 'sixth_B',
+  13: 'sixth_C',
+  21: 'fifth_A',
+  22: 'fifth_B',
+  23: 'fifth_C',
+}
+
+export function getDivisionByLeaderboardCode(code: number | null, game: GameVendor = 'mt', season: string = 'latest'): Division | null {
+  const division = leaderboardDivisionsMap[code ?? 0]
+  if (!division) return null
+  if (hasEliteDivisions(game, season)) return division
+  return division.startsWith('sixth') ? 'sixth' : 'fifth'
+}
+
 export const ranksLestaMap: Record<number, Division> = {
   1: 'first_E',
   80: 'first_D',
