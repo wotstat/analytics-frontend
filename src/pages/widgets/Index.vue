@@ -93,10 +93,10 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { VueComponent as InstructionGame } from './instructionGame/index.md'
 import { VueComponent as InstructionOBS } from './instructionOBS/index.md'
-import { useMeta } from '@/shared/composition/useMeta'
+import { usePageMeta } from '@/meta/pageMeta'
 import { WIDGETS_URL } from '@/shared/external/externalUrl'
 
-useMeta({
+usePageMeta({
   title: 'Виджеты',
   description: 'Виджеты универсальные их можно добавлять как в OBS так и прямо в игру Мир Танков и World of Tanks',
   keywords: 'виджеты, виджеты для стримеров, виджеты для игр, виджеты для стрима, виджеты для трансляции, виджеты мир танков'

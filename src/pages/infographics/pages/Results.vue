@@ -166,17 +166,10 @@ import { useQueryStatParams, getQueryStatParamsCache, useQueryStatParamsCache, w
 import TeamLevelTable from '@/pages/infographics/shared/widgets/TeamLevelTable.vue'
 import { countLocalize } from '@/shared/i18n/i18n'
 import OptionsSelect from '@/shared/ui/optionsSelect/OptionsSelect.vue'
-import { useMeta } from '@/shared/composition/useMeta'
 import { normalizeArray } from '@/shared/utils/math'
 import MiniBarNew from '../shared/widgets/charts/MiniBarNew.vue'
 
 
-
-useMeta({
-  title: 'Статистика результатов',
-  description: 'Статистика результатов боёв',
-  keywords: 'статистика результатов, статистика результатов боёв, статистика результатов в игре, статистика результатов в world of tanks'
-})
 
 const percentProcessor = createPercentProcessor(1)
 

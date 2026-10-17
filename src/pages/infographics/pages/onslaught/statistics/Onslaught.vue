@@ -61,17 +61,13 @@ import Loader from '../shared/Loader.vue'
 import SecondaryStat from './secondaryStat/SecondaryStat.vue'
 import { refDebouncedCheck } from '@/shared/utils/refDebouncedCheck'
 import { useSeasonInterval } from '../shared/useSeasonInterval'
-import { useMeta } from '@/shared/composition/useMeta'
 import { BattleRes, useBattleResultTable } from './battleHistoryTable/useBattleHistory'
 import { ChannelsTypes, useAnalyticsRealtime } from '@/shared/external/realtime/useAnalyticsRealtime'
 import Live from './components/Live.vue'
 import { useStableScrollbarGutter } from '@/shared/composition/useStableScrollbarGutter.ts'
+import { usePageMeta } from '@/meta/pageMeta'
+import { onslaughtSelectionMetaTags } from '../meta/utils/params'
 
-useMeta({
-  title: 'Статистика Натиска - WotStat',
-  description: 'Персональная статистика по режиму Натиск: динамика рейтинга, эффективность техники, результаты на картах и многое другое.',
-  keywords: 'натиск, статистика, рейтинг, техника, карты, WotStat',
-})
 useStableScrollbarGutter()
 
 const ONE_HOUR = 60 * 60 * 1000
@@ -86,6 +82,13 @@ const { params: { season: selectedSeason, region: selectedRegion } } = useOnslau
 const seasons = ref<{ region: string, season: string, start: string, end: string }[]>([])
 const nicknameStorage = useOnslaughtNicknameStorage()
 const { nickname } = nicknameStorage.params
+
+usePageMeta(() => onslaughtSelectionMetaTags({
+  region: selectedRegion.value,
+  season: selectedSeason.value,
+  nickname: nickname.value,
+}, 'Личная статистика', true))
+
 const debouncedNickname = refDebouncedCheck(nickname, (n, old) => old.length > 0 ? 500 : 0)
 const isLoading = ref(false)
 const game = computed(() => regionToGame(selectedRegion.value))

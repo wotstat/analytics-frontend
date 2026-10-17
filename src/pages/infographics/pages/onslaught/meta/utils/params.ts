@@ -17,22 +17,36 @@ function resolveSeason(region: OnslaughtRegion, requestedSeason: string | null, 
   return regionalSeasons.find(item => item.season === requestedSeason)?.season ?? regionalSeasons[0]?.season ?? null
 }
 
+function seasonDisplayName(region: OnslaughtRegion, season: string | null) {
+  if (!season) return 'Текущий сезон'
+  const translations: Record<string, string> = i18n.ru
+  return translations[`season:${region.toLowerCase()}:${season}`] ?? season
+}
+
 export function readOnslaughtParams(url: URL, seasons?: readonly OnslaughtSeason[]): OnslaughtMetaParams {
   const rawRegion = url.searchParams.get('region') ?? 'RU'
   const region = [...regions, 'CT'].includes(rawRegion) ? rawRegion as OnslaughtRegion : 'RU'
 
   const requestedSeason = url.searchParams.get('season')?.trim() || null
   const season = resolveSeason(region, requestedSeason, seasons)
-  const translations: Record<string, string> = i18n.ru
-  let seasonName = 'Текущий сезон'
-  if (season) seasonName = translations[`season:${region.toLowerCase()}:${season}`] ?? season
+  const seasonName = seasonDisplayName(region, season)
 
   return { region, season, seasonName, nickname: url.searchParams.get('nickname')?.trim() ?? '' }
 }
 
 export function onslaughtMetaTags(url: URL, seasons: readonly OnslaughtSeason[] | undefined,
   section: string, personal = false) {
-  const { region, seasonName, nickname } = readOnslaughtParams(url, seasons)
+  return onslaughtSelectionMetaTags(readOnslaughtParams(url, seasons), section, personal)
+}
+
+export function onslaughtSelectionMetaTags(
+  selection: Pick<OnslaughtMetaParams, 'region' | 'season'> & { nickname?: string },
+  section: string,
+  personal = false,
+) {
+  const { region, season } = selection
+  const seasonName = seasonDisplayName(region, season)
+  const nickname = selection.nickname?.trim() ?? ''
   const subject = personal && nickname ? `${nickname} — ${section.toLowerCase()}` : section
   const title = `${subject} Натиска · ${region} · ${seasonName} — WotStat`
   return {

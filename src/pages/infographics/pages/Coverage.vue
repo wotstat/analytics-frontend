@@ -29,13 +29,6 @@ import PlayerCoverageTable from '@/pages/infographics/shared/widgets/PlayerCover
 import { useQueryStatParams, useQueryStatParamsCache, whereClause } from '@/shared/legacyStatQuery/useQueryStatParams'
 import { createFixedSpaceProcessor } from '@/shared/utils/processors/processors'
 import { bestMV } from '@/db/schema'
-import { useMeta } from '@/shared/composition/useMeta'
-
-useMeta({
-  title: 'Охват игроков',
-  description: 'Статистика охвата игроков в боях',
-  keywords: 'охват игроков, статистика охвата игроков, статистика игроков, статистика игроков в боях'
-})
 
 const container = useTemplateRef<HTMLElement>('container')
 const enabled = useElementVisibility(container)

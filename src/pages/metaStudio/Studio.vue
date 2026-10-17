@@ -47,7 +47,7 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { parsePageUrl } from '@/meta/utils'
-import { metaDefinitions as cards, matchMetaDefinition } from '@/meta/resolver'
+import { metaDefinitions as cards, matchMetaDefinition } from '@/meta/definitions'
 import { useNoIndex } from '@/pages/debug/shared/useNoIndex'
 import { getStudioUrl, useStudioState } from './state/studioState'
 import { studioCardGroups } from './utils/catalog'

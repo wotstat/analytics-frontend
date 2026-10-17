@@ -131,16 +131,8 @@ import {
 import LootboxList from './lootboxList/Index.vue'
 import { useQueryStorage } from '@/shared/uiKit/queryStorage/useQueryStorage'
 import { stringListParam } from '@/shared/legacyStatQuery/statQueryParams'
-import { useMeta } from '@/shared/composition/useMeta'
 import { useLocalStorage } from '@vueuse/core'
 import { useLootboxQueryOptions } from './useLootboxQueryOptions'
-
-useMeta({
-  title: 'Статистика коробок',
-  description: 'Статистика открытия коробок в игре World of Tanks и Мир Танков',
-  keywords: 'статистика коробок, статистика коробок в игре, статистика коробок в world of tanks, статистика коробок в мир танков'
-})
-
 
 const params = useQueryStatParams()
 const queryOptions = useLootboxQueryOptions(params)

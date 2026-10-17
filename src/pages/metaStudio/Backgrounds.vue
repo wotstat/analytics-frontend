@@ -75,7 +75,7 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, useTemplateRef } from 'vue'
 import type { MetaFormat, RenderContext } from '@/meta/utils'
-import { metaDefinitions as cards } from '@/meta/resolver'
+import { metaDefinitions as cards } from '@/meta/definitions'
 import { getBrowserMetaResolver } from '@/meta/context/browser'
 import { metaCardBackgrounds } from '@/shared/ui/meta/components/utils/backgrounds'
 import contoursPattern from '@/shared/ui/meta/components/assets/contours.svg?url'

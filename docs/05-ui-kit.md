@@ -213,7 +213,7 @@ const highlight = new Highlight({ selection: linesNearStroke, class: 'highlighte
 - `core.ts` — общие мелочи; `math.ts` — математика; `time.ts` — форматирование времени (`ms2sec`, `sec2minsec` и т.п. — смотри экспорты; `hourDayExp` к ним **не относится**, это локальная функция внутри `pages/infographics/pages/Battle.vue`).
 - `refDebouncedCheck.ts`, `refThrottledCheck.ts` — реактивные обёртки.
 - `types/` — `Prettify`, `ComponentInstance`.
-- `shared/composition/useMeta.ts` — установка title/meta страницы; `useHasScroll.ts`.
+- `meta/pageMeta.ts` — `usePageMeta` для реактивного переопределения метаданных страницы; `shared/composition/useHasScroll.ts` — определение прокрутки.
 
 ## Стили (`src/styles/`)
 

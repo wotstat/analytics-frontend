@@ -20,14 +20,6 @@ import { useTemplateRef } from 'vue'
 import { useElementVisibility } from '@vueuse/core'
 import MapsTable from '@/pages/infographics/shared/widgets/MapsTable.vue'
 import { useQueryStatParams } from '@/shared/legacyStatQuery/useQueryStatParams'
-import { useMeta } from '@/shared/composition/useMeta'
-
-useMeta({
-  title: 'Статистика карт',
-  description: 'Статистика по карт в боях',
-  keywords: 'статистика карт, статистика карт в боях, статистика карт в игре, статистика карт в world of tanks'
-})
-
 
 const container = useTemplateRef<HTMLElement>('container')
 const visible = useElementVisibility(container)

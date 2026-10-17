@@ -21,7 +21,7 @@
 
 
 <script setup lang="ts">
-import { useMeta } from '@/shared/composition/useMeta'
+import { usePageMeta } from '@/meta/pageMeta'
 import { computed } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { debugGroups, debugPages, type DebugGroup } from './routes'
@@ -29,7 +29,7 @@ import { useNoIndex } from './shared/useNoIndex'
 
 const route = useRoute()
 
-useMeta({ title: 'Debug — wotstat.info' })
+usePageMeta({ title: 'Debug — wotstat.info' })
 useNoIndex()
 
 const isIndex = computed(() => route.path.replace(/\/$/, '') === '/debug')

@@ -5,6 +5,15 @@
 где `history` — результат `createDeferredWebHistory()` из `shared/uiKit/queryStorage/utils/`.
 Один координатор на роутер объединяет записи и следит за временем жизни владельцев.
 
+`setupQueryStorage` возвращает координатор с read-only `readyRoute`. Во время навигации,
+смены владельцев и синхронизации query значение равно `null`. После обработки текущих
+изменений в естественном цикле координатор публикует актуальный маршрут роутера.
+Наблюдение этого сигнала ничего не запускает, не вызывает `flush`, не ускоряет debounce
+и не меняет порядок записи browser history. Будущие изменения с отложенной записью
+не удерживают сигнал готовности: локальные refs уже содержат их актуальные значения.
+Сигнал описывает параметры; монтирование асинхронных страниц отдельно учитывает
+`shared/uiKit/pageNavigation/pageNavigation.ts`. Мета использует объединённую готовность.
+
 Ядро находится в `src/shared/uiKit/queryStorage/`: публичный API `useQueryStorage.ts`,
 координатор `utils/queryStorageCoordinator.ts`, обработка определений и значений в `utils/queryParamUtils.ts`
 и типы `queryStorageTypes.ts`. Связанная реализация `utils/createDeferredWebHistory.ts` находится рядом,

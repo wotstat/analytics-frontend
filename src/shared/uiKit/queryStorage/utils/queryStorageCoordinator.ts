@@ -1,5 +1,5 @@
-import { effectScope, ref, watch, type Ref } from 'vue'
-import type { LocationQuery, LocationQueryRaw, RouteLocation, RouteLocationNormalized, RouteRecordNormalized, Router } from 'vue-router'
+import { effectScope, ref, shallowReadonly, shallowRef, watch, type Ref } from 'vue'
+import type { LocationQuery, LocationQueryRaw, RouteLocation, RouteLocationNormalized, RouteLocationNormalizedLoaded, RouteRecordNormalized, Router } from 'vue-router'
 import type { DeferredWebHistory } from './createDeferredWebHistory'
 import type { QueryParam, QueryWriteOptions } from '../queryStorageTypes'
 import { defaultValue, encode, decode, contextDefinitions, assertContext, sameDefinition, paramEnabled, type Encoded, type QuerySnapshot } from './queryParamUtils'
@@ -76,6 +76,9 @@ function sameRecord(a: RouteRecordNormalized, b: RouteRecordNormalized) {
 
 // Компоненты меняют значения, координатор собирает query для общего цикла записи history.
 class QueryStorageCoordinator {
+  private ready = shallowRef<RouteLocationNormalizedLoaded | null>(null)
+  readonly readyRoute = shallowReadonly(this.ready)
+
   private entries = new Map<string, Entry>()
   private labels = new Set<string>()
   private scope = effectScope(true)
@@ -87,6 +90,7 @@ class QueryStorageCoordinator {
   private reading = false
   private transitioning = false
   private pop = false
+  private generation = 0
 
   private timer?: ReturnType<typeof setTimeout>
   private writing?: { to: string }
@@ -98,6 +102,7 @@ class QueryStorageCoordinator {
     router.options.history.listen(() => { this.pop = true })
 
     router.beforeEach((to, from) => {
+      this.ready.value = null
       if (this.isOwnWrite(to)) return
       this.transitioning = true
       return this.prepareNavigation(to, from)
@@ -230,6 +235,7 @@ class QueryStorageCoordinator {
   }
 
   bind(owner: QueryOwner, name: string, definition: QueryParam, options: QueryWriteOptions): Binding {
+    this.ready.value = null
     const label = definition.label ?? name
     const key = definition.key ?? label
     assertContext(definition, new Set([label]))
@@ -385,8 +391,14 @@ class QueryStorageCoordinator {
   }
 
   private schedule() {
+    this.ready.value = null
+    this.generation++
     if (this.timer) clearTimeout(this.timer)
     this.history.schedule()
+  }
+
+  private publishReady() {
+    if (!this.transitioning && !this.writing) this.ready.value = this.router.currentRoute.value
   }
 
   expedite(entries: Entry[]) {
@@ -574,8 +586,12 @@ class QueryStorageCoordinator {
   }
 
   private write(): Promise<void> | undefined {
+    const generation = this.generation
     const prepared = this.prepareWrite()
-    if (!prepared) return
+    if (!prepared) {
+      if (generation === this.generation) this.publishReady()
+      return
+    }
 
     const { target, fullPath, history } = prepared
     const epoch = this.epoch
@@ -613,6 +629,7 @@ class QueryStorageCoordinator {
         }
 
         if (succeeded || epoch !== this.epoch || [...this.entries.values()].some(entry => entry.pending)) this.schedule()
+        else this.publishReady()
       })
   }
 }

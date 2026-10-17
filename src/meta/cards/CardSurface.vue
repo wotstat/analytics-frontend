@@ -1,7 +1,7 @@
 <template>
   <div class="meta-card-surface" :style="{ width: `${size.width}px`, height: `${size.height}px` }">
     <slot>
-      <component v-if="component" :is="component" :context />
+      <component v-if="component" :is="component" v-bind="context.meta.props" :context />
     </slot>
   </div>
 </template>
@@ -9,7 +9,7 @@
 <script setup lang="ts">
 import { computed, provide } from 'vue'
 import { formats, type RenderContext } from '../utils'
-import { metaDefinitions } from '../resolver'
+import { metaDefinitions } from '../definitions'
 import { metaReadyKey } from './useMetaReady'
 
 const props = defineProps<{ context: RenderContext }>()

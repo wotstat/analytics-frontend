@@ -11,8 +11,12 @@ export type MetaFormat = keyof typeof formats
 export type MetaTags = {
   title: string
   description?: string
+  keywords?: string
   imageAlt?: string
 }
+
+export type MetaPropValue = string | number | boolean | null | readonly MetaPropValue[] | { readonly [key: string]: MetaPropValue }
+export type MetaProps = Record<string, MetaPropValue> & { context?: never }
 
 export type MetaDefinition<C extends MetaContexts = MetaContexts> = {
   id: string
@@ -22,6 +26,7 @@ export type MetaDefinition<C extends MetaContexts = MetaContexts> = {
   meta: MetaTags | ((url: URL, context: ContextValues<NoInfer<C>>) => MetaTags)
   revisionKey?: string | ((url: URL, context: ContextValues<NoInfer<C>>) => string | undefined)
   component?: Component
+  props?: MetaProps | ((url: URL, context: ContextValues<NoInfer<C>>) => MetaProps)
   cache?: { htmlSeconds?: number, imageSeconds?: number }
   name?: string
   summary?: string
@@ -53,6 +58,7 @@ export function everyDays(days: number): string {
 export type PageMeta = MetaTags & {
   definitionId: string
   hasImage: boolean
+  props?: MetaProps
   revisionKey?: string
   cache: { htmlSeconds: number, imageSeconds: number }
 }

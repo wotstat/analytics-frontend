@@ -108,14 +108,6 @@ import { computed, useTemplateRef } from 'vue'
 
 import { ms2sec, sec2minsec, ms2secLabel } from '@/shared/utils/time'
 import { createFixedSpaceProcessor } from '@/shared/utils/processors/processors'
-import { useMeta } from '@/shared/composition/useMeta'
-
-useMeta({
-  title: 'Сессионная инфографика',
-  description: 'Серверная статистика по сессии игрока в Мир Танков и World of Tanks',
-  keywords: 'инфографика, сессия, игрок, статистика, World of Tanks'
-})
-
 
 const container = useTemplateRef<HTMLElement>('container')
 const visible = useElementVisibility(container)

@@ -1,4 +1,4 @@
-import { metaDefinitions } from '@/meta/resolver'
+import { metaDefinitions } from '@/meta/definitions'
 
 export const studioCards = metaDefinitions.map(card => {
   const separator = card.name.indexOf('/')

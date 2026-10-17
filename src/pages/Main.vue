@@ -365,7 +365,7 @@ import { LONG_CACHE, queryAsync, queryAsyncFirst } from '@/db'
 import { computed } from 'vue'
 import { getArenaName } from '@/shared/i18n/i18n'
 import { createFixedSpaceProcessor } from '@/shared/utils/processors/processors'
-import { useMeta } from '@/shared/composition/useMeta'
+import { usePageMeta } from '@/meta/pageMeta'
 import { useAnalyticsRealtime } from '@/shared/external/realtime/useAnalyticsRealtime'
 import { CLICKHOUSE_URL, CURRENT_URL_PREFIX } from '@/shared/external/externalUrl'
 import { useRouter } from 'vue-router'
@@ -374,7 +374,7 @@ import { useTweenComputed } from '@/shared/ui/tween/useTweenRef'
 import { normalizeArray } from '@/shared/utils/math'
 import MiniBarNew from './infographics/shared/widgets/charts/MiniBarNew.vue'
 
-useMeta({
+usePageMeta({
   title: 'WOTSTAT - Сессионная аналитика для игр «Мир танков» и «World of Tanks»',
   description: 'Сессионная аналитика для игр «Мир танков» и «World of Tanks». Откройте новые горизонты анализа вашей игры с бесплатным и полностью открытым модом WotStat для игр «Мир танков» и «World of Tanks»',
   keywords: 'wotstat, wot, world of tanks, мир танков, аналитика, статистика, мод, модификация, сессионная аналитика, анализ боёв, анализ выстрелов, анализ урона, анализ результатов, анализ карт, анализ стримснайперов, анализ сетапа, медианные показатели, clickhouse, sql',

@@ -100,16 +100,9 @@ import { normalizeArray } from '@/shared/utils/math'
 import { createFixedSpaceProcessor, createPercentProcessor } from '@/shared/utils/processors/processors'
 import { shellNames } from '@/shared/game/domain/wot'
 import { bestMV } from '@/db/schema'
-import { useMeta } from '@/shared/composition/useMeta'
 import MiniBarNew from '../shared/widgets/charts/MiniBarNew.vue'
 
 const toPercent = createPercentProcessor(0)
-
-useMeta({
-  title: 'Инфографика урона',
-  description: 'Инфографика урона в боях',
-  keywords: 'инфографика урона, статистика урона, статистика урона в боях'
-})
 
 const params = useQueryStatParams()
 const cache = useQueryStatParamsCache(params)

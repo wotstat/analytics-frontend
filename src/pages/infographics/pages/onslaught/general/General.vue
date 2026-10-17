@@ -54,30 +54,24 @@ import DaySelector from '../shared/daySelector/DaySelector.vue'
 import GlobalVehicleTable from './globalStatistics/GlobalVehicleTable.vue'
 import GlobalMapsTable from './globalStatistics/GlobalMapsTable.vue'
 import DailyPlayersChart from './dailyPlayersChart/DailyPlayersChart.vue'
-import {
-  buildGlobalArenaStatisticsQuery,
-  buildGlobalVehicleStatisticsQuery,
-  type GlobalStatisticsFilters,
-} from './globalStatistics/queries.ts'
-import type {
-  GlobalArenaStatistic,
-  GlobalVehicleStatistic,
-  StatisticsLoadState,
-} from './globalStatistics/types.ts'
+import { buildGlobalArenaStatisticsQuery, buildGlobalVehicleStatisticsQuery, type GlobalStatisticsFilters } from './globalStatistics/queries.ts'
+import type { GlobalArenaStatistic, GlobalVehicleStatistic, StatisticsLoadState } from './globalStatistics/types.ts'
 import TipSelectDays from './tips/TipSelectDays.vue'
 import { setFeatureVisit } from '@/shared/uiKit/newFeatureBadge/newFeatureBadge.ts'
-import { useMeta } from '@/shared/composition/useMeta.ts'
+import { usePageMeta } from '@/meta/pageMeta'
+import { onslaughtSelectionMetaTags } from '../meta/utils/params'
 
-useMeta({
-  title: 'Статистика Натиска - WotStat',
-  description: 'Статистика Натиска в World of Tanks. Распределение игроков по рангам, статистика по технике и картам, рейтинг игроков.',
-  keywords: 'натиск, статистика, рейтинг, техника, карты, WotStat',
-})
 useStableScrollbarGutter()
 setFeatureVisit('onslaught-general')
 
 const seasons = ref<{ region: string, season: string, start: string }[]>([])
 const { params: { season: selectedSeason, region: selectedRegion } } = useOnslaughtQueryStorage()
+
+usePageMeta(() => onslaughtSelectionMetaTags({
+  region: selectedRegion.value,
+  season: selectedSeason.value,
+}, 'Общая статистика'))
+
 const selectedRankDistributionItems = ref<RankDistributionItem[]>([])
 const selectedDays = ref<string[]>([])
 const isDaySelectorOpen = ref(false)

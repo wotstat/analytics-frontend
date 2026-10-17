@@ -7,7 +7,7 @@
 
 ## Отдельный target Open Graph
 
-Определения `**/meta-definition.ts` и компоненты карточек находятся в обычном `src/`
+Определения `**/meta-definition.ts` и `**/*-meta-definition.ts` и компоненты карточек находятся в обычном `src/`
 рядом с соответствующими страницами. Общий дизайн карточек, default-карточка с определением
 и общие контексты сайта находятся в `src/shared/ui/meta/`.
 В `src/meta/` остаётся общий механизм Open Graph, разделённый по назначению:
@@ -37,7 +37,7 @@ resolver и не загружает контексты. В студии мета
 Приложение не импортирует основной App, роутер сайта или студию. Команда `build` в `package.json`
 после основного SPA собирает браузерный renderer и серверный модуль метаданных через корневой
 `vite.config.ts` с целями `BUILD_TARGET=meta-renderer` и `BUILD_TARGET=meta-server`.
-Каждый `meta-definition.ts` содержит `export default defineMetaDefinition({ ... })`.
+Каждый файл определения содержит `export default defineMetaDefinition({ ... })`.
 `CardSurface` использует общий каталог определений из `resolver.ts` и выбирает компонент
 по `meta.definitionId`. Объявления контекстов могут входить в renderer-бандл, но их загрузка
 начинается только при создании resolver; renderer его не создаёт и получает готовую `meta`.
@@ -68,7 +68,13 @@ reset документа renderer — в блоке `<style lang="scss">` без
 
 ## Роутинг (`src/routes.ts`)
 
-Все маршруты в одном файле. Тяжёлые страницы — через `asyncPage()` (обёртка `defineAsyncComponent` с `PageLoader` и `suspensible: true`). Карта маршрутов:
+Все маршруты в одном файле. Тяжёлые страницы — через `asyncPage()` из `pages/shared/asyncPage.ts`
+(обёртка `defineAsyncComponent` с `PageLoader` и `suspensible: true`). Обёртка сообщает
+о фактическом mount/activation загруженной страницы в `shared/uiKit/pageNavigation/`.
+`setupPageNavigation` объединяет этот сигнал с готовностью queryStorage и предоставляет
+read-only `readyRoute`: во время перехода он равен `null`, после монтирования всех
+асинхронных route records и синхронизации параметров содержит текущий маршрут.
+Мета наблюдает этот сигнал, не вызывая загрузчики страниц или flush history. Карта маршрутов:
 
 | Путь | Компонент | Что это |
 | --- | --- | --- |

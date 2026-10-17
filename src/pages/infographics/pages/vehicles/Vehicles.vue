@@ -50,7 +50,6 @@ import TimeSeriesCompare from './timeSeriesCompare/TimeSeriesCompare.vue'
 import { useVehicleComparison } from './timeSeriesCompare/useVehicleComparison'
 import { computed, ref } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
-import { useMeta } from '@/shared/composition/useMeta'
 import VehicleListTable from './vehicleListTable/VehicleListTable.vue'
 import type { Slot } from './vehicleMetricSelector/vehicleMetrics.ts'
 import VehicleFilters from './filters/VehicleFilters.vue'
@@ -61,12 +60,6 @@ import { useBackground } from '@/shared/uiKit/pageBackground/useBackground'
 import VehiclesBackground from './VehiclesBackground.vue'
 
 useBackground(VehiclesBackground)
-
-useMeta({
-  title: 'Статистика танков',
-  description: 'Статистика всех танков игры',
-  keywords: 'статистика танков, статистика танков в боях, статистика танков в игре, статистика танков в world of tanks'
-})
 
 const { filters, localFilters, search, grouping, period, slots, sort } = useVehicleQueryStorage()
 const visibleSlots = ref<Slot[]>([])

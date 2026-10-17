@@ -209,18 +209,14 @@ import PageSelector from './components/PageSelector.vue'
 import { useSeasonInterval } from '../shared/useSeasonInterval'
 import Live from './components/Live.vue'
 import RankIcon from '@/shared/game/components/comp7/rank/RankIcon.vue'
-import { useMeta } from '@/shared/composition/useMeta'
 import type { SelectedInterval } from './components/detail/types.ts'
 import { useStableScrollbarGutter } from '@/shared/composition/useStableScrollbarGutter.ts'
 import LeaderboardCharts from './components/LeaderboardCharts.vue'
 import { useAnalyticsRealtime } from '@/shared/external/realtime/useAnalyticsRealtime'
 import { LEADERBOARD_QUERY_OPTIONS } from './utils/cache'
+import { usePageMeta } from '@/meta/pageMeta'
+import { onslaughtSelectionMetaTags } from '../meta/utils/params'
 
-useMeta({
-  title: 'Таблица лидеров Натиска - WotStat',
-  description: 'Таблица лидеров по рейтингу в режиме Натиск Мир Танков и World of Tanks. Рейтинг, количество боёв и динамика за день для каждого игрока.',
-  keywords: 'Натиск, таблица лидеров, рейтинг, бои, динамика, Мир Танков, World of Tanks',
-})
 useStableScrollbarGutter()
 
 const page = ref(1)
@@ -230,6 +226,13 @@ const seasons = ref<{ region: string, season: string, start: string }[]>([])
 const { params: { season: selectedSeason, region: region } } = useOnslaughtQueryStorage()
 const nicknameStorage = useOnslaughtNicknameStorage()
 const { nickname } = nicknameStorage.params
+
+usePageMeta(() => onslaughtSelectionMetaTags({
+  region: region.value,
+  season: selectedSeason.value,
+  nickname: nickname.value,
+}, 'Таблица лидеров', true))
+
 const debouncedNickname = refDebounced(nickname, 500)
 
 const seasonInterval = useSeasonInterval(seasons, selectedSeason, region)

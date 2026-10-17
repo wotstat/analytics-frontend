@@ -184,7 +184,7 @@ import BloggerName from './components/blogger/BloggerName.vue'
 import { computed, onMounted, ref, watchEffect, useTemplateRef } from 'vue'
 import { headerHeight, useAdditionalHeaderHeight } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import { displayVariant, preferredLogProcessor } from './store'
-import { useMeta } from '@/shared/composition/useMeta'
+import { usePageMeta } from '@/meta/pageMeta'
 import CrossTable from './components/CrossTable.vue'
 import BattlesPerWinrate from './components/BattlesPerWinrate.vue'
 import Ads from './components/Ads.vue'
@@ -193,7 +193,7 @@ import { timeProcessor } from '@/shared/utils/time'
 
 
 
-useMeta({
+usePageMeta({
   title: 'Статистика Битва Блогеров 2025 ',
   description: 'Статистика по битве блогеров 2025 в игре Мир Танков',
   keywords: 'битва блогеров, блогеры, статистика, wot, Джов, Юша, Левша, Нирю, Jove, Yusha, Lebwa, Nearyou',

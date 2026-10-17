@@ -1,5 +1,5 @@
 import { type RouteRecordRaw, createRouter } from 'vue-router'
-
+import { setupPageMeta } from './meta/pageMeta'
 import infographics from './pages/infographics/Index.vue'
 import Battle from './pages/infographics/pages/Battle.vue'
 import Shots from './pages/infographics/pages/shots/Shots.vue'
@@ -10,21 +10,11 @@ import Vehicles from './pages/infographics/pages/vehicles/Vehicles.vue'
 import Coverage from './pages/infographics/pages/Coverage.vue'
 import Lootbox from './pages/infographics/pages/lootbox/Index.vue'
 import Install from './pages/install/Index.vue'
-import { AsyncComponentLoader, defineAsyncComponent } from 'vue'
-import PageLoader from './shared/ui/loaders/pageLoader/PageLoader.vue'
+import { asyncPage } from './pages/shared/asyncPage'
 import { debugRoutes } from './pages/debug/routes'
 import { setupQueryStorage } from './shared/uiKit/queryStorage/useQueryStorage'
 import { createDeferredWebHistory } from './shared/uiKit/queryStorage/utils/createDeferredWebHistory.ts'
-
-
-function asyncPage(loader: AsyncComponentLoader): any {
-  return defineAsyncComponent({
-    loader,
-    loadingComponent: PageLoader,
-    delay: 200,
-    suspensible: true,
-  })
-}
+import { setupPageNavigation } from './shared/uiKit/pageNavigation/pageNavigation'
 
 const routes = [
   { path: '/', component: () => import('./pages/Main.vue') },
@@ -97,4 +87,6 @@ export const router = createRouter({
   },
 })
 
-setupQueryStorage(router, history)
+const queryStorage = setupQueryStorage(router, history)
+const navigation = setupPageNavigation(router, queryStorage.readyRoute)
+setupPageMeta(router, navigation.readyRoute)

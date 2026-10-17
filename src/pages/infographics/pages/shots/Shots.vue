@@ -84,15 +84,7 @@ import PopupWindow from '@/shared/ui/components/PopupWindow.vue'
 import ShotInfo from './shotInfo/Index.vue'
 import { useShotQueryStorage } from './useShotQueryStorage'
 import { queryStorageSync } from '@/shared/uiKit/queryStorage/useQueryStorage'
-import { useMeta } from '@/shared/composition/useMeta'
 import ShotDistribution from './shotDistribution/ShotDistribution.vue'
-
-useMeta({
-  title: 'Статистика стрельбы',
-  description: 'Статистика стрельбы в боях',
-  keywords: 'статистика стрельбы, статистика стрельбы в боях, статистика стрельбы в игре, статистика стрельбы в world of tanks'
-})
-
 
 const { params: { shot: selectedShot } } = useShotQueryStorage()
 
