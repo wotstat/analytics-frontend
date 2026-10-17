@@ -4,7 +4,9 @@ import type { Serializer } from '@/shared/uiKit/queryStorage/serializers/types'
 import { defaultSlots, type Slot } from '../../vehicleMetricSelector/vehicleMetrics'
 import { slotSerializer } from '../../vehicleMetricSelector/utils/slotSerializer'
 import type { VehicleStatisticsPeriod } from '../../shared/vehicleStatisticsPeriod'
-import { defaultSortOrders, type SortKey, type SortOrder } from '../useVehicleSorting'
+import type { SortKey, SortOrder } from '../useVehicleSorting'
+
+const defaultSortOrders: SortOrder[] = [{ key: 'battles', ascending: false }]
 
 const periodKeys = new Map<VehicleStatisticsPeriod, string>([[1, 'day'], [7, 'week'], [30, 'month']])
 const periodsByKey = new Map([...periodKeys].map(([period, key]) => [key, period]))

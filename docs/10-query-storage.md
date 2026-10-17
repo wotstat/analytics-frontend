@@ -455,12 +455,12 @@ Default — `['random']`, поэтому этот выбор не записыв
 выборку из словаря как битовую маску. Функции не знают о предметной области;
 игровые словари передаются из `shared/game/encoding/masks.ts`.
 
-`timeSeriesCompare/query/codec/codec.ts` предоставляет две функции для `compareParam`:
-`serializeComparison(sources, context?)` и `deserializeComparison(raw, context?)`.
+`timeSeriesCompare/query/codec/codec.ts` предоставляет синхронный `deserializeComparison(raw, context?)`,
+`serialize.ts` — `serializeComparison(sources, context?)` для записи `compareParam`.
 Вход и выход — массив `SavedComparisonSource[]`, настройки графика хранятся отдельно.
-Кодек напрямую вызывает компактеры танков, карт и режимов, затем записывает значения через Writer.
-Основной файл задаёт версию, порядок секций и решение о сжатии; соседние `filters.ts`, `sources.ts`
-и `colors.ts` реализуют секции, `limits.ts` задаёт ограничения формата.
+Только запись использует браузерные компактеры танков и карт, затем передаёт значения Writer.
+Декодер не зависит от БД и браузера. Общие служебные файлы находятся в `codec/utils/`:
+`filters.ts`, `sources.ts` и `colors.ts` реализуют секции, `limits.ts` задаёт ограничения формата.
 Общие Base62 и raw DEFLATE находятся в `shared/utils/encoding/{base62,deflate}.ts`.
 При чтении числовые ID танков/карт остаются в модели,
 а режимы разрешаются сразу через синхронный словарь.

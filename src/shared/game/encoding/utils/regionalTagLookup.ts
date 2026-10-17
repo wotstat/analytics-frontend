@@ -1,4 +1,3 @@
-import { isErrorStatus, loading, type Status } from '@/db'
 import type { Expansion } from './types'
 
 type RegionalTagRow = { tag: string, region: string }
@@ -17,14 +16,11 @@ export function indexRegionalTags(rows: readonly RegionalTagRow[], identify: (ta
   return index
 }
 
-export function resolveRegionalTag(index: ReadonlyMap<number, readonly RegionalTagRow[]>, status: Status, id: number, region?: string): Expansion {
+export function resolveRegionalTag(index: ReadonlyMap<number, readonly RegionalTagRow[]>, id: number, region?: string): Expansion {
   const tags = [...new Set((index.get(id) ?? [])
     .filter(row => region === undefined || row.region === region).map(row => row.tag))]
 
-  if (!tags.length) {
-    if (status === loading) return { status: 'loading' }
-    return { status: 'unresolved', reason: isErrorStatus(status) ? 'error' : 'missing' }
-  }
+  if (!tags.length) return { status: 'unresolved', reason: 'missing' }
 
   const sorted = tags.sort((a, b) => a.length - b.length || a.localeCompare(b))
   const base = sorted[0]

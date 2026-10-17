@@ -1,11 +1,12 @@
 import { Reader, Writer, compactMask, expandMask, invalid } from '@/shared/utils/encoding/compactBinary'
 import { sameSet, uniqueSorted } from '@/shared/utils/collections'
 import { battleModeCompactor } from '@/shared/game/encoding/battleModes/battleModes'
-import { arenaCompactor } from '@/shared/game/encoding/arenas'
+import type { TagCompactor } from '@/shared/game/encoding/utils/types'
+import { unpackRegionalId } from '@/shared/game/encoding/utils/regionalIdPacking'
 import { singleRegion } from '@/shared/game/domain/regions'
-import { vehicleRegions, type VehicleFilters } from '../../../filters/types'
-import type { SavedComparisonFilters } from '../state'
-import { snapshotComparisonFilters } from '../../utils/comparisonFilters'
+import { vehicleRegions, type VehicleFilters } from '../../../../filters/types'
+import type { SavedComparisonFilters } from '../../state'
+import { snapshotComparisonFilters } from '../../../utils/comparisonFilters'
 import { binaryLimits, MAX_ITEMS, MAX_SOURCES } from './limits'
 
 const platoons = ['any', 'solo', 'duo', 'trio', 'large'] as const
@@ -56,7 +57,7 @@ function readBattleModes(input: Reader): SavedComparisonFilters['battleModes'] {
   })
 }
 
-function encodeFilters(filters: SavedComparisonFilters, base: VehicleFilters): Uint8Array | undefined {
+function encodeFilters(filters: SavedComparisonFilters, base: VehicleFilters, arenaCompactor: TagCompactor): Uint8Array | undefined {
   const region = singleRegion(filters.regions)
   const normalized = {
     ...filters,
@@ -87,9 +88,8 @@ function readFilters(input: Reader, base: VehicleFilters, flags = input.uint(63)
   if (flags & 2) filters.battleModes = readBattleModes(input)
   if (flags & 4) filters.arenas = input.list(() => {
     const value = input.atom()
-    const expanded = arenaCompactor.expand(value, singleRegion(filters.regions))
-    // Отсутствующий каталог/ID сохраняется; некорректная форма отвергается.
-    if (expanded.status === 'unresolved' && expanded.reason === 'invalid') return invalid()
+    if (typeof value === 'number' && !unpackRegionalId(value)) return invalid()
+    if (typeof value === 'string' && !/^[\w-]+$/.test(value)) return invalid()
     return value
   }, MAX_ITEMS)
   if (flags & 8) filters.platoon = platoons[input.uint(platoons.length - 1)]
@@ -98,11 +98,11 @@ function readFilters(input: Reader, base: VehicleFilters, flags = input.uint(63)
   return filters
 }
 
-export function writeFilterTable(output: Writer, filters: readonly SavedComparisonFilters[], base: VehicleFilters) {
+export function writeFilterTable(output: Writer, filters: readonly SavedComparisonFilters[], base: VehicleFilters, arenaCompactor: TagCompactor) {
   const entries: Uint8Array[] = []
   const keys = new Map<string, number>()
   const references = filters.map(value => {
-    const bytes = encodeFilters(value, base)
+    const bytes = encodeFilters(value, base, arenaCompactor)
     if (!bytes) return 0
 
     const key = bytes.join(',')

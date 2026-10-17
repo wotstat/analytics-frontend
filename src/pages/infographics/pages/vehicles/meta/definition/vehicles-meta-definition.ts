@@ -1,6 +1,8 @@
 import { defineMetaDefinition, everyDays } from '@/meta/utils'
 import VehiclesTableMetaCard from '../table/VehiclesTableMetaCard.vue'
 import VehiclesCompareMetaCard from '../compare/VehiclesCompareMetaCard.vue'
+import { vehiclesMetaCatalog } from '../utils/catalog'
+import { vehiclesCompareMetaTags, vehiclesTableMetaTags } from '../utils/tags'
 
 const examples = import.meta.env.VITE_META_SERVER ? undefined : await import('./examples')
 
@@ -13,11 +15,8 @@ export default defineMetaDefinition({
   name: 'Сравнение техники/Техника',
   summary: 'Крупный заголовок, полные строки и рамка таблицы, продолжающаяся до нижнего края карточки.',
   examples: examples?.tableExamples(),
-  meta: {
-    title: 'Статистика техники — WotStat Analytics',
-    description: 'Статистика техники, уровней и типов по выбранным фильтрам и показателям.',
-    imageAlt: 'Статистика техники по выбранным фильтрам — WotStat Analytics',
-  },
+  contexts: { vehiclesMetaCatalog },
+  meta: (url, { vehiclesMetaCatalog }) => vehiclesTableMetaTags(url, vehiclesMetaCatalog),
   ...vehiclesMetaCache,
 })
 
@@ -27,10 +26,7 @@ export const compare = defineMetaDefinition({
   name: 'Сравнение техники/Сравнение',
   summary: 'Один-два танка без легенды; три и более источника или категории — панорама с легендой.',
   examples: examples?.compareExamples(),
-  meta: {
-    title: 'Сравнение техники — WotStat Analytics',
-    description: 'Дневная динамика выбранного показателя с 2024 года. Реальные данные по источникам сравнения.',
-    imageAlt: 'График сравнения техники — WotStat Analytics',
-  },
+  contexts: { vehiclesMetaCatalog },
+  meta: (url, { vehiclesMetaCatalog }) => vehiclesCompareMetaTags(url, vehiclesMetaCatalog),
   ...vehiclesMetaCache,
 })

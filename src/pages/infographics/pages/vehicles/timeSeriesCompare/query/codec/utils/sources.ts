@@ -1,11 +1,12 @@
 import { Reader, Writer, invalid } from '@/shared/utils/encoding/compactBinary'
 import { sameSet, uniqueSorted } from '@/shared/utils/collections'
-import { vehicleCompactor } from '@/shared/game/encoding/vehicles'
+import type { TagCompactor } from '@/shared/game/encoding/utils/types'
+import { unpackRegionalId } from '@/shared/game/encoding/utils/regionalIdPacking'
 import { vehicleCategoryCompactor, type VehicleCategory } from '@/shared/game/encoding/vehicleCategories'
 import { nationMask, vehicleLevelMask, vehicleTypeMask } from '@/shared/game/encoding/masks'
 import { singleRegion } from '@/shared/game/domain/regions'
-import type { ComparisonTarget, SavedComparisonSource } from '../state'
-import { comparisonFiltersKey, snapshotComparisonFilters } from '../../utils/comparisonFilters'
+import type { ComparisonTarget, SavedComparisonSource } from '../../state'
+import { comparisonFiltersKey, snapshotComparisonFilters } from '../../../utils/comparisonFilters'
 import type { FilterTable } from './filters'
 import { compactColor, writeColor, readColor } from './colors'
 import { MAX_SOURCES } from './limits'
@@ -32,7 +33,7 @@ function selectionFlags(target: ComparisonTarget) {
     | Number(!sameSet(target.selection.nations, base.nations)) << 3
 }
 
-function writeTarget(output: Writer, target: ComparisonTarget, extras: boolean, region?: string) {
+function writeTarget(output: Writer, target: ComparisonTarget, extras: boolean, vehicleCompactor: TagCompactor, region?: string) {
   if ('tank' in target) {
     let tank = target.tank
     if (typeof tank === 'number') {
@@ -67,7 +68,7 @@ function readTarget(input: Reader): { target: ComparisonTarget, extras: boolean 
   return { target: { category, selection: categorySelection(category) }, extras }
 }
 
-export function writeSources(output: Writer, sources: readonly SavedComparisonSource[], references: readonly number[]): number {
+export function writeSources(output: Writer, sources: readonly SavedComparisonSource[], references: readonly number[], vehicleCompactor: TagCompactor): number {
   let flags = 0
   sources.slice(0, INLINE_DISABLED_FLAGS.length).forEach((source, index) => {
     if (!source.enabled) flags |= INLINE_DISABLED_FLAGS[index]
@@ -84,7 +85,7 @@ export function writeSources(output: Writer, sources: readonly SavedComparisonSo
     const isTank = 'tank' in source.target
     const fields = isTank ? color.kind : Number(!!color.kind) | selectionFlags(source.target)
     const extras = filter * 16 | fields
-    writeTarget(output, source.target, !!extras, singleRegion(source.filters.regions))
+    writeTarget(output, source.target, !!extras, vehicleCompactor, singleRegion(source.filters.regions))
     if (!extras) return
 
     output.uint(extras)
@@ -132,10 +133,7 @@ export function readSources(input: Reader, filters: FilterTable, flags: number):
     const isDisabled = index < INLINE_DISABLED_FLAGS.length
       ? !!(flags & INLINE_DISABLED_FLAGS[index]) : !!disabled[index - INLINE_DISABLED_FLAGS.length]
     const sourceFilters = snapshotComparisonFilters(filters[filter])
-    if ('tank' in target) {
-      const expanded = vehicleCompactor.expand(target.tank, singleRegion(sourceFilters.regions))
-      if (expanded.status === 'unresolved' && expanded.reason === 'invalid') return invalid()
-    }
+    if ('tank' in target && typeof target.tank === 'number' && !unpackRegionalId(target.tank)) return invalid()
     sources.push({ target, color, filters: sourceFilters, enabled: !isDisabled })
   }
 
@@ -144,11 +142,14 @@ export function readSources(input: Reader, filters: FilterTable, flags: number):
   if (disabled.slice(tailSources).some(Boolean)) return invalid()
 
   const keys = sources.map(({ target, filters }) => {
-    const key = 'tank' in target ? target.tank : [
+    const filterKey = comparisonFiltersKey(filters)
+    if ('tank' in target) return JSON.stringify([target.tank, filterKey])
+
+    const key = [
       vehicleCategoryCompactor.compact(target.category),
       uniqueSorted(target.selection.levels), uniqueSorted(target.selection.types), uniqueSorted(target.selection.nations),
     ]
-    return JSON.stringify([key, comparisonFiltersKey(filters)])
+    return JSON.stringify([key, filterKey])
   })
   if (new Set(keys).size !== keys.length) return invalid()
 

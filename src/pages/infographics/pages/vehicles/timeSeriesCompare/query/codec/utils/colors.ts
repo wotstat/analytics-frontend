@@ -1,5 +1,5 @@
 import { Reader, Writer, invalid } from '@/shared/utils/encoding/compactBinary'
-import { comparisonColor, comparisonPalette } from '../palette'
+import { comparisonColor, comparisonPalette } from '../../palette'
 
 type EncodedColor = { kind: 0 } | { kind: 1, value: number } | { kind: 2 | 3, value: string }
 

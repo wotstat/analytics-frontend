@@ -72,7 +72,7 @@ default `['random']`, значение `all` для отсутствия огр�
 `domain/battleModes/battleModeFilter.ts` переводит тот же выбор в SQL-условия и список необходимых колонок;
 он используется адаптером StatParams, таблицей карт и запросами техники.
 
-`encoding/types.ts` содержит `CompactValue = number | string` и
+`encoding/utils/types.ts` содержит `CompactValue = number | string`, интерфейс `TagCompactor` и
 результат разрешения `Expansion<T>`: `ready/value`, `loading` либо `unresolved/reason`
 (`missing`, `ambiguous`, `invalid`, `error`). Число — упакованный ID, строка — полный исходный ключ.
 
@@ -87,7 +87,9 @@ default `['random']`, значение `all` для отсутствия огр�
 
 `encoding/utils/regionalTagLookup.ts` содержит общие поиск тегов по ID и региону
 и индекс `Map<number, RegionalTagRow[]>` для восстановления компактных ID техники и карт.
-Сами игровые каталоги остаются в `domain/`.
+Этот модуль не зависит от БД: состояния загрузки и ошибки добавляют браузерные компактеры.
+`encoding/utils/entityIds.ts` содержит извлечение ID из тегов и короткую подпись ID техники;
+эти же функции использует серверный meta-контекст техники. Сами игровые каталоги остаются в `domain/`.
 Упаковка регионального поля находится в `encoding/utils/regionalIdPacking.ts`:
 
 - бит `HAS_REGION_FLAG` (бит 0) задаёт наличие региона внутри ID;

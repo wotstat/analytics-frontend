@@ -27,25 +27,41 @@
       <p>expand: <span class="debug-value">{{ JSON.stringify(expanded) }}</span></p>
       <p>Техника: {{ statusLabel(vehicleCatalog.status) }} · Карты: {{ statusLabel(arenaCatalog.status) }}</p>
     </DebugSection>
-    <DebugSection title="Сравнения" id="comparisons" description="Длина одних и тех же байтов в Base62 и Base64url; меняется после загрузки каталогов.">
+    <DebugSection title="Сравнения" id="comparisons"
+      description="Длина одних и тех же байтов в Base62 и Base64url; меняется после загрузки каталогов.">
       <label class="debug-control"><input type="checkbox" v-model="withContext" />Контекст страницы RU/random</label>
       <table class="debug-table">
-        <thead><tr><th>Пример</th><th>compare</th><th>Параметры графика</th><th>Base62</th><th>Base64url</th><th>Δ символов</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Пример</th>
+            <th>compare</th>
+            <th>Параметры графика</th>
+            <th>Base62</th>
+            <th>Base64url</th>
+            <th>Δ символов</th>
+          </tr>
+        </thead>
         <tbody>
           <tr v-for="example in comparisonExamples" :key="example.name">
-            <th>{{ example.name }}</th><td class="debug-value">{{ example.encoded }}</td>
-            <td class="debug-value">{{ example.query || '—' }}</td><td>{{ example.encoded.length }}</td>
-            <td>{{ example.base64Length }}</td><td>{{ example.encoded.length - example.base64Length }}</td>
+            <th>{{ example.name }}</th>
+            <td class="debug-value">{{ example.encoded }}</td>
+            <td class="debug-value">{{ example.query || '—' }}</td>
+            <td>{{ example.encoded.length }}</td>
+            <td>{{ example.base64Length }}</td>
+            <td>{{ example.encoded.length - example.base64Length }}</td>
           </tr>
         </tbody>
       </table>
       <label class="debug-control">Модель примера
         <select v-model="selectedExample">
-          <option v-for="(example, index) in comparisonExamples" :key="example.name" :value="index">{{ example.name }}</option>
+          <option v-for="(example, index) in comparisonExamples" :key="example.name" :value="index">{{ example.name }}
+          </option>
         </select>
       </label>
-      <label class="debug-control">Своя строка compare<input v-model="rawComparison" placeholder="Пусто — выбранный пример" /></label>
-      <label class="debug-control">Своя строка annotations<input v-model="rawAnnotations" placeholder="Пусто — выбранный пример" /></label>
+      <label class="debug-control">Своя строка compare<input v-model="rawComparison"
+          placeholder="Пусто — выбранный пример" /></label>
+      <label class="debug-control">Своя строка annotations<input v-model="rawAnnotations"
+          placeholder="Пусто — выбранный пример" /></label>
       <pre class="decoded">{{ JSON.stringify(decodedExample, null, 2) }}</pre>
     </DebugSection>
   </DebugPage>
@@ -64,7 +80,8 @@ import { arenaCompactor } from '@/shared/game/encoding/arenas'
 import { arenaCatalog } from '@/shared/game/domain/arenas/catalog'
 import { battleModeCompactor } from '@/shared/game/encoding/battleModes/battleModes'
 import type { SavedComparisonSource } from '@/pages/infographics/pages/vehicles/timeSeriesCompare/query/state'
-import { serializeComparison, deserializeComparison } from '@/pages/infographics/pages/vehicles/timeSeriesCompare/query/codec/codec'
+import { deserializeComparison } from '@/pages/infographics/pages/vehicles/timeSeriesCompare/query/codec/codec'
+import { serializeComparison } from '@/pages/infographics/pages/vehicles/timeSeriesCompare/query/codec/serialize'
 import { comparisonAnnotationsParam, comparisonAnnotationState } from '@/pages/infographics/pages/vehicles/timeSeriesCompare/query/annotations'
 import { comparisonSettingsParams, type ComparisonSettings } from '@/pages/infographics/pages/vehicles/timeSeriesCompare/query/settings'
 import { createVehicleFilters } from '@/pages/infographics/pages/vehicles/filters/types'
@@ -78,15 +95,18 @@ const region = ref('RU')
 const full = ref(defaults.vehicle)
 const saved = ref('1440')
 const numeric = ref(true)
+
 const input = computed(() => numeric.value ? Number(saved.value) : saved.value)
 const currentRegion = () => kind.value === 'battleMode' ? undefined : region.value || undefined
 const compact = computed(() => kind.value === 'battleMode' ? battleModeCompactor.compact(full.value)
   : compactors[kind.value].compact(full.value, currentRegion()))
+
 const expansions = {
   vehicle: computed(() => vehicleCompactor.expand(input.value, currentRegion())),
   arena: computed(() => arenaCompactor.expand(input.value, currentRegion())),
   battleMode: computed(() => battleModeCompactor.expand(input.value)),
 }
+
 const expanded = computed(() => expansions[kind.value].value)
 watch(kind, value => { full.value = defaults[value]; capture() })
 function capture() { saved.value = String(compact.value); numeric.value = typeof compact.value === 'number' }
@@ -96,6 +116,7 @@ const selectedExample = ref(0)
 const rawComparison = ref('')
 const rawAnnotations = ref('')
 const withContext = ref(true)
+
 const comparisonContext = computed(() => withContext.value ? createVehicleFilters() : undefined)
 const comparisonExamples = computed(() => {
   const filters = createVehicleFilters()
@@ -115,34 +136,54 @@ const comparisonExamples = computed(() => {
     { name: 'Кастомный RGB', sources: [{ ...tank('ussr:R45_IS-7'), color: '#123456' }] },
     { name: 'Кастомный RGBA', sources: [{ ...tank('ussr:R45_IS-7'), color: '#12345680' }] },
   ]
-  examples.push({ name: 'X уровень, тяжёлые', sources: [{
-    target: { category: { level: 10, type: 'HT' }, selection: { levels: [10], types: ['HT'], nations: [] } },
-    filters, color: 0, enabled: true,
-  }] })
-  examples.push({ name: 'Категория с переопределённой выборкой', sources: [{
-    target: { category: { level: 10, type: 'HT' }, selection: { levels: [], types: ['HT', 'MT'], nations: ['ussr', 'usa'] } },
-    filters: { ...filters, regions: [], battleModes: [], platoon: 'solo', result: 'win', battleLevel: 'top' },
-    color: '#12345680', enabled: false,
-  }] })
-  examples.push({ name: 'Общие фильтры и выключенные линии 1, 3 и 10', sources: Array.from({ length: 10 }, (_, index) => ({
-    target: { category: { level: index + 1 }, selection: { levels: [index + 1], types: [], nations: [] } },
-    filters: { ...filters, arenas: ['05_prohorovka'], result: 'win' }, color: index, enabled: index !== 0 && index !== 2 && index !== 9,
-  })) })
-  examples.push({ name: 'Третья линия выключена', sources: [8, 9, 10].map((level, index) => ({
-    target: { category: { level }, selection: { levels: [level], types: [], nations: [] } },
-    filters, color: index, enabled: index !== 2,
-  })) })
-  examples.push({ name: 'Четвёртая линия выключена', sources: [7, 8, 9, 10].map((level, index) => ({
-    target: { category: { level }, selection: { levels: [level], types: [], nations: [] } },
-    filters, color: index, enabled: index !== 3,
-  })) })
-  examples.push({ name: 'Неразрешённые ID и полный тег', sources: [
-    { ...tank('ussr:R45_IS-7'), target: { tank: 536870880 }, filters: { ...filters, arenas: [16777214] } },
-    tank('ussr:unknown_vehicle', 1),
-  ] })
+
+  examples.push({
+    name: 'X уровень, тяжёлые', sources: [{
+      target: { category: { level: 10, type: 'HT' }, selection: { levels: [10], types: ['HT'], nations: [] } },
+      filters, color: 0, enabled: true,
+    }]
+  })
+
+  examples.push({
+    name: 'Категория с переопределённой выборкой', sources: [{
+      target: { category: { level: 10, type: 'HT' }, selection: { levels: [], types: ['HT', 'MT'], nations: ['ussr', 'usa'] } },
+      filters: { ...filters, regions: [], battleModes: [], platoon: 'solo', result: 'win', battleLevel: 'top' },
+      color: '#12345680', enabled: false,
+    }]
+  })
+
+  examples.push({
+    name: 'Общие фильтры и выключенные линии 1, 3 и 10', sources: Array.from({ length: 10 }, (_, index) => ({
+      target: { category: { level: index + 1 }, selection: { levels: [index + 1], types: [], nations: [] } },
+      filters: { ...filters, arenas: ['05_prohorovka'], result: 'win' }, color: index, enabled: index !== 0 && index !== 2 && index !== 9,
+    }))
+  })
+
+  examples.push({
+    name: 'Третья линия выключена', sources: [8, 9, 10].map((level, index) => ({
+      target: { category: { level }, selection: { levels: [level], types: [], nations: [] } },
+      filters, color: index, enabled: index !== 2,
+    }))
+  })
+
+  examples.push({
+    name: 'Четвёртая линия выключена', sources: [7, 8, 9, 10].map((level, index) => ({
+      target: { category: { level }, selection: { levels: [level], types: [], nations: [] } },
+      filters, color: index, enabled: index !== 3,
+    }))
+  })
+
+  examples.push({
+    name: 'Неразрешённые ID и полный тег', sources: [
+      { ...tank('ussr:R45_IS-7'), target: { tank: 536870880 }, filters: { ...filters, arenas: [16777214] } },
+      tank('ussr:unknown_vehicle', 1),
+    ]
+  })
+
   examples.push({ name: 'Много полных тегов (DEFLATE)', sources: Array.from({ length: 20 }, (_, index) => tank(`ussr:unknown_vehicle_${index}`, index)) })
   const settings: ComparisonSettings = { slot: 'winrate', step: 'week', averageWindow: 3 }
   const annotations = comparisonAnnotationsParam.serialize(new Set(['versions', 'razvorot']))
+
   examples.push(
     ...(['winrate', 'blocked', 'damage_q50', 'damagePerLifeMinute', 'damagePerLifeMinute_q50', 'maxAssist', 'assist_max', 'maxAssist_max'] as const).map(slot => ({
       name: `Только метрика: ${slot}`, settings: { slot }, sources: [tank('ussr:R45_IS-7')],
@@ -154,12 +195,17 @@ const comparisonExamples = computed(() => {
       name: `Только усреднение: avg${averageWindow}`, settings: { averageWindow }, sources: [tank('ussr:R45_IS-7')],
     })),
     { name: 'Только аннотации', annotations, sources: [tank('ussr:R45_IS-7')] },
-    { name: 'Все аннотации', annotations: comparisonAnnotationsParam.serialize(new Set(['versions', 'patches', 'micropatches', 'wotstat-outages', 'razvorot', 'stun-removal', 'bops-removal'])),
-      sources: [tank('ussr:R45_IS-7')] },
-    { name: 'Настройки, цвет и выключенная линия', settings, annotations,
-      sources: [{ ...tank('ussr:R45_IS-7'), color: '#123456', enabled: false }, tank('ussr:R52_Object_261', 1)] },
+    {
+      name: 'Все аннотации', annotations: comparisonAnnotationsParam.serialize(new Set(['versions', 'patches', 'micropatches', 'wotstat-outages', 'razvorot', 'stun-removal', 'bops-removal'])),
+      sources: [tank('ussr:R45_IS-7')]
+    },
+    {
+      name: 'Настройки, цвет и выключенная линия', settings, annotations,
+      sources: [{ ...tank('ussr:R45_IS-7'), color: '#123456', enabled: false }, tank('ussr:R52_Object_261', 1)]
+    },
     { name: 'Настройки без источников', settings, annotations, sources: [] },
   )
+
   const params = comparisonSettingsParams
   return examples.map(example => {
     const settings: ComparisonSettings = {
@@ -176,6 +222,7 @@ const comparisonExamples = computed(() => {
     return { ...example, settings, encoded, query, base64Length: Math.ceil(decodeBase62(encoded).length * 4 / 3) }
   })
 })
+
 const decodedExample = computed(() => {
   try {
     const example = comparisonExamples.value[selectedExample.value]

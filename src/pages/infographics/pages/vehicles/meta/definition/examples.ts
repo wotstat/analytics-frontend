@@ -1,4 +1,4 @@
-import { serializeComparison } from '../../timeSeriesCompare/query/codec/codec'
+import { serializeComparison } from '../../timeSeriesCompare/query/codec/serialize'
 import { createVehicleFilters } from '../../filters/types'
 import type { SavedComparisonSource } from '../../timeSeriesCompare/query/state'
 

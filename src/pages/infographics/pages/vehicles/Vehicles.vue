@@ -59,6 +59,7 @@ import { defaultVehicleStatisticsFromDay } from './shared/vehicleStatisticsPerio
 import { useVehicleTableStatistics } from './vehicleListTable/useVehicleTableStatistics'
 import { useBackground } from '@/shared/uiKit/pageBackground/useBackground'
 import VehiclesBackground from './VehiclesBackground.vue'
+import { useVehiclesPageMeta } from './meta/utils/pageMeta'
 
 useBackground(VehiclesBackground)
 
@@ -66,6 +67,8 @@ const { filters, localFilters, search, grouping, period, slots, sort } = useVehi
 const visibleSlots = ref<Slot[]>([])
 
 const comparison = useVehicleComparison(filters)
+
+useVehiclesPageMeta()
 
 const beforeDay = new Date().toISOString().slice(0, 10)
 const fromBeginning = useLocalStorage('vehicles-from-beginning', false)

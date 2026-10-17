@@ -7,7 +7,6 @@ import { vehicleName } from '../shared/vehicleName'
 
 export type SortKey = Slot | 'name' | 'tankLevel' | 'tankType'
 export type SortOrder = { key: SortKey, ascending: boolean }
-export const defaultSortOrders: SortOrder[] = [{ key: 'battles', ascending: false }]
 
 const typeOrder = new Map<string, number>(vehicleTypes.map((type, index) => [type, vehicleTypes.length - index]))
 

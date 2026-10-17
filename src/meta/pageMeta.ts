@@ -8,7 +8,7 @@ export type PageMetaOverride = Partial<Pick<MetaTags, 'title' | 'description' | 
 type Source = {
   record?: RouteRecordNormalized
   active: boolean
-  read: () => PageMetaOverride
+  read: () => PageMetaOverride | null
 }
 
 type PageMetaManager = {
@@ -41,6 +41,7 @@ export function setupPageMeta(router: Router, readyRoute: Readonly<Ref<RouteLoca
 
     for (const { source } of active) {
       const override = source.read()
+      if (override === null) return
       for (const name of ['title', 'description', 'keywords'] as const) {
         const value = override[name]
         if (value !== undefined) meta[name] = value
@@ -69,7 +70,7 @@ export function setupPageMeta(router: Router, readyRoute: Readonly<Ref<RouteLoca
   watch([readyRoute, revision], update, { immediate: true, flush: 'post' })
 }
 
-export function usePageMeta(meta: MaybeRefOrGetter<PageMetaOverride>) {
+export function usePageMeta(meta: MaybeRefOrGetter<PageMetaOverride | null>) {
   const router = useRouter()
   const manager = managers.get(router)
   if (!manager) throw new Error('setupPageMeta must be called before usePageMeta')

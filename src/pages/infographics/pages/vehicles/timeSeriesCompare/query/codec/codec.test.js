@@ -13,7 +13,8 @@ mock.module('@/shared/game/domain/arenas/catalog', () => ({
   arenaCatalog: shallowRef({ status: Symbol('success'), data: fixtures.catalogs.arenas }),
 }))
 
-const { serializeComparison, deserializeComparison } = await import('./codec')
+const { deserializeComparison } = await import('./codec')
+const { serializeComparison } = await import('./serialize')
 
 describe('compare v1: совместимость сохранённых ссылок', () => {
   for (const { name, compare, context, input, sources, colors } of fixtures.cases) {
