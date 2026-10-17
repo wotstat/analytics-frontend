@@ -5,7 +5,6 @@
 
 interface ImportMetaEnv {
   readonly VITE_META_RENDERER: boolean;
-  readonly VITE_META_SERVER: boolean
   VITE_MODE_DEV_LOCAL?: string;
   VITE_DEFAULT_URL_PREFIX?: string;
 }

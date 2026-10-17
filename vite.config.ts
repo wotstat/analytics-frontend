@@ -17,7 +17,6 @@ const common = {
   envDir: projectRoot,
   define: {
     'import.meta.env.VITE_META_RENDERER': false,
-    'import.meta.env.VITE_META_SERVER': false,
   },
   resolve: { alias: { '@': resolve(projectRoot, 'src') } }
 }
@@ -64,7 +63,6 @@ const metaRendererConfig: UserConfig = {
 
 const metaServerConfig: UserConfig = {
   ...common,
-  define: { ...common.define, 'import.meta.env.VITE_META_SERVER': true },
   root: projectRoot,
   publicDir: false,
   plugins: [metaDefinitionsPlugin(projectRoot), {
