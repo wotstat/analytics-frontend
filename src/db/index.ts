@@ -6,7 +6,7 @@ import { createDatabase, type QueryOptions as ClientQueryOptions } from './clien
 import type { CachePolicy } from './cache'
 
 export { createConcurrencyGroup, type ConcurrencyGroup } from './concurrency'
-export { SUPER_SHORT_CACHE, SHORT_CACHE, DEFAULT_CACHE, MEDIUM_CACHE, LONG_CACHE, DAY_CACHE, DAILY_CACHE, MONTHLY_CACHE, createQueryCache, type CachePolicy } from './cache'
+export { SUPER_SHORT_CACHE, SHORT_CACHE, DEFAULT_CACHE, MEDIUM_CACHE, LONG_CACHE, DAY_CACHE, MONTH_CACHE, DAILY_CACHE, MONTHLY_CACHE, IMMUTABLE_CACHE, createQueryCache, type CachePolicy } from './cache'
 export type { QueryResponse } from './client'
 
 export const totalRequests = useLocalStorage('totalRequests', 0)

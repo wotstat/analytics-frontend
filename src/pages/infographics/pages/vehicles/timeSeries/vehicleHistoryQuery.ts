@@ -1,5 +1,5 @@
 import type { VehicleFilters } from '../filters/types'
-import { DAILY_CACHE, MONTHLY_CACHE, type CachePolicy } from '@/db/cache'
+import { DAILY_CACHE, IMMUTABLE_CACHE, type CachePolicy } from '@/db/cache'
 import type { VehicleSelection } from '../shared/vehicleGrouping'
 import { vehicleDailyStatisticsTable, vehicleSelectionWhere, vehicleStatisticsWhere } from '../shared/vehicleStatisticsQuery'
 import { availableSlots, metricQuerySlots, type Slot } from '../vehicleMetricSelector/vehicleMetrics'
@@ -21,8 +21,8 @@ export function vehicleHistoryRanges(beforeDay: string, step: HistoryStep): Hist
   const year = periodStart(`${beforeDay.slice(0, 4)}-01-01`, step)
   const month = periodStart(`${beforeDay.slice(0, 7)}-01`, step)
   const until = periodStart(beforeDay, step)
-  const ranges: HistoryRange[] = [{ from: null, until: year, cache: MONTHLY_CACHE, recent: false }]
-  if (year < month) ranges.push({ from: year, until: month, cache: MONTHLY_CACHE, recent: false })
+  const ranges: HistoryRange[] = [{ from: null, until: year, cache: IMMUTABLE_CACHE, recent: false }]
+  if (year < month) ranges.push({ from: year, until: month, cache: IMMUTABLE_CACHE, recent: false })
   if (month < until) ranges.push({ from: month, until, cache: DAILY_CACHE, recent: true })
   return ranges
 }

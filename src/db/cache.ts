@@ -11,8 +11,10 @@ export const DEFAULT_CACHE = { ttl: 60 } as const satisfies CachePolicy
 export const MEDIUM_CACHE = { ttl: 300 } as const satisfies CachePolicy
 export const LONG_CACHE = { ttl: 600 } as const satisfies CachePolicy
 export const DAY_CACHE = { ttl: 24 * 60 * 60 } as const satisfies CachePolicy
+export const MONTH_CACHE = { ttl: 30 * 24 * 60 * 60 } as const satisfies CachePolicy
 export const DAILY_CACHE = { until: 'day' } as const satisfies CachePolicy
 export const MONTHLY_CACHE = { until: 'month' } as const satisfies CachePolicy
+export const IMMUTABLE_CACHE = { expiresAt: new Date('2100-01-01T00:00:00Z') } as const satisfies CachePolicy
 
 export type ResolvedCachePolicy = {
   key: string
