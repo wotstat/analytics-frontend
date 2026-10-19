@@ -11,7 +11,7 @@
     <label class="debug-control"><input v-model="multiple" type="checkbox">Несколько рядов</label>
     <label class="debug-control">Рядов
       <select v-model.number="rowCount" class="debug-select" :disabled="!multiple">
-        <option v-for="size in [3, 5, 6, 21]" :key="size" :value="size">{{ size }}</option>
+        <option v-for="size in [1, 2, 3, 5, 6, 21]" :key="size" :value="size">{{ size }}</option>
       </select>
     </label>
     <label class="debug-control">Стиль маркера

@@ -68,6 +68,7 @@ onBeforeUnmount(() => props.legend.clearHighlight())
 function classForItem(item: TItem) {
   return {
     disabled: !props.legend.isEnabled(item),
+    highlightable: props.highlightable,
     highlighted: props.highlightable && props.legend.isHighlighted(item),
     outlined: resolvedMarkerStyle.value === 'outlined',
     glow: resolvedMarkerStyle.value === 'glow',
@@ -154,7 +155,7 @@ function clearHighlight() {
         }
       }
 
-      .marker.editable-marker:hover {
+      &.highlightable .marker.editable-marker:hover {
         &::before {
           transform: scale(1.3);
         }
@@ -175,12 +176,10 @@ function clearHighlight() {
           transform: scale(2);
           filter: blur(4px);
         }
+      }
 
-        &.editable-marker:hover {
-          &::before {
-            transform: scale(1.2);
-          }
-        }
+      &.highlightable .marker.editable-marker:hover::before {
+        transform: scale(1.2);
       }
 
       &.highlighted .marker {

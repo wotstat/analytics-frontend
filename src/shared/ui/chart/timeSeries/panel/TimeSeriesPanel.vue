@@ -44,7 +44,8 @@
       </div>
       <div v-if="hasLegend || $slots.details || $slots['legend-actions']" class="panel-details">
         <div v-if="hasLegend" class="legend-row">
-          <Legend :legend toggleable highlightable :color-editable :removable :marker-style="resolvedMarkerStyle"
+          <Legend :legend toggleable :highlightable="legend.items.value.length > 1" :color-editable :removable
+            :marker-style="resolvedMarkerStyle"
             @color-change="(item, color) => emit('colorChange', item, color)" @remove="item => emit('remove', item)" />
           <slot name="legend-actions" />
         </div>
