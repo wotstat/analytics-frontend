@@ -7,7 +7,8 @@
       <div v-for="column, index in columns" :key="index" class="value-column">
         <div v-for="item in column" :key="item.tag" class="value-row" :class="{ missing: item.value == null }">
           <span class="source">
-            <span class="dot" :class="{ highlighted: item.highlighted }" :style="{ backgroundColor: item.color }"></span>
+            <span class="dot" :class="[resolvedMarkerStyle, { highlighted: item.highlighted }]"
+              :style="{ color: item.color }"></span>
             <span>{{ item.name }}</span>
           </span>
           <b v-if="item.value != null">{{ formatValue(item.value, item) }}</b>
@@ -20,11 +21,15 @@
 <script setup lang="ts" generic="TItem extends SeriesTooltipItem">
 import { computed } from 'vue'
 import type { SeriesTooltipItem } from './seriesTooltip'
+import { resolveMarkerStyle, type MarkerStyle } from '../utils/markerStyle'
 
 const props = defineProps<{
   items: readonly TItem[]
   formatValue: (value: number, item: TItem) => string
+  markerStyle?: MarkerStyle
 }>()
+
+const resolvedMarkerStyle = computed(() => resolveMarkerStyle(props.markerStyle, props.items.length))
 
 const MAX_ROWS_PER_COLUMN = 10
 const MAX_COLUMNS = 3
@@ -114,14 +119,67 @@ const horizontal = computed(() => columns.value.length >= 2)
           overflow-wrap: anywhere;
 
           .dot {
+            position: relative;
             width: 6px;
             height: 6px;
             flex-shrink: 0;
-            border-radius: 50%;
-            transition: transform 0.15s;
+
+            &::before,
+            &::after {
+              content: '';
+              position: absolute;
+              inset: 0;
+              box-sizing: border-box;
+              border-radius: 50%;
+              transition: transform 0.15s ease, opacity 0.15s ease, filter 0.15s ease;
+            }
+
+            &::before {
+              z-index: 1;
+              background-color: currentColor;
+            }
+
+            &::after {
+              z-index: 0;
+              border: 1px solid currentColor;
+              opacity: 0.6;
+              transform: scale(0.6);
+              filter: blur(1px);
+            }
+
+            &.glow::after {
+              border: 1px solid currentColor;
+              opacity: 0;
+              transform: scale(2);
+              filter: blur(2px);
+            }
 
             &.highlighted {
-              transform: scale(1.4);
+              &::before {
+                transform: scale(1.4);
+              }
+
+              &.outlined {
+                &::before {
+                  transform: scale(0.9);
+                }
+
+                &::after {
+                  opacity: 1;
+                  transform: scale(2.5);
+                  filter: blur(0px);
+                }
+              }
+
+              &.glow {
+                &::before {
+                  transform: scale(1);
+                }
+
+                &::after {
+                  opacity: 1;
+                }
+              }
             }
           }
         }
@@ -129,7 +187,7 @@ const horizontal = computed(() => columns.value.length >= 2)
     }
   }
 
-  .header + .value-columns {
+  .header+.value-columns {
     margin-top: 6px;
   }
 }

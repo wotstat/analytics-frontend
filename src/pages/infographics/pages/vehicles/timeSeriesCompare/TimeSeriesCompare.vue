@@ -1,7 +1,8 @@
 <template>
   <section class="vehicle-comparison">
     <TimeSeriesPanel :chart :legend :has-values="hasValues" :annotation-labels="annotations.length > 0"
-      :format-value="(value, ctx) => formatSlotValue(ctx.hit.datum.slot, value)" color-editable removable
+      :format-value="(value, ctx) => formatSlotValue(ctx.hit.datum.slot, value)" marker-style="glow" color-editable
+      removable
       @color-change="(source, color) => emit('colorChange', source.tag, color)"
       @remove="source => emit('remove', source.tag)" @series-click="onSeriesClick">
 

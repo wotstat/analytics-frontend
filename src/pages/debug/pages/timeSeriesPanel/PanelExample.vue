@@ -9,12 +9,24 @@
       </select>
     </label>
     <label class="debug-control"><input v-model="multiple" type="checkbox">Несколько рядов</label>
-    <label class="debug-control"><input v-model="many" type="checkbox">21 ряд</label>
+    <label class="debug-control">Рядов
+      <select v-model.number="rowCount" class="debug-select" :disabled="!multiple">
+        <option v-for="size in [3, 5, 6, 21]" :key="size" :value="size">{{ size }}</option>
+      </select>
+    </label>
+    <label class="debug-control">Стиль маркера
+      <select v-model="markerStyle" class="debug-select">
+        <option :value="undefined">Автоматически</option>
+        <option value="outlined">С обводкой</option>
+        <option value="classic">Классический</option>
+        <option value="glow">Свечение (Glow)</option>
+      </select>
+    </label>
     <label class="debug-control"><input v-model="partial" type="checkbox">Частичная загрузка</label>
     <label class="debug-control"><input v-model="narrow" type="checkbox">Ширина 320 px</label>
     <button class="debug-button" @click="restore">Вернуть источники</button>
   </div>
-  <TimeSeriesPanel :chart :legend :density :has-values="hasValues" :format-value="formatValue"
+  <TimeSeriesPanel :chart :legend :density :has-values="hasValues" :format-value="formatValue" :marker-style
     :tooltip="density === 'compact' && !multiple ? 'header' : 'floating'" :show-legend="multiple" color-editable
     removable class="demo-panel" :class="{ narrow }" @color-change="changeColor"
     @remove="source => removed.add(source.tag)" @series-click="onSeriesClick">
@@ -66,6 +78,7 @@ import { TimeSeriesChart } from '@/shared/ui/chart/timeSeries/chart/TimeSeriesCh
 import { TimeSeriesViewport } from '@/shared/ui/chart/timeSeries/chart/TimeSeriesViewport'
 import { useLegend } from '@/shared/ui/chart/legend/useLegend'
 import { seriesColor } from '@/shared/ui/chart/legend/seriesColors'
+import type { MarkerStyle } from '@/shared/ui/chart/utils/markerStyle'
 import { DAY, utcDayStart, utcDayString } from '@/shared/ui/chart/timeSeries/utils/timeSeriesTime'
 import type { TimeSeriesPoint } from '@/shared/ui/chart/timeSeries/chart/timeSeries'
 import type { ClickInteractionEvent } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/BaseInteractionController'
@@ -77,7 +90,8 @@ const props = defineProps<{ density: 'standard' | 'compact' }>()
 const state = ref('ready')
 const metric = ref<'count' | 'percent'>('count')
 const multiple = ref(props.density === 'standard')
-const many = ref(false)
+const rowCount = ref(3)
+const markerStyle = ref<MarkerStyle>()
 const partial = ref(false)
 const narrow = ref(false)
 const removed = reactive(new Set<string>())
@@ -85,7 +99,7 @@ const colors = reactive(new Map<string, string>())
 const log = useEventLog({ max: 6 })
 const metricOptions = [{ value: 'count', label: 'Количество' }, { value: 'percent', label: 'Доля' }] as const
 
-const sources = computed<DemoSource[]>(() => Array.from({ length: multiple.value ? many.value ? 21 : 3 : 1 }, (_, i) => ({
+const sources = computed<DemoSource[]>(() => Array.from({ length: multiple.value ? rowCount.value : 1 }, (_, i) => ({
   tag: `source-${i}`, name: `Источник ${i + 1}`, color: colors.get(`source-${i}`) ?? seriesColor(i),
   loading: state.value === 'loading' || (partial.value && i === 2),
 })).filter(source => !removed.has(source.tag)))

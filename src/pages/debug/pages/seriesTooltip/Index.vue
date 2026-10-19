@@ -18,7 +18,15 @@
       <div class="debug-row">
         <label class="debug-control"><span class="debug-label">рядов</span>
           <select v-model.number="count" class="debug-select">
-            <option v-for="size in [1, 10, 11, 20, 21, 40]" :key="size" :value="size">{{ size }}</option>
+            <option v-for="size in [1, 5, 6, 10, 11, 20, 21, 40]" :key="size" :value="size">{{ size }}</option>
+          </select>
+        </label>
+        <label class="debug-control"><span class="debug-label">стиль маркера</span>
+          <select v-model="markerStyle" class="debug-select">
+            <option :value="undefined">Автоматически</option>
+            <option value="outlined">С обводкой</option>
+            <option value="classic">Классический</option>
+            <option value="glow">Свечение (Glow)</option>
           </select>
         </label>
         <label class="debug-control"><span class="debug-label">длинные названия</span>
@@ -35,14 +43,15 @@
         </label>
       </div>
       <div class="card">
-        <SeriesTooltip :items :format-value="formatValue">
+        <SeriesTooltip :items :format-value="formatValue" :marker-style>
           <template v-if="header" #header="{ columnCount, horizontal }">
             <b class="heading">Произвольный показатель</b>
             <span class="metadata" :class="{ horizontal }">Колонок: {{ columnCount }} · 30 сентября 2026</span>
           </template>
         </SeriesTooltip>
       </div>
-      <p class="debug-note">Подсветка увеличивает только цветной маркер. При отключённом заголовке у списка нет верхнего зазора.</p>
+      <p class="debug-note">Автоматический стиль: до пяти рядов кружок увеличивается, от шести — уменьшается с растущей обводкой.
+        При отключённом заголовке у списка нет верхнего зазора.</p>
     </DebugSection>
 
     <DebugSection title="Границы экрана" id="series-tooltip-edges"
@@ -53,7 +62,7 @@
           @click="openAt($event)">Tooltip</button>
       </div>
       <PopoverStyled :target :display="open" :placement="['top-float', 'bottom-float']" interactive>
-        <SeriesTooltip :items :format-value="formatValue" />
+        <SeriesTooltip :items :format-value="formatValue" :marker-style />
       </PopoverStyled>
       <div class="debug-row"><button class="debug-button" @click="open = false">Закрыть</button></div>
     </DebugSection>
@@ -67,10 +76,12 @@ import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import SeriesTooltip from '@/shared/ui/chart/tooltip/SeriesTooltip.vue'
 import { seriesColor } from '@/shared/ui/chart/legend/seriesColors'
 import type { SeriesTooltipItem } from '@/shared/ui/chart/tooltip/seriesTooltip'
+import type { MarkerStyle } from '@/shared/ui/chart/utils/markerStyle'
 import PopoverStyled from '@/shared/uiKit/popover/PopoverStyled.vue'
 
 const colors = Array.from({ length: 30 }, (_, index) => seriesColor(index))
 const count = ref(11)
+const markerStyle = ref<MarkerStyle>()
 const longNames = ref(false)
 const missing = ref(true)
 const highlighted = ref(1)

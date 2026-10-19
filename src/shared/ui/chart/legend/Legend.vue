@@ -9,7 +9,7 @@
           <div v-if="item.loading" key="loading" class="marker loading-marker">
             <Loader compact class="item-loader" />
           </div>
-          <LegendColorPicker v-else-if="colorEditable" key="color" class="marker"
+          <LegendColorPicker v-else-if="colorEditable" key="color" class="marker editable-marker"
             :placement="['bottom-float', 'left-float', 'top-float']"
             :model-value="item.color" @update:model-value="color => emit('colorChange', item, `#${color}`)" />
           <div v-else key="static" class="marker"></div>
@@ -22,14 +22,13 @@
       </button>
     </button>
   </div>
-
-
 </template>
 
 
 <script setup lang="ts" generic="TItem extends LegendItem">
 import { computed, onBeforeUnmount, watch } from 'vue'
 import type { LegendItem, LegendModel } from './useLegend'
+import { resolveMarkerStyle, type MarkerStyle } from '../utils/markerStyle'
 import LegendColorPicker from './LegendColorPicker.vue'
 import XIcon from '@/assets/icons/x.svg'
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
@@ -41,6 +40,7 @@ type Props<TItem extends LegendItem> = {
   highlightable?: boolean
   colorEditable?: boolean
   removable?: boolean
+  markerStyle?: MarkerStyle
 }
 
 const props = withDefaults(defineProps<Props<TItem>>(), {
@@ -55,6 +55,7 @@ const emit = defineEmits<{
 }>()
 
 const items = computed(() => props.legend.items.value)
+const resolvedMarkerStyle = computed(() => resolveMarkerStyle(props.markerStyle, items.value.length))
 
 watch(() => props.highlightable, highlightable => {
   if (!highlightable) props.legend.clearHighlight()
@@ -68,6 +69,8 @@ function classForItem(item: TItem) {
   return {
     disabled: !props.legend.isEnabled(item),
     highlighted: props.highlightable && props.legend.isHighlighted(item),
+    outlined: resolvedMarkerStyle.value === 'outlined',
+    glow: resolvedMarkerStyle.value === 'glow',
     interactive: isInteractive(item),
     loading: !!item.loading
   }
@@ -117,6 +120,7 @@ function clearHighlight() {
     display: flex;
     flex-direction: row;
     align-items: center;
+    transition: color 0.15s ease;
 
     &.disabled {
 
@@ -133,6 +137,59 @@ function clearHighlight() {
       .marker {
         &::before {
           transform: scale(1.3);
+        }
+      }
+    }
+
+    &.outlined {
+      &.highlighted .marker {
+        &::before {
+          transform: scale(0.9);
+        }
+
+        &::after {
+          opacity: 1;
+          transform: scale(2);
+          filter: blur(0px);
+        }
+      }
+
+      .marker.editable-marker:hover {
+        &::before {
+          transform: scale(1.3);
+        }
+
+        &::after {
+          opacity: 0;
+          transform: scale(1.3);
+        }
+      }
+    }
+
+    &.glow {
+
+      .marker {
+        &::after {
+          border: 0;
+          border: 2px solid var(--item-color);
+          transform: scale(2);
+          filter: blur(4px);
+        }
+
+        &.editable-marker:hover {
+          &::before {
+            transform: scale(1.2);
+          }
+        }
+      }
+
+      &.highlighted .marker {
+        &::before {
+          transform: scale(1.1);
+        }
+
+        &::after {
+          opacity: 0.6;
         }
       }
     }
@@ -170,18 +227,35 @@ function clearHighlight() {
         pointer-events: none;
       }
 
-      &::before {
+      &::before,
+      &::after {
         content: '';
-        display: inline-block;
+        position: absolute;
+        inset: 0;
+        margin: auto;
         width: 0.6em;
         height: 0.6em;
+        box-sizing: border-box;
         border-radius: 50%;
+        transition: transform 0.15s ease, opacity 0.15s ease, filter 0.15s ease;
+      }
+
+      &::before {
+        z-index: 1;
         background-color: var(--item-color);
-        transition: transform 0.15s ease;
+      }
+
+      &::after {
+        z-index: 0;
+        border: 1px solid var(--item-color);
+        opacity: 0;
+        transform: scale(0.65);
+        filter: blur(3px);
       }
     }
 
-    .loading-marker::before {
+    .loading-marker::before,
+    .loading-marker::after {
       content: none;
     }
 

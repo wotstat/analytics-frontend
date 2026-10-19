@@ -1,5 +1,5 @@
 <template>
-  <SeriesTooltip :items="rows" :format-value="value => formatValue(value, ctx)">
+  <SeriesTooltip :items="rows" :format-value="value => formatValue(value, ctx)" :marker-style>
     <template v-if="$slots.header" #header="layout">
       <slot name="header" v-bind="layout" :ctx />
     </template>
@@ -12,12 +12,14 @@ import type { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction
 import type { TimeSeriesHit } from '../chart/TimeSeriesChart'
 import type { TimeSeriesPoint } from '../chart/timeSeries'
 import type { LegendItem } from '../../legend/useLegend'
+import type { MarkerStyle } from '../../utils/markerStyle'
 import SeriesTooltip from '../../tooltip/SeriesTooltip.vue'
 
 const props = defineProps<{
   ctx: TooltipCtx<TimeSeriesHit<TPoint>>
   sources: readonly TItem[]
   formatValue: (value: number, ctx: TooltipCtx<TimeSeriesHit<TPoint>>) => string
+  markerStyle?: MarkerStyle
 }>()
 
 const rows = computed(() => {

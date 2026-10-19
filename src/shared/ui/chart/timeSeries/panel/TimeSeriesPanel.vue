@@ -16,7 +16,7 @@
       </template>
       <template #tooltip="{ ctx }">
         <slot name="tooltip" :ctx>
-          <TimeSeriesTooltip :ctx :sources="legend.enabled.value" :format-value>
+          <TimeSeriesTooltip :ctx :sources="legend.enabled.value" :format-value :marker-style="resolvedMarkerStyle">
             <template v-if="$slots['tooltip-header']" #header="context">
               <slot name="tooltip-header" v-bind="context" />
             </template>
@@ -44,7 +44,7 @@
       </div>
       <div v-if="hasLegend || $slots.details || $slots['legend-actions']" class="panel-details">
         <div v-if="hasLegend" class="legend-row">
-          <Legend :legend toggleable highlightable :color-editable :removable
+          <Legend :legend toggleable highlightable :color-editable :removable :marker-style="resolvedMarkerStyle"
             @color-change="(item, color) => emit('colorChange', item, color)" @remove="item => emit('remove', item)" />
           <slot name="legend-actions" />
         </div>
@@ -56,7 +56,7 @@
       :placement="['top-float', 'bottom-float']" :offset="{ top: 28, bottom: annotationLabels ? 40 : 12 }">
       <template #default="{ ctx }">
         <slot name="tooltip" :ctx>
-          <TimeSeriesTooltip :ctx :sources="legend.enabled.value" :format-value>
+          <TimeSeriesTooltip :ctx :sources="legend.enabled.value" :format-value :marker-style="resolvedMarkerStyle">
             <template v-if="$slots['tooltip-header']" #header="context">
               <slot name="tooltip-header" v-bind="context" />
             </template>
@@ -75,6 +75,7 @@ import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/Univers
 import type { TimeSeriesChart, TimeSeriesHit } from '../chart/TimeSeriesChart'
 import type { TimeSeriesPoint } from '../chart/timeSeries'
 import type { LegendItem, LegendModel } from '../../legend/useLegend'
+import { resolveMarkerStyle, type MarkerStyle } from '../../utils/markerStyle'
 import ChartToolbar from '../toolbar/layout/ChartToolbar.vue'
 import ToolbarGroup from '../toolbar/layout/ToolbarGroup.vue'
 import HeaderTooltip from '../../tooltip/HeaderTooltip.vue'
@@ -93,6 +94,7 @@ const props = withDefaults(defineProps<{
   colorEditable?: boolean
   removable?: boolean
   annotationLabels?: boolean
+  markerStyle?: MarkerStyle
 }>(), {
   density: 'standard',
   tooltip: 'floating',
@@ -106,6 +108,7 @@ const emit = defineEmits<{
 }>()
 
 const hasLegend = computed(() => props.showLegend && props.legend.items.value.length > 0)
+const resolvedMarkerStyle = computed(() => resolveMarkerStyle(props.markerStyle, props.legend.items.value.length))
 
 watch([() => props.chart, () => props.legend.items.value.map(item => ({ tag: item.tag, color: item.color }))],
   ([chart, colors]) => chart.setSeriesColors(colors),

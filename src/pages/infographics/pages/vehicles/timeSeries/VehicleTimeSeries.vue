@@ -1,5 +1,5 @@
 <template>
-  <TimeSeriesPanel :chart :legend :has-values="hasValues" density="compact"
+  <TimeSeriesPanel :chart :legend :has-values="hasValues" density="compact" marker-style="glow"
     :tooltip="split === null ? 'header' : 'floating'" :show-legend="split !== null"
     :annotation-labels="annotations.length > 0"
     :format-value="(value, ctx) => formatSlotValue(ctx.hit.datum.slot, value)" class="vehicle-time-series">
