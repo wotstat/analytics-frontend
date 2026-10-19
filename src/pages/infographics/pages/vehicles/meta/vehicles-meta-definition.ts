@@ -40,11 +40,11 @@ export const compare = defineMetaDefinition({
   name: 'Сравнение техники/Сравнение',
   summary: 'Один-два танка без легенды; три и более источника или категории — панорама с легендой.',
   examples: [
+    { name: 'Три танка · урон', url: 'https://wotstat.info/session/vehicles?region=RU&compare=1JNxP4fcCSA375qQz40k3owcagZjw54TRxz0gPWFr1BElpdfAPd3VCU0xoNsI8VoJfrxocFmpJzeZbLq61qr' },
     { name: 'Два танка · урон', url: 'https://wotstat.info/session/vehicles?region=RU&compare=4u2COGR' },
     { name: 'ИС-7 · урон', url: 'https://wotstat.info/session/vehicles?region=RU&compare=HpeZ' },
     { name: 'Два танка · победы', url: 'https://wotstat.info/session/vehicles?region=RU&metric=winrate&compare=4u2COGR' },
     { name: 'Объект 261 · победы', url: 'https://wotstat.info/session/vehicles?region=RU&metric=winrate&compare=2Vgd2OvHGjYwA3DFyqfvV3J5AcCxiT' },
-    { name: 'Три танка · урон', url: 'https://wotstat.info/session/vehicles?region=RU&compare=1JNxP4fcCSA375qQz40k3owcagZjw54TRxz0gPWFr1BElpdfAPd3VCU0xoNsI8VoJfrxocFmpJzeZbLq61qr' },
     { name: 'Уровни VIII / IX / X', url: 'https://wotstat.info/session/vehicles?region=RU&compare=1AhWI6' },
     { name: 'Один уровень · X', url: 'https://wotstat.info/session/vehicles?region=RU&compare=KARwIvzg' },
     { name: 'Типы · ТТ / ПТ-САУ', url: 'https://wotstat.info/session/vehicles?region=RU&compare=HcCR' },
