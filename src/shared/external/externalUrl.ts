@@ -1,7 +1,7 @@
 
 
 const prefix = (() => {
-  const match = location.host.match(/^(.*)\.wotstat\.info$/i)
+  const match = typeof location === 'undefined' ? null : location.host.match(/^(.*)\.wotstat\.info$/i)
   return match ? `${match[1]}.` : (import.meta.env.VITE_DEFAULT_URL_PREFIX ?? '')
 })()
 
