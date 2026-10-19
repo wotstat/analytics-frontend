@@ -96,13 +96,8 @@ import { VueComponent as InstructionOBS } from './instructionOBS/index.md'
 import { usePageMeta } from '@/meta/pageMeta'
 import { WIDGETS_URL } from '@/shared/external/externalUrl'
 
-usePageMeta({
-  title: 'Виджеты',
-  description: 'Виджеты универсальные их можно добавлять как в OBS так и прямо в игру Мир Танков и World of Tanks',
-  keywords: 'виджеты, виджеты для стримеров, виджеты для игр, виджеты для стрима, виджеты для трансляции, виджеты мир танков'
-})
-
 const selectedTitle = ref<string>('')
+const selectedDescription = ref('')
 const collection = useTemplateRef<HTMLIFrameElement>('collection')
 const preview = useTemplateRef<HTMLIFrameElement>('preview')
 const isPreviewLoading = ref(true)
@@ -130,7 +125,22 @@ const selectedRoute = computed(() => {
   return currentPreviewRoute()
 })
 
+usePageMeta(() => {
+  const meta = {
+    title: 'Виджеты WotStat',
+    description: 'Виджеты для «Мира танков» и World of Tanks. Добавляйте их прямо в игру или в OBS.',
+    keywords: 'виджеты, виджеты для стримеров, виджеты для игр, виджеты для стрима, виджеты для трансляции, виджеты мир танков'
+  }
+  if (!selectedRoute.value) return meta
+
+  if (selectedTitle.value) meta.title = `${selectedTitle.value} — Виджеты WotStat`
+  if (selectedDescription.value) meta.description = selectedDescription.value
+  return meta
+})
+
 watch(selectedRoute, (value, old) => {
+  selectedTitle.value = ''
+  selectedDescription.value = ''
   if (value && !old) isPreviewLoading.value = true
 })
 
@@ -144,27 +154,32 @@ useIframeMessages(collection, data => {
     router.push({
       params: { widget: data.route.split('/').filter(Boolean) }
     })
-  } else if (data.type === 'collection-mounted') {
-    if (collection.value)
-      isCollectionLoading.value = false
+    return
   }
+
+  if (data.type === 'collection-mounted' && collection.value) isCollectionLoading.value = false
 })
 
 useIframeMessages(preview, data => {
   if (data.type === 'readme-loaded') {
     const attributes = data.attributes as Record<string, string>
     if ('title' in attributes) selectedTitle.value = attributes.title
-  } else if (data.type === 'preview-mounted') {
-    if (preview.value) isPreviewLoading.value = false
-  } else if (data.type === 'preview-component-loaded') {
-    showCollection.value = true
+    if (typeof data.name === 'string') selectedTitle.value = data.name
+    if (typeof data.description === 'string') selectedDescription.value = data.description
+    return
   }
+
+  if (data.type === 'preview-mounted') {
+    if (preview.value) isPreviewLoading.value = false
+    return
+  }
+
+  if (data.type === 'preview-component-loaded') showCollection.value = true
 })
 
 onDeactivated(() => {
   if (collection.value)
     isCollectionLoading.value = false
-
 })
 
 function onClosePreview() {

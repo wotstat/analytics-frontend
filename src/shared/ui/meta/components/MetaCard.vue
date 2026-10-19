@@ -46,7 +46,7 @@
       <slot v-if="$slots.footer" name="footer" />
       <template v-else>
         <span>{{ footer }}</span>
-        <span>wotstat.info</span>
+        <span v-if="footerRight">{{ footerRight }}</span>
       </template>
     </div>
   </div>
@@ -69,11 +69,13 @@ withDefaults(defineProps<{
   subtitle?: string
   label?: string
   footer?: string
+  footerRight?: string
   background?: Component
 }>(), {
   variant: 'full',
   brand: 'WotStat Analytics',
   title: 'WotStat Analytics',
+  footerRight: 'wotstat.info',
 })
 
 const palette = shallowRef<MetaCardPalette>('lavender')

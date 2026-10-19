@@ -61,6 +61,11 @@
 - `useIframeMessages.ts` — приём сообщений от iframe (фильтрация по `event.source`);
 - `useIframeContentBounding.ts` — авторазмер iframe под содержимое.
 
+Мета-карточки конкретных виджетов загружают названия и короткие описания через
+статический `/widget-catalog.json` и используют отдельный iframe
+`/iframe/widget-preview/:widget*` только с самим виджетом. Готовность и размеры
+согласуются через `widget-preview-*`; контракт описан в [Open Graph](11-open-graph.md#виджеты).
+
 ## Прочее
 
 - `robots.txt`, `sitemap.xml`, `sitemap-google.xml` — в `public/`.
