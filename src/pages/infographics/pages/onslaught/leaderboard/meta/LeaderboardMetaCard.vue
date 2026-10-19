@@ -101,6 +101,10 @@ const footer = computed(() => {
 </script>
 
 <style scoped lang="scss">
+.legend-summary {
+  margin-top: -15px;
+}
+
 .section-label {
   margin: 0 0 22px;
   color: var(--meta-card-muted);
@@ -225,6 +229,7 @@ const footer = computed(() => {
     justify-content: space-between;
     min-width: 0;
     gap: 32px;
+    margin-top: -20px;
   }
 
   .player-copy {

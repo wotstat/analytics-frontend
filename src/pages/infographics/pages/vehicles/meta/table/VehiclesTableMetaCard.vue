@@ -94,7 +94,7 @@ const stateMessage = computed(() => {
   .table-composition {
     flex: 1;
     min-height: 0;
-    margin-top: 23px;
+    margin-top: 32px;
   }
 
   .state {

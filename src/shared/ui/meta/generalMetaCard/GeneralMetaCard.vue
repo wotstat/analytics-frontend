@@ -1,5 +1,6 @@
 <template>
   <MetaCard
+    variant="compact"
     class="general-card"
     :background
     subtitle="Статистика и аналитика танковых боёв"
@@ -10,7 +11,9 @@
       <br>
       <span class="secondary-title">Analytics</span>
     </template>
-    <template v-if="$slots.background" #background><slot name="background" /></template>
+    <template v-if="$slots.background" #background>
+      <slot name="background" />
+    </template>
   </MetaCard>
 </template>
 

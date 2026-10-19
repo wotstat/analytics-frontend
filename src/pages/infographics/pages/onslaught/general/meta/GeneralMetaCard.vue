@@ -66,6 +66,7 @@ const game = computed(() => regionToGame(params.value.region))
 
   .overview-copy {
     min-width: 0;
+    margin-bottom: 32px;
 
     h2 {
       margin: 0;

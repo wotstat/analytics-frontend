@@ -1,27 +1,36 @@
 <template>
-  <MetaCard :variant class="statistics-preview-card" label="Статистика игрока" footer="Динамика. Результаты. Прогресс.">
+  <MetaCard :header-divider :footer-divider class="statistics-preview-card" label="Статистика игрока"
+    footer="Динамика. Результаты. Прогресс.">
     <template #background><slot name="background" /></template>
-    <div class="statistics">
-      <div class="message">
-        <p>Ваши результаты</p>
-        <h1>Каждый бой<br>в цифрах</h1>
-        <span>Следите за прогрессом вместе с WotStat</span>
-      </div>
-      <div class="metrics">
-        <div v-for="metric in metrics" :key="metric.label" class="metric">
-          <strong>{{ metric.value }}</strong>
-          <span>{{ metric.label }}</span>
+    <template #[contentSlot]>
+      <div class="statistics">
+        <div class="message">
+          <p>Ваши результаты</p>
+          <h1>Каждый бой<br>в цифрах</h1>
+          <span>Следите за прогрессом вместе с WotStat</span>
+        </div>
+        <div class="metrics">
+          <div v-for="metric in metrics" :key="metric.label" class="metric">
+            <strong>{{ metric.value }}</strong>
+            <span>{{ metric.label }}</span>
+          </div>
         </div>
       </div>
-    </div>
+    </template>
   </MetaCard>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import MetaCard from '@/shared/ui/meta/components/MetaCard.vue'
-import type { MetaCardVariant } from '@/shared/ui/meta/components/utils/variants'
 
-defineProps<{ variant: MetaCardVariant }>()
+const props = defineProps<{
+  contentFull?: boolean
+  headerDivider?: boolean
+  footerDivider?: boolean
+}>()
+
+const contentSlot = computed(() => props.contentFull ? 'content-full' : 'content')
 
 const metrics = [
   { label: 'Победы', value: '56,8 %' },

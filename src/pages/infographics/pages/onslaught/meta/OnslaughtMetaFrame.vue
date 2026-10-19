@@ -1,33 +1,37 @@
 <template>
-  <MetaCard :variant class="onslaught-meta" specific-brand="НАТИСК" :label="`${params.region} · ${params.seasonName}`" :footer>
+  <MetaCard header-divider class="onslaught-meta" specific-brand="НАТИСК" :label="`${params.region} · ${params.seasonName}`" :footer>
     <template #background>
       <MetaCardBackground palette="slate" class="onslaught-background">
         <img src="../assets/bg-1.jpg" alt="" loading="eager">
       </MetaCardBackground>
     </template>
 
-    <div v-if="state === 'error' || state === 'empty'" class="empty-state">
-      <p class="og-eyebrow">{{ section }}</p>
-      <h2 v-if="state === 'error'">Не удалось загрузить статистику</h2>
-      <h2 v-else>Пока нет данных за этот сезон</h2>
-    </div>
-    <slot v-else />
+    <template #[contentSlot]>
+      <div v-if="state === 'error' || state === 'empty'" class="empty-state">
+        <p class="og-eyebrow">{{ section }}</p>
+        <h2 v-if="state === 'error'">Не удалось загрузить статистику</h2>
+        <h2 v-else>Пока нет данных за этот сезон</h2>
+      </div>
+      <slot v-else />
+    </template>
   </MetaCard>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import MetaCard from '@/shared/ui/meta/components/MetaCard.vue'
 import MetaCardBackground from '@/shared/ui/meta/components/MetaCardBackground.vue'
-import type { MetaCardVariant } from '@/shared/ui/meta/components/utils/variants'
 import type { OnslaughtMetaParams } from './utils/params'
 
-withDefaults(defineProps<{
-  variant?: MetaCardVariant
+const props = defineProps<{
+  contentFull?: boolean
   params: OnslaughtMetaParams
   section: string
   footer: string
   state: 'loading' | 'ready' | 'empty' | 'error'
-}>(), { variant: 'compact' })
+}>()
+
+const contentSlot = computed(() => props.contentFull ? 'content-full' : 'content')
 </script>
 
 <style scoped lang="scss">

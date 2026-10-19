@@ -1,9 +1,16 @@
 <template>
-  <div class="meta-card" :class="`variant-${variant}`" :style="{ '--meta-card-palette-muted': secondaryColor }">
+  <div class="meta-card" :class="{ 'header-divider': headerDivider, 'footer-divider': footerDivider }"
+    :style="{ '--meta-card-palette-muted': secondaryColor }">
     <div class="background">
       <slot name="background">
         <component :is="background ?? AuroraMistBackground" />
       </slot>
+    </div>
+
+    <div v-if="$slots['content-full']" class="content-full">
+      <div class="content-body">
+        <slot name="content-full" />
+      </div>
     </div>
 
     <div class="heading">
@@ -15,22 +22,23 @@
             <span class="heading-brand" :class="{ accent: specificBrand }">{{ brand }}</span>
           </slot>
         </h1>
-        <span v-if="label || $slots.label" class="label"><slot name="label">{{ label }}</slot></span>
+        <span v-if="label || $slots.label" class="label">
+          <slot name="label">{{ label }}</slot>
+        </span>
       </template>
     </div>
 
-    <div class="content">
+    <div class="content" :class="{ 'content-full': variant === 'full' && !$slots.content && !$slots['content-full'] }">
       <div class="content-body">
-        <slot>
-          <div v-if="variant === 'full'" class="message">
-            <h1 class="title">
-              <slot name="title">{{ title }}</slot>
-            </h1>
-            <p v-if="subtitle || $slots.subtitle" class="subtitle">
-              <slot name="subtitle">{{ subtitle }}</slot>
-            </p>
-          </div>
-        </slot>
+        <slot v-if="$slots.content" name="content" />
+        <div v-else-if="!$slots['content-full']" class="message">
+          <h1 class="title" :class="{ 'string-title': !$slots.title }">
+            <slot name="title">{{ title }}</slot>
+          </h1>
+          <p v-if="subtitle || $slots.subtitle" class="subtitle">
+            <slot name="subtitle">{{ subtitle }}</slot>
+          </p>
+        </div>
       </div>
     </div>
 
@@ -49,10 +57,11 @@ import { computed, provide, shallowRef, type Component } from 'vue'
 import type { RenderContext } from '@/meta/utils'
 import AuroraMistBackground from './backgrounds/AuroraMistBackground.vue'
 import { metaCardPaletteKey, metaCardSecondaryColors, type MetaCardPalette } from './utils/palette'
-import type { MetaCardVariant } from './utils/variants'
 
 withDefaults(defineProps<{
-  variant?: MetaCardVariant
+  variant?: 'full' | 'compact'
+  headerDivider?: boolean
+  footerDivider?: boolean
   context?: RenderContext
   specificBrand?: string
   brand?: string
@@ -141,6 +150,7 @@ const secondaryColor = computed(() => metaCardSecondaryColors[palette.value])
   }
 
   .content,
+  .content-full,
   .content-body {
     position: relative;
     flex: 1;
@@ -151,27 +161,39 @@ const secondaryColor = computed(() => metaCardSecondaryColors[palette.value])
     justify-content: center;
   }
 
-  .content {
-    .message {
-      .title {
-        margin: 0;
-        font-size: var(--meta-card-title-size, 88px);
-        line-height: 1.04;
-        font-weight: 700;
-        overflow-wrap: anywhere;
-      }
+  .content-full {
+    position: absolute;
+    inset: 0;
+    padding: inherit;
+    padding-block: 0;
+  }
 
-      .subtitle {
-        max-width: 900px;
-        margin: 24px 0 0;
-        color: var(--meta-card-muted);
-        font-size: 30px;
-        line-height: 1.4;
+  .message {
+    .title {
+      margin: 0;
+      font-size: var(--meta-card-title-size, 88px);
+      line-height: 1.04;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+
+      &.string-title {
+        text-box: trim-start ex alphabetic;
       }
+    }
+
+    .subtitle {
+      max-width: 900px;
+      margin: 24px 0 0;
+      color: var(--meta-card-muted);
+      font-size: 30px;
+      line-height: 1.4;
+      text-box: trim-end ex alphabetic;
     }
   }
 
   .footer {
+    margin-top: auto;
+
     &:empty {
       display: none;
     }
@@ -186,24 +208,17 @@ const secondaryColor = computed(() => metaCardSecondaryColors[palette.value])
     gap: 0;
   }
 
-  &.variant-compact,
-  &.variant-compact-full {
+  &.header-divider {
     .heading {
       padding-bottom: 24px;
       border-bottom: 1px solid #ffffff14;
     }
   }
 
-  &.variant-compact-full {
-    .content {
-      position: absolute;
-      inset: 0;
-      padding: inherit;
-      padding-block: 0;
-    }
-
+  &.footer-divider {
     .footer {
-      margin-top: auto;
+      padding-top: 24px;
+      border-top: 1px solid #ffffff14;
     }
   }
 }

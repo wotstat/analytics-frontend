@@ -7,13 +7,26 @@
 
     <div class="preview-controls">
       <label>
-        <span>Компоновка</span>
-        <select v-model="layout">
-          <option value="full">Полный</option>
-          <option value="compact">Компактный</option>
-          <option value="compact-full">Compact Full</option>
+        <span>Пример</span>
+        <select v-model="example">
+          <option value="general">Общая карточка</option>
+          <option value="statistics">Статистика игрока</option>
         </select>
       </label>
+      <template v-if="example === 'statistics'">
+        <label>
+          <input v-model="contentFull" type="checkbox">
+          <span>Контент на всю высоту</span>
+        </label>
+        <label>
+          <input v-model="headerDivider" type="checkbox">
+          <span>Разделитель под шапкой</span>
+        </label>
+        <label>
+          <input v-model="footerDivider" type="checkbox">
+          <span>Разделитель над подвалом</span>
+        </label>
+      </template>
       <label>
         <span>Формат</span>
         <select v-model="format">
@@ -81,14 +94,19 @@ import { computed, ref, shallowRef, useTemplateRef } from 'vue'
 import type { MetaFormat } from '@/meta/utils'
 import { metaCardBackgrounds } from '@/shared/ui/meta/components/utils/backgrounds'
 import contoursPattern from '@/shared/ui/meta/components/assets/contours.svg?url'
-import type { MetaCardVariant } from '@/shared/ui/meta/components/utils/variants'
 import ScaledCard from '../ScaledCard.vue'
 import GeneralMetaCard from '@/shared/ui/meta/generalMetaCard/GeneralMetaCard.vue'
 import StatisticsPreviewCard from './StatisticsPreviewCard.vue'
 
-const layout = ref<MetaCardVariant>('full')
-const previewCard = computed(() => layout.value === 'full' ? GeneralMetaCard : StatisticsPreviewCard)
-const previewProps = computed(() => layout.value === 'full' ? {} : { variant: layout.value })
+const example = ref<'general' | 'statistics'>('general')
+const contentFull = ref(false)
+const headerDivider = ref(true)
+const footerDivider = ref(false)
+const previewCard = computed(() => example.value === 'general' ? GeneralMetaCard : StatisticsPreviewCard)
+const previewProps = computed(() => {
+  if (example.value === 'general') return {}
+  return { contentFull: contentFull.value, headerDivider: headerDivider.value, footerDivider: footerDivider.value }
+})
 const format = ref<MetaFormat>('og')
 const pattern = ref('default')
 const backgroundGroups = [

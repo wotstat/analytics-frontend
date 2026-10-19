@@ -105,6 +105,7 @@ const stateMessage = computed(() => {
     font-size: 52px;
     line-height: 1.05;
     letter-spacing: -1.6px;
+    text-box: trim-start cap text;
   }
 
   .selection {
@@ -129,7 +130,7 @@ const stateMessage = computed(() => {
     min-height: 0;
     display: flex;
     flex-direction: column;
-    margin-top: 24px;
+    margin-top: 25px;
     padding-bottom: 22px;
   }
 
@@ -219,7 +220,7 @@ const stateMessage = computed(() => {
 
   &.duel {
     .comparison-body {
-      margin-top: 14px;
+      margin-top: 0;
     }
 
     .rivals {
@@ -363,7 +364,7 @@ const stateMessage = computed(() => {
     gap: 20px;
 
     .comparison-body {
-      margin-top: 20px;
+      margin-top: 25px;
     }
 
     &.duel {

@@ -1,11 +1,13 @@
 <template>
-  <MetaCard variant="compact-full" class="vehicle-meta-card" label="Debug / Open Graph">
-    <VehicleImage v-if="tag" class="vehicle-image" :tag size="shop" loading="eager" />
-    <div class="message">
-      <p>Техника</p>
-      <h1>{{ name }}</h1>
-      <span class="tag">{{ tag || 'Укажите ?tag=ussr:R45_IS-7' }}</span>
-    </div>
+  <MetaCard header-divider class="vehicle-meta-card" label="Debug / Open Graph">
+    <template #content-full>
+      <VehicleImage v-if="tag" class="vehicle-image" :tag size="shop" loading="eager" />
+      <div class="message">
+        <p>Техника</p>
+        <h1>{{ name }}</h1>
+        <span class="tag">{{ tag || 'Укажите ?tag=ussr:R45_IS-7' }}</span>
+      </div>
+    </template>
     <template #footer>
       <span>{{ status }}</span>
       <span>/debug/meta/vehicle</span>

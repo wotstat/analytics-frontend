@@ -62,8 +62,10 @@ export function tableFilterLabels(params: VehiclesMetaParams) {
 }
 
 export const tableHeading = (params: VehiclesMetaParams) => ({
-  tanks: 'СТАТИСТИКА ТЕХНИКИ', levels: 'СТАТИСТИКА УРОВНЕЙ',
-  classes: 'СТАТИСТИКА ТИПОВ', classesByLevel: 'ТИПЫ ПО УРОВНЯМ',
+  tanks: 'Статистика техники',
+  levels: 'Статистика уровней',
+  classes: 'Статистика типов',
+  classesByLevel: 'Типы по уровням',
 })[params.table.grouping]
 
 export const periodLabel = (days: number) => ({ 1: 'Последний день', 7: 'Последние 7 дней', 30: 'Последние 30 дней' })[days]

@@ -1,10 +1,12 @@
 <template>
-  <MetaCard variant="compact-full" class="delayed-meta-card" label="Debug / Open Graph">
-    <div class="message">
-      <span class="duration">5 секунд</span>
-      <h1>{{ ready ? 'Карточка готова' : 'Подготовка карточки' }}</h1>
-      <p>Тестовая задержка перед готовностью к рендеру.</p>
-    </div>
+  <MetaCard header-divider class="delayed-meta-card" label="Debug / Open Graph">
+    <template #content-full>
+      <div class="message">
+        <span class="duration">5 секунд</span>
+        <h1>{{ ready ? 'Карточка готова' : 'Подготовка карточки' }}</h1>
+        <p>Тестовая задержка перед готовностью к рендеру.</p>
+      </div>
+    </template>
     <template #footer>
       <span class="status" :class="{ ready }">{{ ready ? 'Готова к рендеру' : 'Ожидание 5 секунд…' }}</span>
       <span>/debug/meta/delayed</span>

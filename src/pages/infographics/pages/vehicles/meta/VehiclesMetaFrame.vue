@@ -1,9 +1,9 @@
 <template>
-  <MetaCard variant="compact" class="vehicles-meta-frame" specific-brand="ТЕХНИКА" :label :background>
+  <MetaCard header-divider class="vehicles-meta-frame" specific-brand="ТЕХНИКА" :label :background>
     <template v-if="$slots.background" #background>
       <slot name="background" />
     </template>
-    <slot />
+    <template #content><slot /></template>
     <template #footer />
   </MetaCard>
 </template>

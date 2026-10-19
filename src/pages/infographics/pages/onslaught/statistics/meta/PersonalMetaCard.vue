@@ -1,5 +1,5 @@
 <template>
-  <OnslaughtMetaFrame :params :state :variant="!params.nickname || hasNoStatistics ? 'compact-full' : 'compact'"
+  <OnslaughtMetaFrame :params :state :content-full="!params.nickname || hasNoStatistics"
     section="Личная статистика" :footer>
     <div v-if="!params.nickname" class="personal-intro">
       <div class="intro-copy">
