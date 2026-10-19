@@ -180,6 +180,22 @@ export function useVehicleComparison(filters: Ref<VehicleFilters>) {
     .filter(source => source.selection && comparisonFiltersKey(source.filters) === currentFiltersKey.value)
     .map(source => comparisonRowKey(source.rowKey, source.selection!)))
 
+  const paletteSlots = new Map<string, number>()
+
+  function reservePaletteSlots() {
+    const tags = new Set(savedSources.value.map(sourceTag))
+    for (const tag of paletteSlots.keys()) {
+      if (!tags.has(tag)) paletteSlots.delete(tag)
+    }
+
+    savedSources.value.forEach((source, index) => {
+      const tag = sourceTag(source)
+      if (!paletteSlots.has(tag)) paletteSlots.set(tag, typeof source.color === 'number' ? source.color : index)
+    })
+
+    return new Set(paletteSlots.values())
+  }
+
   function candidateKey(vehicle: VehicleStatistics, selection: VehicleSelection) {
     return comparisonRowKey(vehicle.rowKey, selection)
   }
@@ -196,7 +212,12 @@ export function useVehicleComparison(filters: Ref<VehicleFilters>) {
 
   function addMany(candidates: readonly ComparisonCandidate[]) {
     const keys = new Set(comparedKeys.value)
-    const colors = new Set(sources.value.map(source => source.color))
+    const occupiedSlots = reservePaletteSlots()
+    const colors = new Set([...occupiedSlots].map(comparisonColor))
+    for (const source of sources.value) {
+      const color = source.color
+      colors.add(color.length === 9 && color.endsWith('ff') ? color.slice(0, 7) : color)
+    }
     const additions: SavedComparisonSource[] = []
 
     for (const { vehicle, selection } of candidates) {
@@ -205,15 +226,19 @@ export function useVehicleComparison(filters: Ref<VehicleFilters>) {
       keys.add(key)
 
       const unused = comparisonPalette.findIndex(color => !colors.has(color))
-      const color = unused >= 0 ? unused : savedSources.value.length + additions.length
+      let color = unused >= 0 ? unused : Math.max(comparisonPalette.length, savedSources.value.length + additions.length)
+      while (occupiedSlots.has(color)) color++
+      occupiedSlots.add(color)
       colors.add(comparisonColor(color))
 
-      additions.push({
+      const source: SavedComparisonSource = {
         target: createTarget(vehicle, selection),
         color,
         enabled: true,
         filters: snapshotComparisonFilters(filters.value),
-      })
+      }
+      paletteSlots.set(sourceTag(source), color)
+      additions.push(source)
     }
 
     if (additions.length) savedSources.value.push(...additions)
@@ -221,11 +246,13 @@ export function useVehicleComparison(filters: Ref<VehicleFilters>) {
 
   function remove(tag: string) {
     savedSources.value = savedSources.value.filter(source => sourceTag(source) !== tag)
+    paletteSlots.delete(tag)
   }
 
   function setColor(tag: string, color: string) {
     const source = savedSources.value.find(source => sourceTag(source) === tag)
     if (!source || !/^#[\da-f]{6}(?:[\da-f]{2})?$/i.test(color)) return
+    reservePaletteSlots()
     source.color = color.toLowerCase()
   }
 
@@ -234,7 +261,10 @@ export function useVehicleComparison(filters: Ref<VehicleFilters>) {
     for (const source of savedSources.value) source.enabled = !disabled.has(sourceTag(source))
   }
 
-  function clear() { savedSources.value = [] }
+  function clear() {
+    savedSources.value = []
+    paletteSlots.clear()
+  }
 
   return { sources, settings, annotations, comparedKeys, toggle, addMany, remove, setColor, setDisabled, clear }
 }
