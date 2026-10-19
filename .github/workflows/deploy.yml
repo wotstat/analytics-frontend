@@ -31,27 +31,6 @@ jobs:
       - name: Build
         run: bun run build
 
-      - name: Upload to s3
-        run: |
-          aws s3 sync ./dist s3://wotstat.info \
-            --cache-control "max-age=31104000, public" \
-            --endpoint-url=https://storage.yandexcloud.net/ \
-            --delete
-
-          aws s3 cp \
-            s3://wotstat.info/index.html s3://wotstat.info/index.html \
-            --cache-control "public, max-age=300" \
-            --endpoint-url=https://storage.yandexcloud.net/
-
-          aws s3 cp \
-            s3://wotstat.info/sitemap.xml s3://wotstat.info/sitemap.xml \
-            --content-type "text/xml; charset=utf-8" \
-            --endpoint-url=https://storage.yandexcloud.net/
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ru-central1
-
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh/
@@ -86,3 +65,24 @@ jobs:
           printf -v command '%q ' sh "$META_APP_PATH/current/rerun.sh" frontend \
             --app-dir "$META_APP_PATH" --incoming "$DEPLOY_INCOMING"
           ssh node "$command"
+
+      - name: Upload to s3
+        run: |
+          aws s3 sync ./dist s3://wotstat.info \
+            --cache-control "max-age=31104000, public" \
+            --endpoint-url=https://storage.yandexcloud.net/ \
+            --delete
+
+          aws s3 cp \
+            s3://wotstat.info/index.html s3://wotstat.info/index.html \
+            --cache-control "public, max-age=300" \
+            --endpoint-url=https://storage.yandexcloud.net/
+
+          aws s3 cp \
+            s3://wotstat.info/sitemap.xml s3://wotstat.info/sitemap.xml \
+            --content-type "text/xml; charset=utf-8" \
+            --endpoint-url=https://storage.yandexcloud.net/
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ru-central1
