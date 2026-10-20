@@ -35,6 +35,7 @@ export function assertContext(definition: QueryParam, labels: Set<string>) {
 }
 
 export function sameDefinition(a: QueryParam, b: QueryParam): boolean {
+  if (a === b) return true
   if (a.type !== b.type || a.serialize !== b.serialize || a.deserialize !== b.deserialize) return false
   if (encode(a, defaultValue(a)) !== encode(b, defaultValue(b))) return false
 

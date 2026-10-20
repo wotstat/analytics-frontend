@@ -91,6 +91,7 @@ class QueryStorageCoordinator {
   private transitioning = false
   private pop = false
   private generation = 0
+  private needsReconcile = true
 
   private timer?: ReturnType<typeof setTimeout>
   private writing?: { to: string }
@@ -236,6 +237,7 @@ class QueryStorageCoordinator {
 
   bind(owner: QueryOwner, name: string, definition: QueryParam, options: QueryWriteOptions): Binding {
     this.ready.value = null
+    this.needsReconcile = true
     const label = definition.label ?? name
     const key = definition.key ?? label
     assertContext(definition, new Set([label]))
@@ -332,7 +334,7 @@ class QueryStorageCoordinator {
     }
 
     syncEntries?.add(entry)
-    this.schedule()
+    this.schedule(false)
   }
 
   set(binding: Binding, value: any, options = binding.options) {
@@ -364,7 +366,7 @@ class QueryStorageCoordinator {
       if (binding.entry.pending) binding.entry.pending = { at, history }
     }
 
-    this.schedule()
+    this.schedule(false)
   }
 
   activate(owner: QueryOwner) {
@@ -390,8 +392,9 @@ class QueryStorageCoordinator {
     this.schedule()
   }
 
-  private schedule() {
+  private schedule(reconcile = true) {
     this.ready.value = null
+    this.needsReconcile ||= reconcile
     this.generation++
     if (this.timer) clearTimeout(this.timer)
     this.history.schedule()
@@ -436,12 +439,23 @@ class QueryStorageCoordinator {
     if (this.writing || this.transitioning) return
     if (this.timer) clearTimeout(this.timer)
 
+    const now = Date.now()
+    if (!this.needsReconcile) {
+      const pending = [...this.entries.values()].flatMap(entry => entry.pending ? [entry.pending.at] : [])
+      if (!pending.length) return
+
+      const at = Math.min(...pending)
+      if (at > now) {
+        this.timer = setTimeout(() => this.schedule(false), at - now)
+        return
+      }
+    }
+
     const route = this.router.currentRoute.value
     const query: LocationQueryRaw = { ...route.query }
     const activeLabels = new Set<string>()
     let history: 'push' | 'replace' = 'replace'
     let next = Infinity
-    const now = Date.now()
 
     const active = new Map<Entry, Binding[]>()
     const byLabel = new Map<string, Entry>()
@@ -522,8 +536,10 @@ class QueryStorageCoordinator {
 
     // Сначала определяем будущую активность: скрытый поиск не задерживает смену группировки.
     const desiredQuery = { ...query }
+    const desiredBindings = new Map<Entry, Binding[]>()
     for (const entry of ordered) {
       const enabled = writeValue(entry, desiredQuery, entry.value.value)
+      desiredBindings.set(entry, enabled)
       if (!enabled.length) entry.pending = undefined
     }
 
@@ -565,7 +581,16 @@ class QueryStorageCoordinator {
         model = decode(entry.definition, route.query[bindings[0].label], route.query)
       }
 
-      const enabled = writeValue(entry, query, model)
+      let enabled: Binding[]
+      if (blocked.has(entry)) enabled = writeValue(entry, query, model)
+      else {
+        enabled = desiredBindings.get(entry)!
+        for (const { label } of bindings) {
+          if (Object.hasOwn(desiredQuery, label)) query[label] = desiredQuery[label]
+          else delete query[label]
+        }
+      }
+
       for (const { label, priority } of enabled) priorities.set(label, Math.max(priorities.get(label) ?? priority, priority))
       if (!blocked.has(entry)) {
         if (enabled.length && entry.pending?.history === 'push') history = 'push'
@@ -573,13 +598,14 @@ class QueryStorageCoordinator {
       }
     }
 
-    if (next !== Infinity) this.timer = setTimeout(() => this.schedule(), Math.max(0, next - Date.now()))
+    if (next !== Infinity) this.timer = setTimeout(() => this.schedule(false), Math.max(0, next - Date.now()))
 
     const sortedQuery = Object.fromEntries(Object.entries(query).sort(([a], [b]) =>
       (priorities.get(b) ?? 0) - (priorities.get(a) ?? 0) || a.localeCompare(b, 'en')
     ))
     const target = { path: route.path, hash: route.hash, query: sortedQuery }
     const fullPath = this.router.resolve(target).fullPath
+    this.needsReconcile = false
     if (fullPath === route.fullPath) return
 
     return { target, fullPath, history }
@@ -628,7 +654,7 @@ class QueryStorageCoordinator {
           }
         }
 
-        if (succeeded || epoch !== this.epoch || [...this.entries.values()].some(entry => entry.pending)) this.schedule()
+        if (succeeded || epoch !== this.epoch || [...this.entries.values()].some(entry => entry.pending)) this.schedule(!succeeded)
         else this.publishReady()
       })
   }
