@@ -133,12 +133,16 @@ const unresolvedMessage = computed(() => {
 
 const currentFilters = computed(() => snapshotComparisonFilters(props.filters))
 const legendItems = computed(() => props.sources.map(source => {
-  const state = states.get(source.tag)
-  const pending = !source.resolution && (!state || state.status === loading)
+  const name = computed(() => comparisonName(source, currentFilters.value))
   return {
-    ...source,
-    name: comparisonName(source, currentFilters.value),
-    loading: source.resolution === 'loading' || pending,
+    tag: source.tag,
+    get color() { return source.color },
+    get name() { return name.value },
+    get loading() {
+      const state = states.get(source.tag)
+      const pending = !source.resolution && (!state || state.status === loading)
+      return source.resolution === 'loading' || pending
+    },
   }
 }))
 
@@ -147,7 +151,7 @@ const disabledTags = computed<ReadonlySet<InteractionTag>>({
   set: tags => emit('visibilityChange', [...tags].filter((tag): tag is string => typeof tag === 'string')),
 })
 
-const legend = useLegend<ComparisonSource & { loading?: boolean }>(legendItems, { disabledTags })
+const legend = useLegend(legendItems, { disabledTags })
 const chart = markRaw(new VehicleHistoryChart(legend.highlightSync))
 
 function onSeriesClick({ tag, event }: { tag: string, event: ClickInteractionEvent }) {

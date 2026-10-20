@@ -89,7 +89,6 @@ export class AutoLine<T extends Point = Point> extends BasePlotRenderer {
     this.color = color
     if (this.line) this.line.style.color = color ?? ''
     if (this.area) this.area.style.color = color ?? ''
-    this.requestRender()
     return this
   }
 

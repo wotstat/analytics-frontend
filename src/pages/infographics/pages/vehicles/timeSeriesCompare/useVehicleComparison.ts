@@ -100,68 +100,74 @@ export function useVehicleComparison(filters: Ref<VehicleFilters>) {
     return result
   }
 
-  const sources = computed<readonly ComparisonSource[]>(() => {
-    const sampleNumbers = new Map<string, number>()
+  function resolveSource(source: SavedComparisonSource, sampleNumbers: Map<string, number>): Omit<ComparisonSource, 'color' | 'enabled'> {
+    const resolved = resolver(source)
+    const arenas = resolved.arenas.value
+    const sourceFilters: VehicleFilters = {
+      ...source.filters,
+      arenas: arenas.status === 'ready' ? arenas.value : source.filters.arenas.map(String),
+    }
 
-    return savedSources.value.map(source => {
-      const resolved = resolver(source)
-      const arenas = resolved.arenas.value
-      const sourceFilters: VehicleFilters = {
-        ...source.filters,
-        arenas: arenas.status === 'ready' ? arenas.value : source.filters.arenas.map(String),
+    const filtersKey = comparisonFiltersKey(sourceFilters)
+    const sampleNumber = sampleNumbers.get(filtersKey) ?? sampleNumbers.size + 1
+    sampleNumbers.set(filtersKey, sampleNumber)
+
+    const base = {
+      tag: sourceTag(source),
+      filters: sourceFilters,
+      sampleNumber,
+    }
+
+    const tank = 'tank' in source.target ? resolved.tank.value : null
+    const unavailable = [arenas, tank].find(value => value?.status === 'unresolved') ?? [arenas, tank].find(value => value?.status === 'loading')
+
+    if (unavailable) {
+      let name = 'Загрузка…'
+      let resolution: ComparisonSource['resolution'] = 'loading'
+      if (unavailable.status === 'unresolved') {
+        name = 'Источник из ссылки'
+        if ('tank' in source.target) name = `Танк ${vehicleCompactLabel(source.target.tank)}`
+        resolution = unavailable.reason === 'error' ? 'error' : 'missing'
       }
-
-      const filtersKey = comparisonFiltersKey(sourceFilters)
-      const sampleNumber = sampleNumbers.get(filtersKey) ?? sampleNumbers.size + 1
-      sampleNumbers.set(filtersKey, sampleNumber)
-
-      const base = {
-        tag: sourceTag(source),
-        filters: sourceFilters,
-        color: comparisonColor(source.color),
-        enabled: source.enabled,
-        sampleNumber,
-      }
-
-      const tank = 'tank' in source.target ? resolved.tank.value : null
-      const unavailable = [arenas, tank].find(value => value?.status === 'unresolved') ?? [arenas, tank].find(value => value?.status === 'loading')
-
-      if (unavailable) {
-        let name = 'Загрузка…'
-        let resolution: ComparisonSource['resolution'] = 'loading'
-        if (unavailable.status === 'unresolved') {
-          name = 'Источник из ссылки'
-          if ('tank' in source.target) name = `Танк ${vehicleCompactLabel(source.target.tank)}`
-          resolution = unavailable.reason === 'error' ? 'error' : 'missing'
-        }
-
-        return {
-          ...base,
-          rowKey: 'tank' in source.target ? `vehicle:${source.target.tank}` : categoryRowKey(source.target.category),
-          selection: null,
-          name,
-          resolution,
-        }
-      }
-
-      if (tank?.status === 'ready') {
-        const tag = tank.value
-        return {
-          ...base,
-          rowKey: tag,
-          selection: { tankTag: tag, levels: [], types: [], nations: [] },
-          name: vehicleName({ tankTag: tag, tankLevel: null, tankType: null }),
-        }
-      }
-
-      if ('tank' in source.target) throw new Error('Comparison vehicle has not been resolved')
-      const { category, selection } = source.target
 
       return {
         ...base,
-        rowKey: categoryRowKey(category),
-        selection,
-        name: vehicleName({ tankTag: null, tankLevel: category.level ?? null, tankType: category.type ?? null }),
+        rowKey: 'tank' in source.target ? `vehicle:${source.target.tank}` : categoryRowKey(source.target.category),
+        selection: null,
+        name,
+        resolution,
+      }
+    }
+
+    if (tank?.status === 'ready') {
+      const tag = tank.value
+      return {
+        ...base,
+        rowKey: tag,
+        selection: { tankTag: tag, levels: [], types: [], nations: [] },
+        name: vehicleName({ tankTag: tag, tankLevel: null, tankType: null }),
+      }
+    }
+
+    if ('tank' in source.target) throw new Error('Comparison vehicle has not been resolved')
+    const { category, selection } = source.target
+
+    return {
+      ...base,
+      rowKey: categoryRowKey(category),
+      selection,
+      name: vehicleName({ tankTag: null, tankLevel: category.level ?? null, tankType: category.type ?? null }),
+    }
+  }
+
+  const sources = computed<readonly ComparisonSource[]>(() => {
+    const sampleNumbers = new Map<string, number>()
+    return savedSources.value.map(source => {
+      const color = computed(() => comparisonColor(source.color))
+      return {
+        ...resolveSource(source, sampleNumbers),
+        get color() { return color.value },
+        get enabled() { return source.enabled },
       }
     })
   })
@@ -252,7 +258,7 @@ export function useVehicleComparison(filters: Ref<VehicleFilters>) {
   function setColor(tag: string, color: string) {
     const source = savedSources.value.find(source => sourceTag(source) === tag)
     if (!source || !/^#[\da-f]{6}(?:[\da-f]{2})?$/i.test(color)) return
-    reservePaletteSlots()
+    if (!paletteSlots.has(tag)) reservePaletteSlots()
     source.color = color.toLowerCase()
   }
 

@@ -39,6 +39,7 @@ export class TimeSeriesChart<T extends TimeSeriesPoint = TimeSeriesPoint> extend
 
   private readonly interaction = new InteractionController()
   private interactionComponents: InteractionComponent[] = []
+  private markers: MarkerOverlay<TimeSeriesHit<T>> | null = null
 
   private readonly mask = new ChartMask('center', { top: -4, bottom: -4 })
   private nextSeriesClass = 0
@@ -96,6 +97,7 @@ export class TimeSeriesChart<T extends TimeSeriesPoint = TimeSeriesPoint> extend
   setSeriesColors(series: readonly { tag: string, color?: string }[]) {
     this.seriesColors = new Map(series.map(item => [item.tag, item.color]))
     for (const [tag, state] of this.seriesState) state.line.setColor(this.seriesColors.get(tag))
+    this.markers?.refreshColors()
   }
 
   setSeries(series: readonly TimeSeries<T>[]) {
@@ -137,6 +139,7 @@ export class TimeSeriesChart<T extends TimeSeriesPoint = TimeSeriesPoint> extend
   private updateInteractions() {
     for (const component of this.interactionComponents) this.interaction.removeComponent(component)
     this.interactionComponents = []
+    this.markers = null
 
     const lines = [...this.seriesState.values()].map(state => state.line)
     if (!lines.length) return
@@ -167,19 +170,21 @@ export class TimeSeriesChart<T extends TimeSeriesPoint = TimeSeriesPoint> extend
       if (this.highlightSync) highlight.syncWith(this.highlightSync)
     }
 
+    this.markers = new MarkerOverlay({
+      selection,
+      size: 4,
+      maskSize: 6,
+      markerClasses: 'time-series-hover-marker',
+      classesForHit: hit => typeof hit.interactionTag === 'string' ? this.seriesState.get(hit.interactionTag)?.className ?? [] : [],
+      colorForHit: hit => typeof hit.interactionTag === 'string' ? this.seriesColors.get(hit.interactionTag) : undefined,
+      targetMasks: [this.mask.root],
+    })
+
     this.interactionComponents = [
       callbacks,
       ...(highlight ? [highlight] : []),
       new VerticalLine({ selection, offset: { start: -4, end: 0 } }),
-      new MarkerOverlay({
-        selection,
-        size: 4,
-        maskSize: 6,
-        markerClasses: 'time-series-hover-marker',
-        classesForHit: hit => typeof hit.interactionTag === 'string' ? this.seriesState.get(hit.interactionTag)?.className ?? [] : [],
-        colorForHit: hit => typeof hit.interactionTag === 'string' ? this.seriesColors.get(hit.interactionTag) : undefined,
-        targetMasks: [this.mask.root],
-      }),
+      this.markers,
       new ChartTooltip({
         selection,
         tooltipPivot: 'nearest',

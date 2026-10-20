@@ -11,7 +11,7 @@
     <label class="debug-control"><input v-model="multiple" type="checkbox">Несколько рядов</label>
     <label class="debug-control">Рядов
       <select v-model.number="rowCount" class="debug-select" :disabled="!multiple">
-        <option v-for="size in [1, 2, 3, 5, 6, 21]" :key="size" :value="size">{{ size }}</option>
+        <option v-for="size in [1, 2, 3, 5, 6, 21, 100]" :key="size" :value="size">{{ size }}</option>
       </select>
     </label>
     <label class="debug-control">Стиль маркера
@@ -99,10 +99,15 @@ const colors = reactive(new Map<string, string>())
 const log = useEventLog({ max: 6 })
 const metricOptions = [{ value: 'count', label: 'Количество' }, { value: 'percent', label: 'Доля' }] as const
 
-const sources = computed<DemoSource[]>(() => Array.from({ length: multiple.value ? rowCount.value : 1 }, (_, i) => ({
-  tag: `source-${i}`, name: `Источник ${i + 1}`, color: colors.get(`source-${i}`) ?? seriesColor(i),
-  loading: state.value === 'loading' || (partial.value && i === 2),
-})).filter(source => !removed.has(source.tag)))
+const sources = computed<DemoSource[]>(() => Array.from({ length: multiple.value ? rowCount.value : 1 }, (_, i) => {
+  const tag = `source-${i}`
+  const defaultColor = seriesColor(i)
+  return {
+    tag, name: `Источник ${i + 1}`,
+    get color() { return colors.get(tag) ?? defaultColor },
+    loading: state.value === 'loading' || (partial.value && i === 2),
+  }
+}).filter(source => !removed.has(source.tag)))
 const legend = useLegend(sources)
 const chart = markRaw(new TimeSeriesChart<DemoPoint>(legend.highlightSync))
 const viewport = new TimeSeriesViewport(chart)

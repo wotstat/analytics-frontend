@@ -17,7 +17,7 @@ export type MarkerOverlayOptions<THit extends InteractionHit = InteractionHit> =
   maskSize?: number
 }
 
-type PlannedMarker = { anchor: Point, classes: string, color?: string }
+type PlannedMarker<THit> = { hit: THit, anchor: Point, classes: string, color?: string }
 type PlacedMarker = { marker: AutoMarker, classes: string }
 
 const DEFAULT_SIZE = 4
@@ -30,7 +30,7 @@ export class MarkerOverlay<THit extends InteractionHit = InteractionHit> impleme
   private options: MarkerOverlayOptions<THit>
   private targetMasks: Element[] = []
   private markers: PlacedMarker[] = []
-  private planned: PlannedMarker[] = []
+  private planned: PlannedMarker<THit>[] = []
   private controller: InteractionController | null = null
 
   constructor(options: MarkerOverlayOptions<THit>) {
@@ -59,7 +59,7 @@ export class MarkerOverlay<THit extends InteractionHit = InteractionHit> impleme
   }
 
   prepareInteraction(frame: InteractionFrame): void {
-    const planned: PlannedMarker[] = []
+    const planned: PlannedMarker<THit>[] = []
     const seen = new Map<number, Set<number>>()
 
     for (const hit of frame.resolve(this.options.selection)) {
@@ -70,6 +70,7 @@ export class MarkerOverlay<THit extends InteractionHit = InteractionHit> impleme
       ys.add(anchor.y)
 
       planned.push({
+        hit,
         anchor,
         classes: classNames('hover-marker', this.options.markerClasses, this.options.classesForHit?.(hit)).join(' '),
         color: this.options.colorForHit?.(hit),
@@ -77,6 +78,16 @@ export class MarkerOverlay<THit extends InteractionHit = InteractionHit> impleme
     }
 
     this.planned = planned
+  }
+
+  refreshColors(): void {
+    for (let i = 0; i < this.planned.length; i++) {
+      const plan = this.planned[i]
+      const color = this.options.colorForHit?.(plan.hit)
+      if (plan.color === color) continue
+      plan.color = color
+      this.markers[i]?.marker.setColor(color)
+    }
   }
 
   renderInteraction(): void {
