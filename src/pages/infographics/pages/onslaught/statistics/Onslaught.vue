@@ -482,11 +482,11 @@ const days = computed(() => {
     const stat = statByDay.get(dbDate)
     if (stat?.lastRating) lastRating = stat.lastRating
     if (stat?.totalBattles && firstDayPlayed == -1) firstDayPlayed = i
-    if (stat?.lastEliteRating) eliteRating = stat.lastEliteRating
+    if (stat?.lastEliteRating || stat?.lastEliteThreshold) eliteRating = stat.lastEliteRating || stat.lastEliteThreshold
     if (stat?.maxQualBattleIndex != undefined && stat.qualificationBattles) lastQualBattleIndex = Math.max(lastQualBattleIndex, stat.maxQualBattleIndex)
 
-    const rankBeforeBattle = getRankByRating(stat?.firstRating[0] ?? lastRating, game, stat?.firstRating[1] || undefined, selectedSeason.value ?? 'latest')
-    const rankAfterBattle = getRankByRating(stat?.maxRating[0] ?? lastRating, game, stat?.maxRating[1] || undefined, selectedSeason.value ?? 'latest')
+    const rankBeforeBattle = getRankByRating(stat?.firstRating[0] ?? lastRating, game, stat?.firstRating[1] || (eliteRating > 0 ? eliteRating : undefined), selectedSeason.value ?? 'latest')
+    const rankAfterBattle = getRankByRating(stat?.maxRating[0] ?? lastRating, game, stat?.maxRating[1] || (eliteRating > 0 ? eliteRating : undefined), selectedSeason.value ?? 'latest')
 
     const energyDelta = getEnergyPerBattle(maxRank, rankBeforeBattle, rankAfterBattle, game) * (stat?.totalBattles ?? 0)
     maxRank = compareRanks(maxRank, rankAfterBattle) > 0 ? maxRank : rankAfterBattle
