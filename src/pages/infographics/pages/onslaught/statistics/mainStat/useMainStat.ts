@@ -80,8 +80,6 @@ export type StatisticRes = {
   maxQualBattleIndex: number,
   lastEliteThreshold: number,
   lastPlayerRank: number,
-  maxPlayerRank: number
-  minPlayerRank: number
   lastPlayerRating: number
 }
 

@@ -139,6 +139,14 @@ const { top: chartTop, height: chartHeight } = useElementBounding(dayChart)
 const isChartDayVisible = computed(() => chartTop.value + chartHeight.value - headerOffset.value - 25 > 0)
 const displayedDay = computed(() => !isChartDayVisible.value && selectedDayIndex.value != null ? selectedDayIndex.value + 1 : null)
 const seasonInterval = useSeasonInterval(seasons, selectedSeason, selectedRegion)
+const seasonTimeInterval = computed(() => {
+  if (!seasonInterval.value) return null
+  const offset = getRegionIsoHourOffset(selectedRegion.value) * ONE_HOUR
+  return {
+    start: seasonInterval.value.start.getTime() - offset,
+    end: seasonInterval.value.end.getTime() - offset
+  }
+})
 
 const statistics = shallowRef<StatisticRes[] | null>(null)
 const vehicleStatistics = shallowRef<VehicleRes[] | null>(null)
@@ -152,12 +160,14 @@ const eliteRatingStatistics = queryComputedFirst<{ top1: number, eliteThreshold:
     '${seasonInterval.value ? dateToDbDate(seasonInterval.value.start) : '2000-01-01'}' as START_DATE,
     '${seasonInterval.value ? dateToDbDate(seasonInterval.value.end) : '2000-01-01'}' as END_DATE,
     (
-      select max(recalculationTime) 
+      select recalculationTime
       from Comp7LeaderboardByRank 
       where 
         not startsWith(name, 'MT_COMP_QA_') and 
         region = REGION and 
         recalculationTime between START_DATE and END_DATE + interval 1 day
+      order by recalculationTime desc
+      limit 1
     ) as latestTime
   select max(rating) as top1, min(rating) as eliteThreshold, anyIf(rating, rank=10) as top10, anyIf(rating, rank=100) as top100
   from Comp7LeaderboardByRank
@@ -189,8 +199,8 @@ async function load(abortSignal: AbortSignal, soft = false) {
   const mainStatistics = await query<StatisticRes>(`
     with
         '${nickName}' as PLAYER,
-        '${startDate}' as START_DATE,
-        '${endDate}' as END_DATE,
+        '${startDate}' - interval OFFSET hour as START_DATE,
+        '${endDate}' - interval OFFSET hour as END_DATE,
         '${region}' as REGION,
         ${getRegionIsoHourOffset(region)} as OFFSET,
         t0 as (
@@ -198,7 +208,7 @@ async function load(abortSignal: AbortSignal, soft = false) {
                 argMax(eliteRating, dateTime) as lastEliteRating
             from Event_OnComp7Info
             where region = REGION
-                and dateTime between START_DATE and END_DATE
+                and dateTime >= START_DATE and dateTime < END_DATE
             group by day
             order by day
         ),
@@ -211,7 +221,7 @@ async function load(abortSignal: AbortSignal, soft = false) {
                   argMax(leaderboardPosition, dateTime) as lastLeaderboardPosition
             from Event_OnComp7Info
             where playerName = PLAYER
-              and dateTime between START_DATE and END_DATE
+              and dateTime >= START_DATE and dateTime < END_DATE
               and region = REGION
             group by day
             order by day
@@ -222,7 +232,7 @@ async function load(abortSignal: AbortSignal, soft = false) {
             from Event_OnBattleStart
             where region = REGION
               and playerName = PLAYER
-              and dateTime between START_DATE and END_DATE
+              and dateTime >= START_DATE and dateTime < END_DATE
               and battleMode = 'COMP7'
             group by day
             order by day
@@ -254,7 +264,7 @@ async function load(abortSignal: AbortSignal, soft = false) {
             from Event_OnBattleResult
             where region = REGION
               and playerName = PLAYER
-              and dateTime between START_DATE and END_DATE
+              and dateTime >= START_DATE and dateTime < END_DATE
               and battleMode = 'COMP7'
             group by day
             order by day
@@ -265,16 +275,24 @@ async function load(abortSignal: AbortSignal, soft = false) {
                    minIf(rating, elite = true) as eliteThreshold,
                    anyIf(rank, name = PLAYER) as rank,
                    anyIf(rating, name = PLAYER) as playerRating
-            from Comp7Leaderboard
-            where not startsWith(name, 'MT_COMP_QA_') and region = REGION
+            from Comp7LeaderboardByRank
+            where
+              not startsWith(name, 'MT_COMP_QA_')
+              and region = REGION
+              and recalculationTime >= toStartOfDay(toDateTime(START_DATE) - interval 1 day)
+              and (REGION = 'CT' or recalculationTime in (
+                select max(lastRecalculationTime)
+                from Comp7LeaderboardDaily
+                where region = REGION
+                  and day between toDate(START_DATE) - interval 1 day and toDate(END_DATE)
+                group by day
+              ))
             group by recalculationTime
         )
         select toStartOfDay(recalculationTime + interval OFFSET hour) as day,
                argMax(eliteThreshold, recalculationTime) as lastEliteThreshold,
                argMax(rank, recalculationTime) as lastPlayerRank,
-               argMax(playerRating, recalculationTime) as lastPlayerRating,
-               max(rank) as maxPlayerRank,
-               min(rank) as minPlayerRank
+               argMax(playerRating, recalculationTime) as lastPlayerRating
         from prepare
         group by day
     )
@@ -292,14 +310,14 @@ async function load(abortSignal: AbortSignal, soft = false) {
   const qualStatisticsRes = await query<{ battleIndex: number, result: 'win' | 'loss' | 'draw' }>(`
     with
       '${nickName}' as PLAYER,
-      '${startDate}' as START_DATE,
-      '${endDate}' as END_DATE,
+      '${startDate}' - interval OFFSET hour as START_DATE,
+      '${endDate}' - interval OFFSET hour as END_DATE,
       '${region}' as REGION,
       ${getRegionIsoHourOffset(region)} as OFFSET
     select comp7.qualBattleIndex as battleIndex, result
     from Event_OnBattleResult
     where playerName = PLAYER
-      and dateTime between START_DATE and END_DATE
+      and dateTime >= START_DATE and dateTime < END_DATE
       and region = REGION
       and battleMode = 'COMP7'
       and comp7.qualActive = true
@@ -313,8 +331,8 @@ async function load(abortSignal: AbortSignal, soft = false) {
   const vehicleStatisticsRes = await query<VehicleRes>(`
     with
       '${nickName}' as PLAYER,
-      '${startDate}' as START_DATE,
-      '${endDate}' as END_DATE,
+      '${startDate}' - interval OFFSET hour as START_DATE,
+      '${endDate}' - interval OFFSET hour as END_DATE,
       '${region}' as REGION,
       ${getRegionIsoHourOffset(region)} as OFFSET
     select toStartOfDay(dateTime + interval OFFSET hour) as day,
@@ -329,7 +347,7 @@ async function load(abortSignal: AbortSignal, soft = false) {
           sum(personal.kills) as kills
     from Event_OnBattleResult
     where playerName = PLAYER
-      and dateTime between START_DATE and END_DATE
+      and dateTime >= START_DATE and dateTime < END_DATE
       and region = REGION
       and battleMode = 'COMP7'
     group by day, tankTag, tankType, tankLevel
@@ -342,8 +360,8 @@ async function load(abortSignal: AbortSignal, soft = false) {
   const mapsStatisticsRes = await query<MapsRes>(`
     with
       '${nickName}' as PLAYER,
-      '${startDate}' as START_DATE,
-      '${endDate}' as END_DATE,
+      '${startDate}' - interval OFFSET hour as START_DATE,
+      '${endDate}' - interval OFFSET hour as END_DATE,
       '${region}' as REGION,
       ${getRegionIsoHourOffset(region)} as OFFSET
     select toStartOfDay(dateTime + interval OFFSET hour) as day,
@@ -356,7 +374,7 @@ async function load(abortSignal: AbortSignal, soft = false) {
           sum(personal.kills) as kills
     from Event_OnBattleResult
     where playerName = PLAYER
-      and dateTime between START_DATE and END_DATE
+      and dateTime >= START_DATE and dateTime < END_DATE
       and region = REGION
       and battleMode = 'COMP7'
     group by day, arenaTag
@@ -369,8 +387,8 @@ async function load(abortSignal: AbortSignal, soft = false) {
   const battleHistoryRes = await query<BattleRes>(`
   with
       '${nickName}' as PLAYER,
-      '${startDate}' as START_DATE,
-      '${endDate}' as END_DATE,
+      '${startDate}' - interval OFFSET hour as START_DATE,
+      '${endDate}' - interval OFFSET hour as END_DATE,
       '${region}' as REGION,
       ${getRegionIsoHourOffset(region)} as OFFSET
     select toStartOfDay(dateTime + interval OFFSET hour) as day, dateTime,
@@ -383,7 +401,7 @@ async function load(abortSignal: AbortSignal, soft = false) {
       personal.comp7PrestigePoints as prestigePoints
     from Event_OnBattleResult
     where playerName = PLAYER 
-      and dateTime between START_DATE and END_DATE
+      and dateTime >= START_DATE and dateTime < END_DATE
       and region = REGION
       and battleMode = 'COMP7'
     order by onBattleStartId;
@@ -416,8 +434,8 @@ const liveBattleResults = useAnalyticsRealtime(
   [] as ChannelsTypes['battleResult'],
   d => {
     if (d.length === 0) return
-    if (!seasonInterval.value) return
-    if (Date.now() > seasonInterval.value.end.getTime() || Date.now() < seasonInterval.value.start.getTime()) return
+    if (!seasonTimeInterval.value) return
+    if (Date.now() >= seasonTimeInterval.value.end || Date.now() < seasonTimeInterval.value.start) return
 
     loadingAbortController.abort()
     loadingAbortController = new AbortController()
@@ -433,8 +451,8 @@ useAnalyticsRealtime(
 
     const lastInfo = d.length > 0 ? d[d.length - 1] : null
     if (!lastInfo) return
-    if (!seasonInterval.value) return
-    if (Date.now() > seasonInterval.value.end.getTime() || Date.now() < seasonInterval.value.start.getTime()) return
+    if (!seasonTimeInterval.value) return
+    if (Date.now() >= seasonTimeInterval.value.end || Date.now() < seasonTimeInterval.value.start) return
     if (lastInfo.rating == 0) return
 
     if (days.value[0].rating == lastInfo.rating) return
@@ -448,10 +466,10 @@ useAnalyticsRealtime(
 
 const showLiveBadge = refDebounced(computed(() => {
   if (liveBattleResults.status.value != 'OPEN') return false
-  if (!seasonInterval.value) return false
+  if (!seasonTimeInterval.value) return false
   if (!debouncedNickname.value) return false
   const now = Date.now()
-  return now >= seasonInterval.value.start.getTime() && now <= seasonInterval.value.end.getTime()
+  return now >= seasonTimeInterval.value.start && now < seasonTimeInterval.value.end
 }), 500)
 
 const days = computed(() => {

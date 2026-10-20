@@ -13,10 +13,11 @@ const SEASON_LENGTHS = {
   'asia:comp7_5_3': 42 * ONE_DAY, // в ASIA сезон 42 день
   'ru:comp7_5_4': 42 * ONE_DAY,
 
-  'ru:comp7_6_1': ['2026-01-02', '2026-02-21'], // https://tanki.su/ru/news/game-events/natisk-ognennyj-sokol/
   'eu:comp7_6_1': ['2026-01-02', '2026-02-11'], // https://worldoftanks.eu/en/news/general-news/onslaught-season-of-the-phoenix-1/
   'na:comp7_6_1': ['2026-01-02', '2026-02-11'], // https://worldoftanks.com/en/news/general-news/onslaught-season-of-the-phoenix-1/
   'asia:comp7_6_1': ['2026-01-02', '2026-02-11'], // https://worldoftanks.com/en/news/general-news/onslaught-season-of-the-phoenix-1/
+
+  'ru:comp7_6_1': ['2026-09-02', '2026-10-21'], // https://tanki.su/ru/news/game-events/natisk-ognennyj-sokol/
 }
 
 const SEASON_SKILL_CHANGE = {

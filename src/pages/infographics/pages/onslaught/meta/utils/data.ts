@@ -1,4 +1,5 @@
 import { query } from '@/db'
+import { getRegionIsoHourOffset } from '@/shared/game/domain/comp7/utils'
 import type { OnslaughtMetaPeriod } from './params'
 import { onslaughtQueryOptions } from './seasons'
 
@@ -88,8 +89,10 @@ export async function loadLeaderboardSnapshot(params: OnslaughtMetaPeriod, signa
 }
 
 export async function loadPersonalStatistics(params: OnslaughtMetaPeriod, signal: AbortSignal): Promise<PersonalStatistics | null> {
+  const offset = getRegionIsoHourOffset(params.region)
   const where = `region = ${sqlString(params.region)} AND playerName = ${sqlString(params.nickname)}
-    AND dateTime >= '${params.startDate}' AND dateTime < '${params.endDate}'`
+    AND dateTime >= '${params.startDate}' - INTERVAL ${offset} HOUR
+    AND dateTime < '${params.endDate}' - INTERVAL ${offset} HOUR`
 
   const [rating, starts, results] = await Promise.all([
     query<{ currentRating: number, eliteRating: number, updatedAt: number }>(`
