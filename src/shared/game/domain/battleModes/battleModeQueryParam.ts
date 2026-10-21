@@ -4,9 +4,9 @@ import { battleModeFamilies } from './battleModeFamilies'
 export const battleModeQueryParam = {
   label: 'mode',
   default: (): BattleModeSelectionKey[] => ['random'],
-  serialize: (values: BattleModeSelectionKey[]) => values.length ? [...new Set(values)].join(',') : 'all',
+  serialize: (values: BattleModeSelectionKey[]) => values.length ? [...new Set(values)].join(',') : 'any',
   deserialize: (raw: string): BattleModeSelectionKey[] => {
-    if (raw === 'all') return []
+    if (raw === 'any') return []
 
     const keys = raw.split(',').map(key => {
       const { targets } = battleModeSelection(key)
