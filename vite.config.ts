@@ -11,6 +11,7 @@ import MarkdownIt from 'markdown-it'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import { visualizer } from 'rollup-plugin-visualizer'
 import { metaDefinitionsPlugin } from './vitePlugins/metaDefinitions/metaDefinitions.ts'
+import { sitemapPlugin } from './vitePlugins/sitemap/sitemap.ts'
 
 const projectRoot = fileURLToPath(new URL('./', import.meta.url))
 const common = {
@@ -31,6 +32,7 @@ const mainConfig: UserConfig = {
   ...common,
   plugins: [
     metaDefinitionsPlugin(projectRoot),
+    sitemapPlugin(projectRoot, 'https://wotstat.info'),
     vue(),
     vueDevTools(),
     svgLoader(svgLoaderConfig),
@@ -56,6 +58,7 @@ const metaRendererConfig: UserConfig = {
   publicDir: false,
   plugins: [metaDefinitionsPlugin(projectRoot), vue(), svgLoader(svgLoaderConfig)],
   build: {
+    chunkSizeWarningLimit: Infinity,
     outDir: resolve(projectRoot, 'dist-meta/client'),
     emptyOutDir: true
   }
@@ -71,6 +74,7 @@ const metaServerConfig: UserConfig = {
   }],
   ssr: { noExternal: true },
   build: {
+    chunkSizeWarningLimit: Infinity,
     ssr: resolve(projectRoot, 'src/meta/resolver.ts'),
     outDir: resolve(projectRoot, 'dist-meta'),
     emptyOutDir: false,

@@ -31,7 +31,6 @@ const routes = [
       { path: 'players', component: Coverage },
       { path: 'chuck-norris-tournament', component: asyncPage(() => import('./pages/infographics/pages/chuck/Chuck.vue')) },
       { path: 'lootbox', component: Lootbox, meta: { hideTankList: true } },
-      { path: 'widgets/:widget*', component: asyncPage(() => import('./pages/widgets/Index.vue')), meta: { hideTankList: true, customTitle: 'Виджеты' } },
     ]
   },
   {
@@ -46,6 +45,7 @@ const routes = [
   {
     path: '/replays',
     component: asyncPage(() => import('./pages/replays/Index.vue')),
+    meta: { sitemap: false },
     children: [
       { path: '', component: asyncPage(() => import('./pages/replays/search/Index.vue')) },
       { path: 'analyze', component: asyncPage(() => import('./pages/replays/localAnalyzer/Index.vue')) },
@@ -53,9 +53,8 @@ const routes = [
     ]
   },
   { path: '/bb25', component: asyncPage(() => import('./pages/services/bob25/Index.vue')) },
-  { path: '/mt-36-1', component: asyncPage(() => import('./pages/services/mt36.1/Index.vue')) },
   { path: '/services/compare-versions', component: asyncPage(() => import('./pages/services/mt36.1/Index.vue')) },
-  { path: '/services/fixed-match-detector', component: asyncPage(() => import('./pages/services/fixedMatchDetect/Index.vue')) },
+  { path: '/services/fixed-match-detector', component: asyncPage(() => import('./pages/services/fixedMatchDetect/Index.vue')), meta: { sitemap: false } },
   { path: '/install', component: Install },
 
   { path: '/widgets/:widget*', component: asyncPage(() => import('./pages/widgets/Index.vue')) },
@@ -63,22 +62,20 @@ const routes = [
   {
     path: '/meta',
     component: () => import('./pages/metaStudio/Studio.vue'),
-    meta: { clearPage: true },
+    meta: { clearPage: true, sitemap: false },
     children: [
       { path: '', component: () => import('./pages/metaStudio/Gallery.vue') },
       { path: 'backgrounds', component: () => import('./pages/metaStudio/backgrounds/Backgrounds.vue') },
       { path: 'cards/:id', component: () => import('./pages/metaStudio/CardEditor.vue') },
     ],
   },
-
-  ...debugRoutes,
 ] satisfies RouteRecordRaw[]
 
 const history = createDeferredWebHistory()
 
 export const router = createRouter({
   history,
-  routes,
+  routes: [...routes, ...debugRoutes],
   scrollBehavior(to, from, savedPosition) {
     if (to.path === from.path) return
     if (to.matched && from.matched && to.matched[0] == from.matched[0]) return

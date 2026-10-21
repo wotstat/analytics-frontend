@@ -66,7 +66,9 @@
 `/iframe/widget-preview/:widget*` только с самим виджетом. Готовность и размеры
 согласуются через `widget-preview-*`; контракт описан в [Open Graph](11-open-graph.md#виджеты).
 
+Этот же каталог загружается при сборке SPA для [генерации страниц виджетов в sitemap](02-architecture.md#sitemap).
+
 ## Прочее
 
-- `robots.txt`, `sitemap.xml`, `sitemap-google.xml` — в `public/`.
+- `robots.txt` — в `public/`; `sitemap.xml` и `sitemap-google.xml` [генерируются из роутера](02-architecture.md#sitemap) при сборке SPA.
 - Реплеи и позиции — отдельные бэкенды экосистемы; их API вызываются из соответствующих страниц (`pages/replays/`), смотри код страницы перед изменением.
