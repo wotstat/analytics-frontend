@@ -1,13 +1,13 @@
 import { battleMetricData } from '../../shared/metricData/battle/battleMetricData'
 import type { StatisticExpression, StatisticExpressions } from '../../shared/metricData/battle/expressions'
 import { aggregations, quantileLevels, type Aggregation } from './aggregations'
-import type { MetricCatalogEntry, MetricHistory, MetricOptionSection, MetricPresentation, MetricDefinition } from '../utils/metricTypes'
+import type { MetricCatalogEntry, MetricHistory, MetricOptionSection, MetricPresentation, MetricDefinition, MetricTileDefinition } from '../utils/metricTypes'
 
 const history: MetricHistory = {
   splits: ['arena', 'platoon', 'result', 'battleLevel'], battleSample: true, outages: true,
 }
 
-type StatisticDefinition<Variants extends readonly Aggregation[]> = MetricPresentation & StatisticExpression & {
+type StatisticDefinition<Variants extends readonly Aggregation[]> = MetricPresentation & Pick<MetricTileDefinition, 'badgeTextColor'> & StatisticExpression & {
   defaultLabel?: string
   aggregations?: Variants
   column?: string
@@ -38,7 +38,7 @@ function aggregationExpression(column: string, valueCount: boolean, aggregation:
 export function statisticMetric<const Key extends string, const Variants extends readonly Aggregation[] = readonly []>(
   key: Key, definition: StatisticDefinition<Variants>): MetricCatalogEntry<Key | `${Key}_${Variants[number]}`> {
   type Value = Key | `${Key}_${Variants[number]}`
-  const { defaultLabel, aggregations: variants = [], sql, dailySql, column = key, valueCount = false, ...presentation } = definition
+  const { defaultLabel, aggregations: variants = [], sql, dailySql, column = key, valueCount = false, badgeTextColor, ...presentation } = definition
   const values: Value[] = [key]
   const expressions: StatisticExpressions = { [key]: { sql, dailySql } }
   const labels: Record<string, MetricPresentation> = {
@@ -82,7 +82,7 @@ export function statisticMetric<const Key extends string, const Variants extends
   return {
     metrics,
     tiles: [{
-      ...presentation, id: key, defaultValue: key, values,
+      ...presentation, id: key, defaultValue: key, values, badgeTextColor,
       sections: values.length > 1 ? availableSections : undefined,
     }],
   }

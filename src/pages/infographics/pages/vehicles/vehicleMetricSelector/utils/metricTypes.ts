@@ -38,6 +38,7 @@ export type MetricTileDefinition<Key extends string = string> = Pick<MetricPrese
   defaultValue: Key
   values: readonly Key[]
   idleLabel?: string
+  badgeTextColor?: string
   sections?: readonly MetricOptionSection<Key>[]
 }
 

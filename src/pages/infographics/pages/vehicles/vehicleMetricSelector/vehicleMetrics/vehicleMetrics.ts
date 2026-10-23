@@ -23,7 +23,7 @@ function ratio(numerator: string | string[], denominator: string | string[], mul
 
   return {
     sql: expression(''), dailySql: expression('Sum'), aggregations: aggregationOrder, valueCount: true,
-    color: derivedColor, headingColor: '#bd8de8',
+    color: derivedColor, headingColor: '#bd8de8', badgeTextColor: '#000',
   }
 }
 
@@ -159,7 +159,7 @@ const metricCatalog = [
     title: 'Знаки классности', color: '#e4bf78', note: 'Данные из API игры', helpText: gameApiHelpText,
     entries: [
       snapshotMetrics('mastery', {
-        label: 'Знак классности', color: '#e4bf78', headingColor: '#ffc45c', icon: 'mastery-percent',
+        label: 'Знак классности', color: '#e4bf78', headingColor: '#ffc45c', badgeTextColor: '#000', icon: 'mastery-percent',
         tables: { history: 'MasteryInfo', latest: 'MasteryInfoLatest' },
         percentiles: [1, 5, 10, 25, 50, 75, 80, 90, 95, 99, 100],
         icons: { 50: 'mastery-3', 80: 'mastery-2', 95: 'mastery-1', 99: 'mastery-m' },
@@ -177,7 +177,7 @@ const metricCatalog = [
     title: 'Отметки на стволах орудий', color: '#7dcec0', note: 'Данные из API игры', helpText: gameApiHelpText,
     entries: [
       snapshotMetrics('marks', {
-        label: 'Отметка', color: '#7dcec0', headingColor: '#52ddc6', icon: 'moe-percent',
+        label: 'Отметка', color: '#7dcec0', headingColor: '#52ddc6', badgeTextColor: '#000', icon: 'moe-percent',
         tables: { history: 'MoeInfo', latest: 'MoeInfoLatest' },
         percentiles: [0, 20, 40, 55, 65, 75, 85, 95, 100],
         icons: { 65: 'moe-1', 85: 'moe-2', 95: 'moe-3', 100: 'moe-4' },

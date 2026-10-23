@@ -39,7 +39,8 @@
               <span v-if="selectionLabel(tile)" class="selection-value">{{ selectionLabel(tile) }}</span>
               <template #action>
                 <span class="dots"></span>
-                <span v-if="multiple && selectedTileValues(tile, selected).length > 1" class="selection-badge">
+                <span v-if="multiple && selectedTileValues(tile, selected).length > 1" class="selection-badge"
+                  :style="{ color: tile.badgeTextColor }">
                   {{ selectedTileValues(tile, selected).length }}
                 </span>
               </template>
@@ -238,7 +239,7 @@ function clearOrResetSelection() {
   padding: 0 2px;
   box-sizing: border-box;
   border-radius: 6px;
-  background: var(--blue-thin-color);
+  background: var(--selection-tile-accent, var(--blue-thin-color));
   color: #fff;
   font-size: 9px;
   line-height: 1;

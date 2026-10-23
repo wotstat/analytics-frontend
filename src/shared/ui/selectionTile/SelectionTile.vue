@@ -99,6 +99,8 @@ const emit = defineEmits<{
 }
 
 .selection-tile__action {
+  --selection-tile-action-color: rgba(197, 197, 197, 0.6);
+
   position: relative;
   display: grid;
   flex: none;
@@ -106,7 +108,7 @@ const emit = defineEmits<{
   width: var(--selection-tile-action-width, 30px);
   padding: 0;
   background: transparent;
-  color: rgba(197, 197, 197, 0.6);
+  color: var(--selection-tile-action-color);
 
   &::before {
     content: '';
@@ -122,7 +124,7 @@ const emit = defineEmits<{
 
   &:hover:not(:disabled),
   &.open {
-    color: rgba(255, 255, 255, 0.8);
+    color: color-mix(in srgb, var(--selection-tile-action-color) 80%, white);
 
     &::before {
       background: rgba(255, 255, 255, 0.08);
@@ -130,7 +132,7 @@ const emit = defineEmits<{
   }
 
   &.active {
-    color: var(--selection-tile-accent, var(--blue-thin-color));
+    --selection-tile-action-color: var(--selection-tile-accent, var(--blue-thin-color));
 
     &::before {
       background: color-mix(in srgb, var(--selection-tile-accent, var(--blue-thin-color)) 12%, transparent);
