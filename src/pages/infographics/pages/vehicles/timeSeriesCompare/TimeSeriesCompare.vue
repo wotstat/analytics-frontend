@@ -61,7 +61,7 @@ import ResetIcon from '@/assets/icons/reset.svg'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import TimeSeriesPanel from '@/shared/ui/chart/timeSeries/panel/TimeSeriesPanel.vue'
 import type { ClickInteractionEvent } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/BaseInteractionController'
-import { formatSlotValue } from '../vehicleMetricSelector/formatMetricValue.ts'
+import { formatSlotValue } from '../vehicleMetricSelector/utils/formatMetricValue.ts'
 import { useLegend } from '@/shared/ui/chart/legend/useLegend'
 import VehicleMetricSelector from '../vehicleMetricSelector/VehicleMetricSelector.vue'
 import type { VehicleFilters } from '../filters/types'
@@ -82,6 +82,7 @@ import { snapshotComparisonFilters } from './utils/comparisonFilters'
 import { comparisonName } from './utils/comparisonName'
 import { useVehicleHistories } from '../timeSeries/useVehicleHistories'
 import HistoryTooltipHeader from '../timeSeries/tooltip/HistoryTooltipHeader.vue'
+import { availableSlots } from '../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 
 useHistoryEventStyles()
 
@@ -110,6 +111,7 @@ function setting<K extends keyof ComparisonSettings>(key: K) {
 }
 
 const slot = setting('slot')
+const metricHistory = computed(() => availableSlots[slot.value].history)
 const step = setting('step')
 const averageWindow = setting('averageWindow')
 const annotationOptions = useHistoryAnnotationSettings(annotationSettings)
@@ -201,7 +203,7 @@ watch([series, slot, step, averageWindow], () => {
 }, { immediate: true })
 
 watch(annotations, value => chart.setHistoryAnnotations(value), { immediate: true })
-watch(annotationOptions.showWotstatOutages, visible => chart.setOutagesVisible(visible), { immediate: true })
+watch([annotationOptions.showWotstatOutages, metricHistory], ([visible, history]) => chart.setOutagesVisible(visible && history.outages), { immediate: true })
 </script>
 
 <style scoped lang="scss">

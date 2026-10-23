@@ -6,7 +6,7 @@
 import { markRaw } from 'vue'
 import ChartView from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import type { VehicleHistoryPeriod } from '../../../shared/types'
-import type { Slot } from '../../../vehicleMetricSelector/vehicleMetrics'
+import type { Slot } from '../../../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 import { MetaHistoryChart } from './MetaHistoryChart'
 
 const props = defineProps<{ series: { color: string, history: VehicleHistoryPeriod[] }[], slot: Slot, until: number }>()

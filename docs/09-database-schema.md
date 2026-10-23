@@ -962,15 +962,28 @@
 
 ### Отметки и мастерство
 
-**`MoeInfo` / `MoeInfoLatest`** (`ReplacingMergeTree`) — пороги отметок эффективности (MoE) по танкам:
-`region`, `tag`, `updatedAt`, `dateTime`, и пороги `p0, p20, p40, p55, p65, p75, p85, p95, p100`
-(значения урона+ассиста для соответствующего процента отметки).
+Схема проверена 21 октября 2026. Публичный API игры наполняет две независимые таблицы:
 
-**`MasteryInfo`** — пороги знаков классности/мастерства по танкам:
-`region`, `tag`, `updatedAt`, `dateTime`, `p1`…`p100` (порог опыта для каждого перцентиля).
+| Таблица | Поля планок |
+| --- | --- |
+| `MasteryInfo` | `p1`…`p100` (`UInt16`), планки опыта; `p0` отсутствует |
+| `MoeInfo` | `p0`, `p20`, `p40`, `p55`, `p65`, `p75`, `p85`, `p95`, `p100` (`UInt16`), сумма для отметки |
 
-**`GameMoeInfo`** (`AggregatingMergeTree`) — временной ряд глобальных MoE:
-`region`, `vehicleTag`, `dateTime`, `battleCount`, `p0`…`p100`.
+Общие поля: `region String`, `tag String`, `updatedAt DateTime`, `dateTime DateTime`.
+Обе — `ReplacingMergeTree ORDER BY (region, tag, updatedAt)`, без партиционирования
+и дополнительных skip-индексов. `updatedAt` приходит из `updated_at` API; `dateTime` — время
+загрузки микросервисом. Режимов боя, карт, числа боёв и игроков в этих таблицах нет.
+Загрузчик `server-microtasks/src/tasks/public-api-loader/loaders/moeAndMastery.ts`
+запрашивает распределения `xp` и `damage`; `MoeInfo.p0` он не передаёт, поэтому это
+нулевая опорная планка по умолчанию, а не отдельно полученный процентиль API.
+
+`Event_OnMoeInfo` → `MoeInfoLatest` / `GameMoeInfo` — отдельная устаревшая цепочка событий мода.
+`MoeInfoLatest` (`ReplacingMergeTree`, ключ `region, vehicleTag`) содержит `latestDateTime`,
+`battleCount` и планки `p0/p20/p40/p55/p65/p75/p85/p95/p100`.
+`GameMoeInfo` (`AggregatingMergeTree`, ключ `region, vehicleTag, dateTime`) хранит историю
+с `battleCount` и теми же планками как `SimpleAggregateFunction(max, …)`.
+Статистика техники использует именно `MasteryInfo` и `MoeInfo`; исторические события
+планируется позднее перенести в `MoeInfo` через backfill.
 
 ### Онлайн и события
 

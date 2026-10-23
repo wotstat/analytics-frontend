@@ -17,7 +17,7 @@ import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
 import DropdownArrow from '@/shared/uiKit/dropdown/DropdownArrow.vue'
 import { usePopoverCloseDelay } from '@/shared/uiKit/popover/usePopoverCloseDelay'
 import VehicleSlotOptions from './VehicleSlotOptions.vue'
-import { availableSlots, type Slot } from './vehicleMetrics.ts'
+import { availableSlots, type Slot } from './vehicleMetrics/vehicleMetrics.ts'
 
 defineOptions({ inheritAttrs: false })
 

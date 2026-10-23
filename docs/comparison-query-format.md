@@ -92,11 +92,15 @@ Base64url больше не читается и не определяется а
 
 | Параметр | Значения | Default |
 | --- | --- | --- |
-| `metric` | Ключи из `availableSlots` в kebab-case: `damage`, `winrate`, `damage-q50`, `damage-per-life-minute-q50` | `damage` |
+| `metric` | Ключи из `availableSlots` в kebab-case: `damage`, `winrate`, `damage-q50`, `damage-per-life-minute-q50`, `mastery-p99`, `marks-p95` | `damage` |
 | `step` | `day`, `week`, `month` | `day` |
 | `avg` | `3`, `5`, `7` | `null` — усреднение выключено, параметр отсутствует |
 
 Пример: `metric=winrate&step=week&avg=3&compare=HpeZ`.
+Планки API имеют фиксированные ключи с префиксом `mastery-` и суффиксами
+`p1`/`p5`/`p10`/`p25`/`p50`/`p75`/`p80`/`p90`/`p95`/`p99`/`p100`; для `marks-` —
+`p0`/`p20`/`p40`/`p55`/`p65`/`p75`/`p85`/`p95`/`p100`. В коде используются единообразные
+идентификаторы `mastery_p99`, `marks_p95`, как у `damage_q95`. Бинарный формат `compare` не меняется.
 Общий сериализатор метрик находится в `vehicleMetricSelector/utils/slotSerializer.ts` и также
 используется для выбранных столбцов и сортировки таблицы. URL-ключи строятся из существующего
 каталога метрик: границы camelCase и `_` заменяются дефисами,

@@ -1,5 +1,5 @@
 import type { Serializer } from '@/shared/uiKit/queryStorage/serializers/types'
-import { availableSlots, type Slot } from '../vehicleMetrics'
+import { availableSlots, type Slot } from '../vehicleMetrics/vehicleMetrics'
 
 const metricKeys = new Map((Object.keys(availableSlots) as Slot[]).map(slot => {
   const [base, aggregation] = slot.split('_')

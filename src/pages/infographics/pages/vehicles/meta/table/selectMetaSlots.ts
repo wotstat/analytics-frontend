@@ -1,7 +1,7 @@
-import { baseSlot, defaultSlots, orderSlots, type Slot } from '../../vehicleMetricSelector/vehicleMetrics'
+import { metricTileFor, defaultSlots, orderSlots, type Slot } from '../../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 import type { SortOrder } from '../../vehicleListTable/useVehicleSorting'
 
-const priorities = new Map(defaultSlots.map((slot, index) => [baseSlot(slot), index]))
+const priorities = new Map(defaultSlots.map((slot, index) => [metricTileFor(slot).id, index]))
 
 export function selectMetaSlots(selected: readonly Slot[], sort: readonly SortOrder[]) {
   const required = sort.flatMap(({ key }) => {
@@ -10,7 +10,8 @@ export function selectMetaSlots(selected: readonly Slot[], sort: readonly SortOr
   })
 
   const prioritized = orderSlots(selected).sort((left, right) =>
-    (priorities.get(baseSlot(left)) ?? defaultSlots.length) - (priorities.get(baseSlot(right)) ?? defaultSlots.length))
+    (priorities.get(metricTileFor(left).id) ?? defaultSlots.length) - (priorities.get(metricTileFor(right).id) ?? defaultSlots.length))
+
   const slots = [...new Set([...required, ...prioritized])].slice(0, 4)
   return orderSlots(slots)
 }

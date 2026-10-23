@@ -1,4 +1,4 @@
-import { availableSlots, type Slot, type SlotDefinition } from './vehicleMetrics'
+import { availableSlots, type Slot } from '../vehicleMetrics/vehicleMetrics'
 
 const integer = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 })
 const decimal = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -47,7 +47,7 @@ function formatInteger(value: number, step: number | null) {
 export function formatSlotValue(slot: Slot, value: number | null | undefined, step: number | null = null) {
   if (value == null || !Number.isFinite(value)) return '—'
 
-  const definition: SlotDefinition = availableSlots[slot]
+  const definition = availableSlots[slot]
   switch (definition.format) {
     case 'percent': return `${decimal.format(value)}%`
     case 'decimal': return decimal.format(value)

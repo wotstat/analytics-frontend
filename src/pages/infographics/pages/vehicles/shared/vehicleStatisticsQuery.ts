@@ -1,204 +1,28 @@
-import { battleModeConditions } from '@/shared/game/domain/battleModes/battleModeFilter'
 import { LONG_CACHE } from '@/db/cache'
 import type { VehicleFilters } from '../filters/types'
-import { availableSlots, metricQuerySlots, type Slot } from '../vehicleMetricSelector/vehicleMetrics'
 import type { VehicleGrouping, VehicleSelection } from './vehicleGrouping'
 import type { VehicleStatisticsPeriod } from './vehicleStatisticsPeriod'
 import type { VehicleStatistics } from './types'
+import type { MetricData } from './metricData/utils/types'
+import { battleRowQueries } from './metricData/battle/tableQueries'
 
 export const VEHICLE_STATISTICS_QUERY_OPTIONS = {
   cache: LONG_CACHE,
   proxyCache: true,
+  format: 'JSONCompact',
   settings: {
     use_query_cache: 1,
     query_cache_nondeterministic_function_handling: 'save',
   },
 } as const
 
-function quote(value: string) {
-  return `'${value.replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`
-}
-
-export function vehicleStatisticsWhere(filters: VehicleFilters, beforeDay: string | null, dateColumn: 'day' | 'lastDay' = 'day') {
-  const conditions: string[] = beforeDay === null ? [] : [`stats.${dateColumn} < toDate(${quote(beforeDay)})`]
-
-  if (filters.regions.length) {
-    conditions.push(`stats.region in (${[...filters.regions].sort().map(quote).join(', ')})`)
-  }
-
-  conditions.push(...battleModeConditions(filters.battleModes, 'stats.'))
-
-  if (filters.arenas.length) {
-    const arenaTags = [...new Set(filters.arenas)].sort()
-      .map(tag => quote(tag.startsWith('spaces/') ? tag : `spaces/${tag}`))
-    conditions.push(`stats.arenaTag in (${arenaTags.join(', ')})`)
-  }
-
-  const platoons = { solo: '= 0', duo: '= 1', trio: '= 2', large: '>= 3' } as const
-  if (filters.platoon !== 'any') conditions.push(`stats.squadmatesCount ${platoons[filters.platoon]}`)
-  if (filters.result !== 'any') conditions.push(`stats.result = ${quote(filters.result)}`)
-
-  if (filters.battleLevel !== 'any') conditions.push(`stats.battleLevel = ${quote(filters.battleLevel)}`)
-
-  return conditions.length ? conditions.join('\n      and ') : '1'
-}
-
-export function vehicleSelectionWhere(selection?: VehicleSelection) {
-  if (!selection) return ''
-  const conditions: string[] = []
-  if (selection.tankTag) conditions.push(`stats.tankTag = ${quote(selection.tankTag)}`)
-  if (selection.levels.length) conditions.push(`stats.tankLevel in (${[...selection.levels].sort((a, b) => a - b).join(', ')})`)
-  if (selection.types.length) conditions.push(`stats.tankType in (${[...selection.types].sort().map(quote).join(', ')})`)
-  if (selection.nations.length) conditions.push(`splitByChar(':', stats.tankTag)[1] in (${[...selection.nations].sort().map(quote).join(', ')})`)
-  return conditions.map(condition => `\n      and ${condition}`).join('')
-}
-
-export function vehicleDailyStatisticsTable(filters: VehicleFilters, selection?: VehicleSelection, byTank = false) {
-  if (filters.arenas.length || filters.platoon !== 'any' || filters.result !== 'any' || filters.battleLevel !== 'any') return null
-  return byTank || selection?.tankTag || selection?.nations.length
-    ? 'PlayerBattleDailyStatistics'
-    : 'PlayerBattleDailyStatisticsByClassLevel'
-}
-
 export function vehicleStatisticsQueries(filters: VehicleFilters, grouping: VehicleGrouping = 'tanks',
   days: VehicleStatisticsPeriod = 30, selection?: VehicleSelection,
   beforeDay = new Date().toISOString().slice(0, 10)) {
-  const isTank = grouping === 'tanks'
-  const daily = vehicleDailyStatisticsTable(filters, selection, isTank)
-  const table = daily ?? 'PlayerBattleResults'
-
-  const latestTable = daily ? table : 'PlayerBattleLatestDays'
-  const latestDate = daily ? 'day' : 'lastDay'
-  const metricSql = (slot: Slot) => availableSlots[slot][daily ? 'dailySql' : 'sql']
-  const withLevel = grouping === 'levels' || grouping === 'classesByLevel'
-  const withType = grouping === 'classes' || grouping === 'classesByLevel'
-  const dimensions = isTank ? ['stats.tankTag'] : [
-    ...(withLevel ? ['stats.tankLevel'] : []),
-    ...(withType ? ['stats.tankType'] : []),
-  ]
-  const groupBy = dimensions.join(', ')
-  const keys = isTank ? ['tankTag'] : [
-    ...(withLevel ? ['tankLevel'] : []),
-    ...(withType ? ['tankType'] : []),
-  ]
-  const selectionFilter = vehicleSelectionWhere(isTank ? undefined : selection)
-  const where = vehicleStatisticsWhere(filters, beforeDay) + selectionFilter
-  const latestWhere = vehicleStatisticsWhere(filters, beforeDay, latestDate) + selectionFilter
-  const rowKey = isTank ? 'stats.tankTag' : `concat(${quote(`${grouping}:`)}, ${dimensions.map(column => `toString(${column})`).join(", ':', ")})`
-
-  const selectPeriod = (conditions: string, isActual: boolean) => `
-    select
-      ${rowKey} as rowKey,
-      ${isTank ? 'stats.tankTag' : 'NULL'} as tankTag,
-      ${isTank || withLevel ? 'any(stats.tankLevel)' : 'NULL'} as tankLevel,
-      ${isTank || withType ? 'any(stats.tankType)' : 'NULL'} as tankType,
-      min(stats.region) as region,
-      max(stats.day) as day,
-      toBool(${isActual ? 1 : 0}) as isActual,
-      ${metricSql('battles')} as battles,
-      ${metricSql('playerCount')} as playerCount
-    from ${table} as stats
-    prewhere ${where}
-      and ${conditions}
-    group by ${groupBy}
-  `
-
-  // Опорный день — самый частый среди последних дат в пределах двух дней от максимума.
-  // Более свежие группы тоже актуальны; период каждой группы заканчивается её последним днём.
-  // Оба запроса используют одинаковый срез, но читают непересекающиеся группы.
-  const latest = `
-    with
-      latest as (
-        select ${groupBy}, max(stats.${latestDate}) as latestDay
-        from ${latestTable} as stats
-        prewhere ${latestWhere}
-        group by ${groupBy}
-      ),
-      (select max(latestDay) from latest) as latestDataDay,
-      (
-        select latestDay from latest
-        where latestDay >= latestDataDay - toIntervalDay(2)
-        group by latestDay
-        order by count() desc, latestDay desc
-        limit 1
-      ) as actualDay
-  `
-
+  const context = { filters, grouping, days, selection, beforeDay }
   return {
-    column(slot: Slot, rows: readonly VehicleStatistics[]) {
-      if (!rows.length) return null
-
-      // Даты уже получены базовым запросом. Порядок строк не меняет SQL и кеш.
-      const groups = [...rows].sort((a, b) => a.rowKey < b.rowKey ? -1 : a.rowKey > b.rowKey ? 1 : 0)
-      const dates = [...new Set(rows.map(row => row.day))].sort()
-      const isActual = rows.every(row => row.isActual)
-      const metrics = metricQuerySlots(slot).map(key => `${metricSql(key)} as ${key}`).join(',\n          ')
-      let periodFilter = ''
-
-      if (isActual) {
-        // Обычно у всех актуальных групп один день. Перечисляем только исключения
-        // с более свежей датой, сохраняя индивидуальные окна и правило актуальности.
-        const overrides = dates.slice(1).map(day => {
-          const keys = groups.filter(row => row.day === day).map(row => quote(row.rowKey)).join(', ')
-          return `${rowKey} in (${keys}), toDate(${quote(day)})`
-        })
-        if (overrides.length) {
-          const lastDay = `multiIf(${overrides.join(', ')}, firstDay)`
-          periodFilter = `\n          and stats.day >= ${lastDay} - toIntervalDay(${days - 1})
-          and stats.day <= ${lastDay}`
-        }
-      } else {
-        const latest = groups.map(row => `(${quote(row.rowKey)}, ${quote(row.day)})`).join(', ')
-        periodFilter = `\n          and (${rowKey}, stats.day) in (
-            select latest.1,
-              arrayJoin(arrayMap(offset -> toDate(latest.2) - toIntervalDay(offset), range(${days}))) as day
-            from (select arrayJoin([${latest}]) as latest)
-          )`
-      }
-
-      return `
-        with toDate(${quote(dates[0])}) as firstDay
-        select
-          ${rowKey} as rowKey,
-          ${metrics}
-        from ${table} as stats
-        prewhere ${vehicleStatisticsWhere(filters, null) + selectionFilter}
-          and stats.day >= firstDay - toIntervalDay(${days - 1})
-          and stats.day <= ${dates.length === 1 ? 'firstDay' : `toDate(${quote(dates[dates.length - 1])})`}${periodFilter}
-        group by ${groupBy}${isActual ? '\n        having max(stats.day) >= firstDay' : ''}
-        order by rowKey
-      `
-    },
-    actual: `${latest},
-      actual as (
-        select ${keys.join(', ')}, latestDay
-        from latest
-        where latestDay >= actualDay
-      )
-      ${selectPeriod(`stats.day >= actualDay - toIntervalDay(${days - 1})
-      and stats.day <= latestDataDay
-      and (${groupBy}, stats.day) in (
-        select ${keys.join(', ')},
-          arrayJoin(arrayMap(offset -> latestDay - toIntervalDay(offset), range(${days}))) as day
-        from actual
-      )`, true)}
-      order by battles desc, rowKey
-    `,
-    inactive: `${latest},
-      inactive as (
-        select ${keys.join(', ')}, latestDay
-        from latest
-        where latestDay < actualDay
-      )
-      ${selectPeriod(`stats.day >= (select min(latestDay) from inactive) - toIntervalDay(${days - 1})
-      and stats.day <= (select max(latestDay) from inactive)
-      and (${groupBy}, stats.day) in (
-        select ${keys.join(', ')},
-          arrayJoin(arrayMap(offset -> latestDay - toIntervalDay(offset), range(${days}))) as day
-        from inactive
-      )`, false)}
-      order by battles desc, rowKey
-    `,
+    ...battleRowQueries(context),
+    column: (data: MetricData, rows: readonly VehicleStatistics[]) => data.column?.({ ...context, rows }) ?? null,
   }
 }
 

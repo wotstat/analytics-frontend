@@ -1,14 +1,12 @@
 import { onScopeDispose, shallowRef, toValue, watch, type MaybeRefOrGetter } from 'vue'
 import { createConcurrencyGroup, createQueryCache, error, loading, query, success, type CachePolicy, type Status } from '@/db'
+import type { MetricDateField } from '../vehicleMetricSelector/utils/metricTypes'
 import type { VehicleStatistics } from '../shared/types'
-import { metricQuerySlots, type Slot } from '../vehicleMetricSelector/vehicleMetrics'
+import { availableSlots, type Slot } from '../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 import { VEHICLE_STATISTICS_QUERY_OPTIONS, type VehicleStatisticsQueries } from '../shared/vehicleStatisticsQuery'
+import type { MetricQuery } from '../shared/metricData/utils/types'
 
-type ColumnSlot = Exclude<Slot, 'battles' | 'playerCount'>
-type ColumnValues = { rowKey: string } & Partial<Record<ColumnSlot, number | null>>
-
-// Даты метрик заданы в SQL: кеш должен переживать календарные границы.
-const METRIC_CACHE = { ttl: 7 * 24 * 60 * 60 } as const satisfies CachePolicy
+type ColumnValues = Pick<VehicleStatistics, 'rowKey'> & Partial<Record<MetricDateField, string>> & Partial<Record<Slot, number | null>>
 
 export function useVehicleTableStatistics(
   queries: MaybeRefOrGetter<VehicleStatisticsQueries>,
@@ -55,11 +53,12 @@ export function useVehicleTableStatistics(
   const stop = watch([
     () => toValue(queries),
     () => [...new Set(toValue(slots)
-      .filter(slot => slot !== 'battles' && slot !== 'playerCount')
-      .map(slot => metricQuerySlots(slot)[0]))].sort().join(','),
+      .map(slot => availableSlots[slot].data)
+      .filter(data => data.column)
+      .map(data => data.key))].sort().join(','),
     () => toValue(onlyActual),
     () => toValue(retry),
-  ], async ([plan, slotKeys, actualOnly], [previousPlan], onCleanup) => {
+  ], async ([plan, , actualOnly], [previousPlan], onCleanup) => {
     let cancelled = false
     onCleanup(() => { cancelled = true })
 
@@ -69,7 +68,10 @@ export function useVehicleTableStatistics(
       result.value = { status: loading, data: [], progress: { completed: 0, total: 0 } }
     }
 
-    const selected = slotKeys ? slotKeys.split(',') as ColumnSlot[] : []
+    const selected = [...new Map(toValue(slots).map(slot => {
+      const data = availableSlots[slot].data
+      return [data.key, data] as const
+    })).values()].filter(data => data.column)
     const bases = actualOnly ? [plan.actual] : [plan.actual, plan.inactive]
     const planned = new Set<string>()
     const completed = new Set<string>()
@@ -100,9 +102,9 @@ export function useVehicleTableStatistics(
     for (const base of bases) {
       const rows = cache.get(base) as VehicleStatistics[] | undefined
       if (!rows) continue
-      for (const slot of selected) {
-        const sql = plan.column(slot, rows)
-        if (sql) wanted.add(sql)
+      for (const data of selected) {
+        const request = plan.column(data, rows)
+        if (request) wanted.add(request.sql)
       }
     }
     for (const [sql, request] of requests) {
@@ -113,9 +115,9 @@ export function useVehicleTableStatistics(
     planRequests(wanted)
     updateProgress()
 
-    async function loadColumns(rows: VehicleStatistics[], sqls: string[]) {
-      const columns = await Promise.all(sqls.map(async sql => {
-        const values = await load<ColumnValues>(sql, METRIC_CACHE)
+    async function loadColumns(rows: VehicleStatistics[], queries: MetricQuery[]) {
+      const columns = await Promise.all(queries.map(async ({ sql, cache }) => {
+        const values = await load<ColumnValues>(sql, cache)
         completeRequest(sql)
         return values
       }))
@@ -134,28 +136,27 @@ export function useVehicleTableStatistics(
     }
 
     try {
-      const parts: { rows: VehicleStatistics[], sqls: string[] }[] = []
+      const parts: { rows: VehicleStatistics[], queries: MetricQuery[] }[] = []
       // Заменяем предварительные пакеты точными SQL; пустые части не требуют метрик.
       for (const base of bases) {
         const rows = await load<VehicleStatistics>(base)
         if (cancelled) return
 
-        // Разные агрегации одной метрики дают один и тот же SQL.
-        const sqls = new Set<string>()
-        for (const slot of selected) {
-          const sql = plan.column(slot, rows)
-          if (!sql) continue
-          sqls.add(sql)
+        // Каждая группа загружается один раз, независимо от числа выбранных вариантов.
+        const queries = new Map<string, MetricQuery>()
+        for (const data of selected) {
+          const request = plan.column(data, rows)
+          if (request) queries.set(request.sql, request)
         }
-        parts.push({ rows, sqls: [...sqls] })
+        parts.push({ rows, queries: [...queries.values()] })
         if (base === firstPendingBase) pendingMetrics = 0
-        planRequests(sqls)
+        planRequests(queries.keys())
         completeRequest(base)
       }
 
       const data: VehicleStatistics[] = []
-      for (const { rows, sqls } of parts) {
-        const values = await loadColumns(rows, sqls)
+      for (const { rows, queries } of parts) {
+        const values = await loadColumns(rows, queries)
         if (cancelled) return
         data.push(...values)
       }

@@ -1,7 +1,7 @@
 import { defineParams } from '@/shared/uiKit/queryStorage/useQueryStorage'
 import { arrayParam } from '@/shared/uiKit/queryStorage/params'
 import type { Serializer } from '@/shared/uiKit/queryStorage/serializers/types'
-import { defaultSlots, type Slot } from '../../vehicleMetricSelector/vehicleMetrics'
+import { defaultSlots, type Slot } from '../../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 import { slotSerializer } from '../../vehicleMetricSelector/utils/slotSerializer'
 import type { VehicleStatisticsPeriod } from '../../shared/vehicleStatisticsPeriod'
 import type { SortKey, SortOrder } from '../useVehicleSorting'

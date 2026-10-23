@@ -40,7 +40,7 @@
         <template v-if="column.metric">
           <Icon :icon="availableSlots[column.metric].icon" class="icon" />
           <span v-if="slotHeadingLabel(column.metric)" class="aggregation-label"
-            :class="{ derived: !!availableSlots[column.metric].formula }">
+            :style="{ color: availableSlots[column.metric].headingColor }">
             {{ slotHeadingLabel(column.metric) }}
           </span>
         </template>
@@ -71,7 +71,7 @@
       <template #cell="{ row, column, value }">
         <span v-if="showValueBars && column.metric && Number.isFinite(row[column.metric])" class="value-bar"
           :style="valueBarStyle(row, column.metric)"></span>
-        <span class="metric-value" :class="{ 'with-bar': showValueBars }">{{ value ?? '—' }}</span>
+        <span class="metric-value" :class="{ 'with-bar': showValueBars }" v-tooltip="metricTooltip(row, column.metric)">{{ value ?? '—' }}</span>
       </template>
 
       <template #expanded="{ row }">
@@ -153,7 +153,7 @@ import { regionToGame } from '@/shared/game/domain/wot'
 import { createVehicleNameFilter } from '@/shared/game/components/vehicles/vehicleSearch'
 import SearchLine from '@/shared/game/components/selectors/components/searchLine/SearchLine.vue'
 import Loader from '@/shared/ui/loaders/loader/Loader.vue'
-import { availableSlots, baseSlot, defaultSlots, defaultSlotsForLimit, orderSlots, slotHeadingLabel, type Slot } from '../vehicleMetricSelector/vehicleMetrics.ts'
+import { availableSlots, metricTileFor, defaultSlots, defaultSlotsForLimit, orderSlots, slotHeadingLabel, type Slot } from '../vehicleMetricSelector/vehicleMetrics/vehicleMetrics.ts'
 import type { VehicleStatistics } from '../shared/types'
 import { DEFAULT_MIN_BATTLES, DEFAULT_MIN_PLAYERS, DEFAULT_ONLY_ACTUAL, type LocalVehicleFilters } from './filters/localFilters'
 import { comparisonRowKey } from '../timeSeriesCompare/utils/comparisonRowKey'
@@ -171,12 +171,13 @@ import VehicleTimeSeries from '../timeSeries/VehicleTimeSeries.vue'
 import DropdownArrow from '@/shared/uiKit/dropdown/DropdownArrow.vue'
 import { isVehicleType } from '@/shared/game/components/vehicles/vehicleType/vehicleTypeToImage'
 import { romanNumberProcessor } from '@/shared/utils/processors/processors'
-import { formatSlotValue } from '../vehicleMetricSelector/formatMetricValue.ts'
+import { formatSlotValue } from '../vehicleMetricSelector/utils/formatMetricValue.ts'
 import { useVehicleSorting, type SortKey, type SortOrder } from './useVehicleSorting'
 import type { VehicleFilters } from '../filters/types'
 import type { HistoryAverageWindow, HistoryStep } from '../timeSeries/period/historyStep'
 import type { VehicleStatisticsPeriod } from '../shared/vehicleStatisticsPeriod'
 import type { ComparisonCandidate } from '../timeSeriesCompare/types'
+import { formatStatisticsDay } from '../shared/formatStatisticsDay'
 
 const props = defineProps<{
   vehicles: VehicleStatistics[]
@@ -307,6 +308,13 @@ watch([configuredSlots, maxSelectableSlots], ([slots]) => {
   if (normalized !== slots) configuredSlots.value = normalized
 }, { immediate: true })
 
+function metricTooltip(row: VehicleStatistics, slot?: Slot) {
+  const definition = slot && availableSlots[slot]
+  if (!definition?.updatedDayField) return { disabled: true, text: '' }
+  const day = row[definition.updatedDayField]
+  return { text: `${definition.label}. ${day ? `Данные от ${formatStatisticsDay(day)}` : 'Нет данных'}` }
+}
+
 const sorting = useVehicleSorting(grouping, configuredSlots, sortOrders)
 
 const tableStyle = computed(() => ({
@@ -321,7 +329,7 @@ const columns = computed<VehicleColumn[]>(() => [
   ...(showType.value ? [{ key: 'tankType', label: 'Тип техники', width: METADATA_COLUMN_WIDTH, sortable: true, interactive: true } as const] : []),
   ...(showName.value ? [{ key: 'name', label: 'Название танка', width: nameWidth.value, align: 'left', sortable: true, interactive: true } as const] : []),
   ...visibleSlots.value.map(metric => ({
-    key: metric, metric, label: availableSlots[metric].label, tooltip: availableSlots[metric].label,
+    key: metric, metric, label: availableSlots[metric].label, tooltip: availableSlots[metric].updatedDayField ? undefined : availableSlots[metric].label,
     sortable: true, interactive: true, value: (vehicle: VehicleStatistics) => formatSlotValue(metric, vehicle[metric]),
   })),
 ])
@@ -466,7 +474,7 @@ watch([search, localFilters, () => props.vehicles, () => props.fromDay], () => d
 
 watch(visibleSlots, slots => {
   if (slots.includes(activeSlot.value)) return
-  activeSlot.value = slots.find(slot => baseSlot(slot) === baseSlot(activeSlot.value)) ?? slots[0] ?? 'battles'
+  activeSlot.value = slots.find(slot => metricTileFor(slot).id === metricTileFor(activeSlot.value).id) ?? slots[0] ?? 'battles'
 })
 
 watch([visibleSlots, width], ([slots, tableWidth]) => {
@@ -679,10 +687,6 @@ watch([visibleSlots, width], ([slots, tableWidth]) => {
     font-weight: 600;
     line-height: 1.1;
     white-space: nowrap;
-
-    &.derived {
-      color: #bd8de8;
-    }
   }
 
   .icon {

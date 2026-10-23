@@ -1,6 +1,7 @@
-import type { Slot } from '../vehicleMetricSelector/vehicleMetrics'
+import type { MetricDateField } from '../vehicleMetricSelector/utils/metricTypes'
+import type { Slot } from '../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 
-type VehicleMetricValues = Record<'battles' | 'playerCount', number> & Partial<Record<Slot, number | null>>
+type VehicleMetricValues = Partial<Record<Slot, number | null>>
 
 export type VehicleStatistics = {
   rowKey: string
@@ -10,7 +11,7 @@ export type VehicleStatistics = {
   region: string
   day: string
   isActual: boolean
-} & Record<'battles' | 'playerCount', number> & Partial<Record<Slot, number | null>>
+} & Partial<Record<MetricDateField, string>> & Record<'battles' | 'playerCount', number> & Partial<Record<Slot, number | null>>
 
 export type VehicleHistoryPeriod = { periodStart: string, splitKey?: string } & VehicleMetricValues
 

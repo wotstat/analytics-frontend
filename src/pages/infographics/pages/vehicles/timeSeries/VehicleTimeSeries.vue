@@ -16,7 +16,8 @@
     </template>
 
     <template #actions>
-      <ToolbarButton :icon="LineChartIcon" variant="accent" :active="split !== null" @click="openSplitMenu" />
+      <ToolbarButton v-if="splitOptions.length" :icon="LineChartIcon" variant="accent" :active="split !== null"
+        v-tooltip="'Разбить историю'" @click="openSplitMenu" />
       <HistoryAnnotationSettings :settings="annotationOptions" :regions="filters.regions" />
     </template>
 
@@ -58,8 +59,8 @@ import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import { closeContextMenu, isContextMenuOpen } from '@/shared/uiKit/contextMenu/createContextMenu'
 import { checkboxItem, separator, simpleContextMenu } from '@/shared/uiKit/contextMenu/simpleContextMenu'
 import type { VehicleFilters } from '../filters/types'
-import type { Slot } from '../vehicleMetricSelector/vehicleMetrics.ts'
-import { formatSlotValue } from '../vehicleMetricSelector/formatMetricValue.ts'
+import type { Slot } from '../vehicleMetricSelector/vehicleMetrics/vehicleMetrics.ts'
+import { formatSlotValue } from '../vehicleMetricSelector/utils/formatMetricValue.ts'
 import { formatHistoryPeriod } from './tooltip/formatHistoryPeriod'
 import { useVehicleHistories } from './useVehicleHistories'
 import { VehicleHistoryChart } from './VehicleHistoryChart'
@@ -78,6 +79,7 @@ import { historySplitSeriesColor } from './split/seriesColors'
 import VehicleMetricSelector from '../vehicleMetricSelector/VehicleMetricSelector.vue'
 import type { VehicleSelection } from '../shared/vehicleGrouping'
 import HistoryTooltipHeader from './tooltip/HistoryTooltipHeader.vue'
+import { availableSlots } from '../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 
 useHistoryEventStyles()
 
@@ -94,7 +96,10 @@ const props = defineProps<{
 const slot = defineModel<Slot>('slot', { required: true })
 const step = defineModel<HistoryStep>('step', { required: true })
 const averageWindow = defineModel<HistoryAverageWindow>('averageWindow', { required: true })
-const split = ref<VehicleHistorySplit | null>(null)
+const requestedSplit = ref<VehicleHistorySplit | null>(null)
+const metricHistory = computed(() => availableSlots[slot.value].history)
+const splitOptions = computed(() => historySplitOptions.filter(option => metricHistory.value.splits.includes(option.value)))
+const split = computed(() => requestedSplit.value && metricHistory.value.splits.includes(requestedSplit.value) ? requestedSplit.value : null)
 const annotationOptions = useHistoryAnnotationSettings()
 const { annotations: versionAnnotations } = useGameVersionAnnotations(
   annotationOptions.versions, computed(() => props.filters.regions))
@@ -157,16 +162,18 @@ watch([series, slot, step, averageWindow], () => {
 }, { immediate: true })
 
 watch(annotations, value => chart.setHistoryAnnotations(value), { immediate: true })
-watch(annotationOptions.showWotstatOutages, visible => chart.setOutagesVisible(visible), { immediate: true })
+watch([annotationOptions.showWotstatOutages, metricHistory], ([visible, history]) => chart.setOutagesVisible(visible && history.outages), { immediate: true })
 
 let splitMenuId = -1
+watch(metricHistory, () => closeContextMenu(splitMenuId))
 
 function selectSplit(value: VehicleHistorySplit | null) {
-  split.value = value
+  requestedSplit.value = value
   closeContextMenu(splitMenuId)
 }
 
 function openSplitMenu(event: MouseEvent) {
+  if (!splitOptions.value.length) return
   if (isContextMenuOpen(splitMenuId)) {
     closeContextMenu(splitMenuId)
     return
@@ -185,7 +192,7 @@ function openSplitMenu(event: MouseEvent) {
       toggle: () => selectSplit(null),
     }),
     separator,
-    ...historySplitOptions.map(option => checkboxItem(option.label, {
+    ...splitOptions.value.map(option => checkboxItem(option.label, {
       value: computed(() => split.value === option.value),
       toggle: () => selectSplit(option.value),
     })),

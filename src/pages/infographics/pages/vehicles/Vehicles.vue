@@ -40,7 +40,7 @@
     <h5>Источник данных</h5>
     <p>
       Учитываются все участники боёв, в которых хотя бы один игрок использовал мод WotStat. Бои с несколькими игроками с
-      модом учитываются один раз.
+      модом учитываются один раз. Планки знаков классности и отметок на орудии загружаются отдельно из публичного API игры.
     </p>
   </section>
 </template>
@@ -51,7 +51,7 @@ import { useVehicleComparison } from './timeSeriesCompare/useVehicleComparison'
 import { computed, ref } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import VehicleListTable from './vehicleListTable/VehicleListTable.vue'
-import type { Slot } from './vehicleMetricSelector/vehicleMetrics.ts'
+import type { Slot } from './vehicleMetricSelector/vehicleMetrics/vehicleMetrics.ts'
 import VehicleFilters from './filters/VehicleFilters.vue'
 import { useVehicleQueryStorage } from './filters/useVehicleQueryStorage'
 import { vehicleStatisticsQueries } from './shared/vehicleStatisticsQuery'

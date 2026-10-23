@@ -1,6 +1,6 @@
 <template>
   <PanelPopover v-model="open" :target :placement :title :width="900" :scrollbar-offsets="[40, 14]"
-    @content-scroll="closeAggregation()" class="vehicle-slot-options">
+    @content-scroll="closeOptions()" class="vehicle-slot-options">
     <template v-if="maxSlots !== undefined" #toolbar>
       <div class="selection-controls">
         <span class="selected-count">Выбрано {{ selected.length }} из {{ maxSlots }}</span>
@@ -12,32 +12,28 @@
 
     <template #content>
       <div class="column-list">
-        <section v-for="category in slotCategories" :key="category.title" class="category panel-section"
-          :class="{ derived: category.derived }">
+        <section v-for="category in metricCategories" :key="category.title" class="category panel-section"
+          :style="{ '--panel-heading-color': category.color }">
           <h3>{{ category.title }}</h3>
           <div class="tiles">
-            <SelectionTile v-for="slot in category.slots" :key="slot" class="tile-option"
-              :class="{ derived: !!availableSlots[slot].formula }"
-              :selected="isSelected(slot)"
-              :disabled="!isSelected(slot) && isDisabled(defaultSlot(slot))"
-              :accent-color="availableSlots[slot].formula ? '#bbaad6' : undefined"
-              :action="isAggregatableSlot(slot)"
-              :action-active="extraAggregationCount(slot) > 0"
-              :action-open="aggregationOpen && aggregationSlot === slot"
-              @select="selectMetric(slot)"
-              @action="openAggregation(slot, $event)">
-              <Icon :icon="availableSlots[slot].icon" class="tile-icon" />
+            <SelectionTile v-for="tile in category.tiles" :key="tile.id" class="tile-option"
+              :class="{ 'with-subtitle': !!tile.subtitle }"
+              :selected="selectedTileValues(tile, selected).length > 0"
+              :disabled="!selectedTileValues(tile, selected).length && !canSelectMetric(tile.defaultValue, selected, maxSlots)"
+              :accent-color="tile.color" :action="!!tile.sections?.length"
+              :action-active="selectedTileValues(tile, selected).some(value => value !== tile.defaultValue)"
+              :action-open="optionsOpen && optionsTile?.id === tile.id"
+              @select="selectTile(tile)" @action="openOptions(tile, $event)">
+              <Icon :icon="tile.icon" class="tile-icon" :style="{ color: tile.color }" />
               <span class="tile-text">
-                <span class="tile-label">{{ metricLabel(slot) }}</span>
-                <span v-if="availableSlots[slot].formula" class="tile-formula">{{ availableSlots[slot].formula }}</span>
+                <span class="tile-label">{{ tile.label }}</span>
+                <span v-if="tile.subtitle" class="tile-subtitle">{{ tile.subtitle }}</span>
               </span>
-              <span v-if="aggregationLabel(slot)" class="aggregation-value">
-                {{ aggregationLabel(slot) }}
-              </span>
+              <span v-if="selectionLabel(tile)" class="selection-value">{{ selectionLabel(tile) }}</span>
               <template #action>
                 <span class="dots"></span>
-                <span v-if="multiple && extraAggregationCount(slot)" class="aggregation-badge">
-                  {{ extraAggregationCount(slot) }}
+                <span v-if="multiple && selectedTileValues(tile, selected).length > 1" class="selection-badge">
+                  {{ selectedTileValues(tile, selected).length }}
                 </span>
               </template>
             </SelectionTile>
@@ -45,9 +41,8 @@
         </section>
       </div>
 
-      <VehicleAggregationPopover v-if="aggregationSlot !== null" v-model="aggregationOpen"
-        :metric="aggregationSlot" :target="aggregationTrigger" :selected :max-slots
-        @select="emit('select', $event)" />
+      <VehicleMetricOptionsPopover v-if="optionsTile" v-model="optionsOpen" :tile="optionsTile"
+        :target="optionsTrigger" :selected :max-slots @select="emit('select', $event)" />
     </template>
   </PanelPopover>
 </template>
@@ -61,8 +56,9 @@ import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
 import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import type { PlacementParam, PopoverTarget } from '@/shared/uiKit/popover/utils'
-import { availableSlots, baseSlot, defaultSlot, isAggregatableSlot, metricLabel, slotAggregationLabel, slotCategories, type AggregatableSlot, type BaseSlot, type Slot } from './vehicleMetrics'
-import VehicleAggregationPopover from './VehicleAggregationPopover.vue'
+import { availableSlots, metricCategories, type Slot } from './vehicleMetrics/vehicleMetrics'
+import { canSelectMetric, selectedTileValues, type MetricTile } from './utils/metricSelection'
+import VehicleMetricOptionsPopover from './metricOptions/VehicleMetricOptionsPopover.vue'
 
 const props = defineProps<{
   title: string
@@ -74,71 +70,52 @@ const props = defineProps<{
 }>()
 
 const open = defineModel<boolean>('open', { default: false })
-
 const emit = defineEmits<{
   select: [slot: Slot]
-  toggleMetric: [slot: BaseSlot]
+  toggleTile: [tile: MetricTile]
   clear: []
   reset: []
 }>()
 
-const aggregationOpen = ref(false)
-const aggregationSlot = ref<AggregatableSlot | null>(null)
-const aggregationTrigger = shallowRef<HTMLButtonElement | null>(null)
+const optionsOpen = ref(false)
+const optionsTile = shallowRef<MetricTile | null>(null)
+const optionsTrigger = shallowRef<HTMLButtonElement | null>(null)
 
 watch(open, isOpen => {
-  if (!isOpen) closeAggregation()
+  if (!isOpen) closeOptions()
 })
 
-function selectedAggregations(slot: BaseSlot) {
-  return props.selected.filter(selected => baseSlot(selected) === slot)
+function closeOptions() {
+  optionsOpen.value = false
 }
 
-function isSelected(slot: BaseSlot) {
-  return selectedAggregations(slot).length > 0
+function selectionLabel(tile: MetricTile) {
+  const values = selectedTileValues(tile, props.selected)
+  if (values.length > 1) return ''
+  return values.length ? availableSlots[values[0]].variantLabel : tile.idleLabel
 }
 
-function aggregationLabel(slot: BaseSlot) {
-  const selected = selectedAggregations(slot)
-  return selected.length === 1 ? slotAggregationLabel(selected[0]) : ''
-}
-
-function extraAggregationCount(slot: BaseSlot) {
-  return selectedAggregations(slot).filter(selected => selected !== defaultSlot(slot)).length
-}
-
-function openAggregation(slot: BaseSlot, event: MouseEvent) {
-  if (!isAggregatableSlot(slot)) return
-  if (aggregationOpen.value && aggregationSlot.value === slot) {
-    closeAggregation()
+function openOptions(tile: MetricTile, event: MouseEvent) {
+  if (optionsOpen.value && optionsTile.value?.id === tile.id) {
+    closeOptions()
     return
   }
 
-  aggregationTrigger.value = event.currentTarget as HTMLButtonElement
-  aggregationSlot.value = slot
-  aggregationOpen.value = true
+  optionsTile.value = tile
+  optionsTrigger.value = event.currentTarget as HTMLButtonElement
+  optionsOpen.value = true
 }
 
-function closeAggregation() {
-  aggregationOpen.value = false
-}
-
-function selectMetric(slot: BaseSlot) {
-  closeAggregation()
-  if (props.multiple) emit('toggleMetric', slot)
-  else emit('select', defaultSlot(slot))
+function selectTile(tile: MetricTile) {
+  closeOptions()
+  if (props.multiple) emit('toggleTile', tile)
+  else emit('select', tile.defaultValue)
 }
 
 function clearOrResetSelection() {
-  closeAggregation()
+  closeOptions()
   if (props.selected.length) emit('clear')
   else emit('reset')
-}
-
-function isDisabled(slot: Slot) {
-  if (props.maxSlots === undefined) return false
-  if (props.selected.includes(slot)) return false
-  return props.selected.length >= props.maxSlots
 }
 </script>
 
@@ -159,10 +136,6 @@ function isDisabled(slot: Slot) {
 
 .column-list {
   .category {
-    &.derived {
-      --panel-heading-color: #ece0ff;
-    }
-
     .tiles {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr));
@@ -172,12 +145,8 @@ function isDisabled(slot: Slot) {
         --selection-tile-main-padding: 2px 6px;
         --selection-tile-gap: 8px;
 
-        &.derived {
+        &.with-subtitle {
           --selection-tile-main-padding: 7px 6px;
-
-          .tile-icon {
-            color: #bbaad6;
-          }
         }
       }
 
@@ -194,13 +163,13 @@ function isDisabled(slot: Slot) {
         white-space: nowrap;
       }
 
-      .tile-formula {
+      .tile-subtitle {
         color: rgba(255, 255, 255, 0.45);
         font-size: 11px;
         line-height: 1.3;
       }
 
-      .aggregation-value {
+      .selection-value {
         flex: none;
         margin-left: auto;
         color: rgba(255, 255, 255, 0.55);
@@ -218,7 +187,7 @@ function isDisabled(slot: Slot) {
   }
 }
 
-.aggregation-badge {
+.selection-badge {
   position: absolute;
   top: calc(50% - 14px);
   right: 1px;

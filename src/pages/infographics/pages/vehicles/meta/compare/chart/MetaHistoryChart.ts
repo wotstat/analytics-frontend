@@ -9,7 +9,7 @@ import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksBy
 import type { Point } from '@/shared/uiKit/chart/universalChart/utils/Point'
 import type { VehicleHistoryPeriod } from '../../../shared/types'
 import { defaultVehicleStatisticsFromDay } from '../../../shared/vehicleStatisticsPeriod'
-import type { Slot } from '../../../vehicleMetricSelector/vehicleMetrics'
+import type { Slot } from '../../../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 import { formatMetaSlotValue } from '../../utils/format'
 
 type Series = { color: string, history: VehicleHistoryPeriod[] }

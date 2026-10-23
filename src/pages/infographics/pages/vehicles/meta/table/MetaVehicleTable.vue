@@ -12,7 +12,7 @@
         </span>
         <div class="heading-symbol">
           <EfficiencyIcon :icon="column.icon" class="icon" />
-          <span v-if="column.label" class="aggregation-label">{{ column.label }}</span>
+          <span v-if="column.label" class="aggregation-label" :style="{ color: column.headingColor }">{{ column.label }}</span>
         </div>
         <span v-if="column.sort" class="sort-marker" :class="{ ascending: column.sort.ascending }" />
       </div>
@@ -37,7 +37,7 @@ import { regionToGame } from '@/shared/game/domain/wot'
 import type { VehicleStatistics } from '../../shared/types'
 import MetaVehicleName from './MetaVehicleName.vue'
 import { formatMetaSlotValue } from '../utils/format'
-import { availableSlots, slotHeadingLabel, type Slot } from '../../vehicleMetricSelector/vehicleMetrics'
+import { availableSlots, slotHeadingLabel, type Slot } from '../../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 import type { SortOrder } from '../../vehicleListTable/useVehicleSorting'
 
 const props = defineProps<{ rows: VehicleStatistics[], slots: readonly Slot[], sort: readonly SortOrder[] }>()
@@ -47,6 +47,7 @@ const columns = computed(() => props.slots.map(slot => ({
   slot,
   icon: availableSlots[slot].icon,
   label: slotHeadingLabel(slot),
+  headingColor: availableSlots[slot].headingColor,
   sort: primarySort.value?.key === slot ? primarySort.value : undefined,
 })))
 const vehicleSort = computed(() => {

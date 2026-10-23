@@ -5,8 +5,8 @@ import type { TimeSeries } from '@/shared/ui/chart/timeSeries/chart/timeSeries'
 import { DAY } from '@/shared/ui/chart/timeSeries/utils/timeSeriesTime'
 import { movingAveragePoints } from '@/shared/ui/chart/timeSeries/utils/movingAverage'
 import type { VehicleHistoryPeriod, VehicleHistorySeries } from '../shared/types'
-import { availableSlots, type Slot } from '../vehicleMetricSelector/vehicleMetrics'
-import { formatSlotValue } from '../vehicleMetricSelector/formatMetricValue'
+import { availableSlots, type Slot } from '../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
+import { formatSlotValue } from '../vehicleMetricSelector/utils/formatMetricValue'
 import {
   historyDayStart, historyDayString, historyPeriodWindow, nextHistoryPeriod,
   type HistoryAverageWindow, type HistoryStep,
@@ -130,7 +130,7 @@ export class VehicleHistoryChart extends TimeSeriesChart<HistoryPoint> {
         periodStart: row.periodStart,
         periodEnd: historyDayString(end - DAY),
         step,
-        battles: row.battles,
+        battles: row.battles ?? null,
         slot,
       })
       previousStart = start

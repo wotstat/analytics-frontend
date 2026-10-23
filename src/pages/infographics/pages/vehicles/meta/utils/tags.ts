@@ -8,7 +8,7 @@ import type { CompactValue } from '@/shared/game/encoding/utils/types'
 import { romanNumberProcessor } from '@/shared/utils/processors/processors'
 import type { VehicleSelection } from '../../shared/vehicleGrouping'
 import type { SavedComparisonFilters, SavedComparisonSource } from '../../timeSeriesCompare/query/state'
-import { availableSlots, type Slot } from '../../vehicleMetricSelector/vehicleMetrics'
+import { availableSlots, type Slot } from '../../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 import { readVehiclesMetaParams, type VehiclesMetaParams } from './params'
 import type { VehiclesMetaCatalog } from './catalog'
 

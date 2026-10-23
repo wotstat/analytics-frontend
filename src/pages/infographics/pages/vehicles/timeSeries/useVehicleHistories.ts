@@ -4,7 +4,7 @@ import type { VehicleFilters } from '../filters/types'
 import type { VehicleSelection } from '../shared/vehicleGrouping'
 import type { VehicleHistoryPeriod } from '../shared/types'
 import { VEHICLE_STATISTICS_QUERY_OPTIONS } from '../shared/vehicleStatisticsQuery'
-import type { Slot } from '../vehicleMetricSelector/vehicleMetrics'
+import type { Slot } from '../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 import type { HistoryStep } from './period/historyStep'
 import type { VehicleHistorySplit } from './split/historySplit'
 import { vehicleHistoryQueries, type VehicleHistoryQueries } from './vehicleHistoryQuery'
@@ -39,7 +39,6 @@ export function useVehicleHistories(sources: MaybeRefOrGetter<readonly HistorySo
       ...VEHICLE_STATISTICS_QUERY_OPTIONS,
       cache: policy,
       allowCache: true,
-      format: 'JSONCompact',
       abortSignal: controller.signal,
       concurrency,
     }).then(({ data, cacheExpiresAt }) => {
@@ -63,7 +62,7 @@ export function useVehicleHistories(sources: MaybeRefOrGetter<readonly HistorySo
       if (!metrics) return null
       const byKey = new Map(metrics.map(row => [rowKey(row), row]))
       for (const row of base) {
-        rows.push({ ...row, ...byKey.get(rowKey(row)), battles: row.battles ?? 0, playerCount: row.playerCount ?? 0 })
+        rows.push({ ...row, ...byKey.get(rowKey(row)) })
       }
     }
     return rows

@@ -6,14 +6,15 @@
 
   <VehicleSlotOptions v-model:open="open" :target="trigger"
     :placement="['bottom-end', 'bottom-float', 'top-end', 'left-float', 'top-end']" title="Выбор столбцов" :selected
-    :max-slots="maxSlots" multiple @select="toggle" @toggle-metric="toggleMetric"
+    :max-slots="maxSlots" multiple @select="toggle" @toggle-tile="toggleTile"
     @clear="selected = []" @reset="reset" />
 </template>
 
 <script setup lang="ts">
 import { useTemplateRef } from 'vue'
 import VehicleSlotOptions from '../../vehicleMetricSelector/VehicleSlotOptions.vue'
-import { baseSlot, defaultSlot, defaultSlots, orderSlots, type BaseSlot, type Slot } from '../../vehicleMetricSelector/vehicleMetrics.ts'
+import { defaultSlots, orderSlots, type Slot } from '../../vehicleMetricSelector/vehicleMetrics/vehicleMetrics.ts'
+import { toggleMetricTile, type MetricTile } from '../../vehicleMetricSelector/utils/metricSelection'
 
 const props = defineProps<{ maxSlots: number }>()
 const selected = defineModel<Slot[]>({ required: true })
@@ -30,10 +31,8 @@ function toggle(slot: Slot) {
   if (selected.value.length < props.maxSlots) selected.value = orderSlots([...selected.value, slot])
 }
 
-function toggleMetric(slot: BaseSlot) {
-  if (selected.value.some(item => baseSlot(item) === slot)) {
-    selected.value = selected.value.filter(item => baseSlot(item) !== slot)
-  } else toggle(defaultSlot(slot))
+function toggleTile(tile: MetricTile) {
+  selected.value = orderSlots(toggleMetricTile(tile, selected.value, props.maxSlots))
 }
 
 function reset() {
@@ -54,7 +53,6 @@ function reset() {
   background: rgba(255, 255, 255, 0.05);
   color: inherit;
   font-size: 14px;
-  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 
   &.double-digit-limit {

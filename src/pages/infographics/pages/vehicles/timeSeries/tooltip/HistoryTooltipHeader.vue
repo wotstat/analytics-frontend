@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import { availableSlots } from '../../vehicleMetricSelector/vehicleMetrics'
+import { availableSlots } from '../../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 import { formatStatisticsDay } from '../../shared/formatStatisticsDay'
 import { formatHistoryPeriod, formatHistoryWeekday } from './formatHistoryPeriod'
 import type { VehicleHistoryHit } from '../VehicleHistoryChart'

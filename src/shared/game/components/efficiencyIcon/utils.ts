@@ -7,7 +7,10 @@ export const shared = [
   'win',
   'solo',
   'platoon',
-  'stronghold'
+  'stronghold',
+
+  'mastery-1', 'mastery-2', 'mastery-3', 'mastery-m', 'mastery-percent',
+  'moe-1', 'moe-2', 'moe-3', 'moe-4', 'moe-percent'
 ] as const
 
 export const efficiency = [
