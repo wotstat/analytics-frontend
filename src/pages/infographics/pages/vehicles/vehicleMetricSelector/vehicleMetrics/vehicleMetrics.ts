@@ -5,6 +5,7 @@ import { sampleExpressions } from '../../shared/metricData/battle/expressions'
 import type { MetricCatalogSection, MetricCategory, MetricDefinition, MetricCatalogEntry, MetricTileDefinition } from '../utils/metricTypes'
 
 const derivedColor = '#bbaad6'
+const gameApiHelpText = 'Данные получены напрямую из игры и не связаны с модом. Показатели общие и не зависят от фильтров боёв (режима, карты, взвода и т. д.).'
 
 function average(column: string) {
   const valueCount = column === 'stunDuration'
@@ -155,7 +156,8 @@ const metricCatalog = [
     ],
   },
   {
-    title: 'Знаки классности', color: '#e4bf78', entries: [
+    title: 'Знаки классности', color: '#e4bf78', note: 'Данные из API игры', helpText: gameApiHelpText,
+    entries: [
       snapshotMetrics('mastery', {
         label: 'Знак классности', color: '#e4bf78', headingColor: '#ffc45c', icon: 'mastery-percent',
         tables: { history: 'MasteryInfo', latest: 'MasteryInfoLatest' },
@@ -172,7 +174,8 @@ const metricCatalog = [
     ],
   },
   {
-    title: 'Отметки на стволах орудий', color: '#7dcec0', entries: [
+    title: 'Отметки на стволах орудий', color: '#7dcec0', note: 'Данные из API игры', helpText: gameApiHelpText,
+    entries: [
       snapshotMetrics('marks', {
         label: 'Отметка', color: '#7dcec0', headingColor: '#52ddc6', icon: 'moe-percent',
         tables: { history: 'MoeInfo', latest: 'MoeInfoLatest' },

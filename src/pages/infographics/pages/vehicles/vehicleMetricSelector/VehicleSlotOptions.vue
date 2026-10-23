@@ -14,7 +14,14 @@
       <div class="column-list">
         <section v-for="category in metricCategories" :key="category.title" class="category panel-section"
           :style="{ '--panel-heading-color': category.color }">
-          <h3>{{ category.title }}</h3>
+          <h3 class="category-heading">
+            <span>{{ category.title }}</span>
+            <span v-if="category.note || category.helpText" class="category-details">
+              <span v-if="category.note">{{ category.note }}</span>
+              <span v-if="category.helpText" class="category-help"
+                v-tooltip="{ text: category.helpText, disabled: !open, placement: ['top-float', 'bottom-float', 'left-float'] }">?</span>
+            </span>
+          </h3>
           <div class="tiles">
             <SelectionTile v-for="tile in category.tiles" :key="tile.id" class="tile-option"
               :class="{ 'with-subtitle': !!tile.subtitle }"
@@ -136,6 +143,39 @@ function clearOrResetSelection() {
 
 .column-list {
   .category {
+    .category-heading {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 12px;
+    }
+
+    .category-details {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+      color: rgba(255, 255, 255, 0.55);
+      font-size: 12px;
+      font-weight: 400;
+
+    }
+
+    .category-help {
+      display: inline-flex;
+      flex: none;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      font-size: 11px;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      font-weight: bold;
+      border-radius: 50%;
+      cursor: help;
+    }
+
     .tiles {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr));

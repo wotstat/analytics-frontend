@@ -41,9 +41,16 @@ export type MetricTileDefinition<Key extends string = string> = Pick<MetricPrese
   sections?: readonly MetricOptionSection<Key>[]
 }
 
-export type MetricCategory<Key extends string = string> = { title: string, color?: string, tiles: readonly MetricTileDefinition<Key>[] }
+export type MetricGroupPresentation = {
+  title: string
+  color?: string
+  note?: string
+  helpText?: string
+}
+
+export type MetricCategory<Key extends string = string> = MetricGroupPresentation & { tiles: readonly MetricTileDefinition<Key>[] }
 export type MetricCatalogEntry<Key extends string = string> = {
   metrics: Record<Key, MetricDefinition>
   tiles: readonly MetricTileDefinition<Key>[]
 }
-export type MetricCatalogSection = { title: string, color?: string, entries: readonly MetricCatalogEntry[] }
+export type MetricCatalogSection = MetricGroupPresentation & { entries: readonly MetricCatalogEntry[] }
