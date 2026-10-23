@@ -4,7 +4,7 @@ import type { MetricDateField, MetricDefinition, MetricCatalogEntry, MetricHisto
 const history: MetricHistory = { splits: [], battleSample: false, outages: false }
 
 type SnapshotDefinition<Percentile extends number> = Pick<MetricPresentation, 'icon' | 'label' | 'color' | 'headingColor'> & {
-  table: string
+  tables: { history: string, latest: string }
   percentiles: readonly Percentile[]
   icons?: Partial<Record<Percentile, MetricPresentation['icon']>>
   presets: readonly { percentile: Percentile, label: string }[]
@@ -18,6 +18,8 @@ export function snapshotMetrics<const Key extends string, const Percentile exten
   const updatedDayField: MetricDateField = `${key}UpdatedDay`
   const { icon, color, headingColor } = definition
   const values = definition.percentiles.map(valueKey)
+  const data = snapshotMetricData(key, definition.tables,
+    definition.percentiles.map(percentile => ({ key: valueKey(percentile), column: `p${percentile}` })), updatedDayField)
 
   const metrics = Object.fromEntries(definition.percentiles.map(percentile => {
     const value = valueKey(percentile)
@@ -26,7 +28,7 @@ export function snapshotMetrics<const Key extends string, const Percentile exten
     return [value, {
       icon: definition.icons?.[percentile] ?? icon, color, headingColor, label: `${definition.label} · ${label}`,
       headingLabel: `${percentile}%`, variantLabel: `${percentile}%`,
-      data: snapshotMetricData(value, definition.table, `p${percentile}`, updatedDayField),
+      data: data[value],
       updatedDayField, history,
     } satisfies MetricDefinition]
   })) as Record<Value, MetricDefinition>

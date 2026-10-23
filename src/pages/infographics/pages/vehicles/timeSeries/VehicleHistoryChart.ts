@@ -51,7 +51,12 @@ export class VehicleHistoryChart extends TimeSeriesChart<HistoryPoint> {
       this.labelSlot = slot
     }
 
-    const key = JSON.stringify([slot, today, step])
+    // Готовые данные за сегодняшний день занимают полный интервал на оси.
+    const until = Math.max(historyDayStart(today), ...series.flatMap(item => {
+      const last = item.history.at(-1)
+      return last ? [nextHistoryPeriod(historyDayStart(last.periodStart), step)] : []
+    }))
+    const key = JSON.stringify([slot, until, step])
     const tags = new Set(series.map(item => item.tag))
     for (const tag of this.historyPoints.keys()) {
       if (!tags.has(tag)) this.historyPoints.delete(tag)
@@ -65,7 +70,7 @@ export class VehicleHistoryChart extends TimeSeriesChart<HistoryPoint> {
       }
 
       if (item.enabled !== false) {
-        cached.rawPoints ??= this.preparePoints(item.history, slot, today, step)
+        cached.rawPoints ??= this.preparePoints(item.history, slot, until, step)
         if (cached.points === null || cached.averageWindow !== averageWindow) {
           cached.points = averageWindow === null ? cached.rawPoints : movingAveragePoints(cached.rawPoints, averageWindow)
           cached.averageWindow = averageWindow
@@ -81,7 +86,7 @@ export class VehicleHistoryChart extends TimeSeriesChart<HistoryPoint> {
       this.viewport.update({
         range: {
           minX: Math.min(...starts, historyDayStart('2024-01-01')),
-          maxX: historyDayStart(today),
+          maxX: until,
         },
         minWindow: minimumTimeSeriesWindow(step),
         resetKey: step,
@@ -112,16 +117,15 @@ export class VehicleHistoryChart extends TimeSeriesChart<HistoryPoint> {
     this.annotationLayer.setAnnotations(historyChartAnnotations(this.historyAnnotations, this.outagesVisible))
   }
 
-  private preparePoints(history: VehicleHistoryPeriod[], slot: Slot, today: string, step: HistoryStep) {
+  private preparePoints(history: VehicleHistoryPeriod[], slot: Slot, until: number, step: HistoryStep) {
     const points: (HistoryPoint | null)[] = []
     let previousStart: number | null = null
-    const todayStart = historyDayStart(today)
 
     for (const row of history) {
       const value = row[slot] ?? null
       if (value === null || !Number.isFinite(value)) continue
 
-      const { start, end } = historyPeriodWindow(row.periodStart, step, todayStart)
+      const { start, end } = historyPeriodWindow(row.periodStart, step, until)
       // Пропуски до четырёх дней соединяем без новых точек, более длинные оставляем разрывами.
       if (previousStart !== null && start - nextHistoryPeriod(previousStart, step) > 4 * DAY) points.push(null)
       points.push({

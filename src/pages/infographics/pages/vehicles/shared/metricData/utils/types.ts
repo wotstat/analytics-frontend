@@ -27,9 +27,13 @@ export type MetricHistoryContext = {
   split: VehicleHistorySplit | null
 }
 
-// Один объект на группу совместной загрузки, независимо от числа плиток и выбранных вариантов.
-export type MetricData = {
+// Один объект на группу совместной загрузки столбцов, независимо от плиток и вариантов истории.
+export type MetricColumnData = {
   key: string
-  column?: (context: MetricColumnContext) => MetricQuery | null
+  query: (context: MetricColumnContext) => MetricQuery | null
+}
+
+export type MetricData = {
+  column?: MetricColumnData
   history: (context: MetricHistoryContext) => MetricHistoryQuery[]
 }

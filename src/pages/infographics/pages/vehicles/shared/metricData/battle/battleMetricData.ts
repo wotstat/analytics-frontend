@@ -6,14 +6,17 @@ import { sampleExpressions, type StatisticExpressions } from './expressions'
 export function battleMetricData(key: string, expressions: StatisticExpressions): MetricData {
   const sampleOnly = Object.keys(expressions).every(metric => metric in sampleExpressions)
   const history: MetricData['history'] = context => battleHistoryQueries(context, expressions, sampleOnly)
-  if (sampleOnly) return { key, history }
+  if (sampleOnly) return { history }
 
   return {
-    key, history,
-    column: context => {
-      const sql = battleColumnQuery(context, expressions)
-      if (!sql) return null
-      return { sql, cache: { ttl: 7 * 24 * 60 * 60 } }
+    history,
+    column: {
+      key,
+      query: context => {
+        const sql = battleColumnQuery(context, expressions)
+        if (!sql) return null
+        return { sql, cache: { ttl: 7 * 24 * 60 * 60 } }
+      },
     },
   }
 }

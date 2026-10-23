@@ -1,10 +1,10 @@
-import { onScopeDispose, shallowRef, toValue, watch, type MaybeRefOrGetter } from 'vue'
+import { computed, onScopeDispose, shallowRef, toValue, watch, type MaybeRefOrGetter } from 'vue'
 import { createConcurrencyGroup, createQueryCache, error, loading, query, success, type CachePolicy, type Status } from '@/db'
 import type { MetricDateField } from '../vehicleMetricSelector/utils/metricTypes'
 import type { VehicleStatistics } from '../shared/types'
 import { availableSlots, type Slot } from '../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 import { VEHICLE_STATISTICS_QUERY_OPTIONS, type VehicleStatisticsQueries } from '../shared/vehicleStatisticsQuery'
-import type { MetricQuery } from '../shared/metricData/utils/types'
+import type { MetricColumnData, MetricQuery } from '../shared/metricData/utils/types'
 
 type ColumnValues = Pick<VehicleStatistics, 'rowKey'> & Partial<Record<MetricDateField, string>> & Partial<Record<Slot, number | null>>
 
@@ -22,6 +22,14 @@ export function useVehicleTableStatistics(
   const cache = createQueryCache<unknown[]>()
   const requests = new Map<string, { controller: AbortController, promise: Promise<unknown[]> }>()
   const concurrency = createConcurrencyGroup(1)
+  const columnGroups = computed(() => {
+    const groups = new Map<string, MetricColumnData>()
+    for (const slot of toValue(slots)) {
+      const column = availableSlots[slot].data.column
+      if (column) groups.set(column.key, column)
+    }
+    return [...groups.values()]
+  })
 
   function load<T>(sql: string, policy: CachePolicy = VEHICLE_STATISTICS_QUERY_OPTIONS.cache): Promise<T[]> {
     const cached = cache.get(sql)
@@ -52,10 +60,7 @@ export function useVehicleTableStatistics(
 
   const stop = watch([
     () => toValue(queries),
-    () => [...new Set(toValue(slots)
-      .map(slot => availableSlots[slot].data)
-      .filter(data => data.column)
-      .map(data => data.key))].sort().join(','),
+    () => columnGroups.value.map(group => group.key).sort().join(','),
     () => toValue(onlyActual),
     () => toValue(retry),
   ], async ([plan, , actualOnly], [previousPlan], onCleanup) => {
@@ -68,10 +73,7 @@ export function useVehicleTableStatistics(
       result.value = { status: loading, data: [], progress: { completed: 0, total: 0 } }
     }
 
-    const selected = [...new Map(toValue(slots).map(slot => {
-      const data = availableSlots[slot].data
-      return [data.key, data] as const
-    })).values()].filter(data => data.column)
+    const selected = columnGroups.value
     const bases = actualOnly ? [plan.actual] : [plan.actual, plan.inactive]
     const planned = new Set<string>()
     const completed = new Set<string>()

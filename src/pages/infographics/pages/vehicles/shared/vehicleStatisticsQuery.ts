@@ -3,7 +3,7 @@ import type { VehicleFilters } from '../filters/types'
 import type { VehicleGrouping, VehicleSelection } from './vehicleGrouping'
 import type { VehicleStatisticsPeriod } from './vehicleStatisticsPeriod'
 import type { VehicleStatistics } from './types'
-import type { MetricData } from './metricData/utils/types'
+import type { MetricColumnData } from './metricData/utils/types'
 import { battleRowQueries } from './metricData/battle/tableQueries'
 
 export const VEHICLE_STATISTICS_QUERY_OPTIONS = {
@@ -22,7 +22,7 @@ export function vehicleStatisticsQueries(filters: VehicleFilters, grouping: Vehi
   const context = { filters, grouping, days, selection, beforeDay }
   return {
     ...battleRowQueries(context),
-    column: (data: MetricData, rows: readonly VehicleStatistics[]) => data.column?.({ ...context, rows }) ?? null,
+    column: (data: MetricColumnData, rows: readonly VehicleStatistics[]) => data.query({ ...context, rows }),
   }
 }
 

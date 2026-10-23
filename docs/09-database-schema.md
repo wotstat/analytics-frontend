@@ -962,7 +962,7 @@
 
 ### Отметки и мастерство
 
-Схема проверена 21 октября 2026. Публичный API игры наполняет две независимые таблицы:
+Схема проверена 23 октября 2026. Публичный API игры наполняет две независимые таблицы:
 
 | Таблица | Поля планок |
 | --- | --- |
@@ -977,13 +977,26 @@
 запрашивает распределения `xp` и `damage`; `MoeInfo.p0` он не передаёт, поэтому это
 нулевая опорная планка по умолчанию, а не отдельно полученный процентиль API.
 
-`Event_OnMoeInfo` → `MoeInfoLatest` / `GameMoeInfo` — отдельная устаревшая цепочка событий мода.
-`MoeInfoLatest` (`ReplacingMergeTree`, ключ `region, vehicleTag`) содержит `latestDateTime`,
+Для таблицы техники используются `MasteryInfoLatest` и `MoeInfoLatest`: `ReplacingMergeTree(version)`
+с ключом `(region, tag)`, без партиционирования. Сохраняют все обычные поля соответствующего API-источника;
+`region` и `tag` имеют тип `LowCardinality(String)`. Материализованный `version UInt64` упаковывает
+Unix timestamps `(updatedAt, dateTime)` в старшие/младшие 32 бита. Чтение с `FINAL` даёт целый последний
+снимок независимо от завершения фонового слияния. MV `mastery_info_latest_mv` и `moe_info_latest_mv`
+переносят новые API-снимки; история графиков остаётся в исходных таблицах.
+
+[SQL-миграция](sql/vehicle-api-latest.sql) выполнена владельцем БД и проверена 23 октября 2026.
+Обе API-витрины заполнены, значения и даты совпадают с последними снимками исходных таблиц.
+Старая событийная `MoeInfoLatest` переименована в `GameMoeInfoLatest`, её MV пересоздана
+как `game_moe_info_latest_mv`. Роль `public_reader`, общая для `public` и `internal-public`,
+имеет `SELECT` на обе API-витрины и сохранённую событийную таблицу.
+
+`Event_OnMoeInfo` → `GameMoeInfoLatest` / `GameMoeInfo` — отдельная устаревшая цепочка событий мода после миграции.
+`GameMoeInfoLatest` (`ReplacingMergeTree`, ключ `region, vehicleTag`) содержит `latestDateTime`,
 `battleCount` и планки `p0/p20/p40/p55/p65/p75/p85/p95/p100`.
 `GameMoeInfo` (`AggregatingMergeTree`, ключ `region, vehicleTag, dateTime`) хранит историю
 с `battleCount` и теми же планками как `SimpleAggregateFunction(max, …)`.
-Статистика техники использует именно `MasteryInfo` и `MoeInfo`; исторические события
-планируется позднее перенести в `MoeInfo` через backfill.
+Статистика техники использует API-источники: Latest для таблицы, `MasteryInfo` и `MoeInfo` для истории;
+исторические события планируется позднее перенести в `MoeInfo` через backfill.
 
 ### Онлайн и события
 

@@ -155,10 +155,11 @@ const metricCatalog = [
     ],
   },
   {
-    title: 'Планки знаков классности', color: '#e4bf78', entries: [
+    title: 'Знаки классности', color: '#e4bf78', entries: [
       snapshotMetrics('mastery', {
         label: 'Знак классности', color: '#e4bf78', headingColor: '#ffc45c', icon: 'mastery-percent',
-        table: 'MasteryInfo', percentiles: [1, 5, 10, 25, 50, 75, 80, 90, 95, 99, 100],
+        tables: { history: 'MasteryInfo', latest: 'MasteryInfoLatest' },
+        percentiles: [1, 5, 10, 25, 50, 75, 80, 90, 95, 99, 100],
         icons: { 50: 'mastery-3', 80: 'mastery-2', 95: 'mastery-1', 99: 'mastery-m' },
         presets: [
           { percentile: 50, label: 'III степень' },
@@ -171,15 +172,16 @@ const metricCatalog = [
     ],
   },
   {
-    title: 'Планки отметок на орудии', color: '#7dcec0', entries: [
+    title: 'Отметки на стволах орудий', color: '#7dcec0', entries: [
       snapshotMetrics('marks', {
-        label: 'Отметки', color: '#7dcec0', headingColor: '#52ddc6', icon: 'moe-percent',
-        table: 'MoeInfo', percentiles: [0, 20, 40, 55, 65, 75, 85, 95, 100],
+        label: 'Отметка', color: '#7dcec0', headingColor: '#52ddc6', icon: 'moe-percent',
+        tables: { history: 'MoeInfo', latest: 'MoeInfoLatest' },
+        percentiles: [0, 20, 40, 55, 65, 75, 85, 95, 100],
         icons: { 65: 'moe-1', 85: 'moe-2', 95: 'moe-3', 100: 'moe-4' },
         presets: [
-          { percentile: 65, label: 'Первая отметка' },
-          { percentile: 85, label: 'Вторая отметка' },
-          { percentile: 95, label: 'Третья отметка' },
+          { percentile: 65, label: 'Первая' },
+          { percentile: 85, label: 'Вторая' },
+          { percentile: 95, label: 'Третья' },
         ],
         defaultPercentile: 100,
       })
