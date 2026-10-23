@@ -45,7 +45,7 @@
             <div class="space flex-1"></div>
             <div class="reset-container" :class="{ 'disabled': !canReset }">
               <ToolbarButton class="reset" :icon="Reload" variant="round" :disabled="!canReset" @click="reset" />
-              <div class="vr"></div>
+              <div class="vr" v-if="!props.game"></div>
             </div>
           </div>
         </div>
