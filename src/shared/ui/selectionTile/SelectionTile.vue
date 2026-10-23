@@ -1,10 +1,10 @@
 <template>
   <div class="selection-tile" :class="{ selected, disabled, compact: density === 'compact' }"
     :style="{ '--selection-tile-accent': accentColor }">
-    <button class="selection-tile__main" type="button" :disabled @click="emit('select', $event)">
+    <button class="main" type="button" :disabled @click="emit('select', $event)">
       <slot />
     </button>
-    <button v-if="action" class="selection-tile__action" type="button" :disabled
+    <button v-if="action" class="action" type="button" :disabled
       :class="{ active: actionActive, open: actionOpen }"
       @click="emit('action', $event)">
       <slot name="action" />
@@ -79,67 +79,67 @@ const emit = defineEmits<{
       background: rgba(255, 255, 255, 0.12);
     }
   }
-}
 
-.selection-tile__main {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  justify-content: var(--selection-tile-justify-content, flex-start);
-  gap: var(--selection-tile-gap, 0px);
-  min-width: 0;
-  min-height: var(--selection-tile-min-height);
-  padding: var(--selection-tile-main-padding);
-  background: transparent;
-  color: inherit;
-  text-align: left;
-  font-size: var(--selection-tile-font-size);
-  line-height: 1.2;
-  user-select: none;
-}
-
-.selection-tile__action {
-  --selection-tile-action-color: rgba(197, 197, 197, 0.6);
-
-  position: relative;
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: var(--selection-tile-action-width, 30px);
-  padding: 0;
-  background: transparent;
-  color: var(--selection-tile-action-color);
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 24px;
-    height: 24px;
-    border-radius: 5px;
-    pointer-events: none;
-    transform: translate(-50%, -50%);
+  .main {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: var(--selection-tile-justify-content, flex-start);
+    gap: var(--selection-tile-gap, 0px);
+    min-width: 0;
+    min-height: var(--selection-tile-min-height);
+    padding: var(--selection-tile-main-padding);
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    font-size: var(--selection-tile-font-size);
+    line-height: 1.2;
+    user-select: none;
   }
 
-  &:hover:not(:disabled),
-  &.open {
-    color: color-mix(in srgb, var(--selection-tile-action-color) 80%, white);
+  .action {
+    --selection-tile-action-color: rgba(197, 197, 197, 0.6);
+
+    position: relative;
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: var(--selection-tile-action-width, 30px);
+    padding: 0;
+    background: transparent;
+    color: var(--selection-tile-action-color);
 
     &::before {
-      background: rgba(255, 255, 255, 0.08);
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 24px;
+      height: 24px;
+      border-radius: 5px;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
     }
-  }
 
-  &.active {
-    --selection-tile-action-color: var(--selection-tile-accent, var(--blue-thin-color));
+    &:hover:not(:disabled),
+    &.open {
+      color: color-mix(in srgb, var(--selection-tile-action-color) 80%, white);
 
-    &::before {
-      background: color-mix(in srgb, var(--selection-tile-accent, var(--blue-thin-color)) 12%, transparent);
+      &::before {
+        background: rgba(255, 255, 255, 0.08);
+      }
     }
 
-    &:hover:not(:disabled)::before {
-      background: color-mix(in srgb, var(--selection-tile-accent, var(--blue-thin-color)) 22%, transparent);
+    &.active {
+      --selection-tile-action-color: var(--selection-tile-accent, var(--blue-thin-color));
+
+      &::before {
+        background: color-mix(in srgb, var(--selection-tile-accent, var(--blue-thin-color)) 12%, transparent);
+      }
+
+      &:hover:not(:disabled)::before {
+        background: color-mix(in srgb, var(--selection-tile-accent, var(--blue-thin-color)) 22%, transparent);
+      }
     }
   }
 }

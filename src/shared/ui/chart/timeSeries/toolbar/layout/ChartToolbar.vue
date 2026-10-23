@@ -1,9 +1,9 @@
 <template>
   <div class="chart-toolbar" :class="{ compact: density === 'compact', 'has-left': $slots.left }">
-    <div v-if="$slots.left" class="chart-toolbar__left">
+    <div v-if="$slots.left" class="left">
       <slot name="left" />
     </div>
-    <div class="chart-toolbar__controls">
+    <div class="controls">
       <slot />
     </div>
   </div>
@@ -26,31 +26,31 @@ withDefaults(defineProps<{ density?: 'standard' | 'compact' }>(), { density: 'st
   flex-wrap: var(--toolbar-group-wrap);
   min-width: 0;
 
-  &__left {
+  .left {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     min-width: 0;
   }
 
-  &__controls {
+  .controls {
     display: flex;
     align-items: center;
     flex-wrap: var(--toolbar-group-wrap);
     gap: 8px;
     min-width: 0;
+
+    > :deep(.toolbar-group + .toolbar-group)::before {
+      content: '';
+      flex: none;
+      height: 14px;
+      border-left: 1px solid var(--toolbar-divider-color);
+      margin: var(--toolbar-divider-margin);
+    }
   }
 
-  &.has-left .chart-toolbar__controls {
+  &.has-left .controls {
     margin-left: auto;
-  }
-
-  .chart-toolbar__controls > :deep(.toolbar-group + .toolbar-group)::before {
-    content: '';
-    flex: none;
-    height: 14px;
-    border-left: 1px solid var(--toolbar-divider-color);
-    margin: var(--toolbar-divider-margin);
   }
 
   &.compact {
@@ -62,7 +62,7 @@ withDefaults(defineProps<{ density?: 'standard' | 'compact' }>(), { density: 'st
   }
 
   @media (max-width: 600px) {
-    &.has-left .chart-toolbar__controls {
+    &.has-left .controls {
       margin-left: 0;
     }
   }
