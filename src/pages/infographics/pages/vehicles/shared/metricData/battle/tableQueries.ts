@@ -2,6 +2,7 @@ import type { MetricColumnContext, MetricTableContext } from '../utils/types'
 import { quote } from '../../utils/sql'
 import { vehicleDailyStatisticsTable, vehicleSelectionWhere, vehicleStatisticsWhere } from './filters'
 import { sampleExpressions, selectExpressions, type StatisticExpressions } from './expressions'
+import { vehicleGroupingSql } from '../utils/groupingSql'
 
 function tableLayout({ filters, grouping, selection }: MetricTableContext) {
   const isTank = grouping === 'tanks'
@@ -10,17 +11,8 @@ function tableLayout({ filters, grouping, selection }: MetricTableContext) {
 
   const withLevel = grouping === 'levels' || grouping === 'classesByLevel'
   const withType = grouping === 'classes' || grouping === 'classesByLevel'
-  const dimensions = isTank ? ['stats.tankTag'] : [
-    ...(withLevel ? ['stats.tankLevel'] : []),
-    ...(withType ? ['stats.tankType'] : []),
-  ]
-  const groupBy = dimensions.join(', ')
-  const keys = isTank ? ['tankTag'] : [
-    ...(withLevel ? ['tankLevel'] : []),
-    ...(withType ? ['tankType'] : []),
-  ]
+  const { groupBy, keys, rowKey } = vehicleGroupingSql(grouping)
   const selectionFilter = vehicleSelectionWhere(isTank ? undefined : selection)
-  const rowKey = isTank ? 'stats.tankTag' : `concat(${quote(`${grouping}:`)}, ${dimensions.map(column => `toString(${column})`).join(", ':', ")})`
 
   return { isTank, daily, table, withLevel, withType, groupBy, keys, selectionFilter, rowKey }
 }

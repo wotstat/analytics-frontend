@@ -1,4 +1,4 @@
-import { snapshotMetricData } from '../../shared/metricData/snapshotMetricData'
+import { snapshotMetricData } from '../../shared/metricData/snapshotMetricData/snapshotMetricData'
 import type { MetricDateField, MetricDefinition, MetricCatalogEntry, MetricHistory, MetricPresentation, MetricTileDefinition } from '../utils/metricTypes'
 
 const history: MetricHistory = { splits: [], battleSample: false, outages: false }

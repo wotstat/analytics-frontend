@@ -39,9 +39,36 @@
   <section class="data-source">
     <h5>Источник данных</h5>
     <p>
-      Учитываются все участники боёв, в которых хотя бы один игрок использовал мод WotStat. Бои с несколькими игроками с
-      модом учитываются один раз. Планки знаков классности и отметок на орудии загружаются отдельно из публичного API игры.
+      Учитываются все участники боёв, в которых хотя бы один игрок использовал мод WotStat. Бои в которых участвуют
+      несколько игроков с модом <b>учитываются один раз</b>.
     </p>
+
+    <template v-if="hasSnapshotColumns">
+      <h5>Планки отметок и знаков классности</h5>
+      <p>
+        Планки знаков классности и отметок на орудии загружаются отдельно из публичного API игры.
+        В таблице отображаются последние доступные, период 1/7/30 дней на них не влияет.
+        Планка общие на всю игру и не зависят от фильтров боя (режим/карта/взвод/результат/уровень).
+      </p>
+
+      <template v-if="grouping !== 'tanks'">
+        <h5>
+          Планки при группировке по {{
+            {
+              'levels': 'уровню',
+              'classes': 'типу',
+              'classesByLevel': 'Типу по уровню'
+            }[grouping]
+          }}
+        </h5>
+
+        <p>
+          Планки отображают среднее по группе взвешенное по числу боёв танка. То есть <b>более популярные танки сильнее
+            влияют на результат</b>. Фильтры определяют состав группы и веса танков
+          <i>(танк может быть популярен в одном режиме, но непопулярен в другом)</i>.
+        </p>
+      </template>
+    </template>
   </section>
 </template>
 
@@ -51,7 +78,7 @@ import { useVehicleComparison } from './timeSeriesCompare/useVehicleComparison'
 import { computed, ref } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import VehicleListTable from './vehicleListTable/VehicleListTable.vue'
-import type { Slot } from './vehicleMetricSelector/vehicleMetrics/vehicleMetrics.ts'
+import { availableSlots, type Slot } from './vehicleMetricSelector/vehicleMetrics/vehicleMetrics.ts'
 import VehicleFilters from './filters/VehicleFilters.vue'
 import { useVehicleQueryStorage } from './filters/useVehicleQueryStorage'
 import { vehicleStatisticsQueries } from './shared/vehicleStatisticsQuery'
@@ -65,6 +92,7 @@ useBackground(VehiclesBackground)
 
 const { filters, localFilters, search, grouping, period, slots, sort } = useVehicleQueryStorage()
 const visibleSlots = ref<Slot[]>([])
+const hasSnapshotColumns = computed(() => visibleSlots.value.some(slot => availableSlots[slot].updatedDayField !== undefined))
 
 const comparison = useVehicleComparison(filters)
 
@@ -98,6 +126,14 @@ const statistics = useVehicleTableStatistics(queries, statisticsSlots, onlyActua
     line-height: 1.4;
     font-weight: 600;
     color: rgba(255, 255, 255, 0.9);
+
+    &:not(:first-child) {
+      margin-top: 16px;
+    }
+  }
+
+  p+p {
+    margin-top: 8px;
   }
 }
 </style>
