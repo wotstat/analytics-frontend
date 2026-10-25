@@ -31,8 +31,8 @@
 
     <p class="debug-note">
       Приоритет placement: <b>модификатор → значение → опции директивы</b>. Последняя кнопка ряда это и проверяет:
-      карточка обязана оказаться слева, а не снизу. В docs/05-ui-kit.md ни модификаторы, ни этот приоритет не
-      описаны — список модификаторов есть только в типе <span class="debug-value">TooltipModifier</span>:
+      карточка обязана оказаться слева, а не снизу. Список модификаторов задан в типе
+      <span class="debug-value">TooltipModifier</span>:
       <span class="debug-value">instant</span>, <span class="debug-value">interactive</span> и все 24 варианта
       placement, включая <span class="debug-value">-float</span>.
     </p>

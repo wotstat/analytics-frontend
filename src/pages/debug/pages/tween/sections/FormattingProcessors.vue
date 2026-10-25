@@ -173,10 +173,9 @@
     </table>
 
     <p class="debug-note">
-      В docs/05-ui-kit.md среди экспортов <span class="debug-path">time.ts</span> упомянута
-      <span class="debug-value">hourDayExp</span> — на деле такой функции в файле нет: это локальная функция внутри
-      <span class="debug-path">src/pages/infographics/pages/Battle.vue</span>, не экспорт утилиты. Реальные экспорты
-      time.ts — в таблице выше, плюс <span class="debug-value">timeProcessor</span>: внутренняя реализация
+      Функция <span class="debug-value">hourDayExp</span> определена локально в
+      <span class="debug-path">src/pages/infographics/pages/Battle.vue</span>. Экспорты
+      <span class="debug-path">time.ts</span> — в таблице выше, плюс <span class="debug-value">timeProcessor</span>: внутренняя реализация
       sec2minsec, отдаёт пару [минуты, секунды], отдельно нигде не используется.
     </p>
 
