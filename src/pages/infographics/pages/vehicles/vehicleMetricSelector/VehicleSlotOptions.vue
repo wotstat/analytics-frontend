@@ -24,6 +24,7 @@
           </h3>
           <div class="tiles">
             <SelectionTile v-for="tile in category.tiles" :key="tile.id" class="tile-option"
+              v-tooltip="{ text: tile.label, disabled: !open || !overflowingTiles[tile.id], placement: ['top-float', 'bottom-float'] }"
               :class="{ 'with-subtitle': !!tile.subtitle }"
               :selected="selectedTileValues(tile, selected).length > 0"
               :disabled="!selectedTileValues(tile, selected).length && !canSelectMetric(tile.defaultValue, selected, maxSlots)"
@@ -33,7 +34,7 @@
               @select="selectTile(tile)" @action="openOptions(tile, $event)">
               <Icon :icon="tile.icon" class="tile-icon" :style="{ color: tile.color }" />
               <span class="tile-text">
-                <span class="tile-label">{{ tile.label }}</span>
+                <MetricLabel :text="tile.label" @overflow="overflowingTiles[tile.id] = $event" />
                 <span v-if="tile.subtitle" class="tile-subtitle">{{ tile.subtitle }}</span>
               </span>
               <span v-if="selectionLabel(tile)" class="selection-value">{{ selectionLabel(tile) }}</span>
@@ -67,6 +68,7 @@ import type { PlacementParam, PopoverTarget } from '@/shared/uiKit/popover/utils
 import { availableSlots, metricCategories, type Slot } from './vehicleMetrics/vehicleMetrics'
 import { canSelectMetric, selectedTileValues, type MetricTile } from './utils/metricSelection'
 import VehicleMetricOptionsPopover from './metricOptions/VehicleMetricOptionsPopover.vue'
+import MetricLabel from './MetricLabel.vue'
 
 const props = defineProps<{
   title: string
@@ -88,6 +90,7 @@ const emit = defineEmits<{
 const optionsOpen = ref(false)
 const optionsTile = shallowRef<MetricTile | null>(null)
 const optionsTrigger = shallowRef<HTMLButtonElement | null>(null)
+const overflowingTiles = ref<Record<string, boolean>>({})
 
 watch(open, isOpen => {
   if (!isOpen) closeOptions()
@@ -196,12 +199,6 @@ function clearOrResetSelection() {
         flex-direction: column;
         gap: 3px;
         min-width: 0;
-      }
-
-      .tile-label {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
       }
 
       .tile-subtitle {

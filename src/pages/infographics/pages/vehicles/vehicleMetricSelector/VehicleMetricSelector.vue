@@ -1,8 +1,9 @@
 <template>
   <button ref="trigger" v-bind="$attrs" class="metric-trigger" type="button" :aria-expanded="open"
+    v-tooltip="{ text: availableSlots[slot].label, disabled: open || !labelOverflow, placement: ['top-float', 'bottom-float'] }"
     @click="open = !open">
     <Icon :icon="availableSlots[slot].icon" class="metric-icon" />
-    <span class="metric-label">{{ availableSlots[slot].label }}</span>
+    <MetricLabel :text="availableSlots[slot].label" @overflow="labelOverflow = $event" />
     <DropdownArrow class="metric-arrow" :expanded="open" />
   </button>
 
@@ -17,12 +18,14 @@ import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
 import DropdownArrow from '@/shared/uiKit/dropdown/DropdownArrow.vue'
 import { usePopoverCloseDelay } from '@/shared/uiKit/popover/usePopoverCloseDelay'
 import VehicleSlotOptions from './VehicleSlotOptions.vue'
+import MetricLabel from './MetricLabel.vue'
 import { availableSlots, type Slot } from './vehicleMetrics/vehicleMetrics.ts'
 
 defineOptions({ inheritAttrs: false })
 
 const slot = defineModel<Slot>({ required: true })
 const open = ref(false)
+const labelOverflow = ref(false)
 const { closeAfterSelection } = usePopoverCloseDelay(open)
 const trigger = useTemplateRef<HTMLButtonElement>('trigger')
 
@@ -55,13 +58,6 @@ function selectMetric(value: Slot) {
     flex: none;
     width: 30px;
     height: 30px;
-  }
-
-  .metric-label {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .metric-arrow {
