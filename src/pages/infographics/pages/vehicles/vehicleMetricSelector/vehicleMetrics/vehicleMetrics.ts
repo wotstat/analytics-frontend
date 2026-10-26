@@ -4,7 +4,7 @@ import { snapshotMetrics } from './snapshotMetrics'
 import { sampleExpressions } from '../../shared/metricData/battle/expressions'
 import type { MetricCatalogSection, MetricCategory, MetricDefinition, MetricCatalogEntry, MetricTileDefinition } from '../utils/metricTypes'
 
-const derivedColor = '#bbaad6'
+const derivedColor = '#cfb6f6'
 const gameApiHelpText = 'Данные получены напрямую из игры и не связаны с модом. Показатели общие и не зависят от фильтров боёв (режима, карты, взвода и т. д.).'
 
 function average(column: string) {
@@ -70,13 +70,13 @@ const metricCatalog = [
   },
   {
     title: 'Стрельба', entries: [
-      statisticMetric('shots', { icon: 'shots', label: 'Выстрелы', ...average('shots'), format: 'decimal' }),
       statisticMetric('directEnemyHits', { icon: 'hits', label: 'Прямые попадания', ...average('directEnemyHits'), format: 'decimal' }),
       statisticMetric('piercingEnemyHits', { icon: 'piercing', label: 'Пробития', ...average('piercingEnemyHits'), format: 'decimal' }),
       statisticMetric('explosionHits', { icon: 'explosion-hits', label: 'Попадания осколками', ...average('explosionHits'), format: 'decimal' }),
       statisticMetric('directHitsReceived', { icon: 'received-hits', label: 'Получено прямых попаданий', ...average('directHitsReceived'), format: 'decimal' }),
       statisticMetric('piercingsReceived', { icon: 'received-piercing', label: 'Получено пробитий', ...average('piercingsReceived'), format: 'decimal' }),
       statisticMetric('explosionHitsReceived', { icon: 'received-explosion-hits', label: 'Получено попаданий осколками', ...average('explosionHitsReceived'), format: 'decimal' }),
+      statisticMetric('shots', { icon: 'shots', label: 'Выстрелы', ...average('shots'), format: 'decimal' }),
     ],
   },
   {
