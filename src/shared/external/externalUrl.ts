@@ -9,6 +9,8 @@ const base = (() => {
   const matchMt = location.host.match(/^(.*)\.mtstat\.info$/i)
   if (matchMt) return { prefix: `${matchMt[1]}.`, domain: 'mtstat.info' }
 
+  if (location.host == 'mtstat.info') return { prefix: '', domain: 'mtstat.info' }
+
   return { prefix: '', domain: 'wotstat.info' }
 })()
 
