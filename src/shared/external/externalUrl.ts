@@ -12,6 +12,8 @@ const base = (() => {
   return { prefix: '', domain: 'wotstat.info' }
 })()
 
+console.log(`Setup WotStat base url prefix: "${base.prefix}", domain: "${base.domain}"`)
+
 export const CLICKHOUSE_URL = `https://${base.prefix}db.${base.domain}`
 export const CLICKHOUSE_WEB_PROXY_URL = import.meta.env.VITE_META_RENDERER ? location.origin : `https://${base.prefix}${base.domain}`
 export const ANALYTICS_REALTIME_URL = `https://${base.prefix}realtime.${base.domain}`
