@@ -28,7 +28,7 @@ export function setupPageMeta(router: Router, readyRoute: Readonly<Ref<RouteLoca
     const url = new URL(route.fullPath, window.location.origin)
     const definition = matchMetaDefinition(url)
     const context = Object.fromEntries(Object.keys(definition.contexts ?? {}).map(key => [key, undefined]))
-    const base = typeof definition.meta === 'function' ? definition.meta(url, context) : definition.meta
+    const base = typeof definition.meta === 'function' ? definition.meta(url, context, { url: url.href }) : definition.meta
     const meta: MetaTags = { ...base }
 
     const active = [...sources].flatMap(source => {

@@ -1,4 +1,4 @@
-import type { Component } from 'vue'
+import type { Component, ComputedRef, InjectionKey } from 'vue'
 import type { ContextValues, MetaContexts } from './context/utils/types'
 
 export const formats = {
@@ -18,15 +18,19 @@ export type MetaTags = {
 export type MetaPropValue = string | number | boolean | null | readonly MetaPropValue[] | { readonly [key: string]: MetaPropValue }
 export type MetaProps = Record<string, MetaPropValue> & { context?: never }
 
+export type RequestContext = {
+  url: string
+}
+
 export type MetaDefinition<C extends MetaContexts = MetaContexts> = {
   id: string
   priority: number
   match: string | ((url: URL) => boolean)
   contexts?: C
-  meta: MetaTags | ((url: URL, context: ContextValues<NoInfer<C>>) => MetaTags)
-  revisionKey?: string | ((url: URL, context: ContextValues<NoInfer<C>>) => string | undefined)
+  meta: MetaTags | ((url: URL, context: ContextValues<NoInfer<C>>, request: RequestContext) => MetaTags)
+  revisionKey?: string | ((url: URL, context: ContextValues<NoInfer<C>>, request: RequestContext) => string | undefined)
   component?: Component
-  props?: MetaProps | ((url: URL, context: ContextValues<NoInfer<C>>) => MetaProps)
+  props?: MetaProps | ((url: URL, context: ContextValues<NoInfer<C>>, request: RequestContext) => MetaProps)
   cache?: { htmlSeconds?: number, imageSeconds?: number }
   name?: string
   summary?: string
@@ -67,7 +71,10 @@ export type RenderContext = {
   url: string
   format: MetaFormat
   meta: PageMeta
+  request: RequestContext
 }
+
+export const renderContextKey: InjectionKey<ComputedRef<RenderContext | undefined>> = Symbol('meta-render-context')
 
 export const parsePageUrl = (input: string): URL => {
   const url = new URL(input)

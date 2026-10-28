@@ -35,7 +35,8 @@ import { studioCards, studioCardGroups } from './utils/catalog'
 
 const exampleContext = (card: (typeof studioCards)[number]): RenderContext => {
   const url = card.examples[0].url
-  return { url, format: 'og', meta: getBrowserMetaResolver().readMeta(new URL(url)) }
+  const request = { url }
+  return { url, format: 'og', meta: getBrowserMetaResolver().readMeta(new URL(url), request), request }
 }
 </script>
 

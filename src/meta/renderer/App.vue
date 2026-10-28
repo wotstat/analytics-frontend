@@ -7,11 +7,11 @@
 <script setup lang="ts">
 import { nextTick, onErrorCaptured, onMounted, onUnmounted, shallowRef, useTemplateRef } from 'vue'
 import CardSurface from '../cards/CardSurface.vue'
-import { parsePageUrl, type MetaFormat, type PageMeta, type RenderContext } from '../utils'
+import { parsePageUrl, type RenderContext } from '../utils'
 
 declare global {
   interface Window {
-    prepare?: (request: { url: string, format: MetaFormat, meta: PageMeta, signal?: AbortSignal }) => Promise<void>
+    prepare?: (request: RenderContext & { signal?: AbortSignal }) => Promise<void>
   }
 }
 
@@ -31,7 +31,7 @@ onErrorCaptured(error => {
   return false
 })
 
-const prepare: NonNullable<Window['prepare']> = async ({ url: input, format, meta, signal: requestSignal }) => {
+const prepare: NonNullable<Window['prepare']> = async ({ url: input, format, meta, request, signal: requestSignal }) => {
   const lifecycleSignal = lifecycle?.signal
 
   if (!root.value || !lifecycleSignal || lifecycleSignal.aborted) throw new Error('Renderer is not mounted')
@@ -56,7 +56,7 @@ const prepare: NonNullable<Window['prepare']> = async ({ url: input, format, met
     context.value = null
     await wait(nextTick())
 
-    context.value = { url: url.href, format, meta }
+    context.value = { url: url.href, format, meta, request }
     await wait(nextTick())
     if (!surface.value) throw new Error('Card did not mount')
 

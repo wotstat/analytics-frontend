@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
 import { computed, provide } from 'vue'
-import { formats, type MetaFormat, type RenderContext } from '../utils'
+import { formats, renderContextKey, type MetaFormat, type RenderContext } from '../utils'
 import { metaDefinitions } from '../definitions'
 import { metaReadyKey } from './useMetaReady'
 
@@ -17,6 +17,7 @@ const props = withDefaults(defineProps<{ context?: RenderContext, format?: MetaF
 })
 const size = computed(() => formats[props.context?.format ?? props.format])
 const component = computed(() => metaDefinitions.find(item => item.id === props.context?.meta.definitionId)?.component)
+provide(renderContextKey, computed(() => props.context))
 
 const preparations: Promise<void>[] = []
 provide(metaReadyKey, ready => {

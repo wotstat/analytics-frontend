@@ -46,19 +46,19 @@
       <slot v-if="$slots.footer" name="footer" />
       <template v-else>
         <span>{{ footer }}</span>
-        <span v-if="footerRight">{{ footerRight }}</span>
+        <span v-if="resolvedFooterRight">{{ resolvedFooterRight }}</span>
       </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, provide, shallowRef, type Component } from 'vue'
-import type { RenderContext } from '@/meta/utils'
+import { computed, inject, provide, shallowRef, type Component } from 'vue'
+import { renderContextKey, type RenderContext } from '@/meta/utils'
 import AuroraMistBackground from './backgrounds/AuroraMistBackground.vue'
 import { metaCardPaletteKey, metaCardSecondaryColors, type MetaCardPalette } from './utils/palette'
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   variant?: 'full' | 'compact'
   headerDivider?: boolean
   footerDivider?: boolean
@@ -75,7 +75,16 @@ withDefaults(defineProps<{
   variant: 'full',
   brand: 'WotStat Analytics',
   title: 'WotStat Analytics',
-  footerRight: 'wotstat.info',
+})
+
+const renderContext = inject(renderContextKey, undefined)
+const resolvedFooterRight = computed(() => {
+  if (props.footerRight !== undefined) return props.footerRight
+  const context = props.context ?? renderContext?.value
+  let url = context?.request.url ?? context?.url
+  if (!url && typeof location !== 'undefined') url = location.href
+  const host = new URL(url ?? 'https://wotstat.info').hostname
+  return host.replace(/^(?:ru\.)?(?:og\.)?/i, '')
 })
 
 const palette = shallowRef<MetaCardPalette>('lavender')
