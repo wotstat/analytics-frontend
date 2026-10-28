@@ -26,3 +26,4 @@ export const INSTALL_URL = `https://${base.prefix}install.${base.domain}`
 export const DISCORD_URL = 'https://discord.gg/7K8W9JE6xU'
 
 export const CURRENT_URL_PREFIX = base.prefix
+export const CURRENT_URL_DOMAIN = base.domain

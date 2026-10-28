@@ -1,9 +1,9 @@
 <template>
   <div class="hidden-x">
     <div class="main center-container">
-      <div class="go-to-ru info card" v-if="CURRENT_URL_PREFIX !== 'ru.'">
-        Если провайдер (РКН) блокирует или замедляет сайт, вы можете использовать резервную версию <a
-          href="https://ru.wotstat.info"><b>ru.</b>wotstat.info</a>
+      <div class="go-to-ru info card" v-if="CURRENT_URL_DOMAIN !== 'mtstat.info'">
+        Основной домен wotstat.info заблокирован РКН. Для доступа из России используйте <a
+          href="https://mtstat.info">mtstat.info</a>.
       </div>
 
       <h1>Сессионная аналитика для игр «Мир&nbsp;танков» и «World&nbsp;of&nbsp;Tanks»</h1>
@@ -38,29 +38,29 @@
           </h2>
         </div>
 
-        <div class="is-alternative card" v-if="CURRENT_URL_PREFIX == 'ru.'">
+        <div class="is-alternative card" v-if="CURRENT_URL_DOMAIN === 'mtstat.info'">
           <p>
-            Вы находитесь на резервной версии, которая нужна на случай замедления основного сайта.
-            Если он у вас работает, рекомендуется пользоваться основным <a href="https://wotstat.info">wotstat.info</a>.
+            Вы используете mtstat.info — домен WotStat для доступа из России.
+            Основной домен wotstat.info заблокирован РКН.
           </p>
 
           <br>
 
           <p>
-            Кроме того, резервная версия с префиксом <b>ru</b> доступна для всех прочих ресурсов:
+            Другие ресурсы WotStat также доступны на поддоменах mtstat.info:
           </p>
 
           <ul>
             <li>
-              <a href="https://ru.positions.wotstat.info" target="_blank"><b>ru.</b>positions.wotstat.info</a> – сайт
+              <a href="https://positions.mtstat.info" target="_blank">positions.mtstat.info</a> – сайт
               модификации на позиции
             </li>
             <li>
-              <a href="https://ru.widgets.wotstat.info" target="_blank"><b>ru.</b>widgets.wotstat.info</a> – сайт с
+              <a href="https://widgets.mtstat.info" target="_blank">widgets.mtstat.info</a> – сайт с
               виджетами
             </li>
             <li>
-              <a href="https://db.wotstat.info/play?user=public" target="_blank"><b>ru.</b>db.wotstat.info</a> – доступ
+              <a href="https://db.mtstat.info/play?user=public" target="_blank">db.mtstat.info</a> – доступ
               к базе данных
             </li>
           </ul>
@@ -367,7 +367,7 @@ import { getArenaName } from '@/shared/i18n/i18n'
 import { createFixedSpaceProcessor } from '@/shared/utils/processors/processors'
 import { usePageMeta } from '@/meta/pageMeta'
 import { useAnalyticsRealtime } from '@/shared/external/realtime/useAnalyticsRealtime'
-import { CLICKHOUSE_URL, CURRENT_URL_PREFIX } from '@/shared/external/externalUrl'
+import { CLICKHOUSE_URL, CURRENT_URL_DOMAIN } from '@/shared/external/externalUrl'
 import { useRouter } from 'vue-router'
 import { ms2sec, sec2minsec, ms2secLabel } from '@/shared/utils/time'
 import { useTweenComputed } from '@/shared/ui/tween/useTweenRef'

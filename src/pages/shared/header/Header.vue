@@ -33,12 +33,12 @@
     </div> -->
 
 
-    <div class="upper-header blue" v-if="CURRENT_URL_PREFIX != 'ru.' && ruHeaderVisible">
-      Доступен резервный домен на случай замедлений в России <a href="http://ru.wotstat.info"
-        target="_blank">ru.wotstat.info</a>
+    <div class="upper-header blue" v-if="CURRENT_URL_DOMAIN !== 'mtstat.info' && mtstatHeaderVisible">
+      Основной домен wotstat.info заблокирован РКН. Для доступа из России используйте <a href="https://mtstat.info"
+        target="_blank">mtstat.info</a>.
 
       <div class="right-section">
-        <button @click="hideHeader('RuAlternativeHeader')">Понятно</button>
+        <button @click="hideHeader('MtstatAccessHeader')">Понятно</button>
       </div>
     </div>
 
@@ -185,7 +185,7 @@ import LogoIcon from './assets/logo2.0.svg'
 import HeaderSpacer from './HeaderSpacer.vue'
 import I18nIcon from './assets/i18n.svg'
 import DropdownArrow from '@/shared/uiKit/dropdown/DropdownArrow.vue'
-import { CLICKHOUSE_URL, CURRENT_URL_PREFIX, POSITIONS_URL, DISCORD_URL } from '@/shared/external/externalUrl'
+import { CLICKHOUSE_URL, CURRENT_URL_DOMAIN, POSITIONS_URL, DISCORD_URL } from '@/shared/external/externalUrl'
 import { useLocalStorage } from '@vueuse/core'
 import { vNewFeatureBadge } from '@/shared/uiKit/newFeatureBadge/newFeatureBadge'
 import HetznerBlock0126 from '../problems/hetznerBlock0126/HetznerBlock0126.vue'
@@ -202,13 +202,13 @@ useDefaultHeaderHeight(headerElement)
 
 const { additionalHeaderHeight } = useAdditionalHeaderHeight()
 
-const ruHeaderVisible = useLocalStorage('RuAlternativeHeader', true)
+const mtstatHeaderVisible = useLocalStorage('MtstatAccessHeader', true)
 const maintenanceHeaderVisible = useLocalStorage('MaintenanceHeader-280426-2', true)
 
-type Headers = 'RuAlternativeHeader' | 'MaintenanceHeader-280426'
+type Headers = 'MtstatAccessHeader' | 'MaintenanceHeader-280426'
 
 function hideHeader(name: Headers) {
-  if (name == 'RuAlternativeHeader') ruHeaderVisible.value = false
+  if (name == 'MtstatAccessHeader') mtstatHeaderVisible.value = false
   else if (name == 'MaintenanceHeader-280426') maintenanceHeaderVisible.value = false
 }
 
