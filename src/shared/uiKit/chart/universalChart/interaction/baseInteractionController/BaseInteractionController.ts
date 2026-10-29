@@ -6,6 +6,7 @@ import { BasePlotRenderer } from '../../plot/BasePlotRenderer'
 import { StartState } from './states/StartState'
 import { State, StateMachine } from './StateMachine'
 import { BaseState, Context } from './states/BaseState'
+import '../wheelInput/wheelInput'
 
 export type InteractionDirection = 'horizontal' | 'vertical' | 'all' | false
 
@@ -109,7 +110,7 @@ export abstract class BaseInteractionController extends BasePlotRenderer {
 
     this.interactiveZone.addEventListener('contextmenu', this.onContextmenu.bind(this), { signal: this.listenerAbortSignal })
     this.interactiveZone.addEventListener('touchmove', this.touchMove.bind(this), { signal: this.listenerAbortSignal })
-    this.interactiveZone.addEventListener('wheel', this.onWheel.bind(this), { signal: this.listenerAbortSignal })
+    this.interactiveZone.addEventListener('wheel', this.onWheel.bind(this), { signal: this.listenerAbortSignal, passive: false })
   }
 
   detach(): void {

@@ -1,5 +1,4 @@
 import { ChartRenderManager } from './ChartRenderManager'
-import './wheelInput'
 
 export default class BaseChart {
 

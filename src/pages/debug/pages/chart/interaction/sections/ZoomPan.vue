@@ -1,6 +1,6 @@
 <template>
   <DebugSection title="Зум и пан под курсорными линиями" id="zoom-pan"
-    description="Пан, тач-жесты и адаптивный зум колёсиком. Линии обязаны оставаться под курсором и не отставать на кадр. Общий анализатор учитывает прокрутку всей страницы, ещё до наведения на график."
+    description="Пан, тач-жесты, адаптивный зум колёсиком и управление тачпадом. Линии обязаны оставаться под курсором и не отставать на кадр. Тачпад определяется по двум ненулевым дельтам в одном wheel или нативному pinch Safari на macOS."
     source="src/shared/uiKit/chart/universalChart/interaction/composable/components/zoomChartComponent/">
 
     <div class="debug-row">
@@ -39,23 +39,38 @@
 
     <p class="debug-note">
       Ввод: <span class="debug-value">{{ wheelModes[wheelSnapshot.mode] }}</span>.
-      Последнее событие: <span class="debug-value">{{ wheelActions[wheelSnapshot.eventMode] }}</span>.
+      Устройство: <span class="debug-value">{{ wheelDevices[wheelSnapshot.device] }}</span>.
+      Действие: <span class="debug-value">{{ wheelActions[wheelSnapshot.action] }}</span>.
+      Поток: {{ wheelModes[wheelSnapshot.eventMode] }}.
       Причина: {{ wheelReasons[wheelSnapshot.reason] }}.
       ΔX: {{ wheelSnapshot.deltaX }}, ΔY: {{ wheelSnapshot.deltaY }},
       единицы: {{ wheelUnits[wheelSnapshot.deltaMode] ?? wheelSnapshot.deltaMode }},
       интервал: {{ wheelSnapshot.interval === null ? '—' : `${wheelSnapshot.interval.toFixed(1)} мс` }}.
+      Одноосевых серий: {{ wheelSnapshot.singleAxisGestures }} / {{ WHEEL_RETURN_GESTURES }}.
       <button class="debug-btn" @click="wheelInput.reset()">Сбросить анализатор</button>
     </p>
 
     <DemoChartView :chart="chart" :height="280" />
 
     <p class="debug-note">
-      Сначала покрути страницу вне графика, затем приблизь график: шаговое колесо должно анимировать зум,
-      плавный поток — применяться напрямую. Переключись на тачпад или включи сглаживание мыши:
-      анализатор должен переопределить ввод. Пинч и пан пальцами сохраняют прежнее поведение;
-      Ctrl + колесо применяется напрямую. Анализатор учитывает величину дельты и интервал вместе.
-      После паузы больше 400 мс неоднозначное событие ждёт продолжения до 40 мс;
-      одиночный шаг анимируется. Быстрое вращение уже распознанного колеса сохраняет сглаживание.
+      Горизонтальное колесо панорамирует активную ось X во всех режимах, включая auto до определения
+      тачпада. Вертикальное колесо по умолчанию масштабирует график. Плавность колеса определяет
+      только сглаживание зума: шаги анимируются, плавный поток применяется напрямую.
+      Две ненулевые дельты X и Y в одном wheel или нативный pinch в Safari на macOS включают режим
+      тачпада для всей страницы. После трёх завершённых строго одноосевых серий следующая серия
+      возвращает режим колёсика. Серии разделяются паузой более 80 мс; переключения внутри серии нет.
+      Диагональ и pinch сбрасывают счётчик возврата, нативная инерция продолжает текущую серию.
+      После определения тачпада pinch меняет масштаб, а прокрутка двумя пальцами
+      панорамирует график с сохранением hover. Каждое направление двигает только свою активную ось.
+      Начальное преобладающее направление определяет владельца жеста: график или страницу.
+      Если жест захвачен графиком, поперечные дельты блокируются во время потока событий, включая инерцию.
+      Если жест начался по выключенной оси, он целиком остаётся у страницы, даже при смене направления.
+      Захват снимается после 80 мс тишины. Если браузер передаёт признак инерции, первое движение нового
+      физического жеста после неё снимает захват сразу.
+      Инерцию прокрутки даёт система.
+      Пан и пинч на сенсорном экране сохраняют прежнее поведение. Ctrl + колесо всегда масштабирует,
+      но не включает режим тачпада. Опция библиотеки wheelInput: auto / wheel / trackpad
+      позволяет задать режим явно; этот стенд использует auto.
     </p>
 
     <table class="debug-table">
@@ -111,15 +126,17 @@ import { CursorChart, type ZoomConfig } from '../shared/CursorChart'
 import { panDirections } from '../shared/panDirections'
 import { seriesExtent } from '../shared/series'
 import { formatBound, useChartBounds } from '../shared/useChartBounds'
-import { wheelInput } from '@/shared/uiKit/chart/wheelInput'
+import { wheelInput, WHEEL_RETURN_GESTURES } from '@/shared/uiKit/chart/universalChart/interaction/wheelInput/wheelInput'
 
 const wheelSnapshot = shallowRef(wheelInput.snapshot)
 const wheelModes = { unknown: 'ещё не определён', smooth: 'плавный', discrete: 'шаговый' }
-const wheelActions = { unknown: 'ожидание до 40 мс', smooth: 'прямой зум', discrete: 'плавное движение к цели' }
+const wheelDevices = { wheel: 'колёсико', trackpad: 'тачпад' }
+const wheelActions = { pending: 'ввода ещё не было', zoom: 'зум', pan: 'панорамирование', 'zoom-pan': 'зум и панорамирование' }
 const wheelReasons = {
-  pending: 'нужно продолжение', fine: 'малая дельта', units: 'строки / страницы',
-  cadence: 'частые небольшие дельты', isolated: 'нет признаков плавного потока', gesture: 'продолжение жеста',
-  pinch: 'Ctrl / пинч', momentum: 'нативная инерция'
+  pending: 'ожидание ввода / выборки', fine: 'мелкая пиксельная дельта', units: 'строки / страницы',
+  cadence: 'частые меняющиеся дельты', isolated: 'отдельный шаг', gesture: 'продолжение потока',
+  pinch: 'Ctrl / пинч', momentum: 'нативная инерция', 'native-pinch': 'нативный pinch тачпада',
+  diagonal: 'дельты X и Y в одном wheel', 'wheel-return': 'возврат после трёх одноосевых серий'
 }
 const wheelUnits: Record<number, string> = { 0: 'пиксели', 1: 'строки', 2: 'страницы' }
 onUnmounted(wheelInput.onChange.on(snapshot => wheelSnapshot.value = snapshot))

@@ -48,6 +48,7 @@ src/
 | --- | --- |
 | Найти страницу | [routes.ts](../src/routes.ts), затем каталог компонента страницы |
 | Добавить UI | [Каталог компонентов](ui-kit.md), примеры в [pages/debug/](../src/pages/debug/) |
+| Управление графиком | [interaction/](../src/shared/uiKit/chart/universalChart/interaction/) — контроллеры ввода, зум/пан и определение колеса/тачпада |
 | Работать с URL-параметрами | [useQueryStorage.ts](../src/shared/uiKit/queryStorage/useQueryStorage.ts), готовые определения в [params.ts](../src/shared/uiKit/queryStorage/params.ts); параметры страницы объявляются рядом с ней |
 | Загрузить данные | [db/index.ts](../src/db/index.ts): `queryComputed`, `queryAsync`, `query`; SQL и типы результатов — у потребителей, актуальная схема таблиц — в самой БД |
 | Изменить формат ссылок сравнения | [query/codec/](../src/pages/infographics/pages/vehicles/timeSeriesCompare/query/codec/), включая тест и фиксированные примеры; общие примитивы — [utils/encoding/](../src/shared/utils/encoding/), игровые компактеры — [game/encoding/](../src/shared/game/encoding/) |
