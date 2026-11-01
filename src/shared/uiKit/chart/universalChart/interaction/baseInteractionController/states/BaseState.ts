@@ -4,6 +4,7 @@ import { Position, TouchZoomPoint } from '../BaseInteractionController'
 import { Delegate } from '../BaseInteractionController'
 import { State, StateMachine } from '../StateMachine'
 import { ClickCandidate } from './ClickCandidate'
+import type { InteractionFrame } from '../../core/InteractionFrame'
 
 function event2Position(event: { offsetX: number, offsetY: number, clientX: number, clientY: number }): Position {
   return {
@@ -99,6 +100,7 @@ export class BaseState implements State<Context> {
     const chart = this.chart
     if (!chart) return
     const cursor = this.event2Position(event)
+    let frame: InteractionFrame | null = null
     let panInertionPrevented = false
     this.delegate.onClick({
       cursor,
@@ -110,6 +112,9 @@ export class BaseState implements State<Context> {
       shiftKey: event.shiftKey,
       ctrlKey: event.ctrlKey,
       metaKey: event.metaKey,
+      get frame(): InteractionFrame {
+        return frame ??= chart.interactionFrameFromPointer({ point: this.point, cursor: this.cursor, isTouch: this.isTouch })
+      },
       get panInertionPrevented() { return panInertionPrevented },
       preventPanInertion() { panInertionPrevented = true },
     })

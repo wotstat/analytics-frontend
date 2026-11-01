@@ -9,7 +9,6 @@ import { Highlight } from '@/shared/uiKit/chart/universalChart/interaction/compo
 import type { HighlightSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/HighlightSynchronizer'
 import { InteractionController, type InteractionComponent } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController'
 import { CallbackComponent } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/callback/CallbackComponent'
-import { InteractionFrame } from '@/shared/uiKit/chart/universalChart/interaction/core/InteractionFrame'
 import { InteractionPresentation, spring } from '@/shared/uiKit/chart/universalChart/interaction/composable/presentation/InteractionPresentation'
 import type { ClickInteractionEvent } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/BaseInteractionController'
 import { AutoLabels, type Options as LabelsOptions } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
@@ -157,12 +156,7 @@ export class TimeSeriesChart<T extends TimeSeriesPoint = TimeSeriesPoint> extend
     const callbacks = new CallbackComponent()
     callbacks.on('click', event => {
       if (!this.onSeriesClick.hasListeners) return
-      // TODO: как будто бы получение InteractionFrame можно куда то вынести, типа interactions.frame
-      const frame = new InteractionFrame(event.space, {
-        key: Symbol('click'),
-        pointer: { point: event.point, cursor: event.cursor, isTouch: event.isTouch },
-      })
-      const [hit] = frame.resolve(strokeSelection)
+      const [hit] = event.frame.resolve(strokeSelection)
       if (typeof hit?.interactionTag === 'string') this.onSeriesClick.emit({ tag: hit.interactionTag, event })
     })
 

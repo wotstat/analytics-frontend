@@ -6,6 +6,7 @@ import { BasePlotRenderer } from '../../plot/BasePlotRenderer'
 import { StartState } from './states/StartState'
 import { State, StateMachine } from './StateMachine'
 import { BaseState, Context } from './states/BaseState'
+import type { InteractionFrame } from '../core/InteractionFrame'
 import '../wheelInput/wheelInput'
 
 export type InteractionDirection = 'horizontal' | 'vertical' | 'all' | false
@@ -23,6 +24,7 @@ export type ClickInteractionEvent = {
   shiftKey: boolean
   ctrlKey: boolean
   metaKey: boolean
+  readonly frame: InteractionFrame
   readonly panInertionPrevented: boolean
   preventPanInertion(): void
 }

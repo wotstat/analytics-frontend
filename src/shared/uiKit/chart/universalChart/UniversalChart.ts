@@ -6,6 +6,8 @@ import { ChartSpace } from './utils/ChartSpace'
 import { EventEmitter } from './utils/EventEmitter'
 import { Offset4Side, unwrapOffset } from './utils/utils'
 import { ChartRenderManager } from '../ChartRenderManager'
+import { InteractionFrame } from './interaction/core/InteractionFrame'
+import type { InteractionPointer } from './interaction/core/InteractionInput'
 
 type Options = {
   renderBounds?: { minX?: number, maxX?: number, minY?: number, maxY?: number },
@@ -98,6 +100,22 @@ export class UniversalChart extends BaseChart {
   dispose() {
     super.dispose()
     for (const renderer of this.allRenderers) renderer.detach?.()
+  }
+
+  interactionFrameFromPointer(pointer: InteractionPointer | null): InteractionFrame {
+    return new InteractionFrame(this.space, { key: Symbol('input'), pointer })
+  }
+
+  interactionFrameFromCursor(cursor: { clientX: number, clientY: number }, isTouch: boolean = false): InteractionFrame {
+    const matrix = this.svg.getScreenCTM()
+    if (!matrix) throw new Error('Cannot convert cursor coordinates without an SVG screen transform')
+    const point = new DOMPoint(cursor.clientX, cursor.clientY).matrixTransform(matrix.inverse())
+
+    return this.interactionFrameFromPointer({
+      point: { x: point.x, y: point.y },
+      cursor: { offsetX: point.x, offsetY: point.y, clientX: cursor.clientX, clientY: cursor.clientY },
+      isTouch,
+    })
   }
 
   addSlot(position: 'top' | 'right' | 'bottom' | 'left', slot: SlotRenderer, path: string | string[] = []) {
