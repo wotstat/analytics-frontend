@@ -1,6 +1,6 @@
 <template>
   <div class="ballistic-chart">
-    <FloatingTooltip :ctx="tooltipCtx" :animated="true" :animation-omega="20" class="ballistic-distribution-tooltip"
+    <FloatingTooltip :ctx="tooltipCtx" class="ballistic-distribution-tooltip"
       v-slot="{ ctx }">
       <div class="tooltip-content">
         <h4><span class="mono-num">{{ Math.round(ctx.hit.datum.x * 100) }}</span>% сведения</h4>

@@ -43,6 +43,14 @@
         <label class="debug-control"><input v-model="empty" type="checkbox">Пустые данные</label>
         <label class="debug-control"><input v-model="extended" type="checkbox">Расширить диапазон</label>
         <label class="debug-control"><input v-model="narrow" type="checkbox">Узкий контейнер</label>
+        <label class="debug-control">Привязка тултипа
+          <select v-model="tooltipAnchor" class="debug-select">
+            <option value="pivot-x">Только X</option>
+            <option value="pivot-y">Только Y</option>
+            <option value="pivot">Обе координаты</option>
+            <option value="cursor">Курсор</option>
+          </select>
+        </label>
       </div>
       <div class="debug-row">
         <button class="debug-button" @click="revision++">Обновить значения</button>
@@ -75,7 +83,11 @@
         Переключение цвета сохраняет окно.</p>
       <p class="debug-note">Именные классы задают цвета аннотаций. Другая палитра меняет только CSS-переменные и
         сохраняет окно.</p>
-      <FloatingTooltip :ctx="chart.tooltipCtx.value" anchor="pivot-x" :placement="['top-float', 'bottom-float']">
+      <p class="debug-note">Nearest выбирает данные сразу. Линия, маркеры и тултип используют общий анимированный X,
+        а итоговый pivot тултипа сглаживается после вычисления. Маркеры движутся по траектории линии.
+        Переключи шаг на «Месяц», чтобы лучше видеть переходы;
+        при панорамировании и зуме их положение преобразуется вместе с графиком.</p>
+      <FloatingTooltip :ctx="chart.tooltipCtx.value" :anchor="tooltipAnchor" :placement="['top-float', 'bottom-float']">
         <template #default="{ ctx }">
           <SeriesTooltip :items="tooltipRows(ctx)" :format-value="formatValue">
             <template #header>{{ ctx.hit.datum.period }}</template>
@@ -84,6 +96,7 @@
       </FloatingTooltip>
       <EventLog :entries="log.entries.value" @clear="log.clear" />
     </DebugSection>
+    <Presentation />
   </DebugPage>
 </template>
 
@@ -91,6 +104,7 @@
 import { computed, markRaw, onScopeDispose, ref, watch } from 'vue'
 import DebugPage from '@/pages/debug/shared/DebugPage.vue'
 import DebugSection from '@/pages/debug/shared/DebugSection.vue'
+import Presentation from '../chart/interaction/sections/Presentation.vue'
 import EventLog from '@/pages/debug/shared/EventLog.vue'
 import { useEventLog } from '@/pages/debug/shared/useEventLog'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
@@ -118,6 +132,7 @@ const second = ref(true)
 const empty = ref(false)
 const extended = ref(false)
 const narrow = ref(false)
+const tooltipAnchor = ref<'pivot' | 'pivot-x' | 'pivot-y' | 'cursor'>('pivot-x')
 const labels = ref(true)
 const bands = ref(true)
 const background = ref(true)

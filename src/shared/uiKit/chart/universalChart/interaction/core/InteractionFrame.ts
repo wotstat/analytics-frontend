@@ -19,7 +19,8 @@ export class InteractionFrame {
 
   constructor(
     readonly space: ChartSpace,
-    readonly input: InteractionInput
+    readonly input: InteractionInput,
+    readonly time: number = performance.now()
   ) { }
 
   resolve<THit extends InteractionHit>(resolver: InteractionResolver<THit>, input: InteractionInput = this.input): readonly THit[] {

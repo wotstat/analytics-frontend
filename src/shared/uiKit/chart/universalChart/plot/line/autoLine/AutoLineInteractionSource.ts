@@ -3,9 +3,10 @@ import { InteractionHit } from '../../../interaction/core/InteractionHit'
 import { InteractionResolveContext } from '../../../interaction/core/InteractionResolver'
 import { Selection } from '../../../interaction/core/Selection'
 import { InteractionSource, InteractionTag } from '../../../interaction/core/InteractionSource'
+import type { InteractionTrajectory } from '../../../interaction/core/InteractionBinding'
 import { ChartSpace } from '../../../utils/ChartSpace'
 import { Point } from '../../../utils/Point'
-import { nearestPointOnSubpaths, StrokeSubpath } from './LineStrokeSampler'
+import { nearestPointOnSubpaths, pointOnSubpathsAtAxis, sampleOrNearestAtAxis, StrokeSubpath } from './utils/LineStrokeSampler'
 
 export type LinePointHit<T extends Point = Point> = InteractionHit<T, 'line-point'> & {
   readonly pointIndex: number
@@ -62,6 +63,18 @@ export abstract class AutoLineInteraction<T extends Point = Point> {
   nearStroke(options: NearStrokeOptions): Selection<LineStrokeHit<T>> {
     return new NearStrokeSelection(this.sources, options)
   }
+
+  alongAxis(axis: 'x' | 'y', options: NearestByAxisOptions = {}): InteractionTrajectory {
+    const sources = new Map(this.sources.map(source => [source.id, source]))
+    return {
+      axis,
+      sample: (hit, point) => {
+        const source = sources.get(hit.sourceId)
+        if (!source || hit.kind !== 'line-point') return null
+        return source.sampleOrNearest(axis, point[axis], hit.geometry.anchor, options)
+      },
+    }
+  }
 }
 
 class AutoLineInteractionUnion<T extends Point> extends AutoLineInteraction<T> {
@@ -97,6 +110,14 @@ export class AutoLineInteractionSource<T extends Point = Point> extends AutoLine
 
   getTargets(tag: InteractionTag): readonly SVGElement[] {
     return this.tag === tag ? this.targets() : []
+  }
+
+  pointAtAxis(axis: 'x' | 'y', value: number, target: Point): Point | null {
+    return pointOnSubpathsAtAxis(this.getStroke().subpaths, axis, value, target)
+  }
+
+  sampleOrNearest(axis: 'x' | 'y', value: number, target: Point, options: NearestByAxisOptions = {}): Point | null {
+    return sampleOrNearestAtAxis(this.getStroke().subpaths, axis, value, target, options.maxAxisDistance)
   }
 
   nearStrokeHit(point: Point, maxDistance: number): LineStrokeHit<T> | null {
@@ -160,7 +181,7 @@ class NearestByAxisSelection<T extends Point> extends Selection<LinePointHit<T>>
 
   constructor(
     private readonly sources: readonly AutoLineInteractionSource<T>[],
-    private readonly axis: 'x' | 'y',
+    private readonly selectedAxis: 'x' | 'y',
     private readonly options: NearestByAxisOptions
   ) {
     super(sources)
@@ -172,8 +193,8 @@ class NearestByAxisSelection<T extends Point> extends Selection<LinePointHit<T>>
 
     const space = ctx.space
     const scale = space.chartToLocalScale()
-    const axisScale = this.axis === 'x' ? scale.scaleX : scale.scaleY
-    const target = this.axis === 'x' ? space.layoutToChartX(pointer.point.x) : space.layoutToChartY(pointer.point.y)
+    const axisScale = this.selectedAxis === 'x' ? scale.scaleX : scale.scaleY
+    const target = this.selectedAxis === 'x' ? space.layoutToChartX(pointer.point.x) : space.layoutToChartY(pointer.point.y)
 
     let bestValue = 0
     let bestDistance = Infinity
@@ -182,7 +203,7 @@ class NearestByAxisSelection<T extends Point> extends Selection<LinePointHit<T>>
       for (const point of source.points) {
         if (!isEligible(point, space)) continue
 
-        const value = this.axis === 'x' ? point.x : point.y
+        const value = this.selectedAxis === 'x' ? point.x : point.y
         const distance = Math.abs(value - target) * axisScale
         if (distance < bestDistance) {
           bestDistance = distance
@@ -201,7 +222,7 @@ class NearestByAxisSelection<T extends Point> extends Selection<LinePointHit<T>>
       for (let i = 0; i < points.length; i++) {
         const point = points[i]
         if (!isEligible(point, space)) continue
-        if ((this.axis === 'x' ? point.x : point.y) !== bestValue) continue
+        if ((this.selectedAxis === 'x' ? point.x : point.y) !== bestValue) continue
 
         const hit = source.createPointHit(point, i, space, pointer.point)
         if (hit) hits.push(hit)

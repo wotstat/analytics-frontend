@@ -6,6 +6,7 @@ import { ChartTooltip, type TooltipCtx } from '@/shared/uiKit/chart/universalCha
 import { VerticalLine } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/lines/VerticalLine'
 import { MarkerOverlay } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/markerOverlay/MarkerOverlay'
 import { InteractionController } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController'
+import { InteractionPresentation, spring } from '@/shared/uiKit/chart/universalChart/interaction/composable/presentation/InteractionPresentation'
 import { AutoLabels, type Options as LabelsOptions, type TickSource } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
 import { labelCandidates } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/labelCandidates'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
@@ -63,11 +64,17 @@ export class DailyPlayersChart extends UniversalChart {
       .clipBy(clipMain)
 
     const linePoints = this.line.interaction.nearestByAxis('x')
+    const presentation = new InteractionPresentation({
+      motion: spring({ response: 0.105 }),
+    })
+    const x = presentation.animate(linePoints.axis('x'))
+    const markerBinding = presentation.project(linePoints, x, this.line.interaction.alongAxis('x'))
 
     this.interactionController = new InteractionController()
+      .addComponent(presentation)
       .addComponent(new VerticalLine({
         offset: { end: 0.5, start: -5 },
-        selection: linePoints,
+        binding: x,
       }))
       .addComponent(new MarkerOverlay({
         classes: 'markers',
@@ -75,11 +82,12 @@ export class DailyPlayersChart extends UniversalChart {
         size: 5,
         maskSize: 7,
         targetMasks: [maskMain.root],
-        selection: linePoints,
+        binding: markerBinding,
       }))
       .addComponent(new ChartTooltip({
         selection: linePoints,
-        tooltipPivot: 'avg',
+        binding: presentation.animate(linePoints.pivot('avg')),
+        cursorBinding: presentation.animate(linePoints.cursor()),
         onHide: () => this.tooltipCtx.value = null,
         onPositionChange: ctx => this.tooltipCtx.value = ctx,
       }))

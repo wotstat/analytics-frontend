@@ -1,3 +1,4 @@
+import { InteractionPresentation, spring } from '@/shared/uiKit/chart/universalChart/interaction/composable/presentation/InteractionPresentation'
 import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
 import { ChartShadowFilter } from '@/shared/uiKit/chart/universalChart/defs/ChartShadowFilter'
 import { AutoLabels } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
@@ -112,15 +113,20 @@ export class ShotDistributionChart extends UniversalChart {
     )
 
     const selectedPoints = lineInteractions.nearestByAxis('x')
+    const presentation = new InteractionPresentation({
+      motion: spring({ response: 0.314 }),
+    })
     const hoveredLine = lineInteractions.nearStroke({ maxDistance: 8 }).nearest()
     this.highlight = new Highlight({ selection: hoveredLine, class: 'highlighted' })
       .syncWith(options.highlightSync)
 
     const interactionController = new InteractionController()
       .addComponent(this.highlight)
+      .addComponent(presentation)
       .addComponent(new ChartTooltip({
         selection: selectedPoints,
-        tooltipPivot: 'max-y',
+        binding: presentation.animate(selectedPoints.pivot('max-y')),
+        cursorBinding: presentation.animate(selectedPoints.cursor()),
         exposeHighlights: [this.highlight],
         onHide: () => this.tooltipCtx.value = null,
         onPositionChange: ctx => this.tooltipCtx.value = ctx,

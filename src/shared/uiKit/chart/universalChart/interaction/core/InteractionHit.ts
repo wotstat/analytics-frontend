@@ -1,5 +1,6 @@
 import { InteractionGeometry } from './InteractionGeometry'
 import { InteractionTag } from './InteractionSource'
+import type { InteractionSpace } from './InteractionBinding'
 
 type KeyType = string | number | symbol
 export type InteractionIdentity = {
@@ -30,6 +31,7 @@ export interface InteractionHit<
   readonly memberships: readonly InteractionIdentity[]
 
   readonly geometry: InteractionGeometry
+  readonly anchorSpace?: InteractionSpace
   geometryFor(scope: TGeometryScope): InteractionGeometry | null
 
   readonly distance: number

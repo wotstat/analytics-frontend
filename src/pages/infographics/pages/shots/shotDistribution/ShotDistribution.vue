@@ -1,7 +1,7 @@
 <template>
   <ServerStatusWrapper :status v-slot="{ showError, status }">
     <div class="chart-container" ref="container" v-if="status != 'error'">
-      <FloatingTooltip :ctx="tooltipCtx" :animated="true" :animation-omega="20" class="shot-distribution-tooltip"
+      <FloatingTooltip :ctx="tooltipCtx" class="shot-distribution-tooltip"
         v-slot="{ ctx }">
         <div class="tooltip-content">
           <h4><span class="mono-num">{{ ctx.hit.datum.x.toFixed(0) }}</span>% сведения</h4>

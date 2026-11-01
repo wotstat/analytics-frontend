@@ -20,6 +20,7 @@ class CursorSelection extends Selection<CursorHit> {
       identity: { sourceId: cursorSource, kind: 'item', key: ctx.input.key },
       memberships: [],
       geometry: geometryFromPoint(pointer.point),
+      anchorSpace: 'layout',
       geometryFor: () => null,
       distance: Infinity,
       contains: false,

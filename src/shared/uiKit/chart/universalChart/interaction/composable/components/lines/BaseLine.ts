@@ -1,12 +1,17 @@
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { addClasses, Classes, removeClasses } from '../../../../utils/utils'
 import { InteractionFrame } from '../../../core/InteractionFrame'
-import { InteractionGeometry } from '../../../core/InteractionGeometry'
-import { InteractionResolver } from '../../../core/InteractionResolver'
+import type { InteractionBinding, PresentedCoordinate } from '../../../core/InteractionBinding'
+import type { InteractionResolver } from '../../../core/InteractionResolver'
+import { selectionCoordinates } from '../../../core/utils/selectionBindings'
 import { InteractionComponent, InteractionController } from '../../InteractionController'
 
-export type LineOptions = {
-  selection: InteractionResolver
+export type LineBinding = InteractionBinding<number | null | readonly PresentedCoordinate[]>
+
+export type LineOptions = (
+  | { selection: InteractionResolver, binding?: never }
+  | { binding: LineBinding, selection?: never }
+) & {
   classes?: Classes
   offset?: number | { start?: number, end?: number } | [start: number, end: number]
 }
@@ -26,6 +31,7 @@ export abstract class BaseLine implements InteractionComponent {
   private options: LineOptions
   private lines: SVGLineElement[] = []
   private coordinates: number[] = []
+  private binding: LineBinding | null = null
   private controller: InteractionController | null = null
 
   constructor(options: LineOptions) {
@@ -47,8 +53,8 @@ export abstract class BaseLine implements InteractionComponent {
 
   updateOptions(options: LineOptions) {
     for (const line of this.lines) removeClasses(line, 'hover-line', this.options.classes)
-
     this.options = options
+    this.binding = options.binding ?? null
     this.offset = unwrapLineOffset(options.offset)
 
     for (const line of this.lines) addClasses(line, 'hover-line', options.classes)
@@ -59,10 +65,13 @@ export abstract class BaseLine implements InteractionComponent {
   prepareInteraction(frame: InteractionFrame): void {
     const coordinates: number[] = []
     const seen = new Set<number>()
+    if (!this.binding) this.binding = this.options.binding ?? selectionCoordinates(this.options.selection, this.axis)
 
-    for (const hit of frame.resolve(this.options.selection)) {
-      const coordinate = this.coordinate(hit.geometry)
-      if (seen.has(coordinate)) continue
+    const value = this.binding.read(frame)
+    const values = typeof value === 'number' ? [value] : value?.map(item => item.value) ?? []
+
+    for (const coordinate of values) {
+      if (!Number.isFinite(coordinate) || seen.has(coordinate)) continue
       seen.add(coordinate)
       coordinates.push(coordinate)
     }
@@ -92,6 +101,6 @@ export abstract class BaseLine implements InteractionComponent {
     this.coordinates = []
   }
 
-  protected abstract coordinate(geometry: InteractionGeometry): number
+  protected abstract readonly axis: 'x' | 'y'
   protected abstract place(line: SVGLineElement, coordinate: number, space: ChartSpace): void
 }

@@ -1,3 +1,4 @@
+import { InteractionPresentation, spring } from '@/shared/uiKit/chart/universalChart/interaction/composable/presentation/InteractionPresentation'
 import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
 import { ChartClip } from '@/shared/uiKit/chart/universalChart/defs/ChartClip'
 import { AutoLabels } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
@@ -103,14 +104,21 @@ export class ComparisonBarChart extends UniversalChart {
       groupGaps: 'nearest',
     })
 
+    const selectedGroup = selectedItem.related('group')
+    const presentation = new InteractionPresentation({
+      motion: spring({ response: 0.314 }),
+    })
+
     this.highlight = new Highlight({ selection: selectedItem, class: 'highlighted' })
       .syncWith(options.highlightSync)
 
     const interactionController = new InteractionController()
       .addComponent(this.highlight)
+      .addComponent(presentation)
       .addComponent(new ChartTooltip({
-        selection: selectedItem.related('group'),
-        tooltipPivot: 'max-y',
+        selection: selectedGroup,
+        binding: presentation.animate(selectedGroup.pivot('max-y')),
+        cursorBinding: presentation.animate(selectedGroup.cursor()),
         exposeHighlights: [this.highlight],
         onHide: () => this.tooltipCtx.value = null,
         onPositionChange: ctx => this.tooltipCtx.value = ctx,

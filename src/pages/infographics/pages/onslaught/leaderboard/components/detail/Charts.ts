@@ -22,6 +22,7 @@ import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRender
 import { HoverSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/HoverSynchronizer'
 import { BoundsSynchronizer } from '@/shared/uiKit/chart/universalChart/interaction/composable/sync/BoundsSynchronizer'
 import { CallbackComponent } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/callback/CallbackComponent'
+import { InteractionPresentation, spring } from '@/shared/uiKit/chart/universalChart/interaction/composable/presentation/InteractionPresentation'
 
 
 const MINUTE = 1 * 60
@@ -79,6 +80,11 @@ class BaseChart extends UniversalChart {
       .clipBy(clipMain)
 
     const syncedPoints = this.line.interaction.nearestByAxis('x').withInput(sync.hover)
+    const presentation = new InteractionPresentation({
+      motion: spring({ response: 0.105 }),
+    })
+    const x = presentation.animate(syncedPoints.axis('x'))
+    const markerBinding = presentation.project(syncedPoints, x, this.line.interaction.alongAxis('x'))
 
     this.interactionController = new InteractionController()
       .addComponent(new ZoomChartComponent({
@@ -95,9 +101,10 @@ class BaseChart extends UniversalChart {
           elastic: true
         },
       }))
+      .addComponent(presentation)
       .addComponent(new VerticalLine({
         offset: { end: 0.5, start: -5 },
-        selection: syncedPoints,
+        binding: x,
       }))
       .addComponent(new MarkerOverlay({
         classes: 'markers',
@@ -105,11 +112,12 @@ class BaseChart extends UniversalChart {
         size: 4,
         maskSize: 6,
         targetMasks: [maskMain.root],
-        selection: syncedPoints,
+        binding: markerBinding,
       }))
       .addComponent(new ChartTooltip({
         selection: syncedPoints,
-        tooltipPivot: 'avg',
+        binding: presentation.animate(syncedPoints.pivot('avg')),
+        cursorBinding: presentation.animate(syncedPoints.cursor()),
         onHide: () => this.tooltipCtx.value = null,
         onPositionChange: ctx => this.tooltipCtx.value = ctx,
       }))

@@ -1,5 +1,6 @@
 import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
 import { InteractionController } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController'
+import { InteractionResolver } from '@/shared/uiKit/chart/universalChart/interaction/core/InteractionResolver'
 import { ChartTooltip, ChartTooltipOptions, TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
 import { Highlight } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/highlight/Highlight'
 import { MarkerOverlay } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/markerOverlay/MarkerOverlay'
@@ -101,7 +102,7 @@ export class FrameChart extends UniversalChart {
     this.plotRoot.addPlot(this.line)
   }
 
-  private tooltipOptions(selection: ChartTooltipOptions<FrameHit>['selection']): ChartTooltipOptions<FrameHit> {
+  private tooltipOptions(selection: InteractionResolver<FrameHit>): ChartTooltipOptions<FrameHit> {
     return {
       selection,
       onShow: ctx => {

@@ -1,12 +1,9 @@
 import { ChartSpace } from '../../../../utils/ChartSpace'
-import { InteractionGeometry } from '../../../core/InteractionGeometry'
 import { BaseLine } from './BaseLine'
 
 export class VerticalLine extends BaseLine {
 
-  protected coordinate(geometry: InteractionGeometry): number {
-    return geometry.anchor.x
-  }
+  protected readonly axis = 'x'
 
   protected place(line: SVGLineElement, x: number, space: ChartSpace): void {
     line.setAttribute('x1', x.toString())

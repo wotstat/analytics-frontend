@@ -3,11 +3,16 @@ import { Point } from '../../../../utils/Point'
 import { addClasses, Classes, classNames, removeClasses } from '../../../../utils/utils'
 import { InteractionFrame } from '../../../core/InteractionFrame'
 import { InteractionHit } from '../../../core/InteractionHit'
-import { InteractionResolver } from '../../../core/InteractionResolver'
+import type { InteractionBinding, InteractionKey, PresentedHit } from '../../../core/InteractionBinding'
+import type { InteractionResolver } from '../../../core/InteractionResolver'
+import { selectionAnchors } from '../../../core/utils/selectionBindings'
 import { InteractionComponent, InteractionController } from '../../InteractionController'
 
-export type MarkerOverlayOptions<THit extends InteractionHit = InteractionHit> = {
-  selection: InteractionResolver<THit>
+export type MarkerOverlayInput<THit extends InteractionHit = InteractionHit> =
+  | { selection: InteractionResolver<THit>, binding?: never, keyForHit?: (hit: THit) => InteractionKey }
+  | { binding: InteractionBinding<readonly PresentedHit<THit>[]>, selection?: never, keyForHit?: never }
+
+export type MarkerOverlayOptions<THit extends InteractionHit = InteractionHit> = MarkerOverlayInput<THit> & {
   classes?: Classes
   markerClasses?: Classes
   classesForHit?: (hit: THit) => Classes
@@ -28,6 +33,7 @@ export class MarkerOverlay<THit extends InteractionHit = InteractionHit> impleme
   private readonly root = document.createElementNS('http://www.w3.org/2000/svg', 'g')
 
   private options: MarkerOverlayOptions<THit>
+  private binding: InteractionBinding<readonly PresentedHit<THit>[]>
   private targetMasks: Element[] = []
   private markers: PlacedMarker[] = []
   private planned: PlannedMarker<THit>[] = []
@@ -35,6 +41,7 @@ export class MarkerOverlay<THit extends InteractionHit = InteractionHit> impleme
 
   constructor(options: MarkerOverlayOptions<THit>) {
     this.options = options
+    this.binding = options.binding ?? selectionAnchors(options.selection, options.keyForHit)
     this.applyOptions()
   }
 
@@ -45,16 +52,17 @@ export class MarkerOverlay<THit extends InteractionHit = InteractionHit> impleme
   }
 
   detach(): void {
-    this.clear()
+    this.clearMarkers()
     this.root.remove()
     this.controller = null
   }
 
   updateOptions(options: MarkerOverlayOptions<THit>) {
     removeClasses(this.root, 'hover-markers', this.options.classes)
+    this.clearMarkers()
     this.options = options
+    this.binding = options.binding ?? selectionAnchors(options.selection, options.keyForHit)
     this.applyOptions()
-    this.clear()
     this.controller?.scheduleRender()
   }
 
@@ -62,8 +70,8 @@ export class MarkerOverlay<THit extends InteractionHit = InteractionHit> impleme
     const planned: PlannedMarker<THit>[] = []
     const seen = new Map<number, Set<number>>()
 
-    for (const hit of frame.resolve(this.options.selection)) {
-      const anchor = hit.geometry.anchor
+    for (const { hit, anchor } of this.binding.read(frame)) {
+      if (!anchor) continue
       let ys = seen.get(anchor.x)
       if (!ys) { ys = new Set(); seen.set(anchor.x, ys) }
       if (ys.has(anchor.y)) continue
@@ -129,7 +137,7 @@ export class MarkerOverlay<THit extends InteractionHit = InteractionHit> impleme
     return new AutoMarker(this.root, this.targetMasks, style, style)
   }
 
-  private clear() {
+  private clearMarkers() {
     for (const placed of this.markers) placed.marker.dispose()
     this.markers = []
     this.planned = []

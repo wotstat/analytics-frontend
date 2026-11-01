@@ -3,8 +3,10 @@ import { Point } from '../../../../utils/Point'
 import { Position } from '../../../baseInteractionController/BaseInteractionController'
 import { InteractionFrame } from '../../../core/InteractionFrame'
 import { InteractionHit } from '../../../core/InteractionHit'
-import { InteractionResolver } from '../../../core/InteractionResolver'
 import { InteractionComponent, InteractionController } from '../../InteractionController'
+import type { InteractionBinding, InteractionPivot } from '../../../core/InteractionBinding'
+import type { InteractionResolver } from '../../../core/InteractionResolver'
+import { selectionCursor, selectionPivot } from '../../../core/utils/selectionBindings'
 import { Highlight, HighlightRef, HighlightSnapshot } from '../highlight/Highlight'
 
 export type TooltipBox = {
@@ -16,17 +18,7 @@ export type TooltipBox = {
 
 type NonEmptyArray<T> = readonly [T, ...T[]]
 
-export type TooltipPivot<THit extends InteractionHit = InteractionHit> =
-  | 'cursor'
-  | 'nearest'
-  | 'avg'
-  | 'max-x'
-  | 'min-x'
-  | 'max-y'
-  | 'min-y'
-  | 'max'
-  | 'min'
-  | ((hits: NonEmptyArray<THit>) => Point)
+export type TooltipPivot<THit extends InteractionHit = InteractionHit> = InteractionPivot<THit>
 
 export type TooltipCtx<THit extends InteractionHit = InteractionHit> = {
   readonly hit: THit
@@ -38,6 +30,8 @@ export type TooltipCtx<THit extends InteractionHit = InteractionHit> = {
   readonly absolutePivot: Point
   readonly cursor: Position
   readonly absoluteCursor: Point
+  readonly cursorAnchor: Point
+  readonly absoluteCursorAnchor: Point
   readonly chartBox: TooltipBox
   readonly absoluteChartBox: TooltipBox
   readonly isTouch: boolean
@@ -45,6 +39,8 @@ export type TooltipCtx<THit extends InteractionHit = InteractionHit> = {
 
 export type ChartTooltipOptions<THit extends InteractionHit = InteractionHit> = {
   selection: InteractionResolver<THit>
+  binding?: InteractionBinding<Point | null>
+  cursorBinding?: InteractionBinding<Point | null>
   exposeHighlights?: readonly Highlight[]
   tooltipPivot?: TooltipPivot<THit>
   onShow?: (ctx: TooltipCtx<THit>) => void
@@ -65,14 +61,22 @@ function isNonEmpty<T>(items: readonly T[]): items is NonEmptyArray<T> {
 export class ChartTooltip<THit extends InteractionHit = InteractionHit> implements InteractionComponent {
 
   private options: ChartTooltipOptions<THit>
+  private pivotBinding: InteractionBinding<Point | null>
+  private cursorBinding: InteractionBinding<Point | null>
   private controller: InteractionController | null = null
 
   private hits: readonly THit[] = []
+  private pointer: TooltipPointer | null = null
+  private pivot: Point | null = null
+  private cursorAnchor: Point | null = null
   private active = false
   private windowScroll = { x: 0, y: 0 }
 
   constructor(options: ChartTooltipOptions<THit>) {
     this.options = options
+    this.cursorBinding = options.cursorBinding ?? selectionCursor(options.selection)
+    const pivot = options.tooltipPivot ?? 'cursor'
+    this.pivotBinding = options.binding ?? (pivot === 'cursor' ? this.cursorBinding : selectionPivot(options.selection, pivot))
   }
 
   attach(root: SVGGElement, controller: InteractionController): void {
@@ -88,6 +92,9 @@ export class ChartTooltip<THit extends InteractionHit = InteractionHit> implemen
   updateOptions(options: ChartTooltipOptions<THit>) {
     this.hide()
     this.options = options
+    this.cursorBinding = options.cursorBinding ?? selectionCursor(options.selection)
+    const pivot = options.tooltipPivot ?? 'cursor'
+    this.pivotBinding = options.binding ?? (pivot === 'cursor' ? this.cursorBinding : selectionPivot(options.selection, pivot))
     this.controller?.scheduleRender()
   }
 
@@ -97,19 +104,23 @@ export class ChartTooltip<THit extends InteractionHit = InteractionHit> implemen
 
   prepareInteraction(frame: InteractionFrame): void {
     this.hits = frame.resolve(this.options.selection)
+    this.cursorAnchor = this.cursorBinding.read(frame)
+    this.pivot = this.pivotBinding.read(frame)
+    if (!this.controller || !isNonEmpty(this.hits)) return
+
+    this.pointer = this.pointerFor(this.controller, frame, this.hits)
   }
 
   renderInteraction(frame: InteractionFrame): void {
     const controller = this.controller
     const hits = this.hits
 
-    if (!controller || !isNonEmpty(hits)) {
+    if (!controller || !isNonEmpty(hits) || !this.pointer || !this.pivot || !this.cursorAnchor) {
       this.hide()
       return
     }
 
-    const pointer = this.pointerFor(controller, frame, hits)
-    const ctx = this.buildContext(controller, frame.space, pointer, hits)
+    const ctx = this.buildContext(controller, frame.space, this.pointer, hits)
 
     const wasActive = this.active
     this.active = true
@@ -120,6 +131,8 @@ export class ChartTooltip<THit extends InteractionHit = InteractionHit> implemen
 
   private hide() {
     this.hits = []
+    this.pointer = null
+    this.pivot = this.cursorAnchor = null
     if (!this.active) return
 
     this.active = false
@@ -128,7 +141,10 @@ export class ChartTooltip<THit extends InteractionHit = InteractionHit> implemen
 
   private pointerFor(controller: InteractionController, frame: InteractionFrame, hits: NonEmptyArray<THit>): TooltipPointer {
     const local = frame.input.pointer
-    if (local && local.cursor) return { point: local.point, cursor: local.cursor, isTouch: local.isTouch }
+    if (local) {
+      if (local.cursor) return { point: local.point, cursor: local.cursor, isTouch: local.isTouch }
+      return this.toPointer(controller, local.point, local.isTouch)
+    }
 
     const effective = frame.effectiveInputFor(this.options.selection)?.pointer
     if (effective) return this.toPointer(controller, effective.point, effective.isTouch)
@@ -145,14 +161,19 @@ export class ChartTooltip<THit extends InteractionHit = InteractionHit> implemen
     }
   }
 
-  private nearestAnchor(hits: NonEmptyArray<THit>): Point {
+  private nearestHit(hits: NonEmptyArray<THit>): THit {
     let nearest = hits[0]
     for (let i = 1; i < hits.length; i++) if (hits[i].distance <= nearest.distance) nearest = hits[i]
-    return nearest.geometry.anchor
+    return nearest
+  }
+
+  private nearestAnchor(hits: NonEmptyArray<THit>): Point {
+    return this.nearestHit(hits).geometry.anchor
   }
 
   private buildContext(controller: InteractionController, space: ChartSpace, pointer: TooltipPointer, hits: NonEmptyArray<THit>): TooltipCtx<THit> {
-    const pivot = this.pivotFor(controller, hits, pointer)
+    const cursorAnchor = controller.chartToPage(this.cursorAnchor!)
+    const pivot = controller.chartToPage(this.pivot!)
 
     const topLeft = controller.chartToPage({ x: space.layout.x, y: space.layout.y })
     const bottomRight = controller.chartToPage({ x: space.layout.x + space.layout.width, y: space.layout.y + space.layout.height })
@@ -171,6 +192,8 @@ export class ChartTooltip<THit extends InteractionHit = InteractionHit> implemen
       absolutePivot: { x: pivot.x + this.windowScroll.x, y: pivot.y + this.windowScroll.y },
       cursor: pointer.cursor,
       absoluteCursor: { x: pointer.cursor.clientX + this.windowScroll.x, y: pointer.cursor.clientY + this.windowScroll.y },
+      cursorAnchor,
+      absoluteCursorAnchor: { x: cursorAnchor.x + this.windowScroll.x, y: cursorAnchor.y + this.windowScroll.y },
       chartBox,
       absoluteChartBox: {
         top: chartBox.top + this.windowScroll.y,
@@ -180,43 +203,5 @@ export class ChartTooltip<THit extends InteractionHit = InteractionHit> implemen
       },
       isTouch: pointer.isTouch
     }
-  }
-
-  private pivotFor(controller: InteractionController, hits: NonEmptyArray<THit>, pointer: TooltipPointer): Point {
-    const mode = this.options.tooltipPivot ?? 'cursor'
-    if (typeof mode === 'function') return controller.chartToPage(mode(hits))
-    if (mode === 'cursor') return { x: pointer.cursor.clientX, y: pointer.cursor.clientY }
-    if (mode === 'nearest') return controller.chartToPage(this.nearestAnchor(hits))
-
-    let sumX = 0
-    let sumY = 0
-    let minX = hits[0].geometry.anchor.x
-    let maxX = minX
-    let minY = hits[0].geometry.anchor.y
-    let maxY = minY
-
-    for (const hit of hits) {
-      const { x, y } = hit.geometry.anchor
-      sumX += x
-      sumY += y
-      minX = Math.min(minX, x)
-      maxX = Math.max(maxX, x)
-      minY = Math.min(minY, y)
-      maxY = Math.max(maxY, y)
-    }
-
-    const avgX = sumX / hits.length
-    const avgY = sumY / hits.length
-
-    if (mode === 'max-x') return controller.chartToPage({ x: maxX, y: avgY })
-    if (mode === 'min-x') return controller.chartToPage({ x: minX, y: avgY })
-
-    // Geometry anchors use layout coordinates, where Y grows downwards.
-    if (mode === 'max-y') return controller.chartToPage({ x: avgX, y: minY })
-    if (mode === 'min-y') return controller.chartToPage({ x: avgX, y: maxY })
-    if (mode === 'max') return controller.chartToPage({ x: maxX, y: minY })
-    if (mode === 'min') return controller.chartToPage({ x: minX, y: maxY })
-
-    return controller.chartToPage({ x: avgX, y: avgY })
   }
 }

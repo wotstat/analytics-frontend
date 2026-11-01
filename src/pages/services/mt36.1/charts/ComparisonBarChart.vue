@@ -1,6 +1,6 @@
 <template>
   <div class="comparison-bar-chart">
-    <FloatingTooltip :ctx="tooltipCtx" :animated="true" :animation-omega="20" class="comparison-bar-tooltip"
+    <FloatingTooltip :ctx="tooltipCtx" class="comparison-bar-tooltip"
       v-slot="{ ctx }">
       <div class="tooltip-content">
         <h4>{{ tooltipTitle(ctx.hit.category ?? '') }}</h4>

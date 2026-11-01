@@ -1,3 +1,4 @@
+import { InteractionPresentation, spring } from '@/shared/uiKit/chart/universalChart/interaction/composable/presentation/InteractionPresentation'
 import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager'
 import { ChartClip } from '@/shared/uiKit/chart/universalChart/defs/ChartClip'
 import { ChartShadowFilter } from '@/shared/uiKit/chart/universalChart/defs/ChartShadowFilter'
@@ -65,14 +66,20 @@ export class BattlesPerWinrateChart extends UniversalChart {
       groupGaps: 'nearest',
     })
     const syncedBar = selectedBar.withInput(options.hoverSync)
+    const presentation = new InteractionPresentation({
+      motion: spring({ response: 0.18 }),
+    })
+
     const interactionController = new InteractionController()
+      .addComponent(presentation)
       .addComponent(new VerticalLine({
-        selection: syncedBar,
+        binding: presentation.animate(syncedBar.coordinates('x')),
         classes: 'winrate-hover-line',
       }))
       .addComponent(new ChartTooltip({
         selection: selectedBar,
-        tooltipPivot: 'avg',
+        binding: presentation.animate(selectedBar.pivot('avg')),
+        cursorBinding: presentation.animate(selectedBar.cursor()),
         onHide: () => this.tooltipCtx.value = null,
         onPositionChange: ctx => this.tooltipCtx.value = ctx,
       }))

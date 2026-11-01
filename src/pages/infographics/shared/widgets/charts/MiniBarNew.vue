@@ -5,7 +5,7 @@
       ['--bar-color']: getColor(props.color).main,
       ['--bar-color-highlighted']: getColor(props.color).highlight,
     }">
-      <FloatingTooltip :ctx="tooltipCtx" :animated="true" :animation-omega="20" :hideDelay="0" v-slot="{ ctx }"
+      <FloatingTooltip :ctx="tooltipCtx" :hideDelay="0" v-slot="{ ctx }"
         :class="'mini-bar-tooltip'" v-if="props.tooltip !== false">
         <div class="tooltip" :class="{
           ['has-label']: props.tooltip?.label,
@@ -26,6 +26,7 @@
 
 
 <script setup lang="ts">
+import { InteractionPresentation, spring } from '@/shared/uiKit/chart/universalChart/interaction/composable/presentation/InteractionPresentation'
 import UniversalChartComponent from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
 import ServerStatusWrapper from '../../ServerStatusWrapper.vue'
 import { Status } from '@/db'
@@ -109,10 +110,15 @@ const selectedBarItem = bar.interaction.contains({
   groupGaps: 'nearest'
 })
 
+const presentation = new InteractionPresentation({
+  motion: spring({ response: 0.314 }),
+})
 const interactionController = new InteractionController()
+  .addComponent(presentation)
   .addComponent(new ChartTooltip({
     selection: selectedBarItem,
-    tooltipPivot: 'avg',
+    binding: presentation.animate(selectedBarItem.pivot('avg')),
+    cursorBinding: presentation.animate(selectedBarItem.cursor()),
     onHide: () => tooltipCtx.value = null,
     onPositionChange: ctx => tooltipCtx.value = ctx,
   }))

@@ -2,6 +2,8 @@ import { InteractionHit } from './InteractionHit'
 import { HoverResolver, InteractionInput } from './InteractionInput'
 import { InteractionResolveContext, InteractionResolver } from './InteractionResolver'
 import { InteractionSource } from './InteractionSource'
+import type { InteractionAxis, InteractionKey, InteractionPivot } from './InteractionBinding'
+import { selectionAnchors, selectionAxis, selectionCoordinates, selectionCursor, selectionPivot } from './utils/selectionBindings'
 
 export type WithinOptions = {
   maxDistance: number
@@ -32,6 +34,32 @@ export abstract class Selection<THit extends InteractionHit = InteractionHit> im
 
   abstract resolve(ctx: InteractionResolveContext): readonly THit[]
 
+  anchors(keyForHit?: (hit: THit) => InteractionKey) {
+    return selectionAnchors(this, keyForHit)
+  }
+
+  coordinates(axis: InteractionAxis, keyForHit?: (hit: THit) => InteractionKey) {
+    return selectionCoordinates(this, axis, keyForHit)
+  }
+
+  axis(axis: InteractionAxis) {
+    return selectionAxis(this, axis)
+  }
+
+  pivot(pivot: InteractionPivot<THit>) {
+    return selectionPivot(this, pivot)
+  }
+
+  cursor() {
+    return selectionCursor(this)
+  }
+
+  filter<TFiltered extends THit>(predicate: (hit: THit) => hit is TFiltered): Selection<TFiltered>
+  filter(predicate: (hit: THit) => boolean): Selection<THit>
+  filter(predicate: (hit: THit) => boolean): Selection<THit> {
+    return new FilterSelection(this, predicate)
+  }
+
   union<TOther extends InteractionHit>(other: InteractionResolver<TOther>): Selection<THit | TOther> {
     return new UnionSelection<THit | TOther>(this, other)
   }
@@ -54,6 +82,18 @@ export abstract class Selection<THit extends InteractionHit = InteractionHit> im
 
   withInput(hoverSync: HoverResolver): Selection<THit> {
     return new WithInputSelection(this, hoverSync)
+  }
+}
+
+class FilterSelection<THit extends InteractionHit> extends Selection<THit> {
+  constructor(private readonly parent: InteractionResolver<THit>, private readonly predicate: (hit: THit) => boolean) {
+    super(sourcesOf(parent))
+  }
+
+  resolve(ctx: InteractionResolveContext): readonly THit[] {
+    const hits = ctx.frame.resolve(this.parent, ctx.input)
+    ctx.frame.inheritEffectiveInput(this, this.parent, ctx.input)
+    return hits.filter(this.predicate)
   }
 }
 

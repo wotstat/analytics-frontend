@@ -93,7 +93,11 @@ function onAnimationFrame() {
 
   animationHandle = requestAnimationFrame(onAnimationFrame)
 
-  if (!props.target) return
+  updatePosition()
+}
+
+function updatePosition() {
+  if (!props.display || !props.target) return
   const targetNewParams = getParams(props.target, popupContainer.value)
   if (!targetNewParams) return
 
@@ -110,6 +114,8 @@ function onAnimationFrame() {
 
   isTargetOutsideViewport.value = isElementOutsideViewport(targetNewParams.target, newViewport)
 }
+
+watch(() => props.target, updatePosition, { flush: 'post' })
 
 let lastPlacement: PlacementWithModifiers | undefined = undefined
 watch(() => props.display, display => {

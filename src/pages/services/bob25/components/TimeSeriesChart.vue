@@ -12,7 +12,7 @@
         <DropDown v-if="showDisplayVariant" :variants="displayVariants" v-model="displayVariant" />
       </div>
 
-      <FloatingTooltip :ctx="tooltipCtx" :animated="true" :animation-omega="20" class="blogger-chart-tooltip"
+      <FloatingTooltip :ctx="tooltipCtx" class="blogger-chart-tooltip"
         v-slot="{ ctx }">
         <div class="tooltip-content">
           <h4>{{ formatDateFull(ctx.hit.datum.x) }}</h4>

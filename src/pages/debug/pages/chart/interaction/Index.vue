@@ -123,6 +123,7 @@
     <Polygon />
     <Highlight />
     <TooltipLines />
+    <Presentation />
     <SelectionComposition />
     <Synchronization />
     <ZoomPan />
@@ -147,6 +148,7 @@ import Scatter from './sections/Scatter.vue'
 import Polygon from './sections/Polygon.vue'
 import Highlight from './sections/Highlight.vue'
 import TooltipLines from './sections/TooltipLines.vue'
+import Presentation from './sections/Presentation.vue'
 import SelectionComposition from './sections/SelectionComposition.vue'
 import Synchronization from './sections/synchronization/Synchronization.vue'
 import ZoomPan from './sections/ZoomPan.vue'

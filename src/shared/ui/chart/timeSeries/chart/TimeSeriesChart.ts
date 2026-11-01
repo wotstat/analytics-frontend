@@ -10,6 +10,7 @@ import type { HighlightSynchronizer } from '@/shared/uiKit/chart/universalChart/
 import { InteractionController, type InteractionComponent } from '@/shared/uiKit/chart/universalChart/interaction/composable/InteractionController'
 import { CallbackComponent } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/callback/CallbackComponent'
 import { InteractionFrame } from '@/shared/uiKit/chart/universalChart/interaction/core/InteractionFrame'
+import { InteractionPresentation, spring } from '@/shared/uiKit/chart/universalChart/interaction/composable/presentation/InteractionPresentation'
 import type { ClickInteractionEvent } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/BaseInteractionController'
 import { AutoLabels, type Options as LabelsOptions } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
 import { labelCandidates } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/labelCandidates'
@@ -147,10 +148,16 @@ export class TimeSeriesChart<T extends TimeSeriesPoint = TimeSeriesPoint> extend
     const interactions = lines.slice(1).reduce<AutoLineInteraction<T>>(
       (source, line) => source.union(line.interaction), lines[0].interaction)
     const selection = interactions.nearestByAxis('x')
+
+    const presentation = new InteractionPresentation({ motion: spring({ response: 0.105 }) })
+    const x = presentation.animate(selection.axis('x'))
+    const markerBinding = presentation.project(selection, x, interactions.alongAxis('x'))
     const strokeSelection = interactions.nearStroke({ maxDistance: 20 }).nearest()
+
     const callbacks = new CallbackComponent()
     callbacks.on('click', event => {
       if (!this.onSeriesClick.hasListeners) return
+      // TODO: как будто бы получение InteractionFrame можно куда то вынести, типа interactions.frame
       const frame = new InteractionFrame(event.space, {
         key: Symbol('click'),
         pointer: { point: event.point, cursor: event.cursor, isTouch: event.isTouch },
@@ -171,7 +178,7 @@ export class TimeSeriesChart<T extends TimeSeriesPoint = TimeSeriesPoint> extend
     }
 
     this.markers = new MarkerOverlay({
-      selection,
+      binding: markerBinding,
       size: 4,
       maskSize: 6,
       markerClasses: 'time-series-hover-marker',
@@ -182,12 +189,14 @@ export class TimeSeriesChart<T extends TimeSeriesPoint = TimeSeriesPoint> extend
 
     this.interactionComponents = [
       callbacks,
+      presentation,
       ...(highlight ? [highlight] : []),
-      new VerticalLine({ selection, offset: { start: -4, end: 0 } }),
+      new VerticalLine({ binding: x, offset: { start: -4, end: 0 } }),
       this.markers,
       new ChartTooltip({
         selection,
-        tooltipPivot: 'nearest',
+        binding: presentation.animate(selection.pivot('nearest')),
+        cursorBinding: presentation.animate(selection.cursor()),
         exposeHighlights: highlight ? [highlight] : [],
         onHide: () => this.tooltipCtx.value = null,
         onPositionChange: ctx => this.tooltipCtx.value = ctx,

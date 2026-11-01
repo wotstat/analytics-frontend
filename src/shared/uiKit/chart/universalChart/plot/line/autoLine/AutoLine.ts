@@ -7,7 +7,7 @@ import { addClasses, Classes } from '../../../utils/utils'
 import { InteractionTag } from '../../../interaction/core/InteractionSource'
 import { BasePlotRenderer } from '../../BasePlotRenderer'
 import { AutoLineInteractionSource, StrokeGeometry } from './AutoLineInteractionSource'
-import { sampleStrokeSubpaths, StrokeSubpath } from './LineStrokeSampler'
+import { sampleStrokeSubpaths, StrokeSubpath } from './utils/LineStrokeSampler'
 import { MonotoneXPath } from './MonotoneXPath'
 import { smoothPath } from './utils'
 

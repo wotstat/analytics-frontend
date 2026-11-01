@@ -1,6 +1,6 @@
 <template>
   <div class="damage-chart">
-    <FloatingTooltip :ctx="tooltipCtx" :animated="true" :animation-omega="20" class="damage-distribution-tooltip"
+    <FloatingTooltip :ctx="tooltipCtx" class="damage-distribution-tooltip"
       v-slot="{ ctx }">
       <div class="tooltip-content">
         <h4>{{ tooltipTitle(ctx) }}</h4>
