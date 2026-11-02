@@ -110,9 +110,7 @@ const selectedBarItem = bar.interaction.contains({
   groupGaps: 'nearest'
 })
 
-const presentation = new InteractionPresentation({
-  motion: spring({ response: 0.314 }),
-})
+const presentation = new InteractionPresentation({ motion: spring({ response: 0.314 }) })
 const interactionController = new InteractionController()
   .addComponent(presentation)
   .addComponent(new ChartTooltip({

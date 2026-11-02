@@ -95,8 +95,8 @@ class BaseChart extends UniversalChart {
     })
 
     const syncedPoints = this.line.interaction.nearestByAxis('horizontal').withInput(sync.hover)
-    const presentation = new InteractionPresentation({ motion: spring({ response: 0.105 }) })
-    const axisBinding = presentation.axis(syncedPoints, 'horizontal', { wheelPan: zoom })
+    const presentation = new InteractionPresentation({ motion: spring({ response: 0.08 }) })
+    const axisBinding = presentation.axis(syncedPoints, 'horizontal', { navigation: zoom })
 
     this.interactionController = new InteractionController()
       .addComponent(zoom)

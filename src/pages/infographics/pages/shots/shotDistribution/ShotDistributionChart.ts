@@ -113,9 +113,7 @@ export class ShotDistributionChart extends UniversalChart {
     )
 
     const selectedPoints = lineInteractions.nearestByAxis('horizontal')
-    const presentation = new InteractionPresentation({
-      motion: spring({ response: 0.314 }),
-    })
+    const presentation = new InteractionPresentation({ motion: spring({ response: 0.314 }) })
     const hoveredLine = lineInteractions.nearStroke({ maxDistance: 8 }).nearest()
     this.highlight = new Highlight({ selection: hoveredLine, class: 'highlighted' })
       .syncWith(options.highlightSync)

@@ -6,7 +6,11 @@ export type BoundsSyncDirection = Axis | 'all'
 export type AxisWindow = { min: number, max: number }
 export type BoundsSyncWindow = { x?: AxisWindow, y?: AxisWindow }
 export type BoundsSyncPhase = 'active' | 'end'
-export type BoundsSyncState = { window: BoundsSyncWindow, phase: BoundsSyncPhase, wheelPanUntil?: number }
+export type BoundsSyncState = {
+  window: BoundsSyncWindow
+  phase: BoundsSyncPhase
+  cursorAnchorUntil?: Partial<Record<SyncAxis, number>>
+}
 
 // Shared driven-axis window for a group of linked charts. Mirrors HoverSynchronizer, but the
 // participants are ZoomChartComponents rather than hover components: the chart the user last
@@ -40,9 +44,10 @@ export class BoundsSynchronizer {
 
   // Only the current source publishes. `end` marks the drive settled and demotes the source, but
   // the window persists so a follower still mid-animation (or relayouting later) lands on it.
-  publish(source: symbol, window: BoundsSyncWindow, phase: BoundsSyncPhase, wheelPanUntil?: number): void {
+  publish(source: symbol, window: BoundsSyncWindow, phase: BoundsSyncPhase,
+    cursorAnchorUntil?: BoundsSyncState['cursorAnchorUntil']): void {
     if (this.source !== source) return
-    this.state = { window, phase, wheelPanUntil }
+    this.state = { window, phase, cursorAnchorUntil }
     if (phase === 'end') this.source = null
     this.notify()
   }

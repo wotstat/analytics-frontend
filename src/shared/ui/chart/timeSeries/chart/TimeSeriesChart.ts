@@ -147,8 +147,8 @@ export class TimeSeriesChart<T extends TimeSeriesPoint = TimeSeriesPoint> extend
     const interactions = AutoLineInteraction.union(...lines)
     const selection = interactions.nearestByAxis('horizontal')
 
-    const presentation = new InteractionPresentation({ motion: spring({ response: 0.105 }) })
-    const axisBinding = presentation.axis(selection, 'horizontal', { wheelPan: this.zoom })
+    const presentation = new InteractionPresentation({ motion: spring({ response: 0.08 }) })
+    const axisBinding = presentation.axis(selection, 'horizontal', { navigation: this.zoom })
 
     const strokeSelection = interactions.nearStroke({ maxDistance: 20 }).nearest()
     const callbacks = new CallbackComponent()

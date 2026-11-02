@@ -2,7 +2,8 @@ import { Size, UniversalChart } from '../../../../UniversalChart'
 import { Bounds, BoundsAxes, BoundsConstraint, BoundsPatch } from '../../../../utils/Bounds'
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
-import { axisCoordinate } from '../../../../utils/Axis'
+import { axisCoordinate, type Axis } from '../../../../utils/Axis'
+import type { InteractionNavigation, NavigationAnchorPolicy } from '../../../core/InteractionNavigation'
 import { ClickInteractionEvent, InteractionDirection, Position, TouchZoomPoint } from '../../../baseInteractionController/BaseInteractionController'
 import { InteractionController, InteractionComponent } from '../../InteractionController'
 import {
@@ -126,7 +127,7 @@ type Options = {
 // displayed-space curve written back into raw through the inverse projection, and
 // only ever start after the input owning their channel has ended — so a pan composes
 // with a still-running zoom return on the same axis.
-export class ZoomChartComponent implements InteractionComponent {
+export class ZoomChartComponent implements InteractionComponent, InteractionNavigation {
 
   private options!: Options
   private chart!: UniversalChart
@@ -144,8 +145,8 @@ export class ZoomChartComponent implements InteractionComponent {
   private lastCursor: Position | null = null
   private pinch: PinchState | null = null
   private wheel: WheelBatch | null = null
-  private wheelPanTime: number | null = null
-  private wheelZoomAnchor: number | null = null
+  private cursorAnchorUntil: Partial<Record<Axis, number>> = {}
+  private wheelZoomAnchor: Point | null = null
   private wheelPanGesture: WheelPanGesture = { lastEventTime: 0, captured: null, momentum: false }
   private nativePinchScale: number | null = null
   private nativeGestureListeners: AbortController | null = null
@@ -167,7 +168,7 @@ export class ZoomChartComponent implements InteractionComponent {
   private applyingBounds = false
   private readonly onChartBoundsSet = () => {
     if (this.applyingBounds) return
-    this.wheelPanTime = null
+    this.cursorAnchorUntil = {}
     this.wheelZoomAnchor = null
     if (this.wheel) {
       // An explicit viewport change owns the next frame; the wheel tail must not
@@ -182,14 +183,13 @@ export class ZoomChartComponent implements InteractionComponent {
     this.applyOptions(options)
   }
 
-  // Includes horizontal wheel/trackpad pan, zoom drift at limits and their animated tails.
-  isWheelPanning(time: number): boolean {
+  anchorPolicy(axis: Axis, time: number): NavigationAnchorPolicy {
     const external = this.boundsSync?.consume(this.boundsSyncParticipant)
-    if (external && !this.hasActiveInput()) {
-      return external.wheelPanUntil !== undefined && time < external.wheelPanUntil
+    let until = this.cursorAnchorUntil[axis]
+    if (external && !this.hasActiveInput() && this.boundsSync!.axes.includes(axis)) {
+      until = external.cursorAnchorUntil?.[axis]
     }
-    if (this.wheelPanTime === null) return false
-    return time - this.wheelPanTime < WHEEL_BATCH_TIMEOUT * 1000
+    return until !== undefined && time < until ? 'cursor' : 'data'
   }
 
   private applyOptions(options: Options): void {
@@ -279,7 +279,7 @@ export class ZoomChartComponent implements InteractionComponent {
   }
 
   onPanBegin(cursor: Position, point: Point, space: ChartSpace, isTouch: boolean, controller: InteractionController): boolean {
-    this.wheelPanTime = null
+    this.cursorAnchorUntil = {}
     this.wheelZoomAnchor = null
     this.boundsSync?.claim(this.boundsSyncParticipant) // this chart is the drive source now
     const afterPinch = isTouch && (this.pinch?.ended ?? false)
@@ -355,7 +355,7 @@ export class ZoomChartComponent implements InteractionComponent {
   onTouchZoomBegin(first: TouchZoomPoint, second: TouchZoomPoint, space: ChartSpace, controller: InteractionController): boolean {
     if (!this.isZoomEnabled()) return false
 
-    this.wheelPanTime = null
+    this.cursorAnchorUntil = {}
     this.wheelZoomAnchor = null
     this.boundsSync?.claim(this.boundsSyncParticipant) // this chart is the drive source now
     this.stopAllMotions()
@@ -426,10 +426,7 @@ export class ZoomChartComponent implements InteractionComponent {
     if (!this.wheel) this.wheel = { input, anchor: null }
 
     if (action.zoom) this.setWheelZoomAnchor(point, space)
-    else if (action.pan) {
-      this.wheelZoomAnchor = null
-      if (this.enabledBoundsAxes.x && deltaX !== 0 && !this.pan) this.wheelPanTime = now
-    }
+    else if (action.pan) this.wheelZoomAnchor = null
 
     // Only accepted navigation input owns the gesture and may interrupt other motion.
     this.boundsSync?.claim(this.boundsSyncParticipant) // this chart is the drive source now
@@ -444,7 +441,7 @@ export class ZoomChartComponent implements InteractionComponent {
     if (!Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) return
 
     if (event.type === 'gesturestart') {
-      this.wheelPanTime = null
+      this.cursorAnchorUntil = {}
       this.wheelZoomAnchor = null
       this.nativePinchScale = event.scale
       this.wheelPanGesture = { lastEventTime: 0, captured: null, momentum: false }
@@ -479,10 +476,13 @@ export class ZoomChartComponent implements InteractionComponent {
   }
 
   private setWheelZoomAnchor(point: Point, space: ChartSpace): void {
-    this.wheelPanTime = null
+    this.cursorAnchorUntil = {}
     this.wheelZoomAnchor = null
-    if (!this.enabledBoundsAxes.x || this.pan || !(space.layout.width > 0)) return
-    this.wheelZoomAnchor = clamp(getAxisPosition('x', point, space.layout), 0, 1)
+    if (this.pan) return
+    this.wheelZoomAnchor = {
+      x: clamp(getAxisPosition('x', point, space.layout), 0, 1),
+      y: clamp(getAxisPosition('y', point, space.layout), 0, 1),
+    }
   }
 
   //#endregion
@@ -538,7 +538,7 @@ export class ZoomChartComponent implements InteractionComponent {
     const stillBusy = this.hasActiveInput() || this.hasAnyMotion()
     if (panEnded && !stillBusy) this.releaseAutoFit(false)
     this.stepAutoFollow(space, patch, now, stillBusy)
-    this.trackWheelZoomPan(space, patch, now)
+    this.updateZoomAnchorPolicy(space, patch, now)
 
     if (Bounds.isPatchValid(patch) && !space.bounds.isEqualToPatch(patch)) this.applyChartBounds(patch, true)
 
@@ -552,15 +552,21 @@ export class ZoomChartComponent implements InteractionComponent {
     }
   }
 
-  private trackWheelZoomPan(space: ChartSpace, patch: BoundsPatch, now: number): void {
+  private updateZoomAnchorPolicy(space: ChartSpace, patch: BoundsPatch, now: number): void {
     const anchor = this.wheelZoomAnchor
     if (anchor === null) return
 
-    const min = patch.minX ?? space.bounds.minX
-    const max = patch.maxX ?? space.bounds.maxX
-    const shift = (min - space.bounds.minX) * (1 - anchor) + (max - space.bounds.maxX) * anchor
-    const shiftPx = Math.abs(shift) * space.layout.width / (max - min)
-    if (shiftPx > ZOOM_ANCHOR_EPSILON_PX) this.wheelPanTime = now
+    for (const axis of this.activeAxes) {
+      const before = getAxisBounds(space.bounds, axis)
+      const min = axis === 'x' ? patch.minX ?? before.min : patch.minY ?? before.min
+      const max = axis === 'x' ? patch.maxX ?? before.max : patch.maxY ?? before.max
+      const shift = (min - before.min) * (1 - anchor[axis]) + (max - before.max) * anchor[axis]
+      const shiftPx = Math.abs(shift) * getAxisSize(axis, space.layout) / (max - min)
+      if (!Number.isFinite(shiftPx) || shiftPx <= ZOOM_ANCHOR_EPSILON_PX) continue
+
+      const direction = axis === 'x' ? 'horizontal' : 'vertical'
+      this.cursorAnchorUntil[direction] = now + WHEEL_BATCH_TIMEOUT * 1000
+    }
   }
 
   // Sync-hub listener: runs synchronously whenever a peer publishes (inside the source's layout
@@ -621,14 +627,16 @@ export class ZoomChartComponent implements InteractionComponent {
     if (!sync || !sync.isSource(this.boundsSyncParticipant)) return
 
     const window: BoundsSyncState['window'] = {}
+    const cursorAnchorUntil: BoundsSyncState['cursorAnchorUntil'] = {}
     for (const axis of sync.axes) {
       const min = axis === 'horizontal' ? patch.minX ?? space.bounds.minX : patch.minY ?? space.bounds.minY
       const max = axis === 'horizontal' ? patch.maxX ?? space.bounds.maxX : patch.maxY ?? space.bounds.maxY
       if (Number.isFinite(min) && Number.isFinite(max) && min < max) window[axisCoordinate(axis)] = { min, max }
+      const until = this.cursorAnchorUntil[axis]
+      if (until !== undefined) cursorAnchorUntil[axis] = until
     }
 
-    const wheelPanUntil = this.wheelPanTime === null ? undefined : this.wheelPanTime + WHEEL_BATCH_TIMEOUT * 1000
-    sync.publish(this.boundsSyncParticipant, window, phase, wheelPanUntil)
+    sync.publish(this.boundsSyncParticipant, window, phase, cursorAnchorUntil)
   }
 
   private processPinch(raw: Bounds, layout: LayoutValue, now: number): boolean {
@@ -686,7 +694,7 @@ export class ZoomChartComponent implements InteractionComponent {
         this.applyWheelZoom(wheel, raw, step)
       },
       step => this.clampWheelTarget(raw, step),
-      step => this.applyWheelPan(wheel, raw, step))
+      step => this.applyWheelPan(wheel, raw, step, now))
     if (active || this.nativePinchScale !== null) return
 
     // only an elastic wheel batch has release logic: the spring may start after input stops
@@ -760,7 +768,7 @@ export class ZoomChartComponent implements InteractionComponent {
     if (changed && this.pan) this.pan.startBounds = raw.clone()
   }
 
-  private applyWheelPan(wheel: WheelBatch, raw: Bounds, step: WheelPanStep): void {
+  private applyWheelPan(wheel: WheelBatch, raw: Bounds, step: WheelPanStep, now: number): void {
     this.stopMotionsForPan(false)
     const anchor = wheel.anchor
     if (anchor && !this.pan) this.rebaseRawAnchor(raw, step.layout, axis => anchor[axis], () => 0.5)
@@ -772,6 +780,11 @@ export class ZoomChartComponent implements InteractionComponent {
 
       const delta = axis === 'x' ? step.deltaX : step.deltaY
       if (delta === 0) continue
+
+      if (!this.pan) {
+        const direction = axis === 'x' ? 'horizontal' : 'vertical'
+        this.cursorAnchorUntil[direction] = now + WHEEL_BATCH_TIMEOUT * 1000
+      }
 
       const current = getAxisBounds(raw, axis)
       const shift = this.panAxisShift(axis, -delta, current, size)
@@ -1371,7 +1384,7 @@ export class ZoomChartComponent implements InteractionComponent {
     this.lastCursor = null
     this.pinch = null
     this.wheel = null
-    this.wheelPanTime = null
+    this.cursorAnchorUntil = {}
     this.wheelZoomAnchor = null
     this.wheelPanGesture = { lastEventTime: 0, captured: null, momentum: false }
     this.nativePinchScale = null

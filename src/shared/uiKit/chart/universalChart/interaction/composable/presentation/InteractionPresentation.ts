@@ -9,9 +9,9 @@ import type { InteractionFrame } from '../../core/InteractionFrame'
 import type { InteractionHit } from '../../core/InteractionHit'
 import type { InteractionResolver } from '../../core/InteractionResolver'
 import type { InteractionComponent, InteractionController } from '../InteractionController'
-import type { ZoomChartComponent } from '../components/zoomChartComponent/ZoomChartComponent'
+import type { InteractionNavigation } from '../../core/InteractionNavigation'
 import { selectionAxis, selectionPivot } from '../../core/utils/selectionBindings'
-import { createWheelPanBinding } from './wheelPanBinding'
+import { createNavigationBinding } from './navigationBinding'
 
 export { spring, type Spring }
 
@@ -19,7 +19,7 @@ export type InteractionPresentationOptions = { motion?: Spring }
 
 export type AxisPresentationOptions = {
   motion?: Spring
-  wheelPan?: ZoomChartComponent
+  navigation?: InteractionNavigation
 }
 
 export interface PresentedAxis<THit extends InteractionHit = InteractionHit> extends InteractionBinding<number | null> {
@@ -52,13 +52,11 @@ export class InteractionPresentation implements InteractionComponent {
 
   axis<THit extends InteractionHit>(selection: InteractionResolver<THit>, axis: InteractionAxis,
     options: AxisPresentationOptions = {}): PresentedAxis<THit> {
-    if (options.wheelPan && axis !== 'horizontal') throw new RangeError('Wheel pan presentation requires the horizontal axis')
-
     const motion = spring(options.motion ?? this.motion)
     const coordinateKey = axisCoordinate(axis)
     let coordinate: InteractionBinding<number | null>
-    if (options.wheelPan) {
-      coordinate = createWheelPanBinding(selection, options.wheelPan, motion, {
+    if (options.navigation) {
+      coordinate = createNavigationBinding(selection, axis, options.navigation, motion, {
         isAttached: () => this.controller !== null,
         revision: () => this.revision,
         scheduleRender: () => this.controller?.scheduleRender(),
