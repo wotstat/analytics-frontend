@@ -8,10 +8,9 @@ type Focus = { point: Point, layout: LayoutValue }
 export type WheelZoomStep = Focus & { logDelta: number }
 export type WheelPanStep = { deltaX: number, deltaY: number, layout: LayoutValue }
 export type WheelPanGesture = { lastEventTime: number, captured: boolean | null, momentum: boolean }
-type Pending = WheelZoomStep & WheelPanStep & {
+type WheelAction = { pan: boolean, zoom: boolean }
+type Pending = WheelZoomStep & WheelPanStep & WheelAction & {
   decision: Readonly<WheelInputDecision>
-  zoom: boolean
-  pan: boolean
 }
 
 // Converts wheel input into zoom or pan frame deltas. The chart owns geometry and limits.
@@ -24,7 +23,7 @@ export class WheelNavigation {
   private lastFrame = 0
 
   push(deltaY: number, deltaX: number, deltaMode: number, point: Point, layout: LayoutValue, now: number,
-    enabled: { zoom: boolean, pan: BoundsAxes, input?: WheelInputDetection }, gesture: WheelPanGesture): boolean {
+    enabled: { zoom: boolean, pan: BoundsAxes, input?: WheelInputDetection }, gesture: WheelPanGesture): WheelAction | false {
     let pixelsX = deltaX
     let pixelsY = deltaY
     if (deltaMode === 1) {
@@ -66,7 +65,7 @@ export class WheelNavigation {
       point: { ...point }, layout: { ...layout }, decision,
     })
     this.lastEventTime = now
-    return true
+    return { pan, zoom }
   }
 
   pushPinch(logDelta: number, point: Point, layout: LayoutValue, now: number): void {

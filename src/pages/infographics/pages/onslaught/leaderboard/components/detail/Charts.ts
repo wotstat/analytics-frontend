@@ -79,32 +79,31 @@ class BaseChart extends UniversalChart {
       .maskBy(maskMain)
       .clipBy(clipMain)
 
-    const syncedPoints = this.line.interaction.nearestByAxis('horizontal').withInput(sync.hover)
-    const presentation = new InteractionPresentation({
-      motion: spring({ response: 0.105 }),
+    const zoom = new ZoomChartComponent({
+      chart: this,
+      zoom: true,
+      panDirection: 'horizontal',
+      autoFitFollow: true,
+      boundsSync: sync.bounds,
+      limits: {
+        minX: 0,
+        maxX: this.maxX,
+        maxDeltaX: this.maxX,
+        minDeltaX: 60 * 60 * 12,
+        elastic: true
+      },
     })
-    const x = presentation.animate(syncedPoints.axis('horizontal'))
-    const markerBinding = presentation.project(syncedPoints, x, this.line.interaction.alongAxis('horizontal'))
+
+    const syncedPoints = this.line.interaction.nearestByAxis('horizontal').withInput(sync.hover)
+    const presentation = new InteractionPresentation({ motion: spring({ response: 0.105 }) })
+    const axisBinding = presentation.axis(syncedPoints, 'horizontal', { wheelPan: zoom })
 
     this.interactionController = new InteractionController()
-      .addComponent(new ZoomChartComponent({
-        chart: this,
-        zoom: true,
-        panDirection: 'horizontal',
-        autoFitFollow: true,
-        boundsSync: sync.bounds,
-        limits: {
-          minX: 0,
-          maxX: this.maxX,
-          maxDeltaX: this.maxX,
-          minDeltaX: 60 * 60 * 12,
-          elastic: true
-        },
-      }))
+      .addComponent(zoom)
       .addComponent(presentation)
       .addComponent(new VerticalLine({
         offset: { end: 0.5, start: -5 },
-        binding: x,
+        binding: axisBinding,
       }))
       .addComponent(new MarkerOverlay({
         classes: 'markers',
@@ -112,11 +111,11 @@ class BaseChart extends UniversalChart {
         size: 4,
         maskSize: 6,
         targetMasks: [maskMain.root],
-        binding: markerBinding,
+        binding: axisBinding.along(this.line.interaction.alongAxis('horizontal')),
       }))
       .addComponent(new ChartTooltip({
         selection: syncedPoints,
-        binding: presentation.animate(syncedPoints.pivot('avg')),
+        binding: axisBinding.pivot('avg'),
         cursorBinding: presentation.animate(syncedPoints.cursor()),
         onHide: () => this.tooltipCtx.value = null,
         onPositionChange: ctx => this.tooltipCtx.value = ctx,

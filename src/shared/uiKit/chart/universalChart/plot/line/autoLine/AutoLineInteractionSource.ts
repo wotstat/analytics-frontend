@@ -44,16 +44,18 @@ export abstract class AutoLineInteraction<T extends Point = Point> {
 
   abstract readonly sources: readonly AutoLineInteractionSource<T>[]
 
-  static union<const TInteractions extends AutoLineInteractionTuple>(
-    ...interactions: TInteractions
-  ): AutoLineInteraction<PointOf<TInteractions[number]>> {
-    type TPoint = PointOf<TInteractions[number]>
-    // Каждый source по-прежнему создаёт hit из собственного T; union расширяет только datum-тип композиции
-    const sources = interactions.flatMap(interaction => interaction.sources) as AutoLineInteractionSource<TPoint>[]
+  static union<const TInputs extends readonly AutoLineInteractionInput[]>(
+    ...inputs: TInputs
+  ): AutoLineInteraction<PointOf<TInputs[number]>> {
+    type TPoint = PointOf<TInputs[number]>
+    const sources = inputs.flatMap(input => {
+      const interaction = 'interaction' in input ? input.interaction : input
+      return interaction.sources
+    }) as AutoLineInteractionSource<TPoint>[]
     return new AutoLineInteractionUnion(sources)
   }
 
-  union<U extends Point>(other: AutoLineInteraction<U>): AutoLineInteraction<T | U> {
+  union<U extends Point>(other: AutoLineInteractionInput<U>): AutoLineInteraction<T | U> {
     return AutoLineInteraction.union(this, other)
   }
 
@@ -85,12 +87,13 @@ class AutoLineInteractionUnion<T extends Point> extends AutoLineInteraction<T> {
   }
 }
 
-type AutoLineInteractionTuple = readonly [
-  AutoLineInteraction<Point>,
-  ...AutoLineInteraction<Point>[],
-]
+type AutoLineInteractionInput<T extends Point = Point> =
+  | AutoLineInteraction<T>
+  | { readonly interaction: AutoLineInteraction<T> }
 
-type PointOf<TInteraction> = TInteraction extends AutoLineInteraction<infer TPoint> ? TPoint : never
+type PointOf<TInput> =
+  TInput extends { readonly interaction: AutoLineInteraction<infer TPoint> } ? TPoint :
+  TInput extends AutoLineInteraction<infer TPoint> ? TPoint : never
 
 export class AutoLineInteractionSource<T extends Point = Point> extends AutoLineInteraction<T> implements InteractionSource {
 

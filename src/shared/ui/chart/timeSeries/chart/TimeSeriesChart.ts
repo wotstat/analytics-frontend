@@ -14,7 +14,7 @@ import type { ClickInteractionEvent } from '@/shared/uiKit/chart/universalChart/
 import { AutoLabels, type Options as LabelsOptions } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/AutoLabels'
 import { labelCandidates } from '@/shared/uiKit/chart/universalChart/labels/autoLabels/generators/labelCandidates'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
-import type { AutoLineInteraction, LinePointHit } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineInteractionSource'
+import { AutoLineInteraction, type LinePointHit } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLineInteractionSource'
 import { TicksByLabels } from '@/shared/uiKit/chart/universalChart/ticks/TicksByLabels'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
@@ -144,15 +144,13 @@ export class TimeSeriesChart<T extends TimeSeriesPoint = TimeSeriesPoint> extend
     const lines = [...this.seriesState.values()].map(state => state.line)
     if (!lines.length) return
 
-    const interactions = lines.slice(1).reduce<AutoLineInteraction<T>>(
-      (source, line) => source.union(line.interaction), lines[0].interaction)
+    const interactions = AutoLineInteraction.union(...lines)
     const selection = interactions.nearestByAxis('horizontal')
 
     const presentation = new InteractionPresentation({ motion: spring({ response: 0.105 }) })
-    const x = presentation.animate(selection.axis('horizontal'))
-    const markerBinding = presentation.project(selection, x, interactions.alongAxis('horizontal'))
-    const strokeSelection = interactions.nearStroke({ maxDistance: 20 }).nearest()
+    const axisBinding = presentation.axis(selection, 'horizontal', { wheelPan: this.zoom })
 
+    const strokeSelection = interactions.nearStroke({ maxDistance: 20 }).nearest()
     const callbacks = new CallbackComponent()
     callbacks.on('click', event => {
       if (!this.onSeriesClick.hasListeners) return
@@ -172,7 +170,7 @@ export class TimeSeriesChart<T extends TimeSeriesPoint = TimeSeriesPoint> extend
     }
 
     this.markers = new MarkerOverlay({
-      binding: markerBinding,
+      binding: axisBinding.along(interactions.alongAxis('horizontal')),
       size: 4,
       maskSize: 6,
       markerClasses: 'time-series-hover-marker',
@@ -185,11 +183,11 @@ export class TimeSeriesChart<T extends TimeSeriesPoint = TimeSeriesPoint> extend
       callbacks,
       presentation,
       ...(highlight ? [highlight] : []),
-      new VerticalLine({ binding: x, offset: { start: -4, end: 0 } }),
+      new VerticalLine({ binding: axisBinding, offset: { start: -4, end: 0 } }),
       this.markers,
       new ChartTooltip({
         selection,
-        binding: presentation.animate(selection.pivot('nearest')),
+        binding: axisBinding.pivot('nearest'),
         cursorBinding: presentation.animate(selection.cursor()),
         exposeHighlights: highlight ? [highlight] : [],
         onHide: () => this.tooltipCtx.value = null,

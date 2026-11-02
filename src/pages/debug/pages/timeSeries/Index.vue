@@ -54,7 +54,8 @@
       </div>
       <div class="debug-row">
         <button class="debug-button" @click="revision++">Обновить значения</button>
-        <button class="debug-button" @click="zoomIn">Последние 30 дней</button>
+        <button class="debug-button" @click="zoomIn(30)">Последние 30 дней</button>
+        <button class="debug-button" @click="zoomIn(7)">Последние 7 дней</button>
         <button class="debug-button" @click="viewport.showAll()">Весь диапазон</button>
         <label class="debug-control"><input v-model="explicitColor" type="checkbox">Задать цвет первого ряда</label>
         <label class="debug-control">Цвет первого ряда<input v-model="color" type="color"></label>
@@ -83,10 +84,11 @@
         Переключение цвета сохраняет окно.</p>
       <p class="debug-note">Именные классы задают цвета аннотаций. Другая палитра меняет только CSS-переменные и
         сохраняет окно.</p>
-      <p class="debug-note">Nearest выбирает данные сразу. Линия, маркеры и тултип используют общий анимированный X,
-        а итоговый pivot тултипа сглаживается после вычисления. Маркеры движутся по траектории линии.
-        Переключи шаг на «Месяц», чтобы лучше видеть переходы;
-        при панорамировании и зуме их положение преобразуется вместе с графиком.</p>
+      <p class="debug-note">Nearest выбирает данные сразу. Линия, маркеры и тултип используют общий X.
+        При горизонтальном скролле привязка плавно сходится к курсору и следует за ним до конца жеста и инерции,
+        затем возвращается к ближайшей точке. Значения в тултипе остаются данными ближайшего периода.
+        При перетаскивании и зуме привязка преобразуется вместе с графиком. Маркеры движутся по траектории линии.
+        Переключи шаг на «Месяц», чтобы лучше видеть переходы.</p>
       <FloatingTooltip :ctx="chart.tooltipCtx.value" :anchor="tooltipAnchor" :placement="['top-float', 'bottom-float']">
         <template #default="{ ctx }">
           <SeriesTooltip :items="tooltipRows(ctx)" :format-value="formatValue">
@@ -216,8 +218,8 @@ onScopeDispose(chart.onSeriesClick.on(({ tag, event }) => {
   log.push(`Клик ${tag}${event.altKey ? ' + Alt' : ''}${event.isTouch ? ' (touch)' : ''}`)
 }))
 
-function zoomIn() {
-  chart.setRenderBounds({ minX: range.value.maxX - 30 * DAY, maxX: range.value.maxX, minY: null, maxY: null })
+function zoomIn(days: number) {
+  chart.setRenderBounds({ minX: range.value.maxX - days * DAY, maxX: range.value.maxX, minY: null, maxY: null })
 }
 
 function tooltipRows(ctx: TooltipCtx<TimeSeriesHit<DemoPoint>>) {

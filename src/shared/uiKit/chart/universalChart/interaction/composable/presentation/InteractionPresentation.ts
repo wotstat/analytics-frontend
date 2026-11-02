@@ -1,18 +1,31 @@
 import { DEFAULT_SPRING, spring, SpringFollower, type Spring } from '../../../utils/spring'
-import { isFinitePoint } from '../../../utils/Point'
+import { isFinitePoint, type Point } from '../../../utils/Point'
 import { axisCoordinate } from '../../../utils/Axis'
 import {
-  createInteractionBinding, type InteractionBinding, type InteractionKey, type InteractionTarget,
-  type InteractionTrajectory, type PresentedHit,
+  createInteractionBinding, createInteractionTarget, type InteractionAxis, type InteractionBinding,
+  type InteractionKey, type InteractionPivot, type InteractionTarget, type InteractionTrajectory, type PresentedHit,
 } from '../../core/InteractionBinding'
 import type { InteractionFrame } from '../../core/InteractionFrame'
 import type { InteractionHit } from '../../core/InteractionHit'
 import type { InteractionResolver } from '../../core/InteractionResolver'
 import type { InteractionComponent, InteractionController } from '../InteractionController'
+import type { ZoomChartComponent } from '../components/zoomChartComponent/ZoomChartComponent'
+import { selectionAxis, selectionPivot } from '../../core/utils/selectionBindings'
+import { createWheelPanBinding } from './wheelPanBinding'
 
 export { spring, type Spring }
 
 export type InteractionPresentationOptions = { motion?: Spring }
+
+export type AxisPresentationOptions = {
+  motion?: Spring
+  wheelPan?: ZoomChartComponent
+}
+
+export interface PresentedAxis<THit extends InteractionHit = InteractionHit> extends InteractionBinding<number | null> {
+  along: (trajectory: InteractionTrajectory) => InteractionBinding<readonly PresentedHit<THit>[]>
+  pivot: (pivot?: InteractionPivot<THit>) => InteractionBinding<Point | null>
+}
 
 type Motion = { frame: InteractionFrame, follower: SpringFollower }
 
@@ -35,6 +48,48 @@ export class InteractionPresentation implements InteractionComponent {
   detach(): void {
     this.revision++
     this.controller = null
+  }
+
+  axis<THit extends InteractionHit>(selection: InteractionResolver<THit>, axis: InteractionAxis,
+    options: AxisPresentationOptions = {}): PresentedAxis<THit> {
+    if (options.wheelPan && axis !== 'horizontal') throw new RangeError('Wheel pan presentation requires the horizontal axis')
+
+    const motion = spring(options.motion ?? this.motion)
+    const coordinateKey = axisCoordinate(axis)
+    let coordinate: InteractionBinding<number | null>
+    if (options.wheelPan) {
+      coordinate = createWheelPanBinding(selection, options.wheelPan, motion, {
+        isAttached: () => this.controller !== null,
+        revision: () => this.revision,
+        scheduleRender: () => this.controller?.scheduleRender(),
+      })
+    } else {
+      coordinate = this.animate(selectionAxis(selection, axis), motion)
+    }
+
+    return {
+      read: coordinate.read,
+      along: trajectory => {
+        if (trajectory.axis !== axis) throw new RangeError('Trajectory axis must match the presented axis')
+        return this.project(selection, coordinate, trajectory)
+      },
+      pivot: (pivot = 'nearest') => {
+        const target = selectionPivot(selection, pivot)
+        const freeAxisTarget = createInteractionTarget((frame, follow) => target.evaluate(frame,
+          (key, dimension, space, value) => {
+            if (dimension === axis) return value
+            return follow(key, dimension, space, value)
+          }))
+        const anchor = this.animate(freeAxisTarget, motion)
+
+        return createInteractionBinding(frame => {
+          const value = coordinate.read(frame)
+          const point = anchor.read(frame)
+          if (value === null || !point) return null
+          return { ...point, [coordinateKey]: value }
+        })
+      },
+    }
   }
 
   animate<T>(source: InteractionTarget<T>, profile: Spring = this.motion): InteractionBinding<T> {
