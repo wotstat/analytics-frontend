@@ -78,7 +78,7 @@ import { useHistoryEventAnnotations } from '../timeSeries/annotations/events/use
 import { useHistoryEventStyles } from '../timeSeries/annotations/events/useHistoryEventStyles'
 import { applyHistoryFilters, hasHistoryValues } from '../timeSeries/historyValues'
 import type { ComparisonSource } from './types'
-import { snapshotComparisonFilters } from './utils/comparisonFilters'
+import { differentComparisonFilters } from './utils/comparisonFilters'
 import { comparisonName } from './utils/comparisonName'
 import { useVehicleHistories } from '../timeSeries/useVehicleHistories'
 import HistoryTooltipHeader from '../timeSeries/tooltip/HistoryTooltipHeader.vue'
@@ -133,9 +133,9 @@ const unresolvedMessage = computed(() => {
   return 'Некоторые источники из ссылки не найдены в игровых справочниках.'
 })
 
-const currentFilters = computed(() => snapshotComparisonFilters(props.filters))
+const differentFilters = computed(() => differentComparisonFilters(props.filters, props.sources.map(source => source.filters)))
 const legendItems = computed(() => props.sources.map(source => {
-  const name = computed(() => comparisonName(source, currentFilters.value))
+  const name = computed(() => comparisonName(source, differentFilters.value))
   return {
     tag: source.tag,
     get color() { return source.color },

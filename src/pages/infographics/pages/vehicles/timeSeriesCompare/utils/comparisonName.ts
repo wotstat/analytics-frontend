@@ -1,7 +1,6 @@
 import { battleModeSelection } from '@/shared/game/domain/battleModes/battleModeSelection'
 import { countLocalize, getArenaName } from '@/shared/i18n/i18n'
 import type { ComparisonFilters, ComparisonSource } from '../types'
-import { differentComparisonFilters } from './comparisonFilters'
 
 function arenaLabel(arenas: string[]) {
   if (!arenas.length) return 'Все карты'
@@ -11,8 +10,7 @@ function arenaLabel(arenas: string[]) {
     : getArenaName(tags[0])
 }
 
-export function comparisonName(source: ComparisonSource, current: ComparisonFilters) {
-  const different = differentComparisonFilters(source.filters, current)
+export function comparisonName(source: ComparisonSource, different: readonly (keyof ComparisonFilters)[]) {
   if (different.length > 3) return `${source.name} (выборка ${source.sampleNumber})`
 
   const filters = source.filters

@@ -14,9 +14,12 @@ export function comparisonFiltersKey(filters: SavedComparisonFilters) {
   return JSON.stringify(entries)
 }
 
-export function differentComparisonFilters(saved: ComparisonFilters, current: ComparisonFilters) {
-  return (Object.keys(saved) as (keyof ComparisonFilters)[])
-    .filter(key => filterKey(saved[key]) !== filterKey(current[key]))
+export function differentComparisonFilters(current: ComparisonFilters, sources: readonly ComparisonFilters[]) {
+  return (Object.keys(current) as (keyof ComparisonFilters)[])
+    .filter(key => {
+      const currentKey = filterKey(current[key])
+      return sources.some(filters => filterKey(filters[key]) !== currentKey)
+    })
 }
 
 export function snapshotComparisonFilters<T extends string | number>(filters: Omit<SavedComparisonFilters, 'arenas'> & { arenas: T[] }) {
