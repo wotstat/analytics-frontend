@@ -86,6 +86,7 @@ function isElementOutsideViewport(element: TargetRect, viewport: Bbox) {
 }
 
 const viewport = ref<Bbox>({ left: 0, top: 0, right: 0, bottom: 0 })
+const windowScroll = shallowRef({ x: 0, y: 0 })
 function onAnimationFrame() {
   animationHandle = null
 
@@ -101,11 +102,18 @@ function updatePosition() {
   const targetNewParams = getParams(props.target, popupContainer.value)
   if (!targetNewParams) return
 
+  const newViewport = getViewportRect()
+  const scrollX = window.scrollX
+  const scrollY = window.scrollY
+
   if (!targetParams.value || !isParamsEqual(targetParams.value, targetNewParams)) {
     targetParams.value = targetNewParams
   }
 
-  const newViewport = getViewportRect()
+  if (windowScroll.value.x !== scrollX || windowScroll.value.y !== scrollY) {
+    windowScroll.value = { x: scrollX, y: scrollY }
+  }
+
   if (viewport.value.left !== newViewport.left || viewport.value.top !== newViewport.top ||
     viewport.value.right !== newViewport.right || viewport.value.bottom !== newViewport.bottom) {
     viewport.value = newViewport
@@ -148,11 +156,12 @@ const positions = computed(() => {
   if (!targetParams.value) return null
 
   const params = targetParams.value
+  const { left, top, right, bottom } = viewport.value
 
   const position = calculatePopoverPosition(params, placementParam.value, {
     offset: offset.value,
     viewportOffset: viewportOffset.value,
-    bbox: 'window',
+    bbox: new DOMRect(left, top, right - left, bottom - top),
     lastPlacement,
     preserveLastPlacement: props.preserveLastPlacement ?? true
   })
@@ -199,8 +208,8 @@ const targetStyle = computed(() => {
   if (!positions.value) return {}
 
   const transform = props.snapToPixels ?
-    `translate3d(${roundDpr(positions.value.x + window.scrollX)}px, ${roundDpr(positions.value.y + window.scrollY)}px, 0px)` :
-    `translate3d(${positions.value.x + window.scrollX}px, ${positions.value.y + window.scrollY}px, 0px)`
+    `translate3d(${roundDpr(positions.value.x + windowScroll.value.x)}px, ${roundDpr(positions.value.y + windowScroll.value.y)}px, 0px)` :
+    `translate3d(${positions.value.x + windowScroll.value.x}px, ${positions.value.y + windowScroll.value.y}px, 0px)`
 
   return {
     transform,

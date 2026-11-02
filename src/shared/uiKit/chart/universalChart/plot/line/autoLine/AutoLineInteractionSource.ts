@@ -20,6 +20,7 @@ export type NearestByAxisOptions = {
 export type StrokeGeometry = {
   readonly subpaths: readonly StrokeSubpath[]
   readonly target: SVGPathElement | null
+  readonly halfWidth: number
 }
 
 export type NearStrokeOptions = {
@@ -126,10 +127,9 @@ export class AutoLineInteractionSource<T extends Point = Point> extends AutoLine
   }
 
   nearStrokeHit(point: Point, maxDistance: number): LineStrokeHit<T> | null {
-    const { subpaths, target } = this.getStroke()
+    const { subpaths, target, halfWidth } = this.getStroke()
     if (!target || subpaths.length === 0) return null
 
-    const halfWidth = strokeHalfWidth(target)
     const projection = nearestPointOnSubpaths(subpaths, point, Math.max(maxDistance, halfWidth))
     if (!projection) return null
 
@@ -171,11 +171,6 @@ export class AutoLineInteractionSource<T extends Point = Point> extends AutoLine
       pointIndex: index
     }
   }
-}
-
-function strokeHalfWidth(target: SVGPathElement): number {
-  const width = parseFloat(getComputedStyle(target).strokeWidth)
-  return (Number.isFinite(width) ? width : 0) / 2
 }
 
 function isEligible<T extends Point>(point: T | null, space: ChartSpace): point is T {

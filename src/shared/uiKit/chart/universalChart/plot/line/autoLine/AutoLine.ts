@@ -1,5 +1,5 @@
 import { ChartGradient } from '../../../defs/ChartGradient'
-import { Overflow } from '../../../UniversalChart'
+import { Overflow, UniversalChart } from '../../../UniversalChart'
 import { Bounds, BoundsConstraint } from '../../../utils/Bounds'
 import { ChartSpace } from '../../../utils/ChartSpace'
 import { isFinitePoint, Point } from '../../../utils/Point'
@@ -39,6 +39,7 @@ export class AutoLine<T extends Point = Point> extends BasePlotRenderer {
 
   private strokeSampleD: string | null = null
   private strokeSampleSubpaths: readonly StrokeSubpath[] = []
+  private strokeHalfWidth = 0
   private color: string | undefined
 
   readonly interaction: AutoLineInteractionSource<T>
@@ -60,6 +61,25 @@ export class AutoLine<T extends Point = Point> extends BasePlotRenderer {
     this.requestRender()
   }
 
+  attach(root: SVGGElement, chart: UniversalChart): void {
+    super.attach(root, chart)
+
+    if (this.options.area && !this.area) {
+      this.area = document.createElementNS(NAMESPACE, 'path')
+      addClasses(this.area, 'area', this.options.classes)
+      this.area.style.color = this.color ?? ''
+      this.root.appendChild(this.area)
+      if (this.options.area instanceof ChartGradient) this.options.area.fill(this.area)
+    }
+
+    if (!this.line) {
+      this.line = document.createElementNS(NAMESPACE, 'path')
+      addClasses(this.line, 'line', this.options.classes)
+      this.line.style.color = this.color ?? ''
+      this.root.appendChild(this.line)
+    }
+  }
+
   detach() {
     super.detach()
     this.line?.remove()
@@ -76,7 +96,13 @@ export class AutoLine<T extends Point = Point> extends BasePlotRenderer {
       this.strokeSampleSubpaths = d ? sampleStrokeSubpaths(d) : []
     }
 
-    return { subpaths: this.strokeSampleSubpaths, target: this.line }
+    return { subpaths: this.strokeSampleSubpaths, target: this.line, halfWidth: this.strokeHalfWidth }
+  }
+
+  protected beforeLayoutImpl(): void {
+    // Read the animated CSS width before any chart mutates its SVG in this frame.
+    const width = this.line ? parseFloat(getComputedStyle(this.line).strokeWidth) : 0
+    this.strokeHalfWidth = (Number.isFinite(width) ? width : 0) / 2
   }
 
   getPoints(): readonly (T | null)[] {
@@ -165,23 +191,7 @@ export class AutoLine<T extends Point = Point> extends BasePlotRenderer {
       paths.push(this.calculateSegmentPath(i, segment, space, overflow))
     }
 
-    if (this.options.area) {
-      if (!this.area) {
-        this.area = document.createElementNS(NAMESPACE, 'path')
-        addClasses(this.area, 'area', this.options.classes)
-        this.area.style.color = this.color ?? ''
-        this.root.appendChild(this.area)
-        if (this.options.area instanceof ChartGradient) this.options.area.fill(this.area)
-      }
-      this.area?.setAttribute('d', paths.map(t => t.area ?? '').join(' '))
-    }
-
-    if (!this.line) {
-      this.line = document.createElementNS(NAMESPACE, 'path')
-      addClasses(this.line, 'line', this.options.classes)
-      this.line.style.color = this.color ?? ''
-      this.root.appendChild(this.line)
-    }
+    this.area?.setAttribute('d', paths.map(t => t.area ?? '').join(' '))
     this.line?.setAttribute('d', paths.map(t => t.line).join(' '))
   }
 
