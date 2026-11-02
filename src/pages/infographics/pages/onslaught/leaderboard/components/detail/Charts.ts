@@ -79,12 +79,12 @@ class BaseChart extends UniversalChart {
       .maskBy(maskMain)
       .clipBy(clipMain)
 
-    const syncedPoints = this.line.interaction.nearestByAxis('x').withInput(sync.hover)
+    const syncedPoints = this.line.interaction.nearestByAxis('horizontal').withInput(sync.hover)
     const presentation = new InteractionPresentation({
       motion: spring({ response: 0.105 }),
     })
-    const x = presentation.animate(syncedPoints.axis('x'))
-    const markerBinding = presentation.project(syncedPoints, x, this.line.interaction.alongAxis('x'))
+    const x = presentation.animate(syncedPoints.axis('horizontal'))
+    const markerBinding = presentation.project(syncedPoints, x, this.line.interaction.alongAxis('horizontal'))
 
     this.interactionController = new InteractionController()
       .addComponent(new ZoomChartComponent({

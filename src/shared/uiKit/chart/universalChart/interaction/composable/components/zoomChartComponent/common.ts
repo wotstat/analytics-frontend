@@ -1,7 +1,7 @@
 import { Bounds } from '../../../../utils/Bounds'
 import { Point } from '../../../../utils/Point'
 
-export type Axis = 'x' | 'y'
+export type Coordinate = keyof Point
 export type AxisBounds = { min: number, max: number }
 export type LayoutValue = { x: number, y: number, width: number, height: number }
 
@@ -22,12 +22,12 @@ export function clamp(value: number, min: number, max: number): number {
 
 // Normalized position along an axis in chart direction (0 at min, 1 at max).
 // Screen Y grows downward while chart Y grows upward, hence the inversion.
-export function getAxisPosition(axis: Axis, point: Point, layout: LayoutValue): number {
+export function getAxisPosition(axis: Coordinate, point: Point, layout: LayoutValue): number {
   if (axis === 'x') return (point.x - layout.x) / layout.width
   return 1 - (point.y - layout.y) / layout.height
 }
 
-export function getAxisSize(axis: Axis, layout: LayoutValue): number {
+export function getAxisSize(axis: Coordinate, layout: LayoutValue): number {
   return axis === 'x' ? layout.width : layout.height
 }
 
@@ -36,11 +36,11 @@ export function orderedAxisBounds(min: number, max: number): AxisBounds | null {
   return min < max ? { min, max } : { min: max, max: min }
 }
 
-export function getAxisBounds(bounds: Bounds, axis: Axis): AxisBounds {
+export function getAxisBounds(bounds: Bounds, axis: Coordinate): AxisBounds {
   return axis === 'x' ? { min: bounds.minX, max: bounds.maxX } : { min: bounds.minY, max: bounds.maxY }
 }
 
-export function setAxisBounds(bounds: Bounds, axis: Axis, value: AxisBounds): void {
+export function setAxisBounds(bounds: Bounds, axis: Coordinate, value: AxisBounds): void {
   if (axis === 'x') {
     bounds.minX = value.min
     bounds.maxX = value.max

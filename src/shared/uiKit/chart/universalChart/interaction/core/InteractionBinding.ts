@@ -1,9 +1,10 @@
 import type { Point } from '../../utils/Point'
+import type { Axis } from '../../utils/Axis'
 import type { InteractionFrame } from './InteractionFrame'
 import type { InteractionHit } from './InteractionHit'
 
 export type InteractionKey = string | number | symbol
-export type InteractionAxis = 'x' | 'y'
+export type InteractionAxis = Axis
 export type InteractionSpace = 'chart' | 'layout'
 
 export interface InteractionBinding<T> {

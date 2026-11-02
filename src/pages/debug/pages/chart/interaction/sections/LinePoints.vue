@@ -7,8 +7,8 @@
       <label class="debug-control">
         <span class="debug-label">ось</span>
         <select v-model="axis">
-          <option value="x">x</option>
-          <option value="y">y</option>
+          <option value="horizontal">Горизонтальная</option>
+          <option value="vertical">Вертикальная</option>
         </select>
       </label>
 
@@ -98,7 +98,7 @@
     </p>
 
     <p class="debug-note">
-      Ось <span class="debug-value">y</span> переключает поиск на вертикальную метрику: удобнее смотреть вместе с
+      Ось <span class="debug-value">vertical</span> переключает поиск на вертикальную метрику: удобнее смотреть вместе с
       горизонтальной линией. Порядок хитов — порядок точек в исходном массиве, сортировки по расстоянию здесь нет.
     </p>
   </DebugSection>
@@ -111,8 +111,9 @@ import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import DemoChartView from '../shared/DemoChartView.vue'
 import { LinePointsChart, type LinePointsHit } from '../shared/LinePointsChart'
 import { wavePoints } from '../shared/linePoints'
+import type { Axis } from '@/shared/uiKit/chart/universalChart/utils/Axis'
 
-const axis = ref<'x' | 'y'>('x')
+const axis = ref<Axis>('horizontal')
 const limited = ref(false)
 const maxAxisDistance = ref(30)
 const verticalLine = ref(true)

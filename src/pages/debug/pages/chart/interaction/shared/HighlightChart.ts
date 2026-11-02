@@ -111,7 +111,7 @@ export class HighlightChart extends UniversalChart {
 
     this.lineInteraction = this.lineA.interaction.union(this.lineB.interaction)
     this.strokeNearest = this.lineInteraction.nearStroke({ maxDistance: this.config.maxDistance }).nearest()
-    this.linePointsByX = this.lineInteraction.nearestByAxis('x')
+    this.linePointsByX = this.lineInteraction.nearestByAxis('horizontal')
 
     // Все три Highlight читают один и тот же strokeNearest — умышленно: демонстрирует одновременно
     // «разные классы на одном target» (lineHighlight + secondDiffClass) и «два Highlight одного класса,
@@ -208,7 +208,7 @@ export class HighlightChart extends UniversalChart {
 
       // Новый maxDistance — новый узел графа: selections immutable
       this.strokeNearest = this.lineInteraction.nearStroke({ maxDistance: this.config.maxDistance }).nearest()
-      this.linePointsByX = this.lineInteraction.nearestByAxis('x')
+      this.linePointsByX = this.lineInteraction.nearestByAxis('horizontal')
 
       this.lineHighlight.updateOptions({ selection: this.strokeNearest, class: 'line-highlighted' })
       this.secondSameClass.updateOptions({ selection: this.strokeNearest, class: 'line-highlighted' })

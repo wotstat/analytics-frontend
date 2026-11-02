@@ -1,7 +1,7 @@
 import { Bounds } from '../../../../utils/Bounds'
 import { Point } from '../../../../utils/Point'
 import { TouchZoomPoint } from '../../../baseInteractionController/BaseInteractionController'
-import { Axis, AxisBounds, LayoutValue, getAxisPosition, getAxisSize, orderedAxisBounds } from './common'
+import { Coordinate, AxisBounds, LayoutValue, getAxisPosition, getAxisSize, orderedAxisBounds } from './common'
 
 const MIN_AXIS_DISTANCE = 48
 const ACTIVATE_AXIS_DISTANCE = 72
@@ -58,7 +58,7 @@ export class PinchGesture {
   }
 
   // Current midpoint screen fraction, used as the hard-clamp anchor
-  midAnchor(axis: Axis): number {
+  midAnchor(axis: Coordinate): number {
     return (getAxisPosition(axis, this.first.point, this.layout) + getAxisPosition(axis, this.second.point, this.layout)) / 2
   }
 
@@ -66,7 +66,7 @@ export class PinchGesture {
     return { x: this.solveAxis('x'), y: this.solveAxis('y') }
   }
 
-  private createAxisState(axis: Axis, min: number, max: number, lockable: boolean): AxisGestureState | null {
+  private createAxisState(axis: Coordinate, min: number, max: number, lockable: boolean): AxisGestureState | null {
     const size = getAxisSize(axis, this.layout)
     if (!(size > 0) || !Number.isFinite(max - min) || max - min === 0) return null
 
@@ -77,7 +77,7 @@ export class PinchGesture {
     return buildAxisState(separated ? 'projection' : lockable ? 'locked' : 'distance', min, max, p1, p2)
   }
 
-  private solveAxis(axis: Axis): AxisBounds | null {
+  private solveAxis(axis: Coordinate): AxisBounds | null {
     const state = this.states[axis]
     if (!state) return null
 
@@ -112,7 +112,7 @@ export class PinchGesture {
 
   // A locked axis becomes a regular projection pinch once the fingers separate enough,
   // rebased from the current (pan-shifted) bounds so there is no jump
-  private activateAxis(axis: Axis, state: AxisGestureState, current: AxisBounds | null, p1: number, p2: number): void {
+  private activateAxis(axis: Coordinate, state: AxisGestureState, current: AxisBounds | null, p1: number, p2: number): void {
     const min = current?.min ?? state.startMin
     const max = current?.max ?? state.startMax
     if (!Number.isFinite(max - min) || max - min === 0) return

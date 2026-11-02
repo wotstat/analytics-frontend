@@ -112,7 +112,7 @@ export class ShotDistributionChart extends UniversalChart {
       sharedLine.interaction
     )
 
-    const selectedPoints = lineInteractions.nearestByAxis('x')
+    const selectedPoints = lineInteractions.nearestByAxis('horizontal')
     const presentation = new InteractionPresentation({
       motion: spring({ response: 0.314 }),
     })

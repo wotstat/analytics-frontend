@@ -63,12 +63,12 @@ export class DailyPlayersChart extends UniversalChart {
       .maskBy(maskMain)
       .clipBy(clipMain)
 
-    const linePoints = this.line.interaction.nearestByAxis('x')
+    const linePoints = this.line.interaction.nearestByAxis('horizontal')
     const presentation = new InteractionPresentation({
       motion: spring({ response: 0.105 }),
     })
-    const x = presentation.animate(linePoints.axis('x'))
-    const markerBinding = presentation.project(linePoints, x, this.line.interaction.alongAxis('x'))
+    const x = presentation.animate(linePoints.axis('horizontal'))
+    const markerBinding = presentation.project(linePoints, x, this.line.interaction.alongAxis('horizontal'))
 
     this.interactionController = new InteractionController()
       .addComponent(presentation)

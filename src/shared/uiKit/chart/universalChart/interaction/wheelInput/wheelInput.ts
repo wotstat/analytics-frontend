@@ -1,4 +1,5 @@
 import { EventEmitter } from '../../utils/EventEmitter'
+import type { Axis } from '../../utils/Axis'
 import { WheelSmoothing, WheelInputMode, WheelSmoothingReason, WheelSmoothingSample } from './WheelSmoothing'
 import { isTrackpadGesture } from '../utils/nativeGesture'
 
@@ -11,7 +12,7 @@ export const WHEEL_GESTURE_PAUSE = 80
 export const WHEEL_RETURN_GESTURES = 3
 
 type DetectionReason = 'diagonal' | 'wheel-return'
-type DeviceGesture = { axis: 'x' | 'y' | null, time: number, momentum: boolean }
+type DeviceGesture = { axis: Axis | null, time: number, momentum: boolean }
 type Reason = WheelSmoothingReason | 'pinch' | 'momentum' | 'native-pinch' | DetectionReason
 type Snapshot = {
   mode: WheelInputMode
@@ -109,7 +110,7 @@ class WheelInput {
     const previous = this.deviceGesture
     const inputStopped = !previous || time < previous.time || time - previous.time > WHEEL_GESTURE_PAUSE
     const newGesture = !momentum && (inputStopped || previous?.momentum === true)
-    const axis = deltaX !== 0 ? 'x' : 'y'
+    const axis = deltaX !== 0 ? 'horizontal' : 'vertical'
     if (newGesture) {
       this.deviceGesture = { axis, time, momentum }
       if (device !== 'trackpad' || !previous) return { device, reason: null }

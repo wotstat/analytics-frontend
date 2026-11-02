@@ -146,11 +146,11 @@ export class TimeSeriesChart<T extends TimeSeriesPoint = TimeSeriesPoint> extend
 
     const interactions = lines.slice(1).reduce<AutoLineInteraction<T>>(
       (source, line) => source.union(line.interaction), lines[0].interaction)
-    const selection = interactions.nearestByAxis('x')
+    const selection = interactions.nearestByAxis('horizontal')
 
     const presentation = new InteractionPresentation({ motion: spring({ response: 0.105 }) })
-    const x = presentation.animate(selection.axis('x'))
-    const markerBinding = presentation.project(selection, x, interactions.alongAxis('x'))
+    const x = presentation.animate(selection.axis('horizontal'))
+    const markerBinding = presentation.project(selection, x, interactions.alongAxis('horizontal'))
     const strokeSelection = interactions.nearStroke({ maxDistance: 20 }).nearest()
 
     const callbacks = new CallbackComponent()

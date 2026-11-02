@@ -53,7 +53,7 @@ export class FrameChart extends UniversalChart {
     this.line = new AutoLine<LinePoint>({ interactionTag: 'frame-line', classes: ['main-line', 's0'], smoothingMethod: 'monotone' })
     this.plotRoot = new PlotGroup().addPlot(this.line)
 
-    const points = this.line.interaction.nearestByAxis('x')
+    const points = this.line.interaction.nearestByAxis('horizontal')
     // Point hit target пуст — у исходной точки нет своего SVG-элемента, поэтому highlight читает
     // stroke: только у него есть реальный target, на котором виден class diff
     const stroke = this.line.interaction.nearStroke({ maxDistance: 60 }).nearest()

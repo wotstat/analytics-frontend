@@ -11,6 +11,7 @@ import { BarGapPolicy, BarGroupHit, BarHitArea, BarItemHit, BarItemSelection } f
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import { EventEmitter } from '@/shared/uiKit/chart/universalChart/utils/EventEmitter'
 import { PlotGroup } from '@/shared/uiKit/chart/universalChart/utils/PlotGroup'
+import type { Axis } from '@/shared/uiKit/chart/universalChart/utils/Axis'
 import { buildChartScaffold, clipAndMask, resetChartView } from './chartScaffold'
 import { ComponentToggle } from './ComponentToggle'
 import { HitProbe } from './HitProbe'
@@ -158,9 +159,9 @@ export function defaultBarConfig(strategy: BarStrategyKind): BarChartConfig {
 // Соседние зоны в режиме 'nearest' обязаны встречаться ровно в середине inner gap: boundary — стык
 // слотов, gapMid — середина промежутка между отрисованными прямоугольниками. Нули из расчёта исключены:
 // у них вырожденный rect на baseline, и собственной зоны они не имеют
-export function zoneJunctions(items: readonly BarZone[], axis: 'x' | 'y'): ZoneJunction[] {
-  const min = (zone: BarZone, rect: 'rect' | 'slotRect') => axis === 'x' ? zone[rect].minX : zone[rect].minY
-  const max = (zone: BarZone, rect: 'rect' | 'slotRect') => axis === 'x' ? zone[rect].maxX : zone[rect].maxY
+export function zoneJunctions(items: readonly BarZone[], axis: Axis): ZoneJunction[] {
+  const min = (zone: BarZone, rect: 'rect' | 'slotRect') => axis === 'horizontal' ? zone[rect].minX : zone[rect].minY
+  const max = (zone: BarZone, rect: 'rect' | 'slotRect') => axis === 'horizontal' ? zone[rect].maxX : zone[rect].maxY
 
   const sorted = items.filter(item => item.value !== 0).sort((a, b) => min(a, 'rect') - min(b, 'rect'))
 

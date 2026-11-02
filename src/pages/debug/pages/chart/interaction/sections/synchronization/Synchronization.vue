@@ -77,13 +77,13 @@
     <p class="debug-note">
       <b>Разные Y-масштабы.</b> Y графика B на порядок больше, чем у A (~6000 против ~500), и это не мешает
       синхронизации: <span class="debug-value">HoverSynchronizer</span> публикует chart-frame координату, а
-      <span class="debug-value">nearestByAxis('x')</span> внутри synced-запроса использует только X — Y каждый график
+      <span class="debug-value">nearestByAxis('horizontal')</span> внутри synced-запроса использует только X — Y каждый график
       достаёт из своих собственных bounds.
     </p>
 
     <p class="debug-note">
       <b>Один resolver — два результата в одном кадре.</b> Таблицы под каждым графиком читают
-      <i>один и тот же</i> <span class="debug-value">line.interaction.nearestByAxis('x')</span> дважды за кадр: строка
+      <i>один и тот же</i> <span class="debug-value">line.interaction.nearestByAxis('horizontal')</span> дважды за кадр: строка
       <span class="debug-value">local</span> — прямой resolve, строка <span class="debug-value">synced</span> — тот же
       resolver под <span class="debug-value">withInput(hoverSync)</span>. Наведи курсор на один график — на нём обе
       строки совпадут (local приоритетнее), а на втором local останется пустым, пока synced покажет то, что нашлось

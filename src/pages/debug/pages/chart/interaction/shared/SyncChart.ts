@@ -39,7 +39,7 @@ type Init = {
   config?: Partial<SyncConfig>
 }
 
-// Один и тот же line.interaction.nearestByAxis('x') резолвится и напрямую (local),
+// Один и тот же line.interaction.nearestByAxis('horizontal') резолвится и напрямую (local),
 // и через withInput(hoverSync) (synced) — какой из них слушает VerticalLine/MarkerOverlay/ChartTooltip,
 // решает конфиг. hoverSync добавляется в controller последним, тем же порядком, что и в production Charts.ts
 export class SyncChart extends UniversalChart {
@@ -81,7 +81,7 @@ export class SyncChart extends UniversalChart {
 
     // maxAxisDistance обязателен: без него nearestByAxis всегда находит ближайшую точку вне зависимости
     // от расстояния, и разрыв никогда не дал бы по-настоящему пустой selection
-    this.localSelection = this.line.interaction.nearestByAxis('x', { maxAxisDistance: 40 })
+    this.localSelection = this.line.interaction.nearestByAxis('horizontal', { maxAxisDistance: 40 })
     this.syncedSelection = this.localSelection.withInput(init.hoverSync)
 
     this.verticalLine = new VerticalLine({ selection: this.selectionFor('verticalLineSynced') })

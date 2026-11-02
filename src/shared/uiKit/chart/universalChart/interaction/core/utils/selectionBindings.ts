@@ -1,4 +1,5 @@
 import { isFinitePoint, type Point } from '../../../utils/Point'
+import { axisCoordinate } from '../../../utils/Axis'
 import {
   createInteractionTarget, type InteractionAxis, type InteractionFollow, type InteractionKey,
   type InteractionPivot, type InteractionSpace, type InteractionTarget, type PresentedCoordinate, type PresentedHit,
@@ -10,17 +11,17 @@ import type { InteractionResolver } from '../InteractionResolver'
 function coordinate(frame: InteractionFrame, follow: InteractionFollow, key: InteractionKey,
   axis: InteractionAxis, space: InteractionSpace, value: number): number {
   if (space === 'layout') return follow(key, axis, space, value)
-  const target = axis === 'x' ? frame.space.layoutToChartX(value) : frame.space.layoutToChartY(value)
+  const target = axis === 'horizontal' ? frame.space.layoutToChartX(value) : frame.space.layoutToChartY(value)
   const result = follow(key, axis, space, target)
-  return axis === 'x' ? frame.space.chartToLayoutX(result) : frame.space.chartToLayoutY(result)
+  return axis === 'horizontal' ? frame.space.chartToLayoutX(result) : frame.space.chartToLayoutY(result)
 }
 
 function point(frame: InteractionFrame, follow: InteractionFollow, key: InteractionKey,
   space: InteractionSpace, value: Point): Point | null {
   if (!isFinitePoint(value)) return null
   const result = {
-    x: coordinate(frame, follow, key, 'x', space, value.x),
-    y: coordinate(frame, follow, key, 'y', space, value.y),
+    x: coordinate(frame, follow, key, 'horizontal', space, value.x),
+    y: coordinate(frame, follow, key, 'vertical', space, value.y),
   }
   return isFinitePoint(result) ? result : null
 }
@@ -41,21 +42,23 @@ export function selectionAnchors<THit extends InteractionHit>(selection: Interac
 
 export function selectionCoordinates<THit extends InteractionHit>(selection: InteractionResolver<THit>,
   axis: InteractionAxis, keyForHit: (hit: THit) => InteractionKey = hit => hit.sourceId): InteractionTarget<readonly PresentedCoordinate[]> {
+  const coordinateKey = axisCoordinate(axis)
   return createInteractionTarget((frame, follow) => frame.resolve(selection).flatMap(hit => {
     const key = keyForHit(hit)
-    const value = coordinate(frame, follow, key, axis, hit.anchorSpace ?? 'chart', hit.geometry.anchor[axis])
+    const value = coordinate(frame, follow, key, axis, hit.anchorSpace ?? 'chart', hit.geometry.anchor[coordinateKey])
     return Number.isFinite(value) ? [{ key, value }] : []
   }))
 }
 
 export function selectionAxis(selection: InteractionResolver, axis: InteractionAxis): InteractionTarget<number | null> {
+  const coordinateKey = axisCoordinate(axis)
   return createInteractionTarget((frame, follow) => {
     const hits = frame.resolve(selection)
     if (!hits.length) return null
-    const value = hits[0].geometry.anchor[axis]
+    const value = hits[0].geometry.anchor[coordinateKey]
     const space = hits[0].anchorSpace ?? 'chart'
     if (!Number.isFinite(value) || hits.some(hit =>
-      hit.geometry.anchor[axis] !== value || (hit.anchorSpace ?? 'chart') !== space)) return null
+      hit.geometry.anchor[coordinateKey] !== value || (hit.anchorSpace ?? 'chart') !== space)) return null
     const result = coordinate(frame, follow, 'axis', axis, space, value)
     return Number.isFinite(result) ? result : null
   })

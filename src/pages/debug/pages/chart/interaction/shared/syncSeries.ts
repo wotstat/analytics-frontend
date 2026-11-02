@@ -15,7 +15,7 @@ export function syncSeriesA(): (LinePoint | null)[] {
 }
 
 // Y на порядок больше, чем у A: withInput() проецирует только X, поэтому несовпадающие Y-масштабы
-// не мешают nearestByAxis('x')
+// не мешают nearestByAxis('horizontal')
 export function syncSeriesB(): (LinePoint | null)[] {
   return Array.from({ length: 24 }, (_, i) => {
     if (i >= 2 && i <= 7) return null

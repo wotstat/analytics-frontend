@@ -1,6 +1,8 @@
-export type SyncAxis = 'x' | 'y'
+import type { Axis } from '../../../utils/Axis'
+
+export type SyncAxis = Axis
 // Which axes are synchronized, named like panDirection elsewhere for consistency.
-export type BoundsSyncDirection = 'horizontal' | 'vertical' | 'all'
+export type BoundsSyncDirection = Axis | 'all'
 export type AxisWindow = { min: number, max: number }
 export type BoundsSyncWindow = { x?: AxisWindow, y?: AxisWindow }
 export type BoundsSyncPhase = 'active' | 'end'
@@ -25,7 +27,7 @@ export class BoundsSynchronizer {
   private listeners = new Set<() => void>()
 
   constructor(direction: BoundsSyncDirection = 'all') {
-    this.axes = direction === 'all' ? ['x', 'y'] : direction === 'horizontal' ? ['x'] : ['y']
+    this.axes = direction === 'all' ? ['horizontal', 'vertical'] : [direction]
   }
 
   // The gesturing chart becomes the source; a fresh gesture voids the previous synced window.

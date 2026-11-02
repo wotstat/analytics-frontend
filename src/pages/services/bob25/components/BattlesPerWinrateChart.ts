@@ -73,7 +73,7 @@ export class BattlesPerWinrateChart extends UniversalChart {
     const interactionController = new InteractionController()
       .addComponent(presentation)
       .addComponent(new VerticalLine({
-        binding: presentation.animate(syncedBar.coordinates('x')),
+        binding: presentation.animate(syncedBar.coordinates('horizontal')),
         classes: 'winrate-hover-line',
       }))
       .addComponent(new ChartTooltip({

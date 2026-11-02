@@ -138,10 +138,10 @@ export class MultiLineChart extends UniversalChart {
   private buildSelections() {
     const options = { maxAxisDistance: this.config.maxAxisDistance ?? undefined }
 
-    let points: Selection<MultiLineHit> = this.interaction.nearestByAxis('x', options)
+    let points: Selection<MultiLineHit> = this.interaction.nearestByAxis('horizontal', options)
 
     // Тот же bucket второй раз: дубликаты обязаны сохранить позицию из левой и содержимое из правой
-    const right = this.config.duplicateUnion ? this.lines[1].interaction.nearestByAxis('x', options) : null
+    const right = this.config.duplicateUnion ? this.lines[1].interaction.nearestByAxis('horizontal', options) : null
     if (right) points = points.union(right)
 
     if (this.config.maxDistance !== null) points = points.within({ maxDistance: this.config.maxDistance })
@@ -196,14 +196,14 @@ export class MultiLineChart extends UniversalChart {
       const presentation = new InteractionPresentation({ motion: profiles.points })
       this.presentation = presentation
       if (followLine) {
-        const x = presentation.animate(points.axis('x'))
-        const projected = presentation.project(points, x, this.interaction.alongAxis('x', {
+        const x = presentation.animate(points.axis('horizontal'))
+        const projected = presentation.project(points, x, this.interaction.alongAxis('horizontal', {
           maxAxisDistance: this.config.maxAxisDistance ?? undefined,
         }))
         const cursorHits = composed.filter((hit): hit is CursorHit => hit.kind === 'cursor')
         const cursors = presentation.animate(cursorHits.anchors(), profiles.cursor)
         markerInput = { binding: presentation.merge<ComposedHit>(projected, cursors) }
-        const cursorX = presentation.animate(cursorHits.coordinates('x'), profiles.cursor)
+        const cursorX = presentation.animate(cursorHits.coordinates('horizontal'), profiles.cursor)
         lineInput = { binding: createInteractionBinding(frame => {
           const value = x.read(frame)
           const coordinates = cursorX.read(frame)
@@ -211,7 +211,7 @@ export class MultiLineChart extends UniversalChart {
         }) }
       } else {
         markerInput = { binding: presentation.animate(composed.anchors()) }
-        lineInput = { binding: presentation.animate(composed.coordinates('x')) }
+        lineInput = { binding: presentation.animate(composed.coordinates('horizontal')) }
       }
 
       const cursorBinding = presentation.animate(composed.cursor(), profiles.cursor)

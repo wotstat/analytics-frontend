@@ -1,4 +1,5 @@
 import { ChartClip } from '../defs/ChartClip'
+import type { Axis } from '../utils/Axis'
 import { SlotRenderer, UniversalChart, Overflow, Size } from '../UniversalChart'
 import { ChartSpace } from '../utils/ChartSpace'
 import { addClasses, Classes, classNames, removeClasses } from '../utils/utils'
@@ -30,7 +31,7 @@ export type LabelsFrame = {
 
 export const DEFAULT_LABEL_OFFSET = 15
 export const DEFAULT_LEVEL_GAP = 4
-export type Axis = 'vertical' | 'horizontal'
+export type { Axis }
 export type LabelsSide = 'top' | 'right' | 'bottom' | 'left'
 export type SlotSize = 'auto' | 'stable' | 'max-candidate' | number
 

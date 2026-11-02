@@ -137,7 +137,7 @@ export class MixedChart extends UniversalChart {
 
     // Source union только между совместимыми line sources — до запроса
     const lines = this.lineA.interaction.union(this.lineB.interaction)
-    const linePointsByX = lines.nearestByAxis('x')
+    const linePointsByX = lines.nearestByAxis('horizontal')
     const lineNearStroke = lines.nearStroke({ maxDistance: 6 }).nearest()
 
     const barItem = this.bar.interaction.contains({ gaps: 'miss' })

@@ -1,6 +1,7 @@
 import { Overflow, Size, UniversalChart } from '../../UniversalChart'
 import { ChartSpace } from '../../utils/ChartSpace'
 import { Point } from '../../utils/Point'
+import type { Axis } from '../../utils/Axis'
 import { Classes } from '../../utils/utils'
 import { BasePlotRenderer } from '../../plot/BasePlotRenderer'
 import { StartState } from './states/StartState'
@@ -9,7 +10,7 @@ import { BaseState, Context } from './states/BaseState'
 import type { InteractionFrame } from '../core/InteractionFrame'
 import '../wheelInput/wheelInput'
 
-export type InteractionDirection = 'horizontal' | 'vertical' | 'all' | false
+export type InteractionDirection = Axis | 'all' | false
 
 export type Position = { offsetX: number, offsetY: number, clientX: number, clientY: number }
 export type TouchZoomPoint = { cursor: Position, point: Point }

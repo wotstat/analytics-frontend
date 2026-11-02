@@ -143,8 +143,8 @@ watchEffect(() => chart.setConfig({
 }))
 
 const pipeline = computed(() => {
-  const steps = [`lines.nearestByAxis('x'${limitedAxis.value ? `, { maxAxisDistance: ${maxAxisDistance.value} }` : ''})`]
-  if (duplicateUnion.value) steps.push('.union(lineB.interaction.nearestByAxis(\'x\'))')
+  const steps = [`lines.nearestByAxis('horizontal'${limitedAxis.value ? `, { maxAxisDistance: ${maxAxisDistance.value} }` : ''})`]
+  if (duplicateUnion.value) steps.push('.union(lineB.interaction.nearestByAxis(\'horizontal\'))')
   if (limitedDistance.value) steps.push(`.within({ maxDistance: ${maxDistance.value} })`)
   if (cursorUnion.value) steps.push('.union(cursorSelection())')
   if (cursorFallback.value) steps.push('.orElse(cursorSelection())')

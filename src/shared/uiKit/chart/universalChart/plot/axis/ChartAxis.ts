@@ -1,10 +1,11 @@
 import { Overflow, Size } from '../../UniversalChart'
 import { BasePlotRenderer } from '../../plot/BasePlotRenderer'
 import { ChartSpace } from '../../utils/ChartSpace'
+import type { Axis } from '../../utils/Axis'
 import { Classes, joinClasses } from '../../utils/utils'
 
 
-export type Axis = 'vertical' | 'horizontal'
+export type { Axis }
 
 export class ChartAxis extends BasePlotRenderer {
 

@@ -2,10 +2,11 @@ import { Size, UniversalChart } from '../../../../UniversalChart'
 import { Bounds, BoundsAxes, BoundsConstraint, BoundsPatch } from '../../../../utils/Bounds'
 import { ChartSpace } from '../../../../utils/ChartSpace'
 import { Point } from '../../../../utils/Point'
+import { axisCoordinate } from '../../../../utils/Axis'
 import { ClickInteractionEvent, InteractionDirection, Position, TouchZoomPoint } from '../../../baseInteractionController/BaseInteractionController'
 import { InteractionController, InteractionComponent } from '../../InteractionController'
 import {
-  Axis, AxisBounds, DEFAULT_DECELERATION, DEFAULT_TOUCH_ZOOM_DECELERATION, INERTIA_MIN_REMAINING_PIXELS,
+  Coordinate, AxisBounds, DEFAULT_DECELERATION, DEFAULT_TOUCH_ZOOM_DECELERATION, INERTIA_MIN_REMAINING_PIXELS,
   INPUT_STOP_TIMEOUT, LayoutValue, MIN_VELOCITY_SAMPLE_DT, RUBBER_BAND_COEFF,
   VELOCITY_SAMPLE_DT_SMOOTHING, VELOCITY_SAMPLE_OUTLIER_RATIO,
   WHEEL_BATCH_TIMEOUT, axisCenter, axisRange, clamp,
@@ -130,11 +131,11 @@ export class ZoomChartComponent implements InteractionComponent {
   private chart!: UniversalChart
 
   private limits!: NormalizedLimits
-  private activeAxes!: Axis[]
+  private activeAxes!: Coordinate[]
   private enabledBoundsAxes!: BoundsAxes
   // The axis the component does not drive but auto-fits (single-axis pan/zoom only); null
   // when both axes are driven ('all') or none are. The follower animates this one.
-  private autoFitAxis!: Axis | null
+  private autoFitAxis!: Coordinate | null
   // Follower natural frequency, null when the follow animation is disabled
   private autoFitFollowOmega!: number | null
 
@@ -535,9 +536,9 @@ export class ZoomChartComponent implements InteractionComponent {
 
     const patch: BoundsPatch = {}
     for (const axis of this.boundsSync!.axes) {
-      const window = external.window[axis]
+      const window = external.window[axisCoordinate(axis)]
       if (!window) continue
-      if (axis === 'x') {
+      if (axis === 'horizontal') {
         patch.minX = window.min
         patch.maxX = window.max
       } else {
@@ -549,7 +550,7 @@ export class ZoomChartComponent implements InteractionComponent {
     // ease the auto-fit axis locally (busy while the drive is active so it engages, then keeps
     // stepping to settle and release after 'end'); skip if that axis is itself synchronized above
     const autoFit = this.autoFitAxis
-    if (autoFit === null || !this.boundsSync!.axes.includes(autoFit)) {
+    if (autoFit === null || !this.boundsSync!.axes.some(axis => axisCoordinate(axis) === autoFit)) {
       this.stepAutoFollow(space, patch, now, active)
     }
 
@@ -568,9 +569,9 @@ export class ZoomChartComponent implements InteractionComponent {
 
     const window: BoundsSyncState['window'] = {}
     for (const axis of sync.axes) {
-      const min = axis === 'x' ? patch.minX ?? space.bounds.minX : patch.minY ?? space.bounds.minY
-      const max = axis === 'x' ? patch.maxX ?? space.bounds.maxX : patch.maxY ?? space.bounds.maxY
-      if (Number.isFinite(min) && Number.isFinite(max) && min < max) window[axis] = { min, max }
+      const min = axis === 'horizontal' ? patch.minX ?? space.bounds.minX : patch.minY ?? space.bounds.minY
+      const max = axis === 'horizontal' ? patch.maxX ?? space.bounds.maxX : patch.maxY ?? space.bounds.maxY
+      if (Number.isFinite(min) && Number.isFinite(max) && min < max) window[axisCoordinate(axis)] = { min, max }
     }
 
     sync.publish(this.boundsSyncParticipant, window, phase)
@@ -845,7 +846,7 @@ export class ZoomChartComponent implements InteractionComponent {
   }
 
   // px -> chart units shift for a pan client delta along the axis (screen Y is inverted)
-  private panAxisShift(axis: Axis, clientDelta: number, start: AxisBounds, layoutSize: number): number {
+  private panAxisShift(axis: Coordinate, clientDelta: number, start: AxisBounds, layoutSize: number): number {
     return (axis === 'x' ? -clientDelta : clientDelta) * this.panConversionRange(axis, start, layoutSize) / layoutSize
   }
 
@@ -905,7 +906,7 @@ export class ZoomChartComponent implements InteractionComponent {
   // velocity mapped into displayed space. A null channel velocity leaves that
   // channel's current motion untouched, a null inertia allows only springs.
   private releaseAxis(
-    axis: Axis,
+    axis: Coordinate,
     raw: Bounds,
     layoutSize: number,
     velocity: { center: number | null, logRange: number | null },
@@ -977,7 +978,7 @@ export class ZoomChartComponent implements InteractionComponent {
     return changed
   }
 
-  private stepAxisMotions(axis: Axis, raw: Bounds, layoutSize: number, now: number): boolean {
+  private stepAxisMotions(axis: Coordinate, raw: Bounds, layoutSize: number, now: number): boolean {
     const motions = this.motions[axis]
     if (!motions.center && !motions.logRange) return false
 
@@ -1116,7 +1117,7 @@ export class ZoomChartComponent implements InteractionComponent {
   // Starts raw space from the current visual state: the inverse of the elastic
   // projection, so a gesture picking up mid-overscroll continues without a jump.
   // The anchor must match the one the following frames will project with.
-  private resetRawFrom(space: ChartSpace, anchorOf: (axis: Axis) => number = () => 0.5): Bounds {
+  private resetRawFrom(space: ChartSpace, anchorOf: (axis: Coordinate) => number = () => 0.5): Bounds {
     const raw = space.bounds.clone()
 
     if (this.limits.elastic) {
@@ -1131,7 +1132,7 @@ export class ZoomChartComponent implements InteractionComponent {
     return raw
   }
 
-  private projectAxis(bounds: AxisBounds, axis: Axis, layoutSize: number, anchorT: number = 0.5): AxisBounds {
+  private projectAxis(bounds: AxisBounds, axis: Coordinate, layoutSize: number, anchorT: number = 0.5): AxisBounds {
     const limits = this.axisLimits(axis)
     if (!limits.hasAny) return bounds
     if (this.limits.elastic) return applyElasticAxis(bounds, limits, layoutSize, anchorT)
@@ -1141,7 +1142,7 @@ export class ZoomChartComponent implements InteractionComponent {
   // Screen fraction the elastic projection is anchored at: the pinch midpoint or the
   // wheel cursor while zooming, the window center otherwise. Keeping the anchor pinned
   // makes elastic overzoom stretch around the point the user is zooming at.
-  private currentAnchor(axis: Axis): number {
+  private currentAnchor(axis: Coordinate): number {
     if (this.pinch) return clamp(this.pinch.gesture.midAnchor(axis), 0, 1)
     if (this.wheel?.anchor && !this.pan) return this.wheel.anchor[axis]
     return 0.5
@@ -1149,7 +1150,7 @@ export class ZoomChartComponent implements InteractionComponent {
 
   // Re-derives raw so the displayed bounds stay identical when the projection anchor
   // changes (wheel cursor moved, zoom gesture ended)
-  private rebaseRawAnchor(raw: Bounds, layout: LayoutValue, fromT: (axis: Axis) => number, toT: (axis: Axis) => number): void {
+  private rebaseRawAnchor(raw: Bounds, layout: LayoutValue, fromT: (axis: Coordinate) => number, toT: (axis: Coordinate) => number): void {
     if (!this.limits.elastic) return
 
     for (const axis of this.activeAxes) {
@@ -1168,7 +1169,7 @@ export class ZoomChartComponent implements InteractionComponent {
 
   // px -> chart units conversion for pan: uses the displayed (resisted) range so the
   // content keeps tracking the finger 1:1 even while the range is overzoomed
-  private panConversionRange(axis: Axis, start: AxisBounds, layoutSize: number): number {
+  private panConversionRange(axis: Coordinate, start: AxisBounds, layoutSize: number): number {
     const limits = this.axisLimits(axis)
     if (this.isElasticAxis(limits)) return resistedAxisRange(axisRange(start), limits, layoutSize)
     return axisRange(start)
@@ -1176,7 +1177,7 @@ export class ZoomChartComponent implements InteractionComponent {
 
   // With hard limits raw is kept clamped at every application step, each gesture
   // supplying its own anchor. In elastic mode raw is left free on purpose.
-  private hardClampAxis(bounds: AxisBounds, axis: Axis, anchorT: number): AxisBounds {
+  private hardClampAxis(bounds: AxisBounds, axis: Coordinate, anchorT: number): AxisBounds {
     const limits = this.axisLimits(axis)
     if (this.limits.elastic || !limits.hasAny) return bounds
     return clampAxisToLimits(bounds, limits, anchorT)
@@ -1334,7 +1335,7 @@ export class ZoomChartComponent implements InteractionComponent {
     return { source, deceleration }
   }
 
-  private axisLimits(axis: Axis): AxisLimits {
+  private axisLimits(axis: Coordinate): AxisLimits {
     return axis === 'x' ? this.limits.x : this.limits.y
   }
 

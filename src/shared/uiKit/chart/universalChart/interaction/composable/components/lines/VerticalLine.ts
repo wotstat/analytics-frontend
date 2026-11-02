@@ -3,7 +3,7 @@ import { BaseLine } from './BaseLine'
 
 export class VerticalLine extends BaseLine {
 
-  protected readonly axis = 'x'
+  protected readonly axis = 'horizontal'
 
   protected place(line: SVGLineElement, x: number, space: ChartSpace): void {
     line.setAttribute('x1', x.toString())

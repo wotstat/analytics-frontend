@@ -1,4 +1,5 @@
 import { ChartSpace } from '../../../../utils/ChartSpace'
+import type { Axis } from '../../../../utils/Axis'
 import { addClasses, Classes, removeClasses } from '../../../../utils/utils'
 import { InteractionFrame } from '../../../core/InteractionFrame'
 import type { InteractionBinding, PresentedCoordinate } from '../../../core/InteractionBinding'
@@ -101,6 +102,6 @@ export abstract class BaseLine implements InteractionComponent {
     this.coordinates = []
   }
 
-  protected abstract readonly axis: 'x' | 'y'
+  protected abstract readonly axis: Axis
   protected abstract place(line: SVGLineElement, coordinate: number, space: ChartSpace): void
 }

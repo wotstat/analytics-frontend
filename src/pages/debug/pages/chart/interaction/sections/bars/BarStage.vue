@@ -399,7 +399,7 @@ const junctions = computed<ZoneJunction[]>(() => {
   const snapshot = zones.value
   if (!snapshot) return []
 
-  return zoneJunctions(snapshot.items, props.strategy === 'grouped' ? 'x' : 'y')
+  return zoneJunctions(snapshot.items, props.strategy === 'grouped' ? 'horizontal' : 'vertical')
 })
 
 const groupZone = computed(() => {

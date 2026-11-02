@@ -92,7 +92,7 @@ export class BloggerTimeSeriesChart extends UniversalChart {
       .union(this.lines[1].interaction)
       .union(this.lines[2].interaction)
       .union(this.lines[3].interaction)
-    const selectedPoints = lineInteractions.nearestByAxis('x')
+    const selectedPoints = lineInteractions.nearestByAxis('horizontal')
     const presentation = new InteractionPresentation({
       motion: spring({ response: 0.105 }),
     })

@@ -75,7 +75,7 @@ export class DamageDistributionChart extends UniversalChart {
     })
 
     const lineInteractions = this.leftLine.interaction.union(this.rightLine.interaction)
-    const selectedPoints = lineInteractions.nearestByAxis('x')
+    const selectedPoints = lineInteractions.nearestByAxis('horizontal')
     const presentation = new InteractionPresentation({
       motion: spring({ response: 0.314 }),
     })

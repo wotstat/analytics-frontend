@@ -14,11 +14,12 @@ import { baseMarkerOptions, buildChartScaffold, clipAndMask, resetChartView } fr
 import { ComponentToggle } from './ComponentToggle'
 import { HitProbe } from './HitProbe'
 import { LinePoint } from './linePoints'
+import type { Axis } from '@/shared/uiKit/chart/universalChart/utils/Axis'
 
 export type LinePointsHit = LinePointHit<LinePoint>
 
 export type LinePointsConfig = {
-  axis: 'x' | 'y'
+  axis: Axis
   maxAxisDistance: number | null
   verticalLine: boolean
   horizontalLine: boolean
@@ -26,7 +27,7 @@ export type LinePointsConfig = {
 }
 
 export function defaultLinePoints(): LinePointsConfig {
-  return { axis: 'x', maxAxisDistance: null, verticalLine: true, horizontalLine: false, marker: true }
+  return { axis: 'horizontal', maxAxisDistance: null, verticalLine: true, horizontalLine: false, marker: true }
 }
 
 type Init = {

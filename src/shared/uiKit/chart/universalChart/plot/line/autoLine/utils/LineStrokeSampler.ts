@@ -1,15 +1,16 @@
 import { InteractionBounds } from '../../../../interaction/core/InteractionGeometry'
 import { Point } from '../../../../utils/Point'
+import { axisCoordinate, type Axis } from '../../../../utils/Axis'
 
 export type StrokeSubpath = {
   readonly points: readonly Point[]
   readonly bounds: InteractionBounds
   readonly curves: readonly StrokeCurve[]
-  readonly directions: Readonly<Record<'x' | 'y', AxisDirection>>
+  readonly directions: Readonly<Record<keyof Point, CoordinateDirection>>
 }
 
 type StrokeCurve = { from: Point, to: Point, controls?: readonly [Point, Point] }
-type AxisDirection = -1 | 0 | 1 | null
+type CoordinateDirection = -1 | 0 | 1 | null
 
 export type StrokeProjection = {
   readonly anchor: Point
@@ -34,7 +35,7 @@ export function sampleStrokeSubpaths(d: string): readonly StrokeSubpath[] {
   const flush = () => {
     if (current.length > 0) subpaths.push({
       points: current, bounds: boundsOf(current), curves,
-      directions: { x: axisDirection(curves, 'x'), y: axisDirection(curves, 'y') },
+      directions: { x: coordinateDirection(curves, 'x'), y: coordinateDirection(curves, 'y') },
     })
     current = []
     curves = []
@@ -72,25 +73,26 @@ export function sampleStrokeSubpaths(d: string): readonly StrokeSubpath[] {
 }
 
 // Sample where the spring is now; the selected point disambiguates overlapping subpaths.
-export function pointOnSubpathsAtAxis(subpaths: readonly StrokeSubpath[], axis: 'x' | 'y', value: number, target: Point): Point | null {
+export function pointOnSubpathsAtAxis(subpaths: readonly StrokeSubpath[], axis: Axis, value: number, target: Point): Point | null {
   return sampleOrNearestAtAxis(subpaths, axis, value, target, 0)
 }
 
-export function sampleOrNearestAtAxis(subpaths: readonly StrokeSubpath[], axis: 'x' | 'y', value: number, target: Point, maxAxisDistance = Infinity): Point | null {
+export function sampleOrNearestAtAxis(subpaths: readonly StrokeSubpath[], axis: Axis, value: number, target: Point, maxAxisDistance = Infinity): Point | null {
   if (!Number.isFinite(value)) return null
 
+  const coordinateKey = axisCoordinate(axis)
   let selected: Point | null = null
   let axisDistance = Infinity
   let distance = Infinity
   let ambiguous = false
 
   for (const subpath of subpaths) {
-    const sampled = pointOnSubpathAtAxis(subpath, axis, value)
-    const anchor = sampled ?? nearestSubpathEndpoint(subpath, axis, value, maxAxisDistance)
+    const sampled = pointOnSubpathAtCoordinate(subpath, coordinateKey, value)
+    const anchor = sampled ?? nearestSubpathEndpoint(subpath, coordinateKey, value, maxAxisDistance)
     if (!anchor) continue
 
-    const nextAxisDistance = sampled ? 0 : Math.abs(anchor[axis] - value)
-    const targetAnchor = pointOnSubpathAtAxis(subpath, axis, target[axis])
+    const nextAxisDistance = sampled ? 0 : Math.abs(anchor[coordinateKey] - value)
+    const targetAnchor = pointOnSubpathAtCoordinate(subpath, coordinateKey, target[coordinateKey])
     const nextDistance = targetAnchor ? dist(targetAnchor, target) : Infinity
 
     if (!selected || nextAxisDistance < axisDistance || nextAxisDistance === axisDistance && nextDistance < distance) {
@@ -108,28 +110,28 @@ export function sampleOrNearestAtAxis(subpaths: readonly StrokeSubpath[], axis: 
   return ambiguous ? null : selected
 }
 
-function nearestSubpathEndpoint(subpath: StrokeSubpath, axis: 'x' | 'y', value: number, maxAxisDistance: number): Point | null {
-  if (subpath.directions[axis] === null) return null
+function nearestSubpathEndpoint(subpath: StrokeSubpath, coordinateKey: keyof Point, value: number, maxAxisDistance: number): Point | null {
+  if (subpath.directions[coordinateKey] === null) return null
   const first = subpath.curves[0]?.from ?? subpath.points[0]
   const last = subpath.curves.at(-1)?.to ?? first
-  const firstDistance = Math.abs(value - first[axis])
-  const lastDistance = Math.abs(value - last[axis])
+  const firstDistance = Math.abs(value - first[coordinateKey])
+  const lastDistance = Math.abs(value - last[coordinateKey])
   const nearest = firstDistance <= lastDistance ? first : last
-  return Math.abs(value - nearest[axis]) <= maxAxisDistance ? nearest : null
+  return Math.abs(value - nearest[coordinateKey]) <= maxAxisDistance ? nearest : null
 }
 
-function axisDirection(curves: readonly StrokeCurve[], axis: 'x' | 'y'): AxisDirection {
-  let direction: AxisDirection = 0
-  const other = axis === 'x' ? 'y' : 'x'
+function coordinateDirection(curves: readonly StrokeCurve[], coordinateKey: keyof Point): CoordinateDirection {
+  let direction: CoordinateDirection = 0
+  const other = coordinateKey === 'x' ? 'y' : 'x'
 
   for (const curve of curves) {
     const points = [...(curve.controls ?? []), curve.to]
-    if (curve.from[axis] === curve.to[axis] && points.some(p => p[other] !== curve.from[other])) return null
+    if (curve.from[coordinateKey] === curve.to[coordinateKey] && points.some(p => p[other] !== curve.from[other])) return null
 
-    let previous = curve.from[axis]
+    let previous = curve.from[coordinateKey]
     for (const point of points) {
-      const delta = point[axis] - previous
-      previous = point[axis]
+      const delta = point[coordinateKey] - previous
+      previous = point[coordinateKey]
       if (delta === 0) continue
       const sign = delta > 0 ? 1 : -1
       if (direction !== 0 && direction !== sign) return null
@@ -140,35 +142,35 @@ function axisDirection(curves: readonly StrokeCurve[], axis: 'x' | 'y'): AxisDir
   return direction
 }
 
-function pointOnSubpathAtAxis(subpath: StrokeSubpath, axis: 'x' | 'y', value: number): Point | null {
-  const direction = subpath.directions[axis]
+function pointOnSubpathAtCoordinate(subpath: StrokeSubpath, coordinateKey: keyof Point, value: number): Point | null {
+  const direction = subpath.directions[coordinateKey]
   if (direction === null || !Number.isFinite(value)) return null
 
   const first = subpath.curves[0]?.from ?? subpath.points[0]
   const last = subpath.curves.at(-1)?.to ?? first
   if (direction === 0) {
-    if (Math.abs(value - first[axis]) <= AXIS_EPSILON_PX) return { ...first, [axis]: value }
+    if (Math.abs(value - first[coordinateKey]) <= AXIS_EPSILON_PX) return { ...first, [coordinateKey]: value }
     return null
   }
 
   const position = value * direction
-  const start = first[axis] * direction
-  const end = last[axis] * direction
+  const start = first[coordinateKey] * direction
+  const end = last[coordinateKey] * direction
   if (position < start - AXIS_EPSILON_PX || position > end + AXIS_EPSILON_PX) return null
-  if (position <= start) return { ...first, [axis]: value }
-  if (position >= end) return { ...last, [axis]: value }
+  if (position <= start) return { ...first, [coordinateKey]: value }
+  if (position >= end) return { ...last, [coordinateKey]: value }
 
   let low = 0
   let high = subpath.curves.length - 1
   while (low < high) {
     const mid = (low + high) >>> 1
-    if (subpath.curves[mid].to[axis] * direction < position) low = mid + 1
+    if (subpath.curves[mid].to[coordinateKey] * direction < position) low = mid + 1
     else high = mid
   }
 
   const curve = subpath.curves[low]
   if (!curve.controls) {
-    const t = (value - curve.from[axis]) / (curve.to[axis] - curve.from[axis])
+    const t = (value - curve.from[coordinateKey]) / (curve.to[coordinateKey] - curve.from[coordinateKey])
     return {
       x: curve.from.x + (curve.to.x - curve.from.x) * t,
       y: curve.from.y + (curve.to.y - curve.from.y) * t,
@@ -181,12 +183,12 @@ function pointOnSubpathAtAxis(subpath: StrokeSubpath, axis: 'x' | 'y', value: nu
   let t = 0.5
   for (let i = 0; i < 40; i++) {
     t = (from + to) / 2
-    const coordinate = cubicCoordinateAt(curve.from[axis], c1[axis], c2[axis], curve.to[axis], t)
+    const coordinate = cubicCoordinateAt(curve.from[coordinateKey], c1[coordinateKey], c2[coordinateKey], curve.to[coordinateKey], t)
     if (Math.abs(coordinate - value) < 1e-7) break
     if ((coordinate - value) * direction < 0) from = t
     else to = t
   }
-  return { ...cubicPointAt(curve.from, c1, c2, curve.to, t), [axis]: value }
+  return { ...cubicPointAt(curve.from, c1, c2, curve.to, t), [coordinateKey]: value }
 }
 
 function cubicCoordinateAt(from: number, c1: number, c2: number, to: number, t: number): number {

@@ -1,5 +1,6 @@
 import { DEFAULT_SPRING, spring, SpringFollower, type Spring } from '../../../utils/spring'
 import { isFinitePoint } from '../../../utils/Point'
+import { axisCoordinate } from '../../../utils/Axis'
 import {
   createInteractionBinding, type InteractionBinding, type InteractionKey, type InteractionTarget,
   type InteractionTrajectory, type PresentedHit,
@@ -74,7 +75,7 @@ export class InteractionPresentation implements InteractionComponent {
         }
 
         const scale = space === 'chart' ? frame.space.chartToLocalScale() : { scaleX: 1, scaleY: 1 }
-        const pxPerUnit = axis === 'x' ? scale.scaleX : scale.scaleY
+        const pxPerUnit = axis === 'horizontal' ? scale.scaleX : scale.scaleY
         if (state.follower.settled(target, pxPerUnit)) {
           state.follower.value = target
           state.follower.velocity = 0
@@ -94,12 +95,13 @@ export class InteractionPresentation implements InteractionComponent {
 
   project<THit extends InteractionHit>(selection: InteractionResolver<THit>,
     coordinate: InteractionBinding<number | null>, trajectory: InteractionTrajectory): InteractionBinding<readonly PresentedHit<THit>[]> {
+    const coordinateKey = axisCoordinate(trajectory.axis)
     return createInteractionBinding(frame => {
       const value = coordinate.read(frame)
       if (value === null || !Number.isFinite(value)) return []
 
       return frame.resolve(selection).map(hit => {
-        const position = { ...hit.geometry.anchor, [trajectory.axis]: value }
+        const position = { ...hit.geometry.anchor, [coordinateKey]: value }
         const sampled = trajectory.sample(hit, position, frame)
         return { key: hit.sourceId, hit, anchor: sampled && isFinitePoint(sampled) ? sampled : null }
       })
