@@ -22,6 +22,13 @@
           Расширенная палитра
         </label>
       </div>
+      <div class="options panel-section">
+        <h3>Сортировка</h3>
+        <label class="option">
+          <input v-model="pinCompared" type="checkbox">
+          Закреплять строки из сравнения
+        </label>
+      </div>
       <div v-if="showAdvanced" class="options panel-section">
         <h3>История данных</h3>
         <label class="option">
@@ -43,6 +50,7 @@ import { vehicleStatisticsPeriods, type VehicleStatisticsPeriod } from '../../sh
 const period = defineModel<VehicleStatisticsPeriod>({ required: true })
 const showValueBars = defineModel<boolean>('showValueBars', { required: true })
 const extendedPalette = defineModel<boolean>('extendedPalette', { required: true })
+const pinCompared = defineModel<boolean>('pinCompared', { required: true })
 const fromBeginning = defineModel<boolean>('fromBeginning', { required: true })
 const open = ref(false)
 const showAdvanced = ref(false)

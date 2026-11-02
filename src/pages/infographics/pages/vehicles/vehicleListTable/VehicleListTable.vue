@@ -9,7 +9,8 @@
       <div class="toolbar-right" ref="toolbarRight">
         <VehicleColumnSelector v-model="visibleSlots" v-model:open="columnsOpen" :max-slots="maxSelectableSlots" />
         <VehicleTableSettings v-model="period" v-model:show-value-bars="showValueBars"
-          v-model:extended-palette="extendedPalette" v-model:from-beginning="fromBeginning" />
+          v-model:extended-palette="extendedPalette" v-model:pin-compared="pinCompared"
+          v-model:from-beginning="fromBeginning" />
       </div>
     </div>
 
@@ -227,6 +228,7 @@ const historyStep = ref<HistoryStep>('day')
 const averageWindow = ref<HistoryAverageWindow>(null)
 const showValueBars = useLocalStorage('vehicles-table-show-value-bars', false)
 const extendedPalette = useLocalStorage('vehicles-table-extended-value-bar-palette', false)
+const pinCompared = useLocalStorage('vehicles-table-pin-compared', false)
 
 const displayLimit = ref(PAGE_SIZE)
 
@@ -379,7 +381,16 @@ const filteredVehicles = computed(() => {
     return (vehicle.battles ?? 0) > filters.minBattles && (vehicle.playerCount ?? 0) > filters.minPlayers
   })
 
-  return vehicles.sort(sorting.compare)
+  vehicles.sort(sorting.compare)
+  if (!pinCompared.value) return vehicles
+
+  const compared: VehicleStatistics[] = []
+  const remaining: VehicleStatistics[] = []
+  for (const vehicle of vehicles) {
+    if (isCompared(vehicle)) compared.push(vehicle)
+    else remaining.push(vehicle)
+  }
+  return [...compared, ...remaining]
 })
 
 const displayedVehicles = computed(() => filteredVehicles.value.slice(0, displayLimit.value))
