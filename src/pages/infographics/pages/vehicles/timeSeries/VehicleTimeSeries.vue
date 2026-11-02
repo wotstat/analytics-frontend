@@ -24,8 +24,15 @@
     <template v-if="split === null" #tooltip="{ ctx }">
       <div class="history-tooltip">
         <div class="tooltip-value"><b>{{ formatSlotValue(ctx.hit.datum.slot, ctx.hit.datum.y) }}</b></div>
-        <div class="tooltip-date">{{ formatHistoryPeriod(ctx.hit.datum.periodStart, ctx.hit.datum.periodEnd,
-          ctx.hit.datum.step) }}</div>
+        <div class="tooltip-date">
+          <template v-if="ctx.hit.datum.step === 'day'">
+            {{ formatStatisticsDay(ctx.hit.datum.periodStart) }} ·
+            <span class="weekday">{{ formatHistoryWeekday(ctx.hit.datum.periodStart) }}</span>
+          </template>
+          <template v-else>
+            {{ formatHistoryPeriod(ctx.hit.datum.periodStart, ctx.hit.datum.periodEnd, ctx.hit.datum.step) }}
+          </template>
+        </div>
       </div>
     </template>
 
@@ -61,7 +68,8 @@ import { checkboxItem, separator, simpleContextMenu } from '@/shared/uiKit/conte
 import type { VehicleFilters } from '../filters/types'
 import type { Slot } from '../vehicleMetricSelector/vehicleMetrics/vehicleMetrics.ts'
 import { formatSlotValue } from '../vehicleMetricSelector/utils/formatMetricValue.ts'
-import { formatHistoryPeriod } from './tooltip/formatHistoryPeriod'
+import { formatHistoryPeriod, formatHistoryWeekday } from './tooltip/formatHistoryPeriod'
+import { formatStatisticsDay } from '../shared/formatStatisticsDay'
 import { useVehicleHistories } from './useVehicleHistories'
 import { VehicleHistoryChart } from './VehicleHistoryChart'
 import type { VehicleHistoryPeriod, VehicleHistorySeries } from '../shared/types'
@@ -243,6 +251,11 @@ onBeforeUnmount(() => closeContextMenu(splitMenuId))
       font-size: 11px;
       line-height: 1;
       margin-top: 3px;
+
+      .weekday {
+        display: inline-block;
+        width: 2ch;
+      }
     }
   }
 
