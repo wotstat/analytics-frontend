@@ -10,6 +10,7 @@ import { ZoomChartComponent } from '@/shared/uiKit/chart/universalChart/interact
 import { VerticalLine } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/lines/VerticalLine'
 import { HorizontalLine } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/lines/HorizontalLine'
 import { cursorSelection } from '@/shared/uiKit/chart/universalChart/interaction/core/CursorSelection'
+import type { Spring } from '@/shared/uiKit/chart/universalChart/utils/spring'
 import type { ChartSeries } from '@/pages/debug/shared/fixtures/types'
 import { buildChartScaffold, resetChartView } from './chartScaffold'
 import { ComponentToggle } from './ComponentToggle'
@@ -24,7 +25,7 @@ export type CursorConfig = {
 export type ZoomConfig = {
   zoom?: boolean
   panDirection?: InteractionDirection
-  autoFitFollow?: boolean | number
+  autoFitFollow?: boolean | Spring
   limits?: {
     minX?: number
     maxX?: number

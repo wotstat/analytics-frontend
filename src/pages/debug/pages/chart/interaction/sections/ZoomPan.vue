@@ -19,7 +19,7 @@
       <label class="debug-control">
         <span class="debug-label">autoFitFollow</span>
         <select v-model="autoFitFollow">
-          <option v-for="item in autoFitVariants" :key="String(item.value)" :value="item.value">{{ item.label }}
+          <option v-for="item in autoFitVariants" :key="item.label" :value="item.value">{{ item.label }}
           </option>
         </select>
       </label>
@@ -127,6 +127,7 @@ import { panDirections } from '../shared/panDirections'
 import { seriesExtent } from '../shared/series'
 import { formatBound, useChartBounds } from '../shared/useChartBounds'
 import { wheelInput, WHEEL_RETURN_GESTURES } from '@/shared/uiKit/chart/universalChart/interaction/wheelInput/wheelInput'
+import { spring } from '@/shared/uiKit/chart/universalChart/utils/spring'
 
 const wheelSnapshot = shallowRef(wheelInput.snapshot)
 const wheelModes = { unknown: 'ещё не определён', smooth: 'плавный', discrete: 'шаговый' }
@@ -143,13 +144,13 @@ onUnmounted(wheelInput.onChange.on(snapshot => wheelSnapshot.value = snapshot))
 
 const autoFitVariants = [
   { value: true, label: 'true (по умолчанию)' },
-  { value: 6, label: '6 (вязко)' },
+  { value: spring({ response: 1.05 }), label: 'response: 1.05 (вязко)' },
   { value: false, label: 'false (снап)' },
 ] as const
 
 const panDirection = ref<InteractionDirection>('horizontal')
 const zoom = ref(true)
-const autoFitFollow = ref<boolean | number>(true)
+const autoFitFollow = ref<ZoomConfig['autoFitFollow']>(true)
 const limited = ref(true)
 const elastic = ref(true)
 

@@ -16,7 +16,7 @@ import {
 import { applyElasticAxis, elasticVelocityFactor, invertElasticAxis, invertResistedAxisRange, invertResistedPlacement, resistedAxisRange } from './elastic'
 import { decayOffset, decayVelocityAt, remainingDecayOffset, totalDecayTravel } from './inertia'
 import { AxisLimits, NormalizedLimits, clampAxisToLimits, effectiveMaxDelta, isPlacementWithinLimits, isRangeWithinLimits, normalizeLimits, placementBand } from './limits'
-import { CriticalFollower, DEFAULT_FOLLOW_OMEGA } from '../../../../utils/follower'
+import { DEFAULT_SPRING, spring, SpringFollower, type Spring } from '../../../../utils/spring'
 import { ScalarSpring } from './spring'
 import { PinchGesture } from './TouchZoomSolver'
 import { BoundsSyncState, BoundsSynchronizer } from '../../sync/BoundsSynchronizer'
@@ -54,7 +54,7 @@ type AxisMotions = { center: ChannelMotion | null, logRange: ChannelMotion | nul
 
 // Eases the opposite (auto-fitted) axis toward its shifting data extent. Min and max glide
 // independently; `lastTime` is the timestamp of the previous step for frame-rate independence.
-type AutoFollow = { min: CriticalFollower, max: CriticalFollower, lastTime: number }
+type AutoFollow = { min: SpringFollower, max: SpringFollower, lastTime: number }
 
 type PanState = {
   startClientX: number,
@@ -96,9 +96,9 @@ type Options = {
   wheelInput?: WheelInputDetection
   deceleration?: DecelerationOptions
   // Eases the auto-fitted (non-driven) axis toward its data extent instead of snapping:
-  // true or omitted = default responsiveness, a positive number = custom natural
-  // frequency (higher = snappier), false = off (the axis snaps synchronously)
-  autoFitFollow?: boolean | number
+  // true or omitted = default spring, Spring = custom response and damping ratio,
+  // false = off (the axis snaps synchronously)
+  autoFitFollow?: boolean | Spring
   // Links this chart's driven-axis window to others sharing the hub: gesture one, the rest
   // follow on the synchronized axes while each auto-fits its own on the rest. Independent of
   // hover-sync. See BoundsSynchronizer.
@@ -138,8 +138,8 @@ export class ZoomChartComponent implements InteractionComponent, InteractionNavi
   // The axis the component does not drive but auto-fits (single-axis pan/zoom only); null
   // when both axes are driven ('all') or none are. The follower animates this one.
   private autoFitAxis!: Coordinate | null
-  // Follower natural frequency, null when the follow animation is disabled
-  private autoFitFollowOmega!: number | null
+  // Follower spring, null when the follow animation is disabled
+  private autoFitFollowMotion!: Spring | null
 
   private pan: PanState | null = null
   private lastCursor: Position | null = null
@@ -203,7 +203,7 @@ export class ZoomChartComponent implements InteractionComponent, InteractionNavi
     if (this.isYAxisEnabled()) this.activeAxes.push('y')
     this.enabledBoundsAxes = { x: this.isXAxisEnabled(), y: this.isYAxisEnabled() }
     this.autoFitAxis = this.activeAxes.length === 1 ? (this.activeAxes[0] === 'x' ? 'y' : 'x') : null
-    this.autoFitFollowOmega = normalizeAutoFitFollow(options.autoFitFollow)
+    this.autoFitFollowMotion = normalizeAutoFitFollow(options.autoFitFollow)
   }
 
   // Replaces the current options and recomputes the derived config. Any in-flight
@@ -806,8 +806,8 @@ export class ZoomChartComponent implements InteractionComponent, InteractionNavi
   // never starts an animation and falls through to that synchronous path unchanged.
   private stepAutoFollow(space: ChartSpace, patch: BoundsPatch, now: number, activeBusy: boolean): void {
     const axis = this.autoFitAxis
-    const omega = this.autoFitFollowOmega
-    if (!axis || omega === null) return
+    const motion = this.autoFitFollowMotion
+    if (!axis || motion === null) return
 
     const fit = getAxisBounds(this.chart.autoFitBounds(this.drivenConstraint(space, patch)), axis)
     if (!Number.isFinite(fit.min) || !Number.isFinite(fit.max) || fit.min >= fit.max) {
@@ -819,7 +819,7 @@ export class ZoomChartComponent implements InteractionComponent, InteractionNavi
       if (!activeBusy) return // engage from input only, never from a passive re-layout
       const current = getAxisBounds(space.bounds, axis)
       const start = Number.isFinite(current.min) && Number.isFinite(current.max) && current.min < current.max ? current : fit
-      this.autoFollow = { min: new CriticalFollower(start.min, 0, omega), max: new CriticalFollower(start.max, 0, omega), lastTime: now }
+      this.autoFollow = { min: new SpringFollower(start.min, 0, motion), max: new SpringFollower(start.max, 0, motion), lastTime: now }
     }
 
     const follow = this.autoFollow
@@ -1477,16 +1477,10 @@ function inertiaBounceMotion(motion: InertiaMotion, from: number, to: number, bo
   return { kind: 'spring', spring: new ScalarSpring(springValue, springValue, velocity), startTime: now }
 }
 
-// true or omitted enables the auto-fit follow with the default responsiveness, a
-// positive number enables it with a custom natural frequency, false disables it
-function normalizeAutoFitFollow(option: boolean | number | undefined): number | null {
+function normalizeAutoFitFollow(option: boolean | Spring | undefined): Spring | null {
   if (option === false) return null
-  if (option === undefined || option === true) return DEFAULT_FOLLOW_OMEGA
-  if (!Number.isFinite(option) || option <= 0) {
-    console.warn(`ZoomChartComponent: autoFitFollow must be a positive number or a boolean, got ${option}, the default is used`)
-    return DEFAULT_FOLLOW_OMEGA
-  }
-  return option
+  if (option === undefined || option === true) return DEFAULT_SPRING
+  return spring(option)
 }
 
 // Fraction of the from -> to segment at which the channel crosses the boundary

@@ -1,7 +1,7 @@
 import { wheelInput, WheelInputDecision, WheelInputDetection, WHEEL_GESTURE_PAUSE } from '../../../wheelInput/wheelInput'
 import { Point } from '../../../../utils/Point'
 import { BoundsAxes } from '../../../../utils/Bounds'
-import { CriticalFollower } from '../../../../utils/follower'
+import { SpringFollower } from '../../../../utils/spring'
 import { clamp, LayoutValue } from './common'
 
 type Focus = { point: Point, layout: LayoutValue }
@@ -17,7 +17,7 @@ type Pending = WheelZoomStep & WheelPanStep & WheelAction & {
 export class WheelNavigation {
   lastEventTime = 0
   private pending: Pending[] = []
-  private follow: CriticalFollower | null = null
+  private follow: SpringFollower | null = null
   private target = 0
   private focus: Focus | null = null
   private lastFrame = 0
@@ -112,7 +112,7 @@ export class WheelNavigation {
         continue
       }
 
-      this.follow ??= new CriticalFollower(0)
+      this.follow ??= new SpringFollower(0)
       this.target = this.follow.value + distance
       // Reversal responds immediately without carrying velocity away from the target.
       if (this.follow.velocity * distance < 0) this.follow.velocity = 0
