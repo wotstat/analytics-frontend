@@ -5,7 +5,7 @@
         class="vehicle-image" />
     </span>
     <span class="vehicle-info">
-      <span class="vehicle-name" :title="vehicleName(vehicle, false)">
+      <span class="vehicle-name" :title="showTooltip ? vehicleName(vehicle, false) : undefined">
         <span v-for="(part, index) in nameParts" :key="index" :class="{ highlight: part.highlight }">{{ part.text }}</span>
       </span>
       <span v-if="!vehicle.isActual" class="postfix">{{ formatStatisticsDay(vehicle.day) }}</span>
@@ -18,11 +18,16 @@ import { computed } from 'vue'
 import VehicleImage from '@/shared/game/components/vehicles/vehicleImage/VehicleImage.vue'
 import { regionToGame } from '@/shared/game/domain/wot'
 import { getHighlightedTextParts, highlight } from '@/shared/uiKit/highlightString/highlightUtils'
-import type { VehicleStatistics } from '../shared/types'
+import type { VehicleStatisticsRow } from '../shared/types'
 import { formatStatisticsDay } from '../shared/formatStatisticsDay'
 import { vehicleName } from '../shared/vehicleName'
 
-const props = defineProps<{ vehicle: VehicleStatistics, search: string, showImage: boolean }>()
+const props = withDefaults(defineProps<{
+  vehicle: VehicleStatisticsRow
+  search: string
+  showImage: boolean
+  showTooltip?: boolean
+}>(), { showTooltip: true })
 const nameParts = computed(() => getHighlightedTextParts(highlight(vehicleName(props.vehicle), props.search)))
 </script>
 

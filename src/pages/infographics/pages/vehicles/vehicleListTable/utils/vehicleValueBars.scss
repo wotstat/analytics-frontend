@@ -1,0 +1,37 @@
+@mixin vehicle-value-bars {
+  .metric-value {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &.with-bar {
+      padding: 0 8px;
+    }
+  }
+
+  .value-bar {
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    width: 3px;
+    height: 24px;
+    transform: translateY(-50%);
+    overflow: hidden;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--value-bar-color) 10%, transparent);
+    pointer-events: none;
+    opacity: 0.8;
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: var(--value-bar-height);
+      min-height: 2px;
+      border-radius: inherit;
+      background: var(--value-bar-color);
+    }
+  }
+}

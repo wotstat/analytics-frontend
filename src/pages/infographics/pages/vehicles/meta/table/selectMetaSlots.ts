@@ -1,5 +1,5 @@
 import { metricTileFor, defaultSlots, orderSlots, type Slot } from '../../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
-import type { SortOrder } from '../../vehicleListTable/useVehicleSorting'
+import type { SortOrder } from '../../vehicleListTable/utils/useVehicleSorting'
 
 const priorities = new Map(defaultSlots.map((slot, index) => [metricTileFor(slot).id, index]))
 

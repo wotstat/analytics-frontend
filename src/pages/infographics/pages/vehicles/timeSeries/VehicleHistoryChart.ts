@@ -56,13 +56,14 @@ export class VehicleHistoryChart extends TimeSeriesChart<HistoryPoint> {
       const last = item.history.at(-1)
       return last ? [nextHistoryPeriod(historyDayStart(last.periodStart), step)] : []
     }))
-    const key = JSON.stringify([slot, until, step])
     const tags = new Set(series.map(item => item.tag))
     for (const tag of this.historyPoints.keys()) {
       if (!tags.has(tag)) this.historyPoints.delete(tag)
     }
 
     const points: TimeSeries<HistoryPoint>[] = series.map(item => {
+      const seriesSlot = item.slot ?? slot
+      const key = JSON.stringify([seriesSlot, until, step])
       let cached = this.historyPoints.get(item.tag)
       if (!cached || cached.history !== item.history || cached.key !== key) {
         cached = { history: item.history, key, rawPoints: null, points: null, averageWindow }
@@ -70,7 +71,7 @@ export class VehicleHistoryChart extends TimeSeriesChart<HistoryPoint> {
       }
 
       if (item.enabled !== false) {
-        cached.rawPoints ??= this.preparePoints(item.history, slot, until, step)
+        cached.rawPoints ??= this.preparePoints(item.history, seriesSlot, until, step)
         if (cached.points === null || cached.averageWindow !== averageWindow) {
           cached.points = averageWindow === null ? cached.rawPoints : movingAveragePoints(cached.rawPoints, averageWindow)
           cached.averageWindow = averageWindow

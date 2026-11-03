@@ -27,7 +27,11 @@ export type LegendModel<TItem extends LegendItem = LegendItem> = {
 
 export function useLegend<TItem extends LegendItem>(
   source: MaybeRefOrGetter<readonly TItem[]>,
-  options: { highlightSync?: HighlightSynchronizer, disabledTags?: Ref<ReadonlySet<InteractionTag>> } = {},
+  options: {
+    highlightSync?: HighlightSynchronizer
+    disabledTags?: Ref<ReadonlySet<InteractionTag>>
+    tagsForItem?: (item: TItem) => readonly InteractionTag[]
+  } = {},
 ): LegendModel<TItem> {
   const items = computed(() => toValue(source))
   const disabledTags = options.disabledTags ?? shallowRef<ReadonlySet<InteractionTag>>(new Set())
@@ -42,7 +46,7 @@ export function useLegend<TItem extends LegendItem>(
   const enabledTags = computed(() => [...new Set(enabled.value.map(item => item.tag))])
   const highlighted = computed(() => {
     const tags = new Set(highlightedTags.value)
-    return enabled.value.filter(item => tags.has(item.tag))
+    return enabled.value.filter(item => itemTags(item).some(tag => tags.has(tag)))
   })
 
   const stopSync = connection.subscribe(state => {
@@ -69,7 +73,11 @@ export function useLegend<TItem extends LegendItem>(
   }
 
   function isHighlighted(item: TItem): boolean {
-    return isEnabled(item) && highlightedTags.value.includes(item.tag)
+    return isEnabled(item) && itemTags(item).some(tag => highlightedTags.value.includes(tag))
+  }
+
+  function itemTags(item: TItem): readonly InteractionTag[] {
+    return options.tagsForItem?.(item) ?? [item.tag]
   }
 
   function toggle(item: TItem): void {
@@ -123,7 +131,7 @@ export function useLegend<TItem extends LegendItem>(
   function highlight(item: TItem): void {
     if (!isEnabled(item)) return
     publishedTag = item.tag
-    connection.publish([item.tag])
+    connection.publish(itemTags(item))
   }
 
   function clearHighlight(): void {

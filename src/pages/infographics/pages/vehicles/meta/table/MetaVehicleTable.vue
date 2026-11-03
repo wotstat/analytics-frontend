@@ -38,7 +38,7 @@ import type { VehicleStatistics } from '../../shared/types'
 import MetaVehicleName from './MetaVehicleName.vue'
 import { formatMetaSlotValue } from '../utils/format'
 import { availableSlots, slotHeadingLabel, type Slot } from '../../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
-import type { SortOrder } from '../../vehicleListTable/useVehicleSorting'
+import type { SortOrder } from '../../vehicleListTable/utils/useVehicleSorting'
 
 const props = defineProps<{ rows: VehicleStatistics[], slots: readonly Slot[], sort: readonly SortOrder[] }>()
 

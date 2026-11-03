@@ -4,7 +4,7 @@
   <PanelPopover v-model="open" :target="target" title="Настройки таблицы" :width="250" density="compact"
     :placement="['bottom-end', 'bottom-float', 'top-end']">
     <template #content>
-      <div class="options panel-section">
+      <div v-if="!appearanceOnly" class="options panel-section">
         <h3>Показывать значения</h3>
         <label v-for="option in vehicleStatisticsPeriods" :key="option.value" class="option">
           <input v-model="period" type="radio" name="vehicle-table-period" :value="option.value">
@@ -47,18 +47,19 @@ import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import { vehicleStatisticsPeriods, type VehicleStatisticsPeriod } from '../../shared/vehicleStatisticsPeriod'
 
-const period = defineModel<VehicleStatisticsPeriod>({ required: true })
+const { appearanceOnly = false } = defineProps<{ appearanceOnly?: boolean }>()
+const period = defineModel<VehicleStatisticsPeriod>({ default: 30 })
 const showValueBars = defineModel<boolean>('showValueBars', { required: true })
 const extendedPalette = defineModel<boolean>('extendedPalette', { required: true })
 const pinCompared = defineModel<boolean>('pinCompared', { required: true })
-const fromBeginning = defineModel<boolean>('fromBeginning', { required: true })
+const fromBeginning = defineModel<boolean>('fromBeginning', { default: false })
 const open = ref(false)
 const showAdvanced = ref(false)
 const trigger = useTemplateRef<InstanceType<typeof ToolbarButton>>('trigger')
 const target = computed(() => trigger.value?.element ?? null)
 
 function toggle(event: MouseEvent) {
-  if (!open.value) showAdvanced.value = event.altKey
+  if (!open.value) showAdvanced.value = !appearanceOnly && event.altKey
   open.value = !open.value
 }
 </script>

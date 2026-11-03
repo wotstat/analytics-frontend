@@ -1,7 +1,7 @@
 
 const base = (() => {
   if (typeof location === 'undefined') return { prefix: '', domain: 'wotstat.info' }
-  if (import.meta.env.MODE === 'development') return { prefix: '', domain: 'mtstat.info' }
+  if (import.meta.env.MODE === 'development') return { prefix: '', domain: 'wotstat.info' }
 
   const matchWot = location.host.match(/^(.*)\.wotstat\.info$/i)
   if (matchWot) return { prefix: `${matchWot[1]}.`, domain: 'wotstat.info' }

@@ -1,9 +1,9 @@
 import type { VehicleSelection } from '../shared/vehicleGrouping'
 import type { VehicleFilters } from '../filters/types'
-import type { VehicleStatistics } from '../shared/types'
+import type { VehicleStatisticsRow } from '../shared/types'
 
 export type ComparisonCandidate = {
-  vehicle: VehicleStatistics
+  vehicle: VehicleStatisticsRow
   selection: VehicleSelection
 }
 

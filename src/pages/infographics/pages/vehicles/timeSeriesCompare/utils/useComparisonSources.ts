@@ -1,0 +1,219 @@
+import { computed, type Ref } from 'vue'
+import type { VehicleFilters } from '../../filters/types'
+import type { VehicleStatisticsRow } from '../../shared/types'
+import type { VehicleSelection } from '../../shared/vehicleGrouping'
+import { vehicleName } from '../../shared/vehicleName'
+import type { ComparisonCandidate, ComparisonSource } from '../types'
+import { comparisonFiltersKey, snapshotComparisonFilters } from './comparisonFilters'
+import { categoryRowKey, comparisonRowKey } from './comparisonRowKey'
+import type { ComparisonTarget, SavedComparisonSource } from '../query/state'
+import { comparisonColor, comparisonPalette } from '../query/palette'
+import { vehicleCompactor, vehicleCompactLabel } from '@/shared/game/encoding/vehicles'
+import { arenaCompactor } from '@/shared/game/encoding/arenas'
+import { singleRegion } from '@/shared/game/domain/regions'
+import type { VehicleType } from '@/shared/game/domain/vehicles/types'
+
+function sourceTag(source: SavedComparisonSource) {
+  const target = source.target
+  const filtersKey = comparisonFiltersKey(source.filters)
+  if ('tank' in target) return JSON.stringify([target.tank, filtersKey])
+  return JSON.stringify([comparisonRowKey(categoryRowKey(target.category), target.selection), filtersKey])
+}
+
+function createTarget(vehicle: VehicleStatisticsRow, selection: VehicleSelection): ComparisonTarget {
+  if (selection.tankTag) return { tank: selection.tankTag }
+  return {
+    category: { level: vehicle.tankLevel ?? undefined, type: (vehicle.tankType ?? undefined) as VehicleType | undefined },
+    selection: {
+      levels: [...selection.levels].sort((a, b) => a - b),
+      types: [...selection.types].sort(),
+      nations: [...selection.nations].sort(),
+    },
+  }
+}
+
+export function useComparisonSources(filters: Ref<VehicleFilters>, savedSources: Ref<SavedComparisonSource[]>) {
+  function createResolver(source: SavedComparisonSource) {
+    const region = () => singleRegion(source.filters.regions)
+    return {
+      arenas: computed(() => arenaCompactor.expandMany(source.filters.arenas, region())),
+      tank: computed(() => vehicleCompactor.expand('tank' in source.target ? source.target.tank : '', region())),
+    }
+  }
+
+  const resolvers = new WeakMap<SavedComparisonSource, ReturnType<typeof createResolver>>()
+  function resolver(source: SavedComparisonSource) {
+    const cached = resolvers.get(source)
+    if (cached) return cached
+    const result = createResolver(source)
+    resolvers.set(source, result)
+    return result
+  }
+
+  function resolveSource(source: SavedComparisonSource, sampleNumbers: Map<string, number>): Omit<ComparisonSource, 'color' | 'enabled'> {
+    const resolved = resolver(source)
+    const arenas = resolved.arenas.value
+    const sourceFilters: VehicleFilters = {
+      ...source.filters,
+      arenas: arenas.status === 'ready' ? arenas.value : source.filters.arenas.map(String),
+    }
+
+    const filtersKey = comparisonFiltersKey(sourceFilters)
+    const sampleNumber = sampleNumbers.get(filtersKey) ?? sampleNumbers.size + 1
+    sampleNumbers.set(filtersKey, sampleNumber)
+
+    const base = {
+      tag: sourceTag(source),
+      filters: sourceFilters,
+      sampleNumber,
+    }
+
+    const tank = 'tank' in source.target ? resolved.tank.value : null
+    const unavailable = [arenas, tank].find(value => value?.status === 'unresolved') ?? [arenas, tank].find(value => value?.status === 'loading')
+
+    if (unavailable) {
+      let name = 'Загрузка…'
+      let resolution: ComparisonSource['resolution'] = 'loading'
+      if (unavailable.status === 'unresolved') {
+        name = 'Источник из ссылки'
+        if ('tank' in source.target) name = `Танк ${vehicleCompactLabel(source.target.tank)}`
+        resolution = unavailable.reason === 'error' ? 'error' : 'missing'
+      }
+
+      return {
+        ...base,
+        rowKey: 'tank' in source.target ? `vehicle:${source.target.tank}` : categoryRowKey(source.target.category),
+        selection: null,
+        name,
+        resolution,
+      }
+    }
+
+    if (tank?.status === 'ready') {
+      const tag = tank.value
+      return {
+        ...base,
+        rowKey: tag,
+        selection: { tankTag: tag, levels: [], types: [], nations: [] },
+        name: vehicleName({ tankTag: tag, tankLevel: null, tankType: null }),
+      }
+    }
+
+    if ('tank' in source.target) throw new Error('Comparison vehicle has not been resolved')
+    const { category, selection } = source.target
+
+    return {
+      ...base,
+      rowKey: categoryRowKey(category),
+      selection,
+      name: vehicleName({ tankTag: null, tankLevel: category.level ?? null, tankType: category.type ?? null }),
+    }
+  }
+
+  const sources = computed<readonly ComparisonSource[]>(() => {
+    const sampleNumbers = new Map<string, number>()
+    return savedSources.value.map(source => {
+      const color = computed(() => comparisonColor(source.color))
+      return {
+        ...resolveSource(source, sampleNumbers),
+        get color() { return color.value },
+        get enabled() { return source.enabled },
+      }
+    })
+  })
+
+  const currentFiltersKey = computed(() => comparisonFiltersKey(filters.value))
+  const comparedKeys = computed(() => sources.value
+    .filter(source => source.selection && comparisonFiltersKey(source.filters) === currentFiltersKey.value)
+    .map(source => comparisonRowKey(source.rowKey, source.selection!)))
+
+  const paletteSlots = new Map<string, number>()
+
+  function reservePaletteSlots() {
+    const tags = new Set(savedSources.value.map(sourceTag))
+    for (const tag of paletteSlots.keys()) {
+      if (!tags.has(tag)) paletteSlots.delete(tag)
+    }
+
+    savedSources.value.forEach((source, index) => {
+      const tag = sourceTag(source)
+      if (!paletteSlots.has(tag)) paletteSlots.set(tag, typeof source.color === 'number' ? source.color : index)
+    })
+
+    return new Set(paletteSlots.values())
+  }
+
+  function candidateKey(vehicle: VehicleStatisticsRow, selection: VehicleSelection) {
+    return comparisonRowKey(vehicle.rowKey, selection)
+  }
+
+  function toggle(vehicle: VehicleStatisticsRow, selection: VehicleSelection) {
+    const key = candidateKey(vehicle, selection)
+    const existing = sources.value.find(source => source.selection
+      && comparisonRowKey(source.rowKey, source.selection) === key
+      && comparisonFiltersKey(source.filters) === currentFiltersKey.value)
+
+    if (existing) return remove(existing.tag)
+    addMany([{ vehicle, selection }])
+  }
+
+  function addMany(candidates: readonly ComparisonCandidate[]) {
+    const keys = new Set(comparedKeys.value)
+    const occupiedSlots = reservePaletteSlots()
+    const colors = new Set([...occupiedSlots].map(comparisonColor))
+
+    for (const source of sources.value) {
+      const color = source.color
+      colors.add(color.length === 9 && color.endsWith('ff') ? color.slice(0, 7) : color)
+    }
+
+    const additions: SavedComparisonSource[] = []
+    for (const { vehicle, selection } of candidates) {
+      const key = candidateKey(vehicle, selection)
+      if (keys.has(key)) continue
+      keys.add(key)
+
+      let color = comparisonPalette.findIndex(color => !colors.has(color))
+      if (color < 0) color = Math.max(comparisonPalette.length, savedSources.value.length + additions.length)
+      while (occupiedSlots.has(color)) color++
+
+      occupiedSlots.add(color)
+      colors.add(comparisonColor(color))
+
+      const source: SavedComparisonSource = {
+        target: createTarget(vehicle, selection),
+        color,
+        enabled: true,
+        filters: snapshotComparisonFilters(filters.value),
+      }
+      paletteSlots.set(sourceTag(source), color)
+      additions.push(source)
+    }
+
+    if (additions.length) savedSources.value.push(...additions)
+  }
+
+  function remove(tag: string) {
+    savedSources.value = savedSources.value.filter(source => sourceTag(source) !== tag)
+    paletteSlots.delete(tag)
+  }
+
+  function setColor(tag: string, color: string) {
+    const source = savedSources.value.find(source => sourceTag(source) === tag)
+    if (!source || !/^#[\da-f]{6}(?:[\da-f]{2})?$/i.test(color)) return
+    if (!paletteSlots.has(tag)) reservePaletteSlots()
+    source.color = color.toLowerCase()
+  }
+
+  function setDisabled(tags: readonly string[]) {
+    const disabled = new Set(tags)
+    for (const source of savedSources.value) source.enabled = !disabled.has(sourceTag(source))
+  }
+
+  function clear() {
+    savedSources.value = []
+    paletteSlots.clear()
+  }
+
+  return { sources, comparedKeys, toggle, addMany, remove, setColor, setDisabled, clear }
+}

@@ -46,7 +46,7 @@
           </div>
         </section>
 
-        <div class="group panel-section">
+        <div v-if="showThresholds" class="group panel-section">
           <h3 class="group-label">Боёв больше</h3>
           <div class="thresholds mt-font">
             <button v-for="threshold in battleThresholds" :key="threshold" class="option"
@@ -55,7 +55,7 @@
           </div>
         </div>
 
-        <div class="group panel-section">
+        <div v-if="showThresholds" class="group panel-section">
           <h3 class="group-label">Игроков больше</h3>
           <div class="thresholds mt-font">
             <button v-for="threshold in playerThresholds" :key="threshold" class="option"
@@ -86,9 +86,10 @@ import {
 } from './localFilters'
 
 const filters = defineModel<LocalVehicleFilters>({ required: true })
-const { grouping, availableNations } = defineProps<{
+const { grouping, availableNations, showThresholds = true } = defineProps<{
   grouping: VehicleGrouping
   availableNations: readonly NationId[]
+  showThresholds?: boolean
 }>()
 
 const showLevels = computed(() => grouping !== 'classes')
@@ -101,8 +102,9 @@ const target = computed(() => trigger.value?.element ?? null)
 
 const activeCount = computed(() => {
   const { levels, nations, types, onlyActual, minBattles, minPlayers } = filters.value
-  let count = Number(minBattles !== DEFAULT_MIN_BATTLES) + Number(minPlayers !== DEFAULT_MIN_PLAYERS)
+  let count = 0
 
+  if (showThresholds) count += Number(minBattles !== DEFAULT_MIN_BATTLES) + Number(minPlayers !== DEFAULT_MIN_PLAYERS)
   if (showLevels.value) count += levels.length
   if (showTypes.value) count += types.length
   if (showTankFilters.value) count += nations.length + Number(onlyActual !== DEFAULT_ONLY_ACTUAL)

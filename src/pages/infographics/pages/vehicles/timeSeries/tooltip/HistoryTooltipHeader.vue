@@ -1,5 +1,5 @@
 <template>
-  <b class="heading">{{ availableSlots[point.slot].label }}</b>
+  <b v-if="showMetric" class="heading">{{ availableSlots[point.slot].label }}</b>
   <div class="metadata" :class="{ horizontal }">
     <template v-if="horizontal">
       <span v-if="gameVersion" class="game-version">{{ gameVersion }}</span>
@@ -22,11 +22,12 @@ import { formatStatisticsDay } from '../../shared/formatStatisticsDay'
 import { formatHistoryPeriod, formatHistoryWeekday } from './formatHistoryPeriod'
 import type { VehicleHistoryHit } from '../VehicleHistoryChart'
 
-defineProps<{
+withDefaults(defineProps<{
   point: VehicleHistoryHit['datum']
   horizontal: boolean
   gameVersion?: string | null
-}>()
+  showMetric?: boolean
+}>(), { showMetric: true })
 </script>
 
 <style scoped lang="scss">

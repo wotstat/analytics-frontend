@@ -33,7 +33,7 @@ export function snapshotMetricData<Key extends string>(key: string, tables: { hi
     },
   }
 
-  return Object.fromEntries(metrics.map(({ key, column }) => [key, {
+  return Object.fromEntries(metrics.map(({ key }) => [key, {
     column: columnData,
     history: context => {
       const { filters, selection, step, beforeDay } = context
@@ -69,7 +69,7 @@ export function snapshotMetricData<Key extends string>(key: string, tables: { hi
           base: `
             select
               ${period} as periodStart,
-              argMax(${column}, tuple(updatedAt, dateTime)) as ${key}
+              ${metrics.map(metric => `argMax(${metric.column}, tuple(updatedAt, dateTime)) as ${metric.key}`).join(',\n              ')}
             from ${tables.history}
             where ${where}
               and tag = ${quote(selection.tankTag)}

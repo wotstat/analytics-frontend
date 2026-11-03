@@ -1,9 +1,9 @@
 import { watch, type Ref } from 'vue'
 import { vehicleTypes } from '@/shared/game/domain/vehicles/types'
-import type { Slot } from '../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
-import type { VehicleStatistics } from '../shared/types'
-import type { VehicleGrouping } from '../shared/vehicleGrouping'
-import { vehicleName } from '../shared/vehicleName'
+import type { Slot } from '../../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
+import type { VehicleStatisticsRow } from '../../shared/types'
+import type { VehicleGrouping } from '../../shared/vehicleGrouping'
+import { vehicleName } from '../../shared/vehicleName'
 
 export type SortKey = Slot | 'name' | 'tankLevel' | 'tankType'
 export type SortOrder = { key: SortKey, ascending: boolean }
@@ -16,8 +16,13 @@ function compareDescending(left: number | null, right: number | null) {
   return right - left
 }
 
+function sortValue(vehicle: VehicleStatisticsRow, key: Exclude<SortKey, 'name'>) {
+  if (key === 'tankType') return typeOrder.get(vehicle.tankType ?? '') ?? null
+  return vehicle[key] ?? null
+}
+
 export function useVehicleSorting(grouping: Ref<VehicleGrouping>, slots: Ref<Slot[]>, sortOrders: Ref<SortOrder[]>) {
-  function compare(a: VehicleStatistics, b: VehicleStatistics) {
+  function compare(a: VehicleStatisticsRow, b: VehicleStatisticsRow) {
     for (const { key, ascending } of sortOrders.value) {
       if (key === 'name') {
         const comparison = vehicleName(a).localeCompare(vehicleName(b), 'ru')
@@ -25,8 +30,8 @@ export function useVehicleSorting(grouping: Ref<VehicleGrouping>, slots: Ref<Slo
         continue
       }
 
-      const left = key === 'tankType' ? typeOrder.get(a.tankType ?? '') ?? null : a[key] ?? null
-      const right = key === 'tankType' ? typeOrder.get(b.tankType ?? '') ?? null : b[key] ?? null
+      const left = sortValue(a, key)
+      const right = sortValue(b, key)
 
       // Отсутствующие значения всегда идут последними, в том числе при сортировке по возрастанию.
       if (left === null && right !== null) return 1
@@ -37,7 +42,7 @@ export function useVehicleSorting(grouping: Ref<VehicleGrouping>, slots: Ref<Slo
     }
 
     if (sortOrders.value.some(({ key }) => key !== 'name' && key !== 'tankLevel' && key !== 'tankType')) {
-      const secondary = compareDescending(a.battles, b.battles)
+      const secondary = compareDescending(a.battles ?? null, b.battles ?? null)
       if (secondary) return secondary
     }
 
@@ -56,8 +61,8 @@ export function useVehicleSorting(grouping: Ref<VehicleGrouping>, slots: Ref<Slo
     const index = sortPosition(key) - 1
 
     if (!multiple) {
-      const ascending = sortOrders.value.length === 1 && index === 0
-        ? !sortOrders.value[0].ascending : defaultAscending(key)
+      let ascending = defaultAscending(key)
+      if (sortOrders.value.length === 1 && index === 0) ascending = !sortOrders.value[0].ascending
 
       sortOrders.value = [{ key, ascending }]
       return
@@ -69,9 +74,14 @@ export function useVehicleSorting(grouping: Ref<VehicleGrouping>, slots: Ref<Slo
     }
 
     if (sortOrders.value[index].ascending === defaultAscending(key)) {
-      sortOrders.value = sortOrders.value.map((order, position) =>
-        position === index ? { key, ascending: !defaultAscending(key) } : order)
-    } else sortOrders.value = sortOrders.value.filter((_, position) => position !== index)
+      sortOrders.value = sortOrders.value.map((order, position) => {
+        if (position !== index) return order
+        return { key, ascending: !defaultAscending(key) }
+      })
+      return
+    }
+
+    sortOrders.value = sortOrders.value.filter((_, position) => position !== index)
   }
 
   watch([grouping, slots, sortOrders], ([group, selected, orders]) => {
