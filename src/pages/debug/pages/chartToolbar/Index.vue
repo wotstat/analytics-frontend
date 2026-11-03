@@ -3,7 +3,7 @@
     description="Явная композиция групп выбора и действий, плотность и настройки аннотаций без запросов к БД."
     source="src/shared/ui/chart/timeSeries/toolbar/layout/ChartToolbar.vue">
     <DebugSection title="Обычная плотность и слоты" id="standard"
-      description="Левая часть задаётся потребителем; дополнительные действия остаются рядом с выбором сглаживания."
+      description="На узкой панели шапка занимает свою строку, группы переносятся целиком, а кнопки растягиваются."
       source="src/shared/ui/chart/timeSeries/toolbar/layout/ChartToolbar.vue">
       <div class="debug-row">
         <label class="debug-control"><input v-model="narrow" type="checkbox"><span>Ширина 320 px</span></label>
@@ -20,7 +20,7 @@
           </template>
           <ToolbarOptions v-model="comparisonStep" :options="stepOptions" />
           <ToolbarOptions v-model="comparisonAverage" :options="averageOptions" clearable />
-          <ToolbarGroup>
+          <ToolbarGroup class="actions">
             <ToolbarButton :icon="ResetIcon" @click="resetComparison" />
             <ChartAnnotationSettings :groups="visibleComparisonGroups"
               @toggle="(groupId, optionId) => toggleOption(comparisonGroups, groupId, optionId)" />
@@ -36,12 +36,12 @@
     <DebugSection title="Компактные строки с общими моделями" id="synchronized"
       description="Шаг и сглаживание общие у двух строк. Настройки аннотаций у каждой строки свои; сравнение выше независимо."
       source="src/shared/ui/chart/timeSeries/toolbar/layout/ChartToolbar.vue">
-      <div v-for="(groups, index) in rowGroups" :key="index" class="toolbar-stage">
+      <div v-for="(groups, index) in rowGroups" :key="index" class="toolbar-stage" :class="{ narrow }">
         <div class="row-heading">Строка {{ index + 1 }}</div>
         <ChartToolbar density="compact">
           <ToolbarOptions v-model="rowStep" :options="stepOptions" />
           <ToolbarOptions v-model="rowAverage" :options="averageOptions" clearable />
-          <ToolbarGroup>
+          <ToolbarGroup class="actions">
             <ChartAnnotationSettings :groups @toggle="(groupId, optionId) => toggleOption(groups, groupId, optionId)" />
           </ToolbarGroup>
         </ChartToolbar>
@@ -52,7 +52,7 @@
     </DebugSection>
 
     <DebugSection title="Произвольный состав групп" id="custom"
-      description="У общего toolbar нет встроенных шагов и окон среднего. Группы могут скрываться, а пустой список выбора не создаёт разделитель."
+      description="Слишком широкая группа переносит кнопки внутри себя. Группы могут скрываться, а пустой список выбора не создаёт разделитель."
       source="src/shared/ui/chart/timeSeries/toolbar/options/ToolbarOptions.vue">
       <div class="debug-row">
         <label class="debug-control"><input v-model="optionsDisabled" type="checkbox"><span>Заблокировать выбор</span></label>
@@ -64,7 +64,7 @@
           <ToolbarOptions v-model="displayMode" :options="modeOptions" :disabled="optionsDisabled" />
           <ToolbarOptions v-if="showLimit" v-model="limit" :options="limitOptions" clearable :disabled="optionsDisabled" />
           <ToolbarOptions v-model="limit" :options="[]" clearable />
-          <ToolbarGroup v-if="showActions">
+          <ToolbarGroup v-if="showActions" class="actions">
             <ToolbarButton :icon="ResetIcon" @click="limit = null" />
           </ToolbarGroup>
         </ChartToolbar>
@@ -122,7 +122,7 @@ const averageOptions = ([3, 5, 7] as const).map(value => ({
 const modeOptions = [
   { value: 'count', label: 'Количество' },
   { value: 'percent', label: 'Доля' },
-  { value: 'detail', label: 'Детально', disabled: true },
+  { value: 'detail', label: 'Подробное представление', disabled: true },
 ] as const satisfies readonly ToolbarOption<DisplayMode>[]
 const limitOptions = [
   { value: 0, label: 'Все' },

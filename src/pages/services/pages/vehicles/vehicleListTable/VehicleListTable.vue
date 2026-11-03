@@ -177,7 +177,7 @@ import type { VehicleStatisticsPeriod } from '../shared/vehicleStatisticsPeriod'
 import type { ComparisonCandidate } from '../timeSeriesCompare/types'
 import { useVehicleValueBars } from './utils/useVehicleValueBars'
 import { useVehicleTableAppearance } from './utils/useVehicleTableAppearance'
-import { vehicleColumns, vehicleNameColumn } from './utils/columns'
+import { COMPARE_MIN_TABLE_WIDTH, EXPAND_MIN_TABLE_WIDTH, vehicleColumns, vehicleNameColumn } from './utils/columns'
 
 const props = defineProps<{
   vehicles: VehicleStatistics[]
@@ -201,9 +201,7 @@ const MAX_BULK_COMPARISON_LINES = 100
 const MAX_TANK_SLOTS = 7
 const MAX_CATEGORY_SLOTS = 12
 const MIN_SLOT_WIDTH = 86
-const EXPAND_MIN_TABLE_WIDTH = 720
 const METADATA_MIN_TABLE_WIDTH = 520
-const COMPARE_MIN_TABLE_WIDTH = 440
 const IMAGE_MIN_TABLE_WIDTH = 320
 
 const search = defineModel<string>('search', { required: true })
@@ -560,8 +558,14 @@ watch([visibleSlots, width], ([slots, tableWidth]) => {
       color: inherit;
     }
 
-    &:hover {
+    &:active:not(:disabled) {
       background: rgba(255, 255, 255, 0.1);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.1);
+      }
     }
   }
 

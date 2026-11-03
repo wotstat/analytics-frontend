@@ -145,6 +145,7 @@ function selectAll(event: MouseEvent) {
 .mode-trigger {
   display: inline-flex;
   align-items: center;
+  gap: 5px;
   min-width: 0;
   max-width: 100%;
   height: 24px;
@@ -170,7 +171,7 @@ function selectAll(event: MouseEvent) {
   .mode-arrow {
     width: 10px;
     height: 10px;
-    margin-left: 5px;
+    margin-left: auto;
     opacity: 0.7;
   }
 }

@@ -43,11 +43,7 @@ useBackground(VehiclesBackground, { backgroundKey: 'services-vehicles' })
 </script>
 
 <style scoped lang="scss">
-@use '../../vehicles/filters/baseFilterStyles.scss' as *;
-
 .achievement-filters {
-  @include base-filter-height;
-
   margin: 12px 0 24px;
 }
 
@@ -72,6 +68,13 @@ useBackground(VehiclesBackground, { backgroundKey: 'services-vehicles' })
 
     &.active {
       background: var(--blue-color);
+    }
+  }
+
+  @container content (max-width: 600px) {
+    .region {
+      flex: 1;
+      height: 30px;
     }
   }
 }

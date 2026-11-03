@@ -216,14 +216,18 @@ onBeforeUnmount(() => closeContextMenu(splitMenuId))
 @use './annotations/historyAnnotationStyles.scss' as *;
 
 .vehicle-time-series {
-  margin-top: 12px;
-
   .metric-header {
     display: flex;
     align-items: center;
     gap: 8px;
     min-width: 0;
     max-width: 100%;
+
+    @container time-series-panel (max-width: 600px) {
+      :deep(.metric-trigger) {
+        flex: 1;
+      }
+    }
   }
 
   .history-tooltip {

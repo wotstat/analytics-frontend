@@ -27,9 +27,16 @@ defineEmits<{ click: [event: MouseEvent] }>()
   color: rgba(255, 255, 255, 0.55);
   border-radius: 5px;
 
-  &:hover:not(:disabled) {
+  &:active:not(:disabled) {
     color: white;
     background: rgba(255, 255, 255, 0.08);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover:not(:disabled) {
+      color: white;
+      background: rgba(255, 255, 255, 0.08);
+    }
   }
 
   &:disabled {

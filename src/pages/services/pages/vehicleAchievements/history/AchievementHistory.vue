@@ -3,12 +3,8 @@
     :density="compact ? 'compact' : 'standard'" :annotation-labels="annotations.length > 0"
     :format-value="(value, ctx) => formatSlotValue(ctx.hit.datum.slot, value)" marker-style="glow"
     class="achievement-history" :class="{ comparison: !compact }" @series-click="onSeriesClick">
-    <template #header>
-      <div v-if="compact" class="history-heading">
-        <slot name="header-before" />
-        <span>{{ sources[0]?.name }}</span>
-      </div>
-      <h2 v-else>Сравнение <span v-if="sources.length">{{ sources.length }}</span></h2>
+    <template v-if="!compact" #header>
+      <h2>Сравнение <span v-if="sources.length">{{ sources.length }}</span></h2>
     </template>
 
     <template #toolbar>
@@ -17,13 +13,14 @@
     </template>
 
     <template #actions>
+      <slot name="actions" />
       <HistoryAnnotationSettings :settings="annotationOptions" :regions="annotationRegions" :show-outages="false" />
     </template>
 
     <template v-if="!hasValues" #state>
       <template v-if="!sources.length">
         <b class="empty-heading">Сравните планки танков на одном графике</b>
-        <span>Нажмите «+» в таблице. Каждый танк добавится со всеми четырьмя показателями.</span>
+        <span>Нажмите «+» в таблице или в раскрытом графике. Каждый танк добавится со всеми четырьмя показателями.</span>
       </template>
       <template v-else>
         <Loader v-if="pending" class="loader" />
@@ -238,7 +235,6 @@ watch(annotations, value => chart.setHistoryAnnotations(value), { immediate: tru
 
 .achievement-history {
   min-width: 0;
-  margin-top: 12px;
 
   &.comparison {
     margin: 0 0 28px;
@@ -251,7 +247,7 @@ watch(annotations, value => chart.setHistoryAnnotations(value), { immediate: tru
       min-height: 30px;
     }
 
-    @media (max-width: 600px) {
+    @container content (max-width: 600px) {
       padding: 12px;
     }
   }
@@ -269,7 +265,6 @@ watch(annotations, value => chart.setHistoryAnnotations(value), { immediate: tru
     }
   }
 
-  .history-heading,
   .group-legend {
     display: flex;
     align-items: center;

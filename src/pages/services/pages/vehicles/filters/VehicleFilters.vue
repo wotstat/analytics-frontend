@@ -148,8 +148,6 @@ function reset() {
 </script>
 
 <style scoped lang="scss">
-@use './baseFilterStyles.scss' as *;
-
 .vehicle-filters {
   margin: 12px 0 24px;
   font-size: 15px;
@@ -201,23 +199,13 @@ function reset() {
   }
 
   .toolbar {
-    @include base-filter-height;
-
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
     gap: 12px 20px;
 
-    @media (max-width: 550px) {
-      gap: 12px 16px;
-    }
-
     .region-select {
       flex-shrink: 0;
-
-      @media (max-width: 550px) {
-        flex-basis: 100%;
-      }
     }
 
     .primary-filter {
@@ -241,7 +229,7 @@ function reset() {
       .expand {
         display: flex;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
         min-height: 24px;
         color: rgba(255, 255, 255, 0.65);
         font-size: inherit;
@@ -255,10 +243,6 @@ function reset() {
         &.enabled {
           color: var(--blue-thin-color);
         }
-      }
-
-      @media (max-width: 550px) {
-        margin-left: 0;
       }
 
       .expand .arrow {
@@ -304,14 +288,90 @@ function reset() {
       .variants {
         min-height: 22px;
       }
+    }
+  }
 
-      @media (max-width: 550px) {
-        gap: 8px;
+  @container content (max-width: 600px) {
+    .toolbar {
+      gap: 8px;
 
-        .label {
-          flex-basis: 78px;
+      .region-select {
+        flex-basis: 100%;
+
+        .variant {
+          flex: 1;
+          height: 30px;
         }
       }
+
+      .primary-filter {
+        flex: 1 1 170px;
+        align-items: center;
+
+        > :deep(.mode-trigger) {
+          flex: 1;
+          height: 30px;
+        }
+      }
+
+      .actions {
+        flex: 1 0 auto;
+        margin-left: 0;
+
+        .expand {
+          flex: 1;
+          min-height: 30px;
+        }
+
+        .toolbar-button {
+          --toolbar-button-size: 30px;
+        }
+      }
+    }
+
+    .advanced-filters {
+      gap: 16px;
+    }
+
+    .advanced-filters .advanced-row {
+      flex-wrap: wrap;
+      gap: 6px;
+
+      .label {
+        flex-basis: 100%;
+      }
+
+      .variants,
+      > :deep(.badges) {
+        flex: 1 1 100%;
+      }
+
+      > :deep(.badges) {
+        .badge,
+        .select,
+        .add {
+          height: 30px;
+        }
+
+        .select {
+          flex: 1;
+        }
+
+        .add {
+          width: 30px;
+        }
+      }
+
+      .variant {
+        flex: 1 1 auto;
+        height: 30px;
+      }
+    }
+  }
+
+  @container content (max-width: 420px) {
+    .toolbar .primary-filter {
+      flex-basis: 100%;
     }
   }
 }

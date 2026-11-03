@@ -9,7 +9,7 @@
       <template #right>
         <ChartToolbar :density>
           <slot name="toolbar" />
-          <ToolbarGroup v-if="$slots.actions">
+          <ToolbarGroup v-if="$slots.actions" class="actions">
             <slot name="actions" />
           </ToolbarGroup>
         </ChartToolbar>
@@ -30,7 +30,7 @@
         <slot name="header" />
       </template>
       <slot name="toolbar" />
-      <ToolbarGroup v-if="$slots.actions">
+      <ToolbarGroup v-if="$slots.actions" class="actions">
         <slot name="actions" />
       </ToolbarGroup>
     </ChartToolbar>
@@ -127,7 +127,8 @@ watch(() => props.chart, (chart, _, onCleanup) => {
 .time-series-panel {
   --time-series-legend-height: 21px;
   --time-series-gap: 12px;
-  --time-series-height: calc(clamp(260px, 30vw, 400px) - var(--time-series-legend-height) - var(--time-series-gap));
+  --time-series-height: calc(clamp(260px, 30cqi, 400px) - var(--time-series-legend-height) - var(--time-series-gap));
+  container: time-series-panel / inline-size;
   min-width: 0;
 
   .panel-content {
@@ -180,7 +181,7 @@ watch(() => props.chart, (chart, _, onCleanup) => {
   &.compact {
     --time-series-legend-height: 0px;
     --time-series-gap: 10px;
-    --time-series-height: clamp(230px, 28vw, 320px);
+    --time-series-height: clamp(230px, 28cqi, 320px);
 
     .panel-header {
       padding-bottom: 3px;
@@ -188,13 +189,14 @@ watch(() => props.chart, (chart, _, onCleanup) => {
       margin-bottom: 2px;
 
       :deep(.items) {
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 8px;
         min-height: 38px;
       }
 
       :deep(.right) {
+        margin-left: auto;
+      }
+
+      :deep(.controls) {
         margin-left: auto;
       }
     }
@@ -207,6 +209,46 @@ watch(() => props.chart, (chart, _, onCleanup) => {
       gap: 16px;
       color: rgba(255, 255, 255, 0.55);
       padding: 0;
+    }
+  }
+
+  .panel-header {
+    :deep(.items > .left:empty) {
+      display: none;
+    }
+
+    :deep(.items) {
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    :deep(.left),
+    :deep(.right) {
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    :deep(.center) {
+      display: none;
+    }
+
+    :deep(.right) {
+      flex: 1;
+    }
+  }
+
+  @container time-series-panel (max-width: 600px) {
+    .panel-header {
+      :deep(.items > .left),
+      :deep(.items > .right) {
+        flex: 1 1 100%;
+        margin-left: 0;
+      }
+    }
+
+    .chart-state {
+      padding: 12px;
     }
   }
 

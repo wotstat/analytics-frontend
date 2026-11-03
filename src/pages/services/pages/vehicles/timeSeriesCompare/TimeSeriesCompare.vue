@@ -217,15 +217,23 @@ watch([annotationOptions.showWotstatOutages, metricHistory], ([visible, history]
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.025);
 
-  @media (max-width: 600px) {
+  @container content (max-width: 600px) {
     padding: 12px;
+
+    h2 {
+      flex-basis: 100%;
+    }
+
+    :deep(.metric-selector) {
+      flex: 1;
+      margin-left: 0;
+    }
   }
 
   h2 {
     margin: 0;
     font-size: 18px;
     color: white;
-    margin-right: 10px;
 
     span {
       display: inline-block;
@@ -234,10 +242,6 @@ watch([annotationOptions.showWotstatOutages, metricHistory], ([visible, history]
       color: rgba(255, 255, 255, 0.4);
       font-size: 14px;
     }
-  }
-
-  .metric-selector {
-    margin-left: 10px;
   }
 
   .empty-heading {

@@ -53,7 +53,12 @@
 
       <template #expanded="{ row }">
         <AchievementHistory :kind :sources="[historySource(row)]" :filters :before-day compact
-          v-model:step="historyStep" v-model:average-window="averageWindow" />
+          v-model:step="historyStep" v-model:average-window="averageWindow">
+          <template v-if="!showCompare" #actions>
+            <VehicleCompareButton class="history-compare" :compared="isCompared(row)"
+              @click.stop="emit('compare', row, selectionFor(row))" />
+          </template>
+        </AchievementHistory>
       </template>
 
       <template #loading>
@@ -106,7 +111,7 @@ import VehicleNameCell from '../vehicles/vehicleListTable/VehicleNameCell.vue'
 import VehicleTableSettings from '../vehicles/vehicleListTable/settings/VehicleTableSettings.vue'
 import { useVehicleValueBars } from '../vehicles/vehicleListTable/utils/useVehicleValueBars'
 import { useVehicleTableAppearance } from '../vehicles/vehicleListTable/utils/useVehicleTableAppearance'
-import { vehicleColumns, vehicleNameColumn } from '../vehicles/vehicleListTable/utils/columns'
+import { COMPARE_MIN_TABLE_WIDTH, EXPAND_MIN_TABLE_WIDTH, vehicleColumns, vehicleNameColumn } from '../vehicles/vehicleListTable/utils/columns'
 import { useVehicleSorting, type SortKey, type SortOrder } from '../vehicles/vehicleListTable/utils/useVehicleSorting'
 import { availableSlots, type Slot } from '../vehicles/vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 import { formatSlotValue } from '../vehicles/vehicleMetricSelector/utils/formatMetricValue'
@@ -147,6 +152,8 @@ const slots = ref<Slot[]>([...definition.value.slots].reverse())
 const sorting = useVehicleSorting(ref<VehicleGrouping>('tanks'), slots, sort)
 const table = useTemplateRef<HTMLElement>('table')
 const { width } = useElementSize(table)
+const showExpand = computed(() => width.value >= EXPAND_MIN_TABLE_WIDTH)
+const showCompare = computed(() => width.value >= COMPARE_MIN_TABLE_WIDTH)
 const showMetadata = computed(() => width.value >= 700)
 const showImage = computed(() => width.value >= 560)
 const availableNations = computed<readonly Nation[]>(() => regionToGame(props.filters.regions[0]) === 'mt' ? mtNations : wotNations)
@@ -154,8 +161,8 @@ const availableNations = computed<readonly Nation[]>(() => regionToGame(props.fi
 type AchievementColumn = ComposableTableColumn<VehicleStatisticsRow, SortKey | 'compare' | 'expand'> & { metric?: Slot }
 const columns = computed<AchievementColumn[]>(() => {
   const columns: AchievementColumn[] = [
-    vehicleColumns.compare,
-    vehicleColumns.expand,
+    ...(showCompare.value ? [vehicleColumns.compare] : []),
+    ...(showExpand.value ? [vehicleColumns.expand] : []),
   ]
 
   if (showMetadata.value) columns.push(
@@ -339,6 +346,11 @@ watch([search, localFilters, () => props.vehicles], () => displayLimit.value = P
     height: 12px;
     margin: auto;
     color: rgba(255, 255, 255, 0.55);
+  }
+
+  .history-compare {
+    margin: 0;
+    background: rgba(255, 255, 255, 0.05);
   }
 
   .state {

@@ -211,7 +211,7 @@ watch(() => props.rows.map(props.rowKey), keys => {
 }
 
 .composable-table-expanded {
-  padding: 10px 18px 18px;
+  padding: 2px 18px 18px;
 }
 
 .composable-table-empty {
