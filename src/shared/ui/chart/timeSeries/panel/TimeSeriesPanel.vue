@@ -127,7 +127,7 @@ watch(() => props.chart, (chart, _, onCleanup) => {
 .time-series-panel {
   --time-series-legend-height: 21px;
   --time-series-gap: 12px;
-  --time-series-height: calc(clamp(260px, 30cqi, 400px) - var(--time-series-legend-height) - var(--time-series-gap));
+  --time-series-height: calc(clamp(300px, 45vw, 400px) - var(--time-series-legend-height) - var(--time-series-gap));
   container: time-series-panel / inline-size;
   min-width: 0;
 
@@ -181,7 +181,7 @@ watch(() => props.chart, (chart, _, onCleanup) => {
   &.compact {
     --time-series-legend-height: 0px;
     --time-series-gap: 10px;
-    --time-series-height: clamp(230px, 28cqi, 320px);
+    --time-series-height: clamp(250px, 45vw, 320px);
 
     .panel-header {
       padding-bottom: 3px;
@@ -240,6 +240,7 @@ watch(() => props.chart, (chart, _, onCleanup) => {
 
   @container time-series-panel (max-width: 600px) {
     .panel-header {
+
       :deep(.items > .left),
       :deep(.items > .right) {
         flex: 1 1 100%;
