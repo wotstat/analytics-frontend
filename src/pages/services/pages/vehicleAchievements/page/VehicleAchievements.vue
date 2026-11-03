@@ -77,7 +77,7 @@ useBackground(VehiclesBackground, { backgroundKey: 'services-vehicles' })
 }
 
 .data-source {
-  margin-top: 50px;
+  margin: 50px 0 0;
   padding-top: 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   color: rgba(255, 255, 255, 0.8);
@@ -87,6 +87,13 @@ useBackground(VehiclesBackground, { backgroundKey: 'services-vehicles' })
   h5 {
     margin: 0 0 6px;
     font-size: 14px;
+    line-height: 1.4;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+
+    &:not(:first-child) {
+      margin-top: 16px;
+    }
   }
 
   p+p {

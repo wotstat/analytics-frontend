@@ -177,7 +177,7 @@ import type { VehicleStatisticsPeriod } from '../shared/vehicleStatisticsPeriod'
 import type { ComparisonCandidate } from '../timeSeriesCompare/types'
 import { useVehicleValueBars } from './utils/useVehicleValueBars'
 import { useVehicleTableAppearance } from './utils/useVehicleTableAppearance'
-import { vehicleControlColumns } from './utils/controlColumns'
+import { vehicleColumns, vehicleNameColumn } from './utils/columns'
 
 const props = defineProps<{
   vehicles: VehicleStatistics[]
@@ -201,7 +201,6 @@ const MAX_BULK_COMPARISON_LINES = 100
 const MAX_TANK_SLOTS = 7
 const MAX_CATEGORY_SLOTS = 12
 const MIN_SLOT_WIDTH = 86
-const METADATA_COLUMN_WIDTH = 40
 const EXPAND_MIN_TABLE_WIDTH = 720
 const METADATA_MIN_TABLE_WIDTH = 520
 const COMPARE_MIN_TABLE_WIDTH = 440
@@ -268,14 +267,14 @@ const effectiveSelection = computed<VehicleSelection>(() => {
   }
 })
 
-const metadataColumnCount = computed(() => Number(showLevel.value) + Number(showType.value))
-const nameWidth = computed(() => Math.max(140, width.value * 0.25))
+const nameColumn = computed(() => vehicleNameColumn(width.value))
 const maxSelectableSlots = computed(() => {
   const maxSlots = showName.value ? MAX_TANK_SLOTS : MAX_CATEGORY_SLOTS
-  const nameColumnWidth = showName.value ? nameWidth.value : 0
-  const metadataWidth = METADATA_COLUMN_WIDTH * metadataColumnCount.value
-  const expandWidth = showExpand.value ? vehicleControlColumns.expand.width : 0
-  const compareWidth = showCompare.value ? vehicleControlColumns.compare.width : 0
+  const nameColumnWidth = showName.value ? nameColumn.value.width : 0
+  const metadataWidth = (showLevel.value ? vehicleColumns.tankLevel.width : 0) +
+    (showType.value ? vehicleColumns.tankType.width : 0)
+  const expandWidth = showExpand.value ? vehicleColumns.expand.width : 0
+  const compareWidth = showCompare.value ? vehicleColumns.compare.width : 0
   const availableWidth = width.value - nameColumnWidth - metadataWidth - expandWidth - compareWidth
   const fittedSlots = Math.max(1, Math.floor(availableWidth / MIN_SLOT_WIDTH))
 
@@ -309,11 +308,11 @@ const tableStyle = computed(() => ({
 
 type VehicleColumn = ComposableTableColumn<VehicleStatistics, SortKey | 'compare' | 'expand'> & { metric?: Slot }
 const columns = computed<VehicleColumn[]>(() => [
-  ...(showCompare.value ? [vehicleControlColumns.compare] : []),
-  ...(showExpand.value ? [vehicleControlColumns.expand] : []),
-  ...(showLevel.value ? [{ key: 'tankLevel', label: 'Уровень', width: METADATA_COLUMN_WIDTH, sortable: true, interactive: true } as const] : []),
-  ...(showType.value ? [{ key: 'tankType', label: 'Тип техники', width: METADATA_COLUMN_WIDTH, sortable: true, interactive: true } as const] : []),
-  ...(showName.value ? [{ key: 'name', label: 'Название танка', width: nameWidth.value, align: 'left', sortable: true, interactive: true } as const] : []),
+  ...(showCompare.value ? [vehicleColumns.compare] : []),
+  ...(showExpand.value ? [vehicleColumns.expand] : []),
+  ...(showLevel.value ? [vehicleColumns.tankLevel] : []),
+  ...(showType.value ? [vehicleColumns.tankType] : []),
+  ...(showName.value ? [nameColumn.value] : []),
   ...visibleSlots.value.map(metric => ({
     key: metric, metric, label: availableSlots[metric].label, tooltip: availableSlots[metric].label,
     sortable: true, interactive: true, value: (vehicle: VehicleStatistics) => formatSlotValue(metric, vehicle[metric]),
@@ -525,10 +524,6 @@ watch([visibleSlots, width], ([slots, tableWidth]) => {
 
   .vehicle-stats {
     --composable-table-cell-padding: 0 3px;
-
-    :deep(.row-toggle) {
-      padding: 0;
-    }
 
     :deep(.composable-table-cell.row-toggle:hover) {
       background: none;

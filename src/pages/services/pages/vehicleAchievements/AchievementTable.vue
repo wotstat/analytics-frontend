@@ -106,7 +106,7 @@ import VehicleNameCell from '../vehicles/vehicleListTable/VehicleNameCell.vue'
 import VehicleTableSettings from '../vehicles/vehicleListTable/settings/VehicleTableSettings.vue'
 import { useVehicleValueBars } from '../vehicles/vehicleListTable/utils/useVehicleValueBars'
 import { useVehicleTableAppearance } from '../vehicles/vehicleListTable/utils/useVehicleTableAppearance'
-import { vehicleControlColumns } from '../vehicles/vehicleListTable/utils/controlColumns'
+import { vehicleColumns, vehicleNameColumn } from '../vehicles/vehicleListTable/utils/columns'
 import { useVehicleSorting, type SortKey, type SortOrder } from '../vehicles/vehicleListTable/utils/useVehicleSorting'
 import { availableSlots, type Slot } from '../vehicles/vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 import { formatSlotValue } from '../vehicles/vehicleMetricSelector/utils/formatMetricValue'
@@ -154,17 +154,17 @@ const availableNations = computed<readonly Nation[]>(() => regionToGame(props.fi
 type AchievementColumn = ComposableTableColumn<VehicleStatisticsRow, SortKey | 'compare' | 'expand'> & { metric?: Slot }
 const columns = computed<AchievementColumn[]>(() => {
   const columns: AchievementColumn[] = [
-    vehicleControlColumns.compare,
-    vehicleControlColumns.expand,
+    vehicleColumns.compare,
+    vehicleColumns.expand,
   ]
 
   if (showMetadata.value) columns.push(
-    { key: 'tankLevel', label: 'Уровень', width: 40, sortable: true, interactive: true },
-    { key: 'tankType', label: 'Тип техники', width: 40, sortable: true, interactive: true },
+    vehicleColumns.tankLevel,
+    vehicleColumns.tankType,
   )
 
   columns.push(
-    { key: 'name', label: 'Название танка', width: '2fr', minWidth: showImage.value ? 200 : 110, align: 'left', sortable: true, interactive: true },
+    vehicleNameColumn(width.value),
     ...slots.value.map(metric => ({
       key: metric, metric, label: availableSlots[metric].label, minWidth: showValueBars.value ? 62 : 46,
       sortable: true, interactive: true, value: (vehicle: VehicleStatisticsRow) => formatSlotValue(metric, vehicle[metric]),
