@@ -38,6 +38,15 @@ const routes = [
     ]
   },
   {
+    path: '/services',
+    component: asyncPage(() => import('./pages/services/Index.vue')),
+    children: [
+      { path: 'vehicles', alias: '', component: Vehicles, meta: { customTitle: 'Статистика техники' } },
+      { path: 'mastery', component: Mastery, meta: { customTitle: 'Знаки классности' } },
+      { path: 'marks', component: Marks, meta: { customTitle: 'Отметки на стволах' } },
+    ]
+  },
+  {
     path: '/onslaught',
     component: asyncPage(() => import('./pages/infographics/pages/onslaught/Layout.vue')),
     children: [

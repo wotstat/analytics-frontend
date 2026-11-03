@@ -4,7 +4,7 @@ import VehiclesCompareMetaCard from './compare/VehiclesCompareMetaCard.vue'
 import { vehiclesMetaCatalog } from './utils/catalog.ts'
 import { vehiclesCompareMetaTags, vehiclesTableMetaTags } from './utils/tags.ts'
 
-const vehiclesPage = (url: URL) => /^\/session\/vehicles\/?$/.test(url.pathname)
+const vehiclesPage = (url: URL) => /^\/(session\/vehicles|services(?:\/vehicles)?)\/?$/.test(url.pathname)
 const vehiclesMetaCache = { revisionKey: () => everyDays(1), cache: { htmlSeconds: 10, imageSeconds: 3600 } }
 
 export default defineMetaDefinition({
@@ -13,7 +13,8 @@ export default defineMetaDefinition({
   name: 'Сравнение техники/Техника',
   summary: 'Крупный заголовок, полные строки и рамка таблицы, продолжающаяся до нижнего края карточки.',
   examples: [
-    { name: 'Техника · RU', url: 'https://wotstat.info/session/vehicles' },
+    { name: 'Техника · RU', url: 'https://wotstat.info/services/vehicles' },
+    { name: 'Сервисы', url: 'https://wotstat.info/services' },
     { name: 'Только X уровень', url: 'https://wotstat.info/session/vehicles?level=10' },
     { name: 'По уровням', url: 'https://wotstat.info/session/vehicles?group=levels' },
     { name: 'По типам', url: 'https://wotstat.info/session/vehicles?group=classes' },
@@ -41,7 +42,7 @@ export const compare = defineMetaDefinition({
   summary: 'Один-два танка без легенды; три и более источника или категории — панорама с легендой.',
   examples: [
     { name: 'Три танка · урон', url: 'https://wotstat.info/session/vehicles?region=RU&compare=1JNxP4fcCSA375qQz40k3owcagZjw54TRxz0gPWFr1BElpdfAPd3VCU0xoNsI8VoJfrxocFmpJzeZbLq61qr' },
-    { name: 'Два танка · урон', url: 'https://wotstat.info/session/vehicles?region=RU&compare=4u2COGR' },
+    { name: 'Два танка · урон', url: 'https://wotstat.info/services/vehicles?region=RU&compare=4u2COGR' },
     { name: 'ИС-7 · урон', url: 'https://wotstat.info/session/vehicles?region=RU&compare=HpeZ' },
     { name: 'Два танка · победы', url: 'https://wotstat.info/session/vehicles?region=RU&metric=winrate&compare=4u2COGR' },
     { name: 'Объект 261 · победы', url: 'https://wotstat.info/session/vehicles?region=RU&metric=winrate&compare=2Vgd2OvHGjYwA3DFyqfvV3J5AcCxiT' },
