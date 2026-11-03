@@ -14,17 +14,15 @@
       </div>
     </div>
 
-    <ComposableTable v-model:expanded-rows="expandedRows" class="vehicle-stats" :class="{ 'with-compare': showCompare }"
+    <ComposableTable v-model:expanded-rows="expandedRows" class="vehicle-stats"
       :columns
       :rows="status === success ? displayedVehicles : []" :row-key="vehicle => vehicle.rowKey"
       :sort="sorting.sortOrders.value" :loading="status === loading" :cell-class="cellClass" @sort="onSort"
       @cell-click="onCellClick">
 
       <template #header-compare>
-        <button v-if="bulkComparisonTotal <= MAX_BULK_COMPARISON_LINES" class="compare-all" type="button"
-          :disabled="status !== success || !comparisonCandidates.length" @click="compareAll">
-          <PlusIcon />
-        </button>
+        <VehicleCompareButton v-if="bulkComparisonTotal <= MAX_BULK_COMPARISON_LINES" class="compare-all"
+          :disabled="status !== success || !comparisonCandidates.length" @click="compareAll" />
       </template>
       <template #header-expand><span></span></template>
       <template #header-tankLevel><span class="level-heading">Ур.</span></template>
@@ -146,7 +144,6 @@ import { computed, ref, useTemplateRef, watch } from 'vue'
 import { useElementSize, useLocalStorage } from '@vueuse/core'
 import { isErrorStatus, loading, success, type Status } from '@/db'
 import ModalWindowContent from '@/shared/ui/modalWindow/ModalWindowContent.vue'
-import PlusIcon from './assets/plus-bold.svg'
 import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
 import VehicleType from '@/shared/game/components/vehicles/vehicleType/VehicleType.vue'
 import { mtNations, wotNations, type Nation } from '@/shared/game/domain/vehicles/nations'
@@ -180,6 +177,7 @@ import type { VehicleStatisticsPeriod } from '../shared/vehicleStatisticsPeriod'
 import type { ComparisonCandidate } from '../timeSeriesCompare/types'
 import { useVehicleValueBars } from './utils/useVehicleValueBars'
 import { useVehicleTableAppearance } from './utils/useVehicleTableAppearance'
+import { vehicleControlColumns } from './utils/controlColumns'
 
 const props = defineProps<{
   vehicles: VehicleStatistics[]
@@ -204,8 +202,6 @@ const MAX_TANK_SLOTS = 7
 const MAX_CATEGORY_SLOTS = 12
 const MIN_SLOT_WIDTH = 86
 const METADATA_COLUMN_WIDTH = 40
-const EXPAND_COLUMN_WIDTH = 20
-const COMPARE_COLUMN_WIDTH = 36
 const EXPAND_MIN_TABLE_WIDTH = 720
 const METADATA_MIN_TABLE_WIDTH = 520
 const COMPARE_MIN_TABLE_WIDTH = 440
@@ -278,8 +274,8 @@ const maxSelectableSlots = computed(() => {
   const maxSlots = showName.value ? MAX_TANK_SLOTS : MAX_CATEGORY_SLOTS
   const nameColumnWidth = showName.value ? nameWidth.value : 0
   const metadataWidth = METADATA_COLUMN_WIDTH * metadataColumnCount.value
-  const expandWidth = showExpand.value ? EXPAND_COLUMN_WIDTH : 0
-  const compareWidth = showCompare.value ? COMPARE_COLUMN_WIDTH : 0
+  const expandWidth = showExpand.value ? vehicleControlColumns.expand.width : 0
+  const compareWidth = showCompare.value ? vehicleControlColumns.compare.width : 0
   const availableWidth = width.value - nameColumnWidth - metadataWidth - expandWidth - compareWidth
   const fittedSlots = Math.max(1, Math.floor(availableWidth / MIN_SLOT_WIDTH))
 
@@ -313,8 +309,8 @@ const tableStyle = computed(() => ({
 
 type VehicleColumn = ComposableTableColumn<VehicleStatistics, SortKey | 'compare' | 'expand'> & { metric?: Slot }
 const columns = computed<VehicleColumn[]>(() => [
-  ...(showCompare.value ? [{ key: 'compare', width: COMPARE_COLUMN_WIDTH } as const] : []),
-  ...(showExpand.value ? [{ key: 'expand', width: EXPAND_COLUMN_WIDTH, interactive: true } as const] : []),
+  ...(showCompare.value ? [vehicleControlColumns.compare] : []),
+  ...(showExpand.value ? [vehicleControlColumns.expand] : []),
   ...(showLevel.value ? [{ key: 'tankLevel', label: 'Уровень', width: METADATA_COLUMN_WIDTH, sortable: true, interactive: true } as const] : []),
   ...(showType.value ? [{ key: 'tankType', label: 'Тип техники', width: METADATA_COLUMN_WIDTH, sortable: true, interactive: true } as const] : []),
   ...(showName.value ? [{ key: 'name', label: 'Название танка', width: nameWidth.value, align: 'left', sortable: true, interactive: true } as const] : []),
@@ -330,7 +326,7 @@ function onSort(key: VehicleColumn['key'], event: MouseEvent) {
 }
 
 function cellClass(vehicle: VehicleStatistics, column: VehicleColumn) {
-  if (column.key === 'compare') return 'compare-cell'
+  if (column.key === 'compare') return
   if (!column.metric) return 'row-toggle'
   return expandedRows.value.includes(vehicle.rowKey) && activeSlot.value === column.metric ? 'active-value' : undefined
 }
@@ -530,13 +526,7 @@ watch([visibleSlots, width], ([slots, tableWidth]) => {
   .vehicle-stats {
     --composable-table-cell-padding: 0 3px;
 
-    :deep(.compare-cell),
     :deep(.row-toggle) {
-      padding: 0;
-    }
-
-    &.with-compare :deep(.heading:first-child) {
-      justify-content: flex-start;
       padding: 0;
     }
 
@@ -568,7 +558,7 @@ watch([visibleSlots, width], ([slots, tableWidth]) => {
 
   .history-compare {
     flex: none;
-    margin-left: 0;
+    margin: 0;
     background: rgba(255, 255, 255, 0.05);
 
     &:not(.added) {
@@ -577,32 +567,6 @@ watch([visibleSlots, width], ([slots, tableWidth]) => {
 
     &:hover {
       background: rgba(255, 255, 255, 0.1);
-    }
-  }
-
-  .compare-all {
-    display: grid;
-    place-items: center;
-    margin-left: 6px;
-    width: 28px;
-    height: 30px;
-    padding: 0;
-    border-radius: 5px;
-    color: rgba(255, 255, 255, 0.55);
-
-    svg {
-      width: 12px;
-      height: 12px;
-    }
-
-    &:hover:not(:disabled) {
-      color: white;
-      background: rgba(255, 255, 255, 0.08);
-    }
-
-    &:disabled {
-      opacity: 0.3;
-      cursor: default;
     }
   }
 

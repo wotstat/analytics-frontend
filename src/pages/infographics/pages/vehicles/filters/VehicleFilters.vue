@@ -148,6 +148,8 @@ function reset() {
 </script>
 
 <style scoped lang="scss">
+@use './baseFilterStyles.scss' as *;
+
 .vehicle-filters {
   margin: 12px 0 24px;
   font-size: 15px;
@@ -199,6 +201,8 @@ function reset() {
   }
 
   .toolbar {
+    @include base-filter-height;
+
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;

@@ -1,8 +1,10 @@
 <template>
-  <div class="region-select">
-    <button v-for="option in vehicleRegions" :key="option" type="button" class="region mt-font"
-      :class="{ active: region === option }" @click="region = option">{{ option }}</button>
-  </div>
+  <section class="achievement-filters">
+    <div class="region-select">
+      <button v-for="option in vehicleRegions" :key="option" type="button" class="region mt-font"
+        :class="{ active: region === option }" @click="region = option">{{ option }}</button>
+    </div>
+  </section>
 
   <AchievementHistory :kind :sources="comparison.sources.value" :filters :before-day="beforeDay"
     v-model:metrics="metrics" v-model:step="step" v-model:average-window="averageWindow" v-model:annotations="annotations"
@@ -41,11 +43,20 @@ useBackground(VehiclesBackground)
 </script>
 
 <style scoped lang="scss">
+@use '../../vehicles/filters/baseFilterStyles.scss' as *;
+
+.achievement-filters {
+  @include base-filter-height;
+
+  margin: 12px 0 24px;
+}
+
 .region-select {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  min-height: 24px;
   gap: 5px;
-  margin: 12px 0 24px;
 
   .region {
     height: 22px;

@@ -14,11 +14,9 @@
       :rows="status === success ? displayedVehicles : []" :row-key="vehicle => vehicle.rowKey"
       :sort="sorting.sortOrders.value" :loading="status === loading" @sort="onSort" @cell-click="onCellClick">
       <template #header-compare>
-        <button v-if="bulkComparisonTotal <= MAX_BULK_COMPARISON_LINES" class="compare-all" type="button"
+        <VehicleCompareButton v-if="bulkComparisonTotal <= MAX_BULK_COMPARISON_LINES" class="compare-all"
           :disabled="status !== success || !comparisonCandidates.length"
-          v-tooltip="'Добавить все танки к сравнению'" @click="compareAll">
-          <PlusIcon />
-        </button>
+          v-tooltip="'Добавить все танки к сравнению'" @click="compareAll" />
       </template>
       <template #header-expand><span></span></template>
       <template #header-tankLevel><span>Ур.</span></template>
@@ -86,7 +84,6 @@ import { computed, ref, useTemplateRef, watch } from 'vue'
 import { useElementSize, useLocalStorage } from '@vueuse/core'
 import { isErrorStatus, loading, success, type Status } from '@/db'
 import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
-import PlusIcon from '../vehicles/vehicleListTable/assets/plus-bold.svg'
 import VehicleType from '@/shared/game/components/vehicles/vehicleType/VehicleType.vue'
 import { isVehicleType } from '@/shared/game/components/vehicles/vehicleType/vehicleTypeToImage'
 import { mtNations, wotNations, type Nation } from '@/shared/game/domain/vehicles/nations'
@@ -109,6 +106,7 @@ import VehicleNameCell from '../vehicles/vehicleListTable/VehicleNameCell.vue'
 import VehicleTableSettings from '../vehicles/vehicleListTable/settings/VehicleTableSettings.vue'
 import { useVehicleValueBars } from '../vehicles/vehicleListTable/utils/useVehicleValueBars'
 import { useVehicleTableAppearance } from '../vehicles/vehicleListTable/utils/useVehicleTableAppearance'
+import { vehicleControlColumns } from '../vehicles/vehicleListTable/utils/controlColumns'
 import { useVehicleSorting, type SortKey, type SortOrder } from '../vehicles/vehicleListTable/utils/useVehicleSorting'
 import { availableSlots, type Slot } from '../vehicles/vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 import { formatSlotValue } from '../vehicles/vehicleMetricSelector/utils/formatMetricValue'
@@ -156,8 +154,8 @@ const availableNations = computed<readonly Nation[]>(() => regionToGame(props.fi
 type AchievementColumn = ComposableTableColumn<VehicleStatisticsRow, SortKey | 'compare' | 'expand'> & { metric?: Slot }
 const columns = computed<AchievementColumn[]>(() => {
   const columns: AchievementColumn[] = [
-    { key: 'compare', width: 32 },
-    { key: 'expand', width: 18, interactive: true },
+    vehicleControlColumns.compare,
+    vehicleControlColumns.expand,
   ]
 
   if (showMetadata.value) columns.push(
@@ -290,10 +288,6 @@ watch([search, localFilters, () => props.vehicles], () => displayLimit.value = P
       container-name: achievement-heading;
     }
 
-    :deep(.composable-table-cell:first-child) {
-      padding: 0;
-    }
-
     :deep(.composable-table-cell.interactive:hover) {
       background: none;
     }
@@ -302,32 +296,6 @@ watch([search, localFilters, () => props.vehicles], () => displayLimit.value = P
       :deep(.composable-table-line:hover) {
         background: rgba(255, 255, 255, 0.04);
       }
-    }
-  }
-
-  .compare-all {
-    display: grid;
-    place-items: center;
-    margin-left: 6px;
-    width: 28px;
-    height: 30px;
-    padding: 0;
-    border-radius: 5px;
-    color: rgba(255, 255, 255, 0.55);
-
-    svg {
-      width: 12px;
-      height: 12px;
-    }
-
-    &:hover:not(:disabled) {
-      color: white;
-      background: rgba(255, 255, 255, 0.08);
-    }
-
-    &:disabled {
-      opacity: 0.3;
-      cursor: default;
     }
   }
 

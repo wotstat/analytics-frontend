@@ -1,5 +1,5 @@
 <template>
-  <button class="compare" :class="{ added: compared }" @click="$emit('click', $event)">
+  <button class="compare" :class="{ added: compared }" type="button" :disabled @click="$emit('click', $event)">
     <Transition name="compare-icon">
       <Checkmark v-if="compared" key="checkmark" class="compare-icon" />
       <PlusIcon v-else key="plus" class="compare-icon" />
@@ -11,7 +11,7 @@
 import PlusIcon from '../assets/plus-bold.svg'
 import Checkmark from './checkmark-bold.svg'
 
-defineProps<{ compared: boolean }>()
+defineProps<{ compared?: boolean, disabled?: boolean }>()
 defineEmits<{ click: [event: MouseEvent] }>()
 </script>
 
@@ -20,16 +20,21 @@ defineEmits<{ click: [event: MouseEvent] }>()
   align-self: center;
   display: grid;
   place-items: center;
-  margin-left: 6px;
+  margin: 0 auto;
   width: 28px;
   height: 30px;
   padding: 0;
   color: rgba(255, 255, 255, 0.55);
   border-radius: 5px;
 
-  &:hover {
+  &:hover:not(:disabled) {
     color: white;
     background: rgba(255, 255, 255, 0.08);
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: default;
   }
 
   &.added {

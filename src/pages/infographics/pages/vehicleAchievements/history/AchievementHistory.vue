@@ -247,6 +247,10 @@ watch(annotations, value => chart.setHistoryAnnotations(value), { immediate: tru
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.025);
 
+    :deep(.panel-header) {
+      min-height: 30px;
+    }
+
     @media (max-width: 600px) {
       padding: 12px;
     }
