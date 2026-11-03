@@ -3,8 +3,8 @@ import { sameSet, uniqueSorted } from '@/shared/utils/collections'
 import { battleModeCompactor } from '@/shared/game/encoding/battleModes/battleModes'
 import type { TagCompactor } from '@/shared/game/encoding/utils/types'
 import { unpackRegionalId } from '@/shared/game/encoding/utils/regionalIdPacking'
-import { singleRegion } from '@/shared/game/domain/regions'
-import { vehicleRegions, type VehicleFilters } from '../../../../filters/types'
+import { singleRegion, queryRegions } from '@/shared/game/domain/region/regions'
+import type { VehicleFilters } from '../../../../filters/types'
 import type { SavedComparisonFilters } from '../../state'
 import { snapshotComparisonFilters } from '../../../utils/comparisonFilters'
 import { binaryLimits, MAX_ITEMS, MAX_SOURCES } from './limits'
@@ -71,7 +71,7 @@ function encodeFilters(filters: SavedComparisonFilters, base: VehicleFilters, ar
 
   const output = new Writer(binaryLimits)
   output.uint(flags)
-  if (flags & 1) output.uint(compactMask(normalized.regions, vehicleRegions))
+  if (flags & 1) output.uint(compactMask(normalized.regions, queryRegions))
   if (flags & 2) writeBattleModes(output, normalized.battleModes)
   if (flags & 4) output.list(uniqueSorted(normalized.arenas), arena => {
     output.atom(typeof arena === 'number' ? arena : arenaCompactor.compact(arena, region))
@@ -84,7 +84,7 @@ function encodeFilters(filters: SavedComparisonFilters, base: VehicleFilters, ar
 
 function readFilters(input: Reader, base: VehicleFilters, flags = input.uint(63)): SavedComparisonFilters {
   const filters: SavedComparisonFilters = snapshotComparisonFilters(base)
-  if (flags & 1) filters.regions = expandMask(input.uint(), vehicleRegions)
+  if (flags & 1) filters.regions = expandMask(input.uint(), queryRegions)
   if (flags & 2) filters.battleModes = readBattleModes(input)
   if (flags & 4) filters.arenas = input.list(() => {
     const value = input.atom()

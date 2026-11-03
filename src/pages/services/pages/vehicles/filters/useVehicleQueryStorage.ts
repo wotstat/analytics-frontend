@@ -1,10 +1,11 @@
 import { computed } from 'vue'
 import { defineParams, useQueryStorage } from '@/shared/uiKit/queryStorage/useQueryStorage'
-import { oneOfParam, setParam, setOfParam } from '@/shared/uiKit/queryStorage/params'
+import { oneOfParam, setParam } from '@/shared/uiKit/queryStorage/params'
 import { stringSerializer } from '@/shared/uiKit/queryStorage/serializers/stringSerializer'
 import { oneOfSerializer } from '@/shared/uiKit/queryStorage/serializers/oneOfSerializer'
 import { battleModeQueryParam } from '@/shared/game/domain/battleModes/battleModeQueryParam'
-import { createVehicleFilters, vehicleRegions, type VehicleFilters } from './types'
+import { regionQueryParam } from '@/shared/game/domain/region/regionQueryParam'
+import { createVehicleFilters, type VehicleFilters } from './types'
 import { createLocalVehicleFilters, battleThresholds, playerThresholds, type LocalVehicleFilters } from '../vehicleListTable/filters/localFilters'
 import { vehicleGroupings, type VehicleGrouping } from '../shared/vehicleGrouping'
 import { vehicleTableSettingsParams } from '../vehicleListTable/query/settings'
@@ -27,7 +28,7 @@ const tableContext = { grouping: groupingParam }
 const onlyTanks = ({ grouping }: { grouping: VehicleGrouping }) => grouping === 'tanks'
 
 export const vehicleQueryParams = defineParams({
-  regions: setOfParam(vehicleRegions, defaults.regions, { label: 'region', key: 'vehicles.regions', priority: 160 }),
+  regions: regionQueryParam,
   battleModes: { ...battleModeQueryParam, key: 'vehicles.battleModes', priority: 150 },
   arenas: setParam(stringSerializer, defaults.arenas, { label: 'arena', key: 'vehicles.arenas', priority: 140, validate: value => /^[\w-]+$/.test(value) }),
   platoon: oneOfParam(['any', 'solo', 'duo', 'trio', 'large'], defaults.platoon, { label: 'platoon', key: 'vehicles.platoon', priority: 130 }),

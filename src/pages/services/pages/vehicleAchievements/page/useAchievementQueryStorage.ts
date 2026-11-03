@@ -1,7 +1,9 @@
 import { computed } from 'vue'
 import { defineParams, useQueryStorage, type QueryParam } from '@/shared/uiKit/queryStorage/useQueryStorage'
-import { arrayParam, oneOfParam, setParam } from '@/shared/uiKit/queryStorage/params'
-import { vehicleRegions, type VehicleFilters, type VehicleRegion } from '../../vehicles/filters/types'
+import { arrayParam, setParam } from '@/shared/uiKit/queryStorage/params'
+import { firstQueryRegion, regionQueryParam, useSingleRegion } from '@/shared/game/domain/region/regionQueryParam'
+import { queryRegions } from '@/shared/game/domain/region/regions'
+import type { VehicleFilters, VehicleRegion } from '../../vehicles/filters/types'
 import { createLocalVehicleFilters, type LocalVehicleFilters } from '../../vehicles/vehicleListTable/filters/localFilters'
 import { vehicleListFilterParams } from '../../vehicles/vehicleListTable/query/filters'
 import { sortOrderSerializer } from '../../vehicles/vehicleListTable/utils/sortOrderSerializer'
@@ -25,14 +27,14 @@ function achievementFilters(region: VehicleRegion = 'RU'): VehicleFilters {
 const achievementCompareParam = {
   label: 'compare', key: 'achievements.compare', priority: -10,
   default: [] as SavedComparisonSource[],
-  serialize: (sources: SavedComparisonSource[], context?: { region: VehicleRegion }) =>
-    serializeComparison(sources, achievementFilters(context?.region)),
-  deserialize: (raw: string, context?: { region: VehicleRegion }) => {
-    const sources = deserializeComparison(raw, achievementFilters(context?.region))
+  serialize: (sources: SavedComparisonSource[], context?: { regions: Set<VehicleRegion> }) =>
+    serializeComparison(sources, achievementFilters(firstQueryRegion(context?.regions))),
+  deserialize: (raw: string, context?: { regions: Set<VehicleRegion> }) => {
+    const sources = deserializeComparison(raw, achievementFilters(firstQueryRegion(context?.regions)))
     const seen = new Set<string>()
     return sources.flatMap(source => {
       const region = source.filters.regions[0]
-      if (!('tank' in source.target) || source.filters.regions.length !== 1 || !vehicleRegions.includes(region)) return []
+      if (!('tank' in source.target) || source.filters.regions.length !== 1 || !queryRegions.includes(region)) return []
 
       const identity = JSON.stringify([region, source.target.tank])
       if (seen.has(identity)) return []
@@ -40,18 +42,17 @@ const achievementCompareParam = {
       return [{ ...source, filters: achievementFilters(region) }]
     })
   }
-} satisfies QueryParam<SavedComparisonSource[], { region: VehicleRegion }>
+} satisfies QueryParam<SavedComparisonSource[], { regions: Set<VehicleRegion> }>
 const hasComparison = ({ compare }: { compare: SavedComparisonSource[] }) => compare.length > 0
 
 function createAchievementQueryParams(kind: AchievementKind) {
   const key = `achievements.${kind}`
   const slots = achievements[kind].slots
-  const regionParam = oneOfParam(vehicleRegions, 'RU', { label: 'region', key: `${key}.region`, priority: 100 })
-  const compareParam = { ...achievementCompareParam, context: { region: regionParam } }
+  const compareParam = { ...achievementCompareParam, context: { regions: regionQueryParam } }
   const comparisonContext = { compare: compareParam }
 
   return defineParams({
-    region: regionParam,
+    regions: regionQueryParam,
     search: vehicleListFilterParams.search,
     types: vehicleListFilterParams.types,
     nations: vehicleListFilterParams.nations,
@@ -90,7 +91,8 @@ export function useAchievementQueryStorage(kind: AchievementKind) {
   const slots = achievements[kind].slots
   const storage = useQueryStorage(achievementQueryParams[kind], { history: 'replace', debounce: 150 })
   const p = storage.params
-  const filters = computed(() => achievementFilters(p.region.value))
+  const region = useSingleRegion(p.regions)
+  const filters = computed(() => achievementFilters(region.value))
   const comparison = useComparisonSources(filters, p.compare)
   const annotations = computed({
     get: () => comparisonAnnotationState(p.annotations.value),
@@ -114,7 +116,7 @@ export function useAchievementQueryStorage(kind: AchievementKind) {
   })
 
   return {
-    region: p.region, search: p.search, sort: p.sort, localFilters, filters, comparison,
+    region, search: p.search, sort: p.sort, localFilters, filters, comparison,
     metrics, step: p.step, averageWindow: p.averageWindow, annotations,
   }
 }

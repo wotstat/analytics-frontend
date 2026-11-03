@@ -1,7 +1,8 @@
 import type { BattleModeSelectionKey } from '@/shared/game/domain/battleModes/battleModeSelection'
+import { regions, type QueryRegion } from '@/shared/game/domain/region/regions'
 
-export const vehicleRegions = ['RU', 'EU', 'NA', 'ASIA', 'CN'] as const
-export type VehicleRegion = typeof vehicleRegions[number]
+export const vehicleRegions = regions
+export type VehicleRegion = QueryRegion
 
 export type VehicleFilters = {
   regions: VehicleRegion[]

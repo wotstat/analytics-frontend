@@ -5,7 +5,7 @@ import { isErrorStatus, loading } from '@/db'
 import { indexRegionalTags, resolveRegionalTag } from './utils/regionalTagLookup'
 import { packRegionalId, unpackRegionalId } from './utils/regionalIdPacking'
 import type { CompactValue, Expansion } from './utils/types'
-import { gameRegions } from '../domain/regions'
+import { gameRegions } from '../domain/region/regions'
 
 const byId = computed(() => indexRegionalTags(vehicleCatalog.value.data, vehicleId))
 const warnings = new Set<string>()

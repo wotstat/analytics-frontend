@@ -1,2 +1,1 @@
-export const regions = ['RU', 'EU', 'NA', 'ASIA', 'CN'] as const
-export type OnslaughtRegion = typeof regions[number] | 'CT'
+export { regions, type QueryRegion as OnslaughtRegion } from '@/shared/game/domain/region/regions'

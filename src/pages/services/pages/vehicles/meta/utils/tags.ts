@@ -1,6 +1,6 @@
 import type { MetaTags } from '@/meta/utils'
 import { battleModeSelection } from '@/shared/game/domain/battleModes/battleModeSelection'
-import { singleRegion } from '@/shared/game/domain/regions'
+import { singleRegion } from '@/shared/game/domain/region/regions'
 import { nationNames, type Nation } from '@/shared/game/domain/vehicles/nations'
 import { unpackRegionalId } from '@/shared/game/encoding/utils/regionalIdPacking'
 import { resolveRegionalTag } from '@/shared/game/encoding/utils/regionalTagLookup'

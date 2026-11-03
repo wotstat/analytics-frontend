@@ -1,4 +1,4 @@
-import { gameRegions } from '../../domain/regions'
+import { gameRegions } from '../../domain/region/regions'
 
 // Бит 0: регион записан в ID. Биты 1..4: код региона. Остальные биты: ID сущности.
 const HAS_REGION_FLAG = 1 << 0

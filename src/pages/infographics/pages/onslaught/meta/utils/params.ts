@@ -1,5 +1,7 @@
 import i18n from '@/shared/game/domain/comp7/i18n.json'
-import { regions, type OnslaughtRegion } from '../../shared/regions'
+import { firstQueryRegion, regionQueryParam } from '@/shared/game/domain/region/regionQueryParam'
+import { decode } from '@/shared/uiKit/queryStorage/utils/queryParamUtils'
+import type { OnslaughtRegion } from '../../shared/regions'
 import type { OnslaughtSeason } from './seasons'
 
 export type OnslaughtMetaParams = {
@@ -24,8 +26,7 @@ function seasonDisplayName(region: OnslaughtRegion, season: string | null) {
 }
 
 export function readOnslaughtParams(url: URL, seasons?: readonly OnslaughtSeason[]): OnslaughtMetaParams {
-  const rawRegion = url.searchParams.get('region') ?? 'RU'
-  const region = [...regions, 'CT'].includes(rawRegion) ? rawRegion as OnslaughtRegion : 'RU'
+  const region = firstQueryRegion(decode(regionQueryParam, url.searchParams.get('region')))
 
   const requestedSeason = url.searchParams.get('season')?.trim() || null
   const season = resolveSeason(region, requestedSeason, seasons)

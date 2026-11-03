@@ -56,7 +56,7 @@ function changeSeason(season: string) {
 function changeRegion(region: OnslaughtRegion) {
   if (region === queryStorage.params.region.value) return
   const season = seasons.value?.find(item => item.region === region)?.season ?? null
-  queryStorage.patch({ region, season })
+  queryStorage.patch({ regions: new Set([region]), season })
 }
 
 const seasonsData = queryComputed<{ region: string, season: string, start: string }>(() => `

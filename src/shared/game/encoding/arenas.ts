@@ -5,7 +5,7 @@ import { arenaCatalog } from '../domain/arenas/catalog'
 import { indexRegionalTags, resolveRegionalTag } from './utils/regionalTagLookup'
 import { packRegionalId, unpackRegionalId } from './utils/regionalIdPacking'
 import type { CompactValue, Expansion } from './utils/types'
-import { gameRegions } from '../domain/regions'
+import { gameRegions } from '../domain/region/regions'
 
 const byId = computed(() => indexRegionalTags(arenaCatalog.value.data, arenaId))
 const warnings = new Set<string>()

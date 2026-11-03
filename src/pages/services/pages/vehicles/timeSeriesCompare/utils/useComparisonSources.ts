@@ -10,7 +10,7 @@ import type { ComparisonTarget, SavedComparisonSource } from '../query/state'
 import { comparisonColor, comparisonPalette } from '../query/palette'
 import { vehicleCompactor, vehicleCompactLabel } from '@/shared/game/encoding/vehicles'
 import { arenaCompactor } from '@/shared/game/encoding/arenas'
-import { singleRegion } from '@/shared/game/domain/regions'
+import { singleRegion } from '@/shared/game/domain/region/regions'
 import type { VehicleType } from '@/shared/game/domain/vehicles/types'
 
 function sourceTag(source: SavedComparisonSource) {
