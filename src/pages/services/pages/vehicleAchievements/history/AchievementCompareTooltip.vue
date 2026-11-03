@@ -1,7 +1,7 @@
 <template>
   <div class="achievement-compare-tooltip" :class="{ single: metrics.length === 1 }">
     <div class="header">
-      <span class="period">{{ period }}</span>
+      <b class="period">{{ period }}</b>
       <span v-if="gameVersion" class="game-version">{{ gameVersion }}</span>
     </div>
 
@@ -99,7 +99,7 @@ const rows = computed(() => {
     margin-bottom: 6px;
 
     .period {
-      color: rgba(255, 255, 255, 0.75);
+      color: white;
       white-space: nowrap;
     }
 
