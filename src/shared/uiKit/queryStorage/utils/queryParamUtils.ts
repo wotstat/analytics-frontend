@@ -34,17 +34,11 @@ export function assertContext(definition: QueryParam, labels: Set<string>) {
   }
 }
 
-export function sameDefinition(a: QueryParam, b: QueryParam): boolean {
+export function sameValueDefinition(a: QueryParam, b: QueryParam): boolean {
   if (a === b) return true
   if (a.type !== b.type || a.serialize !== b.serialize || a.deserialize !== b.deserialize) return false
-  if (encode(a, defaultValue(a)) !== encode(b, defaultValue(b))) return false
-
-  const left = Object.entries(a.context ?? {})
-  const right = b.context ?? {}
-  return left.length === Object.keys(right).length && left.every(([name, dependency]) => {
-    const other = right[name]
-    return other && dependency.label === other.label && sameDefinition(dependency, other)
-  })
+  // Контекст и enabled относятся к привязке в URL, а не к общему значению.
+  return encode(a, defaultValue(a)) === encode(b, defaultValue(b))
 }
 
 export function encode(definition: QueryParam, value: any, query?: QuerySnapshot): Encoded {

@@ -2,7 +2,7 @@ import { effectScope, ref, shallowReadonly, shallowRef, watch, type Ref } from '
 import type { LocationQuery, LocationQueryRaw, RouteLocation, RouteLocationNormalized, RouteLocationNormalizedLoaded, RouteRecordNormalized, Router } from 'vue-router'
 import type { DeferredWebHistory } from './createDeferredWebHistory'
 import type { QueryParam, QueryWriteOptions } from '../queryStorageTypes'
-import { defaultValue, encode, decode, contextDefinitions, assertContext, sameDefinition, paramEnabled, type Encoded, type QuerySnapshot } from './queryParamUtils'
+import { defaultValue, encode, decode, contextDefinitions, assertContext, sameValueDefinition, paramEnabled, type Encoded, type QuerySnapshot } from './queryParamUtils'
 
 type Navigation = {
   incoming: LocationQuery
@@ -64,9 +64,9 @@ export function queryStorageSync<T>(callback: () => T): T {
   }
 }
 
-function queryValue(entry: Entry, query?: QuerySnapshot, model = entry.value.value): Encoded {
-  const value = encode(entry.definition, model, query)
-  if (value === encode(entry.definition, entry.defaultValue, query)) return undefined
+function queryValue(entry: Entry, query?: QuerySnapshot, model = entry.value.value, definition = entry.definition): Encoded {
+  const value = encode(definition, model, query)
+  if (value === encode(definition, entry.defaultValue, query)) return undefined
   return value
 }
 
@@ -204,7 +204,7 @@ class QueryStorageCoordinator {
         return existing
       }
 
-      if (!sameDefinition(existing.definition, definition)) {
+      if (!sameValueDefinition(existing.definition, definition)) {
         throw new Error(`useQueryStorage: incompatible definitions for key "${key}"`)
       }
 
@@ -284,7 +284,7 @@ class QueryStorageCoordinator {
 
     try {
       if (Object.hasOwn(this.incoming, label) || this.authoritative) {
-        entry.value.value = decode(entry.definition, this.incoming[label], this.incoming)
+        entry.value.value = decode(binding.definition, this.incoming[label], this.incoming)
       }
 
       this.persist(entry)
@@ -303,7 +303,7 @@ class QueryStorageCoordinator {
       if (Object.hasOwn(this.incoming, label)) return
 
       const entry = this.getEntry(dependency.key ?? label, dependency)
-      query[label] = queryValue(entry, query)
+      query[label] = queryValue(entry, query, entry.value.value, dependency)
     }
 
     for (const dependency of Object.values(definition.context)) restore(dependency)
@@ -406,22 +406,23 @@ class QueryStorageCoordinator {
 
   expedite(entries: Entry[]) {
     const related = new Set(entries)
-    const active = new Map<string, Entry>()
+    const active = new Map<string, Binding>()
 
     for (const entry of this.entries.values()) {
-      for (const binding of this.activeBindings(entry)) active.set(binding.label, entry)
+      for (const binding of this.activeBindings(entry)) active.set(binding.label, binding)
     }
 
     let previousSize = -1
     while (previousSize !== related.size) {
       previousSize = related.size
 
-      for (const entry of new Set(active.values())) {
-        for (const definition of contextDefinitions(entry.definition)) {
+      for (const binding of new Set(active.values())) {
+        const entry = binding.entry
+        for (const definition of contextDefinitions(binding.definition)) {
           const parent = active.get(definition.label!)
-          if (parent && (related.has(entry) || related.has(parent))) {
+          if (parent && (related.has(entry) || related.has(parent.entry))) {
             related.add(entry)
-            related.add(parent)
+            related.add(parent.entry)
           }
         }
       }
@@ -458,7 +459,7 @@ class QueryStorageCoordinator {
     let next = Infinity
 
     const active = new Map<Entry, Binding[]>()
-    const byLabel = new Map<string, Entry>()
+    const byLabel = new Map<string, Binding>()
     const priorities = new Map<string, number>()
 
     for (const entry of this.entries.values()) {
@@ -466,9 +467,9 @@ class QueryStorageCoordinator {
       if (!bindings.length) continue
 
       active.set(entry, bindings)
-      for (const { label } of bindings) {
-        activeLabels.add(label)
-        byLabel.set(label, entry)
+      for (const binding of bindings) {
+        activeLabels.add(binding.label)
+        byLabel.set(binding.label, binding)
       }
     }
 
@@ -480,20 +481,20 @@ class QueryStorageCoordinator {
     const dependencies = new Map<Entry, Set<Entry>>()
     const neighbours = new Map([...active.keys()].map(entry => [entry, new Set<Entry>()]))
 
-    for (const entry of active.keys()) {
+    for (const [entry, bindings] of active) {
       const parents = new Set<Entry>()
 
-      for (const definition of contextDefinitions(entry.definition)) {
+      for (const definition of bindings.flatMap(binding => contextDefinitions(binding.definition))) {
         const parent = byLabel.get(definition.label!)
         if (!parent) continue
 
-        if (!sameDefinition(parent.definition, definition)) {
+        if (!sameValueDefinition(parent.definition, definition)) {
           throw new Error(`useQueryStorage: incompatible context definition for "${definition.label}"`)
         }
 
-        parents.add(parent)
-        neighbours.get(entry)!.add(parent)
-        neighbours.get(parent)!.add(entry)
+        parents.add(parent.entry)
+        neighbours.get(entry)!.add(parent.entry)
+        neighbours.get(parent.entry)!.add(entry)
       }
 
       dependencies.set(entry, parents)
@@ -525,8 +526,8 @@ class QueryStorageCoordinator {
     const writeValue = (entry: Entry, target: LocationQueryRaw, model: any) => {
       const enabled = enabledBindings(entry, target)
       if (!enabled.length) return enabled
-      const value = queryValue(entry, target, model)
-      for (const { label } of enabled) {
+      for (const { label, definition } of enabled) {
+        const value = queryValue(entry, target, model, definition)
         if (value === undefined) delete target[label]
         else target[label] = value
       }
@@ -572,13 +573,13 @@ class QueryStorageCoordinator {
       let model = entry.value.value
 
       if (blocked.has(entry)) {
-        if (!entry.definition.context) {
+        if (!bindings[0].definition.context) {
           for (const { label, priority } of enabledBindings(entry, query)) {
             priorities.set(label, Math.max(priorities.get(label) ?? priority, priority))
           }
           continue
         }
-        model = decode(entry.definition, route.query[bindings[0].label], route.query)
+        model = decode(bindings[0].definition, route.query[bindings[0].label], route.query)
       }
 
       let enabled: Binding[]
@@ -646,7 +647,7 @@ class QueryStorageCoordinator {
                 .find(binding => paramEnabled(binding.definition, this.router.currentRoute.value.query))
               if (!binding || entry.pending) continue
 
-              entry.value.value = decode(entry.definition, this.router.currentRoute.value.query[binding.label], this.router.currentRoute.value.query)
+              entry.value.value = decode(binding.definition, this.router.currentRoute.value.query[binding.label], this.router.currentRoute.value.query)
               this.persist(entry)
             }
           } finally {
