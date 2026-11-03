@@ -1,6 +1,6 @@
 <template>
   <DebugPage title="Компактеры и кодек" description="Региональные ID, реактивное разрешение и бинарный формат compare."
-    source="src/shared/game/encoding/ · src/shared/utils/encoding/ · src/pages/infographics/pages/vehicles/timeSeriesCompare/query/codec/">
+    source="src/shared/game/encoding/ · src/shared/utils/encoding/ · src/pages/services/pages/vehicles/timeSeriesCompare/query/codec/">
     <DebugSection title="Игровые значения" id="compact">
       <div class="debug-row">
         <label class="debug-control">Сущность
@@ -79,12 +79,12 @@ import { vehicleCatalog } from '@/shared/game/domain/vehicles/catalog'
 import { arenaCompactor } from '@/shared/game/encoding/arenas'
 import { arenaCatalog } from '@/shared/game/domain/arenas/catalog'
 import { battleModeCompactor } from '@/shared/game/encoding/battleModes/battleModes'
-import type { SavedComparisonSource } from '@/pages/infographics/pages/vehicles/timeSeriesCompare/query/state'
-import { deserializeComparison } from '@/pages/infographics/pages/vehicles/timeSeriesCompare/query/codec/codec'
-import { serializeComparison } from '@/pages/infographics/pages/vehicles/timeSeriesCompare/query/codec/serialize'
-import { comparisonAnnotationsParam, comparisonAnnotationState } from '@/pages/infographics/pages/vehicles/timeSeriesCompare/query/annotations'
-import { comparisonSettingsParams, type ComparisonSettings } from '@/pages/infographics/pages/vehicles/timeSeriesCompare/query/settings'
-import { createVehicleFilters } from '@/pages/infographics/pages/vehicles/filters/types'
+import type { SavedComparisonSource } from '@/pages/services/pages/vehicles/timeSeriesCompare/query/state'
+import { deserializeComparison } from '@/pages/services/pages/vehicles/timeSeriesCompare/query/codec/codec'
+import { serializeComparison } from '@/pages/services/pages/vehicles/timeSeriesCompare/query/codec/serialize'
+import { comparisonAnnotationsParam, comparisonAnnotationState } from '@/pages/services/pages/vehicles/timeSeriesCompare/query/annotations'
+import { comparisonSettingsParams, type ComparisonSettings } from '@/pages/services/pages/vehicles/timeSeriesCompare/query/settings'
+import { createVehicleFilters } from '@/pages/services/pages/vehicles/filters/types'
 import { decodeBase62 } from '@/shared/utils/encoding/base62'
 
 const compactors = { vehicle: vehicleCompactor, arena: arenaCompactor, battleMode: battleModeCompactor }

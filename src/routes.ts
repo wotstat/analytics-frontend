@@ -6,9 +6,9 @@ import Shots from './pages/infographics/pages/shots/Shots.vue'
 import Damage from './pages/infographics/pages/Damage.vue'
 import Results from './pages/infographics/pages/Results.vue'
 import Maps from './pages/infographics/pages/Maps.vue'
-import Vehicles from './pages/infographics/pages/vehicles/Vehicles.vue'
-import Marks from './pages/infographics/pages/vehicleAchievements/Marks.vue'
-import Mastery from './pages/infographics/pages/vehicleAchievements/Mastery.vue'
+import Vehicles from './pages/services/pages/vehicles/Vehicles.vue'
+import Marks from './pages/services/pages/vehicleAchievements/Marks.vue'
+import Mastery from './pages/services/pages/vehicleAchievements/Mastery.vue'
 import Coverage from './pages/infographics/pages/Coverage.vue'
 import Lootbox from './pages/infographics/pages/lootbox/Index.vue'
 import Install from './pages/install/Index.vue'
@@ -65,9 +65,9 @@ const routes = [
       { path: 'my', component: asyncPage(() => import('./pages/replays/my/Index.vue')) },
     ]
   },
-  { path: '/bb25', component: asyncPage(() => import('./pages/services/bob25/Index.vue')) },
-  { path: '/services/compare-versions', component: asyncPage(() => import('./pages/services/mt36.1/Index.vue')) },
-  { path: '/services/fixed-match-detector', component: asyncPage(() => import('./pages/services/fixedMatchDetect/Index.vue')), meta: { sitemap: false } },
+  { path: '/bb25', component: asyncPage(() => import('./pages/services/legacy/bob25/Index.vue')) },
+  { path: '/services/compare-versions', component: asyncPage(() => import('./pages/services/legacy/mt36.1/Index.vue')) },
+  { path: '/services/fixed-match-detector', component: asyncPage(() => import('./pages/services/legacy/fixedMatchDetect/Index.vue')), meta: { sitemap: false } },
   { path: '/install', component: Install },
 
   { path: '/widgets/:widget*', component: asyncPage(() => import('./pages/widgets/Index.vue')) },

@@ -116,7 +116,7 @@ onslaught/
 
 ## State & data
 
-- **No Pinia/Vuex, no global store.** Shared module state is a plain module-level `ref` or `useLocalStorage(...)` exported from a `store.ts` next to the feature (see `pages/services/bob25/store.ts`, `shared/global/`).
+- **No Pinia/Vuex, no global store.** Shared module state is a plain module-level `ref` or `useLocalStorage(...)` exported from a `store.ts` next to the feature (see `pages/services/legacy/bob25/store.ts`, `shared/global/`).
 - **Page/UI state lives in the URL query** via `useQueryStatParams` / `useQueryParamStorage`, or in `useLocalStorage` for preferences.
 - **Variant lists** are `as const` arrays of `{ value, label }`; derive the type with `typeof variants[number]['value']`.
 - **ClickHouse data**: use the `queryComputed` / `queryComputedFirst` / `queryAsyncFirst` helpers from `@/db` with a `settings` (cache) and `enabled` option. Gate heavy queries on visibility: `const enabled = useElementVisibility(container)` → pass `{ enabled }`. Render via the loading-status widgets (`GenericInfo` etc.), not ad-hoc spinners.

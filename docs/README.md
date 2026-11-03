@@ -20,8 +20,10 @@ src/
   main.ts, App.vue   — запуск приложения и общий каркас
   routes.ts         — маршруты сайта
   pages/            — страницы по разделам сайта; внутри — компоненты и логика раздела
-    infographics/   — сессионная статистика, техника, Натиск
-    services/       — сервисы: статистика техники, мастера и отметки
+    infographics/   — сессионная статистика, Натиск
+    services/       — сервисы
+      pages/        — статистика техники, мастера и отметки
+      legacy/       — старые сервисы
     shared/         — общий каркас страниц: шапка, боковая панель и прочее
     debug/          — примеры и ручная проверка на /debug
     metaStudio/     — студия Open Graph на /meta
@@ -53,7 +55,7 @@ src/
 | Привязки и анимация линий, маркеров и тултипа | [InteractionBinding](../src/shared/uiKit/chart/universalChart/interaction/core/InteractionBinding.ts), [InteractionPresentation](../src/shared/uiKit/chart/universalChart/interaction/composable/presentation/InteractionPresentation.ts), настройки `/debug/time-series#interaction-presentation` и `/debug/chart/interaction#interaction-presentation` |
 | Работать с URL-параметрами | [useQueryStorage.ts](../src/shared/uiKit/queryStorage/useQueryStorage.ts), готовые определения в [params.ts](../src/shared/uiKit/queryStorage/params.ts); параметры страницы объявляются рядом с ней |
 | Загрузить данные | [db/index.ts](../src/db/index.ts): `queryComputed`, `queryAsync`, `query`; SQL и типы результатов — у потребителей, актуальная схема таблиц — в самой БД |
-| Изменить формат ссылок сравнения | [query/codec/](../src/pages/infographics/pages/vehicles/timeSeriesCompare/query/codec/), включая тест и фиксированные примеры; общие примитивы — [utils/encoding/](../src/shared/utils/encoding/), игровые компактеры — [game/encoding/](../src/shared/game/encoding/) |
+| Изменить формат ссылок сравнения | [query/codec/](../src/pages/services/pages/vehicles/timeSeriesCompare/query/codec/), включая тест и фиксированные примеры; общие примитивы — [utils/encoding/](../src/shared/utils/encoding/), игровые компактеры — [game/encoding/](../src/shared/game/encoding/) |
 | Работать с Open Graph | Механизм — [meta/](../src/meta/), общий дизайн — [shared/ui/meta/](../src/shared/ui/meta/), карточки страниц — рядом со страницами, студия — [pages/metaStudio/](../src/pages/metaStudio/) |
 | Изменить сборку или окружение | [vite.config.ts](../vite.config.ts), [vite-env.d.ts](../src/vite-env.d.ts), [build-meta.sh](../build-meta.sh), [workflows/](../.github/workflows/) |
 
