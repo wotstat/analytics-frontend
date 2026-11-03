@@ -39,7 +39,7 @@ const { region, search, sort, localFilters, filters, comparison, metrics, step, 
 const { statistics, retry } = useAchievementStatistics(props.kind, region)
 const beforeDay = new Date().toISOString().slice(0, 10)
 
-useBackground(VehiclesBackground)
+useBackground(VehiclesBackground, { backgroundKey: 'services-vehicles' })
 </script>
 
 <style scoped lang="scss">

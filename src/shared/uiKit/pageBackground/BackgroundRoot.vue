@@ -1,7 +1,7 @@
 <template>
   <TransitionGroup tag="div" class="background-root" aria-hidden="true" inert name="page-background"
     @enter="waitForAnimations" @leave="waitForAnimations">
-    <div v-for="entry in visibleEntries" :key="entry.renderId" class="background-layer"
+    <div v-for="entry in controller.visibleEntries.value" :key="entry.renderId" class="background-layer"
       :class="`background-layer--${entry.placement}`" :style="{ zIndex: entry.depth * 1000000 + entry.order }">
       <component :is="entry.component" v-bind="entry.props" />
     </div>
@@ -9,23 +9,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { type BackgroundController } from './useBackground'
 
-const props = defineProps<{
+defineProps<{
   controller: BackgroundController
 }>()
-
-const visibleEntries = computed(() => {
-  const source = props.controller.entries.value.length
-    ? props.controller.entries.value
-    : props.controller.heldEntries.value
-  const entries = [...source]
-    .sort((left, right) => left.depth - right.depth || left.order - right.order)
-
-  const lastReplace = entries.findLastIndex(entry => entry.mode === 'replace')
-  return entries.slice(Math.max(0, lastReplace))
-})
 
 function waitForAnimations(element: Element, done: () => void) {
   requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => {

@@ -6,14 +6,14 @@
       <div class="content">
         <HeaderSpacer />
         <RouterView v-slot="{ Component }">
-          <component :is="Component" @vue:mounted="backgroundController.finishHandoff()" />
+          <component :is="Component" />
         </RouterView>
       </div>
     </template>
 
     <template v-else>
       <RouterView v-slot="{ Component }">
-        <component :is="Component" @vue:mounted="backgroundController.finishHandoff()" />
+        <component :is="Component" />
       </RouterView>
     </template>
 
@@ -25,8 +25,8 @@
 
 
 <script setup lang="ts">
-import { nextTick, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
+import { pageReadyRoute } from './routes'
 import Header from './pages/shared/header/Header.vue'
 import HeaderSpacer from './pages/shared/header/HeaderSpacer.vue'
 import { headerHeight } from './pages/shared/header/useAdditionalHeaderHeight'
@@ -34,7 +34,7 @@ import ContextMenuRoot from '@/shared/uiKit/contextMenu/ContextMenuRoot.vue'
 import FocusEffectRoot from './shared/uiKit/focusEffect/FocusEffectRoot.vue'
 import TooltipRoot from './shared/uiKit/tooltip/TooltipRoot.vue'
 import BackgroundRoot from './shared/uiKit/pageBackground/BackgroundRoot.vue'
-import { provideBackgroundController } from './shared/uiKit/pageBackground/useBackground'
+import { useBackgroundRoot } from './shared/uiKit/pageBackground/useBackgroundRoot'
 
 
 const isWindows = navigator.platform.indexOf('Win') > -1
@@ -42,12 +42,7 @@ const boldWeight = isWindows ? 700 : 800
 const mediumBoldWeight = isWindows ? 500 : 600
 
 const route = useRoute()
-const backgroundController = provideBackgroundController()
-watch(() => route.matched[0], (current, previous) => {
-  if (current === previous) return
-  backgroundController.beginHandoff()
-  if (!current) nextTick(backgroundController.finishHandoff)
-}, { flush: 'sync' })
+const backgroundController = useBackgroundRoot(pageReadyRoute)
 
 if (import.meta.env.MODE == 'development' && import.meta.env.VITE_MODE_DEV_LOCAL === 'true') {
   window.addEventListener('keydown', e => {

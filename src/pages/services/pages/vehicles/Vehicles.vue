@@ -88,7 +88,7 @@ import { useBackground } from '@/shared/uiKit/pageBackground/useBackground'
 import VehiclesBackground from './VehiclesBackground.vue'
 import { useVehiclesPageMeta } from './meta/utils/pageMeta'
 
-useBackground(VehiclesBackground)
+useBackground(VehiclesBackground, { backgroundKey: 'services-vehicles' })
 
 const { filters, localFilters, search, grouping, period, slots, sort } = useVehicleQueryStorage()
 const visibleSlots = ref<Slot[]>([])

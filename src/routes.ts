@@ -100,3 +100,5 @@ export const router = createRouter({
 const queryStorage = setupQueryStorage(router, history)
 const navigation = setupPageNavigation(router, queryStorage.readyRoute)
 setupPageMeta(router, navigation.readyRoute)
+
+export const pageReadyRoute = navigation.readyRoute

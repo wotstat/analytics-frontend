@@ -12,6 +12,7 @@ import {
 
 const props = withDefaults(defineProps<{
   component: Component
+  backgroundKey?: string | symbol
   mode?: BackgroundMode
   placement?: BackgroundPlacement
   backgroundProps?: Record<string, unknown>
@@ -21,13 +22,15 @@ const props = withDefaults(defineProps<{
 })
 
 const { update } = useBackground(props.component, {
+  backgroundKey: props.backgroundKey,
   mode: props.mode,
   placement: props.placement,
   props: props.backgroundProps,
 })
 
-watch(() => [props.component, props.mode, props.placement, props.backgroundProps], () => {
+watch(() => [props.component, props.backgroundKey, props.mode, props.placement, props.backgroundProps], () => {
   update(props.component, {
+    backgroundKey: props.backgroundKey,
     mode: props.mode,
     placement: props.placement,
     props: props.backgroundProps,
