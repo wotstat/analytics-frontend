@@ -22,6 +22,10 @@ export abstract class BaseSingleTouchEvent extends BaseState {
     this.toggleClass(this.CLASS_NAME, true)
   }
 
+  onPageTouchMove(event: TouchEvent): void {
+    if (this.isPointerCaptured(this.activeEvent.pointerId)) this.onTouchMove(event)
+  }
+
   onTouchMove(event: TouchEvent): void {
     event.preventDefault()
     event.stopPropagation()
@@ -33,13 +37,20 @@ export abstract class BaseSingleTouchEvent extends BaseState {
     event.stopPropagation()
   }
 
+  onPagePointerDown(event: PointerEvent): void {
+    this.onPointerDown(event)
+  }
+
   onPointerDown(event: PointerEvent): void {
-    if (event.pointerId == this.activeEvent.pointerId) return
+    if (event.pointerType !== 'touch' || event.pointerId === this.activeEvent.pointerId) return
     this.click?.cancel()
 
     const first = this.event2TouchZoomPoint(this.activeEvent)
     const second = this.event2TouchZoomPoint(event)
     if (!this.delegate.mayTouchZoom(first, second, this.chart.space)) return
+
+    event.preventDefault()
+    event.stopPropagation()
 
     const pos = this.event2Position(this.activeEvent)
     const point = this.offsetToChart(pos)

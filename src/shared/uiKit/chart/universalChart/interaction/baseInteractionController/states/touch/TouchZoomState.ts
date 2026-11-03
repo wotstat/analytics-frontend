@@ -30,6 +30,10 @@ export class TouchZoomState extends BaseState {
     this.delegate.onTouchZoomBegin(first, second, this.chart.space)
   }
 
+  onPageTouchMove(event: TouchEvent): void {
+    this.onTouchMove(event)
+  }
+
   onTouchMove(event: TouchEvent): void {
     event.preventDefault()
     event.stopPropagation()
@@ -40,9 +44,15 @@ export class TouchZoomState extends BaseState {
     event.stopPropagation()
   }
 
-  onPointerDown(event: PointerEvent): void {
-    if (this.activePointers.has(event.pointerId)) return
+  onPagePointerDown(event: PointerEvent): void {
+    this.onPointerDown(event)
+  }
 
+  onPointerDown(event: PointerEvent): void {
+    if (event.pointerType !== 'touch' || this.activePointers.has(event.pointerId)) return
+
+    event.preventDefault()
+    event.stopPropagation()
     this.capturePointerEvent(event)
     this.potentiallyActivePointers.set(event.pointerId, this.eventToZoomPoint(event))
   }

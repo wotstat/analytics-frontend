@@ -44,14 +44,20 @@ export class AwaitingTouchPanOrHover extends BaseState {
     }
   }
 
+  onPagePointerDown(event: PointerEvent): void {
+    this.onPointerDown(event)
+  }
+
   onPointerDown(event: PointerEvent): void {
-    if (event.pointerId == this.activeEvent.pointerId) return
+    if (event.pointerType !== 'touch' || event.pointerId === this.activeEvent.pointerId) return
     this.click.cancel()
 
     const first = this.event2TouchZoomPoint(this.activeEvent)
     const second = this.event2TouchZoomPoint(event)
     if (!this.delegate.mayTouchZoom(first, second, this.chart.space)) return
 
+    event.preventDefault()
+    event.stopPropagation()
     this.changeState(new TouchZoomState(this.activeEvent, event))
   }
 

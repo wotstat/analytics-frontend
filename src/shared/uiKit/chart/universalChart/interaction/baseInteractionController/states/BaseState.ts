@@ -6,20 +6,13 @@ import { State, StateMachine } from '../StateMachine'
 import { ClickCandidate } from './ClickCandidate'
 import type { InteractionFrame } from '../../core/InteractionFrame'
 
-function event2Position(event: { offsetX: number, offsetY: number, clientX: number, clientY: number }): Position {
-  return {
-    offsetX: event.offsetX,
-    offsetY: event.offsetY,
-    clientX: event.clientX,
-    clientY: event.clientY
-  }
-}
-
 export type Context = {
   delegate: Delegate,
   toggleClass: (className: string, enabled: boolean) => void
   capturePointer: (pointerId: number) => void
   releasePointer: (pointerId: number) => void
+  isPointerCaptured: (pointerId: number) => boolean
+  event2Position: (event: { clientX: number, clientY: number }) => Position
   offsetToChart: (event: { offsetX: number, offsetY: number }) => Point
   isPointerInside: (event: { clientX: number, clientY: number }) => boolean
   chartToPage: (point: Point) => Point
@@ -71,6 +64,10 @@ export class BaseState implements State<Context> {
     this.ctx.releasePointer(pointerId)
   }
 
+  isPointerCaptured(pointerId: number) {
+    return this.ctx.isPointerCaptured(pointerId)
+  }
+
   offsetToChart(event: { offsetX: number, offsetY: number }): Point {
     return this.ctx.offsetToChart(event)
   }
@@ -80,7 +77,7 @@ export class BaseState implements State<Context> {
   }
 
   event2Position(event: { offsetX: number, offsetY: number, clientX: number, clientY: number }): Position {
-    return event2Position(event)
+    return this.ctx.event2Position(event)
   }
 
   event2TouchZoomPoint(event: PointerEvent): TouchZoomPoint {
@@ -122,11 +119,15 @@ export class BaseState implements State<Context> {
 
   onTouchMove(event: TouchEvent) { }
 
+  onPageTouchMove(event: TouchEvent) { }
+
   onContextmenu(event: PointerEvent) { }
 
   onPointerEnter(event: PointerEvent) { }
 
   onPointerDown(event: PointerEvent) { }
+
+  onPagePointerDown(event: PointerEvent) { }
 
   onPointerMove(event: PointerEvent) { }
 

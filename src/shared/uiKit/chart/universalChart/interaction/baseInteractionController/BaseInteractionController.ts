@@ -76,6 +76,13 @@ export abstract class BaseInteractionController extends BasePlotRenderer {
       if (this.interactiveZone.hasPointerCapture(pointerId)) this.interactiveZone.releasePointerCapture(pointerId)
       this.capturedPointers.delete(pointerId)
     },
+    isPointerCaptured: pointerId => this.capturedPointers.has(pointerId),
+    event2Position: event => {
+      const matrix = this.interactiveZone.getScreenCTM()
+      if (!matrix) throw new Error('Cannot convert cursor coordinates without an SVG screen transform')
+      const point = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse())
+      return { offsetX: point.x, offsetY: point.y, clientX: event.clientX, clientY: event.clientY }
+    },
     offsetToChart: (event: { offsetX: number, offsetY: number }) => this.offsetToChart(event),
     isPointerInside: (event: { clientX: number, clientY: number }) => {
       const rect = this.interactiveZone.getBoundingClientRect()
@@ -114,6 +121,10 @@ export abstract class BaseInteractionController extends BasePlotRenderer {
     this.interactiveZone.addEventListener('contextmenu', this.onContextmenu.bind(this), { signal: this.listenerAbortSignal })
     this.interactiveZone.addEventListener('touchmove', this.touchMove.bind(this), { signal: this.listenerAbortSignal })
     this.interactiveZone.addEventListener('wheel', this.onWheel.bind(this), { signal: this.listenerAbortSignal, passive: false })
+
+    const page = this.interactiveZone.ownerDocument
+    page.addEventListener('pointerdown', this.onPagePointerDown.bind(this), { signal: this.listenerAbortSignal, capture: true })
+    page.addEventListener('touchmove', this.onPageTouchMove.bind(this), { signal: this.listenerAbortSignal, capture: true, passive: false })
   }
 
   detach(): void {
@@ -130,6 +141,14 @@ export abstract class BaseInteractionController extends BasePlotRenderer {
 
   protected touchMove(event: TouchEvent) {
     this.currentState.onTouchMove(event)
+  }
+
+  private onPageTouchMove(event: TouchEvent) {
+    if (event.target !== this.interactiveZone) this.currentState.onPageTouchMove(event)
+  }
+
+  private onPagePointerDown(event: PointerEvent) {
+    if (event.target !== this.interactiveZone) this.currentState.onPagePointerDown(event)
   }
 
   protected onContextmenu(event: PointerEvent) {
