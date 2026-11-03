@@ -95,7 +95,7 @@
       <p class="debug-note">
         Без <span class="debug-value">tagToText</span> в бейдже оказывается сырой тег
         (<span class="debug-value">tagToText?.(tag) ?? tag</span>) — так же выглядит подпись, если локализация ещё не
-        доехала или тега в ней нет. Кнопка справа меняется по <span class="debug-value">selected.size</span>: «выбрать»
+        доехала или тега в ней нет. Кнопка справа меняется по <span class="debug-value">selected.size</span>: «Выбрать»
         на пустом наборе и «+» на непустом; она же единственный способ открыть попап, отдельного клика по строке нет.
       </p>
     </div>

@@ -44,7 +44,7 @@
       <span class="debug-value">null</span>, а проверка в <span class="debug-value">tagToText</span> написана как
       <span class="debug-value">if (!info) return tag</span> и потому мертва. Хеш без
       <span class="debug-value">:команды</span> превращается в <span class="debug-value">team: NaN</span> и пустой тег,
-      так что в бейдже оказывается <span class="debug-value">/NaN</span> — жать «выбрать» после этого всё ещё можно,
+      так что в бейдже оказывается <span class="debug-value">/NaN</span> — жать «Выбрать» после этого всё ещё можно,
       но что выбрано, уже не прочитать.
     </p>
 

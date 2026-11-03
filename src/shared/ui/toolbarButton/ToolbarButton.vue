@@ -53,8 +53,14 @@ defineExpose({ element })
   &.variant-surface {
     background: rgba(255, 255, 255, 0.05);
 
-    &:hover:not(:disabled) {
+    &:active:not(:disabled) {
       background: rgba(255, 255, 255, 0.1);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.1);
+      }
     }
 
     &.active {
@@ -67,9 +73,16 @@ defineExpose({ element })
 
     color: rgba(197, 197, 197, 0.6);
 
-    &:hover:not(:disabled) {
+    &:active:not(:disabled) {
       color: rgba(255, 255, 255, 0.8);
       background: rgba(255, 255, 255, 0.08);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      &:hover:not(:disabled) {
+        color: rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.08);
+      }
     }
 
     &.active {
@@ -82,8 +95,14 @@ defineExpose({ element })
     color: rgba(255, 255, 255, 0.65);
     transition: color 0.15s;
 
-    &:hover:not(:disabled) {
+    &:active:not(:disabled) {
       color: white;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      &:hover:not(:disabled) {
+        color: white;
+      }
     }
 
     &.active {
@@ -98,6 +117,10 @@ defineExpose({ element })
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.08);
     color: rgba(255, 255, 255, 0.9);
+
+    &:active:not(:disabled) {
+      background: rgba(255, 255, 255, 0.2);
+    }
 
     @media (hover: hover) and (pointer: fine) {
       &:hover:not(:disabled) {

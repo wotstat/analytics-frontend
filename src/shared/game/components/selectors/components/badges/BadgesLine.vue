@@ -4,7 +4,7 @@
       @close="onRemove(tag)" />
     <template v-if="showAddButton">
       <button class="select" @click="openSelect" v-if="selected.size == 0">
-        <p>выбрать</p>
+        <p>Выбрать</p>
       </button>
       <button class="add" @click="openSelect" v-else>
         <PlusIcon class="plus-icon" />
@@ -56,9 +56,16 @@ function onRemove(tag: T) {
     background-color: rgba(255, 255, 255, 0.1);
     transition: color 0.15s, background-color 0.15s;
 
-    &:hover {
+    &:active {
       background-color: rgba(255, 255, 255, 0.2);
       color: white;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+      }
     }
   }
 

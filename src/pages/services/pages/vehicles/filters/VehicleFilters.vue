@@ -185,8 +185,14 @@ function reset() {
     user-select: none;
     transition: background-color 0.07s;
 
-    &:hover {
+    &:active {
       background: rgba(255, 255, 255, 0.2);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
     }
 
     &.active {
@@ -236,8 +242,14 @@ function reset() {
         white-space: nowrap;
         transition: color 0.15s;
 
-        &:hover:not(:disabled) {
+        &:active:not(:disabled) {
           color: white;
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+          &:hover:not(:disabled) {
+            color: white;
+          }
         }
 
         &.enabled {
@@ -300,7 +312,7 @@ function reset() {
 
         .variant {
           flex: 1;
-          height: 30px;
+          height: 25px;
         }
       }
 

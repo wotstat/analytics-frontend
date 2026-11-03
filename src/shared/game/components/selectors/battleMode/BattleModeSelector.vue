@@ -157,8 +157,14 @@ function selectAll(event: MouseEvent) {
   transition: background 0.15s;
 
   &.open,
-  &:hover {
+  &:active {
     background: rgba(255, 255, 255, 0.1);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
   }
 
   .mode-label {
@@ -204,8 +210,14 @@ header {
         transition: background-color 0.07s;
         border: none;
 
-        &:hover {
+        &:active {
           background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+          &:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+          }
         }
 
         &.active {

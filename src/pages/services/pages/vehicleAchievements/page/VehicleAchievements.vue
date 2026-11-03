@@ -62,8 +62,14 @@ useBackground(VehiclesBackground, { backgroundKey: 'services-vehicles' })
     font-size: 14px;
     line-height: 1;
 
-    &:hover {
+    &:active {
       background: rgba(255, 255, 255, 0.2);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
     }
 
     &.active {
@@ -74,7 +80,7 @@ useBackground(VehiclesBackground, { backgroundKey: 'services-vehicles' })
   @container content (max-width: 600px) {
     .region {
       flex: 1;
-      height: 30px;
+      height: 25px;
     }
   }
 }
