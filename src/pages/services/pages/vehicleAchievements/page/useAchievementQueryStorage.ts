@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-import { useQueryStorage, type QueryParam } from '@/shared/uiKit/queryStorage/useQueryStorage'
+import { defineParams, useQueryStorage, type QueryParam } from '@/shared/uiKit/queryStorage/useQueryStorage'
 import { arrayParam, booleanParam, oneOfParam, setOfParam, setParam, stringParam } from '@/shared/uiKit/queryStorage/params'
 import { nations } from '@/shared/game/domain/vehicles/nations'
 import { vehicleTypes } from '@/shared/game/domain/vehicles/types'
@@ -17,15 +17,16 @@ import { comparisonSettingsParams } from '../../vehicles/timeSeriesCompare/query
 import { comparisonAnnotationsParam, comparisonAnnotationKeys, comparisonAnnotationState } from '../../vehicles/timeSeriesCompare/query/annotations'
 import { achievements, type AchievementKind } from '../utils/achievements'
 
+const defaults = createLocalVehicleFilters()
+const levelOptions: readonly number[] = vehicleLevels
+
 function achievementFilters(region: VehicleRegion = 'RU'): VehicleFilters {
   return { ...unrestrictedComparisonFilters(), regions: [region] }
 }
 
-export function useAchievementQueryStorage(kind: AchievementKind) {
+function createAchievementQueryParams(kind: AchievementKind) {
   const key = `achievements.${kind}`
   const slots = achievements[kind].slots
-  const defaults = createLocalVehicleFilters()
-  const levelOptions: readonly number[] = vehicleLevels
 
   const regionParam = oneOfParam(vehicleRegions, 'RU', { label: 'region', key: `${key}.region`, priority: 100 })
   const compareParam = {
@@ -53,7 +54,7 @@ export function useAchievementQueryStorage(kind: AchievementKind) {
     enabled: ({ compare }: { compare: SavedComparisonSource[] }) => compare.length > 0,
   }
 
-  const storage = useQueryStorage({
+  return defineParams({
     region: regionParam,
     search: stringParam('', { key: `${key}.search`, history: 'replace', debounce: 300, priority: 90 }),
     types: setOfParam(vehicleTypes, [], { label: 'type', key: `${key}.types`, priority: 80 }),
@@ -72,8 +73,17 @@ export function useAchievementQueryStorage(kind: AchievementKind) {
     averageWindow: { ...comparisonSettingsParams.averageWindow, key: `${key}.averageWindow`, ...comparisonAvailability },
     annotations: { ...comparisonAnnotationsParam, key: `${key}.annotations`, ...comparisonAvailability },
     compare: compareParam,
-  }, { history: 'replace', debounce: 150 })
+  })
+}
 
+const achievementQueryParams = {
+  marks: createAchievementQueryParams('marks'),
+  mastery: createAchievementQueryParams('mastery'),
+}
+
+export function useAchievementQueryStorage(kind: AchievementKind) {
+  const slots = achievements[kind].slots
+  const storage = useQueryStorage(achievementQueryParams[kind], { history: 'replace', debounce: 150 })
   const p = storage.params
   const filters = computed(() => achievementFilters(p.region.value))
   const comparison = useComparisonSources(filters, p.compare)
