@@ -1,10 +1,8 @@
-import { InteractionBounds } from '../../../../interaction/core/InteractionGeometry'
 import { Point } from '../../../../utils/Point'
 import { axisCoordinate, type Axis } from '../../../../utils/Axis'
 
 export type StrokeSubpath = {
-  readonly points: readonly Point[]
-  readonly bounds: InteractionBounds
+  readonly start: Point
   readonly curves: readonly StrokeCurve[]
   readonly directions: Readonly<Record<keyof Point, CoordinateDirection>>
 }
@@ -18,58 +16,32 @@ export type StrokeProjection = {
   readonly subpathIndex: number
 }
 
-const SAMPLE_STEP_PX = 4
-const MAX_SEGMENTS_PER_CURVE = 2000
-const MAX_SAMPLES_PER_SUBPATH = 4000
 const AXIS_EPSILON_PX = 0.01
 const TARGET_EPSILON_PX = 0.1
 
-export function sampleStrokeSubpaths(d: string): readonly StrokeSubpath[] {
-  const commands = parseCommands(d)
-  const subpaths: StrokeSubpath[] = []
+// Packed endpoints and cubic controls are shared with linePath.zig; no SVG text is involved.
+export function strokeSubpathFromNodes(nodes: Float64Array): StrokeSubpath | null {
+  if (nodes.length === 0) return null
+  const start = { x: nodes[0], y: nodes[1] }
+  let cursor = start
+  const curves: StrokeCurve[] = []
 
-  let current: Point[] = []
-  let curves: StrokeCurve[] = []
-  let cursor: Point | null = null
-
-  const flush = () => {
-    if (current.length > 0) subpaths.push({
-      points: current, bounds: boundsOf(current), curves,
-      directions: { x: coordinateDirection(curves, 'x'), y: coordinateDirection(curves, 'y') },
-    })
-    current = []
-    curves = []
-  }
-
-  for (const command of commands) {
-    if (command.type === 'M') {
-      flush()
-      cursor = { x: command.values[0], y: command.values[1] }
-      current.push(cursor)
-      continue
-    }
-    if (!cursor) continue
-
-    if (command.type === 'L') {
-      const end = { x: command.values[0], y: command.values[1] }
-      curves.push({ from: cursor, to: end })
-      cursor = end
-      current.push(cursor)
-      continue
-    }
-
-    if (command.type === 'C') {
-      const c1 = { x: command.values[0], y: command.values[1] }
-      const c2 = { x: command.values[2], y: command.values[3] }
-      const end = { x: command.values[4], y: command.values[5] }
+  for (let i = 6; i < nodes.length; i += 6) {
+    const end = { x: nodes[i], y: nodes[i + 1] }
+    if (Number.isFinite(nodes[i + 2])) {
+      const c1 = { x: nodes[i + 2], y: nodes[i + 3] }
+      const c2 = { x: nodes[i + 4], y: nodes[i + 5] }
       curves.push({ from: cursor, to: end, controls: [c1, c2] })
-      appendFlattenedCubic(current, cursor, c1, c2, end)
-      cursor = end
+    } else {
+      curves.push({ from: cursor, to: end })
     }
+    cursor = end
   }
-  flush()
 
-  return subpaths
+  return {
+    start, curves,
+    directions: { x: coordinateDirection(curves, 'x'), y: coordinateDirection(curves, 'y') },
+  }
 }
 
 // Sample where the spring is now; the selected point disambiguates overlapping subpaths.
@@ -112,7 +84,7 @@ export function sampleOrNearestAtAxis(subpaths: readonly StrokeSubpath[], axis: 
 
 function nearestSubpathEndpoint(subpath: StrokeSubpath, coordinateKey: keyof Point, value: number, maxAxisDistance: number): Point | null {
   if (subpath.directions[coordinateKey] === null) return null
-  const first = subpath.curves[0]?.from ?? subpath.points[0]
+  const first = subpath.start
   const last = subpath.curves.at(-1)?.to ?? first
   const firstDistance = Math.abs(value - first[coordinateKey])
   const lastDistance = Math.abs(value - last[coordinateKey])
@@ -146,7 +118,7 @@ function pointOnSubpathAtCoordinate(subpath: StrokeSubpath, coordinateKey: keyof
   const direction = subpath.directions[coordinateKey]
   if (direction === null || !Number.isFinite(value)) return null
 
-  const first = subpath.curves[0]?.from ?? subpath.points[0]
+  const first = subpath.start
   const last = subpath.curves.at(-1)?.to ?? first
   if (direction === 0) {
     if (Math.abs(value - first[coordinateKey]) <= AXIS_EPSILON_PX) return { ...first, [coordinateKey]: value }
@@ -196,53 +168,6 @@ function cubicCoordinateAt(from: number, c1: number, c2: number, to: number, t: 
   return mt * mt * mt * from + 3 * mt * mt * t * c1 + 3 * mt * t * t * c2 + t * t * t * to
 }
 
-type PathCommand = { type: 'M' | 'L' | 'C', values: number[] }
-
-const ARG_COUNT: Record<PathCommand['type'], number> = { M: 2, L: 2, C: 6 }
-const KNOWN_COMMANDS = new Set(['M', 'L', 'C'])
-
-// TODO: Возможно лучше не парсить svg, а получать исходные точки из которых этот d был построен.
-function parseCommands(d: string): PathCommand[] {
-  const tokens = d.match(/[A-Za-z]|-?\d+\.?\d*(?:[eE][+-]?\d+)?/g) ?? []
-  const commands: PathCommand[] = []
-
-  let i = 0
-  let type: PathCommand['type'] | null = null
-
-  while (i < tokens.length) {
-    const token = tokens[i]
-
-    if (/^[A-Za-z]$/.test(token)) {
-      if (!KNOWN_COMMANDS.has(token)) {
-        console.error(`LineStrokeSampler: unexpected path command "${token}" — stroke sampling supports only M/L/C, parsing stopped`)
-        break
-      }
-      type = token as PathCommand['type']
-      i++
-      continue
-    }
-    if (!type) break
-
-    const count = ARG_COUNT[type]
-    const values: number[] = []
-    for (let k = 0; k < count && i < tokens.length; k++, i++) values.push(Number(tokens[i]))
-    if (values.length === count) commands.push({ type, values })
-  }
-
-  return commands
-}
-
-function appendFlattenedCubic(out: Point[], p0: Point, c1: Point, c2: Point, p1: Point) {
-  const controlLength = dist(p0, c1) + dist(c1, c2) + dist(c2, p1)
-  const segments = Math.min(MAX_SEGMENTS_PER_CURVE, Math.max(1, Math.ceil(controlLength / SAMPLE_STEP_PX)))
-
-  for (let i = 1; i <= segments; i++) {
-    if (out.length >= MAX_SAMPLES_PER_SUBPATH) return
-    const t = i / segments
-    out.push(cubicPointAt(p0, c1, c2, p1, t))
-  }
-}
-
 function cubicPointAt(p0: Point, c1: Point, c2: Point, p1: Point, t: number): Point {
   const mt = 1 - t
   const a = mt * mt * mt
@@ -258,64 +183,4 @@ function cubicPointAt(p0: Point, c1: Point, c2: Point, p1: Point, t: number): Po
 
 function dist(a: Point, b: Point): number {
   return Math.hypot(b.x - a.x, b.y - a.y)
-}
-
-function boundsOf(points: readonly Point[]): InteractionBounds {
-  let minX = Infinity
-  let maxX = -Infinity
-  let minY = Infinity
-  let maxY = -Infinity
-
-  for (const p of points) {
-    minX = Math.min(minX, p.x)
-    maxX = Math.max(maxX, p.x)
-    minY = Math.min(minY, p.y)
-    maxY = Math.max(maxY, p.y)
-  }
-
-  return { minX, maxX, minY, maxY }
-}
-
-export function nearestPointOnSubpaths(subpaths: readonly StrokeSubpath[], point: Point, margin: number): StrokeProjection | null {
-  let best: StrokeProjection | null = null
-
-  for (let i = 0; i < subpaths.length; i++) {
-    const subpath = subpaths[i]
-    if (!boundsWithinMargin(subpath.bounds, point, margin)) continue
-
-    const projection = nearestPointOnPolyline(subpath.points, point)
-    if (projection && (!best || projection.distance < best.distance)) best = { ...projection, subpathIndex: i }
-  }
-
-  return best
-}
-
-function boundsWithinMargin(bounds: InteractionBounds, point: Point, margin: number): boolean {
-  return point.x >= bounds.minX - margin && point.x <= bounds.maxX + margin &&
-    point.y >= bounds.minY - margin && point.y <= bounds.maxY + margin
-}
-
-function nearestPointOnPolyline(points: readonly Point[], point: Point): { anchor: Point, distance: number } | null {
-  if (points.length === 0) return null
-  if (points.length === 1) return { anchor: points[0], distance: dist(point, points[0]) }
-
-  let best: { anchor: Point, distance: number } | null = null
-
-  for (let i = 0; i < points.length - 1; i++) {
-    const projection = projectOnSegment(point, points[i], points[i + 1])
-    if (!best || projection.distance < best.distance) best = projection
-  }
-
-  return best
-}
-
-function projectOnSegment(point: Point, a: Point, b: Point): { anchor: Point, distance: number } {
-  const dx = b.x - a.x
-  const dy = b.y - a.y
-  const lengthSq = dx * dx + dy * dy
-
-  const t = lengthSq === 0 ? 0 : Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / lengthSq))
-  const anchor = { x: a.x + t * dx, y: a.y + t * dy }
-
-  return { anchor, distance: dist(point, anchor) }
 }

@@ -7,7 +7,7 @@ import type { InteractionTrajectory } from '../../../interaction/core/Interactio
 import { ChartSpace } from '../../../utils/ChartSpace'
 import { Point } from '../../../utils/Point'
 import { axisCoordinate, type Axis } from '../../../utils/Axis'
-import { nearestPointOnSubpaths, pointOnSubpathsAtAxis, sampleOrNearestAtAxis, StrokeSubpath } from './utils/LineStrokeSampler'
+import { pointOnSubpathsAtAxis, sampleOrNearestAtAxis, StrokeProjection, StrokeSubpath } from './utils/LineStrokeSampler'
 
 export type LinePointHit<T extends Point = Point> = InteractionHit<T, 'line-point'> & {
   readonly pointIndex: number
@@ -18,7 +18,8 @@ export type NearestByAxisOptions = {
 }
 
 export type StrokeGeometry = {
-  readonly subpaths: readonly StrokeSubpath[]
+  readonly getSubpaths: () => readonly StrokeSubpath[]
+  readonly nearestPoint: (point: Point, margin: number) => StrokeProjection | null
   readonly target: SVGPathElement | null
   readonly halfWidth: number
 }
@@ -119,18 +120,18 @@ export class AutoLineInteractionSource<T extends Point = Point> extends AutoLine
   }
 
   pointAtAxis(axis: Axis, value: number, target: Point): Point | null {
-    return pointOnSubpathsAtAxis(this.getStroke().subpaths, axis, value, target)
+    return pointOnSubpathsAtAxis(this.getStroke().getSubpaths(), axis, value, target)
   }
 
   sampleOrNearest(axis: Axis, value: number, target: Point, options: NearestByAxisOptions = {}): Point | null {
-    return sampleOrNearestAtAxis(this.getStroke().subpaths, axis, value, target, options.maxAxisDistance)
+    return sampleOrNearestAtAxis(this.getStroke().getSubpaths(), axis, value, target, options.maxAxisDistance)
   }
 
   nearStrokeHit(point: Point, maxDistance: number): LineStrokeHit<T> | null {
-    const { subpaths, target, halfWidth } = this.getStroke()
-    if (!target || subpaths.length === 0) return null
+    const { nearestPoint, target, halfWidth } = this.getStroke()
+    if (!target) return null
 
-    const projection = nearestPointOnSubpaths(subpaths, point, Math.max(maxDistance, halfWidth))
+    const projection = nearestPoint(point, Math.max(maxDistance, halfWidth))
     if (!projection) return null
 
     const contains = projection.distance <= halfWidth

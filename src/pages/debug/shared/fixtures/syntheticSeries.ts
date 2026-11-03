@@ -54,7 +54,7 @@ export function syntheticSeries(kind: SeriesKind, seed = 1, count = 120): ChartS
     }
 
     case 'huge':
-      // Проверка децимации в MonotoneXPath: точек кратно больше, чем пикселей.
+      // Проверка децимации в LinePath: точек кратно больше, чем пикселей.
       return randomWalk(HUGE_COUNT, random, 500, 8)
 
     case 'negative':

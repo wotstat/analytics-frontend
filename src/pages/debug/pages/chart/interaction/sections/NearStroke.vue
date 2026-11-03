@@ -102,11 +102,9 @@
     <p class="debug-note">
       Замер переключает сценарий на 20 000 точек monotone, ждёт кадр рендера (строка <span class="debug-value">d</span>
       готова) и гоняет <span class="debug-value">nearStroke</span> через фиктивные <span class="debug-value">
-        InteractionFrame</span> по многим X без реальных DOM-событий.
-      <span class="debug-value">getTotalLength</span>/<span class="debug-value">getPointAtLength</span> форсируют
-      layout и линеаризуют путь — это цена только первого resolve, пока строка d не менялась. Тёплые resolve уже не
-      трогают DOM: сравнение point-to-segment по закешированным сэмплам, поэтому кадр во время ховера не должен
-      проседать даже на длинном monotone-пути.
+        InteractionFrame</span> по многим X без реальных DOM-событий. Числовая геометрия отрисованного пути
+      хранится в WASM: первый запрос строит сэмплы, последующие переиспользуют их. SVG из текста не разбирается.
+      Поиск становится доступен после загрузки WASM вместе с отрисованной линией.
     </p>
   </DebugSection>
 </template>

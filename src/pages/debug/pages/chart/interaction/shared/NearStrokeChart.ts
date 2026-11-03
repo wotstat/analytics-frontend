@@ -13,7 +13,7 @@ import { baseMarkerOptions, buildChartScaffold, clipAndMask, resetChartView } fr
 import { CompositionProbe, CompositionSnapshot } from './CompositionProbe'
 import { crossingPair, densePoints, gapPoints, LinePoint, parallelPair, sparsePoints, wavePoints } from './linePoints'
 
-export type StrokePreset = 'straight' | 'smooth' | 'monotone' | 'sparse' | 'nullgap' | 'intersect' | 'parallel' | 'dense'
+export type StrokePreset = 'straight' | 'smooth' | 'monotone' | 'sparse' | 'nullgap' | 'intersect' | 'parallel' | 'dense' | 'dense-linear'
 
 export const strokePresets: { value: StrokePreset, label: string }[] = [
   { value: 'straight', label: 'прямая' },
@@ -23,7 +23,8 @@ export const strokePresets: { value: StrokePreset, label: string }[] = [
   { value: 'nullgap', label: 'разрыв null' },
   { value: 'intersect', label: 'пересечение линий' },
   { value: 'parallel', label: 'близкие параллельные' },
-  { value: 'dense', label: '20 000 точек (перф)' },
+  { value: 'dense', label: '20 000 точек monotone (перф)' },
+  { value: 'dense-linear', label: '20 000 точек ломаной (перф)' },
 ]
 
 export type StrokeChartHit = LineStrokeHit<LinePoint>
@@ -51,6 +52,7 @@ function presetData(preset: StrokePreset): {
     case 'nullgap': return { pointsA: gapPoints(), pointsB: [], smoothingMethod: 'monotone' }
     case 'intersect': { const [a, b] = crossingPair(); return { pointsA: a, pointsB: b } }
     case 'parallel': { const [a, b] = parallelPair(); return { pointsA: a, pointsB: b, smoothingMethod: 'monotone' } }
+    case 'dense-linear': return { pointsA: densePoints(20_000), pointsB: [] }
     case 'dense': return { pointsA: densePoints(20_000), pointsB: [], smoothingMethod: 'monotone' }
   }
 }
@@ -126,8 +128,8 @@ export class NearStrokeChart extends UniversalChart {
   }
 
   // Синтетический прогон resolve() по многим pointer-позициям вдоль layout, без реальных DOM-событий.
-  // cold — первый resolve после смены preset: строка d новая, семплирование ещё не закешировано.
-  // warmAvg — следующие resolve с тем же d: кеш уже построен, каждый кадр только точечная математика
+  // cold — первый resolve после рендера: числовая геометрия готова, сэмплы ещё не закешированы.
+  // warmAvg — следующие resolve с той же геометрией: WASM переиспользует сэмплы
   measureHoverCost(steps = 400): HoverCostMeasurement {
     const space = this.space
     const y = space.layout.y + space.layout.height / 2

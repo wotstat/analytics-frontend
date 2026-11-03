@@ -10,8 +10,199 @@ const NUMBER_CAPACITY = 24;
 const PIXEL_COLUMN_WIDTH: f64 = 1.0;
 const COLLINEAR_EPS: f64 = 0.05;
 const MIN_CORRIDOR_DX: f64 = 1e-6;
+const SAMPLE_STEP_PX: f64 = 4;
+const MAX_SEGMENTS_PER_CURVE: f64 = 2000;
 const MOVE_CAPACITY = 2 + NUMBER_CAPACITY + 1 + NUMBER_CAPACITY;
 const SEGMENT_CAPACITY = 2 + NUMBER_CAPACITY + 1 + NUMBER_CAPACITY + 2 + NUMBER_CAPACITY + 1 + NUMBER_CAPACITY + 2 + NUMBER_CAPACITY + 1 + NUMBER_CAPACITY + 1;
+
+const Point = extern struct {
+    x: f64,
+    y: f64,
+};
+
+// One endpoint and the preceding cubic's controls. NaN controls denote a straight segment.
+const StrokeNode = extern struct {
+    x: f64,
+    y: f64,
+    c1x: f64 = std.math.nan(f64),
+    c1y: f64 = std.math.nan(f64),
+    c2x: f64 = std.math.nan(f64),
+    c2y: f64 = std.math.nan(f64),
+
+    fn point(self: StrokeNode) Point {
+        return .{ .x = self.x, .y = self.y };
+    }
+};
+
+const Stroke = struct {
+    nodes: std.ArrayList(StrokeNode) = .empty,
+    samples: std.ArrayList(Point) = .empty,
+    sampled: bool = false,
+    min_x: f64 = std.math.inf(f64),
+    max_x: f64 = -std.math.inf(f64),
+    min_y: f64 = std.math.inf(f64),
+    max_y: f64 = -std.math.inf(f64),
+
+    fn clear(self: *Stroke) void {
+        self.nodes.clearRetainingCapacity();
+        self.samples.clearRetainingCapacity();
+        self.sampled = false;
+        self.min_x = std.math.inf(f64);
+        self.max_x = -std.math.inf(f64);
+        self.min_y = std.math.inf(f64);
+        self.max_y = -std.math.inf(f64);
+    }
+
+    fn include(self: *Stroke, p: Point) void {
+        self.min_x = @min(self.min_x, p.x);
+        self.max_x = @max(self.max_x, p.x);
+        self.min_y = @min(self.min_y, p.y);
+        self.max_y = @max(self.max_y, p.y);
+    }
+
+    fn append(self: *Stroke, node: StrokeNode) !void {
+        try self.nodes.append(allocator, node);
+        self.include(node.point());
+        if (std.math.isFinite(node.c1x)) {
+            self.include(.{ .x = node.c1x, .y = node.c1y });
+            self.include(.{ .x = node.c2x, .y = node.c2y });
+        }
+    }
+
+    fn sample(self: *Stroke) !void {
+        if (self.sampled) return;
+        self.samples.clearRetainingCapacity();
+        if (self.nodes.items.len == 0) return;
+
+        var from = self.nodes.items[0].point();
+        try self.samples.append(allocator, from);
+        for (self.nodes.items[1..]) |node| {
+            const to = node.point();
+            if (!std.math.isFinite(node.c1x)) {
+                try self.samples.append(allocator, to);
+                from = to;
+                continue;
+            }
+
+            const c1 = Point{ .x = node.c1x, .y = node.c1y };
+            const c2 = Point{ .x = node.c2x, .y = node.c2y };
+            const length = distance(from, c1) + distance(c1, c2) + distance(c2, to);
+            const count: usize = @intFromFloat(@min(MAX_SEGMENTS_PER_CURVE, @max(1, @ceil(length / SAMPLE_STEP_PX))));
+            try self.samples.ensureUnusedCapacity(allocator, count);
+            for (1..(count + 1)) |i| {
+                const t = @as(f64, @floatFromInt(i)) / @as(f64, @floatFromInt(count));
+                self.samples.appendAssumeCapacity(cubicPoint(from, c1, c2, to, t));
+            }
+            from = to;
+        }
+        self.sampled = true;
+    }
+};
+
+var hit_result: [3]f64 = undefined;
+
+export fn createStroke() usize {
+    const stroke = allocator.create(Stroke) catch return 0;
+    stroke.* = .{};
+    return @intFromPtr(stroke);
+}
+
+export fn freeStroke(ptr: usize) void {
+    const stroke = strokeAt(ptr);
+    stroke.nodes.deinit(allocator);
+    stroke.samples.deinit(allocator);
+    allocator.destroy(stroke);
+}
+
+export fn strokeNodesPtr(ptr: usize) usize {
+    return @intFromPtr(strokeAt(ptr).nodes.items.ptr);
+}
+
+export fn strokeNodesLen(ptr: usize) usize {
+    return strokeAt(ptr).nodes.items.len;
+}
+
+export fn resizeStroke(ptr: usize, len: usize) usize {
+    const stroke = strokeAt(ptr);
+    stroke.clear();
+    stroke.nodes.resize(allocator, len) catch return 0;
+    return @intFromPtr(stroke.nodes.items.ptr);
+}
+
+export fn commitStroke(ptr: usize) void {
+    const stroke = strokeAt(ptr);
+    for (stroke.nodes.items) |node| {
+        stroke.include(node.point());
+        if (std.math.isFinite(node.c1x)) {
+            stroke.include(.{ .x = node.c1x, .y = node.c1y });
+            stroke.include(.{ .x = node.c2x, .y = node.c2y });
+        }
+    }
+}
+
+export fn nearestStrokePoint(ptr: usize, x: f64, y: f64, margin: f64) i32 {
+    const stroke = strokeAt(ptr);
+    if (stroke.nodes.items.len == 0 or !allFinite(.{ x, y }) or !(margin >= 0)) return 0;
+    if (x < stroke.min_x - margin or x > stroke.max_x + margin or y < stroke.min_y - margin or y > stroke.max_y + margin) return 0;
+
+    stroke.sample() catch return -1;
+    const pointer = Point{ .x = x, .y = y };
+    var anchor = stroke.samples.items[0];
+    var best_distance_sq = distanceSquared(pointer, anchor);
+
+    for (1..stroke.samples.items.len) |i| {
+        const from = stroke.samples.items[i - 1];
+        const to = stroke.samples.items[i];
+        if (x < @min(from.x, to.x) - margin or x > @max(from.x, to.x) + margin) continue;
+        if (y < @min(from.y, to.y) - margin or y > @max(from.y, to.y) + margin) continue;
+
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        const length_sq = dx * dx + dy * dy;
+        const t = if (length_sq == 0) 0 else @max(0, @min(1, ((x - from.x) * dx + (y - from.y) * dy) / length_sq));
+        const projected = Point{ .x = from.x + t * dx, .y = from.y + t * dy };
+        const projected_distance_sq = distanceSquared(pointer, projected);
+        if (projected_distance_sq < best_distance_sq) {
+            best_distance_sq = projected_distance_sq;
+            anchor = projected;
+        }
+    }
+
+    if (best_distance_sq > margin * margin) return 0;
+    hit_result = .{ anchor.x, anchor.y, @sqrt(best_distance_sq) };
+    return 1;
+}
+
+export fn hitResultPtr() usize {
+    return @intFromPtr(&hit_result);
+}
+
+fn strokeAt(ptr: usize) *Stroke {
+    return @ptrFromInt(ptr);
+}
+
+fn distance(a: Point, b: Point) f64 {
+    return @sqrt(distanceSquared(a, b));
+}
+
+fn distanceSquared(a: Point, b: Point) f64 {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    return dx * dx + dy * dy;
+}
+
+fn cubicPoint(from: Point, c1: Point, c2: Point, to: Point, t: f64) Point {
+    const mt = 1 - t;
+    const a = mt * mt * mt;
+    const b = 3 * mt * mt * t;
+    const c = 3 * mt * t * t;
+    const d = t * t * t;
+    return .{ .x = a * from.x + b * c1.x + c * c2.x + d * to.x, .y = a * from.y + b * c1.y + c * c2.y + d * to.y };
+}
+
+fn round2(value: f64) f64 {
+    return @floor(value * 100 + 0.5) / 100;
+}
 
 const PathWriter = struct {
     buffer: []u8,
@@ -157,11 +348,13 @@ export fn resultLen() usize {
     return result_length;
 }
 
-export fn buildMonotoneXPath(
+export fn buildLinePath(
+    stroke_ptr: usize,
     x_ptr: usize,
     y_ptr: usize,
     len: usize,
     smoothing: f64,
+    monotone: u32,
     bounds_min_x: f64,
     bounds_max_x: f64,
     bounds_min_y: f64,
@@ -176,6 +369,8 @@ export fn buildMonotoneXPath(
     visible_max_y: f64,
 ) u32 {
     clearResult();
+    const stroke = strokeAt(stroke_ptr);
+    stroke.clear();
 
     if (x_ptr == 0 or y_ptr == 0 or len == 0) return 0;
     if (!allFinite(.{
@@ -266,7 +461,7 @@ export fn buildMonotoneXPath(
 
     if (count == 1) {
         var writer_single = PathWriter.init(@max(@as(usize, 64), MOVE_CAPACITY)) catch return 0;
-        emitMovePath(&writer_single, x[0], y[0]) catch {
+        emitMovePath(&writer_single, stroke, x[0], y[0]) catch {
             writer_single.deinit();
             return 0;
         };
@@ -274,9 +469,9 @@ export fn buildMonotoneXPath(
         return 1;
     }
 
-    if (count == 2) {
-        var writer_line = PathWriter.init(@max(@as(usize, 96), MOVE_CAPACITY + SEGMENT_CAPACITY)) catch return 0;
-        emitLinePath(&writer_line, x[0], y[0], x[1], y[1]) catch {
+    if (count == 2 or monotone == 0) {
+        var writer_line = PathWriter.init(@max(@as(usize, 96), count * MOVE_CAPACITY)) catch return 0;
+        emitLinearPath(&writer_line, stroke, x[0..count], y[0..count]) catch {
             writer_line.deinit();
             return 0;
         };
@@ -335,7 +530,7 @@ export fn buildMonotoneXPath(
 
     var writer = PathWriter.init(@max(@as(usize, 128), count * 96)) catch return 0;
 
-    emitPath(&writer, x[0..count], y[0..count], dx, tangent, k) catch {
+    emitPath(&writer, stroke, x[0..count], y[0..count], dx, tangent, k) catch {
         writer.deinit();
         return 0;
     };
@@ -488,12 +683,8 @@ fn allFinite(values: anytype) bool {
     return true;
 }
 
-fn emitPath(writer: *PathWriter, x: []const f64, y: []const f64, dx: []const f64, tangent: []const f64, k: f64) !void {
-    try writer.ensure(MOVE_CAPACITY);
-    writer.text("M ");
-    try writer.number2(x[0]);
-    writer.byte(' ');
-    try writer.number2(y[0]);
+fn emitPath(writer: *PathWriter, stroke: *Stroke, x: []const f64, y: []const f64, dx: []const f64, tangent: []const f64, k: f64) !void {
+    try emitMovePath(writer, stroke, x[0], y[0]);
 
     for (0..dx.len) |i| {
         try writer.ensure(SEGMENT_CAPACITY);
@@ -517,25 +708,34 @@ fn emitPath(writer: *PathWriter, x: []const f64, y: []const f64, dx: []const f64
         writer.byte(' ');
         try writer.number2(y[i + 1]);
         writer.byte(' ');
+        try stroke.append(.{
+            .x = round2(x[i + 1]),
+            .y = round2(y[i + 1]),
+            .c1x = round2(cp1x),
+            .c1y = round2(cp1y),
+            .c2x = round2(cp2x),
+            .c2y = round2(cp2y),
+        });
     }
 }
 
-fn emitMovePath(writer: *PathWriter, x: f64, y: f64) !void {
+fn emitMovePath(writer: *PathWriter, stroke: *Stroke, x: f64, y: f64) !void {
     try writer.ensure(MOVE_CAPACITY);
     writer.text("M ");
     try writer.number2(x);
     writer.byte(' ');
     try writer.number2(y);
+    try stroke.append(.{ .x = round2(x), .y = round2(y) });
 }
 
-fn emitLinePath(writer: *PathWriter, x0: f64, y0: f64, x1: f64, y1: f64) !void {
-    try writer.ensure(MOVE_CAPACITY + SEGMENT_CAPACITY);
-    writer.text("M ");
-    try writer.number2(x0);
-    writer.byte(' ');
-    try writer.number2(y0);
-    writer.text(" L ");
-    try writer.number2(x1);
-    writer.byte(' ');
-    try writer.number2(y1);
+fn emitLinearPath(writer: *PathWriter, stroke: *Stroke, x: []const f64, y: []const f64) !void {
+    try emitMovePath(writer, stroke, x[0], y[0]);
+    for (1..x.len) |i| {
+        try writer.ensure(MOVE_CAPACITY + 1);
+        writer.text(" L ");
+        try writer.number2(x[i]);
+        writer.byte(' ');
+        try writer.number2(y[i]);
+        try stroke.append(.{ .x = round2(x[i]), .y = round2(y[i]) });
+    }
 }

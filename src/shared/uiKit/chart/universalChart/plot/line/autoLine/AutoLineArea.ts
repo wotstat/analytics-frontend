@@ -2,16 +2,12 @@ import { ChartGradient } from '../../../defs/ChartGradient'
 import { Overflow } from '../../../UniversalChart'
 import { Bounds, BoundsConstraint } from '../../../utils/Bounds'
 import { ChartSpace } from '../../../utils/ChartSpace'
-import { isFinitePoint } from '../../../utils/Point'
 import { addClasses, Classes } from '../../../utils/utils'
 import { BasePlotRenderer } from '../../BasePlotRenderer'
-import { MonotoneXPath } from './MonotoneXPath'
-import { smoothPath } from './utils'
+import { LinePath, linePathWasmReady } from './linePath/LinePath'
 
 
 const NAMESPACE = 'http://www.w3.org/2000/svg'
-const DEFAULT_PRECISION = 2
-const DEFAULT_SMOOTHING = 1
 
 type Options = {
   classes?: Classes
@@ -36,11 +32,14 @@ export class AutoLineArea extends BasePlotRenderer {
   protected bottomPoints: (Point | null)[] = []
   protected topSegments: Point[][] = []
   protected bottomSegments: Point[][] = []
-  protected topMonotoneSegments: MonotoneXPath[] = []
-  protected bottomMonotoneSegments: MonotoneXPath[] = []
+  protected topPathSegments: LinePath[] = []
+  protected bottomPathSegments: LinePath[] = []
 
   constructor(readonly options: Options) {
     super(options.classes, { affectsBounds: options.affectsBounds ?? true })
+    linePathWasmReady().then(status => {
+      if (status === 'ready') this.requestRender()
+    })
   }
 
   protected pointsDidChange() {
@@ -51,6 +50,8 @@ export class AutoLineArea extends BasePlotRenderer {
 
   detach() {
     super.detach()
+    for (const path of this.topPathSegments) path.release()
+    for (const path of this.bottomPathSegments) path.release()
     this.topLine?.remove()
     this.topLine = null
     this.bottomLine?.remove()
@@ -67,16 +68,11 @@ export class AutoLineArea extends BasePlotRenderer {
     this.topSegments = splitToSegments(top)
     this.bottomSegments = splitToSegments(bottom).map(segment => segment.reverse())
 
-    for (const path of this.topMonotoneSegments) path.dispose()
-    for (const path of this.bottomMonotoneSegments) path.dispose()
+    for (const path of this.topPathSegments) path.dispose()
+    for (const path of this.bottomPathSegments) path.dispose()
 
-    if (this.options.smoothingMethod === 'monotone') {
-      this.topMonotoneSegments = this.topSegments.map(segment => new MonotoneXPath(segment))
-      this.bottomMonotoneSegments = this.bottomSegments.map(segment => new MonotoneXPath(segment))
-    } else {
-      this.topMonotoneSegments = []
-      this.bottomMonotoneSegments = []
-    }
+    this.topPathSegments = this.topSegments.map(segment => new LinePath(segment))
+    this.bottomPathSegments = this.bottomSegments.map(segment => new LinePath(segment))
 
     return this
   }
@@ -121,8 +117,8 @@ export class AutoLineArea extends BasePlotRenderer {
       return
     }
 
-    const topPaths = this.topSegments.map((segment, i) => this.calculateSegmentPath(segment, this.topMonotoneSegments[i], space, overflow))
-    const bottomPaths = this.bottomSegments.map((segment, i) => this.calculateSegmentPath(segment, this.bottomMonotoneSegments[i], space, overflow))
+    const topPaths = this.topPathSegments.map(path => this.calculateSegmentPath(path, space, overflow))
+    const bottomPaths = this.bottomPathSegments.map(path => this.calculateSegmentPath(path, space, overflow))
 
     if (!this.area) {
       this.area = document.createElementNS(NAMESPACE, 'path')
@@ -158,41 +154,23 @@ export class AutoLineArea extends BasePlotRenderer {
     this.bottomLine.setAttribute('d', bottomPaths.join(' '))
   }
 
-  private calculateSegmentPath(points: Point[], monotonePath: MonotoneXPath | undefined, space: ChartSpace, overflow: Overflow): string {
-    const smoothing = this.options.smoothing ?? DEFAULT_SMOOTHING
-    const precision = this.options.precision ?? DEFAULT_PRECISION
-
-    if (this.options.smoothingMethod === 'monotone' && monotonePath) {
-      const bounds = space.bounds
-      const layout = { minX: space.layout.x, minY: space.layout.y, maxX: space.layout.x + space.layout.width, maxY: space.layout.y + space.layout.height }
-      const layoutOverflow = {
-        minX: layout.minX - overflow.left,
-        maxX: layout.maxX + overflow.right,
-        minY: layout.minY - overflow.top,
-        maxY: layout.maxY + overflow.bottom
-      }
-
-      const dataBounds = this.calculateBounds()
-      if (!dataBounds.isEmpty()) {
-        layoutOverflow.minY = Math.min(layoutOverflow.minY, space.chartToLayoutY(dataBounds.maxY) - 1)
-        layoutOverflow.maxY = Math.max(layoutOverflow.maxY, space.chartToLayoutY(dataBounds.minY) + 1)
-      }
-
-      return monotonePath.getPath(smoothing, bounds, layout, layoutOverflow)
+  private calculateSegmentPath(path: LinePath, space: ChartSpace, overflow: Overflow): string {
+    const bounds = space.bounds
+    const layout = { minX: space.layout.x, minY: space.layout.y, maxX: space.layout.x + space.layout.width, maxY: space.layout.y + space.layout.height }
+    const layoutOverflow = {
+      minX: layout.minX - overflow.left,
+      maxX: layout.maxX + overflow.right,
+      minY: layout.minY - overflow.top,
+      maxY: layout.maxY + overflow.bottom
     }
 
-    if (this.options.smoothingMethod === 'smooth' || this.options.smoothing) {
-      const p = points.map(p => space.chartToLayout(p))
-      return smoothPath(p, smoothing, precision)
+    const dataBounds = this.calculateBounds()
+    if (!dataBounds.isEmpty()) {
+      layoutOverflow.minY = Math.min(layoutOverflow.minY, space.chartToLayoutY(dataBounds.maxY) - 1)
+      layoutOverflow.maxY = Math.max(layoutOverflow.maxY, space.chartToLayoutY(dataBounds.minY) + 1)
     }
 
-    const d: string[] = []
-    for (let i = 0; i < points.length; i++) {
-      const p = space.chartToLayout(points[i])
-      if (!isFinitePoint(p)) return '' // не даём NaN/Infinity просочиться в d — см. isFinitePoint()
-      d.push(`${i === 0 ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`)
-    }
-    return d.join(' ')
+    return path.getPath(this.options, bounds, layout, layoutOverflow)
   }
 }
 

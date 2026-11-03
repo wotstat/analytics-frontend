@@ -1,7 +1,7 @@
 <template>
   <DebugSection title="Децимация и wasm: сто тысяч точек" id="decimation"
     description="Слева весь ряд целиком, справа каждая N-я точка того же ряда при тех же bounds. Формы обязаны совпасть: децимация выкидывает точки, неразличимые в пикселях, а не сглаживает данные. Смотри на экстремумы — срезанный пик здесь был бы багом."
-    source="src/shared/uiKit/chart/universalChart/plot/line/autoLine/MonotoneXPath.ts">
+    source="src/shared/uiKit/chart/universalChart/plot/line/autoLine/linePath/LinePath.ts">
 
     <div class="debug-row">
       <label class="debug-control">
@@ -69,10 +69,9 @@
     </div>
 
     <p class="debug-note">
-      «Узлов в пути» — это <span class="debug-value">C</span>-команд плюс одна: на monotone видно, во сколько раз
-      децимация сократила ряд. На <span class="debug-value">smooth</span> и на ломаной сокращения нет вообще: узлов
-      столько же, сколько точек, длина d уезжает в мегабайты, и сотня тысяч точек кладёт вкладку на секунды.
-      Это не поломка страницы, а цена отсутствия децимации вне monotone.
+      «Узлов в пути» — число конечных точек команд <span class="debug-value">M/L/C</span>.
+      Monotone и ломаная строятся в WASM с отсечением невидимых точек и децимацией в пиксельных координатах.
+      У <span class="debug-value">smooth</span> децимации нет: на сотне тысяч точек путь может достигать мегабайт.
     </p>
 
     <p class="debug-note">
@@ -84,12 +83,11 @@
     </p>
 
     <p class="debug-note">
-      <b>Переключателя реализации нет.</b> Zig→wasm и TS-фоллбек живут в одном файле, выбор молчаливый: модуль
-      грузится один раз при импорте, и если инициализация упала — путь строит TS. Состояние загрузки движок отдаёт:
-      «wasm» в шапке — это <span class="debug-value">monotoneXPathWasmReady()</span>, синхронный вариант —
-      <span class="debug-value">getMonotoneXPathWasmStatus()</span>. Счётчика вызовов по реализациям нет: статус
-      говорит, что доступно, а не сколько раз чем воспользовались. Обе реализации обязаны давать одинаковый путь;
-      расхождение ищется сравнением d, а не глазами.
+      <b>WASM грузится один раз при импорте.</b> Пока модуль загружается, пути пустые;
+      после загрузки линии автоматически перерисовываются. Состояние загрузки движок отдаёт:
+      «wasm» в шапке — это <span class="debug-value">linePathWasmReady()</span>, синхронный вариант —
+      <span class="debug-value">getLinePathWasmStatus()</span>. Ломаная и monotone строятся в WASM,
+      smooth — в TS. При ошибке загрузки WASM линии остаются пустыми, ошибка выводится в консоль.
     </p>
   </DebugSection>
 </template>
@@ -101,7 +99,7 @@ import DebugSection from '@/pages/debug/shared/DebugSection.vue'
 import { syntheticSeries } from '@/pages/debug/shared/fixtures/syntheticSeries'
 import type { ChartPoint } from '@/pages/debug/shared/fixtures/types'
 import { AutoLine } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/AutoLine'
-import { MonotoneXPath, monotoneXPathWasmReady } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/MonotoneXPath'
+import { LinePath, linePathWasmReady } from '@/shared/uiKit/chart/universalChart/plot/line/autoLine/linePath/LinePath'
 import { UniversalChart } from '@/shared/uiKit/chart/universalChart/UniversalChart'
 import { globalChartRenderManagerSteps4 } from '@/shared/ui/chart/VueChartRenderManager.ts'
 import ChartStage from '../shared/ChartStage.vue'
@@ -174,9 +172,9 @@ function build() {
 watchEffect(() => redraw())
 
 onMounted(() => {
-  monotoneXPathWasmReady().then(status => wasmState.value = status === 'ready'
-    ? 'загружен, путь строит wasm'
-    : 'не загрузился, работает TS-фоллбек')
+  linePathWasmReady().then(status => wasmState.value = status === 'ready'
+    ? 'загружен'
+    : 'ошибка загрузки')
 })
 
 function redraw() {
@@ -200,7 +198,9 @@ function redraw() {
   })
 }
 
-function measurePath() {
+async function measurePath() {
+  if (await linePathWasmReady() !== 'ready') return
+
   const space = instance.value.chart.space
   const layout = {
     minX: space.layout.x,
@@ -209,14 +209,15 @@ function measurePath() {
     maxY: space.layout.y + space.layout.height,
   }
 
-  const path = new MonotoneXPath(full.value)
+  const path = new LinePath(full.value)
+  const options = { smoothingMethod: method.value === 'none' ? undefined : method.value }
 
   const start = performance.now()
-  path.getPath(1, space.bounds, layout, layout)
+  path.getPath(options, space.bounds, layout, layout)
   const afterFirst = performance.now()
 
   const runs = 5
-  for (let i = 0; i < runs; i++) path.getPath(1, space.bounds, layout, layout)
+  for (let i = 0; i < runs; i++) path.getPath(options, space.bounds, layout, layout)
   const afterWarm = performance.now()
 
   path.dispose()
