@@ -46,7 +46,7 @@
           </tr>
           <tr>
             <th>TooltipRoot</th>
-            <td>рисует открытые тултипы через PopoverStyled, закрывает по тапу вне и по «поповер не поместился»</td>
+            <td>рисует тултипы через PopoverStyled, закрывает по касанию снаружи, прокрутке на таче и «поповер не поместился»</td>
             <td><a href="#viewport-edges">границы viewport</a>, <a href="#touch">тач</a></td>
           </tr>
         </tbody>

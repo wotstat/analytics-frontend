@@ -36,6 +36,7 @@ export type DisplayedTooltip = {
   target: HTMLElement,
   component: DefineComponent,
   options: Required<TooltipOptions>,
+  isTouch: boolean,
   props: DefineTooltipProps
 }
 export const displayedTooltips = ref(new Map<string, DisplayedTooltip>())
@@ -222,6 +223,7 @@ function createDisplayedTooltip(
     trigger,
     target,
     options: options,
+    isTouch: false,
     props: inheritTooltipProps(tooltipDefinition.props, propsOverrides),
     component: Component,
   })
@@ -282,6 +284,7 @@ function toggleTouchTooltip(
   }
 
   const displayed = createDisplayedTooltip(trigger, target, tooltipId, group, bindingValue, options, propsOverrides, isTriggerActive)
+  displayed.isTouch = true
   showTooltip(group, displayed)
 }
 
