@@ -46,7 +46,7 @@ export const widgetMeta = defineMetaDefinition({
     }
 
     return {
-      title: `${widget.name} — Виджеты WotStat`,
+      title: `Виджеты WotStat — ${widget.name}`,
       description: widget.description || description,
       imageAlt: `${widget.name} — превью виджета`,
     }

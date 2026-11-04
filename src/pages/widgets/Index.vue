@@ -133,7 +133,7 @@ usePageMeta(() => {
   }
   if (!selectedRoute.value) return meta
 
-  if (selectedTitle.value) meta.title = `${selectedTitle.value} — Виджеты WotStat`
+  if (selectedTitle.value) meta.title = `Виджеты WotStat — ${selectedTitle.value}`
   if (selectedDescription.value) meta.description = selectedDescription.value
   return meta
 })

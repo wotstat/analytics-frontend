@@ -127,7 +127,8 @@ export function vehiclesTableMetaTags(url: URL, catalog?: VehiclesMetaCatalog): 
   const subject = tableSubject(table)
 
   const nations = list([...table.nations].map(nation => nationNames[nation]))
-  let title = subject.name === 'техника' ? 'Статистика техники' : `${capitalize(subject.name)} — статистика`
+  let title = 'Статистика техники'
+  if (subject.name !== 'техника') title += ` — ${capitalize(subject.name)}`
   if (nations) title += ` · ${nations}`
 
   const presentation = filterPresentation([filters], catalog)
@@ -150,16 +151,16 @@ export function vehiclesTableMetaTags(url: URL, catalog?: VehiclesMetaCatalog): 
   return tags(shorten(title, 120), description)
 }
 
-const metricNames: Partial<Record<Slot, { title: string, description: string }>> = {
-  damage: { title: 'урона', description: 'среднего урона' },
-  winrate: { title: 'процента побед', description: 'процента побед' },
-  assist: { title: 'содействия', description: 'среднего содействия' },
-  blocked: { title: 'заблокированного урона', description: 'заблокированного урона' },
-  xp: { title: 'опыта', description: 'среднего опыта' },
-  kills: { title: 'уничтожений', description: 'среднего числа уничтожений' },
-  battles: { title: 'числа боёв', description: 'числа боёв' },
-  playerCount: { title: 'числа игроков', description: 'числа игроков' },
-  survival: { title: 'выживаемости', description: 'выживаемости' },
+const metricDescriptions: Partial<Record<Slot, string>> = {
+  damage: 'среднего урона',
+  winrate: 'процента побед',
+  assist: 'среднего содействия',
+  blocked: 'заблокированного урона',
+  xp: 'среднего опыта',
+  kills: 'среднего числа уничтожений',
+  battles: 'числа боёв',
+  playerCount: 'числа игроков',
+  survival: 'выживаемости',
 }
 
 function sourceLabel(source: SavedComparisonSource, catalog?: VehiclesMetaCatalog) {
@@ -180,7 +181,7 @@ function sourceLabel(source: SavedComparisonSource, catalog?: VehiclesMetaCatalo
 export function vehiclesCompareMetaTags(url: URL, catalog?: VehiclesMetaCatalog): MetaTags {
   const params = readVehiclesMetaParams(url)
   const sources = params.sources.filter(source => source.enabled)
-  const fallback = tags('Сравнение техники', 'Динамика показателей техники по данным боёв с марта 2024 года.')
+  const fallback = tags('Статистика техники', 'Динамика показателей техники по данным боёв с марта 2024 года.')
   if (params.invalidComparison || !sources.length) return fallback
 
   const labels = sources.map(source => sourceLabel(source, catalog))
@@ -205,14 +206,10 @@ export function vehiclesCompareMetaTags(url: URL, catalog?: VehiclesMetaCatalog)
 
   const slot = params.settings.slot
   const label = availableSlots[slot].label
-  const metric = metricNames[slot] ?? {
-    title: `показателя «${label}»`,
-    description: `показателя «${label}»`,
-  }
-  const action = sources.length === 1 ? 'динамика' : 'сравнение'
-  const title = `${subject} — ${action} ${metric.title}`
+  const metricDescription = metricDescriptions[slot] ?? `показателя «${label}»`
+  const title = `Статистика техники — ${subject} — ${label}`
 
-  let description = `Динамика ${metric.description}: ${summarize(names)}.`
+  let description = `Динамика ${metricDescription}: ${summarize(names)}.`
   if (presentation.context) description += ` ${capitalize(presentation.context)}.`
   description += ' Данные боёв с марта 2024 года.'
   if (presentation.details.length) description += ` ${presentation.details.join(' · ')}.`
