@@ -150,7 +150,7 @@ export class TimeSeriesChart<T extends TimeSeriesPoint = TimeSeriesPoint> extend
     const presentation = new InteractionPresentation({ motion: spring({ response: 0.08 }) })
     const axisBinding = presentation.axis(selection, 'horizontal', { navigation: this.zoom })
 
-    const strokeSelection = interactions.nearStroke({ maxDistance: 20 }).nearest()
+    const strokeSelection = interactions.nearStroke({ maxDistance: 8 }).nearest()
     const callbacks = new CallbackComponent()
     callbacks.on('click', event => {
       if (!this.onSeriesClick.hasListeners) return

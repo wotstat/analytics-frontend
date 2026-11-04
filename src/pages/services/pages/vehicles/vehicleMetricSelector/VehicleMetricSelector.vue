@@ -39,7 +39,6 @@ function selectMetric(value: Slot) {
 .metric-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
   min-width: 0;
   max-width: 100%;
   height: 30px;
@@ -59,6 +58,10 @@ function selectMetric(value: Slot) {
     flex: none;
     width: 30px;
     height: 30px;
+  }
+
+  .metric-label {
+    margin-right: 5px;
   }
 
   .metric-arrow {
