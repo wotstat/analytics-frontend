@@ -51,11 +51,11 @@ export function createDatabase(config: DatabaseConfig, onResponse?: (response: R
 
   const activeQueries = new Map<string, Set<ActiveQuery>>()
   const cachedResults = createQueryCache<QueryResponse<unknown>>()
-  function queryCacheKey(sql: string, options: QueryOptions) {
+  function queryCacheKey(sql: string, options: QueryOptions, policyKey = resolveCachePolicy(options.cache)?.key ?? null) {
     const settings = sortedEntries(Object.entries(options.settings ?? {})
       .filter(([, value]) => value !== undefined)
       .map(([key, value]) => [key, String(value)]))
-    return JSON.stringify([sql, options.format ?? 'JSON', settings, resolveCachePolicy(options.cache)?.key ?? null])
+    return JSON.stringify([sql, options.format ?? 'JSON', settings, policyKey])
   }
 
   async function query<T>(query: string, options: QueryOptions = {}): Promise<QueryResponse<T>> {
@@ -84,7 +84,7 @@ export function createDatabase(config: DatabaseConfig, onResponse?: (response: R
     async function execute() {
       abortSignal?.throwIfAborted()
       const policy = resolveCachePolicy(cache)
-      const executionKey = queryCacheKey(query, options)
+      const executionKey = queryCacheKey(query, options, policy?.key ?? null)
       const cacheHeaders = proxyCache && policy && policy.ttl > 0 ? policy.headers : undefined
       const result = await clickhouse.query({
         query, format, abort_signal: abortSignal,

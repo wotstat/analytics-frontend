@@ -1,5 +1,6 @@
 import { onScopeDispose, reactive, shallowReactive, toValue, watch, type MaybeRefOrGetter } from 'vue'
 import { createConcurrencyGroup, createQueryCache, error, loading, query, success, type CachePolicy, type ConcurrencyGroup, type Status } from '@/db'
+import { resolveCachePolicy } from '@/db/cache'
 import type { VehicleFilters } from '../filters/types'
 import type { VehicleSelection } from '../shared/vehicleGrouping'
 import type { VehicleHistoryPeriod } from '../shared/types'
@@ -15,6 +16,7 @@ type HistoryState = { status: Status, data: VehicleHistoryPeriod[] }
 type HistoryPlan = { key: string, parts: VehicleHistoryQueries, concurrency: ConcurrencyGroup }
 
 const rowKey = (row: HistoryValues) => JSON.stringify([row.periodStart, row.splitKey ?? null])
+const queryKey = (sql: string, policy: CachePolicy) => JSON.stringify([sql, resolveCachePolicy(policy)?.key])
 
 export function useVehicleHistories(sources: MaybeRefOrGetter<readonly HistorySource[]>, options: {
   beforeDay: string
@@ -29,9 +31,10 @@ export function useVehicleHistories(sources: MaybeRefOrGetter<readonly HistorySo
   const concurrency = createConcurrencyGroup(5)
 
   function load(sql: string, policy: CachePolicy, concurrency: ConcurrencyGroup) {
-    const cached = cache.get(sql)
+    const key = queryKey(sql, policy)
+    const cached = cache.get(key)
     if (cached) return Promise.resolve(cached)
-    const pending = requests.get(sql)
+    const pending = requests.get(key)
     if (pending) return pending.promise
 
     const controller = new AbortController()
@@ -43,22 +46,23 @@ export function useVehicleHistories(sources: MaybeRefOrGetter<readonly HistorySo
       concurrency,
     }).then(({ data, cacheExpiresAt }) => {
       controller.signal.throwIfAborted()
-      cache.set(sql, data, cacheExpiresAt)
+      cache.set(key, data, cacheExpiresAt)
       return data
     }).finally(() => {
-      if (requests.get(sql)?.controller === controller) requests.delete(sql)
+      if (requests.get(key)?.controller === controller) requests.delete(key)
     })
-    requests.set(sql, { controller, promise })
+    requests.set(key, { controller, promise })
     return promise
   }
 
-  function cachedHistory(parts: VehicleHistoryQueries, get = cache.get): VehicleHistoryPeriod[] | null {
+  function cachedHistory(parts: VehicleHistoryQueries,
+    get = (sql: string, policy: CachePolicy) => cache.get(queryKey(sql, policy))): VehicleHistoryPeriod[] | null {
     const rows: VehicleHistoryPeriod[] = []
     for (const part of parts) {
-      const base = get(part.base)
+      const base = get(part.base, part.cache)
       if (!base) return null
       if (!base.length) continue
-      const metrics = part.metric ? get(part.metric) : []
+      const metrics = part.metric ? get(part.metric, part.cache) : []
       if (!metrics) return null
       const byKey = new Map(metrics.map(row => [rowKey(row), row]))
       for (const row of base) {
@@ -99,7 +103,8 @@ export function useVehicleHistories(sources: MaybeRefOrGetter<readonly HistorySo
   const stop = watch(() => toValue(sources).map(source => {
     const parts = vehicleHistoryQueries(source.filters, source.selection, options.beforeDay,
       toValue(options.step), source.split ?? null, toValue(options.slot))
-    return { tag: source.tag, parts, key: JSON.stringify([parts, retries.get(source.tag) ?? 0]) }
+    const queries = parts.map(({ base, metric, cache }) => [base, metric, resolveCachePolicy(cache)?.key])
+    return { tag: source.tag, parts, key: JSON.stringify([queries, retries.get(source.tag) ?? 0]) }
   }), histories => {
     const tags = new Set(histories.map(history => history.tag))
     for (const tag of plans.keys()) {
@@ -111,12 +116,12 @@ export function useVehicleHistories(sources: MaybeRefOrGetter<readonly HistorySo
 
     // Один SQL может быть нужен нескольким источникам. Отменяем его только
     // после удаления всех потребителей, включая ожидающие задачи очереди.
-    const wanted = new Set(histories.flatMap(history => history.parts.flatMap(part =>
-      part.metric ? [part.base, part.metric] : [part.base])))
-    for (const [sql, request] of requests) {
-      if (wanted.has(sql)) continue
+    const wanted = new Set(histories.flatMap(history => history.parts.flatMap(({ base, metric, cache }) =>
+      (metric ? [base, metric] : [base]).map(sql => queryKey(sql, cache)))))
+    for (const [key, request] of requests) {
+      if (wanted.has(key)) continue
       request.controller.abort()
-      requests.delete(sql)
+      requests.delete(key)
     }
 
     for (const { tag, key, parts } of histories) {

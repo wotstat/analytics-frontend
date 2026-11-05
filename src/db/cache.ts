@@ -2,7 +2,8 @@ import type { ClickHouseSettings } from '@clickhouse/client-web'
 
 export type CachePolicy =
   | { ttl: number, until?: never, expiresAt?: never }
-  | { until: 'hour' | 'day' | 'month', ttl?: never, expiresAt?: never }
+  | { until: 'hour' | 'month', ttl?: never, expiresAt?: never }
+  | { until: 'day', firstHourTtl?: number, ttl?: never, expiresAt?: never }
   | { expiresAt: Date, ttl?: never, until?: never }
 
 export const SUPER_SHORT_CACHE = { ttl: 5 } as const satisfies CachePolicy
@@ -28,13 +29,15 @@ export const QUERY_CACHE_HEADER = 'X-Wotstat-Query-Cache-'
 export function resolveCachePolicy(policy?: CachePolicy, now = Date.now()): ResolvedCachePolicy | undefined {
   if (!policy) return undefined
 
-  if (policy.ttl !== undefined) {
-    if (!Number.isSafeInteger(policy.ttl) || policy.ttl < 0) throw new RangeError('Cache TTL must be a non-negative integer')
+  const firstHourTtl = policy.until === 'day' ? policy.firstHourTtl : undefined
+  const ttl = firstHourTtl !== undefined && new Date(now).getUTCHours() === 0 ? firstHourTtl : policy.ttl
+  if (ttl !== undefined) {
+    if (!Number.isSafeInteger(ttl) || ttl < 0) throw new RangeError('Cache TTL must be a non-negative integer')
     return {
-      key: `ttl:${policy.ttl}`,
-      ttl: policy.ttl,
-      expiresAt: now + policy.ttl * 1000,
-      headers: { [`${QUERY_CACHE_HEADER}TTL`]: String(policy.ttl) },
+      key: `ttl:${ttl}`,
+      ttl,
+      expiresAt: now + ttl * 1000,
+      headers: { [`${QUERY_CACHE_HEADER}TTL`]: String(ttl) },
     }
   }
 
@@ -46,8 +49,9 @@ export function resolveCachePolicy(policy?: CachePolicy, now = Date.now()): Reso
     end.setUTCHours(0, 0, 0, 0)
   }
   if (!Number.isFinite(end.getTime())) throw new RangeError('Cache expiration must be a valid date')
+  const kind = firstHourTtl === undefined ? policy.until ?? 'expiresAt' : `day:firstHourTtl:${firstHourTtl}`
   return {
-    key: `${policy.until ?? 'expiresAt'}:${end.toISOString()}`,
+    key: `${kind}:${end.toISOString()}`,
     ttl: Math.max(0, Math.floor((end.getTime() - now) / 1000)),
     expiresAt: end.getTime(),
     headers: { [`${QUERY_CACHE_HEADER}Until`]: end.toISOString() },

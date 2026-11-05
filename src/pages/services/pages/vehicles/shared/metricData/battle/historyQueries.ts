@@ -1,5 +1,5 @@
 import type { MetricHistoryContext, HistoryRange, MetricHistoryQuery } from '../utils/types'
-import { vehicleHistoryRanges } from '../utils/historyRanges'
+import { DAILY_VIEW_HISTORY_CACHE, vehicleHistoryRanges } from '../utils/historyRanges'
 import type { VehicleHistorySplit } from '../../../timeSeries/split/historySplit'
 import { vehicleDailyStatisticsTable, vehicleSelectionWhere, vehicleStatisticsWhere } from './filters'
 import { sampleExpressions, selectExpressions, type StatisticExpressions } from './expressions'
@@ -17,10 +17,7 @@ export function battleHistoryQueries({ filters, selection, beforeDay, step, spli
   const splitGroup = split === null ? '' : ', splitKey'
   const dailyTable = split === null ? vehicleDailyStatisticsTable(filters, selection) : null
 
-  function sql(range: HistoryRange, fields: StatisticExpressions) {
-    // 42 дня в витринах покрывают и начало недели в предыдущем месяце.
-    // До ежедневного refresh график использует тот же срез, что и таблица.
-    const daily = range.recent ? dailyTable : null
+  function sql(range: HistoryRange, daily: typeof dailyTable, fields: StatisticExpressions) {
     return `
     select
       ${period} as periodStart${splitSelect},
@@ -32,9 +29,13 @@ export function battleHistoryQueries({ filters, selection, beforeDay, step, spli
   `
   }
 
-  return vehicleHistoryRanges(beforeDay, step).map(range => ({
-    ...range,
-    base: sql(range, sampleExpressions),
-    metric: sampleOnly ? null : sql(range, expressions),
-  }))
+  return vehicleHistoryRanges(beforeDay, step).map(range => {
+    const daily = range.recent ? dailyTable : null
+    return {
+      ...range,
+      cache: daily ? DAILY_VIEW_HISTORY_CACHE : range.cache,
+      base: sql(range, daily, sampleExpressions),
+      metric: sampleOnly ? null : sql(range, daily, expressions),
+    }
+  })
 }

@@ -1,6 +1,9 @@
-import { DAILY_CACHE, IMMUTABLE_CACHE } from '@/db/cache'
+import { DAILY_CACHE, IMMUTABLE_CACHE, type CachePolicy } from '@/db/cache'
 import type { HistoryStep } from '../../../timeSeries/period/historyStep'
 import type { HistoryRange } from './types'
+
+// Витрины пересчитываются после полуночи UTC.
+export const DAILY_VIEW_HISTORY_CACHE = { until: 'day', firstHourTtl: 60 * 60 } as const satisfies CachePolicy
 
 function periodStart(day: string, step: HistoryStep) {
   const date = new Date(`${day}T00:00:00Z`)

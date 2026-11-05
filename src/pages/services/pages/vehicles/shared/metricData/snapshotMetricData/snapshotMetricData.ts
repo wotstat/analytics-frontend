@@ -59,7 +59,7 @@ export function snapshotMetricData<Key extends string>(key: string, tables: { hi
             where ${where}
             group by tankTag, day
           `
-          return { ...range, cache: DAILY_CACHE, base: weightedSnapshotHistory(context, range, snapshots, keys), metric: null }
+          return weightedSnapshotHistory(context, range, snapshots, keys)
         }
 
         return {
