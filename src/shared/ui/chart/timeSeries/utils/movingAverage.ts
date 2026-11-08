@@ -18,6 +18,11 @@ export function movingAveragePoints<T extends TimeSeriesPoint>(points: readonly 
     let segmentEnd = segmentStart
     while (segmentEnd < points.length && points[segmentEnd] !== null) segmentEnd++
 
+    if (segmentEnd - segmentStart < window) {
+      segmentStart = segmentEnd
+      continue
+    }
+
     for (let index = segmentStart; index < segmentEnd; index++) {
       const from = Math.max(segmentStart, index - radius)
       const to = Math.min(segmentEnd, index + radius + 1)
