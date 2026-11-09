@@ -3,6 +3,7 @@ import './shared/i18n/i18n'
 import { createApp } from 'vue'
 import App from './App.vue'
 import { router } from './routes'
+import { setup as setupGoogleAnalytics } from './shared/external/google/analytics'
 import { setup as setupYmMetrika } from './shared/external/ym/metrika'
 import { vTextTooltip } from './shared/ui/tooltip/textTooltip'
 
@@ -14,6 +15,7 @@ createApp(App)
   .mount('#app')
 
 if (import.meta.env.VITE_ANALYTICS_ENABLED === 'true') {
+  setupGoogleAnalytics(import.meta.env.VITE_GA_ID)
   setupYmMetrika({
     webvisor: false,
     clickmap: false,

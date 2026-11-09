@@ -17,22 +17,6 @@
 <body>
   <div id="app"></div>
   <script type="module" src="/src/main.ts"></script>
-
-  <!-- Google tag (gtag.js) -->
-  <script>
-    if ('%VITE_ANALYTICS_ENABLED%' === 'true') {
-      const measurementId = 'G-SCKESJJC93'
-      window.dataLayer = window.dataLayer || []
-      window.gtag = function () { window.dataLayer.push(arguments) }
-      window.gtag('js', new Date())
-      window.gtag('config', measurementId)
-
-      const script = document.createElement('script')
-      script.async = true
-      script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`
-      document.head.appendChild(script)
-    }
-  </script>
 </body>
 
 </html>

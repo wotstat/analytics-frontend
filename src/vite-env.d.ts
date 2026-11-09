@@ -6,6 +6,8 @@
 interface ImportMetaEnv {
   readonly VITE_META_RENDERER: boolean;
   VITE_MODE_DEV_LOCAL?: string;
+  readonly VITE_ANALYTICS_ENABLED?: string
+  readonly VITE_GA_ID?: string
 }
 
 interface ImportMeta {
