@@ -19,13 +19,19 @@
   <script type="module" src="/src/main.ts"></script>
 
   <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-SCKESJJC93"></script>
   <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
+    if ('%VITE_ANALYTICS_ENABLED%' === 'true') {
+      const measurementId = 'G-SCKESJJC93'
+      window.dataLayer = window.dataLayer || []
+      window.gtag = function () { window.dataLayer.push(arguments) }
+      window.gtag('js', new Date())
+      window.gtag('config', measurementId)
 
-    gtag('config', 'G-SCKESJJC93');
+      const script = document.createElement('script')
+      script.async = true
+      script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`
+      document.head.appendChild(script)
+    }
   </script>
 </body>
 

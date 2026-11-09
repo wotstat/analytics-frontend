@@ -13,9 +13,11 @@ createApp(App)
   .directive('tooltip', vTextTooltip)
   .mount('#app')
 
-setupYmMetrika({
-  webvisor: false,
-  clickmap: false,
-  trackLinks: false,
-  accurateTrackBounce: false
-})
+if (import.meta.env.VITE_ANALYTICS_ENABLED === 'true') {
+  setupYmMetrika({
+    webvisor: false,
+    clickmap: false,
+    trackLinks: false,
+    accurateTrackBounce: false
+  })
+}
