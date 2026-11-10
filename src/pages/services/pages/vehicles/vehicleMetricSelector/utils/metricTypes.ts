@@ -18,6 +18,7 @@ export type MetricHistory = {
   splits: readonly VehicleHistorySplit[]
   battleSample: boolean
   outages: boolean
+  isValidValue?: (value: number) => boolean
 }
 
 export type MetricDefinition = MetricPresentation & {

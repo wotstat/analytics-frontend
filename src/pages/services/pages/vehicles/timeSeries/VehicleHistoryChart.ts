@@ -120,11 +120,18 @@ export class VehicleHistoryChart extends TimeSeriesChart<HistoryPoint> {
 
   private preparePoints(history: VehicleHistoryPeriod[], slot: Slot, until: number, step: HistoryStep) {
     const points: (HistoryPoint | null)[] = []
+    const breakOnMissing = availableSlots[slot].history.isValidValue !== undefined
     let previousStart: number | null = null
 
     for (const row of history) {
       const value = row[slot] ?? null
-      if (value === null || !Number.isFinite(value)) continue
+      if (value === null || !Number.isFinite(value)) {
+        if (breakOnMissing && previousStart !== null) {
+          points.push(null)
+          previousStart = null
+        }
+        continue
+      }
 
       const { start, end } = historyPeriodWindow(row.periodStart, step, until)
       // Пропуски до четырёх дней соединяем без новых точек, более длинные оставляем разрывами.

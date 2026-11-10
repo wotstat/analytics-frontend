@@ -1,7 +1,10 @@
 import { snapshotMetricData } from '../../shared/metricData/snapshotMetricData/snapshotMetricData'
 import type { MetricDateField, MetricDefinition, MetricCatalogEntry, MetricHistory, MetricPresentation, MetricTileDefinition } from '../utils/metricTypes'
 
-const history: MetricHistory = { splits: [], battleSample: false, outages: false }
+const history: MetricHistory = {
+  splits: [], battleSample: false, outages: false,
+  isValidValue: value => value !== 0,
+}
 
 type SnapshotDefinition<Percentile extends number> = Pick<MetricPresentation, 'icon' | 'label' | 'color' | 'headingColor'> & Pick<MetricTileDefinition, 'badgeTextColor'> & {
   tables: { history: string, latest: string }

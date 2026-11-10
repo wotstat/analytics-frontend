@@ -5,7 +5,7 @@ import type { VehicleFilters } from '../filters/types'
 import type { VehicleSelection } from '../shared/vehicleGrouping'
 import type { VehicleHistoryPeriod } from '../shared/types'
 import { VEHICLE_STATISTICS_QUERY_OPTIONS } from '../shared/vehicleStatisticsQuery'
-import type { Slot } from '../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
+import { availableSlots, type Slot } from '../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 import type { HistoryStep } from './period/historyStep'
 import type { VehicleHistorySplit } from './split/historySplit'
 import { vehicleHistoryQueries, type VehicleHistoryQueries } from './vehicleHistoryQuery'
@@ -66,7 +66,14 @@ export function useVehicleHistories(sources: MaybeRefOrGetter<readonly HistorySo
       if (!metrics) return null
       const byKey = new Map(metrics.map(row => [rowKey(row), row]))
       for (const row of base) {
-        rows.push({ ...row, ...byKey.get(rowKey(row)) })
+        const period = { ...row, ...byKey.get(rowKey(row)) }
+        for (const [key, value] of Object.entries(period)) {
+          if (typeof value !== 'number') continue
+          const slot = key as Slot
+          const validate = availableSlots[slot]?.history.isValidValue
+          if (validate && !validate(value)) period[slot] = null
+        }
+        rows.push(period)
       }
     }
     return rows
