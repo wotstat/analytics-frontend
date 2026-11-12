@@ -64,7 +64,7 @@ function createAchievementQueryParams(kind: AchievementKind) {
     onlyActual: vehicleListFilterParams.onlyActual,
     deltaPeriod: deltaPeriodParam,
     sortByDelta: sortByDeltaParam,
-    sort: arrayParam(sortOrderSerializer, [{ key: slots[0], ascending: false }] as SortOrder[], {
+    sort: arrayParam(sortOrderSerializer, [{ key: achievements[kind].defaultSortSlot, ascending: false }] as SortOrder[], {
       key: `${key}.sort`, priority: 10,
       validate: ({ key }) => key === 'name' || key === 'tankLevel' || key === 'tankType' || slots.includes(key),
     }),

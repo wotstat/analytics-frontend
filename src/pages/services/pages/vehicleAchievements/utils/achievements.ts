@@ -16,6 +16,7 @@ type AchievementDefinition = {
   latestTable: string
   historyTable: string
   slots: readonly Slot[]
+  defaultSortSlot: Slot
 }
 
 export const achievements: Record<AchievementKind, AchievementDefinition> = {
@@ -23,10 +24,12 @@ export const achievements: Record<AchievementKind, AchievementDefinition> = {
     latestTable: 'MoeInfoLatest',
     historyTable: 'MoeInfo',
     slots: ['marks_p100', 'marks_p95', 'marks_p85', 'marks_p65'],
+    defaultSortSlot: 'marks_p95',
   },
   mastery: {
     latestTable: 'MasteryInfoLatest',
     historyTable: 'MasteryInfo',
     slots: ['mastery_p99', 'mastery_p95', 'mastery_p80', 'mastery_p50'],
+    defaultSortSlot: 'mastery_p99',
   },
 }

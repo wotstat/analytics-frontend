@@ -316,7 +316,7 @@ watch(availableNations, available => {
 watch([search, localFilters, () => props.vehicles], () => displayLimit.value = PAGE_SIZE)
 watch(sortByDelta, enabled => {
   if (enabled && !sort.value.some(({ key }) => slots.value.includes(key as Slot))) {
-    sort.value = [{ key: definition.value.slots[0], ascending: false }]
+    sort.value = [{ key: definition.value.defaultSortSlot, ascending: false }]
   }
 }, { immediate: true })
 </script>
