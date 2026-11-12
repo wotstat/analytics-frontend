@@ -14,6 +14,7 @@
   <AchievementTable :kind :vehicles="statistics.data" :status="statistics.status" :filters :before-day="beforeDay"
     :compared-keys="comparison.comparedKeys.value" :comparison-count="comparison.sources.value.length"
     v-model:search="search" v-model:local-filters="localFilters" v-model:sort="sort"
+    v-model:delta-period="deltaPeriod" v-model:sort-by-delta="sortByDelta"
     @compare="comparison.toggle" @compare-all="comparison.addMany" @retry="retry" />
 
   <section class="data-source">
@@ -21,6 +22,8 @@
     <p>Планки загружаются из публичного API игры и не зависят от боёв с модом WotStat.
       В таблице показаны последние доступные значения для выбранного региона.</p>
     <p>Дата на графике учитывает задержку в два дня между датой данных API и применением планок в игре.</p>
+    <p>Прирост показывает изменение за день, неделю, месяц, три месяца, полгода или год.
+      Месяцы и годы считаются по календарю. Если снимка за нужную дату нет, вместо прироста показан прочерк.</p>
   </section>
 </template>
 
@@ -35,7 +38,10 @@ import { useAchievementQueryStorage } from './useAchievementQueryStorage'
 import { useAchievementStatistics } from './useAchievementStatistics'
 
 const props = defineProps<{ kind: AchievementKind }>()
-const { region, search, sort, localFilters, filters, comparison, metrics, step, averageWindow, annotations } = useAchievementQueryStorage(props.kind)
+const {
+  region, search, sort, localFilters, filters, comparison, metrics, step, averageWindow, annotations,
+  deltaPeriod, sortByDelta,
+} = useAchievementQueryStorage(props.kind)
 const { statistics, retry } = useAchievementStatistics(props.kind, region)
 const beforeDay = new Date().toISOString().slice(0, 10)
 

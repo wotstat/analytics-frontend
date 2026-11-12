@@ -80,6 +80,8 @@ function toggle(event: MouseEvent) {
     gap: 8px;
     font-size: inherit;
     cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
 
     input {
       margin: 0;

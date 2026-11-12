@@ -16,13 +16,17 @@ function compareDescending(left: number | null, right: number | null) {
   return right - left
 }
 
-function sortValue(vehicle: VehicleStatisticsRow, key: Exclude<SortKey, 'name'>) {
-  if (key === 'tankType') return typeOrder.get(vehicle.tankType ?? '') ?? null
-  return vehicle[key] ?? null
-}
+export function useVehicleSorting<Row extends VehicleStatisticsRow = VehicleStatisticsRow>(
+  grouping: Ref<VehicleGrouping>, slots: Ref<Slot[]>, sortOrders: Ref<SortOrder[]>,
+  metricValue?: (vehicle: Row, slot: Slot) => number | null,
+) {
+  function sortValue(vehicle: Row, key: Exclude<SortKey, 'name'>) {
+    if (key === 'tankType') return typeOrder.get(vehicle.tankType ?? '') ?? null
+    if (key === 'tankLevel') return vehicle.tankLevel
+    return metricValue ? metricValue(vehicle, key) : vehicle[key] ?? null
+  }
 
-export function useVehicleSorting(grouping: Ref<VehicleGrouping>, slots: Ref<Slot[]>, sortOrders: Ref<SortOrder[]>) {
-  function compare(a: VehicleStatisticsRow, b: VehicleStatisticsRow) {
+  function compare(a: Row, b: Row) {
     for (const { key, ascending } of sortOrders.value) {
       if (key === 'name') {
         const comparison = vehicleName(a).localeCompare(vehicleName(b), 'ru')

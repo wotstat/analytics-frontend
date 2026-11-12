@@ -31,14 +31,15 @@ const props = withDefaults(defineProps<{
   options: readonly SelectOption<T>[]
   disabled?: boolean
   placeholder?: string
-}>(), { placeholder: 'Выбрать' })
+  align?: 'left' | 'right' | 'center'
+}>(), { placeholder: 'Выбрать', align: 'left' })
 
 const value = defineModel<T>({ required: true })
 const isDesktop = useMediaQuery('(hover: hover) and (pointer: fine)')
 const menuId = ref(-1)
 const open = computed(() => isContextMenuOpen(menuId.value))
 const selectedOption = computed(() => props.options.find(option => option.value === value.value))
-const label = computed(() => selectedOption.value?.label ?? props.placeholder)
+const label = computed(() => selectedOption.value?.selectedLabel ?? selectedOption.value?.label ?? props.placeholder)
 const isDisabled = computed(() => props.disabled || !props.options.some(option => !option.disabled))
 
 function toggleMenu(event: PointerEvent) {
@@ -51,6 +52,7 @@ function toggleMenu(event: PointerEvent) {
   const target = event.currentTarget as HTMLButtonElement
   const { id } = simpleContextMenu({
     position: target.getBoundingClientRect(),
+    alignX: props.align,
     alignY: 'bottom',
     closeOnScroll: true,
     actionOnPointerUp: true,

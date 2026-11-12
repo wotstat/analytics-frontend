@@ -1,6 +1,6 @@
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { defineParams, useQueryStorage, type QueryParam } from '@/shared/uiKit/queryStorage/useQueryStorage'
-import { arrayParam, setParam } from '@/shared/uiKit/queryStorage/params'
+import { arrayParam, booleanParam, oneOfParam, setParam } from '@/shared/uiKit/queryStorage/params'
 import { firstQueryRegion, regionQueryParam, useSingleRegion } from '@/shared/game/domain/region/regionQueryParam'
 import { queryRegions } from '@/shared/game/domain/region/regions'
 import type { VehicleFilters, VehicleRegion } from '../../vehicles/filters/types'
@@ -16,16 +16,20 @@ import { serializeComparison } from '../../vehicles/timeSeriesCompare/query/code
 import { deserializeComparison } from '../../vehicles/timeSeriesCompare/query/codec/codec'
 import { comparisonSettingsParams } from '../../vehicles/timeSeriesCompare/query/settings'
 import { comparisonAnnotationsParam, comparisonAnnotationKeys, comparisonAnnotationState } from '../../vehicles/timeSeriesCompare/query/annotations'
-import { achievements, type AchievementKind } from '../utils/achievements'
+import { achievementDeltaPeriods, achievements, type AchievementKind } from '../utils/achievements'
 
 const defaults = createLocalVehicleFilters()
+const deltaPeriodParam = oneOfParam(['none', ...achievementDeltaPeriods], 'none', { label: 'delta', key: 'achievements.delta' })
+const sortByDeltaParam = booleanParam(false, { label: 'delta-sort', key: 'achievements.delta-sort' })
 
 function achievementFilters(region: VehicleRegion = 'RU'): VehicleFilters {
   return { ...unrestrictedComparisonFilters(), regions: [region] }
 }
 
 const achievementCompareParam = {
-  label: 'compare', key: 'achievements.compare', priority: -10,
+  label: 'compare',
+  key: 'achievements.compare',
+  priority: -10,
   default: [] as SavedComparisonSource[],
   serialize: (sources: SavedComparisonSource[], context?: { regions: Set<VehicleRegion> }) =>
     serializeComparison(sources, achievementFilters(firstQueryRegion(context?.regions))),
@@ -58,6 +62,8 @@ function createAchievementQueryParams(kind: AchievementKind) {
     nations: vehicleListFilterParams.nations,
     levels: vehicleListFilterParams.levels,
     onlyActual: vehicleListFilterParams.onlyActual,
+    deltaPeriod: deltaPeriodParam,
+    sortByDelta: sortByDeltaParam,
     sort: arrayParam(sortOrderSerializer, [{ key: slots[0], ascending: false }] as SortOrder[], {
       key: `${key}.sort`, priority: 10,
       validate: ({ key }) => key === 'name' || key === 'tankLevel' || key === 'tankType' || slots.includes(key),
@@ -94,14 +100,17 @@ export function useAchievementQueryStorage(kind: AchievementKind) {
   const region = useSingleRegion(p.regions)
   const filters = computed(() => achievementFilters(region.value))
   const comparison = useComparisonSources(filters, p.compare)
+
   const annotations = computed({
     get: () => comparisonAnnotationState(p.annotations.value),
     set: value => { p.annotations.value = comparisonAnnotationKeys(value) },
   })
+
   const metrics = computed<Slot[]>({
     get: () => slots.filter(slot => p.metrics.value.has(slot)),
     set: value => { p.metrics.value = new Set(slots.filter(slot => value.includes(slot))) },
   })
+
   const localFilters = computed<LocalVehicleFilters>({
     get: () => ({
       ...defaults,
@@ -115,8 +124,22 @@ export function useAchievementQueryStorage(kind: AchievementKind) {
     }),
   })
 
+  watch(p.deltaPeriod, period => {
+    if (period === 'none') p.sortByDelta.value = false
+  }, { immediate: true })
+
   return {
-    region, search: p.search, sort: p.sort, localFilters, filters, comparison,
-    metrics, step: p.step, averageWindow: p.averageWindow, annotations,
+    region,
+    search: p.search,
+    sort: p.sort,
+    localFilters,
+    filters,
+    comparison,
+    deltaPeriod: p.deltaPeriod,
+    sortByDelta: p.sortByDelta,
+    metrics,
+    step: p.step,
+    averageWindow: p.averageWindow,
+    annotations,
   }
 }
