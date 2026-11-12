@@ -63,6 +63,7 @@ const horizontal = computed(() => columns.value.length >= 2)
 
   &.columns-1 {
     width: max-content;
+    min-width: min(180px, calc(100vw - 40px));
     max-width: calc(100vw - 40px);
   }
 

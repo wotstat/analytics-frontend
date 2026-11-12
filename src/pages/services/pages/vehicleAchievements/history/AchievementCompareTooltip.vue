@@ -1,9 +1,6 @@
 <template>
   <div class="achievement-compare-tooltip" :class="{ single: metrics.length === 1 }">
-    <div class="header">
-      <b class="period">{{ period }}</b>
-      <span v-if="gameVersion" class="game-version">{{ gameVersion }}</span>
-    </div>
+    <HistoryTooltipHeader class="header" :point="ctx.hit.datum" :horizontal="metrics.length > 1" :game-version />
 
     <table class="values">
       <thead v-if="metrics.length > 1">
@@ -38,7 +35,7 @@ import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
 import type { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
 import type { VehicleHistoryHit } from '../../vehicles/timeSeries/VehicleHistoryChart'
 import type { ComparisonSource } from '../../vehicles/timeSeriesCompare/types'
-import { formatHistoryPeriod } from '../../vehicles/timeSeries/tooltip/formatHistoryPeriod'
+import HistoryTooltipHeader from '../../vehicles/timeSeries/tooltip/HistoryTooltipHeader.vue'
 import { availableSlots, type Slot } from '../../vehicles/vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 import { formatSlotValue } from '../../vehicles/vehicleMetricSelector/utils/formatMetricValue'
 import { achievementSeriesTag } from './achievementSeries'
@@ -49,11 +46,6 @@ const props = defineProps<{
   metrics: readonly Slot[]
   gameVersion?: string | null
 }>()
-
-const period = computed(() => {
-  const { periodStart, periodEnd, step } = props.ctx.hit.datum
-  return formatHistoryPeriod(periodStart, periodEnd, step)
-})
 
 const rows = computed(() => {
   const hits = new Map(props.ctx.hits.map(hit => [hit.interactionTag, hit]))
@@ -91,22 +83,7 @@ const rows = computed(() => {
   font-variant-numeric: tabular-nums;
 
   .header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 2px 12px;
     margin-bottom: 6px;
-
-    .period {
-      color: white;
-      white-space: nowrap;
-    }
-
-    .game-version {
-      color: rgba(255, 255, 255, 0.45);
-      overflow-wrap: anywhere;
-    }
   }
 
   .values {
@@ -200,13 +177,7 @@ const rows = computed(() => {
   }
 
   &.single {
-    min-width: 0;
-
-    .header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0;
-    }
+    min-width: min(180px, calc(100vw - 40px));
 
     .source-cell {
       max-width: 220px;

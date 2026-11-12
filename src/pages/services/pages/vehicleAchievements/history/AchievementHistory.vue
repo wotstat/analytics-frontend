@@ -54,7 +54,7 @@
       <TimeSeriesTooltip v-if="compact" :ctx :sources="tooltipLines"
         :format-value="value => formatSlotValue(ctx.hit.datum.slot, value)" marker-style="glow">
         <template #header="{ horizontal }">
-          <HistoryTooltipHeader :point="ctx.hit.datum" :horizontal :show-metric="false"
+          <HistoryTooltipHeader :point="ctx.hit.datum" :horizontal
             :game-version="versionForPeriod(ctx.hit.datum.periodEnd)" />
         </template>
       </TimeSeriesTooltip>

@@ -1,82 +1,46 @@
 <template>
-  <b v-if="showMetric" class="heading">{{ availableSlots[point.slot].label }}</b>
-  <div class="metadata" :class="{ horizontal }">
-    <template v-if="horizontal">
-      <span v-if="gameVersion" class="game-version">{{ gameVersion }}</span>
-      <span v-if="gameVersion" class="separator">·</span>
-      <span v-if="point.step === 'day'" class="weekday">{{ formatHistoryWeekday(point.periodStart) }}</span>
-      <span v-if="point.step === 'day'" class="separator">·</span>
-      <span class="date">{{ point.step === 'day' ? formatStatisticsDay(point.periodStart)
-        : formatHistoryPeriod(point.periodStart, point.periodEnd, point.step) }}</span>
-    </template>
-    <template v-else>
-      <span class="date">{{ formatHistoryPeriod(point.periodStart, point.periodEnd, point.step) }}</span>
-      <span v-if="gameVersion" class="game-version">{{ gameVersion }}</span>
-    </template>
+  <div class="history-tooltip-header" :class="{ horizontal }">
+    <b class="date">{{ formatHistoryPeriod(point.periodStart, point.periodEnd, point.step) }}</b>
+    <span v-if="gameVersion" class="game-version">{{ gameVersion }}</span>
   </div>
 </template>
 
 <script setup lang="ts">
-import { availableSlots } from '../../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
-import { formatStatisticsDay } from '../../shared/formatStatisticsDay'
-import { formatHistoryPeriod, formatHistoryWeekday } from './formatHistoryPeriod'
+import { formatHistoryPeriod } from './formatHistoryPeriod'
 import type { VehicleHistoryHit } from '../VehicleHistoryChart'
 
-withDefaults(defineProps<{
+defineProps<{
   point: VehicleHistoryHit['datum']
   horizontal: boolean
   gameVersion?: string | null
-  showMetric?: boolean
-}>(), { showMetric: true })
+}>()
 </script>
 
 <style scoped lang="scss">
-.heading {
-  display: block;
-  color: white;
-  overflow-wrap: anywhere;
+.history-tooltip-header {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
   text-align: left;
-}
 
-.metadata {
-  span {
-    display: block;
-  }
-
-  .date,
-  .game-version {
-    color: rgba(255, 255, 255, 0.5);
-    text-align: left;
-  }
-
-  .game-version {
+  .date {
+    color: white;
     overflow-wrap: anywhere;
   }
 
-  .weekday {
-    flex: none;
-    width: 2ch;
-    color: rgba(255, 255, 255, 0.5);
-    text-align: center;
-  }
-
-  .separator {
-    color: rgba(255, 255, 255, 0.5);
+  .game-version {
+    color: rgba(255, 255, 255, 0.45);
+    overflow-wrap: anywhere;
   }
 
   &.horizontal {
-    display: flex;
+    flex-direction: row;
     flex-wrap: wrap;
-    justify-content: flex-end;
-    column-gap: 6px;
-    min-width: 0;
-    margin-left: auto;
-    text-align: right;
-
-    .date,
-    .game-version {
-      text-align: right;
-    }
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 2px 12px;
   }
 }
 </style>

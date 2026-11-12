@@ -89,7 +89,9 @@ export function useGameVersionAnnotations(
       if (!row) return []
 
       const version = row.gameVersionFull.replace(/^v\./, '')
-      const label = version.endsWith('#0000') ? version.replace(/\.\d+\s+#0000$/, '') : version
+      let label = version
+      if (version.endsWith('#0000')) label = version.replace(/\.\d+\s+#0000$/, '')
+      else if (!visibility.value.micropatches) label = version.replace(/\s+#\d+$/, '')
       return [selected.size > 1 ? `[${region}] ${label}` : label]
     })
 

@@ -1,7 +1,7 @@
 import { availableSlots, type Slot } from '../vehicleMetrics/vehicleMetrics'
 
-const integer = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 })
-const decimal = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const integer = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
+const decimal = new Intl.NumberFormat('en-US', { useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const compactUnits = [
   { value: 1_000, suffix: 'k' },
   { value: 1_000_000, suffix: 'M' },
