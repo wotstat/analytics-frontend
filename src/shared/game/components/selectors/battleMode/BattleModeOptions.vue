@@ -19,19 +19,19 @@
 
   <ResponsivePanelPopover v-model="submenuOpen" :target="target" :title="submenuOption?.label" :width="280" density="compact"
     :offset="4" :placement="['bottom-end', 'top-end', 'right-start-float', 'left-start-float']">
-    <template v-if="submenuOption" #toolbar>
-      <SelectionTile density="compact" class="any-variant" v-bind="battleAttributes(submenuOption.key)"
+    <template v-if="submenuOption" #toolbar="{ isModal }">
+      <SelectionTile :density="isModal ? 'standard' : 'compact'" class="any-variant" v-bind="battleAttributes(submenuOption.key)"
         :selected="selected.includes(submenuOption.key)" :class="{ archived: submenuOption.archived }"
         :accent-color="submenuOption.archived ? archiveAccent : undefined" @select="emit('select', submenuOption.key, $event)">
         Любой</SelectionTile>
     </template>
-    <template #content>
-      <div class="mode-submenu" @pointerdown.stop @pointerup.stop @click.stop
+    <template #content="{ isModal }">
+      <div class="mode-submenu" :class="{ 'modal-mode': isModal }" @pointerdown.stop @pointerup.stop @click.stop
         @keydown.esc.stop.prevent="closeChildren()">
         <section v-for="(group, index) in submenuGroups" :key="index" class="submenu-group">
           <h3 v-if="group.title && showGroupTitles">{{ group.title }}</h3>
           <div class="mode-options">
-            <SelectionTile v-for="option in group.options" :key="option.key" density="compact"
+            <SelectionTile v-for="option in group.options" :key="option.key" :density="isModal ? 'standard' : 'compact'"
               v-bind="battleAttributes(option.key)" :selected="selected.includes(option.key)"
               :class="{ archived: option.archived }" :accent-color="option.archived ? archiveAccent : undefined"
               @select="emit('select', option.key, $event)">
@@ -135,7 +135,7 @@ function closeChildren() {
 .archive-label {
   margin-left: auto;
   padding-left: 8px;
-  font-size: 11px;
+  font-size: var(--battle-mode-archive-font-size, 11px);
   opacity: 0.7;
 }
 
@@ -196,6 +196,14 @@ function closeChildren() {
   display: flex;
   flex-direction: column;
   gap: 6px;
+
+  &.modal-mode {
+    --battle-mode-archive-font-size: 13px;
+
+    .submenu-group h3 {
+      font-size: 14px;
+    }
+  }
 }
 
 .any-variant.selection-tile.compact {

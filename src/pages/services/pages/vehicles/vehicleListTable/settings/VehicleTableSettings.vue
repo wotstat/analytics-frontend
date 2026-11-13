@@ -3,38 +3,40 @@
 
   <ResponsivePanelPopover v-model="open" :target="target" title="Настройки таблицы" :width="250" density="compact"
     :placement="['bottom-end', 'bottom-float', 'top-end']">
-    <template #content>
-      <div v-if="!appearanceOnly" class="options panel-section">
-        <h3>Показывать значения</h3>
-        <label v-for="option in vehicleStatisticsPeriods" :key="option.value" class="option">
-          <input v-model="period" type="radio" name="vehicle-table-period" :value="option.value">
-          {{ option.label }}
-        </label>
-      </div>
-      <div class="options panel-section">
-        <h3>Оформление</h3>
-        <label class="option">
-          <input v-model="showValueBars" type="checkbox">
-          Индикаторы значений
-        </label>
-        <label v-if="showValueBars" class="option palette-option">
-          <input v-model="extendedPalette" type="checkbox">
-          Расширенная палитра
-        </label>
-      </div>
-      <div class="options panel-section">
-        <h3>Сортировка</h3>
-        <label class="option">
-          <input v-model="pinCompared" type="checkbox">
-          Закреплять строки из сравнения
-        </label>
-      </div>
-      <div v-if="showAdvanced" class="options panel-section">
-        <h3>История данных</h3>
-        <label class="option">
-          <input v-model="fromBeginning" type="checkbox">
-          Начинать с самого начала
-        </label>
+    <template #content="{ isModal }">
+      <div class="table-settings" :class="{ 'modal-mode': isModal }">
+        <div v-if="!appearanceOnly" class="options panel-section">
+          <h3>Показывать значения</h3>
+          <label v-for="option in vehicleStatisticsPeriods" :key="option.value" class="option">
+            <input v-model="period" type="radio" name="vehicle-table-period" :value="option.value">
+            {{ option.label }}
+          </label>
+        </div>
+        <div class="options panel-section">
+          <h3>Оформление</h3>
+          <label class="option">
+            <input v-model="showValueBars" type="checkbox">
+            Индикаторы значений
+          </label>
+          <label v-if="showValueBars" class="option palette-option">
+            <input v-model="extendedPalette" type="checkbox">
+            Расширенная палитра
+          </label>
+        </div>
+        <div class="options panel-section">
+          <h3>Сортировка</h3>
+          <label class="option">
+            <input v-model="pinCompared" type="checkbox">
+            Закреплять строки из сравнения
+          </label>
+        </div>
+        <div v-if="showAdvanced" class="options panel-section">
+          <h3>История данных</h3>
+          <label class="option">
+            <input v-model="fromBeginning" type="checkbox">
+            Начинать с самого начала
+          </label>
+        </div>
       </div>
     </template>
   </ResponsivePanelPopover>
@@ -66,7 +68,7 @@ function toggle(event: MouseEvent) {
 
 <style scoped lang="scss">
 .options {
-  .option + .option {
+  .option+.option {
     margin-top: 3px;
   }
 
@@ -86,6 +88,29 @@ function toggle(event: MouseEvent) {
     input {
       margin: 0;
       accent-color: var(--blue-thin-color);
+    }
+  }
+}
+
+.table-settings.modal-mode {
+  font-size: 16px;
+
+  .options {
+    h3 {
+      font-size: 16px;
+    }
+
+    .option {
+      min-height: 25px;
+      padding-block: 4px;
+      box-sizing: border-box;
+      gap: 10px;
+
+      input {
+        flex: none;
+        width: 18px;
+        height: 18px;
+      }
     }
   }
 }

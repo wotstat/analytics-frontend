@@ -114,8 +114,8 @@ const emit = defineEmits<{
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 24px;
-      height: 24px;
+      width: calc(var(--selection-tile-action-width, 30px) - 8px);
+      height: calc(var(--selection-tile-action-width, 30px) - 8px);
       border-radius: 5px;
       pointer-events: none;
       transform: translate(-50%, -50%);

@@ -7,10 +7,10 @@
   <ResponsivePanelPopover v-model="open" :target="trigger" :width="380" title="Выбор режимов боя"
     :placement="['bottom-start', 'bottom-float', 'top-start', 'right-float']" @content-scroll="activeKey = null"
     :scrollbar-offsets="[14, 14]" @mode-change="activeKey = null">
-    <template #header-content>
-      <div class="header-filters">
+    <template #header-content="{ isModal }">
+      <div class="header-filters" :class="{ 'modal-mode': isModal }">
         <div class="search-header-line">
-          <SearchLine v-model="search" placeholder="Поиск режима" />
+          <SearchLine v-model="search" class="mode-search" placeholder="Поиск режима" />
           <div v-if="!game && regions === undefined" class="game-select">
             <div class="vr"></div>
             <button v-for="variant in gameOptions" :key="variant.key" type="button" class="variant mt-font selectable"
@@ -23,19 +23,21 @@
       </div>
     </template>
 
-    <template #content>
-      <SelectionTile :selected="model.length === 0" data-battle-mode="*" data-battle-gameplay="*" @select="selectAll">
-        Все режимы</SelectionTile>
-      <section v-for="category in visibleCategories" :key="category.title" class="mode-category">
-        <h3>{{ category.title }}</h3>
-        <BattleModeOptions v-model:active-key="activeKey" :options="category.options" :selected="model"
-          :archived-selected="archivedSelected" :search @select="select" />
-      </section>
-      <p v-if="!visibleCategories.length" class="mode-notice">Ничего не найдено</p>
-      <p v-if="loading" class="mode-notice">Проверка дополнительных режимов…</p>
-      <p v-else-if="failed" class="mode-notice">
-        Не удалось загрузить дополнительные режимы. <button type="button" @click="load">Повторить</button>
-      </p>
+    <template #content="{ isModal }">
+      <div class="mode-list" :class="{ 'modal-mode': isModal }">
+        <SelectionTile :selected="model.length === 0" data-battle-mode="*" data-battle-gameplay="*" @select="selectAll">
+          Все режимы</SelectionTile>
+        <section v-for="category in visibleCategories" :key="category.title" class="mode-category">
+          <h3>{{ category.title }}</h3>
+          <BattleModeOptions v-model:active-key="activeKey" :options="category.options" :selected="model"
+            :archived-selected="archivedSelected" :search @select="select" />
+        </section>
+        <p v-if="!visibleCategories.length" class="mode-notice">Ничего не найдено</p>
+        <p v-if="loading" class="mode-notice">Проверка дополнительных режимов…</p>
+        <p v-else-if="failed" class="mode-notice">
+          Не удалось загрузить дополнительные режимы. <button type="button" @click="load">Повторить</button>
+        </p>
+      </div>
     </template>
 
     <template v-if="multiple && selectionPriority === 'single'" #footer>
@@ -230,6 +232,44 @@ function selectAll(event: MouseEvent) {
       }
     }
   }
+
+  &.modal-mode {
+    .search-header-line {
+      gap: 8px;
+
+      .mode-search {
+        flex: 1;
+        min-width: 0;
+        height: 40px;
+
+        :deep(input) {
+          font-size: 16px;
+        }
+
+        :deep(.clear-input) {
+          padding: 10px;
+        }
+      }
+
+      .game-select .variant {
+        height: 34px;
+        padding-inline: 10px;
+        font-size: 14px;
+      }
+    }
+
+    .archive-toggle {
+      min-height: 34px;
+      gap: 8px;
+      font-size: 16px;
+
+      input {
+        flex: none;
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
 }
 
 .archive-toggle {
@@ -266,6 +306,24 @@ function selectAll(event: MouseEvent) {
     background: transparent;
     color: var(--blue-thin-color);
     padding: 0;
+  }
+}
+
+.mode-list.modal-mode {
+  --selection-tile-action-width: 35px;
+  --battle-mode-archive-font-size: 13px;
+
+  :deep(.selection-tile) {
+    --selection-tile-font-size: 16px;
+    --selection-tile-min-height: 42px;
+  }
+
+  .mode-category h3 {
+    font-size: 16px;
+  }
+
+  .mode-notice {
+    font-size: 13px;
   }
 }
 </style>

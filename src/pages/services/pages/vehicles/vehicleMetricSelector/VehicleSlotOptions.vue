@@ -1,7 +1,14 @@
 <template>
-  <ResponsivePanelPopover v-model="open" :target :placement :title :width="900" :breakpoint="900"
+  <ResponsivePanelPopover
+    v-model="open"
+    :target :placement :title
+    :width="900"
+    :breakpoint="900"
     :scrollbar-offsets="[40, 14]"
-    @content-scroll="closeOptions()" @mode-change="closeOptions()" class="vehicle-slot-options">
+    @content-scroll="closeOptions()"
+    @mode-change="closeOptions()"
+    class="vehicle-slot-options">
+
     <template v-if="maxSlots !== undefined" #toolbar="{ isModal }">
       <div class="selection-controls" :class="{ 'modal-mode': isModal }">
 
@@ -19,10 +26,13 @@
       </div>
     </template>
 
-    <template #content>
-      <div class="column-list">
-        <section v-for="category in metricCategories" :key="category.title" class="category panel-section"
+    <template #content="{ isModal }">
+      <div class="column-list" :class="{ 'modal-mode': isModal }">
+        <section v-for="category in metricCategories"
+          :key="category.title"
+          class="category panel-section"
           :style="{ '--panel-heading-color': category.color }">
+
           <h3 class="category-heading">
             <span>{{ category.title }}</span>
             <span v-if="category.note || category.helpText" class="category-details">
@@ -31,6 +41,7 @@
                 v-tooltip="{ text: category.helpText, disabled: !open, placement: ['top-float', 'bottom-float', 'left-float'] }">?</span>
             </span>
           </h3>
+
           <div class="tiles">
             <SelectionTile v-for="tile in category.tiles" :key="tile.id" class="tile-option"
               v-tooltip="{ text: tile.label, disabled: !open || !overflowingTiles[tile.id], placement: ['top-float', 'bottom-float'] }"
@@ -47,6 +58,7 @@
                 <span v-if="tile.subtitle" class="tile-subtitle">{{ tile.subtitle }}</span>
               </span>
               <span v-if="selectionLabel(tile)" class="selection-value">{{ selectionLabel(tile) }}</span>
+
               <template #action>
                 <span class="dots"></span>
                 <span v-if="multiple && selectedTileValues(tile, selected).length > 1" class="selection-badge"
@@ -59,8 +71,13 @@
         </section>
       </div>
 
-      <VehicleMetricOptionsPopover v-if="optionsTile" v-model="optionsOpen" :tile="optionsTile"
-        :target="optionsTrigger" :selected :max-slots @select="emit('select', $event)" />
+      <VehicleMetricOptionsPopover v-if="optionsTile"
+        v-model="optionsOpen"
+        :tile="optionsTile"
+        :target="optionsTrigger"
+        :selected
+        :max-slots
+        @select="emit('select', $event)" />
     </template>
   </ResponsivePanelPopover>
 </template>
@@ -225,32 +242,73 @@ function clearOrResetSelection() {
         }
       }
 
-      .tile-text {
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-        min-width: 0;
+      .tile-option {
+
+        .tile-text {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+          min-width: 0;
+        }
+
+        .tile-subtitle {
+          color: rgba(255, 255, 255, 0.45);
+          font-size: 11px;
+          line-height: 1.3;
+        }
+
+        .selection-value {
+          flex: none;
+          margin-left: auto;
+          color: rgba(255, 255, 255, 0.55);
+          font-size: 11px;
+          white-space: nowrap;
+        }
+
+        .tile-icon {
+          flex: none;
+          width: 34px;
+          height: 34px;
+          margin: -2px;
+        }
+      }
+    }
+  }
+
+  &.modal-mode {
+    .category {
+
+      --selection-tile-action-width: 35px;
+
+      .category-heading {
+        font-size: 16px;
       }
 
-      .tile-subtitle {
-        color: rgba(255, 255, 255, 0.45);
-        font-size: 11px;
-        line-height: 1.3;
-      }
+      .tiles {
 
-      .selection-value {
-        flex: none;
-        margin-left: auto;
-        color: rgba(255, 255, 255, 0.55);
-        font-size: 11px;
-        white-space: nowrap;
-      }
+        .tile-option {
+          --selection-tile-main-padding: 4px 10px;
 
-      .tile-icon {
-        flex: none;
-        width: 34px;
-        height: 34px;
-        margin: -2px;
+          .tile-text {
+            font-size: 16px;
+            line-height: 1.2;
+          }
+
+          .tile-icon {
+            width: 40px;
+            height: 40px;
+            margin: -3px;
+          }
+
+          .tile-subtitle {
+            font-size: 13px;
+          }
+
+          .selection-value {
+            font-size: 13px;
+          }
+
+        }
       }
     }
   }

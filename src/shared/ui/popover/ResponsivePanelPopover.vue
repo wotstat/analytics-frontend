@@ -12,6 +12,9 @@
         <CloseButton @click="open = false" />
       </div>
     </template>
+    <template v-if="$slots.controls" #controls>
+      <slot name="controls" :is-modal="isModal" />
+    </template>
     <template v-if="$slots.toolbar || $slots['header-content']" #header-content>
       <div v-if="$slots.toolbar" class="popup-header-content"><slot name="toolbar" :is-modal="isModal" /></div>
       <div v-if="$slots['header-content']" class="popup-header-content"><slot name="header-content" :is-modal="isModal" /></div>

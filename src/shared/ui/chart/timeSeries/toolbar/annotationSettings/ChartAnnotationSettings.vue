@@ -6,16 +6,18 @@
 
   <ResponsivePanelPopover v-model="open" :target="target" :title density="compact" :width
     :placement="['bottom-end', 'bottom-float', 'top-end']">
-    <template #content>
-      <div v-for="group in visibleGroups" :key="group.id" class="panel-section">
-        <h3 v-if="group.label">{{ group.label }}</h3>
-        <div class="annotation-options" :class="{ row: group.layout === 'row' }">
-          <SelectionTile v-for="option in group.options" :key="option.id" class="annotation-option"
-            :class="classNames(option.classes)" density="compact"
-            :selected="option.selected" :disabled="option.disabled"
-            @select="emit('toggle', group.id, option.id)">
-            {{ option.label }}
-          </SelectionTile>
+    <template #content="{ isModal }">
+      <div class="annotation-settings" :class="{ 'modal-mode': isModal }">
+        <div v-for="group in visibleGroups" :key="group.id" class="panel-section">
+          <h3 v-if="group.label">{{ group.label }}</h3>
+          <div class="annotation-options" :class="{ row: group.layout === 'row' }">
+            <SelectionTile v-for="option in group.options" :key="option.id" class="annotation-option"
+              :class="classNames(option.classes)" :density="isModal ? 'standard' : 'compact'"
+              :selected="option.selected" :disabled="option.disabled"
+              @select="emit('toggle', group.id, option.id)">
+              {{ option.label }}
+            </SelectionTile>
+          </div>
         </div>
       </div>
     </template>
@@ -94,5 +96,24 @@ const target = computed(() => trigger.value?.element ?? null)
 
 .row .annotation-option {
   flex-basis: auto;
+}
+
+.annotation-settings.modal-mode {
+  .panel-section>h3 {
+    font-size: 16px;
+  }
+
+  .annotation-options {
+    gap: 6px;
+
+    &.row {
+      flex-wrap: wrap;
+    }
+  }
+
+  .annotation-option {
+    --selection-tile-font-size: 16px;
+    --selection-tile-min-height: 40px;
+  }
 }
 </style>

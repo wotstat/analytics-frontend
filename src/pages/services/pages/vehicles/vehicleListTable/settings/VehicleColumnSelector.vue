@@ -4,10 +4,17 @@
     Столбцы · {{ selected.length }}/{{ maxSlots }}
   </button>
 
-  <VehicleSlotOptions v-model:open="open" :target="trigger"
-    :placement="['bottom-end', 'bottom-float', 'top-end', 'left-float', 'top-end']" title="Выбор столбцов" :selected
-    :max-slots="maxSlots" multiple @select="toggle" @toggle-tile="toggleTile"
-    @clear="selected = []" @reset="reset" />
+  <VehicleSlotOptions v-model:open="open"
+    :target="trigger"
+    :placement="['bottom-end', 'bottom-float', 'top-end', 'left-float', 'top-end']"
+    title="Выбор столбцов"
+    :selected
+    :max-slots="maxSlots"
+    multiple
+    @select="toggle"
+    @toggle-tile="toggleTile"
+    @clear="selected = []"
+    @reset="reset" />
 </template>
 
 <script setup lang="ts">

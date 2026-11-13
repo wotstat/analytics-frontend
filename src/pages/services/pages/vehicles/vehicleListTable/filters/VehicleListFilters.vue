@@ -7,12 +7,13 @@
 
   <ResponsivePanelPopover v-model="open" :target="target" title="Фильтр таблицы" :width="360"
     :placement="['bottom-start', 'bottom-float', 'top-start']">
-    <template #toolbar>
-      <ToolbarButton class="reset-button" :icon="Reload" variant="round" :disabled="!activeCount" @click="resetFilters" />
+    <template #controls>
+      <ToolbarButton class="reset-button" :icon="Reload" variant="round" :disabled="!activeCount"
+        @click="resetFilters" />
     </template>
 
-    <template #content>
-      <div class="filters-content">
+    <template #content="{ isModal }">
+      <div class="filters-content" :class="{ 'modal-mode': isModal }">
         <section class="group panel-section">
           <h3 class="group-label">Показывать</h3>
           <div class="vehicle-options">
@@ -180,8 +181,6 @@ function selectOption<T>(selected: readonly T[], option: T, options: readonly T[
 }
 
 .filters-content {
-  container-type: inline-size;
-
   .checkbox-option {
     display: flex;
     align-items: center;
@@ -248,14 +247,6 @@ function selectOption<T>(selected: readonly T[], option: T, options: readonly T[
         justify-content: center;
         gap: 1px;
 
-        @media (max-width: 700px) {
-          @container (max-width: 400px) {
-            display: grid;
-            grid-template-columns: repeat(6, minmax(0, 1fr));
-            row-gap: 4px;
-          }
-        }
-
         .nation {
           box-sizing: border-box;
           flex: 1;
@@ -291,6 +282,65 @@ function selectOption<T>(selected: readonly T[], option: T, options: readonly T[
             .flag {
               filter: brightness(1.8);
             }
+          }
+        }
+      }
+    }
+  }
+
+  &.modal-mode {
+    .group-label {
+      font-size: 16px;
+    }
+
+    .option {
+      height: 28px;
+      font-size: 16px;
+    }
+
+    .levels,
+    .types,
+    .thresholds {
+      gap: 6px;
+    }
+
+    .levels {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+
+    .checkbox-option {
+      min-height: 36px;
+      gap: 10px;
+      font-size: 16px;
+
+      input {
+        flex: none;
+        width: 18px;
+        height: 18px;
+      }
+    }
+
+    .group .vehicle-options {
+      gap: 10px;
+
+      .types .type-icon {
+        width: 22px;
+        height: 22px;
+      }
+
+      .nations {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 4px;
+
+        .nation {
+          height: 30px;
+
+          .flag {
+            flex: none;
+            width: 100%;
+            max-width: 38px;
           }
         }
       }
