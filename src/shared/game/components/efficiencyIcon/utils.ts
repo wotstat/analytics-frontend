@@ -10,7 +10,7 @@ export const shared = [
   'stronghold',
 
   'mastery-1', 'mastery-2', 'mastery-3', 'mastery-m', 'mastery-percent',
-  'moe-1', 'moe-2', 'moe-3', 'moe-4', 'moe-percent'
+  'moe-1', 'moe-2', 'moe-3', 'moe-4', 'moe-percent', 'moe-dmg'
 ] as const
 
 export const efficiency = [
@@ -30,6 +30,7 @@ export const efficiency = [
   'chuck-score', 'chuck-score-avg', 'chuck-score-max',
   'crits', 'crits-avg', 'crits-max',
   'discover', 'discover-avg', 'discover-max',
+  'tank-hit', 'tank-hit-avg', 'tank-hit-max',
   'distance', 'distance-avg', 'distance-max',
   'dmg', 'dmg-avg', 'dmg-max',
   'shots', 'shots-avg', 'shots-max',
@@ -68,6 +69,7 @@ export const efficiencyWithMods = [
   { value: 'block', modifications: ['block', 'block-avg', 'block-max'] },
   { value: 'assist', modifications: ['assist', 'assist-avg', 'assist-max'] },
   { value: 'discover', modifications: ['discover', 'discover-avg', 'discover-max'] },
+  { value: 'tank-hit', modifications: ['tank-hit', 'tank-hit-avg', 'tank-hit-max'] },
   { value: 'assist-radio', modifications: ['assist-radio', 'assist-radio-avg', 'assist-radio-max'] },
   { value: 'assist-track', modifications: ['assist-track', 'assist-track-avg', 'assist-track-max'] },
   { value: 'stun', modifications: ['stun', 'stun-avg', 'stun-max'] },
@@ -136,6 +138,7 @@ export const inBattleEfficiency = [
   'crits',
   'chuck-score',
   'discover',
+  'tank-hit',
   'distance',
   'dmg',
   'fire',
