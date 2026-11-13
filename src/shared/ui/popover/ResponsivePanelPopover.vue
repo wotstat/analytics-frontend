@@ -119,6 +119,11 @@ function close() {
         flex: none;
         align-items: center;
         gap: 10px;
+
+        .toolbar-button.variant-round {
+          --toolbar-button-size: 30px;
+          --toolbar-icon-size: 16px;
+        }
       }
     }
   }
