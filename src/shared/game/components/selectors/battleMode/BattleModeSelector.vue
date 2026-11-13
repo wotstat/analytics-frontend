@@ -4,12 +4,11 @@
     <DropdownArrow class="mode-arrow" :expanded="open" />
   </button>
 
-  <ResponsivePanelPopover v-model="open" :target="trigger" :width="380"
+  <ResponsivePanelPopover v-model="open" :target="trigger" :width="380" title="Выбор режимов боя"
     :placement="['bottom-start', 'bottom-float', 'top-start', 'right-float']" @content-scroll="activeKey = null"
     :scrollbar-offsets="[14, 14]" @mode-change="activeKey = null">
-    <template #header>
-      <header class="panel-header">
-        <h2 class="panel-header-title">Выбор режимов боя</h2>
+    <template #header-content>
+      <div class="header-filters">
         <div class="search-header-line">
           <SearchLine v-model="search" placeholder="Поиск режима" />
           <div v-if="!game && regions === undefined" class="game-select">
@@ -21,7 +20,7 @@
           </div>
         </div>
         <label class="archive-toggle"><input v-model="showArchived" type="checkbox">Отображать архивные</label>
-      </header>
+      </div>
     </template>
 
     <template #content>
@@ -182,12 +181,11 @@ function selectAll(event: MouseEvent) {
   }
 }
 
-header {
+.header-filters {
   .search-header-line {
     display: flex;
     gap: 5px;
     align-items: center;
-    margin-top: 8px;
 
     .game-select {
       display: contents;

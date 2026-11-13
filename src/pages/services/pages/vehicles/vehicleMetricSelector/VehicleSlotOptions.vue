@@ -2,7 +2,7 @@
   <ResponsivePanelPopover v-model="open" :target :placement :title :width="900" :breakpoint="900"
     :scrollbar-offsets="[40, 14]"
     @content-scroll="closeOptions()" @mode-change="closeOptions()" class="vehicle-slot-options">
-    <template v-if="maxSlots !== undefined" #header-content="{ isModal }">
+    <template v-if="maxSlots !== undefined" #toolbar="{ isModal }">
       <div class="selection-controls" :class="{ 'modal-mode': isModal }">
 
         <span class="selected-count">Выбрано {{ selected.length }} из {{ maxSlots }}</span>

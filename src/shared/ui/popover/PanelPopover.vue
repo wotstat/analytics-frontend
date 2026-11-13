@@ -135,8 +135,8 @@ const panelStyle = computed(() => ({
 
   .panel-header-content {
     flex: none;
+    width: 100%;
     min-width: 0;
-    margin-left: auto;
   }
 
   .panel-footer {
