@@ -180,6 +180,8 @@ function selectOption<T>(selected: readonly T[], option: T, options: readonly T[
 }
 
 .filters-content {
+  container-type: inline-size;
+
   .checkbox-option {
     display: flex;
     align-items: center;
@@ -246,10 +248,18 @@ function selectOption<T>(selected: readonly T[], option: T, options: readonly T[
         justify-content: center;
         gap: 1px;
 
+        @media (max-width: 700px) {
+          @container (max-width: 400px) {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            row-gap: 4px;
+          }
+        }
+
         .nation {
           box-sizing: border-box;
           flex: 1;
-          height: 20px;
+          height: auto;
           border-radius: 5px;
           background: transparent;
           padding: 2px;
@@ -257,6 +267,7 @@ function selectOption<T>(selected: readonly T[], option: T, options: readonly T[
           .flag {
             flex: 1;
             width: 10px;
+            max-width: 30px;
             min-width: auto;
             border-radius: 3px;
             pointer-events: none;
