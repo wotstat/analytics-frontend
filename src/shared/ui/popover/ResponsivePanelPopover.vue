@@ -1,6 +1,6 @@
 <template>
   <PanelPopover v-if="!isModal" v-bind="panelProps" v-model="panelOpen" @content-scroll="emit('contentScroll', $event)">
-    <template v-for="(_, name) in $slots" #[name]><slot :name="name" /></template>
+    <template v-for="(_, name) in $slots" #[name]><slot :name="name" :is-modal="isModal" /></template>
   </PanelPopover>
 
   <ModalWindow v-else :display="open" :title="title ?? ''" class="responsive-panel-popup"
@@ -8,16 +8,21 @@
     :style="{ '--panel-popup-width': `${width ?? 360}px` }" @close="close">
     <template v-if="$slots.header" #header>
       <div class="popup-header">
-        <div class="custom-header"><slot name="header" /></div>
+        <div class="custom-header"><slot name="header" :is-modal="isModal" /></div>
         <CloseButton @click="open = false" />
       </div>
     </template>
-    <template v-else-if="$slots.toolbar" #controls><slot name="toolbar" /></template>
+    <template v-else-if="$slots.toolbar" #controls><slot name="toolbar" :is-modal="isModal" /></template>
+    <template v-if="$slots['header-content']" #header-content>
+      <div class="popup-header-content"><slot name="header-content" :is-modal="isModal" /></div>
+    </template>
     <PanelContent :density :scroll-mode="scrollMode" :scrollbar-offsets="scrollbarOffsets"
       @scroll="emit('contentScroll', $event)">
-      <slot name="content"><slot /></slot>
+      <slot name="content" :is-modal="isModal"><slot :is-modal="isModal" /></slot>
     </PanelContent>
-    <template v-if="$slots.footer" #footer-content><div class="popup-footer"><slot name="footer" /></div></template>
+    <template v-if="$slots.footer" #footer-content>
+      <div class="popup-footer"><slot name="footer" :is-modal="isModal" /></div>
+    </template>
   </ModalWindow>
 </template>
 
@@ -143,6 +148,10 @@ function close() {
         font-size: 18px;
       }
     }
+  }
+
+  .popup-header-content {
+    padding: 0 var(--panel-padding) var(--panel-padding);
   }
 
   .popup-footer {

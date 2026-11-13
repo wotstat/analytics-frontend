@@ -1,12 +1,21 @@
 <template>
-  <ResponsivePanelPopover v-model="open" :target :placement :title :width="900" :breakpoint="900" :scrollbar-offsets="[40, 14]"
+  <ResponsivePanelPopover v-model="open" :target :placement :title :width="900" :breakpoint="900"
+    :scrollbar-offsets="[40, 14]"
     @content-scroll="closeOptions()" @mode-change="closeOptions()" class="vehicle-slot-options">
-    <template v-if="maxSlots !== undefined" #toolbar>
-      <div class="selection-controls">
+    <template v-if="maxSlots !== undefined" #header-content="{ isModal }">
+      <div class="selection-controls" :class="{ 'modal-mode': isModal }">
+
         <span class="selected-count">Выбрано {{ selected.length }} из {{ maxSlots }}</span>
-        <ToolbarButton v-if="multiple" :icon="selected.length ? ClearIcon : ResetIcon" size="small" class="icon-button"
-          v-tooltip.instant="{ text: selected.length ? 'Очистить' : 'По умолчанию', placement: ['top-float', 'bottom-float'], viewportOffset: 5 }"
-          @click="clearOrResetSelection" />
+
+        <ToolbarButton v-if="multiple" :variant="isModal ? 'surface' : 'plain'"
+          size="small"
+          :icon="isModal ? undefined : actionIcon"
+          :class="{ 'selection-action': isModal }"
+          v-tooltip.instant="{ text: actionLabel, disabled: isModal, placement: ['top-float', 'bottom-float'], viewportOffset: 5 }"
+          @click="clearOrResetSelection">
+          <component :is="actionIcon" />
+          <span>{{ actionLabel }}</span>
+        </ToolbarButton>
       </div>
     </template>
 
@@ -58,9 +67,9 @@
 
 <script setup lang="ts">
 import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
-import ClearIcon from '@/assets/icons/x-bold.svg'
+import ClearIcon from '@/assets/icons/x.svg'
 import ResetIcon from '@/assets/icons/reset.svg'
-import { ref, shallowRef, watch } from 'vue'
+import { computed, ref, shallowRef, watch } from 'vue'
 import ResponsivePanelPopover from '@/shared/ui/popover/ResponsivePanelPopover.vue'
 import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
@@ -78,6 +87,9 @@ const props = defineProps<{
   maxSlots?: number
   multiple?: boolean
 }>()
+
+const actionIcon = computed(() => props.selected.length ? ClearIcon : ResetIcon)
+const actionLabel = computed(() => props.selected.length ? 'Очистить' : 'По умолчанию')
 
 const open = defineModel<boolean>('open', { default: false })
 const emit = defineEmits<{
@@ -134,6 +146,7 @@ function clearOrResetSelection() {
 .selection-controls {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   min-height: 20px;
 
@@ -141,6 +154,24 @@ function clearOrResetSelection() {
     color: rgba(255, 255, 255, 0.55);
     font-size: 12px;
     line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  &.modal-mode {
+    .selected-count {
+      color: inherit;
+      font-size: inherit;
+    }
+  }
+
+  .selection-action {
+    --toolbar-button-width: auto;
+    --toolbar-button-height: 30px;
+
+    display: flex;
+    gap: 6px;
+    padding: 0 12px 0 8px;
+    font-size: 14px;
     white-space: nowrap;
   }
 }

@@ -51,27 +51,29 @@ const teleportTarget = computed(() => props.teleportTo ?? getPopoverRoot())
 let animationHandle: number | null = null
 const isTargetOutsideViewport = ref(false)
 
-function isInsideTarget(node: Node) {
+function isInside(event: PointerEvent) {
+  const path = event.composedPath()
+  if (popupContainer.value && path.includes(popupContainer.value)) return true
   const target = props.target
-  return target != null && 'contains' in target && target.contains(node)
+  return target != null && 'contains' in target && path.includes(target)
 }
 
 useEventListener(window, 'pointerdown', (event: PointerEvent) => {
   if (!props.display) return
   if (!popupContainer.value) return
-  if (!popupContainer.value.contains(event.target as Node) && !isInsideTarget(event.target as Node)) emit('pointerDownOutside', event)
+  if (!isInside(event)) emit('pointerDownOutside', event)
 })
 
 useEventListener(window, 'pointerup', (event: PointerEvent) => {
   if (!props.display) return
   if (!popupContainer.value) return
-  if (!popupContainer.value.contains(event.target as Node) && !isInsideTarget(event.target as Node)) emit('pointerUpOutside', event)
+  if (!isInside(event)) emit('pointerUpOutside', event)
 })
 
 useEventListener(window, 'click', (event: PointerEvent) => {
   if (!props.display) return
   if (!popupContainer.value) return
-  if (!popupContainer.value.contains(event.target as Node) && !isInsideTarget(event.target as Node)) emit('pointerClickOutside', event)
+  if (!isInside(event)) emit('pointerClickOutside', event)
 })
 
 // viewportOffset сжимает вьюпорт со всех сторон — так же, как в generateBbox

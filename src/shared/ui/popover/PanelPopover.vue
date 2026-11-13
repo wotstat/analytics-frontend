@@ -4,10 +4,13 @@
     <div class="panel-popover" :class="{ compact: density === 'compact', 'child-scroll': scrollMode === 'child' }"
       :style="panelStyle">
       <slot v-if="$slots.header" name="header" />
-      <header v-else-if="title || $slots.toolbar" class="panel-header panel-header--row">
+      <header v-else-if="title || $slots.toolbar || $slots['header-content']" class="panel-header panel-header--row">
         <h2 v-if="title" class="panel-header-title">{{ title }}</h2>
         <div v-if="$slots.toolbar" class="panel-toolbar">
           <slot name="toolbar" />
+        </div>
+        <div v-if="$slots['header-content']" class="panel-header-content">
+          <slot name="header-content" />
         </div>
       </header>
 
@@ -127,6 +130,12 @@ const panelStyle = computed(() => ({
     flex: none;
     align-items: center;
     gap: 10px;
+    margin-left: auto;
+  }
+
+  .panel-header-content {
+    flex: none;
+    min-width: 0;
     margin-left: auto;
   }
 
