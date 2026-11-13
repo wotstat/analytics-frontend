@@ -1,8 +1,11 @@
 <template>
   <Teleport to="body">
     <Transition @before-enter="emit('before-open')" @after-leave="emit('after-close')">
-      <ModalWindowContent :title="title" v-if="display" @close="emit('close')"
+      <ModalWindowContent v-bind="$attrs" :title="title" v-if="display" @close="emit('close')"
         :style="{ '--margin-block-start': marginBlockStart ?? 0 }">
+        <template #header v-if="slots['header']">
+          <slot name="header"></slot>
+        </template>
         <template #controls v-if="slots['controls']">
           <slot name="controls"></slot>
         </template>
@@ -25,6 +28,8 @@
 <script setup lang="ts">
 import { useSlots } from 'vue'
 import ModalWindowContent from './ModalWindowContent.vue'
+
+defineOptions({ inheritAttrs: false })
 
 const props = defineProps<{
   title: string

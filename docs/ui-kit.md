@@ -14,7 +14,7 @@
 | Выпадающий список и стрелки раскрытия | [dropdown/](../src/shared/uiKit/dropdown/) | `/debug/misc`, `/debug/dropdown-arrow` |
 | Текстовая подсказка | Глобальная `v-tooltip`, проектная директива [vTextTooltip](../src/shared/ui/tooltip/textTooltip.ts) | `/debug/tooltip` |
 | Подсказка с Vue-компонентом | [useTooltip](../src/shared/uiKit/tooltip/useTooltip.ts) | `/debug/tooltip` |
-| Всплывающая панель | [PanelPopover](../src/shared/ui/popover/PanelPopover.vue); базовые варианты — [popover/](../src/shared/uiKit/popover/) | `/debug/panel-popover`, `/debug/popover` |
+| Всплывающая панель | [PanelPopover](../src/shared/ui/popover/PanelPopover.vue), [ResponsivePanelPopover](../src/shared/ui/popover/ResponsivePanelPopover.vue) — модальное окно на узком экране; базовые варианты — [popover/](../src/shared/uiKit/popover/) | `/debug/panel-popover`, `/debug/popover` |
 | Контекстное меню | [contextMenu/](../src/shared/uiKit/contextMenu/): `simpleContextMenu`, `createContextMenu` | `/debug/context-menu` |
 | Модальное окно | [modalWindow/](../src/shared/ui/modalWindow/): `ModalWindow`, `ModalWindowContent`, кнопки | `/debug/modal-window` |
 | Обучающая подсказка | [TipBubble](../src/shared/ui/tipBubble/TipBubble.vue) | `/debug/tip-bubble` |

@@ -1,7 +1,7 @@
 <template>
   <ToolbarButton ref="trigger" :icon="SettingsIcon" variant="surface" size="large" @click="toggle" />
 
-  <PanelPopover v-model="open" :target="target" title="Настройки таблицы" :width="250" density="compact"
+  <ResponsivePanelPopover v-model="open" :target="target" title="Настройки таблицы" :width="250" density="compact"
     :placement="['bottom-end', 'bottom-float', 'top-end']">
     <template #content>
       <div v-if="!appearanceOnly" class="options panel-section">
@@ -37,13 +37,13 @@
         </label>
       </div>
     </template>
-  </PanelPopover>
+  </ResponsivePanelPopover>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
 import SettingsIcon from '@/assets/icons/settings.svg'
-import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
+import ResponsivePanelPopover from '@/shared/ui/popover/ResponsivePanelPopover.vue'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import { vehicleStatisticsPeriods, type VehicleStatisticsPeriod } from '../../shared/vehicleStatisticsPeriod'
 

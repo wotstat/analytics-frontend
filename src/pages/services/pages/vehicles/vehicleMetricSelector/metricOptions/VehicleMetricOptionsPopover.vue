@@ -1,33 +1,33 @@
 <template>
-  <PopoverAutoClose v-model="open" :target :arrow-size="0"
-    :placement="['bottom-end', 'top-end', 'right-start-float', 'left-start-float']" :offset="4"
-    :viewport-offset="popoverViewportOffset">
-    <div class="metric-options-menu" @pointerdown.stop @pointerup.stop @click.stop>
-      <div class="heading">{{ tile.label }}</div>
-      <div class="sections nice-scrollbar">
-        <section v-for="(section, index) in tile.sections" :key="index">
-          <h3 v-if="section.title">
-            {{ section.title }}
-            <span v-if="section.help" class="help" v-help-tooltip="{ content: helpComponents[section.help], disabled: !open }">?</span>
-          </h3>
-          <div class="options" :style="{ gridTemplateColumns: `repeat(${section.columns ?? 1}, minmax(0, 1fr))` }">
-            <SelectionTile v-for="option in section.options" :key="option.value" density="compact"
-              :class="{ wide: option.wide }" :accent-color="tile.color"
-              :selected="selected.includes(option.value)"
-              :disabled="!canSelectMetric(option.value, selected, maxSlots)"
-              @select="emit('select', option.value)">
-              {{ option.label }}
-            </SelectionTile>
-          </div>
-        </section>
+  <ResponsivePanelPopover v-model="open" :target :title="tile.label" :width="250" density="compact"
+    :placement="['bottom-end', 'top-end', 'right-start-float', 'left-start-float']" :offset="4">
+    <template #content>
+      <div class="metric-options-menu" @pointerdown.stop @pointerup.stop @click.stop>
+        <div class="sections">
+          <section v-for="(section, index) in tile.sections" :key="index">
+            <h3 v-if="section.title">
+              {{ section.title }}
+              <span v-if="section.help" class="help" v-help-tooltip="{ content: helpComponents[section.help], disabled: !open }">?</span>
+            </h3>
+            <div class="options" :style="{ gridTemplateColumns: `repeat(${section.columns ?? 1}, minmax(0, 1fr))` }">
+              <SelectionTile v-for="option in section.options" :key="option.value" density="compact"
+                :class="{ wide: option.wide }" :accent-color="tile.color"
+                :selected="selected.includes(option.value)"
+                :disabled="!canSelectMetric(option.value, selected, maxSlots)"
+                @select="emit('select', option.value)">
+                {{ option.label }}
+              </SelectionTile>
+            </div>
+          </section>
+        </div>
       </div>
-    </div>
-  </PopoverAutoClose>
+    </template>
+  </ResponsivePanelPopover>
 </template>
 
 <script setup lang="ts">
 import { h, markRaw, type Component } from 'vue'
-import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
+import ResponsivePanelPopover from '@/shared/ui/popover/ResponsivePanelPopover.vue'
 import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
 import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import { useTooltip } from '@/shared/uiKit/tooltip/useTooltip'
@@ -61,27 +61,13 @@ const emit = defineEmits<{ select: [slot: Slot] }>()
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  width: min(250px, calc(100vw - 20px));
-  max-height: min(450px, 60dvh);
-  overflow: hidden;
   font-size: 13px;
   line-height: 1.3;
-
-  .heading {
-    flex: none;
-    padding: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    font-size: 14px;
-    font-weight: 600;
-  }
 
   .sections {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 10px;
-    min-height: 0;
-    overflow-y: auto;
   }
 
   h3 {

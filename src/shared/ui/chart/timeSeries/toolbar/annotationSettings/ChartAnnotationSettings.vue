@@ -4,7 +4,7 @@
     <span class="dots"></span>
   </ToolbarButton>
 
-  <PanelPopover v-model="open" :target="target" :title density="compact" :width
+  <ResponsivePanelPopover v-model="open" :target="target" :title density="compact" :width
     :placement="['bottom-end', 'bottom-float', 'top-end']">
     <template #content>
       <div v-for="group in visibleGroups" :key="group.id" class="panel-section">
@@ -19,12 +19,12 @@
         </div>
       </div>
     </template>
-  </PanelPopover>
+  </ResponsivePanelPopover>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
-import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
+import ResponsivePanelPopover from '@/shared/ui/popover/ResponsivePanelPopover.vue'
 import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import { classNames } from '@/shared/uiKit/chart/universalChart/utils/utils'

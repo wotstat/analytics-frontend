@@ -11,17 +11,12 @@
         </div>
       </header>
 
-      <template v-if="scrollMode === 'child'">
-        <slot name="content">
-          <slot />
-        </slot>
-      </template>
-      <div v-else ref="content" class="panel-content nice-scrollbar" :class="{ 'has-scrollbar': hasScrollbar }"
+      <PanelContent :density :scroll-mode="scrollMode" :scrollbar-offsets="scrollbarOffsets"
         @scroll="$emit('contentScroll', $event)">
         <slot name="content">
           <slot />
         </slot>
-      </div>
+      </PanelContent>
 
       <footer v-if="$slots.footer" class="panel-footer">
         <slot name="footer" />
@@ -31,24 +26,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, useTemplateRef, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRafFn } from '@vueuse/core'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
-import { getViewportRect, type CloseOnOutsideWindow, type OffsetValue, type PlacementParam, type PlacementWithModifiers, type PopoverTarget } from '@/shared/uiKit/popover/utils'
+import { getViewportRect, type PlacementParam, type PlacementWithModifiers } from '@/shared/uiKit/popover/utils'
+import PanelContent from './PanelContent.vue'
+import type { PanelPopoverProps } from './utils/panelPopover'
 import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 
-const props = withDefaults(defineProps<{
-  target: PopoverTarget | null
-  title?: string
-  density?: 'standard' | 'compact'
-  scrollMode?: 'panel' | 'child'
-  width?: number
-  placement?: PlacementParam
-  offset?: OffsetValue
-  arrowSize?: number
-  closeOnOutsideWindow?: CloseOnOutsideWindow
-  scrollbarOffsets?: [number, number]
-}>(), {
+const props = withDefaults(defineProps<PanelPopoverProps>(), {
   density: 'standard',
   scrollMode: 'panel',
   width: 360,
@@ -61,15 +47,12 @@ defineEmits<{ contentScroll: [event: Event] }>()
 
 const availableHeight = ref(700)
 const availableWidth = ref(360)
-const content = useTemplateRef<HTMLDivElement>('content')
-const hasScrollbar = ref(false)
 const panelPlacement = computed<PlacementParam>(() => {
   const preferred = Array.isArray(props.placement) ? props.placement : [props.placement ?? 'bottom-float']
   return preferred.map(value => value.endsWith('-float') ? value : `${value}-float` as PlacementWithModifiers)
 })
 
 function updateAvailableHeight() {
-  hasScrollbar.value = !!content.value && content.value.offsetWidth > content.value.clientWidth
   const viewport = getViewportRect()
   availableWidth.value = Math.max(0, Math.floor(viewport.right - viewport.left - 24))
   if (!props.target) return
@@ -92,8 +75,6 @@ const panelStyle = computed(() => ({
   '--panel-viewport-top': `${popoverViewportOffset.value.top}px`,
   '--panel-available-height': `${availableHeight.value}px`,
   '--panel-available-width': `${availableWidth.value}px`,
-  '--panel-scrollbar-track-start': `${props.scrollbarOffsets[0]}px`,
-  '--panel-scrollbar-track-end': `${props.scrollbarOffsets[1]}px`,
 }))
 </script>
 
@@ -149,55 +130,6 @@ const panelStyle = computed(() => ({
     margin-left: auto;
   }
 
-  .panel-content {
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding: var(--panel-padding);
-
-    &.has-scrollbar {
-      margin-right: 3px;
-      padding-right: 3px;
-    }
-
-    &::-webkit-scrollbar-track {
-      margin-block-start: var(--panel-scrollbar-track-start);
-      margin-block-end: var(--panel-scrollbar-track-end);
-    }
-
-    :deep(.panel-section + .panel-section) {
-      margin-top: 20px;
-    }
-
-    :deep(.panel-divider) {
-      height: 0;
-      margin: 12px 0;
-      border: 0;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    :deep(.panel-section > :is(h3, h4, h5)) {
-      margin: 0 0 8px;
-      color: var(--panel-heading-color, #fff);
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    :deep(.panel-section > h4) {
-      font-size: 13px;
-    }
-
-    :deep(.panel-section > h5) {
-      font-size: 12px;
-    }
-
-    :deep(.panel-note) {
-      margin: 0;
-      color: rgba(255, 255, 255, 0.55);
-      font-size: 12px;
-    }
-  }
-
   .panel-footer {
     flex: none;
     padding: var(--panel-padding);
@@ -212,19 +144,6 @@ const panelStyle = computed(() => ({
     --panel-header-title-line-height: 18px;
 
     font-size: 12px;
-
-    .panel-content :deep(.panel-section > :is(h3, h4, h5)) {
-      margin-bottom: 6px;
-      font-size: 12px;
-    }
-
-    .panel-content :deep(.panel-section > h4) {
-      font-size: 11px;
-    }
-
-    .panel-content :deep(.panel-section > h5) {
-      font-size: 10px;
-    }
   }
 
   @media (max-width: 500px) {

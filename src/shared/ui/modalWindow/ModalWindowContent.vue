@@ -3,16 +3,18 @@
     <div class="background" @click="emit('close')"></div>
     <div class="modal">
       <header :class="headerClass">
-        <div class="title-line">
-          <h1>{{ title }}</h1>
-          <div class="controls">
-            <slot name="controls"></slot>
-            <CloseButton v-if="!hideCloseButton" @click="emit('close')" />
+        <slot name="header">
+          <div class="title-line">
+            <h1>{{ title }}</h1>
+            <div class="controls">
+              <slot name="controls"></slot>
+              <CloseButton v-if="!hideCloseButton" @click="emit('close')" />
+            </div>
           </div>
-        </div>
-        <div class="content-line" v-if="slots['header-content']">
-          <slot name="header-content"></slot>
-        </div>
+          <div class="content-line" v-if="slots['header-content']">
+            <slot name="header-content"></slot>
+          </div>
+        </slot>
       </header>
 
       <main class="nice-scrollbar" ref="scroll" @scroll="handleScroll">

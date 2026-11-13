@@ -17,41 +17,38 @@
     </SelectionTile>
   </div>
 
-  <PanelPopover v-if="active" v-model="submenuOpen" :target="target" :width="280" density="compact" scroll-mode="child"
+  <ResponsivePanelPopover v-model="submenuOpen" :target="target" :title="submenuOption?.label" :width="280" density="compact"
     :offset="4" :placement="['bottom-end', 'top-end', 'right-start-float', 'left-start-float']">
+    <template v-if="submenuOption" #toolbar>
+      <SelectionTile density="compact" class="any-variant" v-bind="battleAttributes(submenuOption.key)"
+        :selected="selected.includes(submenuOption.key)" :class="{ archived: submenuOption.archived }"
+        :accent-color="submenuOption.archived ? archiveAccent : undefined" @select="emit('select', submenuOption.key, $event)">
+        Любой</SelectionTile>
+    </template>
     <template #content>
       <div class="mode-submenu" @pointerdown.stop @pointerup.stop @click.stop
         @keydown.esc.stop.prevent="closeChildren()">
-        <header class="panel-header panel-header--row">
-          <h2 class="panel-header-title">{{ active.label }}</h2>
-          <SelectionTile density="compact" class="any-variant" v-bind="battleAttributes(active.key)"
-            :selected="selected.includes(active.key)" :class="{ archived: active.archived }"
-            :accent-color="active.archived ? archiveAccent : undefined" @select="emit('select', active.key, $event)">
-            Любой</SelectionTile>
-        </header>
-        <div class="submenu-content nice-scrollbar">
-          <section v-for="(group, index) in submenuGroups" :key="index" class="submenu-group">
-            <h3 v-if="group.title && showGroupTitles">{{ group.title }}</h3>
-            <div class="mode-options">
-              <SelectionTile v-for="option in group.options" :key="option.key" density="compact"
-                v-bind="battleAttributes(option.key)" :selected="selected.includes(option.key)"
-                :class="{ archived: option.archived }" :accent-color="option.archived ? archiveAccent : undefined"
-                @select="emit('select', option.key, $event)">
-                <HighlightString :text="highlight(option.label, search)" class="option-label" />
-                <span v-if="option.archived" class="archive-label">архив</span>
-              </SelectionTile>
-            </div>
-          </section>
-        </div>
+        <section v-for="(group, index) in submenuGroups" :key="index" class="submenu-group">
+          <h3 v-if="group.title && showGroupTitles">{{ group.title }}</h3>
+          <div class="mode-options">
+            <SelectionTile v-for="option in group.options" :key="option.key" density="compact"
+              v-bind="battleAttributes(option.key)" :selected="selected.includes(option.key)"
+              :class="{ archived: option.archived }" :accent-color="option.archived ? archiveAccent : undefined"
+              @select="emit('select', option.key, $event)">
+              <HighlightString :text="highlight(option.label, search)" class="option-label" />
+              <span v-if="option.archived" class="archive-label">архив</span>
+            </SelectionTile>
+          </div>
+        </section>
       </div>
     </template>
-  </PanelPopover>
+  </ResponsivePanelPopover>
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef } from 'vue'
+import { computed, shallowRef, watch } from 'vue'
 import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
-import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
+import ResponsivePanelPopover from '@/shared/ui/popover/ResponsivePanelPopover.vue'
 import HighlightString from '@/shared/uiKit/highlightString/HighlightString.vue'
 import { highlight } from '@/shared/uiKit/highlightString/highlightUtils'
 import { type BattleModeOption, type BattleModeVariant } from './catalog'
@@ -68,13 +65,19 @@ const emit = defineEmits<{ select: [key: BattleModeSelectionKey, event: MouseEve
 const archiveAccent = '#eea650'
 const target = shallowRef<HTMLButtonElement | null>(null)
 const active = computed(() => props.options.find(option => option.key === activeKey.value))
+const submenuOption = shallowRef<BattleModeOption | null>(null)
+
+watch(active, option => {
+  if (option) submenuOption.value = option
+}, { immediate: true })
+
 const submenuOpen = computed({
   get: () => !!active.value,
   set: value => { if (!value) closeChildren() },
 })
 const submenuGroups = computed(() => {
   const groups: { title?: string, options: BattleModeVariant[] }[] = []
-  for (const option of active.value?.children ?? []) {
+  for (const option of submenuOption.value?.children ?? []) {
     const previous = groups.at(-1)
     if (previous && previous.title === option.group) previous.options.push(option)
     else groups.push({ title: option.group, options: [option] })
@@ -192,8 +195,7 @@ function closeChildren() {
 .mode-submenu {
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  max-height: inherit;
+  gap: 6px;
 }
 
 .any-variant.selection-tile.compact {
@@ -202,15 +204,6 @@ function closeChildren() {
 
   flex: none;
   margin-left: auto;
-}
-
-.submenu-content {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-height: 0;
-  padding: 10px;
-  overflow-y: auto;
 }
 
 .submenu-group h3 {

@@ -4,9 +4,9 @@
     <DropdownArrow class="mode-arrow" :expanded="open" />
   </button>
 
-  <PanelPopover v-model="open" :target="trigger" :width="380"
+  <ResponsivePanelPopover v-model="open" :target="trigger" :width="380"
     :placement="['bottom-start', 'bottom-float', 'top-start', 'right-float']" @content-scroll="activeKey = null"
-    :scrollbar-offsets="[14, 14]">
+    :scrollbar-offsets="[14, 14]" @mode-change="activeKey = null">
     <template #header>
       <header class="panel-header">
         <h2 class="panel-header-title">Выбор режимов боя</h2>
@@ -42,13 +42,13 @@
     <template v-if="multiple && selectionPriority === 'single'" #footer>
       Ctrl + клик — выбрать несколько
     </template>
-  </PanelPopover>
+  </ResponsivePanelPopover>
 </template>
 
 <script setup lang="ts">
 import DropdownArrow from '@/shared/uiKit/dropdown/DropdownArrow.vue'
 import { usePopoverCloseDelay } from '@/shared/uiKit/popover/usePopoverCloseDelay'
-import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
+import ResponsivePanelPopover from '@/shared/ui/popover/ResponsivePanelPopover.vue'
 import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
 import { computed, ref, useTemplateRef, watch } from 'vue'
 import { highlight } from '@/shared/uiKit/highlightString/highlightUtils'

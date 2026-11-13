@@ -1,6 +1,6 @@
 <template>
-  <PanelPopover v-model="open" :target :placement :title :width="900" :scrollbar-offsets="[40, 14]"
-    @content-scroll="closeOptions()" class="vehicle-slot-options">
+  <ResponsivePanelPopover v-model="open" :target :placement :title :width="900" :breakpoint="900" :scrollbar-offsets="[40, 14]"
+    @content-scroll="closeOptions()" @mode-change="closeOptions()" class="vehicle-slot-options">
     <template v-if="maxSlots !== undefined" #toolbar>
       <div class="selection-controls">
         <span class="selected-count">Выбрано {{ selected.length }} из {{ maxSlots }}</span>
@@ -53,7 +53,7 @@
       <VehicleMetricOptionsPopover v-if="optionsTile" v-model="optionsOpen" :tile="optionsTile"
         :target="optionsTrigger" :selected :max-slots @select="emit('select', $event)" />
     </template>
-  </PanelPopover>
+  </ResponsivePanelPopover>
 </template>
 
 <script setup lang="ts">
@@ -61,7 +61,7 @@ import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
 import ClearIcon from '@/assets/icons/x-bold.svg'
 import ResetIcon from '@/assets/icons/reset.svg'
 import { ref, shallowRef, watch } from 'vue'
-import PanelPopover from '@/shared/ui/popover/PanelPopover.vue'
+import ResponsivePanelPopover from '@/shared/ui/popover/ResponsivePanelPopover.vue'
 import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import type { PlacementParam, PopoverTarget } from '@/shared/uiKit/popover/utils'
