@@ -1,7 +1,8 @@
+import { createNumberFormatter } from '@/shared/utils/processors/createNumberFormatter'
 import { availableSlots, type Slot } from '../vehicleMetrics/vehicleMetrics'
 
-const integer = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
-const decimal = new Intl.NumberFormat('en-US', { useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const integer = createNumberFormatter({ maximumFractionDigits: 0 })
+const decimal = createNumberFormatter({ useGrouping: false, minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const compactUnits = [
   { value: 1_000, suffix: 'k' },
   { value: 1_000_000, suffix: 'M' },
@@ -10,12 +11,12 @@ const compactUnits = [
 ] as const
 
 const compactFormatters = Array.from({ length: 13 }, (_, maximumFractionDigits) =>
-  new Intl.NumberFormat('en-US', { useGrouping: false, maximumFractionDigits }))
+  createNumberFormatter({ useGrouping: false, maximumFractionDigits }))
 
 function formatInteger(value: number, step: number | null) {
   // При шаге, кратном тысяче, подписи оси можно сокращать уже с 1k.
   const compactFrom = step !== null && step >= 1_000 && step % 1_000 === 0 ? 1_000 : 100_000
-  if (Math.abs(value) < compactFrom) return integer.format(value)
+  if (Math.abs(value) < compactFrom) return integer(value)
 
   let unitIndex = compactUnits.findLastIndex(unit => Math.abs(value) >= unit.value)
 
@@ -41,7 +42,7 @@ function formatInteger(value: number, step: number | null) {
   }
 
   const unit = compactUnits[unitIndex]
-  return `${compactFormatters[digits].format(value / unit.value)}${unit.suffix}`
+  return `${compactFormatters[digits](value / unit.value)}${unit.suffix}`
 }
 
 export function formatSlotValue(slot: Slot, value: number | null | undefined, step: number | null = null) {
@@ -49,9 +50,9 @@ export function formatSlotValue(slot: Slot, value: number | null | undefined, st
 
   const definition = availableSlots[slot]
   switch (definition.format) {
-    case 'percent': return `${decimal.format(value)}%`
-    case 'decimal': return decimal.format(value)
-    case 'distance': return `${integer.format(value)} м`
+    case 'percent': return `${decimal(value)}%`
+    case 'decimal': return decimal(value)
+    case 'distance': return `${integer(value)} м`
     case 'time': {
       const seconds = Math.round(value)
       return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`

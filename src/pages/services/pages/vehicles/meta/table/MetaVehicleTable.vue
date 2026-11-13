@@ -31,6 +31,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { createNumberFormatter } from '@/shared/utils/processors/createNumberFormatter'
 import VehicleImage from '@/shared/game/components/vehicles/vehicleImage/VehicleImage.vue'
 import EfficiencyIcon from '@/shared/game/components/efficiencyIcon/IconRenderer.vue'
 import { regionToGame } from '@/shared/game/domain/wot'
@@ -55,16 +56,16 @@ const vehicleSort = computed(() => {
   if (order?.key === 'name' || order?.key === 'tankLevel' || order?.key === 'tankType') return order
 })
 const gridColumns = computed(() => ['minmax(0, 1fr)', ...props.slots.map(() => 'var(--meta-table-column-width)')].join(' '))
-const percentFormat = new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })
-const decimalFormat = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 })
-const distanceFormat = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 })
+const percentFormat = createNumberFormatter({ minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })
+const decimalFormat = createNumberFormatter({ maximumFractionDigits: 2 })
+const distanceFormat = createNumberFormatter({ maximumFractionDigits: 0 })
 
 function formatValue(slot: Slot, value: number | null | undefined) {
   if (value == null || !Number.isFinite(value)) return '—'
   const format = availableSlots[slot].format
-  if (format === 'percent') return `${percentFormat.format(value)}%`
-  if (format === 'decimal') return decimalFormat.format(value).replace(',', '.')
-  if (format === 'distance') return distanceFormat.format(value)
+  if (format === 'percent') return `${percentFormat(value)}%`
+  if (format === 'decimal') return decimalFormat(value)
+  if (format === 'distance') return distanceFormat(value)
   return formatMetaSlotValue(slot, value)
 }
 </script>

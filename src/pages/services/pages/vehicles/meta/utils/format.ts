@@ -7,7 +7,7 @@ export function formatMetaSlotValue(slot: Slot, value: number | null | undefined
   const definition = availableSlots[slot]
 
   if (definition.format !== 'percent' || step === null || !Number.isFinite(step) || step <= 0)
-    return formatSlotValue(slot, value, step).replace(',', '.')
+    return formatSlotValue(slot, value, step)
 
   const fractionDigits = step.toFixed(12).replace(/0+$/, '').split('.')[1]?.length ?? 0
   return `${Number(value.toFixed(fractionDigits))}%`
