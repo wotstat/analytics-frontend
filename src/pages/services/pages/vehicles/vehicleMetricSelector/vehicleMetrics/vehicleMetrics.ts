@@ -81,10 +81,10 @@ const metricCatalog = [
   },
   {
     title: 'Прочность', entries: [
-      statisticMetric('maxHealth', { icon: 'hp', label: 'Начальная прочность', ...average('maxHealth') }),
-      statisticMetric('health', { icon: 'hp', label: 'Оставшаяся прочность', ...average('health') }),
-      statisticMetric('damageReceived', { icon: 'hp', label: 'Полученный урон', ...average('damageReceived') }),
-      statisticMetric('damageReceivedFromInvisibles', { icon: 'hp', label: 'Урон от незасвеченных', ...average('damageReceivedFromInvisibles') }),
+      statisticMetric('maxHealth', { icon: 'hp-3', label: 'Начальная прочность', ...average('maxHealth') }),
+      statisticMetric('health', { icon: 'hp-1', label: 'Оставшаяся прочность', ...average('health') }),
+      statisticMetric('damageReceived', { icon: 'received-dmg', label: 'Полученный урон', ...average('damageReceived') }),
+      statisticMetric('damageReceivedFromInvisibles', { icon: 'dmg-from-invisible', label: 'Урон от незасвеченных', ...average('damageReceivedFromInvisibles') }),
     ],
   },
   {
@@ -142,11 +142,11 @@ const metricCatalog = [
         ...ratio('damageBlockedByArmor', ['damageBlockedByArmor', 'damageReceived'], 100), format: 'percent',
       }),
       statisticMetric('remainingHealthShare', {
-        icon: 'hp', label: 'Оставшаяся прочность, %', headingLabel: '%', subtitle: 'Остаток / начальная прочность',
+        icon: 'hp-1', label: 'Оставшаяся прочность, %', headingLabel: '%', subtitle: 'Остаток / начальная прочность',
         ...ratio('health', 'maxHealth', 100), format: 'percent',
       }),
       statisticMetric('invisibleDamageShare', {
-        icon: 'hp', label: 'Доля урона от незасвеченных', headingLabel: 'НЗ%', subtitle: 'От незасвеченных / весь урон',
+        icon: 'dmg-from-invisible', label: 'Доля урона от незасвеченных', headingLabel: '%', subtitle: 'От незасвеченных / весь урон',
         ...ratio('damageReceivedFromInvisibles', 'damageReceived', 100), format: 'percent',
       }),
       statisticMetric('assistShare', {
