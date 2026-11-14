@@ -4,7 +4,7 @@
     <DropdownArrow class="mode-arrow" :expanded="open" />
   </button>
 
-  <ResponsivePanelPopover v-model="open" :target="trigger" :width="380" title="Выбор режимов боя"
+  <ResponsivePanelPopover v-model="open" :target="trigger" :width="380" title="Выбор режимов боя" modal-full-height
     :placement="['bottom-start', 'bottom-float', 'top-start', 'right-float']" @content-scroll="activeKey = null"
     :scrollbar-offsets="[14, 14]" @mode-change="activeKey = null">
     <template #header-content="{ isModal }">

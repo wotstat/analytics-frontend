@@ -4,7 +4,7 @@
   </PanelPopover>
 
   <ModalWindow v-else :display="open" :title="title ?? ''" class="responsive-panel-popup"
-    :class="{ compact: density === 'compact', 'child-scroll': scrollMode === 'child' }"
+    :class="{ compact: density === 'compact', 'child-scroll': scrollMode === 'child', 'full-height': modalFullHeight }"
     :style="{ '--panel-popup-width': `${width ?? 360}px` }" @close="close">
     <template v-if="$slots.header" #header>
       <div class="popup-header">
@@ -38,7 +38,10 @@ import PanelPopover from './PanelPopover.vue'
 import PanelContent from './PanelContent.vue'
 import { openChildPanelsKey, type PanelPopoverProps } from './utils/panelPopover'
 
-const props = withDefaults(defineProps<PanelPopoverProps & { breakpoint?: number }>(), { breakpoint: 700 })
+const props = withDefaults(defineProps<PanelPopoverProps & {
+  breakpoint?: number
+  modalFullHeight?: boolean
+}>(), { breakpoint: 700 })
 const open = defineModel<boolean>({ default: false })
 const emit = defineEmits<{
   contentScroll: [event: Event]
@@ -47,7 +50,7 @@ const emit = defineEmits<{
 
 const isModal = useMediaQuery(() => `(max-width: ${props.breakpoint}px)`)
 const panelProps = computed(() => {
-  const { breakpoint, ...panel } = props
+  const { breakpoint, modalFullHeight, ...panel } = props
   return panel
 })
 
@@ -170,6 +173,10 @@ function close() {
 
   &.child-scroll .modal > main.nice-scrollbar {
     flex: 1;
+  }
+
+  &.full-height .modal {
+    height: calc(100dvh - 30px);
   }
 
   @media (max-width: 700px) {

@@ -13,12 +13,13 @@
       </label>
       <label class="debug-control"><input v-model="compact" type="checkbox"> Компактная</label>
       <label class="debug-control"><input v-model="customHeader" type="checkbox"> Своя шапка</label>
+      <label class="debug-control"><input v-model="modalFullHeight" type="checkbox"> Полная высота модального окна</label>
       <button ref="trigger" class="debug-btn" @click="open = !open">Адаптивная панель</button>
     </div>
     <p class="debug-hint">Выбрано: {{ selected.length }}, действий: {{ clicks }}, вложенная: {{ nestedOpen }}</p>
 
     <ResponsivePanelPopover v-model="open" :target="trigger" title="Настройки адаптивной панели" :breakpoint
-      :width="560" :density="compact ? 'compact' : 'standard'" :placement="['bottom-start', 'top-start']"
+      :width="560" :density="compact ? 'compact' : 'standard'" :placement="['bottom-start', 'top-start']" :modal-full-height
       @mode-change="nestedOpen = false">
       <template v-if="customHeader" #header>
         <header class="panel-header"><h2 class="panel-header-title">Своя шапка адаптивной панели</h2></header>
@@ -56,6 +57,7 @@ const nestedOpen = ref(false)
 const breakpoint = ref(700)
 const compact = ref(false)
 const customHeader = ref(false)
+const modalFullHeight = ref(false)
 const clicks = ref(0)
 const selected = ref<number[]>([])
 
