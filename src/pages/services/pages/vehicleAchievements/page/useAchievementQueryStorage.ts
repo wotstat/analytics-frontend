@@ -7,7 +7,6 @@ import type { VehicleFilters, VehicleRegion } from '../../vehicles/filters/types
 import { createLocalVehicleFilters, type LocalVehicleFilters } from '../../vehicles/vehicleListTable/filters/localFilters'
 import { vehicleListFilterParams } from '../../vehicles/vehicleListTable/query/filters'
 import { sortOrderSerializer } from '../../vehicles/vehicleListTable/utils/sortOrderSerializer'
-import type { SortOrder } from '../../vehicles/vehicleListTable/utils/useVehicleSorting'
 import { slotSerializer } from '../../vehicles/vehicleMetricSelector/utils/slotSerializer'
 import type { Slot } from '../../vehicles/vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 import { useComparisonSources } from '../../vehicles/timeSeriesCompare/utils/useComparisonSources'
@@ -52,6 +51,10 @@ const hasComparison = ({ compare }: { compare: SavedComparisonSource[] }) => com
 function createAchievementQueryParams(kind: AchievementKind) {
   const key = `achievements.${kind}`
   const slots = achievements[kind].slots
+  const achievementSort = sortOrderSerializer({
+    serialize: slot => slotSerializer.serialize(slot).slice(kind.length + 1),
+    deserialize: raw => slotSerializer.deserialize(`${kind}-${raw}`),
+  })
   const compareParam = { ...achievementCompareParam, context: { regions: regionQueryParam } }
   const comparisonContext = { compare: compareParam }
 
@@ -64,7 +67,7 @@ function createAchievementQueryParams(kind: AchievementKind) {
     onlyActual: vehicleListFilterParams.onlyActual,
     deltaPeriod: deltaPeriodParam,
     sortByDelta: sortByDeltaParam,
-    sort: arrayParam(sortOrderSerializer, [{ key: achievements[kind].defaultSortSlot, ascending: false }] as SortOrder[], {
+    sort: arrayParam(achievementSort, [{ key: achievements[kind].defaultSortSlot, ascending: false }], {
       key: `${key}.sort`, priority: 10,
       validate: ({ key }) => key === 'name' || key === 'tankLevel' || key === 'tankType' || slots.includes(key),
     }),

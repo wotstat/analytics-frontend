@@ -25,7 +25,7 @@ const periodSerializer: Serializer<VehicleStatisticsPeriod> = {
 }
 
 const columnsParam = arrayParam(slotSerializer, defaultSlots, { label: 'columns', key: 'vehicles.table.columns', priority: 10 })
-const sortParam = arrayParam(sortOrderSerializer, defaultSortOrders, { key: 'vehicles.table.sort', priority: 5 })
+const sortParam = arrayParam(sortOrderSerializer(slotSerializer), defaultSortOrders, { key: 'vehicles.table.sort', priority: 5 })
 
 export const vehicleTableSettingsParams = defineParams({
   period: { ...periodSerializer, default: 30 as const, key: 'vehicles.table.period', priority: 20 },
