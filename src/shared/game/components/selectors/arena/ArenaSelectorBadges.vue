@@ -29,7 +29,7 @@ function openSelect() {
 const arenas = queryAsync<{ region: string, battleMode: string, battleGameplay: string, tag: string, gameVersion: string }>(`
 select region, battleMode, battleGameplay, splitByChar('/', arenaTag)[2] as tag, argMax(gameVersion, dateTime) as gameVersion
 from Event_OnBattleStart
-where region in ('RU', 'EU')
+where region in ('RU', 'EU') and serverName != 'Offline'
 group by arenaTag, region, battleGameplay, battleMode
 `, { enabled: visibleModal, cache: LONG_CACHE, proxyCache: true })
 

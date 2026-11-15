@@ -18,7 +18,7 @@ export type VersionRow = { region: string, version: string }
 const arenas = queryAsync<ArenaRow>(`
 select region, battleMode, battleGameplay, splitByChar('/', arenaTag)[2] as tag, argMax(gameVersion, dateTime) as gameVersion
 from Event_OnBattleStart
-where region in ('RU', 'EU')
+where region in ('RU', 'EU') and serverName != 'Offline'
 group by arenaTag, region, battleGameplay, battleMode
 `, { cache: LONG_CACHE, proxyCache: true })
 
