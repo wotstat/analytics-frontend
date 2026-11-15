@@ -1,10 +1,25 @@
 <template>
-  <PopoverAutoClose v-model="open" :target :placement="panelPlacement" :offset :arrow-size="arrowSize"
-    :viewport-offset="popoverViewportOffset" :close-on-outside-window="closeOnOutsideWindow">
-    <div class="panel-popover" :class="{ compact: density === 'compact', 'child-scroll': scrollMode === 'child' }"
+  <PopoverAutoClose
+    v-model="open"
+    :target
+    :placement="panelPlacement"
+    :offset
+    :arrow-size="arrowSize"
+    :class="scaleWidthOffset > 0 ? 'scale-transition' : undefined"
+    :viewport-offset="popoverViewportOffset"
+    :close-on-outside-window="closeOnOutsideWindow"
+    :styles="{
+      '--popover-collapsed-scale': `clamp(0, 1 - ${scaleWidthOffset} / max(1, var(--popover-width-px)), 1)`,
+      '--popover-enter-scale-transition': panelEnterSpring,
+    }">
+
+    <div
+      class="panel-popover"
+      :class="{ compact: density === 'compact', 'child-scroll': scrollMode === 'child' }"
       :style="panelStyle">
       <slot v-if="$slots.header" name="header" />
-      <header v-else-if="title || $slots.toolbar || $slots.controls || $slots['header-content']" class="panel-header panel-header--row">
+      <header v-else-if="title || $slots.toolbar || $slots.controls || $slots['header-content']"
+        class="panel-header panel-header--row">
         <h2 v-if="title" class="panel-header-title">{{ title }}</h2>
         <div v-if="$slots.toolbar || $slots.controls" class="panel-toolbar">
           <slot name="toolbar" />
@@ -35,13 +50,14 @@ import { useRafFn } from '@vueuse/core'
 import PopoverAutoClose from '@/shared/uiKit/popover/PopoverAutoClose.vue'
 import { getViewportRect, type PlacementParam, type PlacementWithModifiers } from '@/shared/uiKit/popover/utils'
 import PanelContent from './PanelContent.vue'
-import type { PanelPopoverProps } from './utils/panelPopover'
+import { panelEnterSpring, type PanelPopoverProps } from './utils/panelPopover'
 import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 
 const props = withDefaults(defineProps<PanelPopoverProps>(), {
   density: 'standard',
   scrollMode: 'panel',
   width: 360,
+  scaleWidthOffset: 20,
   arrowSize: 0,
   scrollbarOffsets: () => [10, 10],
 })

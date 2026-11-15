@@ -185,7 +185,8 @@ const verticalPlacements = new Set<Placement>(['top', 'bottom', 'top-start', 'to
 function calculatePosition(placement: Placement, offset: Offset, params: Params, floatModifier: boolean, bbox: Bbox | null) {
   const { popup, target } = params
 
-  let { x, y } = calculateBasePosition(placement, offset, params)
+  const base = calculateBasePosition(placement, offset, params)
+  let { x, y } = base
 
   if (bbox && floatModifier) {
     if (!verticalPlacements.has(placement)) {
@@ -231,7 +232,8 @@ function calculatePosition(placement: Placement, offset: Offset, params: Params,
     }
   }
 
-  return { x, y }
+  const placementOrigin = x === base.x && y === base.y ? transformOrigins[placement] : undefined
+  return { x, y, placementOrigin }
 }
 
 function isInside(x: number, y: number, bbox: Bbox, params: Params) {
@@ -253,6 +255,21 @@ function getPlacement(placementWithModifiers: PlacementWithModifiers) {
   }
 }
 
+const transformOrigins: Record<Placement, string> = {
+  'top': 'center bottom',
+  'top-start': 'left bottom',
+  'top-end': 'right bottom',
+  'bottom': 'center top',
+  'bottom-start': 'left top',
+  'bottom-end': 'right top',
+  'left': 'right center',
+  'left-start': 'right top',
+  'left-end': 'right bottom',
+  'right': 'left center',
+  'right-start': 'left top',
+  'right-end': 'left bottom',
+}
+
 export type PlacementParam = PlacementWithModifiers[] | PlacementWithModifiers;
 export function calculatePopoverPosition(params: Params, preferredPlacement: PlacementWithModifiers[],
   options: {
@@ -261,7 +278,7 @@ export function calculatePopoverPosition(params: Params, preferredPlacement: Pla
     preserveLastPlacement?: boolean
     offset: Offset,
     viewportOffset: Offset
-  }): { x: number, y: number, placement?: PlacementWithModifiers, fitsWithinBbox: boolean } {
+  }) {
 
   const { offset, lastPlacement, preserveLastPlacement, viewportOffset } = options
 
@@ -272,23 +289,16 @@ export function calculatePopoverPosition(params: Params, preferredPlacement: Pla
 
   for (const placementWithModifiers of checkedPlacements) {
     const { placement, float: floatModifier } = getPlacement(placementWithModifiers)
-    const { x, y } = calculatePosition(placement, offset, params, floatModifier, bbox)
-
-    if (!bbox) return { x, y, placement: placementWithModifiers, fitsWithinBbox: true }
-    if (isInside(x, y, bbox, params)) {
-      return { x, y, placement: placementWithModifiers, fitsWithinBbox: true }
+    const position = calculatePosition(placement, offset, params, floatModifier, bbox)
+    if (!bbox || isInside(position.x, position.y, bbox, params)) {
+      return { ...position, placement: placementWithModifiers, fitsWithinBbox: true }
     }
   }
 
-  if (!lastPlacement) {
-    const { placement, float: floatModifier } = getPlacement(checkedPlacements[0])
-    const { x, y } = calculatePosition(placement, offset, params, floatModifier, bbox)
-    return { x, y, placement: checkedPlacements[0], fitsWithinBbox: false }
-  }
-
-  const { placement, float: floatModifier } = getPlacement(lastPlacement)
-  const { x, y } = calculatePosition(placement, offset, params, floatModifier, bbox)
-  return { x, y, placement: lastPlacement, fitsWithinBbox: false }
+  const fallback = lastPlacement ?? checkedPlacements[0]
+  const { placement, float: floatModifier } = getPlacement(fallback)
+  const position = calculatePosition(placement, offset, params, floatModifier, bbox)
+  return { ...position, placement: fallback, fitsWithinBbox: false }
 }
 
 export function getArrowPosition(position: ReturnType<typeof calculatePopoverPosition>, params: Params) {

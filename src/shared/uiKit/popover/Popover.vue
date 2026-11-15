@@ -173,10 +173,7 @@ const positions = computed(() => {
   const arrowPosition = getArrowPosition(position, params)
 
   return {
-    x: position.x,
-    y: position.y,
-    placement: position.placement,
-    fitsWithinBbox: position.fitsWithinBbox,
+    ...position,
     arrowX: arrowPosition?.x,
     arrowY: arrowPosition?.y,
     arrowDirection: arrowPosition?.direction
@@ -207,7 +204,7 @@ watch(() => positions.value?.arrowDirection, (direction, old) => {
 }, { immediate: true })
 
 const targetStyle = computed(() => {
-  if (!positions.value) return {}
+  if (!positions.value || !targetParams.value) return {}
 
   const transform = props.snapToPixels ?
     `translate3d(${roundDpr(positions.value.x + windowScroll.value.x)}px, ${roundDpr(positions.value.y + windowScroll.value.y)}px, 0px)` :
@@ -215,6 +212,8 @@ const targetStyle = computed(() => {
 
   return {
     transform,
+    '--popover-width-px': targetParams.value.popup.width,
+    '--popover-transform-origin': positions.value.placementOrigin ?? 'initial',
     ...props.styles
   }
 })

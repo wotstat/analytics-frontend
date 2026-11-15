@@ -1,14 +1,26 @@
 <template>
-  <PopoverAnimated :target :display :snapToPixels :offset="targetOffset" :viewportOffset :placement :preserveLastPlacement :styles="{
-    ...styles,
-    '--enter-duration': enterAnimationDuration,
-    '--exit-duration': exitAnimationDuration,
-  }" :teleportTo="teleportTo" @pointer-down-outside="e => emit('pointerDownOutside', e)"
+  <PopoverAnimated
+    :target
+    :display
+    :snapToPixels
+    :offset="targetOffset"
+    :viewportOffset
+    :placement
+    :preserveLastPlacement
+    :styles="{
+      ...styles,
+      '--enter-duration': enterAnimationDuration,
+      '--exit-duration': exitAnimationDuration,
+    }"
+    :teleportTo="teleportTo"
+    :duration="Math.max(enterDuration, exitDuration)"
+    @pointer-down-outside="e => emit('pointerDownOutside', e)"
     @pointer-up-outside="e => emit('pointerUpOutside', e)" @target-outside-window="emit('targetOutsideWindow')"
     @popover-outside-window="emit('popoverOutsideWindow')"
     @popover-fully-outside-window="emit('popoverFullyOutsideWindow')"
     @pointer-click-outside="e => emit('pointerClickOutside', e)"
-    v-slot="{ arrow, transitionClass }" :duration="Math.max(enterDuration, exitDuration)">
+    v-slot="{ arrow, transitionClass }">
+
     <div class=" popover-card" :class="[{
       [`arrow-${arrow.direction}`]: arrow.direction,
       'arrow-disabled': arrowSize == 0,
@@ -96,6 +108,7 @@ $animation-offset: var(--animation-transition-offset, 3px);
 
 .popover-card {
   pointer-events: auto;
+  transform-origin: var(--popover-transform-origin, var(--arrow-x) var(--arrow-y));
 
   &.non-interactive {
     pointer-events: none;
@@ -217,17 +230,25 @@ $animation-offset: var(--animation-transition-offset, 3px);
 }
 
 .v-enter-active {
-  transition: opacity var(--enter-duration) ease, transform var(--enter-duration) ease;
+  transition: opacity var(--enter-duration) ease, transform var(--enter-duration) ease,
+    scale var(--popover-enter-scale-transition, var(--enter-duration) ease-out);
 }
 
 .v-leave-active {
-  transition: opacity var(--exit-duration) ease, transform var(--exit-duration) ease;
+  transition: opacity var(--exit-duration) ease, transform var(--exit-duration) ease, scale var(--exit-duration) ease-out;
 }
 
 .v-enter-from,
 .v-leave-to {
   opacity: 0;
 
+  &.scale-transition {
+    scale: var(--popover-collapsed-scale);
+  }
+}
+
+.v-enter-from:not(.scale-transition),
+.v-leave-to:not(.scale-transition) {
   &.arrow-left {
     transform: translate(calc(-1 * $animation-offset), 0);
   }
