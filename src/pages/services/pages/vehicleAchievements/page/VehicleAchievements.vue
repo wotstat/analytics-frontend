@@ -35,7 +35,7 @@ import AchievementHistory from '../history/AchievementHistory.vue'
 import AchievementTable from '../AchievementTable.vue'
 import type { AchievementKind } from '../utils/achievements'
 import { useAchievementQueryStorage } from './useAchievementQueryStorage'
-import { useAchievementStatistics } from './useAchievementStatistics'
+import { useAchievementStatistics } from '../utils/useAchievementStatistics'
 
 const props = defineProps<{ kind: AchievementKind }>()
 const {

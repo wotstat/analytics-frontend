@@ -32,14 +32,16 @@ export function snapshotMetrics<const Key extends string, const Percentile exten
   const metrics = Object.fromEntries(percentiles.map(percentile => {
     const value = valueKey(percentile)
     const percentileLabel = `${percentile}%`
+    const metricIcon = icons?.[percentile] ?? icon
+    const headingLabel = metricIcon === icon ? percentileLabel : undefined
     const preset = presets.find(preset => preset.percentile === percentile)
     return [value, {
-      icon: icons?.[percentile] ?? icon,
+      icon: metricIcon,
       color,
       headingColor,
       label: `${label} · ${preset?.label ?? percentileLabel}`,
-      headingLabel: percentileLabel,
-      variantLabel: percentileLabel,
+      headingLabel,
+      variantLabel: preset ? headingLabel : percentileLabel,
       data: data[value],
       updatedDayField,
       history,
@@ -56,7 +58,7 @@ export function snapshotMetrics<const Key extends string, const Percentile exten
       label: presetLabel,
       defaultValue: value,
       values: [value],
-      idleLabel: `${percentile}%`,
+      idleLabel: metrics[value].headingLabel,
     }
   })
 

@@ -29,12 +29,7 @@
       <template #header-tankType><VehicleType type="any" class="type-heading" /></template>
       <template #header-name><Icon icon="tank" class="heading-icon" /></template>
       <template #header="{ column }">
-        <template v-if="column.metric">
-          <Icon :icon="availableSlots[column.metric].icon" class="heading-icon" />
-          <span class="metric-caption">
-            {{ availableSlots[column.metric].headingLabel }}
-          </span>
-        </template>
+        <Icon v-if="column.metric" :icon="availableSlots[column.metric].icon" class="heading-icon" />
       </template>
 
       <template #cell-compare="{ row }">
@@ -57,7 +52,11 @@
         <span class="metric-content" :class="{ 'with-bar': showValueBars }">
           <span class="metric-value">{{ value ?? '—' }}</span>
           <AchievementDelta v-if="column.metric && deltaPeriod !== 'none'" class="metric-delta"
-            :value="achievementDelta(row, column.metric, deltaPeriod)" />
+            :value="achievementDelta(row, column.metric, deltaPeriod)">
+            <template #empty="{ value }">
+              <span v-tooltip="value === null ? 'Нет данных за дату сравнения' : 'Без изменений'">–</span>
+            </template>
+          </AchievementDelta>
         </span>
       </template>
 
@@ -103,7 +102,6 @@ import VehicleType from '@/shared/game/components/vehicles/vehicleType/VehicleTy
 import { isVehicleType } from '@/shared/game/components/vehicles/vehicleType/vehicleTypeToImage'
 import { mtNations, wotNations, type Nation } from '@/shared/game/domain/vehicles/nations'
 import { regionToGame } from '@/shared/game/domain/wot'
-import { createVehicleNameFilter } from '@/shared/game/components/vehicles/vehicleSearch'
 import SearchLine from '@/shared/game/components/selectors/components/searchLine/SearchLine.vue'
 import ComposableTable from '@/shared/ui/composableTable/ComposableTable.vue'
 import type { ComposableTableCellEvent, ComposableTableColumn, ComposableTableKey } from '@/shared/ui/composableTable/types'
@@ -114,7 +112,7 @@ import type { SelectOption } from '@/shared/ui/optionsSelect/types'
 import { romanNumberProcessor } from '@/shared/utils/processors/processors'
 import type { VehicleFilters } from '../vehicles/filters/types'
 import type { VehicleStatisticsRow } from '../vehicles/shared/types'
-import { vehicleHistorySelection, type VehicleSelection, type VehicleGrouping } from '../vehicles/shared/vehicleGrouping'
+import { vehicleHistorySelection, type VehicleSelection } from '../vehicles/shared/vehicleGrouping'
 import { vehicleName } from '../vehicles/shared/vehicleName'
 import type { LocalVehicleFilters } from '../vehicles/vehicleListTable/filters/localFilters'
 import VehicleListFilters from '../vehicles/vehicleListTable/filters/VehicleListFilters.vue'
@@ -124,7 +122,7 @@ import VehicleTableSettings from '../vehicles/vehicleListTable/settings/VehicleT
 import { useVehicleValueBars } from '../vehicles/vehicleListTable/utils/useVehicleValueBars'
 import { useVehicleTableAppearance } from '../vehicles/vehicleListTable/utils/useVehicleTableAppearance'
 import { COMPARE_MIN_TABLE_WIDTH, EXPAND_MIN_TABLE_WIDTH, vehicleColumns, vehicleNameColumn } from '../vehicles/vehicleListTable/utils/columns'
-import { useVehicleSorting, type SortKey, type SortOrder } from '../vehicles/vehicleListTable/utils/useVehicleSorting'
+import type { SortKey, SortOrder } from '../vehicles/vehicleListTable/utils/useVehicleSorting'
 import { availableSlots, type Slot } from '../vehicles/vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 import { formatSlotValue } from '../vehicles/vehicleMetricSelector/utils/formatMetricValue'
 import type { ComparisonCandidate, ComparisonSource } from '../vehicles/timeSeriesCompare/types'
@@ -132,6 +130,7 @@ import { comparisonRowKey } from '../vehicles/timeSeriesCompare/utils/comparison
 import type { HistoryStep, HistoryAverageWindow } from '../vehicles/timeSeries/period/historyStep'
 import AchievementHistory from './history/AchievementHistory.vue'
 import AchievementDelta from './AchievementDelta.vue'
+import { useAchievementTableRows } from './utils/useAchievementTableRows'
 import { achievementDelta, achievements, type AchievementKind, type AchievementDeltaSelection, type AchievementStatisticsRow } from './utils/achievements'
 
 const props = defineProps<{
@@ -182,11 +181,9 @@ const averageWindow = ref<HistoryAverageWindow>(null)
 const { showValueBars, extendedPalette } = useVehicleTableAppearance()
 const pinCompared = useLocalStorage('vehicles-table-pin-compared', false)
 const definition = computed(() => achievements[props.kind])
-const slots = ref<Slot[]>([...definition.value.slots].reverse())
-const sorting = useVehicleSorting<AchievementStatisticsRow>(ref<VehicleGrouping>('tanks'), slots, sort, (vehicle, slot) => {
-  if (sortByDelta.value && deltaPeriod.value !== 'none') return achievementDelta(vehicle, slot, deltaPeriod.value)
-  return vehicle[slot] ?? null
-})
+const { rows, slots, sorting } = useAchievementTableRows(props.kind, () => props.vehicles, sort, () => ({
+  ...localFilters.value, search: search.value, deltaPeriod: deltaPeriod.value, sortByDelta: sortByDelta.value,
+}))
 const table = useTemplateRef<HTMLElement>('table')
 const { width } = useElementSize(table)
 const compactToolbar = computed(() => width.value < 700)
@@ -226,7 +223,7 @@ const columns = computed<AchievementColumn[]>(() => {
       ...vehicleNameColumn(width.value),
       ...(width.value < 440 ? { width: Math.max(100, width.value * 0.28) } : {}),
     },
-    ...slots.value.map(metric => ({
+    ...slots.map(metric => ({
       key: metric, metric,
       label: availableSlots[metric].label,
       minWidth: metricMinWidth.value,
@@ -237,18 +234,7 @@ const columns = computed<AchievementColumn[]>(() => {
   return columns
 })
 const filteredVehicles = computed(() => {
-  const matchVehicle = createVehicleNameFilter(search.value)
-  const { levels, types, nations, onlyActual } = localFilters.value
-
-  const vehicles = props.vehicles.filter(vehicle => {
-    if (onlyActual && !vehicle.isActual) return false
-    if (matchVehicle(vehicleName(vehicle)) === null) return false
-    if (levels.length && !levels.some(level => level === vehicle.tankLevel)) return false
-    if (types.length && !types.some(type => type === vehicle.tankType)) return false
-    return !nations.length || nations.some(nation => nation === vehicle.tankTag?.split(':')[0])
-  })
-
-  vehicles.sort(sorting.compare)
+  const vehicles = rows.value
   if (!pinCompared.value) return vehicles
 
   const compared: AchievementStatisticsRow[] = []
@@ -314,11 +300,6 @@ watch(availableNations, available => {
   if (nations.length !== localFilters.value.nations.length) localFilters.value = { ...localFilters.value, nations }
 }, { immediate: true })
 watch([search, localFilters, () => props.vehicles], () => displayLimit.value = PAGE_SIZE)
-watch(sortByDelta, enabled => {
-  if (enabled && !sort.value.some(({ key }) => slots.value.includes(key as Slot))) {
-    sort.value = [{ key: definition.value.defaultSortSlot, ascending: false }]
-  }
-}, { immediate: true })
 </script>
 
 <style scoped lang="scss">
@@ -393,11 +374,6 @@ watch(sortByDelta, enabled => {
   .achievement-stats {
     --composable-table-cell-padding: 0 3px;
 
-    :deep(.composable-table-head .heading) {
-      container-type: inline-size;
-      container-name: achievement-heading;
-    }
-
     :deep(.composable-table-cell.interactive:hover) {
       background: none;
     }
@@ -457,22 +433,6 @@ watch(sortByDelta, enabled => {
     display: block;
     width: 40px;
     height: 40px;
-  }
-
-  .metric-caption {
-    position: absolute;
-    right: 3px;
-    bottom: 9px;
-    padding: 1px 4px;
-    color: white;
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1.1;
-
-    @container achievement-heading (width < 110px) {
-      background-color: #1b1f23;
-      border-radius: 3px;
-    }
   }
 
   .type-heading {

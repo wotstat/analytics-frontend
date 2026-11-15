@@ -5,12 +5,11 @@
 <script setup lang="ts">
 import { markRaw } from 'vue'
 import ChartView from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
-import type { VehicleHistoryPeriod } from '../../../shared/types'
 import type { Slot } from '../../../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
-import { MetaHistoryChart } from './MetaHistoryChart'
+import { MetaHistoryChart, type MetaHistorySeries, type MetaHistoryOptions } from './MetaHistoryChart'
 
-const props = defineProps<{ series: { color: string, history: VehicleHistoryPeriod[] }[], slot: Slot, until: number }>()
-const chart = markRaw(new MetaHistoryChart(props.series, props.slot, props.until))
+const props = defineProps<{ series: MetaHistorySeries[], slot: Slot, until: number, options?: MetaHistoryOptions }>()
+const chart = markRaw(new MetaHistoryChart(props.series, props.slot, props.until, props.options))
 </script>
 
 <style scoped lang="scss">

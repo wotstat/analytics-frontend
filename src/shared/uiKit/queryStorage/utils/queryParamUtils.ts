@@ -1,6 +1,6 @@
 import type { LocationQuery, LocationQueryRaw } from 'vue-router'
 import { unref } from 'vue'
-import type { QueryParam } from '../queryStorageTypes'
+import type { QueryParam, QueryParams, QueryValues } from '../queryStorageTypes'
 
 export type Encoded = string | null | undefined
 export type QuerySnapshot = Readonly<LocationQuery | LocationQueryRaw>
@@ -74,4 +74,13 @@ export function decode(definition: QueryParam, raw: unknown, query?: QuerySnapsh
   } catch {
     return defaultValue(definition)
   }
+}
+
+export function readQueryParams<P extends QueryParams>(definitions: P, url: URL): QueryValues<P> {
+  const query = Object.fromEntries(url.searchParams)
+  return Object.fromEntries(Object.entries(definitions).map(([key, definition]) => {
+    const raw = query[definition.label ?? key]
+    if (raw === undefined || !paramEnabled(definition, query)) return [key, defaultValue(definition)]
+    return [key, decode(definition, raw, query)]
+  })) as QueryValues<P>
 }

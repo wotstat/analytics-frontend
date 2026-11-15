@@ -3,7 +3,7 @@
     <TriangleUp class="triangle" />
     {{ spaceProcessor(Math.abs(value)) }}
   </span>
-  <span v-else class="no-change" v-tooltip="value === null ? 'Нет данных за дату сравнения' : 'Без изменений'">–</span>
+  <span v-else class="no-change"><slot name="empty" :value>–</slot></span>
 </template>
 
 <script setup lang="ts">

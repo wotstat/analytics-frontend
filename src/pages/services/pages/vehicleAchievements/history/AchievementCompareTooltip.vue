@@ -38,7 +38,7 @@ import type { ComparisonSource } from '../../vehicles/timeSeriesCompare/types'
 import HistoryTooltipHeader from '../../vehicles/timeSeries/tooltip/HistoryTooltipHeader.vue'
 import { availableSlots, type Slot } from '../../vehicles/vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 import { formatSlotValue } from '../../vehicles/vehicleMetricSelector/utils/formatMetricValue'
-import { achievementSeriesTag } from './achievementSeries'
+import { achievementSeriesTag } from '../utils/achievementSeries'
 
 const props = defineProps<{
   ctx: TooltipCtx<VehicleHistoryHit>

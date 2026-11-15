@@ -11,21 +11,36 @@ import type { VehicleHistoryPeriod } from '../../../shared/types'
 import { defaultVehicleStatisticsFromDay } from '../../../shared/vehicleStatisticsPeriod'
 import type { Slot } from '../../../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 import { formatMetaSlotValue } from '../../utils/format'
+import { nextHistoryPeriod, type HistoryStep, type HistoryAverageWindow } from '../../../timeSeries/period/historyStep'
 
-type Series = { color: string, history: VehicleHistoryPeriod[] }
+export type MetaHistorySeries = { color: string, history: VehicleHistoryPeriod[], slot?: Slot }
+export type MetaHistoryOptions = { fromDay?: string, step?: HistoryStep, averageWindow?: HistoryAverageWindow }
+
 const DAY = 86_400_000
+const shortDate = new Intl.DateTimeFormat('ru', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' })
+
+function timeAxis(from: number, until: number) {
+  const days = Math.floor((until - from) / DAY)
+  if (days < 365) {
+    const intervals = Math.min(4, days)
+    const dates = Array.from({ length: intervals + 1 }, (_, i) => from + Math.round(i * days / (intervals || 1)) * DAY)
+    return { values: labelCandidates({ values: dates }), labelForValue: (value: number) => shortDate.format(value) }
+  }
+
+  const firstYear = new Date(from).getUTCFullYear()
+  const yearCount = new Date(until).getUTCFullYear() - firstYear + 1
+  const years = Array.from({ length: yearCount }, (_, i) => Math.max(from, Date.UTC(firstYear + i, 0, 1)))
+  return { values: labelCandidates({ values: years }), labelForValue: (value: number) => String(new Date(value).getUTCFullYear()) }
+}
 
 export class MetaHistoryChart extends UniversalChart {
-  constructor(series: Series[], slot: Slot, until: number) {
+  constructor(series: MetaHistorySeries[], slot: Slot, until: number,
+    { fromDay = defaultVehicleStatisticsFromDay, step: historyStep = 'day', averageWindow = 3 }: MetaHistoryOptions = {}) {
     super({ layoutVariant: 'vertical', renderManager: globalChartRenderManagerSteps4, minLayoutSize: { top: 14, right: 12 } })
 
-    const from = Date.parse(`${defaultVehicleStatisticsFromDay}T00:00:00Z`)
-    const firstYear = new Date(from).getUTCFullYear()
-    const years = Array.from({ length: new Date(until).getUTCFullYear() - firstYear + 1 }, (_, i) => Math.max(from, Date.UTC(firstYear + i, 0, 1)))
-
+    const from = Date.parse(`${fromDay}T00:00:00Z`)
     const x = new AutoLabels('horizontal', {
-      values: labelCandidates({ values: years }), labelForValue: value => String(new Date(value).getUTCFullYear()),
-      strategy: 'classic-flow', labelOffset: 8, padding: 4,
+      ...timeAxis(from, until), strategy: 'classic-flow', labelOffset: 8, padding: 4,
     })
     const clip = new ChartClip('center')
     let min = Infinity
@@ -38,10 +53,10 @@ export class MetaHistoryChart extends UniversalChart {
       for (const row of source.history) {
         const x = new Date(`${row.periodStart}T00:00:00Z`).getTime()
         if (x < from || x > until) continue
-        if (previous && x - previous > DAY) rawPoints.push(null)
+        if (previous && x > nextHistoryPeriod(previous / 1000, historyStep) * 1000) rawPoints.push(null)
         previous = x
 
-        const value = row[slot]
+        const value = row[source.slot ?? slot]
         if (value == null || !Number.isFinite(value)) {
           rawPoints.push(null)
           continue
@@ -50,7 +65,8 @@ export class MetaHistoryChart extends UniversalChart {
       }
 
       // Соединяем участки после сглаживания, не усредняя значения через пропуски.
-      const points = movingAveragePoints(rawPoints, 3).filter((point): point is Point => point !== null)
+      const averaged = averageWindow === null ? rawPoints : movingAveragePoints(rawPoints, averageWindow)
+      const points = averaged.filter((point): point is Point => point !== null)
       for (const point of points) {
         min = Math.min(min, point.y)
         max = Math.max(max, point.y)

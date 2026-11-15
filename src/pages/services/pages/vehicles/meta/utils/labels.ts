@@ -1,10 +1,8 @@
 import { battleModeSelection } from '@/shared/game/domain/battleModes/battleModeSelection'
-import { nationNames, type Nation } from '@/shared/game/domain/vehicles/nations'
 import { getArenaName } from '@/shared/i18n/i18n'
-import { romanNumberProcessor } from '@/shared/utils/processors/processors'
 import type { VehicleFilters } from '../../filters/types'
-import type { VehicleSelection } from '../../shared/vehicleGrouping'
 import type { VehiclesMetaParams } from './params'
+import { selectionLabelParts, type SelectionLabel } from './selectionLabels'
 
 export function filterLabels(filters: VehicleFilters) {
   const labels: string[] = []
@@ -41,22 +39,12 @@ export function comparisonFilterLabels(filters: VehicleFilters[]) {
   return { region, mode: commonMode, labels: commonLabels, sources }
 }
 
-type SelectionLabel = { text: string, level?: boolean, types?: string[] }
-
-function selectionLabelParts(selection: VehicleSelection) {
-  const labels: SelectionLabel[] = []
-  const classes: Record<string, string> = { HT: 'ТТ', MT: 'СТ', LT: 'ЛТ', AT: 'ПТ-САУ', SPG: 'САУ' }
-  if (selection.levels.length) labels.push({ text: [...selection.levels].sort((a, b) => a - b).map(romanNumberProcessor).join(', '), level: true })
-  if (selection.types.length) labels.push({ text: selection.types.map(type => classes[type] ?? type).join(', '), types: selection.types })
-  if (selection.nations.length) labels.push({ text: selection.nations.map(nation => nationNames[nation as Nation] ?? nation).join(', ') })
-  return labels
-}
-
-export const selectionLabels = (selection: VehicleSelection) => selectionLabelParts(selection).map(label => label.text)
-
 export function tableFilterLabels(params: VehiclesMetaParams) {
   const { table, filters } = params
-  const labels: SelectionLabel[] = [...filterLabels(filters).map(text => ({ text })), ...selectionLabelParts({ levels: [...table.levels], types: [...table.types], nations: [...table.nations] })]
+  const labels: SelectionLabel[] = [
+    ...filterLabels(filters).map(text => ({ text })),
+    ...selectionLabelParts({ levels: [...table.levels], types: [...table.types], nations: [...table.nations] }),
+  ]
   if (table.search) labels.push({ text: `Поиск: ${table.search}` })
   return labels
 }

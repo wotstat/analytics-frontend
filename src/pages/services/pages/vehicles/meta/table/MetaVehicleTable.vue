@@ -24,7 +24,10 @@
           loading="eager" />
         <MetaVehicleName :vehicle="row" class="vehicle-name" />
       </div>
-      <span v-for="column in columns" :key="column.slot">{{ formatValue(column.slot, row[column.slot]) }}</span>
+      <span v-for="column in columns" :key="column.slot">
+        {{ formatValue(column.slot, row[column.slot]) }}
+        <slot name="detail" :row :metric="column.slot" />
+      </span>
     </div>
   </div>
 </template>
@@ -35,13 +38,13 @@ import { createNumberFormatter } from '@/shared/utils/processors/createNumberFor
 import VehicleImage from '@/shared/game/components/vehicles/vehicleImage/VehicleImage.vue'
 import EfficiencyIcon from '@/shared/game/components/efficiencyIcon/IconRenderer.vue'
 import { regionToGame } from '@/shared/game/domain/wot'
-import type { VehicleStatistics } from '../../shared/types'
+import type { VehicleStatisticsRow } from '../../shared/types'
 import MetaVehicleName from './MetaVehicleName.vue'
 import { formatMetaSlotValue } from '../utils/format'
 import { availableSlots, slotHeadingLabel, type Slot } from '../../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 import type { SortOrder } from '../../vehicleListTable/utils/useVehicleSorting'
 
-const props = defineProps<{ rows: VehicleStatistics[], slots: readonly Slot[], sort: readonly SortOrder[] }>()
+const props = defineProps<{ rows: VehicleStatisticsRow[], slots: readonly Slot[], sort: readonly SortOrder[] }>()
 
 const primarySort = computed(() => props.sort[0])
 const columns = computed(() => props.slots.map(slot => ({

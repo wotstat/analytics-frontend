@@ -11,6 +11,7 @@ import type { SavedComparisonFilters, SavedComparisonSource } from '../../timeSe
 import { availableSlots, type Slot } from '../../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
 import { readVehiclesMetaParams, type VehiclesMetaParams } from './params'
 import type { VehiclesMetaCatalog } from './catalog'
+import { vehicleClassLabel } from './selectionLabels'
 
 const listFormatter = new Intl.ListFormat('ru')
 const list = (values: readonly string[]) => listFormatter.format(values)
@@ -20,9 +21,7 @@ const shorten = (value: string, length: number) => {
   return value.slice(0, length - 1).trimEnd() + '…'
 }
 
-const classes: Record<string, string> = { HT: 'ТТ', MT: 'СТ', LT: 'ЛТ', AT: 'ПТ-САУ', SPG: 'САУ' }
-
-function summarize(values: readonly string[]) {
+export function summarize(values: readonly string[]) {
   let count = Math.min(values.length, 3)
   while (count > 1 && list(values.slice(0, count)).length > 85) count--
   const selected = values.slice(0, count)
@@ -31,7 +30,7 @@ function summarize(values: readonly string[]) {
 }
 
 function selectionSubject(selection: VehicleSelection) {
-  const types = selection.types.map(type => classes[type] ?? type)
+  const types = selection.types.map(vehicleClassLabel)
   let name = types.length ? list(types) : 'техника'
   let genitive = types.length ? name : 'техники'
 
@@ -52,7 +51,7 @@ function resolveTag(value: CompactValue, regions: readonly string[], index?: Veh
   if (result.status === 'ready') return result.value
 }
 
-function vehicleLabel(value: CompactValue, filters: SavedComparisonFilters, catalog?: VehiclesMetaCatalog) {
+export function vehicleLabel(value: CompactValue, filters: SavedComparisonFilters, catalog?: VehiclesMetaCatalog) {
   const tag = resolveTag(value, filters.regions, catalog?.vehicleTags)
   if (!tag) return
   const name = catalog?.vehicleNames.get(tag)?.trim()
@@ -118,8 +117,12 @@ function tableSubject(table: VehiclesMetaParams['table']) {
   return { name: 'типы техники по уровням', genitive: 'типов техники по уровням' }
 }
 
+export function vehicleMetaTitle(...parts: string[]) {
+  return [...parts.filter(Boolean), 'WotStat Analytics'].join(' — ')
+}
+
 function tags(subject: string, description: string): MetaTags {
-  return { title: `${subject} — WotStat Analytics`, description, imageAlt: subject }
+  return { title: vehicleMetaTitle(subject), description, imageAlt: subject }
 }
 
 export function vehiclesTableMetaTags(url: URL, catalog?: VehiclesMetaCatalog): MetaTags {

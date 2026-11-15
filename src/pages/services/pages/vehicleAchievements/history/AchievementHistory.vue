@@ -98,7 +98,7 @@ import { useHistoryEventStyles } from '../../vehicles/timeSeries/annotations/eve
 import { hasHistoryValues } from '../../vehicles/timeSeries/historyValues'
 import AchievementCompareTooltip from './AchievementCompareTooltip.vue'
 import { achievements, type AchievementKind } from '../utils/achievements'
-import { achievementHistoryColors, achievementLabel, achievementSeriesColor, achievementSeriesTag } from './achievementSeries'
+import { achievementHistoryColors, achievementLabel, achievementSeriesColor, achievementSeriesTag } from '../utils/achievementSeries'
 
 useHistoryEventStyles()
 

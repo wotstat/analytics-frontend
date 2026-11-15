@@ -3,8 +3,8 @@ import { error, loading, query, success, type Status } from '@/db'
 import { vehiclesByRegion, vehiclesByTag } from '@/shared/game/domain/vehicles/catalog'
 import type { VehicleRegion } from '../../vehicles/filters/types'
 import { VEHICLE_STATISTICS_QUERY_OPTIONS } from '../../vehicles/shared/vehicleStatisticsQuery'
-import type { AchievementKind, AchievementStatisticsRow } from '../utils/achievements'
-import { achievementStatisticsQuery } from '../utils/achievementStatisticsQuery'
+import type { AchievementKind, AchievementStatisticsRow } from './achievements'
+import { achievementStatisticsQuery } from './achievementStatisticsQuery'
 
 type SnapshotRow = Pick<AchievementStatisticsRow, 'rowKey' | 'tankTag' | 'region' | 'day'> & Partial<AchievementStatisticsRow>
 

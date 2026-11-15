@@ -11,12 +11,16 @@ import { defaultVehicleStatisticsFromDay } from '../../shared/vehicleStatisticsP
 import { useVehicleHistories } from '../../timeSeries/useVehicleHistories'
 import { applyHistoryFilters } from '../../timeSeries/historyValues'
 import { comparisonColor } from '../../timeSeriesCompare/query/palette'
-import { useVehiclesMetaReady } from '../utils/readiness'
-import type { VehiclesMetaParams } from '../utils/params'
-import { selectionLabels } from '../utils/labels'
+import { useVehiclesMetaReady } from './readiness'
+import type { SavedComparisonSource } from '../../timeSeriesCompare/query/state'
+import type { VehicleThresholds } from '../../shared/types'
+import type { Slot } from '../../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
+import type { HistoryStep } from '../../timeSeries/period/historyStep'
+import { selectionLabels } from './selectionLabels'
 
-export function useCompareMeta(params: VehiclesMetaParams, beforeDay: string) {
-  const sources = computed(() => params.sources.filter(source => source.enabled).map((source, index) => {
+export function useCompareMeta(saved: SavedComparisonSource[], slot: Slot, beforeDay: string,
+  { step = 'day', thresholds }: { step?: HistoryStep, thresholds?: VehicleThresholds } = {}) {
+  const sources = computed(() => saved.filter(source => source.enabled).map((source, index) => {
     const region = singleRegion(source.filters.regions)
     const arenas = arenaCompactor.expandMany(source.filters.arenas, region)
     const tank = 'tank' in source.target ? vehicleCompactor.expand(source.target.tank, region) : null
@@ -50,19 +54,20 @@ export function useCompareMeta(params: VehiclesMetaParams, beforeDay: string) {
   }))
 
   const readySources = computed(() => sources.value.filter(source => source.status === success))
-  const { states } = useVehicleHistories(readySources, { beforeDay, step: 'day', slot: params.settings.slot })
+  const { states } = useVehicleHistories(readySources, { beforeDay, step, slot })
 
   const state = useVehiclesMetaReady(() => {
     const statuses = sources.value.flatMap((source): Status[] => [source.status, states.get(source.tag)?.status ?? loading])
-    if (params.sources.some(source => 'tank' in source.target)) statuses.push(vehicleCatalog.value.status)
-    if (params.filters.arenas.length || params.sources.some(source => source.filters.arenas.length)) statuses.push(arenaCatalog.value.status)
+    if (saved.some(source => source.enabled && 'tank' in source.target)) statuses.push(vehicleCatalog.value.status)
+    if (saved.some(source => source.enabled && source.filters.arenas.length)) statuses.push(arenaCatalog.value.status)
     return statuses
   })
 
-  const series = computed(() => sources.value.map(source => ({
-    ...source,
-    history: applyHistoryFilters(states.get(source.tag)?.data ?? [], params.settings.slot, params.table, 'day', defaultVehicleStatisticsFromDay),
-  })))
+  const series = computed(() => sources.value.map(source => {
+    let history = states.get(source.tag)?.data ?? []
+    if (thresholds) history = applyHistoryFilters(history, slot, thresholds, step, defaultVehicleStatisticsFromDay)
+    return { ...source, history }
+  }))
 
   return { series, state }
 }
