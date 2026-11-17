@@ -4,7 +4,7 @@
     <p>За поражение: <span class="value red mt-font">{{ roundProcessor(ratingLose) }}</span></p>
     <hr>
     <p>Текущий рейтинг: <span class="value mt-font">
-        <RankIcon :rank="last" :size="'small'" class="rank-icon" :season :game />
+        <RankIcon v-if="last[1]" :rank="last[1]" :size="'small'" class="rank-icon" :season :game />
         {{ last[0] }}
       </span>
     </p>
@@ -19,10 +19,11 @@
 <script setup lang="ts">
 import { createFixedProcessor } from '@/shared/utils/processors/processors'
 import RankIcon from '@/shared/game/components/comp7/rank/RankIcon.vue'
+import type { RatingSnapshot } from '../useMainStat'
 import { GameVendor } from '@/shared/game/domain/wot'
 
 const props = defineProps<{
-  last: [rating: number, eliteRating: number]
+  last: RatingSnapshot
   totalIncome: number
   ratingWin: number
   ratingLose: number

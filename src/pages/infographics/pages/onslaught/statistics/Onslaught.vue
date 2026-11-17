@@ -47,7 +47,7 @@ import { useOnslaughtQueryStorage, useOnslaughtNicknameStorage } from '../shared
 import { computedWithControl, onKeyStroke, refDebounced, useElementBounding } from '@vueuse/core'
 import { DayChartData } from './types'
 import MainStat from './mainStat/MainStat.vue'
-import { compareRanks, getDivisionLetterByRating, getEnergyPerBattle, getMaxEnergyLimit, getRankByRating, getRatingInactiveDecreasePerDay, getRegionIsoHourOffset, getSeasonQualificationCount, Rank } from '@/shared/game/domain/comp7/utils'
+import { compareRanks, getDivisionLetterFromTag, getEnergyPerBattle, getMaxEnergyLimit, getRankFromTag, getRatingInactiveDecreasePerDay, getRegionIsoHourOffset, getSeasonQualificationCount, type Rank, type RankTag } from '@/shared/game/domain/comp7/utils'
 import { useMainStat, type StatisticRes } from './mainStat/useMainStat'
 import VehicleTable from './vehicleTable/VehicleTable.vue'
 import { useVehicleTable, VehicleRes } from './vehicleTable/useVehicleTable'
@@ -154,25 +154,25 @@ const mapsStatistics = shallowRef<MapsRes[] | null>(null)
 const battleHistoryStatistics = shallowRef<BattleRes[] | null>(null)
 const qualificationStatistics = shallowRef<{ battleIndex: number, result: 'win' | 'loss' | 'draw' }[] | null>(null)
 
-const eliteRatingStatistics = queryComputedFirst<{ top1: number, eliteThreshold: number, top10: number, top100: number }>(() => `
+const leaderboardStatistics = queryComputedFirst<{ top1: number, legendC: number, legendB: number, legendA: number, top10: number, top100: number }>(() => `
   with
     '${selectedRegion.value}' as REGION,
-    '${seasonInterval.value ? dateToDbDate(seasonInterval.value.start) : '2000-01-01'}' as START_DATE,
-    '${seasonInterval.value ? dateToDbDate(seasonInterval.value.end) : '2000-01-01'}' as END_DATE,
+    toDateTime('${seasonInterval.value ? dateToDbDate(seasonInterval.value.start) : '2000-01-01'}', 'UTC') as START_DATE,
+    toDateTime('${seasonInterval.value ? dateToDbDate(seasonInterval.value.end) : '2000-01-01'}', 'UTC') as END_DATE,
     (
-      select recalculationTime
-      from Comp7LeaderboardByRank 
-      where 
-        not startsWith(name, 'MT_COMP_QA_') and 
-        region = REGION and 
-        recalculationTime between START_DATE and END_DATE + interval 1 day
-      order by recalculationTime desc
-      limit 1
+      select max(lastRecalculationTime)
+      from Comp7LeaderboardDaily
+      where region = REGION
+        and day between toDate(START_DATE) and toDate(END_DATE) + interval 1 day
+        and lastRecalculationTime between START_DATE and END_DATE + interval 1 day
     ) as latestTime
-  select max(rating) as top1, min(rating) as eliteThreshold, anyIf(rating, rank=10) as top10, anyIf(rating, rank=100) as top100
+  select max(rating) as top1, min(rating) as legendC,
+    minIf(rating, division in (11, 12)) as legendB, minIf(rating, division = 11) as legendA,
+    anyIf(rating, rank=10) as top10, anyIf(rating, rank=100) as top100
   from Comp7LeaderboardByRank
-  where not startsWith(name, 'MT_COMP_QA_') and region = REGION and recalculationTime = latestTime and elite = true;
-`, { top1: 0, eliteThreshold: 0, top10: 0, top100: 0 })
+  where not startsWith(name, 'MT_COMP_QA_') and region = REGION and recalculationTime = latestTime and elite = true
+  limit 1
+`, { top1: 0, legendC: 0, legendB: 0, legendA: 0, top10: 0, top100: 0 })
 
 async function load(abortSignal: AbortSignal, soft = false) {
   const nickName = debouncedNickname.value
@@ -202,27 +202,23 @@ async function load(abortSignal: AbortSignal, soft = false) {
         '${startDate}' - interval OFFSET hour as START_DATE,
         '${endDate}' - interval OFFSET hour as END_DATE,
         '${region}' as REGION,
+        '${selectedSeason.value ?? ''}' as SEASON,
         ${getRegionIsoHourOffset(region)} as OFFSET,
-        t0 as (
-            select toStartOfDay(dateTime + interval OFFSET hour) as day,
-                argMax(eliteRating, dateTime) as lastEliteRating
-            from Event_OnComp7Info
-            where region = REGION
-                and dateTime >= START_DATE and dateTime < END_DATE
-            group by day
-            order by day
-        ),
         t1 as (
             select toStartOfDay(dateTime + interval OFFSET hour) as day,
-                  argMinIf((rating, eliteRating), dateTime, rating > 0) as firstRating,
-                  argMin((rating, eliteRating), rating) as minRating,
-                  argMax((rating, eliteRating), rating) as maxRating,
-                  argMax(rating, dateTime) as lastRating,
-                  argMax(leaderboardPosition, dateTime) as lastLeaderboardPosition
+                  argMinIf((rating, nullIf(rank, '')), (dateTime, id), rank not in ('qual', '')) as firstRating,
+                  argMin((rating, nullIf(rank, '')), (rating, dateTime, id)) as minRating,
+                  argMax((rating, nullIf(rank, '')), (rating, dateTime, id)) as maxRating,
+                  argMax((rating, nullIf(rank, ''), leaderboardPosition), (dateTime, id)) as lastSnapshot,
+                  lastSnapshot.1 as lastRating,
+                  lastSnapshot.2 as lastRank,
+                  lastSnapshot.3 as lastLeaderboardPosition,
+                  count() as ratingSnapshots,
+                  groupUniqArrayIf(rank, rank != '') as ranks
             from Event_OnComp7Info
             where playerName = PLAYER
               and dateTime >= START_DATE and dateTime < END_DATE
-              and region = REGION
+              and region = REGION and season = SEASON
             group by day
             order by day
         ),
@@ -268,39 +264,17 @@ async function load(abortSignal: AbortSignal, soft = false) {
               and battleMode = 'COMP7'
             group by day
             order by day
-        ),
-        t4 as (
-          with prepare as (
-            select recalculationTime,
-                   minIf(rating, elite = true) as eliteThreshold,
-                   anyIf(rank, name = PLAYER) as rank,
-                   anyIf(rating, name = PLAYER) as playerRating
-            from Comp7LeaderboardByRank
-            where
-              not startsWith(name, 'MT_COMP_QA_')
-              and region = REGION
-              and recalculationTime >= toStartOfDay(toDateTime(START_DATE) - interval 1 day)
-              and (REGION = 'CT' or recalculationTime in (
-                select max(lastRecalculationTime)
-                from Comp7LeaderboardDaily
-                where region = REGION
-                  and day between toDate(START_DATE) - interval 1 day and toDate(END_DATE)
-                group by day
-              ))
-            group by recalculationTime
         )
-        select toStartOfDay(recalculationTime + interval OFFSET hour) as day,
-               argMax(eliteThreshold, recalculationTime) as lastEliteThreshold,
-               argMax(rank, recalculationTime) as lastPlayerRank,
-               argMax(playerRating, recalculationTime) as lastPlayerRating
-        from prepare
-        group by day
-    )
-    select * from t0
-    left outer join t1 using day
-    left outer join t2 using day
-    left outer join t3 using day
-    left outer join t4 using day
+    select * from (
+      select day from t1
+      union distinct select day from t2
+      union distinct select day from t3
+    ) as eventDays
+    left any join t1 using day
+    left any join t2 using day
+    left any join t3 using day
+    order by day
+    limit 1000
   `, { abortSignal, allowCache: false })
 
   if (abortSignal.aborted) return
@@ -477,18 +451,18 @@ const days = computed(() => {
   const stat = statistics.value ?? []
 
   const statByDay = new Map(stat?.map(s => [s.day, s]) ?? [])
-  const maxRating = Math.max(...stat?.map(s => s.lastPlayerRating || s.lastRating) ?? [0], 0)
-  const startRating = stat.find(s => s.totalBattles > 0 && s.firstRating[0] != 0)?.firstRating[0] ?? 0
+  const maxRating = Math.max(...stat.map(s => s.maxRating[0]), 0)
+  const startRating = stat.find(s => s.firstRating[1] != null)?.firstRating[0] ?? 0
   const game = regionToGame(selectedRegion.value)
   const maxEnergyLimit = getMaxEnergyLimit(game)
 
   const result = []
   let lastRating = 0
+  let lastRank: RankTag | null = null
   let firstDayPlayed = -1
-  let eliteRating = -1
   let lastQualBattleIndex = -1
   let energy = 0
-  let maxRank = 'qual' as Rank
+  let maxRank: Rank = 'qual'
 
   const seasonQualificationCount = getSeasonQualificationCount(selectedSeason.value ?? 'latest', gameToRegion(game))
   const isoHourOffset = getRegionIsoHourOffset(gameToRegion(game))
@@ -496,33 +470,41 @@ const days = computed(() => {
   for (let i = 0; i < seasonInterval.value.length; i++) {
     const isoDate = new Date(seasonInterval.value.start.getTime() + i * ONE_DAY).toISOString()
     const dbDate = `${isoDate.slice(0, 10)} ${isoDate.slice(11, 19)}`
-
     const stat = statByDay.get(dbDate)
-    if (stat?.lastRating) lastRating = stat.lastRating
-    if (stat?.totalBattles && firstDayPlayed == -1) firstDayPlayed = i
-    if (stat?.lastEliteRating || stat?.lastEliteThreshold) eliteRating = stat.lastEliteRating || stat.lastEliteThreshold
-    if (stat?.maxQualBattleIndex != undefined && stat.qualificationBattles) lastQualBattleIndex = Math.max(lastQualBattleIndex, stat.maxQualBattleIndex)
+    const previousRank = lastRank
+    const hasSnapshot = (stat?.ratingSnapshots ?? 0) > 0
+    const isFuture = seasonInterval.value.start.getTime() + i * ONE_DAY > Date.now() + isoHourOffset * ONE_HOUR
 
-    const rankBeforeBattle = getRankByRating(stat?.firstRating[0] ?? lastRating, game, stat?.firstRating[1] || (eliteRating > 0 ? eliteRating : undefined), selectedSeason.value ?? 'latest')
-    const rankAfterBattle = getRankByRating(stat?.maxRating[0] ?? lastRating, game, stat?.maxRating[1] || (eliteRating > 0 ? eliteRating : undefined), selectedSeason.value ?? 'latest')
+    if (stat && hasSnapshot) {
+      lastRating = stat.lastRating
+      lastRank = stat.lastRank
+    }
+    if (stat?.totalBattles && firstDayPlayed === -1) firstDayPlayed = i
+    if (stat?.qualificationBattles) lastQualBattleIndex = Math.max(lastQualBattleIndex, stat.maxQualBattleIndex)
 
-    const energyDelta = getEnergyPerBattle(maxRank, rankBeforeBattle, rankAfterBattle, game) * (stat?.totalBattles ?? 0)
-    maxRank = compareRanks(maxRank, rankAfterBattle) > 0 ? maxRank : rankAfterBattle
+    const beforeTag = stat?.firstRating[1] ?? previousRank ?? lastRank
+    const dayRanks = stat?.ranks.map(getRankFromTag) ?? []
+    const rankAfterBattle: Rank = dayRanks.reduce<Rank>((highest, rank) => compareRanks(highest, rank) >= 0 ? highest : rank,
+      lastRank ? getRankFromTag(lastRank) : maxRank)
+    const energyDelta = beforeTag
+      ? getEnergyPerBattle(maxRank, getRankFromTag(beforeTag), rankAfterBattle, game) * (stat?.totalBattles ?? 0)
+      : 0
+    if (compareRanks(rankAfterBattle, maxRank) > 0) maxRank = rankAfterBattle
     energy = Math.min(maxEnergyLimit, energy + energyDelta)
 
-    if (stat?.totalBattles === 0) {
+    if (!stat?.totalBattles && !isFuture && firstDayPlayed !== -1) {
       if (energy > 0) energy -= 1
-      else lastRating -= getRatingInactiveDecreasePerDay(getRankByRating(lastRating, game, eliteRating > 0 ? eliteRating : undefined, selectedSeason.value ?? 'latest'), game)
+      else if (!hasSnapshot && lastRank) {
+        lastRating = Math.max(0, lastRating - getRatingInactiveDecreasePerDay(getRankFromTag(lastRank), game))
+      }
     }
 
-    const isFuture = seasonInterval.value.start.getTime() + i * ONE_DAY > Date.now() + isoHourOffset * ONE_HOUR
-    const timeline: DayChartData['timeline'] = isFuture ? 'future' : firstDayPlayed == -1 ? 'past' : stat?.totalBattles ? 'played' : 'active'
-
+    const timeline: DayChartData['timeline'] = isFuture ? 'future' : firstDayPlayed === -1 ? 'past' : stat?.totalBattles ? 'played' : 'active'
     const ratingPercent = (() => {
-      if (lastRating == 0 && lastQualBattleIndex !== -1) {
+      if (lastRank === 'qual' && lastQualBattleIndex !== -1) {
         const qualBattleNumber = lastQualBattleIndex + 1
-        if (startRating > 0) return (startRating / maxRating) * (qualBattleNumber / seasonQualificationCount)
-        else return qualBattleNumber / seasonQualificationCount
+        if (startRating > 0 && maxRating > 0) return (startRating / maxRating) * (qualBattleNumber / seasonQualificationCount)
+        return qualBattleNumber / seasonQualificationCount
       }
       if (maxRating > 0) return lastRating / maxRating
       return 0
@@ -532,11 +514,11 @@ const days = computed(() => {
       dayIndex: i,
       day: dbDate,
       rating: lastRating,
-      eliteRating,
+      rank: lastRank,
       maxRating,
-      ratingPercent: timeline == 'future' && firstDayPlayed == -1 ? 0 : ratingPercent,
+      ratingPercent: timeline === 'future' && firstDayPlayed === -1 ? 0 : ratingPercent,
       timeline,
-      stat: stat,
+      stat,
       energyDelta
     })
   }
@@ -547,9 +529,9 @@ const days = computed(() => {
 const barsData = computed<DayChartData[]>(() => days.value.map(d => ({
   relativeRating: d.ratingPercent,
   timeline: d.timeline,
-  rank: getRankByRating(d.rating, game.value, d.eliteRating > 0 ? d.eliteRating : undefined, selectedSeason.value ?? 'latest'),
-  divisionLetter: getDivisionLetterByRating(d.rating, game.value, selectedSeason.value ?? 'latest', d.eliteRating > 0 ? d.eliteRating : undefined),
-  leaderboardPosition: d.stat?.lastPlayerRank || d.stat?.lastLeaderboardPosition || null,
+  rank: d.rank ? getRankFromTag(d.rank) : null,
+  divisionLetter: d.rank ? getDivisionLetterFromTag(d.rank) : '?',
+  leaderboardPosition: d.stat?.lastLeaderboardPosition ?? null,
   dayIndex: d.dayIndex,
 })))
 
@@ -565,23 +547,29 @@ const battlesStats = refDebounced(useBattleResultTable(computed(() => battleHist
 
 let qualificationStatsVersion = 0
 const qualificationStats = refDebounced(computedWithControl(qualificationStatistics, () => {
-  const firstPlayedDay = statistics.value?.find(d => d.totalBattles > 0 && d.firstRating[0] != 0)
+  const firstPlayedDay = statistics.value?.find(d => d.firstRating[1] != null)
 
   return {
     battles: qualificationStatistics.value ?? [],
-    rating: firstPlayedDay ? firstPlayedDay.firstRating[0] : 0,
+    rating: firstPlayedDay?.firstRating[0] ?? null,
+    rank: firstPlayedDay?.firstRating[1] ?? null,
     version: `${qualificationStatsVersion++}`
   }
 }), 1)
 
-const currentRating = computed(() => ({
-  rating: days.value.at(-1)?.rating ?? null,
-  eliteRating: eliteRatingStatistics.value.data.eliteThreshold,
-  qualIndex: Math.max(...days.value.map(d => d.stat?.qualificationBattles ? d.stat.maxQualBattleIndex : -1), -1),
-  top1: eliteRatingStatistics.value.data.top1,
-  top10: eliteRatingStatistics.value.data.top10,
-  top100: eliteRatingStatistics.value.data.top100,
-}))
+const currentRating = computed(() => {
+  const latest = statistics.value?.findLast(day => day.ratingSnapshots > 0)
+  const leaderboard = leaderboardStatistics.value.data
+  return {
+    rating: latest?.lastRating ?? null,
+    rank: latest?.lastRank ?? null,
+    legendThresholds: { C: leaderboard.legendC, B: leaderboard.legendB, A: leaderboard.legendA },
+    qualIndex: Math.max(...days.value.map(d => d.stat?.qualificationBattles ? d.stat.maxQualBattleIndex : -1), -1),
+    top1: leaderboard.top1,
+    top10: leaderboard.top10,
+    top100: leaderboard.top100,
+  }
+})
 
 watch(selectedDayIndex, (dayIndex) => {
   if (navigator.maxTouchPoints > 0) return

@@ -1,7 +1,7 @@
 <template>
   <Item>
     <template #icon>
-      <RankIcon :rank="{ value: value, eliteRating: eliteRating }" :size="'medium'" :season :game class='icon' />
+      <RankIcon v-if="rank" :rank="rank" :size="'medium'" :season :game class='icon' />
     </template>
     <template #value>
       <p>{{ value }}</p>
@@ -24,12 +24,13 @@
 <script setup lang="ts">
 import RankIcon from '@/shared/game/components/comp7/rank/RankIcon.vue'
 import Item from './Item.vue'
+import type { RankTag } from '@/shared/game/domain/comp7/utils'
 import { GameVendor } from '@/shared/game/domain/wot'
 import { type Component } from 'vue'
 
 const props = defineProps<{
   value: number,
-  eliteRating: number
+  rank: RankTag | null
   delta: number
   season?: string
   game?: GameVendor,

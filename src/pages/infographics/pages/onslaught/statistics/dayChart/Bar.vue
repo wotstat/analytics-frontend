@@ -1,7 +1,7 @@
 <template>
   <button class="bar mt-font" :class="{
     'selected': props.selected,
-    [`rank-${props.value.rank}`]: true,
+    [`rank-${props.value.rank}`]: props.value.rank !== null,
     [props.value.timeline]: true,
     'unknown-rating': props.value.relativeRating == 0
   }" :style="{

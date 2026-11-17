@@ -3,8 +3,8 @@
     <p>За победу: <span class="value green mt-font">+{{ roundProcessor(ratingWin) }}</span></p>
     <p>За поражение: <span class="value red mt-font">{{ roundProcessor(ratingLose) }}</span></p>
     <hr>
-    <p v-if="min[0] != 0">Минимум: <span class="value mt-font">
-        <RankIcon :rank="min" :size="'small'" class="rank-icon" :season :game />
+    <p v-if="min[0] !== 0 || (min[1] && min[1] !== 'qual')">Минимум: <span class="value mt-font">
+        <RankIcon v-if="min[1]" :rank="min[1]" :size="'small'" class="rank-icon" :season :game />
         {{ min[0] }}
       </span>
       <span class="rating-delta value mt-font" v-if="minDelta != 0">
@@ -12,7 +12,7 @@
       </span>
     </p>
     <p>Максимум: <span class="value mt-font">
-        <RankIcon :rank="max" :size="'small'" class="rank-icon" :season :game />
+        <RankIcon v-if="max[1]" :rank="max[1]" :size="'small'" class="rank-icon" :season :game />
         {{ max[0] }}
       </span>
       <span class="rating-delta value mt-font" v-if="maxDelta != 0">
@@ -27,11 +27,12 @@
 import { createFixedProcessor } from '@/shared/utils/processors/processors'
 import RankIcon from '@/shared/game/components/comp7/rank/RankIcon.vue'
 import { computed } from 'vue'
+import type { RatingSnapshot } from '../useMainStat'
 import { GameVendor } from '@/shared/game/domain/wot'
 
 const props = defineProps<{
-  min: [rating: number, eliteRating: number]
-  max: [rating: number, eliteRating: number]
+  min: RatingSnapshot
+  max: RatingSnapshot
   current: number
   ratingWin: number
   ratingLose: number

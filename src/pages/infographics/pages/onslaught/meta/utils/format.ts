@@ -1,5 +1,5 @@
 import i18n from '@/shared/game/domain/comp7/i18n.json'
-import type { Division } from '@/shared/game/domain/comp7/utils'
+import type { RankTag } from '@/shared/game/domain/comp7/utils'
 
 const numberFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
 const percentFormatter = new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 1 })
@@ -14,7 +14,7 @@ export function formatPercent(value: number | null) {
   return percentFormatter.format(value).replaceAll(',', '\u00a0')
 }
 
-export function rankLabel(division: Division) {
+export function rankLabel(division: RankTag) {
   if (division === 'qual') return 'Квалификация'
   const [rank, letter] = division.split('_')
   const translations: Record<string, string> = i18n.ru

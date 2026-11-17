@@ -1,7 +1,7 @@
 <template>
   <div class="rating-progress">
     <div class="current-rating">
-      <RankIcon :rank="[rating ?? 0, eliteRating]" class="rank-icon" :size="'large'" :game :season />
+      <RankIcon v-if="rank" :rank="rank" class="rank-icon" :size="'large'" :game :season />
       <p class="mt-font">{{ rating ?? '?' }}</p>
     </div>
 
@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
 import RankIcon from '@/shared/game/components/comp7/rank/RankIcon.vue'
-import { getDivisionByRating, getDivisionsByRank, getNextDivision, getRankByRating, getRatingForDivision, getSeasonQualificationCount } from '@/shared/game/domain/comp7/utils'
+import { getDivisionsByRank, getNextDivision, getRankFromTag, getDivisionLetterFromTag, getRatingForDivision, getSeasonQualificationCount, type RankTag } from '@/shared/game/domain/comp7/utils'
 import { gameToRegion, GameVendor } from '@/shared/game/domain/wot'
 import { computed } from 'vue'
 
@@ -42,7 +42,8 @@ import { computed } from 'vue'
 const props = defineProps<{
   rating: number | null
   qualIndex: number
-  eliteRating: number
+  rank: RankTag | null
+  legendThresholds: { C: number, B: number, A: number }
   top1: number
   top10: number
   top100: number
@@ -50,54 +51,49 @@ const props = defineProps<{
   season: string
 }>()
 
-const rank = computed(() => getRankByRating(props.rating ?? 0, props.game, props.eliteRating, props.season))
+const baseRank = computed(() => props.rank ? getRankFromTag(props.rank) : null)
 const divisions = computed(() => {
-  // Источник данных пока содержит только общий порог Легенды, без порогов B/A.
-  if (rank.value === 'sixth') return ['sixth'] as const
-  const result = getDivisionsByRank(rank.value, props.game, props.season)
-  if (rank.value !== 'fifth' || props.eliteRating <= 0) return result
-  return result.filter(division => getRatingForDivision(division, props.game, props.season) < props.eliteRating)
+  if (!baseRank.value) return []
+  if (baseRank.value === 'sixth' && props.rank === 'sixth') return ['sixth'] as const
+  const result = getDivisionsByRank(baseRank.value, props.game, props.season)
+  if (baseRank.value === 'sixth') {
+    return result.filter(division => Number.isFinite(getRatingForDivision(division, props.game, props.season, props.legendThresholds)))
+  }
+  if (baseRank.value !== 'fifth' || props.legendThresholds.C <= 0) return result
+  return result.filter(division => getRatingForDivision(division, props.game, props.season) < props.legendThresholds.C)
 })
-const currentDivisionLetter = computed(() => {
-  if (!divisions.value.length) return null
-  const currentDivision = getDivisionByRating(props.rating ?? 0, props.game, props.eliteRating, props.season)
-  if (currentDivision.includes('_')) return currentDivision.split('_')[1]
-  return '-'
-})
+const currentDivisionLetter = computed(() => props.rank ? getDivisionLetterFromTag(props.rank) : null)
 
 const divisionLetters = computed(() => {
-  if (divisions.value.length == 0 || props.eliteRating == 0 || props.rating == null) return []
-  if (divisions.value.length == 1) {
+  if (!divisions.value.length || props.rating == null) return []
+  if (divisions.value.length === 1) {
     const division = divisions.value[0]
-    if (division == 'qual') return ['Квалификация']
-    if (division == 'fifth') return ['Чемпион']
-    if (division == 'sixth') return ['Легенда']
+    if (division === 'qual') return ['Квалификация']
+    if (division === 'fifth') return ['Чемпион']
+    if (division === 'sixth') return ['Легенда']
   }
   return divisions.value.map(division => division.split('_')[1])
 })
 
 const ratingValues = computed(() => {
-  if (!divisions.value || props.rating == null) return []
-  if (divisions.value.length == 1) {
-    if (divisions.value[0] == 'qual') {
-      const seasonQualificationCount = getSeasonQualificationCount(props.season, gameToRegion(props.game))
-      return new Array(seasonQualificationCount + 1).fill(0).map((_, i) => i)
-    }
+  if (!divisions.value.length || props.rating == null) return []
+  if (baseRank.value === 'qual') {
+    const count = getSeasonQualificationCount(props.season, gameToRegion(props.game))
+    return Array.from({ length: count + 1 }, (_, i) => i)
+  }
+  if (baseRank.value === 'sixth' && props.rank === 'sixth') {
+    if (props.legendThresholds.C <= 0) return []
+    return [props.legendThresholds.C, props.top100, props.top10, props.top1]
+      .filter((rating, i, values) => rating > 0 && (i === 0 || rating >= values[i - 1]))
   }
 
-  if (rank.value === 'fifth' && props.eliteRating <= 0) return []
-  const ratings = divisions.value.map(division => getRatingForDivision(division, props.game, props.season))
-
-  const currentDivision = divisions.value[divisions.value.length - 1]
-  if (currentDivision == 'sixth') return [props.eliteRating, props.top100, props.top10, props.top1]
-
-  const nextDivision = getNextDivision(currentDivision, props.game, props.season)
-  if (!nextDivision) return ratings
-
-  if (nextDivision == 'sixth' || nextDivision == 'sixth_C') return [...ratings, props.eliteRating]
-
-  const nextRating = getRatingForDivision(nextDivision, props.game, props.season)
-  return [...ratings, rank.value === 'fifth' ? Math.min(nextRating, props.eliteRating) : nextRating]
+  const ratings = divisions.value.map(division => getRatingForDivision(division, props.game, props.season, props.legendThresholds))
+  const lastDivision = divisions.value.at(-1)!
+  const nextDivision = getNextDivision(lastDivision, props.game, props.season)
+  let end = nextDivision ? getRatingForDivision(nextDivision, props.game, props.season, props.legendThresholds) : props.top1
+  if (baseRank.value === 'sixth') end = props.top1
+  if (baseRank.value === 'fifth' && props.legendThresholds.C > 0) end = Math.min(end, props.legendThresholds.C)
+  return [...ratings, end].filter(value => Number.isFinite(value) && value >= 0)
 })
 
 const ratingValuesWithWidths = computed(() => {
@@ -123,14 +119,15 @@ const progress = computed(() => {
   if (interval.length < 2) return 0
   const firstValue = interval[0]
   const lastValue = interval[interval.length - 1]
-  const min = typeof firstValue === 'number' ? firstValue : firstValue[0]
-  const max = typeof lastValue === 'number' ? lastValue : lastValue[0]
+  const min = firstValue
+  const max = lastValue
 
   if (divisions.value.length == 1 && divisions.value[0] == 'qual') {
     return ((1 + props.qualIndex - min) / (max - min)) * 100
   }
 
   if (!props.rating) return 0
+  if (max <= min) return props.rating >= max ? 100 : 0
 
   return Math.max(0, Math.min(100, ((props.rating - min) / (max - min)) * 100))
 })

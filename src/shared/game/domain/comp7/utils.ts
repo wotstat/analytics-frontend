@@ -147,6 +147,16 @@ export type Division = `${Exclude<Rank, 'qual' | 'sixth' | 'fifth'>}_${Exclude<D
   | `${'fifth' | 'sixth'}_${EliteDivisionLetter}` | 'qual' | 'fifth' | 'sixth'
 
 export type EliteRating = number | Record<EliteDivisionLetter, number>
+export type RankTag = Rank | Division
+
+export function getRankFromTag(tag: RankTag): Rank {
+  return tag.split('_')[0] as Rank
+}
+
+export function getDivisionLetterFromTag(tag: RankTag): DivisionLetter | '?' {
+  if (tag === 'qual') return '?'
+  return (tag.split('_')[1] ?? '') as DivisionLetter
+}
 
 const RANK_ORDER: Rank[] = ['qual', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth']
 

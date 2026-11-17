@@ -4,7 +4,7 @@ import { DivisionLetter, Rank } from '@/shared/game/domain/comp7/utils'
 export type DayChartData = {
   relativeRating: number
   timeline: 'past' | 'future' | 'active' | 'played'
-  rank: Rank
+  rank: Rank | null
   divisionLetter: DivisionLetter | '?'
   leaderboardPosition: number | null
   dayIndex: number

@@ -57,26 +57,19 @@ import BattlesIcon from '@/shared/game/components/efficiencyIcon/assets/battles.
 import WinrateIcon from '@/shared/game/components/efficiencyIcon/assets/winrate.svg?component'
 import DamageIcon from '@/shared/game/components/efficiencyIcon/assets/dmg.svg?component'
 import { regionToGame } from '@/shared/game/domain/wot'
-import { getDivisionByRating } from '@/shared/game/domain/comp7/utils'
 import OnslaughtMetaFrame from '../../meta/OnslaughtMetaFrame.vue'
 import MetaMetrics from '../../meta/MetaMetrics.vue'
 import MetaRankPair from '../../meta/MetaRankPair.vue'
 import { useOnslaughtMeta } from '../../meta/utils/useOnslaughtMeta'
-import { loadLeaderboardSnapshot, loadPersonalStatistics, type PersonalStatistics } from '../../meta/utils/data'
+import { loadPersonalStatistics, type PersonalStatistics } from '../../meta/utils/data'
 import { formatNumber, formatPercent, rankLabel } from '../../meta/utils/format'
 
 const props = defineProps<{ context: RenderContext }>()
 const statistics = shallowRef<PersonalStatistics | null>(null)
-const legendThreshold = shallowRef<number | null>(null)
 
 const { params, state } = useOnslaughtMeta(props.context, async (selection, signal) => {
   if (!selection.nickname) return
-  const [personal, leaderboard] = await Promise.all([
-    loadPersonalStatistics(selection, signal),
-    loadLeaderboardSnapshot(selection, signal),
-  ])
-  statistics.value = personal
-  legendThreshold.value = leaderboard?.legends ? leaderboard.threshold : null
+  statistics.value = await loadPersonalStatistics(selection, signal)
 })
 
 const hasNoStatistics = computed(() => state.value === 'ready' && !statistics.value)
@@ -86,11 +79,7 @@ const winrate = computed(() => {
   return statistics.value.wins / statistics.value.results
 })
 
-const division = computed(() => {
-  if (statistics.value?.rating == null) return null
-  return getDivisionByRating(statistics.value.rating, game.value,
-    legendThreshold.value ?? statistics.value.eliteRating, params.value.season ?? 'latest')
-})
+const division = computed(() => statistics.value?.rank ?? null)
 
 const footer = computed(() => {
   if (!params.value.nickname) return 'Личная статистика · За весь сезон'

@@ -17,8 +17,8 @@
     </div>
     <div class="rating">
       <ArrowRight class="arrow-icon" />
-      <RankIcon :rank="rating" class="rank-icon" :game="game" :season="season" />
-      <p class="mt-font">{{ rating || '?' }}</p>
+      <RankIcon v-if="rank" :rank="rank" class="rank-icon" :game="game" :season="season" />
+      <p class="mt-font">{{ rating ?? '?' }}</p>
     </div>
   </div>
 </template>
@@ -30,11 +30,12 @@ import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
 import { computed } from 'vue'
 import ArrowRight from './assets/arrow-right.svg'
 import { gameToRegion, GameVendor } from '@/shared/game/domain/wot'
-import { getSeasonQualificationCount } from '@/shared/game/domain/comp7/utils'
+import { getSeasonQualificationCount, type RankTag } from '@/shared/game/domain/comp7/utils'
 
 const props = defineProps<{
   battles: { battleIndex: number, result: 'win' | 'loss' | 'draw' }[]
-  rating: number
+  rating: number | null
+  rank: RankTag | null
   season: string
   game: GameVendor
   version?: string

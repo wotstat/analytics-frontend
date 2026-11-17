@@ -1,4 +1,5 @@
 import { IconType } from '@/shared/game/components/efficiencyIcon/utils'
+import type { RankTag } from '@/shared/game/domain/comp7/utils'
 import { GameVendor } from '@/shared/game/domain/wot'
 import { Component, computed, h, Ref } from 'vue'
 import PrestigeTooltip from './tooltips/PrestigeTooltip.vue'
@@ -13,7 +14,7 @@ import TopRatingTooltip from './tooltips/TopRatingTooltip.vue'
 export type TopDayRating = {
   type: 'top-rating',
   rating: number,
-  eliteRating: number,
+  rank: RankTag | null,
   dayIndex: number,
   season: string,
   tooltipComponent?: Component
@@ -22,7 +23,7 @@ export type TopDayRating = {
 export type RatingDelta = {
   type: 'rating-delta',
   rating: number,
-  eliteRating: number,
+  rank: RankTag | null,
   delta: number,
   season: string,
   tooltipComponent?: Component
@@ -47,13 +48,17 @@ export type StatItem = TopDayRating | Simple | Winrate | RatingDelta
 
 
 
+export type RatingSnapshot = [rating: number, rank: RankTag | null]
+
 export type StatisticRes = {
   day: string,
-  firstRating: [rating: number, eliteRating: number],
-  minRating: [rating: number, eliteRating: number],
-  maxRating: [rating: number, eliteRating: number],
+  firstRating: RatingSnapshot,
+  minRating: RatingSnapshot,
+  maxRating: RatingSnapshot,
   lastRating: number,
-  lastEliteRating: number,
+  lastRank: RankTag | null,
+  ratingSnapshots: number,
+  ranks: RankTag[],
   lastLeaderboardPosition: number | null,
   totalBattles: number,
   totalResults: number,
@@ -78,15 +83,13 @@ export type StatisticRes = {
   ratingDeltaWin: number,
   ratingDeltaLose: number,
   maxQualBattleIndex: number,
-  lastEliteThreshold: number,
-  lastPlayerRank: number,
-  lastPlayerRating: number
 }
 
 type Day = {
   dayIndex: number,
   timeline: 'played' | 'future' | 'past' | 'active',
   rating: number,
+  rank: RankTag | null,
   stat: StatisticRes | undefined
 }
 
@@ -113,7 +116,7 @@ export function useMainStat(days: Ref<Day[]>,
       const stats = data.map(d => d.stat).filter(s => s !== undefined)
 
       const maxRating = Math.max(...data.map(d => d.stat?.maxRating[0] ?? 0))
-      const maxDayIndex = findLastIndexOrDefault(data, d => d.stat?.maxRating[0] == maxRating && d.timeline == 'played', null) ||
+      const maxDayIndex = findLastIndexOrDefault(data, d => d.stat != null && d.stat.ratingSnapshots > 0 && d.stat.maxRating[0] === maxRating, null) ??
         findLastIndexOrDefault(data, d => d.stat != null && d.stat.totalBattles !== 0, -1)
 
       const maxStat = data[maxDayIndex].stat!
@@ -148,11 +151,11 @@ export function useMainStat(days: Ref<Day[]>,
       result.push({
         type: 'top-rating',
         rating: maxStat.maxRating[0],
-        eliteRating: maxStat.maxRating[1],
+        rank: maxStat.maxRating[1],
         dayIndex: maxDayIndex,
         season: season.value ?? 'latest',
         tooltipComponent: h(TopRatingTooltip, {
-          last: [maxStat.lastRating, maxStat.lastEliteRating],
+          last: [maxStat.lastRating, maxStat.lastRank],
           totalIncome: sum(stats, d => d.ratingDeltaWin) + sum(stats, d => d.ratingDeltaLose),
           ratingWin,
           ratingLose,
@@ -209,8 +212,9 @@ export function useMainStat(days: Ref<Day[]>,
       })
     } else {
 
-      const day = data.find(d => d.dayIndex === selectedDayIndex)?.stat
-      if (!day) return []
+      const selectedDay = data.find(d => d.dayIndex === selectedDayIndex)
+      if (!selectedDay?.stat) return []
+      const day = selectedDay.stat
 
       const totalBattles = day.totalBattles
       const totalResults = day.totalResults
@@ -228,14 +232,14 @@ export function useMainStat(days: Ref<Day[]>,
 
       result.push({
         type: 'rating-delta',
-        rating: day.lastRating,
-        eliteRating: day.lastEliteRating,
+        rating: selectedDay.rating,
+        rank: selectedDay.rank,
         delta: day.ratingDelta,
         season: season.value ?? 'latest',
         tooltipComponent: h(RatingTooltip, {
           min: day.minRating,
           max: day.maxRating,
-          current: day.lastRating,
+          current: selectedDay.rating,
           ratingWin,
           ratingLose,
           leaderboardPosition: day.lastLeaderboardPosition,

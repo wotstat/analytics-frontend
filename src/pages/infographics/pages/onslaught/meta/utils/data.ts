@@ -1,5 +1,5 @@
 import { query } from '@/db'
-import { getRegionIsoHourOffset } from '@/shared/game/domain/comp7/utils'
+import { getRegionIsoHourOffset, type RankTag } from '@/shared/game/domain/comp7/utils'
 import type { OnslaughtMetaPeriod } from './params'
 import { onslaughtQueryOptions } from './seasons'
 
@@ -16,7 +16,7 @@ export type LeaderboardPlayer = { name: string, position: number, rating: number
 export type PersonalStatistics = {
   updatedAt: number
   rating: number | null
-  eliteRating: number | null
+  rank: RankTag | null
   battles: number
   results: number
   wins: number
@@ -95,8 +95,8 @@ export async function loadPersonalStatistics(params: OnslaughtMetaPeriod, signal
     AND dateTime < '${params.endDate}' - INTERVAL ${offset} HOUR`
 
   const [rating, starts, results] = await Promise.all([
-    query<{ currentRating: number, eliteRating: number, updatedAt: number }>(`
-      SELECT argMax(rating, dateTime) AS currentRating, argMax(eliteRating, dateTime) AS eliteRating,
+    query<{ current: [rating: number, rank: RankTag | null], updatedAt: number }>(`
+      SELECT argMax((rating, nullIf(rank, '')), (dateTime, id)) AS current,
         toUnixTimestamp(max(dateTime)) AS updatedAt
       FROM Event_OnComp7Info
       WHERE ${where} AND season = ${sqlString(params.season ?? '')}
@@ -126,8 +126,8 @@ export async function loadPersonalStatistics(params: OnslaughtMetaPeriod, signal
 
   return {
     updatedAt: Math.max(current?.updatedAt ?? 0, starts.data[0]?.updatedAt ?? 0, result?.updatedAt ?? 0),
-    rating: current?.currentRating ?? null,
-    eliteRating: current?.eliteRating || null,
+    rating: current?.current[0] ?? null,
+    rank: current?.current[1] ?? null,
     battles: Math.max(battles, result?.results ?? 0),
     results: result?.results ?? 0,
     wins: result?.wins ?? 0,
