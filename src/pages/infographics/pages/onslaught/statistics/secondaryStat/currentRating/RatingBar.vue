@@ -2,6 +2,7 @@
   <div class="rating-progress">
     <div class="current-rating">
       <RankIcon v-if="rank" :rank="rank" class="rank-icon" :size="'large'" :game :season />
+      <div v-else class="rank-icon"></div>
       <p class="mt-font">{{ rating ?? '?' }}</p>
     </div>
 
@@ -272,6 +273,8 @@ const progress = computed(() => {
     gap: 5px;
 
     .rank-icon {
+      flex: none;
+      aspect-ratio: 1;
       margin: -5px;
       height: 65px;
       filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.5));
@@ -283,7 +286,8 @@ const progress = computed(() => {
       font-size: 24px;
       color: #fffef7;
       font-weight: bold;
-      min-width: 52px;
+      font-variant-numeric: tabular-nums;
+      min-width: 4ch;
     }
   }
 

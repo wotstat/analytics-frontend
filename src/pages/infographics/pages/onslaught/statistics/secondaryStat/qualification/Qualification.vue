@@ -18,6 +18,7 @@
     <div class="rating">
       <ArrowRight class="arrow-icon" />
       <RankIcon v-if="rank" :rank="rank" class="rank-icon" :game="game" :season="season" />
+      <div v-else class="rank-icon"></div>
       <p class="mt-font">{{ rating ?? '?' }}</p>
     </div>
   </div>
@@ -75,6 +76,8 @@ const results = computed(() => {
     gap: 8px;
 
     .rank-icon {
+      flex: none;
+      aspect-ratio: 1;
       height: 34px;
       filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.5));
       user-select: none;
@@ -85,7 +88,8 @@ const results = computed(() => {
       font-size: 24px;
       color: #fffef7;
       font-weight: bold;
-      min-width: 52px;
+      font-variant-numeric: tabular-nums;
+      min-width: 4ch;
     }
   }
 
@@ -250,7 +254,6 @@ const results = computed(() => {
 
         p {
           font-size: 18px;
-          min-width: 37px;
         }
       }
     }
