@@ -50,9 +50,9 @@ const routes = [
     path: '/onslaught',
     component: asyncPage(() => import('./pages/infographics/pages/onslaught/Layout.vue')),
     children: [
-      { path: '', alias: 'general', component: asyncPage(() => import('./pages/infographics/pages/onslaught/general/General.vue')) },
-      { path: 'leaderboard', component: asyncPage(() => import('./pages/infographics/pages/onslaught/leaderboard/Leaderboard.vue')), },
-      { path: 'personal', component: asyncPage(() => import('./pages/infographics/pages/onslaught/statistics/Onslaught.vue')) },
+      { path: '', alias: 'general', component: asyncPage(() => import('./pages/infographics/pages/onslaught/general/General.vue')), meta: { customTitle: 'Общая статистика Натиска' } },
+      { path: 'leaderboard', component: asyncPage(() => import('./pages/infographics/pages/onslaught/leaderboard/Leaderboard.vue')), meta: { customTitle: 'Таблица Лидеров' } },
+      { path: 'personal', component: asyncPage(() => import('./pages/infographics/pages/onslaught/statistics/Onslaught.vue')), meta: { customTitle: 'Персональная статистика Натиска' } },
     ]
   },
   {

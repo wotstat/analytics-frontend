@@ -1,6 +1,4 @@
 <template>
-  <h1>Общая статистика Натиска</h1>
-
   <div class="onslaught-page">
     <Settings v-model:season="selectedSeason" v-model:region="selectedRegion" v-model:seasons="seasons" />
 
@@ -331,10 +329,6 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss" scoped>
-h1 {
-  margin-top: 0;
-}
-
 .onslaught-page {
   margin-top: 1em;
 }

@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar-layout-container">
+  <div class="sidebar-layout-container" :class="{ 'wide-sidebar': wideSidebar }">
 
     <div class="sidebar">
       <slot name="sidebar">
@@ -15,9 +15,17 @@
     </div>
 
     <div class="content">
-      <slot name="content-top"></slot>
+      <template v-if="$slots['mobile-content-top']">
+        <div class="desktop-content-top">
+          <slot name="content-top" />
+        </div>
+        <div class="mobile-content-top">
+          <slot name="mobile-content-top" />
+        </div>
+      </template>
+      <slot v-else name="content-top" />
 
-      <div class="menu-bar" ref="menuBar" :class="menuTop <= headerOffset && menuY != 0 ? 'top' : ''">
+      <div v-if="$slots['menu-bar'] || links?.length" class="menu-bar" ref="menuBar" :class="{ top: menuPinned }">
         <slot name="menu-bar">
           <div class="router-links">
             <template v-for="link in links">
@@ -38,56 +46,90 @@
 <script setup lang="ts">
 import { useElementBounding } from '@vueuse/core'
 import { RouterLink } from 'vue-router'
-import { computed, watchEffect, useTemplateRef } from 'vue'
+import { computed, useTemplateRef, watchEffect } from 'vue'
 import { headerHeight, useAdditionalHeaderHeight } from '@/pages/shared/header/useAdditionalHeaderHeight.ts'
 import { type SidebarLink } from './utils.ts'
 
-const menuBar = useTemplateRef<HTMLElement>('menuBar')
-const { top: menuTop, y: menuY, height: menuH } = useElementBounding(menuBar)
-const headerOffset = computed(() => headerHeight.value)
-
-const props = defineProps<{
+defineProps<{
   links?: SidebarLink[]
+  wideSidebar?: boolean
 }>()
+
+const menuBar = useTemplateRef<HTMLElement>('menuBar')
+const { top: menuTop, height: menuHeight } = useElementBounding(menuBar)
+const menuPinned = computed(() => menuHeight.value > 0 && menuTop.value <= headerHeight.value)
 
 const { additionalHeaderHeight } = useAdditionalHeaderHeight()
 watchEffect(() => {
-  if (menuY.value == 0) return additionalHeaderHeight.value = 0
-  if (menuTop.value > headerOffset.value) return additionalHeaderHeight.value = 0
-  additionalHeaderHeight.value = menuH.value - 18
+  additionalHeaderHeight.value = menuPinned.value ? menuHeight.value - 18 : 0
 })
-
 </script>
 
 <style lang="scss" scoped>
-$sidebar-width: 170px;
 $mobile-layout: 1100px;
+$content-width: 1200px;
+$page-margin: 1rem;
+$wide-sidebar-width: 210px;
+
+@mixin desktop-layout($sidebar-width, $centering-breakpoint) {
+  --sidebar-width: #{$sidebar-width};
+
+  @media screen and (min-width: $centering-breakpoint) {
+    .content {
+      max-width: calc($content-width - 3 * $page-margin);
+      margin-right: $sidebar-width;
+    }
+  }
+}
 
 .sidebar-layout-container {
   display: flex;
   justify-content: center;
+
+  &:not(.wide-sidebar) {
+    @include desktop-layout(170px, 1500px);
+  }
+
+  &.wide-sidebar {
+    @include desktop-layout($wide-sidebar-width, calc($content-width + 2 * ($wide-sidebar-width + $page-margin)));
+  }
 
   @media screen and (max-width: $mobile-layout) {
     flex-direction: column;
   }
 
   .sidebar {
-    width: $sidebar-width;
-    margin: 1rem;
+    width: var(--sidebar-width);
+    margin: $page-margin;
 
     @media screen and (max-width: $mobile-layout) {
       display: none;
     }
 
     :deep(.sticky-sidebar) {
+      --sidebar-sticky-top: calc(var(--header-height) + 40px);
+
       position: sticky;
       margin-top: 24px;
-      top: calc(var(--header-height) + 40px);
+      top: var(--sidebar-sticky-top);
     }
 
     .router-links {
       display: flex;
       flex-direction: column;
+    }
+  }
+
+  .menu-bar,
+  .mobile-content-top {
+    @media screen and (width > $mobile-layout) {
+      display: none;
+    }
+  }
+
+  .desktop-content-top {
+    @media screen and (max-width: $mobile-layout) {
+      display: none;
     }
   }
 
@@ -97,10 +139,6 @@ $mobile-layout: 1100px;
     position: sticky;
     top: calc(var(--header-height) - 15px);
     z-index: 10;
-
-    @media screen and (min-width: calc($mobile-layout + 1px)) {
-      display: none;
-    }
 
     .router-links {
       display: flex;
@@ -128,15 +166,10 @@ $mobile-layout: 1100px;
   .content {
     flex: 1;
     min-width: 0;
-    --content-page-margin: 1rem;
+    --content-page-margin: #{$page-margin};
     margin: var(--content-page-margin);
     container-name: content;
     container-type: inline-size;
-
-    @media screen and (min-width: 1500px) {
-      max-width: calc(1200px - 3rem);
-      margin-right: $sidebar-width;
-    }
 
     @media screen and (max-width: $mobile-layout) {
       :deep(.page-title) {

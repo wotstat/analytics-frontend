@@ -85,13 +85,16 @@ watch([queryStorage.params.region, queryStorage.params.season, seasonsData], () 
 
 <style lang="scss" scoped>
 .settings {
+  $main-line-height: 30px;
+
   display: flex;
   align-items: center;
   gap: 5px;
+  min-height: $main-line-height;
 
   .vr {
     width: 1px;
-    height: 30px;
+    height: $main-line-height;
     background-color: rgba(255, 255, 255, 0.1);
   }
 
@@ -152,6 +155,7 @@ watch([queryStorage.params.region, queryStorage.params.season, seasonsData], () 
       align-items: center;
       gap: 5px;
       width: 100%;
+      min-height: $main-line-height;
     }
 
     .season-select {

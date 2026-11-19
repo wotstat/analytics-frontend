@@ -1,6 +1,4 @@
 <template>
-  <h1>Таблица Лидеров</h1>
-
   <div class="onslaught-leaderboard-page">
 
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" v-model:region="region"
@@ -513,8 +511,8 @@ function click(name: string) {
 
 
 <style lang="scss" scoped>
-h1 {
-  margin-top: 0;
+.onslaught-leaderboard-page {
+  margin-top: 1em;
 }
 
 .info {

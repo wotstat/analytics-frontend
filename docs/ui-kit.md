@@ -8,6 +8,7 @@
 
 | Что нужно | Готовый код | Пример на сайте |
 | --- | --- | --- |
+| Лейаут раздела с боковым и выпадающим мобильным меню | [SectionLayout](../src/pages/shared/sidebarLayout/SectionLayout.vue) | `/services`, `/onslaught` |
 | Кнопка тулбара | [ToolbarButton](../src/shared/ui/toolbarButton/ToolbarButton.vue) | `/debug/toolbar-button` |
 | Плитка выбора | [SelectionTile](../src/shared/ui/selectionTile/SelectionTile.vue) | `/debug/selection-tile` |
 | Выбор одного варианта | [OptionsSelect](../src/shared/ui/optionsSelect/OptionsSelect.vue) | `/debug/options-select` |

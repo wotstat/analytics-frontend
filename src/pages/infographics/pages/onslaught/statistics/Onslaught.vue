@@ -1,6 +1,4 @@
 <template>
-  <h1>Персональная статистика Натиска</h1>
-
   <div class="onslaught-page">
     <Settings v-model:season="selectedSeason" v-model:nickname="nickname" v-model:region="selectedRegion"
       v-model:seasons="seasons" :showNameInput="true" @clear-nickname="nicknameStorage.flush()" />
@@ -586,10 +584,6 @@ const displayedTipSelectDay = computed(() => {
 </script>
 
 <style lang="scss" scoped>
-h1 {
-  margin-top: 0;
-}
-
 .onslaught-page {
   margin-top: 1em;
 
