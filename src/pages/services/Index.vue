@@ -19,8 +19,8 @@ const sections = [
     id: 'main',
     links: [
       { to: '/services/vehicles', label: 'Статистика техники' },
-      { to: '/services/mastery', label: 'Мастера' },
       { to: '/services/marks', label: 'Отметки' },
+      { to: '/services/mastery', label: 'Мастера' },
     ],
   },
   {
