@@ -5,7 +5,7 @@
         class="vehicle-image" />
     </span>
     <span class="vehicle-info">
-      <span class="vehicle-name" :title="showTooltip ? vehicleName(vehicle, false) : undefined">
+      <span class="vehicle-name">
         <span v-for="(part, index) in nameParts" :key="index" :class="{ highlight: part.highlight }">{{ part.text }}</span>
       </span>
       <span v-if="!vehicle.isActual" class="postfix">{{ formatStatisticsDay(vehicle.day) }}</span>
@@ -22,12 +22,11 @@ import type { VehicleStatisticsRow } from '../shared/types'
 import { formatStatisticsDay } from '../shared/formatStatisticsDay'
 import { vehicleName } from '../shared/vehicleName'
 
-const props = withDefaults(defineProps<{
+const props = defineProps<{
   vehicle: VehicleStatisticsRow
   search: string
   showImage: boolean
-  showTooltip?: boolean
-}>(), { showTooltip: true })
+}>()
 const nameParts = computed(() => getHighlightedTextParts(highlight(vehicleName(props.vehicle), props.search)))
 </script>
 

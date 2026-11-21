@@ -44,7 +44,7 @@
         <VehicleType :type="row.tankType && isVehicleType(row.tankType) ? row.tankType : 'any'" class="vehicle-type" />
       </template>
       <template #cell-name="{ row }">
-        <VehicleNameCell :vehicle="row" :search :show-image="showImage" :show-tooltip="false" />
+        <VehicleNameCell :vehicle="row" :search :show-image="showImage" />
       </template>
       <template #cell="{ row, column, value }">
         <span v-if="showValueBars && column.metric && Number.isFinite(row[column.metric])" class="value-bar"

@@ -312,7 +312,7 @@ const columns = computed<VehicleColumn[]>(() => [
   ...(showType.value ? [vehicleColumns.tankType] : []),
   ...(showName.value ? [nameColumn.value] : []),
   ...visibleSlots.value.map(metric => ({
-    key: metric, metric, label: availableSlots[metric].label, tooltip: availableSlots[metric].label,
+    key: metric, metric, label: availableSlots[metric].label,
     sortable: true, interactive: true, value: (vehicle: VehicleStatistics) => formatSlotValue(metric, vehicle[metric]),
   })),
 ])
