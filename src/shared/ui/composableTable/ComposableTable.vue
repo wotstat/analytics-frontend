@@ -16,7 +16,7 @@
           :tooltip-class="headingTooltipClass"
           :position="sort.findIndex(order => order.key === column.key) + 1"
           :ascending="sort.find(order => order.key === column.key)?.ascending"
-          @click="column.sortable && $emit('sort', column.key, $event)">
+          @click="onSort(column, $event)">
 
           <slot v-if="$slots[`header-${column.key}`]" :name="`header-${column.key}`" :column />
           <slot v-else-if="$slots.header" name="header" :column />
@@ -111,6 +111,7 @@ const table = useTemplateRef<HTMLElement>('table')
 const rowsBody = useTemplateRef<HTMLElement>('rowsBody')
 const lastRow = shallowRef<HTMLElement | null>(null)
 const stickyEndOffset = ref(0)
+let releaseSortHeightFrame = 0
 const { top, bottom, width, update } = useElementBounding(table, {
   updateTiming: 'next-frame',
   windowScroll: false,
@@ -136,6 +137,25 @@ useResizeObserver(() => [table.value, lastRow.value], () => {
   }
   stickyEndOffset.value = root.getBoundingClientRect().bottom - row.getBoundingClientRect().top
 })
+
+// Work around a Safari bug where sorting rows inside a container query layout jumps the page upward.
+// During an intermediate layout, WebKit can briefly shrink the scrollable area and clamp the scroll offset.
+// Apply the current table height before emitting the sort event and release it after the next layout pass.
+function onSort(column: Column, event: MouseEvent) {
+  if (!column.sortable) return
+
+  const root = table.value
+  if (!root || !rowsBody.value) return emit('sort', column.key, event)
+
+  root.style.setProperty('--composable-table-sort-height', `${root.getBoundingClientRect().height}px`)
+  void getComputedStyle(root).minHeight
+  emit('sort', column.key, event)
+
+  cancelAnimationFrame(releaseSortHeightFrame)
+  releaseSortHeightFrame = requestAnimationFrame(() => {
+    releaseSortHeightFrame = requestAnimationFrame(() => root.style.removeProperty('--composable-table-sort-height'))
+  })
+}
 
 function cellAttrs(row: Row, column: Column): ButtonHTMLAttributes {
   return {
@@ -183,6 +203,7 @@ watch(() => props.rows.map(props.rowKey), keys => {
 
 .composable-table {
   min-width: 0;
+  min-height: var(--composable-table-sort-height, 0px);
   font-size: 14px;
   overflow-x: clip;
 
