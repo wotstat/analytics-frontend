@@ -43,7 +43,6 @@ const routes = [
   {
     path: '/services',
     component: asyncPage(() => import('./pages/services/Index.vue')),
-    meta: { resetScroll: true },
     children: [
       { path: 'vehicles', alias: '', component: Vehicles, meta: { customTitle: 'Статистика техники' } },
       { path: 'mastery', component: Mastery, meta: { customTitle: 'Знаки классности' } },
@@ -98,10 +97,8 @@ const history = createDeferredWebHistory()
 export const router = createRouter({
   history,
   routes: [...routes, ...debugRoutes],
-  scrollBehavior(to, from, savedPosition) {
-    if (to.path === from.path) return
-    if (to.matched[0] === from.matched[0] && !to.meta.resetScroll && !from.meta.resetScroll) return
-
+  scrollBehavior: (to, from) => {
+    if (to.path === from.path || to.meta.resetScroll === false) return
     return { top: 0 }
   },
 })
