@@ -14,7 +14,7 @@
 
     <TableState v-if="state.status === 'empty' || state.status === 'error'" :state />
 
-    <div v-else class="table-container nice-scrollbar-transparent mt-font"
+    <div v-else class="table-container mt-font"
       :class="{ 'with-skill-column': !groupBySkill }">
       <ComposableTable :rows="displayedRows" :columns :sort="sorting.sort.value" @sort="sorting.toggle"
         heading-tooltip-class="comp7-tooltip" :row-key="row => row.key" :loading="state.status === 'loading'" :skeleton-rows="skeletonRows">
@@ -235,7 +235,6 @@ const displayedRows = computed(() => sorting.rows.value.slice(0, displayLimit.va
 }
 
 .table-container {
-  overflow-x: auto;
   padding-bottom: 5px;
 
   :deep(.composable-table-cell:first-child) { padding: 0; }

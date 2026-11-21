@@ -1,9 +1,14 @@
 <template>
-  <div class="composable-table nice-scrollbar-transparent">
-    <div class="composable-table-content"
-      :style="{ '--composable-table-columns': gridColumns, minWidth: `${minWidth}px` }">
-
-      <div class="composable-table-head mt-font">
+  <div class="composable-table nice-scrollbar-transparent" ref="table"
+    :class="{ 'scrolls-horizontally': hasHorizontalOverflow }"
+    :style="{
+      '--composable-table-columns': gridColumns,
+      '--composable-table-min-width': `${minWidth}px`,
+      '--composable-table-sticky-top': `${headerOffset}px`,
+      '--composable-table-sticky-end-offset': `${stickyEndOffset}px`,
+    }">
+    <div class="header" :class="{ pinned }">
+      <div class="head mt-font">
         <ComposableTableHeading v-for="column in columns"
           :key="column.key"
           :label="column.label"
@@ -18,7 +23,9 @@
           <template v-else>{{ column.label }}</template>
         </ComposableTableHeading>
       </div>
+    </div>
 
+    <div class="content">
       <slot v-if="loading" name="loading">
         <div v-for="index in skeletonRows" :key="index" class="composable-table-skeleton"></div>
       </slot>
@@ -27,7 +34,7 @@
         <div class="composable-table-empty">Нет данных</div>
       </slot>
 
-      <div v-else class="composable-table-body">
+      <div v-else class="composable-table-body" ref="rowsBody">
         <div v-for="(row, rowIndex) in rows" :key="rowKey(row)" class="composable-table-row"
           :class="{ expanded: isExpanded(row) }">
 
@@ -65,7 +72,9 @@
 </template>
 
 <script setup lang="ts" generic="Row, Column extends ComposableTableColumn<Row>">
-import { computed, useSlots, watch, type ButtonHTMLAttributes } from 'vue'
+import { computed, ref, shallowRef, useSlots, useTemplateRef, watch, type ButtonHTMLAttributes } from 'vue'
+import { useElementBounding, useEventListener, useResizeObserver } from '@vueuse/core'
+import { headerOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import ComposableTableHeading from './ComposableTableHeading.vue'
 import type { ComposableTableCellEvent, ComposableTableColumn, ComposableTableKey, ComposableTableSort } from './types'
 
@@ -89,12 +98,44 @@ const emit = defineEmits<{
 const slots = useSlots()
 const expandedRows = defineModel<ComposableTableKey[]>('expandedRows', { default: () => [] })
 const expandedKeys = computed(() => new Set(expandedRows.value))
+
 const gridColumns = computed(() => props.columns.map(column => {
   if (typeof column.width === 'number') return `${column.width}px`
   return `minmax(${column.minWidth ?? 0}px, ${column.width ?? '1fr'})`
 }).join(' '))
+
 const minWidth = computed(() => props.columns.reduce((width, column) =>
   width + (typeof column.width === 'number' ? column.width : column.minWidth ?? 0), 0))
+
+const table = useTemplateRef<HTMLElement>('table')
+const rowsBody = useTemplateRef<HTMLElement>('rowsBody')
+const lastRow = shallowRef<HTMLElement | null>(null)
+const stickyEndOffset = ref(0)
+const { top, bottom, width, update } = useElementBounding(table, {
+  updateTiming: 'next-frame',
+  windowScroll: false,
+})
+
+const hasHorizontalOverflow = computed(() => width.value > 0 && width.value < minWidth.value)
+const pinned = computed(() => top.value < headerOffset.value &&
+  bottom.value - stickyEndOffset.value > headerOffset.value)
+
+useEventListener('scroll', update, { passive: true })
+
+watch([rowsBody, () => props.rows.at(-1)], ([body]) => {
+  const row = body?.lastElementChild
+  lastRow.value = row instanceof HTMLElement ? row : null
+}, { flush: 'post' })
+
+useResizeObserver(() => [table.value, lastRow.value], () => {
+  const root = table.value
+  const row = lastRow.value
+  if (!root || !row) {
+    stickyEndOffset.value = 0
+    return
+  }
+  stickyEndOffset.value = root.getBoundingClientRect().bottom - row.getBoundingClientRect().top
+})
 
 function cellAttrs(row: Row, column: Column): ButtonHTMLAttributes {
   return {
@@ -129,7 +170,6 @@ function onRowClick(row: Row, event: MouseEvent) {
   toggleExpanded(row)
 }
 
-// Как у локальных строк: исчезнувшая строка при возвращении начинает закрытой.
 watch(() => props.rows.map(props.rowKey), keys => {
   const visible = new Set(keys)
   if (expandedRows.value.some(key => !visible.has(key))) {
@@ -143,14 +183,87 @@ watch(() => props.rows.map(props.rowKey), keys => {
 
 .composable-table {
   min-width: 0;
-  overflow-x: auto;
   font-size: 14px;
-}
+  overflow-x: clip;
 
-.composable-table-head,
-.composable-table-line {
-  display: grid;
-  grid-template-columns: var(--composable-table-columns);
+  &.scrolls-horizontally {
+    overflow-x: auto;
+    overflow-y: clip;
+
+    .header {
+      min-width: var(--composable-table-min-width);
+    }
+
+    @supports not named-feature(single-axis-scroll-container) {
+      .header {
+        position: static;
+        margin-bottom: 0;
+
+        &::before,
+        &::after {
+          content: none;
+        }
+      }
+
+      .content {
+        margin-top: 0;
+      }
+    }
+  }
+
+  .header {
+    position: sticky;
+    top: var(--composable-table-sticky-top);
+    margin-bottom: var(--composable-table-sticky-end-offset);
+    z-index: 9;
+
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0 0 -12px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    &::before {
+      backdrop-filter: blur(6px);
+      mask-image: linear-gradient(black 54%, transparent);
+    }
+
+    &::after {
+      backdrop-filter: blur(18px);
+      mask-image: linear-gradient(black 28%, transparent 82%);
+    }
+
+    &.pinned::before,
+    &.pinned::after {
+      opacity: 1;
+    }
+  }
+
+  .head,
+  .content {
+    min-width: var(--composable-table-min-width);
+    overflow: clip;
+  }
+
+  .content {
+    margin-top: calc(-1 * var(--composable-table-sticky-end-offset));
+  }
+
+  .head {
+    position: relative;
+    z-index: 1;
+    padding-bottom: 4px;
+  }
+
+  .head,
+  .composable-table-line {
+    display: grid;
+    grid-template-columns: var(--composable-table-columns);
+  }
 }
 
 .composable-table-row {

@@ -11,7 +11,7 @@
       </div>
       <hr class="separator">
 
-      <div class="table-container nice-scrollbar-transparent mt-font">
+      <div class="table-container mt-font">
         <ComposableTable :rows="displayedRows" :columns :sort="sorting.sort.value" @sort="sorting.toggle"
           heading-tooltip-class="comp7-tooltip" :row-key="row => row.key">
 
@@ -215,7 +215,6 @@ hr {
 }
 
 .table-container {
-  overflow-x: auto;
   font-size: 14px;
   padding-bottom: 5px;
 

@@ -4,9 +4,10 @@
     :type="sortable ? 'button' : undefined"
     class="heading" :class="classes"
     @click="$emit('click', $event)"
-    v-tooltip.instant.top-float="{ text: label, class: tooltipClass, disabled: !label }">
+    v-tooltip.instant="{ text: label, class: tooltipClass, disabled: !label, placement: ['top-float', 'bottom-float'] }">
     <slot />
     <span v-if="position" class="sort-arrow">
+      <component :is="ascending ? SortArrowUp : SortArrowDown" class="triangle" />
       <span v-if="position > 1" class="sort-number">{{ position }}</span>
     </span>
   </component>
@@ -14,6 +15,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import SortArrowUp from './assets/sort-arrow-up.svg'
+import SortArrowDown from './assets/sort-arrow-down.svg'
 
 const props = withDefaults(defineProps<{
   label?: string
@@ -70,14 +73,6 @@ const classes = computed(() => ({
     }
   }
 
-  &.asc {
-    .sort-arrow::after {
-      top: auto;
-      bottom: 0;
-      transform: translate(-50%, 0) rotate(180deg);
-    }
-  }
-
   .sort-arrow {
     position: absolute;
     height: 1px;
@@ -87,16 +82,13 @@ const classes = computed(() => ({
     background-color: currentColor;
     z-index: 1;
 
-    &::after {
-      content: '';
+    .triangle {
       position: absolute;
-      left: 50%;
+      inset-inline: 0;
       top: 0;
-      transform: translate(-50%, 0);
+      margin-inline: auto;
       width: 13px;
       height: 5px;
-      background-color: currentColor;
-      clip-path: polygon(0 0, 100% 0, 50% 100%);
     }
 
     .sort-number {
@@ -108,6 +100,11 @@ const classes = computed(() => ({
       line-height: 1;
       font-variant-numeric: tabular-nums;
     }
+  }
+
+  &.asc .sort-arrow .triangle {
+    top: auto;
+    bottom: 0;
   }
 }
 </style>
