@@ -19,6 +19,8 @@ import { setupQueryStorage } from './shared/uiKit/queryStorage/useQueryStorage'
 import { createDeferredWebHistory } from './shared/uiKit/queryStorage/utils/createDeferredWebHistory.ts'
 import { setupPageNavigation } from './shared/uiKit/pageNavigation/pageNavigation'
 
+const loadOnslaught = () => import('./pages/infographics/pages/onslaught/onslaught')
+
 const routes = [
   { path: '/', component: () => import('./pages/Main.vue') },
   {
@@ -50,11 +52,11 @@ const routes = [
   },
   {
     path: '/onslaught',
-    component: asyncPage(() => import('./pages/infographics/pages/onslaught/Layout.vue')),
+    component: asyncPage(() => loadOnslaught().then(module => module.Layout)),
     children: [
-      { path: '', alias: 'general', component: asyncPage(() => import('./pages/infographics/pages/onslaught/general/General.vue')), meta: { customTitle: 'Общая статистика Натиска' } },
-      { path: 'leaderboard', component: asyncPage(() => import('./pages/infographics/pages/onslaught/leaderboard/Leaderboard.vue')), meta: { customTitle: 'Таблица Лидеров' } },
-      { path: 'personal', component: asyncPage(() => import('./pages/infographics/pages/onslaught/statistics/Onslaught.vue')), meta: { customTitle: 'Персональная статистика Натиска' } },
+      { path: '', alias: 'general', component: asyncPage(() => loadOnslaught().then(module => module.General)), meta: { customTitle: 'Общая статистика Натиска' } },
+      { path: 'leaderboard', component: asyncPage(() => loadOnslaught().then(module => module.Leaderboard)), meta: { customTitle: 'Таблица Лидеров' } },
+      { path: 'personal', component: asyncPage(() => loadOnslaught().then(module => module.Personal)), meta: { customTitle: 'Персональная статистика Натиска' } },
     ]
   },
   {
