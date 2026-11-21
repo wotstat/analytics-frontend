@@ -12,7 +12,7 @@ export default defineMetaDefinition({
     { name: 'Задержка 5 секунд', url: 'https://wotstat.info/debug/meta/delayed' },
   ],
   meta: {
-    title: 'Open Graph: задержка 5 секунд — WotStat Analytics',
+    title: 'Open Graph: задержка 5 секунд',
     description: 'Тестовая карточка сообщает о готовности к рендеру через 5 секунд.',
     imageAlt: 'Карточка готова к рендеру после задержки 5 секунд.',
   },

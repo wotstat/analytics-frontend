@@ -118,11 +118,11 @@ function tableSubject(table: VehiclesMetaParams['table']) {
 }
 
 export function vehicleMetaTitle(...parts: string[]) {
-  return [...parts.filter(Boolean), 'WotStat Analytics'].join(' — ')
+  return parts.filter(Boolean).join(' — ')
 }
 
 function tags(subject: string, description: string): MetaTags {
-  return { title: vehicleMetaTitle(subject), description, imageAlt: subject }
+  return { title: subject, description, imageAlt: subject }
 }
 
 export function vehiclesTableMetaTags(url: URL, catalog?: VehiclesMetaCatalog): MetaTags {

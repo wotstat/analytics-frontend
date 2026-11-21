@@ -12,7 +12,7 @@ export default defineMetaDefinition({
     { name: 'Сравнение версий', url: 'https://wotstat.info/services/compare-versions' },
   ],
   meta: {
-    title: 'Сравнение версий игры — WotStat Analytics',
+    title: 'Сравнение версий игры',
     description: 'Сравните версии игры по длительности боёв, разбросу снарядов и распределению урона. Страница была сделана для обновления 1.36.1 «Разворот».',
     imageAlt: 'Сравнение версий игры — WotStat Analytics',
   },

@@ -12,7 +12,7 @@ export default defineMetaDefinition({
     { name: 'Текущее время', url: 'https://wotstat.info/debug/meta/time' },
   ],
   meta: {
-    title: 'Open Graph: текущее время — WotStat Analytics',
+    title: 'Open Graph: текущее время',
     description: 'Текущее время UTC на момент создания карточки. Каждый запрос изображения создаёт новую карточку.',
     imageAlt: 'Текущее время и дата в UTC.',
   },

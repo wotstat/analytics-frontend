@@ -17,13 +17,10 @@ export default defineMetaDefinition({
 
   meta: (url, { vehicleNames }) => {
     const tag = url.searchParams.get('tag') ?? ''
-    const title = (() => {
-      if (tag && vehicleNames?.[tag]) return `${vehicleNames[tag]} — WotStat Analytics`
-      return 'Название танка — WotStat Analytics'
-    })()
+    const title = (tag && vehicleNames?.[tag]) || 'Название танка'
 
     return {
-      title: title,
+      title,
       description: 'Тестовая карточка загружает название техники из ClickHouse.',
       imageAlt: 'Название танка из ClickHouse',
     }
