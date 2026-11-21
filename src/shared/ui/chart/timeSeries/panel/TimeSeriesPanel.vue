@@ -128,7 +128,7 @@ watch(() => props.chart, (chart, _, onCleanup) => {
   --time-series-legend-height: 21px;
   --time-series-gap: 12px;
   --time-series-height: calc(clamp(300px, 45vw, 400px) - var(--time-series-legend-height) - var(--time-series-gap));
-  container: time-series-panel / inline-size;
+  container: time-series-panel chart-toolbar / inline-size;
   min-width: 0;
 
   .panel-content {
@@ -191,14 +191,6 @@ watch(() => props.chart, (chart, _, onCleanup) => {
       :deep(.items) {
         min-height: 38px;
       }
-
-      :deep(.right) {
-        margin-left: auto;
-      }
-
-      :deep(.controls) {
-        margin-left: auto;
-      }
     }
 
     .panel-content {
@@ -233,8 +225,13 @@ watch(() => props.chart, (chart, _, onCleanup) => {
       display: none;
     }
 
-    :deep(.right) {
-      flex: 1;
+    :deep(.items > .right) {
+      margin-left: auto;
+
+      > .chart-toolbar {
+        // В шапке адаптивность тулбара зависит от ширины всей панели.
+        container: none;
+      }
     }
   }
 
