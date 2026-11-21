@@ -202,6 +202,8 @@ watch(() => props.rows.map(props.rowKey), keys => {
 @use '@/styles/textColors.scss' as *;
 
 .composable-table {
+  $sort-arrow-space: 4px;
+
   min-width: 0;
   min-height: var(--composable-table-sort-height, 0px);
   font-size: 14px;
@@ -227,7 +229,7 @@ watch(() => props.rows.map(props.rowKey), keys => {
       }
 
       .content {
-        margin-top: 0;
+        margin-top: -$sort-arrow-space;
       }
     }
   }
@@ -271,13 +273,13 @@ watch(() => props.rows.map(props.rowKey), keys => {
   }
 
   .content {
-    margin-top: calc(-1 * var(--composable-table-sticky-end-offset));
+    margin-top: calc(-1 * var(--composable-table-sticky-end-offset) - $sort-arrow-space);
   }
 
   .head {
     position: relative;
     z-index: 1;
-    padding-bottom: 4px;
+    padding-bottom: $sort-arrow-space;
   }
 
   .head,
