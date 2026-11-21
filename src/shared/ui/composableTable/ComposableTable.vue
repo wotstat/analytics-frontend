@@ -217,6 +217,10 @@ watch(() => props.rows.map(props.rowKey), keys => {
       min-width: var(--composable-table-min-width);
     }
 
+    .content {
+      padding-bottom: 5px;
+    }
+
     @supports not named-feature(single-axis-scroll-container) {
       .header {
         position: static;
