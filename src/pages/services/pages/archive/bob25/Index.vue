@@ -18,7 +18,7 @@
     <div class="lines">
       <div class="card">
         <p>
-          Статистика собирается из боёв, в которых <b>хотя бы у одного</b> игрока был установлен мод
+          Статистика собиралась из боёв, в которых <b>хотя бы у одного</b> игрока был установлен мод
           <a href="/install?preset=analytics" target="_blank" rel="noopener noreferrer">WotStat Аналитика</a>.
         </p>
       </div>
