@@ -1,6 +1,9 @@
 <template>
   <div class="line">
-    <h3>{{ title }}</h3>
+    <div class="heading">
+      <h3>{{ title }}</h3>
+      <DropDown :variants="crossPeriodVariants" v-model="crossTablePeriod" />
+    </div>
     <table class="cross-table bold mt3-font" ref="table" cellspacing="0" cellpadding="0" :style="{
       '--hovered-i': hovered?.i,
       '--hovered-j': hovered?.j
@@ -10,11 +13,7 @@
     }">
       <tbody>
         <tr>
-          <td class="empty">
-            <div class="drop-down-container">
-              <DropDown :variants="crossPeriodVariants" v-model="crossTablePeriod" />
-            </div>
-          </td>
+          <td class="empty"></td>
           <td v-for="(item, i) in bloggerNamesArray">
             <BloggerName :blogger="i" small-bloom />
           </td>
@@ -105,9 +104,17 @@ watch(table, (t, old) => {
 
 
 <style lang="scss" scoped>
-h3 {
-  margin: 0;
+.heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
   margin-bottom: 5px;
+
+  h3 {
+    margin: 0;
+  }
 }
 
 table {
@@ -115,7 +122,7 @@ table {
   color: white;
 
   td {
-    padding: 5px;
+    padding: clamp(2px, 1cqw, 5px);
     text-align: center;
     width: 20%;
 
@@ -123,30 +130,21 @@ table {
       margin: 0;
       font-size: 18px;
 
-      @media screen and (max-width: 900px) {
+      @container content (max-width: 900px) {
         font-size: 16px;
       }
 
-      @media screen and (max-width: 600px) {
+      @container content (max-width: 600px) {
         font-size: 14px;
+      }
+
+      @container content (max-width: 320px) {
+        font-size: 12px;
       }
     }
 
     &:not(.empty) {
       background-color: rgba(102, 102, 102, 0.15);
-    }
-
-    &.empty {
-      position: relative;
-
-      .drop-down-container {
-        position: absolute;
-        inset: 0;
-        font-weight: normal;
-        text-align: left;
-        padding-right: 3px;
-        padding-top: 1px;
-      }
     }
 
     &.red {

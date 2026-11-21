@@ -70,7 +70,7 @@ h3 {
     text-align: center;
   }
 
-  @media screen and (max-width: 1000px) {
+  @container content (max-width: 1000px) {
     flex-direction: column;
     gap: 20px;
 

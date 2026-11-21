@@ -100,6 +100,10 @@ const showChart = defineModel('showChart')
   font-weight: bold;
   line-height: 1;
 
+  .flex {
+    gap: clamp(6px, 2cqw, 16px);
+  }
+
   .subline {
     margin-top: 8px;
     font-size: 15px;
@@ -110,11 +114,11 @@ const showChart = defineModel('showChart')
     opacity: 1;
   }
 
-  @media screen and (max-width: 900px) {
+  @container content (max-width: 900px) {
     font-size: 25px;
   }
 
-  @media screen and (max-width: 800px) {
+  @container content (max-width: 800px) {
     font-size: 18px;
 
     .subline {
@@ -122,12 +126,16 @@ const showChart = defineModel('showChart')
     }
   }
 
-  @media screen and (max-width: 500px) {
+  @container content (max-width: 500px) {
     font-size: 16px;
 
     .subline {
       font-size: 11px;
     }
+  }
+
+  @container content (max-width: 320px) {
+    font-size: 14px;
   }
 
   :deep(p) {

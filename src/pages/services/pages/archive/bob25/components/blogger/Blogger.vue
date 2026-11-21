@@ -2,7 +2,7 @@
   <div class="blogger" :class="blogger">
     <img :src="targetUrl" :alt="blogger">
     <h3 class="mt-font" :class="props.blogger">{{ place }}</h3>
-    <BloggerName :blogger="blogger" />
+    <BloggerName :blogger="blogger" class="nickname" />
     <!-- <h2 class="mt-font">{{ targetNickname }}</h2> -->
   </div>
 </template>
@@ -60,19 +60,15 @@ const place = computed(() => {
     transform: translateY(2%);
   }
 
-  h2 {
+  .nickname {
     position: absolute;
     bottom: 22%;
     font-weight: bold;
     text-align: center;
     width: 100%;
     color: white;
-    font-size: 2.5em;
+    font-size: clamp(16px, 4cqw, 40px);
     margin: 0;
-
-    @media (max-width: 768px) {
-      font-size: 1.5em;
-    }
   }
 
   h3 {
@@ -86,15 +82,11 @@ const place = computed(() => {
     -webkit-text-stroke-color: rgb(255, 255, 255);
     -webkit-text-stroke-width: 2px;
     font-weight: bold;
-    font-size: 20vw;
+    font-size: min(20cqw, 170px);
 
     user-select: none;
 
-    @media screen and (min-width: 900px) {
-      font-size: 170px;
-    }
-
-    @media screen and (max-width: 768px) {
+    @container content (max-width: 768px) {
       -webkit-text-stroke-width: 1.5px;
     }
 
@@ -116,7 +108,7 @@ const place = computed(() => {
   }
 
   &.yusha img {
-    transform: translate(2%, 2%) scaleX(-1);
+    transform: translateY(2%) scaleX(-1);
   }
 }
 </style>

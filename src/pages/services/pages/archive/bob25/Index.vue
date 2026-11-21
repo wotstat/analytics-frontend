@@ -1,30 +1,27 @@
 <template>
-  <div class="bob-center-container">
-    <DefineBackground :component="Bob25Background" />
-    <h1>Результаты<br />Битвы Блогеров 2025</h1>
-
-    <Ads />
-
-    <div class="bloggers">
+  <div class="bob-results">
+    <div class="bloggers" ref="portraits">
       <Blogger blogger="nearyou" />
       <Blogger blogger="lebwa" />
       <Blogger blogger="jove" />
       <Blogger blogger="yusha" />
     </div>
 
-    <div class="sub-header" ref="subHeader" :class="{ 'visible': shouldDisplaySubHeader }">
+    <div class="sub-header" ref="subHeader" :class="{ 'visible': shouldDisplaySubHeader }"
+      :style="{ '--nickname-offset': `${nicknameOffset}px` }">
       <BloggerName :blogger="'nearyou'" />
       <BloggerName :blogger="'lebwa'" />
       <BloggerName :blogger="'jove'" />
       <BloggerName :blogger="'yusha'" />
     </div>
 
-    <!-- <div class="skills-header mt-font">
-      <Skills v-for="skill in skills" :skills="skill" />
-    </div> -->
-
     <div class="lines">
-      <InstallMod />
+      <div class="card">
+        <p>
+          Статистика собирается из боёв, в которых <b>хотя бы у одного</b> игрока был установлен мод
+          <a href="/install?preset=analytics" target="_blank" rel="noopener noreferrer">WotStat Аналитика</a>.
+        </p>
+      </div>
       <BloggersLine title="Всего игроков" :values="totalPlayers" withPercent
         v-model:show-chart="showTotalPlayersChart" />
       <TimeSeriesChart v-if="showTotalPlayersChart" :labels="totalPlayersChart.labels" :data="totalPlayersChart.data"
@@ -56,22 +53,6 @@
       </BloggersLine>
 
 
-      <!-- <BloggersLine title="Прирост очков за 60 минут" :values="hourTotalScoreDelta" with-percent />
-      <BloggersLine title="Заработано очков сегодня" :values="todayScoreDelta" with-percent>
-        <template #subline="{ item, processor }">
-          <p class="subline">7% =
-            <TweenValue :value="Math.round(item * 0.07)" :processor="processor" space />
-          </p>
-        </template>
-      </BloggersLine>
-      <BloggersLine title="Заработано очков вчера" :values="yesterdayTotalScoreDelta" with-percent>
-        <template #subline="{ item, processor }">
-          <p class="subline">7% =
-            <TweenValue :value="Math.round(item * 0.07)" :processor="processor" space />
-          </p>
-        </template>
-      </BloggersLine> -->
-
       <BloggersLine title="Среднее время боя" :values="avgDuration" :processor="t => timeProcessor(t).join(':')"
         v-model:show-chart="showDurationChart" less-is-better />
 
@@ -90,8 +71,8 @@
         <p class="footnote">*Рекомендуется шаг не менее 10 минут, иначе график шумный</p>
       </template>
 
-      <CrossTable title="Перекрёстный винрейт" :percents="crossWinrate" :digits="1" v-if="crossWinrate" />
-      <CrossTable title="Перекрёстное количество боёв" :percents="crossBattles" :digits="0" v-if="crossBattles" />
+      <CrossTable title="Перекрёстный винрейт" :percents="crossTables.winrate" :digits="1" />
+      <CrossTable title="Перекрёстное количество боёв" :percents="crossTables.battles" :digits="0" />
       <p class="footnote">
         Читать построчно. То есть, если в строке <b>Near_You</b> и столбце <b>Yusha</b> стоит 13%, это значит, что
         команда <b>Near_You</b> провела 13% боёв против команды <b>Yusha</b>.
@@ -170,34 +151,32 @@
 
 
 <script setup lang="ts">
-import DefineBackground from '@/shared/uiKit/pageBackground/DefineBackground.vue'
+import { useBackground } from '@/shared/uiKit/pageBackground/useBackground'
 import Bob25Background from './Bob25Background.vue'
 import Blogger from './components/blogger/Blogger.vue'
 import BloggersLine from './components/BloggersLine.vue'
-import { useElementBounding, useLocalStorage } from '@vueuse/core'
+import { useElementBounding, useLocalStorage, useResizeObserver } from '@vueuse/core'
 import TopTanks from './components/TopTanks.vue'
 import TimeSeriesChart from './components/TimeSeriesChart.vue'
-import { step, useAvgBattleDuration, useAvgBattleDurationChart, useCrossBattleCount, useCrossWinrate, useHourTotalScoreDelta, usePlayerDistribution, usePopularTanks, useScoredPopularTanks, useScoredTanks, useSkillsHistory, useTodayTotalScoreDelta, useTotalBattles, useTotalBattlesChart, useTotalPlayers, useTotalPlayersChart, useTotalScore, useTotalScoreChart, useTotalWinrate, useWinrateChart, useYesterdayTotalScoreDelta } from './components/queryLoader'
+import {
+  step, useAvgBattleDuration, useAvgBattleDurationChart, useCrossTables, usePlayerDistribution,
+  usePopularTanks, useScoredPopularTanks, useScoredTanks, useTotalBattles, useTotalBattlesChart, useTotalPlayers,
+  useTotalPlayersChart, useTotalScore, useTotalScoreChart, useTotalWinrate, useWinrateChart,
+} from './components/queryLoader'
 import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
-import InstallMod from './components/InstallMod.vue'
 import BloggerName from './components/blogger/BloggerName.vue'
-import { computed, onMounted, ref, watchEffect, useTemplateRef } from 'vue'
+import { computed, ref, watchEffect, useTemplateRef } from 'vue'
 import { headerHeight, useAdditionalHeaderHeight } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import { displayVariant, preferredLogProcessor } from './store'
-import { usePageMeta } from '@/meta/pageMeta'
 import CrossTable from './components/CrossTable.vue'
 import BattlesPerWinrate from './components/BattlesPerWinrate.vue'
-import Ads from './components/Ads.vue'
 import TopByDamage from './components/TopByDamage.vue'
 import { timeProcessor } from '@/shared/utils/time'
 
 
 
-usePageMeta({
-  title: 'Статистика Битва Блогеров 2025 ',
-  description: 'Статистика по битве блогеров 2025 в игре Мир Танков',
-  keywords: 'битва блогеров, блогеры, статистика, wot, Джов, Юша, Левша, Нирю, Jove, Yusha, Lebwa, Nearyou',
-})
+defineOptions({ name: 'BattleOfBloggers2025' })
+useBackground(Bob25Background)
 
 
 const showTotalPlayersChart = useLocalStorage('bob25-show-total-players-chart', false)
@@ -212,32 +191,27 @@ const totalScoreHightPass = computed(() => totalScoreDeltaHightFilter.value && d
 const shouldInterpolateScore = computed(() => displayVariant.value === 'total' && step.value == 'min1')
 
 
+const portraits = useTemplateRef<HTMLElement>('portraits')
+const portraitNickname = computed(() => portraits.value?.querySelector<HTMLElement>('.nickname'))
 const subHeader = useTemplateRef<HTMLElement>('subHeader')
-const loaded = ref(false)
-const { top: subHeaderTop, y: menuY, height: menuH, update } = useElementBounding(subHeader)
-const headerOffset = computed(() => headerHeight.value)
-const shouldDisplaySubHeader = computed(() => loaded.value && subHeaderTop.value < headerOffset.value)
+const nicknameOffset = ref(0)
+useResizeObserver(() => [portraits.value, portraitNickname.value, subHeader.value], () => {
+  const row = portraits.value
+  const nickname = portraitNickname.value
+  const header = subHeader.value
+  if (!row || !nickname || !header) return
 
-onMounted(async () => {
-
-  async function awaitLoad() {
-    for (let i = 0; i < 200; i++) {
-      await new Promise(r => setTimeout(r, 1))
-      if (subHeaderTop.value > 80) return
-      update()
-    }
-  }
-
-  await awaitLoad()
-  loaded.value = true
+  const nicknameBounds = nickname.getBoundingClientRect()
+  const nicknameCenter = nicknameBounds.top + nicknameBounds.height / 2
+  nicknameOffset.value = row.getBoundingClientRect().bottom - nicknameCenter + header.getBoundingClientRect().height / 2
 })
 
+const { top: subHeaderTop, height: subHeaderHeight } = useElementBounding(subHeader)
+const shouldDisplaySubHeader = computed(() => subHeaderHeight.value > 0 && subHeaderTop.value < headerHeight.value)
 
 const { additionalHeaderHeight } = useAdditionalHeaderHeight()
 watchEffect(() => {
-  if (menuY.value == 0) return additionalHeaderHeight.value = 0
-  if (subHeaderTop.value > headerOffset.value) return additionalHeaderHeight.value = 0
-  additionalHeaderHeight.value = menuH.value - 5
+  additionalHeaderHeight.value = shouldDisplaySubHeader.value ? subHeaderHeight.value - 5 : 0
 })
 
 
@@ -247,9 +221,6 @@ const totalBattles = useTotalBattles()
 const totalBattlesChart = useTotalBattlesChart(showTotalBattlesChart)
 const totalScore = useTotalScore()
 const totalScoreChart = useTotalScoreChart(showTotalScoreChart)
-const hourTotalScoreDelta = useHourTotalScoreDelta()
-const yesterdayTotalScoreDelta = useYesterdayTotalScoreDelta()
-const todayScoreDelta = useTodayTotalScoreDelta()
 const avgDuration = useAvgBattleDuration()
 const avgBattleDurationChart = useAvgBattleDurationChart(showDurationChart)
 const popularTanks = usePopularTanks()
@@ -257,9 +228,7 @@ const scoredTanks = useScoredTanks()
 const scoredPopularTanks = useScoredPopularTanks()
 const totalWinrate = useTotalWinrate()
 const winrateChart = useWinrateChart(showWinrateChart)
-const skills = useSkillsHistory()
-const crossWinrate = useCrossWinrate()
-const crossBattles = useCrossBattleCount()
+const crossTables = useCrossTables()
 const playerDistribution = usePlayerDistribution()
 
 const delta = computed(() => {
@@ -284,91 +253,29 @@ const delta = computed(() => {
 
 
 <style lang="scss" scoped>
-.bob-center-container {
-  max-width: 1200px;
-  margin: 0 auto;
+.sub-header {
+  position: sticky;
+  top: calc(var(--header-height) - 10px);
+  display: flex;
   padding: 0 15px;
+  margin-top: calc(-1 * var(--nickname-offset));
+  margin-bottom: var(--nickname-offset);
+  z-index: 10;
+  gap: clamp(6px, 2cqw, 16px);
+  opacity: 0;
+  transition: opacity 0.1s;
 
-  .sub-header {
-    position: sticky;
-    top: calc(var(--header-height) - 10px);
-    display: flex;
-    padding: 0 15px;
-    z-index: 10;
-    margin-top: -132px;
-    gap: 1rem;
-
-    opacity: 0;
-    transition: opacity 0.1s;
-
-    margin-bottom: 100px;
-
-    @media screen and (max-width: 900px) {
-      margin-bottom: calc((100vw + 30px) * 0.15 - 25px);
-    }
-
-    &.visible {
-      opacity: 1;
-    }
-
-    h2 {
-      margin: 0;
-      flex: 1;
-      text-align: center;
-      font-size: 23px;
-      line-height: 1;
-    }
-
-    @media screen and (max-width: 900px) {
-      margin-top: calc((100vw + 30px) * -0.15 + 2px);
-
-      h2 {
-        font-size: 20px;
-      }
-    }
-
-    @media screen and (max-width: 500px) {
-      h2 {
-        font-size: 16px;
-      }
-    }
+  &.visible {
+    opacity: 1;
   }
 
-  .skills-header {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 30px;
-
-    @media screen and (max-width: 900px) {
-      margin-bottom: calc((100vw + 30px) * 0.15 - 110px);
-    }
-
-    @media screen and (max-width: 550px) {
-      visibility: hidden;
-    }
-
-    div {
-      flex: 1;
-    }
-  }
-}
-
-
-h1 {
-  color: white;
-  text-align: center;
-  text-shadow:
-    0.5px 0.3px 8px rgba(0, 195, 255, 0.3),
-    -0.5px -0.5px 8px rgba(225, 0, 255, 0.3),
-    0.5px 0.5px 3px rgb(0, 195, 255, 0.6),
-    -0.5px -0.3px 3px rgb(225, 0, 255, 0.6);
-
-  @media screen and (max-width: 900px) {
-    font-size: 40px;
-  }
-
-  @media screen and (max-width: 600px) {
-    font-size: 30px;
+  h2 {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    text-align: center;
+    font-size: clamp(14px, 2.5cqw, 23px);
+    line-height: 1;
   }
 }
 
@@ -390,7 +297,18 @@ h1 {
   justify-content: space-around;
   max-width: 100%;
   max-height: 400px;
-  margin-bottom: 15px;
+  margin-top: 12px;
+  isolation: isolate;
+
+  @media (width > 1100px) {
+    :deep(.nickname) {
+      transition: opacity 0.1s;
+    }
+
+    &:has(+ .sub-header.visible) :deep(.nickname) {
+      opacity: 0;
+    }
+  }
 }
 
 .lines {
@@ -414,11 +332,10 @@ h1 {
     margin-top: -15px;
     margin-bottom: 20px;
   }
-}
 
-h3 {
-  margin: 0;
-  margin-bottom: 5px;
+  :deep(h3) {
+    font-size: 22px;
+  }
 }
 
 :deep(.card) {
@@ -427,8 +344,7 @@ h3 {
 }
 
 footer {
-  margin-top: 200px;
-  margin-bottom: 100px;
+  margin: 48px 0 32px;
 
   h5 {
     margin: 10px 0;
@@ -449,6 +365,8 @@ footer {
     padding: 2px 5px;
     border-radius: 3px;
     font-size: 14px;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 }
 </style>

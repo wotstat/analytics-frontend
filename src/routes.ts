@@ -48,6 +48,11 @@ const routes = [
       { path: 'mastery', component: Mastery, meta: { customTitle: 'Знаки классности' } },
       { path: 'marks', component: Marks, meta: { customTitle: 'Отметки на стволах' } },
       { path: 'compare-versions', component: CompareVersions, meta: { customTitle: 'Сравнение версий игры' } },
+      {
+        path: 'bb25',
+        component: () => import('./pages/services/pages/archive/bob25/Index.vue'),
+        meta: { customTitle: 'Битва блогеров 2025', resetScroll: true },
+      },
     ]
   },
   {
@@ -69,7 +74,7 @@ const routes = [
       { path: 'my', component: asyncPage(() => import('./pages/replays/my/Index.vue')) },
     ]
   },
-  { path: '/bb25', component: asyncPage(() => import('./pages/services/legacy/bob25/Index.vue')) },
+  { path: '/bb25', redirect: '/services/bb25' },
   { path: '/services/fixed-match-detector', component: asyncPage(() => import('./pages/services/legacy/fixedMatchDetect/Index.vue')), meta: { sitemap: false } },
   { path: '/install', component: Install },
 

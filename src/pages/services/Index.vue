@@ -1,7 +1,7 @@
 <template>
   <SectionLayout :title="String(route.meta.customTitle ?? '')" :sections>
     <RouterView v-slot="{ Component }">
-      <KeepAlive>
+      <KeepAlive exclude="BattleOfBloggers2025">
         <component :is="Component" />
       </KeepAlive>
     </RouterView>
@@ -25,7 +25,10 @@ const sections = [
   {
     id: 'archive',
     title: 'Архив',
-    links: [{ to: '/services/compare-versions', label: 'Сравнение версий' }],
+    links: [
+      { to: '/services/compare-versions', label: 'Сравнение версий' },
+      { to: '/services/bb25', label: 'Битва блогеров 2025' },
+    ],
   },
 ]
 </script>
