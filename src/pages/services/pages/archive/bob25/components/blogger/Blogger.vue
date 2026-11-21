@@ -1,6 +1,6 @@
 <template>
   <div class="blogger" :class="blogger">
-    <img :src="targetUrl" :alt="blogger">
+    <img :src="targetUrl" :alt="blogger" width="360" height="670">
     <BloggerPlace :blogger />
     <BloggerName :blogger="blogger" class="nickname" />
     <!-- <h2 class="mt-font">{{ targetNickname }}</h2> -->
@@ -37,6 +37,8 @@ const targetUrl = computed(() => {
 
 <style lang="scss" scoped>
 .blogger {
+  flex: 1;
+  min-width: 0;
   position: relative;
   z-index: -1;
 
