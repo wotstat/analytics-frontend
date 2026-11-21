@@ -9,6 +9,7 @@ import Maps from './pages/infographics/pages/Maps.vue'
 import Vehicles from './pages/services/pages/vehicles/Vehicles.vue'
 import Marks from './pages/services/pages/vehicleAchievements/Marks.vue'
 import Mastery from './pages/services/pages/vehicleAchievements/Mastery.vue'
+import CompareVersions from './pages/services/pages/archive/mt36.1/Index.vue'
 import Coverage from './pages/infographics/pages/Coverage.vue'
 import Lootbox from './pages/infographics/pages/lootbox/Index.vue'
 import Install from './pages/install/Index.vue'
@@ -44,6 +45,7 @@ const routes = [
       { path: 'vehicles', alias: '', component: Vehicles, meta: { customTitle: 'Статистика техники' } },
       { path: 'mastery', component: Mastery, meta: { customTitle: 'Знаки классности' } },
       { path: 'marks', component: Marks, meta: { customTitle: 'Отметки на стволах' } },
+      { path: 'compare-versions', component: CompareVersions, meta: { customTitle: 'Сравнение версий игры' } },
     ]
   },
   {
@@ -66,7 +68,6 @@ const routes = [
     ]
   },
   { path: '/bb25', component: asyncPage(() => import('./pages/services/legacy/bob25/Index.vue')) },
-  { path: '/services/compare-versions', component: asyncPage(() => import('./pages/services/legacy/mt36.1/Index.vue')) },
   { path: '/services/fixed-match-detector', component: asyncPage(() => import('./pages/services/legacy/fixedMatchDetect/Index.vue')), meta: { sitemap: false } },
   { path: '/install', component: Install },
 
@@ -91,7 +92,7 @@ export const router = createRouter({
   routes: [...routes, ...debugRoutes],
   scrollBehavior(to, from, savedPosition) {
     if (to.path === from.path) return
-    if (to.matched && from.matched && to.matched[0] == from.matched[0]) return
+    if (to.matched[0] === from.matched[0] && !to.meta.resetScroll && !from.meta.resetScroll) return
 
     return { top: 0 }
   },

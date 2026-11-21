@@ -1,15 +1,16 @@
 <template>
-  <div class="mt26-1-center-container">
-    <h1>Сравнительная аналитика<br />версий игры</h1>
+  <div class="compare-versions">
+    <p class="intro">
+      Эта страница была сделана специально для обновления 1.36.1 «Разворот». Однако здесь можно сравнить любые две
+      версии игры.
+    </p>
 
-    <h2 class="description">
-      На этой странице вы можете сравнить различные версии игры, чтобы понять, как изменения в серверной части повлияли
-      на игровой процесс.
-    </h2>
-
-    <details class="collapsible-menu">
-      <summary class="menu-trigger">Что было в Мир Танков 1.36.1</summary>
-      <div class="menu-content">
+    <details class="version-changes" @toggle="changesOpen = ($event.currentTarget as HTMLDetailsElement).open">
+      <summary>
+        <DropdownArrow horizontal :expanded="changesOpen" />
+        Что изменилось в «Мире танков» 1.36.1
+      </summary>
+      <div class="content">
         <p>
           В обновление Мира Танков 1.36.1 были внесены существенные изменения в серверную часть игры:
         </p>
@@ -25,7 +26,7 @@
     </details>
 
     <section class="select-version">
-      <h3>Выбор версий</h3>
+      <h2>Выбор версий</h2>
       <div class="selector-vs">
         <div class="version-select">
           Группа №1:
@@ -43,7 +44,7 @@
 
 
     <section class="ballistic-distribution">
-      <h3>Распределение снарядов</h3>
+      <h2>Распределение снарядов</h2>
       <div class="line">
         <label>
           <input type="checkbox" v-model="ballisticDistributionIdeal" />
@@ -59,8 +60,8 @@
             {{spaceProcessor(ballisticDistributionData.data.reduce((acc, item) => acc + item.c, 0).toString())}}
           </b>
         </p>
-        <p>На картинках прицела по <b>20 000</b> реальных выстрелов. Количество выстрелов одинаковое.</p>
-        <p>При использовании <b>не идеальных условий</b> возникают погрешности связанные с
+        <p v-if="!ballisticDistributionIdeal">При использовании <b>не идеальных условий</b> возникают погрешности
+          связанные с
           рассинхронизацией клиента и сервера. Резкие перепады графика сглаживаются <i>нормальным</i> распределением
           погрешности</p>
       </div>
@@ -109,7 +110,7 @@
     </section>
 
     <section class="type-distribution">
-      <h3>Продолжительность боя</h3>
+      <h2>Продолжительность боя</h2>
       <div class="cards">
         <div class="card flex">
           <div class="comparison-chart-container flex-1">
@@ -135,7 +136,7 @@
     </section>
 
     <section>
-      <h3>Уровни боёв</h3>
+      <h2>Уровни боёв</h2>
       <LevelSwitcher v-model="selectedLevels" />
       <div class="cards">
         <div class="card">
@@ -150,7 +151,7 @@
     </section>
 
     <section class="type-distribution">
-      <h3>Распределение типов танков по боям</h3>
+      <h2>Распределение типов танков по боям</h2>
       <LevelSwitcher v-model="selectedLevels" />
       <div class="cards">
         <div class="card flex" v-for="chart in typeDistributionData" :key="chart.chart.key">
@@ -165,7 +166,7 @@
     </section>
 
     <section class="damage-distribution">
-      <h3>Распределение урона</h3>
+      <h2>Распределение урона</h2>
 
       <div class="controls">
         <div class="line">
@@ -208,7 +209,7 @@
     </section>
 
     <section class="type-distribution">
-      <h3>Другое</h3>
+      <h2>Другое</h2>
       <div class="cards">
         <div class="card flex">
           <div class="comparison-chart-container flex-1">
@@ -229,12 +230,6 @@
         </div>
       </div>
     </section>
-
-
-    <footer>
-
-    </footer>
-
   </div>
 </template>
 
@@ -248,6 +243,7 @@ import LevelSwitcher from './LevelSwitcher.vue'
 import { refDebounced, useDebounce } from '@vueuse/core'
 
 import DropDown from '@/shared/uiKit/dropdown/DropDown.vue'
+import DropdownArrow from '@/shared/uiKit/dropdown/DropdownArrow.vue'
 import ShotsCircle from '@/pages/infographics/shared/widgets/ShotsCircle.vue'
 import { spaceProcessor } from '@/shared/utils/processors/useSpaceProcessor'
 import { roundProcessor, createPercentProcessor, romanNumberProcessor } from '@/shared/utils/processors/processors'
@@ -266,6 +262,8 @@ import CompareVersionsBackground from './CompareVersionsBackground.vue'
 
 setFeatureVisit('mt-36-1')
 useBackground(CompareVersionsBackground, { placement: 'page' })
+
+const changesOpen = ref(false)
 
 const queryOptions = {
   cache: DAY_CACHE,
@@ -718,52 +716,50 @@ async function loadNextBatchRight(options: Options) {
 
 
 <style lang="scss" scoped>
-.mt26-1-center-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 15px;
-
-  h1 {
-    color: white;
-    text-align: center;
-
-    @media screen and (max-width: 900px) {
-      font-size: 40px;
-    }
-
-    @media screen and (max-width: 600px) {
-      font-size: 30px;
-    }
+.compare-versions {
+  .intro {
+    margin: 12px 0;
   }
 
-  h2.description {
-    text-align: center;
-    margin-top: 20px;
-    font-size: 22px;
-    line-height: 1.4;
-    font-weight: normal;
-
-    @media screen and (max-width: 900px) {
-      font-size: 16px;
-    }
-
-    @media screen and (max-width: 600px) {
-      font-size: 14px;
-    }
-  }
-
-  .collapsible-menu {
-    margin: 0 auto;
+  .version-changes {
     margin-bottom: 2em;
+    interpolate-size: allow-keywords;
 
-    .menu-content {
-      padding: 15px;
-      padding-left: 1em;
-      background: rgba(102, 102, 102, 0.15);
-      border-radius: 15px;
+    &::details-content {
+      block-size: 0;
+      overflow: clip;
+      transition: block-size 200ms ease, content-visibility 200ms allow-discrete;
+    }
+
+    &[open]::details-content {
+      block-size: auto;
+    }
+
+    summary {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      cursor: pointer;
+      font-weight: 600;
+
+      &::-webkit-details-marker {
+        display: none;
+      }
+
+      .dropdown-arrow {
+        width: 12px;
+        height: 12px;
+        color: #ffffff80;
+      }
+    }
+
+    .content {
+      padding: 8px 0 0 20px;
 
       ul {
-        margin-bottom: 0;
+        margin: 6px 0 0;
+        padding-left: 1.25em;
       }
     }
   }
@@ -773,7 +769,6 @@ async function loadNextBatchRight(options: Options) {
       display: flex;
       align-items: stretch;
       gap: 1em;
-      flex-wrap: wrap;
 
       .vr {
         width: 1px;
@@ -786,6 +781,15 @@ async function loadNextBatchRight(options: Options) {
         align-items: center;
         gap: 0.5em;
         flex: 1;
+        min-width: 0;
+      }
+
+      @container content (max-width: 600px) {
+        flex-direction: column;
+
+        .vr {
+          display: none;
+        }
       }
     }
   }
@@ -799,19 +803,19 @@ async function loadNextBatchRight(options: Options) {
   .cards {
     display: flex;
     gap: 1em;
-    flex-wrap: wrap;
+
+    @container content (max-width: 800px) {
+      flex-direction: column;
+    }
   }
 
   .card {
     flex: 1;
+    min-width: 0;
     background: rgba(102, 102, 102, 0.15);
     box-shadow: none;
 
     div.card-main-info {
-      display: flex;
-      align-items: baseline;
-      justify-content: center;
-      gap: 0.5em;
       margin-bottom: -0.3em;
       margin-top: 0.2em;
 
@@ -836,30 +840,22 @@ async function loadNextBatchRight(options: Options) {
   }
 
   .type-distribution {
-    .cards {
-      display: flex;
-      gap: 1em;
-      flex-wrap: wrap;
-
-      @media screen and (max-width: 800px) {
-        flex-direction: column;
-      }
-
-      .card {
-        flex-direction: column;
-        height: 300px;
-        min-height: 300px;
-        gap: 0;
-      }
+    .card {
+      flex-direction: column;
+      min-height: 300px;
+      gap: 0;
     }
   }
 
   .damage-distribution {
 
     .card {
+      box-sizing: border-box;
       display: flex;
       flex-direction: column;
+      width: 100%;
       aspect-ratio: 2;
+      min-height: 240px;
     }
 
     .damage-chart-container {
@@ -887,7 +883,6 @@ async function loadNextBatchRight(options: Options) {
       .line {
         display: flex;
         flex-wrap: wrap;
-        white-space: nowrap;
         gap: 0.5em;
         margin-bottom: 1em;
 
@@ -916,8 +911,10 @@ async function loadNextBatchRight(options: Options) {
     .line {
       margin-bottom: 1em;
 
-      &.flex {
-        flex-wrap: wrap;
+      @container content (max-width: 600px) {
+        &.flex {
+          flex-direction: column;
+        }
       }
     }
 
@@ -928,6 +925,7 @@ async function loadNextBatchRight(options: Options) {
       .left {
         flex: 1;
         display: flex;
+        min-width: 0;
 
         .card {
           display: flex;
@@ -937,6 +935,7 @@ async function loadNextBatchRight(options: Options) {
 
       .right {
         flex: 0.3;
+        min-width: 0;
         display: flex;
         flex-direction: column;
         gap: 1em;
@@ -953,11 +952,12 @@ async function loadNextBatchRight(options: Options) {
         }
       }
 
-      @media screen and (max-width: 800px) {
+      @container content (max-width: 800px) {
         flex-direction: column;
 
         .left {
           aspect-ratio: 2;
+          min-height: 240px;
         }
 
         .right {
@@ -995,14 +995,11 @@ async function loadNextBatchRight(options: Options) {
   section {
     margin-bottom: 3em;
 
-    h3 {
-      margin: 0;
-      margin-bottom: 0.5em;
+    h2 {
+      margin: 0 0 0.5em;
+      font-size: 22px;
+      line-height: 1.3;
     }
-  }
-
-  footer {
-    margin-top: 30vh;
   }
 }
 </style>

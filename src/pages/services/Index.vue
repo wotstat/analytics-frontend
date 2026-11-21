@@ -13,13 +13,19 @@ import { RouterView, useRoute } from 'vue-router'
 import SectionLayout from '@/pages/shared/sidebarLayout/SectionLayout.vue'
 
 const route = useRoute()
-const links = [
-  { to: '/services/vehicles', label: 'Статистика техники' },
-  { to: '/services/mastery', label: 'Мастера' },
-  { to: '/services/marks', label: 'Отметки' },
-]
 const sections = [
-  { id: 'main', links },
-  { id: 'utility', title: 'Служебная', links },
+  {
+    id: 'main',
+    links: [
+      { to: '/services/vehicles', label: 'Статистика техники' },
+      { to: '/services/mastery', label: 'Мастера' },
+      { to: '/services/marks', label: 'Отметки' },
+    ],
+  },
+  {
+    id: 'archive',
+    title: 'Архив',
+    links: [{ to: '/services/compare-versions', label: 'Сравнение версий' }],
+  },
 ]
 </script>

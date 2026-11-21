@@ -11,8 +11,9 @@
   top: 0;
   left: 0;
   width: 100%;
-  height: 250vh;
+  height: min(100%, 250vh);
   overflow: hidden;
+  mask-image: linear-gradient(#000 70%, transparent);
 
   .blue-gradient {
     position: absolute;

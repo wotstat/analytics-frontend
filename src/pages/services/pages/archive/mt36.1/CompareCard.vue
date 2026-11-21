@@ -1,5 +1,5 @@
 <template>
-  <div class="card compare nowrap mono-num">
+  <div class="card compare mono-num">
     <div class="data">
       <p class="left n-mono">
         <SimpleTweenValue :options="{ minStep }" :value="left" :processor="processor" />
