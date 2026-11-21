@@ -232,7 +232,8 @@ const problemsVisible = ref(false)
   box-shadow: 0px 0px 10px 2px $background-color;
 
   .spacer {
-    transition: all 0.1s;
+    // 4 frames at 30 FPS
+    transition: height calc(4s / 30);
   }
 }
 

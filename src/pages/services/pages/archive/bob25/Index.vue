@@ -1,18 +1,13 @@
 <template>
-  <div class="bob-results">
+  <div class="bob-results" :style="{ '--compact-nickname-size': `${compactNicknameSize}px` }">
     <div class="bloggers" ref="portraits">
-      <Blogger blogger="nearyou" />
-      <Blogger blogger="lebwa" />
-      <Blogger blogger="jove" />
-      <Blogger blogger="yusha" />
+      <Blogger v-for="blogger in bloggers" :key="blogger" :blogger />
     </div>
 
-    <div class="sub-header" ref="subHeader" :class="{ 'visible': shouldDisplaySubHeader }"
-      :style="{ '--nickname-offset': `${nicknameOffset}px` }">
-      <BloggerName :blogger="'nearyou'" />
-      <BloggerName :blogger="'lebwa'" />
-      <BloggerName :blogger="'jove'" />
-      <BloggerName :blogger="'yusha'" />
+    <div class="nickname-track" v-show="portraitsHeight > 0" :style="{ top: `${nicknameOffset}px` }">
+      <div class="nicknames" ref="nicknames" :style="{ top: `${stickyTop}px` }">
+        <BloggerName v-for="blogger in bloggers" :key="blogger" :blogger />
+      </div>
     </div>
 
     <div class="lines">
@@ -155,7 +150,7 @@ import { useBackground } from '@/shared/uiKit/pageBackground/useBackground'
 import Bob25Background from './Bob25Background.vue'
 import Blogger from './components/blogger/Blogger.vue'
 import BloggersLine from './components/BloggersLine.vue'
-import { useElementBounding, useLocalStorage, useResizeObserver } from '@vueuse/core'
+import { useElementBounding, useLocalStorage } from '@vueuse/core'
 import TopTanks from './components/TopTanks.vue'
 import TimeSeriesChart from './components/TimeSeriesChart.vue'
 import {
@@ -165,14 +160,13 @@ import {
 } from './components/queryLoader'
 import ServerStatusWrapper from '@/pages/infographics/shared/ServerStatusWrapper.vue'
 import BloggerName from './components/blogger/BloggerName.vue'
-import { computed, ref, watchEffect, useTemplateRef } from 'vue'
+import { computed, watch, watchEffect, useTemplateRef } from 'vue'
 import { headerHeight, useAdditionalHeaderHeight } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import { displayVariant, preferredLogProcessor } from './store'
 import CrossTable from './components/CrossTable.vue'
 import BattlesPerWinrate from './components/BattlesPerWinrate.vue'
 import TopByDamage from './components/TopByDamage.vue'
 import { timeProcessor } from '@/shared/utils/time'
-
 
 
 defineOptions({ name: 'BattleOfBloggers2025' })
@@ -191,27 +185,42 @@ const totalScoreHightPass = computed(() => totalScoreDeltaHightFilter.value && d
 const shouldInterpolateScore = computed(() => displayVariant.value === 'total' && step.value == 'min1')
 
 
+const bloggers = ['nearyou', 'lebwa', 'jove', 'yusha'] as const
 const portraits = useTemplateRef<HTMLElement>('portraits')
-const portraitNickname = computed(() => portraits.value?.querySelector<HTMLElement>('.nickname'))
-const subHeader = useTemplateRef<HTMLElement>('subHeader')
-const nicknameOffset = ref(0)
-useResizeObserver(() => [portraits.value, portraitNickname.value, subHeader.value], () => {
-  const row = portraits.value
-  const nickname = portraitNickname.value
-  const header = subHeader.value
-  if (!row || !nickname || !header) return
+const nicknames = useTemplateRef<HTMLElement>('nicknames')
+const { top: portraitsTop, height: portraitsHeight, width: portraitsWidth, update: updatePortraitBounds } = useElementBounding(portraits)
+watch(headerHeight, updatePortraitBounds, { flush: 'post' })
 
-  const nicknameBounds = nickname.getBoundingClientRect()
-  const nicknameCenter = nicknameBounds.top + nicknameBounds.height / 2
-  nicknameOffset.value = row.getBoundingClientRect().bottom - nicknameCenter + header.getBoundingClientRect().height / 2
+const portraitNicknameSize = computed(() => Math.min(40, Math.max(16, portraitsWidth.value * 0.04)))
+const compactNicknameSize = computed(() => Math.min(23, Math.max(14, portraitsWidth.value * 0.025)))
+
+const portraitLineHeight = 1.1
+const headerOverlap = 10
+const stickyTop = computed(() => headerHeight.value - headerOverlap)
+const nicknameOffset = computed(() =>
+  portraitsHeight.value * 0.78 - (portraitNicknameSize.value * portraitLineHeight + compactNicknameSize.value) / 2)
+const distanceToStickyTop = computed(() => portraitsTop.value + nicknameOffset.value - stickyTop.value)
+
+const DOWNSCALE_DISTANCE_FACTOR = 1
+const nicknameProgress = computed(() => {
+  const shrinkDistance = DOWNSCALE_DISTANCE_FACTOR * portraitNicknameSize.value
+  return 1 - Math.min(1, Math.max(0, distanceToStickyTop.value / shrinkDistance))
 })
 
-const { top: subHeaderTop, height: subHeaderHeight } = useElementBounding(subHeader)
-const shouldDisplaySubHeader = computed(() => subHeaderHeight.value > 0 && subHeaderTop.value < headerHeight.value)
+watchEffect(() => {
+  const row = nicknames.value
+  if (!row) return
+
+  const progress = nicknameProgress.value
+  const fontSize = portraitNicknameSize.value + (compactNicknameSize.value - portraitNicknameSize.value) * progress
+  row.style.fontSize = `${fontSize}px`
+  row.style.lineHeight = String(portraitLineHeight + (1 - portraitLineHeight) * progress)
+})
 
 const { additionalHeaderHeight } = useAdditionalHeaderHeight()
 watchEffect(() => {
-  additionalHeaderHeight.value = shouldDisplaySubHeader.value ? subHeaderHeight.value - 5 : 0
+  const nearHeader = portraitsHeight.value > 0 && headerHeight.value > 0 && distanceToStickyTop.value <= headerOverlap
+  additionalHeaderHeight.value = nearHeader ? compactNicknameSize.value - 5 : 0
 })
 
 
@@ -262,29 +271,32 @@ const delta = computed(() => {
     -0.5px -0.3px 3px rgb(225 0 255 / 60%);
 }
 
-.sub-header {
-  position: sticky;
-  top: calc(var(--header-height) - 10px);
-  display: flex;
-  padding: 0 15px;
-  margin-top: calc(-1 * var(--nickname-offset));
-  margin-bottom: var(--nickname-offset);
-  z-index: 10;
-  gap: clamp(6px, 2cqw, 16px);
-  opacity: 0;
-  transition: opacity 0.1s;
+.bob-results {
+  position: relative;
+  margin-top: 12px;
+}
 
-  &.visible {
-    opacity: 1;
-  }
+.nickname-track {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 11;
+  pointer-events: none;
+}
+
+.nicknames {
+  position: sticky;
+  display: flex;
+  align-items: center;
+  height: var(--compact-nickname-size);
 
   h2 {
     flex: 1;
     min-width: 0;
     margin: 0;
     text-align: center;
-    font-size: clamp(14px, 2.5cqw, 23px);
-    line-height: 1;
+    font-size: inherit;
+    line-height: inherit;
+    font-weight: bold;
   }
 }
 
@@ -306,18 +318,8 @@ const delta = computed(() => {
   justify-content: space-around;
   max-width: 100%;
   max-height: 400px;
-  margin-top: 12px;
+  margin-bottom: var(--compact-nickname-size);
   isolation: isolate;
-
-  @media (width > 1100px) {
-    :deep(.nickname) {
-      transition: opacity 0.1s;
-    }
-
-    &:has(+ .sub-header.visible) :deep(.nickname) {
-      opacity: 0;
-    }
-  }
 }
 
 .lines {

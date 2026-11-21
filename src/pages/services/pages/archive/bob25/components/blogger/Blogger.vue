@@ -2,8 +2,6 @@
   <div class="blogger" :class="blogger">
     <img :src="targetUrl" :alt="blogger" width="360" height="670">
     <BloggerPlace :blogger />
-    <BloggerName :blogger="blogger" class="nickname" />
-    <!-- <h2 class="mt-font">{{ targetNickname }}</h2> -->
   </div>
 </template>
 
@@ -15,7 +13,6 @@ import Jove from './jove.webp'
 import Lebwa from './lebwa.webp'
 import Nearyou from './nearyou.webp'
 import Yusha from './yusha.webp'
-import BloggerName from './BloggerName.vue'
 import BloggerPlace from './BloggerPlace.vue'
 
 
@@ -53,17 +50,6 @@ const targetUrl = computed(() => {
 
     mask-image: linear-gradient(rgba(0, 0, 0, 1) 60%, rgba(0, 0, 0, 0.1) 90%, rgba(0, 0, 0, 0) 98%);
     transform: translateY(2%);
-  }
-
-  .nickname {
-    position: absolute;
-    bottom: 22%;
-    font-weight: bold;
-    text-align: center;
-    width: 100%;
-    color: white;
-    font-size: clamp(16px, 4cqw, 40px);
-    margin: 0;
   }
 
   .place {
