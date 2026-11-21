@@ -15,7 +15,7 @@
     </div>
 
     <ComposableTable v-model:expanded-rows="expandedRows" class="vehicle-stats"
-      :columns
+      :columns :expand-on-row-click="visibleSlots.length === 0"
       :rows="status === success ? displayedVehicles : []" :row-key="vehicle => vehicle.rowKey"
       :sort="sorting.sortOrders.value" :loading="status === loading" :cell-class="cellClass" @sort="onSort"
       @cell-click="onCellClick">
