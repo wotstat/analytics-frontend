@@ -253,6 +253,15 @@ const delta = computed(() => {
 
 
 <style lang="scss" scoped>
+:global(.bob25-title) {
+  color: white;
+  text-shadow:
+    0.5px 0.3px 8px rgb(0 195 255 / 30%),
+    -0.5px -0.5px 8px rgb(225 0 255 / 30%),
+    0.5px 0.5px 3px rgb(0 195 255 / 60%),
+    -0.5px -0.3px 3px rgb(225 0 255 / 60%);
+}
+
 .sub-header {
   position: sticky;
   top: calc(var(--header-height) - 10px);

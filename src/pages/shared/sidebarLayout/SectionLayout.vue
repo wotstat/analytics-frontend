@@ -26,13 +26,13 @@
     </template>
 
     <template #content-top>
-      <h1 class="heading">{{ title }}</h1>
+      <h1 class="heading" :class="titleClass">{{ title }}</h1>
     </template>
 
     <template #mobile-content-top>
       <div class="mobile-menu">
         <h1 class="heading">
-          <button type="button" class="menu-toggle" @click="menuOpen = !menuOpen">
+          <button type="button" class="menu-toggle" :class="titleClass" @click="menuOpen = !menuOpen">
             {{ title }}
             <span class="indicator">
               <DropdownArrow angle="large" :expanded="menuOpen" />
@@ -63,6 +63,7 @@ type SectionLink = { to: string, label: string }
 
 defineProps<{
   title: string
+  titleClass?: string
   sections: { id: string, title?: string, links: SectionLink[] }[]
 }>()
 

@@ -51,7 +51,7 @@ const routes = [
       {
         path: 'bb25',
         component: () => import('./pages/services/pages/archive/bob25/Index.vue'),
-        meta: { customTitle: 'Битва блогеров 2025', resetScroll: true },
+        meta: { customTitle: 'Битва блогеров 2025', titleClass: 'bob25-title', resetScroll: true },
       },
     ]
   },

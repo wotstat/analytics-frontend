@@ -1,5 +1,6 @@
 <template>
-  <SectionLayout :title="String(route.meta.customTitle ?? '')" :sections>
+  <SectionLayout :title="String(route.meta.customTitle ?? '')"
+    :title-class="String(route.meta.titleClass ?? '')" :sections>
     <RouterView v-slot="{ Component }">
       <KeepAlive exclude="BattleOfBloggers2025">
         <component :is="Component" />
