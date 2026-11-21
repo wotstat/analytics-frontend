@@ -8,6 +8,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import '@/styles/mtfont.scss'
 
 const props = defineProps<{
   blogger: 'jove' | 'lebwa' | 'nearyou' | 'yusha' | 0 | 1 | 2 | 3 | number

@@ -1,9 +1,9 @@
 import { defineMetaDefinition } from '@/meta/utils'
-import MetaCard from '@/shared/ui/meta/components/MetaCard.vue'
+import Bob25MetaCard from './Bob25MetaCard.vue'
 
 export default defineMetaDefinition({
   id: 'services-bb25',
-  component: MetaCard,
+  component: Bob25MetaCard,
   priority: 10,
   match: url => /^\/(?:services\/)?bb25\/?$/.test(url.pathname),
   name: 'Архив/Битва блогеров 2025',
@@ -15,12 +15,6 @@ export default defineMetaDefinition({
     title: 'Статистика Битвы блогеров 2025',
     description: 'Результаты Битвы блогеров 2025 в «Мире танков». Очки, винрейт и статистика боёв команд Near_You, LeBwa, Jove и Yusha.',
     keywords: 'битва блогеров, блогеры, статистика, wot, Джов, Юша, Левша, Нирю, Jove, Yusha, Lebwa, Nearyou',
-    imageAlt: 'Битва блогеров 2025 — WotStat Analytics',
-  },
-  props: {
-    title: 'Битва блогеров 2025',
-    subtitle: 'Результаты команд и статистика боёв',
-    label: 'Архив',
-    footer: 'Мир танков',
+    imageAlt: 'Итоги Битвы блогеров 2025. Near_You — 1-е место, LeBwa — 2-е, Jove — 3-е, Yusha — 4-е.',
   },
 })

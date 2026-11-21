@@ -11,6 +11,13 @@ export const bloggerNames = {
   yusha
 }
 
+export const bloggerPlaces = {
+  nearyou: 1,
+  lebwa: 2,
+  jove: 3,
+  yusha: 4,
+} as const
+
 export const bloggerNamesArray = [
   nearyou,
   lebwa,
