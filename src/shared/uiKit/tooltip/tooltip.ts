@@ -64,6 +64,7 @@ function inheritTooltipProps(base: DefineTooltipProps, overrides: DefineTooltipP
   return {
     get offset() { return get('offset') },
     get placement() { return get('placement') },
+    get positioning() { return get('positioning') },
     get arrowSize() { return get('arrowSize') },
     get viewportOffset() { return get('viewportOffset') },
     get class() { return get('class') },
@@ -327,6 +328,7 @@ export function defineTooltip<T>(
     props: {
       offset: [Object, Number, Array],
       placement: [String, Array],
+      positioning: [String, Function],
       arrowSize: Number,
       viewportOffset: [Object, Number, Array],
       class: [String, Object, Array]
@@ -359,6 +361,11 @@ export function defineTooltip<T>(
       let touchMoved = false
 
       const group = binding.arg ?? `default-${defaultGroupCounter++}`
+      const positioningModifier = (() => {
+        if (binding.modifiers.fixed) return 'fixed'
+        if (binding.modifiers.absolute) return 'absolute'
+        return undefined
+      })()
 
       const overrides = {
         ...requiredOptions,
@@ -379,6 +386,7 @@ export function defineTooltip<T>(
 
         const propsOverrides: DefineTooltipProps = Object.fromEntries(objectEntries({
           ...propsFromValue,
+          positioning: positioningModifier ?? propsFromValue.positioning,
           placement: (() => {
             for (const variant of placementWithModifiersVariants) if (binding.modifiers[variant]) return variant
             return propsFromValue.placement

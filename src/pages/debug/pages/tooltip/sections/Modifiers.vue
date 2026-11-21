@@ -26,15 +26,23 @@
           v-text-tooltip.left.instant="{ text: 'В значении placement: bottom, в модификаторе left — победил модификатор', placement: 'bottom' }">
           .left + placement в значении
         </button>
+
+        <button class="debug-btn" v-tooltip.fixed.instant="'Позиционирование относительно окна'">
+          .fixed.instant
+        </button>
+
+        <button class="debug-btn"
+          v-text-tooltip.absolute.instant="{ text: 'Позиционирование относительно страницы', positioning: 'fixed' }">
+          .absolute + positioning в значении
+        </button>
       </div>
     </div>
 
     <p class="debug-note">
-      Приоритет placement: <b>модификатор → значение → опции директивы</b>. Последняя кнопка ряда это и проверяет:
-      карточка обязана оказаться слева, а не снизу. Список модификаторов задан в типе
-      <span class="debug-value">TooltipModifier</span>:
-      <span class="debug-value">instant</span>, <span class="debug-value">interactive</span> и все 24 варианта
-      placement, включая <span class="debug-value">-float</span>.
+      Для <span class="debug-value">placement</span> и <span class="debug-value">positioning</span> действует один
+      порядок приоритета <b>модификатор → значение → опции директивы</b>.
+      <span class="debug-value">.fixed</span> задаёт позицию относительно окна, а
+      <span class="debug-value">.absolute</span> — относительно страницы.
     </p>
 
     <p class="debug-note">

@@ -6,6 +6,7 @@
     :offset="targetOffset"
     :viewportOffset
     :placement
+    :positioning
     :preserveLastPlacement
     :styles="{
       ...styles,
@@ -44,7 +45,7 @@
 
 <script setup lang="ts">
 import { ClassValue, computed, RendererElement } from 'vue'
-import { OffsetValue, PlacementParam, PopoverTarget, roundDpr } from './utils'
+import { OffsetValue, PlacementParam, PopoverPositioning, PopoverTarget, roundDpr } from './utils'
 import PopoverAnimated from './PopoverAnimated.vue'
 
 
@@ -72,6 +73,7 @@ const { target,
   arrowUsingMask?: boolean
   preserveLastPlacement?: boolean
   placement?: PlacementParam
+  positioning?: PopoverPositioning
   styles?: Record<string, string>
   class?: ClassValue,
   enterDuration?: number

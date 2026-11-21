@@ -15,8 +15,8 @@
 
 
 <script setup lang="ts">
-import { computed, onBeforeMount, onUnmounted, ref, shallowRef, triggerRef, watch, useTemplateRef, RendererElement, onMounted } from 'vue'
-import { Bbox, calculatePopoverPosition, generateOffset, getArrowPosition, getParams, getViewportRect, isParamsEqual, OffsetValue, Params, PlacementParam, PlacementWithModifiers, PopoverTarget, roundDpr, TargetRect } from './utils'
+import { computed, onBeforeMount, onUnmounted, ref, shallowRef, toValue, triggerRef, watch, useTemplateRef, RendererElement } from 'vue'
+import { Bbox, calculatePopoverPosition, generateOffset, getArrowPosition, getParams, getViewportRect, isParamsEqual, OffsetValue, Params, PlacementParam, PlacementWithModifiers, PopoverPositioning, PopoverTarget, roundDpr, TargetRect } from './utils'
 import { useEventListener } from '@vueuse/core'
 import { getPopoverRoot } from './popoverRoot'
 
@@ -29,6 +29,7 @@ const props = withDefaults(defineProps<{
   offset?: OffsetValue
   viewportOffset?: OffsetValue
   placement?: PlacementParam
+  positioning?: PopoverPositioning
   preserveLastPlacement?: boolean
   styles?: Record<string, string>
   teleportTo?: string | RendererElement | null
@@ -89,6 +90,7 @@ function isElementOutsideViewport(element: TargetRect, viewport: Bbox) {
 
 const viewport = ref<Bbox>({ left: 0, top: 0, right: 0, bottom: 0 })
 const windowScroll = shallowRef({ x: 0, y: 0 })
+const positioning = shallowRef<'absolute' | 'fixed'>('absolute')
 function onAnimationFrame() {
   animationHandle = null
 
@@ -107,6 +109,7 @@ function updatePosition() {
   const newViewport = getViewportRect()
   const scrollX = window.scrollX
   const scrollY = window.scrollY
+  positioning.value = toValue(props.positioning) ?? 'absolute'
 
   if (!targetParams.value || !isParamsEqual(targetParams.value, targetNewParams)) {
     targetParams.value = targetNewParams
@@ -125,7 +128,7 @@ function updatePosition() {
   isTargetOutsideViewport.value = isElementOutsideViewport(targetNewParams.target, newViewport)
 }
 
-watch(() => props.target, updatePosition, { flush: 'post' })
+watch([() => props.target, () => props.positioning], updatePosition, { flush: 'post' })
 
 let lastPlacement: PlacementWithModifiers | undefined = undefined
 watch(() => props.display, display => {
@@ -206,12 +209,20 @@ watch(() => positions.value?.arrowDirection, (direction, old) => {
 const targetStyle = computed(() => {
   if (!positions.value || !targetParams.value) return {}
 
-  const transform = props.snapToPixels ?
-    `translate3d(${roundDpr(positions.value.x + windowScroll.value.x)}px, ${roundDpr(positions.value.y + windowScroll.value.y)}px, 0px)` :
-    `translate3d(${positions.value.x + windowScroll.value.x}px, ${positions.value.y + windowScroll.value.y}px, 0px)`
+  let { x, y } = positions.value
+  if (positioning.value === 'absolute') {
+    x += windowScroll.value.x
+    y += windowScroll.value.y
+  }
+
+  if (props.snapToPixels) {
+    x = roundDpr(x)
+    y = roundDpr(y)
+  }
 
   return {
-    transform,
+    position: positioning.value,
+    transform: `translate3d(${x}px, ${y}px, 0px)`,
     '--popover-width-px': targetParams.value.popup.width,
     '--popover-transform-origin': positions.value.placementOrigin ?? 'initial',
     ...props.styles

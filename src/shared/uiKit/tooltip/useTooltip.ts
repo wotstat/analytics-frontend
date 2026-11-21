@@ -43,6 +43,7 @@ export function useTooltip<
   const {
     offset,
     placement,
+    positioning,
     arrowSize,
     viewportOffset,
     class: className,
@@ -64,6 +65,7 @@ export function useTooltip<
       return () => h(DefineTooltip, {
         offset: toValue(offset),
         placement: toValue(placement),
+        positioning: toValue(positioning),
         arrowSize: toValue(arrowSize),
         viewportOffset: toValue(viewportOffset),
         class: toValue(className),

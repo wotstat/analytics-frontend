@@ -43,9 +43,9 @@ cache.set(key, result)
 return result
 ```
 
-## 2. Громоздкие тернарные операторы
+## 2. Громоздкие и вложенные тернарные операторы
 
-Если условие и результаты длинные, используй `if` с ранним `return`. Переносы строк не устраняют сложность выражения. Короткие понятные тернарные операторы допустимы.
+Для вложенных тернарных операторов и длинных условий или веток используй `if` с ранним `return`. При присваивании `const` можно использовать сразу вызываемую функцию. Короткие понятные тернарные операторы допустимы.
 
 Плохо:
 
@@ -59,6 +59,23 @@ return response.ok && response.data !== undefined ? { status: 'ready', value: no
 if (response.ok && response.data !== undefined)
   return { status: 'ready', value: normalize(response.data) }
 return { status: 'error', message: response.error }
+```
+
+Плохо — вложенные тернарные операторы
+
+```ts
+const positioningModifier = binding.modifiers.fixed ? 'fixed'
+  : binding.modifiers.absolute ? 'absolute' : undefined
+```
+
+Хорошо — ранние возвраты
+
+```ts
+const positioningModifier = (() => {
+  if (binding.modifiers.fixed) return 'fixed'
+  if (binding.modifiers.absolute) return 'absolute'
+  return undefined
+})()
 ```
 
 ## 3. Лишние ветвления и вложенность вместо раннего возврата

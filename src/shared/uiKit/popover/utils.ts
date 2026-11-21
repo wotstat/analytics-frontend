@@ -25,6 +25,8 @@ export type VirtualElement = { getBoundingClientRect(): TargetRect }
 
 export type PopoverTarget = HTMLElement | VirtualElement
 
+export type PopoverPositioning = 'absolute' | 'fixed' | (() => 'absolute' | 'fixed')
+
 // условие автозакрытия: поповер не поместился целиком | поповер вышел целиком | цель вышла целиком
 export type CloseOnOutsideWindow = 'popover' | 'popover-full' | 'target'
 

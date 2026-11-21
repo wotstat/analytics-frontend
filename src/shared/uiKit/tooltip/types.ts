@@ -1,4 +1,4 @@
-import type { OffsetValue, PlacementParam, PlacementWithModifiers } from '../popover/utils'
+import type { OffsetValue, PlacementParam, PlacementWithModifiers, PopoverPositioning } from '../popover/utils'
 
 
 /**
@@ -10,6 +10,7 @@ import type { OffsetValue, PlacementParam, PlacementWithModifiers } from '../pop
 export type DefineTooltipProps = {
   offset?: OffsetValue
   placement?: PlacementParam
+  positioning?: PopoverPositioning
   arrowSize?: number,
   viewportOffset?: OffsetValue
   class?: string | Record<string, boolean> | (string | Record<string, boolean>)[]
@@ -25,4 +26,4 @@ export type TextTooltipValue = string | TooltipBindingProps & {
   text: string
 }
 
-export type TooltipModifier = 'instant' | 'interactive' | PlacementWithModifiers
+export type TooltipModifier = 'instant' | 'interactive' | 'fixed' | 'absolute' | PlacementWithModifiers

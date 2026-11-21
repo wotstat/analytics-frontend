@@ -1,5 +1,5 @@
 <template>
-  <Popover :target :display :snapToPixels :offset :viewportOffset :placement :preserveLastPlacement :styles :teleportTo
+  <Popover :target :display :snapToPixels :offset :viewportOffset :placement :positioning :preserveLastPlacement :styles :teleportTo
     @pointer-down-outside="e => emit('pointerDownOutside', e)" @pointer-up-outside="e => emit('pointerUpOutside', e)"
     @target-outside-window="emit('targetOutsideWindow')" @popover-outside-window="emit('popoverOutsideWindow')"
     @popover-fully-outside-window="emit('popoverFullyOutsideWindow')"
@@ -13,7 +13,7 @@
 <script setup lang="ts">
 import { nextTick, onUnmounted, ref, RendererElement, watch } from 'vue'
 import Popover from './Popover.vue'
-import { OffsetValue, PlacementParam, PopoverTarget } from './utils'
+import { OffsetValue, PlacementParam, PopoverPositioning, PopoverTarget } from './utils'
 
 
 const props = withDefaults(defineProps<{
@@ -23,6 +23,7 @@ const props = withDefaults(defineProps<{
   offset?: OffsetValue
   viewportOffset?: OffsetValue
   placement?: PlacementParam
+  positioning?: PopoverPositioning
   preserveLastPlacement?: boolean
   duration?: number
   styles?: Record<string, string>

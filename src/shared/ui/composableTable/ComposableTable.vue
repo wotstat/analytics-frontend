@@ -7,13 +7,14 @@
       '--composable-table-sticky-top': `${headerOffset}px`,
       '--composable-table-sticky-end-offset': `${stickyEndOffset}px`,
     }">
-    <div class="header" :class="{ pinned }">
+    <div class="header" ref="tableHeader" :class="{ blurred: showHeaderBlur }">
       <div class="head mt-font">
         <ComposableTableHeading v-for="column in columns"
           :key="column.key"
           :label="column.label"
           :sortable="column.sortable"
           :tooltip-class="headingTooltipClass"
+          :tooltip-positioning="pinned ? 'fixed' : 'absolute'"
           :position="sort.findIndex(order => order.key === column.key) + 1"
           :ascending="sort.find(order => order.key === column.key)?.ascending"
           @click="onSort(column, $event)">
@@ -73,7 +74,7 @@
 
 <script setup lang="ts" generic="Row, Column extends ComposableTableColumn<Row>">
 import { computed, ref, shallowRef, useSlots, useTemplateRef, watch, type ButtonHTMLAttributes } from 'vue'
-import { useElementBounding, useEventListener, useResizeObserver } from '@vueuse/core'
+import { useElementBounding, useResizeObserver } from '@vueuse/core'
 import { headerOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import ComposableTableHeading from './ComposableTableHeading.vue'
 import type { ComposableTableCellEvent, ComposableTableColumn, ComposableTableKey, ComposableTableSort } from './types'
@@ -104,24 +105,23 @@ const gridColumns = computed(() => props.columns.map(column => {
   return `minmax(${column.minWidth ?? 0}px, ${column.width ?? '1fr'})`
 }).join(' '))
 
-const minWidth = computed(() => props.columns.reduce((width, column) =>
-  width + (typeof column.width === 'number' ? column.width : column.minWidth ?? 0), 0))
+const minWidth = computed(() => props.columns.reduce((width, column) => width + (typeof column.width === 'number' ? column.width : column.minWidth ?? 0), 0))
 
 const table = useTemplateRef<HTMLElement>('table')
+const tableHeader = useTemplateRef<HTMLElement>('tableHeader')
 const rowsBody = useTemplateRef<HTMLElement>('rowsBody')
 const lastRow = shallowRef<HTMLElement | null>(null)
+
 const stickyEndOffset = ref(0)
 let releaseSortHeightFrame = 0
-const { top, bottom, width, update } = useElementBounding(table, {
-  updateTiming: 'next-frame',
-  windowScroll: false,
-})
+const { top, bottom, width } = useElementBounding(table)
+const { top: headerTop, update: updateHeaderBounds } = useElementBounding(tableHeader)
 
 const hasHorizontalOverflow = computed(() => width.value > 0 && width.value < minWidth.value)
-const pinned = computed(() => top.value < headerOffset.value &&
-  bottom.value - stickyEndOffset.value > headerOffset.value)
+const pinned = computed(() => top.value < headerTop.value && Math.abs(headerTop.value - headerOffset.value) < 0.5)
+const showHeaderBlur = computed(() => top.value < headerOffset.value && bottom.value - stickyEndOffset.value > headerOffset.value)
 
-useEventListener('scroll', update, { passive: true })
+watch([headerOffset, stickyEndOffset, hasHorizontalOverflow], updateHeaderBounds, { flush: 'post' })
 
 watch([rowsBody, () => props.rows.at(-1)], ([body]) => {
   const row = body?.lastElementChild
@@ -258,8 +258,8 @@ watch(() => props.rows.map(props.rowKey), keys => {
       mask-image: linear-gradient(black 28%, transparent 82%);
     }
 
-    &.pinned::before,
-    &.pinned::after {
+    &.blurred::before,
+    &.blurred::after {
       opacity: 1;
     }
   }

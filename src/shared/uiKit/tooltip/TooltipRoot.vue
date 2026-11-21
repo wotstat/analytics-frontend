@@ -5,6 +5,7 @@
         :display="display" :key="group" :teleportTo="null" :exit-duration="HIDE_ANIMATION_DURATION"
         :interactive="tooltip.options.interactive" :class="tooltip.props.class"
         :placement="tooltip.props.placement" :viewport-offset="tooltip.props.viewportOffset"
+        :positioning="tooltip.props.positioning"
         :arrow-size="tooltip.props.arrowSize" :offset="tooltip.props.offset"
         @pointer-down-outside="event => onPointerDownOutside(group, tooltip, event)"
         @popover-outside-window="onPopoverOutsideWindow(group, tooltip)">

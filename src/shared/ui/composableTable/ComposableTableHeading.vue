@@ -4,7 +4,13 @@
     :type="sortable ? 'button' : undefined"
     class="heading" :class="classes"
     @click="$emit('click', $event)"
-    v-tooltip.instant="{ text: label, class: tooltipClass, disabled: !label, placement: ['top-float', 'bottom-float'] }">
+    v-tooltip.instant="{
+      text: label,
+      class: tooltipClass,
+      disabled: !label,
+      placement: ['top-float', 'bottom-float'],
+      positioning: tooltipPositioning
+    }">
     <slot />
     <span v-if="position" class="sort-arrow">
       <component :is="ascending ? SortArrowUp : SortArrowDown" class="triangle" />
@@ -15,12 +21,14 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { PopoverPositioning } from '@/shared/uiKit/popover/utils'
 import SortArrowUp from './assets/sort-arrow-up.svg'
 import SortArrowDown from './assets/sort-arrow-down.svg'
 
 const props = withDefaults(defineProps<{
   label?: string
   tooltipClass?: string
+  tooltipPositioning?: PopoverPositioning
   sortable?: boolean
   position?: number
   ascending?: boolean
