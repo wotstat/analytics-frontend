@@ -9,7 +9,7 @@
     accepted: acceptedInCycle,
     [`align-${targetDirection}`]: true,
     'skip-hover-delay': skipHoverDelay,
-  }" ref="root" @click="onClick" @mousedown="onMouseDown">
+  }" ref="root" @pointerenter="onPointerEnter" @pointerleave="onPointerLeave" @pointerdown="onPointerDown">
     <div class="bubble" ref="bubble">
       <LightbulbIcon class="icon lightbulb" />
       <CheckmarkIcon class="icon checkmark" :style="{
@@ -26,10 +26,10 @@
 
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch, useTemplateRef } from 'vue'
+import { computed, nextTick, onScopeDispose, ref, watch, useTemplateRef } from 'vue'
 import LightbulbIcon from './assets/lightbulb.svg'
 import CheckmarkIcon from './assets/checkmark.svg'
-import { useElementBounding, useElementHover, useResizeObserver, useWindowSize } from '@vueuse/core'
+import { useElementBounding, useResizeObserver, useWindowSize } from '@vueuse/core'
 import { animate, spring } from 'motion'
 
 const props = defineProps<{
@@ -58,9 +58,10 @@ const contentWidth = ref(0)
 const contentHeight = ref(0)
 
 const displayed = ref(false)
-const isHover = useElementHover(root)
+const isHover = ref(false)
 const isHoverExistsInCycle = ref(false)
 const isContentClicked = ref(false)
+const touchExtended = ref<boolean>()
 const canBeExtended = ref(false)
 const canBeAutoExtended = ref(false)
 const acceptedInCycle = ref(false)
@@ -114,11 +115,11 @@ useResizeObserver(content, (entries) => {
 const extended = computed(() => {
   if (!canBeExtended.value) return false
   if (props.forceExtend) return true
-  if (isContentClicked.value) return false
   if (acceptedInCycle.value) return false
+  if (touchExtended.value !== undefined) return touchExtended.value
+  if (isContentClicked.value) return false
   if (isHover.value) return true
-  if (props.autoExtend && canBeAutoExtended.value && !isHoverExistsInCycle.value) return true
-  return false
+  return props.autoExtend && canBeAutoExtended.value && !isHoverExistsInCycle.value
 })
 
 watch(extended, (value) => emits('extendChanged', value))
@@ -139,11 +140,13 @@ watch(extended, (value) => {
 
 if (props.displayed) showAnimation()
 watch(() => [props.displayed, props.autoExtend], ([displayed, autoExtend], [oldDisplayed, oldAutoExtend]) => {
-  if (displayed) showAnimation()
-  else {
-    const extendedBefore = !displayed && !autoExtend && oldDisplayed && oldAutoExtend
-    hideAnimation(extendedBefore)
+  if (!displayed) {
+    hideAnimation(!autoExtend && oldDisplayed && oldAutoExtend)
+    return
   }
+
+  if (!oldDisplayed) touchExtended.value = undefined
+  showAnimation()
 })
 
 watch(() => props.accepted, (accepted, old) => {
@@ -172,28 +175,53 @@ watch(isHover, (hover) => {
   }
 })
 
-function clickAction() {
-  isContentClicked.value = !isContentClicked.value
+function onPointerEnter(event: PointerEvent) {
+  if (event.pointerType === 'touch') return
+  touchExtended.value = undefined
+  isHover.value = true
+}
+
+function onPointerLeave(event: PointerEvent) {
+  if (event.pointerType !== 'touch') isHover.value = false
+}
+
+function clickAction(isTouch: boolean) {
+  if (isTouch) touchExtended.value = !(touchExtended.value ?? extended.value)
+  else isContentClicked.value = !isContentClicked.value
   skipHoverDelay.value = true
   requestAnimationFrame(() => skipHoverDelay.value = false)
   emits('interact', 'click')
 }
 
-function onClick() {
-  if (navigator.maxTouchPoints == 0) return // disable click on non-touch devices, since mouseUp used
-  clickAction()
-}
+let pressController: AbortController | undefined
+onScopeDispose(() => pressController?.abort())
 
-function onMouseDown(downEvent: MouseEvent) {
-  if (Date.now() - lastHoverTime < 200) return
+function onPointerDown(downEvent: PointerEvent) {
+  if (!downEvent.isPrimary || downEvent.button !== 0) return
+  if (!props.displayed || props.accepted) return
+  const isTouch = downEvent.pointerType === 'touch'
+  if (!isTouch && Date.now() - lastHoverTime < 200) return
 
-  animate(bubble.value, { transform: 'scale(0.8)' }, { duration: 0.2 })
+  if (!isTouch) animate(bubble.value, { transform: 'scale(0.8)' }, { duration: 0.2 })
 
-  document.addEventListener('mouseup', (upEvent: MouseEvent) => {
-    animate(bubble.value, { transform: 'scale(1)' }, { duration: 0.2 })
-    const distance = Math.sqrt((downEvent.clientX - upEvent.clientX) ** 2 + (downEvent.clientY - upEvent.clientY) ** 2)
-    if (distance < 20) clickAction()
-  }, { once: true })
+  pressController?.abort()
+  const controller = new AbortController()
+  pressController = controller
+
+  const finishPress = (event: PointerEvent) => {
+    if (event.pointerId !== downEvent.pointerId) return
+    controller.abort()
+    pressController = undefined
+
+    if (!isTouch && bubble.value) animate(bubble.value, { transform: 'scale(1)' }, { duration: 0.2 })
+
+    if (event.type === 'pointercancel' || !props.displayed || props.accepted) return
+    const distance = Math.hypot(downEvent.clientX - event.clientX, downEvent.clientY - event.clientY)
+    if (distance < 20) clickAction(isTouch)
+  }
+
+  document.addEventListener('pointerup', finishPress, { signal: controller.signal })
+  document.addEventListener('pointercancel', finishPress, { signal: controller.signal })
 }
 
 async function showAnimation() {
@@ -269,6 +297,7 @@ async function hideAnimation(respectExtendedBefore = false) {
   display: flex;
   user-select: none;
   cursor: pointer;
+  touch-action: manipulation;
   transform: scale(1);
 
   .bubble {
