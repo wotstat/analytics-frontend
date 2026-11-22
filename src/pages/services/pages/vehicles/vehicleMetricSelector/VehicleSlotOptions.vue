@@ -91,7 +91,9 @@
         :target="optionsTrigger"
         :selected
         :max-slots
-        @select="selectSlot" />
+        @select="selectSlot"
+        @limit-hover="columnLimit?.setBackgroundHovered($event)"
+        @disabled-click="columnLimit?.showLimitFeedback()" />
     </template>
   </ResponsivePanelPopover>
 </template>

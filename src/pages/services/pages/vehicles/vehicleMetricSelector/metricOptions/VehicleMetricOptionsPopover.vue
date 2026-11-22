@@ -3,14 +3,10 @@
     v-model="open"
     :target
     :title="tile.label"
-    :width="maxSlots === undefined ? 250 : 280"
+    :width="250"
     density="compact"
     :placement="['bottom-end', 'top-end', 'right-start-float', 'left-start-float']"
     :offset="4">
-
-    <template v-if="maxSlots !== undefined" #controls>
-      <VehicleColumnLimit ref="columnLimit" :selected-count="selected.length" :max-slots />
-    </template>
 
     <template #content="{ isModal }">
       <div class="metric-options-menu" :class="{ 'is-modal': isModal }" @pointerdown.stop @pointerup.stop @click.stop>
@@ -31,9 +27,9 @@
                 :disabled="isOptionDisabled(option.value)"
                 report-disabled-click
                 @pointerenter="hoverOption(option.value, $event)"
-                @pointerleave="columnLimit?.setBackgroundHovered(false)"
+                @pointerleave="emit('limitHover', false)"
                 @select="emit('select', option.value)"
-                @disabled-click="columnLimit?.showLimitFeedback()">
+                @disabled-click="emit('disabledClick')">
                 {{ option.label }}
               </SelectionTile>
             </div>
@@ -45,13 +41,12 @@
 </template>
 
 <script setup lang="ts">
-import { h, markRaw, useTemplateRef, type Component } from 'vue'
+import { h, markRaw, watch, type Component } from 'vue'
 import ResponsivePanelPopover from '@/shared/ui/popover/ResponsivePanelPopover.vue'
 import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
 import { popoverViewportOffset } from '@/pages/shared/header/useAdditionalHeaderHeight'
 import { useTooltip } from '@/shared/uiKit/tooltip/useTooltip'
 import QuantileTooltip from './QuantileTooltip.vue'
-import VehicleColumnLimit from '../VehicleColumnLimit.vue'
 import type { Slot } from '../vehicleMetrics/vehicleMetrics'
 import { canSelectMetric, type MetricTile } from '../utils/metricSelection'
 
@@ -73,8 +68,15 @@ const props = defineProps<{
   maxSlots?: number
 }>()
 const open = defineModel<boolean>({ default: false })
-const emit = defineEmits<{ select: [slot: Slot] }>()
-const columnLimit = useTemplateRef('columnLimit')
+const emit = defineEmits<{
+  select: [slot: Slot]
+  limitHover: [hovered: boolean]
+  disabledClick: []
+}>()
+
+watch(open, isOpen => {
+  if (!isOpen) emit('limitHover', false)
+})
 
 function isOptionDisabled(slot: Slot) {
   return !canSelectMetric(slot, props.selected, props.maxSlots)
@@ -82,7 +84,7 @@ function isOptionDisabled(slot: Slot) {
 
 function hoverOption(slot: Slot, event: PointerEvent) {
   const hovered = event.pointerType === 'mouse' && isOptionDisabled(slot)
-  columnLimit.value?.setBackgroundHovered(hovered)
+  emit('limitHover', hovered)
 }
 </script>
 
