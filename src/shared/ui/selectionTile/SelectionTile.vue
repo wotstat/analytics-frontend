@@ -1,6 +1,13 @@
 <template>
-  <div class="selection-tile" :class="{ selected, disabled, compact: density === 'compact' }"
-    :style="{ '--selection-tile-accent': accentColor }">
+  <div class="selection-tile"
+    :class="{
+      selected,
+      disabled,
+      compact: density === 'compact',
+      'report-disabled-click': disabled && reportDisabledClick
+    }"
+    :style="{ '--selection-tile-accent': accentColor }"
+    @click="disabled && reportDisabledClick && emit('disabledClick', $event)">
     <button class="main" type="button" :disabled @click="emit('select', $event)">
       <slot />
     </button>
@@ -16,6 +23,7 @@
 withDefaults(defineProps<{
   selected?: boolean
   disabled?: boolean
+  reportDisabledClick?: boolean
   density?: 'standard' | 'compact'
   accentColor?: string
   action?: boolean
@@ -26,6 +34,7 @@ withDefaults(defineProps<{
 const emit = defineEmits<{
   select: [event: MouseEvent]
   action: [event: MouseEvent]
+  disabledClick: [event: MouseEvent]
 }>()
 </script>
 
@@ -51,6 +60,14 @@ const emit = defineEmits<{
 
   &.disabled {
     opacity: 0.45;
+  }
+
+  &.report-disabled-click {
+    cursor: not-allowed;
+
+    > button {
+      pointer-events: none;
+    }
   }
 
   &.selected {

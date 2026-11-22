@@ -11,18 +11,24 @@
 
     <template v-if="maxSlots !== undefined" #toolbar="{ isModal }">
       <div class="selection-controls" :class="{ 'modal-mode': isModal }">
+        <div class="limit-tip">
+          <TipBubbleText ref="limitTip" bubble-key="vehicle-column-limit"
+            :display="open && selected.length >= maxSlots"
+            auto-extend="always" direction="right" :page-padding="16"
+            text="Снимите выбор со столбца, чтобы добавить другой." />
+        </div>
 
-        <span class="selected-count">Выбрано {{ selected.length }} из {{ maxSlots }}</span>
-
-        <ToolbarButton v-if="multiple" :variant="isModal ? 'surface' : 'plain'"
-          size="small"
-          :icon="isModal ? undefined : actionIcon"
-          :class="{ 'selection-action': isModal }"
-          v-tooltip.instant="{ text: actionLabel, disabled: isModal, placement: ['top-float', 'bottom-float'], viewportOffset: 5 }"
-          @click="clearOrResetSelection">
-          <component :is="actionIcon" />
-          <span>{{ actionLabel }}</span>
-        </ToolbarButton>
+        <VehicleColumnLimit ref="columnLimit" :selected-count="selected.length" :max-slots>
+          <ToolbarButton v-if="multiple" :variant="isModal ? 'surface' : 'plain'"
+            size="small"
+            :icon="isModal ? undefined : actionIcon"
+            :class="{ 'selection-action': isModal }"
+            v-tooltip.instant="{ text: actionLabel, disabled: isModal, placement: ['top-float', 'bottom-float'], viewportOffset: 5 }"
+            @click="clearOrResetSelection">
+            <component :is="actionIcon" />
+            <span>{{ actionLabel }}</span>
+          </ToolbarButton>
+        </VehicleColumnLimit>
       </div>
     </template>
 
@@ -47,11 +53,16 @@
               v-tooltip="{ text: tile.label, disabled: !open || !overflowingTiles[tile.id], placement: ['top-float', 'bottom-float'] }"
               :class="{ 'with-subtitle': !!tile.subtitle }"
               :selected="selectedTileValues(tile, selected).length > 0"
-              :disabled="!selectedTileValues(tile, selected).length && !canSelectMetric(tile.defaultValue, selected, maxSlots)"
+              :disabled="isTileDisabled(tile)"
+              report-disabled-click
               :accent-color="tile.color" :action="!!tile.sections?.length"
               :action-active="selectedTileValues(tile, selected).some(value => value !== tile.defaultValue)"
               :action-open="optionsOpen && optionsTile?.id === tile.id"
-              @select="selectTile(tile)" @action="openOptions(tile, $event)">
+              @pointerenter="hoverTile(tile, $event)"
+              @pointerleave="columnLimit?.setBackgroundHovered(false)"
+              @select="selectTile(tile)"
+              @action="openOptions(tile, $event)"
+              @disabled-click="columnLimit?.showLimitFeedback()">
               <Icon :icon="tile.icon" class="tile-icon" :style="{ color: tile.color }" />
               <span class="tile-text">
                 <MetricLabel :text="tile.label" @overflow="overflowingTiles[tile.id] = $event" />
@@ -77,7 +88,7 @@
         :target="optionsTrigger"
         :selected
         :max-slots
-        @select="emit('select', $event)" />
+        @select="selectSlot" />
     </template>
   </ResponsivePanelPopover>
 </template>
@@ -86,14 +97,16 @@
 import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
 import ClearIcon from '@/assets/icons/x.svg'
 import ResetIcon from '@/assets/icons/reset.svg'
-import { computed, ref, shallowRef, watch } from 'vue'
+import { computed, ref, shallowRef, useTemplateRef, watch } from 'vue'
 import ResponsivePanelPopover from '@/shared/ui/popover/ResponsivePanelPopover.vue'
 import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
+import TipBubbleText from '@/shared/ui/tipBubble/TipBubbleText.vue'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import type { PlacementParam, PopoverTarget } from '@/shared/uiKit/popover/utils'
 import { availableSlots, metricCategories, type Slot } from './vehicleMetrics/vehicleMetrics'
 import { canSelectMetric, selectedTileValues, type MetricTile } from './utils/metricSelection'
 import VehicleMetricOptionsPopover from './metricOptions/VehicleMetricOptionsPopover.vue'
+import VehicleColumnLimit from './VehicleColumnLimit.vue'
 import MetricLabel from './MetricLabel.vue'
 
 const props = defineProps<{
@@ -120,6 +133,8 @@ const optionsOpen = ref(false)
 const optionsTile = shallowRef<MetricTile | null>(null)
 const optionsTrigger = shallowRef<HTMLButtonElement | null>(null)
 const overflowingTiles = ref<Record<string, boolean>>({})
+const columnLimit = useTemplateRef('columnLimit')
+const limitTip = useTemplateRef('limitTip')
 
 watch(open, isOpen => {
   if (!isOpen) closeOptions()
@@ -127,6 +142,16 @@ watch(open, isOpen => {
 
 function closeOptions() {
   optionsOpen.value = false
+}
+
+function isTileDisabled(tile: MetricTile) {
+  if (selectedTileValues(tile, props.selected).length) return false
+  return !canSelectMetric(tile.defaultValue, props.selected, props.maxSlots)
+}
+
+function hoverTile(tile: MetricTile, event: PointerEvent) {
+  const hovered = event.pointerType === 'mouse' && isTileDisabled(tile)
+  columnLimit.value?.setBackgroundHovered(hovered)
 }
 
 function selectionLabel(tile: MetricTile) {
@@ -148,36 +173,66 @@ function openOptions(tile: MetricTile, event: MouseEvent) {
 
 function selectTile(tile: MetricTile) {
   closeOptions()
+  if (props.multiple && selectedTileValues(tile, props.selected).length) limitTip.value?.accept()
   if (props.multiple) emit('toggleTile', tile)
   else emit('select', tile.defaultValue)
 }
 
+function selectSlot(slot: Slot) {
+  if (props.multiple && props.selected.includes(slot)) limitTip.value?.accept()
+  emit('select', slot)
+}
+
 function clearOrResetSelection() {
   closeOptions()
-  if (props.selected.length) emit('clear')
-  else emit('reset')
+
+  if (props.selected.length) {
+    limitTip.value?.accept()
+    emit('clear')
+    return
+  }
+
+  emit('reset')
 }
 </script>
 
 <style scoped lang="scss">
 .selection-controls {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  width: max-content;
   min-height: 20px;
+  margin-left: auto;
 
-  .selected-count {
-    color: rgba(255, 255, 255, 0.55);
-    font-size: 12px;
-    line-height: 1.2;
-    white-space: nowrap;
+  .limit-tip {
+    position: absolute;
+    top: 50%;
+    right: calc(100% + 8px);
+    width: 18px;
+    transform: translateY(-50%);
   }
 
   &.modal-mode {
-    .selected-count {
-      color: inherit;
-      font-size: inherit;
+    .limit-tip {
+      :deep(.content-container) {
+        top: 50%;
+        translate: 0 -50%;
+      }
+
+      :deep(.tip-content) {
+        padding-inline-end: 16px;
+      }
+
+      :deep(.spacer) {
+        display: none;
+      }
+    }
+
+    .column-limit {
+      --column-limit-background-extra-end: 3px;
+
+      font-size: 14px;
     }
   }
 
@@ -186,10 +241,24 @@ function clearOrResetSelection() {
     --toolbar-button-height: 30px;
 
     display: flex;
+    flex: none;
     gap: 6px;
     padding: 0 12px 0 8px;
     font-size: 14px;
     white-space: nowrap;
+  }
+
+  @media (max-width: 460px) {
+    .selection-action {
+      --toolbar-button-width: 30px;
+
+      justify-content: center;
+      padding: 0;
+
+      span {
+        display: none;
+      }
+    }
   }
 }
 
