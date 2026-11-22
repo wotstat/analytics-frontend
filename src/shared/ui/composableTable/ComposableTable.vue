@@ -251,7 +251,7 @@ watch(() => props.rows.map(props.rowKey), keys => {
       inset: 0 0 -12px;
       pointer-events: none;
       opacity: 0;
-      transition: opacity 0.4s ease;
+      transition: opacity 0.3s ease;
     }
 
     &::before {
