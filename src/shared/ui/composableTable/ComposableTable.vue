@@ -345,8 +345,10 @@ watch(() => props.rows.map(props.rowKey), keys => {
     white-space: nowrap;
   }
 
-  &.interactive:hover {
-    background: rgba(255, 255, 255, 0.045);
+  @media (hover: hover) and (pointer: fine) {
+    &.interactive:hover {
+      background: rgba(255, 255, 255, 0.045);
+    }
   }
 }
 
