@@ -1,7 +1,7 @@
 <template>
   <button class="compare" :class="{ added: compared }" type="button" :disabled @click="$emit('click', $event)">
     <Transition name="compare-icon">
-      <Checkmark v-if="compared" key="checkmark" class="compare-icon" />
+      <Checkmark v-if="compared" key="checkmark" class="compare-icon checkmark" />
       <PlusIcon v-else key="plus" class="compare-icon" />
     </Transition>
   </button>
@@ -44,7 +44,7 @@ defineEmits<{ click: [event: MouseEvent] }>()
     cursor: default;
   }
 
-  &.added {
+  .checkmark {
     color: #30d158;
   }
 
