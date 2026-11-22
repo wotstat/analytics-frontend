@@ -12,10 +12,13 @@
     <template v-if="maxSlots !== undefined" #toolbar="{ isModal }">
       <div class="selection-controls" :class="{ 'modal-mode': isModal }">
         <div class="limit-tip">
-          <TipBubbleText ref="limitTip" bubble-key="vehicle-column-limit"
+          <TipBubbleText ref="limitTip"
+            bubble-key="vehicle-column-limit"
             :display="open && selected.length >= maxSlots"
-            auto-extend="always" direction="right" :page-padding="16"
-            text="Снимите выбор со столбца, чтобы добавить другой." />
+            auto-extend="always"
+            direction="right"
+            :page-padding="16"
+            text="Максимум столбцов. Чтобы добавить новый, снимите выбор с существующего." />
         </div>
 
         <VehicleColumnLimit ref="columnLimit" :selected-count="selected.length" :max-slots>
