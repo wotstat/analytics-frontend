@@ -1,7 +1,14 @@
 <template>
-  <VehicleCompareMetaLayout :format="context.format" :region="filterPresentation.region" :heading="metricLabel"
-    :subtitle="filterPresentation.mode" :details="filterPresentation.labels.join(' · ')" :sources="rivals"
-    :state-message :has-values :background>
+  <VehicleCompareMetaLayout
+    :format="context.format"
+    :region="filterPresentation.region"
+    :heading="metricLabel"
+    :subtitle="filterPresentation.mode"
+    :details="filterPresentation.labels.join(' · ')"
+    :sources="rivals"
+    :state-message
+    :has-values
+    :background>
     <template v-if="$slots.background" #background><slot name="background" /></template>
     <MetaHistoryChart :series="sources" :slot :until="now" />
   </VehicleCompareMetaLayout>
@@ -11,7 +18,7 @@
 import { computed, type Component } from 'vue'
 import type { RenderContext } from '@/meta/utils'
 import type { VehicleHistoryPeriod } from '../../shared/types'
-import { availableSlots } from '../../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
+import { availableSlots } from '../../metrics/catalog/vehicleMetrics'
 import { formatMetaSlotValue } from '../utils/format'
 import VehicleCompareMetaLayout from './VehicleCompareMetaLayout.vue'
 import MetaHistoryChart from './chart/MetaHistoryChart.vue'

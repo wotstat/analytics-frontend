@@ -1,0 +1,253 @@
+<template>
+  <section class="vehicle-comparison">
+    <TimeSeriesPanel
+      :chart
+      :legend
+      :has-values="hasValues"
+      :annotation-labels="annotations.length > 0"
+      :format-value="(value, ctx) => formatSlotValue(ctx.hit.datum.slot, value)"
+      marker-style="glow"
+      color-editable
+      removable
+      @color-change="(source, color) => emit('colorChange', source.tag, color)"
+      @remove="source => emit('remove', source.tag)"
+      @series-click="onSeriesClick">
+
+      <template #header>
+        <h2>Сравнение <span v-if="sources.length">{{ sources.length }}</span></h2>
+        <VehicleMetricSelector v-model="slot" class="metric-selector" />
+      </template>
+
+      <template #toolbar>
+        <HistoryToolbarOptions v-model:step="step" v-model:average-window="averageWindow" />
+      </template>
+
+      <template #actions>
+        <HistoryAnnotationSettings :settings="annotationOptions" :regions="annotationRegions" />
+      </template>
+
+      <template v-if="!sources.length || !hasValues" #state>
+        <template v-if="!sources.length">
+          <b class="empty-heading">Сравните танки на одном графике</b>
+          <span>Нажмите «+» в таблице или в раскрытом графике. Чтобы добавить среднее по уровню или типу, выберите
+            нужный режим
+            таблицы.</span>
+        </template>
+        <template v-else>{{ emptyMessage }}</template>
+      </template>
+
+      <template #legend-actions>
+        <ToolbarButton :icon="ResetIcon" class="reset" @click="emit('clear')" />
+      </template>
+
+      <template #details>
+        <div v-if="unresolvedSources.length" class="source-error">
+          <span>{{ unresolvedMessage }}</span>
+        </div>
+        <div v-for="source in failedSources" :key="source.tag" class="source-error">
+          <span>{{ source.name }}: не удалось загрузить историю.</span>
+          <button @click="retry(source.tag)">Повторить</button>
+        </div>
+        <div v-if="emptySources.length" class="caption">
+          Нет данных: {{emptySources.map(source => source.name).join(', ')}}
+        </div>
+      </template>
+
+      <template #tooltip-header="{ ctx, horizontal }">
+        <HistoryTooltipHeader
+          :point="ctx.hit.datum"
+          :horizontal
+          :game-version="versionForPeriod(ctx.hit.datum.periodEnd)" />
+      </template>
+    </TimeSeriesPanel>
+  </section>
+</template>
+
+<script setup lang="ts">
+import { computed, markRaw, watch } from 'vue'
+import { isErrorStatus, loading, success } from '@/db'
+import ResetIcon from '@/assets/icons/reset.svg'
+import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
+import TimeSeriesPanel from '@/shared/ui/chart/timeSeries/panel/TimeSeriesPanel.vue'
+import type { ClickInteractionEvent } from '@/shared/uiKit/chart/universalChart/interaction/baseInteractionController/BaseInteractionController'
+import { formatSlotValue } from '../metrics/utils/formatMetricValue.ts'
+import { useLegend } from '@/shared/ui/chart/legend/useLegend'
+import VehicleMetricSelector from '../metrics/VehicleMetricSelector.vue'
+import type { VehicleFilters } from '../filters/types'
+import type { ComparisonSettings } from './query/settings'
+import type { VehicleSelection } from '../shared/vehicleGrouping'
+import type { InteractionTag } from '@/shared/uiKit/chart/universalChart/interaction/core/InteractionSource'
+import { VehicleHistoryChart } from '../history/VehicleHistoryChart'
+import type { VehicleThresholds } from '../shared/types'
+import HistoryToolbarOptions from '../../shared/history/period/HistoryToolbarOptions.vue'
+import HistoryAnnotationSettings from '../../shared/history/annotations/settings/HistoryAnnotationSettings.vue'
+import { useHistoryAnnotationSettings, type HistoryAnnotationState } from '../../shared/history/annotations/settings/useHistoryAnnotationSettings'
+import { useGameVersionAnnotations } from '../history/annotations/gameVersionAnnotations'
+import { useHistoryEventAnnotations } from '../history/annotations/events/useHistoryEventAnnotations'
+import { useHistoryEventStyles } from '../../shared/history/annotations/events/useHistoryEventStyles'
+import { applyHistoryFilters, hasHistoryValues } from '../history/historyValues'
+import type { ComparisonSource } from './types'
+import { differentComparisonFilters } from './utils/comparisonFilters'
+import { comparisonName } from './utils/comparisonName'
+import { useVehicleHistories } from '../history/useVehicleHistories'
+import HistoryTooltipHeader from '../history/tooltip/HistoryTooltipHeader.vue'
+import { availableSlots } from '../metrics/catalog/vehicleMetrics'
+
+useHistoryEventStyles()
+
+const props = defineProps<{
+  filters: VehicleFilters
+  beforeDay: string
+  fromDay: string | null
+  sources: readonly ComparisonSource[]
+} & VehicleThresholds>()
+
+const emit = defineEmits<{
+  remove: [tag: string]
+  colorChange: [tag: string, color: string]
+  clear: []
+  visibilityChange: [disabledTags: string[]]
+}>()
+
+const settings = defineModel<ComparisonSettings>('settings', { required: true })
+const annotationSettings = defineModel<HistoryAnnotationState>('annotations', { required: true })
+
+function setting<K extends keyof ComparisonSettings>(key: K) {
+  return computed({
+    get: () => settings.value[key],
+    set: (value: ComparisonSettings[K]) => { settings.value = { ...settings.value, [key]: value } },
+  })
+}
+
+const slot = setting('slot')
+const metricHistory = computed(() => availableSlots[slot.value].history)
+const step = setting('step')
+const averageWindow = setting('averageWindow')
+const annotationOptions = useHistoryAnnotationSettings(annotationSettings)
+const annotationRegions = computed(() => {
+  if (!props.sources.length) return props.filters.regions
+  if (props.sources.some(source => !source.filters.regions.length)) return []
+  return [...new Set(props.sources.flatMap(source => source.filters.regions))]
+})
+
+const { annotations: versionAnnotations, versionForPeriod } = useGameVersionAnnotations(annotationOptions.versions, annotationRegions, { includeTooltipVersion: true })
+const eventAnnotations = useHistoryEventAnnotations(annotationOptions.enabledEvents, annotationRegions)
+const annotations = computed(() => [...versionAnnotations.value, ...eventAnnotations.value])
+
+const readySources = computed(() => props.sources.filter((source): source is ComparisonSource & { selection: VehicleSelection } => source.selection !== null))
+const { states, retry } = useVehicleHistories(readySources, { beforeDay: props.beforeDay, step, slot })
+const unresolvedSources = computed(() => props.sources.filter(source => source.resolution === 'error' || source.resolution === 'missing'))
+const unresolvedMessage = computed(() => {
+  if (unresolvedSources.value.some(source => source.resolution === 'error')) return 'Не удалось загрузить игровые справочники.'
+  return 'Некоторые источники из ссылки не найдены в игровых справочниках.'
+})
+
+const differentFilters = computed(() => differentComparisonFilters(props.filters, props.sources.map(source => source.filters)))
+const legendItems = computed(() => props.sources.map(source => {
+  const name = computed(() => comparisonName(source, differentFilters.value))
+  return {
+    tag: source.tag,
+    get color() { return source.color },
+    get name() { return name.value },
+    get loading() {
+      const state = states.get(source.tag)
+      const pending = !source.resolution && (!state || state.status === loading)
+      return source.resolution === 'loading' || pending
+    },
+  }
+}))
+
+const disabledTags = computed<ReadonlySet<InteractionTag>>({
+  get: () => new Set(props.sources.filter(source => !source.enabled).map(source => source.tag)),
+  set: tags => emit('visibilityChange', [...tags].filter((tag): tag is string => typeof tag === 'string')),
+})
+
+const legend = useLegend(legendItems, { disabledTags })
+const chart = markRaw(new VehicleHistoryChart(legend.highlightSync))
+
+function onSeriesClick({ tag, event }: { tag: string, event: ClickInteractionEvent }) {
+  if (event.isTouch) return
+
+  const source = legend.items.value.find(item => item.tag === tag)
+  if (!source || !legend.isEnabled(source)) return
+
+  event.preventPanInertion()
+  const targets = event.altKey ? legend.items.value.filter(item => item.tag !== tag) : [source]
+  legend.setEnabled(targets, false)
+}
+
+const histories = computed(() => props.sources.map(source => ({
+  tag: source.tag,
+  history: applyHistoryFilters(states.get(source.tag)?.data ?? [], slot.value, props, step.value, props.fromDay),
+})))
+
+const series = computed(() => histories.value.map(source => ({
+  ...source,
+  enabled: legend.isEnabled(source),
+})))
+
+const hasValues = computed(() => series.value.some(source => source.enabled && hasHistoryValues(source.history, slot.value)))
+const pending = computed(() => legendItems.value.some(source => source.loading))
+
+const emptyMessage = computed(() => {
+  if (pending.value) return 'Загрузка истории…'
+  if (!legend.enabled.value.length) return 'Включите источники в легенде'
+  if (!readySources.value.length && unresolvedSources.value.length) return 'Не удалось восстановить источники из ссылки'
+  return 'По выбранным фильтрам нет данных для отображения'
+})
+
+const failedSources = computed(() => legendItems.value.filter(source => {
+  const state = states.get(source.tag)
+  return state && isErrorStatus(state.status)
+}))
+
+const emptyTags = computed(() => new Set(histories.value
+  .filter(source => states.get(source.tag)?.status === success && !hasHistoryValues(source.history, slot.value))
+  .map(source => source.tag)))
+
+const emptySources = computed(() => legendItems.value.filter(source => emptyTags.value.has(source.tag)))
+
+watch([series, slot, step, averageWindow], () => {
+  chart.setHistories(series.value, slot.value, props.beforeDay, step.value, averageWindow.value)
+}, { immediate: true })
+
+watch(annotations, value => chart.setHistoryAnnotations(value), { immediate: true })
+watch([annotationOptions.showWotstatOutages, metricHistory], ([visible, history]) => chart.setOutagesVisible(visible && history.outages), { immediate: true })
+</script>
+
+<style scoped lang="scss">
+@use '../../shared/comparison/comparisonPanel.scss' as *;
+@use '../../shared/history/annotations/historyAnnotationStyles.scss' as *;
+
+.vehicle-comparison {
+  @include comparison-panel;
+
+  :deep(.chart-state)>span {
+    max-width: 520px;
+  }
+
+  .caption,
+  .source-error {
+    margin-top: 12px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .source-error {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    button {
+      color: var(--blue-thin-color);
+    }
+  }
+
+  :deep(.time-series-annotation-area),
+  :deep(.time-series-annotations .label),
+  :deep(.time-series-annotation-ticks .tick-level) {
+    @include history-annotation-styles;
+    color: var(--history-annotation-color);
+  }
+}
+</style>

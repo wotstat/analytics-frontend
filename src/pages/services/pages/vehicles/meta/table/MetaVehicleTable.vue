@@ -20,7 +20,10 @@
 
     <div v-for="row in rows" :key="row.rowKey" class="table-line table-row">
       <div class="vehicle-cell">
-        <VehicleImage v-if="row.tankTag" :tag="row.tankTag" size="preview" :game="regionToGame(row.region)"
+        <VehicleImage v-if="row.tankTag"
+          :tag="row.tankTag"
+          size="preview"
+          :game="regionToGame(row.region)"
           loading="eager" />
         <MetaVehicleName :vehicle="row" class="vehicle-name" />
       </div>
@@ -41,8 +44,8 @@ import { regionToGame } from '@/shared/game/domain/wot'
 import type { VehicleStatisticsRow } from '../../shared/types'
 import MetaVehicleName from './MetaVehicleName.vue'
 import { formatMetaSlotValue } from '../utils/format'
-import { availableSlots, slotHeadingLabel, type Slot } from '../../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
-import type { SortOrder } from '../../vehicleListTable/utils/useVehicleSorting'
+import { availableSlots, slotHeadingLabel, type Slot } from '../../metrics/catalog/vehicleMetrics'
+import type { SortOrder } from '../../table/utils/useVehicleSorting'
 
 const props = defineProps<{ rows: VehicleStatisticsRow[], slots: readonly Slot[], sort: readonly SortOrder[] }>()
 

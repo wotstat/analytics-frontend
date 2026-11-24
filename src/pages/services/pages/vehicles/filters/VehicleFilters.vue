@@ -1,10 +1,7 @@
 <template>
   <section class="vehicle-filters">
     <div class="toolbar">
-      <div class="region-select" title="Shift + клик — выбрать несколько регионов">
-        <button v-for="region in vehicleRegions" :key="region" class="variant mt-font"
-          :class="{ active: regions.includes(region) }" @click="selectRegion(region, $event)">{{ region }}</button>
-      </div>
+      <RegionSelector v-model:selected="regions" class="region-select" />
 
       <div class="primary-filter">
         <span class="label">Режим</span>
@@ -12,10 +9,7 @@
       </div>
 
       <div class="actions">
-        <button class="expand" :class="{ enabled: advancedCount > 0 }" @click="expanded = !expanded">
-          Ещё фильтры<span v-if="advancedCount"> · {{ advancedCount }}</span>
-          <DropdownArrow class="arrow" :expanded />
-        </button>
+        <AdvancedFiltersButton v-model="expanded" :count="advancedCount" />
         <ToolbarButton :icon="ResetIcon" :disabled="!canReset" @click="reset" />
       </div>
     </div>
@@ -29,7 +23,9 @@
       <div class="advanced-row">
         <span class="label">Взвод</span>
         <div class="variants">
-          <button v-for="option in platoonOptions" :key="option.value" class="variant"
+          <button v-for="option in platoonOptions"
+            :key="option.value"
+            class="variant"
             :class="{ active: platoon === option.value, neutral: option.value === 'any' }"
             @click="platoon = option.value">{{ option.label }}</button>
         </div>
@@ -38,7 +34,9 @@
       <div class="advanced-row">
         <span class="label">Результат</span>
         <div class="variants">
-          <button v-for="option in resultOptions" :key="option.value" class="variant"
+          <button v-for="option in resultOptions"
+            :key="option.value"
+            class="variant"
             :class="{ active: result === option.value, neutral: option.value === 'any' }"
             @click="result = option.value">{{ option.label }}</button>
         </div>
@@ -47,7 +45,9 @@
       <div class="advanced-row">
         <span class="label">Уровни боя</span>
         <div class="variants">
-          <button v-for="option in battleLevelOptions" :key="option.value" class="variant"
+          <button v-for="option in battleLevelOptions"
+            :key="option.value"
+            class="variant"
             :class="{ active: battleLevel === option.value, neutral: option.value === 'any' }"
             v-tooltip:battleLevel.bottom-float="battleLevelDescriptions[option.value]"
             @click="battleLevel = option.value">
@@ -61,14 +61,15 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import DropdownArrow from '@/shared/uiKit/dropdown/DropdownArrow.vue'
 import ResetIcon from '@/assets/icons/reset.svg'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
 import ArenaSelectorBadges from '@/shared/game/components/selectors/arena/ArenaSelectorBadges.vue'
 import { regionToGame } from '@/shared/game/domain/wot'
 import BattleModeSelector from '@/shared/game/components/selectors/battleMode/BattleModeSelector.vue'
-import { createVehicleFilters, vehicleRegions, type VehicleFilters, type VehicleRegion } from './types'
-import { useBadgeSelection } from './useBadgeSelection'
+import RegionSelector from '@/shared/game/components/selectors/region/RegionSelector.vue'
+import AdvancedFiltersButton from '../../shared/filters/AdvancedFiltersButton.vue'
+import { createVehicleFilters, type VehicleFilters } from './types'
+import { useBadgeSelection } from '../../shared/filters/useBadgeSelection'
 
 const filters = defineModel<VehicleFilters>({ required: true })
 const expanded = ref(false)
@@ -118,16 +119,6 @@ const platoon = field('platoon')
 const result = field('result')
 const battleLevel = field('battleLevel')
 
-function selectRegion(region: VehicleRegion, event: MouseEvent) {
-  if (!event.shiftKey) {
-    regions.value = [region]
-  } else if (!regions.value.includes(region)) {
-    regions.value = [...regions.value, region]
-  } else if (regions.value.length > 1) {
-    regions.value = regions.value.filter(value => value !== region)
-  }
-}
-
 const arenaGame = computed(() => {
   const games = new Set(filters.value.regions.map(regionToGame))
   return games.size === 1 ? [...games][0] : undefined
@@ -161,7 +152,6 @@ function reset() {
     white-space: nowrap;
   }
 
-  .region-select,
   .variants {
     display: flex;
     flex-wrap: wrap;
@@ -212,6 +202,7 @@ function reset() {
 
     .region-select {
       flex-shrink: 0;
+      min-height: 24px;
     }
 
     .primary-filter {
@@ -231,37 +222,6 @@ function reset() {
       align-items: center;
       gap: 10px;
       margin-left: auto;
-
-      .expand {
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        min-height: 24px;
-        color: rgba(255, 255, 255, 0.65);
-        font-size: inherit;
-        white-space: nowrap;
-        transition: color 0.15s;
-
-        &:active:not(:disabled) {
-          color: white;
-        }
-
-        @media (hover: hover) and (pointer: fine) {
-          &:hover:not(:disabled) {
-            color: white;
-          }
-        }
-
-        &.enabled {
-          color: var(--blue-thin-color);
-        }
-      }
-
-      .expand .arrow {
-        margin-left: 5px;
-        width: 12px;
-        height: 12px;
-      }
     }
   }
 
@@ -308,12 +268,9 @@ function reset() {
       gap: 8px;
 
       .region-select {
+        --option-button-flex: 1;
+        --option-button-height: 25px;
         flex-basis: 100%;
-
-        .variant {
-          flex: 1;
-          height: 25px;
-        }
       }
 
       .primary-filter {
@@ -329,11 +286,6 @@ function reset() {
       .actions {
         flex: 1 0 auto;
         margin-left: 0;
-
-        .expand {
-          flex: 1;
-          min-height: 30px;
-        }
 
         .toolbar-button {
           --toolbar-button-size: 30px;

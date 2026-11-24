@@ -1,5 +1,5 @@
-import { formatSlotValue } from '../../vehicleMetricSelector/utils/formatMetricValue'
-import { availableSlots, type Slot } from '../../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
+import { formatSlotValue } from '../../metrics/utils/formatMetricValue'
+import { availableSlots, type Slot } from '../../metrics/catalog/vehicleMetrics'
 
 export function formatMetaSlotValue(slot: Slot, value: number | null | undefined, step: number | null = null) {
   if (value == null || !Number.isFinite(value)) return '—'

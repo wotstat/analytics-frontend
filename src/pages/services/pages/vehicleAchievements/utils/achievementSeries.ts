@@ -1,4 +1,4 @@
-import { metricTileFor, type Slot } from '../../vehicles/vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
+import { metricTileFor, type Slot } from '../../vehicles/metrics/catalog/vehicleMetrics'
 
 export const achievementHistoryColors = ['#db34f2', '#3cd3fe', '#30d158', '#ffd600']
 

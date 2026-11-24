@@ -1,8 +1,12 @@
 <template>
-  <BadgesLinePopover :tagToText="t => getTankName(t, true)" v-model="vehicles"
-    :close-on-outside-window="closeOnOutsideWindow" :width="350" scroll-mode="child"
+  <BadgesLinePopover
+    :tagToText="t => getTankName(t, true)"
+    v-model="vehicles"
+    :close-on-outside-window="closeOnOutsideWindow"
+    :width="350"
+    scroll-mode="child"
     :placement="['bottom-start', 'top-start', 'bottom-float', 'top-float']">
-    <VehiclePopup :tank-list="selectableVehicles" v-model="vehicles" />
+    <VehiclePopup :tank-list="selectableVehicles" v-model="vehicles" :game />
   </BadgesLinePopover>
 </template>
 
@@ -11,10 +15,12 @@ import { getTankName } from '@/shared/i18n/i18n'
 import BadgesLinePopover from '../components/badges/BadgesLinePopover.vue'
 import VehiclePopup from './VehiclePopup.vue'
 import { selectableVehicles } from '@/shared/game/domain/vehicles/catalog'
+import type { GameVendor } from '@/shared/game/domain/wot'
 import { CloseOnOutsideWindow } from '@/shared/uiKit/popover/utils'
 
 defineProps<{
   closeOnOutsideWindow?: CloseOnOutsideWindow
+  game?: GameVendor
 }>()
 
 const vehicles = defineModel<Set<string>>({ default: () => new Set() })

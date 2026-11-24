@@ -7,6 +7,7 @@ import Damage from './pages/infographics/pages/Damage.vue'
 import Results from './pages/infographics/pages/Results.vue'
 import Maps from './pages/infographics/pages/Maps.vue'
 import Vehicles from './pages/services/pages/vehicles/Vehicles.vue'
+import ServicesMaps from './pages/services/pages/maps/Maps.vue'
 import Marks from './pages/services/pages/vehicleAchievements/Marks.vue'
 import Mastery from './pages/services/pages/vehicleAchievements/Mastery.vue'
 import CompareVersions from './pages/services/pages/archive/mt36.1/Index.vue'
@@ -18,6 +19,18 @@ import { debugRoutes } from './pages/debug/routes'
 import { setupQueryStorage } from './shared/uiKit/queryStorage/useQueryStorage'
 import { createDeferredWebHistory } from './shared/uiKit/queryStorage/utils/createDeferredWebHistory.ts'
 import { setupPageNavigation } from './shared/uiKit/pageNavigation/pageNavigation'
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    customTitle?: string
+    titleClass?: string
+    clearPage?: boolean
+    hideHeader?: boolean
+    hideTankList?: boolean
+    resetScroll?: boolean
+    sitemap?: boolean
+  }
+}
 
 const loadOnslaught = () => import('./pages/infographics/pages/onslaught/onslaught')
 
@@ -45,6 +58,7 @@ const routes = [
     component: asyncPage(() => import('./pages/services/Index.vue')),
     children: [
       { path: 'vehicles', alias: '', component: Vehicles, meta: { customTitle: 'Статистика техники' } },
+      { path: 'maps', component: ServicesMaps, meta: { customTitle: 'Статистика карт' } },
       { path: 'mastery', component: Mastery, meta: { customTitle: 'Знаки классности' } },
       { path: 'marks', component: Marks, meta: { customTitle: 'Отметки на стволах' } },
       { path: 'compare-versions', component: CompareVersions, meta: { customTitle: 'Сравнение версий игры' } },

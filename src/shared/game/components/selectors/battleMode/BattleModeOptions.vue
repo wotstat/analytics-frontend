@@ -1,39 +1,65 @@
 <template>
   <div class="mode-options">
-    <SelectionTile v-for="option in options" :key="option.key" v-bind="battleAttributes(option.key)"
-      :selected="selected.includes(option.key) || selectedChildCount(option) > 0" :class="{ archived: option.archived }"
+    <SelectionTile v-for="option in options"
+      :key="option.key"
+      v-bind="battleAttributes(option.key)"
+      :selected="selected.includes(option.key) || selectedChildCount(option) > 0"
+      :class="{ archived: option.archived }"
       :accent-color="option.archived || hasArchivedSelection(option) ? archiveAccent : undefined"
-      :action="option.children.length > 0" :action-open="active?.key === option.key"
-      :action-active="selectedChildCount(option) > 0" @select="emit('select', option.key, $event)"
+      :action="option.children.length > 0"
+      :action-open="active?.key === option.key"
+      :action-active="selectedChildCount(option) > 0"
+      @select="emit('select', option.key, $event)"
       @action="openChildren(option, $event)">
       <HighlightString :text="highlight(option.label, search)" class="option-label" />
       <span v-if="option.archived" class="archive-label main-archive-label">архив</span>
       <template #action>
-        <span class="dots"></span>
-        <span v-if="selectedChildCount(option)" class="selection-badge"
+        <EllipsisIcon width="18" height="18" />
+        <span v-if="selectedChildCount(option)"
+          class="selection-badge"
           :class="{ 'archive-badge': option.archived || hasArchivedSelection(option) }">{{ selectedChildCount(option)
           }}</span>
       </template>
     </SelectionTile>
   </div>
 
-  <ResponsivePanelPopover v-model="submenuOpen" :target="target" :title="submenuOption?.label" :width="280" density="compact"
-    :offset="4" :placement="['bottom-end', 'top-end', 'right-start-float', 'left-start-float']">
+  <ResponsivePanelPopover
+    v-model="submenuOpen"
+    :target="target"
+    :title="submenuOption?.label"
+    :width="280"
+    density="compact"
+    :offset="4"
+    :placement="['bottom-end', 'top-end', 'right-start-float', 'left-start-float']">
     <template v-if="submenuOption" #toolbar="{ isModal }">
-      <SelectionTile :density="isModal ? 'standard' : 'compact'" class="any-variant" v-bind="battleAttributes(submenuOption.key)"
-        :selected="selected.includes(submenuOption.key)" :class="{ archived: submenuOption.archived }"
-        :accent-color="submenuOption.archived ? archiveAccent : undefined" @select="emit('select', submenuOption.key, $event)">
+      <SelectionTile
+        :density="isModal ? 'standard' : 'compact'"
+        class="any-variant"
+        v-bind="battleAttributes(submenuOption.key)"
+        :selected="selected.includes(submenuOption.key)"
+        :class="{ archived: submenuOption.archived }"
+        :accent-color="submenuOption.archived ? archiveAccent : undefined"
+        @select="emit('select', submenuOption.key, $event)">
         Любой</SelectionTile>
     </template>
     <template #content="{ isModal }">
-      <div class="mode-submenu" :class="{ 'modal-mode': isModal }" @pointerdown.stop @pointerup.stop @click.stop
+      <div
+        class="mode-submenu"
+        :class="{ 'modal-mode': isModal }"
+        @pointerdown.stop
+        @pointerup.stop
+        @click.stop
         @keydown.esc.stop.prevent="closeChildren()">
         <section v-for="(group, index) in submenuGroups" :key="index" class="submenu-group">
           <h3 v-if="group.title && showGroupTitles">{{ group.title }}</h3>
           <div class="mode-options">
-            <SelectionTile v-for="option in group.options" :key="option.key" :density="isModal ? 'standard' : 'compact'"
-              v-bind="battleAttributes(option.key)" :selected="selected.includes(option.key)"
-              :class="{ archived: option.archived }" :accent-color="option.archived ? archiveAccent : undefined"
+            <SelectionTile v-for="option in group.options"
+              :key="option.key"
+              :density="isModal ? 'standard' : 'compact'"
+              v-bind="battleAttributes(option.key)"
+              :selected="selected.includes(option.key)"
+              :class="{ archived: option.archived }"
+              :accent-color="option.archived ? archiveAccent : undefined"
               @select="emit('select', option.key, $event)">
               <HighlightString :text="highlight(option.label, search)" class="option-label" />
               <span v-if="option.archived" class="archive-label">архив</span>
@@ -47,6 +73,7 @@
 
 <script setup lang="ts">
 import { computed, shallowRef, watch } from 'vue'
+import EllipsisIcon from '@/assets/icons/ellipsis.svg'
 import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
 import ResponsivePanelPopover from '@/shared/ui/popover/ResponsivePanelPopover.vue'
 import HighlightString from '@/shared/uiKit/highlightString/HighlightString.vue'
@@ -141,34 +168,6 @@ function closeChildren() {
 
 .main-archive-label {
   margin-right: -6px;
-}
-
-.dots {
-  position: relative;
-
-  &,
-  &::before,
-  &::after {
-    width: 3px;
-    height: 3px;
-    border-radius: 50%;
-    background: currentColor;
-  }
-
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-  }
-
-  &::before {
-    right: 6px;
-  }
-
-  &::after {
-    left: 6px;
-  }
 }
 
 .selection-badge {

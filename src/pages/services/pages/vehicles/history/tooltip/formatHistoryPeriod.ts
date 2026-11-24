@@ -1,0 +1,25 @@
+import { formatStatisticsDay } from '../../shared/formatStatisticsDay'
+import type { HistoryStep } from '../../../shared/history/period/historyStep'
+
+const monthFormatter = new Intl.DateTimeFormat('ru-RU', { month: 'long', timeZone: 'UTC' })
+const weekdayFormatter = new Intl.DateTimeFormat('ru-RU', { weekday: 'short', timeZone: 'UTC' })
+
+export function formatHistoryWeekday(day: string) {
+  return weekdayFormatter.format(new Date(`${day}T00:00:00Z`)).replace('.', '')
+}
+
+export function formatHistoryPeriod(start: string, end: string, step: HistoryStep) {
+  if (step === 'month') {
+    const date = new Date(`${start}T00:00:00Z`)
+    const month = monthFormatter.format(date)
+    return `${month[0].toUpperCase()}${month.slice(1)} ${date.getUTCFullYear()}`
+  }
+
+  const from = formatStatisticsDay(start)
+  if (step === 'day') {
+    const weekday = formatHistoryWeekday(start)
+    return `${from} · ${weekday}`
+  }
+
+  return start === end ? from : `${from} — ${formatStatisticsDay(end)}`
+}

@@ -1,7 +1,11 @@
 <template>
-  <DebugPage title="ToolbarButton" description="Варианты кнопки тулбара, состояния и цель поповера без данных из БД."
+  <DebugPage
+    title="ToolbarButton"
+    description="Варианты кнопки тулбара, состояния и цель поповера без данных из БД."
     source="src/shared/ui/toolbarButton/ToolbarButton.vue">
-    <DebugSection title="Размеры и состояния" id="toolbar-button-variants"
+    <DebugSection
+      title="Размеры и состояния"
+      id="toolbar-button-variants"
       description="Кнопки сохраняют размер при смене состояния; заблокированные не отправляют событие click."
       source="src/shared/ui/toolbarButton/ToolbarButton.vue">
       <div class="debug-row">
@@ -10,12 +14,30 @@
       </div>
       <div class="debug-stage center short">
         <div class="examples">
-          <ToolbarButton :icon="SettingsIcon" variant="surface" size="large" :active :disabled
+          <ToolbarButton
+            :icon="SettingsIcon"
+            variant="surface"
+            size="large"
+            :active
+            :disabled
             @click="countClick" />
-          <ToolbarButton variant="accent" :active :disabled @click="countClick"><span class="dots"></span></ToolbarButton>
-          <ToolbarButton :icon="ResetIcon" size="small" :active :disabled
+          <ToolbarButton
+            :icon="EllipsisIcon"
+            variant="accent"
+            :active
+            :disabled
             @click="countClick" />
-          <ToolbarButton :icon="ResetIcon" variant="round" :active :disabled
+          <ToolbarButton
+            :icon="ResetIcon"
+            size="small"
+            :active
+            :disabled
+            @click="countClick" />
+          <ToolbarButton
+            :icon="ResetIcon"
+            variant="round"
+            :active
+            :disabled
             @click="countClick" />
         </div>
       </div>
@@ -24,14 +46,24 @@
         по одному нажатию. При блокировке счётчик не меняется. У кнопок нет title и aria-атрибутов.</p>
     </DebugSection>
 
-    <DebugSection title="Привязка поповера" id="toolbar-button-popover"
+    <DebugSection
+      title="Привязка поповера"
+      id="toolbar-button-popover"
       description="Поповер должен появиться у кнопки и закрыться по Escape или нажатию снаружи."
       source="src/shared/ui/toolbarButton/ToolbarButton.vue">
       <div class="debug-stage center short">
-        <ToolbarButton ref="trigger" :icon="SettingsIcon" variant="surface" size="large"
+        <ToolbarButton
+          ref="trigger"
+          :icon="SettingsIcon"
+          variant="surface"
+          size="large"
           @click="open = !open" />
       </div>
-      <PanelPopover v-model="open" :target="target" title="Панель кнопки" :width="250"
+      <PanelPopover
+        v-model="open"
+        :target="target"
+        title="Панель кнопки"
+        :width="250"
         :placement="['bottom-start', 'top-start']">
         <template #content><p>Цель — DOM-элемент кнопки ToolbarButton.</p></template>
       </PanelPopover>
@@ -41,6 +73,7 @@
 
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
+import EllipsisIcon from '@/assets/icons/ellipsis.svg'
 import SettingsIcon from '@/assets/icons/settings.svg'
 import ResetIcon from '@/assets/icons/reset.svg'
 import DebugPage from '@/pages/debug/shared/DebugPage.vue'
@@ -67,33 +100,5 @@ function countClick(event: MouseEvent) {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.dots {
-  position: relative;
-
-  &,
-  &::before,
-  &::after {
-    width: 3px;
-    height: 3px;
-    border-radius: 50%;
-    background: currentColor;
-  }
-
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-  }
-
-  &::before {
-    right: 6px;
-  }
-
-  &::after {
-    left: 6px;
-  }
 }
 </style>

@@ -12,6 +12,7 @@
 | Кнопка тулбара | [ToolbarButton](../src/shared/ui/toolbarButton/ToolbarButton.vue) | `/debug/toolbar-button` |
 | Плитка выбора | [SelectionTile](../src/shared/ui/selectionTile/SelectionTile.vue) | `/debug/selection-tile` |
 | Выбор одного варианта | [OptionsSelect](../src/shared/ui/optionsSelect/OptionsSelect.vue) | `/debug/options-select` |
+| Группа кнопок с одиночным или множественным выбором | [OptionButtons](../src/shared/uiKit/selection/OptionButtons.vue), [selectOptionWithModifiers](../src/shared/uiKit/selection/selectOptionWithModifiers.ts) | Фильтры сервисов, сезоны Натиска |
 | Выпадающий список и стрелки раскрытия | [dropdown/](../src/shared/uiKit/dropdown/) | `/debug/misc`, `/debug/dropdown-arrow` |
 | Текстовая подсказка | Глобальная `v-tooltip`, проектная директива [vTextTooltip](../src/shared/ui/tooltip/textTooltip.ts) | `/debug/tooltip` |
 | Подсказка с Vue-компонентом | [useTooltip](../src/shared/uiKit/tooltip/useTooltip.ts) | `/debug/tooltip` |
@@ -34,7 +35,7 @@
 | Подсветка совпадений поиска | [HighlightString](../src/shared/uiKit/highlightString/HighlightString.vue) | `/debug/misc` |
 | Бейдж «новое» и спрайт-атлас | [newFeatureBadge/](../src/shared/uiKit/newFeatureBadge/), [spriteAtlas/](../src/shared/uiKit/spriteAtlas/) | `/debug/misc` |
 
-Игровой UI находится в [game/components/](../src/shared/game/components/): селекторы техники, карт, режимов и версий игры, иконки техники и наций, миникарта, ранги Натиска. Примеры — в игровых разделах `/debug`.
+Игровой UI находится в [game/components/](../src/shared/game/components/): селекторы техники, карт, режимов, версий игры и [регионов](../src/shared/game/components/selectors/region/RegionSelector.vue), иконки техники и наций, миникарта, ранги Натиска. Примеры — в игровых разделах `/debug`.
 
 Карточки старой инфографики (`GenericInfo`, `GenericInfoQuery`, `MiniBarNew`) — в [infographics/shared/widgets/](../src/pages/infographics/shared/widgets/). Общий дизайн Open Graph (`MetaCard`, фоны) — в [ui/meta/components/](../src/shared/ui/meta/components/), просмотр — на `/meta`.
 

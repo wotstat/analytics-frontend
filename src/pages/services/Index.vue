@@ -1,6 +1,8 @@
 <template>
-  <SectionLayout :title="String(route.meta.customTitle ?? '')"
-    :title-class="String(route.meta.titleClass ?? '')" :sections>
+  <SectionLayout
+    :title="route.meta.customTitle ?? ''"
+    :title-class="route.meta.titleClass"
+    :sections>
     <RouterView v-slot="{ Component }">
       <KeepAlive exclude="BattleOfBloggers2025">
         <component :is="Component" />
@@ -19,6 +21,7 @@ const sections = [
     id: 'main',
     links: [
       { to: '/services/vehicles', label: 'Статистика техники' },
+      { to: '/services/maps', label: 'Статистика карт' },
       { to: '/services/marks', label: 'Отметки' },
       { to: '/services/mastery', label: 'Мастера' },
     ],

@@ -3,44 +3,53 @@
     <header class="vehicle-popup-header">
       <div class="title-row">
         <h2 class="panel-header-title">Выбор техники</h2>
-        <ToolbarButton :icon="Reload" class="reset" variant="round" :disabled="!shouldVisibleReset" @click="reset" />
+        <ToolbarButton
+          :icon="Reload"
+          class="reset"
+          variant="round"
+          :disabled="!shouldVisibleReset"
+          @click="reset" />
       </div>
 
       <div class="types mt-font">
-        <button class="type selectable" @click="preferredGame = 'mt'" :class="preferredGame == 'mt' ? 'active' : ''">
-          Lesta
-        </button>
-        <button class="type selectable" @click="preferredGame = 'wot'" :class="preferredGame != 'mt' ? 'active' : ''">
-          WG
-        </button>
-        <div class="vr"></div>
-        <button class="type selectable" :class="currentTypes.has(type) ? 'active' : ''" v-for="type in vehicleTypes"
-          @click="e => selectType(e, type)">
-          <VehicleTypeComponent :type="type" class="icon" />
-        </button>
+        <template v-if="!game">
+          <button class="type selectable" @click="preferredGame = 'mt'" :class="preferredGame == 'mt' ? 'active' : ''">
+            Lesta
+          </button>
+          <button class="type selectable" @click="preferredGame = 'wot'" :class="preferredGame != 'mt' ? 'active' : ''">
+            WG
+          </button>
+          <div class="vr"></div>
+        </template>
+        <OptionButtons v-model:selected="currentTypes" :options="vehicleTypes" class="type-options">
+          <template #default="{ option }"><VehicleTypeComponent :type="option" class="icon" /></template>
+        </OptionButtons>
       </div>
 
       <div class="nations mt-font">
-        <button class="nation selectable" v-for="nation in availableNations"
+        <button v-for="nation in availableNations"
+          class="nation selectable"
           v-tooltip:vehicleFilters.top-float="{ text: nationNames[nation], delay: 500 }"
-          :class="currentNations.has(nation) ? 'active' : ''" @click="e => selectNation(e, nation)">
+          :class="currentNations.has(nation) ? 'active' : ''"
+          @click="e => selectNation(e, nation)">
           <NationComponent :nation="nation" class="flag" />
         </button>
       </div>
 
-      <div class="levels mt-font">
-        <button class="level selectable" :class="currentLevels.has(level) ? 'active' : ''"
-          v-for="level in levels" @click="e => selectLevel(e, level)">
-          {{ romanNumberProcessor(level) }}
-        </button>
-      </div>
+      <OptionButtons v-model:selected="currentLevels" :options="vehicleLevels" class="levels mt-font">
+        <template #default="{ option }">{{ romanNumberProcessor(option) }}</template>
+      </OptionButtons>
 
       <SearchLine v-model="currentSearch" autofocus />
     </header>
 
     <div class="vehicle-popup-content">
-      <VehicleTable :display-sections="tankToDisplay" ref="vehicleTable" v-model:name-variant="nameVariant"
-        v-model:selected="vehicles" :game="preferredGame == 'wot' ? 'wot' : 'mt'" />
+      <VehicleTable
+        :display-sections="tankToDisplay"
+        ref="vehicleTable"
+        v-model:name-variant="nameVariant"
+        v-model:selected="vehicles"
+        :game="currentGame === 'wot' ? 'wot' : 'mt'" />
 
       <div class="loading" v-if="props.tankList.length === 0">
         <Loader />
@@ -70,20 +79,22 @@ import NationComponent from '@/shared/game/components/vehicles/nation/Nation.vue
 import SearchLine from '../components/searchLine/SearchLine.vue'
 import { preferredGame } from '@/shared/global/globalPreferred'
 import { mtNations, wotNations, nationNames, nations, nationsIndexes, Nation } from '@/shared/game/domain/vehicles/nations'
-import { VehicleType, vehicleTypes } from '@/shared/game/domain/vehicles/types'
+import { vehicleLevels, vehicleTypes, type VehicleType } from '@/shared/game/domain/vehicles/types'
+import { gameToRegion, type GameVendor } from '@/shared/game/domain/wot'
+import { selectOptionWithModifiers } from '@/shared/uiKit/selection/selectOptionWithModifiers'
+import OptionButtons from '@/shared/uiKit/selection/OptionButtons.vue'
 import { romanNumberProcessor } from '@/shared/utils/processors/processors'
 
 const vehicleTable = useTemplateRef<InstanceType<typeof VehicleTable>>('vehicleTable')
 
 const currentSearch = ref('')
-const currentLevels = ref(new Set<number>())
-const currentTypes = ref(new Set<VehicleType>())
+const currentLevels = ref<number[]>([])
+const currentTypes = ref<VehicleType[]>([])
 const currentNations = ref(new Set<Nation>())
-const levels = Array.from({ length: 11 }, (_, index) => index + 1)
-const availableNations = computed(() => preferredGame.value === 'mt' ? mtNations : wotNations)
 const nameVariant = useLocalStorage<'full' | 'short'>('preferred-vehicle-name-variant', 'full')
 
 const props = defineProps<{
+  game?: GameVendor
   tankList: {
     type: 'MT' | 'LT' | 'HT' | 'AT' | 'SPG',
     tag: string, level: number, short: string, name: string, region: string, nation: Nation
@@ -91,6 +102,8 @@ const props = defineProps<{
 }>()
 
 const vehicles = defineModel<Set<string>>({ required: true })
+const currentGame = computed(() => props.game ?? preferredGame.value)
+const availableNations = computed(() => currentGame.value === 'mt' ? mtNations : wotNations)
 
 const preparedTankList = computed(() => {
   return props.tankList.map(tank => {
@@ -196,7 +209,6 @@ const groupedList = computed(() => {
 })
 
 const tankToDisplay = computed(() => {
-
   const currentLevelsCached = new Set(currentLevels.value)
   const currentTypesCached = new Set(currentTypes.value)
   const currentNationsCached = new Set(currentNations.value)
@@ -207,12 +219,10 @@ const tankToDisplay = computed(() => {
   const hasTypes = currentTypesCached.size > 0
   const hasNations = currentNationsCached.size > 0
 
+  const targetRegion = gameToRegion(currentGame.value === 'mt' ? 'mt' : 'wot')
+
   const filteredGroups = groupedList.value.map(tankList => {
-
-    const targetRegion = preferredGame.value == 'mt' ? 'RU' : 'EU'
-    const data = tankList.data
-
-    const prefiltered = data
+    const prefiltered = tankList.data
       .filter(t =>
         t.region == targetRegion &&
         (!hasLevels || currentLevelsCached.has(t.level)) &&
@@ -261,97 +271,17 @@ const tankToDisplay = computed(() => {
     }))
 })
 
-const shouldVisibleReset = computed(() => currentLevels.value.size > 0 || currentTypes.value.size > 0 || currentNations.value.size > 0 || currentSearch.value != '')
+const shouldVisibleReset = computed(() => currentLevels.value.length > 0 || currentTypes.value.length > 0
+  || currentNations.value.size > 0 || currentSearch.value !== '')
 
-function toggleAllExcept<T>(selected: ReadonlySet<T>, option: T, options: readonly T[]): Set<T> {
-  const others = options.filter(item => item !== option)
-  const allOthersSelected = selected.size === others.length && others.every(item => selected.has(item))
-  return new Set(allOthersSelected ? [option] : others)
-}
-
-function selectLevel(e: MouseEvent, level: number) {
-  if (e.altKey) {
-    currentLevels.value = toggleAllExcept(currentLevels.value, level, levels)
-    return
-  }
-
-  if (currentLevels.value.has(level)) currentLevels.value.delete(level)
-  else {
-    if (e.shiftKey) {
-      if (currentLevels.value.size === 0) {
-        currentLevels.value.add(level)
-      } else {
-        const levels = Array.from(currentLevels.value)
-        const min = Math.min(...levels)
-        const max = Math.max(...levels)
-
-        if (level < min) for (let i = level; i <= max; i++) currentLevels.value.add(i)
-        else for (let i = min; i <= level; i++) currentLevels.value.add(i)
-      }
-    }
-    else if (!e.ctrlKey && !e.metaKey) currentLevels.value.clear()
-
-    if (!e.shiftKey) currentLevels.value.add(level)
-  }
-}
-
-function selectType(e: MouseEvent, type: VehicleType) {
-  if (e.altKey) {
-    currentTypes.value = toggleAllExcept(currentTypes.value, type, vehicleTypes)
-    return
-  }
-
-  if (currentTypes.value.has(type)) currentTypes.value.delete(type)
-  else {
-    if (e.shiftKey) {
-      if (currentTypes.value.size === 0) {
-        currentTypes.value.add(type)
-      } else {
-        const index = vehicleTypes.indexOf(type)
-        const types = Array.from(currentTypes.value).map(t => vehicleTypes.indexOf(t))
-        const min = Math.min(...types)
-        const max = Math.max(...types)
-
-        if (index < min) for (let i = index; i <= max; i++) currentTypes.value.add(vehicleTypes[i])
-        else for (let i = min; i <= index; i++) currentTypes.value.add(vehicleTypes[i])
-      }
-    }
-    else if (!e.ctrlKey && !e.metaKey) currentTypes.value.clear()
-
-    if (!e.shiftKey) currentTypes.value.add(type)
-  }
-}
-
-function selectNation(e: MouseEvent, nation: Nation) {
-  if (e.altKey) {
-    currentNations.value = toggleAllExcept(currentNations.value, nation, availableNations.value)
-    return
-  }
-
-  if (currentNations.value.has(nation)) currentNations.value.delete(nation)
-  else {
-    if (e.shiftKey) {
-      if (currentNations.value.size === 0) {
-        currentNations.value.add(nation)
-      } else {
-        const index = nationsIndexes.get(nation)!
-        const nationsI = Array.from(currentNations.value).map(n => nationsIndexes.get(n)!)
-        const min = Math.min(...nationsI)
-        const max = Math.max(...nationsI)
-
-        if (index < min) for (let i = index; i <= max; i++) currentNations.value.add(nations[i])
-        else for (let i = min; i <= index; i++) currentNations.value.add(nations[i])
-      }
-    }
-    else if (!e.ctrlKey && !e.metaKey) currentNations.value.clear()
-
-    if (!e.shiftKey) currentNations.value.add(nation)
-  }
+function selectNation(event: MouseEvent, nation: Nation) {
+  const options = event.altKey ? availableNations.value : nations
+  currentNations.value = new Set(selectOptionWithModifiers([...currentNations.value], nation, options, event))
 }
 
 function reset() {
-  currentLevels.value.clear()
-  currentTypes.value.clear()
+  currentLevels.value = []
+  currentTypes.value = []
   currentNations.value.clear()
   currentSearch.value = ''
 }
@@ -415,20 +345,9 @@ function reset() {
   }
 
   .levels {
-    display: flex;
-    gap: 5px;
-    justify-content: center;
-
-    .level {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      flex: 1;
-      text-align: center;
-      padding: 0 5px;
-      height: 22px;
-    }
+    --option-buttons-wrap: nowrap;
+    --option-button-flex: 1;
+    --option-button-padding: 0 5px;
   }
 
   .nations {
@@ -478,6 +397,15 @@ function reset() {
     gap: 5px;
     justify-content: center;
 
+    .type-options {
+      --option-button-flex: 1;
+      display: contents;
+
+      .icon {
+        height: 14px;
+      }
+    }
+
     .vr {
       width: 1px;
       background-color: rgba(255, 255, 255, 0.1);
@@ -492,10 +420,6 @@ function reset() {
       padding: 0 10px;
       line-height: 1;
       font-size: 14px;
-
-      .icon {
-        height: 14px;
-      }
     }
   }
 }

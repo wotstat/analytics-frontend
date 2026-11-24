@@ -189,3 +189,39 @@ encoding/
 ## 8. README, пересказывающий реализацию
 
 В README оставляй минимум для понимания модуля: назначение, основные точки входа и необходимые неочевидные ограничения. Не пересказывай код и детали реализации — их изучают по исходникам.
+
+## 9. Плотная запись атрибутов тега
+
+Если из-за количества или длины атрибутов тег трудно читать, выноси атрибуты, пропсы, `v-model` и обработчики по одному на строку сразу после имени тега. Директивы, управляющие выводом элемента, например `v-for` и `v-if`, можно оставить на первой строке рядом с именем тега. Короткие теги можно записывать в одну строку.
+
+**Плохо**
+
+```vue
+<button v-for="option in options" :key="option" class="option" type="button" :disabled
+  :class="{ active: selected ? selected.includes(option) : modelValue === option }"
+  @click="select(option, $event)">
+```
+
+**Хорошо**
+
+```vue
+<button v-for="option in options"
+  :key="option"
+  class="option"
+  type="button"
+  :disabled
+  :class="{ active: selected ? selected.includes(option) : modelValue === option }"
+  @click="select(option, $event)">
+```
+
+```vue
+<VehicleComparison
+  :sources="comparison.sources.value"
+  :filters
+  :min-battles="localFilters.minBattles"
+  v-model:settings="comparison.settings.value"
+  v-model:annotations="comparison.annotations.value"
+  @visibility-change="comparison.setDisabled"
+  @color-change="comparison.setColor"
+  @clear="comparison.clear" />
+```

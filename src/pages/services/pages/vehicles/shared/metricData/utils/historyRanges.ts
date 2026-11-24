@@ -1,5 +1,5 @@
 import { DAILY_CACHE, IMMUTABLE_CACHE, type CachePolicy } from '@/db/cache'
-import type { HistoryStep } from '../../../timeSeries/period/historyStep'
+import type { HistoryStep } from '../../../../shared/history/period/historyStep'
 import type { HistoryRange } from './types'
 
 // Витрины пересчитываются после полуночи UTC.

@@ -1,6 +1,11 @@
 <template>
-  <VehicleCompareMetaLayout :format="context.format" :region="regions.join(' / ') || params.region" :heading
-    :sources="rivals" :state-message :has-values>
+  <VehicleCompareMetaLayout
+    :format="context.format"
+    :region="regions.join(' / ') || params.region"
+    :heading
+    :sources="rivals"
+    :state-message
+    :has-values>
     <template #selection>
       <div class="metrics" :class="[kind, { single: singleMetric }]">
         <span v-for="(slot, index) in metrics" :key="slot">
@@ -10,9 +15,16 @@
       </div>
     </template>
     <template #value-icon>
-      <Icon class="value-icon" :class="kind" :icon="availableSlots[primary].icon" :viewBox="iconViewBox" />
+      <Icon
+        class="value-icon"
+        :class="kind"
+        :icon="availableSlots[primary].icon"
+        :viewBox="iconViewBox" />
     </template>
-    <MetaHistoryChart :series="lines" :slot="primary" :until="now"
+    <MetaHistoryChart
+      :series="lines"
+      :slot="primary"
+      :until="now"
       :options="{ fromDay, step: params.step, averageWindow: params.averageWindow }" />
   </VehicleCompareMetaLayout>
 </template>
@@ -25,8 +37,8 @@ import VehicleCompareMetaLayout from '../../vehicles/meta/compare/VehicleCompare
 import MetaHistoryChart from '../../vehicles/meta/compare/chart/MetaHistoryChart.vue'
 import { useCompareMeta } from '../../vehicles/meta/utils/useCompareMeta'
 import { formatMetaSlotValue } from '../../vehicles/meta/utils/format'
-import { hasHistoryValues } from '../../vehicles/timeSeries/historyValues'
-import { availableSlots } from '../../vehicles/vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
+import { hasHistoryValues } from '../../vehicles/history/historyValues'
+import { availableSlots } from '../../vehicles/metrics/catalog/vehicleMetrics'
 import { achievementSeriesColor } from '../utils/achievementSeries'
 import { achievements, type AchievementKind } from '../utils/achievements'
 import { readAchievementMetaParams } from './utils/params'

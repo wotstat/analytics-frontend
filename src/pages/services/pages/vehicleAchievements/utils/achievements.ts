@@ -1,4 +1,4 @@
-import type { Slot } from '../../vehicles/vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
+import type { Slot } from '../../vehicles/metrics/catalog/vehicleMetrics'
 import type { VehicleStatisticsRow } from '../../vehicles/shared/types'
 
 export type AchievementKind = 'marks' | 'mastery'

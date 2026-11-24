@@ -1,6 +1,10 @@
 <template>
   <div class="achievement-compare-tooltip" :class="{ single: metrics.length === 1 }">
-    <HistoryTooltipHeader class="header" :point="ctx.hit.datum" :horizontal="metrics.length > 1" :game-version />
+    <HistoryTooltipHeader
+      class="header"
+      :point="ctx.hit.datum"
+      :horizontal="metrics.length > 1"
+      :game-version />
 
     <table class="values">
       <thead v-if="metrics.length > 1">
@@ -19,7 +23,9 @@
               <span class="name">{{ source.name }}</span>
             </span>
           </td>
-          <td v-for="cell in source.cells" :key="cell.slot" class="value"
+          <td v-for="cell in source.cells"
+            :key="cell.slot"
+            class="value"
             :class="{ highlighted: metrics.length > 1 && cell.highlighted, missing: cell.value == null }">
             {{ formatSlotValue(cell.slot, cell.value) }}
           </td>
@@ -33,11 +39,11 @@
 import { computed } from 'vue'
 import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
 import type { TooltipCtx } from '@/shared/uiKit/chart/universalChart/interaction/composable/components/chartTooltip/ChartTooltip'
-import type { VehicleHistoryHit } from '../../vehicles/timeSeries/VehicleHistoryChart'
-import type { ComparisonSource } from '../../vehicles/timeSeriesCompare/types'
-import HistoryTooltipHeader from '../../vehicles/timeSeries/tooltip/HistoryTooltipHeader.vue'
-import { availableSlots, type Slot } from '../../vehicles/vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
-import { formatSlotValue } from '../../vehicles/vehicleMetricSelector/utils/formatMetricValue'
+import type { VehicleHistoryHit } from '../../vehicles/history/VehicleHistoryChart'
+import type { ComparisonSource } from '../../vehicles/comparison/types'
+import HistoryTooltipHeader from '../../vehicles/history/tooltip/HistoryTooltipHeader.vue'
+import { availableSlots, type Slot } from '../../vehicles/metrics/catalog/vehicleMetrics'
+import { formatSlotValue } from '../../vehicles/metrics/utils/formatMetricValue'
 import { achievementSeriesTag } from '../utils/achievementSeries'
 
 const props = defineProps<{

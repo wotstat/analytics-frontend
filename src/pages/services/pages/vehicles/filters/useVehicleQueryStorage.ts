@@ -6,10 +6,10 @@ import { oneOfSerializer } from '@/shared/uiKit/queryStorage/serializers/oneOfSe
 import { battleModeQueryParam } from '@/shared/game/domain/battleModes/battleModeQueryParam'
 import { regionQueryParam } from '@/shared/game/domain/region/regionQueryParam'
 import { createVehicleFilters, type VehicleFilters } from './types'
-import { createLocalVehicleFilters, battleThresholds, playerThresholds, type LocalVehicleFilters } from '../vehicleListTable/filters/localFilters'
+import { createLocalVehicleFilters, battleThresholds, playerThresholds, type LocalVehicleFilters } from '../table/filters/localFilters'
 import { vehicleGroupings, type VehicleGrouping } from '../shared/vehicleGrouping'
-import { vehicleTableSettingsParams } from '../vehicleListTable/query/settings'
-import { vehicleListFilterParams } from '../vehicleListTable/query/filters'
+import { vehicleTableSettingsParams } from '../table/query/settings'
+import { vehicleListFilterParams } from '../table/query/filters'
 
 const defaults = createVehicleFilters()
 const localDefaults = createLocalVehicleFilters()

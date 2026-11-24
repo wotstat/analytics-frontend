@@ -1,19 +1,31 @@
 <template>
-  <ToolbarButton ref="trigger" class="chart-annotation-trigger" variant="accent" :active="hasAnnotations"
-    @click="open = !open">
-    <span class="dots"></span>
-  </ToolbarButton>
+  <ToolbarButton
+    ref="trigger"
+    class="chart-annotation-trigger"
+    :icon="EllipsisIcon"
+    variant="accent"
+    :active="hasAnnotations"
+    @click="open = !open" />
 
-  <ResponsivePanelPopover v-model="open" :target="target" :title density="compact" :width
+  <ResponsivePanelPopover
+    v-model="open"
+    :target="target"
+    :title
+    density="compact"
+    :width
     :placement="['bottom-end', 'bottom-float', 'top-end']">
     <template #content="{ isModal }">
       <div class="annotation-settings" :class="{ 'modal-mode': isModal }">
         <div v-for="group in visibleGroups" :key="group.id" class="panel-section">
           <h3 v-if="group.label">{{ group.label }}</h3>
           <div class="annotation-options" :class="{ row: group.layout === 'row' }">
-            <SelectionTile v-for="option in group.options" :key="option.id" class="annotation-option"
-              :class="classNames(option.classes)" :density="isModal ? 'standard' : 'compact'"
-              :selected="option.selected" :disabled="option.disabled"
+            <SelectionTile v-for="option in group.options"
+              :key="option.id"
+              class="annotation-option"
+              :class="classNames(option.classes)"
+              :density="isModal ? 'standard' : 'compact'"
+              :selected="option.selected"
+              :disabled="option.disabled"
               @select="emit('toggle', group.id, option.id)">
               {{ option.label }}
             </SelectionTile>
@@ -26,6 +38,7 @@
 
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
+import EllipsisIcon from '@/assets/icons/ellipsis.svg'
 import ResponsivePanelPopover from '@/shared/ui/popover/ResponsivePanelPopover.vue'
 import SelectionTile from '@/shared/ui/selectionTile/SelectionTile.vue'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
@@ -50,34 +63,6 @@ const target = computed(() => trigger.value?.element ?? null)
 <style scoped lang="scss">
 .chart-annotation-trigger {
   margin-left: -2px;
-
-  .dots {
-    position: relative;
-
-    &,
-    &::before,
-    &::after {
-      width: 3px;
-      height: 3px;
-      border-radius: 50%;
-      background: currentColor;
-    }
-
-    &::before,
-    &::after {
-      content: '';
-      position: absolute;
-      top: 0;
-    }
-
-    &::before {
-      right: 6px;
-    }
-
-    &::after {
-      left: 6px;
-    }
-  }
 }
 
 .annotation-options {

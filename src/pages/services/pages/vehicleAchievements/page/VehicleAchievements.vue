@@ -1,21 +1,38 @@
 <template>
   <section class="achievement-filters">
-    <div class="region-select">
-      <button v-for="option in vehicleRegions" :key="option" type="button" class="region mt-font"
-        :class="{ active: region === option }" @click="region = option">{{ option }}</button>
-    </div>
+    <RegionSelector v-model="region" class="region-select" />
   </section>
 
-  <AchievementHistory :kind :sources="comparison.sources.value" :filters :before-day="beforeDay"
-    v-model:metrics="metrics" v-model:step="step" v-model:average-window="averageWindow" v-model:annotations="annotations"
-    @visibility-change="comparison.setDisabled" @remove="comparison.remove" @color-change="comparison.setColor"
+  <AchievementHistory
+    :kind
+    :sources="comparison.sources.value"
+    :filters
+    :before-day="beforeDay"
+    v-model:metrics="metrics"
+    v-model:step="step"
+    v-model:average-window="averageWindow"
+    v-model:annotations="annotations"
+    @visibility-change="comparison.setDisabled"
+    @remove="comparison.remove"
+    @color-change="comparison.setColor"
     @clear="comparison.clear" />
 
-  <AchievementTable :kind :vehicles="statistics.data" :status="statistics.status" :filters :before-day="beforeDay"
-    :compared-keys="comparison.comparedKeys.value" :comparison-count="comparison.sources.value.length"
-    v-model:search="search" v-model:local-filters="localFilters" v-model:sort="sort"
-    v-model:delta-period="deltaPeriod" v-model:sort-by-delta="sortByDelta"
-    @compare="comparison.toggle" @compare-all="comparison.addMany" @retry="retry" />
+  <AchievementTable
+    :kind
+    :vehicles="statistics.data"
+    :status="statistics.status"
+    :filters
+    :before-day="beforeDay"
+    :compared-keys="comparison.comparedKeys.value"
+    :comparison-count="comparison.sources.value.length"
+    v-model:search="search"
+    v-model:local-filters="localFilters"
+    v-model:sort="sort"
+    v-model:delta-period="deltaPeriod"
+    v-model:sort-by-delta="sortByDelta"
+    @compare="comparison.toggle"
+    @compare-all="comparison.addMany"
+    @retry="retry" />
 
   <section class="data-source">
     <h5>Источник данных</h5>
@@ -29,8 +46,8 @@
 
 <script setup lang="ts">
 import { useBackground } from '@/shared/uiKit/pageBackground/useBackground'
-import VehiclesBackground from '../../vehicles/VehiclesBackground.vue'
-import { vehicleRegions } from '../../vehicles/filters/types'
+import RegionSelector from '@/shared/game/components/selectors/region/RegionSelector.vue'
+import StatisticsBackground from '../../shared/StatisticsBackground.vue'
 import AchievementHistory from '../history/AchievementHistory.vue'
 import AchievementTable from '../AchievementTable.vue'
 import type { AchievementKind } from '../utils/achievements'
@@ -45,7 +62,7 @@ const {
 const { statistics, retry } = useAchievementStatistics(props.kind, region)
 const beforeDay = new Date().toISOString().slice(0, 10)
 
-useBackground(VehiclesBackground, { backgroundKey: 'services-vehicles' })
+useBackground(StatisticsBackground, { backgroundKey: 'services-vehicles' })
 </script>
 
 <style scoped lang="scss">
@@ -54,40 +71,11 @@ useBackground(VehiclesBackground, { backgroundKey: 'services-vehicles' })
 }
 
 .region-select {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
   min-height: 24px;
-  gap: 5px;
-
-  .region {
-    height: 22px;
-    padding: 0 10px;
-    border-radius: 5px;
-    background: rgba(255, 255, 255, 0.08);
-    font-size: 14px;
-    line-height: 1;
-
-    &:active {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    @media (hover: hover) and (pointer: fine) {
-      &:hover {
-        background: rgba(255, 255, 255, 0.2);
-      }
-    }
-
-    &.active {
-      background: var(--blue-color);
-    }
-  }
 
   @container content (max-width: 600px) {
-    .region {
-      flex: 1;
-      height: 25px;
-    }
+    --option-button-flex: 1;
+    --option-button-height: 25px;
   }
 }
 

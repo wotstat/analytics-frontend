@@ -1,45 +1,71 @@
 <template>
-  <section ref="table" class="achievement-table"
+  <section
+    ref="table"
+    class="achievement-table"
     :class="{ 'stacked-deltas': stackedDeltas, 'compact-toolbar': compactToolbar }">
     <div class="toolbar">
       <SearchLine v-model="search" class="search" placeholder="Найти танк" />
-      <VehicleListFilters v-model="localFilters" grouping="tanks" :available-nations="availableNations"
+      <VehicleListFilters
+        v-model="localFilters"
+        grouping="tanks"
+        :available-nations="availableNations"
         :show-thresholds="false" />
       <div class="settings">
         <label v-if="deltaPeriod !== 'none'" class="delta-sort">
           <input v-model="sortByDelta" type="checkbox">
           {{ compactToolbar ? 'По приросту' : 'Сортировать по приросту' }}
         </label>
-        <OptionsSelect v-model="deltaPeriod" :options="displayedDeltaOptions" align="right" class="delta-period" />
-        <VehicleTableSettings appearance-only v-model:show-value-bars="showValueBars"
-          v-model:extended-palette="extendedPalette" v-model:pin-compared="pinCompared" />
+        <OptionsSelect
+          v-model="deltaPeriod"
+          :options="displayedDeltaOptions"
+          :align="'right'"
+          class="delta-period" />
+        <TableSettings />
       </div>
     </div>
 
-    <ComposableTable v-model:expanded-rows="expandedRows" class="achievement-stats" :columns
-      :rows="status === success ? displayedVehicles : []" :row-key="vehicle => vehicle.rowKey"
-      :sort="sorting.sortOrders.value" :loading="status === loading" @sort="onSort" @cell-click="onCellClick">
+    <ComposableTable
+      v-model:expanded-rows="expandedRows"
+      class="achievement-stats"
+      :columns
+      :rows="status === success ? displayedVehicles : []"
+      :row-key="vehicle => vehicle.rowKey"
+      :sort="sorting.sortOrders.value"
+      :loading="status === loading"
+      @sort="onSort"
+      @cell-click="onCellClick">
       <template #header-compare>
-        <VehicleCompareButton v-if="bulkComparisonTotal <= MAX_BULK_COMPARISON_LINES" class="compare-all"
-          :disabled="status !== success || !comparisonCandidates.length"
-          v-tooltip="'Добавить все танки к сравнению'" @click="compareAll" />
+        <BulkCompareButton
+          :candidates="comparisonCandidates"
+          :comparison-count
+          :filters
+          :lines-per-candidate="definition.slots.length"
+          :disabled="status !== success"
+          tooltip="Добавить все танки к сравнению"
+          @compare="emit('compareAll', $event)" />
       </template>
       <template #header-expand><span></span></template>
       <template #header-tankLevel><span>Ур.</span></template>
-      <template #header-tankType><VehicleType type="any" class="type-heading" /></template>
-      <template #header-name><Icon icon="tank" class="heading-icon" /></template>
+      <template #header-tankType>
+        <VehicleType type="any" class="type-heading" />
+      </template>
+      <template #header-name>
+        <Icon icon="tank" class="heading-icon" />
+      </template>
       <template #header="{ column }">
         <Icon v-if="column.metric" :icon="availableSlots[column.metric].icon" class="heading-icon" />
       </template>
 
       <template #cell-compare="{ row }">
-        <VehicleCompareButton :compared="isCompared(row)"
+        <CompareButton
+          :compared="isCompared(row)"
           @click.stop="emit('compare', row, selectionFor(row))" />
       </template>
       <template #cell-expand="{ expanded }">
         <DropdownArrow class="arrow" :expanded horizontal angle="large" />
       </template>
-      <template #cell-tankLevel="{ row }">{{ row.tankLevel === null ? '—' : romanNumberProcessor(row.tankLevel) }}</template>
+      <template #cell-tankLevel="{ row }">{{ row.tankLevel === null ? '—' : romanNumberProcessor(row.tankLevel)
+        }}</template>
       <template #cell-tankType="{ row }">
         <VehicleType :type="row.tankType && isVehicleType(row.tankType) ? row.tankType : 'any'" class="vehicle-type" />
       </template>
@@ -47,11 +73,13 @@
         <VehicleNameCell :vehicle="row" :search :show-image="showImage" />
       </template>
       <template #cell="{ row, column, value }">
-        <span v-if="showValueBars && column.metric && Number.isFinite(row[column.metric])" class="value-bar"
+        <span v-if="showValueBars && column.metric && Number.isFinite(row[column.metric])"
+          class="value-bar"
           :style="valueBarStyle(row, column.metric)"></span>
         <span class="metric-content" :class="{ 'with-bar': showValueBars }">
           <span class="metric-value">{{ value ?? '—' }}</span>
-          <AchievementDelta v-if="column.metric && deltaPeriod !== 'none'" class="metric-delta"
+          <AchievementDelta v-if="column.metric && deltaPeriod !== 'none'"
+            class="metric-delta"
             :value="achievementDelta(row, column.metric, deltaPeriod)">
             <template #empty="{ value }">
               <span v-tooltip="value === null ? 'Нет данных за дату сравнения' : 'Без изменений'">–</span>
@@ -61,31 +89,33 @@
       </template>
 
       <template #expanded="{ row }">
-        <AchievementHistory :kind :sources="[historySource(row)]" :filters :before-day compact
-          v-model:step="historyStep" v-model:average-window="averageWindow">
+        <AchievementHistory
+          :kind
+          :sources="[historySource(row)]"
+          :filters
+          :before-day
+          compact
+          v-model:step="historyStep"
+          v-model:average-window="averageWindow">
           <template v-if="!showCompare" #actions>
-            <VehicleCompareButton class="history-compare" :compared="isCompared(row)"
+            <CompareButton
+              class="history-compare"
+              :compared="isCompared(row)"
               @click.stop="emit('compare', row, selectionFor(row))" />
           </template>
         </AchievementHistory>
       </template>
 
       <template #loading>
-        <div class="state">
-          <Loader class="loader" />
-          <span>Загрузка планок техники…</span>
-        </div>
+        <TableState :status message="Загрузка планок техники…" />
       </template>
       <template #empty>
-        <div v-if="isErrorStatus(status)" class="state">
-          <span>Не удалось загрузить планки техники</span>
-          <button class="text-button" @click="emit('retry')">Попробовать ещё раз</button>
-        </div>
-        <div v-else class="state">{{ vehicles.length ? 'Танки не найдены' : 'В выбранном регионе пока нет данных' }}</div>
+        <TableState :status :message="emptyMessage" :retry="() => emit('retry')" />
       </template>
       <template #footer>
         <button v-if="status === success && displayedVehicles.length < filteredVehicles.length"
-          class="show-more text-button" @click="displayLimit += PAGE_SIZE">
+          class="show-more text-button"
+          @click="displayLimit += PAGE_SIZE">
           Показать ещё {{ Math.min(PAGE_SIZE, filteredVehicles.length - displayLimit) }}
         </button>
       </template>
@@ -95,7 +125,7 @@
 
 <script setup lang="ts">
 import { computed, ref, useTemplateRef, watch } from 'vue'
-import { useElementSize, useLocalStorage } from '@vueuse/core'
+import { useElementSize } from '@vueuse/core'
 import { isErrorStatus, loading, success, type Status } from '@/db'
 import Icon from '@/shared/game/components/efficiencyIcon/Icon.vue'
 import VehicleType from '@/shared/game/components/vehicles/vehicleType/VehicleType.vue'
@@ -106,7 +136,6 @@ import SearchLine from '@/shared/game/components/selectors/components/searchLine
 import ComposableTable from '@/shared/ui/composableTable/ComposableTable.vue'
 import type { ComposableTableCellEvent, ComposableTableColumn, ComposableTableKey } from '@/shared/ui/composableTable/types'
 import DropdownArrow from '@/shared/uiKit/dropdown/DropdownArrow.vue'
-import Loader from '@/shared/ui/loaders/loader/Loader.vue'
 import OptionsSelect from '@/shared/ui/optionsSelect/OptionsSelect.vue'
 import type { SelectOption } from '@/shared/ui/optionsSelect/types'
 import { romanNumberProcessor } from '@/shared/utils/processors/processors'
@@ -114,20 +143,23 @@ import type { VehicleFilters } from '../vehicles/filters/types'
 import type { VehicleStatisticsRow } from '../vehicles/shared/types'
 import { vehicleHistorySelection, type VehicleSelection } from '../vehicles/shared/vehicleGrouping'
 import { vehicleName } from '../vehicles/shared/vehicleName'
-import type { LocalVehicleFilters } from '../vehicles/vehicleListTable/filters/localFilters'
-import VehicleListFilters from '../vehicles/vehicleListTable/filters/VehicleListFilters.vue'
-import VehicleCompareButton from '../vehicles/vehicleListTable/comparison/VehicleCompareButton.vue'
-import VehicleNameCell from '../vehicles/vehicleListTable/VehicleNameCell.vue'
-import VehicleTableSettings from '../vehicles/vehicleListTable/settings/VehicleTableSettings.vue'
-import { useVehicleValueBars } from '../vehicles/vehicleListTable/utils/useVehicleValueBars'
-import { useVehicleTableAppearance } from '../vehicles/vehicleListTable/utils/useVehicleTableAppearance'
-import { COMPARE_MIN_TABLE_WIDTH, EXPAND_MIN_TABLE_WIDTH, vehicleColumns, vehicleNameColumn } from '../vehicles/vehicleListTable/utils/columns'
-import type { SortKey, SortOrder } from '../vehicles/vehicleListTable/utils/useVehicleSorting'
-import { availableSlots, type Slot } from '../vehicles/vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
-import { formatSlotValue } from '../vehicles/vehicleMetricSelector/utils/formatMetricValue'
-import type { ComparisonCandidate, ComparisonSource } from '../vehicles/timeSeriesCompare/types'
-import { comparisonRowKey } from '../vehicles/timeSeriesCompare/utils/comparisonRowKey'
-import type { HistoryStep, HistoryAverageWindow } from '../vehicles/timeSeries/period/historyStep'
+import type { LocalVehicleFilters } from '../vehicles/table/filters/localFilters'
+import VehicleListFilters from '../vehicles/table/filters/VehicleListFilters.vue'
+import CompareButton from '../shared/table/comparison/CompareButton.vue'
+import BulkCompareButton from '../shared/table/comparison/BulkCompareButton.vue'
+import VehicleNameCell from '../vehicles/table/VehicleNameCell.vue'
+import TableSettings from '../shared/table/TableSettings.vue'
+import { useVehicleValueBars } from '../vehicles/table/utils/useVehicleValueBars'
+import TableState from '../shared/table/TableState.vue'
+import { useTablePreferences } from '../shared/table/useTablePreferences'
+import { COMPARE_MIN_TABLE_WIDTH, vehicleColumns, vehicleNameColumn } from '../vehicles/table/utils/columns'
+import { EXPAND_MIN_TABLE_WIDTH } from '../shared/table/utils/rowColumns'
+import type { SortKey, SortOrder } from '../vehicles/table/utils/useVehicleSorting'
+import { availableSlots, type Slot } from '../vehicles/metrics/catalog/vehicleMetrics'
+import { formatSlotValue } from '../vehicles/metrics/utils/formatMetricValue'
+import type { ComparisonCandidate, ComparisonSource } from '../vehicles/comparison/types'
+import { comparisonRowKey } from '../vehicles/comparison/utils/comparisonRowKey'
+import type { HistoryStep, HistoryAverageWindow } from '../shared/history/period/historyStep'
 import AchievementHistory from './history/AchievementHistory.vue'
 import AchievementDelta from './AchievementDelta.vue'
 import { useAchievementTableRows } from './utils/useAchievementTableRows'
@@ -144,7 +176,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{
   compare: [vehicle: VehicleStatisticsRow, selection: VehicleSelection]
-  compareAll: [candidates: ComparisonCandidate[]]
+  compareAll: [candidates: readonly ComparisonCandidate[]]
   retry: []
 }>()
 const search = defineModel<string>('search', { required: true })
@@ -173,13 +205,11 @@ const compactDeltaLabels: Record<AchievementDeltaSelection, string> = {
 }
 
 const PAGE_SIZE = 50
-const MAX_BULK_COMPARISON_LINES = 100
 const displayLimit = ref(PAGE_SIZE)
 const expandedRows = ref<ComposableTableKey[]>([])
 const historyStep = ref<HistoryStep>('day')
 const averageWindow = ref<HistoryAverageWindow>(null)
-const { showValueBars, extendedPalette } = useVehicleTableAppearance()
-const pinCompared = useLocalStorage('vehicles-table-pin-compared', false)
+const { showValueBars, extendedPalette, pinCompared } = useTablePreferences()
 const definition = computed(() => achievements[props.kind])
 const { rows, slots, sorting } = useAchievementTableRows(props.kind, () => props.vehicles, sort, () => ({
   ...localFilters.value, search: search.value, deltaPeriod: deltaPeriod.value, sortByDelta: sortByDelta.value,
@@ -246,12 +276,14 @@ const filteredVehicles = computed(() => {
   return [...compared, ...remaining]
 })
 const displayedVehicles = computed(() => filteredVehicles.value.slice(0, displayLimit.value))
+const emptyMessage = computed(() => {
+  if (isErrorStatus(props.status)) return 'Не удалось загрузить планки техники'
+  return props.vehicles.length ? 'Танки не найдены' : 'В выбранном регионе пока нет данных'
+})
 const valueBarStyle = useVehicleValueBars(filteredVehicles, slots, { enabled: showValueBars, extendedPalette })
 const comparisonCandidates = computed<ComparisonCandidate[]>(() => filteredVehicles.value
   .filter(vehicle => !isCompared(vehicle))
   .map(vehicle => ({ vehicle, selection: selectionFor(vehicle) })))
-const bulkComparisonTotal = computed(() =>
-  (props.comparisonCount + comparisonCandidates.value.length) * definition.value.slots.length)
 
 function selectionFor(vehicle: VehicleStatisticsRow) {
   return vehicleHistorySelection(vehicle, { levels: [], types: [], nations: [] })
@@ -259,12 +291,6 @@ function selectionFor(vehicle: VehicleStatisticsRow) {
 
 function isCompared(vehicle: VehicleStatisticsRow) {
   return props.comparedKeys.includes(comparisonRowKey(vehicle.rowKey, selectionFor(vehicle)))
-}
-
-function compareAll() {
-  if (props.status !== success || !comparisonCandidates.value.length
-    || bulkComparisonTotal.value > MAX_BULK_COMPARISON_LINES) return
-  emit('compareAll', comparisonCandidates.value)
 }
 
 function historySource(vehicle: VehicleStatisticsRow): ComparisonSource {
@@ -303,7 +329,7 @@ watch([search, localFilters, () => props.vehicles], () => displayLimit.value = P
 </script>
 
 <style scoped lang="scss">
-@use '../vehicles/vehicleListTable/utils/vehicleValueBars.scss' as *;
+@use '../vehicles/table/utils/vehicleValueBars.scss' as *;
 
 .achievement-table {
   @include vehicle-value-bars;
@@ -458,22 +484,6 @@ watch([search, localFilters, () => props.vehicles], () => displayLimit.value = P
   .history-compare {
     margin: 0;
     background: rgba(255, 255, 255, 0.05);
-  }
-
-  .state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    min-height: 220px;
-    text-align: center;
-    color: rgba(255, 255, 255, 0.55);
-  }
-
-  .loader {
-    font-size: 4px;
-    margin-bottom: 20px;
   }
 
   .text-button {

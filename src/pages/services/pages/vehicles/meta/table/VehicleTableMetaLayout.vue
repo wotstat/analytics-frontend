@@ -36,8 +36,8 @@
 <script setup lang="ts">
 import { computed, type Component } from 'vue'
 import type { VehicleStatisticsRow } from '../../shared/types'
-import type { Slot } from '../../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
-import type { SortOrder } from '../../vehicleListTable/utils/useVehicleSorting'
+import type { Slot } from '../../metrics/catalog/vehicleMetrics'
+import type { SortOrder } from '../../table/utils/useVehicleSorting'
 import type { SelectionLabel } from '../utils/selectionLabels'
 import VehiclesMetaFrame from '../VehiclesMetaFrame.vue'
 import MetaVehicleTable from './MetaVehicleTable.vue'

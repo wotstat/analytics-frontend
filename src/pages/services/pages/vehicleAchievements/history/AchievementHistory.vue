@@ -1,8 +1,16 @@
 <template>
-  <TimeSeriesPanel :chart :legend="lineLegend" :has-values="hasValues" :show-legend="compact"
-    :density="compact ? 'compact' : 'standard'" :annotation-labels="annotations.length > 0"
-    :format-value="(value, ctx) => formatSlotValue(ctx.hit.datum.slot, value)" marker-style="glow"
-    class="achievement-history" :class="{ comparison: !compact }" @series-click="onSeriesClick">
+  <TimeSeriesPanel
+    :chart
+    :legend="lineLegend"
+    :has-values="hasValues"
+    :show-legend="compact"
+    :density="compact ? 'compact' : 'standard'"
+    :annotation-labels="annotations.length > 0"
+    :format-value="(value, ctx) => formatSlotValue(ctx.hit.datum.slot, value)"
+    marker-style="glow"
+    class="achievement-history"
+    :class="{ comparison: !compact }"
+    @series-click="onSeriesClick">
     <template v-if="!compact" #header>
       <h2>Сравнение <span v-if="sources.length">{{ sources.length }}</span></h2>
     </template>
@@ -31,10 +39,20 @@
     <template #details>
       <template v-if="!compact && sources.length">
         <div class="group-legend">
-          <Legend :legend="groupLegend" toggleable highlightable color-editable removable marker-style="glow"
+          <Legend
+            :legend="groupLegend"
+            toggleable
+            highlightable
+            color-editable
+            removable
+            marker-style="glow"
             @color-change="(source, color) => emit('colorChange', source.tag, color)"
             @remove="source => emit('remove', source.tag)" />
-          <ToolbarButton :icon="ResetIcon" class="reset" v-tooltip="'Очистить сравнение'" @click="emit('clear')" />
+          <ToolbarButton
+            :icon="ResetIcon"
+            class="reset"
+            v-tooltip="'Очистить сравнение'"
+            @click="emit('clear')" />
         </div>
       </template>
 
@@ -51,14 +69,22 @@
     </template>
 
     <template #tooltip="{ ctx }">
-      <TimeSeriesTooltip v-if="compact" :ctx :sources="tooltipLines"
-        :format-value="value => formatSlotValue(ctx.hit.datum.slot, value)" marker-style="glow">
+      <TimeSeriesTooltip v-if="compact"
+        :ctx
+        :sources="tooltipLines"
+        :format-value="value => formatSlotValue(ctx.hit.datum.slot, value)"
+        marker-style="glow">
         <template #header="{ horizontal }">
-          <HistoryTooltipHeader :point="ctx.hit.datum" :horizontal
+          <HistoryTooltipHeader
+            :point="ctx.hit.datum"
+            :horizontal
             :game-version="versionForPeriod(ctx.hit.datum.periodEnd)" />
         </template>
       </TimeSeriesTooltip>
-      <AchievementCompareTooltip v-else :ctx :sources="groupLegend.enabled.value" :metrics="tooltipMetrics"
+      <AchievementCompareTooltip v-else
+        :ctx
+        :sources="groupLegend.enabled.value"
+        :metrics="tooltipMetrics"
         :game-version="versionForPeriod(ctx.hit.datum.periodEnd)" />
     </template>
   </TimeSeriesPanel>
@@ -80,22 +106,22 @@ import type { ClickInteractionEvent } from '@/shared/uiKit/chart/universalChart/
 import type { VehicleFilters } from '../../vehicles/filters/types'
 import type { VehicleSelection } from '../../vehicles/shared/vehicleGrouping'
 import type { VehicleHistorySeries } from '../../vehicles/shared/types'
-import type { ComparisonSource } from '../../vehicles/timeSeriesCompare/types'
-import { differentComparisonFilters } from '../../vehicles/timeSeriesCompare/utils/comparisonFilters'
-import { comparisonName } from '../../vehicles/timeSeriesCompare/utils/comparisonName'
-import type { Slot } from '../../vehicles/vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
-import { formatSlotValue } from '../../vehicles/vehicleMetricSelector/utils/formatMetricValue'
-import { VehicleHistoryChart } from '../../vehicles/timeSeries/VehicleHistoryChart'
-import { useVehicleHistories } from '../../vehicles/timeSeries/useVehicleHistories'
-import type { HistoryStep, HistoryAverageWindow } from '../../vehicles/timeSeries/period/historyStep'
-import HistoryToolbarOptions from '../../vehicles/timeSeries/period/HistoryToolbarOptions.vue'
-import HistoryTooltipHeader from '../../vehicles/timeSeries/tooltip/HistoryTooltipHeader.vue'
-import HistoryAnnotationSettings from '../../vehicles/timeSeries/annotations/settings/HistoryAnnotationSettings.vue'
-import { createHistoryAnnotationState, useHistoryAnnotationSettings, type HistoryAnnotationState } from '../../vehicles/timeSeries/annotations/settings/useHistoryAnnotationSettings'
-import { useGameVersionAnnotations } from '../../vehicles/timeSeries/annotations/gameVersionAnnotations'
-import { useHistoryEventAnnotations } from '../../vehicles/timeSeries/annotations/events/useHistoryEventAnnotations'
-import { useHistoryEventStyles } from '../../vehicles/timeSeries/annotations/events/useHistoryEventStyles'
-import { hasHistoryValues } from '../../vehicles/timeSeries/historyValues'
+import type { ComparisonSource } from '../../vehicles/comparison/types'
+import { differentComparisonFilters } from '../../vehicles/comparison/utils/comparisonFilters'
+import { comparisonName } from '../../vehicles/comparison/utils/comparisonName'
+import type { Slot } from '../../vehicles/metrics/catalog/vehicleMetrics'
+import { formatSlotValue } from '../../vehicles/metrics/utils/formatMetricValue'
+import { VehicleHistoryChart } from '../../vehicles/history/VehicleHistoryChart'
+import { useVehicleHistories } from '../../vehicles/history/useVehicleHistories'
+import type { HistoryStep, HistoryAverageWindow } from '../../shared/history/period/historyStep'
+import HistoryToolbarOptions from '../../shared/history/period/HistoryToolbarOptions.vue'
+import HistoryTooltipHeader from '../../vehicles/history/tooltip/HistoryTooltipHeader.vue'
+import HistoryAnnotationSettings from '../../shared/history/annotations/settings/HistoryAnnotationSettings.vue'
+import { createHistoryAnnotationState, useHistoryAnnotationSettings, type HistoryAnnotationState } from '../../shared/history/annotations/settings/useHistoryAnnotationSettings'
+import { useGameVersionAnnotations } from '../../vehicles/history/annotations/gameVersionAnnotations'
+import { useHistoryEventAnnotations } from '../../vehicles/history/annotations/events/useHistoryEventAnnotations'
+import { useHistoryEventStyles } from '../../shared/history/annotations/events/useHistoryEventStyles'
+import { hasHistoryValues } from '../../vehicles/history/historyValues'
 import AchievementCompareTooltip from './AchievementCompareTooltip.vue'
 import { achievements, type AchievementKind } from '../utils/achievements'
 import { achievementHistoryColors, achievementLabel, achievementSeriesColor, achievementSeriesTag } from '../utils/achievementSeries'
@@ -231,7 +257,7 @@ watch(annotations, value => chart.setHistoryAnnotations(value), { immediate: tru
 </script>
 
 <style scoped lang="scss">
-@use '../../vehicles/timeSeries/annotations/historyAnnotationStyles.scss' as *;
+@use '../../shared/history/annotations/historyAnnotationStyles.scss' as *;
 
 .achievement-history {
   min-width: 0;

@@ -1,5 +1,5 @@
 import { DAILY_CACHE } from '@/db/cache'
-import type { MetricDateField } from '../../../vehicleMetricSelector/utils/metricTypes'
+import type { MetricDateField } from '../../../metrics/utils/metricTypes'
 import { quote } from '../../utils/sql'
 import { vehicleDailyStatisticsTable, vehicleSelectionWhere, vehicleStatisticsWhere } from '../battle/filters'
 import { vehicleGroupingSql } from '../utils/groupingSql'

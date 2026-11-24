@@ -3,8 +3,8 @@ import type { VehicleFilters } from '../../../filters/types'
 import type { VehicleStatistics } from '../../types'
 import type { VehicleGrouping, VehicleSelection } from '../../vehicleGrouping'
 import type { VehicleStatisticsPeriod } from '../../vehicleStatisticsPeriod'
-import type { HistoryStep } from '../../../timeSeries/period/historyStep'
-import type { VehicleHistorySplit } from '../../../timeSeries/split/historySplit'
+import type { HistoryStep } from '../../../../shared/history/period/historyStep'
+import type { VehicleHistorySplit } from '../../../history/split/historySplit'
 
 export type MetricQuery = { sql: string, cache: CachePolicy }
 export type HistoryRange = { from: string | null, until: string, cache: CachePolicy, recent: boolean }

@@ -1,0 +1,299 @@
+<template>
+  <TimeSeriesPanel
+    :chart
+    :legend
+    :has-values="hasValues"
+    density="compact"
+    marker-style="glow"
+    :tooltip="split === null ? 'header' : 'floating'"
+    :show-legend="split !== null"
+    :annotation-labels="annotations.length > 0"
+    :format-value="(value, ctx) => formatSlotValue(ctx.hit.datum.slot, value)"
+    class="vehicle-time-series">
+
+    <template #header>
+      <div class="metric-header">
+        <slot name="header-before" />
+        <VehicleMetricSelector v-model="slot" />
+      </div>
+    </template>
+
+    <template #toolbar>
+      <HistoryToolbarOptions v-model:step="step" v-model:average-window="averageWindow" />
+    </template>
+
+    <template #actions>
+      <ToolbarButton v-if="splitOptions.length"
+        :icon="LineChartIcon"
+        variant="accent"
+        :active="split !== null"
+        v-tooltip="'Разбить историю'"
+        @click="openSplitMenu" />
+      <HistoryAnnotationSettings :settings="annotationOptions" :regions="filters.regions" />
+    </template>
+
+    <template v-if="split === null" #tooltip="{ ctx }">
+      <div class="history-tooltip">
+        <div class="tooltip-value"><b>{{ formatSlotValue(ctx.hit.datum.slot, ctx.hit.datum.y) }}</b></div>
+        <div class="tooltip-date">
+          <template v-if="ctx.hit.datum.step === 'day'">
+            {{ formatStatisticsDay(ctx.hit.datum.periodStart) }} ·
+            <span class="weekday">{{ formatHistoryWeekday(ctx.hit.datum.periodStart) }}</span>
+          </template>
+          <template v-else>
+            {{ formatHistoryPeriod(ctx.hit.datum.periodStart, ctx.hit.datum.periodEnd, ctx.hit.datum.step) }}
+          </template>
+        </div>
+      </div>
+    </template>
+
+    <template #tooltip-header="{ ctx, horizontal }">
+      <HistoryTooltipHeader :point="ctx.hit.datum" :horizontal />
+    </template>
+
+    <template v-if="history.status === loading || isErrorStatus(history.status) || !hasValues" #state>
+      <template v-if="history.status === loading">
+        <Loader class="loader" />
+        <span>Загрузка истории…</span>
+      </template>
+
+      <template v-else-if="isErrorStatus(history.status)">
+        <span>Не удалось загрузить историю</span>
+        <button class="retry" @click="retry('vehicle')">Попробовать ещё раз</button>
+      </template>
+
+      <template v-else>По выбранным фильтрам пока нет данных</template>
+    </template>
+  </TimeSeriesPanel>
+</template>
+
+<script setup lang="ts">
+import { computed, markRaw, onBeforeUnmount, ref, watch } from 'vue'
+import { isErrorStatus, loading, success, type Status } from '@/db'
+import TimeSeriesPanel from '@/shared/ui/chart/timeSeries/panel/TimeSeriesPanel.vue'
+import { useLegend } from '@/shared/ui/chart/legend/useLegend'
+import Loader from '@/shared/ui/loaders/loader/Loader.vue'
+import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
+import { closeContextMenu, isContextMenuOpen } from '@/shared/uiKit/contextMenu/createContextMenu'
+import { checkboxItem, separator, simpleContextMenu } from '@/shared/uiKit/contextMenu/simpleContextMenu'
+import type { VehicleFilters } from '../filters/types'
+import type { Slot } from '../metrics/catalog/vehicleMetrics.ts'
+import { formatSlotValue } from '../metrics/utils/formatMetricValue.ts'
+import { formatHistoryPeriod, formatHistoryWeekday } from './tooltip/formatHistoryPeriod'
+import { formatStatisticsDay } from '../shared/formatStatisticsDay'
+import { useVehicleHistories } from './useVehicleHistories'
+import { VehicleHistoryChart } from './VehicleHistoryChart'
+import type { VehicleHistoryPeriod, VehicleHistorySeries } from '../shared/types'
+import type { HistoryAverageWindow, HistoryStep } from '../../shared/history/period/historyStep'
+import HistoryToolbarOptions from '../../shared/history/period/HistoryToolbarOptions.vue'
+import HistoryAnnotationSettings from '../../shared/history/annotations/settings/HistoryAnnotationSettings.vue'
+import LineChartIcon from './assets/line-chart.svg'
+import { useHistoryAnnotationSettings } from '../../shared/history/annotations/settings/useHistoryAnnotationSettings'
+import { useGameVersionAnnotations } from './annotations/gameVersionAnnotations'
+import { useHistoryEventAnnotations } from './annotations/events/useHistoryEventAnnotations'
+import { useHistoryEventStyles } from '../../shared/history/annotations/events/useHistoryEventStyles'
+import { applyHistoryFilters, hasHistoryValues } from './historyValues'
+import { historySplitName, historySplitOptions, orderHistorySplitKeys, type VehicleHistorySplit } from './split/historySplit'
+import { historySplitSeriesColor } from './split/seriesColors'
+import VehicleMetricSelector from '../metrics/VehicleMetricSelector.vue'
+import type { VehicleSelection } from '../shared/vehicleGrouping'
+import HistoryTooltipHeader from './tooltip/HistoryTooltipHeader.vue'
+import { availableSlots } from '../metrics/catalog/vehicleMetrics'
+
+useHistoryEventStyles()
+
+const props = defineProps<{
+  selection: VehicleSelection
+  name: string
+  filters: VehicleFilters
+  beforeDay: string
+  fromDay: string | null
+  minBattles: number
+  minPlayers: number
+}>()
+
+const slot = defineModel<Slot>('slot', { required: true })
+const step = defineModel<HistoryStep>('step', { required: true })
+const averageWindow = defineModel<HistoryAverageWindow>('averageWindow', { required: true })
+const requestedSplit = ref<VehicleHistorySplit | null>(null)
+const metricHistory = computed(() => availableSlots[slot.value].history)
+const splitOptions = computed(() => historySplitOptions.filter(option => metricHistory.value.splits.includes(option.value)))
+const split = computed(() => requestedSplit.value && metricHistory.value.splits.includes(requestedSplit.value) ? requestedSplit.value : null)
+const annotationOptions = useHistoryAnnotationSettings()
+const { annotations: versionAnnotations } = useGameVersionAnnotations(
+  annotationOptions.versions, computed(() => props.filters.regions))
+const eventAnnotations = useHistoryEventAnnotations(annotationOptions.enabledEvents, computed(() => props.filters.regions))
+const annotations = computed(() => [...versionAnnotations.value, ...eventAnnotations.value])
+
+type SplitSource = { tag: string, name: string, color: string }
+
+const { states, retry } = useVehicleHistories(() => [{
+  tag: 'vehicle', filters: props.filters, selection: props.selection, split: split.value,
+}], { beforeDay: props.beforeDay, step, slot })
+const history = computed<{ status: Status, data: VehicleHistoryPeriod[] }>(() =>
+  states.get('vehicle') ?? { status: loading, data: [] })
+
+const splitSources = computed<SplitSource[]>(() => {
+  const activeSplit = split.value
+  if (activeSplit === null) return []
+
+  const keys = orderHistorySplitKeys(activeSplit,
+    [...new Set(history.value.data.flatMap(row => row.splitKey ? [row.splitKey] : []))])
+
+  return keys.map((key, index) => ({
+    tag: key,
+    name: historySplitName(activeSplit, key),
+    color: historySplitSeriesColor(activeSplit, key, index),
+  }))
+})
+
+const legendItems = computed(() => split.value === null
+  ? [{ tag: 'vehicle', name: props.name, color: 'var(--blue-thin-color)' }]
+  : splitSources.value)
+const legend = useLegend(legendItems)
+const chart = markRaw(new VehicleHistoryChart(legend.highlightSync))
+
+const histories = computed<VehicleHistorySeries[]>(() => {
+  if (split.value === null) {
+    return [{
+      tag: 'vehicle',
+      history: applyHistoryFilters(history.value.data, slot.value, props, step.value, props.fromDay),
+    }]
+  }
+
+  return splitSources.value.map(source => ({
+    tag: source.tag,
+    history: applyHistoryFilters(history.value.data.filter(row => row.splitKey === source.tag),
+      slot.value, props, step.value, props.fromDay),
+  }))
+})
+const series = computed(() => histories.value.map(source => ({
+  ...source,
+  enabled: legend.isEnabled(source),
+})))
+
+const hasValues = computed(() => history.value.status === success &&
+  series.value.some(source => source.enabled !== false &&
+    hasHistoryValues(source.history, slot.value)))
+
+watch([series, slot, step, averageWindow], () => {
+  chart.setHistories(series.value, slot.value, props.beforeDay, step.value, averageWindow.value)
+}, { immediate: true })
+
+watch(annotations, value => chart.setHistoryAnnotations(value), { immediate: true })
+watch([annotationOptions.showWotstatOutages, metricHistory], ([visible, history]) => chart.setOutagesVisible(visible && history.outages), { immediate: true })
+
+let splitMenuId = -1
+watch(metricHistory, () => closeContextMenu(splitMenuId))
+
+function selectSplit(value: VehicleHistorySplit | null) {
+  requestedSplit.value = value
+  closeContextMenu(splitMenuId)
+}
+
+function openSplitMenu(event: MouseEvent) {
+  if (!splitOptions.value.length) return
+  if (isContextMenuOpen(splitMenuId)) {
+    closeContextMenu(splitMenuId)
+    return
+  }
+
+  const target = event.currentTarget as HTMLElement
+  const { id } = simpleContextMenu({
+    position: target.getBoundingClientRect(),
+    alignX: 'right',
+    alignY: 'bottom',
+    closeOnScroll: true,
+    closeOnAction: false,
+  }, [
+    checkboxItem('Без разбиения', {
+      value: computed(() => split.value === null),
+      toggle: () => selectSplit(null),
+    }),
+    separator,
+    ...splitOptions.value.map(option => checkboxItem(option.label, {
+      value: computed(() => split.value === option.value),
+      toggle: () => selectSplit(option.value),
+    })),
+  ])
+
+  splitMenuId = id
+}
+
+onBeforeUnmount(() => closeContextMenu(splitMenuId))
+</script>
+
+<style lang="scss" scoped>
+@use '../../shared/history/annotations/historyAnnotationStyles.scss' as *;
+
+.vehicle-time-series {
+  .metric-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    max-width: 100%;
+
+    @container time-series-panel (max-width: 600px) {
+      :deep(.metric-trigger) {
+        flex: 1;
+      }
+    }
+  }
+
+  .history-tooltip {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    pointer-events: none;
+    padding-bottom: 3px;
+
+    .tooltip-value {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 8px;
+
+      b {
+        color: white;
+        font-size: 20px;
+        line-height: 20px;
+      }
+    }
+
+    .tooltip-date {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 11px;
+      line-height: 1;
+      margin-top: 3px;
+
+      .weekday {
+        display: inline-block;
+        width: 2ch;
+      }
+    }
+  }
+
+  .loader {
+    font-size: 3px;
+    margin-bottom: 16px;
+  }
+
+  .retry {
+    color: var(--blue-thin-color);
+
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        color: white;
+      }
+    }
+  }
+
+  :deep(.time-series-annotation-area),
+  :deep(.time-series-annotations .label),
+  :deep(.time-series-annotation-ticks .tick-level) {
+    @include history-annotation-styles;
+    color: var(--history-annotation-color);
+  }
+}
+</style>

@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { markRaw } from 'vue'
 import ChartView from '@/shared/uiKit/chart/universalChart/UniversalChart.vue'
-import type { Slot } from '../../../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
+import type { Slot } from '../../../metrics/catalog/vehicleMetrics'
 import { MetaHistoryChart, type MetaHistorySeries, type MetaHistoryOptions } from './MetaHistoryChart'
 
 const props = defineProps<{ series: MetaHistorySeries[], slot: Slot, until: number, options?: MetaHistoryOptions }>()

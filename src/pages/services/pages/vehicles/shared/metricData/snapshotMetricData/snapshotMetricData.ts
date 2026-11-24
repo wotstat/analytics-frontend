@@ -1,5 +1,5 @@
 import { DAILY_CACHE, LONG_CACHE } from '@/db/cache'
-import type { MetricDateField } from '../../../vehicleMetricSelector/utils/metricTypes'
+import type { MetricDateField } from '../../../metrics/utils/metricTypes'
 import { quote } from '../../utils/sql'
 import type { MetricColumnData, MetricData } from '../utils/types'
 import { vehicleHistoryRanges } from '../utils/historyRanges'

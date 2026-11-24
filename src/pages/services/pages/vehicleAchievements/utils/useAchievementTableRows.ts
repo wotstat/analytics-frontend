@@ -2,8 +2,8 @@ import { computed, ref, watch, type Ref } from 'vue'
 import { createVehicleNameFilter } from '@/shared/game/components/vehicles/vehicleSearch'
 import { vehicleName } from '../../vehicles/shared/vehicleName'
 import type { VehicleSelection } from '../../vehicles/shared/vehicleGrouping'
-import { useVehicleSorting, type SortOrder } from '../../vehicles/vehicleListTable/utils/useVehicleSorting'
-import type { Slot } from '../../vehicles/vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
+import { useVehicleSorting, type SortOrder } from '../../vehicles/table/utils/useVehicleSorting'
+import type { Slot } from '../../vehicles/metrics/catalog/vehicleMetrics'
 import { achievementDelta, achievements, type AchievementKind, type AchievementDeltaSelection, type AchievementStatisticsRow } from './achievements'
 
 type Filters = VehicleSelection & { search: string, onlyActual: boolean, deltaPeriod: AchievementDeltaSelection, sortByDelta: boolean }

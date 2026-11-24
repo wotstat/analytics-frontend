@@ -1,9 +1,9 @@
 import { readQueryParams } from '@/shared/uiKit/queryStorage/utils/queryParamUtils'
 import { vehicleQueryParams } from '../../filters/useVehicleQueryStorage'
 import type { VehicleFilters } from '../../filters/types'
-import { comparisonSettingsParams } from '../../timeSeriesCompare/query/settings'
-import { deserializeComparison } from '../../timeSeriesCompare/query/codec/codec'
-import type { SavedComparisonSource } from '../../timeSeriesCompare/query/state'
+import { comparisonSettingsParams } from '../../comparison/query/settings'
+import { deserializeComparison } from '../../comparison/query/codec/codec'
+import type { SavedComparisonSource } from '../../comparison/query/state'
 
 export function readVehiclesMetaParams(url: URL) {
   const table = readQueryParams(vehicleQueryParams, url)

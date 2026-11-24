@@ -1,7 +1,7 @@
 <template>
   <VehicleFilters v-model="filters" />
 
-  <TimeSeriesCompare
+  <VehicleComparison
     :sources="comparison.sources.value"
     :filters
     :before-day="beforeDay"
@@ -15,7 +15,7 @@
     @color-change="comparison.setColor"
     @clear="comparison.clear" />
 
-  <VehicleListTable
+  <VehicleTable
     v-model:grouping="grouping"
     v-model:local-filters="localFilters"
     v-model:search="search"
@@ -73,22 +73,22 @@
 </template>
 
 <script setup lang="ts">
-import TimeSeriesCompare from './timeSeriesCompare/TimeSeriesCompare.vue'
-import { useVehicleComparison } from './timeSeriesCompare/useVehicleComparison'
+import VehicleComparison from './comparison/VehicleComparison.vue'
+import { useVehicleComparison } from './comparison/useVehicleComparison'
 import { computed, ref } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
-import VehicleListTable from './vehicleListTable/VehicleListTable.vue'
-import { availableSlots, type Slot } from './vehicleMetricSelector/vehicleMetrics/vehicleMetrics.ts'
+import VehicleTable from './table/VehicleTable.vue'
+import { availableSlots, type Slot } from './metrics/catalog/vehicleMetrics.ts'
 import VehicleFilters from './filters/VehicleFilters.vue'
 import { useVehicleQueryStorage } from './filters/useVehicleQueryStorage'
 import { vehicleStatisticsQueries } from './shared/vehicleStatisticsQuery'
 import { defaultVehicleStatisticsFromDay } from './shared/vehicleStatisticsPeriod'
-import { useVehicleTableStatistics } from './vehicleListTable/useVehicleTableStatistics'
+import { useVehicleTableStatistics } from './table/useVehicleTableStatistics'
 import { useBackground } from '@/shared/uiKit/pageBackground/useBackground'
-import VehiclesBackground from './VehiclesBackground.vue'
+import StatisticsBackground from '../shared/StatisticsBackground.vue'
 import { useVehiclesPageMeta } from './meta/utils/pageMeta'
 
-useBackground(VehiclesBackground, { backgroundKey: 'services-vehicles' })
+useBackground(StatisticsBackground, { backgroundKey: 'services-vehicles' })
 
 const { filters, localFilters, search, grouping, period, slots, sort } = useVehicleQueryStorage()
 const visibleSlots = ref<Slot[]>([])

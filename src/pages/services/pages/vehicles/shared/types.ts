@@ -1,5 +1,5 @@
-import type { MetricDateField } from '../vehicleMetricSelector/utils/metricTypes'
-import type { Slot } from '../vehicleMetricSelector/vehicleMetrics/vehicleMetrics'
+import type { MetricDateField } from '../metrics/utils/metricTypes'
+import type { Slot } from '../metrics/catalog/vehicleMetrics'
 
 type VehicleMetricValues = Partial<Record<Slot, number | null>>
 

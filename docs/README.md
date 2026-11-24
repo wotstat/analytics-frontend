@@ -22,7 +22,8 @@ src/
   pages/            — страницы по разделам сайта; внутри — компоненты и логика раздела
     infographics/   — сессионная статистика, Натиск
     services/       — сервисы
-      pages/        — статистика техники, мастера и отметки
+      pages/        — статистика техники и карт, мастера и отметки
+        shared/     — общие компоненты страниц сервисов
         archive/    — архивные страницы сервисов
       legacy/       — старые сервисы
     shared/         — общий каркас страниц: шапка, боковая панель и прочее
@@ -46,6 +47,8 @@ src/
 
 Код конкретной страницы хранится рядом с ней; общий для раздела — внутри этого раздела. Переиспользуемый между разделами код находится в `shared/`. Переносимые UI-примитивы относятся к `uiKit/`, их настройка под сайт — к `ui/`. Компоненты называются `PascalCase.vue`, composable — `useXxx.ts`.
 
+[Карты](../src/pages/services/pages/maps/) и [техника](../src/pages/services/pages/vehicles/) организованы по папкам `filters/`, `table/`, `metrics/`, `history/` и `comparison/`. Общие элементы находятся в [services/pages/shared](../src/pages/services/pages/shared/).
+
 ## Точки входа
 
 | Задача | Где смотреть |
@@ -56,7 +59,7 @@ src/
 | Привязки и анимация линий, маркеров и тултипа | [InteractionBinding](../src/shared/uiKit/chart/universalChart/interaction/core/InteractionBinding.ts), [InteractionPresentation](../src/shared/uiKit/chart/universalChart/interaction/composable/presentation/InteractionPresentation.ts), настройки `/debug/time-series#interaction-presentation` и `/debug/chart/interaction#interaction-presentation` |
 | Работать с URL-параметрами | [useQueryStorage.ts](../src/shared/uiKit/queryStorage/useQueryStorage.ts), готовые определения в [params.ts](../src/shared/uiKit/queryStorage/params.ts); параметры страницы объявляются рядом с ней |
 | Загрузить данные | [db/index.ts](../src/db/index.ts): `queryComputed`, `queryAsync`, `query`; SQL и типы результатов — у потребителей, актуальная схема таблиц — в самой БД |
-| Изменить формат ссылок сравнения | [query/codec/](../src/pages/services/pages/vehicles/timeSeriesCompare/query/codec/), включая тест и фиксированные примеры; общие примитивы — [utils/encoding/](../src/shared/utils/encoding/), игровые компактеры — [game/encoding/](../src/shared/game/encoding/) |
+| Изменить формат ссылок сравнения | [query/codec/](../src/pages/services/pages/vehicles/comparison/query/codec/), включая тест и фиксированные примеры; общие примитивы — [utils/encoding/](../src/shared/utils/encoding/), игровые компактеры — [game/encoding/](../src/shared/game/encoding/) |
 | Работать с Open Graph | Механизм — [meta/](../src/meta/), общий дизайн — [shared/ui/meta/](../src/shared/ui/meta/), карточки страниц — рядом со страницами, студия — [pages/metaStudio/](../src/pages/metaStudio/) |
 | Изменить сборку или окружение | [vite.config.ts](../vite.config.ts), [vite-env.d.ts](../src/vite-env.d.ts), [build-meta.sh](../build-meta.sh), [workflows/](../.github/workflows/) |
 

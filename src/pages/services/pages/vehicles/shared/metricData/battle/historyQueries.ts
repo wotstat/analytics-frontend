@@ -1,6 +1,6 @@
 import type { MetricHistoryContext, HistoryRange, MetricHistoryQuery } from '../utils/types'
 import { DAILY_VIEW_HISTORY_CACHE, vehicleHistoryRanges } from '../utils/historyRanges'
-import type { VehicleHistorySplit } from '../../../timeSeries/split/historySplit'
+import type { VehicleHistorySplit } from '../../../history/split/historySplit'
 import { vehicleDailyStatisticsTable, vehicleSelectionWhere, vehicleStatisticsWhere } from './filters'
 import { sampleExpressions, selectExpressions, type StatisticExpressions } from './expressions'
 

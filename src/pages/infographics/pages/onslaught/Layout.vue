@@ -1,5 +1,5 @@
 <template>
-  <SectionLayout :title="String(route.meta.customTitle ?? '')" :sections>
+  <SectionLayout :title="route.meta.customTitle ?? ''" :sections>
     <template #link-label="{ link }">
       <span v-if="link.to === '/onslaught'" class="general-label" v-new-feature-badge="'onslaught-general'">
         {{ link.label }}

@@ -1,25 +1,22 @@
 <template>
   <div class="settings">
     <div class="line-main">
-      <NicknameInput @clear="emit('clearNickname')" class="nickname" v-model="nickname" v-if="props.showNameInput" />
+      <NicknameInput v-if="props.showNameInput"
+        @clear="emit('clearNickname')"
+        class="nickname"
+        v-model="nickname" />
 
-      <div class="game-select">
-        <div class="vr" v-if="props.showNameInput"></div>
-        <button class="variant mt-font selectable" v-for="region in regions"
-          :class="{ 'active': selectedRegion === region }" @click="changeRegion(region)" :key="region">
-          {{ region }}
-        </button>
-      </div>
+      <div class="vr" v-if="props.showNameInput"></div>
+      <RegionSelector :model-value="selectedRegion" @update:model-value="changeRegion" class="regions" />
     </div>
 
-    <div class="season-select">
-      <div class="space flex-1"></div>
-      <button class="variant mt-font selectable" v-for="season in currentSeasons.slice(0, 3)"
-        :key="`${season.region}-${season.season}`" @click="changeSeason(season.season)"
-        :class="{ 'active': season.season === selectedSeason }">
-        {{ t(`season:${season.region.toLowerCase()}:${season.season}`) }}
-      </button>
-    </div>
+    <OptionButtons
+      :model-value="selectedSeason"
+      :options="seasonOptions"
+      @update:model-value="changeSeason"
+      class="seasons mt-font">
+      <template #default="{ option }">{{ t(`season:${selectedRegion?.toLowerCase()}:${option}`) }}</template>
+    </OptionButtons>
   </div>
 </template>
 
@@ -27,9 +24,11 @@
 <script setup lang="ts">
 import NicknameInput from './nicknameInput/NicknameInput.vue'
 import { computed, watch, watchEffect } from 'vue'
+import RegionSelector from '@/shared/game/components/selectors/region/RegionSelector.vue'
+import OptionButtons from '@/shared/uiKit/selection/OptionButtons.vue'
 import { useI18n } from '@/shared/i18n/useI18n'
 import i18n from '@/shared/game/domain/comp7/i18n.json'
-import { regions, useOnslaughtQueryStorage, type OnslaughtRegion } from '../useOnslaughtQueryStorage'
+import { useOnslaughtQueryStorage, type OnslaughtRegion } from '../useOnslaughtQueryStorage'
 import { LONG_CACHE, queryComputed, success } from '@/db'
 import { getRegionIsoHourOffset } from '@/shared/game/domain/comp7/utils'
 
@@ -47,7 +46,10 @@ const seasons = defineModel<{ region: string, season: string, start: string }[]>
 const selectedSeason = defineModel<string | null>('season')
 const selectedRegion = defineModel<OnslaughtRegion>('region')
 const nickname = defineModel<string>('nickname')
-const currentSeasons = computed(() => seasons.value?.filter(s => s.region === selectedRegion.value) || [])
+const seasonOptions = computed(() => (seasons.value ?? [])
+  .filter(item => item.region === selectedRegion.value)
+  .slice(0, 3)
+  .map(item => item.season))
 
 function changeSeason(season: string) {
   queryStorage.patch({ season })
@@ -104,42 +106,17 @@ watch([queryStorage.params.region, queryStorage.params.season, seasonsData], () 
     width: 200px;
   }
 
-  .line-main,
-  .game-select,
-  .season-select {
+  .line-main {
     display: contents;
   }
 
-  .variant {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 22px;
-    padding: 0 10px;
-    line-height: 1;
-    font-size: 14px;
-    white-space: nowrap;
-
-    .icon {
-      height: 14px;
-    }
+  .regions,
+  .seasons {
+    --option-buttons-wrap: nowrap;
   }
 
-  .selectable {
-    background-color: rgba(255, 255, 255, 0.08);
-    border-radius: 5px;
-    cursor: pointer;
-    user-select: none;
-    transition: background-color 0.07s;
-    border: none;
-
-    &:hover {
-      background-color: rgba(255, 255, 255, 0.2);
-    }
-
-    &.active {
-      background-color: var(--blue-color);
-    }
+  .seasons {
+    margin-left: auto;
   }
 
   @media screen and (max-width: 600px) {
@@ -158,30 +135,17 @@ watch([queryStorage.params.region, queryStorage.params.season, seasonsData], () 
       min-height: $main-line-height;
     }
 
-    .season-select {
-      display: flex;
-      align-items: center;
-      gap: 5px;
+    .seasons {
+      --option-button-flex: 1 1 auto;
       width: 100%;
-
-      .space {
-        display: none;
-      }
-
-      .variant {
-        flex: 1;
-      }
+      margin-left: 0;
     }
   }
 
   @media screen and (max-width: 350px) {
-    .season-select {
+    .seasons {
       flex-direction: column;
-
-      .variant {
-        min-height: 22px;
-        width: 100%;
-      }
+      align-items: stretch;
     }
   }
 }

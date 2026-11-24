@@ -1,6 +1,8 @@
 <template>
-  <DebugPage title="Компактеры и кодек" description="Региональные ID, реактивное разрешение и бинарный формат compare."
-    source="src/shared/game/encoding/ · src/shared/utils/encoding/ · src/pages/services/pages/vehicles/timeSeriesCompare/query/codec/">
+  <DebugPage
+    title="Компактеры и кодек"
+    description="Региональные ID, реактивное разрешение и бинарный формат compare."
+    source="src/shared/game/encoding/ · src/shared/utils/encoding/ · src/pages/services/pages/vehicles/comparison/query/codec/">
     <DebugSection title="Игровые значения" id="compact">
       <div class="debug-row">
         <label class="debug-control">Сущность
@@ -27,7 +29,9 @@
       <p>expand: <span class="debug-value">{{ JSON.stringify(expanded) }}</span></p>
       <p>Техника: {{ statusLabel(vehicleCatalog.status) }} · Карты: {{ statusLabel(arenaCatalog.status) }}</p>
     </DebugSection>
-    <DebugSection title="Сравнения" id="comparisons"
+    <DebugSection
+      title="Сравнения"
+      id="comparisons"
       description="Длина одних и тех же байтов в Base62 и Base64url; меняется после загрузки каталогов.">
       <label class="debug-control"><input type="checkbox" v-model="withContext" />Контекст страницы RU/random</label>
       <table class="debug-table">
@@ -79,11 +83,11 @@ import { vehicleCatalog } from '@/shared/game/domain/vehicles/catalog'
 import { arenaCompactor } from '@/shared/game/encoding/arenas'
 import { arenaCatalog } from '@/shared/game/domain/arenas/catalog'
 import { battleModeCompactor } from '@/shared/game/encoding/battleModes/battleModes'
-import type { SavedComparisonSource } from '@/pages/services/pages/vehicles/timeSeriesCompare/query/state'
-import { deserializeComparison } from '@/pages/services/pages/vehicles/timeSeriesCompare/query/codec/codec'
-import { serializeComparison } from '@/pages/services/pages/vehicles/timeSeriesCompare/query/codec/serialize'
-import { comparisonAnnotationsParam, comparisonAnnotationState } from '@/pages/services/pages/vehicles/timeSeriesCompare/query/annotations'
-import { comparisonSettingsParams, type ComparisonSettings } from '@/pages/services/pages/vehicles/timeSeriesCompare/query/settings'
+import type { SavedComparisonSource } from '@/pages/services/pages/vehicles/comparison/query/state'
+import { deserializeComparison } from '@/pages/services/pages/vehicles/comparison/query/codec/codec'
+import { serializeComparison } from '@/pages/services/pages/vehicles/comparison/query/codec/serialize'
+import { comparisonAnnotationsParam, comparisonAnnotationState } from '@/pages/services/pages/vehicles/comparison/query/annotations'
+import { comparisonSettingsParams, type ComparisonSettings } from '@/pages/services/pages/vehicles/comparison/query/settings'
 import { createVehicleFilters } from '@/pages/services/pages/vehicles/filters/types'
 import { decodeBase62 } from '@/shared/utils/encoding/base62'
 
