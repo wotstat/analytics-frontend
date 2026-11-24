@@ -3,15 +3,15 @@ import { arrayParam } from '@/shared/uiKit/queryStorage/params'
 import type { Serializer } from '@/shared/uiKit/queryStorage/serializers/types'
 import { defaultSlots, type Slot } from '../../metrics/catalog/vehicleMetrics'
 import { slotSerializer } from '../../metrics/utils/slotSerializer'
-import type { VehicleStatisticsPeriod } from '../../shared/vehicleStatisticsPeriod'
+import { defaultTableStatisticsPeriod, type TableStatisticsPeriod } from '../../../shared/table/statisticsPeriods'
 import type { SortOrder } from '../utils/useVehicleSorting'
 import { sortOrderSerializer } from '../utils/sortOrderSerializer'
 
 const defaultSortOrders: SortOrder[] = [{ key: 'battles', ascending: false }]
 
-const periodKeys = new Map<VehicleStatisticsPeriod, string>([[1, 'day'], [7, 'week'], [30, 'month']])
+const periodKeys = new Map<TableStatisticsPeriod, string>([[1, 'day'], [7, 'week'], [30, 'month']])
 const periodsByKey = new Map([...periodKeys].map(([period, key]) => [key, period]))
-const periodSerializer: Serializer<VehicleStatisticsPeriod> = {
+const periodSerializer: Serializer<TableStatisticsPeriod> = {
   serialize: period => {
     const key = periodKeys.get(period)
     if (key === undefined) throw new Error('Unknown statistics period')
@@ -28,7 +28,7 @@ const columnsParam = arrayParam(slotSerializer, defaultSlots, { label: 'columns'
 const sortParam = arrayParam(sortOrderSerializer(slotSerializer), defaultSortOrders, { key: 'vehicles.table.sort', priority: 5 })
 
 export const vehicleTableSettingsParams = defineParams({
-  period: { ...periodSerializer, default: 30 as const, key: 'vehicles.table.period', priority: 20 },
+  period: { ...periodSerializer, default: defaultTableStatisticsPeriod, key: 'vehicles.table.period', priority: 20 },
   slots: {
     ...columnsParam,
     serialize: (slots: Slot[]) => columnsParam.serialize(slots.length ? slots : defaultSlots),

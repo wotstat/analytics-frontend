@@ -8,7 +8,7 @@
           v-model:delta-metrics="deltaMetrics"
           :max-slots="columnLimit"
           :default-columns="defaultColumns" />
-        <TableSettings />
+        <TableSettings v-model="period" />
       </div>
     </div>
 
@@ -88,6 +88,7 @@ import { highlight } from '@/shared/uiKit/highlightString/highlightUtils'
 import { useMetricRowExpansion } from '../../shared/table/utils/useMetricRowExpansion'
 import type { HistoryAverageWindow, HistoryStep } from '../../shared/history/period/historyStep'
 import CompareButton from '../../shared/table/comparison/CompareButton.vue'
+import { defaultTableStatisticsPeriod, type TableStatisticsPeriod } from '../../shared/table/statisticsPeriods'
 import TableSettings from '../../shared/table/TableSettings.vue'
 import TableState from '../../shared/table/TableState.vue'
 import { useTablePreferences } from '../../shared/table/useTablePreferences'
@@ -103,6 +104,7 @@ type MapColumn = ComposableTableColumn<MapRow> & { icon?: IconType, variant?: st
 
 const props = defineProps<{ filters: MapFilters, comparedTags: ReadonlySet<string> }>()
 const emit = defineEmits<{ compare: [tag: string, name: string] }>()
+const period = ref<TableStatisticsPeriod>(defaultTableStatisticsPeriod)
 const search = ref('')
 const ascending = ref(true)
 const { pinCompared } = useTablePreferences()

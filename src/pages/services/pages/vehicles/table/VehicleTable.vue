@@ -10,7 +10,6 @@
         <VehicleColumnSelector v-model="visibleSlots" v-model:open="columnsOpen" :max-slots="maxSelectableSlots" />
         <TableSettings
           v-model="period"
-          :periods="vehicleStatisticsPeriods"
           v-model:from-beginning="fromBeginning" />
       </div>
     </div>
@@ -166,7 +165,7 @@ import { formatSlotValue } from '../metrics/utils/formatMetricValue.ts'
 import { useVehicleSorting, type SortKey, type SortOrder } from './utils/useVehicleSorting'
 import type { VehicleFilters } from '../filters/types'
 import type { HistoryAverageWindow, HistoryStep } from '../../shared/history/period/historyStep'
-import { vehicleStatisticsPeriods, type VehicleStatisticsPeriod } from '../shared/vehicleStatisticsPeriod'
+import type { TableStatisticsPeriod } from '../../shared/table/statisticsPeriods'
 import type { ComparisonCandidate } from '../comparison/types'
 import { useVehicleValueBars } from './utils/useVehicleValueBars'
 import TableState from '../../shared/table/TableState.vue'
@@ -202,7 +201,7 @@ const IMAGE_MIN_TABLE_WIDTH = 320
 const search = defineModel<string>('search', { required: true })
 const localFilters = defineModel<LocalVehicleFilters>('localFilters', { required: true })
 const grouping = defineModel<VehicleGrouping>('grouping', { required: true })
-const period = defineModel<VehicleStatisticsPeriod>('period', { required: true })
+const period = defineModel<TableStatisticsPeriod>('period', { required: true })
 const fromBeginning = defineModel<boolean>('fromBeginning', { required: true })
 
 const configuredSlots = defineModel<Slot[]>('slots', { required: true })

@@ -15,13 +15,13 @@
     :placement="['bottom-end', 'bottom-float', 'top-end']">
     <template #content="{ isModal }">
       <div class="table-settings" :class="{ 'modal-mode': isModal }">
-        <div v-if="periods?.length" class="options panel-section">
+        <div v-if="period !== undefined" class="options panel-section">
           <h3>Показывать значения</h3>
-          <label v-for="option in periods" :key="option.value" class="option">
+          <label v-for="option in tableStatisticsPeriods" :key="option.value" class="option">
             <input
               v-model="period"
               type="radio"
-              name="vehicle-table-period"
+              :name="periodGroup"
               :value="option.value">
             {{ option.label }}
           </label>
@@ -56,24 +56,25 @@
   </ResponsivePanelPopover>
 </template>
 
-<script setup lang="ts" generic="Period extends number = number">
-import { computed, ref, useTemplateRef } from 'vue'
+<script setup lang="ts">
+import { computed, ref, useId, useTemplateRef } from 'vue'
 import SettingsIcon from '@/assets/icons/settings.svg'
 import ResponsivePanelPopover from '@/shared/ui/popover/ResponsivePanelPopover.vue'
 import ToolbarButton from '@/shared/ui/toolbarButton/ToolbarButton.vue'
+import { tableStatisticsPeriods, type TableStatisticsPeriod } from './statisticsPeriods'
 import { useTablePreferences } from './useTablePreferences'
 
-const { periods } = defineProps<{ periods?: readonly { value: Period, label: string }[] }>()
-const period = defineModel<Period>()
+const period = defineModel<TableStatisticsPeriod>()
+const periodGroup = `table-period-${useId()}`
 const { showValueBars, extendedPalette, pinCompared } = useTablePreferences()
-const fromBeginning = defineModel<boolean>('fromBeginning', { default: false })
+const fromBeginning = defineModel<boolean | undefined>('fromBeginning', { default: undefined })
 const open = ref(false)
 const showAdvanced = ref(false)
 const trigger = useTemplateRef<InstanceType<typeof ToolbarButton>>('trigger')
 const target = computed(() => trigger.value?.element ?? null)
 
 function toggle(event: MouseEvent) {
-  if (!open.value) showAdvanced.value = !!periods?.length && event.altKey
+  if (!open.value) showAdvanced.value = fromBeginning.value !== undefined && event.altKey
   open.value = !open.value
 }
 </script>

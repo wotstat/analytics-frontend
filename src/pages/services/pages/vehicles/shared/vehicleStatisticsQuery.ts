@@ -1,7 +1,7 @@
 import { LONG_CACHE } from '@/db/cache'
+import { defaultTableStatisticsPeriod, type TableStatisticsPeriod } from '../../shared/table/statisticsPeriods'
 import type { VehicleFilters } from '../filters/types'
 import type { VehicleGrouping, VehicleSelection } from './vehicleGrouping'
-import type { VehicleStatisticsPeriod } from './vehicleStatisticsPeriod'
 import type { VehicleStatistics } from './types'
 import type { MetricColumnData } from './metricData/utils/types'
 import { battleRowQueries } from './metricData/battle/tableQueries'
@@ -17,7 +17,7 @@ export const VEHICLE_STATISTICS_QUERY_OPTIONS = {
 } as const
 
 export function vehicleStatisticsQueries(filters: VehicleFilters, grouping: VehicleGrouping = 'tanks',
-  days: VehicleStatisticsPeriod = 30, selection?: VehicleSelection,
+  days: TableStatisticsPeriod = defaultTableStatisticsPeriod, selection?: VehicleSelection,
   beforeDay = new Date().toISOString().slice(0, 10)) {
   const context = { filters, grouping, days, selection, beforeDay }
   return {

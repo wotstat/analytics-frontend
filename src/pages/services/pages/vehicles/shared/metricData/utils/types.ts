@@ -2,8 +2,8 @@ import type { CachePolicy } from '@/db/cache'
 import type { VehicleFilters } from '../../../filters/types'
 import type { VehicleStatistics } from '../../types'
 import type { VehicleGrouping, VehicleSelection } from '../../vehicleGrouping'
-import type { VehicleStatisticsPeriod } from '../../vehicleStatisticsPeriod'
 import type { HistoryStep } from '../../../../shared/history/period/historyStep'
+import type { TableStatisticsPeriod } from '../../../../shared/table/statisticsPeriods'
 import type { VehicleHistorySplit } from '../../../history/split/historySplit'
 
 export type MetricQuery = { sql: string, cache: CachePolicy }
@@ -13,7 +13,7 @@ export type MetricHistoryQuery = HistoryRange & { base: string, metric: string |
 export type MetricTableContext = {
   filters: VehicleFilters
   grouping: VehicleGrouping
-  days: VehicleStatisticsPeriod
+  days: TableStatisticsPeriod
   selection?: VehicleSelection
   beforeDay: string
 }
