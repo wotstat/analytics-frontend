@@ -1,10 +1,7 @@
 <template>
   <section class="map-filters">
     <div class="row">
-      <div class="field region-select">
-        <span class="label">Регион</span>
-        <RegionSelector v-model:selected="regions" class="regions" />
-      </div>
+      <RegionSelector v-model:selected="regions" class="region-select" />
 
       <div class="field mode">
         <span class="label">Режим</span>
@@ -185,13 +182,9 @@ function reset() {
     --map-filter-height: 30px;
 
     .region-select {
+      --option-button-flex: 1;
+      --option-button-height: 25px;
       flex-basis: 100%;
-
-      .regions {
-        --option-button-flex: 1;
-        --option-button-height: 25px;
-        flex: 1;
-      }
     }
 
     .mode {
